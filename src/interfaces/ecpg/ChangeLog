@@ -1976,6 +1976,12 @@ Tu Jan 24 10:59:21 CET 2006
 
 	- Synced parser and keyword list.
 	- Added another test case.
+	
+Sa Feb  4 21:35:03 CET 2006
+
+	- Added C bit fields to ecpg parser.
+	- Added some default rules to lexer.
+	- Added log output to prepare statement.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 

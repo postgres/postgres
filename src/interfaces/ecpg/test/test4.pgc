@@ -6,10 +6,22 @@ exec sql whenever sqlerror sqlprint;
 
 exec sql include sqlca;
 
+EXEC SQL type errtype is enum
+{
+	OK   = 0,
+	ERR  = 1,
+	WARN = 2
+};
+
 int
 main (void)
 {
 EXEC SQL BEGIN DECLARE SECTION;
+	struct 
+	{
+		errtype e :2;
+		int code :14;
+	} error = {1, 147};
 	int i = 1;
 	int *did = &i;
 	int a[10] = {9,8,7,6,5,4,3,2,1,0};
@@ -34,13 +46,18 @@ EXEC SQL END DECLARE SECTION;
 
  	EXEC SQL BEGIN WORK;
 
-	EXEC SQL CREATE TABLE test (f float, i int, a int[10], text char(10), b bool);
+	EXEC SQL CREATE TABLE test (f float, i int, a int[10], text char(10), b bool, t int, err int);
 
-	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(404.90,3,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij', 'f');
+	EXEC SQL INSERT INTO test(f,i,a,text,b,t,err) VALUES(404.90,3,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij','f',0,0);
 
-	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(140787.0,2,:a,:text,'t');
+	EXEC SQL INSERT INTO test(f,i,a,text,b,t,err) VALUES(140787.0,2,:a,:text,'t',2,14);
 	
-	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(14.07,:did,:a,:t,:b);
+EXEC SQL IFDEF BIT_FIELD_IS_NOT_ACCESSIBLE;
+	EXEC SQL INSERT INTO test(f,i,a,text,b,t,err) VALUES(14.07,:did,:a,:t,:b,:error);
+EXEC SQL ELSE;
+	EXEC SQL INSERT INTO test(f,i,a,text,b,t,err) VALUES(14.07,:did,:a,:t,:b,1,147);
+	error.code=0;
+EXEC SQL ENDIF;
 
 	EXEC SQL COMMIT;
 

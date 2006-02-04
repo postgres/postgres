@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.51 2006/01/24 11:01:38 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.52 2006/02/04 20:54:44 meskes Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -27,6 +27,9 @@ test_informix: test_informix.o
 test_informix2: test_informix2.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -L../compatlib -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lecpg_compat -lpq $(PTHREAD_LIBS) -o $@
 	
+test4: test4.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lpq $(PTHREAD_LIBS) -o $@
+
 %.c: %.pgc
 	$(ECPG) -o $@ -I$(srcdir) $<
 
@@ -35,6 +38,9 @@ test_informix.c: test_informix.pgc
 
 test_informix2.c: test_informix2.pgc
 	$(ECPG) -o $@ -C INFORMIX  $<
+
+test4.c: test4.pgc
+	$(ECPG) -o $@ -c  $<
 
 clean:
 	rm -f $(TESTS) $(TESTS:%=%.o) $(TESTS:%=%.c) log

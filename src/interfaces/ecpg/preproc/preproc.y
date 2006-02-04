@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.318 2006/02/03 05:38:35 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.319 2006/02/04 20:54:42 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -575,7 +575,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor
 %type  <str>	prepared_name struct_union_type_with_symbol OptConsTableSpace
-%type  <str>	ECPGunreserved ECPGunreserved_interval cvariable
+%type  <str>	ECPGunreserved ECPGunreserved_interval cvariable opt_bit_field
 %type  <str>	AlterOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
 %type  <str>	DropTableSpaceStmt indirection indirection_el ECPGSetDescriptorHeader
 %type  <str>	AlterDatabaseStmt CreateRoleStmt OptRoleList AlterRoleStmt AlterRoleSetStmt
@@ -4740,9 +4740,9 @@ single_var_declaration: storage_declaration
 
 			actual_startline[struct_level] = hashline_number();
 		}
-		variable_list ';'
+		variable_list opt_bit_field';'
 		{
-			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
+			$$ = cat_str(6, actual_startline[struct_level], $1, $2.type_str, $4, $5, make_str(";\n"));
 		}
 		| var_type
 		{
@@ -4753,9 +4753,9 @@ single_var_declaration: storage_declaration
 
 			actual_startline[struct_level] = hashline_number();
 		}
-		variable_list ';'
+		variable_list opt_bit_field';'
 		{
-			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, make_str(";\n"));
+			$$ = cat_str(5, actual_startline[struct_level], $1.type_str, $3, $4, make_str(";\n"));
 		}
 		| struct_union_type_with_symbol ';'
 		{
@@ -4875,9 +4875,9 @@ var_declaration: storage_declaration
 
 			actual_startline[struct_level] = hashline_number();
 		}
-		variable_list ';'
+		variable_list opt_bit_field';'
 		{
-			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
+			$$ = cat_str(6, actual_startline[struct_level], $1, $2.type_str, $4, $5, make_str(";\n"));
 		}
 		| var_type
 		{
@@ -4888,14 +4888,18 @@ var_declaration: storage_declaration
 
 			actual_startline[struct_level] = hashline_number();
 		}
-		variable_list ';'
+		variable_list opt_bit_field';'
 		{
-			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, make_str(";\n"));
+			$$ = cat_str(5, actual_startline[struct_level], $1.type_str, $3, $4, make_str(";\n"));
 		}
 		| struct_union_type_with_symbol ';'
 		{
 			$$ = cat2_str($1, make_str(";"));
 		}
+		;
+
+opt_bit_field:	':' Iconst	{ $$ =cat2_str(make_str(":"), $2); }
+		| /* EMPTY */	{ $$ = EMPTY; }
 		;
 
 storage_declaration: storage_clause storage_modifier
@@ -5808,13 +5812,13 @@ ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action
 		{
 			when_error.code = $<action>3.code;
 			when_error.command = $<action>3.command;
-			$$ = cat_str(3, make_str("/* exec sql whenever sqlerror "), $3.str, make_str("; */\n"));
+			$$ = cat_str(3, make_str("/* exec sql whenever sqlerror "), $3.str, make_str("; */"));
 		}
 		| SQL_WHENEVER NOT SQL_FOUND action
 		{
 			when_nf.code = $<action>4.code;
 			when_nf.command = $<action>4.command;
-			$$ = cat_str(3, make_str("/* exec sql whenever not found "), $4.str, make_str("; */\n"));
+			$$ = cat_str(3, make_str("/* exec sql whenever not found "), $4.str, make_str("; */"));
 		}
 		| SQL_WHENEVER SQL_SQLWARNING action
 		{
@@ -6531,6 +6535,7 @@ c_thing:	c_anything	{ $$ = $1; }
 		|	')'			{ $$ = make_str(")"); }
 		|	','			{ $$ = make_str(","); }
 		|	';'			{ $$ = make_str(";"); }
+		|	':'			{ $$ = make_str(":"); }
 		;
 
 c_anything:  IDENT			{ $$ = $1; }

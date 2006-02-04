@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.15 2005/11/30 12:49:49 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.16 2006/02/04 20:54:42 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -100,6 +100,8 @@ ECPGprepare(int lineno, const char *name, const char *variable)
 	/* add prepared statement to our list */
 	this->name = ECPGstrdup(name, lineno);
 	this->stmt = stmt;
+	ECPGlog("ECPGprepare line %d: QUERY: %s\n", stmt->lineno, stmt->command);
+		
 
 	if (prep_stmts == NULL)
 		this->next = NULL;
