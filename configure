@@ -22753,13 +22753,13 @@ if test x"$template" != x"win32"
 then
   { echo "$as_me:$LINENO: WARNING:
 *** Skipping thread test program.  --enable-thread-safety-force was used.
-*** Run the program in src/tools/thread on the your machine and add
+*** Run the program in src/test/thread on the your machine and add
 proper locking function calls to your applications to guarantee thread
 safety.
 " >&5
 echo "$as_me: WARNING:
 *** Skipping thread test program.  --enable-thread-safety-force was used.
-*** Run the program in src/tools/thread on the your machine and add
+*** Run the program in src/test/thread on the your machine and add
 proper locking function calls to your applications to guarantee thread
 safety.
 " >&2;}
@@ -22782,11 +22782,11 @@ if test "$cross_compiling" = yes; then
 echo "${ECHO_T}maybe" >&6
   { echo "$as_me:$LINENO: WARNING:
 *** Skipping thread test program because of cross-compile build.
-*** Run the program in src/tools/thread on the target machine.
+*** Run the program in src/test/thread on the target machine.
 " >&5
 echo "$as_me: WARNING:
 *** Skipping thread test program because of cross-compile build.
-*** Run the program in src/tools/thread on the target machine.
+*** Run the program in src/test/thread on the target machine.
 " >&2;}
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -22795,7 +22795,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include "$srcdir/src/tools/thread/thread_test.c"
+#include "$srcdir/src/test/thread/thread_test.c"
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -22824,7 +22824,7 @@ echo "${ECHO_T}no" >&6
 ***
 *** You can use the configure option --enable-thread-safety-force
 *** to force threads to be enabled.  However, you must then run
-*** the program in src/tools/thread and add locking function calls
+*** the program in src/test/thread and add locking function calls
 *** to your applications to guarantee thread safety.
 " >&5
 echo "$as_me: error:
@@ -22833,7 +22833,7 @@ echo "$as_me: error:
 ***
 *** You can use the configure option --enable-thread-safety-force
 *** to force threads to be enabled.  However, you must then run
-*** the program in src/tools/thread and add locking function calls
+*** the program in src/test/thread and add locking function calls
 *** to your applications to guarantee thread safety.
 " >&2;}
    { (exit 1); exit 1; }; }

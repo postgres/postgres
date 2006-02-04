@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.445 2006/02/04 00:42:54 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.446 2006/02/04 01:00:01 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1288,7 +1288,7 @@ if test x"$template" != x"win32"
 then
   AC_MSG_WARN([
 *** Skipping thread test program.  --enable-thread-safety-force was used.
-*** Run the program in src/tools/thread on the your machine and add
+*** Run the program in src/test/thread on the your machine and add
 proper locking function calls to your applications to guarantee thread
 safety.
 ])
@@ -1304,7 +1304,7 @@ _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS -DIN_CONFIGURE"
 LIBS="$LIBS $PTHREAD_LIBS"
-AC_TRY_RUN([#include "$srcdir/src/tools/thread/thread_test.c"],
+AC_TRY_RUN([#include "$srcdir/src/test/thread/thread_test.c"],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
   AC_MSG_ERROR([
@@ -1313,13 +1313,13 @@ AC_TRY_RUN([#include "$srcdir/src/tools/thread/thread_test.c"],
 ***
 *** You can use the configure option --enable-thread-safety-force
 *** to force threads to be enabled.  However, you must then run
-*** the program in src/tools/thread and add locking function calls
+*** the program in src/test/thread and add locking function calls
 *** to your applications to guarantee thread safety.
 ])],
   [AC_MSG_RESULT(maybe)
   AC_MSG_WARN([
 *** Skipping thread test program because of cross-compile build.
-*** Run the program in src/tools/thread on the target machine.
+*** Run the program in src/test/thread on the target machine.
 ])])
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
