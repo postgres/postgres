@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Feb  1 12:32:41 EST 2006
+Last updated:		Fri Feb  3 22:23:19 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1024,7 +1024,7 @@ Write-Ahead Log
   remove the 'fsync' parameter (which results in an an inconsistent
   database) in favor of this capability.
 
-* Allow control over which tables are WAL-logged
+* Allow control over which tables are WAL-logged [walcontrol]
 
   Allow tables to bypass WAL writes and just fsync() dirty pages on
   commit.  To do this, only a single writer can modify the table, and
@@ -1035,7 +1035,8 @@ Write-Ahead Log
   using ALTER TABLE, e.g. ALTER TABLE PERSISTENCE [ DROP | TRUNCATE | 
   STABLE | DEFAULT ].  Tables using non-default logging should not use
   referential integrity with default-logging tables, and tables using
-  stable logging probably can not have indexes.  [walcontrol]
+  stable logging probably can not have indexes.  One complexity is
+  the handling of indexes on TOAST tables.
 
 
 Optimizer / Executor
