@@ -3319,3 +3319,61 @@ above, we can do it.
 ---------------------------(end of broadcast)---------------------------
 TIP 2: Don't 'kill -9' the postmaster
 
+From simon@2ndquadrant.com Thu Jan  5 16:56:25 2006
+Return-path: <simon@2ndquadrant.com>
+Received: from smtp.nildram.co.uk (smtp.nildram.co.uk [195.112.4.54])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k05LuPb02246
+	for <pgman@candle.pha.pa.us>; Thu, 5 Jan 2006 16:56:25 -0500 (EST)
+Received: from [192.168.0.3] (unknown [84.12.184.6])
+	by smtp.nildram.co.uk (Postfix) with ESMTP
+	id A9F0F268C4E; Thu,  5 Jan 2006 21:56:18 +0000 (GMT)
+Subject: Re: [HACKERS] [Bizgres-general] WAL bypass for INSERT, UPDATE and
+From: Simon Riggs <simon@2ndquadrant.com>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Martijn van Oosterhout <kleptog@svana.org>,
+   Greg Stark <gsstark@mit.edu>, Rod Taylor <pg@rbt.ca>,
+   Qingqing Zhou <zhouqq@cs.toronto.edu>, pgsql-hackers@postgresql.org
+In-Reply-To: <200601051727.k05HR5p02803@candle.pha.pa.us>
+References: <200601051727.k05HR5p02803@candle.pha.pa.us>
+Content-Type: text/plain
+Date: Thu, 05 Jan 2006 21:56:21 +0000
+Message-ID: <1136498181.21025.285.camel@localhost.localdomain>
+MIME-Version: 1.0
+X-Mailer: Evolution 2.2.3 (2.2.3-2.fc4) 
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+On Thu, 2006-01-05 at 12:27 -0500, Bruce Momjian wrote:
+
+> Seems like a nice optimization.
+
+Negative thoughts: Toast tables have a toast index on them, yes? We have
+agreed that we cannot use the optimization if we have indexes on the
+main table. It follows that we cannot use the optimization if we have
+*any* toasted data, since that would require a pointer between two
+blocks, which would not be correctly recovered following a crash. If we
+log the toast table then there could be a mismatch between heap and
+toast table; if we don't log the toast table there could be a mismatch
+between toast table and toast index.
+
+We can test to see if the toast table is empty when we do ALTER TABLE,
+but loading operations may try to create toasted data rows.
+
+Presumably that means we must either:
+i) abort a COPY if we get a toastable value
+ii) if we get a toastable value, insert the row into a new block, which
+we do logging of, then also log the toast insert and the toast index
+insert - i.e. some blocks we log, others not
+
+This is still useful for many applications, IMHO, but the list of
+restrictions seems to be growing. Worse, we wouldn't know that the toast
+tables were empty until after we did the COPY TO for a pg_dump, so we
+wouldn't be able to retrospectively add an ALTER TABLE command ahead of
+the COPY. 
+
+Thoughts? Hopefully there are some flaws in my thinking here,
+
+Best Regards, Simon Riggs
+
+
+
