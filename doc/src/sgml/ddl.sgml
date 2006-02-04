@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.51 2005/12/23 00:38:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.52 2006/02/04 23:03:19 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2179,7 +2179,7 @@ SELECT * from cities*;
 
    <para>
     <productname>PostgreSQL</productname> supports basic table
-    partitioning. This section describes why and how you can implement
+    partitioning. This section describes why and how to implement
     partitioning as part of your database design.
    </para>
 
@@ -2237,7 +2237,7 @@ SELECT * from cities*;
     table of a single parent table.  The parent table itself is normally
     empty; it exists just to represent the entire data set.  You should be
     familiar with inheritance (see <xref linkend="ddl-inherit">) before
-    attempting to implement partitioning.
+    attempting to set up partitioning.
    </para>
 
    <para>
@@ -2579,8 +2579,7 @@ UNION ALL SELECT * FROM measurement_yy05mm12
 UNION ALL SELECT * FROM measurement_yy06mm01;
 </programlisting>
 
-    However, constraint exclusion is currently not supported for
-    partitioned tables defined in this manner.  Also, the need to
+    However, the need to
     recreate the view adds an extra step to adding and dropping
     individual partitions of the dataset.
    </para>
@@ -2679,8 +2678,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
       optimized, since the planner cannot know what partitions the
       parameter value might select at runtime.  For the same reason,
       <quote>stable</> functions such as <function>CURRENT_DATE</function>
-      must be avoided.  Joining the partition key to a column of another
-      table will not be optimized, either.
+      must be avoided.
      </para>
     </listitem>
 
@@ -2704,13 +2702,6 @@ CHECK ( x = 1::bigint )
       constant does not match the data type of the column to which it
       is being compared.  Cross-datatype comparisons in the supplied
       queries are usually OK, just not in the <literal>CHECK</> conditions.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <command>UPDATE</command> and <command>DELETE</command> commands
-      against the master table do not currently perform constraint exclusion.
      </para>
     </listitem>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.45 2006/01/23 18:16:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.46 2006/02/04 23:03:19 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1986,8 +1986,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         When this parameter is <literal>on</>, the planner compares
         query conditions with table <literal>CHECK</> constraints, and
         omits scanning tables for which the conditions contradict the
-        constraints.  (Presently this is done only for child tables of
-        inheritance scans.)  For example:
+        constraints.  For example:
 
 <programlisting>
 CREATE TABLE parent(key integer, ...);

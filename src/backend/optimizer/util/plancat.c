@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.117 2006/01/31 21:39:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.118 2006/02/04 23:03:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
+#include "optimizer/predtest.h"
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
@@ -40,8 +41,13 @@
 #include "miscadmin.h"
 
 
+/* GUC parameter */
+bool		constraint_exclusion = false;
+
+
 static void estimate_rel_size(Relation rel, int32 *attr_widths,
 				  BlockNumber *pages, double *tuples);
+static List *get_relation_constraints(Oid relationObjectId, RelOptInfo *rel);
 
 
 /*
@@ -360,7 +366,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
  * run, and in many cases it won't be invoked at all, so there seems no
  * point in caching the data in RelOptInfo.
  */
-List *
+static List *
 get_relation_constraints(Oid relationObjectId, RelOptInfo *rel)
 {
 	List	   *result = NIL;
@@ -421,6 +427,48 @@ get_relation_constraints(Oid relationObjectId, RelOptInfo *rel)
 	heap_close(relation, NoLock);
 
 	return result;
+}
+
+
+/*
+ * relation_excluded_by_constraints
+ *
+ * Detect whether the relation need not be scanned because it has CHECK
+ * constraints that conflict with the query's WHERE clause.
+ */
+bool
+relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
+{
+	List	   *constraint_pred;
+
+	/* Skip the test if constraint exclusion is disabled */
+	if (!constraint_exclusion)
+		return false;
+
+	/* Only plain relations have constraints */
+	if (rte->rtekind != RTE_RELATION || rte->inh)
+		return false;
+
+	/* OK to fetch the constraint expressions */
+	constraint_pred = get_relation_constraints(rte->relid, rel);
+
+	/*
+	 * We do not currently enforce that CHECK constraints contain only
+	 * immutable functions, so it's necessary to check here. We daren't draw
+	 * conclusions from plan-time evaluation of non-immutable functions.
+	 */
+	if (contain_mutable_functions((Node *) constraint_pred))
+		return false;
+
+	/*
+	 * The constraints are effectively ANDed together, so we can just try to
+	 * refute the entire collection at once.  This may allow us to make proofs
+	 * that would fail if we took them individually.
+	 */
+	if (predicate_refuted_by(constraint_pred, rel->baserestrictinfo))
+		return true;
+
+	return false;
 }
 
 

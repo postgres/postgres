@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.141 2006/02/03 21:08:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.142 2006/02/04 23:03:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planner.h"
-#include "optimizer/predtest.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
@@ -36,14 +35,12 @@
 
 
 /* These parameters are set by GUC */
-bool		constraint_exclusion = false;
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
 
 
 static void set_base_rel_pathlists(PlannerInfo *root);
-static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
-				 Index rti, RangeTblEntry *rte);
+static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, Index rti);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -146,8 +143,7 @@ set_base_rel_pathlists(PlannerInfo *root)
 		if (rel->reloptkind != RELOPT_BASEREL)
 			continue;
 
-		set_rel_pathlist(root, rel, rti,
-						 rt_fetch(rti, root->parse->rtable));
+		set_rel_pathlist(root, rel, rti);
 	}
 }
 
@@ -156,9 +152,10 @@ set_base_rel_pathlists(PlannerInfo *root)
  *	  Build access paths for a base relation
  */
 static void
-set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
-				 Index rti, RangeTblEntry *rte)
+set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, Index rti)
 {
+	RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
+
 	if (rte->inh)
 	{
 		/* It's an "append relation", process accordingly */
@@ -206,6 +203,24 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 */
 	if (create_or_index_quals(root, rel))
 		set_baserel_size_estimates(root, rel);
+
+	/*
+	 * If we can prove we don't need to scan the rel via constraint exclusion,
+	 * set up a single dummy path for it.  (Rather than inventing a special
+	 * "dummy" path type, we represent this as an AppendPath with no members.)
+	 */
+	if (relation_excluded_by_constraints(rel, rte))
+	{
+		/* Reset output-rows estimate to 0 */
+		rel->rows = 0;
+
+		add_path(rel, (Path *) create_append_path(rel, NIL));
+
+		/* Select cheapest path (pretty easy in this case...) */
+		set_cheapest(rel);
+
+		return;
+	}
 
 	/*
 	 * Generate paths and add them to the rel's pathlist.
@@ -273,7 +288,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
 		int			childRTindex;
 		RelOptInfo *childrel;
-		RangeTblEntry *childrte;
 		Path	   *childpath;
 		ListCell   *parentvars;
 		ListCell   *childvars;
@@ -316,53 +330,18 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 										 childrel->max_attr);
 
 		/*
-		 * If we can prove we don't need to scan this child via constraint
-		 * exclusion, just ignore it.  (We have to have converted the
-		 * baserestrictinfo Vars before we can make the test.)
-		 *
-		 * XXX it'd probably be better to give the child some kind of dummy
-		 * cheapest path, or otherwise explicitly mark it as ignorable.
-		 * Currently there is an ugly check in join_before_append() to handle
-		 * excluded children.
-		 */
-		childrte = rt_fetch(childRTindex, root->parse->rtable);
-		if (constraint_exclusion &&
-			childrte->rtekind == RTE_RELATION)
-		{
-			List	   *constraint_pred;
-
-			constraint_pred = get_relation_constraints(childrte->relid,
-													   childrel);
-
-			/*
-			 * We do not currently enforce that CHECK constraints contain only
-			 * immutable functions, so it's necessary to check here. We
-			 * daren't draw conclusions from plan-time evaluation of
-			 * non-immutable functions.
-			 */
-			if (!contain_mutable_functions((Node *) constraint_pred))
-			{
-				/*
-				 * The constraints are effectively ANDed together, so we can
-				 * just try to refute the entire collection at once.  This may
-				 * allow us to make proofs that would fail if we took them
-				 * individually.
-				 */
-				if (predicate_refuted_by(constraint_pred,
-										 childrel->baserestrictinfo))
-					continue;
-			}
-		}
-
-		/*
-		 * Compute the child's access paths, and save the cheapest.
+		 * Compute the child's access paths, and add the cheapest one
+		 * to the Append path we are constructing for the parent.
 		 *
 		 * It's possible that the child is itself an appendrel, in which
 		 * case we can "cut out the middleman" and just add its child
 		 * paths to our own list.  (We don't try to do this earlier because
 		 * we need to apply both levels of transformation to the quals.)
+		 * This test also handles the case where the child rel need not
+		 * be scanned because of constraint exclusion: it'll have an
+		 * Append path with no subpaths, and will vanish from our list.
 		 */
-		set_rel_pathlist(root, childrel, childRTindex, childrte);
+		set_rel_pathlist(root, childrel, childRTindex);
 
 		childpath = childrel->cheapest_total_path;
 		if (IsA(childpath, AppendPath))
