@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.309 2006/01/09 10:05:31 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.310 2006/02/04 12:50:47 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2201,6 +2201,7 @@ static void ReportGUCOption(struct config_generic * record);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record);
+static bool is_newvalue_equal(struct config_generic *record, const char *newvalue);
 
 
 /*
@@ -3631,7 +3632,15 @@ set_config_option(const char *name, const char *value,
 			break;
 		case PGC_POSTMASTER:
 			if (context == PGC_SIGHUP)
+			{
+				if (changeVal && !is_newvalue_equal(record, value))
+					ereport(elevel,
+							(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+							 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
+									name)));
+
 				return true;
+			}
 			if (context != PGC_POSTMASTER)
 			{
 				ereport(elevel,
@@ -5076,6 +5085,44 @@ _ShowOption(struct config_generic * record)
 	}
 
 	return pstrdup(val);
+}
+
+
+static bool
+is_newvalue_equal(struct config_generic *record, const char *newvalue)
+{
+	switch (record->vartype)
+	{
+		case PGC_BOOL:
+		{
+			struct config_bool *conf = (struct config_bool *) record;
+			bool newval;
+
+			return parse_bool(newvalue, &newval) && *conf->variable == newval;
+		}
+		case PGC_INT:
+		{
+			struct config_int *conf = (struct config_int *) record;
+			int newval;
+
+			return parse_int(newvalue, &newval) && *conf->variable == newval;
+		}
+		case PGC_REAL:
+		{
+			struct config_real *conf = (struct config_real *) record;
+			double newval;
+
+			return parse_real(newvalue, &newval) && *conf->variable == newval;
+		}
+		case PGC_STRING:
+		{
+			struct config_string *conf = (struct config_string *) record;
+
+			return strcmp(*conf->variable, newvalue) == 0;
+		}
+	}
+
+	return false;
 }
 
 

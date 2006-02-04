@@ -83,7 +83,7 @@ Administration
 	o %Allow postgresql.conf file values to be changed via an SQL
 	  API, perhaps using SET GLOBAL
 	o Allow the server to be stopped/restarted via an SQL API
-	o Issue a warning if a change-on-restart-only postgresql.conf value
+	o -Issue a warning if a change-on-restart-only postgresql.conf value
 	  is modified  and the server config files are reloaded
 	o Mark change-on-restart-only values in postgresql.conf
 
