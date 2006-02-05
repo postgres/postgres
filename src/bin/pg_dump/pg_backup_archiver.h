@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.62.4.1 2005/01/25 22:44:47 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.62.4.2 2006/02/05 20:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,8 @@ typedef struct _archiveHandle
 	int			blobTxActive;	/* Flag set if TX active on blobConnection */
 	int			connectToDB;	/* Flag to indicate if direct DB
 								 * connection is required */
-	int			pgCopyIn;		/* Currently in libpq 'COPY IN' mode. */
+	bool		writingCopyData;	/* True when we are sending COPY data */
+	bool		pgCopyIn;		/* Currently in libpq 'COPY IN' mode. */
 	PQExpBuffer pgCopyBuf;		/* Left-over data from incomplete lines in
 								 * COPY IN */
 

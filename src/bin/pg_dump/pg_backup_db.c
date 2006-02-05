@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.61.4.1 2005/07/27 05:15:03 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.61.4.2 2006/02/05 20:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,7 +319,7 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 			if (conn != AH->connection)
 				die_horribly(AH, modulename, "COPY command executed in non-primary connection\n");
 
-			AH->pgCopyIn = 1;
+			AH->pgCopyIn = true;
 		}
 		else
 		{
@@ -406,7 +406,7 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 	 *---------
 	 */
 
-	if (PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
+	if (AH->pgCopyIn && PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
 		die_horribly(AH, modulename, "error returned by PQputline\n");
 
 	resetPQExpBuffer(AH->pgCopyBuf);
@@ -417,10 +417,10 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 
 	if (isEnd)
 	{
-		if (PQendcopy(AH->connection) != 0)
+		if (AH->pgCopyIn && PQendcopy(AH->connection) != 0)
 			die_horribly(AH, modulename, "error returned by PQendcopy\n");
 
-		AH->pgCopyIn = 0;
+		AH->pgCopyIn = false;
 	}
 
 	return qry + loc + 1;
@@ -658,7 +658,10 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, size_t bufLen)
 	/* Could switch between command and COPY IN mode at each line */
 	while (qry < eos)
 	{
-		if (AH->pgCopyIn)
+		/* If we are in CopyIn mode *or* if the upper-layers believe we're doing
+		 * a COPY then call sendCopyLine.  If we're not actually in CopyIn mode
+		 * the sendCopyLine will just dump the data coming in */
+		if (AH->pgCopyIn || AH->writingCopyData)
 			qry = _sendCopyLine(AH, qry, eos);
 		else
 			qry = _sendSQLLine(AH, qry, eos);
