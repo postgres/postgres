@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.142 2005/11/29 01:25:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.143 2006/02/05 02:59:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -904,9 +904,15 @@ explain_outNode(StringInfo str,
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "  ->  ");
 
+			/*
+			 * Ordinarily we don't pass down our own outer_plan value to our
+			 * child nodes, but in an Append we must, since we might be
+			 * looking at an appendrel indexscan with outer references
+			 * from the member scans.
+			 */
 			explain_outNode(str, subnode,
 							appendstate->appendplans[j],
-							NULL,
+							outer_plan,
 							indent + 3, es);
 			j++;
 		}

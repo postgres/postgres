@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.152 2005/12/28 01:29:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.153 2006/02/05 02:59:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -992,6 +992,38 @@ cost_group(Path *path, PlannerInfo *root,
 }
 
 /*
+ * If a nestloop's inner path is an indexscan, be sure to use its estimated
+ * output row count, which may be lower than the restriction-clause-only row
+ * count of its parent.  (We don't include this case in the PATH_ROWS macro
+ * because it applies *only* to a nestloop's inner relation.)  We have to
+ * be prepared to recurse through Append nodes in case of an appendrel.
+ */
+static double
+nestloop_inner_path_rows(Path *path)
+{
+	double		result;
+
+	if (IsA(path, IndexPath))
+		result = ((IndexPath *) path)->rows;
+	else if (IsA(path, BitmapHeapPath))
+		result = ((BitmapHeapPath *) path)->rows;
+	else if (IsA(path, AppendPath))
+	{
+		ListCell   *l;
+
+		result = 0;
+		foreach(l, ((AppendPath *) path)->subpaths)
+		{
+			result += nestloop_inner_path_rows((Path *) lfirst(l));
+		}
+	}
+	else
+		result = PATH_ROWS(path);
+
+	return result;
+}
+
+/*
  * cost_nestloop
  *	  Determines and returns the cost of joining two relations using the
  *	  nested loop algorithm.
@@ -1008,20 +1040,9 @@ cost_nestloop(NestPath *path, PlannerInfo *root)
 	Cost		cpu_per_tuple;
 	QualCost	restrict_qual_cost;
 	double		outer_path_rows = PATH_ROWS(outer_path);
-	double		inner_path_rows = PATH_ROWS(inner_path);
+	double		inner_path_rows = nestloop_inner_path_rows(inner_path);
 	double		ntuples;
 	Selectivity joininfactor;
-
-	/*
-	 * If inner path is an indexscan, be sure to use its estimated output row
-	 * count, which may be lower than the restriction-clause-only row count of
-	 * its parent.	(We don't include this case in the PATH_ROWS macro because
-	 * it applies *only* to a nestloop's inner relation.)
-	 */
-	if (IsA(inner_path, IndexPath))
-		inner_path_rows = ((IndexPath *) inner_path)->rows;
-	else if (IsA(inner_path, BitmapHeapPath))
-		inner_path_rows = ((BitmapHeapPath *) inner_path)->rows;
 
 	if (!enable_nestloop)
 		startup_cost += disable_cost;

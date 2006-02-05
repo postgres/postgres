@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.76 2006/02/03 21:08:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.77 2006/02/05 02:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
-#include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
@@ -570,145 +569,4 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 													   rinfo);
 		}
 	}
-}
-
-/*
- * translate_join_rel
- *	  Returns relation entry corresponding to the union of two given rels,
- *	  creating a new relation entry if none already exists.  This is used
- *	  when one of the inputs is an append child relation.  In addition to
- *	  data about the input rels themselves, the corresponding joinrel for
- *	  the append parent relation must be provided, plus the AppendRelInfo
- *	  showing the parent-to-child translation.
- *
- * The reason for having this code, instead of just applying build_join_rel,
- * is that we must have corresponding tlist orderings for all joinrels that
- * are involved in an Append plan.  So we generate the tlist for joinrels
- * involving append child relations by translating the parent joinrel's tlist,
- * rather than examining the input relations directly.  (Another reason for
- * doing it this way is that the base relation attr_needed info in relations
- * being joined to the appendrel doesn't refer to the append child rel, but
- * the append parent, and so couldn't be used directly anyway.)  Otherwise
- * this is exactly like build_join_rel.
- */
-RelOptInfo *
-translate_join_rel(PlannerInfo *root,
-				   RelOptInfo *oldjoinrel,
-				   AppendRelInfo *appinfo,
-				   RelOptInfo *outer_rel,
-				   RelOptInfo *inner_rel,
-				   JoinType jointype,
-				   List **restrictlist_ptr)
-{
-	RelOptInfo *joinrel;
-	Relids		joinrelids;
-	List	   *restrictlist;
-
-	/*
-	 * Construct the Relids set for the translated joinrel, and see if
-	 * we've already built it.
-	 */
-	joinrelids = bms_copy(oldjoinrel->relids);
-	joinrelids = bms_del_member(joinrelids, appinfo->parent_relid);
-	joinrelids = bms_add_member(joinrelids, appinfo->child_relid);
-	joinrel = find_join_rel(root, joinrelids);
-	if (joinrel)
-	{
-		/*
-		 * Yes, so we only need to figure the restrictlist for this particular
-		 * pair of component relations.
-		 */
-		bms_free(joinrelids);
-		if (restrictlist_ptr)
-			*restrictlist_ptr = build_joinrel_restrictlist(root,
-														   joinrel,
-														   outer_rel,
-														   inner_rel,
-														   jointype);
-		return joinrel;
-	}
-
-	/*
-	 * Nope, so make one.
-	 */
-	joinrel = makeNode(RelOptInfo);
-	joinrel->reloptkind = RELOPT_JOINREL;
-	joinrel->relids = joinrelids;
-	joinrel->rows = 0;
-	joinrel->width = 0;
-	joinrel->reltargetlist = NIL;
-	joinrel->pathlist = NIL;
-	joinrel->cheapest_startup_path = NULL;
-	joinrel->cheapest_total_path = NULL;
-	joinrel->cheapest_unique_path = NULL;
-	joinrel->relid = 0;			/* indicates not a baserel */
-	joinrel->rtekind = RTE_JOIN;
-	joinrel->min_attr = 0;
-	joinrel->max_attr = 0;
-	joinrel->attr_needed = NULL;
-	joinrel->attr_widths = NULL;
-	joinrel->indexlist = NIL;
-	joinrel->pages = 0;
-	joinrel->tuples = 0;
-	joinrel->subplan = NULL;
-	joinrel->baserestrictinfo = NIL;
-	joinrel->baserestrictcost.startup = 0;
-	joinrel->baserestrictcost.per_tuple = 0;
-	joinrel->joininfo = NIL;
-	joinrel->index_outer_relids = NULL;
-	joinrel->index_inner_paths = NIL;
-
-	/*
-	 * Make the tlist by translating oldjoinrel's tlist, to ensure they
-	 * are in compatible orders.  Since we don't call build_joinrel_tlist,
-	 * we need another way to set the rel width; for the moment, just
-	 * assume it is the same as oldjoinrel.  (The correct value may well be
-	 * less, but it's not clear it's worth the trouble to get it right.)
-	 */
-	joinrel->reltargetlist = (List *)
-		adjust_appendrel_attrs((Node *) oldjoinrel->reltargetlist,
-							   appinfo);
-	joinrel->width = oldjoinrel->width;
-
-	/*
-	 * Construct restrict and join clause lists for the new joinrel. (The
-	 * caller might or might not need the restrictlist, but I need it anyway
-	 * for set_joinrel_size_estimates().)
-	 */
-	restrictlist = build_joinrel_restrictlist(root,
-											  joinrel,
-											  outer_rel,
-											  inner_rel,
-											  jointype);
-	if (restrictlist_ptr)
-		*restrictlist_ptr = restrictlist;
-	build_joinrel_joinlist(joinrel, outer_rel, inner_rel);
-
-	/*
-	 * Set estimates of the joinrel's size.
-	 */
-	set_joinrel_size_estimates(root, joinrel, outer_rel, inner_rel,
-							   jointype, restrictlist);
-
-	/*
-	 * Add the joinrel to the query's joinrel list, and store it into the
-	 * auxiliary hashtable if there is one.  NB: GEQO requires us to append
-	 * the new joinrel to the end of the list!
-	 */
-	root->join_rel_list = lappend(root->join_rel_list, joinrel);
-
-	if (root->join_rel_hash)
-	{
-		JoinHashEntry *hentry;
-		bool		found;
-
-		hentry = (JoinHashEntry *) hash_search(root->join_rel_hash,
-											   &(joinrel->relids),
-											   HASH_ENTER,
-											   &found);
-		Assert(!found);
-		hentry->join_rel = joinrel;
-	}
-
-	return joinrel;
 }

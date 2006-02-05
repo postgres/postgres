@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.119 2005/11/26 22:14:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.120 2006/02/05 02:59:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,8 +769,9 @@ set_join_references(Join *join, List *rtable)
  *		Handle join references appearing in an inner indexscan's quals
  *
  * To handle bitmap-scan plan trees, we have to be able to recurse down
- * to the bottom BitmapIndexScan nodes, so this is split out as a separate
- * function.
+ * to the bottom BitmapIndexScan nodes; likewise, appendrel indexscans
+ * require recursing through Append nodes.  This is split out as a separate
+ * function so that it can recurse.
  */
 static void
 set_inner_join_references(Plan *inner_plan,
@@ -904,6 +905,22 @@ set_inner_join_references(Plan *inner_plan,
 		ListCell   *l;
 
 		foreach(l, innerscan->bitmapplans)
+		{
+			set_inner_join_references((Plan *) lfirst(l),
+									  rtable,
+									  outer_itlist);
+		}
+	}
+	else if (IsA(inner_plan, Append))
+	{
+		/*
+		 * The inner side is an append plan.  Recurse to see if it contains
+		 * indexscans that need to be fixed.
+		 */
+		Append	   *appendplan = (Append *) inner_plan;
+		ListCell   *l;
+
+		foreach(l, appendplan->appendplans)
 		{
 			set_inner_join_references((Plan *) lfirst(l),
 									  rtable,

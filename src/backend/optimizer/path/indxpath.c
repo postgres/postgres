@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.200 2006/01/29 17:40:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.201 2006/02/05 02:59:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ static Const *string_to_const(const char *str, Oid datatype);
  *
  * 'rel' is the relation for which we want to generate index paths
  *
- * Note: check_partial_indexes() must have been run previously.
+ * Note: check_partial_indexes() must have been run previously for this rel.
  */
 void
 create_index_paths(PlannerInfo *root, RelOptInfo *rel)
@@ -1290,6 +1290,9 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
  * negligible startup cost.  (True today, but someday we might have to think
  * harder.)  Therefore, there is only one dimension of comparison and so it's
  * sufficient to return a single "best" path.
+ *
+ * Note: create_index_paths() must have been run previously for this rel,
+ * else the result will always be NULL.
  */
 Path *
 best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
