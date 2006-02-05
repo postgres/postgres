@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.117.2.1 2005/11/22 18:23:26 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.117.2.2 2006/02/05 20:58:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,9 +330,14 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * with libpq.
 						 */
 						if (te->copyStmt && strlen(te->copyStmt) > 0)
+						{
 							ahprintf(AH, "%s", te->copyStmt);
+							AH->writingCopyData = true;
+						}
 
 						(*AH->PrintTocDataPtr) (AH, te, ropt);
+
+						AH->writingCopyData = false;
 
 						_enableTriggersIfNecessary(AH, te, ropt);
 					}

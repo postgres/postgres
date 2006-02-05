@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.66 2005/10/15 02:49:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.66.2.1 2006/02/05 20:58:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc)
 	{
 		if (PQresultStatus(res) == PGRES_COPY_IN)
 		{
-			AH->pgCopyIn = 1;
+			AH->pgCopyIn = true;
 		}
 		else
 		{
@@ -383,13 +383,12 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 	appendPQExpBuffer(AH->pgCopyBuf, "%s\n", qry);
 	isEnd = (strcmp(AH->pgCopyBuf->data, "\\.\n") == 0);
 
-	/*---------
-	 * fprintf(stderr, "Sending '%s' via
-	 *		COPY (at end = %d)\n\n", AH->pgCopyBuf->data, isEnd);
-	 *---------
+	/*
+	 * Note that we drop the data on the floor if libpq has failed to
+	 * enter COPY mode; this allows us to behave reasonably when trying
+	 * to continue after an error in a COPY command.
 	 */
-
-	if (PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
+	if (AH->pgCopyIn && PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
 		die_horribly(AH, modulename, "error returned by PQputline\n");
 
 	resetPQExpBuffer(AH->pgCopyBuf);
@@ -400,10 +399,10 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 
 	if (isEnd)
 	{
-		if (PQendcopy(AH->connection) != 0)
+		if (AH->pgCopyIn && PQendcopy(AH->connection) != 0)
 			die_horribly(AH, modulename, "error returned by PQendcopy\n");
 
-		AH->pgCopyIn = 0;
+		AH->pgCopyIn = false;
 	}
 
 	return qry + loc + 1;
@@ -615,7 +614,18 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, size_t bufLen)
 	/* Could switch between command and COPY IN mode at each line */
 	while (qry < eos)
 	{
-		if (AH->pgCopyIn)
+		/*
+		 * If libpq is in CopyIn mode *or* if the archive structure shows we
+		 * are sending COPY data, treat the data as COPY data.  The pgCopyIn
+		 * check is only needed for backwards compatibility with ancient
+		 * archive files that might just issue a COPY command without marking
+		 * it properly.  Note that in an archive entry that has a copyStmt,
+		 * all data up to the end of the entry will go to _sendCopyLine, and
+		 * therefore will be dropped if libpq has failed to enter COPY mode.
+		 * Also, if a "\." data terminator is found, anything remaining in the
+		 * archive entry will be dropped.
+		 */
+		if (AH->pgCopyIn || AH->writingCopyData)
 			qry = _sendCopyLine(AH, qry, eos);
 		else
 			qry = _sendSQLLine(AH, qry, eos);
