@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.46 2006/02/04 23:03:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.47 2006/02/05 18:19:14 momjian Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -12,7 +12,7 @@ $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.46 2006/02/04 23:03:19 tgl Exp $
   <para>
    There are many configuration parameters that affect the behavior of
    the database system. In the first section of this chapter, we
-   describe how to set configuration chapters. The subsequent sections
+   describe how to set configuration parameters. The subsequent sections
    discuss each parameter in detail.
   </para>
 
