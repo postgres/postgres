@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.64 2005/10/15 02:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.65 2006/02/06 02:23:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,12 +242,12 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 		if (po->expanded && po->html3)
 		{
 			if (po->caption)
-				fprintf(fout, "<centre><h2>%s</h2></centre>\n", po->caption);
+				fprintf(fout, "<center><h2>%s</h2></center>\n", po->caption);
 			else
 				fprintf(fout,
-						"<centre><h2>"
+						"<center><h2>"
 						"Query retrieved %d rows * %d fields"
-						"</h2></centre>\n",
+						"</h2></center>\n",
 						nTups, nFields);
 		}
 		for (i = 0; i < nTups; i++)
