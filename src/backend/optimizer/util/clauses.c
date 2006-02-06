@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.207 2006/01/31 21:39:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.208 2006/02/06 22:21:12 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -70,6 +70,7 @@ static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
+static bool is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK);
 static bool set_coercionform_dontcare_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node,
 							   eval_const_expressions_context *context);
@@ -816,8 +817,11 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, ScalarArrayOpExpr))
 	{
-		/* inherently non-strict, consider null scalar and empty array */
-		return true;
+		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+
+		if (!is_strict_saop(expr, false))
+			return true;
+		/* else fall through to check args */
 	}
 	if (IsA(node, BoolExpr))
 	{
@@ -937,10 +941,9 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	}
 	else if (IsA(node, ScalarArrayOpExpr))
 	{
-		/* Strict if it's "foo op ANY array" and op is strict */
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
-		if (expr->useOr && op_strict(expr->opno))
+		if (is_strict_saop(expr, true))
 			result = find_nonnullable_rels_walker((Node *) expr->args, false);
 	}
 	else if (IsA(node, BoolExpr))
@@ -989,6 +992,57 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
 	}
 	return result;
+}
+
+/*
+ * Can we treat a ScalarArrayOpExpr as strict?
+ *
+ * If "falseOK" is true, then a "false" result can be considered strict,
+ * else we need to guarantee an actual NULL result for NULL input.
+ *
+ * "foo op ALL array" is strict if the op is strict *and* we can prove
+ * that the array input isn't an empty array.  We can check that
+ * for the cases of an array constant and an ARRAY[] construct.
+ *
+ * "foo op ANY array" is strict in the falseOK sense if the op is strict.
+ * If not falseOK, the test is the same as for "foo op ALL array".
+ */
+static bool
+is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK)
+{
+	Node   *rightop;
+
+	/* The contained operator must be strict. */
+	if (!op_strict(expr->opno))
+		return false;
+	/* If ANY and falseOK, that's all we need to check. */
+	if (expr->useOr && falseOK)
+		return true;
+	/* Else, we have to see if the array is provably non-empty. */
+	Assert(list_length(expr->args) == 2);
+	rightop = (Node *) lsecond(expr->args);
+	if (rightop && IsA(rightop, Const))
+	{
+		Datum		arraydatum = ((Const *) rightop)->constvalue;
+		bool		arrayisnull = ((Const *) rightop)->constisnull;
+		ArrayType  *arrayval;
+		int			nitems;
+
+		if (arrayisnull)
+			return false;
+		arrayval = DatumGetArrayTypeP(arraydatum);
+		nitems = ArrayGetNItems(ARR_NDIM(arrayval), ARR_DIMS(arrayval));
+		if (nitems > 0)
+			return true;
+	}
+	else if (rightop && IsA(rightop, ArrayExpr))
+	{
+		ArrayExpr  *arrayexpr = (ArrayExpr *) rightop;
+
+		if (arrayexpr->elements != NIL && !arrayexpr->multidims)
+			return true;
+	}
+	return false;
 }
 
 
