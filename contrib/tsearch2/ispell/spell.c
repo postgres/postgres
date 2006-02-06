@@ -719,6 +719,9 @@ NISortAffixes(IspellDict * Conf)
 	CMPDAffix  *ptr;
 	int			firstsuffix = -1;
 
+	if (Conf->naffixes==0)
+		return;
+
 	if (Conf->naffixes > 1)
 		qsort((void *) Conf->Affix, Conf->naffixes, sizeof(AFFIX), cmpaffix);
 
