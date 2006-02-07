@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.446 2006/02/04 01:00:01 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.447 2006/02/07 11:22:41 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -599,15 +599,10 @@ AC_SEARCH_LIBS(pow, m)
 AC_SEARCH_LIBS(dlopen, dl)
 AC_CHECK_LIB(nsl,      main)
 AC_SEARCH_LIBS(socket, [socket wsock32])
-AC_CHECK_LIB(ipc,      main)
-AC_CHECK_LIB(IPC,      main)
-AC_CHECK_LIB(lc,       main)
 AC_SEARCH_LIBS(shl_load, dld)
 AC_CHECK_LIB(ld,       main)
-AC_CHECK_LIB(compat,   main)
 AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
-AC_CHECK_LIB(PW,       main)
 AC_CHECK_LIB(resolv,   main)
 AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 # QNX:
