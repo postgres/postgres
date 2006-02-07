@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Feb  3 22:23:19 EST 2006
+Last updated:           Mon Feb  6 21:08:10 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -26,7 +26,7 @@ first.
 
 <ul>
   <li>%Remove behavior of postmaster -o
-  </li><li>-<em>%Allow pooled connections to list all prepared statements</em>
+  </li><li>-*%Allow pooled connections to list all prepared statements*
 <p>  This would allow an application inheriting a pooled connection to know
   the statements prepared in the current session.
 </p>
@@ -79,8 +79,8 @@ first.
     </li><li>%Allow postgresql.conf file values to be changed via an SQL
           API, perhaps using SET GLOBAL
     </li><li>Allow the server to be stopped/restarted via an SQL API
-    </li><li>-<em>Issue a warning if a change-on-restart-only postgresql.conf value
-          is modified  and the server config files are reloaded</em>
+    </li><li>-<em>Issue a warning if a change-on-restart-only postgresql.conf value</em>
+          is modified  and the server config files are reloaded
     </li><li>Mark change-on-restart-only values in postgresql.conf
   </li></ul>
   </li><li>Tablespaces
@@ -928,18 +928,22 @@ first.
   remove the 'fsync' parameter (which results in an an inconsistent
   database) in favor of this capability.
 </p>
-  </li><li>Allow control over which tables are WAL-logged [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?walcontrol">walcontrol</a>]
+  </li><li>Allow WAL logging to be turned off for a table, but the table
+  might be dropped or truncated during crash recovery [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?walcontrol">walcontrol</a>]
 <p>  Allow tables to bypass WAL writes and just fsync() dirty pages on
-  commit.  To do this, only a single writer can modify the table, and
-  writes must happen only on new pages.  Readers can continue accessing
-  the table.  This would affect COPY, and perhaps INSERT/UPDATE too.
-  Another option is to avoid transaction logging entirely and truncate 
-  or drop the table on crash recovery.  These should be implemented 
-  using ALTER TABLE, e.g. ALTER TABLE PERSISTENCE [ DROP | TRUNCATE | 
-  STABLE | DEFAULT ].  Tables using non-default logging should not use
-  referential integrity with default-logging tables, and tables using
-  stable logging probably can not have indexes.  One complexity is
-  the handling of indexes on TOAST tables.
+  commit.  This should be implemented using ALTER TABLE, e.g. ALTER 
+  TABLE PERSISTENCE [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo? DROP | TRUNCATE | DEFAULT "> DROP | TRUNCATE | DEFAULT </a>].  Tables using 
+  non-default logging should not use referential integrity with 
+  default-logging tables.  A table without dirty buffers during a
+  crash could perhaps avoid the drop/truncate.
+</p>
+  </li><li>Allow WAL logging to be turned off for a table, but the table would
+  avoid being truncated/dropped [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?walcontrol">walcontrol</a>]
+<p>  To do this, only a single writer can modify the table, and writes 
+  must happen only on new pages so the new pages can be removed during
+  crash recovery.  Readers can continue accessing the table.  Such 
+  tables probably cannot have indexes.  One complexity is the handling 
+  of indexes on TOAST tables.
 </p>
 </li></ul>
 <h1><a name="section_20">Optimizer / Executor</a></h1>
