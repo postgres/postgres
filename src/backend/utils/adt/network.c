@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.62 2006/01/26 18:08:10 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.63 2006/02/07 17:04:04 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -104,9 +104,9 @@ network_in(char *src, bool is_cidr)
 					 errdetail("Value has bits set to right of mask.")));
 	}
 
-	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
-		+ ip_addrsize(dst);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
 	ip_bits(dst) = bits;
 
 	return dst;
@@ -219,9 +219,9 @@ network_recv(StringInfo buf, bool is_cidr)
 				 /* translator: %s is inet or cidr */
 				 errmsg("invalid length in external \"%s\" value",
 						is_cidr ? "cidr" : "inet")));
-	VARATT_SIZEP(addr) = VARHDRSZ
-		+ ((char *) ip_addr(addr) - (char *) VARDATA(addr))
-		+ ip_addrsize(addr);
+	VARATT_SIZEP(addr) = VARHDRSZ +
+		((char *) ip_addr(addr) - (char *) VARDATA(addr)) +
+		ip_addrsize(addr);
 
 	addrptr = (char *) ip_addr(addr);
 	for (i = 0; i < nb; i++)
@@ -792,9 +792,9 @@ network_broadcast(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
-		+ ip_addrsize(dst);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -837,9 +837,9 @@ network_network(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
-		+ ip_addrsize(dst);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -880,9 +880,9 @@ network_netmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
-		+ ip_addrsize(dst);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -929,9 +929,9 @@ network_hostmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ
-		+ ((char *) ip_addr(dst) - (char *) VARDATA(dst))
-		+ ip_addrsize(dst);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
 
 	PG_RETURN_INET_P(dst);
 }
