@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.65 2006/02/06 02:23:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.66 2006/02/07 00:26:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,7 +256,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 			{
 				if (po->html3)
 					fprintf(fout,
-							"<table %s><caption align=high>%d</caption>\n",
+							"<table %s><caption align=\"top\">%d</caption>\n",
 							po->tableOpt ? po->tableOpt : "", i);
 				else
 					fprintf(fout, libpq_gettext("-- RECORD %d --\n"), i);
@@ -276,12 +276,12 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				{
 					if (po->caption)
 						fprintf(fout,
-							  "<table %s><caption align=high>%s</caption>\n",
+							  "<table %s><caption align=\"top\">%s</caption>\n",
 								po->tableOpt ? po->tableOpt : "",
 								po->caption);
 					else
 						fprintf(fout,
-								"<table %s><caption align=high>"
+								"<table %s><caption align=\"top\">"
 								"Retrieved %d rows * %d fields"
 								"</caption>\n",
 						   po->tableOpt ? po->tableOpt : "", nTups, nFields);
@@ -406,8 +406,8 @@ do_field(const PQprintOpt *po, const PGresult *res,
 			{
 				if (po->html3)
 					fprintf(fout,
-							"<tr><td align=left><b>%s</b></td>"
-							"<td align=%s>%s</td></tr>\n",
+							"<tr><td align=\"left\"><b>%s</b></td>"
+							"<td align=\"%s\">%s</td></tr>\n",
 							fieldNames[j],
 							fieldNotNum[j] ? "left" : "right",
 							pval);
@@ -502,7 +502,7 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 
 		if (po->html3)
 		{
-			fprintf(fout, "<th align=%s>%s</th>",
+			fprintf(fout, "<th align=\"%s\">%s</th>",
 					fieldNotNum[j] ? "left" : "right", fieldNames[j]);
 		}
 		else
@@ -546,7 +546,7 @@ output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 		char	   *p = fields[row_index * nFields + field_index];
 
 		if (po->html3)
-			fprintf(fout, "<td align=%s>%s</td>",
+			fprintf(fout, "<td align=\"%s\">%s</td>",
 					fieldNotNum[field_index] ? "left" : "right", p ? p : "");
 		else
 		{
