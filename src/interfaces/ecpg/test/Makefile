@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.52 2006/02/04 20:54:44 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.53 2006/02/08 09:10:05 meskes Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -11,7 +11,7 @@ ECPG = ../preproc/ecpg -I$(srcdir)/../include
 
 TESTS = test1 test2 test3 test4 test5 perftest dyntest dyntest2 test_notice \
 	test_code100 test_init testdynalloc num_test dt_test test_informix \
-	test_informix2 test_desc
+	test_informix2 test_desc test_func
 ifeq ($(enable_thread_safety), yes)
 TESTS += test_thread test_thread_implicit
 endif

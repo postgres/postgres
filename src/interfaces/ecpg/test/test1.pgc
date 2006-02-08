@@ -42,6 +42,9 @@ exec sql ifdef NAMELEN;
 		int amount;
 		char letter;
 	} name_letter[AMOUNT];
+#if 0
+	int not_used;
+#endif
 exec sql endif;
         struct ind_struct
         {

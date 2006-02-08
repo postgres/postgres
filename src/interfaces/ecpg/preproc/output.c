@@ -2,19 +2,22 @@
 
 #include "extern.h"
 
-static void ouput_escaped_str(char *cmd);
+static void output_escaped_str(char *cmd);
 
 void
 output_line_number(void)
 {
-	if (input_filename)
-		fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);
+	char *line = hashline_number();
+	
+	/* output_escaped_str(line); */
+	fprintf(yyout, "%s", line);
+	free(line);
 }
 
 void
 output_simple_statement(char *stmt)
 {
-	ouput_escaped_str(stmt);
+	output_escaped_str(stmt);
 	output_line_number();
 	free(stmt);
 }
@@ -83,7 +86,8 @@ whenever_action(int mode)
 char *
 hashline_number(void)
 {
-	if (input_filename)
+	/* do not print line numbers if we are in debug mode */
+	if (input_filename && !yydebug)
 	{
 		char	   *line = mm_alloc(strlen("\n#line %d \"%s\"\n") + 21 + strlen(input_filename));
 
@@ -99,7 +103,7 @@ void
 output_statement(char *stmt, int mode, char *con)
 {
 	fprintf(yyout, "{ ECPGdo(__LINE__, %d, %d, %s, \"", compat, force_indicator, con ? con : "NULL");
-	ouput_escaped_str(stmt);
+	output_escaped_str(stmt);
 	fputs("\", ", yyout);
 
 	/* dump variables to C file */
@@ -118,7 +122,7 @@ output_statement(char *stmt, int mode, char *con)
 
 
 static void
-ouput_escaped_str(char *str)
+output_escaped_str(char *str)
 {
 	int			i, len = strlen(str);
 
@@ -128,7 +132,8 @@ ouput_escaped_str(char *str)
 		if (str[i] == '"')
 			fputs("\\\"", yyout);
 		else if (str[i] == '\n')
-			fputs("\\n\\\n", yyout);
+			//fputs("\\n\\\n", yyout);
+			fputs("\\\n", yyout);
 		else
 			fputc(str[i], yyout);
 	}

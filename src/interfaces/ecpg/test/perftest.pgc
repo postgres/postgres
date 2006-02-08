@@ -15,7 +15,7 @@ print_result(long sec, long usec, char *text)
 		sec--;
 		usec+=1000000;
 	}
-	printf("I needed %ld seconds and %ld microseconds for the %s test.\n", sec, usec, text);
+	printf("%ld seconds and %ld microseconds for test %s\n", sec, usec, text);
 	exec sql vacuum;
 	sleep(1);
 }

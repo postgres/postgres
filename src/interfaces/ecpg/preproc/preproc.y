@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.319 2006/02/04 20:54:42 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.320 2006/02/08 09:10:04 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -433,7 +433,7 @@ add_additional_variables(char *name, bool insert)
 %token	UNIONJOIN
 
 /* Special token types, not actually keywords - see the "lex" file */
-%token <str>	IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BCONST XCONST
+%token <str>	IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BCONST XCONST DOLCONST
 %token <ival>	ICONST PARAM
 %token <dval>	FCONST
 
@@ -1519,7 +1519,7 @@ ColConstraintElem:	NOT NULL_P
  * there is no parsing conflict.
  */
 ConstraintAttr: DEFERRABLE		{ $$ = make_str("deferrable"); }
-		| NOT DEFERRABLE		{ $$ = make_str("not deferrable"); }
+		| NOT DEFERRABLE	{ $$ = make_str("not deferrable"); }
 		| INITIALLY DEFERRED	{ $$ = make_str("initially deferred"); }
 		| INITIALLY IMMEDIATE	{ $$ = make_str("initially immediate"); }
 		;
@@ -4383,7 +4383,11 @@ Sconst:  SCONST
 			$$[strlen($1)+2]='\0';
 			free($1);
 		}
-		;
+	| DOLCONST
+		{
+			$$ = $1; 
+		}
+	;
 
 PosIntConst:	Iconst		{ $$ = $1; }
 		| civar		{ $$ = $1; }
@@ -4740,9 +4744,9 @@ single_var_declaration: storage_declaration
 
 			actual_startline[struct_level] = hashline_number();
 		}
-		variable_list opt_bit_field';'
+		variable_list ';'
 		{
-			$$ = cat_str(6, actual_startline[struct_level], $1, $2.type_str, $4, $5, make_str(";\n"));
+			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
 		}
 		| var_type
 		{
@@ -4753,9 +4757,9 @@ single_var_declaration: storage_declaration
 
 			actual_startline[struct_level] = hashline_number();
 		}
-		variable_list opt_bit_field';'
+		variable_list ';'
 		{
-			$$ = cat_str(5, actual_startline[struct_level], $1.type_str, $3, $4, make_str(";\n"));
+			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, make_str(";\n"));
 		}
 		| struct_union_type_with_symbol ';'
 		{
@@ -4799,10 +4803,10 @@ var_type_declarations:	/*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 vt_declarations:  var_declaration			{ $$ = $1; }
-		| type_declaration					{ $$ = $1; }
+		| type_declaration			{ $$ = $1; }
 		| vt_declarations var_declaration	{ $$ = cat2_str($1, $2); }
 		| vt_declarations type_declaration	{ $$ = cat2_str($1, $2); }
-		| vt_declarations CPP_LINE			{ $$ = cat2_str($1, $2); }
+		| vt_declarations CPP_LINE		{ $$ = cat2_str($1, $2); }
 		;
 
 variable_declarations:	var_declaration 	{ $$ = $1; }
@@ -4875,9 +4879,9 @@ var_declaration: storage_declaration
 
 			actual_startline[struct_level] = hashline_number();
 		}
-		variable_list opt_bit_field';'
+		variable_list ';'
 		{
-			$$ = cat_str(6, actual_startline[struct_level], $1, $2.type_str, $4, $5, make_str(";\n"));
+			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
 		}
 		| var_type
 		{
@@ -4888,9 +4892,9 @@ var_declaration: storage_declaration
 
 			actual_startline[struct_level] = hashline_number();
 		}
-		variable_list opt_bit_field';'
+		variable_list ';'
 		{
-			$$ = cat_str(5, actual_startline[struct_level], $1.type_str, $3, $4, make_str(";\n"));
+			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, make_str(";\n"));
 		}
 		| struct_union_type_with_symbol ';'
 		{
@@ -5266,7 +5270,7 @@ variable_list: variable
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
+variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initializer
 		{
 			struct ECPGtype * type;
 			char *dimension = $3.index1; /* dimension of array */
@@ -5284,7 +5288,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 					else
 						type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum, actual_type[struct_level].type_sizeof), dimension);
 
-					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
+					$$ = cat_str(5, $1, mm_strdup($2), $3.str, $4, $5);
 					break;
 
 				case ECPGt_varchar:
@@ -5302,9 +5306,9 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 						mmerror(PARSE_ERROR, ET_ERROR, "pointer to varchar are not implemented");
 
 					if (strcmp(dimension, "0") == 0)
-						$$ = cat_str(6, make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4);
+						$$ = cat_str(7, make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4, $5);
 					else
-						$$ = cat_str(7, make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4);
+						$$ = cat_str(8, make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4, $5);
 					break;
 
 				case ECPGt_char:
@@ -5314,7 +5318,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 					else
 						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
 
-					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
+					$$ = cat_str(5, $1, mm_strdup($2), $3.str, $4, $5);
 					break;
 
 				default:
@@ -5323,7 +5327,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 					else
 						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1")), dimension);
 
-					$$ = cat_str(4, $1, mm_strdup($2), $3.str, $4);
+					$$ = cat_str(5, $1, mm_strdup($2), $3.str, $4, $5);
 					break;
 			}
 
@@ -5824,7 +5828,7 @@ ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action
 		{
 			when_warn.code = $<action>3.code;
 			when_warn.command = $<action>3.command;
-			$$ = cat_str(3, make_str("/* exec sql whenever sql_warning "), $3.str, make_str("; */\n"));
+			$$ = cat_str(3, make_str("/* exec sql whenever sql_warning "), $3.str, make_str("; */"));
 		}
 		;
 
@@ -6517,7 +6521,7 @@ c_stuff_item: c_anything			{ $$ = $1; }
 			{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		;
 
-c_stuff: c_stuff_item	{ $$ = $1; }
+c_stuff: c_stuff_item			{ $$ = $1; }
 		| c_stuff c_stuff_item
 			{ $$ = cat2_str($1, $2); }
 		;
@@ -6530,15 +6534,14 @@ c_term:  c_stuff			{ $$ = $1; }
 		| '{' c_list '}'	{ $$ = cat_str(3, make_str("{"), $2, make_str("}")); }
 		;
 
-c_thing:	c_anything	{ $$ = $1; }
-		|	'('			{ $$ = make_str("("); }
-		|	')'			{ $$ = make_str(")"); }
-		|	','			{ $$ = make_str(","); }
-		|	';'			{ $$ = make_str(";"); }
-		|	':'			{ $$ = make_str(":"); }
+c_thing:	c_anything		{ $$ = $1; }
+		|	'('		{ $$ = make_str("("); }
+		|	')'		{ $$ = make_str(")"); }
+		|	','		{ $$ = make_str(","); }
+		|	';'		{ $$ = make_str(";"); }
 		;
 
-c_anything:  IDENT			{ $$ = $1; }
+c_anything:  IDENT				{ $$ = $1; }
 		| CSTRING			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		| Iconst			{ $$ = $1; }
 		| Fconst			{ $$ = $1; }
@@ -6551,28 +6554,28 @@ c_anything:  IDENT			{ $$ = $1; }
 		| NULL_P			{ $$ = make_str("NULL"); }
 		| S_ADD				{ $$ = make_str("+="); }
 		| S_AND				{ $$ = make_str("&&"); }
-		| S_ANYTHING		{ $$ = make_name(); }
+		| S_ANYTHING			{ $$ = make_name(); }
 		| S_AUTO			{ $$ = make_str("auto"); }
 		| S_CONST			{ $$ = make_str("const"); }
 		| S_DEC				{ $$ = make_str("--"); }
 		| S_DIV				{ $$ = make_str("/="); }
-		| S_DOTPOINT		{ $$ = make_str(".*"); }
+		| S_DOTPOINT			{ $$ = make_str(".*"); }
 		| S_EQUAL			{ $$ = make_str("=="); }
 		| S_EXTERN			{ $$ = make_str("extern"); }
 		| S_INC				{ $$ = make_str("++"); }
 		| S_LSHIFT			{ $$ = make_str("<<"); }
 		| S_MEMBER			{ $$ = make_str("->"); }
-		| S_MEMPOINT		{ $$ = make_str("->*"); }
+		| S_MEMPOINT			{ $$ = make_str("->*"); }
 		| S_MOD				{ $$ = make_str("%="); }
 		| S_MUL				{ $$ = make_str("*="); }
 		| S_NEQUAL			{ $$ = make_str("!="); }
 		| S_OR				{ $$ = make_str("||"); }
-		| S_REGISTER		{ $$ = make_str("register"); }
+		| S_REGISTER			{ $$ = make_str("register"); }
 		| S_RSHIFT			{ $$ = make_str(">>"); }
 		| S_STATIC			{ $$ = make_str("static"); }
 		| S_SUB				{ $$ = make_str("-="); }
 		| S_TYPEDEF			{ $$ = make_str("typedef"); }
-		| S_VOLATILE		{ $$ = make_str("volatile"); }
+		| S_VOLATILE			{ $$ = make_str("volatile"); }
 		| SQL_BOOL			{ $$ = make_str("bool"); }
 		| SQL_ENUM			{ $$ = make_str("enum"); }
 		| HOUR_P			{ $$ = make_str("hour"); }
@@ -6582,9 +6585,9 @@ c_anything:  IDENT			{ $$ = $1; }
 		| MONTH_P			{ $$ = make_str("month"); }
 		| SECOND_P			{ $$ = make_str("second"); }
 		| SQL_SHORT			{ $$ = make_str("short"); }
-		| SQL_SIGNED		{ $$ = make_str("signed"); }
-		| SQL_STRUCT		{ $$ = make_str("struct"); }
-		| SQL_UNSIGNED		{ $$ = make_str("unsigned"); }
+		| SQL_SIGNED			{ $$ = make_str("signed"); }
+		| SQL_STRUCT			{ $$ = make_str("struct"); }
+		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
 		| YEAR_P			{ $$ = make_str("year"); }
 		| CHAR_P			{ $$ = make_str("char"); }
 		| FLOAT_P			{ $$ = make_str("float"); }
@@ -6594,6 +6597,7 @@ c_anything:  IDENT			{ $$ = $1; }
 		| '['				{ $$ = make_str("["); }
 		| ']'				{ $$ = make_str("]"); }
 		| '='				{ $$ = make_str("="); }
+		| ':' 				{ $$ = make_str(":"); }
 		;
 
 %%

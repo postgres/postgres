@@ -56,7 +56,10 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  EXEC SQL select name, accs, byte into:empl.name,:empl.accs,:empl.byte from empl where idnum =:empl.idnum;
+  EXEC SQL select name, accs, byte
+  	into :empl.name, :empl.accs, :empl.byte
+	from empl
+	where idnum =:empl.idnum;
   if (sqlca.sqlcode)
     {
       printf ("select error = %ld\n", sqlca.sqlcode);

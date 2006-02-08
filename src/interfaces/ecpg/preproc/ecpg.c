@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.93 2005/10/15 02:49:47 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.94 2006/02/08 09:10:04 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -418,7 +418,7 @@ main(int argc, char *const argv[])
 					fprintf(yyout, "/* End of automatic include section */\n");
 				}
 
-				fprintf(yyout, "#line 1 \"%s\"\n", input_filename);
+				output_line_number();
 
 				/* and parse the source */
 				yyparse();

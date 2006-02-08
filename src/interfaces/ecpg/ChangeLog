@@ -1982,6 +1982,17 @@ Sa Feb  4 21:35:03 CET 2006
 	- Added C bit fields to ecpg parser.
 	- Added some default rules to lexer.
 	- Added log output to prepare statement.
+	
+Mo Feb  6 21:21:19 CET 2006
+
+	- Added just another test case.
+	- Fixed missing continuation line character.
+	- Do not translate $-quoting.
+	
+Tu Feb  7 18:48:14 CET 2006
+
+	- Bit field notation belongs to a variable not a variable list.
+	- Output of line number only done by one function.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 

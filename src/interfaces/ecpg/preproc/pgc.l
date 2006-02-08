@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.142 2006/02/04 20:54:42 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.143 2006/02/08 09:10:04 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ dolq_start		[A-Za-z\200-\377_]
 dolq_cont		[A-Za-z\200-\377_0-9]
 dolqdelim		\$({dolq_start}{dolq_cont}*)?\$
 dolqfailed		\${dolq_start}{dolq_cont}*
-dolqinside		[^$']+
+dolqinside		[^$]+
 
 /* Double quote
  * Allows embedded spaces and other special characters into identifiers.
@@ -437,7 +437,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				addlit(yytext, yyleng);
 			}
 <xq>{quotecontinue}	{ /* ignore */ }
-<xq>.		{
+<xq>{other}		{
 			   /* This is only needed for \ just before EOF */
 			   addlitchar(yytext[0]);
 			}
@@ -453,14 +453,16 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				dolqstart = mm_strdup(yytext);
 				BEGIN(xdolq);
 				startlit();
+				addlit(yytext, yyleng);
 			}
 <xdolq>{dolqdelim}      {
 				if (strcmp(yytext, dolqstart) == 0)
 				{
+					addlit(yytext, yyleng);
 					free(dolqstart);
 					BEGIN(SQL);
 					yylval.str = mm_strdup(literalbuf);
-					return SCONST;
+					return DOLCONST;
 				}
 				else
 				{
@@ -475,15 +477,11 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 			}
 <xdolq>{dolqinside} 	{ addlit(yytext, yyleng); }
 <xdolq>{dolqfailed}	{ addlit(yytext, yyleng); }
-<xdolq>.	{
-				/* $$ is implemented as a single-quoted string, so double it? */
-				if (yytext[0] == '\'')
-					addlitchar(yytext[0]);
+<xdolq>{other}		{
 				/* single quote or dollar sign */
 				addlitchar(yytext[0]);
 			}
-<xdolq><<EOF>> { yyerror("unterminated dollar-quoted string"); }
-
+<xdolq><<EOF>> 		{ yyerror("unterminated dollar-quoted string"); }
 <SQL>{xdstart}		{
 						state_before = YYSTATE;
 						BEGIN(xd);
@@ -625,8 +623,8 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <SQL>{ip}			{
 						yylval.str = mm_strdup(yytext);
 						return IP;
-					}
-{decimal}			{
+				}
+<C,SQL>{decimal}	{
 						yylval.str = mm_strdup(yytext);
 						return FCONST;
 			}
@@ -797,7 +795,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <C>"-"				{ return('-'); }
 <C>"("				{ return('('); }
 <C>")"				{ return(')'); }
-<C,xskip>{space}	{ ECHO; }
+<C,xskip>{space}		{ ECHO; }
 <C>\{				{ return('{'); }
 <C>\}				{ return('}'); }
 <C>\[				{ return('['); }
@@ -1037,7 +1035,6 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 							 if (strcmp(old, ptr->old) == 0)
 							 {
 								free(ptr->new);
-								/* ptr->new = mm_strdup(scanstr(literalbuf));*/
 								ptr->new = mm_strdup(literalbuf);
 							 }
 						}
