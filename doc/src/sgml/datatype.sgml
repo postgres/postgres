@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.163.2.1 2005/12/22 21:45:30 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.163.2.2 2006/02/09 03:40:30 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1360,7 +1360,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>4 bytes</entry>
         <entry>dates only</entry>
         <entry>4713 BC</entry>
-        <entry>32767 AD</entry>
+        <entry>5874897 AD</entry>
         <entry>1 day</entry>
        </row>
        <row>
