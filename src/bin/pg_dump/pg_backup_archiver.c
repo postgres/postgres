@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.120 2006/02/05 20:58:47 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.121 2006/02/09 20:52:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2410,7 +2410,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s",
 				 pfx, te->tag, te->desc,
 				 te->namespace ? te->namespace : "-",
-				 te->owner);
+				 ropt->noOwner ? "-" : te->owner);
 		if (te->tablespace)
 			ahprintf(AH, "; Tablespace: %s", te->tablespace);
 		ahprintf(AH, "\n");
