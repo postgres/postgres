@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.393 2006/01/26 02:35:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.394 2006/02/09 14:53:51 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2720,43 +2720,43 @@ DATA(insert OID = 1861 (  int82ge		   PGNSP PGUID 12 f f t f i 2 16 "20 21" _nul
 DESCR("greater-than-or-equal");
 
 DATA(insert OID = 1892 (  int2and		   PGNSP PGUID 12 f f t f i 2 21 "21 21" _null_ _null_ _null_ int2and - _null_ ));
-DESCR("binary and");
+DESCR("bitwise and");
 DATA(insert OID = 1893 (  int2or		   PGNSP PGUID 12 f f t f i 2 21 "21 21" _null_ _null_ _null_ int2or - _null_ ));
-DESCR("binary or");
+DESCR("bitwise or");
 DATA(insert OID = 1894 (  int2xor		   PGNSP PGUID 12 f f t f i 2 21 "21 21" _null_ _null_ _null_ int2xor - _null_ ));
-DESCR("binary xor");
+DESCR("bitwise xor");
 DATA(insert OID = 1895 (  int2not		   PGNSP PGUID 12 f f t f i 1 21 "21" _null_ _null_ _null_	int2not - _null_ ));
-DESCR("binary not");
+DESCR("bitwise not");
 DATA(insert OID = 1896 (  int2shl		   PGNSP PGUID 12 f f t f i 2 21 "21 23" _null_ _null_ _null_ int2shl - _null_ ));
-DESCR("binary shift left");
+DESCR("bitwise shift left");
 DATA(insert OID = 1897 (  int2shr		   PGNSP PGUID 12 f f t f i 2 21 "21 23" _null_ _null_ _null_ int2shr - _null_ ));
-DESCR("binary shift right");
+DESCR("bitwise shift right");
 
 DATA(insert OID = 1898 (  int4and		   PGNSP PGUID 12 f f t f i 2 23 "23 23" _null_ _null_ _null_ int4and - _null_ ));
-DESCR("binary and");
+DESCR("bitwise and");
 DATA(insert OID = 1899 (  int4or		   PGNSP PGUID 12 f f t f i 2 23 "23 23" _null_ _null_ _null_ int4or - _null_ ));
-DESCR("binary or");
+DESCR("bitwise or");
 DATA(insert OID = 1900 (  int4xor		   PGNSP PGUID 12 f f t f i 2 23 "23 23" _null_ _null_ _null_ int4xor - _null_ ));
-DESCR("binary xor");
+DESCR("bitwise xor");
 DATA(insert OID = 1901 (  int4not		   PGNSP PGUID 12 f f t f i 1 23 "23" _null_ _null_ _null_	int4not - _null_ ));
-DESCR("binary not");
+DESCR("bitwise not");
 DATA(insert OID = 1902 (  int4shl		   PGNSP PGUID 12 f f t f i 2 23 "23 23" _null_ _null_ _null_ int4shl - _null_ ));
-DESCR("binary shift left");
+DESCR("bitwise shift left");
 DATA(insert OID = 1903 (  int4shr		   PGNSP PGUID 12 f f t f i 2 23 "23 23" _null_ _null_ _null_ int4shr - _null_ ));
-DESCR("binary shift right");
+DESCR("bitwise shift right");
 
 DATA(insert OID = 1904 (  int8and		   PGNSP PGUID 12 f f t f i 2 20 "20 20" _null_ _null_ _null_ int8and - _null_ ));
-DESCR("binary and");
+DESCR("bitwise and");
 DATA(insert OID = 1905 (  int8or		   PGNSP PGUID 12 f f t f i 2 20 "20 20" _null_ _null_ _null_ int8or - _null_ ));
-DESCR("binary or");
+DESCR("bitwise or");
 DATA(insert OID = 1906 (  int8xor		   PGNSP PGUID 12 f f t f i 2 20 "20 20" _null_ _null_ _null_ int8xor - _null_ ));
-DESCR("binary xor");
+DESCR("bitwise xor");
 DATA(insert OID = 1907 (  int8not		   PGNSP PGUID 12 f f t f i 1 20 "20" _null_ _null_ _null_	int8not - _null_ ));
-DESCR("binary not");
+DESCR("bitwise not");
 DATA(insert OID = 1908 (  int8shl		   PGNSP PGUID 12 f f t f i 2 20 "20 23" _null_ _null_ _null_ int8shl - _null_ ));
-DESCR("binary shift left");
+DESCR("bitwise shift left");
 DATA(insert OID = 1909 (  int8shr		   PGNSP PGUID 12 f f t f i 2 20 "20 23" _null_ _null_ _null_ int8shr - _null_ ));
-DESCR("binary shift right");
+DESCR("bitwise shift right");
 
 DATA(insert OID = 1910 (  int8up		   PGNSP PGUID 12 f f t f i 1 20	"20" _null_ _null_ _null_ int8up - _null_ ));
 DESCR("unary plus");
