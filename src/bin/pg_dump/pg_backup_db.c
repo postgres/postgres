@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.67 2006/02/05 20:58:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.68 2006/02/09 18:28:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -389,7 +389,8 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 	 * to continue after an error in a COPY command.
 	 */
 	if (AH->pgCopyIn && PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
-		die_horribly(AH, modulename, "error returned by PQputline\n");
+		die_horribly(AH, modulename, "error returned by PQputline: %s",
+					 PQerrorMessage(AH->connection));
 
 	resetPQExpBuffer(AH->pgCopyBuf);
 
@@ -400,7 +401,8 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 	if (isEnd)
 	{
 		if (AH->pgCopyIn && PQendcopy(AH->connection) != 0)
-			die_horribly(AH, modulename, "error returned by PQendcopy\n");
+			die_horribly(AH, modulename, "error returned by PQendcopy: %s",
+						 PQerrorMessage(AH->connection));
 
 		AH->pgCopyIn = false;
 	}
