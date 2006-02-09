@@ -32,7 +32,6 @@ typedef struct SPNode
 
 typedef struct spell_struct
 {
-	char	   *word;
 	union
 	{
 		char		flag[16];
@@ -41,8 +40,11 @@ typedef struct spell_struct
 			int			affix;
 			int			len;
 		}			d;
-	}			p;
+	}	p;
+	char	word[1];
 }	SPELL;
+
+#define SPELLHDRSZ	(offsetof(SPELL, word))
 
 typedef struct aff_struct
 {
@@ -106,7 +108,7 @@ typedef struct
 
 	int			nspell;
 	int			mspell;
-	SPELL	   *Spell;
+	SPELL	   **Spell;
 
 	AffixNode  *Suffix;
 	AffixNode  *Prefix;

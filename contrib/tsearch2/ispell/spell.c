@@ -18,18 +18,19 @@
 #define GETWCHAR(W,L,N,T) ( ((uint8*)(W))[ ((T)==FF_PREFIX) ? (N) : ( (L) - 1 - (N) ) ] )
 #define GETCHAR(A,N,T)	  GETWCHAR( (A)->repl, (A)->replen, N, T )
 
+static char *VoidString = "";
 
 #define MEMOUT(X)  if ( !(X) ) ereport(ERROR, (errcode(ERRCODE_OUT_OF_MEMORY), errmsg("out of memory")))
 
 static int
 cmpspell(const void *s1, const void *s2)
 {
-	return (strcmp(((const SPELL *) s1)->word, ((const SPELL *) s2)->word));
+	return (strcmp((*(const SPELL **) s1)->word, (*(const SPELL **) s2)->word));
 }
 static int
 cmpspellaffix(const void *s1, const void *s2)
 {
-	return (strcmp(((const SPELL *) s1)->p.flag, ((const SPELL *) s2)->p.flag));
+	return (strcmp((*(const SPELL **) s1)->p.flag, (*(const SPELL **) s2)->p.flag));
 }
 
 static char *
@@ -128,18 +129,17 @@ NIAddSpell(IspellDict * Conf, const char *word, const char *flag)
 		if (Conf->mspell)
 		{
 			Conf->mspell += 1024 * 20;
-			Conf->Spell = (SPELL *) realloc(Conf->Spell, Conf->mspell * sizeof(SPELL));
+			Conf->Spell = (SPELL **) repalloc(Conf->Spell, Conf->mspell * sizeof(SPELL*));
 		}
 		else
 		{
 			Conf->mspell = 1024 * 20;
-			Conf->Spell = (SPELL *) malloc(Conf->mspell * sizeof(SPELL));
+			Conf->Spell = (SPELL **) palloc(Conf->mspell * sizeof(SPELL*));
 		}
-		MEMOUT(Conf->Spell);
 	}
-	Conf->Spell[Conf->nspell].word = strdup(word);
-	MEMOUT(Conf->Spell[Conf->nspell].word);
-	strncpy(Conf->Spell[Conf->nspell].p.flag, flag, 16);
+	Conf->Spell[Conf->nspell] = (SPELL*)palloc(SPELLHDRSZ + strlen(word) + 1);
+	strcpy( Conf->Spell[Conf->nspell]->word ,word );
+	strncpy(Conf->Spell[Conf->nspell]->p.flag, flag, 16);
 	Conf->nspell++;
 	return (0);
 }
@@ -261,13 +261,13 @@ NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const 
 	{
 		Conf->Affix[Conf->naffixes].issimple = 1;
 		Conf->Affix[Conf->naffixes].isregis = 0;
-		Conf->Affix[Conf->naffixes].mask = strdup("");
+		Conf->Affix[Conf->naffixes].mask = VoidString;
 	}
 	else if (RS_isRegis(mask))
 	{
 		Conf->Affix[Conf->naffixes].issimple = 0;
 		Conf->Affix[Conf->naffixes].isregis = 1;
-		Conf->Affix[Conf->naffixes].mask = strdup(mask);
+		Conf->Affix[Conf->naffixes].mask = (mask && *mask) ? strdup(mask) : VoidString;
 	}
 	else
 	{
@@ -287,11 +287,13 @@ NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const 
 	Conf->Affix[Conf->naffixes].flag = flag;
 	Conf->Affix[Conf->naffixes].type = type;
 
-	Conf->Affix[Conf->naffixes].find = strdup(find);
+	Conf->Affix[Conf->naffixes].find = (find && *find) ? strdup(find) : VoidString;
 	MEMOUT(Conf->Affix[Conf->naffixes].find);
-	Conf->Affix[Conf->naffixes].repl = strdup(repl);
-	MEMOUT(Conf->Affix[Conf->naffixes].repl);
-	Conf->Affix[Conf->naffixes].replen = strlen(repl);
+	if ( (Conf->Affix[Conf->naffixes].replen = strlen(repl)) > 0 ) {
+		Conf->Affix[Conf->naffixes].repl = strdup(repl);
+		MEMOUT(Conf->Affix[Conf->naffixes].repl);
+	} else
+		 Conf->Affix[Conf->naffixes].repl = VoidString;
 	Conf->naffixes++;
 	return (0);
 }
@@ -506,10 +508,10 @@ mkSPNode(IspellDict * Conf, int low, int high, int level)
 	int			lownew = low;
 
 	for (i = low; i < high; i++)
-		if (Conf->Spell[i].p.d.len > level && lastchar != Conf->Spell[i].word[level])
+		if (Conf->Spell[i]->p.d.len > level && lastchar != Conf->Spell[i]->word[level])
 		{
 			nchar++;
-			lastchar = Conf->Spell[i].word[level];
+			lastchar = Conf->Spell[i]->word[level];
 		}
 
 	if (!nchar)
@@ -523,9 +525,9 @@ mkSPNode(IspellDict * Conf, int low, int high, int level)
 
 	lastchar = '\0';
 	for (i = low; i < high; i++)
-		if (Conf->Spell[i].p.d.len > level)
+		if (Conf->Spell[i]->p.d.len > level)
 		{
-			if (lastchar != Conf->Spell[i].word[level])
+			if (lastchar != Conf->Spell[i]->word[level])
 			{
 				if (lastchar)
 				{
@@ -533,24 +535,24 @@ mkSPNode(IspellDict * Conf, int low, int high, int level)
 					lownew = i;
 					data++;
 				}
-				lastchar = Conf->Spell[i].word[level];
+				lastchar = Conf->Spell[i]->word[level];
 			}
-			data->val = ((uint8 *) (Conf->Spell[i].word))[level];
-			if (Conf->Spell[i].p.d.len == level + 1)
+			data->val = ((uint8 *) (Conf->Spell[i]->word))[level];
+			if (Conf->Spell[i]->p.d.len == level + 1)
 			{
-				if (data->isword && data->affix != Conf->Spell[i].p.d.affix)
+				if (data->isword && data->affix != Conf->Spell[i]->p.d.affix)
 				{
 					/*
 					 * fprintf(stderr,"Word already exists: %s (affixes: '%s'
-					 * and '%s')\n", Conf->Spell[i].word,
+					 * and '%s')\n", Conf->Spell[i]->word,
 					 * Conf->AffixData[data->affix],
-					 * Conf->AffixData[Conf->Spell[i].p.d.affix] );
+					 * Conf->AffixData[Conf->Spell[i]->p.d.affix] );
 					 */
 					/* MergeAffix called a few times */
-					data->affix = MergeAffix(Conf, data->affix, Conf->Spell[i].p.d.affix);
+					data->affix = MergeAffix(Conf, data->affix, Conf->Spell[i]->p.d.affix);
 				}
 				else
-					data->affix = Conf->Spell[i].p.d.affix;
+					data->affix = Conf->Spell[i]->p.d.affix;
 				data->isword = 1;
 				if (strchr(Conf->AffixData[data->affix], Conf->compoundcontrol))
 					data->compoundallow = 1;
@@ -562,8 +564,6 @@ mkSPNode(IspellDict * Conf, int low, int high, int level)
 	return rs;
 }
 
-
-
 void
 NISortDictionary(IspellDict * Conf)
 {
@@ -571,9 +571,9 @@ NISortDictionary(IspellDict * Conf)
 	int			naffix = 3;
 
 	/* compress affixes */
-	qsort((void *) Conf->Spell, Conf->nspell, sizeof(SPELL), cmpspellaffix);
+	qsort((void *) Conf->Spell, Conf->nspell, sizeof(SPELL*), cmpspellaffix);
 	for (i = 1; i < Conf->nspell; i++)
-		if (strcmp(Conf->Spell[i].p.flag, Conf->Spell[i - 1].p.flag))
+		if (strcmp(Conf->Spell[i]->p.flag, Conf->Spell[i - 1]->p.flag))
 			naffix++;
 
 	Conf->AffixData = (char **) malloc(naffix * sizeof(char *));
@@ -582,28 +582,28 @@ NISortDictionary(IspellDict * Conf)
 	naffix = 1;
 	Conf->AffixData[0] = strdup("");
 	MEMOUT(Conf->AffixData[0]);
-	Conf->AffixData[1] = strdup(Conf->Spell[0].p.flag);
+	Conf->AffixData[1] = strdup(Conf->Spell[0]->p.flag);
 	MEMOUT(Conf->AffixData[1]);
-	Conf->Spell[0].p.d.affix = 1;
-	Conf->Spell[0].p.d.len = strlen(Conf->Spell[0].word);
+	Conf->Spell[0]->p.d.affix = 1;
+	Conf->Spell[0]->p.d.len = strlen(Conf->Spell[0]->word);
 	for (i = 1; i < Conf->nspell; i++)
 	{
-		if (strcmp(Conf->Spell[i].p.flag, Conf->AffixData[naffix]))
+		if (strcmp(Conf->Spell[i]->p.flag, Conf->AffixData[naffix]))
 		{
 			naffix++;
-			Conf->AffixData[naffix] = strdup(Conf->Spell[i].p.flag);
+			Conf->AffixData[naffix] = strdup(Conf->Spell[i]->p.flag);
 			MEMOUT(Conf->AffixData[naffix]);
 		}
-		Conf->Spell[i].p.d.affix = naffix;
-		Conf->Spell[i].p.d.len = strlen(Conf->Spell[i].word);
+		Conf->Spell[i]->p.d.affix = naffix;
+		Conf->Spell[i]->p.d.len = strlen(Conf->Spell[i]->word);
 	}
 
-	qsort((void *) Conf->Spell, Conf->nspell, sizeof(SPELL), cmpspell);
+	qsort((void *) Conf->Spell, Conf->nspell, sizeof(SPELL*), cmpspell);
 	Conf->Dictionary = mkSPNode(Conf, 0, Conf->nspell, 0);
 
 	for (i = 0; i < Conf->nspell; i++)
-		free(Conf->Spell[i].word);
-	free(Conf->Spell);
+		pfree(Conf->Spell[i]);
+	pfree(Conf->Spell);
 	Conf->Spell = NULL;
 }
 
@@ -724,7 +724,6 @@ NISortAffixes(IspellDict * Conf)
 
 	if (Conf->naffixes > 1)
 		qsort((void *) Conf->Affix, Conf->naffixes, sizeof(AFFIX), cmpaffix);
-
 	Conf->CompoundAffix = ptr = (CMPDAffix *) malloc(sizeof(CMPDAffix) * Conf->naffixes);
 	MEMOUT(Conf->CompoundAffix);
 	ptr->affix = NULL;
@@ -803,7 +802,7 @@ FinfAffixes(AffixNode * node, const char *word, int wrdlen, int *level, int type
 }
 
 static char *
-CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *newword)
+CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *newword, int *baselen)
 {
 
 	if (flagflags & FF_COMPOUNDONLYAFX)
@@ -821,9 +820,15 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 	{
 		strcpy(newword, word);
 		strcpy(newword + len - Affix->replen, Affix->find);
+		if ( baselen ) /* store length of non-changed part of word */ 
+			*baselen = len - Affix->replen;
 	}
 	else
 	{
+		/* if prefix is a all non-chaged part's length then all word contains only prefix and suffix,
+		   so out */
+		if ( baselen && *baselen + strlen(Affix->find) <= Affix->replen )
+			return NULL;
 		strcpy(newword, Affix->find);
 		strcat(newword, word + Affix->replen);
 	}
@@ -927,7 +932,7 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag)
 			break;
 		for (j = 0; j < prefix->naff; j++)
 		{
-			if (CheckAffix(word, wrdlen, prefix->aff[j], flag, newword))
+			if (CheckAffix(word, wrdlen, prefix->aff[j], flag, newword, NULL))
 			{
 				/* prefix success */
 				if (FindWord(Conf, newword, prefix->aff[j]->flag, flag & FF_COMPOUNDWORD) && (cur - forms) < (MAX_NORM - 1))
@@ -948,6 +953,8 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag)
 	 */
 	while (snode)
 	{
+		int baselen=0;
+
 		/* find possible suffix */
 		suffix = FinfAffixes(snode, word, wrdlen, &slevel, FF_SUFFIX);
 		if (!suffix)
@@ -955,7 +962,7 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag)
 		/* foreach suffix check affix */
 		for (i = 0; i < suffix->naff; i++)
 		{
-			if (CheckAffix(word, wrdlen, suffix->aff[i], flag, newword))
+			if (CheckAffix(word, wrdlen, suffix->aff[i], flag, newword, &baselen))
 			{
 				/* suffix success */
 				if (FindWord(Conf, newword, suffix->aff[i]->flag, flag & FF_COMPOUNDWORD) && (cur - forms) < (MAX_NORM - 1))
@@ -976,7 +983,7 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag)
 						break;
 					for (j = 0; j < prefix->naff; j++)
 					{
-						if (CheckAffix(newword, swrdlen, prefix->aff[j], flag, pnewword))
+						if (CheckAffix(newword, swrdlen, prefix->aff[j], flag, pnewword, &baselen))
 						{
 							/* prefix success */
 							int			ff = (prefix->aff[j]->flagflags & suffix->aff[i]->flagflags & FF_CROSSPRODUCT) ?
@@ -1323,15 +1330,15 @@ NIFree(IspellDict * Conf)
 			else
 				pg_regfree(&(Affix[i].reg.regex));
 		}
-		free(Affix[i].mask);
-		free(Affix[i].find);
-		free(Affix[i].repl);
+		if ( Affix[i].mask != VoidString ) free(Affix[i].mask);
+		if ( Affix[i].find != VoidString ) free(Affix[i].find);
+		if ( Affix[i].repl != VoidString ) free(Affix[i].repl);
 	}
 	if (Conf->Spell)
 	{
 		for (i = 0; i < Conf->nspell; i++)
-			free(Conf->Spell[i].word);
-		free(Conf->Spell);
+			pfree(Conf->Spell[i]->word);
+		pfree(Conf->Spell);
 	}
 
 	if (Conf->Affix)
