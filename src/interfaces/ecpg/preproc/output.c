@@ -136,7 +136,6 @@ output_escaped_str(char *str)
 		if (str[i] == '"')
 			fputs("\\\"", yyout);
 		else if (str[i] == '\n')
-			//fputs("\\n\\\n", yyout);
 			fputs("\\\n", yyout);
 		else
 			fputc(str[i], yyout);
