@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.104.4.2 2005/05/26 02:10:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.104.4.3 2006/02/09 03:40:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,11 @@ date_in(PG_FUNCTION_ARGS)
 			DateTimeParseError(DTERR_BAD_FORMAT, str, "date");
 			break;
 	}
+
+	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range: \"%s\"", str)));
 
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 
