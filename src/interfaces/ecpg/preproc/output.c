@@ -87,7 +87,11 @@ char *
 hashline_number(void)
 {
 	/* do not print line numbers if we are in debug mode */
-	if (input_filename && !yydebug)
+	if (input_filename
+#ifdef YYDEBUG
+		&& !yydebug
+#endif
+		)
 	{
 		char	   *line = mm_alloc(strlen("\n#line %d \"%s\"\n") + 21 + strlen(input_filename));
 
