@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Feb  7 09:49:09 EST 2006
+Last updated:		Thu Feb  9 23:14:14 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -605,7 +605,7 @@ Clients
 	  statements are saved one line at a time.  Ideally all statements
 	  would be saved like \e does.
 
-	o Allow multi-line column values to align in the proper columns
+	o -Allow multi-line column values to align in the proper columns
 
 	  If the second output column value is 'a\nb', the 'b' should appear
 	  in the second display column, rather than the first column as it
