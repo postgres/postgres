@@ -351,7 +351,7 @@ Sea view wow <u>foo bar</u> <i>qq</i>
 <a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
 ff-bg
 <script>
-	document.write(15);
+       document.write(15);
 </script>
 </body>
 </html>', 
