@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.81 2006/02/10 15:48:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.82 2006/02/10 22:29:06 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -357,8 +357,8 @@ print_aligned_text(const char *title, const char *const * headers,
 {
 	unsigned int col_count = 0;
 	unsigned int cell_count = 0;
-	unsigned int i,
-				tmp;
+	unsigned int i;
+	int tmp;
 	unsigned int *widths,
 				total_w;
 	unsigned int *heights;
@@ -583,17 +583,22 @@ print_aligned_text(const char *title, const char *const * headers,
 					{
 						if (opt_numeric_locale)
 						{
-							/* Assumption: This code used only on strings
+							/*
+							 * Assumption: This code used only on strings
 							 * without multibyte characters, otherwise
 							 * this_line->width < strlen(this_ptr) and we
-							 * get an overflow */
-
-							char *my_cell = format_numeric_locale(this_line->ptr);
-							fprintf(fout, "%*s%s", widths[i % col_count] - strlen(my_cell), "", my_cell);
+							 * get an overflow
+							 */
+							char *my_cell = format_numeric_locale((char *) this_line->ptr);
+							fprintf(fout, "%*s%s",
+									(int) (widths[i % col_count] - strlen(my_cell)), "",
+									my_cell);
 							free(my_cell);
 						}
 						else
-							fprintf(fout, "%*s%s", widths[j] - this_line->width, "", this_line->ptr);
+							fprintf(fout, "%*s%s",
+									widths[j] - this_line->width, "",
+									this_line->ptr);
 					}
 					else
 						fprintf(fout, "%-s%*s", this_line->ptr,
@@ -665,13 +670,13 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	unsigned int record = 1;
 	const char *const * ptr;
 	unsigned int i,
-				tmp = 0,
 				hwidth = 0,
 				dwidth = 0,
 				hheight = 1,
 				dheight = 1,
 				hformatsize = 0,
 				dformatsize = 0;
+	int tmp = 0;
 	char	   *divider;
 	unsigned int cell_count = 0;
 	struct lineptr *hlineptr, *dlineptr;
@@ -823,11 +828,12 @@ print_aligned_vertical(const char *title, const char *const * headers,
 			{
 	 			if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
  				{
- 					char *my_cell = format_numeric_locale(dlineptr[line_count].ptr);
+ 					char *my_cell = format_numeric_locale((char *) dlineptr[line_count].ptr);
  					if (opt_border < 2)
  						fprintf(fout, "%s\n", my_cell);
  					else
- 						fprintf(fout, "%-s%*s |\n", my_cell, dwidth - strlen(my_cell), "");
+ 						fprintf(fout, "%-s%*s |\n", my_cell,
+								(int) (dwidth - strlen(my_cell)), "");
  					free(my_cell);
  				}
  				else
@@ -1753,7 +1759,8 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 	headers = pg_local_calloc(nfields + 1, sizeof(*headers));
 
 	for (i = 0; i < nfields; i++)
-		headers[i] = mbvalidate(PQfname(result, i), opt->topt.encoding);
+		headers[i] = (char*) mbvalidate((unsigned char *) PQfname(result, i),
+										opt->topt.encoding);
 
 	/* set cells */
 	ncells = PQntuples(result) * nfields;
@@ -1764,7 +1771,9 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 		if (PQgetisnull(result, i / nfields, i % nfields))
 			cells[i] = opt->nullPrint ? opt->nullPrint : "";
 		else
-			cells[i] = mbvalidate(PQgetvalue(result, i / nfields, i % nfields), opt->topt.encoding);
+			cells[i] = (char*)
+				mbvalidate((unsigned char*) PQgetvalue(result, i / nfields, i % nfields),
+						   opt->topt.encoding);
 	}
 
 	/* set footers */

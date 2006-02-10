@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.19 2006/02/10 00:39:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.20 2006/02/10 22:29:06 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -158,11 +158,11 @@ pg_wcswidth(const unsigned char *pwcs, size_t len, int encoding)
 	{
 		int chlen, chwidth;
 
-		chlen = PQmblen(pwcs, encoding);
+		chlen = PQmblen((const char*) pwcs, encoding);
 		if (chlen > len)
 			break;     /* Invalid string */
 			
-		chwidth = PQdsplen(pwcs, encoding);
+		chwidth = PQdsplen((const char *) pwcs, encoding);
 		
 		if (chwidth > 0)
 			width += chwidth;
@@ -191,10 +191,10 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 
 	for (; *pwcs && len > 0; pwcs += chlen)
 	{
-		chlen = PQmblen(pwcs, encoding);
+		chlen = PQmblen((char *) pwcs, encoding);
 		if (len < (size_t)chlen)
 			break;
-		w = PQdsplen(pwcs, encoding);
+		w = PQdsplen((char *) pwcs, encoding);
 
 		if (chlen == 1)   /* ASCII char */
 		{
@@ -256,15 +256,14 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 	int			w,
 				chlen = 0;
 	int linewidth = 0;
-	
-	char *ptr = lines->ptr;   /* Pointer to data area */
+	unsigned char *ptr = lines->ptr;   /* Pointer to data area */
 
 	for (; *pwcs && len > 0; pwcs += chlen)
 	{
-		chlen = PQmblen(pwcs,encoding);
+		chlen = PQmblen((char *) pwcs,encoding);
 		if (len < (size_t)chlen)
 			break;
-		w = PQdsplen(pwcs,encoding);
+		w = PQdsplen((char *) pwcs,encoding);
 
 		if (chlen == 1)   /* single byte char char */
 		{
@@ -282,13 +281,13 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 			}
 			else if (*pwcs == '\r')   /* Linefeed */
 			{
-				strcpy(ptr, "\\r");
+				strcpy((char *) ptr, "\\r");
 				linewidth += 2;
 				ptr += 2;
 			}
 			else if (w <= 0)  /* Other control char */
 			{
-				sprintf(ptr, "\\x%02X", *pwcs);
+				sprintf((char *) ptr, "\\x%02X", *pwcs);
 				linewidth += 4;
 				ptr += 4;
 			}
@@ -301,13 +300,13 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 		else if (w <= 0)  /* Non-ascii control char */
 		{
 			if (encoding == PG_UTF8)
-				sprintf(ptr, "\\u%04X", utf2ucs(pwcs));
+				sprintf((char *) ptr, "\\u%04X", utf2ucs(pwcs));
 			else
 				/* This case cannot happen in the current
 				 * code because only UTF-8 signals multibyte
 				 * control characters. But we may need to
 				 * support it at some stage */
-				sprintf(ptr, "\\u????");
+				sprintf((char *) ptr, "\\u????");
 				
 			ptr += 6;
 			linewidth += 6;
