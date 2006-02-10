@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.80 2006/02/10 00:39:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.81 2006/02/10 15:48:05 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -451,6 +451,7 @@ print_aligned_text(const char *title, const char *const * headers,
 	 *  format_space contains maximum space required to store formatted string
 	 * so we prepare the formatting structures
 	 */
+	if (col_count > 0)
 	{
 		int heights_total = 0;
 		struct lineptr *lineptr;
@@ -470,6 +471,8 @@ print_aligned_text(const char *title, const char *const * headers,
 			col_lineptrs[i]->ptr = format_buf[i];
 		}
 	}
+	else
+		lineptr_list = NULL;
 	   		
 	/* print title */
 	if (title && !opt_tuples_only)
