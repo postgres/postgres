@@ -4,10 +4,18 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.65 2006/02/07 11:36:36 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.66 2006/02/10 22:00:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#ifdef WIN32
+/*
+ * Need this to get defines for restricted tokens and jobs. And it
+ * has to be set before any header from the Win32 API is loaded.
+ */
+#define _WIN32_WINNT 0x0500
+#endif
 
 #include "postgres_fe.h"
 #include "libpq-fe.h"
@@ -111,6 +119,7 @@ static void pgwin32_SetServiceStatus(DWORD);
 static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
+static int CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo);
 #endif
 static pgpid_t get_pgpid(void);
 static char **readfile(const char *path);
@@ -325,42 +334,46 @@ readfile(const char *path)
 static int
 start_postmaster(void)
 {
+	char		cmd[MAXPGPATH];
+#ifndef WIN32
 	/*
 	 * Since there might be quotes to handle here, it is easier simply to pass
 	 * everything to a shell to process them.
 	 */
-	char		cmd[MAXPGPATH];
-
-	/*
-	 * Win32 needs START /B rather than "&".
-	 *
-	 * Win32 has a problem with START and quoted executable names. You must
-	 * add a "" as the title at the beginning so you can quote the executable
-	 * name: http://www.winnetmag.com/Article/ArticleID/14589/14589.html
-	 * http://dev.remotenetworktechnology.com/cmd/cmdfaq.htm
-	 */
 	if (log_file != NULL)
-#ifndef WIN32					/* Cygwin doesn't have START */
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &%s",
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file, SYSTEMQUOTE);
-#else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
-				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
-				 DEVNULL, log_file, SYSTEMQUOTE);
-#endif
-	else
-#ifndef WIN32					/* Cygwin doesn't have START */
+    else
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" 2>&1 &%s",
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, SYSTEMQUOTE);
-#else
-		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" 2>&1%s",
-				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
-				 DEVNULL, SYSTEMQUOTE);
-#endif
 
 	return system(cmd);
+    
+#else /* WIN32 */
+    /*
+     * On win32 we don't use system(). So we don't need to use &
+     * (which would be START /B on win32). However, we still call the shell
+     * (CMD.EXE) with it to handle redirection etc. 
+     */
+    PROCESS_INFORMATION pi;
+
+    if (log_file != NULL)
+        snprintf(cmd, MAXPGPATH, "CMD /C %s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
+				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
+				 DEVNULL, log_file, SYSTEMQUOTE);
+    else
+        snprintf(cmd, MAXPGPATH, "CMD /C %s\"%s\" %s%s < \"%s\" 2>&1%s",
+				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
+				 DEVNULL, SYSTEMQUOTE);
+
+    if (!CreateRestrictedProcess(cmd, &pi))
+        return GetLastError();
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return 0;
+#endif /* WIN32 */
 }
 
 
@@ -1063,7 +1076,6 @@ pgwin32_ServiceHandler(DWORD request)
 static void WINAPI
 pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 {
-	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 	DWORD		ret;
 
@@ -1077,8 +1089,6 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 	status.dwCurrentState = SERVICE_START_PENDING;
 
 	memset(&pi, 0, sizeof(pi));
-	memset(&si, 0, sizeof(si));
-	si.cb = sizeof(si);
 
 	/* Register the control request handler */
 	if ((hStatus = RegisterServiceCtrlHandler(register_servicename, pgwin32_ServiceHandler)) == (SERVICE_STATUS_HANDLE) 0)
@@ -1089,7 +1099,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 
 	/* Start the postmaster */
 	pgwin32_SetServiceStatus(SERVICE_START_PENDING);
-	if (!CreateProcess(NULL, pgwin32_CommandLine(false), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+	if (!CreateRestrictedProcess(pgwin32_CommandLine(false), &pi))
 	{
 		pgwin32_SetServiceStatus(SERVICE_STOPPED);
 		return;
@@ -1141,6 +1151,188 @@ pgwin32_doRunAsService(void)
 		exit(1);
 	}
 }
+
+
+/*
+ * Mingw headers are incomplete, and so are the libraries. So we have to load
+ * a whole lot of API functions dynamically. Since we have to do this anyway,
+ * also load the couple of functions that *do* exist in minwg headers but not
+ * on NT4. That way, we don't break on NT4.
+ */
+typedef WINAPI BOOL (*__CreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+typedef WINAPI BOOL (*__IsProcessInJob)(HANDLE, HANDLE, PBOOL);
+typedef WINAPI HANDLE (*__CreateJobObject)(LPSECURITY_ATTRIBUTES, LPCTSTR);
+typedef WINAPI BOOL (*__SetInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD);
+typedef WINAPI BOOL (*__AssignProcessToJobObject)(HANDLE, HANDLE);
+typedef WINAPI BOOL (*__QueryInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD, LPDWORD);
+
+/* Windows API define missing from MingW headers */
+#define DISABLE_MAX_PRIVILEGE   0x1 
+
+/*
+ * Create a restricted token, a job object sandbox, and execute the specified
+ * process with it.
+ *
+ * Returns 0 on success, non-zero on failure, same as CreateProcess().
+ *
+ * On NT4, or any other system not containing the required functions, will
+ * launch the process under the current token without doing any modifications.
+ *
+ * NOTE! Job object will only work when running as a service, because it's
+ * automatically destroyed when pg_ctl exits.
+ */
+static int
+CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
+{
+    int r;
+    BOOL b;
+    STARTUPINFO si;
+    HANDLE origToken;
+    HANDLE restrictedToken;
+    SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+    SID_AND_ATTRIBUTES dropSids[2];
+
+    /* Functions loaded dynamically */
+    __CreateRestrictedToken _CreateRestrictedToken = NULL;
+    __IsProcessInJob _IsProcessInJob = NULL;
+    __CreateJobObject _CreateJobObject = NULL;
+    __SetInformationJobObject _SetInformationJobObject = NULL;
+    __AssignProcessToJobObject _AssignProcessToJobObject = NULL;
+    __QueryInformationJobObject _QueryInformationJobObject = NULL;
+    HANDLE Kernel32Handle;
+    HANDLE Advapi32Handle;
+    
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+
+    Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+    if (Advapi32Handle != NULL)
+    {
+        _CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+    }
+
+    if (_CreateRestrictedToken == NULL)
+    {
+        /* NT4 doesn't have CreateRestrictedToken, so just call ordinary CreateProcess */
+        write_stderr("WARNING: Unable to create restricted tokens on this platform\n");
+        if (Advapi32Handle != NULL)
+            FreeLibrary(Advapi32Handle);
+        return CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, processInfo);
+    }
+
+    /* Open the current token to use as a base for the restricted one */
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
+    {
+        write_stderr("Failed to open process token: %lu\n", GetLastError());
+        return 0;
+    }
+
+    /* Allocate list of SIDs to remove */
+    ZeroMemory(&dropSids, sizeof(dropSids));
+    if (!AllocateAndInitializeSid(&NtAuthority, 2,
+            SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0,0,0,0,0,
+            0, &dropSids[0].Sid) ||
+        !AllocateAndInitializeSid(&NtAuthority, 2, 
+            SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0,0,0,0,0,
+            0, &dropSids[1].Sid))
+    {
+        write_stderr("Failed to allocate SIDs: %lu\n", GetLastError());
+        return 0;
+    }
+
+    b = _CreateRestrictedToken(origToken,
+            DISABLE_MAX_PRIVILEGE,
+            sizeof(dropSids)/sizeof(dropSids[0]),
+            dropSids,
+            0, NULL,
+            0, NULL,
+            &restrictedToken);
+    
+    FreeSid(dropSids[1].Sid);
+    FreeSid(dropSids[0].Sid);
+    CloseHandle(origToken);
+    FreeLibrary(Advapi32Handle);
+
+    if (!b)
+    {
+        write_stderr("Failed to create restricted token: %lu\n", GetLastError());
+        return 0;
+    }
+
+    r = CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, processInfo);
+    
+    Kernel32Handle = LoadLibrary("KERNEL32.DLL");
+    if (Kernel32Handle != NULL)
+    {
+        _IsProcessInJob = (__IsProcessInJob) GetProcAddress(Kernel32Handle, "IsProcessInJob");
+        _CreateJobObject = (__CreateJobObject) GetProcAddress(Kernel32Handle, "CreateJobObjectA");
+        _SetInformationJobObject = (__SetInformationJobObject) GetProcAddress(Kernel32Handle, "SetInformationJobObject");
+        _AssignProcessToJobObject = (__AssignProcessToJobObject) GetProcAddress(Kernel32Handle, "AssignProcessToJobObject");
+        _QueryInformationJobObject = (__QueryInformationJobObject) GetProcAddress(Kernel32Handle, "QueryInformationJobObject");
+    }
+
+    /* Verify that we found all functions */
+    if (_IsProcessInJob == NULL || _CreateJobObject == NULL || _SetInformationJobObject == NULL || _AssignProcessToJobObject == NULL || _QueryInformationJobObject == NULL)
+    {
+        write_stderr("WARNING: Unable to locate all job object functions in system API!\n");
+    } 
+    else
+    { 
+        BOOL inJob;
+        if (_IsProcessInJob(processInfo->hProcess, NULL, &inJob))
+        {
+            if (!inJob)
+            {
+                /* Job objects are working, and the new process isn't in one, so we can create one safely.
+                   If any problems show up when setting it, we're going to ignore them. */
+                HANDLE job;
+                char jobname[128];
+
+                sprintf(jobname,"PostgreSQL_%lu", processInfo->dwProcessId);
+
+                job = _CreateJobObject(NULL, jobname);
+                if (job)
+                {
+                    JOBOBJECT_BASIC_LIMIT_INFORMATION basicLimit;
+                    JOBOBJECT_BASIC_UI_RESTRICTIONS uiRestrictions;
+                    JOBOBJECT_SECURITY_LIMIT_INFORMATION securityLimit;
+
+                    ZeroMemory(&basicLimit, sizeof(basicLimit));
+                    ZeroMemory(&uiRestrictions, sizeof(uiRestrictions));
+                    ZeroMemory(&securityLimit, sizeof(securityLimit));
+
+                    basicLimit.LimitFlags = JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION | JOB_OBJECT_LIMIT_PRIORITY_CLASS;
+                    basicLimit.PriorityClass = NORMAL_PRIORITY_CLASS;
+                    _SetInformationJobObject(job, JobObjectBasicLimitInformation, &basicLimit, sizeof(basicLimit));
+
+                    uiRestrictions.UIRestrictionsClass = JOB_OBJECT_UILIMIT_DESKTOP | JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
+                        JOB_OBJECT_UILIMIT_EXITWINDOWS | JOB_OBJECT_UILIMIT_HANDLES | JOB_OBJECT_UILIMIT_READCLIPBOARD |
+                        JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS | JOB_OBJECT_UILIMIT_WRITECLIPBOARD;
+                    _SetInformationJobObject(job, JobObjectBasicUIRestrictions, &uiRestrictions, sizeof(uiRestrictions));
+
+                    securityLimit.SecurityLimitFlags = JOB_OBJECT_SECURITY_NO_ADMIN | JOB_OBJECT_SECURITY_ONLY_TOKEN;
+                    securityLimit.JobToken = restrictedToken;
+                    _SetInformationJobObject(job, JobObjectSecurityLimitInformation, &securityLimit, sizeof(securityLimit));
+
+                    _AssignProcessToJobObject(job, processInfo->hProcess);
+                }
+            }
+        }
+    }
+    
+    CloseHandle(restrictedToken);
+
+    ResumeThread(processInfo->hThread);
+
+    FreeLibrary(Kernel32Handle);
+
+    /*
+	 * We intentionally don't close the job object handle, because we want the
+	 * object to live on until pg_ctl shuts down.
+	 */
+    return r;
+}
+
 #endif
 
 static void
