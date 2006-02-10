@@ -8,37 +8,36 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.136 2005/11/22 18:17:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.137 2006/02/10 19:01:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
-#include "catalog/namespace.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
-#include "executor/executor.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
-#include "optimizer/prep.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
@@ -54,7 +53,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
 				  bool isconstraint);
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
-static Oid	GetDefaultOpClass(Oid attrType, Oid accessMethodId);
 static bool relationHasPrimaryKey(Relation rel);
 
 
@@ -658,17 +656,26 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	return opClassId;
 }
 
-static Oid
-GetDefaultOpClass(Oid attrType, Oid accessMethodId)
+/*
+ * GetDefaultOpClass
+ *
+ * Given the OIDs of a datatype and an access method, find the default
+ * operator class, if any.	Returns InvalidOid if there is none.
+ */
+Oid
+GetDefaultOpClass(Oid type_id, Oid am_id)
 {
-	OpclassCandidateList opclass;
 	int			nexact = 0;
 	int			ncompatible = 0;
 	Oid			exactOid = InvalidOid;
 	Oid			compatibleOid = InvalidOid;
+	Relation	rel;
+	ScanKeyData skey[1];
+	SysScanDesc scan;
+	HeapTuple	tup;
 
 	/* If it's a domain, look at the base type instead */
-	attrType = getBaseType(attrType);
+	type_id = getBaseType(type_id);
 
 	/*
 	 * We scan through all the opclasses available for the access method,
@@ -678,29 +685,39 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	 * We could find more than one binary-compatible match, in which case we
 	 * require the user to specify which one he wants.	If we find more than
 	 * one exact match, then someone put bogus entries in pg_opclass.
-	 *
-	 * The initial search is done by namespace.c so that we only consider
-	 * opclasses visible in the current namespace search path.	(See also
-	 * typcache.c, which applies the same logic, but over all opclasses.)
 	 */
-	for (opclass = OpclassGetCandidates(accessMethodId);
-		 opclass != NULL;
-		 opclass = opclass->next)
+	rel = heap_open(OperatorClassRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_opclass_opcamid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(am_id));
+
+	scan = systable_beginscan(rel, OpclassAmNameNspIndexId, true,
+							  SnapshotNow, 1, skey);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
+		Form_pg_opclass opclass = (Form_pg_opclass) GETSTRUCT(tup);
+
 		if (opclass->opcdefault)
 		{
-			if (opclass->opcintype == attrType)
+			if (opclass->opcintype == type_id)
 			{
 				nexact++;
-				exactOid = opclass->oid;
+				exactOid = HeapTupleGetOid(tup);
 			}
-			else if (IsBinaryCoercible(attrType, opclass->opcintype))
+			else if (IsBinaryCoercible(type_id, opclass->opcintype))
 			{
 				ncompatible++;
-				compatibleOid = opclass->oid;
+				compatibleOid = HeapTupleGetOid(tup);
 			}
 		}
 	}
+
+	systable_endscan(scan);
+
+	heap_close(rel, AccessShareLock);
 
 	if (nexact == 1)
 		return exactOid;
@@ -708,7 +725,7 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 		errmsg("there are multiple default operator classes for data type %s",
-			   format_type_be(attrType))));
+			   format_type_be(type_id))));
 	if (ncompatible == 1)
 		return compatibleOid;
 
