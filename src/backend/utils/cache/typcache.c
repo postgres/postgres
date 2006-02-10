@@ -36,23 +36,19 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.15.2.2 2006/01/17 17:33:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.15.2.3 2006/02/10 19:01:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/hash.h"
 #include "access/nbtree.h"
-#include "catalog/indexing.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_opclass.h"
-#include "parser/parse_coerce.h"
+#include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
-#include "utils/fmgroids.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -90,9 +86,6 @@ static HTAB *RecordCacheHash = NULL;
 static TupleDesc *RecordCacheArray = NULL;
 static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
 static int32 NextRecordTypmod = 0;		/* number of entries used */
-
-
-static Oid	lookup_default_opclass(Oid type_id, Oid am_id);
 
 
 /*
@@ -177,14 +170,14 @@ lookup_type_cache(Oid type_id, int flags)
 				  TYPECACHE_EQ_OPR_FINFO | TYPECACHE_CMP_PROC_FINFO)) &&
 		typentry->btree_opc == InvalidOid)
 	{
-		typentry->btree_opc = lookup_default_opclass(type_id,
-													 BTREE_AM_OID);
+		typentry->btree_opc = GetDefaultOpClass(type_id,
+												BTREE_AM_OID);
 		/* Only care about hash opclass if no btree opclass... */
 		if (typentry->btree_opc == InvalidOid)
 		{
 			if (typentry->hash_opc == InvalidOid)
-				typentry->hash_opc = lookup_default_opclass(type_id,
-															HASH_AM_OID);
+				typentry->hash_opc = GetDefaultOpClass(type_id,
+													   HASH_AM_OID);
 		}
 		else
 		{
@@ -288,86 +281,6 @@ lookup_type_cache(Oid type_id, int flags)
 
 	return typentry;
 }
-
-/*
- * lookup_default_opclass
- *
- * Given the OIDs of a datatype and an access method, find the default
- * operator class, if any.	Returns InvalidOid if there is none.
- */
-static Oid
-lookup_default_opclass(Oid type_id, Oid am_id)
-{
-	int			nexact = 0;
-	int			ncompatible = 0;
-	Oid			exactOid = InvalidOid;
-	Oid			compatibleOid = InvalidOid;
-	Relation	rel;
-	ScanKeyData skey[1];
-	SysScanDesc scan;
-	HeapTuple	tup;
-
-	/* If it's a domain, look at the base type instead */
-	type_id = getBaseType(type_id);
-
-	/*
-	 * We scan through all the opclasses available for the access method,
-	 * looking for one that is marked default and matches the target type
-	 * (either exactly or binary-compatibly, but prefer an exact match).
-	 *
-	 * We could find more than one binary-compatible match, in which case we
-	 * require the user to specify which one he wants.	If we find more than
-	 * one exact match, then someone put bogus entries in pg_opclass.
-	 *
-	 * This is the same logic as GetDefaultOpClass() in indexcmds.c, except
-	 * that we consider all opclasses, regardless of the current search path.
-	 */
-	rel = heap_open(OperatorClassRelationId, AccessShareLock);
-
-	ScanKeyInit(&skey[0],
-				Anum_pg_opclass_opcamid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(am_id));
-
-	scan = systable_beginscan(rel, OpclassAmNameNspIndexId, true,
-							  SnapshotNow, 1, skey);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_opclass opclass = (Form_pg_opclass) GETSTRUCT(tup);
-
-		if (opclass->opcdefault)
-		{
-			if (opclass->opcintype == type_id)
-			{
-				nexact++;
-				exactOid = HeapTupleGetOid(tup);
-			}
-			else if (IsBinaryCoercible(type_id, opclass->opcintype))
-			{
-				ncompatible++;
-				compatibleOid = HeapTupleGetOid(tup);
-			}
-		}
-	}
-
-	systable_endscan(scan);
-
-	heap_close(rel, AccessShareLock);
-
-	if (nexact == 1)
-		return exactOid;
-	if (nexact != 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-		errmsg("there are multiple default operator classes for data type %s",
-			   format_type_be(type_id))));
-	if (ncompatible == 1)
-		return compatibleOid;
-
-	return InvalidOid;
-}
-
 
 /*
  * lookup_rowtype_tupdesc

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.79.2.1 2005/11/22 18:23:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.79.2.2 2006/02/10 19:01:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -910,119 +910,6 @@ OperatorIsVisible(Oid oprid)
 	return visible;
 }
 
-
-/*
- * OpclassGetCandidates
- *		Given an index access method OID, retrieve a list of all the
- *		opclasses for that AM that are visible in the search path.
- *
- * NOTE: the opcname_tmp field in the returned structs should not be used
- * by callers, because it points at syscache entries that we release at
- * the end of this routine.  If any callers needed the name information,
- * we could pstrdup() the names ... but at present it'd be wasteful.
- */
-OpclassCandidateList
-OpclassGetCandidates(Oid amid)
-{
-	OpclassCandidateList resultList = NULL;
-	CatCList   *catlist;
-	int			i;
-
-	/* Search syscache by AM OID only */
-	catlist = SearchSysCacheList(CLAAMNAMENSP, 1,
-								 ObjectIdGetDatum(amid),
-								 0, 0, 0);
-
-	recomputeNamespacePath();
-
-	for (i = 0; i < catlist->n_members; i++)
-	{
-		HeapTuple	opctup = &catlist->members[i]->tuple;
-		Form_pg_opclass opcform = (Form_pg_opclass) GETSTRUCT(opctup);
-		int			pathpos = 0;
-		OpclassCandidateList newResult;
-		ListCell   *nsp;
-
-		/* Consider only opclasses that are in the search path */
-		foreach(nsp, namespaceSearchPath)
-		{
-			if (opcform->opcnamespace == lfirst_oid(nsp))
-				break;
-			pathpos++;
-		}
-		if (nsp == NULL)
-			continue;			/* opclass is not in search path */
-
-		/*
-		 * Okay, it's in the search path, but does it have the same name as
-		 * something we already accepted?  If so, keep only the one that
-		 * appears earlier in the search path.
-		 *
-		 * If we have an ordered list from SearchSysCacheList (the normal
-		 * case), then any conflicting opclass must immediately adjoin this
-		 * one in the list, so we only need to look at the newest result item.
-		 * If we have an unordered list, we have to scan the whole result
-		 * list.
-		 */
-		if (resultList)
-		{
-			OpclassCandidateList prevResult;
-
-			if (catlist->ordered)
-			{
-				if (strcmp(NameStr(opcform->opcname),
-						   resultList->opcname_tmp) == 0)
-					prevResult = resultList;
-				else
-					prevResult = NULL;
-			}
-			else
-			{
-				for (prevResult = resultList;
-					 prevResult;
-					 prevResult = prevResult->next)
-				{
-					if (strcmp(NameStr(opcform->opcname),
-							   prevResult->opcname_tmp) == 0)
-						break;
-				}
-			}
-			if (prevResult)
-			{
-				/* We have a match with a previous result */
-				Assert(pathpos != prevResult->pathpos);
-				if (pathpos > prevResult->pathpos)
-					continue;	/* keep previous result */
-				/* replace previous result */
-				prevResult->opcname_tmp = NameStr(opcform->opcname);
-				prevResult->pathpos = pathpos;
-				prevResult->oid = HeapTupleGetOid(opctup);
-				prevResult->opcintype = opcform->opcintype;
-				prevResult->opcdefault = opcform->opcdefault;
-				prevResult->opckeytype = opcform->opckeytype;
-				continue;
-			}
-		}
-
-		/*
-		 * Okay to add it to result list
-		 */
-		newResult = (OpclassCandidateList)
-			palloc(sizeof(struct _OpclassCandidateList));
-		newResult->opcname_tmp = NameStr(opcform->opcname);
-		newResult->pathpos = pathpos;
-		newResult->oid = HeapTupleGetOid(opctup);
-		newResult->opcintype = opcform->opcintype;
-		newResult->opcdefault = opcform->opcdefault;
-		newResult->opckeytype = opcform->opckeytype;
-		newResult->next = resultList;
-		resultList = newResult;
-	}
-
-	ReleaseSysCacheList(catlist);
-
-	return resultList;
-}
 
 /*
  * OpclassnameGetOpcid
