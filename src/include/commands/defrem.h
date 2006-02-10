@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.62 2004/12/31 22:03:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.62.4.1 2006/02/10 19:01:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@ extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
 				   const char *label, Oid namespace);
+extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 
 /* commands/functioncmds.c */
 extern void CreateFunction(CreateFunctionStmt *stmt);
