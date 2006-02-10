@@ -74,7 +74,7 @@ char2wchar(wchar_t *to, const char *from, size_t len)
 #endif /* WIN32 */
 
 int
-_t_isalpha( char *ptr ) {
+_t_isalpha( const char *ptr ) {
 	wchar_t	character;
 
 	char2wchar(&character, ptr, 1);
@@ -83,7 +83,7 @@ _t_isalpha( char *ptr ) {
 }
 
 int
-_t_isprint( char *ptr ) {
+_t_isprint( const char *ptr ) {
 	wchar_t	character;
 
 	char2wchar(&character, ptr, 1);

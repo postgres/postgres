@@ -44,9 +44,9 @@ size_t		char2wchar(wchar_t *to, const char *from, size_t len);
 
 #define	t_isdigit(x)	( pg_mblen(x)==1 && isdigit( TOUCHAR(x) ) )
 #define	t_isspace(x)	( pg_mblen(x)==1 && isspace( TOUCHAR(x) ) )
-int _t_isalpha( char *ptr );
+extern int _t_isalpha( const char *ptr );
 #define	t_isalpha(x)	( (pg_mblen(x)==1) ? isalpha( TOUCHAR(x) ) : _t_isalpha(x) )
-int _t_isprint( char *ptr );
+extern int _t_isprint( const char *ptr );
 #define	t_isprint(x)	( (pg_mblen(x)==1) ? isprint( TOUCHAR(x) ) : _t_isprint(x) )
 /*
  * t_iseq() should be called only for ASCII symbols 

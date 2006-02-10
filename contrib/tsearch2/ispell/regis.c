@@ -9,14 +9,16 @@
 bool
 RS_isRegis(const char *str)
 {
-	unsigned char *ptr = (unsigned char *) str;
-
-	while (ptr && *ptr)
-		if (t_isalpha(ptr) || t_iseq(ptr,'[') || t_iseq(ptr,']') || t_iseq(ptr, '^'))
-			ptr+=pg_mblen(ptr);
+	while (str && *str)
+	{
+		if (t_isalpha(str) ||
+			t_iseq(str, '[') ||
+			t_iseq(str,']') ||
+			t_iseq(str, '^'))
+			str += pg_mblen(str);
 		else
 			return false;
-
+	}
 	return true;
 }
 
