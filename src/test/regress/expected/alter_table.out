@@ -797,7 +797,6 @@ alter table atacc1 drop c;
 alter table atacc1 drop d;
 alter table atacc1 drop b;
 select * from atacc1;
-  
 --
 (1 row)
 
