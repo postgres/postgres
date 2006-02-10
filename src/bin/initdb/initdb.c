@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.107 2006/01/27 19:01:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.108 2006/02/10 22:05:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,9 @@ static char *authmethod = "";
 static bool debug = false;
 static bool noclean = false;
 static bool show_setting = false;
+#ifdef WIN32
+static bool restricted_exec = false;
+#endif
 
 
 /* internal vars */
@@ -192,6 +195,9 @@ static int	locale_date_order(const char *locale);
 static bool chklocale(const char *locale);
 static void setlocales(void);
 static void usage(const char *progname);
+#ifdef WIN32
+static int CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo);
+#endif
 
 
 /*
@@ -2239,6 +2245,91 @@ setlocales(void)
 
 }
 
+#ifdef WIN32
+/* MingW headers are incomplete */
+typedef WINAPI BOOL (*__CreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+#define DISABLE_MAX_PRIVILEGE   0x1 
+
+/*
+ * Create a restricted token and execute the specified process with it.
+ *
+ * Returns 0 on failure, non-zero on success, same as CreateProcess().
+ *
+ * On NT4, or any other system not containing the required functions, will
+ * NOT execute anything.
+ */
+static int 
+CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
+{
+    BOOL b;
+    STARTUPINFO si;
+    HANDLE origToken;
+    HANDLE restrictedToken;
+    SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+    SID_AND_ATTRIBUTES dropSids[2];
+    __CreateRestrictedToken _CreateRestrictedToken = NULL;
+    HANDLE Advapi32Handle;
+    
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+
+    Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+    if (Advapi32Handle != NULL)
+    {
+        _CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+    }
+
+    if (_CreateRestrictedToken == NULL)
+    {
+        fprintf(stderr,"WARNING: Unable to create restricted tokens on this platform\n");
+        if (Advapi32Handle != NULL)
+            FreeLibrary(Advapi32Handle);
+        return 0;
+    }
+
+    /* Open the current token to use as a base for the restricted one */
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
+    {
+        fprintf(stderr, "Failed to open process token: %lu\n", GetLastError());
+        return 0;
+    }
+
+    /* Allocate list of SIDs to remove */
+    ZeroMemory(&dropSids, sizeof(dropSids));
+    if (!AllocateAndInitializeSid(&NtAuthority, 2,
+            SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0,0,0,0,0,
+            0, &dropSids[0].Sid) ||
+        !AllocateAndInitializeSid(&NtAuthority, 2, 
+            SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0,0,0,0,0,
+            0, &dropSids[1].Sid))
+    {
+        fprintf(stderr,"Failed to allocate SIDs: %lu\n", GetLastError());
+        return 0;
+    }
+
+    b = _CreateRestrictedToken(origToken,
+            DISABLE_MAX_PRIVILEGE,
+            sizeof(dropSids)/sizeof(dropSids[0]),
+            dropSids,
+            0, NULL,
+            0, NULL,
+            &restrictedToken);
+    
+    FreeSid(dropSids[1].Sid);
+    FreeSid(dropSids[0].Sid);
+    CloseHandle(origToken);
+    FreeLibrary(Advapi32Handle);
+
+    if (!b)
+    {
+        fprintf(stderr,"Failed to create restricted token: %lu\n", GetLastError());
+        return 0;
+    }
+
+    return CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, processInfo);
+}
+#endif
+
 /*
  * print help text
  */
@@ -2295,6 +2386,9 @@ main(int argc, char *argv[])
 		{"auth", required_argument, NULL, 'A'},
 		{"pwprompt", no_argument, NULL, 'W'},
 		{"pwfile", required_argument, NULL, 9},
+#ifdef WIN32
+		{"restrictedexec", no_argument, NULL, 10},
+#endif
 		{"username", required_argument, NULL, 'U'},
 		{"help", no_argument, NULL, '?'},
 		{"version", no_argument, NULL, 'V'},
@@ -2403,6 +2497,11 @@ main(int argc, char *argv[])
 			case 9:
 				pwfilename = xstrdup(optarg);
 				break;
+#ifdef WIN32
+			case 10:
+				restricted_exec = true;
+				break;
+#endif
 			case 's':
 				show_setting = true;
 				break;
@@ -2496,6 +2595,44 @@ main(int argc, char *argv[])
 
 	pg_data_native = pg_data;
 	canonicalize_path(pg_data);
+
+#ifdef WIN32
+    /* 
+     * Before we execute another program, make sure that we are running with a 
+     * restricted token. If not, re-execute ourselves with one.
+     */
+    if (!restricted_exec)
+    {
+        PROCESS_INFORMATION pi;
+        char *cmdline;
+        
+        ZeroMemory(&pi, sizeof(pi));
+
+        cmdline = pg_malloc(strlen(GetCommandLine()) + 19);
+        strcpy(cmdline, GetCommandLine());
+        strcat(cmdline, " --restrictedexec");
+        
+        if (!CreateRestrictedProcess(cmdline, &pi))
+        {
+            fprintf(stderr,"Failed to re-exec with restricted token: %lu.\n", GetLastError());
+        }
+        else
+        {
+            /* Successfully re-execed. Now wait for child process to capture exitcode. */
+            DWORD x;
+            
+            CloseHandle(pi.hThread);
+            WaitForSingleObject(pi.hProcess, INFINITE);
+
+            if (!GetExitCodeProcess(pi.hProcess, &x))
+            {
+                fprintf(stderr,"Failed to get exit code from subprocess: %lu\n", GetLastError());
+                exit(1);
+            }
+            exit(x);
+        }
+    }
+#endif
 
 	/*
 	 * we have to set PGDATA for postgres rather than pass it on the command
