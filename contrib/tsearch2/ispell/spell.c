@@ -306,7 +306,7 @@ NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const 
 #define PAE_INREPL 	5
 
 static bool
-parse_affentry( char *str, char *mask, char *find, char *repl ) {
+parse_affentry( char *str, char *mask, char *find, char *repl, int line ) {
 	int state = PAE_WAIT_MASK;
 	char 	*pmask=mask, *pfind=find, *prepl=repl;
 
@@ -332,12 +332,12 @@ parse_affentry( char *str, char *mask, char *find, char *repl ) {
 		} else if ( state == PAE_WAIT_FIND ) {
 			if ( t_iseq(str,'-') ) {
 				state = PAE_INFIND;
-			} else if (t_isalpha(str)) {
+			} else if (t_isalpha(str) || t_iseq(str,'\'') /* english 's */) {
 				COPYCHAR(prepl,str);
 				prepl += pg_mblen(str);
 				state = PAE_INREPL;
 			} else if (!t_isspace(str))
-				ts_error(ERROR, "Affix parse error");
+				ts_error(ERROR, "Affix parse error at %d line", line);
 		} else if ( state == PAE_INFIND ) {
 			if ( t_iseq(str,',') ) {
 				*pfind='\0';
@@ -346,7 +346,7 @@ parse_affentry( char *str, char *mask, char *find, char *repl ) {
 				COPYCHAR(pfind,str);
 				pfind += pg_mblen(str);
 			} else if (!t_isspace(str))
-				ts_error(ERROR, "Affix parse error");
+				ts_error(ERROR, "Affix parse error at %d line", line);
 		} else if ( state == PAE_WAIT_REPL ) {
 			if ( t_iseq(str,'-') ) {
 				break; /* void repl */
@@ -355,7 +355,7 @@ parse_affentry( char *str, char *mask, char *find, char *repl ) {
 				prepl += pg_mblen(str);
 				state = PAE_INREPL;
 			} else if (!t_isspace(str))
-				ts_error(ERROR, "Affix parse error");
+				ts_error(ERROR, "Affix parse error at %d line", line);
 		} else if ( state == PAE_INREPL ) {
 			if ( t_iseq(str,'#') ) {
 				*prepl = '\0';
@@ -364,7 +364,7 @@ parse_affentry( char *str, char *mask, char *find, char *repl ) {
 				COPYCHAR(prepl,str);
 				prepl += pg_mblen(str);
 			} else if (!t_isspace(str))
-				ts_error(ERROR, "Affix parse error");
+				ts_error(ERROR, "Affix parse error at %d line", line);
 		} else
 			ts_error(ERROR, "Unknown state in parse_affentry: %d", state);
 
@@ -390,6 +390,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 	int			flag = 0;
 	char		flagflags = 0;
 	FILE	   *affix;
+	int	line=0;
 
 	if (!(affix = fopen(filename, "r")))
 		return (1);
@@ -397,6 +398,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 
 	while (fgets(str, sizeof(str), affix))
 	{
+		line++;
 		pg_verifymbstr( str, strlen(str), false);
 		memcpy(tmpstr, str, 32); /* compoundwords... */
 		tmpstr[32]='\0';
@@ -463,7 +465,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 			continue;
 
 		lowerstr(str);
-		if ( !parse_affentry(str, mask, find, repl) )
+		if ( !parse_affentry(str, mask, find, repl, line) )
 			continue;
 
 		NIAddAffix(Conf, flag, flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
