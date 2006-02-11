@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.137 2006/02/11 16:59:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.138 2006/02/11 17:14:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -543,9 +543,8 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	double		num_index_tuples;
 	OffsetNumber deletable[MaxOffsetNumber];
 	int			ndeletable;
-	Buffer		buf = NULL;
+	Buffer		buf;
 	BlockNumber num_pages;
-    bool        scanindex = true;
 
 	tuples_removed = 0;
 	num_index_tuples = 0;
@@ -566,15 +565,8 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	 * skip obtaining exclusive lock on empty pages though, since no indexscan
 	 * could be stopped on those.
 	 */
-    if (callback_state)
-    {
-    	buf = _bt_get_endpoint(rel, 0, false);
-        scanindex = BufferIsValid(buf); /* check for empty index */
-    }
-    else
-        scanindex = false;
-
-	if (scanindex)	
+	buf = _bt_get_endpoint(rel, 0, false);
+	if (BufferIsValid(buf))		/* check for empty index */
 	{
 		for (;;)
 		{
@@ -657,10 +649,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 
 	result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 	result->num_pages = num_pages;
-    if (scanindex)
-    	result->num_index_tuples = num_index_tuples;
-    else
-        result->num_index_tuples = -1;
+	result->num_index_tuples = num_index_tuples;
 	result->tuples_removed = tuples_removed;
 
 	PG_RETURN_POINTER(result);

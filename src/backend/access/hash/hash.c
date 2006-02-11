@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.84 2006/02/11 16:59:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.85 2006/02/11 17:14:08 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -496,17 +496,6 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	tuples_removed = 0;
 	num_index_tuples = 0;
 
-	/* return statistics */
-	num_pages = RelationGetNumberOfBlocks(rel);
-
-	result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
-	result->num_pages = num_pages;
-
-    if (!callback_state)
-    {
-        	PG_RETURN_POINTER(result);
-    }
-
 	/*
 	 * Read the metapage to fetch original bucket and tuple counts.  Also, we
 	 * keep a copy of the last-seen metapage so that we can use its
@@ -655,6 +644,11 @@ loop_top:
 
 	_hash_wrtbuf(rel, metabuf);
 
+	/* return statistics */
+	num_pages = RelationGetNumberOfBlocks(rel);
+
+	result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+	result->num_pages = num_pages;
 	result->num_index_tuples = num_index_tuples;
 	result->tuples_removed = tuples_removed;
 
