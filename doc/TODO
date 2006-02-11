@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Feb 10 22:33:33 EST 2006
+Last updated:		Sat Feb 11 16:55:42 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -599,7 +599,7 @@ Clients
 	o Allow psql \pset boolean variables to set to fixed values, rather
 	  than toggle
 	o Consistently display privilege information for all objects in psql
-	o Improve psql's handling of multi-line statements
+	o -Improve psql's handling of multi-line statements
 
 	  Currently, while \e saves a single statement as one entry, interactive
 	  statements are saved one line at a time.  Ideally all statements
