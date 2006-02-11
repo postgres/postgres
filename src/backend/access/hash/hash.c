@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.85 2006/02/11 17:14:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.86 2006/02/11 23:31:33 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -517,6 +517,18 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	cur_maxbucket = orig_maxbucket;
 
 loop_top:
+
+	/*
+	 * If we don't have anything to delete, skip the scan, and report the
+	 * number of tuples shown in the metapage.  (Unlike btree and gist,
+	 * we can trust this number even for a partial index.)
+	 */
+	if (!callback_state)
+	{
+		cur_bucket = cur_maxbucket + 1;
+		num_index_tuples = local_metapage.hashm_ntuples;
+	}
+
 	while (cur_bucket <= cur_maxbucket)
 	{
 		BlockNumber bucket_blkno;

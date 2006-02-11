@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.56 2006/02/11 17:14:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.57 2006/02/11 23:31:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@ typedef struct IndexVacuumCleanupInfo
 {
 	bool		vacuum_full;	/* VACUUM FULL (we have exclusive lock) */
 	int			message_level;	/* ereport level for progress messages */
+	double		num_heap_tuples;	/* tuples remaining in heap */
 } IndexVacuumCleanupInfo;
 
 /* Struct for heap-or-index scans of system tables */

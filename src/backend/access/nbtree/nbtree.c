@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.138 2006/02/11 17:14:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.139 2006/02/11 23:31:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,8 +564,22 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	 * further to its right, which the indexscan will have no pin on.)	We can
 	 * skip obtaining exclusive lock on empty pages though, since no indexscan
 	 * could be stopped on those.
+	 *
+	 * We can skip the scan entirely if there's nothing to delete (indicated
+	 * by callback_state == NULL) and the index isn't partial.  For a partial
+	 * index we must scan in order to derive a trustworthy tuple count.
 	 */
-	buf = _bt_get_endpoint(rel, 0, false);
+	if (callback_state || vac_is_partial_index(rel))
+	{
+		buf = _bt_get_endpoint(rel, 0, false);
+	}
+	else
+	{
+		/* skip scan and set flag for btvacuumcleanup */
+		buf = InvalidBuffer;
+		num_index_tuples = -1;
+	}
+
 	if (BufferIsValid(buf))		/* check for empty index */
 	{
 		for (;;)
@@ -835,6 +849,13 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	stats->num_pages = num_pages;
 	stats->pages_deleted = pages_deleted;
 	stats->pages_free = nFreePages;
+
+	/* if btbulkdelete skipped the scan, use heap's tuple count */
+	if (stats->num_index_tuples < 0)
+	{
+		Assert(info->num_heap_tuples >= 0);
+		stats->num_index_tuples = info->num_heap_tuples;
+	}
 
 	PG_RETURN_POINTER(stats);
 }

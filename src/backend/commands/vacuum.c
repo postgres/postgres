@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.323 2006/02/11 17:14:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.324 2006/02/11 23:31:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2955,6 +2955,7 @@ scan_index(Relation indrel, double num_tuples)
 	/* Do post-VACUUM cleanup, even though we deleted nothing */
 	vcinfo.vacuum_full = true;
 	vcinfo.message_level = elevel;
+	vcinfo.num_heap_tuples = num_tuples;
 
 	stats = index_vacuum_cleanup(indrel, &vcinfo, stats);
 
@@ -3022,6 +3023,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	/* Do post-VACUUM cleanup */
 	vcinfo.vacuum_full = true;
 	vcinfo.message_level = elevel;
+	vcinfo.num_heap_tuples = num_tuples + keep_tuples;
 
 	stats = index_vacuum_cleanup(indrel, &vcinfo, stats);
 

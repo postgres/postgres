@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.13 2006/02/11 17:14:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.14 2006/02/11 23:31:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,16 +25,19 @@
 #include "storage/freespace.h"
 #include "storage/smgr.h"
 
-/* filled by gistbulkdelete, cleared by gistvacuumpcleanup */
-static bool needFullVacuum = false;
 
+typedef struct GistBulkDeleteResult
+{
+	IndexBulkDeleteResult std;	/* common state */
+	bool		needFullVacuum;
+} GistBulkDeleteResult;
 
 typedef struct
 {
 	GISTSTATE	giststate;
 	Relation	index;
 	MemoryContext opCtx;
-	IndexBulkDeleteResult *result;
+	GistBulkDeleteResult *result;
 } GistVacuum;
 
 typedef struct
@@ -43,6 +46,7 @@ typedef struct
 	int			ituplen;
 	bool		emptypage;
 } ArrayTuple;
+
 
 static ArrayTuple
 gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
@@ -125,7 +129,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 					if (chldtuple.ituplen > 1)
 					{
 						/*
-						 * child was splitted, so we need mark completion
+						 * child was split, so we need mark completion
 						 * insert(split)
 						 */
 						int			j;
@@ -262,7 +266,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 				needwrite = true;
 				res.emptypage = true;
 				GistPageSetDeleted(page);
-				gv->result->pages_deleted++;
+				gv->result->std.pages_deleted++;
 			}
 		}
 		else
@@ -329,9 +333,9 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 }
 
 /*
- * For usial vacuum just update FSM, for full vacuum
+ * For usual vacuum just update FSM, for full vacuum
  * reforms parent tuples if some of childs was deleted or changed,
- * update invalid tuples (they can exsist from last crash recovery only),
+ * update invalid tuples (they can exist from last crash recovery only),
  * tries to get smaller index
  */
 
@@ -340,7 +344,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
 	IndexVacuumCleanupInfo *info = (IndexVacuumCleanupInfo *) PG_GETARG_POINTER(1);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(2);
+	GistBulkDeleteResult *stats = (GistBulkDeleteResult *) PG_GETARG_POINTER(2);
 	BlockNumber npages,
 				blkno;
 	BlockNumber nFreePages,
@@ -377,12 +381,10 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		freeGISTstate(&(gv.giststate));
 		MemoryContextDelete(gv.opCtx);
 	}
-	else if (needFullVacuum)
+	else if (stats->needFullVacuum)
 		ereport(NOTICE,
 				(errmsg("index \"%s\" needs VACUUM FULL or REINDEX to finish crash recovery",
 						RelationGetRelationName(rel))));
-
-	needFullVacuum = false;
 
 	if (info->vacuum_full)
 		needLock = false;		/* relation locked with AccessExclusiveLock */
@@ -438,22 +440,29 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 		if (lastBlock > lastFilledBlock)
 			RelationTruncate(rel, lastFilledBlock + 1);
-		stats->pages_removed = lastBlock - lastFilledBlock;
+		stats->std.pages_removed = lastBlock - lastFilledBlock;
 	}
 
 	RecordIndexFreeSpace(&rel->rd_node, nFreePages, freePages);
 	pfree(freePages);
 
 	/* return statistics */
-	stats->pages_free = nFreePages;
+	stats->std.pages_free = nFreePages;
 	if (needLock)
 		LockRelationForExtension(rel, ExclusiveLock);
-	stats->num_pages = RelationGetNumberOfBlocks(rel);
+	stats->std.num_pages = RelationGetNumberOfBlocks(rel);
 	if (needLock)
 		UnlockRelationForExtension(rel, ExclusiveLock);
 
 	if (info->vacuum_full)
 		UnlockRelation(rel, AccessExclusiveLock);
+
+	/* if gistbulkdelete skipped the scan, use heap's tuple count */
+	if (stats->std.num_index_tuples < 0)
+	{
+		Assert(info->num_heap_tuples >= 0);
+		stats->std.num_index_tuples = info->num_heap_tuples;
+	}
 
 	PG_RETURN_POINTER(stats);
 }
@@ -500,15 +509,33 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
 	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
 	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
-	IndexBulkDeleteResult *result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+	GistBulkDeleteResult *result;
 	GistBDItem *stack,
 			   *ptr;
 	bool		needLock;
 
-	stack = (GistBDItem *) palloc0(sizeof(GistBDItem));
+	result = (GistBulkDeleteResult *) palloc0(sizeof(GistBulkDeleteResult));
 
-	stack->blkno = GIST_ROOT_BLKNO;
-	needFullVacuum = false;
+	/*
+	 * We can skip the scan entirely if there's nothing to delete (indicated
+	 * by callback_state == NULL) and the index isn't partial.  For a partial
+	 * index we must scan in order to derive a trustworthy tuple count.
+	 *
+	 * XXX as of PG 8.2 this is dead code because GIST indexes are always
+	 * effectively partial ... but keep it anyway in case our null-handling
+	 * gets fixed.
+	 */
+	if (callback_state || vac_is_partial_index(rel))
+	{
+		stack = (GistBDItem *) palloc0(sizeof(GistBDItem));
+		stack->blkno = GIST_ROOT_BLKNO;
+	}
+	else
+	{
+		/* skip scan and set flag for gistvacuumcleanup */
+		stack = NULL;
+		result->std.num_index_tuples = -1;
+	}
 
 	while (stack)
 	{
@@ -561,11 +588,11 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					i--;
 					maxoff--;
 					ntodelete++;
-					result->tuples_removed += 1;
+					result->std.tuples_removed += 1;
 					Assert(maxoff == PageGetMaxOffsetNumber(page));
 				}
 				else
-					result->num_index_tuples += 1;
+					result->std.num_index_tuples += 1;
 			}
 
 			if (ntodelete)
@@ -615,7 +642,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 				stack->next = ptr;
 
 				if (GistTupleIsInvalid(idxtuple))
-					needFullVacuum = true;
+					result->needFullVacuum = true;
 			}
 		}
 
@@ -634,7 +661,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 	if (needLock)
 		LockRelationForExtension(rel, ExclusiveLock);
-	result->num_pages = RelationGetNumberOfBlocks(rel);
+	result->std.num_pages = RelationGetNumberOfBlocks(rel);
 	if (needLock)
 		UnlockRelationForExtension(rel, ExclusiveLock);
 

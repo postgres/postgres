@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.7 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.8 2006/02/11 23:31:32 tgl Exp $
 -->
 
 <chapter id="indexam">
@@ -198,6 +198,12 @@ ambulkdelete (Relation indexRelation,
    to determine whether any particular index entry, as identified by its
    referenced TID, is to be deleted.  Must return either NULL or a palloc'd
    struct containing statistics about the effects of the deletion operation.
+  </para>
+
+  <para>
+   If <literal>callback_state</> is NULL then no tuples are to be deleted.
+   The index AM may choose to optimize this case (eg by not scanning the
+   index) but it is still expected to deliver accurate statistics.
   </para>
 
   <para>

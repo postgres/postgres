@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.89 2006/02/11 17:14:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.90 2006/02/11 23:31:33 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -685,6 +685,10 @@ index_getmulti(IndexScanDesc scan,
  *		callback routine tells whether a given main-heap tuple is
  *		to be deleted
  *
+ *		if callback_state is NULL then there are no tuples to be deleted;
+ *		index AM can choose to avoid work in this case, but must still
+ *		follow the protocol of returning statistical info.
+ * 
  *		return value is an optional palloc'd struct of statistics
  * ----------------
  */
