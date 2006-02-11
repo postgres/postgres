@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.394 2006/02/09 14:53:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.395 2006/02/11 03:32:39 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2430,6 +2430,21 @@ DATA(insert OID = 2198 (  inet_server_addr		PGNSP PGUID 12 f f f f s 0 869 "" _n
 DESCR("INET address of the server");
 DATA(insert OID = 2199 (  inet_server_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_ _null_ _null_  inet_server_port - _null_ ));
 DESCR("server's port number for this connection");
+
+DATA(insert OID = 2627 (  inetnot			PGNSP PGUID 12 f f t f i 1 869 "869" _null_ _null_ _null_	inetnot - _null_ ));
+DESCR("binary NOT");
+DATA(insert OID = 2628 (  inetand			PGNSP PGUID 12 f f t f i 2 869 "869 869" _null_ _null_ _null_	inetand - _null_ ));
+DESCR("binary AND");
+DATA(insert OID = 2629 (  inetor			PGNSP PGUID 12 f f t f i 2 869 "869 869" _null_ _null_ _null_	inetor - _null_ ));
+DESCR("binary OR");
+DATA(insert OID = 2630 (  inetpl			PGNSP PGUID 12 f f t f i 2 869 "869 20" _null_ _null_ _null_	inetpl - _null_ ));
+DESCR("add integer to INET value");
+DATA(insert OID = 2631 ( int8pl_inet		PGNSP PGUID 14 f f t f i 2 869 "20 869" _null_ _null_ _null_	"select $2 + $1" - _null_ ));
+DESCR("add integer to INET value");
+DATA(insert OID = 2632 (  inetmi_int8		PGNSP PGUID 12 f f t f i 2 869 "869 20" _null_ _null_ _null_	inetmi_int8 - _null_ ));
+DESCR("subtract integer from INET value");
+DATA(insert OID = 2633 (  inetmi			PGNSP PGUID 12 f f t f i 2 20 "869 869" _null_ _null_ _null_	inetmi - _null_ ));
+DESCR("subtract INET values");
 
 DATA(insert OID = 1686 ( numeric			PGNSP PGUID 12 f f t f i 1 1700 "25" _null_ _null_ _null_ text_numeric - _null_ ));
 DESCR("(internal)");

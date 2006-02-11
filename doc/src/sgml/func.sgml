@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.303 2006/01/26 02:35:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.304 2006/02/11 03:32:38 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -6786,6 +6786,36 @@ SELECT pg_sleep(1.5);
         <entry> <literal>&gt;&gt;=</literal> </entry>
         <entry>contains or equals</entry>
         <entry><literal>inet '192.168.1/24' &gt;&gt;= inet '192.168.1/24'</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>~</literal> </entry>
+        <entry>bitwise NOT</entry>
+        <entry><literal>~ inet '192.168.1.6'</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>&amp;</literal> </entry>
+        <entry>bitwise AND</entry>
+        <entry><literal>inet '192.168.1.6' &amp; inet '0.0.0.255'</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>|</literal> </entry>
+        <entry>bitwise OR</entry>
+        <entry><literal>inet '192.168.1.6' | inet '0.0.0.255'</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>+</literal> </entry>
+        <entry>addition</entry>
+        <entry><literal>inet '192.168.1.6' + 25</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>-</literal> </entry>
+        <entry>subtraction</entry>
+        <entry><literal>inet '192.168.1.43' - 36</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>-</literal> </entry>
+        <entry>subtraction</entry>
+        <entry><literal>inet '192.168.1.43' - inet '192.168.1.19'</literal></entry>
        </row>
       </tbody>
      </tgroup>

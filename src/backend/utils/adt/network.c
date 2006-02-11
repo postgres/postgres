@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.63 2006/02/07 17:04:04 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.64 2006/02/11 03:32:39 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -27,6 +27,7 @@ static int32 network_cmp_internal(inet *a1, inet *a2);
 static int	bitncmp(void *l, void *r, int n);
 static bool addressOK(unsigned char *a, int bits, int family);
 static int	ip_addrsize(inet *inetptr);
+static Datum internal_inetpl(inet *ip, int64 iarg);
 
 /*
  *	Access macros.
@@ -1249,4 +1250,209 @@ inet_server_port(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(DirectFunctionCall1(int4in, CStringGetDatum(local_port)));
+}
+
+
+Datum
+inetnot(PG_FUNCTION_ARGS)
+{
+	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *dst;
+
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+
+	{
+		int nb = ip_addrsize(ip);
+		unsigned char	*pip = ip_addr(ip);
+		unsigned char	*pdst = ip_addr(dst);
+
+		while (nb-- > 0)
+			pdst[nb] = ~pip[nb];
+	}
+	ip_bits(dst) = ip_bits(ip);
+
+	ip_family(dst) = ip_family(ip);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
+
+	PG_RETURN_INET_P(dst);
+}
+
+
+Datum
+inetand(PG_FUNCTION_ARGS)
+{
+	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip2 = PG_GETARG_INET_P(1);
+	inet	   *dst;
+
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+
+	if (ip_family(ip) != ip_family(ip2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("mismatch in address family (%d) != (%d)",
+						ip_family(ip), ip_family(ip2))));
+	else
+	{
+		int nb = ip_addrsize(ip);
+		unsigned char	*pip = ip_addr(ip);
+		unsigned char	*pip2 = ip_addr(ip2);
+		unsigned char	*pdst = ip_addr(dst);
+
+		while (nb-- > 0)
+			pdst[nb] = pip[nb] & pip2[nb];
+	}
+	ip_bits(dst) = Max(ip_bits(ip), ip_bits(ip2));
+
+	ip_family(dst) = ip_family(ip);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
+
+	PG_RETURN_INET_P(dst);
+}
+
+
+Datum
+inetor(PG_FUNCTION_ARGS)
+{
+	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip2 = PG_GETARG_INET_P(1);
+	inet	   *dst;
+
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+
+	if (ip_family(ip) != ip_family(ip2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("mismatch in address family (%d) != (%d)",
+						ip_family(ip), ip_family(ip2))));
+	else
+	{
+		int nb = ip_addrsize(ip);
+		unsigned char	*pip = ip_addr(ip);
+		unsigned char	*pip2 = ip_addr(ip2);
+		unsigned char	*pdst = ip_addr(dst);
+
+		while (nb-- > 0)
+			pdst[nb] = pip[nb] | pip2[nb];
+	}
+	ip_bits(dst) = Max(ip_bits(ip), ip_bits(ip2));
+
+	ip_family(dst) = ip_family(ip);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
+
+	PG_RETURN_INET_P(dst);
+}
+
+
+static Datum
+internal_inetpl(inet *ip, int64 plus)
+{
+	inet	   *dst;
+
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+
+	{
+		int nb = ip_addrsize(ip);
+		unsigned char	*pip = ip_addr(ip);
+		unsigned char	*pdst = ip_addr(dst);
+		int carry = 0;
+
+		while (nb-- > 0)
+		{
+			pdst[nb] = carry = pip[nb] + plus + carry;
+			plus /= 0x100;		/* process next byte */
+			carry /= 0x100;		/* remove low byte */
+			/* Overflow on high byte? */
+			if (nb == 0 && (plus != 0 || carry != 0))
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("result out of range")));
+		}
+	}
+	ip_bits(dst) = ip_bits(ip);
+
+	ip_family(dst) = ip_family(ip);
+	VARATT_SIZEP(dst) = VARHDRSZ +
+		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
+		ip_addrsize(dst);
+
+	PG_RETURN_INET_P(dst);
+}
+
+
+Datum
+inetpl(PG_FUNCTION_ARGS)
+{
+	inet   *ip = PG_GETARG_INET_P(0);
+	int64	plus = PG_GETARG_INT64(1);
+
+	return internal_inetpl(ip, plus);
+}
+
+
+Datum
+inetmi_int8(PG_FUNCTION_ARGS)
+{
+	inet   *ip = PG_GETARG_INET_P(0);
+	int64	plus = PG_GETARG_INT64(1);
+
+	return internal_inetpl(ip, -plus);
+}
+
+
+Datum
+inetmi(PG_FUNCTION_ARGS)
+{
+	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *ip2 = PG_GETARG_INET_P(1);
+	int64		res = 0;
+
+	if (ip_family(ip) != ip_family(ip2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("mismatch in address family (%d) != (%d)",
+						ip_family(ip), ip_family(ip2))));
+	else
+	{
+		int nb = ip_addrsize(ip);
+		int	byte = 0;
+		unsigned char	*pip = ip_addr(ip);
+		unsigned char	*pip2 = ip_addr(ip2);
+
+		while (nb-- > 0)
+		{
+			/*
+			 *	Error if overflow on last byte.  This test is tricky
+			 *	because if the subtraction == 128 and res is negative, or
+			 *	if subtraction == -128 and res is positive, the result
+			 *	would still fit in int64.
+			 */
+			if (byte + 1 == sizeof(int64) &&
+				(pip[nb] - pip2[nb] >= 128 + (res < 0) ||
+				 pip[nb] - pip2[nb] <= -128 - (res > 0)))
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("result out of range")));
+			if (byte >= sizeof(int64))
+			{
+				/* Error if bytes beyond int64 length differ. */
+				if (pip[nb] != pip2[nb])
+					ereport(ERROR,
+							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+							 errmsg("result out of range")));
+			}
+			else
+				res += (int64)(pip[nb] - pip2[nb]) << (byte * 8);
+
+			byte++;
+		}
+	}
+
+	PG_RETURN_INT64(res);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.272 2006/01/26 02:35:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.273 2006/02/11 03:32:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -734,6 +734,12 @@ extern Datum inet_client_addr(PG_FUNCTION_ARGS);
 extern Datum inet_client_port(PG_FUNCTION_ARGS);
 extern Datum inet_server_addr(PG_FUNCTION_ARGS);
 extern Datum inet_server_port(PG_FUNCTION_ARGS);
+extern Datum inetnot(PG_FUNCTION_ARGS);
+extern Datum inetand(PG_FUNCTION_ARGS);
+extern Datum inetor(PG_FUNCTION_ARGS);
+extern Datum inetpl(PG_FUNCTION_ARGS);
+extern Datum inetmi_int8(PG_FUNCTION_ARGS);
+extern Datum inetmi(PG_FUNCTION_ARGS);
 
 /* mac.c */
 extern Datum macaddr_in(PG_FUNCTION_ARGS);

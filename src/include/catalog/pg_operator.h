@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.138 2006/01/26 02:35:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.139 2006/02/11 03:32:39 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -652,6 +652,15 @@ DATA(insert OID = 933  (  ">>"	   PGNSP PGUID b f 869 869	 16 931		0	 0	  0   0 
 #define OID_INET_SUP_OP				  933
 DATA(insert OID = 934  (  ">>="    PGNSP PGUID b f 869 869	 16 932		0	 0	  0   0   0 network_supeq - - ));
 #define OID_INET_SUPEQ_OP				934
+
+DATA(insert OID = 2634 (  "~"	   PGNSP PGUID l f	0 869 869 0 0 0 0 0 0 inetnot - - ));
+DATA(insert OID = 2635 (  "&"	   PGNSP PGUID b f	869 869 869 0 0 0 0 0 0 inetand - - ));
+DATA(insert OID = 2636 (  "|"	   PGNSP PGUID b f	869 869 869 0 0 0 0 0 0 inetor - - ));
+DATA(insert OID = 2637 (  "+"	   PGNSP PGUID b f	869 20 869 2638 0 0 0 0 0 inetpl - - ));
+DATA(insert OID = 2638 (  "+"	   PGNSP PGUID b f	20 869 869 2637 0 0 0 0 0 int8pl_inet - - ));
+DATA(insert OID = 2639 (  "-"	   PGNSP PGUID b f	869 20 869 0 0 0 0 0 0 inetmi_int8 - - ));
+DATA(insert OID = 2640 (  "-"	   PGNSP PGUID b f	869 869 20 0 0 0 0 0 0 inetmi - - ));
+
 
 /* case-insensitive LIKE hacks */
 DATA(insert OID = 1625 (  "~~*"   PGNSP PGUID b f  19	25	16 0 1626 0 0 0 0 nameiclike iclikesel iclikejoinsel ));

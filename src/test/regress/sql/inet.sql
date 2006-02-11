@@ -62,6 +62,14 @@ CREATE INDEX inet_idx1 ON inet_tbl(i);
 SET enable_seqscan TO off;
 SELECT * FROM inet_tbl WHERE i<<'192.168.1.0/24'::cidr;
 SELECT * FROM inet_tbl WHERE i<<='192.168.1.0/24'::cidr;
+
+SELECT ~i FROM inet_tbl;
+SELECT i & c FROM inet_tbl;
+SELECT i | c FROM inet_tbl;
+SELECT i + 500 FROM inet_tbl;
+SELECT i - 500 FROM inet_tbl;
+SELECT i - c FROM inet_tbl;
+
 SET enable_seqscan TO on;
 DROP INDEX inet_idx1;
 
