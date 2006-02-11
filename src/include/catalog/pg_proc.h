@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.395 2006/02/11 03:32:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.396 2006/02/11 20:39:58 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2297,7 +2297,7 @@ DESCR("bitwise or");
 DATA(insert OID = 1675 (  bitxor			PGNSP PGUID 12 f f t f i 2 1560 "1560 1560" _null_ _null_ _null_	bitxor - _null_ ));
 DESCR("bitwise exclusive or");
 DATA(insert OID = 1676 (  bitnot			PGNSP PGUID 12 f f t f i 1 1560 "1560" _null_ _null_ _null_ bitnot - _null_ ));
-DESCR("bitwise negation");
+DESCR("bitwise not");
 DATA(insert OID = 1677 (  bitshiftleft		PGNSP PGUID 12 f f t f i 2 1560 "1560 23" _null_ _null_ _null_	bitshiftleft - _null_ ));
 DESCR("bitwise left shift");
 DATA(insert OID = 1678 (  bitshiftright		PGNSP PGUID 12 f f t f i 2 1560 "1560 23" _null_ _null_ _null_	bitshiftright - _null_ ));
@@ -2423,28 +2423,28 @@ DATA(insert OID = 1715 (  cidr				PGNSP PGUID 12 f f t f i 1 650 "869" _null_ _n
 DESCR("coerce inet to cidr");
 
 DATA(insert OID = 2196 (  inet_client_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_ _null_ _null_	inet_client_addr - _null_ ));
-DESCR("INET address of the client");
+DESCR("inet address of the client");
 DATA(insert OID = 2197 (  inet_client_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_ _null_ _null_  inet_client_port - _null_ ));
 DESCR("client's port number for this connection");
 DATA(insert OID = 2198 (  inet_server_addr		PGNSP PGUID 12 f f f f s 0 869 "" _null_ _null_ _null_	inet_server_addr - _null_ ));
-DESCR("INET address of the server");
+DESCR("inet address of the server");
 DATA(insert OID = 2199 (  inet_server_port		PGNSP PGUID 12 f f f f s 0 23 "" _null_ _null_ _null_  inet_server_port - _null_ ));
 DESCR("server's port number for this connection");
 
 DATA(insert OID = 2627 (  inetnot			PGNSP PGUID 12 f f t f i 1 869 "869" _null_ _null_ _null_	inetnot - _null_ ));
-DESCR("binary NOT");
+DESCR("bitwise not");
 DATA(insert OID = 2628 (  inetand			PGNSP PGUID 12 f f t f i 2 869 "869 869" _null_ _null_ _null_	inetand - _null_ ));
-DESCR("binary AND");
+DESCR("bitwise and");
 DATA(insert OID = 2629 (  inetor			PGNSP PGUID 12 f f t f i 2 869 "869 869" _null_ _null_ _null_	inetor - _null_ ));
-DESCR("binary OR");
+DESCR("bitwise or");
 DATA(insert OID = 2630 (  inetpl			PGNSP PGUID 12 f f t f i 2 869 "869 20" _null_ _null_ _null_	inetpl - _null_ ));
-DESCR("add integer to INET value");
-DATA(insert OID = 2631 ( int8pl_inet		PGNSP PGUID 14 f f t f i 2 869 "20 869" _null_ _null_ _null_	"select $2 + $1" - _null_ ));
-DESCR("add integer to INET value");
+DESCR("add integer to inet value");
+DATA(insert OID = 2631 (  int8pl_inet		PGNSP PGUID 14 f f t f i 2 869 "20 869" _null_ _null_ _null_	"select $2 + $1" - _null_ ));
+DESCR("add integer to inet value");
 DATA(insert OID = 2632 (  inetmi_int8		PGNSP PGUID 12 f f t f i 2 869 "869 20" _null_ _null_ _null_	inetmi_int8 - _null_ ));
-DESCR("subtract integer from INET value");
+DESCR("subtract integer from inet value");
 DATA(insert OID = 2633 (  inetmi			PGNSP PGUID 12 f f t f i 2 20 "869 869" _null_ _null_ _null_	inetmi - _null_ ));
-DESCR("subtract INET values");
+DESCR("subtract inet values");
 
 DATA(insert OID = 1686 ( numeric			PGNSP PGUID 12 f f t f i 1 1700 "25" _null_ _null_ _null_ text_numeric - _null_ ));
 DESCR("(internal)");

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.64 2006/02/11 03:32:39 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.65 2006/02/11 20:39:58 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -27,7 +27,7 @@ static int32 network_cmp_internal(inet *a1, inet *a2);
 static int	bitncmp(void *l, void *r, int n);
 static bool addressOK(unsigned char *a, int bits, int family);
 static int	ip_addrsize(inet *inetptr);
-static Datum internal_inetpl(inet *ip, int64 iarg);
+static inet *internal_inetpl(inet *ip, int64 addend);
 
 /*
  *	Access macros.
@@ -1292,8 +1292,7 @@ inetand(PG_FUNCTION_ARGS)
 	if (ip_family(ip) != ip_family(ip2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("mismatch in address family (%d) != (%d)",
-						ip_family(ip), ip_family(ip2))));
+				 errmsg("cannot AND inet values of different sizes")));
 	else
 	{
 		int nb = ip_addrsize(ip);
@@ -1327,8 +1326,7 @@ inetor(PG_FUNCTION_ARGS)
 	if (ip_family(ip) != ip_family(ip2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("mismatch in address family (%d) != (%d)",
-						ip_family(ip), ip_family(ip2))));
+				 errmsg("cannot OR inet values of different sizes")));
 	else
 	{
 		int nb = ip_addrsize(ip);
@@ -1350,8 +1348,8 @@ inetor(PG_FUNCTION_ARGS)
 }
 
 
-static Datum
-internal_inetpl(inet *ip, int64 plus)
+static inet *
+internal_inetpl(inet *ip, int64 addend)
 {
 	inet	   *dst;
 
@@ -1365,15 +1363,31 @@ internal_inetpl(inet *ip, int64 plus)
 
 		while (nb-- > 0)
 		{
-			pdst[nb] = carry = pip[nb] + plus + carry;
-			plus /= 0x100;		/* process next byte */
-			carry /= 0x100;		/* remove low byte */
-			/* Overflow on high byte? */
-			if (nb == 0 && (plus != 0 || carry != 0))
-				ereport(ERROR,
-						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("result out of range")));
+			carry = pip[nb] + (int) (addend & 0xFF) + carry;
+			pdst[nb] = (unsigned char) (carry & 0xFF);
+			carry >>= 8;
+			/*
+			 * We have to be careful about right-shifting addend because
+			 * right-shift isn't portable for negative values, while
+			 * simply dividing by 256 doesn't work (the standard rounding
+			 * is in the wrong direction, besides which there may be machines
+			 * out there that round the wrong way).  So, explicitly clear
+			 * the low-order byte to remove any doubt about the correct
+			 * result of the division, and then divide rather than shift.
+			 */
+			addend &= ~((int64) 0xFF);
+			addend /= 0x100;
 		}
+		/*
+		 * At this point we should have addend and carry both zero if
+		 * original addend was >= 0, or addend -1 and carry 1 if original
+		 * addend was < 0.  Anything else means overflow.
+		 */
+		if (!((addend == 0 && carry == 0) ||
+			  (addend == -1 && carry == 1)))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("result out of range")));
 	}
 	ip_bits(dst) = ip_bits(ip);
 
@@ -1382,7 +1396,7 @@ internal_inetpl(inet *ip, int64 plus)
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
 		ip_addrsize(dst);
 
-	PG_RETURN_INET_P(dst);
+	return dst;
 }
 
 
@@ -1390,9 +1404,9 @@ Datum
 inetpl(PG_FUNCTION_ARGS)
 {
 	inet   *ip = PG_GETARG_INET_P(0);
-	int64	plus = PG_GETARG_INT64(1);
+	int64	addend = PG_GETARG_INT64(1);
 
-	return internal_inetpl(ip, plus);
+	PG_RETURN_INET_P(internal_inetpl(ip, addend));
 }
 
 
@@ -1400,9 +1414,9 @@ Datum
 inetmi_int8(PG_FUNCTION_ARGS)
 {
 	inet   *ip = PG_GETARG_INET_P(0);
-	int64	plus = PG_GETARG_INT64(1);
+	int64	addend = PG_GETARG_INT64(1);
 
-	return internal_inetpl(ip, -plus);
+	PG_RETURN_INET_P(internal_inetpl(ip, -addend));
 }
 
 
@@ -1416,42 +1430,53 @@ inetmi(PG_FUNCTION_ARGS)
 	if (ip_family(ip) != ip_family(ip2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("mismatch in address family (%d) != (%d)",
-						ip_family(ip), ip_family(ip2))));
+				 errmsg("cannot subtract inet values of different sizes")));
 	else
 	{
+		/*
+		 * We form the difference using the traditional complement,
+		 * increment, and add rule, with the increment part being handled
+		 * by starting the carry off at 1.  If you don't think integer
+		 * arithmetic is done in two's complement, too bad.
+		 */
 		int nb = ip_addrsize(ip);
 		int	byte = 0;
 		unsigned char	*pip = ip_addr(ip);
 		unsigned char	*pip2 = ip_addr(ip2);
+		int carry = 1;
 
 		while (nb-- > 0)
 		{
-			/*
-			 *	Error if overflow on last byte.  This test is tricky
-			 *	because if the subtraction == 128 and res is negative, or
-			 *	if subtraction == -128 and res is positive, the result
-			 *	would still fit in int64.
-			 */
-			if (byte + 1 == sizeof(int64) &&
-				(pip[nb] - pip2[nb] >= 128 + (res < 0) ||
-				 pip[nb] - pip2[nb] <= -128 - (res > 0)))
-				ereport(ERROR,
-						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("result out of range")));
-			if (byte >= sizeof(int64))
+			int		lobyte;
+
+			carry = pip[nb] + (~pip2[nb] & 0xFF) + carry;
+			lobyte = carry & 0xFF;
+			if (byte < sizeof(int64))
 			{
-				/* Error if bytes beyond int64 length differ. */
-				if (pip[nb] != pip2[nb])
+				res |= ((int64) lobyte) << (byte * 8);
+			}
+			else
+			{
+				/*
+				 * Input wider than int64: check for overflow.  All bytes
+				 * to the left of what will fit should be 0 or 0xFF,
+				 * depending on sign of the now-complete result.
+				 */
+				if ((res < 0) ? (lobyte != 0xFF) : (lobyte != 0))
 					ereport(ERROR,
 							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 							 errmsg("result out of range")));
 			}
-			else
-				res += (int64)(pip[nb] - pip2[nb]) << (byte * 8);
-
+			carry >>= 8;
 			byte++;
 		}
+
+		/*
+		 * If input is narrower than int64, overflow is not possible, but
+		 * we have to do proper sign extension.
+		 */
+		if (carry == 0 && byte < sizeof(int64))
+			res |= ((int64) -1) << (byte * 8);
 	}
 
 	PG_RETURN_INT64(res);

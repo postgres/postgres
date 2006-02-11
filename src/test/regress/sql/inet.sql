@@ -62,14 +62,29 @@ CREATE INDEX inet_idx1 ON inet_tbl(i);
 SET enable_seqscan TO off;
 SELECT * FROM inet_tbl WHERE i<<'192.168.1.0/24'::cidr;
 SELECT * FROM inet_tbl WHERE i<<='192.168.1.0/24'::cidr;
-
-SELECT ~i FROM inet_tbl;
-SELECT i & c FROM inet_tbl;
-SELECT i | c FROM inet_tbl;
-SELECT i + 500 FROM inet_tbl;
-SELECT i - 500 FROM inet_tbl;
-SELECT i - c FROM inet_tbl;
-
 SET enable_seqscan TO on;
 DROP INDEX inet_idx1;
 
+-- simple tests of inet boolean and arithmetic operators
+SELECT i, ~i AS "~i" FROM inet_tbl;
+SELECT i, c, i & c AS "and" FROM inet_tbl;
+SELECT i, c, i | c AS "or" FROM inet_tbl;
+SELECT i, i + 500 AS "i+500" FROM inet_tbl;
+SELECT i, i - 500 AS "i-500" FROM inet_tbl;
+SELECT i, c, i - c AS "minus" FROM inet_tbl;
+SELECT '127.0.0.1'::inet + 257;
+SELECT ('127.0.0.1'::inet + 257) - 257;
+SELECT '127::1'::inet + 257;
+SELECT ('127::1'::inet + 257) - 257;
+SELECT '127.0.0.2'::inet  - ('127.0.0.2'::inet + 500);
+SELECT '127.0.0.2'::inet  - ('127.0.0.2'::inet - 500);
+SELECT '127::2'::inet  - ('127::2'::inet + 500);
+SELECT '127::2'::inet  - ('127::2'::inet - 500);
+-- these should give overflow errors:
+SELECT '127.0.0.1'::inet + 10000000000;
+SELECT '127.0.0.1'::inet - 10000000000;
+SELECT '126::1'::inet - '127::2'::inet;
+SELECT '127::1'::inet - '126::2'::inet;
+-- but not these
+SELECT '127::1'::inet + 10000000000;
+SELECT '127::1'::inet - '127::2'::inet;
