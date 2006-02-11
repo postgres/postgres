@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.6 2005/08/22 19:39:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.7 2006/02/11 22:17:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -105,6 +105,15 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <re
     <xref linkend="SQL-ALTERTABLE" endterm="SQL-ALTERTABLE-TITLE">.
     <command>ALTER INDEX</> is in fact just an alias for the forms
     of <command>ALTER TABLE</> that apply to indexes.
+   </para>
+
+   <para>
+    Indexes are also used internally by constraints, namely by UNIQUE and
+    PRIMARY KEY constraints. If you rename an index that is used internally by
+    a constraint of that type, this constraint will implicitly be renamed as
+    well. On the other hand, if you rename such a constraint, it will
+    implicitly rename its corresponding index such that both objects always
+    have the same name.
    </para>
 
    <para>

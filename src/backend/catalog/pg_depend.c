@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.17 2005/11/22 18:17:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.18 2006/02/11 22:17:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,3 +361,102 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
 
 	return ret;
 }
+
+List* getReferencingOids(Oid refClassId, Oid refObjId, Oid refObjSubId,
+						 Oid classId, DependencyType deptype)
+{
+	ScanKeyData		key[3];
+	SysScanDesc		scan;
+	HeapTuple		tup;
+	Relation		depRel;
+	List		   *list = NIL;
+
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(refClassId));
+
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(refObjId));
+
+	ScanKeyInit(&key[2],
+				Anum_pg_depend_refobjsubid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(refObjSubId));
+
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+							  SnapshotNow, 3, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend	depForm = (Form_pg_depend) GETSTRUCT(tup);
+
+		/* check if the class id is what we want */
+		if (depForm->classid != classId)
+			continue;
+
+		/* check if the DependencyType is what we want */
+		if (depForm->deptype != deptype)
+			continue;
+
+		/* if we are still here, we have found a match */
+		list = lcons_oid(depForm->objid, list);
+		break;
+	}
+	systable_endscan(scan);
+
+	heap_close(depRel, AccessShareLock);
+	return list;
+}
+
+
+List* getDependentOids(Oid classId, Oid objId,
+					   Oid refClassId, DependencyType deptype)
+{
+	ScanKeyData		key[2];
+	SysScanDesc		scan;
+	HeapTuple		tup;
+	Relation		depRel;
+	List		   *list = NIL;
+
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classId));
+
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objId));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend	depForm = (Form_pg_depend) GETSTRUCT(tup);
+
+		/* check if the DependencyType is what we want */
+		if (depForm->deptype != deptype)
+			continue;
+
+		/* check if the referenced class id is what we want */
+		if (depForm->refclassid != refClassId)
+			continue;
+
+		/* if we are still here, we have found a match */
+		list = lcons_oid(depForm->refobjid, list);
+		break;
+	}
+	systable_endscan(scan);
+
+	heap_close(depRel, AccessShareLock);
+	return list;
+}
+

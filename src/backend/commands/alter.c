@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.15 2005/10/15 02:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.16 2006/02/11 22:17:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,10 @@
 
 #include "access/htup.h"
 #include "catalog/catalog.h"
+#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_constraint.h"
 #include "commands/alter.h"
 #include "commands/conversioncmds.h"
 #include "commands/dbcommands.h"
@@ -88,6 +90,7 @@ ExecRenameStmt(RenameStmt *stmt)
 		case OBJECT_INDEX:
 		case OBJECT_COLUMN:
 		case OBJECT_TRIGGER:
+		case OBJECT_CONSTRAINT:
 			{
 				Oid			relid;
 
@@ -109,12 +112,38 @@ ExecRenameStmt(RenameStmt *stmt)
 							AclResult	aclresult;
 
 							aclresult = pg_namespace_aclcheck(namespaceId,
-															  GetUserId(),
-															  ACL_CREATE);
+													GetUserId(), ACL_CREATE);
 							if (aclresult != ACLCHECK_OK)
 								aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 											get_namespace_name(namespaceId));
 
+							/*
+							 *	Do NOT refer to stmt->renameType here because
+							 *	you can also rename an index with ALTER TABLE
+							 */
+							if (get_rel_relkind(relid) == RELKIND_INDEX)
+							{
+								/* see if we depend on a constraint */
+								List* depOids = getDependentOids(
+												RelationRelationId, relid,
+												ConstraintRelationId,
+												DEPENDENCY_INTERNAL);
+
+								/* there should only be one constraint */
+								Assert(list_length(depOids) <= 1);
+								if (list_length(depOids) == 1)
+								{
+										Oid conRelId = linitial_oid(depOids);
+										/*
+										 *	Apply the same name to the
+										 *	constraint and tell it that this
+										 *	is an implicit rename triggered
+										 *	by an "ALTER INDEX" command.
+										 */
+										RenameConstraint(conRelId,
+											stmt->newname, true, "ALTER INDEX");
+								}
+							}
 							renamerel(relid, stmt->newname);
 							break;
 						}
@@ -130,6 +159,52 @@ ExecRenameStmt(RenameStmt *stmt)
 								   stmt->subname,		/* old att name */
 								   stmt->newname);		/* new att name */
 						break;
+					case OBJECT_CONSTRAINT:
+						/* XXX could do extra function renameconstr() - but I
+						 * don't know where it should go */
+						/* renameconstr(relid,
+									 stmt->subname,
+									 stmt->newname); */
+						{
+							List		*depRelOids;
+							ListCell	*l;
+							Oid conId =
+									GetRelationConstraintOid(relid,
+															 stmt->subname);
+							if (!OidIsValid(conId)) {
+								ereport(ERROR,
+										(errcode(ERRCODE_UNDEFINED_OBJECT),
+										 errmsg("constraint with name \"%s\" "
+												"does not exist",
+												stmt->subname)));
+							}
+							RenameConstraint(conId, stmt->newname,
+											 false, NULL);
+							depRelOids = getReferencingOids(
+											ConstraintRelationId, conId, 0,
+											RelationRelationId,
+											DEPENDENCY_INTERNAL);
+							foreach(l, depRelOids)
+							{
+								Oid		depRelOid;
+								Oid		nspOid;
+								depRelOid = lfirst_oid(l);
+								nspOid = get_rel_namespace(depRelOid);
+								if (get_rel_relkind(depRelOid) == RELKIND_INDEX)
+								{
+									ereport(NOTICE,
+											(errmsg("ALTER TABLE / CONSTRAINT will implicitly rename index "
+													"\"%s\" to \"%s\" on table \"%s.%s\"",
+												get_rel_name(depRelOid),
+												stmt->newname,
+												get_namespace_name(nspOid),
+												get_rel_name(relid))));
+									renamerel(depRelOid, stmt->newname);
+								}
+							}
+						}
+						break;
+
 					default:
 						 /* can't happen */ ;
 				}

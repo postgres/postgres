@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.82 2005/12/08 21:35:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.83 2006/02/11 22:17:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -24,6 +24,8 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     <replaceable class="PARAMETER">action</replaceable> [, ... ]
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable class="PARAMETER">new_column</replaceable>
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    ALTER CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> RENAME TO <replaceable class="PARAMETER">new_constraint_name</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
@@ -165,6 +167,18 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <literal>SET STORAGE</> doesn't itself change anything in the table,
       it just sets the strategy to be pursued during future table updates.
       See <xref linkend="storage-toast"> for more information.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ALTER CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> RENAME TO <replaceable class="PARAMETER">new_constraint_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form renames a constraint that is defined on the table. Note that if
+      a constraint is using an index internally (<literal>UNIQUE</> or
+      <literal>PRIMARY KEY</> constraints), the corresponding index will be
+      renamed as well.
      </para>
     </listitem>
    </varlistentry>
