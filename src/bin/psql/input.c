@@ -3,12 +3,12 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.46 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.47 2006/02/11 21:55:35 momjian Exp $
  */
 #include "postgres_fe.h"
 
-#include "input.h"
 #include "pqexpbuffer.h"
+#include "input.h"
 #include "settings.h"
 #include "tab-complete.h"
 #include "common.h"
@@ -90,18 +90,55 @@ gets_interactive(const char *prompt)
 #ifdef USE_READLINE
 	char	   *s;
 
-	static char *prev_hist = NULL;
-
 	if (useReadline)
 		/* On some platforms, readline is declared as readline(char *) */
 		s = readline((char *) prompt);
 	else
 		s = gets_basic(prompt);
 
-	if (useHistory && s && s[0])
+	return s;
+#else
+	return gets_basic(prompt);
+#endif
+}
+
+
+/* Put the line in the history buffer and also add the trailing \n */
+void pgadd_history(char *s, PQExpBuffer history_buf)
+{
+#ifdef USE_READLINE
+
+	int slen;
+	if (useReadline && useHistory && s && s[0])
+	{
+		slen = strlen(s);
+		if (s[slen-1] == '\n')
+			appendPQExpBufferStr(history_buf, s);
+		else
+		{
+			appendPQExpBufferStr(history_buf, s);
+			appendPQExpBufferChar(history_buf, '\n');
+		}
+	}	
+#endif	
+}
+
+
+/* Feed the contents of the history buffer to readline */
+void pgflush_history(PQExpBuffer history_buf)
+{
+#ifdef USE_READLINE	
+	char *s;
+	static char *prev_hist;
+	int slen, i;
+	
+	if (useReadline && useHistory )
 	{
 		enum histcontrol HC;
-
+		
+		s = history_buf->data;
+		prev_hist = NULL;
+			
 		HC = GetHistControlConfig();
 
 		if (((HC & hctl_ignorespace) && s[0] == ' ') ||
@@ -112,17 +149,27 @@ gets_interactive(const char *prompt)
 		else
 		{
 			free(prev_hist);
+			slen = strlen(s);
+			/* Trim the trailing \n's */
+			for (i = slen-1; i >= 0 && s[i] == '\n'; i--)
+				;
+			s[i + 1] = '\0';
 			prev_hist = pg_strdup(s);
 			add_history(s);
 		}
+		
+		resetPQExpBuffer(history_buf);
 	}
-
-	return s;
-#else
-	return gets_basic(prompt);
 #endif
 }
 
+void pgclear_history(PQExpBuffer history_buf)
+{
+#ifdef USE_READLINE	
+	if (useReadline && useHistory)
+		resetPQExpBuffer(history_buf);
+#endif
+}
 
 
 /*
@@ -156,6 +203,30 @@ gets_fromFile(FILE *source)
 	return NULL;
 }
 
+
+static void encode_history()
+{
+	HIST_ENTRY *cur_hist;
+	char *cur_ptr;
+
+	for (history_set_pos(0), cur_hist = current_history();
+		 cur_hist; cur_hist = next_history())
+		for (cur_ptr = cur_hist->line; *cur_ptr; cur_ptr++)
+			if (*cur_ptr == '\n')
+				*cur_ptr = '\0';
+}
+
+static void decode_history()
+{
+	HIST_ENTRY *cur_hist;
+	char *cur_ptr;
+
+	for (history_set_pos(0), cur_hist = current_history();
+		 cur_hist; cur_hist = next_history())
+		for (cur_ptr = cur_hist->line; *cur_ptr; cur_ptr++)
+			if (*cur_ptr == '\0')
+				*cur_ptr = '\n';
+}
 
 
 /*
@@ -197,6 +268,8 @@ initializeInput(int flags)
 
 		if (psql_history)
 			read_history(psql_history);
+			
+		decode_history();
 	}
 #endif
 
@@ -215,6 +288,7 @@ saveHistory(char *fname)
 #ifdef USE_READLINE
 	if (useHistory && fname)
 	{
+		encode_history();		
 		if (write_history(fname) == 0)
 			return true;
 

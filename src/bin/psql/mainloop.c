@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.69 2005/12/18 02:17:16 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.70 2006/02/11 21:55:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -37,6 +37,7 @@ MainLoop(FILE *source)
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
 	PQExpBuffer previous_buf;	/* if there isn't anything in the new buffer
 								 * yet, use this one for \e, etc. */
+	PQExpBuffer history_buf;
 	char	   *line;			/* current line of input */
 	int			added_nl_pos;
 	bool		success;
@@ -66,7 +67,9 @@ MainLoop(FILE *source)
 
 	query_buf = createPQExpBuffer();
 	previous_buf = createPQExpBuffer();
-	if (!query_buf || !previous_buf)
+	history_buf = createPQExpBuffer();
+
+	if (!query_buf || !previous_buf || !history_buf)
 	{
 		psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
@@ -90,7 +93,7 @@ MainLoop(FILE *source)
 				successResult = EXIT_USER;
 				break;
 			}
-
+			pgclear_history(history_buf);			
 			cancel_pressed = false;
 		}
 
@@ -106,6 +109,8 @@ MainLoop(FILE *source)
 			count_eof = 0;
 			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
+			if (pset.cur_cmd_interactive)
+				pgclear_history(history_buf);			
 
 			if (pset.cur_cmd_interactive)
 				putc('\n', stdout);
@@ -138,11 +143,15 @@ MainLoop(FILE *source)
 			psql_scan_reset(scan_state);
 			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
+			
+			if (pset.cur_cmd_interactive)
+				/*
+				 *	Pass all the contents of history_buf to readline
+				 *	and free the history buffer.
+				 */
+				pgflush_history(history_buf);
 		}
-
-		/*
-		 * otherwise, get another line
-		 */
+		/* otherwise, get another line */
 		else if (pset.cur_cmd_interactive)
 		{
 			/* May need to reset prompt, eg after \r command */
@@ -212,7 +221,11 @@ MainLoop(FILE *source)
 		 */
 		psql_scan_setup(scan_state, line, strlen(line));
 		success = true;
-
+		
+		if (pset.cur_cmd_interactive)
+			/* Put current line in the history buffer */
+			pgadd_history(line, history_buf);
+		
 		while (success || !die_on_error)
 		{
 			PsqlScanResult scan_result;
@@ -287,6 +300,13 @@ MainLoop(FILE *source)
 				scan_result == PSCAN_EOL)
 				break;
 		}
+		
+		if (pset.cur_cmd_interactive && prompt_status != PROMPT_CONTINUE)
+			/*
+			 *	Pass all the contents of history_buf to readline
+			 *	and free the history buffer.
+			 */
+			pgflush_history(history_buf);
 
 		psql_scan_finish(scan_state);
 		free(line);
@@ -333,6 +353,7 @@ MainLoop(FILE *source)
 
 	destroyPQExpBuffer(query_buf);
 	destroyPQExpBuffer(previous_buf);
+	destroyPQExpBuffer(history_buf);
 
 	psql_scan_destroy(scan_state);
 
