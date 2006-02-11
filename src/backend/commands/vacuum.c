@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.321 2006/01/18 20:35:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.322 2006/02/11 16:59:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -719,7 +719,8 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	/* overwrite the existing statistics in the tuple */
 	pgcform = (Form_pg_class) GETSTRUCT(&rtup);
 	pgcform->relpages = (int32) num_pages;
-	pgcform->reltuples = (float4) num_tuples;
+    if (num_tuples >= 0 )
+    	pgcform->reltuples = (float4) num_tuples;
 	pgcform->relhasindex = hasindex;
 
 	/*
@@ -2961,15 +2962,18 @@ scan_index(Relation indrel, double num_tuples)
 	if (!stats)
 		return;
 
-	/* now update statistics in pg_class */
+	/* now update statistics in pg_class 
+     * we use the number of tuples from the table because we have not
+     * actually scanned the index, so don't know the number of tuples in index
+     */
 	vac_update_relstats(RelationGetRelid(indrel),
-						stats->num_pages, stats->num_index_tuples,
+						stats->num_pages, num_tuples,
 						false);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 					RelationGetRelationName(indrel),
-					stats->num_index_tuples,
+					num_tuples,
 					stats->num_pages),
 	errdetail("%u index pages have been deleted, %u are currently reusable.\n"
 			  "%s.",

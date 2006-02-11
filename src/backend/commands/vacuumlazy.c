@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.63 2005/11/22 18:17:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.64 2006/02/11 16:59:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -639,16 +639,19 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 	if (!stats)
 		return;
 
-	/* now update statistics in pg_class */
+	/* now update statistics in pg_class
+     * we use the number of tuples from the table because we have not
+     * actually scanned the index, so don't know the number of tuples in index
+     */
 	vac_update_relstats(RelationGetRelid(indrel),
 						stats->num_pages,
-						stats->num_index_tuples,
+						vacrelstats->rel_tuples, 
 						false);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 					RelationGetRelationName(indrel),
-					stats->num_index_tuples,
+					vacrelstats->rel_tuples,
 					stats->num_pages),
 	errdetail("%u index pages have been deleted, %u are currently reusable.\n"
 			  "%s.",

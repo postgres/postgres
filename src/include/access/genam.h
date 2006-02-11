@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.54 2005/12/03 05:51:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.55 2006/02/11 16:59:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,8 @@ typedef struct IndexBulkDeleteResult
 	BlockNumber num_pages;		/* pages remaining in index */
 	BlockNumber pages_removed;	/* # removed by bulk-delete operation */
 	double		num_index_tuples;		/* tuples remaining */
+                                /* should set to -1 if index not scanned */
+                                /*   because no records to delete        */
 	double		tuples_removed; /* # removed by bulk-delete operation */
 	BlockNumber pages_deleted;	/* # unused pages in index */
 	BlockNumber pages_free;		/* # pages available for reuse */
