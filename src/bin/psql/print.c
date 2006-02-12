@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.82 2006/02/10 22:29:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.83 2006/02/12 02:56:21 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -573,11 +573,15 @@ print_aligned_text(const char *title, const char *const * headers,
 			for (j = 0; j < col_count; j++)
 			{
 				struct lineptr *this_line = col_lineptrs[j] + line_count;
+				bool	finalspaces = (opt_border == 2 || j != col_count-1);
+
 				if (complete[j])  /* Just print spaces... */
-					fprintf(fout, "%*s", widths[j], "");
+				{
+					if (finalspaces)
+						fprintf(fout, "%*s", widths[j], "");
+				}
 				else
 				{
-
 					/* content */
 					if (opt_align[j] == 'r')
 					{
@@ -602,7 +606,7 @@ print_aligned_text(const char *title, const char *const * headers,
 					}
 					else
 						fprintf(fout, "%-s%*s", this_line->ptr,
-								widths[j] - this_line->width, "");
+								finalspaces ? (widths[j] - this_line->width) : 0, "");
 					/* If at the right height, done this col */
 					if (line_count == heights[j]-1 || !this_line[1].ptr)
 					{
