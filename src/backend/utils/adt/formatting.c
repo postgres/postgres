@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.104 2006/02/12 04:44:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.105 2006/02/12 19:52:06 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -3720,15 +3720,16 @@ NUM_prepare_locale(NUMProc *Np)
 		else
 			Np->L_negative_sign = "-";
 
-		if (lconv->positive_sign && *lconv->positive_sign)
+		/* Might be "" */
+		if (lconv->positive_sign)
 			Np->L_positive_sign = lconv->positive_sign;
 		else
 			Np->L_positive_sign = "+";
 
 		/*
-		 * Number thousands separator
+		 * Number thousands separator (might be "")
 		 */
-		if (lconv->thousands_sep && *lconv->thousands_sep)
+		if (lconv->thousands_sep)
 			Np->L_thousands_sep = lconv->thousands_sep;
 		else
 			Np->L_thousands_sep = ",";
