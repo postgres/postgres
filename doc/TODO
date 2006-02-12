@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Feb 12 01:50:38 EST 2006
+Last updated:		Sun Feb 12 14:13:10 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -443,7 +443,7 @@ SQL Commands
 
 	o %Have ALTER TABLE RENAME rename SERIAL sequence names
 	o Add ALTER DOMAIN to modify the underlying data type
-	o -Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
+	o %Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
 	o %Allow ALTER TABLE to change constraint deferrability and actions
 	o Add missing object types for ALTER ... SET SCHEMA
 	o Allow ALTER TABLESPACE to move to different directories
