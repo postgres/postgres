@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.47 2006/02/11 21:55:35 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.48 2006/02/12 05:24:38 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -26,6 +26,15 @@ static bool useReadline;
 static bool useHistory;
 char	   *psql_history;
 
+/*
+ *	Preserve newlines in saved queries by mapping '\n' to NL_IN_HISTORY
+ *
+ *	It is assumed NL_IN_HISTORY will never be entered by the user
+ *	nor appear inside a multi-byte string.  0x00 is not properly
+ *	handled by the readline routines so it can not be used
+ *	for this purpose.
+ */
+#define NL_IN_HISTORY	0x01
 
 enum histcontrol
 {
@@ -213,7 +222,7 @@ static void encode_history()
 		 cur_hist; cur_hist = next_history())
 		for (cur_ptr = cur_hist->line; *cur_ptr; cur_ptr++)
 			if (*cur_ptr == '\n')
-				*cur_ptr = '\0';
+				*cur_ptr = NL_IN_HISTORY;
 }
 
 static void decode_history()
@@ -224,7 +233,7 @@ static void decode_history()
 	for (history_set_pos(0), cur_hist = current_history();
 		 cur_hist; cur_hist = next_history())
 		for (cur_ptr = cur_hist->line; *cur_ptr; cur_ptr++)
-			if (*cur_ptr == '\0')
+			if (*cur_ptr == NL_IN_HISTORY)
 				*cur_ptr = '\n';
 }
 
