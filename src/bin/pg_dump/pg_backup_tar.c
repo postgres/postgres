@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.49 2005/10/15 02:49:38 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.50 2006/02/12 06:11:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,10 @@
 
 #include <ctype.h>
 #include <limits.h>
+
+#ifndef WIN32_CLIENT_ONLY
 #include <unistd.h>
+#endif
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);

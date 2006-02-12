@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.26 2005/05/13 15:21:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.27 2006/02/12 06:11:50 momjian Exp $
 -->
 
 <chapter id="install-win32">
@@ -83,13 +83,27 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.26 2005/05/13 15:21:59 tg
    </varlistentry>
 
    <varlistentry>
+    <term><filename>bin\pg_config\Release\pg_config.exe</filename></term>
     <term><filename>bin\psql\Release\psql.exe</filename></term>
+    <term><filename>bin\pg_dump\Release\pg_dump.exe</filename></term>
+    <term><filename>bin\pg_dump\Release\pg_dumpall.exe</filename></term>
+    <term><filename>bin\pg_dump\Release\pg_restore.exe</filename></term>
+    <term><filename>bin\scripts\Release\clusterdb.exe</filename></term>
+    <term><filename>bin\scripts\Release\createdb.exe</filename></term>
+    <term><filename>bin\scripts\Release\createuser.exe</filename></term>
+    <term><filename>bin\scripts\Release\createlang.exe</filename></term>
+    <term><filename>bin\scripts\Release\dropdb.exe</filename></term>
+    <term><filename>bin\scripts\Release\dropuser.exe</filename></term>
+    <term><filename>bin\scripts\Release\droplang.exe</filename></term>
+    <term><filename>bin\scripts\Release\vacuumdb.exe</filename></term>
+    <term><filename>bin\scripts\Release\reindexdb.exe</filename></term>
     <listitem>
      <para>
-      The <productname>PostgreSQL</productname> interactive terminal
+     The <productname>PostgreSQL</productname> client applications and utilities.
      </para>
     </listitem>
    </varlistentry>
+
   </variablelist>
  </para>
 

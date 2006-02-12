@@ -23,6 +23,9 @@
 #define HAVE_RANDOM
 #endif
 
+#define INT64_FORMAT "%I64d"
+#define HAVE_DECL_VSNPRINTF 1
+
 /* use _snprintf and _vsnprintf */
 #define HAVE_DECL_SNPRINTF 1
 #define snprintf        _snprintf

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.122 2006/02/12 04:04:32 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.123 2006/02/12 06:11:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,10 @@
 #include "dumputils.h"
 
 #include <ctype.h>
+
+#ifndef WIN32_CLIENT_ONLY
 #include <unistd.h>
+#endif
 
 #ifdef WIN32
 #include <io.h>
