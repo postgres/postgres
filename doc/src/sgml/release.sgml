@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.40 2006/02/12 18:23:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.41 2006/02/12 22:36:05 tgl Exp $
 -->
 
 <appendix id="release">
@@ -21,7 +21,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.40 2006/02/12 18:23:
     <title>Migration to version 7.4.12</title>
 
     <para>
-     A dump/restore is not required for those running 7.4.X.
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
     </para>
    </sect2>
 
@@ -30,21 +32,34 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.40 2006/02/12 18:23:
   
 <itemizedlist>
 
-<listitem><para>Fixes for relation cache management and WAL file creation
-(Tom)</para></listitem>
+<listitem><para>Fix potential crash in <command>SET
+SESSION AUTHORIZATION</> (CVE-2006-0553)</para>
+<para>An unprivileged user could crash the server process, resulting in
+momentary denial of service to other users, if the server has been compiled
+with Asserts enabled (which is not the default).
+Thanks to Akio Ishida for reporting this problem.
+</para></listitem>
 
-<listitem><para>Fix rare bug with row visibility logic in self-inserted
-rows (Tom)</para></listitem>
+<listitem><para>Fix bug with row visibility logic in self-inserted
+rows (Tom)</para>
+<para>Under rare circumstances a row inserted by the current command
+could be seen as already valid, when it should not be.  Repairs bug
+created in 7.4.9 and 7.3.11 releases.
+</para></listitem>
+
+<listitem><para>Fix race condition that could lead to <quote>file already
+exists</> errors during pg_clog file creation
+(Tom)</para></listitem>
 
 <listitem><para>Properly check <literal>DOMAIN</> constraints for
 <literal>UNKNOWN</> parameters in prepared statements
 (Neil)</para></listitem>
 
-<listitem><para>Fix <literal>CREATE OPERATOR</> dumps that have
-cross-schema definitions (Tom)</para></listitem>
+<listitem><para>Fix to allow restoring dumps that have cross-schema
+references to custom operators (Tom)</para></listitem>
 
-<listitem><para>Portability fix for <function>finite</> and
-<function>isinf</> (Tom)</para></listitem>
+<listitem><para>Portability fix for testing presence of <function>finite</>
+and <function>isinf</> during configure (Tom)</para></listitem>
 
 </itemizedlist>
 
@@ -2815,7 +2830,9 @@ DROP SCHEMA information_schema CASCADE;
     <title>Migration to version 7.3.14</title>
 
     <para>
-     A dump/restore is not required for those running 7.3.X.
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
     </para>
    </sect2>
 
@@ -2824,7 +2841,30 @@ DROP SCHEMA information_schema CASCADE;
   
 <itemizedlist>
 
-<listitem><para>PLACE HOLDER</para></listitem>
+<listitem><para>Fix potential crash in <command>SET
+SESSION AUTHORIZATION</> (CVE-2006-0553)</para>
+<para>An unprivileged user could crash the server process, resulting in
+momentary denial of service to other users, if the server has been compiled
+with Asserts enabled (which is not the default).
+Thanks to Akio Ishida for reporting this problem.
+</para></listitem>
+
+<listitem><para>Fix bug with row visibility logic in self-inserted
+rows (Tom)</para>
+<para>Under rare circumstances a row inserted by the current command
+could be seen as already valid, when it should not be.  Repairs bug
+created in 7.3.11 release.
+</para></listitem>
+
+<listitem><para>Fix race condition that could lead to <quote>file already
+exists</> errors during pg_clog file creation
+(Tom)</para></listitem>
+
+<listitem><para>Fix to allow restoring dumps that have cross-schema
+references to custom operators (Tom)</para></listitem>
+
+<listitem><para>Portability fix for testing presence of <function>finite</>
+and <function>isinf</> during configure (Tom)</para></listitem>
 
 </itemizedlist>
 
