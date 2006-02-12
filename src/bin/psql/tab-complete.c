@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.146 2006/02/12 03:22:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.147 2006/02/12 07:21:40 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -140,14 +140,16 @@ static const SchemaQuery *completion_squery;	/* to pass a SchemaQuery */
 */
 #define COMPLETE_WITH_QUERY(query) \
 do { completion_charp = query; matches = completion_matches(text, complete_from_query); } while(0)
-#define COMPLETE_WITH_SCHEMA_QUERY(query,addon) \
+#define COMPLETE_WITH_QUERY_ADDON(query, addon) \
+do { completion_charp = query addon; matches = completion_matches(text, complete_from_query); } while(0)
+#define COMPLETE_WITH_SCHEMA_QUERY(query, addon) \
 do { completion_squery = &(query); completion_charp = addon; matches = completion_matches(text, complete_from_schema_query); } while(0)
 #define COMPLETE_WITH_LIST(list) \
 do { completion_charpp = list; matches = completion_matches(text, complete_from_list); } while(0)
 #define COMPLETE_WITH_CONST(string) \
 do { completion_charp = string; matches = completion_matches(text, complete_from_const); } while(0)
-#define COMPLETE_WITH_ATTR(table) \
-do {completion_charp = Query_for_list_of_attributes; completion_info_charp = table; matches = completion_matches(text, complete_from_query); } while(0)
+#define COMPLETE_WITH_ATTR(table, addon) \
+do {completion_charp = Query_for_list_of_attributes addon; completion_info_charp = table; matches = completion_matches(text, complete_from_query); } while(0)
 
 /*
  * Assembly instructions for schema queries
@@ -754,11 +756,25 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
 			 (pg_strcasecmp(prev_wd, "ALTER") == 0 ||
 			  pg_strcasecmp(prev_wd, "RENAME") == 0))
-		COMPLETE_WITH_ATTR(prev2_wd);
+		COMPLETE_WITH_ATTR(prev2_wd, " UNION SELECT 'COLUMN'");
 
+	/* If we have TABLE <sth> ALTER COLUMN|RENAME COLUMN, provide list of columns */
+	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 (pg_strcasecmp(prev2_wd, "ALTER") == 0 ||
+			  pg_strcasecmp(prev2_wd, "RENAME") == 0) &&
+			 pg_strcasecmp(prev_wd, "COLUMN") == 0)
+		COMPLETE_WITH_ATTR(prev3_wd, "");
+  
 	/* ALTER TABLE xxx RENAME yyy */
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "RENAME") == 0 &&
+			 pg_strcasecmp(prev_wd, "TO") != 0)
+		COMPLETE_WITH_CONST("TO");
+
+	/* ALTER TABLE xxx RENAME COLUMN yyy */
+	else if (pg_strcasecmp(prev5_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "RENAME") == 0 &&
+			 pg_strcasecmp(prev2_wd, "COLUMN") == 0 &&
 			 pg_strcasecmp(prev_wd, "TO") != 0)
 		COMPLETE_WITH_CONST("TO");
 
@@ -775,7 +791,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "DROP") == 0 &&
 			 pg_strcasecmp(prev_wd, "COLUMN") == 0)
-		COMPLETE_WITH_ATTR(prev3_wd);
+		COMPLETE_WITH_ATTR(prev3_wd, "");
 	/* ALTER TABLE ALTER [COLUMN] <foo> */
 	else if ((pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			  pg_strcasecmp(prev2_wd, "COLUMN") == 0) ||
@@ -1021,18 +1037,18 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "ON") == 0)
 	{
 		if (find_open_parenthesis(end))
-			COMPLETE_WITH_ATTR(prev_wd);
+			COMPLETE_WITH_ATTR(prev_wd, "");
 		else
 			COMPLETE_WITH_CONST("(");      
 	}
 	else if (pg_strcasecmp(prev5_wd, "INDEX") == 0 &&
 			pg_strcasecmp(prev3_wd, "ON") == 0 &&
 			pg_strcasecmp(prev_wd, "(") == 0)
-		COMPLETE_WITH_ATTR(prev2_wd);
+		COMPLETE_WITH_ATTR(prev2_wd, "");
 	/* same if you put in USING */
 	else if (pg_strcasecmp(prev4_wd, "ON") == 0 &&
 			 pg_strcasecmp(prev2_wd, "USING") == 0)
-		COMPLETE_WITH_ATTR(prev3_wd);
+		COMPLETE_WITH_ATTR(prev3_wd, "");
 	/* Complete USING with an index method */
 	else if (pg_strcasecmp(prev_wd, "USING") == 0)
 	{
@@ -1420,7 +1436,7 @@ psql_completion(char *text, int start, int end)
 	else if (rl_line_buffer[start - 1] == '(' &&
 			 pg_strcasecmp(prev3_wd, "INSERT") == 0 &&
 			 pg_strcasecmp(prev2_wd, "INTO") == 0)
-		COMPLETE_WITH_ATTR(prev_wd);
+		COMPLETE_WITH_ATTR(prev_wd, "");
 
 	/*
 	 * Complete INSERT INTO <table> with "VALUES" or "SELECT" or "DEFAULT
@@ -1452,10 +1468,12 @@ psql_completion(char *text, int start, int end)
 
 /* LOCK */
 	/* Complete LOCK [TABLE] with a list of tables */
-	else if (pg_strcasecmp(prev_wd, "LOCK") == 0 ||
-			 (pg_strcasecmp(prev_wd, "TABLE") == 0 &&
-			  pg_strcasecmp(prev2_wd, "LOCK") == 0))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+	else if (pg_strcasecmp(prev_wd, "LOCK") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'TABLE'");
+	else if (pg_strcasecmp(prev_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "LOCK") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, "");
 
 	/* For the following, handle the case of a single table only for now */
 
@@ -1498,7 +1516,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev4_wd, "FROM") == 0 &&
 			 pg_strcasecmp(prev2_wd, "ORDER") == 0 &&
 			 pg_strcasecmp(prev_wd, "BY") == 0)
-		COMPLETE_WITH_ATTR(prev3_wd);
+		COMPLETE_WITH_ATTR(prev3_wd, "");
 
 /* PREPARE xx AS */
 	else if (pg_strcasecmp(prev_wd, "AS") == 0 &&
@@ -1639,7 +1657,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "SET") == 0
 			 && pg_strcasecmp(prev2_wd, "SESSION") == 0
 			 && pg_strcasecmp(prev_wd, "AUTHORIZATION") == 0)
-		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
+		COMPLETE_WITH_QUERY_ADDON(Query_for_list_of_roles, " UNION SELECT 'DEFAULT'");
 	/* Complete RESET SESSION with AUTHORIZATION */
 	else if (pg_strcasecmp(prev2_wd, "RESET") == 0 &&
 			 pg_strcasecmp(prev_wd, "SESSION") == 0)
@@ -1706,7 +1724,7 @@ psql_completion(char *text, int start, int end)
 	 * make a list of attributes.
 	 */
 	else if (pg_strcasecmp(prev_wd, "SET") == 0)
-		COMPLETE_WITH_ATTR(prev2_wd);
+		COMPLETE_WITH_ATTR(prev2_wd, "");
 
 /* UPDATE xx SET yy = */
 	else if (pg_strcasecmp(prev2_wd, "SET") == 0 &&
@@ -1763,7 +1781,7 @@ psql_completion(char *text, int start, int end)
 /* WHERE */
 	/* Simple case of the word before the where being the table name */
 	else if (pg_strcasecmp(prev_wd, "WHERE") == 0)
-		COMPLETE_WITH_ATTR(prev2_wd);
+		COMPLETE_WITH_ATTR(prev2_wd, "");
 
 /* ... FROM ... */
 /* TODO: also include SRF ? */
