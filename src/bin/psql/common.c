@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.111 2005/11/22 18:17:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.112 2006/02/12 03:30:21 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -444,6 +444,7 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 	int			clen,
 				slen,
 				i,
+				w,
 			   *qidx,
 			   *scridx,
 				qoffset,
@@ -503,7 +504,11 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 	{
 		qidx[i] = qoffset;
 		scridx[i] = scroffset;
-		scroffset += PQdsplen(&query[qoffset], pset.encoding);
+		w = PQdsplen(&query[qoffset], pset.encoding);
+		/* treat control chars as width 1; see tab hack below */
+		if (w <= 0)
+			w = 1;
+		scroffset += w;
 		qoffset += PQmblen(&query[qoffset], pset.encoding);
 	}
 	qidx[i] = qoffset;
@@ -618,7 +623,12 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 		 */
 		scroffset = 0;
 		for (i = 0; i < msg.len; i += PQmblen(&msg.data[i], pset.encoding))
-			scroffset += PQdsplen(&msg.data[i], pset.encoding);
+		{
+			w = PQdsplen(&msg.data[i], pset.encoding);
+			if (w <= 0)
+				w = 1;
+			scroffset += w;
+		}
 
 		/* Finish and emit the message. */
 		appendPQExpBufferStr(&msg, &wquery[qidx[ibeg]]);
