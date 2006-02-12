@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Feb 11 17:17:13 EST 2006
+Last updated:		Sat Feb 11 22:56:13 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -940,7 +940,7 @@ Vacuum
   index entry) might be slow and unreliable, especially for user-defined
   index functions.
 
-* %Add system view to show free space map contents
+* -Add system view to show free space map contents
 
 
 * Auto-vacuum
