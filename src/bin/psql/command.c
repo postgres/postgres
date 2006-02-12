@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.160 2006/02/12 03:22:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.161 2006/02/12 04:04:32 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -563,7 +563,7 @@ exec_command(const char *cmd,
 		else
 		{
 			expand_tilde(&fname);
-			success = (process_file(fname) == EXIT_SUCCESS);
+			success = (process_file(fname, false) == EXIT_SUCCESS);
 			free(fname);
 		}
 	}
@@ -1435,11 +1435,12 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
  * MainLoop() error code.
  */
 int
-process_file(char *filename)
+process_file(char *filename, bool single_txn)
 {
 	FILE	   *fd;
 	int			result;
 	char	   *oldfilename;
+	PGresult   *res; 
 
 	if (!filename)
 		return EXIT_FAILURE;
@@ -1455,7 +1456,13 @@ process_file(char *filename)
 
 	oldfilename = pset.inputfile;
 	pset.inputfile = filename;
+
+    if (single_txn)
+        res = PSQLexec("BEGIN", false);
 	result = MainLoop(fd);
+    if (single_txn)
+        res = PSQLexec("COMMIT", false);
+
 	fclose(fd);
 	pset.inputfile = oldfilename;
 	return result;

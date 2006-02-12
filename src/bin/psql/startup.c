@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.129 2005/12/18 02:17:16 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.130 2006/02/12 04:04:32 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -76,6 +76,7 @@ struct adhoc_opts
 	char	   *action_string;
 	bool		no_readline;
 	bool		no_psqlrc;
+    bool        single_txn;
 };
 
 static int	parse_version(const char *versionString);
@@ -268,7 +269,7 @@ main(int argc, char *argv[])
 		if (!options.no_psqlrc)
 			process_psqlrc(argv[0]);
 
-		successResult = process_file(options.action_string);
+		successResult = process_file(options.action_string, options.single_txn);
 	}
 
 	/*
@@ -425,6 +426,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"list", no_argument, NULL, 'l'},
 		{"log-file", required_argument, NULL, 'L'},
 		{"no-readline", no_argument, NULL, 'n'},
+		{"single-transaction", no_argument, NULL, '1'},
 		{"output", required_argument, NULL, 'o'},
 		{"port", required_argument, NULL, 'p'},
 		{"pset", required_argument, NULL, 'P'},
@@ -453,7 +455,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 	memset(options, 0, sizeof *options);
 
-	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:HlL:no:p:P:qR:sStT:uU:v:VWxX?",
+	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:HlL:no:p:P:qR:sStT:uU:v:VWxX?1",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -606,6 +608,9 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case 'X':
 				options->no_psqlrc = true;
 				break;
+			case '1':
+				options->single_txn = true;
+				break;
 			case '?':
 				/* Actual help option given */
 				if (strcmp(argv[optind - 1], "-?") == 0 || strcmp(argv[optind - 1], "--help") == 0)
@@ -690,9 +695,9 @@ process_psqlrc_file(char *filename)
 	sprintf(psqlrc, "%s-%s", filename, PG_VERSION);
 
 	if (access(psqlrc, R_OK) == 0)
-		(void) process_file(psqlrc);
+		(void) process_file(psqlrc, false);
 	else if (access(filename, R_OK) == 0)
-		(void) process_file(filename);
+		(void) process_file(filename, false);
 	free(psqlrc);
 }
 

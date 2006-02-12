@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.56 2005/11/01 21:09:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.57 2006/02/12 04:04:32 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -448,6 +448,19 @@
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><option>-1</option></term>
+      <term><option>--single-transaction</option></term>
+      <listitem>
+       <para>
+        Force the restore to execute as a single transaction. Either all
+        SQL statements complete successfully, or no changes are applied. This
+        option also forces --exit-on-error.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
  </refsect1>

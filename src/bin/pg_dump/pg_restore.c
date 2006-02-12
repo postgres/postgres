@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.73 2005/10/15 02:49:39 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.74 2006/02/12 04:04:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,6 +111,7 @@ main(int argc, char **argv)
 		{"use-list", 1, NULL, 'L'},
 		{"username", 1, NULL, 'U'},
 		{"verbose", 0, NULL, 'v'},
+		{"single-transaction", 0, NULL, '1'},
 
 		/*
 		 * the following options don't have an equivalent short option letter,
@@ -142,7 +143,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:n:Op:P:RsS:t:T:uU:vWxX:",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:n:Op:P:RsS:t:T:uU:vWxX:1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -185,9 +186,15 @@ main(int argc, char **argv)
 				opts->tocFile = strdup(optarg);
 				break;
 
+			case 'n':			/* Dump data for this schema only */
+				opts->selTypes = 1;
+				opts->schemaNames = strdup(optarg);
+				break;
+
 			case 'O':
 				opts->noOwner = 1;
 				break;
+
 			case 'p':
 				if (strlen(optarg) != 0)
 					opts->pgport = strdup(optarg);
@@ -221,11 +228,6 @@ main(int argc, char **argv)
 				opts->selTypes = 1;
 				opts->selTable = 1;
 				opts->tableNames = strdup(optarg);
-				break;
-
-			case 'n':			/* Dump data for this schema only */
-				opts->selTypes = 1;
-				opts->schemaNames = strdup(optarg);
 				break;
 
 			case 'u':
@@ -266,6 +268,11 @@ main(int argc, char **argv)
 
 				/* This covers the long options equivalent to -X xxx. */
 			case 0:
+				break;
+
+			case '1':			/* Restore data in a single transaction */
+				opts->single_txn = true;
+				opts->exit_on_error = true;
 				break;
 
 			default:
@@ -394,6 +401,7 @@ usage(const char *progname)
 	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
 			 "                           use SESSION AUTHORIZATION commands instead of\n"
 			 "                           OWNER TO commands\n"));
+	printf(_("  -1, --single-transaction restore as a single transaction\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));

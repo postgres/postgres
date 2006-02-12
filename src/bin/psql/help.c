@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.108 2006/02/12 02:54:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.109 2006/02/12 04:04:32 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -93,6 +93,7 @@ usage(void)
 	printf(_("  -d DBNAME       specify database name to connect to (default: \"%s\")\n"), env);
 	puts(_("  -c COMMAND      run only single command (SQL or internal) and exit"));
 	puts(_("  -f FILENAME     execute commands from file, then exit"));
+	puts(_("  -1 (numeral)    execute command file as a single transaction"));
 	puts(_("  -l              list available databases, then exit"));
 	puts(_("  -v NAME=VALUE   set psql variable NAME to VALUE"));
 	puts(_("  -X              do not read startup file (~/.psqlrc)"));

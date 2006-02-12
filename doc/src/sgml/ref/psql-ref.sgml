@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.158 2006/02/12 02:54:30 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.159 2006/02/12 04:04:32 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -462,6 +462,18 @@ PostgreSQL documentation
       </para>
       </listitem>
     </varlistentry>
+
+     <varlistentry>
+      <term><option>-1</option></term>
+      <term><option>--single-transaction</option></term>
+      <listitem>
+       <para>
+        When psql executes a script with the -f option, this additional option
+        will force the script to execute as a single transaction. Either all
+        SQL statements complete successfully, or no changes are applied. 
+       </para>
+      </listitem>
+     </varlistentry>
 
     <varlistentry>
       <term><option>-?</></term>

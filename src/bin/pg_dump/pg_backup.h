@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.37 2005/10/15 02:49:38 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.38 2006/02/12 04:04:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,8 @@ typedef struct _restoreOptions
 
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
 										 * to stderr */
+    bool        single_txn;
+
 } RestoreOptions;
 
 /*
