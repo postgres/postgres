@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.139 2006/02/11 23:31:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.140 2006/02/12 00:18:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,15 +539,11 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
 	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
 	IndexBulkDeleteResult *result;
-	double		tuples_removed;
-	double		num_index_tuples;
+	double		tuples_removed = 0;
 	OffsetNumber deletable[MaxOffsetNumber];
 	int			ndeletable;
 	Buffer		buf;
 	BlockNumber num_pages;
-
-	tuples_removed = 0;
-	num_index_tuples = 0;
 
 	/*
 	 * The outer loop iterates over index leaf pages, the inner over items on
@@ -566,19 +562,12 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	 * could be stopped on those.
 	 *
 	 * We can skip the scan entirely if there's nothing to delete (indicated
-	 * by callback_state == NULL) and the index isn't partial.  For a partial
-	 * index we must scan in order to derive a trustworthy tuple count.
+	 * by callback_state == NULL).
 	 */
-	if (callback_state || vac_is_partial_index(rel))
-	{
+	if (callback_state)
 		buf = _bt_get_endpoint(rel, 0, false);
-	}
 	else
-	{
-		/* skip scan and set flag for btvacuumcleanup */
 		buf = InvalidBuffer;
-		num_index_tuples = -1;
-	}
 
 	if (BufferIsValid(buf))		/* check for empty index */
 	{
@@ -634,8 +623,6 @@ btbulkdelete(PG_FUNCTION_ARGS)
 						deletable[ndeletable++] = offnum;
 						tuples_removed += 1;
 					}
-					else
-						num_index_tuples += 1;
 				}
 			}
 
@@ -663,7 +650,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 
 	result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 	result->num_pages = num_pages;
-	result->num_index_tuples = num_index_tuples;
+	/* btvacuumcleanup will fill in num_index_tuples */
 	result->tuples_removed = tuples_removed;
 
 	PG_RETURN_POINTER(result);
@@ -687,6 +674,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	BlockNumber *freePages;
 	int			nFreePages,
 				maxFreePages;
+	double		num_index_tuples = 0;
 	BlockNumber pages_deleted = 0;
 	MemoryContext mycontext;
 	MemoryContext oldcontext;
@@ -801,6 +789,12 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			MemoryContextSwitchTo(oldcontext);
 			continue;			/* pagedel released buffer */
 		}
+		else if (P_ISLEAF(opaque))
+		{
+			/* Count the index entries of live leaf pages */
+			num_index_tuples += PageGetMaxOffsetNumber(page) + 1 -
+				P_FIRSTDATAKEY(opaque);
+		}
 		_bt_relbuf(rel, buf);
 	}
 
@@ -847,15 +841,9 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 
 	/* update statistics */
 	stats->num_pages = num_pages;
+	stats->num_index_tuples = num_index_tuples;
 	stats->pages_deleted = pages_deleted;
 	stats->pages_free = nFreePages;
-
-	/* if btbulkdelete skipped the scan, use heap's tuple count */
-	if (stats->num_index_tuples < 0)
-	{
-		Assert(info->num_heap_tuples >= 0);
-		stats->num_index_tuples = info->num_heap_tuples;
-	}
 
 	PG_RETURN_POINTER(stats);
 }
