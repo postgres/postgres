@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.310 2006/02/04 12:50:47 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.311 2006/02/12 22:32:42 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "parser/scansup.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/syslogger.h"
@@ -1707,7 +1708,7 @@ static struct config_string ConfigureNamesString[] =
 		{"client_encoding", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the client's character set encoding."),
 			NULL,
-			GUC_REPORT
+			GUC_IS_NAME | GUC_REPORT
 		},
 		&client_encoding_string,
 		"SQL_ASCII", assign_client_encoding, NULL
@@ -1787,7 +1788,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"default_tablespace", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default tablespace to create tables and indexes in."),
-			gettext_noop("An empty string selects the database's default tablespace.")
+			gettext_noop("An empty string selects the database's default tablespace."),
+		 	GUC_IS_NAME
 		},
 		&default_tablespace,
 		"", assign_default_tablespace, NULL
@@ -1945,7 +1947,7 @@ static struct config_string ConfigureNamesString[] =
 		{"server_encoding", PGC_INTERNAL, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the server (database) character set encoding."),
 			NULL,
-			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&server_encoding_string,
 		"SQL_ASCII", NULL, NULL
@@ -1967,7 +1969,7 @@ static struct config_string ConfigureNamesString[] =
 		{"role", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the current role."),
 			NULL,
-			GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_IS_NAME | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&role_string,
 		"none", assign_role, show_role
@@ -1978,7 +1980,7 @@ static struct config_string ConfigureNamesString[] =
 		{"session_authorization", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the session user name."),
 			NULL,
-			GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
@@ -3988,6 +3990,12 @@ set_config_option(const char *name, const char *value,
 					newval = guc_strdup(elevel, value);
 					if (newval == NULL)
 						return false;
+					/*
+					 * The only sort of "parsing" check we need to do is
+					 * apply truncation if GUC_IS_NAME.
+					 */
+					if (conf->gen.flags & GUC_IS_NAME)
+						truncate_identifier(newval, strlen(newval), true);
 				}
 				else if (conf->reset_val)
 				{

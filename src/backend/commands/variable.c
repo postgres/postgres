@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.115 2005/11/22 18:17:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.116 2006/02/12 22:32:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,7 +586,9 @@ assign_client_encoding(const char *value, bool doit, GucSource source)
  * by the numeric oid, followed by a comma, followed by the role name.
  * This cannot be confused with a plain role name because of the NAMEDATALEN
  * limit on names, so we can tell whether we're being passed an initial
- * role name or a saved/restored value.
+ * role name or a saved/restored value.  (NOTE: we rely on guc.c to have
+ * properly truncated any incoming value, but not to truncate already-stored
+ * values.  See GUC_IS_NAME processing.)
  */
 extern char *session_authorization_string;		/* in guc.c */
 
