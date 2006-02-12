@@ -1,0 +1,19 @@
+-- Adjust this setting to control where the objects get created.
+BEGIN;
+SET search_path = public;
+
+-- Register the function.
+CREATE OR REPLACE FUNCTION pg_freespacemap()
+RETURNS SETOF RECORD
+AS 'MODULE_PATHNAME', 'pg_freespacemap'
+LANGUAGE 'C';
+
+-- Create a view for convenient access.
+CREATE VIEW pg_freespacemap AS
+	SELECT P.* FROM pg_freespacemap() AS P
+ 	(blockid int4, relfilenode oid, reltablespace oid, reldatabase oid, relblocknumber int8, blockfreebytes int4);
+ 
+-- Don't want these to be available at public.
+REVOKE ALL ON FUNCTION pg_freespacemap() FROM PUBLIC;
+REVOKE ALL ON pg_freespacemap FROM PUBLIC;
+COMMIT;

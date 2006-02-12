@@ -1,0 +1,98 @@
+Pg_freespacemap - Real time queries on the free space map (FSM).
+---------------
+
+  This module consists of a C function 'pg_freespacemap()' that returns 
+  a set of records, and a view 'pg_freespacemap' to wrapper the function.
+
+  The module provides the ability to examine the contents of the free space
+  map, without having to restart or rebuild the server with additional
+  debugging code.
+
+  By default public access is REVOKED from both of these, just in case there
+  are security issues lurking.
+
+
+Installation
+------------
+
+  Build and install the main Postgresql source, then this contrib module:
+
+  $ cd contrib/pg_freespacemap
+  $ gmake
+  $ gmake install
+
+
+  To register the functions:
+
+  $ psql -d <database> -f pg_freespacemap.sql
+
+
+Notes
+-----
+
+  The definition of the columns exposed in the view is:
+
+       Column     |  references          | Description
+  ----------------+----------------------+------------------------------------
+   blockid        |                      | Id, 1.. max_fsm_pages
+   relfilenode    | pg_class.relfilenode | Refilenode of the relation.
+   reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
+   reldatabase    | pg_database.oid      | Database for the relation.
+   relblocknumber |                      | Offset of the page in the relation.
+   blockfreebytes |                      | Free bytes in the block/page.
+
+
+  There is one row for each page in the free space map.
+
+  Because the map is shared by all the databases, there are pages from
+  relations not belonging to the current database.
+
+  When the pg_freespacemap view is accessed, internal free space map locks are
+  taken, and a copy of the map data is made for the view to display. 
+  This ensures that the view produces a consistent set of results, while not 
+  blocking normal activity longer than necessary.  Nonetheless there 
+  could be some impact on database performance if this view is read often.
+
+
+Sample output
+-------------
+
+  regression=# \d pg_freespacemap
+      View "public.pg_freespacemap"
+      Column     |  Type   | Modifiers 
+  ---------------+---------+-----------
+  blockid        | integer | 
+  relfilenode    | oid     | 
+  reltablespace  | oid     | 
+  reldatabase    | oid     | 
+  relblocknumber | bigint  | 
+  blockfreebytes | integer | 
+ View definition:
+  SELECT p.blockid, p.relfilenode, p.reltablespace, p.reldatabase, p.relblocknumber, p.blockfreebytes
+    FROM pg_freespacemap() p(blockid integer, relfilenode oid, reltablespace oid, reldatabase oid, relblocknumber bigint, blockfreebytes integer);
+
+  regression=# SELECT c.relname, m.relblocknumber, m.blockfreebytes  
+               FROM pg_freespacemap m INNER JOIN pg_class c 
+               ON c.relfilenode = m.relfilenode LIMIT 10;
+      relname             | relblocknumber | blockfreebytes 
+  ------------------------+----------------+----------------
+  sql_features            |              5 |           2696
+  sql_implementation_info |              0 |           7104
+  sql_languages           |              0 |           8016
+  sql_packages            |              0 |           7376
+  sql_sizing              |              0 |           6032
+  pg_authid               |              0 |           7424
+  pg_toast_2618           |             13 |           4588
+  pg_toast_2618           |             12 |           1680
+  pg_toast_2618           |             10 |           1436
+  pg_toast_2618           |              7 |           1136
+  (10 rows)
+
+  regression=# 
+
+
+Author
+------
+
+  * Mark Kirkwood <markir@paradise.net.nz>
+

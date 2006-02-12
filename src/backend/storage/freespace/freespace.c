@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.50 2005/10/29 00:31:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.51 2006/02/12 03:55:53 momjian Exp $
  *
  *
  * NOTES:
@@ -71,44 +71,6 @@
 #include "storage/shmem.h"
 
 
-/* Initial value for average-request moving average */
-#define INITIAL_AVERAGE ((Size) (BLCKSZ / 32))
-
-/*
- * Number of pages and bytes per allocation chunk.	Indexes can squeeze 50%
- * more pages into the same space because they don't need to remember how much
- * free space on each page.  The nominal number of pages, CHUNKPAGES, is for
- * regular rels, and INDEXCHUNKPAGES is for indexes.  CHUNKPAGES should be
- * even so that no space is wasted in the index case.
- */
-#define CHUNKPAGES	16
-#define CHUNKBYTES	(CHUNKPAGES * sizeof(FSMPageData))
-#define INDEXCHUNKPAGES ((int) (CHUNKBYTES / sizeof(IndexFSMPageData)))
-
-
-/*
- * Typedefs and macros for items in the page-storage arena.  We use the
- * existing ItemPointer and BlockId data structures, which are designed
- * to pack well (they should be 6 and 4 bytes apiece regardless of machine
- * alignment issues).  Unfortunately we can't use the ItemPointer access
- * macros, because they include Asserts insisting that ip_posid != 0.
- */
-typedef ItemPointerData FSMPageData;
-typedef BlockIdData IndexFSMPageData;
-
-#define FSMPageGetPageNum(ptr)	\
-	BlockIdGetBlockNumber(&(ptr)->ip_blkid)
-#define FSMPageGetSpace(ptr)	\
-	((Size) (ptr)->ip_posid)
-#define FSMPageSetPageNum(ptr, pg)	\
-	BlockIdSet(&(ptr)->ip_blkid, pg)
-#define FSMPageSetSpace(ptr, sz)	\
-	((ptr)->ip_posid = (OffsetNumber) (sz))
-#define IndexFSMPageGetPageNum(ptr) \
-	BlockIdGetBlockNumber(ptr)
-#define IndexFSMPageSetPageNum(ptr, pg) \
-	BlockIdSet(ptr, pg)
-
 /*----------
  * During database shutdown, we store the contents of FSM into a disk file,
  * which is re-read during startup.  This way we don't have a startup
@@ -155,63 +117,6 @@ typedef struct FsmCacheRelHeader
 	int32		lastPageCount;	/* pages passed to RecordRelationFreeSpace */
 	int32		storedPages;	/* # of pages stored in arena */
 } FsmCacheRelHeader;
-
-
-/*
- * Shared free-space-map objects
- *
- * The per-relation objects are indexed by a hash table, and are also members
- * of two linked lists: one ordered by recency of usage (most recent first),
- * and the other ordered by physical location of the associated storage in
- * the page-info arena.
- *
- * Each relation owns one or more chunks of per-page storage in the "arena".
- * The chunks for each relation are always consecutive, so that it can treat
- * its page storage as a simple array.	We further insist that its page data
- * be ordered by block number, so that binary search is possible.
- *
- * Note: we handle pointers to these items as pointers, not as SHMEM_OFFSETs.
- * This assumes that all processes accessing the map will have the shared
- * memory segment mapped at the same place in their address space.
- */
-typedef struct FSMHeader FSMHeader;
-typedef struct FSMRelation FSMRelation;
-
-/* Header for whole map */
-struct FSMHeader
-{
-	FSMRelation *usageList;		/* FSMRelations in usage-recency order */
-	FSMRelation *usageListTail; /* tail of usage-recency list */
-	FSMRelation *firstRel;		/* FSMRelations in arena storage order */
-	FSMRelation *lastRel;		/* tail of storage-order list */
-	int			numRels;		/* number of FSMRelations now in use */
-	double		sumRequests;	/* sum of requested chunks over all rels */
-	char	   *arena;			/* arena for page-info storage */
-	int			totalChunks;	/* total size of arena, in chunks */
-	int			usedChunks;		/* # of chunks assigned */
-	/* NB: there are totalChunks - usedChunks free chunks at end of arena */
-};
-
-/*
- * Per-relation struct --- this is an entry in the shared hash table.
- * The hash key is the RelFileNode value (hence, we look at the physical
- * relation ID, not the logical ID, which is appropriate).
- */
-struct FSMRelation
-{
-	RelFileNode key;			/* hash key (must be first) */
-	FSMRelation *nextUsage;		/* next rel in usage-recency order */
-	FSMRelation *priorUsage;	/* prior rel in usage-recency order */
-	FSMRelation *nextPhysical;	/* next rel in arena-storage order */
-	FSMRelation *priorPhysical; /* prior rel in arena-storage order */
-	bool		isIndex;		/* if true, we store only page numbers */
-	Size		avgRequest;		/* moving average of space requests */
-	int			lastPageCount;	/* pages passed to RecordRelationFreeSpace */
-	int			firstChunk;		/* chunk # of my first chunk in arena */
-	int			storedPages;	/* # of pages stored in arena */
-	int			nextPage;		/* index (from 0) to start next search at */
-};
-
 
 int			MaxFSMRelations;	/* these are set by guc.c */
 int			MaxFSMPages;
@@ -1835,6 +1740,17 @@ fsm_current_allocation(FSMRelation *fsmrel)
 		Assert(fsmrel->firstChunk < 0 && fsmrel->storedPages == 0);
 		return 0;
 	}
+}
+
+
+/*
+ * Return the FreeSpaceMap structure for examination.
+ */
+FSMHeader *
+GetFreeSpaceMap(void)
+{
+
+	return FreeSpaceMap;
 }
 
 

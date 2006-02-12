@@ -106,6 +106,10 @@ pg_buffercache -
 	Real time queries on the shared buffer cache
 	by Mark Kirkwood <markir@paradise.net.nz>
 
+pg_freespacemap -
+	Displays the contents of the free space map (FSM)
+	by Mark Kirkwood <markir@paradise.net.nz>
+
 pg_trgm -
 	Functions for determining the similarity of text based on trigram
 	matching.
