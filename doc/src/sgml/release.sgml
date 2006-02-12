@@ -1,9 +1,82 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.20 2006/01/06 03:00:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.21 2006/02/12 18:23:46 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+ 
+  <sect1 id="release-8-0-7">
+   <title>Release 8.0.7</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-02-14</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.6.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.7</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>Fixes for relation cache management and WAL file creation
+(Tom)</para></listitem>
+
+<listitem><para>Properly check <literal>DOMAIN</> constraints for
+<literal>UNKNOWN</> parameters in prepared statements
+(Neil)</para></listitem>
+
+<listitem><para>Change <command>ALTER COLUMN TYPE</> to drop
+<literal>FOREIGN KEY</> constraints before <literal>UNIQUE</> or
+<literal>PRIMARY KEY</> constraints (Nakano Yoshihisa)</para></listitem>
+
+<listitem><para>Fix <literal>CREATE OPERATOR</> dumps that have
+cross-schema definitions (Tom)</para></listitem>
+
+<listitem><para>Allow <application>pg_restore</> to continue after a
+<command>COPY</> failure, rather than treating the remaining statements
+as <command>COPY</> data (Stephen Frost)</para></listitem>
+
+<listitem><para>Fix <application>pg_ctl</> <literal>unregister</> crash
+when the  data directory is not specified (Magnus)</para></listitem>
+
+<listitem><para>Fix <application>ecpg</> crash on AMD64 and PPC
+(Neil)</para></listitem>
+
+<listitem><para>Fix problem with argument passing with error reporting
+in <application>PL/python</> (Neil)</para></listitem>
+
+<listitem><para>Fix <application>PL/perl</>'s handling of locales on
+Win32 to match the backend (Andrew)</para></listitem>
+
+<listitem><para>Fix crash when <literal>log_min_messages</> is set in
+<literal>postgresql.conf</> to <literal>DEBUG5</> on Win32
+(Bruce)</para></listitem>
+
+<listitem><para>Fix <application>pgxs</> <literal>-L</> library path
+specification for Win32 and Cygwin (Bruce)</para></listitem>
+
+<listitem><para>Check that SID is enabled while checking for Win32 admin
+privileges (Magnus)</para></listitem>
+
+<listitem><para>Portability fix for <function>finite</> and
+<function>isinf</> (Tom)</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-8-0-6">
    <title>Release 8.0.6</title>
@@ -2949,6 +3022,52 @@ typedefs (Michael)</para></listitem>
    </sect2>
   </sect1>
  
+  <sect1 id="release-7-4-12">
+   <title>Release 7.4.12</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-02-14</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.11.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.12</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>Fixes for relation cache management and WAL file creation
+(Tom)</para></listitem>
+
+<listitem><para>Fix rare bug with row visibility logic in self-inserted
+rows (Tom)</para></listitem>
+
+<listitem><para>Properly check <literal>DOMAIN</> constraints for
+<literal>UNKNOWN</> parameters in prepared statements
+(Neil)</para></listitem>
+
+<listitem><para>Fix <literal>CREATE OPERATOR</> dumps that have
+cross-schema definitions (Tom)</para></listitem>
+
+<listitem><para>Portability fix for <function>finite</> and
+<function>isinf</> (Tom)</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-11">
    <title>Release 7.4.11</title>
 
@@ -5696,6 +5815,38 @@ DROP SCHEMA information_schema CASCADE;
   </sect3>
   </sect2>
  </sect1>
+ 
+  <sect1 id="release-7-3-14">
+   <title>Release 7.3.14</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-02-14</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.13.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.14</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>PLACE HOLDER</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-7-3-13">
    <title>Release 7.3.13</title>
