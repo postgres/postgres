@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.220 2005/09/27 17:39:32 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.221 2006/02/12 07:29:36 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -536,7 +536,7 @@ df = $(DEPDIR)/$(*F)
 # This converts a .d file in the current directory to a .P file in the .deps
 # subdirectory, with the dummy targets as explained above.
 define postprocess-depend
-@if test ! -d $(DEPDIR); then mkdir $(DEPDIR); fi
+@if test ! -d $(DEPDIR); then mkdir -p $(DEPDIR); fi
 @cp $*.d $(df).P
 @sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
      -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $(df).P
