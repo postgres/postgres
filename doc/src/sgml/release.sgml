@@ -1,9 +1,41 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.29 2006/01/06 03:00:46 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.30 2006/02/12 18:23:00 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+ 
+  <sect1 id="release-7-3-14">
+   <title>Release 7.3.14</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-02-14</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.13.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.14</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>PLACE HOLDER</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-7-3-13">
    <title>Release 7.3.13</title>
