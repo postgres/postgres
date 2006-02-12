@@ -2281,24 +2281,31 @@ begin
 end;
 $$ language plpgsql;
 
-
 -- using list of scalars in fori and fore stmts
-create function for_vect() returns void as $$
+create function for_vect() returns void as $proc$
 <<lbl>>declare a integer; b varchar; c varchar; r record;
 begin
-  -- old fori
-  for i in 1 .. 10 loop
+  -- fori
+  for i in 1 .. 3 loop
     raise notice '%', i;
   end loop;
-  for a in select 1 from generate_series(1,4) loop
+  -- fore with record var
+  for r in select gs as aa, 'BB' as bb, 'CC' as cc from generate_series(1,4) gs loop
+    raise notice '% % %', r.aa, r.bb, r.cc;
+  end loop;
+  -- fore with single scalar
+  for a in select gs from generate_series(1,4) gs loop
     raise notice '%', a;
   end loop;
-  for a,b,c in select generate_series, 'BB','CC' from generate_series(1,4) loop
+  -- fore with multiple scalars
+  for a,b,c in select gs, 'BB','CC' from generate_series(1,4) gs loop
     raise notice '% % %', a, b, c;
   end loop;
   -- using qualified names in fors, fore is enabled, disabled only for fori
-  for lbl.a, lbl.b, lbl.c in execute E'select generate_series, \'bb\',\'cc\' from generate_series(1,4)' loop
+  for lbl.a, lbl.b, lbl.c in execute $$select gs, 'bb','cc' from generate_series(1,4) gs$$ loop
     raise notice '% % %', a, b, c;
   end loop;
 end;
-$$ language plpgsql;
+$proc$ language plpgsql;
+
+select for_vect();

@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.84 2006/02/12 06:03:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.85 2006/02/12 06:37:05 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -54,13 +54,14 @@ static	PLpgSQL_stmt	*make_fetch_stmt(void);
 static	void			 check_assignable(PLpgSQL_datum *datum);
 static	PLpgSQL_row		*read_into_scalar_list(const char *initial_name,
 											   PLpgSQL_datum *initial_datum);
+static PLpgSQL_row		*make_scalar_list1(const char *initial_name,
+										   PLpgSQL_datum *initial_datum,
+										   int lineno);
 static	void			 check_sql_expr(const char *stmt);
 static	void			 plpgsql_sql_error_callback(void *arg);
 static	void			 check_labels(const char *start_label,
 									  const char *end_label);
-static PLpgSQL_row       *make_scalar_list1(const char *name,
-					    PLpgSQL_datum *variable);
- 
+
 %}
 
 %union {
@@ -76,9 +77,9 @@ static PLpgSQL_row       *make_scalar_list1(const char *name,
 		{
 			char *name;
 			int  lineno;
+			PLpgSQL_datum   *scalar;
 			PLpgSQL_rec     *rec;
 			PLpgSQL_row     *row;
-		        PLpgSQL_datum   *scalar;
 		}						forvariable;
 		struct
 		{
@@ -895,13 +896,14 @@ for_control		:
 							}
 							else if ($2.scalar)
 							{
-						        new->row = make_scalar_list1($2.name, $2.scalar);
-								check_assignable((PLpgSQL_datum *) new->row);
+								/* convert single scalar to list */
+								new->row = make_scalar_list1($2.name, $2.scalar, $2.lineno);
+								/* no need for check_assignable */
 							}
 							else
 							{
-								plpgsql_error_lineno = $1;
-								yyerror("loop variable of loop over rows must be a record, row, or scalar variable");
+								plpgsql_error_lineno = $2.lineno;
+								yyerror("loop variable of loop over rows must be a record or row variable or list of scalar variables");
 							}
 							new->query = expr;
 
@@ -950,24 +952,24 @@ for_control		:
 								PLpgSQL_expr		*expr2;
 								PLpgSQL_var			*fvar;
 								PLpgSQL_stmt_fori	*new;
+								char				*varname;
 
 								/* First expression is well-formed */
 								check_sql_expr(expr1->query);
 
 								expr2 = plpgsql_read_expression(K_LOOP, "LOOP");
 
-								/* T_SCALAR identifier waits for converting */
-								if ($2.scalar)
-								{
-								    char *name;
-								    plpgsql_convert_ident($2.name, &name, 1);
-								    pfree($2.name);
-								    $2.name = name;
-								}
+								/* should have had a single variable name */
+								plpgsql_error_lineno = $2.lineno;
+								if ($2.scalar && $2.row)
+									ereport(ERROR,
+											(errcode(ERRCODE_SYNTAX_ERROR),
+											 errmsg("integer FOR loop must have just one target variable")));
 
 								/* create loop's private variable */
+								plpgsql_convert_ident($2.name, &varname, 1);
 								fvar = (PLpgSQL_var *)
-									plpgsql_build_variable($2.name,
+									plpgsql_build_variable(varname,
 														   $2.lineno,
 														   plpgsql_build_datatype(INT4OID,
 																				  -1),
@@ -1021,13 +1023,14 @@ for_control		:
 								}
 								else if ($2.scalar)
 								{
-							        new->row = make_scalar_list1($2.name, $2.scalar);
-									check_assignable((PLpgSQL_datum *) new->row);
+									/* convert single scalar to list */
+									new->row = make_scalar_list1($2.name, $2.scalar, $2.lineno);
+									/* no need for check_assignable */
 								}
 								else
 								{
-									plpgsql_error_lineno = $1;
-									yyerror("loop variable of loop over rows must be record, row, or scalar variable");
+									plpgsql_error_lineno = $2.lineno;
+									yyerror("loop variable of loop over rows must be a record or row variable or list of scalar variables");
 								}
 
 								new->query = expr1;
@@ -1047,55 +1050,63 @@ for_control		:
  * if any, because that's what we need for the loop-over-query case.  Note
  * that we must NOT apply check_assignable() or any other semantic check
  * until we know what's what.
+ *
+ * However, if we see a comma-separated list of names, we know that it
+ * can't be an integer FOR loop and so it's OK to check the variables
+ * immediately.  In particular, for T_WORD followed by comma, we should
+ * complain that the name is not known rather than say it's a syntax error.
+ * Note that the non-error result of this case sets *both* $$.scalar and
+ * $$.row; see the for_control production.
  */
 for_variable	: T_SCALAR
-  					{
-						int tok;
-						char		*name;
-						
-						name = pstrdup(yytext);
-						$$.scalar = yylval.scalar;
-						$$.lineno = plpgsql_scanner_lineno();
+					{
+						int			tok;
 
-						if((tok = yylex()) == ',')
-						{
-						    plpgsql_push_back_token(tok);
-						    $$.name = NULL;
-						    $$.row = read_into_scalar_list(name, $$.scalar);
-						    $$.rec = NULL;
-						    $$.scalar = NULL;
-						    
-						    pfree(name);
-						}
-						else
-						{
-						    plpgsql_push_back_token(tok);
-						    $$.name = name;
-						    $$.row = NULL;
-						    $$.rec = NULL;
-						}
+						$$.name = pstrdup(yytext);
+						$$.lineno  = plpgsql_scanner_lineno();
+						$$.scalar = yylval.scalar;
+						$$.rec = NULL;
+						$$.row = NULL;
+						/* check for comma-separated list */
+						tok = yylex();
+						plpgsql_push_back_token(tok);
+						if (tok == ',')
+							$$.row = read_into_scalar_list($$.name, $$.scalar);
 					}
 				| T_WORD
 					{
-						char		*name;
+						int			tok;
 
-						plpgsql_convert_ident(yytext, &name, 1);
-						$$.name = name;
+						$$.name = pstrdup(yytext);
 						$$.lineno  = plpgsql_scanner_lineno();
+						$$.scalar = NULL;
 						$$.rec = NULL;
 						$$.row = NULL;
+						/* check for comma-separated list */
+						tok = yylex();
+						plpgsql_push_back_token(tok);
+						if (tok == ',')
+						{
+							plpgsql_error_lineno = $$.lineno;
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("\"%s\" is not a scalar variable",
+											$$.name)));
+						}
 					}
 				| T_RECORD
 					{
-						$$.name = NULL;
+						$$.name = pstrdup(yytext);
 						$$.lineno  = plpgsql_scanner_lineno();
+						$$.scalar = NULL;
 						$$.rec = yylval.rec;
 						$$.row = NULL;
 					}
 				| T_ROW
 					{
-					        $$.name = NULL;
+						$$.name = pstrdup(yytext);
 						$$.lineno  = plpgsql_scanner_lineno();
+						$$.scalar = NULL;
 						$$.row = yylval.row;
 						$$.rec = NULL;
 					}
@@ -2121,30 +2132,6 @@ make_fetch_stmt(void)
 }
 
 
-static PLpgSQL_row *
-make_scalar_list1(const char *name,
- 				  PLpgSQL_datum *variable)
-{
- 	PLpgSQL_row		*row;
- 	check_assignable(variable);
- 	
- 	row = palloc(sizeof(PLpgSQL_row));
- 	row->dtype = PLPGSQL_DTYPE_ROW;
- 	row->refname = pstrdup("*internal*");
- 	row->lineno = plpgsql_scanner_lineno();
- 	row->rowtupdesc = NULL;
- 	row->nfields = 1;
- 	row->fieldnames = palloc(sizeof(char *) * 1);
- 	row->varnos = palloc(sizeof(int) * 1);
- 	row->fieldnames[0] = pstrdup(name);
- 	row->varnos[0] = variable->dno;
- 
- 	plpgsql_adddatum((PLpgSQL_datum *)row);
- 
- 	return row;
-} 
-
-
 static void
 check_assignable(PLpgSQL_datum *datum)
 {
@@ -2250,6 +2237,37 @@ read_into_scalar_list(const char *initial_name,
 		row->fieldnames[nfields] = fieldnames[nfields];
 		row->varnos[nfields] = varnos[nfields];
 	}
+
+	plpgsql_adddatum((PLpgSQL_datum *)row);
+
+	return row;
+}
+
+/*
+ * Convert a single scalar into a "row" list.  This is exactly
+ * like read_into_scalar_list except we never consume any input.
+ * In fact, since this can be invoked long after the source
+ * input was actually read, the lineno has to be passed in.
+ */
+static PLpgSQL_row *
+make_scalar_list1(const char *initial_name,
+				  PLpgSQL_datum *initial_datum,
+				  int lineno)
+{
+	PLpgSQL_row		*row;
+
+	check_assignable(initial_datum);
+
+	row = palloc(sizeof(PLpgSQL_row));
+	row->dtype = PLPGSQL_DTYPE_ROW;
+	row->refname = pstrdup("*internal*");
+	row->lineno = lineno;
+	row->rowtupdesc = NULL;
+	row->nfields = 1;
+	row->fieldnames = palloc(sizeof(char *));
+	row->varnos = palloc(sizeof(int));
+	row->fieldnames[0] = pstrdup(initial_name);
+	row->varnos[0] = initial_datum->dno;
 
 	plpgsql_adddatum((PLpgSQL_datum *)row);
 

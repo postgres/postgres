@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.85 2006/02/12 06:03:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.86 2006/02/12 06:37:05 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1968,10 +1968,12 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
 
        <para>
-        This form of <literal>FOR</> creates a loop that iterates over a range of integer
-        values. The variable 
+        This form of <literal>FOR</> creates a loop that iterates over a range
+        of integer values. The variable 
         <replaceable>name</replaceable> is automatically defined as type
-        <type>integer</> and exists only inside the loop. The two expressions giving
+        <type>integer</> and exists only inside the loop (any existing
+        definition of the variable name is ignored within the loop).
+        The two expressions giving
         the lower and upper bound of the range are evaluated once when entering
         the loop. The iteration step is normally 1, but is -1 when <literal>REVERSE</> is
         specified.
@@ -2012,9 +2014,9 @@ FOR <replaceable>target</replaceable> IN <replaceable>query</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
-     <replaceable>Target</replaceable> is a record variable, row variable, 
-     or a comma-separated list of  simple variables and record/row fields
-     which is successively assigned each row
+     The <replaceable>target</replaceable> is a record variable, row variable,
+     or comma-separated list of scalar variables.
+     The <replaceable>target</replaceable> is successively assigned each row
      resulting from the <replaceable>query</replaceable> (which must be a
      <command>SELECT</command> command) and the loop body is executed for each
      row. Here is an example:
@@ -2069,7 +2071,8 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      <literal>IN</> and <literal>LOOP</>.  If <literal>..</> is not seen then
      the loop is presumed to be a loop over rows.  Mistyping the <literal>..</>
      is thus likely to lead to a complaint along the lines of
-     <quote>loop variable of loop over rows must be a record or row or scalar variable</>,
+     <quote>loop variable of loop over rows must be a record or row variable
+     or list of scalar variables</>,
      rather than the simple syntax error one might expect to get.
     </para>
     </note>
