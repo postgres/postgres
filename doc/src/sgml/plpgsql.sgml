@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.84 2006/02/05 02:47:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.85 2006/02/12 06:03:38 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2008,11 +2008,13 @@ END LOOP;
      accordingly. The syntax is:
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-FOR <replaceable>record_or_row</replaceable> IN <replaceable>query</replaceable> LOOP
+FOR <replaceable>target</replaceable> IN <replaceable>query</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
-     The record or row variable is successively assigned each row
+     <replaceable>Target</replaceable> is a record variable, row variable, 
+     or a comma-separated list of  simple variables and record/row fields
+     which is successively assigned each row
      resulting from the <replaceable>query</replaceable> (which must be a
      <command>SELECT</command> command) and the loop body is executed for each
      row. Here is an example:
@@ -2047,7 +2049,7 @@ $$ LANGUAGE plpgsql;
      rows:
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-FOR <replaceable>record_or_row</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> LOOP 
+FOR <replaceable>target</replaceable> IN EXECUTE <replaceable>text_expression</replaceable> LOOP 
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
@@ -2067,7 +2069,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      <literal>IN</> and <literal>LOOP</>.  If <literal>..</> is not seen then
      the loop is presumed to be a loop over rows.  Mistyping the <literal>..</>
      is thus likely to lead to a complaint along the lines of
-     <quote>loop variable of loop over rows must be a record or row variable</>,
+     <quote>loop variable of loop over rows must be a record or row or scalar variable</>,
      rather than the simple syntax error one might expect to get.
     </para>
     </note>

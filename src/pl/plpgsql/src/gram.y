@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.83 2006/02/12 04:59:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.84 2006/02/12 06:03:38 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -58,7 +58,9 @@ static	void			 check_sql_expr(const char *stmt);
 static	void			 plpgsql_sql_error_callback(void *arg);
 static	void			 check_labels(const char *start_label,
 									  const char *end_label);
-
+static PLpgSQL_row       *make_scalar_list1(const char *name,
+					    PLpgSQL_datum *variable);
+ 
 %}
 
 %union {
@@ -76,6 +78,7 @@ static	void			 check_labels(const char *start_label,
 			int  lineno;
 			PLpgSQL_rec     *rec;
 			PLpgSQL_row     *row;
+		        PLpgSQL_datum   *scalar;
 		}						forvariable;
 		struct
 		{
@@ -890,10 +893,15 @@ for_control		:
 								new->row = $2.row;
 								check_assignable((PLpgSQL_datum *) new->row);
 							}
+							else if ($2.scalar)
+							{
+						        new->row = make_scalar_list1($2.name, $2.scalar);
+								check_assignable((PLpgSQL_datum *) new->row);
+							}
 							else
 							{
 								plpgsql_error_lineno = $1;
-								yyerror("loop variable of loop over rows must be a record or row variable");
+								yyerror("loop variable of loop over rows must be a record, row, or scalar variable");
 							}
 							new->query = expr;
 
@@ -947,6 +955,15 @@ for_control		:
 								check_sql_expr(expr1->query);
 
 								expr2 = plpgsql_read_expression(K_LOOP, "LOOP");
+
+								/* T_SCALAR identifier waits for converting */
+								if ($2.scalar)
+								{
+								    char *name;
+								    plpgsql_convert_ident($2.name, &name, 1);
+								    pfree($2.name);
+								    $2.name = name;
+								}
 
 								/* create loop's private variable */
 								fvar = (PLpgSQL_var *)
@@ -1002,10 +1019,15 @@ for_control		:
 									new->row = $2.row;
 									check_assignable((PLpgSQL_datum *) new->row);
 								}
+								else if ($2.scalar)
+								{
+							        new->row = make_scalar_list1($2.name, $2.scalar);
+									check_assignable((PLpgSQL_datum *) new->row);
+								}
 								else
 								{
 									plpgsql_error_lineno = $1;
-									yyerror("loop variable of loop over rows must be record or row variable");
+									yyerror("loop variable of loop over rows must be record, row, or scalar variable");
 								}
 
 								new->query = expr1;
@@ -1027,14 +1049,31 @@ for_control		:
  * until we know what's what.
  */
 for_variable	: T_SCALAR
-					{
+  					{
+						int tok;
 						char		*name;
+						
+						name = pstrdup(yytext);
+						$$.scalar = yylval.scalar;
+						$$.lineno = plpgsql_scanner_lineno();
 
-						plpgsql_convert_ident(yytext, &name, 1);
-						$$.name = name;
-						$$.lineno  = plpgsql_scanner_lineno();
-						$$.rec = NULL;
-						$$.row = NULL;
+						if((tok = yylex()) == ',')
+						{
+						    plpgsql_push_back_token(tok);
+						    $$.name = NULL;
+						    $$.row = read_into_scalar_list(name, $$.scalar);
+						    $$.rec = NULL;
+						    $$.scalar = NULL;
+						    
+						    pfree(name);
+						}
+						else
+						{
+						    plpgsql_push_back_token(tok);
+						    $$.name = name;
+						    $$.row = NULL;
+						    $$.rec = NULL;
+						}
 					}
 				| T_WORD
 					{
@@ -1048,20 +1087,14 @@ for_variable	: T_SCALAR
 					}
 				| T_RECORD
 					{
-						char		*name;
-
-						plpgsql_convert_ident(yytext, &name, 1);
-						$$.name = name;
+						$$.name = NULL;
 						$$.lineno  = plpgsql_scanner_lineno();
 						$$.rec = yylval.rec;
 						$$.row = NULL;
 					}
 				| T_ROW
 					{
-						char		*name;
-
-						plpgsql_convert_ident(yytext, &name, 1);
-						$$.name = name;
+					        $$.name = NULL;
 						$$.lineno  = plpgsql_scanner_lineno();
 						$$.row = yylval.row;
 						$$.rec = NULL;
@@ -2086,6 +2119,30 @@ make_fetch_stmt(void)
 
 	return (PLpgSQL_stmt *)fetch;
 }
+
+
+static PLpgSQL_row *
+make_scalar_list1(const char *name,
+ 				  PLpgSQL_datum *variable)
+{
+ 	PLpgSQL_row		*row;
+ 	check_assignable(variable);
+ 	
+ 	row = palloc(sizeof(PLpgSQL_row));
+ 	row->dtype = PLPGSQL_DTYPE_ROW;
+ 	row->refname = pstrdup("*internal*");
+ 	row->lineno = plpgsql_scanner_lineno();
+ 	row->rowtupdesc = NULL;
+ 	row->nfields = 1;
+ 	row->fieldnames = palloc(sizeof(char *) * 1);
+ 	row->varnos = palloc(sizeof(int) * 1);
+ 	row->fieldnames[0] = pstrdup(name);
+ 	row->varnos[0] = variable->dno;
+ 
+ 	plpgsql_adddatum((PLpgSQL_datum *)row);
+ 
+ 	return row;
+} 
 
 
 static void

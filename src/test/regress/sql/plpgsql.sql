@@ -2280,3 +2280,25 @@ begin
   end loop outer_label;
 end;
 $$ language plpgsql;
+
+
+-- using list of scalars in fori and fore stmts
+create function for_vect() returns void as $$
+<<lbl>>declare a integer; b varchar; c varchar; r record;
+begin
+  -- old fori
+  for i in 1 .. 10 loop
+    raise notice '%', i;
+  end loop;
+  for a in select 1 from generate_series(1,4) loop
+    raise notice '%', a;
+  end loop;
+  for a,b,c in select generate_series, 'BB','CC' from generate_series(1,4) loop
+    raise notice '% % %', a, b, c;
+  end loop;
+  -- using qualified names in fors, fore is enabled, disabled only for fori
+  for lbl.a, lbl.b, lbl.c in execute E'select generate_series, \'bb\',\'cc\' from generate_series(1,4)' loop
+    raise notice '% % %', a, b, c;
+  end loop;
+end;
+$$ language plpgsql;
