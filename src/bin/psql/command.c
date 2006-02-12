@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.158 2005/12/26 14:58:04 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.159 2006/02/12 02:54:30 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -55,7 +55,7 @@ static backslashResult exec_command(const char *cmd,
 			 PsqlScanState scan_state,
 			 PQExpBuffer query_buf);
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
-static bool do_connect(const char *new_dbname, const char *new_user);
+static bool do_connect(const char *new_dbname, const char *new_user, const char *new_host, const char *new_port);
 static bool do_shell(const char *command);
 
 
@@ -189,20 +189,27 @@ exec_command(const char *cmd,
 	}
 
 	/*----------
-	 * \c or \connect -- connect to new database or as different user
+	 * \c or \connect -- connect to new database or as different user,
+	 * and/or new host and/or port
 	 *
-	 * \c foo bar  connect to db "foo" as user "bar"
-	 * \c foo [-]  connect to db "foo" as current user
-	 * \c - bar    connect to current db as user "bar"
+	 * \c foo bar [-]  [-]        connect to db "foo" as user "bar" on current host and port
+	 * \c foo [-]  [-]  [-]       connect to db "foo" as current user on current host and port
+	 * \c - bar  [-]  [-]         connect to current db as user "bar" on current host and port
+	 * \c - - host.domain.tld [-] connect to default db as default user on host.domain.tld on default port
+	 * \c - - - 5555              connect to default db as default user on default host at port 5555
 	 * \c		   connect to default db as default user
 	 *----------
 	 */
 	else if (strcmp(cmd, "c") == 0 || strcmp(cmd, "connect") == 0)
 	{
 		char	   *opt1,
-				   *opt2;
+				   *opt2,
+				   *opt3,
+				   *opt4;
 		char		opt1q,
-					opt2q;
+					opt2q,
+					opt3q,
+					opt4q;
 
 		/*
 		 * Ideally we should treat the arguments as SQL identifiers.  But for
@@ -217,20 +224,53 @@ exec_command(const char *cmd,
 									  OT_SQLIDHACK, &opt1q, true);
 		opt2 = psql_scan_slash_option(scan_state,
 									  OT_SQLIDHACK, &opt2q, true);
+		opt3 = psql_scan_slash_option(scan_state,
+									  OT_SQLIDHACK, &opt3q, true);
+		opt4 = psql_scan_slash_option(scan_state,
+									  OT_SQLIDHACK, &opt4q, true);
 
+		if (opt4)
+			/* gave port */
+			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 ||
+											strcmp(opt1, "") == 0) ? "" : opt1,
+								 !opt2q && (strcmp(opt2, "-") == 0 ||
+											strcmp(opt2, "") == 0) ? "" : opt2,
+								 !opt3q && (strcmp(opt3, "-") == 0 ||
+											strcmp(opt3, "") == 0) ? "" : opt3,
+								 !opt3q && (strcmp(opt3, "-") == 0 ||
+											strcmp(opt3, "") == 0) ? "" : opt3);
+		if (opt3)
+			/* gave host */
+			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 ||
+											strcmp(opt1, "") == 0) ? "" : opt1,
+								 !opt2q && (strcmp(opt2, "-") == 0 ||
+											strcmp(opt2, "") == 0) ? "" : opt2,
+								 !opt3q && (strcmp(opt3, "-") == 0 ||
+											strcmp(opt3, "") == 0) ? "" : opt3,
+								 NULL);
 		if (opt2)
 			/* gave username */
-			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 || strcmp(opt1, "") == 0) ? "" : opt1,
-								 !opt2q && (strcmp(opt2, "-") == 0 || strcmp(opt2, "") == 0) ? "" : opt2);
+			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 ||
+											strcmp(opt1, "") == 0) ? "" : opt1,
+								 !opt2q && (strcmp(opt2, "-") == 0 ||
+											strcmp(opt2, "") == 0) ? "" : opt2,
+								 NULL,
+								 NULL);
 		else if (opt1)
 			/* gave database name */
-			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 || strcmp(opt1, "") == 0) ? "" : opt1, "");
+			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 ||
+											strcmp(opt1, "") == 0) ? "" : opt1,
+								 "",
+								 NULL,
+								 NULL);
 		else
 			/* connect to default db as default user */
-			success = do_connect(NULL, NULL);
+			success = do_connect(NULL, NULL, NULL, NULL);
 
 		free(opt1);
 		free(opt2);
+		free(opt3);
+		free(opt4);
 	}
 
 	/* \cd */
@@ -959,11 +999,13 @@ exec_command(const char *cmd,
  * The old connection will be kept if the session is interactive.
  */
 static bool
-do_connect(const char *new_dbname, const char *new_user)
+do_connect(const char *new_dbname, const char *new_user, const char *new_host, const char *new_port)
 {
 	PGconn	   *oldconn = pset.db;
 	const char *dbparam = NULL;
 	const char *userparam = NULL;
+	const char *hostparam = NULL;
+	const char *portparam = NULL;
 	const char *pwparam = NULL;
 	char	   *password_prompt = NULL;
 	char	   *prompted_password = NULL;
@@ -984,6 +1026,18 @@ do_connect(const char *new_dbname, const char *new_user)
 		userparam = PQuser(oldconn);
 	else
 		userparam = new_user;
+
+	/* If host is "" then use the old one */
+	if (new_host && PQhost(oldconn) && strcmp(new_host, "") == 0)
+		hostparam = PQhost(oldconn);
+	else
+		hostparam = new_host;
+
+	/* If port is "" then use the old one */
+	if (new_port && PQport(oldconn) && strcmp(new_port, "") == 0)
+		portparam = PQport(oldconn);
+	else
+		portparam = new_port;
 
 	if (userparam == NULL)
 		password_prompt = strdup("Password: ");
@@ -1009,7 +1063,7 @@ do_connect(const char *new_dbname, const char *new_user)
 	do
 	{
 		need_pass = false;
-		pset.db = PQsetdbLogin(PQhost(oldconn), PQport(oldconn),
+		pset.db = PQsetdbLogin(hostparam, portparam,
 							   NULL, NULL, dbparam, userparam, pwparam);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
@@ -1061,14 +1115,24 @@ do_connect(const char *new_dbname, const char *new_user)
 	{
 		if (!QUIET())
 		{
-			if (userparam != new_user)	/* no new user */
-				printf(_("You are now connected to database \"%s\".\n"), dbparam);
-			else if (dbparam != new_dbname)		/* no new db */
-				printf(_("You are now connected as new user \"%s\".\n"), new_user);
-			else
-				/* both new */
-				printf(_("You are now connected to database \"%s\" as user \"%s\".\n"),
-					   PQdb(pset.db), PQuser(pset.db));
+			if ((hostparam == new_host) && (portparam == new_port)) /* no new host or port */
+			{
+				if (userparam != new_user)	/* no new user */
+					printf(_("You are now connected to database \"%s\".\n"), dbparam);
+				else if (dbparam != new_dbname)		/* no new db */
+					printf(_("You are now connected as new user \"%s\".\n"), new_user);
+				else
+					/* both new */
+					printf(_("You are now connected to database \"%s\" as user \"%s\".\n"),
+						   PQdb(pset.db), PQuser(pset.db));
+			}
+			else /* At least one of host and port are new */
+			{
+				printf(
+					_("You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port %s.\n"),
+					PQdb(pset.db), PQuser(pset.db), PQhost(pset.db),
+					PQport(pset.db));
+			}
 		}
 
 		if (oldconn)

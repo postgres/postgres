@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.157 2005/12/20 00:51:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.158 2006/02/12 02:54:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -693,13 +693,15 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\connect</literal> (or <literal>\c</literal>) <literal>[ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] ]</literal></term>
+        <term><literal>\connect</literal> (or <literal>\c</literal>) <literal>[ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">host</replaceable> ] [ <replaceable class="parameter">port</replaceable> ] ]</literal></term>
         <listitem>
         <para>
         Establishes a connection to a new database and/or under a user
         name. The previous connection is closed. If <replaceable
         class="parameter">dbname</replaceable> is <literal>-</literal>
-        the current database name is assumed.
+        the current database name is assumed.  Similar consideration
+        applies to <replaceable class="parameter">host</replaceable> and
+        <replaceable class="parameter">port</replaceable>. 
         </para>
 
         <para>
