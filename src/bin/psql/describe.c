@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.131 2006/02/12 03:22:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.132 2006/02/12 19:31:14 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -194,7 +194,7 @@ describeFunctions(const char *pattern, bool verbose)
 						  "\nFROM pg_catalog.pg_proc p"
 		"\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace"
 			 "\n     LEFT JOIN pg_catalog.pg_language l ON l.oid = p.prolang"
-		   "\n     LEFT JOIN pg_catalog.pg_roles r ON r.oid = p.proowner\n");
+		   "\n     JOIN pg_catalog.pg_roles r ON r.oid = p.proowner\n");
 
 	/*
 	 * we skip in/out funcs by excluding functions that take or return cstring
@@ -367,7 +367,7 @@ listAllDbs(bool verbose)
 						  _("Description"));
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_database d"
-				  "\n  LEFT JOIN pg_catalog.pg_roles r ON d.datdba = r.oid\n"
+				  "\n  JOIN pg_catalog.pg_roles r ON d.datdba = r.oid\n"
 					  "ORDER BY 1;");
 
 	res = PSQLexec(buf.data, false);
@@ -1485,7 +1485,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_class c"
-			   "\n     LEFT JOIN pg_catalog.pg_roles r ON r.oid = c.relowner"
+			   "\n     JOIN pg_catalog.pg_roles r ON r.oid = c.relowner"
 	 "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace");
 	if (showIndexes)
 		appendPQExpBuffer(&buf,
@@ -1727,7 +1727,7 @@ listSchemas(const char *pattern, bool verbose)
 						  _("Access privileges"), _("Description"));
 
 	appendPQExpBuffer(&buf,
-		 "\nFROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_roles r\n"
+		 "\nFROM pg_catalog.pg_namespace n JOIN pg_catalog.pg_roles r\n"
 					  "       ON n.nspowner=r.oid\n"
 					  "WHERE	(n.nspname !~ '^pg_temp_' OR\n"
 		   "		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");		/* temp schema is first */
