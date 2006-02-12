@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Feb 11 22:56:13 EST 2006
+Last updated:		Sat Feb 11 23:44:09 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -272,7 +272,7 @@ Functions
 
 * %Add pg_get_acldef(), pg_get_typedefault(), pg_get_attrdef(),
   pg_get_tabledef(), pg_get_domaindef(), pg_get_functiondef()
-* Allow to_char() to print localized month names
+* -Allow to_char() to print localized month names
 * Allow functions to have a schema search path specified at creation time
 * Allow substring/replace() to get/set bit values
 * Allow to_char() on interval values to accumulate the highest unit
