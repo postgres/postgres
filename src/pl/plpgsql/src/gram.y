@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.82 2005/10/13 15:34:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.83 2006/02/12 04:59:32 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -881,9 +881,15 @@ for_control		:
 							new->cmd_type = PLPGSQL_STMT_DYNFORS;
 							new->lineno   = $1;
 							if ($2.rec)
+							{
 								new->rec = $2.rec;
+								check_assignable((PLpgSQL_datum *) new->rec);
+							}
 							else if ($2.row)
+							{
 								new->row = $2.row;
+								check_assignable((PLpgSQL_datum *) new->row);
+							}
 							else
 							{
 								plpgsql_error_lineno = $1;
@@ -942,6 +948,7 @@ for_control		:
 
 								expr2 = plpgsql_read_expression(K_LOOP, "LOOP");
 
+								/* create loop's private variable */
 								fvar = (PLpgSQL_var *)
 									plpgsql_build_variable($2.name,
 														   $2.lineno,
@@ -986,9 +993,15 @@ for_control		:
 								new->cmd_type = PLPGSQL_STMT_FORS;
 								new->lineno   = $1;
 								if ($2.rec)
+								{
 									new->rec = $2.rec;
+									check_assignable((PLpgSQL_datum *) new->rec);
+								}
 								else if ($2.row)
+								{
 									new->row = $2.row;
+									check_assignable((PLpgSQL_datum *) new->row);
+								}
 								else
 								{
 									plpgsql_error_lineno = $1;
@@ -1002,6 +1015,17 @@ for_control		:
 					}
 				;
 
+/*
+ * Processing the for_variable is tricky because we don't yet know if the
+ * FOR is an integer FOR loop or a loop over query results.  In the former
+ * case, the variable is just a name that we must instantiate as a loop
+ * local variable, regardless of any other definition it might have.
+ * Therefore, we always save the actual identifier into $$.name where it
+ * can be used for that case.  We also save the outer-variable definition,
+ * if any, because that's what we need for the loop-over-query case.  Note
+ * that we must NOT apply check_assignable() or any other semantic check
+ * until we know what's what.
+ */
 for_variable	: T_SCALAR
 					{
 						char		*name;
@@ -1304,13 +1328,13 @@ stmt_dynexecute : K_EXECUTE lno
 							switch (yylex())
 							{
 								case T_ROW:
-									check_assignable((PLpgSQL_datum *) yylval.row);
 									new->row = yylval.row;
+									check_assignable((PLpgSQL_datum *) new->row);
 									break;
 
 								case T_RECORD:
-									check_assignable((PLpgSQL_datum *) yylval.row);
 									new->rec = yylval.rec;
+									check_assignable((PLpgSQL_datum *) new->rec);
 									break;
 
 								case T_SCALAR:
@@ -1917,11 +1941,13 @@ make_select_stmt(void)
 			{
 				case T_ROW:
 					row = yylval.row;
+					check_assignable((PLpgSQL_datum *) row);
 					have_into = true;
 					break;
 
 				case T_RECORD:
 					rec = yylval.rec;
+					check_assignable((PLpgSQL_datum *) rec);
 					have_into = true;
 					break;
 
@@ -2028,10 +2054,12 @@ make_fetch_stmt(void)
 	{
 		case T_ROW:
 			row = yylval.row;
+			check_assignable((PLpgSQL_datum *) row);
 			break;
 
 		case T_RECORD:
 			rec = yylval.rec;
+			check_assignable((PLpgSQL_datum *) rec);
 			break;
 
 		case T_SCALAR:
@@ -2039,7 +2067,12 @@ make_fetch_stmt(void)
 			break;
 
 		default:
-			yyerror("syntax error");
+			plpgsql_error_lineno = plpgsql_scanner_lineno();
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("syntax error at \"%s\"", yytext),
+					 errdetail("Expected record variable, row variable, "
+							   "or list of scalar variables.")));
 	}
 
 	tok = yylex();
@@ -2136,13 +2169,13 @@ read_into_scalar_list(const char *initial_name,
 				plpgsql_error_lineno = plpgsql_scanner_lineno();
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("\"%s\" is not a variable",
+						 errmsg("\"%s\" is not a scalar variable",
 								yytext)));
 		}
 	}
 
 	/*
-	 * We read an extra, non-comma character from yylex(), so push it
+	 * We read an extra, non-comma token from yylex(), so push it
 	 * back onto the input stream
 	 */
 	plpgsql_push_back_token(tok);
