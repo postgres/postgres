@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Feb 11 23:44:09 EST 2006
+Last updated:		Sun Feb 12 01:50:38 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -389,7 +389,7 @@ SQL Commands
 
 * Add NOVICE output level for helpful messages like automatic sequence/index
   creation
-* %Add COMMENT ON for all cluster global objects (roles, databases
+* -Add COMMENT ON for all cluster global objects (roles, databases
   and tablespaces)
 * -Make row-wise comparisons work per SQL spec
 
