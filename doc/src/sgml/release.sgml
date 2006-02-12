@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.21 2006/02/12 17:58:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.22 2006/02/12 18:14:29 momjian Exp $
 
 Typical markup:
 
@@ -8232,6 +8232,38 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
  
+  <sect1 id="release-7-3-14">
+   <title>Release 7.3.14</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-02-14</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.13.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.14</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+  
+<itemizedlist>
+
+<listitem><para>PLACE HOLDER</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-3-13">
    <title>Release 7.3.13</title>
 
@@ -8288,38 +8320,6 @@ XDES algorithms (Marko Kreen, Solar Designer)</para>
 <listitem><para>Fix <filename>/contrib/dblink</> to throw an error,
 rather than crashing, when the number of columns specified is different from
 what's actually returned by the query (Joe)</para></listitem>
-
-</itemizedlist>
-
-   </sect2>
-  </sect1>
- 
-  <sect1 id="release-7-3-14">
-   <title>Release 7.3.14</title>
-
-   <note>
-   <title>Release date</title>
-   <simpara>2006-02-14</simpara>
-   </note>
-
-   <para>
-    This release contains a variety of fixes from 7.3.13.
-   </para>
-
-   <sect2>
-    <title>Migration to version 7.3.14</title>
-
-    <para>
-     A dump/restore is not required for those running 7.3.X.
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>Changes</title>
-  
-<itemizedlist>
-
-<listitem><para>PLACE HOLDER</para></listitem>
 
 </itemizedlist>
 
