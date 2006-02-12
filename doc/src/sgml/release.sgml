@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.18 2006/01/12 18:09:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.19 2006/02/12 17:11:28 momjian Exp $
 
 Typical markup:
 
@@ -19,6 +19,95 @@ For new features, add links to the documentation sections.
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-8-1-3">
+   <title>Release 8.1.3</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-02-14</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.1.2.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.1.3</title>
+
+    <para>
+     A dump/restore is not required for those running 8.1.X.
+     However, if you are upgrading from a version earlier than 8.1.2, 
+     see the release notes for 8.1.2.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+
+<listitem><para>Fix rare bug with row visibility logic in self-inserted
+rows (Tom)</listitem></para>
+
+<listitem><para>Fixes for relation cache management and WAL file creation
+(Tom)</listitem></para>
+
+<listitem><para>Properly check <literal>DOMAIN</> constraints for
+<literal>UNKNOWN</> parameters in prepared statements
+(Neil)</listitem></para>
+
+<listitem><para>Change <command>ALTER COLUMN TYPE</> to drop
+<literal>FOREIGN KEY</> constraints before <literal>UNIQUE</> or
+<literal>PRIMARY KEY</> constraints (Nakano Yoshihisa)</listitem></para>
+
+<listitem><para>Fix <literal>CREATE OPERATOR</> dumps that have
+cross-schema definitions (Tom)</listitem></para>
+
+<listitem><para>Allow <application>pg_restore</> to continue after a
+<command>COPY</> failure, rather than treating the remaining statements
+as <command>COPY</> data (Stephen Frost)</listitem></para>
+
+<listitem><para>Fix <application>pg_ctl</> <literal>unregister</> crash
+when the  data directory is not specified (Magnus)</listitem></para>
+
+<listitem><para>Fix <application>libpq</> <function>PQprint</> HTML tags
+(Christoph Zwerschke)</listitem></para>
+
+<listitem><para>Fix <application>ecpg</> crash on AMD64 and PPC
+(Neil)</listitem></para>
+
+<listitem><para>Fix problem with argument passing with error reporting
+in <application>PL/python</> (Neil)</listitem></para>
+
+<listitem><para>Fix memory leak in <application>PL/perl</>'s row
+returning code (Neil)</listitem></para>
+
+<listitem><para>Fix <application>PL/perl</>'s handling of locales on
+Win32 to match the backend (Andrew)</listitem></para>
+
+<listitem><para>Various optimizer improvements (Tom)</listitem></para>
+
+<listitem><para>Fix crash when <literal>log_min_messages</> is set in
+<literal>postgresql.conf</> to <literal>DEBUG5</> on Win32
+(Bruce)</listitem></para>
+
+<listitem><para>Fix <application>pgxs</> <literal>-L</> library path
+specification for Win32 and Cygwin (Bruce)</listitem></para>
+
+<listitem><para>Check that SID is enabled while checking for Win32 admin
+privileges (Magnus)</listitem></para>
+
+<listitem><para>Portability fix for <function>finite</> and
+<function>isinf</> (Tom)</listitem></para>
+
+<listitem><para>Improve speed of <filename>/contrib/tsearch2</> index
+creation (Teodor)</listitem></para>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-8-1-2">
    <title>Release 8.1.2</title>
 
