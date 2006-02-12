@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.99.2.5 2003/04/04 00:32:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.99.2.6 2006/02/12 22:33:47 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -170,6 +170,7 @@ struct config_generic
 #define GUC_LIST_QUOTE		0x0002		/* double-quote list elements */
 #define GUC_NO_SHOW_ALL		0x0004		/* exclude from SHOW ALL */
 #define GUC_NO_RESET_ALL	0x0008		/* exclude from RESET ALL */
+#define GUC_IS_NAME			0x0010		/* limit string to NAMEDATALEN-1 */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
@@ -736,7 +737,7 @@ static struct config_string
 			ConfigureNamesString[] =
 {
 	{
-		{"client_encoding", PGC_USERSET}, &client_encoding_string,
+		{"client_encoding", PGC_USERSET, GUC_IS_NAME}, &client_encoding_string,
 		"SQL_ASCII", assign_client_encoding, NULL
 	},
 
@@ -799,7 +800,7 @@ static struct config_string
 	},
 
 	{
-		{"server_encoding", PGC_USERSET}, &server_encoding_string,
+		{"server_encoding", PGC_USERSET, GUC_IS_NAME}, &server_encoding_string,
 		"SQL_ASCII", assign_server_encoding, show_server_encoding
 	},
 
@@ -809,7 +810,7 @@ static struct config_string
 	},
 
 	{
-		{"session_authorization", PGC_USERSET, GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL},
+		{"session_authorization", PGC_USERSET, GUC_IS_NAME | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
 	},
@@ -1906,6 +1907,18 @@ set_config_option(const char *name, const char *value,
 					{
 						elog(elevel, "out of memory");
 						return false;
+					}
+					/*
+					 * The only sort of "parsing" check we need to do is
+					 * apply truncation if GUC_IS_NAME.
+					 */
+					if (conf->gen.flags & GUC_IS_NAME)
+					{
+						int len;
+
+						len = pg_mbcliplen(newval, strlen(newval),
+										   NAMEDATALEN-1);
+						newval[len] = '\0';
 					}
 				}
 				else if (conf->reset_val)

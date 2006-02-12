@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.71.2.3 2005/06/05 01:49:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.71.2.4 2006/02/12 22:33:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,6 +532,8 @@ show_server_encoding(void)
  * that can be re-used directly.  We store the string in the form of
  * NAMEDATALEN 'x's followed by the numeric userid --- this cannot conflict
  * with any valid user name, because of the NAMEDATALEN limit on names.
+ * (NOTE: we rely on guc.c to have properly truncated any incoming value,
+ * but not to truncate already-stored values.  See GUC_IS_NAME processing.)
  */
 const char *
 assign_session_authorization(const char *value, bool doit, bool interactive)
