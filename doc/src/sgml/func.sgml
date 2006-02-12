@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.305 2006/02/12 03:22:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.306 2006/02/12 04:44:15 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4648,6 +4648,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal>FX&nbsp;Month&nbsp;DD&nbsp;Day</literal></entry>
        </row>   
        <row>
+        <entry><literal>TM</literal> prefix</entry>
+        <entry>translation mode (print localized day and month names)</entry>
+        <entry><literal>TMMonth</literal></entry>
+       </row>       
+       <row>
         <entry><literal>SP</literal> suffix</entry>
         <entry>spell mode (not yet implemented)</entry>
         <entry><literal>DDSP</literal></entry>
@@ -4665,6 +4670,12 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <literal>FM</literal> suppresses leading zeroes and trailing blanks
        that would otherwise be added to make the output of a pattern be
        fixed-width.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>TM</literal> does not include trailing blanks.
       </para>
      </listitem>
 

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.103 2005/12/03 16:45:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.104 2006/02/12 04:44:15 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -73,6 +73,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <float.h>
+#include <locale.h>
 
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -81,6 +82,8 @@
 #include "utils/int8.h"
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
+
+#define	_(x)	gettext((x))
 
 /* ----------
  * Routines type
@@ -165,6 +168,10 @@ struct FormatNode
 static char *months_full[] = {
 	"January", "February", "March", "April", "May", "June", "July",
 	"August", "September", "October", "November", "December", NULL
+};
+
+static char *days_short[] = {
+	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", NULL
 };
 
 /* ----------
@@ -466,6 +473,7 @@ static int dch_date(int arg, char *inout, int suf, bool is_to_char,
 #define DCH_S_TH	0x02
 #define DCH_S_th	0x04
 #define DCH_S_SP	0x08
+#define DCH_S_TM	0x10
 
 /* ----------
  * Suffix tests
@@ -478,6 +486,7 @@ static int dch_date(int arg, char *inout, int suf, bool is_to_char,
 
 #define S_FM(_s)	(((_s) & DCH_S_FM) ? 1 : 0)
 #define S_SP(_s)	(((_s) & DCH_S_SP) ? 1 : 0)
+#define S_TM(_s)	(((_s) & DCH_S_TM) ? 1 : 0)
 
 /* ----------
  * Suffixes definition for DATE-TIME TO/FROM CHAR
@@ -486,6 +495,8 @@ static int dch_date(int arg, char *inout, int suf, bool is_to_char,
 static KeySuffix DCH_suff[] = {
 	{"FM", 2, DCH_S_FM, SUFFTYPE_PREFIX},
 	{"fm", 2, DCH_S_FM, SUFFTYPE_PREFIX},
+	{"TM", 2, DCH_S_TM, SUFFTYPE_PREFIX},
+	{"tm", 2, DCH_S_TM, SUFFTYPE_PREFIX},
 	{"TH", 2, DCH_S_TH, SUFFTYPE_POSTFIX},
 	{"th", 2, DCH_S_th, SUFFTYPE_POSTFIX},
 	{"SP", 2, DCH_S_SP, SUFFTYPE_POSTFIX},
@@ -929,6 +940,10 @@ static NUMCacheEntry *NUM_cache_search(char *str);
 static NUMCacheEntry *NUM_cache_getnew(char *str);
 static void NUM_cache_remove(NUMCacheEntry *ent);
 
+static char *localize_month_full(int index);
+static char *localize_month(int index);
+static char *localize_day_full(int index);
+static char *localize_day(int index);
 
 /* ----------
  * Fast sequential search, use index for data selection which
@@ -1330,7 +1345,7 @@ DCH_processor(FormatNode *node, char *inout, bool is_to_char,
 			 * The input string is shorter than format picture, so it's good
 			 * time to break this loop...
 			 *
-			 * Note: this isn't relevant for TO_CHAR mode, beacuse it use
+			 * Note: this isn't relevant for TO_CHAR mode, because it uses
 			 * 'inout' allocated by format picture length.
 			 */
 			break;
@@ -2062,7 +2077,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		tmfc = (TmFromChar *) data;
 
 	/*
-	 * In the FROM-char is not difference between "January" or "JANUARY" or
+	 * In the FROM-char there is no difference between "January" or "JANUARY" or
 	 * "january", all is before search convert to "first-upper". This
 	 * convention is used for MONTH, MON, DAY, DY
 	 */
@@ -2166,22 +2181,31 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			INVALID_FOR_INTERVAL;
 			if (!tm->tm_mon)
 				return -1;
-			strcpy(workbuff, months_full[tm->tm_mon - 1]);
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
+			if (S_TM(suf))
+				strcpy(workbuff, localize_month_full(tm->tm_mon - 1));
+			else
+				strcpy(workbuff, months_full[tm->tm_mon - 1]);
+			sprintf(inout, "%*s", (S_FM(suf) || S_TM(suf)) ? 0 : -9, str_toupper(workbuff));
 			return strlen(p_inout);
 
 		case DCH_Month:
 			INVALID_FOR_INTERVAL;
 			if (!tm->tm_mon)
 				return -1;
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
+			if (S_TM(suf))
+				sprintf(inout, "%*s", 0, localize_month_full(tm->tm_mon - 1));
+			else
+				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
 			return strlen(p_inout);
 
 		case DCH_month:
 			INVALID_FOR_INTERVAL;
 			if (!tm->tm_mon)
 				return -1;
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
+			if (S_TM(suf))
+				sprintf(inout, "%*s", 0, localize_month_full(tm->tm_mon - 1));
+			else
+				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
 			*inout = pg_tolower((unsigned char) *inout);
 			return strlen(p_inout);
 
@@ -2189,7 +2213,10 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			INVALID_FOR_INTERVAL;
 			if (!tm->tm_mon)
 				return -1;
-			strcpy(inout, months[tm->tm_mon - 1]);
+			if (S_TM(suf))
+				strcpy(inout, localize_month(tm->tm_mon - 1));
+			else
+				strcpy(inout, months[tm->tm_mon - 1]);
 			str_toupper(inout);
 			return strlen(p_inout);
 
@@ -2197,14 +2224,20 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			INVALID_FOR_INTERVAL;
 			if (!tm->tm_mon)
 				return -1;
-			strcpy(inout, months[tm->tm_mon - 1]);
+			if (S_TM(suf))
+				strcpy(inout, localize_month(tm->tm_mon - 1));
+			else
+				strcpy(inout, months[tm->tm_mon - 1]);
 			return strlen(p_inout);
 
 		case DCH_mon:
 			INVALID_FOR_INTERVAL;
 			if (!tm->tm_mon)
 				return -1;
-			strcpy(inout, months[tm->tm_mon - 1]);
+			if (S_TM(suf))
+				strcpy(inout, localize_month(tm->tm_mon - 1));
+			else
+				strcpy(inout, months[tm->tm_mon - 1]);
 			*inout = pg_tolower((unsigned char) *inout);
 			return strlen(p_inout);
 
@@ -2232,37 +2265,55 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			break;
 		case DCH_DAY:
 			INVALID_FOR_INTERVAL;
-			strcpy(workbuff, days[tm->tm_wday]);
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
+			if (S_TM(suf))
+				strcpy(workbuff, localize_day_full(tm->tm_wday));
+			else
+				strcpy(workbuff, days[tm->tm_wday]);
+			sprintf(inout, "%*s", (S_FM(suf) || S_TM(suf)) ? 0 : -9, str_toupper(workbuff));
 			return strlen(p_inout);
 
 		case DCH_Day:
 			INVALID_FOR_INTERVAL;
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
+			if (S_TM(suf))
+				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));
+			else
+				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
 			return strlen(p_inout);
 
 		case DCH_day:
 			INVALID_FOR_INTERVAL;
-			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
+			if (S_TM(suf))
+				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));
+			else
+				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
 			*inout = pg_tolower((unsigned char) *inout);
 			return strlen(p_inout);
 
 		case DCH_DY:
 			INVALID_FOR_INTERVAL;
-			strcpy(inout, days[tm->tm_wday]);
+			if (S_TM(suf))
+				strcpy(inout, localize_day(tm->tm_wday));
+			else
+				strcpy(inout, days_short[tm->tm_wday]);
 			str_toupper(inout);
-			return 3;			/* truncate */
+			return strlen(p_inout);
 
 		case DCH_Dy:
 			INVALID_FOR_INTERVAL;
-			strcpy(inout, days[tm->tm_wday]);
-			return 3;			/* truncate */
+			if (S_TM(suf))
+				strcpy(inout, localize_day(tm->tm_wday));
+			else
+				strcpy(inout, days_short[tm->tm_wday]);
+			return strlen(p_inout);
 
 		case DCH_dy:
 			INVALID_FOR_INTERVAL;
-			strcpy(inout, days[tm->tm_wday]);
+			if (S_TM(suf))
+				strcpy(inout, localize_day(tm->tm_wday));
+			else
+				strcpy(inout, days_short[tm->tm_wday]);
 			*inout = pg_tolower((unsigned char) *inout);
-			return 3;			/* truncate */
+			return strlen(p_inout);
 
 		case DCH_DDD:
 			if (is_to_char)
@@ -2800,6 +2851,168 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 
 	pfree(result);
 	return res;
+}
+
+static char *
+localize_month_full(int index)
+{
+	char	*m	= NULL;
+
+	switch (index)
+	{
+		case 0:
+			m = _("January");
+			break;
+		case 1:
+			m = _("February");
+			break;
+		case 2:
+			m = _("March");
+			break;
+		case 3:
+			m = _("April");
+			break;
+		case 4:
+			m = _("May");
+			break;
+		case 5:
+			m = _("June");
+			break;
+		case 6:
+			m = _("July");
+			break;
+		case 7:
+			m = _("August");
+			break;
+		case 8:
+			m = _("September");
+			break;
+		case 9:
+			m = _("October");
+			break;
+		case 10:
+			m = _("November");
+			break;
+		case 11:
+			m = _("December");
+			break;
+	}
+
+	return m;
+}
+
+static char *
+localize_month(int index)
+{
+	char	*m	= NULL;
+
+	switch (index)
+	{
+		case 0:
+			m = _("Jan");
+			break;
+		case 1:
+			m = _("Feb");
+			break;
+		case 2:
+			m = _("Mar");
+			break;
+		case 3:
+			m = _("Apr");
+			break;
+		case 4:
+			m = _("May");
+			break;
+		case 5:
+			m = _("Jun");
+			break;
+		case 6:
+			m = _("Jul");
+			break;
+		case 7:
+			m = _("Aug");
+			break;
+		case 8:
+			m = _("Sep");
+			break;
+		case 9:
+			m = _("Oct");
+			break;
+		case 10:
+			m = _("Nov");
+			break;
+		case 11:
+			m = _("Dec");
+			break;
+	}
+
+	return m;
+}
+
+static char *
+localize_day_full(int index)
+{
+	char	*d	= NULL;
+
+	switch (index)
+	{
+		case 0:
+			d = _("Sunday");
+			break;
+		case 1:
+			d = _("Monday");
+			break;
+		case 2:
+			d = _("Tuesday");
+			break;
+		case 3:
+			d = _("Wednesday");
+			break;
+		case 4:
+			d = _("Thursday");
+			break;
+		case 5:
+			d = _("Friday");
+			break;
+		case 6:
+			d = _("Saturday");
+			break;
+	}
+
+	return d;
+}
+
+static char *
+localize_day(int index)
+{
+	char	*d	= NULL;
+
+	switch (index)
+	{
+		case 0:
+			d = _("Sun");
+			break;
+		case 1:
+			d = _("Mon");
+			break;
+		case 2:
+			d = _("Tue");
+			break;
+		case 3:
+			d = _("Wed");
+			break;
+		case 4:
+			d = _("Thu");
+			break;
+		case 5:
+			d = _("Fri");
+			break;
+		case 6:
+			d = _("Sat");
+			break;
+	}
+
+	return d;
 }
 
 /****************************************************************************
