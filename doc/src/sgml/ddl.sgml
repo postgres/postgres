@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.53 2006/02/11 22:17:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.54 2006/02/12 19:11:00 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -543,10 +543,6 @@ CREATE TABLE products (
     price numeric
 );
 </programlisting>
-   Since <productname>PostgreSQL</productname> implements a UNIQUE constraint by
-   means of an index, the above command will also create an index with the same
-   name as the constraint. If you later on change the name of one of those, the
-   name of the corresponding object will be changed automatically as well.
    </para>
 
    <indexterm>

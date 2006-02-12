@@ -196,10 +196,6 @@ CREATE TABLE tmp4 (a int, b int, unique(a,b));
 
 CREATE TABLE tmp5 (a int, b int);
 
--- creates implicit index tmp6_a_key
-CREATE TABLE tmp6 (a int, b int, unique(a));
-CREATE INDEX tmp6_b_key ON tmp6(b);
-
 -- Insert rows into tmp2 (pktable)
 INSERT INTO tmp2 values (1);
 INSERT INTO tmp2 values (2);
@@ -230,21 +226,6 @@ ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match 
 -- tmp4 is a,b
 
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
-
--- check if constraint and index name stay in sync if we rename one or the other
--- fail here
-ALTER TABLE tmp6 ALTER CONSTRAINT tmp6_a_key RENAME TO tmp6_b_key;
-
--- succeed
-ALTER TABLE tmp6 ALTER CONSTRAINT tmp6_a_key RENAME TO tmp6_c_key;
-
--- Now rename the index (this fails)
-ALTER INDEX tmp6_c_key RENAME TO tmp6_b_key;
-
--- this succeeds and uses ALTER TABLE syntax to rename an INDEX
-ALTER TABLE tmp6_c_key RENAME TO tmp6_a_key;
-
-DROP TABLE tmp6;
 
 DROP TABLE tmp5;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.251 2006/02/11 22:17:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.252 2006/02/12 19:11:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1406,7 +1406,6 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_SCHEMA:
 					tag = "ALTER SCHEMA";
 					break;
-				case OBJECT_CONSTRAINT:
 				case OBJECT_COLUMN:
 				case OBJECT_TABLE:
 					tag = "ALTER TABLE";

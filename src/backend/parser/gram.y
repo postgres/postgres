@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.528 2006/02/12 03:22:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.529 2006/02/12 19:11:01 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4097,15 +4097,6 @@ RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 					n->relation = $3;
 					n->subname = $6;
 					n->newname = $8;
-					$$ = (Node *)n;
-				}
-			| ALTER TABLE relation_expr ALTER CONSTRAINT name RENAME TO name
-				{
-					RenameStmt *n = makeNode(RenameStmt);
-					n->renameType = OBJECT_CONSTRAINT;
-					n->relation = $3;
-					n->subname = $6;
-					n->newname = $9;
 					$$ = (Node *)n;
 				}
 			| ALTER TRIGGER name ON relation_expr RENAME TO name
