@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- *	  $Id: guc_tables.h,v 1.6 2003/08/04 02:40:15 momjian Exp $
+ *	  $Id: guc_tables.h,v 1.6.4.1 2006/02/12 22:33:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,6 +97,7 @@ struct config_generic
 #define GUC_REPORT				0x0010	/* auto-report changes to client */
 #define GUC_NOT_IN_SAMPLE		0x0020	/* not in postgresql.conf.sample */
 #define GUC_DISALLOW_IN_FILE	0x0040	/* can't set in postgresql.conf */
+#define GUC_IS_NAME				0x0080	/* limit string to NAMEDATALEN-1 */
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */

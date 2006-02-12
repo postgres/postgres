@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.3 2004/08/11 21:10:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.4 2006/02/12 22:33:28 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include "optimizer/prep.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "parser/scansup.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/lock.h"
@@ -1284,7 +1285,7 @@ static struct config_string ConfigureNamesString[] =
 		{"client_encoding", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the client's character set encoding."),
 			NULL,
-			GUC_REPORT
+			GUC_IS_NAME | GUC_REPORT
 		},
 		&client_encoding_string,
 		"SQL_ASCII", assign_client_encoding, NULL
@@ -1475,7 +1476,7 @@ static struct config_string ConfigureNamesString[] =
 		{"server_encoding", PGC_INTERNAL, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the server (database) character set encoding."),
 			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_IS_NAME | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&server_encoding_string,
 		"SQL_ASCII", NULL, NULL
@@ -1497,7 +1498,7 @@ static struct config_string ConfigureNamesString[] =
 		{"session_authorization", PGC_USERSET, UNGROUPED,
 			gettext_noop("Shows the session user name."),
 			NULL,
-			GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
@@ -2830,6 +2831,13 @@ set_config_option(const char *name, const char *value,
 								 errmsg("out of memory")));
 						return false;
 					}
+
+					/*
+					 * The only sort of "parsing" check we need to do is
+					 * apply truncation if GUC_IS_NAME.
+					 */
+					if (conf->gen.flags & GUC_IS_NAME)
+						truncate_identifier(newval, strlen(newval), true);
 
 					if (record->context == PGC_USERLIMIT &&
 						*conf->variable)

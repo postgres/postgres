@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.17 2003/07/25 20:17:55 tgl Exp $
+ * $Id: encnames.c,v 1.17.4.1 2006/02/12 22:33:28 tgl Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -434,7 +434,7 @@ pg_char_to_encname_struct(const char *name)
 	if (name == NULL || *name == '\0')
 		return NULL;
 
-	if (strlen(name) > NAMEDATALEN)
+	if (strlen(name) >= NAMEDATALEN)
 	{
 #ifdef FRONTEND
 		fprintf(stderr, "encoding name too long\n");
