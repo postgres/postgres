@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.29 2005/06/08 21:15:27 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.30 2006/02/12 03:22:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -36,9 +36,11 @@ COMMENT ON
   OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable>, <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
   OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
+  ROLE <replaceable class="PARAMETER">object_name</replaceable> |
   RULE <replaceable class="PARAMETER">rule_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
   SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
+  TABLESPACE <replaceable class="PARAMETER">object_name</replaceable> |
   TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   TYPE <replaceable class="PARAMETER">object_name</replaceable> |
   VIEW <replaceable class="PARAMETER">object_name</replaceable>
@@ -67,7 +69,8 @@ COMMENT ON
     <command>\dd</command>, <command>\d+</command>, and <command>\l+</command>.
     Other user interfaces to retrieve comments can be built atop
     the same built-in functions that <application>psql</application> uses, namely
-    <function>obj_description</> and <function>col_description</>
+    <function>obj_description</>, <function>col_description</>,
+    and <function>shobj_description</> 
     (see <xref linkend="functions-info-comment-table">).
   </para>
  </refsect1>
@@ -198,16 +201,14 @@ COMMENT ON
   <title>Notes</title>
 
   <para>
-   A comment for a database can only be created in that database,
-   and will only be visible in that database, not in other databases.
-  </para>
-
-  <para>
    There is presently no security mechanism for comments: any user
    connected to a database can see all the comments for objects in
    that database (although only superusers can change comments for
-   objects that they don't own).  Therefore, don't put
-   security-critical information in comments.
+   objects that they don't own).  For shared objects such as
+   databases, roles, and tablespaces comments are stored gloablly
+   and any user connected to any database can see all the comments
+   for shared objects.  Therefore, don't put security-critical
+   information in comments.
   </para>
  </refsect1>
 
@@ -245,10 +246,12 @@ COMMENT ON LARGE OBJECT 346344 IS 'Planning document';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
 COMMENT ON OPERATOR - (NONE, text) IS 'This is a prefix operator on text';
 COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';
+COMMENT ON ROLE my_role IS 'Administration group for finance tables';
 COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';
 COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
 COMMENT ON TABLE my_schema.my_table IS 'Employee Information';
+COMMENT ON TABLESPACE my_tablespace IS 'Tablespace for indexes';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for RI';
 COMMENT ON TYPE complex IS 'Complex number data type';
 COMMENT ON VIEW my_view IS 'View of departmental costs';

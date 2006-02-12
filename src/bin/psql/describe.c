@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.130 2005/11/22 18:17:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.131 2006/02/12 03:22:19 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -127,8 +127,9 @@ describeTablespaces(const char *pattern, bool verbose)
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\n  spcacl as \"%s\"",
-						  _("Access privileges"));
+						  ",\n  spcacl as \"%s\""
+						  ",\n  pg_catalog.shobj_description(oid, 'pg_tablespace') AS \"%s\"",
+						  _("Access privileges"), _("Description"));
 
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_tablespace\n");
@@ -362,7 +363,7 @@ listAllDbs(bool verbose)
 					  _("Encoding"));
 	if (verbose)
 		appendPQExpBuffer(&buf,
-						  ",\n       pg_catalog.obj_description(d.oid, 'pg_database') as \"%s\"",
+						  ",\n       pg_catalog.shobj_description(d.oid, 'pg_database') as \"%s\"",
 						  _("Description"));
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_database d"
@@ -1382,7 +1383,7 @@ add_tablespace_footer(char relkind, Oid tablespace, char **footers,
  * Describes roles.  Any schema portion of the pattern is ignored.
  */
 bool
-describeRoles(const char *pattern)
+describeRoles(const char *pattern, bool verbose)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -1398,14 +1399,19 @@ describeRoles(const char *pattern)
 		"  CASE WHEN r.rolconnlimit < 0 THEN CAST('%s' AS pg_catalog.text)\n"
 					  "       ELSE CAST(r.rolconnlimit AS pg_catalog.text)\n"
 					  "  END AS \"%s\", \n"
-					  "  ARRAY(SELECT b.rolname FROM pg_catalog.pg_auth_members m JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid) WHERE m.member = r.oid) as \"%s\"\n"
-					  "FROM pg_catalog.pg_roles r\n",
+					  "  ARRAY(SELECT b.rolname FROM pg_catalog.pg_auth_members m JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid) WHERE m.member = r.oid) as \"%s\"",
 					  _("Role name"),
 					  _("yes"), _("no"), _("Superuser"),
 					  _("yes"), _("no"), _("Create role"),
 					  _("yes"), _("no"), _("Create DB"),
 					  _("no limit"), _("Connections"),
 					  _("Member of"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf, "\n, pg_catalog.shobj_description(r.oid, 'pg_authid') AS \"%s\"",
+						_("Description"));
+
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_roles r\n");
 
 	processNamePattern(&buf, pattern, false, false,
 					   NULL, "r.rolname", NULL, NULL);

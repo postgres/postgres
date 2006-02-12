@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.175 2005/11/22 18:17:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.176 2006/02/12 03:22:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -658,10 +658,8 @@ dropdb(const char *dbname, bool missing_ok)
 	/*
 	 * Delete any comments associated with the database
 	 *
-	 * NOTE: this is probably dead code since any such comments should have
-	 * been in that database, not mine.
 	 */
-	DeleteComments(db_id, DatabaseRelationId, 0);
+	DeleteSharedComments(db_id, DatabaseRelationId);
 
 	/*
 	 * Remove shared dependency references for the database.

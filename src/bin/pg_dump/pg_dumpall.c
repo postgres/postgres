@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.69 2005/10/15 02:49:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.70 2006/02/12 03:22:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,16 +409,25 @@ dumpRoles(PGconn *conn)
 				i_rolcanlogin,
 				i_rolconnlimit,
 				i_rolpassword,
-				i_rolvaliduntil;
+				i_rolvaliduntil,
+				i_rolcomment;
 	int			i;
 
 	/* note: rolconfig is dumped later */
-	if (server_version >= 80100)
+	if (server_version >= 80200)
 		printfPQExpBuffer(buf,
 						  "SELECT rolname, rolsuper, rolinherit, "
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
-						  "rolvaliduntil "
+						  "rolvaliduntil, "
+						  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
+						  "FROM pg_authid");
+	else if (server_version >= 80100)
+		printfPQExpBuffer(buf,
+						  "SELECT rolname, rolsuper, rolinherit, "
+						  "rolcreaterole, rolcreatedb, rolcatupdate, "
+						  "rolcanlogin, rolconnlimit, rolpassword, "
+						  "rolvaliduntil, null as rolcomment "
 						  "FROM pg_authid");
 	else
 		printfPQExpBuffer(buf,
@@ -432,6 +441,7 @@ dumpRoles(PGconn *conn)
 						  "-1 as rolconnlimit, "
 						  "passwd as rolpassword, "
 						  "valuntil as rolvaliduntil "
+						  "null as rolcomment "
 						  "FROM pg_shadow "
 						  "UNION ALL "
 						  "SELECT groname as rolname, "
@@ -444,6 +454,7 @@ dumpRoles(PGconn *conn)
 						  "-1 as rolconnlimit, "
 						  "null::text as rolpassword, "
 						  "null::abstime as rolvaliduntil "
+						  "null "
 						  "FROM pg_group");
 
 	res = executeQuery(conn, buf->data);
@@ -458,6 +469,7 @@ dumpRoles(PGconn *conn)
 	i_rolconnlimit = PQfnumber(res, "rolconnlimit");
 	i_rolpassword = PQfnumber(res, "rolpassword");
 	i_rolvaliduntil = PQfnumber(res, "rolvaliduntil");
+	i_rolcomment = PQfnumber(res, "rolcomment");
 
 	if (PQntuples(res) > 0)
 		printf("--\n-- Roles\n--\n\n");
@@ -522,6 +534,12 @@ dumpRoles(PGconn *conn)
 							  PQgetvalue(res, i, i_rolvaliduntil));
 
 		appendPQExpBuffer(buf, ";\n");
+
+		if (!PQgetisnull(res, i, i_rolcomment)) {
+			appendPQExpBuffer(buf, "COMMENT ON ROLE %s IS ", fmtId(rolename));
+			appendStringLiteral(buf, PQgetvalue(res, i, i_rolcomment), true);
+			appendPQExpBuffer(buf, ";\n");
+		}
 
 		printf("%s", buf->data);
 
@@ -652,9 +670,18 @@ dumpTablespaces(PGconn *conn)
 	 * Get all tablespaces except built-in ones (which we assume are named
 	 * pg_xxx)
 	 */
-	res = executeQuery(conn, "SELECT spcname, "
+	if (server_version >= 80200)
+		res = executeQuery(conn, "SELECT spcname, "
 					   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
-					   "spclocation, spcacl "
+					   "spclocation, spcacl, "
+					   "pg_catalog.shobj_description(oid, 'pg_tablespace') "
+					   "FROM pg_catalog.pg_tablespace "
+					   "WHERE spcname NOT LIKE 'pg!_%' ESCAPE '!'");
+	else 
+		res = executeQuery(conn, "SELECT spcname, "
+					   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+					   "spclocation, spcacl, "
+					   "null "
 					   "FROM pg_catalog.pg_tablespace "
 					   "WHERE spcname NOT LIKE 'pg!_%' ESCAPE '!'");
 
@@ -668,6 +695,7 @@ dumpTablespaces(PGconn *conn)
 		char	   *spcowner = PQgetvalue(res, i, 1);
 		char	   *spclocation = PQgetvalue(res, i, 2);
 		char	   *spcacl = PQgetvalue(res, i, 3);
+		char	   *spccomment = PQgetvalue(res, i, 4);
 		char	   *fspcname;
 
 		/* needed for buildACLCommands() */
@@ -691,6 +719,12 @@ dumpTablespaces(PGconn *conn)
 					progname, spcacl, fspcname);
 			PQfinish(conn);
 			exit(1);
+		}
+
+		if (spccomment && strlen(spccomment)) {
+			appendPQExpBuffer(buf, "COMMENT ON TABLESPACE %s IS ", fspcname);
+			appendStringLiteral(buf, spccomment, true);
+			appendPQExpBuffer(buf, ";\n");
 		}
 
 		printf("%s", buf->data);

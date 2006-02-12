@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.159 2006/02/12 02:54:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.160 2006/02/12 03:22:19 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -379,7 +379,7 @@ exec_command(const char *cmd,
 				break;
 			case 'g':
 				/* no longer distinct from \du */
-				success = describeRoles(pattern);
+				success = describeRoles(pattern, show_verbose);
 				break;
 			case 'l':
 				success = do_lo_list();
@@ -404,7 +404,7 @@ exec_command(const char *cmd,
 				success = listTables(&cmd[1], pattern, show_verbose);
 				break;
 			case 'u':
-				success = describeRoles(pattern);
+				success = describeRoles(pattern, show_verbose);
 				break;
 
 			default:

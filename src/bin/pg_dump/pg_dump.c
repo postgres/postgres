@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.427 2006/01/21 02:16:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.428 2006/02/12 03:22:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1185,7 +1185,20 @@ dumpDatabase(Archive *AH)
 	selectSourceSchema("pg_catalog");
 
 	/* Get the database owner and parameters from pg_database */
-	if (g_fout->remoteVersion >= 80000)
+	if (g_fout->remoteVersion >= 80200)
+	{
+		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
+						  "(%s datdba) as dba, "
+						  "pg_encoding_to_char(encoding) as encoding, "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = dattablespace) as tablespace, "
+						  "shobj_description(oid, 'pg_database') as description "
+
+						  "FROM pg_database "
+						  "WHERE datname = ",
+						  username_subquery);
+		appendStringLiteral(dbQry, datname, true);
+	}
+	else if (g_fout->remoteVersion >= 80000)
 	{
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(%s datdba) as dba, "
@@ -1287,10 +1300,28 @@ dumpDatabase(Archive *AH)
 				 NULL);			/* Dumper Arg */
 
 	/* Dump DB comment if any */
-	resetPQExpBuffer(dbQry);
-	appendPQExpBuffer(dbQry, "DATABASE %s", fmtId(datname));
-	dumpComment(AH, dbQry->data, NULL, "",
+	if (g_fout->remoteVersion >= 80200)
+	{
+		/* 8.2 keeps comments on shared objects in a shared table, so
+		 * we cannot use the dumpComment used for other database objects.
+		 */
+		char *comment = PQgetvalue(res, 0, PQfnumber(res, "description"));
+		if (comment && strlen(comment)) {
+			resetPQExpBuffer(dbQry);
+			appendPQExpBuffer(dbQry, "COMMENT ON DATABASE %s IS ", fmtId(datname));
+			appendStringLiteral(dbQry, comment, false);
+			appendPQExpBuffer(dbQry, ";\n");
+
+			ArchiveEntry(AH, dbCatId, createDumpId(), datname, NULL, NULL,
+							dba, false, "COMMENT", dbQry->data, "", NULL,
+							&dbDumpId, 1, NULL, NULL);
+		}
+	} else {
+		resetPQExpBuffer(dbQry);
+		appendPQExpBuffer(dbQry, "DATABASE %s", fmtId(datname));
+		dumpComment(AH, dbQry->data, NULL, "",
 				dbCatId, 0, dbDumpId);
+	}
 
 	PQclear(res);
 

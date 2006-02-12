@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.85 2005/11/22 18:17:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.86 2006/02/12 03:22:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
@@ -30,10 +31,13 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
+#include "catalog/pg_shdescription.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
+#include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -70,6 +74,8 @@ static void CommentLanguage(List *qualname, char *comment);
 static void CommentOpClass(List *qualname, List *arguments, char *comment);
 static void CommentLargeObject(List *qualname, char *comment);
 static void CommentCast(List *qualname, List *arguments, char *comment);
+static void CommentTablespace(List *qualname, char *comment);
+static void CommentRole(List *qualname, char *comment);
 
 
 /*
@@ -133,6 +139,12 @@ CommentObject(CommentStmt *stmt)
 			break;
 		case OBJECT_CAST:
 			CommentCast(stmt->objname, stmt->objargs, stmt->comment);
+			break;
+		case OBJECT_TABLESPACE:
+			CommentTablespace(stmt->objname, stmt->comment);
+			break;
+		case OBJECT_ROLE:
+			CommentRole(stmt->objname, stmt->comment);
 			break;
 		default:
 			elog(ERROR, "unrecognized object type: %d",
@@ -241,6 +253,100 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 }
 
 /*
+ * CreateSharedComments --
+ *
+ * Create a comment for the specified shared object descriptor.  Inserts a
+ * new pg_shdescription tuple, or replaces an existing one with the same key.
+ *
+ * If the comment given is null or an empty string, instead delete any
+ * existing comment for the specified key.
+ */
+void CreateSharedComments(Oid oid, Oid classoid, char *comment)
+{
+	Relation	shdescription;
+	ScanKeyData	skey[2];
+	SysScanDesc	sd;
+	HeapTuple	oldtuple;
+	HeapTuple	newtuple = NULL;
+	Datum		values[Natts_pg_shdescription];
+	char		nulls[Natts_pg_shdescription];
+	char		replaces[Natts_pg_shdescription];
+	int			i;
+
+	/* Reduce empty-string to NULL case */
+	if (comment != NULL && strlen(comment) == 0)
+		comment = NULL;
+
+	/* Prepare to form or update a tuple, if necessary */
+	if (comment != NULL)
+	{
+		for (i = 0; i < Natts_pg_shdescription; i++)
+		{
+			nulls[i] = ' ';
+			replaces[i] = 'r';
+		}
+		i = 0;
+		values[i++] = ObjectIdGetDatum(oid);
+		values[i++] = ObjectIdGetDatum(classoid);
+		values[i++] = DirectFunctionCall1(textin, CStringGetDatum(comment));
+	}
+
+	/* Use the index to search for a matching old tuple */
+
+	ScanKeyInit(&skey[0],
+			Anum_pg_shdescription_objoid,
+			BTEqualStrategyNumber, F_OIDEQ,
+			ObjectIdGetDatum(oid));
+	ScanKeyInit(&skey[1],
+			Anum_pg_shdescription_classoid,
+			BTEqualStrategyNumber, F_OIDEQ,
+			ObjectIdGetDatum(classoid));
+
+	shdescription = heap_open(SharedDescriptionRelationId, RowExclusiveLock);
+
+	sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
+			SnapshotNow, 2, skey);
+
+	while ((oldtuple = systable_getnext(sd)) != NULL)
+	{
+		/* Found the old tuple, so delete or update it */
+
+		if (comment == NULL)
+			simple_heap_delete(shdescription, &oldtuple->t_self);
+		else
+		{
+			newtuple = heap_modifytuple(oldtuple, RelationGetDescr(shdescription),
+					values, nulls, replaces);
+			simple_heap_update(shdescription, &oldtuple->t_self, newtuple);
+		}
+
+		break;	/* Assume there can be only one match */
+	}
+
+	systable_endscan(sd);
+
+	/* If we didn't find an old tuple, insert a new one */
+
+	if (newtuple == NULL && comment != NULL)
+	{
+		newtuple = heap_formtuple(RelationGetDescr(shdescription),
+				values, nulls);
+		simple_heap_insert(shdescription, newtuple);
+	}
+
+	/* Update indexes, if necessary */
+	if (newtuple != NULL)
+	{
+		CatalogUpdateIndexes(shdescription, newtuple);
+		heap_freetuple(newtuple);
+	}
+
+	/* Done */
+
+	heap_close(shdescription, NoLock);
+}
+
+/*
  * DeleteComments -- remove comments for an object
  *
  * If subid is nonzero then only comments matching it will be removed.
@@ -290,6 +396,42 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 
 	systable_endscan(sd);
 	heap_close(description, RowExclusiveLock);
+}
+
+/*
+ * DeleteSharedComments -- remove comments for a shared object
+ */
+void
+DeleteSharedComments(Oid oid, Oid classoid)
+{
+	Relation	shdescription;
+	ScanKeyData	skey[2];
+	SysScanDesc	sd;
+	HeapTuple	oldtuple;
+
+	/* Use the index to search for all matching old tuples */
+
+	ScanKeyInit(&skey[0],
+			Anum_pg_shdescription_objoid,
+			BTEqualStrategyNumber, F_OIDEQ,
+			ObjectIdGetDatum(oid));
+	ScanKeyInit(&skey[1],
+			Anum_pg_shdescription_classoid,
+			BTEqualStrategyNumber, F_OIDEQ,
+			ObjectIdGetDatum(classoid));
+
+	shdescription = heap_open(SharedDescriptionRelationId, RowExclusiveLock);
+
+	sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
+			SnapshotNow, 2, skey);
+
+	while ((oldtuple = systable_getnext(sd)) != NULL)
+		simple_heap_delete(shdescription, &oldtuple->t_self);
+
+	/* Done */
+
+	systable_endscan(sd);
+	heap_close(shdescription, RowExclusiveLock);
 }
 
 /*
@@ -425,7 +567,7 @@ CommentAttribute(List *qualname, char *comment)
  * have regarding the specified database. The routine will check
  * security for owner permissions, and, if successful, will then
  * attempt to find the oid of the database specified. Once found,
- * a comment is added/dropped using the CreateComments() routine.
+ * a comment is added/dropped using the CreateSharedComments() routine.
  */
 static void
 CommentDatabase(List *qualname, char *comment)
@@ -440,11 +582,6 @@ CommentDatabase(List *qualname, char *comment)
 	database = strVal(linitial(qualname));
 
 	/*
-	 * We cannot currently support cross-database comments (since other DBs
-	 * cannot see pg_description of this database).  So, we reject attempts to
-	 * comment on a database other than the current one. Someday this might be
-	 * improved, but it would take a redesigned infrastructure.
-	 *
 	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name
 	 * of the database.  Erroring out would prevent pg_restore from completing
 	 * (which is really pg_restore's fault, but for now we will work around
@@ -462,23 +599,83 @@ CommentDatabase(List *qualname, char *comment)
 		return;
 	}
 
-	/* Only allow comments on the current database */
-	if (oid != MyDatabaseId)
-	{
-		ereport(WARNING,		/* throw just a warning so pg_restore doesn't
-								 * fail */
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("database comments may only be applied to the current database")));
-		return;
-	}
-
 	/* Check object security */
 	if (!pg_database_ownercheck(oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   database);
 
-	/* Call CreateComments() to create/drop the comments */
-	CreateComments(oid, DatabaseRelationId, 0, comment);
+	/* Call CreateSharedComments() to create/drop the comments */
+	CreateSharedComments(oid, DatabaseRelationId, comment);
+}
+
+/*
+ * CommentTablespace --
+ *
+ * This routine is used to add/drop any user-comments a user might
+ * have regarding a tablespace.  The tablepace is specified by name
+ * and, if found, and the user has appropriate permissions, a
+ * comment will be added/dropped using the CreateSharedComments() routine.
+ *
+ */
+static void
+CommentTablespace(List *qualname, char *comment)
+{
+	char	*tablespace;
+	Oid		oid;
+
+	if (list_length(qualname) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("tablespace name may not be qualified")));
+	tablespace = strVal(linitial(qualname));
+
+	oid = get_tablespace_oid(tablespace);
+	if (!OidIsValid(oid))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tablespace \"%s\" does not exist", tablespace)));
+		return;
+	}
+
+	/* Check object security */
+	if (!pg_tablespace_ownercheck(oid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TABLESPACE, tablespace);
+
+	/* Call CreateSharedComments() to create/drop the comments */
+	CreateSharedComments(oid, TableSpaceRelationId, comment);
+}
+
+/*
+ * CommentRole --
+ *
+ * This routine is used to add/drop any user-comments a user might
+ * have regarding a role.  The role is specified by name
+ * and, if found, and the user has appropriate permissions, a
+ * comment will be added/dropped using the CreateSharedComments() routine.
+ */
+static void
+CommentRole(List *qualname, char *comment)
+{
+	char *role;
+	Oid oid;
+
+	if (list_length(qualname) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("role name may not be qualified")));
+	role = strVal(linitial(qualname));
+
+	oid = get_roleid_checked(role);
+
+	/* Check object security */
+	if (!has_privs_of_role(GetUserId(), oid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be member of role \"%s\" to comment upon it", role)));
+
+	/* Call CreateSharedComments() to create/drop the comments */
+	CreateSharedComments(oid, AuthIdRelationId, comment);
 }
 
 /*

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.119 2006/01/21 19:05:59 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.120 2006/02/12 03:22:16 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -186,6 +186,11 @@
      <row>
       <entry><link linkend="catalog-pg-shdepend"><structname>pg_shdepend</structname></link></entry>
       <entry>dependencies on shared objects</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-shdescription"><structname>pg_shdescription</structname></link></entry>
+      <entry>comments on shared objects</entry>
      </row>
 
      <row>
@@ -2230,6 +2235,12 @@
    contents of <structname>pg_description</structname>.
   </para>
 
+  <para>
+   See also <link linkend="catalog-pg-shdescription"><structname>pg_shdescription</structname></link>,
+   which performs a similar function for descriptions involving objects that
+   are shared across a database cluster.
+  </para>
+
   <table>
    <title><structname>pg_description</> Columns</title>
 
@@ -3609,6 +3620,73 @@
    Other dependency flavors may be needed in future.  Note in particular
    that the current definition only supports roles as referenced objects.
   </para>
+
+ </sect1>
+
+ <sect1 id="catalog-pg-shdescription">
+  <title><structname>pg_shdescription</structname></title>
+
+  <indexterm zone="catalog-pg-shdescription">
+   <primary>pg_shdescription</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_shdescription</structname> stores optional
+   descriptions (comments) for shared database objects.  Descriptions can
+   be manipulated with the <command>COMMENT</command> command and viewed
+   with <application>psql</application>'s <literal>\d</literal> commands.
+  </para>
+
+  <para>
+   See also <link linkend="catalog-pg-description"><structname>pg_description</structname></link>,
+   which performs a similar function for descriptions involving objects
+   within a single database.
+  </para>
+
+  <para>
+   Unlike most system catalogs, <structname>pg_shdescription</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_shdescription</structname> per cluster, not
+   one per database.
+  </para>
+
+  <table>
+   <title><structname>pg_shdescription</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>objoid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry>any OID column</entry>
+      <entry>The OID of the object this description pertains to</entry>
+     </row>
+
+     <row>
+      <entry><structfield>classoid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>The OID of the system catalog this object appears in</entry>
+     </row>
+
+     <row>
+      <entry><structfield>description</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Arbitrary text that servers as the description of this object.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
  </sect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.304 2006/02/11 03:32:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.305 2006/02/12 03:22:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -9464,6 +9464,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm zone="functions-info">
+    <primary>shobj_description</primary>
+   </indexterm>
+
+   <indexterm zone="functions-info">
     <primary>comment</primary>
     <secondary sortas="database objects">about database objects</secondary>
    </indexterm>
@@ -9499,6 +9503,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>text</type></entry>
        <entry>get comment for a table column</entry>
       </row>
+      <row>
+       <entry><literal><function>shobj_description</function>(<parameter>object_oid</parameter>, <parameter>catalog_name</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get comment for a shared database object</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -9520,6 +9529,14 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     which is specified by the OID of its table and its column number.
     <function>obj_description</function> cannot be used for table columns since
     columns do not have OIDs of their own.
+   </para>
+
+   <para>
+    <function>shobj_description</function> is used just like
+    <function>obj_description</function> only that it is used for retrieving
+    comments on shared objects.  Some system catalogs are global to all
+    databases within each cluster and their descriptions are stored globally
+    as well.
    </para>
   </sect1>
 

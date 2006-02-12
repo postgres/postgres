@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.58 2005/12/09 21:19:35 petere Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.59 2006/02/12 03:22:17 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
        pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o pg_shdepend.o \
        pg_type.o
 
-BKIFILES = postgres.bki postgres.description
+BKIFILES = postgres.bki postgres.description postgres.shdescription
 
 all: SUBSYS.o $(BKIFILES)
 
@@ -34,7 +34,7 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_rewrite.h pg_trigger.h pg_listener.h pg_description.h pg_cast.h \
 	pg_namespace.h pg_conversion.h pg_depend.h \
 	pg_database.h pg_tablespace.h pg_pltemplate.h \
-	pg_authid.h pg_auth_members.h pg_shdepend.h \
+	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
 	indexing.h \
     )
 
@@ -42,6 +42,8 @@ pg_includes := $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)
 
 # see explanation in ../parser/Makefile
 postgres.description: postgres.bki ;
+
+postgres.shdescription: postgres.bki ;
 
 postgres.bki: genbki.sh $(POSTGRES_BKI_SRCS) \
     $(top_srcdir)/src/include/postgres_ext.h $(top_builddir)/src/include/pg_config_manual.h
@@ -51,6 +53,7 @@ postgres.bki: genbki.sh $(POSTGRES_BKI_SRCS) \
 install-data: $(BKIFILES) installdirs
 	$(INSTALL_DATA) postgres.bki         '$(DESTDIR)$(datadir)/postgres.bki'
 	$(INSTALL_DATA) postgres.description '$(DESTDIR)$(datadir)/postgres.description'
+	$(INSTALL_DATA) postgres.shdescription '$(DESTDIR)$(datadir)/postgres.shdescription'
 	$(INSTALL_DATA) $(srcdir)/system_views.sql '$(DESTDIR)$(datadir)/system_views.sql'
 	$(INSTALL_DATA) $(srcdir)/information_schema.sql '$(DESTDIR)$(datadir)/information_schema.sql'
 	$(INSTALL_DATA) $(srcdir)/sql_features.txt '$(DESTDIR)$(datadir)/sql_features.txt'

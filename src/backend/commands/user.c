@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.168 2006/02/04 19:06:46 adunstan Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.169 2006/02/12 03:22:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
+#include "commands/comment.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
@@ -939,6 +940,11 @@ DropRole(DropRoleStmt *stmt)
 		}
 
 		systable_endscan(sscan);
+
+		/*
+		 * Remove any comments on this role.
+		 */
+		DeleteSharedComments(roleid, AuthIdRelationId);
 
 		/*
 		 * Advance command counter so that later iterations of this loop will

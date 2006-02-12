@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.108 2006/02/10 22:05:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.109 2006/02/12 03:22:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,7 @@ static const char *progname;
 static char *encodingid = "0";
 static char *bki_file;
 static char *desc_file;
+static char *shdesc_file;
 static char *hba_file;
 static char *ident_file;
 static char *conf_file;
@@ -181,6 +182,7 @@ static void unlimit_systables(void);
 static void setup_depend(void);
 static void setup_sysviews(void);
 static void setup_description(void);
+static void setup_shared_description(void);
 static void setup_conversion(void);
 static void setup_privileges(void);
 static void set_info_version(void);
@@ -1574,6 +1576,7 @@ unlimit_systables(void)
 		"ALTER TABLE pg_description CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_proc CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_rewrite CREATE TOAST TABLE;\n",
+		"ALTER TABLE pg_shdescription CREATE TOAST TABLE;\n",
 		"ALTER TABLE pg_statistic CREATE TOAST TABLE;\n",
 		NULL
 	};
@@ -1745,6 +1748,42 @@ setup_description(void)
 				" SELECT t.objoid, c.oid, t.objsubid, t.description "
 				"  FROM tmp_pg_description t, pg_class c "
 				"    WHERE c.relname = t.classname;\n");
+
+	PG_CMD_CLOSE;
+
+	check_ok();
+}
+
+/*
+ * load shared description data
+ */
+static void
+setup_shared_description(void)
+{
+	PG_CMD_DECL;
+
+	fputs(_("loading pg_shdescription ... "), stdout);
+	fflush(stdout);
+
+	snprintf(cmd, sizeof(cmd),
+			"\"%s\" %s template1 >%s",
+			backend_exec, backend_options,
+			DEVNULL);
+
+	PG_CMD_OPEN;
+
+	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_shdescription ( "
+			" objoid oid, "
+			" classname name, "
+			" description text) WITHOUT OIDS;\n");
+
+	PG_CMD_PRINTF1("COPY tmp_pg_shdescription FROM '%s';\n",
+			shdesc_file);
+
+	PG_CMD_PUTS("INSERT INTO pg_shdescription "
+			" SELECT t.objoid, c.oid, t.description "
+			"  FROM tmp_pg_shdescription t, pg_class c "
+			"   WHERE c.relname = t.classname;\n");
 
 	PG_CMD_CLOSE;
 
@@ -2702,6 +2741,7 @@ main(int argc, char *argv[])
 
 	set_input(&bki_file, "postgres.bki");
 	set_input(&desc_file, "postgres.description");
+	set_input(&shdesc_file, "postgres.shdescription");
 	set_input(&hba_file, "pg_hba.conf.sample");
 	set_input(&ident_file, "pg_ident.conf.sample");
 	set_input(&conf_file, "postgresql.conf.sample");
@@ -2718,12 +2758,14 @@ main(int argc, char *argv[])
 				"VERSION=%s\n"
 				"PGDATA=%s\nshare_path=%s\nPGPATH=%s\n"
 				"POSTGRES_SUPERUSERNAME=%s\nPOSTGRES_BKI=%s\n"
-				"POSTGRES_DESCR=%s\nPOSTGRESQL_CONF_SAMPLE=%s\n"
+				"POSTGRES_DESCR=%s\nPOSTGRES_SHDESCR=%s\n"
+				"POSTGRESQL_CONF_SAMPLE=%s\n"
 				"PG_HBA_SAMPLE=%s\nPG_IDENT_SAMPLE=%s\n",
 				PG_VERSION,
 				pg_data, share_path, bin_path,
 				effective_user, bki_file,
-				desc_file, conf_file,
+				desc_file, shdesc_file,
+				conf_file,
 				hba_file, ident_file);
 		if (show_setting)
 			exit(0);
@@ -2731,6 +2773,7 @@ main(int argc, char *argv[])
 
 	check_input(bki_file);
 	check_input(desc_file);
+	check_input(shdesc_file);
 	check_input(hba_file);
 	check_input(ident_file);
 	check_input(conf_file);
@@ -2917,6 +2960,8 @@ main(int argc, char *argv[])
 	setup_sysviews();
 
 	setup_description();
+
+	setup_shared_description();
 
 	setup_conversion();
 

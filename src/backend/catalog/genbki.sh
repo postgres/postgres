@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.37 2005/06/28 05:08:52 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.38 2006/02/12 03:22:17 momjian Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -103,7 +103,7 @@ fi
 
 TMPFILE="genbkitmp$$.c"
 
-trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$" 0 1 2 3 15
+trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$ ${OUTPUT_PREFIX}.shdescription.$$" 0 1 2 3 15
 
 
 # Get NAMEDATALEN from postgres_ext.h
@@ -131,6 +131,7 @@ for dir in $INCLUDE_DIRS; do
 done
 
 touch ${OUTPUT_PREFIX}.description.$$
+touch ${OUTPUT_PREFIX}.shdescription.$$
 
 # ----------------
 # 	Strip comments and other trash from .h
@@ -201,7 +202,7 @@ comment_level > 0 { next; }
 # ----------------
 #	DATA() statements are basically passed right through after
 #	stripping off the DATA( and the ) on the end.
-#	Remember the OID for use by DESCR().
+#	Remember the OID for use by DESCR() and SHDESCR().
 # ----------------
 /^DATA\(/ {
 	data = substr($0, 6, length($0) - 6);
@@ -221,6 +222,16 @@ comment_level > 0 { next; }
 		data = substr($0, 8, length($0) - 9);
 		if (data != "")
 			printf "%d\t%s\t0\t%s\n", oid, catalog, data >>descriptionfile;
+	}
+	next;
+}
+
+/^SHDESCR\(/ {
+	if (oid != 0)
+	{
+		data = substr($0, 10, length($0) - 11);
+		if (data != "")
+			printf "%d\t%s\t%s\n", oid, catalog, data >>shdescriptionfile;
 	}
 	next;
 }
@@ -365,7 +376,7 @@ END {
 		reln_open = 0;
 	}
 }
-' "descriptionfile=${OUTPUT_PREFIX}.description.$$" > $TMPFILE || exit
+' "descriptionfile=${OUTPUT_PREFIX}.description.$$" "shdescriptionfile=${OUTPUT_PREFIX}.shdescription.$$" > $TMPFILE || exit
 
 echo "# PostgreSQL $major_version" >${OUTPUT_PREFIX}.bki.$$
 
@@ -386,10 +397,15 @@ if [ `wc -c < ${OUTPUT_PREFIX}.description.$$` -lt 10000 ]; then
     echo "$CMDNAME: something seems to be wrong with the .description file" >&2
     exit 1
 fi
+if [ `wc -c < ${OUTPUT_PREFIX}.shdescription.$$` -lt 10 ]; then
+    echo "$CMDNAME: something seems to be wrong with the .shdescription file" >&2
+    exit 1
+fi
 
 # Looks good, commit ...
 
 mv ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.bki || exit
 mv ${OUTPUT_PREFIX}.description.$$ ${OUTPUT_PREFIX}.description || exit
+mv ${OUTPUT_PREFIX}.shdescription.$$ ${OUTPUT_PREFIX}.shdescription || exit
 
 exit 0

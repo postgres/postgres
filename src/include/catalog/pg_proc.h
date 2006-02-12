@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.396 2006/02/11 20:39:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.397 2006/02/12 03:22:19 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1513,6 +1513,8 @@ DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 f f t f s 2	25 "26 19" 
 DESCR("get description for object id and catalog name");
 DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 f f t f s 2	25 "26 23" _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = ''pg_catalog.pg_class''::regclass and objsubid = $2" - _null_ ));
 DESCR("get description for table column");
+DATA(insert OID = 1993 ( shobj_description	PGNSP PGUID 14 f f t f s 2	25 "26 19" _null_ _null_ _null_ "select description from pg_catalog.pg_shdescription where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP)" - _null_ ));
+DESCR("get description for object id and shared catalog name");
 
 DATA(insert OID = 1217 (  date_trunc	   PGNSP PGUID 12 f f t f s 2 1184 "25 1184" _null_ _null_ _null_ timestamptz_trunc - _null_ ));
 DESCR("truncate timestamp with time zone to specified units");
