@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.147 2006/02/12 07:21:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.148 2006/02/12 15:25:04 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -140,8 +140,6 @@ static const SchemaQuery *completion_squery;	/* to pass a SchemaQuery */
 */
 #define COMPLETE_WITH_QUERY(query) \
 do { completion_charp = query; matches = completion_matches(text, complete_from_query); } while(0)
-#define COMPLETE_WITH_QUERY_ADDON(query, addon) \
-do { completion_charp = query addon; matches = completion_matches(text, complete_from_query); } while(0)
 #define COMPLETE_WITH_SCHEMA_QUERY(query, addon) \
 do { completion_squery = &(query); completion_charp = addon; matches = completion_matches(text, complete_from_schema_query); } while(0)
 #define COMPLETE_WITH_LIST(list) \
@@ -1657,7 +1655,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev3_wd, "SET") == 0
 			 && pg_strcasecmp(prev2_wd, "SESSION") == 0
 			 && pg_strcasecmp(prev_wd, "AUTHORIZATION") == 0)
-		COMPLETE_WITH_QUERY_ADDON(Query_for_list_of_roles, " UNION SELECT 'DEFAULT'");
+		COMPLETE_WITH_QUERY(Query_for_list_of_roles " UNION SELECT 'DEFAULT'");
 	/* Complete RESET SESSION with AUTHORIZATION */
 	else if (pg_strcasecmp(prev2_wd, "RESET") == 0 &&
 			 pg_strcasecmp(prev_wd, "SESSION") == 0)
