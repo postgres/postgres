@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.422 2006/02/12 18:13:10 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.423 2006/02/12 22:35:26 tgl Exp $
 
 Typical markup:
 
@@ -28,7 +28,8 @@ For new features, add links to the documentation sections.
    </note>
 
    <para>
-    This release contains a variety of fixes from 8.1.2.
+    This release contains a variety of fixes from 8.1.2,
+    including one very serious security issue.
    </para>
 
    <sect2>
@@ -46,26 +47,47 @@ For new features, add links to the documentation sections.
 
 <itemizedlist>
 
-<listitem><para>Fix rare bug with row visibility logic in self-inserted
-rows (Tom)</para></listitem>
+<listitem><para>Fix bug that allowed any logged-in user to <command>SET
+ROLE</> to any other database user id (CVE-2006-0553)</para>
+<para>Due to inadequate validity checking, a user could exploit the special
+case that <command>SET ROLE</> normally uses to restore the previous role
+setting after an error.  This allowed ordinary users to acquire superuser
+status, for example.
+The escalation-of-privilege risk exists only in 8.1.0-8.1.2.
+However, in all releases back to 7.3 there is a related bug in <command>SET
+SESSION AUTHORIZATION</> that allows unprivileged users to crash the server,
+if it has been compiled with Asserts enabled (which is not the default).
+Thanks to Akio Ishida for reporting this problem.
+</para></listitem>
 
-<listitem><para>Fixes for relation cache management and WAL file creation
+<listitem><para>Fix bug with row visibility logic in self-inserted
+rows (Tom)</para>
+<para>Under rare circumstances a row inserted by the current command
+could be seen as already valid, when it should not be.  Repairs bug
+created in 8.0.4, 7.4.9, and 7.3.11 releases.
+</para></listitem>
+
+<listitem><para>Fix race condition that could lead to <quote>file already
+exists</> errors during pg_clog and pg_subtrans file creation
 (Tom)</para></listitem>
+
+<listitem><para>Fix cases that could lead to crashes if a cache-invalidation
+message arrives at just the wrong time (Tom)</para></listitem>
 
 <listitem><para>Properly check <literal>DOMAIN</> constraints for
 <literal>UNKNOWN</> parameters in prepared statements
 (Neil)</para></listitem>
 
-<listitem><para>Change <command>ALTER COLUMN TYPE</> to drop
-<literal>FOREIGN KEY</> constraints before <literal>UNIQUE</> or
-<literal>PRIMARY KEY</> constraints (Nakano Yoshihisa)</para></listitem>
+<listitem><para>Ensure <command>ALTER COLUMN TYPE</> will process
+<literal>FOREIGN KEY</>, <literal>UNIQUE</>, and <literal>PRIMARY KEY</>
+constraints in the proper order (Nakano Yoshihisa)</para></listitem>
 
-<listitem><para>Fix <literal>CREATE OPERATOR</> dumps that have
-cross-schema definitions (Tom)</para></listitem>
+<listitem><para>Fixes to allow restoring dumps that have cross-schema
+references to custom operators or operator classes (Tom)</para></listitem>
 
-<listitem><para>Allow <application>pg_restore</> to continue after a
-<command>COPY</> failure, rather than treating the remaining statements
-as <command>COPY</> data (Stephen Frost)</para></listitem>
+<listitem><para>Allow <application>pg_restore</> to continue properly after a
+<command>COPY</> failure; formerly it tried to treat the remaining 
+<command>COPY</> data as SQL commands (Stephen Frost)</para></listitem>
 
 <listitem><para>Fix <application>pg_ctl</> <literal>unregister</> crash
 when the  data directory is not specified (Magnus)</para></listitem>
@@ -76,29 +98,38 @@ when the  data directory is not specified (Magnus)</para></listitem>
 <listitem><para>Fix <application>ecpg</> crash on AMD64 and PPC
 (Neil)</para></listitem>
 
-<listitem><para>Fix problem with argument passing with error reporting
+<listitem><para>Allow <literal>SETOF</> and <literal>%TYPE</> to be used
+together in function result type declarations</para></listitem>
+
+<listitem><para>Recover properly if error occurs during argument passing
 in <application>PL/python</> (Neil)</para></listitem>
 
-<listitem><para>Fix memory leak in <application>PL/perl</>'s row
-returning code (Neil)</para></listitem>
+<listitem><para>Fix memory leak in <function>plperl_return_next</>
+(Neil)</para></listitem>
 
 <listitem><para>Fix <application>PL/perl</>'s handling of locales on
 Win32 to match the backend (Andrew)</para></listitem>
 
-<listitem><para>Various optimizer improvements (Tom)</para></listitem>
+<listitem><para>Various optimizer fixes (Tom)</para></listitem>
 
-<listitem><para>Fix crash when <literal>log_min_messages</> is set in
-<literal>postgresql.conf</> to <literal>DEBUG5</> on Win32
+<listitem><para>Fix crash when <literal>log_min_messages</> is set to
+<literal>DEBUG3</> or above in <filename>postgresql.conf</> on Win32
 (Bruce)</para></listitem>
 
 <listitem><para>Fix <application>pgxs</> <literal>-L</> library path
-specification for Win32 and Cygwin (Bruce)</para></listitem>
+specification for Win32, Cygwin, OS X, AIX (Bruce)</para></listitem>
 
 <listitem><para>Check that SID is enabled while checking for Win32 admin
 privileges (Magnus)</para></listitem>
 
-<listitem><para>Portability fix for <function>finite</> and
-<function>isinf</> (Tom)</para></listitem>
+<listitem><para>Properly reject out-of-range date inputs (Kris
+Jurka)</para></listitem>
+
+<listitem><para>Portability fix for testing presence of <function>finite</>
+and <function>isinf</> during configure (Tom)</para></listitem>
+
+<listitem><para>Improve speed of <command>COPY IN</> via libpq, by
+avoiding a kernel call per data line (Alon Goldshuv)</para></listitem>
 
 <listitem><para>Improve speed of <filename>/contrib/tsearch2</> index
 creation (Teodor)</para></listitem>
@@ -2437,7 +2468,9 @@ psql -t -f fixseq.sql db1 | psql -e db1
     <title>Migration to version 8.0.7</title>
 
     <para>
-     A dump/restore is not required for those running 8.0.X.
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
     </para>
    </sect2>
 
@@ -2446,23 +2479,42 @@ psql -t -f fixseq.sql db1 | psql -e db1
   
 <itemizedlist>
 
-<listitem><para>Fixes for relation cache management and WAL file creation
+<listitem><para>Fix potential crash in <command>SET
+SESSION AUTHORIZATION</> (CVE-2006-0553)</para>
+<para>An unprivileged user could crash the server process, resulting in
+momentary denial of service to other users, if the server has been compiled
+with Asserts enabled (which is not the default).
+Thanks to Akio Ishida for reporting this problem.
+</para></listitem>
+
+<listitem><para>Fix bug with row visibility logic in self-inserted
+rows (Tom)</para>
+<para>Under rare circumstances a row inserted by the current command
+could be seen as already valid, when it should not be.  Repairs bug
+created in 8.0.4, 7.4.9, and 7.3.11 releases.
+</para></listitem>
+
+<listitem><para>Fix race condition that could lead to <quote>file already
+exists</> errors during pg_clog and pg_subtrans file creation
 (Tom)</para></listitem>
+
+<listitem><para>Fix cases that could lead to crashes if a cache-invalidation
+message arrives at just the wrong time (Tom)</para></listitem>
 
 <listitem><para>Properly check <literal>DOMAIN</> constraints for
 <literal>UNKNOWN</> parameters in prepared statements
 (Neil)</para></listitem>
 
-<listitem><para>Change <command>ALTER COLUMN TYPE</> to drop
-<literal>FOREIGN KEY</> constraints before <literal>UNIQUE</> or
-<literal>PRIMARY KEY</> constraints (Nakano Yoshihisa)</para></listitem>
+<listitem><para>Ensure <command>ALTER COLUMN TYPE</> will process
+<literal>FOREIGN KEY</>, <literal>UNIQUE</>, and <literal>PRIMARY KEY</>
+constraints in the proper order (Nakano Yoshihisa)</para></listitem>
 
-<listitem><para>Fix <literal>CREATE OPERATOR</> dumps that have
-cross-schema definitions (Tom)</para></listitem>
+<listitem><para>Fixes to allow restoring dumps that have cross-schema
+references to custom operators or operator classes (Tom)</para></listitem>
 
-<listitem><para>Allow <application>pg_restore</> to continue after a
-<command>COPY</> failure, rather than treating the remaining statements
-as <command>COPY</> data (Stephen Frost)</para></listitem>
+<listitem><para>Allow <application>pg_restore</> to continue properly after a
+<command>COPY</> failure; formerly it tried to treat the remaining 
+<command>COPY</> data as SQL commands (Stephen Frost)</para></listitem>
 
 <listitem><para>Fix <application>pg_ctl</> <literal>unregister</> crash
 when the  data directory is not specified (Magnus)</para></listitem>
@@ -2470,24 +2522,27 @@ when the  data directory is not specified (Magnus)</para></listitem>
 <listitem><para>Fix <application>ecpg</> crash on AMD64 and PPC
 (Neil)</para></listitem>
 
-<listitem><para>Fix problem with argument passing with error reporting
+<listitem><para>Recover properly if error occurs during argument passing
 in <application>PL/python</> (Neil)</para></listitem>
 
 <listitem><para>Fix <application>PL/perl</>'s handling of locales on
 Win32 to match the backend (Andrew)</para></listitem>
 
-<listitem><para>Fix crash when <literal>log_min_messages</> is set in
-<literal>postgresql.conf</> to <literal>DEBUG5</> on Win32
+<listitem><para>Fix crash when <literal>log_min_messages</> is set to
+<literal>DEBUG3</> or above in <filename>postgresql.conf</> on Win32
 (Bruce)</para></listitem>
 
 <listitem><para>Fix <application>pgxs</> <literal>-L</> library path
-specification for Win32 and Cygwin (Bruce)</para></listitem>
+specification for Win32, Cygwin, OS X, AIX (Bruce)</para></listitem>
 
 <listitem><para>Check that SID is enabled while checking for Win32 admin
 privileges (Magnus)</para></listitem>
 
-<listitem><para>Portability fix for <function>finite</> and
-<function>isinf</> (Tom)</para></listitem>
+<listitem><para>Properly reject out-of-range date inputs (Kris
+Jurka)</para></listitem>
+
+<listitem><para>Portability fix for testing presence of <function>finite</>
+and <function>isinf</> during configure (Tom)</para></listitem>
 
 </itemizedlist>
 
@@ -5454,7 +5509,9 @@ typedefs (Michael)</para></listitem>
     <title>Migration to version 7.4.12</title>
 
     <para>
-     A dump/restore is not required for those running 7.4.X.
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
     </para>
    </sect2>
 
@@ -5463,21 +5520,34 @@ typedefs (Michael)</para></listitem>
   
 <itemizedlist>
 
-<listitem><para>Fixes for relation cache management and WAL file creation
-(Tom)</para></listitem>
+<listitem><para>Fix potential crash in <command>SET
+SESSION AUTHORIZATION</> (CVE-2006-0553)</para>
+<para>An unprivileged user could crash the server process, resulting in
+momentary denial of service to other users, if the server has been compiled
+with Asserts enabled (which is not the default).
+Thanks to Akio Ishida for reporting this problem.
+</para></listitem>
 
-<listitem><para>Fix rare bug with row visibility logic in self-inserted
-rows (Tom)</para></listitem>
+<listitem><para>Fix bug with row visibility logic in self-inserted
+rows (Tom)</para>
+<para>Under rare circumstances a row inserted by the current command
+could be seen as already valid, when it should not be.  Repairs bug
+created in 7.4.9 and 7.3.11 releases.
+</para></listitem>
+
+<listitem><para>Fix race condition that could lead to <quote>file already
+exists</> errors during pg_clog file creation
+(Tom)</para></listitem>
 
 <listitem><para>Properly check <literal>DOMAIN</> constraints for
 <literal>UNKNOWN</> parameters in prepared statements
 (Neil)</para></listitem>
 
-<listitem><para>Fix <literal>CREATE OPERATOR</> dumps that have
-cross-schema definitions (Tom)</para></listitem>
+<listitem><para>Fix to allow restoring dumps that have cross-schema
+references to custom operators (Tom)</para></listitem>
 
-<listitem><para>Portability fix for <function>finite</> and
-<function>isinf</> (Tom)</para></listitem>
+<listitem><para>Portability fix for testing presence of <function>finite</>
+and <function>isinf</> during configure (Tom)</para></listitem>
 
 </itemizedlist>
 
@@ -8248,7 +8318,9 @@ DROP SCHEMA information_schema CASCADE;
     <title>Migration to version 7.3.14</title>
 
     <para>
-     A dump/restore is not required for those running 7.3.X.
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
     </para>
    </sect2>
 
@@ -8257,7 +8329,30 @@ DROP SCHEMA information_schema CASCADE;
   
 <itemizedlist>
 
-<listitem><para>PLACE HOLDER</para></listitem>
+<listitem><para>Fix potential crash in <command>SET
+SESSION AUTHORIZATION</> (CVE-2006-0553)</para>
+<para>An unprivileged user could crash the server process, resulting in
+momentary denial of service to other users, if the server has been compiled
+with Asserts enabled (which is not the default).
+Thanks to Akio Ishida for reporting this problem.
+</para></listitem>
+
+<listitem><para>Fix bug with row visibility logic in self-inserted
+rows (Tom)</para>
+<para>Under rare circumstances a row inserted by the current command
+could be seen as already valid, when it should not be.  Repairs bug
+created in 7.3.11 release.
+</para></listitem>
+
+<listitem><para>Fix race condition that could lead to <quote>file already
+exists</> errors during pg_clog file creation
+(Tom)</para></listitem>
+
+<listitem><para>Fix to allow restoring dumps that have cross-schema
+references to custom operators (Tom)</para></listitem>
+
+<listitem><para>Portability fix for testing presence of <function>finite</>
+and <function>isinf</> during configure (Tom)</para></listitem>
 
 </itemizedlist>
 
