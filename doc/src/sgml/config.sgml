@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.36.2.1 2006/02/05 18:19:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.36.2.2 2006/02/12 19:19:37 momjian Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -517,7 +517,7 @@ SET ENABLE_SEQSCAN TO OFF;
         would-be client has not completed the authentication protocol in
         this much time, the server breaks the connection. This prevents
         hung clients from occupying a connection indefinitely. This
-        option can only be set at server start or in the
+        option can be set at server start or in the
         <filename>postgresql.conf</filename> file. The default is 60.
        </para>
       </listitem>
@@ -1130,7 +1130,7 @@ SET ENABLE_SEQSCAN TO OFF;
          delays is 10 milliseconds; setting <varname>bgwriter_delay</>
          to a value that is not a multiple of 10 may have the same
          results as setting it to the next higher multiple of 10.
-         This option can only be set at server start or in the
+         This option can be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
@@ -1150,7 +1150,7 @@ SET ENABLE_SEQSCAN TO OFF;
          being recycled, and writes any that are dirty.
          The default value is 1.0 (this is a percentage of the total number
          of shared buffers).
-         This option can only be set at server start or in the
+         This option can be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
@@ -1166,7 +1166,7 @@ SET ENABLE_SEQSCAN TO OFF;
          In each round, no more than this many buffers will be written
          as a result of scanning soon-to-be-recycled buffers.
          The default value is 5.
-         This option can only be set at server start or in the
+         This option can be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
@@ -1188,7 +1188,7 @@ SET ENABLE_SEQSCAN TO OFF;
          of shared buffers).  With the default <varname>bgwriter_delay</>
          setting, this will allow the entire shared buffer pool to be scanned
          about once per minute.
-         This option can only be set at server start or in the
+         This option can be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
@@ -1206,7 +1206,7 @@ SET ENABLE_SEQSCAN TO OFF;
          limit is reached, the scan stops, and resumes at the next buffer
          during the next round.)
          The default value is 5.
-         This option can only be set at server start or in the
+         This option can be set at server start or in the
          <filename>postgresql.conf</filename> file.
         </para>
        </listitem>
@@ -1288,7 +1288,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.  If you turn
         this option off, also consider turning off 
         <xref linkend="guc-full-page-writes">.
@@ -1338,7 +1338,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Not all of these choices are available on all platforms.
         The default is the first method in the above list that is supported.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
       </listitem>
@@ -1385,7 +1385,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.  The default is
         <literal>on</>.
        </para>
@@ -2120,7 +2120,7 @@ SELECT * FROM parent WHERE key = 2400;
          option to a list of desired log destinations separated by
          commas. The default is to log to <systemitem>stderr</systemitem> 
          only.
-         This option can only be set at server start or in the
+         This option can be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
        </para>
       </listitem>
@@ -2156,7 +2156,7 @@ SELECT * FROM parent WHERE key = 2400;
         determines the directory in which log files will be created.
         It may be specified as an absolute path, or relative to the
         cluster data directory.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
       </listitem>
@@ -2180,7 +2180,7 @@ SELECT * FROM parent WHERE key = 2400;
         if <varname>log_filename</varname> were <literal>server_log</literal>, then the
         chosen file name would be <literal>server_log.1093827753</literal>
         for a log starting at Sun Aug 29 19:02:33 2004 MST.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
       </listitem>
@@ -2198,7 +2198,7 @@ SELECT * FROM parent WHERE key = 2400;
         After this many minutes have elapsed, a new log file will
         be created.  Set to zero to disable time-based creation of
         new log files.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
       </listitem>
@@ -2216,7 +2216,7 @@ SELECT * FROM parent WHERE key = 2400;
         After this many kilobytes have been emitted into a log file,
         a new log file will be created.  Set to zero to disable size-based
         creation of new log files.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
       </listitem>
@@ -2239,7 +2239,7 @@ SELECT * FROM parent WHERE key = 2400;
         a <varname>log_filename</varname> like <literal>postgresql-%H.log</literal>
         would result in generating twenty-four hourly log files and then
         cyclically overwriting them.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
        <para>
@@ -2280,7 +2280,7 @@ SELECT * FROM parent WHERE key = 2400;
         the default is <literal>LOCAL0</>. See also the
         documentation of your system's
         <application>syslog</application> daemon.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
       </listitem>
@@ -2298,7 +2298,7 @@ SELECT * FROM parent WHERE key = 2400;
          <productname>PostgreSQL</productname> messages in
          <application>syslog</application> logs. The default is
          <literal>postgres</literal>.
-         This option can only be set at server start or in the
+         This option can be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
         </para>
        </listitem>
@@ -2591,7 +2591,7 @@ SELECT * FROM parent WHERE key = 2400;
         This outputs a line in the server log similar to
         <varname>log_connections</varname> but at session termination,
         and includes the duration of the session.  This is off by
-        default. This option can only be set at server start or in the
+        default. This option can be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
       </listitem>
@@ -2633,7 +2633,7 @@ SELECT * FROM parent WHERE key = 2400;
          produces its own 
          time stamp and process ID information, so you probably do not want to
          use those escapes if you are using <application>syslog</>.
-         This option can only be set at server start or in the
+         This option can be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
 
          <informaltable>
@@ -2783,7 +2783,7 @@ SELECT * FROM parent WHERE key = 2400;
         connecting host. Turning on this option causes logging of the
         host name as well.  Note that depending on your host name resolution
         setup this might impose a non-negligible performance penalty. This
-        option can only be set at server start or in the
+        option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
       </listitem>
@@ -2953,7 +2953,7 @@ SELECT * FROM parent WHERE key = 2400;
         autovacuum subprocess.  This is off by default.
         <varname>stats_start_collector</> and <varname>stats_row_level</>
         must also be on for this to start.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
       </listitem>
@@ -2971,7 +2971,7 @@ SELECT * FROM parent WHERE key = 2400;
         and issues <command>VACUUM</> and <command>ANALYZE</> commands
         as needed for tables in that database.  The delay is measured
         in seconds, and the default is 60.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
       </listitem>
@@ -2987,7 +2987,7 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies the minimum number of updated or deleted tuples needed
         to trigger a <command>VACUUM</> in any one table.
         The default is 1000.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
@@ -3005,7 +3005,7 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies the minimum number of inserted, updated or deleted tuples
         needed to trigger an <command>ANALYZE</> in any one table.
         The default is 500.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
@@ -3024,7 +3024,7 @@ SELECT * FROM parent WHERE key = 2400;
         <varname>autovacuum_vacuum_threshold</varname>
         when deciding whether to trigger a <command>VACUUM</>.
         The default is 0.4.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
@@ -3043,7 +3043,7 @@ SELECT * FROM parent WHERE key = 2400;
         <varname>autovacuum_analyze_threshold</varname>
         when deciding whether to trigger an <command>ANALYZE</>.
         The default is 0.2.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> file.
         This setting can be overridden for individual tables by entries in
         <structname>pg_autovacuum</>.
@@ -3995,7 +3995,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         add-on module.  Such variables must have names consisting of a class
         name, a dot, and a variable name.  <varname>custom_variable_classes</>
         specifies all the class names in use in a particular installation.
-        This option can only be set at server start or in the
+        This option can be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
 
