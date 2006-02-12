@@ -9,9 +9,30 @@ that supports an extended subset of the SQL standard, including
 transactions, foreign keys, subqueries, triggers, user-defined types
 and functions.  This distribution also contains C language bindings.
 
-The JDBC, ODBC, C++, Python, and Tcl interfaces have been moved to the
-PostgreSQL Projects Web Site at http://gborg.postgresql.org for separate
-maintenance.  A Perl DBI/DBD driver is available from CPAN.
+PostgreSQL has many language interfaces including some of the more
+common listed below:
+
+C++ - http://thaiopensource.org/development/libpqxx/
+JDBC - http://jdbc.postgresql.org
+ODBC - http://odbc.postgresql.org
+Perl - http://search.cpan.org/~dbdpg/
+PHP - http://www.php.net
+Python - http://www.initd.org/
+Ruby - http://ruby.scripting.ca/postgres/
+
+Other language binding are available from a variety of contributing
+parties.
+
+PostgreSQL also has a great number of procedural languages available,
+a short but not complete list is below:
+
+pl/c - Included in PostgreSQL core 
+plPgsql - Included in PostgreSQL core - Similar to Oracle PL/sql
+plPerl - Included in PostgreSQL core
+plPHP - http://projects.commandprompt.com/projects/public/plphp
+plPython - Included in PostgreSQL core
+plJava - http://gborg.postgresql.org/project/pljava/projdisplay.php
+plTcl - Included in PostgreSQL core
 
 See the file INSTALL for instructions on how to build and install
 PostgreSQL.  That file also lists supported operating systems and
@@ -24,5 +45,6 @@ distribution; it can be read as described in the installation
 instructions.
 
 The latest version of this software may be obtained at
-ftp://ftp.postgresql.org/pub/.  For more information look at our web
-site located at http://www.postgresql.org/.
+http://www.postgresql.org/download/.  For more information look at our
+web site located at http://www.postgresql.org/.
+
