@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.19 2006/02/12 17:11:28 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.20 2006/02/12 17:28:23 momjian Exp $
 
 Typical markup:
 
@@ -47,61 +47,61 @@ For new features, add links to the documentation sections.
 <itemizedlist>
 
 <listitem><para>Fix rare bug with row visibility logic in self-inserted
-rows (Tom)</listitem></para>
+rows (Tom)</para></listitem>
 
 <listitem><para>Fixes for relation cache management and WAL file creation
-(Tom)</listitem></para>
+(Tom)</para></listitem>
 
 <listitem><para>Properly check <literal>DOMAIN</> constraints for
 <literal>UNKNOWN</> parameters in prepared statements
-(Neil)</listitem></para>
+(Neil)</para></listitem>
 
 <listitem><para>Change <command>ALTER COLUMN TYPE</> to drop
 <literal>FOREIGN KEY</> constraints before <literal>UNIQUE</> or
-<literal>PRIMARY KEY</> constraints (Nakano Yoshihisa)</listitem></para>
+<literal>PRIMARY KEY</> constraints (Nakano Yoshihisa)</para></listitem>
 
 <listitem><para>Fix <literal>CREATE OPERATOR</> dumps that have
-cross-schema definitions (Tom)</listitem></para>
+cross-schema definitions (Tom)</para></listitem>
 
 <listitem><para>Allow <application>pg_restore</> to continue after a
 <command>COPY</> failure, rather than treating the remaining statements
-as <command>COPY</> data (Stephen Frost)</listitem></para>
+as <command>COPY</> data (Stephen Frost)</para></listitem>
 
 <listitem><para>Fix <application>pg_ctl</> <literal>unregister</> crash
-when the  data directory is not specified (Magnus)</listitem></para>
+when the  data directory is not specified (Magnus)</para></listitem>
 
 <listitem><para>Fix <application>libpq</> <function>PQprint</> HTML tags
-(Christoph Zwerschke)</listitem></para>
+(Christoph Zwerschke)</para></listitem>
 
 <listitem><para>Fix <application>ecpg</> crash on AMD64 and PPC
-(Neil)</listitem></para>
+(Neil)</para></listitem>
 
 <listitem><para>Fix problem with argument passing with error reporting
-in <application>PL/python</> (Neil)</listitem></para>
+in <application>PL/python</> (Neil)</para></listitem>
 
 <listitem><para>Fix memory leak in <application>PL/perl</>'s row
-returning code (Neil)</listitem></para>
+returning code (Neil)</para></listitem>
 
 <listitem><para>Fix <application>PL/perl</>'s handling of locales on
-Win32 to match the backend (Andrew)</listitem></para>
+Win32 to match the backend (Andrew)</para></listitem>
 
-<listitem><para>Various optimizer improvements (Tom)</listitem></para>
+<listitem><para>Various optimizer improvements (Tom)</para></listitem>
 
 <listitem><para>Fix crash when <literal>log_min_messages</> is set in
 <literal>postgresql.conf</> to <literal>DEBUG5</> on Win32
-(Bruce)</listitem></para>
+(Bruce)</para></listitem>
 
 <listitem><para>Fix <application>pgxs</> <literal>-L</> library path
-specification for Win32 and Cygwin (Bruce)</listitem></para>
+specification for Win32 and Cygwin (Bruce)</para></listitem>
 
 <listitem><para>Check that SID is enabled while checking for Win32 admin
-privileges (Magnus)</listitem></para>
+privileges (Magnus)</para></listitem>
 
 <listitem><para>Portability fix for <function>finite</> and
-<function>isinf</> (Tom)</listitem></para>
+<function>isinf</> (Tom)</para></listitem>
 
 <listitem><para>Improve speed of <filename>/contrib/tsearch2</> index
-creation (Teodor)</listitem></para>
+creation (Teodor)</para></listitem>
 
 </itemizedlist>
 
