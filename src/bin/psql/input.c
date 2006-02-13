@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.49 2006/02/13 14:57:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.50 2006/02/13 17:09:25 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -113,7 +113,8 @@ gets_interactive(const char *prompt)
 
 
 /* Put the line in the history buffer and also add the trailing \n */
-void pgadd_history(char *s, PQExpBuffer history_buf)
+void
+pgadd_history(char *s, PQExpBuffer history_buf)
 {
 #ifdef USE_READLINE
 
@@ -134,7 +135,8 @@ void pgadd_history(char *s, PQExpBuffer history_buf)
 
 
 /* Feed the contents of the history buffer to readline */
-void pgflush_history(PQExpBuffer history_buf)
+void
+pgflush_history(PQExpBuffer history_buf)
 {
 #ifdef USE_READLINE	
 	char *s;
@@ -172,7 +174,8 @@ void pgflush_history(PQExpBuffer history_buf)
 #endif
 }
 
-void pgclear_history(PQExpBuffer history_buf)
+void
+pgclear_history(PQExpBuffer history_buf)
 {
 #ifdef USE_READLINE	
 	if (useReadline && useHistory)
@@ -214,7 +217,8 @@ gets_fromFile(FILE *source)
 
 
 #ifdef USE_READLINE
-static void encode_history(void)
+static void
+encode_history(void)
 {
 	HIST_ENTRY *cur_hist;
 	char *cur_ptr;
@@ -226,7 +230,8 @@ static void encode_history(void)
 				*cur_ptr = NL_IN_HISTORY;
 }
 
-static void decode_history(void)
+static void
+decode_history(void)
 {
 	HIST_ENTRY *cur_hist;
 	char *cur_ptr;
