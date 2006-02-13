@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.123 2004/12/31 22:00:00 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.123.4.1 2006/02/13 16:22:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -683,11 +683,14 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
  * it will work correctly: sublinks will already have been transformed into
  * subplans in the qual, but not in the subquery).
  *
- * 2. The qual must not refer to any subquery output columns that were
+ * 2. The qual must not refer to the whole-row output of the subquery
+ * (since there is no easy way to name that within the subquery itself).
+ *
+ * 3. The qual must not refer to any subquery output columns that were
  * found to have inconsistent types across a set operation tree by
  * subquery_is_pushdown_safe().
  *
- * 3. If the subquery uses DISTINCT ON, we must not push down any quals that
+ * 4. If the subquery uses DISTINCT ON, we must not push down any quals that
  * refer to non-DISTINCT output columns, because that could change the set
  * of rows returned.  This condition is vacuous for DISTINCT, because then
  * there are no non-DISTINCT output columns, but unfortunately it's fairly
@@ -695,7 +698,7 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
  * parsetree representation.  It's cheaper to just make sure all the Vars
  * in the qual refer to DISTINCT columns.
  *
- * 4. We must not push down any quals that refer to subselect outputs that
+ * 5. We must not push down any quals that refer to subselect outputs that
  * return sets, else we'd introduce functions-returning-sets into the
  * subquery's WHERE/HAVING quals.
  */
@@ -724,6 +727,13 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 
 		Assert(var->varno == rti);
 
+		/* Check point 2 */
+		if (var->varattno == 0)
+		{
+			safe = false;
+			break;
+		}
+
 		/*
 		 * We use a bitmapset to avoid testing the same attno more than
 		 * once.  (NB: this only works because subquery outputs can't have
@@ -733,7 +743,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 			continue;
 		tested = bms_add_member(tested, var->varattno);
 
-		/* Check point 2 */
+		/* Check point 3 */
 		if (differentTypes[var->varattno])
 		{
 			safe = false;
@@ -745,7 +755,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		Assert(tle != NULL);
 		Assert(!tle->resdom->resjunk);
 
-		/* If subquery uses DISTINCT or DISTINCT ON, check point 3 */
+		/* If subquery uses DISTINCT or DISTINCT ON, check point 4 */
 		if (subquery->distinctClause != NIL &&
 			!targetIsInSortList(tle, subquery->distinctClause))
 		{
@@ -754,7 +764,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 			break;
 		}
 
-		/* Refuse functions returning sets (point 4) */
+		/* Refuse functions returning sets (point 5) */
 		if (expression_returns_set((Node *) tle->expr))
 		{
 			safe = false;
