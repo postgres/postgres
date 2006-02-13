@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.123 2006/02/12 06:11:50 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.124 2006/02/13 21:30:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,15 +213,15 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	if (AH->public.verbose)
 		dumpTimestamp(AH, "Started on", AH->createDate);
 
+	if (ropt->single_txn)
+		ahprintf(AH, "BEGIN;\n\n");
+
 	/*
 	 * Establish important parameter values right away.
 	 */
 	_doSetFixedOutputState(AH);
 
 	AH->stage = STAGE_PROCESSING;
-
-    if (ropt->single_txn)
-		ahprintf(AH, "BEGIN;\n\n");
 
 	/*
 	 * Drop the items at the start, in reverse order
@@ -376,7 +376,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		}
 	}
 
-    if (ropt->single_txn)
+	if (ropt->single_txn)
 		ahprintf(AH, "COMMIT;\n\n");
 
 	if (AH->public.verbose)
