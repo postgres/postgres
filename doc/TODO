@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Feb 12 14:13:10 EST 2006
+Last updated:		Sun Feb 12 22:42:37 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -79,6 +79,15 @@ Administration
 	  The table should have a line number that is a float so rows
 	  can be inserted between existing rows, e.g. row 2.5 goes
 	  between row 2 and row 3.
+
+	o Allow pg_hba.conf to specify host names along with IP addresses
+
+	  Host name lookup could occur when the postmaster reads the
+	  pg_hba.conf file, or when the backend starts.  Another
+	  solution would be to reverse lookup the connection IP and
+	  check that hostname against the host names in pg_hba.conf.
+	  We could also then check that the host name maps to the IP
+	  address.
 
 	o %Allow postgresql.conf file values to be changed via an SQL
 	  API, perhaps using SET GLOBAL
