@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.48 2006/02/12 05:24:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.49 2006/02/13 14:57:15 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -213,7 +213,8 @@ gets_fromFile(FILE *source)
 }
 
 
-static void encode_history()
+#ifdef USE_READLINE
+static void encode_history(void)
 {
 	HIST_ENTRY *cur_hist;
 	char *cur_ptr;
@@ -225,7 +226,7 @@ static void encode_history()
 				*cur_ptr = NL_IN_HISTORY;
 }
 
-static void decode_history()
+static void decode_history(void)
 {
 	HIST_ENTRY *cur_hist;
 	char *cur_ptr;
@@ -236,6 +237,7 @@ static void decode_history()
 			if (*cur_ptr == NL_IN_HISTORY)
 				*cur_ptr = '\n';
 }
+#endif /* USE_READLINE */
 
 
 /*
@@ -290,7 +292,6 @@ initializeInput(int flags)
 }
 
 
-
 bool
 saveHistory(char *fname)
 {
@@ -309,7 +310,6 @@ saveHistory(char *fname)
 
 	return false;
 }
-
 
 
 static void
