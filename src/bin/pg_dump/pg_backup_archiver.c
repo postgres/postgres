@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.124 2006/02/13 21:30:19 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.125 2006/02/14 23:30:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,7 +214,12 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		dumpTimestamp(AH, "Started on", AH->createDate);
 
 	if (ropt->single_txn)
-		ahprintf(AH, "BEGIN;\n\n");
+	{
+		if (AH->connection)
+			StartTransaction(AH);
+		else
+			ahprintf(AH, "BEGIN;\n\n");
+	}
 
 	/*
 	 * Establish important parameter values right away.
@@ -377,7 +382,12 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	}
 
 	if (ropt->single_txn)
-		ahprintf(AH, "COMMIT;\n\n");
+	{
+		if (AH->connection)
+			CommitTransaction(AH);
+		else
+			ahprintf(AH, "COMMIT;\n\n");
+	}
 
 	if (AH->public.verbose)
 		dumpTimestamp(AH, "Completed on", time(NULL));
@@ -652,10 +662,13 @@ EndBlob(Archive *AHX, Oid oid)
 void
 StartRestoreBlobs(ArchiveHandle *AH)
 {
-	if (AH->connection)
-		StartTransaction(AH);
-	else
-		ahprintf(AH, "BEGIN;\n\n");
+	if (!AH->ropt->single_txn)
+	{
+		if (AH->connection)
+			StartTransaction(AH);
+		else
+			ahprintf(AH, "BEGIN;\n\n");
+	}
 
 	AH->blobCount = 0;
 }
@@ -666,10 +679,13 @@ StartRestoreBlobs(ArchiveHandle *AH)
 void
 EndRestoreBlobs(ArchiveHandle *AH)
 {
-	if (AH->connection)
-		CommitTransaction(AH);
-	else
-		ahprintf(AH, "COMMIT;\n\n");
+	if (!AH->ropt->single_txn)
+	{
+		if (AH->connection)
+			CommitTransaction(AH);
+		else
+			ahprintf(AH, "COMMIT;\n\n");
+	}
 
 	ahlog(AH, 1, "restored %d large objects\n", AH->blobCount);
 }
