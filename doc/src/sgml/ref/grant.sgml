@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.51 2006/01/21 02:16:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.52 2006/02/14 03:32:14 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -373,6 +373,13 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
     which containing role will be recorded as having done the grant.  In such
     cases it is best practice to use <command>SET ROLE</> to become the
     specific role you want to do the <command>GRANT</> as.
+   </para>
+
+   <para>
+    Granting permission on a table does not automatically extend 
+    permissions to any sequences used by the table, including 
+    sequences tied to <type>SERIAL</> columns.  Permissions on 
+    sequence must be set separately.
    </para>
 
    <para>
