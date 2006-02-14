@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.124.4.1 2005/05/07 21:32:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.124.4.2 2006/02/14 17:20:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,8 +571,6 @@ btbulkdelete(PG_FUNCTION_ARGS)
 						maxoff;
 			BlockNumber nextpage;
 
-			vacuum_delay_point();
-
 			ndeletable = 0;
 			page = BufferGetPage(buf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -631,6 +629,10 @@ btbulkdelete(PG_FUNCTION_ARGS)
 			}
 			else
 				_bt_relbuf(rel, buf);
+
+			/* call vacuum_delay_point while not holding any buffer lock */
+			vacuum_delay_point();
+
 			/* And advance to next page, if any */
 			if (nextpage == P_NONE)
 				break;
@@ -723,6 +725,8 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 		Buffer		buf;
 		Page		page;
 		BTPageOpaque opaque;
+
+		vacuum_delay_point();
 
 		buf = _bt_getbuf(rel, blkno, BT_READ);
 		page = BufferGetPage(buf);
