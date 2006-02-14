@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.29 2005/10/06 02:29:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.30 2006/02/14 02:03:44 momjian Exp $
 -->
 
 <chapter id="monitoring">
@@ -145,10 +145,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    overhead occurs.  These respectively determine whether a server
    process sends its current command string, disk-block-level access
    statistics, and row-level access statistics to the collector.
-   Normally these parameters are set in <filename>postgresql.conf</>
-   so that they apply to all server processes, but it is possible to
-   turn them on or off in individual sessions using the <xref
-   linkend="sql-set" endterm="sql-set-title"> command.  (To prevent
+   Additionally, per-database transaction commit and abort statistics
+   are collected if any of these parameters are set.
+  </para>
+  
+  <para>
+   Normally these parameters are set in <filename>postgresql.conf</> so
+   that they apply to all server processes, but it is possible to turn
+   them on or off in individual sessions using the <xref
+   linkend="sql-set" endterm="sql-set-title"> command. (To prevent
    ordinary users from hiding their activity from the administrator,
    only superusers are allowed to change these parameters with
    <command>SET</>.)
