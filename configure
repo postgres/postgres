@@ -5377,7 +5377,10 @@ if test "$ac_cv_search_shl_load" != no; then
 
 fi
 
-echo "$as_me:$LINENO: checking for library containing ldopen" >&5
+# We only use libld in port/dynloader/aix.c
+case $host_os in
+     aix*)
+	echo "$as_me:$LINENO: checking for library containing ldopen" >&5
 echo $ECHO_N "checking for library containing ldopen... $ECHO_C" >&6
 if test "${ac_cv_search_ldopen+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -5503,6 +5506,8 @@ if test "$ac_cv_search_ldopen" != no; then
 
 fi
 
+	;;
+esac
 echo "$as_me:$LINENO: checking for library containing getopt_long" >&5
 echo $ECHO_N "checking for library containing getopt_long... $ECHO_C" >&6
 if test "${ac_cv_search_getopt_long+set}" = set; then
