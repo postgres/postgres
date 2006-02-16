@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.195 2006/02/03 13:53:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.196 2006/02/16 23:23:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -603,8 +603,8 @@ typedef NameData *Name;
 	} while (0)
 
 
-/* Get a bit mask of the bits set in non-int32 aligned addresses */
-#define INT_ALIGN_MASK (sizeof(int32) - 1)
+/* Get a bit mask of the bits set in non-long aligned addresses */
+#define LONG_ALIGN_MASK (sizeof(long) - 1)
 
 /*
  * MemSet
@@ -624,8 +624,8 @@ typedef NameData *Name;
 		int		_val = (val); \
 		Size	_len = (len); \
 \
-		if ((((long) _vstart) & INT_ALIGN_MASK) == 0 && \
-			(_len & INT_ALIGN_MASK) == 0 && \
+		if ((((long) _vstart) & LONG_ALIGN_MASK) == 0 && \
+			(_len & LONG_ALIGN_MASK) == 0 && \
 			_val == 0 && \
 			_len <= MEMSET_LOOP_LIMIT && \
 			/* \
@@ -634,8 +634,8 @@ typedef NameData *Name;
 			 */ \
 			MEMSET_LOOP_LIMIT != 0) \
 		{ \
-			int32 *_start = (int32 *) _vstart; \
-			int32 *_stop = (int32 *) ((char *) _start + _len); \
+			long *_start = (long *) _vstart; \
+			long *_stop = (long *) ((char *) _start + _len); \
 			while (_start < _stop) \
 				*_start++ = 0; \
 		} \
@@ -652,16 +652,16 @@ typedef NameData *Name;
 #define MemSetAligned(start, val, len) \
 	do \
 	{ \
-		int32  *_start = (int32 *) (start); \
+		long   *_start = (long *) (start); \
 		int		_val = (val); \
 		Size	_len = (len); \
 \
-		if ((_len & INT_ALIGN_MASK) == 0 && \
+		if ((_len & LONG_ALIGN_MASK) == 0 && \
 			_val == 0 && \
 			_len <= MEMSET_LOOP_LIMIT && \
 			MEMSET_LOOP_LIMIT != 0) \
 		{ \
-			int32 *_stop = (int32 *) ((char *) _start + _len); \
+			long *_stop = (long *) ((char *) _start + _len); \
 			while (_start < _stop) \
 				*_start++ = 0; \
 		} \
@@ -679,7 +679,7 @@ typedef NameData *Name;
  * this approach.
  */
 #define MemSetTest(val, len) \
-	( ((len) & INT_ALIGN_MASK) == 0 && \
+	( ((len) & LONG_ALIGN_MASK) == 0 && \
 	(len) <= MEMSET_LOOP_LIMIT && \
 	MEMSET_LOOP_LIMIT != 0 && \
 	(val) == 0 )
@@ -687,8 +687,8 @@ typedef NameData *Name;
 #define MemSetLoop(start, val, len) \
 	do \
 	{ \
-		int32 * _start = (int32 *) (start); \
-		int32 * _stop = (int32 *) ((char *) _start + (Size) (len)); \
+		long * _start = (long *) (start); \
+		long * _stop = (long *) ((char *) _start + (Size) (len)); \
 	\
 		while (_start < _stop) \
 			*_start++ = 0; \
