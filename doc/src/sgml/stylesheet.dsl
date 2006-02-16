@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.29 2005/10/13 20:10:03 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.30 2006/02/16 01:03:48 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -179,6 +179,9 @@
 (define %gentext-nav-use-ff%    #t)
 (define %body-attr%             '())
 (define ($generate-book-lot-list$) '())
+
+;; Do not combine first section into chapter chunk.
+(define (chunk-skip-first-element-list) '())
 
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)
