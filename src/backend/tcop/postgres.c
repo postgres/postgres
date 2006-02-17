@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.479 2006/01/18 06:49:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.480 2006/02/17 03:29:02 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -98,8 +98,10 @@ int			PostAuthDelay = 0;
 /* max_stack_depth converted to bytes for speed of checking */
 static int	max_stack_depth_bytes = 2048 * 1024;
 
-/* stack base pointer (initialized by PostgresMain) */
-/* Do not make static so PL/Java can modifiy it */
+/*
+ * Stack base pointer -- initialized by PostgresMain. This is not static
+ * so that PL/Java can modify it.
+ */
 char	   *stack_base_ptr = NULL;
 
 
