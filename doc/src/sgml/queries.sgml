@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.34 2005/05/08 03:08:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.35 2006/02/18 23:14:45 neilc Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -24,8 +24,9 @@
   <para>
    The process of retrieving or the command to retrieve data from a
    database is called a <firstterm>query</firstterm>.  In SQL the
-   <command>SELECT</command> command is used to specify queries.  The
-   general syntax of the <command>SELECT</command> command is
+   <xref linkend="sql-select" endterm="sql-select-title"> command is
+   used to specify queries.  The general syntax of the
+   <command>SELECT</command> command is
 <synopsis>
 SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable> <optional><replaceable>sort_specification</replaceable></optional>
 </synopsis>
@@ -1284,7 +1285,7 @@ SELECT a FROM table1 ORDER BY b;
 <synopsis>
 SELECT <replaceable>select_list</replaceable>
     FROM <replaceable>table_expression</replaceable>
-    <optional>LIMIT { <replaceable>number</replaceable> | ALL }</optional> <optional>OFFSET <replaceable>number</replaceable></optional>
+    <optional> LIMIT { <replaceable>number</replaceable> | ALL } </optional> <optional> OFFSET <replaceable>number</replaceable> </optional>
 </synopsis>
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.86 2006/02/12 06:37:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.87 2006/02/18 23:14:45 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1594,7 +1594,7 @@ SELECT * FROM some_func();
        allow users to define set-returning functions
        that do not have this limitation.  Currently, the point at
        which data begins being written to disk is controlled by the
-       <xref linkend="guc-work-mem" xreflabel="work_mem">
+       <xref linkend="guc-work-mem">
        configuration variable.  Administrators who have sufficient
        memory to store larger result sets in memory should consider
        increasing this parameter.
@@ -3642,11 +3642,12 @@ $$ LANGUAGE plpgsql;
 
     <para>
      <productname>PostgreSQL</> gives you two function creation
-     modifiers to optimize execution: <quote>volatility</> (whether the
-     function always returns the same result when given the same
-     arguments) and <quote>strictness</quote> (whether the
-     function returns null if any argument is null).  Consult the
-     <xref linkend="sql-createfunction"> reference page for details.
+     modifiers to optimize execution: <quote>volatility</> (whether
+     the function always returns the same result when given the same
+     arguments) and <quote>strictness</quote> (whether the function
+     returns null if any argument is null).  Consult the <xref
+     linkend="sql-createfunction" endterm="sql-createfunction-title">
+     reference page for details.
     </para>
 
     <para>

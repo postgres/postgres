@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.12 2005/03/17 20:24:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.13 2006/02/18 23:14:45 neilc Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -39,7 +39,7 @@
 
   <para>
    To create a new row, use the <xref linkend="sql-insert"
-   xreflabel="sql-insert-title"> command.  The command requires the
+   endterm="sql-insert-title"> command.  The command requires the
    table name and a value for each of the columns of the table.  For
    example, consider the products table from <xref linkend="ddl">:
 <programlisting>
@@ -95,12 +95,12 @@ INSERT INTO products DEFAULT VALUES;
 
   <tip>
    <para>
-    To do <quote>bulk loads</quote>, that is, inserting a lot of data,
-    take a look at the <xref linkend="sql-copy"
-    endterm="sql-copy-title"> command.  It is not as flexible as the
-    <xref linkend="sql-insert"  endterm="sql-insert-title">  command, 
-    but is more efficient. Refer to <xref linkend="populate"> for more 
-    information on improving bulk loading performance.
+    When inserting a lot of data at the same time, considering using
+    the <xref linkend="sql-copy" endterm="sql-copy-title"> command.
+    It is not as flexible as the <xref linkend="sql-insert"
+    endterm="sql-insert-title"> command, but is more efficient. Refer
+    to <xref linkend="populate"> for more information on improving
+    bulk loading performance.
    </para>
   </tip>
  </sect1>
@@ -224,11 +224,10 @@ UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a &gt; 0;
   </para>
 
   <para>
-   You use the <xref linkend="sql-delete"
-   xreflabel="sql-delete-title"> command to remove rows; the syntax is
-   very similar to the <command>UPDATE</command> command.  For
-   instance, to remove all rows from the products table that have a
-   price of 10, use
+   You use the <xref linkend="sql-delete" endterm="sql-delete-title">
+   command to remove rows; the syntax is very similar to the
+   <command>UPDATE</command> command.  For instance, to remove all
+   rows from the products table that have a price of 10, use
 <programlisting>
 DELETE FROM products WHERE price = 10;
 </programlisting>

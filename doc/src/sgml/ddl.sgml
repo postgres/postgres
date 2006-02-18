@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.54 2006/02/12 19:11:00 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.55 2006/02/18 23:14:45 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -77,10 +77,11 @@
   </indexterm>
 
   <para>
-   To create a table, you use the aptly named <command>CREATE
-   TABLE</command> command.  In this command you specify at least a
-   name for the new table, the names of the columns and the data type
-   of each column.  For example:
+   To create a table, you use the aptly named <xref
+   linkend="sql-createtable" endterm="sql-createtable-title"> command.
+   In this command you specify at least a name for the new table, the
+   names of the columns and the data type of each column.  For
+   example:
 <programlisting>
 CREATE TABLE my_first_table (
     first_column text,
@@ -136,8 +137,9 @@ CREATE TABLE products (
   </indexterm>
 
   <para>
-   If you no longer need a table, you can remove it using the
-   <command>DROP TABLE</command> command.  For example:
+   If you no longer need a table, you can remove it using the <xref
+   linkend="sql-droptable" endterm="sql-droptable-title"> command.
+   For example:
 <programlisting>
 DROP TABLE my_first_table;
 DROP TABLE products;
@@ -1487,9 +1489,9 @@ REVOKE ALL ON accounts FROM PUBLIC;
    </indexterm>
 
    <para>
-    To create a schema, use the command <command>CREATE
-    SCHEMA</command>.  Give the schema a name of your choice.  For
-    example:
+    To create a schema, use the <xref linkend="sql-createschema"
+    endterm="sql-createschema-title"> command.  Give the schema a name
+    of your choice.  For example:
 <programlisting>
 CREATE SCHEMA myschema;
 </programlisting>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.10 2005/11/01 21:09:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.11 2006/02/18 23:14:45 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -151,8 +151,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
        null. <literal>RETURNS NULL ON NULL INPUT</literal> or
        <literal>STRICT</literal> changes the function so that it is not
        invoked if any of its arguments are null; instead, a null result
-       is assumed automatically.  See <xref
-       linkend="sql-createfunction"> for more information.
+       is assumed automatically.  See <xref linkend="sql-createfunction"
+       endterm="sql-createfunction-title"> for more information.
       </para>
      </listitem>
    </varlistentry>
@@ -164,8 +164,9 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
 
      <listitem>
       <para>
-       Change the volatility of the function to the specified
-       setting.  See <xref linkend="sql-createfunction"> for details.
+       Change the volatility of the function to the specified setting.
+       See <xref linkend="sql-createfunction"
+       endterm="sql-createfunction-title"> for details.
       </para>
     </listitem>
    </varlistentry>
@@ -178,8 +179,9 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
      <para>
       Change whether the function is a security definer or not. The
       key word <literal>EXTERNAL</literal> is ignored for SQL
-      conformance. See <xref linkend="sql-createfunction"> for more
-      information about this capability.
+      conformance. See <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title"> for more information about
+      this capability.
      </para>
     </listitem>
    </varlistentry>
