@@ -1,5 +1,4 @@
-static pg_utf_to_local ULmapWIN874[ 98 ] = {
-  {0x0000, 0x0081},
+static pg_utf_to_local ULmapWIN874[ 97 ] = {
   {0xc2a0, 0x00a0},
   {0xe0b881, 0x00a1},
   {0xe0b882, 0x00a2},

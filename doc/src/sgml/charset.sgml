@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.75 2005/11/04 23:13:59 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.76 2006/02/18 16:15:21 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -571,6 +571,27 @@ initdb --locale=sv_SE
          <entry>1</entry>
          <entry></entry>
         </row>
+	<row>
+	 <entry><literal>WIN1253</literal></entry>
+	 <entry>Windows CP1253</entry>
+	 <entry>Greek</entry>
+	 <entry>1</entry>
+         <entry></entry>
+        </row>
+	<row>
+	 <entry><literal>WIN1254</literal></entry>
+	 <entry>Windows CP1254</entry>
+	 <entry>Turkish</entry>
+	 <entry>1</entry>
+	 <entry></entry>
+	</row>
+	<row>
+	 <entry><literal>WIN1255</literal></entry>
+	 <entry>Windows CP1255</entry>
+	 <entry>Hebrew</entry>
+	 <entry>1</entry>
+	 <entry></entry>
+	</row>
         <row>
          <entry><literal>WIN1256</literal></entry>
          <entry>Windows CP1256</entry>
@@ -578,6 +599,13 @@ initdb --locale=sv_SE
          <entry>1</entry>
          <entry></entry>
         </row>
+	<row>
+	 <entry><literal>WIN1257</literal></entry>
+	 <entry>Windows CP1257</entry>
+	 <entry>Baltic</entry>
+	 <entry>1</entry>
+	 <entry></entry>
+	</row>
         <row>
          <entry><literal>WIN1258</literal></entry>
          <entry>Windows CP1258</entry>
@@ -953,9 +981,33 @@ $ <userinput>psql -l</userinput>
          </entry>
         </row>
         <row>
+         <entry><literal>WIN1253</literal></entry>
+         <entry><emphasis>WIN1253</emphasis>,
+          <literal>UTF8</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>WIN1254</literal></entry>
+         <entry><emphasis>WIN1254</emphasis>,
+          <literal>UTF8</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>WIN1255</literal></entry>
+         <entry><emphasis>WIN1255</emphasis>,
+          <literal>UTF8</literal>
+         </entry>
+        </row>
+        <row>
          <entry><literal>WIN1256</literal></entry>
          <entry><emphasis>WIN1256</emphasis>,
          <literal>UTF8</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>WIN1257</literal></entry>
+         <entry><emphasis>WIN1257</emphasis>,
+          <literal>UTF8</literal>
          </entry>
         </row>
         <row>

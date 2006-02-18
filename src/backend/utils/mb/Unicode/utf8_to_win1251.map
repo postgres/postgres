@@ -1,5 +1,4 @@
-static pg_utf_to_local ULmap_WIN1251[ 127 ] = {
-  {0x0000, 0x0088},
+static pg_utf_to_local ULmapWIN1251[ 127 ] = {
   {0xc2a0, 0x00a0},
   {0xc2a4, 0x00a4},
   {0xc2a6, 0x00a6},
@@ -124,6 +123,7 @@ static pg_utf_to_local ULmap_WIN1251[ 127 ] = {
   {0xe280b0, 0x0089},
   {0xe280b9, 0x008b},
   {0xe280ba, 0x009b},
+  {0xe282ac, 0x0088},
   {0xe28496, 0x00b9},
   {0xe284a2, 0x0099}
 };

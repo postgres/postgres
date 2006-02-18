@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.53 2006/02/10 00:39:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.54 2006/02/18 16:15:22 petere Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -892,11 +892,15 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 26; ISO-8859-7 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 27; ISO-8859-8 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 28; PG_WIN1250 */
-	{0, pg_sjis_mblen, pg_sjis_dsplen, 2},		/* 29; PG_SJIS */
-	{0, pg_big5_mblen, pg_big5_dsplen, 2},		/* 30; PG_BIG5 */
-	{0, pg_gbk_mblen, pg_gbk_dsplen, 2},		/* 31; PG_GBK */
-	{0, pg_uhc_mblen, pg_uhc_dsplen, 2},		/* 32; PG_UHC */
-	{0, pg_gb18030_mblen, pg_gb18030_dsplen, 2} /* 33; PG_GB18030 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 29; PG_WIN1253 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 30; PG_WIN1254 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 31; PG_WIN1255 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 32; PG_WIN1257 */
+	{0, pg_sjis_mblen, pg_sjis_dsplen, 2},		/* 33; PG_SJIS */
+	{0, pg_big5_mblen, pg_big5_dsplen, 2},		/* 34; PG_BIG5 */
+	{0, pg_gbk_mblen, pg_gbk_dsplen, 2},		/* 35; PG_GBK */
+	{0, pg_uhc_mblen, pg_uhc_dsplen, 2},		/* 36; PG_UHC */
+	{0, pg_gb18030_mblen, pg_gb18030_dsplen, 2} /* 37; PG_GB18030 */
 };
 
 /* returns the byte length of a word for mule internal code */

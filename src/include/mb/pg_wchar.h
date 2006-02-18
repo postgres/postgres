@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.66 2005/12/24 18:23:02 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.67 2006/02/18 16:15:23 petere Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -177,6 +177,10 @@ typedef enum pg_enc
 	PG_ISO_8859_7,				/* ISO-8859-7 */
 	PG_ISO_8859_8,				/* ISO-8859-8 */
 	PG_WIN1250,					/* windows-1250 */
+	PG_WIN1253,					/* windows-1253 */
+	PG_WIN1254,					/* windows-1254 */
+	PG_WIN1255,					/* windows-1255 */
+	PG_WIN1257,					/* windows-1257 */
 	/* PG_ENCODING_BE_LAST points to the above entry */
 	
 	/* followings are for client encoding only */
@@ -189,7 +193,7 @@ typedef enum pg_enc
 
 } pg_enc;
 
-#define PG_ENCODING_BE_LAST PG_WIN1250
+#define PG_ENCODING_BE_LAST PG_WIN1257
 
 /*
  * Please use these tests before access to pg_encconv_tbl[]

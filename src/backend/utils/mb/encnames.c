@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.28 2006/02/12 22:32:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.29 2006/02/18 16:15:22 petere Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -197,8 +197,20 @@ pg_encname	pg_encname_tbl[] =
 		"win1252", PG_WIN1252
 	},							/* alias for Windows-1252 */
 	{
+		"win1253", PG_WIN1253
+	},							/* alias for Windows-1253 */
+	{
+		"win1254", PG_WIN1254
+	},							/* alias for Windows-1254 */
+	{
+		"win1255", PG_WIN1255
+	},							/* alias for Windows-1255 */
+	{
 		"win1256", PG_WIN1256
 	},							/* alias for Windows-1256 */
+	{
+		"win1257", PG_WIN1257
+	},							/* alias for Windows-1257 */
 	{
 		"win1258", PG_WIN1258
 	},							/* alias for Windows-1258 */
@@ -230,8 +242,20 @@ pg_encname	pg_encname_tbl[] =
 		"windows1252", PG_WIN1252
 	},							/* Windows-1252; Microsoft */
 	{
+		"windows1253", PG_WIN1253
+	},							/* Windows-1253; Microsoft */
+	{
+		"windows1254", PG_WIN1254
+	},							/* Windows-1254; Microsoft */
+	{
+		"windows1255", PG_WIN1255
+	},							/* Windows-1255; Microsoft */
+	{
 		"windows1256", PG_WIN1256
 	},							/* Windows-1256; Microsoft */
+	{
+		"windows1257", PG_WIN1257
+	},							/* Windows-1257; Microsoft */
 	{
 		"windows1258", PG_WIN1258
 	},							/* Windows-1258; Microsoft */
@@ -357,6 +381,18 @@ pg_enc2name pg_enc2name_tbl[] =
 	},
 	{
 		"WIN1250", PG_WIN1250
+	},
+	{
+		"WIN1253", PG_WIN1253
+	},
+	{
+		"WIN1254", PG_WIN1254
+	},
+	{
+		"WIN1255", PG_WIN1255
+	},
+	{
+		"WIN1257", PG_WIN1257
 	},
 	{
 		"SJIS", PG_SJIS

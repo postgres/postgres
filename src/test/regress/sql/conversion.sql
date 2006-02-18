@@ -346,10 +346,10 @@ SELECT CONVERT('foo', 'SJIS', 'UTF8');
 SELECT CONVERT('foo' USING utf8_to_sjis);
 SELECT CONVERT('foo', 'UTF8', 'SJIS');
 -- WIN1258 --> UTF8
-SELECT CONVERT('foo' USING win1258_to_utf8);
+SELECT CONVERT('foo' USING windows_1258_to_utf8);
 SELECT CONVERT('foo', 'WIN1258', 'UTF8');
 -- UTF8 --> WIN1258
-SELECT CONVERT('foo' USING utf8_to_win1258);
+SELECT CONVERT('foo' USING utf8_to_windows_1258);
 SELECT CONVERT('foo', 'UTF8', 'WIN1258');
 -- UHC --> UTF8
 SELECT CONVERT('foo' USING uhc_to_utf8);
@@ -375,6 +375,30 @@ SELECT CONVERT('foo', 'UTF8', 'WIN874');
 -- WIN874 --> UTF8
 SELECT CONVERT('foo' USING windows_874_to_utf8);
 SELECT CONVERT('foo', 'WIN874', 'UTF8');
+-- UTF8 --> WIN1253
+SELECT CONVERT('foo' USING utf8_to_windows_1253);
+SELECT CONVERT('foo', 'UTF8', 'WIN1253');
+-- WIN1253 --> UTF8
+SELECT CONVERT('foo' USING windows_1253_to_utf8);
+SELECT CONVERT('foo', 'WIN1253', 'UTF8');
+-- UTF8 --> WIN1254
+SELECT CONVERT('foo' USING utf8_to_windows_1254);
+SELECT CONVERT('foo', 'UTF8', 'WIN1254');
+-- WIN1254 --> UTF8
+SELECT CONVERT('foo' USING windows_1254_to_utf8);
+SELECT CONVERT('foo', 'WIN1254', 'UTF8');
+-- UTF8 --> WIN1255
+SELECT CONVERT('foo' USING utf8_to_windows_1255);
+SELECT CONVERT('foo', 'UTF8', 'WIN1255');
+-- WIN1255 --> UTF8
+SELECT CONVERT('foo' USING windows_1255_to_utf8);
+SELECT CONVERT('foo', 'WIN1255', 'UTF8');
+-- UTF8 --> WIN1257
+SELECT CONVERT('foo' USING utf8_to_windows_1257);
+SELECT CONVERT('foo', 'UTF8', 'WIN1257');
+-- WIN1257 --> UTF8
+SELECT CONVERT('foo' USING windows_1257_to_utf8);
+SELECT CONVERT('foo', 'WIN1257', 'UTF8');
 --
 -- return to the super user
 --

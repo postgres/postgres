@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2001-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.9 2005/03/07 04:30:52 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.10 2006/02/18 16:15:22 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,36 +12,64 @@ subdir = src/backend/utils/mb/Unicode
 top_builddir = ../../../../..
 include $(top_builddir)/src/Makefile.global
 
-ISO8859MAPS=iso8859_2_to_utf8.map iso8859_3_to_utf8.map \
-	iso8859_4_to_utf8.map iso8859_5_to_utf8.map \
-	utf8_to_iso8859_2.map utf8_to_iso8859_3.map \
-	utf8_to_iso8859_4.map utf8_to_iso8859_5.map 
+ISO8859MAPS = iso8859_2_to_utf8.map utf8_to_iso8859_2.map \
+	iso8859_3_to_utf8.map utf8_to_iso8859_3.map \
+	iso8859_4_to_utf8.map utf8_to_iso8859_4.map \
+	iso8859_5_to_utf8.map utf8_to_iso8859_5.map \
+	iso8859_6_to_utf8.map utf8_to_iso8859_6.map \
+	iso8859_7_to_utf8.map utf8_to_iso8859_7.map \
+	iso8859_8_to_utf8.map utf8_to_iso8859_8.map \
+	iso8859_9_to_utf8.map utf8_to_iso8859_9.map \
+	iso8859_10_to_utf8.map utf8_to_iso8859_10.map \
+	iso8859_13_to_utf8.map utf8_to_iso8859_13.map \
+	iso8859_14_to_utf8.map utf8_to_iso8859_14.map \
+	iso8859_15_to_utf8.map utf8_to_iso8859_15.map \
+	iso8859_16_to_utf8.map utf8_to_iso8859_16.map
 
+WINMAPS = win866_to_utf8.map utf8_to_win866.map \
+	win874_to_utf8.map utf8_to_win874.map \
+	win1250_to_utf8.map utf8_to_win1250.map \
+	win1251_to_utf8.map utf8_to_win1251.map \
+	win1252_to_utf8.map utf8_to_win1252.map \
+	win1253_to_utf8.map utf8_to_win1253.map \
+	win1254_to_utf8.map utf8_to_win1254.map \
+	win1255_to_utf8.map utf8_to_win1255.map \
+	win1256_to_utf8.map utf8_to_win1256.map \
+	win1257_to_utf8.map utf8_to_win1257.map \
+	win1258_to_utf8.map utf8_to_win1258.map
 
-CYRILLICMAPS=koi8r_to_utf8.map win1251_to_utf8.map win866_to_utf8.map\
-             utf8_to_koi8r.map  utf8_to_win1251.map utf8_to_win866.map
+GENERICMAPS = $(ISO8859MAPS) $(WINMAPS) \
+	big5_to_utf8.map utf8_to_big5.map \
+	johab_to_utf8.map utf8_to_johab.map \
+	uhc_to_utf8.map utf8_to_uhc.map \
+	gbk_to_utf8.map utf8_to_gbk.map \
+	koi8r_to_utf8.map utf8_to_koi8r.map
 
-MAPS= $(ISO8859MAPS) $(CYRILLICMAPS)\
-	big5_to_utf8.map euc_cn_to_utf8.map euc_jp_to_utf8.map \
-	euc_kr_to_utf8.map euc_tw_to_utf8.map sjis_to_utf8.map \
-	utf8_to_big5.map utf8_to_euc_cn.map utf8_to_euc_jp.map \
-	utf8_to_euc_kr.map utf8_to_euc_tw.map utf8_to_iso8859_2.map \
-	utf8_to_sjis.map gb18030_to_utf8.map utf8_to_gb18030.map
+SPECIALMAPS = euc_cn_to_utf8.map utf8_to_euc_cn.map \
+	euc_jp_to_utf8.map utf8_to_euc_jp.map \
+	euc_kr_to_utf8.map utf8_to_euc_kr.map \
+	euc_tw_to_utf8.map utf8_to_euc_tw.map \
+	sjis_to_utf8.map utf8_to_sjis.map \
+	gb18030_to_utf8.map utf8_to_gb18030.map
 
-ISO8859TEXTS= 8859-2.TXT 8859-3.TXT 8859-4.TXT 8859-5.TXT
-CYRILLICTEXTS=cp866.txt cp1251.txt koi8-r.txt
+MAPS = $(GENERICMAPS) $(SPECIALMAPS)
 
-TEXTS=$(ISO8859TEXTS) $(CYRILLICTEXTS) \
-	BIG5.TXT CNS11643.TXT GB2312.TXT \
-	JIS0201.TXT JIS0208.TXT JIS0212.TXT \
-	OLD5601.TXT SHIFTJIS.TXT ISO10646-GB18030.TXT
+ISO8859TEXTS = 8859-2.TXT 8859-3.TXT 8859-4.TXT 8859-5.TXT \
+	8859-6.TXT 8859-7.TXT 8859-8.TXT 8859-9.TXT \
+	8859-10.TXT 8859-13.TXT 8859-14.TXT 8859-15.TXT \
+	8859-16.TXT
+
+WINTEXTS = CP866.TXT CP874.TXT CP1250.TXT CP1251.TXT \
+	CP1252.TXT CP1253.TXT CP1254.TXT CP1255.TXT \
+	CP1256.TXT CP1257.TXT CP1258.TXT
+
+GENERICTEXTS = $(ISO8859TEXTS) $(WINTEXTS) \
+	KOI8-R.TXT CP936.TXT CP949.TXT JOHAB.TXT BIG5.TXT
 
 all: $(MAPS)
 
-$(ISO8859MAPS) : $(ISO8859TEXTS)
-	./UCS_to_8859.pl
-$(CYRILLICMAPS) : $(CYRILLICTEXTS)
-	./UCS_to_cyrillic.pl
+$(GENERICMAPS) : $(GENERICTEXTS)
+	./UCS_to_most.pl
 
 euc_jp_to_utf8.map utf8_to_euc_jp.map : JIS0201.TXT JIS0208.TXT JIS0212.TXT
 	./UCS_to_EUC_JP.pl
@@ -49,17 +77,14 @@ euc_jp_to_utf8.map utf8_to_euc_jp.map : JIS0201.TXT JIS0208.TXT JIS0212.TXT
 euc_cn_to_utf8.map utf8_to_euc_cn.map : GB2312.TXT
 	./UCS_to_EUC_CN.pl
 
-euc_kr_to_utf8.map utf8_to_euc_kr.map : OLD5601.TXT
+euc_kr_to_utf8.map utf8_to_euc_kr.map : KSX1001.TXT
 	./UCS_to_EUC_KR.pl
 
 euc_tw_to_utf8.map utf8_to_euc_tw.map : CNS11643.TXT
 	./UCS_to_EUC_TW.pl
 
-sjis_to_utf8.map utf8_to_sjis.map : SHIFTJIS.TXT
+sjis_to_utf8.map utf8_to_sjis.map : CP932.TXT
 	./UCS_to_SJIS.pl
-
-big5_to_utf8.map utf8_to_big5.map : BIG5.TXT
-	./UCS_to_BIG5.pl
 
 gb18030_to_utf8.map  utf8_to_gb18030.map : ISO10646-GB18030.TXT
 	./UCS_to_GB18030.pl

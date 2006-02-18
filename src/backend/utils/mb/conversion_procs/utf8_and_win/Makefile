@@ -1,12 +1,12 @@
 #-------------------------------------------------------------------------
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1252/Makefile,v 1.3 2005/03/14 18:31:22 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/Makefile,v 1.1 2006/02/18 16:15:22 petere Exp $
 #
 #-------------------------------------------------------------------------
-subdir = src/backend/utils/mb/conversion_procs/utf8_and_win1252
+subdir = src/backend/utils/mb/conversion_procs/utf8_and_win
 top_builddir = ../../../../../..
 include $(top_builddir)/src/Makefile.global
 
-NAME		:= utf8_and_win1252
+NAME		:= utf8_and_win
 
 include $(srcdir)/../proc.mk

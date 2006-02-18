@@ -1409,7 +1409,7 @@ SELECT CONVERT('foo', 'UTF8', 'SJIS');
 (1 row)
 
 -- WIN1258 --> UTF8
-SELECT CONVERT('foo' USING win1258_to_utf8);
+SELECT CONVERT('foo' USING windows_1258_to_utf8);
  convert_using 
 ---------------
  foo
@@ -1422,7 +1422,7 @@ SELECT CONVERT('foo', 'WIN1258', 'UTF8');
 (1 row)
 
 -- UTF8 --> WIN1258
-SELECT CONVERT('foo' USING utf8_to_win1258);
+SELECT CONVERT('foo' USING utf8_to_windows_1258);
  convert_using 
 ---------------
  foo
@@ -1533,6 +1533,110 @@ SELECT CONVERT('foo' USING windows_874_to_utf8);
 (1 row)
 
 SELECT CONVERT('foo', 'WIN874', 'UTF8');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UTF8 --> WIN1253
+SELECT CONVERT('foo' USING utf8_to_windows_1253);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UTF8', 'WIN1253');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1253 --> UTF8
+SELECT CONVERT('foo' USING windows_1253_to_utf8);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1253', 'UTF8');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UTF8 --> WIN1254
+SELECT CONVERT('foo' USING utf8_to_windows_1254);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UTF8', 'WIN1254');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1254 --> UTF8
+SELECT CONVERT('foo' USING windows_1254_to_utf8);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1254', 'UTF8');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UTF8 --> WIN1255
+SELECT CONVERT('foo' USING utf8_to_windows_1255);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UTF8', 'WIN1255');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1255 --> UTF8
+SELECT CONVERT('foo' USING windows_1255_to_utf8);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1255', 'UTF8');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UTF8 --> WIN1257
+SELECT CONVERT('foo' USING utf8_to_windows_1257);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UTF8', 'WIN1257');
+ convert 
+---------
+ foo
+(1 row)
+
+-- WIN1257 --> UTF8
+SELECT CONVERT('foo' USING windows_1257_to_utf8);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'WIN1257', 'UTF8');
  convert 
 ---------
  foo
