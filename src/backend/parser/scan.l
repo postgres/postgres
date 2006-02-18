@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.128 2005/08/16 00:48:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.129 2006/02/18 01:44:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ static char	   *token_start;
 static YY_BUFFER_STATE scanbufhandle;
 static char *scanbuf;
 
-unsigned char unescape_single_char(unsigned char c);
+static unsigned char unescape_single_char(unsigned char c);
 
 %}
 
@@ -855,7 +855,7 @@ litbufdup(void)
 }
 
 
-unsigned char
+static unsigned char
 unescape_single_char(unsigned char c)
 {
 	switch (c)
