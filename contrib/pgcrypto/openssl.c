@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.26 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.27 2006/02/18 20:48:51 neilc Exp $
  */
 
 #include "postgres.h"
@@ -47,17 +47,24 @@
 #define MAX_IV		(128/8)
 
 /*
- * Does OpenSSL support AES?
+ * Compatibility with OpenSSL 0.9.6
+ *
+ * It needs AES and newer DES and digest API.
  */
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 
-/* Yes, it does. */
+/*
+ * Nothing needed for OpenSSL 0.9.7+
+ */
+
 #include <openssl/aes.h>
+
 #else							/* old OPENSSL */
 
 /*
- * No, it does not.  So use included rijndael code to emulate it.
+ * Emulate OpenSSL AES.
  */
+
 #include "rijndael.c"
 
 #define AES_ENCRYPT 1
@@ -90,12 +97,11 @@
 			memcpy(iv, (src) + (len) - 16, 16); \
 		} \
 	} while (0)
-#endif   /* old OPENSSL */
 
 /*
- * Compatibility with older OpenSSL API for DES.
+ * Emulate DES_* API
  */
-#if OPENSSL_VERSION_NUMBER < 0x00907000L
+
 #define DES_key_schedule des_key_schedule
 #define DES_cblock des_cblock
 #define DES_set_key(k, ks) \
@@ -110,63 +116,91 @@
 #define DES_ede3_cbc_encrypt(i, o, l, k1, k2, k3, iv, e) \
 		des_ede3_cbc_encrypt((i), (o), \
 				(l), *(k1), *(k2), *(k3), (iv), (e))
-#endif
+
+/*
+ * Emulate newer digest API.
+ */
+
+static void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
+{
+	memset(ctx, 0, sizeof(*ctx));
+}
+
+static int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
+{
+	memset(ctx, 0, sizeof(*ctx));
+	return 1;
+}
+
+static int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, void *engine)
+{
+	EVP_DigestInit(ctx, md);
+	return 1;
+}
+
+static int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *res, unsigned int *len)
+{
+	EVP_DigestFinal(ctx, res, len);
+	return 1;
+}
+
+#endif   /* old OpenSSL */
 
 /*
  * Hashes
  */
+
+typedef struct OSSLDigest {
+	const EVP_MD *algo;
+	EVP_MD_CTX ctx;
+} OSSLDigest;
+
 static unsigned
 digest_result_size(PX_MD * h)
 {
-	return EVP_MD_CTX_size((EVP_MD_CTX *) h->p.ptr);
+	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
+	return EVP_MD_CTX_size(&digest->ctx);
 }
 
 static unsigned
 digest_block_size(PX_MD * h)
 {
-	return EVP_MD_CTX_block_size((EVP_MD_CTX *) h->p.ptr);
+	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
+	return EVP_MD_CTX_block_size(&digest->ctx);
 }
 
 static void
 digest_reset(PX_MD * h)
 {
-	EVP_MD_CTX *ctx = (EVP_MD_CTX *) h->p.ptr;
-	const EVP_MD *md;
+	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
 
-	md = EVP_MD_CTX_md(ctx);
-
-	EVP_DigestInit(ctx, md);
+	EVP_DigestInit_ex(&digest->ctx, digest->algo, NULL);
 }
 
 static void
 digest_update(PX_MD * h, const uint8 *data, unsigned dlen)
 {
-	EVP_MD_CTX *ctx = (EVP_MD_CTX *) h->p.ptr;
+	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
 
-	EVP_DigestUpdate(ctx, data, dlen);
+	EVP_DigestUpdate(&digest->ctx, data, dlen);
 }
 
 static void
 digest_finish(PX_MD * h, uint8 *dst)
 {
-	EVP_MD_CTX *ctx = (EVP_MD_CTX *) h->p.ptr;
-	const EVP_MD *md = EVP_MD_CTX_md(ctx);
+	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
 
-	EVP_DigestFinal(ctx, dst, NULL);
-
-	/*
-	 * Some builds of 0.9.7x clear all of ctx in EVP_DigestFinal. Fix it by
-	 * reinitializing ctx.
-	 */
-	EVP_DigestInit(ctx, md);
+	EVP_DigestFinal_ex(&digest->ctx, dst, NULL);
 }
 
 static void
 digest_free(PX_MD * h)
 {
-	EVP_MD_CTX *ctx = (EVP_MD_CTX *) h->p.ptr;
+	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
 
-	px_free(ctx);
+	EVP_MD_CTX_cleanup(&digest->ctx);
+
+	px_free(digest);
 	px_free(h);
 }
 
@@ -178,8 +212,8 @@ int
 px_find_digest(const char *name, PX_MD ** res)
 {
 	const EVP_MD *md;
-	EVP_MD_CTX *ctx;
 	PX_MD	   *h;
+	OSSLDigest *digest;
 
 	if (!px_openssl_initialized)
 	{
@@ -191,8 +225,12 @@ px_find_digest(const char *name, PX_MD ** res)
 	if (md == NULL)
 		return PXE_NO_HASH;
 
-	ctx = px_alloc(sizeof(*ctx));
-	EVP_DigestInit(ctx, md);
+	digest = px_alloc(sizeof(*digest));
+	digest->algo = md;
+
+	EVP_MD_CTX_init(&digest->ctx);
+	if (EVP_DigestInit_ex(&digest->ctx, digest->algo, NULL) == 0)
+		return -1;
 
 	h = px_alloc(sizeof(*h));
 	h->result_size = digest_result_size;
@@ -201,7 +239,7 @@ px_find_digest(const char *name, PX_MD ** res)
 	h->update = digest_update;
 	h->finish = digest_finish;
 	h->free = digest_free;
-	h->p.ptr = (void *) ctx;
+	h->p.ptr = (void *) digest;
 
 	*res = h;
 	return 0;
