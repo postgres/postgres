@@ -12,6 +12,17 @@ SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
 INSERT INTO testschema.foo VALUES(1);
 INSERT INTO testschema.foo VALUES(2);
 
+-- tables from dynamic sources
+CREATE TABLE testschema.asselect TABLESPACE testspace AS SELECT 1;
+SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
+    where c.reltablespace = t.oid AND c.relname = 'asselect';
+
+PREPARE selectsource(int) AS SELECT $1;
+CREATE TABLE testschema.asexecute TABLESPACE testspace
+    AS EXECUTE selectsource(2);
+SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
+    where c.reltablespace = t.oid AND c.relname = 'asexecute';
+
 -- index
 CREATE INDEX foo_idx on testschema.foo(i) TABLESPACE testspace;
 SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c

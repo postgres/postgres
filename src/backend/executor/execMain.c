@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.265 2006/01/12 21:48:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.266 2006/02/19 00:04:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "commands/tablecmds.h"
+#include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
@@ -730,9 +731,18 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	{
 		char	   *intoName;
 		Oid			namespaceId;
+		Oid			tablespaceId;
 		AclResult	aclresult;
 		Oid			intoRelationId;
 		TupleDesc	tupdesc;
+
+		/*
+		 * Check consistency of arguments
+		 */
+		if (parseTree->intoOnCommit != ONCOMMIT_NOOP && !parseTree->into->istemp)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("ON COMMIT can only be used on temporary tables")));
 
 		/*
 		 * find namespace to create in, check permissions
@@ -747,13 +757,44 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 						   get_namespace_name(namespaceId));
 
 		/*
+		 * Select tablespace to use.  If not specified, use default_tablespace
+		 * (which may in turn default to database's default).
+		 */
+		if (parseTree->intoTableSpaceName)
+		{
+			tablespaceId = get_tablespace_oid(parseTree->intoTableSpaceName);
+			if (!OidIsValid(tablespaceId))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("tablespace \"%s\" does not exist",
+								parseTree->intoTableSpaceName)));
+		} else
+		{
+			tablespaceId = GetDefaultTablespace();
+			/* note InvalidOid is OK in this case */
+		}
+
+		/* Check permissions except when using the database's default */
+		if (OidIsValid(tablespaceId))
+		{
+			AclResult	aclresult;
+
+			aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(),
+											   ACL_CREATE);
+
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
+							   get_tablespace_name(tablespaceId));
+		}
+
+		/*
 		 * have to copy tupType to get rid of constraints
 		 */
 		tupdesc = CreateTupleDescCopy(tupType);
 
 		intoRelationId = heap_create_with_catalog(intoName,
 												  namespaceId,
-												  InvalidOid,
+												  tablespaceId,
 												  InvalidOid,
 												  GetUserId(),
 												  tupdesc,
@@ -761,7 +802,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 												  false,
 												  true,
 												  0,
-												  ONCOMMIT_NOOP,
+												  parseTree->intoOnCommit,
 												  allowSystemTableMods);
 
 		FreeTupleDesc(tupdesc);

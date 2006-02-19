@@ -64,6 +64,21 @@ SELECT * FROM temptest;
 (0 rows)
 
 DROP TABLE temptest;
+BEGIN;
+CREATE TEMP TABLE temptest(col) ON COMMIT DELETE ROWS AS SELECT 1;
+SELECT * FROM temptest;
+ col 
+-----
+   1
+(1 row)
+
+COMMIT;
+SELECT * FROM temptest;
+ col 
+-----
+(0 rows)
+
+DROP TABLE temptest;
 -- Test ON COMMIT DROP
 BEGIN;
 CREATE TEMP TABLE temptest(col int) ON COMMIT DROP;
@@ -79,8 +94,21 @@ SELECT * FROM temptest;
 COMMIT;
 SELECT * FROM temptest;
 ERROR:  relation "temptest" does not exist
+BEGIN;
+CREATE TEMP TABLE temptest(col) ON COMMIT DROP AS SELECT 1;
+SELECT * FROM temptest;
+ col 
+-----
+   1
+(1 row)
+
+COMMIT;
+SELECT * FROM temptest;
+ERROR:  relation "temptest" does not exist
 -- ON COMMIT is only allowed for TEMP
 CREATE TABLE temptest(col int) ON COMMIT DELETE ROWS;
+ERROR:  ON COMMIT can only be used on temporary tables
+CREATE TABLE temptest(col) ON COMMIT DELETE ROWS AS SELECT 1;
 ERROR:  ON COMMIT can only be used on temporary tables
 -- Test foreign keys
 BEGIN;

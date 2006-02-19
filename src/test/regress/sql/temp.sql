@@ -66,6 +66,16 @@ SELECT * FROM temptest;
 
 DROP TABLE temptest;
 
+BEGIN;
+CREATE TEMP TABLE temptest(col) ON COMMIT DELETE ROWS AS SELECT 1;
+
+SELECT * FROM temptest;
+COMMIT;
+
+SELECT * FROM temptest;
+
+DROP TABLE temptest;
+
 -- Test ON COMMIT DROP
 
 BEGIN;
@@ -80,9 +90,18 @@ COMMIT;
 
 SELECT * FROM temptest;
 
+BEGIN;
+CREATE TEMP TABLE temptest(col) ON COMMIT DROP AS SELECT 1;
+
+SELECT * FROM temptest;
+COMMIT;
+
+SELECT * FROM temptest;
+
 -- ON COMMIT is only allowed for TEMP
 
 CREATE TABLE temptest(col int) ON COMMIT DELETE ROWS;
+CREATE TABLE temptest(col) ON COMMIT DELETE ROWS AS SELECT 1;
 
 -- Test foreign keys
 BEGIN;

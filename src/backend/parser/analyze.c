@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.328 2006/01/15 22:18:46 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.329 2006/02/19 00:04:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1818,6 +1818,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 		applyColumnNames(qry->targetList, stmt->intoColNames);
 
 	qry->intoHasOids = interpretOidsOption(stmt->intoHasOids);
+	qry->intoOnCommit = stmt->intoOnCommit;
+	qry->intoTableSpaceName = stmt->intoTableSpaceName;
 
 	/* mark column origins */
 	markTargetListOrigins(pstate, qry->targetList);
@@ -2661,6 +2663,8 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 	result->utilityStmt = (Node *) stmt;
 
 	paramtypes = FetchPreparedStatementParams(stmt->name);
+
+	stmt->into_has_oids = interpretOidsOption(stmt->into_contains_oids);
 
 	if (stmt->params || paramtypes)
 	{

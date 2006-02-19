@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.529 2006/02/12 19:11:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.530 2006/02/19 00:04:27 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -239,7 +239,7 @@ static void doNegateFloat(Value *v);
 
 %type <boolean>  TriggerForType OptTemp
 %type <oncommit> OnCommitOption
-%type <withoids> OptWithOids WithOidsAs
+%type <withoids> OptWithOids
 
 %type <node>	for_locking_clause opt_for_locking_clause
 %type <list>	locked_rels_list
@@ -2171,7 +2171,8 @@ OptConsTableSpace:   USING INDEX TABLESPACE name	{ $$ = $4; }
  */
 
 CreateAsStmt:
-			CREATE OptTemp TABLE qualified_name OptCreateAs WithOidsAs SelectStmt
+		CREATE OptTemp TABLE qualified_name OptCreateAs
+			OptWithOids OnCommitOption OptTableSpace AS SelectStmt
 				{
 					/*
 					 * When the SelectStmt is a set-operation tree, we must
@@ -2180,7 +2181,7 @@ CreateAsStmt:
 					 * to find it.	Similarly, the output column names must
 					 * be attached to that Select's target list.
 					 */
-					SelectStmt *n = findLeftmostSelect((SelectStmt *) $7);
+					SelectStmt *n = findLeftmostSelect((SelectStmt *) $10);
 					if (n->into != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2189,21 +2190,11 @@ CreateAsStmt:
 					n->into = $4;
 					n->intoColNames = $5;
 					n->intoHasOids = $6;
-					$$ = $7;
+					n->intoOnCommit = $7;
+					n->intoTableSpaceName = $8;
+					$$ = $10;
 				}
 		;
-
-/*
- * To avoid a shift/reduce conflict in CreateAsStmt, we need to
- * include the 'AS' terminal in the parsing of WITH/WITHOUT
- * OIDS. Unfortunately that means this production is effectively a
- * duplicate of OptWithOids.
- */
-WithOidsAs:
-			WITH OIDS AS 							{ $$ = MUST_HAVE_OIDS; }
-			| WITHOUT OIDS AS 						{ $$ = MUST_NOT_HAVE_OIDS; }
-			| AS 									{ $$ = DEFAULT_OIDS; }
-			;
 
 OptCreateAs:
 			'(' CreateAsList ')'					{ $$ = $2; }
@@ -5066,13 +5057,18 @@ ExecuteStmt: EXECUTE name execute_param_clause
 					n->into = NULL;
 					$$ = (Node *) n;
 				}
-			| CREATE OptTemp TABLE qualified_name OptCreateAs AS EXECUTE name execute_param_clause
+			| CREATE OptTemp TABLE qualified_name OptCreateAs
+				OptWithOids OnCommitOption OptTableSpace AS
+				EXECUTE name execute_param_clause
 				{
 					ExecuteStmt *n = makeNode(ExecuteStmt);
-					n->name = $8;
-					n->params = $9;
+					n->name = $11;
+					n->params = $12;
 					$4->istemp = $2;
 					n->into = $4;
+					n->into_contains_oids = $6;
+					n->into_on_commit = $7;
+					n->into_tbl_space = $8;
 					if ($5)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

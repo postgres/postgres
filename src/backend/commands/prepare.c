@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.47 2006/01/18 06:49:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.48 2006/02/19 00:04:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,6 +196,10 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
 		query->into = copyObject(stmt->into);
+		query->intoHasOids = stmt->into_has_oids;
+		query->intoOnCommit = stmt->into_on_commit;
+		if (stmt->into_tbl_space)
+			query->intoTableSpaceName = pstrdup(stmt->into_tbl_space);
 
 		MemoryContextSwitchTo(oldContext);
 	}

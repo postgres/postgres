@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.262 2006/02/04 19:06:46 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.263 2006/02/19 00:04:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -673,6 +673,8 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(resultRelation);
 	COMPARE_NODE_FIELD(into);
 	COMPARE_SCALAR_FIELD(intoHasOids);
+	COMPARE_SCALAR_FIELD(intoOnCommit);
+	COMPARE_STRING_FIELD(intoTableSpaceName);
 	COMPARE_SCALAR_FIELD(hasAggs);
 	COMPARE_SCALAR_FIELD(hasSubLinks);
 	COMPARE_NODE_FIELD(rtable);
@@ -732,6 +734,8 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 	COMPARE_NODE_FIELD(into);
 	COMPARE_NODE_FIELD(intoColNames);
 	COMPARE_SCALAR_FIELD(intoHasOids);
+	COMPARE_SCALAR_FIELD(intoOnCommit);
+	COMPARE_STRING_FIELD(intoTableSpaceName);
 	COMPARE_NODE_FIELD(targetList);
 	COMPARE_NODE_FIELD(fromClause);
 	COMPARE_NODE_FIELD(whereClause);
@@ -1493,6 +1497,10 @@ _equalExecuteStmt(ExecuteStmt *a, ExecuteStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(into);
+	COMPARE_SCALAR_FIELD(into_contains_oids);
+	COMPARE_SCALAR_FIELD(into_has_oids);
+	COMPARE_SCALAR_FIELD(into_on_commit);
+	COMPARE_STRING_FIELD(into_tbl_space);
 	COMPARE_NODE_FIELD(params);
 
 	return true;

@@ -76,6 +76,21 @@ SELECT count(oid) FROM create_table_test2;
 -- should fail
 SELECT count(oid) FROM create_table_test3;
 ERROR:  column "oid" does not exist
+PREPARE table_source(int) AS
+    SELECT a + b AS c1, a - b AS c2, $1 AS c3 FROM create_table_test;
+CREATE TABLE execute_with WITH OIDS AS EXECUTE table_source(1);
+CREATE TABLE execute_without WITHOUT OIDS AS EXECUTE table_source(2);
+SELECT count(oid) FROM execute_with;
+ count 
+-------
+     2
+(1 row)
+
+-- should fail
+SELECT count(oid) FROM execute_without;
+ERROR:  column "oid" does not exist
 DROP TABLE create_table_test;
 DROP TABLE create_table_test2;
 DROP TABLE create_table_test3;
+DROP TABLE execute_with;
+DROP TABLE execute_without;

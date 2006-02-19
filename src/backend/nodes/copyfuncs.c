@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.326 2006/02/04 19:06:46 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.327 2006/02/19 00:04:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1662,6 +1662,8 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(resultRelation);
 	COPY_NODE_FIELD(into);
 	COPY_SCALAR_FIELD(intoHasOids);
+	COPY_SCALAR_FIELD(intoOnCommit);
+	COPY_STRING_FIELD(intoTableSpaceName);
 	COPY_SCALAR_FIELD(hasAggs);
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_NODE_FIELD(rtable);
@@ -1729,6 +1731,8 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(into);
 	COPY_NODE_FIELD(intoColNames);
 	COPY_SCALAR_FIELD(intoHasOids);
+	COPY_SCALAR_FIELD(intoOnCommit);
+	COPY_STRING_FIELD(intoTableSpaceName);
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(fromClause);
 	COPY_NODE_FIELD(whereClause);
@@ -2631,6 +2635,10 @@ _copyExecuteStmt(ExecuteStmt *from)
 
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(into);
+	COPY_SCALAR_FIELD(into_contains_oids);
+	COPY_SCALAR_FIELD(into_has_oids);
+	COPY_SCALAR_FIELD(into_on_commit);
+	COPY_STRING_FIELD(into_tbl_space);
 	COPY_NODE_FIELD(params);
 
 	return newnode;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.99 2006/01/16 20:48:49 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.100 2006/02/19 00:04:26 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -580,9 +580,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>DELETE ROWS</literal></term>
         <listitem>
          <para>
-          All rows in the temporary table will be deleted at the
-          end of each transaction block.  Essentially, an automatic
-          <xref linkend="sql-truncate"> is done at each commit.
+          All rows in the temporary table will be deleted at the end
+          of each transaction block.  Essentially, an automatic <xref
+          linkend="sql-truncate" endterm="sql-truncate-title"> is done
+          at each commit.
          </para>
         </listitem>
        </varlistentry>
