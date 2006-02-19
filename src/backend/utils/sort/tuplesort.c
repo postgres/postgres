@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.58 2006/02/19 05:54:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.59 2006/02/19 19:59:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,8 +324,7 @@ struct Tuplesortstate
 #define USEMEM(state,amt)	((state)->availMem -= (amt))
 #define FREEMEM(state,amt)	((state)->availMem += (amt))
 
-/*--------------------
- *
+/*
  * NOTES about on-tape representation of tuples:
  *
  * We require the first "unsigned int" of a stored tuple to be the total size
@@ -357,16 +356,13 @@ struct Tuplesortstate
  *
  * We count space allocated for tuples against the workMem limit, plus
  * the space used by the variable-size arrays memtuples and memtupindex.
- * Fixed-size space (primarily the LogicalTapeSet I/O buffers) is not
- * counted.
+ * Fixed-size space is not counted; it's small enough to not be interesting.
  *
  * Note that we count actual space used (as shown by GetMemoryChunkSpace)
  * rather than the originally-requested size.  This is important since
  * palloc can add substantial overhead.  It's not a complete answer since
  * we won't count any wasted space in palloc allocation blocks, but it's
  * a lot better than what we were doing before 7.3.
- *
- *--------------------
  */
 
 /*
@@ -2407,6 +2403,7 @@ readtup_datum(Tuplesortstate *state, int tapenum, unsigned int len)
 							sizeof(tuplen)) != sizeof(tuplen))
 			elog(ERROR, "unexpected end of data");
 
+	/* if pass-by-ref data type, must recompute the Datum pointer */
 	if (!tuple->isNull && !state->datumTypeByVal)
 		tuple->val = PointerGetDatum(((char *) tuple) +
 									 MAXALIGN(sizeof(DatumTuple)));
