@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.153 2006/02/05 02:59:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.154 2006/02/19 05:54:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,10 +70,10 @@
 #include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/tuplesort.h"
 
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
-#define LOG6(x)  (log(x) / 1.79175946922805)
 
 /*
  * Some Paths return less than the nominal number of rows of their parent
@@ -767,11 +767,10 @@ cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
  * If the total volume exceeds work_mem, we switch to a tape-style merge
  * algorithm.  There will still be about t*log2(t) tuple comparisons in
  * total, but we will also need to write and read each tuple once per
- * merge pass.	We expect about ceil(log6(r)) merge passes where r is the
- * number of initial runs formed (log6 because tuplesort.c uses six-tape
- * merging).  Since the average initial run should be about twice work_mem,
- * we have
- *		disk traffic = 2 * relsize * ceil(log6(p / (2*work_mem)))
+ * merge pass.  We expect about ceil(logM(r)) merge passes where r is the
+ * number of initial runs formed and M is the merge order used by tuplesort.c.
+ * Since the average initial run should be about twice work_mem, we have
+ *		disk traffic = 2 * relsize * ceil(logM(p / (2*work_mem)))
  *		cpu = comparison_cost * t * log2(t)
  *
  * The disk traffic is assumed to be half sequential and half random
@@ -824,10 +823,14 @@ cost_sort(Path *path, PlannerInfo *root,
 	{
 		double		npages = ceil(nbytes / BLCKSZ);
 		double		nruns = (nbytes / work_mem_bytes) * 0.5;
-		double		log_runs = ceil(LOG6(nruns));
+		double		mergeorder = tuplesort_merge_order(work_mem_bytes);
+		double		log_runs;
 		double		npageaccesses;
 
-		if (log_runs < 1.0)
+		/* Compute logM(r) as log(r) / log(M) */
+		if (nruns > mergeorder)
+			log_runs = ceil(log(nruns) / log(mergeorder));
+		else
 			log_runs = 1.0;
 		npageaccesses = 2.0 * npages * log_runs;
 		/* Assume half are sequential (cost 1), half are not */
