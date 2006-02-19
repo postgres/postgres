@@ -64,7 +64,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.17 2005/10/18 22:59:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.18 2006/02/19 05:58:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,10 +124,10 @@ typedef struct LogicalTape
 	 * we do need the relative block number so we can detect end-of-tape while
 	 * reading.
 	 */
+	char	   *buffer;			/* physical buffer (separately palloc'd) */
 	long		curBlockNumber; /* this block's logical blk# within tape */
 	int			pos;			/* next read/write position in buffer */
 	int			nbytes;			/* total # of valid bytes in buffer */
-	char		buffer[BLCKSZ];
 } LogicalTape;
 
 /*
@@ -156,7 +156,7 @@ struct LogicalTapeSet
 	 * is of length nTapes.
 	 */
 	int			nTapes;			/* # of logical tapes in set */
-	LogicalTape *tapes[1];		/* must be last in struct! */
+	LogicalTape	tapes[1];		/* must be last in struct! */
 };
 
 static void ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
@@ -327,6 +327,10 @@ ltsRewindIndirectBlock(LogicalTapeSet *lts,
 					   IndirectBlock *indirect,
 					   bool freezing)
 {
+	/* Handle case of never-written-to tape */
+	if (indirect == NULL)
+		return -1L;
+
 	/* Insert sentinel if block is not full */
 	if (indirect->nextSlot < BLOCKS_PER_INDIR_BLOCK)
 		indirect->ptrs[indirect->nextSlot] = -1L;
@@ -366,6 +370,10 @@ static long
 ltsRewindFrozenIndirectBlock(LogicalTapeSet *lts,
 							 IndirectBlock *indirect)
 {
+	/* Handle case of never-written-to tape */
+	if (indirect == NULL)
+		return -1L;
+
 	/*
 	 * If block is not topmost, recurse to obtain address of first block in
 	 * this hierarchy level.  Read that one in.
@@ -399,6 +407,10 @@ ltsRecallNextBlockNum(LogicalTapeSet *lts,
 					  IndirectBlock *indirect,
 					  bool frozen)
 {
+	/* Handle case of never-written-to tape */
+	if (indirect == NULL)
+		return -1L;
+
 	if (indirect->nextSlot >= BLOCKS_PER_INDIR_BLOCK ||
 		indirect->ptrs[indirect->nextSlot] == -1L)
 	{
@@ -432,6 +444,10 @@ static long
 ltsRecallPrevBlockNum(LogicalTapeSet *lts,
 					  IndirectBlock *indirect)
 {
+	/* Handle case of never-written-to tape */
+	if (indirect == NULL)
+		return -1L;
+
 	if (indirect->nextSlot <= 1)
 	{
 		long		indirblock;
@@ -467,12 +483,12 @@ LogicalTapeSetCreate(int ntapes)
 	int			i;
 
 	/*
-	 * Create top-level struct.  First LogicalTape pointer is already counted
-	 * in sizeof(LogicalTapeSet).
+	 * Create top-level struct including per-tape LogicalTape structs.
+	 * First LogicalTape struct is already counted in sizeof(LogicalTapeSet).
 	 */
 	Assert(ntapes > 0);
 	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet) +
-									(ntapes - 1) *sizeof(LogicalTape *));
+									(ntapes - 1) * sizeof(LogicalTape));
 	lts->pfile = BufFileCreateTemp(false);
 	lts->nFileBlocks = 0L;
 	lts->freeBlocksLen = 32;	/* reasonable initial guess */
@@ -481,20 +497,21 @@ LogicalTapeSetCreate(int ntapes)
 	lts->nTapes = ntapes;
 
 	/*
-	 * Create per-tape structs, including first-level indirect blocks.
+	 * Initialize per-tape structs.  Note we allocate the I/O buffer and
+	 * first-level indirect block for a tape only when it is first actually
+	 * written to.  This avoids wasting memory space when tuplesort.c
+	 * overestimates the number of tapes needed.
 	 */
 	for (i = 0; i < ntapes; i++)
 	{
-		lt = (LogicalTape *) palloc(sizeof(LogicalTape));
-		lts->tapes[i] = lt;
-		lt->indirect = (IndirectBlock *) palloc(sizeof(IndirectBlock));
-		lt->indirect->nextSlot = 0;
-		lt->indirect->nextup = NULL;
+		lt = &lts->tapes[i];
+		lt->indirect = NULL;
 		lt->writing = true;
 		lt->frozen = false;
 		lt->dirty = false;
 		lt->numFullBlocks = 0L;
 		lt->lastBlockBytes = 0;
+		lt->buffer = NULL;
 		lt->curBlockNumber = 0L;
 		lt->pos = 0;
 		lt->nbytes = 0;
@@ -516,13 +533,14 @@ LogicalTapeSetClose(LogicalTapeSet *lts)
 	BufFileClose(lts->pfile);
 	for (i = 0; i < lts->nTapes; i++)
 	{
-		lt = lts->tapes[i];
+		lt = &lts->tapes[i];
 		for (ib = lt->indirect; ib != NULL; ib = nextib)
 		{
 			nextib = ib->nextup;
 			pfree(ib);
 		}
-		pfree(lt);
+		if (lt->buffer)
+			pfree(lt->buffer);
 	}
 	pfree(lts->freeBlocks);
 	pfree(lts);
@@ -556,8 +574,18 @@ LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 	size_t		nthistime;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = lts->tapes[tapenum];
+	lt = &lts->tapes[tapenum];
 	Assert(lt->writing);
+
+	/* Allocate data buffer and first indirect block on first write */
+	if (lt->buffer == NULL)
+		lt->buffer = (char *) palloc(BLCKSZ);
+	if (lt->indirect == NULL)
+	{
+		lt->indirect = (IndirectBlock *) palloc(sizeof(IndirectBlock));
+		lt->indirect->nextSlot = 0;
+		lt->indirect->nextup = NULL;
+	}
 
 	while (size > 0)
 	{
@@ -606,7 +634,7 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 	long		datablocknum;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = lts->tapes[tapenum];
+	lt = &lts->tapes[tapenum];
 
 	if (!forWrite)
 	{
@@ -660,13 +688,16 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 
 		Assert(!lt->writing && !lt->frozen);
 		/* Must truncate the indirect-block hierarchy down to one level. */
-		for (ib = lt->indirect->nextup; ib != NULL; ib = nextib)
+		if (lt->indirect)
 		{
-			nextib = ib->nextup;
-			pfree(ib);
+			for (ib = lt->indirect->nextup; ib != NULL; ib = nextib)
+			{
+				nextib = ib->nextup;
+				pfree(ib);
+			}
+			lt->indirect->nextSlot = 0;
+			lt->indirect->nextup = NULL;
 		}
-		lt->indirect->nextSlot = 0;
-		lt->indirect->nextup = NULL;
 		lt->writing = true;
 		lt->dirty = false;
 		lt->numFullBlocks = 0L;
@@ -691,7 +722,7 @@ LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
 	size_t		nthistime;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = lts->tapes[tapenum];
+	lt = &lts->tapes[tapenum];
 	Assert(!lt->writing);
 
 	while (size > 0)
@@ -749,7 +780,7 @@ LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum)
 	long		datablocknum;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = lts->tapes[tapenum];
+	lt = &lts->tapes[tapenum];
 	Assert(lt->writing);
 
 	/*
@@ -793,7 +824,7 @@ LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum, size_t size)
 	int			newpos;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = lts->tapes[tapenum];
+	lt = &lts->tapes[tapenum];
 	Assert(lt->frozen);
 
 	/*
@@ -858,7 +889,7 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = lts->tapes[tapenum];
+	lt = &lts->tapes[tapenum];
 	Assert(lt->frozen);
 	Assert(offset >= 0 && offset <= BLCKSZ);
 
@@ -921,7 +952,7 @@ LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
-	lt = lts->tapes[tapenum];
+	lt = &lts->tapes[tapenum];
 	*blocknum = lt->curBlockNumber;
 	*offset = lt->pos;
 }
