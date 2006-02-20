@@ -737,9 +737,9 @@ NISortAffixes(IspellDict * Conf)
 		{
 			if (firstsuffix < 0)
 				firstsuffix = i;
-			if (Affix->flagflags & FF_COMPOUNDONLYAFX)
+			if ((Affix->flagflags & FF_COMPOUNDONLYAFX) && Affix->replen>0 )
 			{
-				if (!ptr->affix ||
+				if (ptr == Conf->CompoundAffix ||
 					strbncmp((const unsigned char *) (ptr - 1)->affix,
 							 (const unsigned char *) Affix->repl,
 							 (ptr - 1)->len))
@@ -1024,17 +1024,31 @@ typedef struct SplitVar
 }	SplitVar;
 
 static int
-CheckCompoundAffixes(CMPDAffix ** ptr, char *word, int len)
+CheckCompoundAffixes(CMPDAffix ** ptr, char *word, int len, bool CheckInPlace)
 {
-	while ((*ptr)->affix)
-	{
-		if (len > (*ptr)->len && strncmp((*ptr)->affix, word, (*ptr)->len) == 0)
+	if ( CheckInPlace ) {
+		while ((*ptr)->affix)
 		{
-			len = (*ptr)->len;
+			if (len > (*ptr)->len && strncmp((*ptr)->affix, word, (*ptr)->len) == 0)
+			{
+				len = (*ptr)->len;
+				(*ptr)++;
+				return len;
+			}
 			(*ptr)++;
-			return len;
 		}
-		(*ptr)++;
+	} else {
+		char *affbegin;
+		while ((*ptr)->affix)
+		{
+			if (len > (*ptr)->len && (affbegin = strstr(word, (*ptr)->affix)) != NULL)
+			{
+				len = (*ptr)->len + (affbegin-word);
+				(*ptr)++;
+				return len;
+			}
+			(*ptr)++;
+		}
 	}
 	return 0;
 }
@@ -1078,26 +1092,11 @@ SplitToVariants(IspellDict * Conf, SPNode * snode, SplitVar * orig, char *word, 
 	memset(notprobed, 1, wordlen);
 	var = CopyVar(orig, 1);
 
-	while (node && level < wordlen)
+	while (level < wordlen)
 	{
-		StopLow = node->data;
-		StopHigh = node->data + node->length;
-		while (StopLow < StopHigh)
-		{
-			StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
-			if (StopMiddle->val == ((uint8 *) (word))[level])
-				break;
-			else if (StopMiddle->val < ((uint8 *) (word))[level])
-				StopLow = StopMiddle + 1;
-			else
-				StopHigh = StopMiddle;
-		}
-		if (StopLow >= StopHigh)
-			break;
-
-		/* find word with epenthetic */
+		/* find word with epenthetic or/and compound suffix */
 		caff = Conf->CompoundAffix;
-		while (level > startpos && (lenaff = CheckCompoundAffixes(&caff, word + level, wordlen - level)) > 0)
+		while (level > startpos && (lenaff = CheckCompoundAffixes(&caff, word + level, wordlen - level, (node) ? true : false)) > 0)
 		{
 			/*
 			 * there is one of compound suffixes, so check word for existings
@@ -1143,41 +1142,61 @@ SplitToVariants(IspellDict * Conf, SPNode * snode, SplitVar * orig, char *word, 
 			}
 		}
 
-		/* find infinitive */
-		if (StopMiddle->isword && StopMiddle->compoundallow && notprobed[level])
-		{
-			/* ok, we found full compoundallowed word */
-			if (level > minpos)
-			{
-				/* and its length more than minimal */
-				if (wordlen == level + 1)
-				{
-					/* well, it was last word */
-					var->stem[var->nstem] = strnduplicate(word + startpos, wordlen - startpos);
-					var->nstem++;
-					pfree(notprobed);
-					return var;
-				}
-				else
-				{
-					/* then we will search more big word at the same point */
-					SplitVar   *ptr = var;
+		if ( !node )
+			break; 
 
-					while (ptr->next)
-						ptr = ptr->next;
-					ptr->next = SplitToVariants(Conf, node, var, word, wordlen, startpos, level);
-					/* we can find next word */
-					level++;
-					var->stem[var->nstem] = strnduplicate(word + startpos, level - startpos);
-					var->nstem++;
-					node = Conf->Dictionary;
-					startpos = level;
-					continue;
+		StopLow = node->data;
+		StopHigh = node->data + node->length;
+		while (StopLow < StopHigh)
+		{
+			StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
+			if (StopMiddle->val == ((uint8 *) (word))[level])
+				break;
+			else if (StopMiddle->val < ((uint8 *) (word))[level])
+				StopLow = StopMiddle + 1;
+			else
+				StopHigh = StopMiddle;
+		}
+
+		if (StopLow < StopHigh) {
+
+			/* find infinitive */
+			if (StopMiddle->isword && StopMiddle->compoundallow && notprobed[level])
+			{
+				/* ok, we found full compoundallowed word */
+				if (level > minpos)
+				{
+					/* and its length more than minimal */
+					if (wordlen == level + 1)
+					{
+						/* well, it was last word */
+						var->stem[var->nstem] = strnduplicate(word + startpos, wordlen - startpos);
+						var->nstem++;
+						pfree(notprobed);
+						return var;
+					}
+					else
+					{
+						/* then we will search more big word at the same point */
+						SplitVar   *ptr = var;
+	
+						while (ptr->next)
+							ptr = ptr->next;
+						ptr->next = SplitToVariants(Conf, node, var, word, wordlen, startpos, level);
+						/* we can find next word */
+						level++;
+						var->stem[var->nstem] = strnduplicate(word + startpos, level - startpos);
+						var->nstem++;
+						node = Conf->Dictionary;
+						startpos = level;
+						continue;
+					}
 				}
 			}
-		}
+			node = StopMiddle->node;
+		} else
+			node = NULL;  
 		level++;
-		node = StopMiddle->node;
 	}
 
 	var->stem[var->nstem] = strnduplicate(word + startpos, wordlen - startpos);
