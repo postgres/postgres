@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.41.2.2 2005/09/25 03:18:16 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.41.2.3 2006/02/20 20:10:45 neilc Exp $
  *
  *********************************************************************
  */
@@ -1121,7 +1121,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 	}
 
 	/*
-	 * now get information required for input conversion of the procedures
+	 * now get information required for input conversion of the procedure's
 	 * arguments.
 	 */
 	proc->nargs = fcinfo->nargs;
@@ -2695,6 +2695,7 @@ PLy_traceback(int *xlevel)
 	}
 
 	PyErr_NormalizeException(&e, &v, &tb);
+	Py_XDECREF(tb);
 
 	eob = PyObject_Str(e);
 	if ((v) && ((vob = PyObject_Str(v)) != NULL))
@@ -2713,9 +2714,10 @@ PLy_traceback(int *xlevel)
 
 	Py_DECREF(eob);
 	Py_XDECREF(vob);
+	Py_XDECREF(v);
 
 	/*
-	 * intuit an appropriate error level for based on the exception type
+	 * intuit an appropriate error level based on the exception type
 	 */
 	if ((PLy_exc_error) && (PyErr_GivenExceptionMatches(e, PLy_exc_error)))
 		*xlevel = ERROR;
@@ -2724,6 +2726,7 @@ PLy_traceback(int *xlevel)
 	else
 		*xlevel = ERROR;
 
+	Py_DECREF(e);
 	leave();
 
 	return xstr;
