@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.206 2006/01/11 08:43:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.207 2006/02/21 23:01:53 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -172,7 +172,8 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
  *		tuple as indicated by "dir"; return the next tuple in scan->rs_ctup,
  *		or set scan->rs_ctup.t_data = NULL if no more tuples.
  *
- * dir == 0 means "re-fetch the tuple indicated by scan->rs_ctup".
+ * dir == NoMovementScanDirection means "re-fetch the tuple indicated
+ * by scan->rs_ctup".
  *
  * Note: the reason nkeys/key are passed separately, even though they are
  * kept in the scan descriptor, is that the caller may not want us to check
@@ -189,12 +190,13 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
  */
 static void
 heapgettup(HeapScanDesc scan,
-		   int dir,
+		   ScanDirection dir,
 		   int nkeys,
 		   ScanKey key)
 {
 	HeapTuple	tuple = &(scan->rs_ctup);
 	Snapshot	snapshot = scan->rs_snapshot;
+	bool		backward = ScanDirectionIsBackward(dir);
 	BlockNumber page;
 	Page		dp;
 	int			lines;
@@ -205,11 +207,8 @@ heapgettup(HeapScanDesc scan,
 	/*
 	 * calculate next starting lineoff, given scan direction
 	 */
-	if (dir > 0)
+	if (ScanDirectionIsForward(dir))
 	{
-		/*
-		 * forward scan direction
-		 */
 		if (!scan->rs_inited)
 		{
 			/*
@@ -242,11 +241,8 @@ heapgettup(HeapScanDesc scan,
 
 		linesleft = lines - lineoff + 1;
 	}
-	else if (dir < 0)
+	else if (backward)
 	{
-		/*
-		 * reverse scan direction
-		 */
 		if (!scan->rs_inited)
 		{
 			/*
@@ -352,7 +348,7 @@ heapgettup(HeapScanDesc scan,
 			 * otherwise move to the next item on the page
 			 */
 			--linesleft;
-			if (dir < 0)
+			if (backward)
 			{
 				--lpp;			/* move back in this page's ItemId array */
 				--lineoff;
@@ -373,7 +369,7 @@ heapgettup(HeapScanDesc scan,
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if ((dir < 0) ? (page == 0) : (page + 1 >= scan->rs_nblocks))
+		if (backward ? (page == 0) : (page + 1 >= scan->rs_nblocks))
 		{
 			if (BufferIsValid(scan->rs_cbuf))
 				ReleaseBuffer(scan->rs_cbuf);
@@ -384,7 +380,7 @@ heapgettup(HeapScanDesc scan,
 			return;
 		}
 
-		page = (dir < 0) ? (page - 1) : (page + 1);
+		page = backward ? (page - 1) : (page + 1);
 
 		heapgetpage(scan, page);
 
@@ -393,7 +389,7 @@ heapgettup(HeapScanDesc scan,
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
 		lines = PageGetMaxOffsetNumber((Page) dp);
 		linesleft = lines;
-		if (dir < 0)
+		if (backward)
 		{
 			lineoff = lines;
 			lpp = PageGetItemId(dp, lines);
@@ -421,11 +417,12 @@ heapgettup(HeapScanDesc scan,
  */
 static void
 heapgettup_pagemode(HeapScanDesc scan,
-					int dir,
+					ScanDirection dir,
 					int nkeys,
 					ScanKey key)
 {
 	HeapTuple	tuple = &(scan->rs_ctup);
+	bool		backward = ScanDirectionIsBackward(dir);
 	BlockNumber page;
 	Page		dp;
 	int			lines;
@@ -437,11 +434,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 	/*
 	 * calculate next starting lineindex, given scan direction
 	 */
-	if (dir > 0)
+	if (ScanDirectionIsForward(dir))
 	{
-		/*
-		 * forward scan direction
-		 */
 		if (!scan->rs_inited)
 		{
 			/*
@@ -471,11 +465,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 
 		linesleft = lines - lineindex;
 	}
-	else if (dir < 0)
+	else if (backward)
 	{
-		/*
-		 * reverse scan direction
-		 */
 		if (!scan->rs_inited)
 		{
 			/*
@@ -584,14 +575,10 @@ heapgettup_pagemode(HeapScanDesc scan,
 			 * otherwise move to the next item on the page
 			 */
 			--linesleft;
-			if (dir < 0)
-			{
+			if (backward)
 				--lineindex;
-			}
 			else
-			{
 				++lineindex;
-			}
 		}
 
 		/*
@@ -602,7 +589,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if ((dir < 0) ? (page == 0) : (page + 1 >= scan->rs_nblocks))
+		if (backward ? (page == 0) : (page + 1 >= scan->rs_nblocks))
 		{
 			if (BufferIsValid(scan->rs_cbuf))
 				ReleaseBuffer(scan->rs_cbuf);
@@ -613,14 +600,13 @@ heapgettup_pagemode(HeapScanDesc scan,
 			return;
 		}
 
-		page = (dir < 0) ? (page - 1) : (page + 1);
-
+		page = backward ? (page - 1) : (page + 1);
 		heapgetpage(scan, page);
 
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
 		lines = scan->rs_ntuples;
 		linesleft = lines;
-		if (dir < 0)
+		if (backward)
 			lineindex = lines - 1;
 		else
 			lineindex = 0;
@@ -1008,15 +994,11 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
-	/*
-	 * Note: we depend here on the -1/0/1 encoding of ScanDirection.
-	 */
 	if (scan->rs_pageatatime)
-		heapgettup_pagemode(scan, (int) direction,
+		heapgettup_pagemode(scan, direction,
 							scan->rs_nkeys, scan->rs_key);
 	else
-		heapgettup(scan, (int) direction,
-				   scan->rs_nkeys, scan->rs_key);
+		heapgettup(scan, direction, scan->rs_nkeys, scan->rs_key);
 
 	if (scan->rs_ctup.t_data == NULL)
 	{
@@ -2745,13 +2727,13 @@ heap_restrpos(HeapScanDesc scan)
 		{
 			scan->rs_cindex = scan->rs_mindex;
 			heapgettup_pagemode(scan,
-								0,			/* "no movement" */
+								NoMovementScanDirection,
 								0,			/* needn't recheck scan keys */
 								NULL);
 		}
 		else
 			heapgettup(scan,
-					   0,					/* "no movement" */
+					   NoMovementScanDirection,
 					   0,					/* needn't recheck scan keys */
 					   NULL);
 	}

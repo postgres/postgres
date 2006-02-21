@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.266 2006/02/19 00:04:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.267 2006/02/21 23:01:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	/*
 	 * run plan
 	 */
-	if (direction == NoMovementScanDirection)
+	if (ScanDirectionIsNoMovement(direction))
 		result = NULL;
 	else
 		result = ExecutePlan(estate,
