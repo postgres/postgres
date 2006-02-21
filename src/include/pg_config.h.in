@@ -129,7 +129,7 @@
 /* Define to 1 if your compiler understands __FUNCTION__. */
 #undef HAVE_FUNCNAME__FUNCTION
 
-/* Define to 1 if you have the `getaddrinfo' function. */
+/* Define to 1 if you have getaddrinfo(). */
 #undef HAVE_GETADDRINFO
 
 /* Define to 1 if you have the `gethostbyname_r' function. */
@@ -204,53 +204,23 @@
 /* Define to 1 if you have the <langinfo.h> header file. */
 #undef HAVE_LANGINFO_H
 
-/* Define to 1 if you have the `BSD' library (-lBSD). */
-#undef HAVE_LIBBSD
-
-/* Define to 1 if you have the `compat' library (-lcompat). */
-#undef HAVE_LIBCOMPAT
-
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #undef HAVE_LIBCRYPTO
 
 /* Define to 1 if you have the `eay32' library (-leay32). */
 #undef HAVE_LIBEAY32
 
-/* Define to 1 if you have the `gen' library (-lgen). */
-#undef HAVE_LIBGEN
-
-/* Define to 1 if you have the `IPC' library (-lIPC). */
-#undef HAVE_LIBIPC
-
-/* Define to 1 if you have the `lc' library (-llc). */
-#undef HAVE_LIBLC
-
-/* Define to 1 if you have the `ld' library (-lld). */
-#undef HAVE_LIBLD
-
-/* Define to 1 if you have the `nsl' library (-lnsl). */
-#undef HAVE_LIBNSL
-
 /* Define to 1 if you have the `pam' library (-lpam). */
 #undef HAVE_LIBPAM
 
-/* Define to 1 if you have the `PW' library (-lPW). */
-#undef HAVE_LIBPW
-
 /* Define if you have a function readline library */
 #undef HAVE_LIBREADLINE
-
-/* Define to 1 if you have the `resolv' library (-lresolv). */
-#undef HAVE_LIBRESOLV
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
 #undef HAVE_LIBSSL
 
 /* Define to 1 if you have the `ssleay32' library (-lssleay32). */
 #undef HAVE_LIBSSLEAY32
-
-/* Define to 1 if you have the `unix' library (-lunix). */
-#undef HAVE_LIBUNIX
 
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ

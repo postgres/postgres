@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.449 2006/02/15 17:23:10 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.450 2006/02/21 06:06:50 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -902,11 +902,21 @@ AC_REPLACE_FUNCS([crypt fseeko getopt getrusage inet_aton random rint srandom st
 
 # System's version of getaddrinfo(), if any, may be used only if we found
 # a definition for struct addrinfo; see notes in src/include/getaddrinfo.h.
-# (Note: the AC_REPLACE_FUNCS probe fails on Windows, where the available
+# (Note: the AC_TRY_LINK probe fails on Windows, where the available
 # versions of getaddrinfo don't follow normal C call protocol.  This is OK
 # because we want to use our own getaddrinfo.c on Windows anyway.)
 if test x"$ac_cv_type_struct_addrinfo" = xyes ; then
-  AC_REPLACE_FUNCS([getaddrinfo])
+  dnl Cannot use AC_CHECK_FUNC because getaddrinfo may be a macro
+  AC_MSG_CHECKING(for getaddrinfo)
+  AC_TRY_LINK([
+#include <sys/socket.h>
+#include <netdb.h>
+],
+            [return getaddrinfo("", "", NULL, NULL) ? 0 : 1;],
+            [AC_DEFINE(HAVE_GETADDRINFO, 1, [Define to 1 if you have getaddrinfo().])
+  AC_MSG_RESULT(yes)],
+            [AC_MSG_RESULT(no)
+             AC_LIBOBJ(getaddrinfo)])
 else
   AC_LIBOBJ(getaddrinfo)
 fi
