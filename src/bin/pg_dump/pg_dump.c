@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.429 2006/02/12 06:11:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.430 2006/02/21 18:01:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4690,10 +4690,11 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	Oid			typsendoid;
 	Oid			typanalyzeoid;
 	char	   *typdelim;
-	char	   *typdefault;
 	char	   *typbyval;
 	char	   *typalign;
 	char	   *typstorage;
+	char	   *typdefault;
+	bool		typdefault_is_literal = false;
 
 	/* Set proper schema search path so regproc references list correctly */
 	selectSourceSchema(tinfo->dobj.namespace->dobj.name);
@@ -4709,8 +4710,8 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typreceive::pg_catalog.oid as typreceiveoid, "
 						  "typsend::pg_catalog.oid as typsendoid, "
 						  "typanalyze::pg_catalog.oid as typanalyzeoid, "
-						  "typdelim, typdefault, typbyval, typalign, "
-						  "typstorage "
+						  "typdelim, typbyval, typalign, typstorage, "
+						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  tinfo->dobj.catId.oid);
@@ -4725,8 +4726,8 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typreceive::pg_catalog.oid as typreceiveoid, "
 						  "typsend::pg_catalog.oid as typsendoid, "
 						  "0 as typanalyzeoid, "
-						  "typdelim, typdefault, typbyval, typalign, "
-						  "typstorage "
+						  "typdelim, typbyval, typalign, typstorage, "
+						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  tinfo->dobj.catId.oid);
@@ -4741,13 +4742,13 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typoutput::pg_catalog.oid as typoutputoid, "
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typanalyzeoid, "
-						  "typdelim, typdefault, typbyval, typalign, "
-						  "typstorage "
+						  "typdelim, typbyval, typalign, typstorage, "
+						  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 						  "FROM pg_catalog.pg_type "
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  tinfo->dobj.catId.oid);
 	}
-	else if (fout->remoteVersion >= 70100)
+	else if (fout->remoteVersion >= 70200)
 	{
 		/*
 		 * Note: although pre-7.3 catalogs contain typreceive and typsend,
@@ -4761,8 +4762,28 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typoutput::oid as typoutputoid, "
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typanalyzeoid, "
-						  "typdelim, typdefault, typbyval, typalign, "
-						  "typstorage "
+						  "typdelim, typbyval, typalign, typstorage, "
+						  "NULL as typdefaultbin, typdefault "
+						  "FROM pg_type "
+						  "WHERE oid = '%u'::oid",
+						  tinfo->dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 70100)
+	{
+		/*
+		 * Ignore pre-7.2 typdefault; the field exists but has an unusable
+		 * representation.
+		 */
+		appendPQExpBuffer(query, "SELECT typlen, "
+						  "typinput, typoutput, "
+						  "'-' as typreceive, '-' as typsend, "
+						  "'-' as typanalyze, "
+						  "typinput::oid as typinputoid, "
+						  "typoutput::oid as typoutputoid, "
+						  "0 as typreceiveoid, 0 as typsendoid, "
+						  "0 as typanalyzeoid, "
+						  "typdelim, typbyval, typalign, typstorage, "
+						  "NULL as typdefaultbin, NULL as typdefault "
 						  "FROM pg_type "
 						  "WHERE oid = '%u'::oid",
 						  tinfo->dobj.catId.oid);
@@ -4777,8 +4798,9 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 						  "typoutput::oid as typoutputoid, "
 						  "0 as typreceiveoid, 0 as typsendoid, "
 						  "0 as typanalyzeoid, "
-						  "typdelim, typdefault, typbyval, typalign, "
-						  "'p'::char as typstorage "
+						  "typdelim, typbyval, typalign, "
+						  "'p'::char as typstorage, "
+						  "NULL as typdefaultbin, NULL as typdefault "
 						  "FROM pg_type "
 						  "WHERE oid = '%u'::oid",
 						  tinfo->dobj.catId.oid);
@@ -4808,13 +4830,18 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	typsendoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typsendoid")));
 	typanalyzeoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typanalyzeoid")));
 	typdelim = PQgetvalue(res, 0, PQfnumber(res, "typdelim"));
-	if (PQgetisnull(res, 0, PQfnumber(res, "typdefault")))
-		typdefault = NULL;
-	else
-		typdefault = PQgetvalue(res, 0, PQfnumber(res, "typdefault"));
 	typbyval = PQgetvalue(res, 0, PQfnumber(res, "typbyval"));
 	typalign = PQgetvalue(res, 0, PQfnumber(res, "typalign"));
 	typstorage = PQgetvalue(res, 0, PQfnumber(res, "typstorage"));
+	if (!PQgetisnull(res, 0, PQfnumber(res, "typdefaultbin")))
+		typdefault = PQgetvalue(res, 0, PQfnumber(res, "typdefaultbin"));
+	else if (!PQgetisnull(res, 0, PQfnumber(res, "typdefault")))
+	{
+		typdefault = PQgetvalue(res, 0, PQfnumber(res, "typdefault"));
+		typdefault_is_literal = true;		/* it needs quotes */
+	}
+	else
+		typdefault = NULL;
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -4854,7 +4881,10 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	if (typdefault != NULL)
 	{
 		appendPQExpBuffer(q, ",\n    DEFAULT = ");
-		appendStringLiteral(q, typdefault, true);
+		if (typdefault_is_literal)
+			appendStringLiteral(q, typdefault, true);
+		else
+			appendPQExpBufferStr(q, typdefault);
 	}
 
 	if (tinfo->isArray)
@@ -4936,6 +4966,7 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 	char	   *typnotnull;
 	char	   *typdefn;
 	char	   *typdefault;
+	bool		typdefault_is_literal = false;
 
 	/* Set proper schema search path so type references list correctly */
 	selectSourceSchema(tinfo->dobj.namespace->dobj.name);
@@ -4944,7 +4975,7 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 	/* We assume here that remoteVersion must be at least 70300 */
 	appendPQExpBuffer(query, "SELECT typnotnull, "
 				"pg_catalog.format_type(typbasetype, typtypmod) as typdefn, "
-					  "typdefault "
+					  "pg_catalog.pg_get_expr(typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) as typdefaultbin, typdefault "
 					  "FROM pg_catalog.pg_type "
 					  "WHERE oid = '%u'::pg_catalog.oid",
 					  tinfo->dobj.catId.oid);
@@ -4963,10 +4994,15 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 
 	typnotnull = PQgetvalue(res, 0, PQfnumber(res, "typnotnull"));
 	typdefn = PQgetvalue(res, 0, PQfnumber(res, "typdefn"));
-	if (PQgetisnull(res, 0, PQfnumber(res, "typdefault")))
-		typdefault = NULL;
-	else
+	if (!PQgetisnull(res, 0, PQfnumber(res, "typdefaultbin")))
+		typdefault = PQgetvalue(res, 0, PQfnumber(res, "typdefaultbin"));
+	else if (!PQgetisnull(res, 0, PQfnumber(res, "typdefault")))
+	{
 		typdefault = PQgetvalue(res, 0, PQfnumber(res, "typdefault"));
+		typdefault_is_literal = true;		/* it needs quotes */
+	}
+	else
+		typdefault = NULL;
 
 	appendPQExpBuffer(q,
 					  "CREATE DOMAIN %s AS %s",
@@ -4976,8 +5012,14 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 	if (typnotnull[0] == 't')
 		appendPQExpBuffer(q, " NOT NULL");
 
-	if (typdefault)
-		appendPQExpBuffer(q, " DEFAULT %s", typdefault);
+	if (typdefault != NULL)
+	{
+		appendPQExpBuffer(q, " DEFAULT ");
+		if (typdefault_is_literal)
+			appendStringLiteral(q, typdefault, true);
+		else
+			appendPQExpBufferStr(q, typdefault);
+	}
 
 	PQclear(res);
 
