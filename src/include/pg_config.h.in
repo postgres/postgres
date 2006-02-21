@@ -129,7 +129,7 @@
 /* Define to 1 if your compiler understands __FUNCTION__. */
 #undef HAVE_FUNCNAME__FUNCTION
 
-/* Define to 1 if you have the `getaddrinfo' function. */
+/* Define to 1 if you have getaddrinfo(). */
 #undef HAVE_GETADDRINFO
 
 /* Define to 1 if you have the `gethostbyname_r' function. */
