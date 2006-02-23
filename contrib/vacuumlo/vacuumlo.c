@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.30 2005/10/15 02:49:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.30.2.1 2006/02/23 22:34:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ vacuumlo(char *database, struct _param * param)
 	strcat(buf, "      AND c.relnamespace = s.oid ");
 	strcat(buf, "      AND t.typname in ('oid', 'lo') ");
 	strcat(buf, "      AND c.relkind = 'r'");
-	strcat(buf, "      AND s.nspname NOT LIKE 'pg\\\\_%'");
+	strcat(buf, "      AND s.nspname !~ '^pg_'");
 	res = PQexec(conn, buf);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
