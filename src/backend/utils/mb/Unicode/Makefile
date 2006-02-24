@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2001-2005, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.10 2006/02/18 16:15:22 petere Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.11 2006/02/24 13:25:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -69,25 +69,25 @@ GENERICTEXTS = $(ISO8859TEXTS) $(WINTEXTS) \
 all: $(MAPS)
 
 $(GENERICMAPS) : $(GENERICTEXTS)
-	./UCS_to_most.pl
+	$(PERL) $(srcdir)/UCS_to_most.pl
 
 euc_jp_to_utf8.map utf8_to_euc_jp.map : JIS0201.TXT JIS0208.TXT JIS0212.TXT
-	./UCS_to_EUC_JP.pl
+	$(PERL) $(srcdir)/UCS_to_EUC_JP.pl
 
 euc_cn_to_utf8.map utf8_to_euc_cn.map : GB2312.TXT
-	./UCS_to_EUC_CN.pl
+	$(PERL) $(srcdir)/UCS_to_EUC_CN.pl
 
 euc_kr_to_utf8.map utf8_to_euc_kr.map : KSX1001.TXT
-	./UCS_to_EUC_KR.pl
+	$(PERL) $(srcdir)/UCS_to_EUC_KR.pl
 
 euc_tw_to_utf8.map utf8_to_euc_tw.map : CNS11643.TXT
-	./UCS_to_EUC_TW.pl
+	$(PERL) $(srcdir)/UCS_to_EUC_TW.pl
 
 sjis_to_utf8.map utf8_to_sjis.map : CP932.TXT
-	./UCS_to_SJIS.pl
+	$(PERL) $(srcdir)/UCS_to_SJIS.pl
 
 gb18030_to_utf8.map  utf8_to_gb18030.map : ISO10646-GB18030.TXT
-	./UCS_to_GB18030.pl
+	$(PERL) $(srcdir)/UCS_to_GB18030.pl
 clean:
 	rm -f $(MAPS)
 
