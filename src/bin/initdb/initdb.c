@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.111 2006/02/24 00:55:49 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.112 2006/02/24 02:02:41 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,9 +95,6 @@ static char *authmethod = "";
 static bool debug = false;
 static bool noclean = false;
 static bool show_setting = false;
-#ifdef WIN32
-static bool restricted_exec = false;
-#endif
 
 
 /* internal vars */
@@ -2426,11 +2423,8 @@ main(int argc, char *argv[])
 		{"lc-messages", required_argument, NULL, 7},
 		{"no-locale", no_argument, NULL, 8},
 		{"auth", required_argument, NULL, 'A'},
-		{"pwprompt", no_argument, NULL, 'W'},
+		{"pwprompt", no_argument, NULL, 'W'},  
 		{"pwfile", required_argument, NULL, 9},
-#ifdef WIN32
-		{"restrictedexec", no_argument, NULL, 10},
-#endif
 		{"username", required_argument, NULL, 'U'},
 		{"help", no_argument, NULL, '?'},
 		{"version", no_argument, NULL, 'V'},
@@ -2450,6 +2444,9 @@ main(int argc, char *argv[])
 								 * environment */
 	char		bin_dir[MAXPGPATH];
 	char	   *pg_data_native;
+#ifdef WIN32
+	char       *restrict_env;
+#endif
 	static const char *subdirs[] = {
 		"global",
 		"pg_xlog",
@@ -2540,11 +2537,6 @@ main(int argc, char *argv[])
 			case 9:
 				pwfilename = xstrdup(optarg);
 				break;
-#ifdef WIN32
-			case 10:
-				restricted_exec = true;
-				break;
-#endif
 			case 's':
 				show_setting = true;
 				break;
@@ -2555,6 +2547,7 @@ main(int argc, char *argv[])
 				exit(1);
 		}
 	}
+
 
 	/* Non-option argument specifies data directory */
 	if (optind < argc)
@@ -2644,16 +2637,18 @@ main(int argc, char *argv[])
      * Before we execute another program, make sure that we are running with a 
      * restricted token. If not, re-execute ourselves with one.
      */
-    if (!restricted_exec)
+
+	if ((restrict_env = getenv("PG_RESTRICT_EXEC")) == NULL 
+		|| strcmp(restrict_env,"1") != 0)
     {
         PROCESS_INFORMATION pi;
         char *cmdline;
         
         ZeroMemory(&pi, sizeof(pi));
 
-        cmdline = pg_malloc(strlen(GetCommandLine()) + 19);
-        strcpy(cmdline, GetCommandLine());
-        strcat(cmdline, " --restrictedexec");
+        cmdline = xstrdup(GetCommandLine());
+
+		putenv("PG_RESTRICT_EXEC=1");
         
         if (!CreateRestrictedProcess(cmdline, &pi))
         {
