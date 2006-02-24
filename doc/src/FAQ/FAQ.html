@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Feb 12 12:15:49 EST 2006</P>
+    <P>Last updated: Fri Feb 24 09:59:35 EST 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -742,16 +742,8 @@ table?</TD><TD>unlimited</TD></TR>
     usually faster than an index scan of a large table.</P>
     However, <SMALL>LIMIT</SMALL> combined with <SMALL>ORDER BY</SMALL>
     often will use an index because only a small portion of the table
-    is returned.  In fact, though MAX() and MIN() don't use indexes,
-    it is possible to retrieve such values using an index with ORDER BY
-    and LIMIT:
-<PRE>
-    SELECT col
-    FROM tab
-    ORDER BY col [ DESC ]
-    LIMIT 1;
-</PRE>
-
+    is returned.</P>
+    
     <P>If you believe the optimizer is incorrect in choosing a
     sequential scan, use <CODE>SET enable_seqscan TO 'off'</CODE> and
     run query again to see if an index scan is indeed faster.</P>
