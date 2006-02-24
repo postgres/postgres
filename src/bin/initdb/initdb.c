@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.73.4.2 2005/04/30 08:19:44 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.73.4.3 2006/02/24 00:54:27 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,6 @@ char	   *conversion_file;
 char	   *info_schema_file;
 char	   *features_file;
 char	   *system_views_file;
-char	   *effective_user;
 bool		testpath = true;
 bool		made_new_pgdata = false;
 bool		found_existing_pgdata = false;
@@ -1271,7 +1270,7 @@ bootstrap_template1(char *short_version)
 		exit_nicely();
 	}
 
-	bki_lines = replace_token(bki_lines, "POSTGRES", effective_user);
+	bki_lines = replace_token(bki_lines, "POSTGRES", username);
 
 	bki_lines = replace_token(bki_lines, "ENCODING", encodingid);
 
@@ -1430,7 +1429,7 @@ get_set_pwd(void)
 	PG_CMD_OPEN;
 
 	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD '%s';\n",
-				   effective_user, pwd1);
+				   username, pwd1);
 
 	PG_CMD_CLOSE;
 
@@ -1709,7 +1708,7 @@ setup_privileges(void)
 	PG_CMD_OPEN;
 
 	priv_lines = replace_token(privileges_setup,
-							   "$POSTGRES_SUPERUSERNAME", effective_user);
+							   "$POSTGRES_SUPERUSERNAME", username);
 	for (line = priv_lines; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
 
@@ -2117,6 +2116,7 @@ main(int argc, char *argv[])
 				ret;
 	int			option_index;
 	char	   *short_version;
+    char       *effective_user;
 	char	   *pgdenv;			/* PGDATA value gotten from and sent to
 								 * environment */
 	char		bin_dir[MAXPGPATH];
@@ -2361,10 +2361,10 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (strlen(username))
-		effective_user = username;
-	else
-		effective_user = get_id();
+	effective_user = get_id();
+	if (strlen(username) == 0)
+		username = effective_user;
+
 
 	if (strlen(encoding))
 		encodingid = get_encoding_id(encoding);
@@ -2391,7 +2391,7 @@ main(int argc, char *argv[])
 				"PG_HBA_SAMPLE=%s\nPG_IDENT_SAMPLE=%s\n",
 				PG_VERSION,
 				pg_data, share_path, bin_path,
-				effective_user, bki_file,
+				username, bki_file,
 				desc_file, conf_file,
 				hba_file, ident_file);
 		if (show_setting)
