@@ -98,10 +98,6 @@ oid2name -
 	Maps numeric files to table names
 	by B Palmer <bpalmer@crimelabs.net>
 
-oracle -
-	Converts Oracle database schema to PostgreSQL
-	by Gilles Darold <gilles@darold.net>
-
 pg_buffercache -
 	Real time queries on the shared buffer cache
 	by Mark Kirkwood <markir@paradise.net.nz>
