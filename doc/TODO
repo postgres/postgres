@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Feb 24 22:40:15 EST 2006
+Last updated:		Sat Feb 25 11:34:42 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -205,7 +205,7 @@ Data Types
 
 * Dates and Times
 
-	o Allow infinite dates just like infinite timestamps
+	o Allow infinite dates and intervals just like infinite timestamps
 	o Merge hardwired timezone names with the TZ database; allow either 
 	  kind everywhere a TZ name is currently taken
 	o Allow customization of the known set of TZ names (generalize the
