@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Feb 24 09:59:35 EST 2006
+   Last updated: Fri Feb 24 23:28:40 EST 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -524,7 +524,7 @@
    As an example, consider a file of 100,000 lines with an integer and
    text description on each line. Suppose the text string avergages
    twenty bytes in length. The flat file would be 2.8 MB. The size of the
-   PostgreSQL database file containing this data can be estimated as 6.4
+   PostgreSQL database file containing this data can be estimated as 5.6
    MB:
     28 bytes: each row header (approximate)
     24 bytes: one int field and one text field
