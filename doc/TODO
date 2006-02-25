@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Feb 12 22:42:37 EST 2006
+Last updated:		Fri Feb 24 22:40:15 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -462,7 +462,6 @@ SQL Commands
 	  Currently non-global system tables must be in the default database
 	  tablespace. Global system tables can never be moved.
 
-	o %Disallow dropping of an inherited constraint
 	o %Prevent child tables from altering or dropping constraints 
           like CHECK that were inherited from the parent table
 	o Have ALTER INDEX update the name of a constraint using that index
