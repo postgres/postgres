@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.101 2006/01/28 16:20:31 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.102 2006/02/26 22:26:39 neilc Exp $
  *
  **********************************************************************/
 
@@ -1285,7 +1285,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
 	/************************************************************
-	 * Build our internal proc name from the functions Oid
+	 * Build our internal proc name from the function's Oid
 	 ************************************************************/
 	if (!is_trigger)
 		sprintf(internal_proname, "__PLPerl_proc_%u", fn_oid);
@@ -1321,7 +1321,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 
 	/************************************************************
 	 * If we haven't found it in the hashtable, we analyze
-	 * the functions arguments and returntype and store
+	 * the function's arguments and return type and store
 	 * the in-/out-functions in the prodesc block and create
 	 * a new hashtable entry for it.
 	 *
