@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Feb 25 11:34:42 EST 2006
+Last updated:           Sun Feb 26 16:22:48 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -184,7 +184,7 @@ first.
   </li><li>-<em>Prevent INET cast to CIDR from dropping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr</em>
   </li><li>-<em>Allow INET + INT8 to increment the host part of the address or</em>
   throw an error on overflow
-  </li><li>%Add 'tid != tid ' operator for use in corruption recovery
+  </li><li>-<em>Add 'tid != tid ' operator for use in corruption recovery</em>
   </li><li>Allow user-defined types to specify a type modifier at table creation
   time
   </li><li>Dates and Times
@@ -304,9 +304,9 @@ first.
 <h1><a name="section_7">Views / Rules</a></h1>
 
 <ul>
-  <li>%Automatically create rules on views so they are updateable, per SQL99
+  <li>Automatically create rules on views so they are updateable, per SQL99
 <p>  We can only auto-create rules for simple views.  For more complex
-  cases users will still have to write rules.
+  cases users will still have to write rules manually.
 </p>
   </li><li>Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
   </li><li>Allow NOTIFY in rules involving conditionals
@@ -331,8 +331,8 @@ first.
   called, and the table is locked in exclusive mode.
 </p>
   </li><li>Allow PREPARE of cursors
-  </li><li>Allow PREPARE to automatically determine parameter types based on the SQL
-  statement
+  </li><li>-<em>Allow PREPARE to automatically determine parameter types based on the SQL</em>
+  statement (Neil)
   </li><li>Allow finer control over the caching of prepared query plans
 <p>  Currently, queries prepared via the libpq API are planned on first
   execute using the supplied parameters --- allow SQL PREPARE to do the
@@ -400,7 +400,7 @@ first.
           expressions like SELECT col1 || col2
     </li><li>Use more reliable method for CREATE DATABASE to get a consistent
           copy of db?
-    </li><li>Add ON COMMIT capability to CREATE TABLE AS ... SELECT
+    </li><li>-<em>Add ON COMMIT capability to CREATE TABLE AS ... SELECT</em>
   </li></ul>
   </li><li>UPDATE
   <ul>
@@ -1035,7 +1035,7 @@ first.
   </li><li>%Promote debug_query_string into a server-side function current_query()
   </li><li>%Allow the identifier length to be increased via a configure option
   </li><li>Allow cross-compiling by generating the zic database on the target system
-  </li><li>Improve NLS maintenace of libpgport messages linked onto applications
+  </li><li>Improve NLS maintenance of libpgport messages linked onto applications
   </li><li>Allow ecpg to work with MSVC and BCC
   </li><li>Add xpath_array() to /contrib/xml2 to return results as an array
   </li><li>Allow building in directories containing spaces
@@ -1049,7 +1049,7 @@ first.
   spaces and then copy the install to a directory with spaces.
 </p>
   </li><li>Fix sgmltools so PDFs can be generated with bookmarks
-  </li><li>%Clean up compiler warnings (especially with gcc version 4)
+  </li><li>-*%Clean up compiler warnings (especially with gcc version 4)*
   </li><li>Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
   </li><li>Update Bonjour to work with newer cross-platform SDK
