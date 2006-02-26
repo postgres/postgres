@@ -328,10 +328,10 @@ Multi-Language Support
 Views / Rules
 =============
 
-* %Automatically create rules on views so they are updateable, per SQL99
+* Automatically create rules on views so they are updateable, per SQL99
 
   We can only auto-create rules for simple views.  For more complex
-  cases users will still have to write rules.
+  cases users will still have to write rules manually.
 
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
@@ -359,8 +359,8 @@ SQL Commands
   called, and the table is locked in exclusive mode.
 
 * Allow PREPARE of cursors
-* Allow PREPARE to automatically determine parameter types based on the SQL
-  statement
+* -Allow PREPARE to automatically determine parameter types based on the SQL
+  statement (Neil)
 * Allow finer control over the caching of prepared query plans
 
   Currently, queries prepared via the libpq API are planned on first
@@ -437,7 +437,7 @@ SQL Commands
 	  expressions like SELECT col1 || col2
 	o Use more reliable method for CREATE DATABASE to get a consistent
 	  copy of db?
-	o Add ON COMMIT capability to CREATE TABLE AS ... SELECT
+	o -Add ON COMMIT capability to CREATE TABLE AS ... SELECT
 
 
 * UPDATE
@@ -1142,7 +1142,7 @@ Source Code
 * %Promote debug_query_string into a server-side function current_query()
 * %Allow the identifier length to be increased via a configure option
 * Allow cross-compiling by generating the zic database on the target system
-* Improve NLS maintenace of libpgport messages linked onto applications
+* Improve NLS maintenance of libpgport messages linked onto applications
 * Allow ecpg to work with MSVC and BCC
 * Add xpath_array() to /contrib/xml2 to return results as an array
 * Allow building in directories containing spaces
@@ -1158,7 +1158,7 @@ Source Code
   spaces and then copy the install to a directory with spaces.
 
 * Fix sgmltools so PDFs can be generated with bookmarks
-* %Clean up compiler warnings (especially with gcc version 4)
+* -%Clean up compiler warnings (especially with gcc version 4)
 * Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
 * Update Bonjour to work with newer cross-platform SDK
