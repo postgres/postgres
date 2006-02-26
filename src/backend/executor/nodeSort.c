@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.52 2005/11/23 20:27:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.53 2006/02/26 22:58:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,6 +225,8 @@ ExecEndSort(SortState *node)
 	 * clean out the tuple table
 	 */
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+	/* must drop pointer to sort result tuple */
+	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
 	/*
 	 * Release tuplesort resources
@@ -292,6 +294,7 @@ ExecReScanSort(SortState *node, ExprContext *exprCtxt)
 	if (!node->sort_Done)
 		return;
 
+	/* must drop pointer to sort result tuple */
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
 	/*
