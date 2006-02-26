@@ -517,3 +517,28 @@ fetch from foo;
 (1 row)
 
 abort;
+-- tests for the "tid" type
+SELECT '(3, 3)'::tid = '(3, 4)'::tid;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT '(3, 3)'::tid = '(3, 3)'::tid;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '(3, 3)'::tid <> '(3, 3)'::tid;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT '(3, 3)'::tid <> '(3, 4)'::tid;
+ ?column? 
+----------
+ t
+(1 row)
+

@@ -325,3 +325,9 @@ rollback to x;
 fetch from foo;
 
 abort;
+
+-- tests for the "tid" type
+SELECT '(3, 3)'::tid = '(3, 4)'::tid;
+SELECT '(3, 3)'::tid = '(3, 3)'::tid;
+SELECT '(3, 3)'::tid <> '(3, 3)'::tid;
+SELECT '(3, 3)'::tid <> '(3, 4)'::tid;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.49 2005/05/27 00:57:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.50 2006/02/26 18:36:21 neilc Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -174,7 +174,6 @@ tideq(PG_FUNCTION_ARGS)
 				   arg1->ip_posid == arg2->ip_posid);
 }
 
-#ifdef NOT_USED
 Datum
 tidne(PG_FUNCTION_ARGS)
 {
@@ -185,7 +184,6 @@ tidne(PG_FUNCTION_ARGS)
 				   BlockIdGetBlockNumber(&(arg2->ip_blkid)) ||
 				   arg1->ip_posid != arg2->ip_posid);
 }
-#endif
 
 /*
  *	Functions to get latest tid of a specified tuple.
