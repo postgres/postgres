@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_prepared.sgml,v 1.1 2005/06/17 22:32:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_prepared.sgml,v 1.2 2006/02/26 03:20:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -65,7 +65,8 @@ ROLLBACK PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <para>
    All currently available prepared transactions are listed in the
-   <structname>pg_prepared_xacts</> system view.
+   <link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link>
+   system view.
   </para>
  </refsect1>
 

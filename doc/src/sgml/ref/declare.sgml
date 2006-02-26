@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.36 2006/02/12 20:31:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.37 2006/02/26 03:20:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -258,8 +258,9 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
    </para>
 
    <para>
-    You can see all available cursors by querying the
-    <structname>pg_cursors</structname> system view.
+    You can see all available cursors by querying the <link
+    linkend="view-pg-cursors"><structname>pg_cursors</structname></link>
+    system view.
    </para>
  </refsect1>
 

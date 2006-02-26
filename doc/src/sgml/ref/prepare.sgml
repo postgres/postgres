@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.18 2006/01/15 22:18:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.19 2006/02/26 03:20:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -153,7 +153,8 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ (<replaceable class=
 
   <para>
    You can see all available prepared statements of a session by querying the
-   <structname>pg_prepared_statements</> system view.
+   <link linkend="view-pg-prepared-statements"><structname>pg_prepared_statements</structname></link>
+   system view.
   </para>
  </refsect1>
 
