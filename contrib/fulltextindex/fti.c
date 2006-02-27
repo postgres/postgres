@@ -22,7 +22,7 @@
  *
  *	-- Create the SQL function based on the compiled shared object
  *	create function fti() returns trigger as
- *	  '/usr/local/pgsql/lib/contrib/fti.so' language 'C';
+ *	  '/usr/local/pgsql/lib/contrib/fti.so' language C;
  *
  *	-- Create the FTI table
  *	create table product_fti (string varchar(255), id oid) without oids;

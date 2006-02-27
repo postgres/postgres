@@ -276,7 +276,7 @@ drop sequence ttdummy_seq;
 CREATE TABLE log_table (tstamp timestamp default timeofday()::timestamp);
 CREATE TABLE main_table (a int, b int);
 COPY main_table (a,b) FROM stdin;
-CREATE FUNCTION trigger_func() RETURNS trigger LANGUAGE 'plpgsql' AS '
+CREATE FUNCTION trigger_func() RETURNS trigger LANGUAGE plpgsql AS '
 BEGIN
 	RAISE NOTICE ''trigger_func() called: action = %, when = %, level = %'', TG_OP, TG_WHEN, TG_LEVEL;
 	RETURN NULL;

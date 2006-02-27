@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$PostgreSQL: pgsql/contrib/isbn_issn/isbn_issn.sql.in,v 1.11 2005/01/29 22:35:02 tgl Exp $
+--	$PostgreSQL: pgsql/contrib/isbn_issn/isbn_issn.sql.in,v 1.12 2006/02/27 16:09:48 petere Exp $
 --
 
 -- Adjust this setting to control where the objects get created.
@@ -120,7 +120,7 @@ CREATE OPERATOR <> (
 CREATE FUNCTION issn_cmp(issn, issn)
 RETURNS integer
 AS '$libdir/isbn_issn'
-LANGUAGE c STRICT;
+LANGUAGE C STRICT;
 
 -- Create default operator class for 'issn'    --
 -- Needed to create index or primary key       --
@@ -253,7 +253,7 @@ CREATE OPERATOR <> (
 CREATE FUNCTION isbn_cmp(isbn, isbn)
 RETURNS integer
 AS '$libdir/isbn_issn'
-LANGUAGE c STRICT;
+LANGUAGE C STRICT;
 
 -- Create default operator class for 'isbn'    --
 -- Needed to create index or primary key       --

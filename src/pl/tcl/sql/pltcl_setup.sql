@@ -58,7 +58,7 @@ create function check_pkey1_exists(int4, bpchar) returns bool as '
         return "t"
     }
     return "f"
-' language 'pltcl';
+' language pltcl;
 
 
 --
@@ -146,7 +146,7 @@ create function trig_pkey1_before() returns trigger as '
     # Anything is fine - let operation pass through
     #
     return OK
-' language 'pltcl';
+' language pltcl;
 
 
 create trigger pkey1_before before insert or update or delete on T_pkey1
@@ -187,7 +187,7 @@ create function trig_pkey2_before() returns trigger as '
     # Return modified tuple in NEW
     #
     return [array get NEW]
-' language 'pltcl';
+' language pltcl;
 
 
 create trigger pkey2_before before insert or update on T_pkey2
@@ -277,7 +277,7 @@ create function trig_pkey2_after() returns trigger as '
     }
 
     return OK
-' language 'pltcl';
+' language pltcl;
 
 
 create trigger pkey2_after after update or delete on T_pkey2
@@ -375,7 +375,7 @@ create function check_primkey() returns trigger as '
     # Anything is fine
     #
     return OK
-' language 'pltcl';
+' language pltcl;
 
 
 create trigger dta1_before before insert or update on T_dta1
@@ -390,7 +390,7 @@ create trigger dta2_before before insert or update on T_dta2
 
 create function tcl_int4add(int4,int4) returns int4 as '
     return [expr $1 + $2]
-' language 'pltcl';
+' language pltcl;
 
 -- We use split(n) as a quick-and-dirty way of parsing the input array
 -- value, which comes in as a string like '{1,2}'.  There are better ways...
@@ -400,13 +400,13 @@ create function tcl_int4_accum(int4[], int4) returns int4[] as '
     set newsum [expr {[lindex $state 1] + $2}]
     set newcnt [expr {[lindex $state 2] + 1}]
     return "{$newsum,$newcnt}"
-' language 'pltcl';
+' language pltcl;
 
 create function tcl_int4_avg(int4[]) returns int4 as '
     set state [split $1 "{,}"]
     if {[lindex $state 2] == 0} { return_null }
     return [expr {[lindex $state 1] / [lindex $state 2]}]
-' language 'pltcl';
+' language pltcl;
 
 create aggregate tcl_avg (
 		sfunc = tcl_int4_accum,
@@ -428,7 +428,7 @@ create function tcl_int4lt(int4,int4) returns bool as '
         return t
     }
     return f
-' language 'pltcl';
+' language pltcl;
 
 create operator @< (
 		leftarg = int4,

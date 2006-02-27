@@ -218,7 +218,7 @@ COPY main_table (a,b) FROM stdin;
 80	15
 \.
 
-CREATE FUNCTION trigger_func() RETURNS trigger LANGUAGE 'plpgsql' AS '
+CREATE FUNCTION trigger_func() RETURNS trigger LANGUAGE plpgsql AS '
 BEGIN
 	RAISE NOTICE ''trigger_func() called: action = %, when = %, level = %'', TG_OP, TG_WHEN, TG_LEVEL;
 	RETURN NULL;

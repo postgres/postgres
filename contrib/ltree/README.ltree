@@ -313,7 +313,7 @@ ltreetest=# select subpath(path,0,2)||'Space'||subpath(path,2) from test where p
 We could create SQL-function:
 CREATE FUNCTION ins_label(ltree, int4, text) RETURNS ltree 
 AS 'select subpath($1,0,$2) || $3 || subpath($1,$2);'
-LANGUAGE SQL WITH (ISCACHABLE);
+LANGUAGE SQL IMMUTABLE;
 
 and previous select could be rewritten as:
 
@@ -329,7 +329,7 @@ Or with another arguments:
 
 CREATE FUNCTION ins_label(ltree, ltree, text) RETURNS ltree
 AS 'select subpath($1,0,nlevel($2)) || $3 || subpath($1,nlevel($2));'
-LANGUAGE SQL WITH (ISCACHABLE);
+LANGUAGE SQL IMMUTABLE;
 
 ltreetest=# select ins_label(path,'Top.Science'::ltree,'Space') from test where path <@ 'Top.Science.Astronomy';
                 ins_label                 

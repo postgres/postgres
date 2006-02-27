@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     	RAISE NOTICE 'TG_NAME=%, TG WHEN=%', TG_NAME, TG_WHEN;
 	RETURN NEW;
     END; $test$
-    LANGUAGE 'plpgsql';
+    LANGUAGE plpgsql;
 
   EXEC SQL CREATE TRIGGER My_Table_Check_Trigger
     BEFORE INSERT

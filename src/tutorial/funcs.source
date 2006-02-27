@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994-5, Regents of the University of California
 --
--- $PostgreSQL: pgsql/src/tutorial/funcs.source,v 1.7 2003/11/29 22:41:33 pgsql Exp $
+-- $PostgreSQL: pgsql/src/tutorial/funcs.source,v 1.8 2006/02/27 16:09:50 petere Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -21,8 +21,8 @@
 -- let's create a simple SQL function that takes no arguments and 
 -- returns 1
 
-CREATE FUNCTION one() RETURNS int4
-   AS 'SELECT 1 as ONE' LANGUAGE 'sql';
+CREATE FUNCTION one() RETURNS integer
+   AS 'SELECT 1 as ONE' LANGUAGE SQL;
 
 --
 -- functions can be used in any expressions (eg. in the target list or 
@@ -34,8 +34,8 @@ SELECT one() AS answer;
 -- here's how you create a function that takes arguments. The following
 -- function returns the sum of its two arguments:
 
-CREATE FUNCTION add_em(int4, int4) RETURNS int4
-   AS 'SELECT $1 + $2' LANGUAGE 'sql';
+CREATE FUNCTION add_em(integer, integer) RETURNS integer
+   AS 'SELECT $1 + $2' LANGUAGE SQL;
 
 SELECT add_em(1, 2) AS answer;
 
@@ -50,8 +50,8 @@ SELECT add_em(1, 2) AS answer;
 
 CREATE TABLE EMP (
 	name		text,
-	salary		int4,
-	age		int4,
+	salary		integer,
+	age		integer,
 	cubicle		point
 );
 
@@ -64,8 +64,8 @@ INSERT INTO EMP VALUES ('Ginger', 4800, 30, '(2,4)');
 -- the argument of a function can also be a tuple. For instance, 
 -- double_salary takes a tuple of the EMP table
 
-CREATE FUNCTION double_salary(EMP) RETURNS int4
-   AS 'SELECT $1.salary * 2 AS salary' LANGUAGE 'sql';
+CREATE FUNCTION double_salary(EMP) RETURNS integer
+   AS 'SELECT $1.salary * 2 AS salary' LANGUAGE SQL;
 
 SELECT name, double_salary(EMP) AS dream
 FROM EMP
@@ -80,7 +80,7 @@ CREATE FUNCTION new_emp() RETURNS EMP
 			  1000 AS salary,
 			  25 AS age,
 			  \'(2,2)\'::point AS cubicle'
-   LANGUAGE 'sql';
+   LANGUAGE SQL;
 
 -- you can then project a column out of resulting the tuple by using the
 -- "function notation" for projection columns. (ie. bar(foo) is equivalent
@@ -91,7 +91,7 @@ SELECT name(new_emp()) AS nobody;
 -- let's try one more function that returns tuples
 CREATE FUNCTION high_pay() RETURNS setof EMP
    AS 'SELECT * FROM EMP where salary > 1500'
-   LANGUAGE 'sql';
+   LANGUAGE SQL;
 
 SELECT name(high_pay()) AS overpaid;
 
@@ -109,10 +109,10 @@ SELECT name(high_pay()) AS overpaid;
 --
 -- SELECT * FROM EMP;
 --
--- CREATE FUNCTION clean_EMP () RETURNS int4
+-- CREATE FUNCTION clean_EMP () RETURNS integer
 --	  AS 'DELETE FROM EMP WHERE EMP.salary <= 0\;
 --		  SELECT 1 AS ignore_this'
---	  LANGUAGE 'sql';
+--	  LANGUAGE SQL;
 --
 -- SELECT clean_EMP();
 --
@@ -125,17 +125,17 @@ SELECT name(high_pay()) AS overpaid;
 --	See funcs.c for the definition of the C functions.
 -----------------------------
 
-CREATE FUNCTION add_one(int4) RETURNS int4
-   AS '_OBJWD_/funcs' LANGUAGE 'c';
+CREATE FUNCTION add_one(integer) RETURNS integer
+   AS '_OBJWD_/funcs' LANGUAGE C;
 
 CREATE FUNCTION makepoint(point, point) RETURNS point
-   AS '_OBJWD_/funcs' LANGUAGE 'c';
+   AS '_OBJWD_/funcs' LANGUAGE C;
 
 CREATE FUNCTION copytext(text) RETURNS text
-   AS '_OBJWD_/funcs' LANGUAGE 'c';
+   AS '_OBJWD_/funcs' LANGUAGE C;
 
-CREATE FUNCTION c_overpaid(EMP, int4) RETURNS bool
-   AS '_OBJWD_/funcs' LANGUAGE 'c';
+CREATE FUNCTION c_overpaid(EMP, integer) RETURNS boolean
+   AS '_OBJWD_/funcs' LANGUAGE C;
 
 SELECT add_one(3) AS four;
 
@@ -149,14 +149,14 @@ WHERE name = 'Bill' or name = 'Sam';
 
 -- remove functions that were created in this file
 
-DROP FUNCTION c_overpaid(EMP, int4);
+DROP FUNCTION c_overpaid(EMP, integer);
 DROP FUNCTION copytext(text);
-DROP FUNCTION makepoint(point,point);
-DROP FUNCTION add_one(int4);
+DROP FUNCTION makepoint(point, point);
+DROP FUNCTION add_one(integer);
 --DROP FUNCTION clean_EMP();
 DROP FUNCTION high_pay();
 DROP FUNCTION new_emp();
-DROP FUNCTION add_em(int4, int4);
+DROP FUNCTION add_em(integer, integer);
 DROP FUNCTION one();
 DROP FUNCTION double_salary(EMP);
 

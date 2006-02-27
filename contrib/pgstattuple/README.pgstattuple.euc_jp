@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pgstattuple/README.pgstattuple.euc_jp,v 1.5 2003/11/29 22:39:29 pgsql Exp $
+$PostgreSQL: pgsql/contrib/pgstattuple/README.pgstattuple.euc_jp,v 1.6 2006/02/27 16:09:49 petere Exp $
 
 pgstattuple README		2002/08/22 石井達夫
 
@@ -54,7 +54,7 @@ free_percent		-- 再利用可能な領域．table_lenに対するfree_spaceの比率．
 
    CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
      AS 'MODULE_PATHNAME', 'pgstattuple'
-     LANGUAGE 'c' WITH (isstrict);
+     LANGUAGE C STRICT;
 
    第一引数: テーブル名
 

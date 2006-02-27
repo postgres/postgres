@@ -6,7 +6,7 @@ SET search_path = public;
 CREATE OR REPLACE FUNCTION pg_freespacemap()
 RETURNS SETOF RECORD
 AS 'MODULE_PATHNAME', 'pg_freespacemap'
-LANGUAGE 'C';
+LANGUAGE C;
 
 -- Create a view for convenient access.
 CREATE VIEW pg_freespacemap AS

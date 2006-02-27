@@ -20,58 +20,47 @@ SELECT soundex('Anne'), soundex('Ann'), difference('Anne', 'Ann');
 SELECT soundex('Anne'), soundex('Andrew'), difference('Anne', 'Andrew');
 SELECT soundex('Anne'), soundex('Margaret'), difference('Anne', 'Margaret');
 
-CREATE TABLE s (nm text)\g
+CREATE TABLE s (nm text);
 
-insert into s values ('john')\g
-insert into s values ('joan')\g
-insert into s values ('wobbly')\g
-insert into s values ('jack')\g
+INSERT INTO s VALUES ('john');
+INSERT INTO s VALUES ('joan');
+INSERT INTO s VALUES ('wobbly');
+INSERT INTO s VALUES ('jack');
 
-select * from s
-where soundex(nm) = soundex('john')\g
+SELECT * FROM s WHERE soundex(nm) = soundex('john');
 
-select a.nm, b.nm from s a, s b
-where soundex(a.nm) = soundex(b.nm)
-and a.oid <> b.oid\g
+SELECT a.nm, b.nm FROM s a, s b WHERE soundex(a.nm) = soundex(b.nm) AND a.oid <> b.oid;
 
-CREATE FUNCTION text_sx_eq(text, text) RETURNS bool AS
+CREATE FUNCTION text_sx_eq(text, text) RETURNS boolean AS
 'select soundex($1) = soundex($2)'
-LANGUAGE 'sql'\g
+LANGUAGE SQL;
 
-CREATE FUNCTION text_sx_lt(text,text) RETURNS bool AS
+CREATE FUNCTION text_sx_lt(text, text) RETURNS boolean AS
 'select soundex($1) < soundex($2)'
-LANGUAGE 'sql'\g
+LANGUAGE SQL;
 
-CREATE FUNCTION text_sx_gt(text,text) RETURNS bool AS
+CREATE FUNCTION text_sx_gt(text, text) RETURNS boolean AS
 'select soundex($1) > soundex($2)'
-LANGUAGE 'sql';
+LANGUAGE SQL;
 
-CREATE FUNCTION text_sx_le(text,text) RETURNS bool AS
+CREATE FUNCTION text_sx_le(text, text) RETURNS boolean AS
 'select soundex($1) <= soundex($2)'
-LANGUAGE 'sql';
+LANGUAGE SQL;
 
-CREATE FUNCTION text_sx_ge(text,text) RETURNS bool AS
+CREATE FUNCTION text_sx_ge(text, text) RETURNS boolean AS
 'select soundex($1) >= soundex($2)'
-LANGUAGE 'sql';
+LANGUAGE SQL;
 
-CREATE FUNCTION text_sx_ne(text,text) RETURNS bool AS
+CREATE FUNCTION text_sx_ne(text, text) RETURNS boolean AS
 'select soundex($1) <> soundex($2)'
-LANGUAGE 'sql';
+LANGUAGE SQL;
 
-DROP OPERATOR #= (text,text)\g
+DROP OPERATOR #= (text, text);
 
-CREATE OPERATOR #= (leftarg=text, rightarg=text, procedure=text_sx_eq,
-commutator = #=)\g
+CREATE OPERATOR #= (leftarg=text, rightarg=text, procedure=text_sx_eq, commutator = #=);
 
-SELECT *
-FROM s
-WHERE text_sx_eq(nm,'john')\g
+SELECT * FROM s WHERE text_sx_eq(nm, 'john');
 
-SELECT *
-FROM s
-WHERE s.nm #= 'john';
+SELECT * FROM s WHERE s.nm #= 'john';
 
-SELECT *
-FROM s
-WHERE difference(s.nm, 'john') > 2;
-
+SELECT * FROM s WHERE difference(s.nm, 'john') > 2;

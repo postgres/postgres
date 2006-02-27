@@ -431,7 +431,7 @@ create view rtest_vview4 as select X.a, X.b, count(Y.a) as refcount
 	group by X.a, X.b;
 create function rtest_viewfunc1(int4) returns int4 as
 	'select count(*)::int4 from rtest_view2 where a = $1'
-	language 'sql';
+	language sql;
 create view rtest_vview5 as select a, b, rtest_viewfunc1(a) as refcount
 	from rtest_view1;
 

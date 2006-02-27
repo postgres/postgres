@@ -315,7 +315,7 @@ Notes
 
       CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
         RETURNS setof my_crosstab_float8_5_cols
-        AS '$libdir/tablefunc','crosstab' LANGUAGE 'c' STABLE STRICT;
+        AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
 
       B. Use OUT parameters to define the return type implicitly.
       The same example could also be done this way:
@@ -328,7 +328,7 @@ Notes
           OUT category_4 FLOAT8,
           OUT category_5 FLOAT8)
         RETURNS setof record
-        AS '$libdir/tablefunc','crosstab' LANGUAGE 'c' STABLE STRICT;
+        AS '$libdir/tablefunc','crosstab' LANGUAGE C STABLE STRICT;
 
 
 Example usage

@@ -16,9 +16,9 @@ CREATE TYPE pgstattuple_type AS (
 CREATE OR REPLACE FUNCTION pgstattuple(text)
 RETURNS pgstattuple_type
 AS 'MODULE_PATHNAME', 'pgstattuple'
-LANGUAGE 'C' STRICT;
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION pgstattuple(oid)
 RETURNS pgstattuple_type
 AS 'MODULE_PATHNAME', 'pgstattuplebyid'
-LANGUAGE 'C' STRICT;
+LANGUAGE C STRICT;

@@ -524,7 +524,7 @@ library, depending on whether or not you write a PG_FUNCTION_INFO_V1() for
 each one.
 
 The SQL declaration for a dynamically-loaded function is CREATE FUNCTION
-foo ... LANGUAGE 'C' regardless of whether it is old- or new-style.
+foo ... LANGUAGE C regardless of whether it is old- or new-style.
 
 New-style dynamic functions will be invoked directly by fmgr, and will
 therefore have the same performance as internal functions after the initial

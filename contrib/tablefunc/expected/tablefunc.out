@@ -128,7 +128,7 @@ CREATE FUNCTION crosstab_out(text,
 	OUT rowid text, OUT att1 text, OUT att2 text, OUT att3 text)
 RETURNS setof record
 AS '$libdir/tablefunc','crosstab'
-LANGUAGE 'C' STABLE STRICT;
+LANGUAGE C STABLE STRICT;
 SELECT * FROM crosstab_out('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
  rowid | att1 | att2 | att3 
 -------+------+------+------
@@ -231,7 +231,7 @@ create type my_crosstab_result as (
 CREATE FUNCTION crosstab_named(text, text)
 RETURNS setof my_crosstab_result
 AS '$libdir/tablefunc','crosstab_hash'
-LANGUAGE 'C' STABLE STRICT;
+LANGUAGE C STABLE STRICT;
 SELECT * FROM crosstab_named(
   'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
   'SELECT DISTINCT attribute FROM cth ORDER BY 1');
@@ -248,7 +248,7 @@ CREATE FUNCTION crosstab_out(text, text,
   OUT test_startdate timestamp, OUT volts float8)
 RETURNS setof record
 AS '$libdir/tablefunc','crosstab_hash'
-LANGUAGE 'C' STABLE STRICT;
+LANGUAGE C STABLE STRICT;
 SELECT * FROM crosstab_out(
   'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
   'SELECT DISTINCT attribute FROM cth ORDER BY 1');

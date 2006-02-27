@@ -4,13 +4,13 @@ BEGIN;
 HASINIT create function dinit_CFG_MODNAME(internal)
 HASINIT         returns internal
 HASINIT         as 'MODULE_PATHNAME'
-HASINIT         language 'C';
+HASINIT         language C;
 
 NOSNOWBALL create function dlexize_CFG_MODNAME(internal,internal,int4)
 NOSNOWBALL        returns internal
 NOSNOWBALL        as 'MODULE_PATHNAME'
-NOSNOWBALL        language 'C'
-NOSNOWBALL        with (isstrict);
+NOSNOWBALL        language C
+NOSNOWBALL        returns null on null input;
 
 insert into pg_ts_dict select
         'CFG_MODNAME',

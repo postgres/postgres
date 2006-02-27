@@ -5,27 +5,27 @@ BEGIN;
 create function set_limit(float4)
 returns float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 create function show_limit()
 returns float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 create function show_trgm(text)
 returns _text
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 create function similarity(text,text)
 returns float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 create function similarity_op(text,text)
 returns bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OPERATOR % (
         LEFTARG = text,
@@ -40,12 +40,12 @@ CREATE OPERATOR % (
 CREATE FUNCTION gtrgm_in(cstring)
 RETURNS gtrgm
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION gtrgm_out(gtrgm)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE TYPE gtrgm (
         INTERNALLENGTH = -1,
@@ -57,37 +57,37 @@ CREATE TYPE gtrgm (
 CREATE FUNCTION gtrgm_consistent(gtrgm,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
  
 CREATE FUNCTION gtrgm_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtrgm_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtrgm_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION gtrgm_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtrgm_union(bytea, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtrgm_same(gtrgm, gtrgm, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 -- create the operator class
 CREATE OPERATOR CLASS gist_trgm_ops

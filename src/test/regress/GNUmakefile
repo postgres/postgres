@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.55 2005/12/09 21:19:36 petere Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.56 2006/02/27 16:09:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress'
 
 
-# Build dynamically-loaded object file for CREATE FUNCTION ... LANGUAGE 'C'.
+# Build dynamically-loaded object file for CREATE FUNCTION ... LANGUAGE C.
 
 NAME = regress
 SO_MAJOR_VERSION= 0

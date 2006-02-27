@@ -4,21 +4,21 @@
 CREATE FUNCTION hobbies(person)
    RETURNS setof hobbies_r 
    AS 'select * from hobbies_r where person = $1.name'
-   LANGUAGE 'sql';
+   LANGUAGE SQL;
 CREATE FUNCTION hobby_construct(text, text)
    RETURNS hobbies_r
    AS 'select $1 as name, $2 as hobby'
-   LANGUAGE 'sql';
+   LANGUAGE SQL;
 CREATE FUNCTION hobbies_by_name(hobbies_r.name%TYPE)
    RETURNS hobbies_r.person%TYPE
    AS 'select person from hobbies_r where name = $1'
-   LANGUAGE 'sql';
+   LANGUAGE SQL;
 NOTICE:  type reference hobbies_r.name%TYPE converted to text
 NOTICE:  type reference hobbies_r.person%TYPE converted to text
 CREATE FUNCTION equipment(hobbies_r)
    RETURNS setof equipment_r
    AS 'select * from equipment_r where hobby = $1.name'
-   LANGUAGE 'sql';
+   LANGUAGE SQL;
 CREATE FUNCTION user_relns()
    RETURNS setof name
    AS 'select relname 
@@ -26,31 +26,31 @@ CREATE FUNCTION user_relns()
        where relnamespace = n.oid and
              (nspname !~ ''pg_.*'' and nspname <> ''information_schema'') and
              relkind <> ''i'' '
-   LANGUAGE 'sql';
+   LANGUAGE SQL;
 CREATE FUNCTION pt_in_widget(point, widget)
    RETURNS bool
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'C';
+   LANGUAGE C;
 CREATE FUNCTION overpaid(emp)
    RETURNS bool
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'C';
+   LANGUAGE C;
 CREATE FUNCTION boxarea(box)
    RETURNS float8
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'C';
+   LANGUAGE C;
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'C';
+   LANGUAGE C;
 CREATE FUNCTION reverse_name(name)
    RETURNS name
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'c';
+   LANGUAGE C;
 CREATE FUNCTION oldstyle_length(int4, text)
    RETURNS int4
    AS '@abs_builddir@/regress@DLSUFFIX@'
-   LANGUAGE 'c';
+   LANGUAGE C;
 --
 -- Function dynamic loading
 --

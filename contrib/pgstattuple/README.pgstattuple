@@ -45,11 +45,11 @@ free_percent		-- free space in %
 
    CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
      AS 'MODULE_PATHNAME', 'pgstattuple'
-     LANGUAGE 'c' STRICT;
+     LANGUAGE C STRICT;
 
    CREATE OR REPLACE FUNCTION pgstattuple(oid) RETURNS pgstattuple_type
      AS 'MODULE_PATHNAME', 'pgstattuplebyid'
-     LANGUAGE 'c' STRICT;
+     LANGUAGE C STRICT;
 
    The argument is the table name (optionally it may be qualified)
    or the OID of the table.  Note that pgstattuple only returns

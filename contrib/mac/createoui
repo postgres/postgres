@@ -42,7 +42,7 @@ create index macoui_idx on macoui (addr);
 create function manuf (macaddr)
 	returns text as '
 		select name from macoui m where trunc(\$1) = m.addr;
-' language 'SQL';
+' language SQL;
 EOF
 
 if [ $update -gt 0 ]; then

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.70 2005/11/21 12:49:31 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.71 2006/02/27 16:09:49 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -632,7 +632,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 		 * In PostgreSQL versions before 6.5, the SQL name of the created
 		 * function could not be different from the internal name, and
 		 * "prosrc" wasn't used.  So there is code out there that does CREATE
-		 * FUNCTION xyz AS '' LANGUAGE 'internal'. To preserve some modicum of
+		 * FUNCTION xyz AS '' LANGUAGE internal. To preserve some modicum of
 		 * backwards compatibility, accept an empty "prosrc" value as meaning
 		 * the supplied SQL function name.
 		 */

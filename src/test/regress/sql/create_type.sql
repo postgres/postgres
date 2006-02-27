@@ -22,19 +22,19 @@ CREATE TYPE city_budget (
 CREATE FUNCTION int42_in(cstring)
    RETURNS int42
    AS 'int4in'
-   LANGUAGE 'internal' WITH (isStrict);
+   LANGUAGE internal STRICT;
 CREATE FUNCTION int42_out(int42)
    RETURNS cstring
    AS 'int4out'
-   LANGUAGE 'internal' WITH (isStrict);
+   LANGUAGE internal STRICT;
 CREATE FUNCTION text_w_default_in(cstring)
    RETURNS text_w_default
    AS 'textin'
-   LANGUAGE 'internal' WITH (isStrict);
+   LANGUAGE internal STRICT;
 CREATE FUNCTION text_w_default_out(text_w_default)
    RETURNS cstring
    AS 'textout'
-   LANGUAGE 'internal' WITH (isStrict);
+   LANGUAGE internal STRICT;
 
 CREATE TYPE int42 (
    internallength = 4,

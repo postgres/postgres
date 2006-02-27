@@ -86,7 +86,7 @@ SELECT * FROM vw_getfoo;
 -- plpgsql, proretset = f, prorettype = b
 DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
-CREATE FUNCTION getfoo(int) RETURNS int AS 'DECLARE fooint int; BEGIN SELECT fooid into fooint FROM foo WHERE fooid = $1; RETURN fooint; END;' LANGUAGE 'plpgsql';
+CREATE FUNCTION getfoo(int) RETURNS int AS 'DECLARE fooint int; BEGIN SELECT fooid into fooint FROM foo WHERE fooid = $1; RETURN fooint; END;' LANGUAGE plpgsql;
 SELECT * FROM getfoo(1) AS t1;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
@@ -94,7 +94,7 @@ SELECT * FROM vw_getfoo;
 -- plpgsql, proretset = f, prorettype = c
 DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
-CREATE FUNCTION getfoo(int) RETURNS foo AS 'DECLARE footup foo%ROWTYPE; BEGIN SELECT * into footup FROM foo WHERE fooid = $1; RETURN footup; END;' LANGUAGE 'plpgsql';
+CREATE FUNCTION getfoo(int) RETURNS foo AS 'DECLARE footup foo%ROWTYPE; BEGIN SELECT * into footup FROM foo WHERE fooid = $1; RETURN footup; END;' LANGUAGE plpgsql;
 SELECT * FROM getfoo(1) AS t1;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;

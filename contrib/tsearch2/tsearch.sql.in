@@ -14,46 +14,46 @@ CREATE TABLE pg_ts_dict (
 
 --dict interface
 CREATE FUNCTION lexize(oid, text) 
-	returns _text
+	RETURNS _text
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION lexize(text, text)
-        returns _text
+        RETURNS _text
         as 'MODULE_PATHNAME', 'lexize_byname'
-        language 'C'
-        with (isstrict);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION lexize(text)
-        returns _text
+        RETURNS _text
         as 'MODULE_PATHNAME', 'lexize_bycurrent'
-        language 'C'
-        with (isstrict);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION set_curdict(int)
-	returns void
+	RETURNS void
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION set_curdict(text)
-	returns void
+	RETURNS void
 	as 'MODULE_PATHNAME', 'set_curdict_byname'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 --built-in dictionaries
 CREATE FUNCTION dex_init(internal)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME' 
-	language 'C';
+	LANGUAGE C;
 
 CREATE FUNCTION dex_lexize(internal,internal,int4)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 insert into pg_ts_dict select 
 	'simple', 
@@ -64,15 +64,15 @@ insert into pg_ts_dict select
 ;
 	 
 CREATE FUNCTION snb_en_init(internal)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME' 
-	language 'C';
+	LANGUAGE C;
 
 CREATE FUNCTION snb_lexize(internal,internal,int4)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 insert into pg_ts_dict select 
 	'en_stem', 
@@ -83,9 +83,9 @@ insert into pg_ts_dict select
 ;
 
 CREATE FUNCTION snb_ru_init_koi8(internal)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME' 
-	language 'C';
+	LANGUAGE C;
 
 insert into pg_ts_dict select 
 	'ru_stem_koi8', 
@@ -96,9 +96,9 @@ insert into pg_ts_dict select
 ;
 	 
 CREATE FUNCTION snb_ru_init_utf8(internal)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME' 
-	language 'C';
+	LANGUAGE C;
 
 insert into pg_ts_dict select 
 	'ru_stem_utf8', 
@@ -109,15 +109,15 @@ insert into pg_ts_dict select
 ;
 	 
 CREATE FUNCTION spell_init(internal)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME' 
-	language 'C';
+	LANGUAGE C;
 
 CREATE FUNCTION spell_lexize(internal,internal,int4)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 insert into pg_ts_dict select 
 	'ispell_template', 
@@ -128,15 +128,15 @@ insert into pg_ts_dict select
 ;
 
 CREATE FUNCTION syn_init(internal)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME' 
-	language 'C';
+	LANGUAGE C;
 
 CREATE FUNCTION syn_lexize(internal,internal,int4)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 insert into pg_ts_dict select 
 	'synonym', 
@@ -162,81 +162,81 @@ CREATE TYPE tokentype
 	as (tokid int4, alias text, descr text); 
 
 CREATE FUNCTION token_type(int4)
-	returns setof tokentype
+	RETURNS setof tokentype
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION token_type(text)
-	returns setof tokentype
+	RETURNS setof tokentype
 	as 'MODULE_PATHNAME', 'token_type_byname'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION token_type()
-	returns setof tokentype
+	RETURNS setof tokentype
 	as 'MODULE_PATHNAME', 'token_type_current'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION set_curprs(int)
-	returns void
+	RETURNS void
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION set_curprs(text)
-	returns void
+	RETURNS void
 	as 'MODULE_PATHNAME', 'set_curprs_byname'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE TYPE tokenout 
 	as (tokid int4, token text);
 
 CREATE FUNCTION parse(oid,text)
-	returns setof tokenout
+	RETURNS setof tokenout
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
  
 CREATE FUNCTION parse(text,text)
-	returns setof tokenout
+	RETURNS setof tokenout
 	as 'MODULE_PATHNAME', 'parse_byname'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
  
 CREATE FUNCTION parse(text)
-	returns setof tokenout
+	RETURNS setof tokenout
 	as 'MODULE_PATHNAME', 'parse_current'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
  
 --default parser
 CREATE FUNCTION prsd_start(internal,int4)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME'
-	language 'C';
+	LANGUAGE C;
 
 CREATE FUNCTION prsd_getlexeme(internal,internal,internal)
-	returns int4
+	RETURNS int4
 	as 'MODULE_PATHNAME'
-	language 'C';
+	LANGUAGE C;
 
 CREATE FUNCTION prsd_end(internal)
-	returns void
+	RETURNS void
 	as 'MODULE_PATHNAME'
-	language 'C';
+	LANGUAGE C;
 
 CREATE FUNCTION prsd_lextype(internal)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME'
-	language 'C';
+	LANGUAGE C;
 
 CREATE FUNCTION prsd_headline(internal,internal,internal)
-	returns internal
+	RETURNS internal
 	as 'MODULE_PATHNAME'
-	language 'C';
+	LANGUAGE C;
 
 insert into pg_ts_parser select
 	'default',
@@ -264,22 +264,22 @@ CREATE TABLE pg_ts_cfgmap (
 ) with oids;
 
 CREATE FUNCTION set_curcfg(int)
-	returns void
+	RETURNS void
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION set_curcfg(text)
-	returns void
+	RETURNS void
 	as 'MODULE_PATHNAME', 'set_curcfg_byname'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION show_curcfg()
-	returns oid
+	RETURNS oid
 	as 'MODULE_PATHNAME'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 insert into pg_ts_cfg values ('default', 'default','C');
 insert into pg_ts_cfg values ('default_russian', 'default','ru_RU.KOI8-R');
@@ -367,12 +367,12 @@ insert into pg_ts_cfgmap values ('simple', 'uint', '{simple}');
 CREATE FUNCTION tsvector_in(cstring)
 RETURNS tsvector
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION tsvector_out(tsvector)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE TYPE tsvector (
         INTERNALLENGTH = -1,
@@ -384,37 +384,37 @@ CREATE TYPE tsvector (
 CREATE FUNCTION length(tsvector)
 RETURNS int4
 AS 'MODULE_PATHNAME', 'tsvector_length'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION to_tsvector(oid, text)
 RETURNS tsvector
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION to_tsvector(text, text)
 RETURNS tsvector
 AS 'MODULE_PATHNAME', 'to_tsvector_name'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION to_tsvector(text)
 RETURNS tsvector
 AS 'MODULE_PATHNAME', 'to_tsvector_current'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION strip(tsvector)
 RETURNS tsvector
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION setweight(tsvector,"char")
 RETURNS tsvector
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION concat(tsvector,tsvector)
 RETURNS tsvector
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OPERATOR || (
         LEFTARG = tsvector,
@@ -426,12 +426,12 @@ CREATE OPERATOR || (
 CREATE FUNCTION tsquery_in(cstring)
 RETURNS tsquery
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION tsquery_out(tsquery)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE TYPE tsquery (
         INTERNALLENGTH = -1,
@@ -443,50 +443,50 @@ CREATE TYPE tsquery (
 CREATE FUNCTION querytree(tsquery)
 RETURNS text
 AS 'MODULE_PATHNAME', 'tsquerytree'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION to_tsquery(oid, text)
 RETURNS tsquery
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION to_tsquery(text, text)
 RETURNS tsquery
 AS 'MODULE_PATHNAME','to_tsquery_name'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION to_tsquery(text)
 RETURNS tsquery
 AS 'MODULE_PATHNAME','to_tsquery_current'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION plainto_tsquery(oid, text)
 RETURNS tsquery
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION plainto_tsquery(text, text)
 RETURNS tsquery
 AS 'MODULE_PATHNAME','plainto_tsquery_name'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION plainto_tsquery(text)
 RETURNS tsquery
 AS 'MODULE_PATHNAME','plainto_tsquery_current'
-LANGUAGE 'c' with (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 --operations
 CREATE FUNCTION exectsq(tsvector, tsquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
   
 COMMENT ON FUNCTION exectsq(tsvector, tsquery) IS 'boolean operation with text index';
 
 CREATE FUNCTION rexectsq(tsquery, tsvector)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 COMMENT ON FUNCTION rexectsq(tsquery, tsvector) IS 'boolean operation with text index';
 
@@ -511,90 +511,90 @@ CREATE OPERATOR @@ (
 CREATE FUNCTION tsearch2()
 RETURNS trigger
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 --Relevation
 CREATE FUNCTION rank(float4[], tsvector, tsquery)
 RETURNS float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION rank(float4[], tsvector, tsquery, int4)
 RETURNS float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION rank(tsvector, tsquery)
 RETURNS float4
 AS 'MODULE_PATHNAME', 'rank_def'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION rank(tsvector, tsquery, int4)
 RETURNS float4
 AS 'MODULE_PATHNAME', 'rank_def'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION rank_cd(int4, tsvector, tsquery)
 RETURNS float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION rank_cd(int4, tsvector, tsquery, int4)
 RETURNS float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION rank_cd(tsvector, tsquery)
 RETURNS float4
 AS 'MODULE_PATHNAME', 'rank_cd_def'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION rank_cd(tsvector, tsquery, int4)
 RETURNS float4
 AS 'MODULE_PATHNAME', 'rank_cd_def'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION headline(oid, text, tsquery, text)
 RETURNS text
 AS 'MODULE_PATHNAME', 'headline'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION headline(oid, text, tsquery)
 RETURNS text
 AS 'MODULE_PATHNAME', 'headline'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION headline(text, text, tsquery, text)
 RETURNS text
 AS 'MODULE_PATHNAME', 'headline_byname'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION headline(text, text, tsquery)
 RETURNS text
 AS 'MODULE_PATHNAME', 'headline_byname'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION headline(text, tsquery, text)
 RETURNS text
 AS 'MODULE_PATHNAME', 'headline_current'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION headline(text, tsquery)
 RETURNS text
 AS 'MODULE_PATHNAME', 'headline_current'
-LANGUAGE 'C' WITH (isstrict, iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 --GiST
 --GiST key type 
 CREATE FUNCTION gtsvector_in(cstring)
 RETURNS gtsvector
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION gtsvector_out(gtsvector)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE TYPE gtsvector (
         INTERNALLENGTH = -1,
@@ -606,37 +606,37 @@ CREATE TYPE gtsvector (
 CREATE FUNCTION gtsvector_consistent(gtsvector,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
   
 CREATE FUNCTION gtsvector_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsvector_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsvector_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION gtsvector_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsvector_union(internal, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsvector_same(gtsvector, gtsvector, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 -- CREATE the OPERATOR class
 CREATE OPERATOR CLASS gist_tsvector_ops
@@ -660,12 +660,12 @@ CREATE TYPE statinfo
 --CREATE FUNCTION tsstat_in(cstring)
 --RETURNS tsstat
 --AS 'MODULE_PATHNAME'
---LANGUAGE 'C' with (isstrict);
+--LANGUAGE C RETURNS NULL ON NULL INPUT;
 --
 --CREATE FUNCTION tsstat_out(tsstat)
 --RETURNS cstring
 --AS 'MODULE_PATHNAME'
---LANGUAGE 'C' with (isstrict);
+--LANGUAGE C RETURNS NULL ON NULL INPUT;
 --
 --CREATE TYPE tsstat (
 --        INTERNALLENGTH = -1,
@@ -677,13 +677,13 @@ CREATE TYPE statinfo
 --CREATE FUNCTION ts_accum(tsstat,tsvector)
 --RETURNS tsstat
 --AS 'MODULE_PATHNAME'
---LANGUAGE 'C' with (isstrict);
+--LANGUAGE C RETURNS NULL ON NULL INPUT;
 --
 --CREATE FUNCTION ts_accum_finish(tsstat)
---	returns setof statinfo
+--	RETURNS setof statinfo
 --	as 'MODULE_PATHNAME'
---	language 'C'
---	with (isstrict);
+--	LANGUAGE C
+--	RETURNS NULL ON NULL INPUT;
 --
 --CREATE AGGREGATE stat (
 --	BASETYPE=tsvector,
@@ -694,30 +694,30 @@ CREATE TYPE statinfo
 --); 
 
 CREATE FUNCTION stat(text)
-	returns setof statinfo
+	RETURNS setof statinfo
 	as 'MODULE_PATHNAME', 'ts_stat'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION stat(text,text)
-	returns setof statinfo
+	RETURNS setof statinfo
 	as 'MODULE_PATHNAME', 'ts_stat'
-	language 'C'
-	with (isstrict);
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
 
 --reset - just for debuging
 CREATE FUNCTION reset_tsearch()
-        returns void
+        RETURNS void
         as 'MODULE_PATHNAME'
-        language 'C'
-        with (isstrict);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT;
 
 --get cover (debug for rank_cd)
 CREATE FUNCTION get_covers(tsvector,tsquery)
-        returns text
+        RETURNS text
         as 'MODULE_PATHNAME'
-        language 'C'
-        with (isstrict);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT;
 
 --debug function
 create type tsdebug as (
@@ -729,13 +729,13 @@ create type tsdebug as (
         "tsvector" tsvector
 );
 
-create function _get_parser_from_curcfg() 
-returns text as 
+CREATE FUNCTION _get_parser_from_curcfg() 
+RETURNS text as 
 ' select prs_name from pg_ts_cfg where oid = show_curcfg() '
-language 'SQL' with(isstrict,iscachable);
+LANGUAGE SQL RETURNS NULL ON NULL INPUT IMMUTABLE;
 
-create function ts_debug(text)
-returns setof tsdebug as '
+CREATE FUNCTION ts_debug(text)
+RETURNS setof tsdebug as '
 select 
         m.ts_name,
         t.alias as tok_type,
@@ -753,43 +753,43 @@ where
         t.alias = m.tok_alias and 
         m.ts_name=c.ts_name and 
         c.oid=show_curcfg() 
-' language 'SQL' with(isstrict);
+' LANGUAGE SQL RETURNS NULL ON NULL INPUT;
 
 --compare functions
 CREATE FUNCTION tsvector_cmp(tsvector,tsvector)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION tsvector_lt(tsvector,tsvector)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION tsvector_le(tsvector,tsvector)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
         
 CREATE FUNCTION tsvector_eq(tsvector,tsvector)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION tsvector_ge(tsvector,tsvector)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
         
 CREATE FUNCTION tsvector_gt(tsvector,tsvector)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE FUNCTION tsvector_ne(tsvector,tsvector)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OPERATOR < (
         LEFTARG = tsvector,
@@ -866,37 +866,37 @@ CREATE OPERATOR CLASS tsvector_ops
 CREATE OR REPLACE FUNCTION tsquery_cmp(tsquery,tsquery)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tsquery_lt(tsquery,tsquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tsquery_le(tsquery,tsquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tsquery_eq(tsquery,tsquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tsquery_ge(tsquery,tsquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tsquery_gt(tsquery,tsquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tsquery_ne(tsquery,tsquery)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict,iscachable);
+LANGUAGE C RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 
 CREATE OPERATOR < (
@@ -972,16 +972,16 @@ CREATE OPERATOR CLASS tsquery_ops
         FUNCTION        1       tsquery_cmp(tsquery, tsquery);
 
 CREATE OR REPLACE FUNCTION numnode(tsquery)
-        returns int4
+        RETURNS int4
         as 'MODULE_PATHNAME', 'tsquery_numnode'
-        language 'C'
-        with (isstrict,iscachable);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tsquery_and(tsquery,tsquery)
-        returns tsquery
+        RETURNS tsquery
         as 'MODULE_PATHNAME', 'tsquery_and'
-        language 'C'
-        with (isstrict,iscachable);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OPERATOR && (
         LEFTARG = tsquery,
@@ -993,10 +993,10 @@ CREATE OPERATOR && (
 );
 
 CREATE OR REPLACE FUNCTION tsquery_or(tsquery,tsquery)
-        returns tsquery
+        RETURNS tsquery
         as 'MODULE_PATHNAME', 'tsquery_or'
-        language 'C'
-        with (isstrict,iscachable);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OPERATOR || (
         LEFTARG = tsquery,
@@ -1008,10 +1008,10 @@ CREATE OPERATOR || (
 );
 
 CREATE OR REPLACE FUNCTION tsquery_not(tsquery)
-        returns tsquery
+        RETURNS tsquery
         as 'MODULE_PATHNAME', 'tsquery_not'
-        language 'C'
-        with (isstrict,iscachable);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OPERATOR !! (
         RIGHTARG = tsquery,
@@ -1021,26 +1021,26 @@ CREATE OPERATOR !! (
 --------------rewrite subsystem
 
 CREATE OR REPLACE FUNCTION rewrite(tsquery, text)
-        returns tsquery
+        RETURNS tsquery
         as 'MODULE_PATHNAME', 'tsquery_rewrite'
-        language 'C'
-        with (isstrict,iscachable);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION rewrite(tsquery, tsquery, tsquery)
-        returns tsquery
+        RETURNS tsquery
         as 'MODULE_PATHNAME', 'tsquery_rewrite_query'
-        language 'C'
-        with (isstrict,iscachable);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION rewrite_accum(tsquery,tsquery[])
         RETURNS tsquery
         AS 'MODULE_PATHNAME'
-        LANGUAGE 'C';
+        LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION rewrite_finish(tsquery)
-      returns tsquery
+      RETURNS tsquery
       as 'MODULE_PATHNAME'
-      language 'C';
+      LANGUAGE C;
 
 CREATE AGGREGATE rewrite (
       BASETYPE=tsquery[],
@@ -1050,16 +1050,16 @@ CREATE AGGREGATE rewrite (
 );
 
 CREATE OR REPLACE FUNCTION tsq_mcontains(tsquery, tsquery)
-        returns bool
+        RETURNS bool
         as 'MODULE_PATHNAME'
-        language 'C'
-        with (isstrict,iscachable);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION tsq_mcontained(tsquery, tsquery)
-        returns bool
+        RETURNS bool
         as 'MODULE_PATHNAME'
-        language 'C'
-        with (isstrict,iscachable);
+        LANGUAGE C
+        RETURNS NULL ON NULL INPUT IMMUTABLE;
 
 CREATE OPERATOR @ (
         LEFTARG = tsquery,
@@ -1084,12 +1084,12 @@ CREATE OPERATOR ~ (
 CREATE FUNCTION gtsq_in(cstring)
 RETURNS gtsq
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION gtsq_out(gtsq)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE TYPE gtsq (
         INTERNALLENGTH = 8,
@@ -1100,37 +1100,37 @@ CREATE TYPE gtsq (
 CREATE FUNCTION gtsq_consistent(gtsq,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsq_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsq_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsq_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C RETURNS NULL ON NULL INPUT;
 
 CREATE FUNCTION gtsq_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsq_union(bytea, internal)
 RETURNS _int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION gtsq_same(gtsq, gtsq, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE OPERATOR CLASS gist_tp_tsquery_ops
 DEFAULT FOR TYPE tsquery USING gist

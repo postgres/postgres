@@ -29,7 +29,7 @@
 #
 #		create function fti() returns trigger as
 #			'/path/to/fti/file/fti.so'
-#		language 'C';
+#		language C;
 #
 #		create trigger my_fti_trigger after update or insert or delete
 #			on mytable

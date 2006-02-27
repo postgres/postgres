@@ -33,29 +33,29 @@
 -- argument polymorphism, but within the constraints of valid aggregate
 -- functions, i.e. tf arg1 and tf return type must match
 -- polymorphic single arg transfn
-CREATE FUNCTION stfp(anyarray) returns anyarray as
-'select $1' language 'sql';
+CREATE FUNCTION stfp(anyarray) RETURNS anyarray AS
+'select $1' LANGUAGE SQL;
 -- non-polymorphic single arg transfn
-CREATE FUNCTION stfnp(int[]) returns int[] as
-'select $1' language 'sql';
+CREATE FUNCTION stfnp(int[]) RETURNS int[] AS
+'select $1' LANGUAGE SQL;
 -- dual polymorphic transfn
-CREATE FUNCTION tfp(anyarray,anyelement) returns anyarray as
-'select $1 || $2' language 'sql';
+CREATE FUNCTION tfp(anyarray,anyelement) RETURNS anyarray AS
+'select $1 || $2' LANGUAGE SQL;
 -- dual non-polymorphic transfn
-CREATE FUNCTION tfnp(int[],int) returns int[] as
-'select $1 || $2' language 'sql';
+CREATE FUNCTION tfnp(int[],int) RETURNS int[] AS
+'select $1 || $2' LANGUAGE SQL;
 -- arg1 only polymorphic transfn
-CREATE FUNCTION tf1p(anyarray,int) returns anyarray as
-'select $1' language 'sql';
+CREATE FUNCTION tf1p(anyarray,int) RETURNS anyarray AS
+'select $1' LANGUAGE SQL;
 -- arg2 only polymorphic transfn
-CREATE FUNCTION tf2p(int[],anyelement) returns int[] as
-'select $1' language 'sql';
+CREATE FUNCTION tf2p(int[],anyelement) RETURNS int[] AS
+'select $1' LANGUAGE SQL;
 -- finalfn polymorphic
-CREATE FUNCTION ffp(anyarray) returns anyarray as
-'select $1' language 'sql';
+CREATE FUNCTION ffp(anyarray) RETURNS anyarray AS
+'select $1' LANGUAGE SQL;
 -- finalfn non-polymorphic
 CREATE FUNCTION ffnp(int[]) returns int[] as
-'select $1' language 'sql';
+'select $1' LANGUAGE SQL;
 -- Try to cover all the possible states:
 -- 
 -- Note: in Cases 1 & 2, we are trying to return P. Therefore, if the transfn

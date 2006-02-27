@@ -5,7 +5,7 @@ SET search_path = public;
 CREATE OR REPLACE FUNCTION pg_buffercache_pages()
 RETURNS SETOF RECORD
 AS 'MODULE_PATHNAME', 'pg_buffercache_pages'
-LANGUAGE 'C';
+LANGUAGE C;
 
 -- Create a view for convenient access.
 CREATE VIEW pg_buffercache AS
