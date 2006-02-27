@@ -9,6 +9,7 @@ OBJS = xpath.o xslt_proc.o
 SHLIB_LINK = -lxml2 -lxslt
 
 DATA_built = pgxml.sql
+DATA = uninstall_pgxml.sql
 DOCS = README.xml2
 
 override CFLAGS += $(shell xml2-config --cflags)

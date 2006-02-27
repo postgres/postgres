@@ -1,9 +1,10 @@
-# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.15 2005/10/18 01:30:48 tgl Exp $
+# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.16 2006/02/27 12:54:38 petere Exp $
 
 MODULE_big = cube
 OBJS= cube.o cubeparse.o
 
 DATA_built = cube.sql
+DATA = uninstall_cube.sql
 DOCS = README.cube
 REGRESS = cube
 

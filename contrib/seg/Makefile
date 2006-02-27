@@ -1,8 +1,9 @@
-# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.14 2005/10/18 01:30:48 tgl Exp $
+# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.15 2006/02/27 12:54:39 petere Exp $
 
 MODULE_big = seg
 OBJS = seg.o segparse.o
 DATA_built = seg.sql
+DATA = uninstall_seg.sql
 DOCS = README.seg
 REGRESS = seg
 

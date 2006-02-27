@@ -1,7 +1,8 @@
-# $PostgreSQL: pgsql/contrib/userlock/Makefile,v 1.19 2005/09/27 17:13:13 tgl Exp $
+# $PostgreSQL: pgsql/contrib/userlock/Makefile,v 1.20 2006/02/27 12:54:39 petere Exp $
 
 MODULES = user_locks
 DATA_built = user_locks.sql
+DATA = uninstall_user_locks.sql
 DOCS = README.user_locks
 
 ifdef USE_PGXS
