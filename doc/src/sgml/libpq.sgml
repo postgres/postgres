@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.201 2005/12/26 14:58:04 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.202 2006/02/28 22:34:24 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3996,6 +3996,57 @@ internationalization.
 
 <para>
 The file <filename>.pgpass</filename> in a user's home directory or the
+file referenced by <envar>PGPASSFILE</envar> can contain passwords to
+be used if the connection requires a password (and no password has been
+specified  otherwise). On Microsoft Windows the file is named
+<filename>%APPDATA%\postgresql\pgpass.conf</> (where
+<filename>%APPDATA%</> refers to the Application Data subdirectory in
+the user's profile).
+</para>
+
+<para>
+This file should contain lines of the following format:
+<synopsis>
+<replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
+</synopsis>
+Each of the first four fields may be a literal value, or <literal>*</literal>,
+which matches anything.  The password field from the first line that matches the
+current connection parameters will be used.  (Therefore, put more-specific
+entries first when you are using wildcards.)
+If an entry needs to contain <literal>:</literal> or
+<literal>\</literal>, escape this character with <literal>\</literal>.
+A hostname of <literal>localhost</> matches both <literal>host</> (TCP)
+and <literal>local</> (Unix domain socket) connections coming from the
+local machine.
+</para>
+
+<para>
+The permissions on <filename>.pgpass</filename> must disallow any
+access to world or group; achieve this by the command
+<command>chmod 0600 ~/.pgpass</command>.
+If the permissions are less strict than this, the file will be ignored.
+(The file permissions are not currently checked on Microsoft Windows,
+however.)
+</para>
+</sect1>
+
+
+<sect1 id="libpq-pgservice">
+<title>The Connection Service File</title>
+
+<indexterm zone="libpq-pgservice">
+ <primary>connection service file</primary>
+</indexterm>
+<indexterm zone="libpq-pgservice">
+ <primary>pg_service.conf</primary>
+</indexterm>
+
+<para>
+The file <filename>pg_service.conf</filename> in the <literal>sysconf</>
+directory (typically <filename>/usr/local/pgsql/etc</>) can assocate a 
+group of libpq connection parameters with a single service name that
+can be specified in the libpq connection.
+.   a user's home directory or the
 file referenced by <envar>PGPASSFILE</envar> can contain passwords to
 be used if the connection requires a password (and no password has been
 specified  otherwise). On Microsoft Windows the file is named
