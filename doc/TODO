@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Feb 26 16:22:48 EST 2006
+Last updated:		Tue Feb 28 14:47:56 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1163,6 +1163,8 @@ Source Code
   read them properly
 * Update Bonjour to work with newer cross-platform SDK
 * -Remove BeOS and QNX-specific code
+* Split out libpq pgpass and environment documentation sections to make
+  it easier for non-developers to find
 
 
 * Win32
