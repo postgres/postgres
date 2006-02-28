@@ -547,8 +547,11 @@
    (--with-krb-srvnam=NAME) */
 #undef PG_KRB_SRVNAM
 
-/* PostgreSQL version */
+/* PostgreSQL version as a string */
 #undef PG_VERSION
+
+/* PostgreSQL version as a number */
+#undef PG_VERSION_NUM
 
 /* A string containing the version number, platform, and C compiler */
 #undef PG_VERSION_STR
