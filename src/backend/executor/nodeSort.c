@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.54 2006/02/28 04:10:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.55 2006/02/28 05:48:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ ExecSort(SortState *node)
 											  plannode->sortOperators,
 											  plannode->sortColIdx,
 											  work_mem,
-											  true /* randomAccess */ );
+											  node->randomAccess);
 		node->tuplesortstate = (void *) tuplesortstate;
 
 		/*
@@ -163,6 +163,15 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	sortstate = makeNode(SortState);
 	sortstate->ss.ps.plan = (Plan *) node;
 	sortstate->ss.ps.state = estate;
+
+	/*
+	 * We must have random access to the sort output to do backward scan
+	 * or mark/restore.  We also prefer to materialize the sort output
+	 * if we might be called on to rewind and replay it many times.
+	 */
+	sortstate->randomAccess = (eflags & (EXEC_FLAG_REWIND |
+										 EXEC_FLAG_BACKWARD |
+										 EXEC_FLAG_MARK)) != 0;
 
 	sortstate->sort_Done = false;
 	sortstate->tuplesortstate = NULL;
@@ -308,11 +317,18 @@ ExecReScanSort(SortState *node, ExprContext *exprCtxt)
 	 *
 	 * Otherwise we can just rewind and rescan the sorted output.
 	 */
-	if (((PlanState *) node)->lefttree->chgParam != NULL)
+	if (((PlanState *) node)->lefttree->chgParam != NULL ||
+		!node->randomAccess)
 	{
 		node->sort_Done = false;
 		tuplesort_end((Tuplesortstate *) node->tuplesortstate);
 		node->tuplesortstate = NULL;
+		/*
+		 * if chgParam of subnode is not null then plan will be re-scanned by
+		 * first ExecProcNode.
+		 */
+		if (((PlanState *) node)->lefttree->chgParam == NULL)
+			ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 	}
 	else
 		tuplesort_rescan((Tuplesortstate *) node->tuplesortstate);

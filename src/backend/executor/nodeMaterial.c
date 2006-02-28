@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.52 2006/02/28 04:10:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.53 2006/02/28 05:48:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,9 +58,9 @@ ExecMaterial(MaterialState *node)
 	tuplestorestate = (Tuplestorestate *) node->tuplestorestate;
 
 	/*
-	 * If first time through, initialize the tuplestore.
+	 * If first time through, and we need a tuplestore, initialize it.
 	 */
-	if (tuplestorestate == NULL)
+	if (tuplestorestate == NULL && node->randomAccess)
 	{
 		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
 
@@ -71,7 +71,8 @@ ExecMaterial(MaterialState *node)
 	 * If we are not at the end of the tuplestore, or are going backwards, try
 	 * to fetch a tuple from tuplestore.
 	 */
-	eof_tuplestore = tuplestore_ateof(tuplestorestate);
+	eof_tuplestore = (tuplestorestate == NULL) ||
+		tuplestore_ateof(tuplestorestate);
 
 	if (!forward && eof_tuplestore)
 	{
@@ -135,7 +136,8 @@ ExecMaterial(MaterialState *node)
 		 * tuplestore is certainly in EOF state, its read position will move
 		 * forward over the added tuple.  This is what we want.
 		 */
-		tuplestore_puttuple(tuplestorestate, (void *) heapTuple);
+		if (tuplestorestate)
+			tuplestore_puttuple(tuplestorestate, (void *) heapTuple);
 	}
 
 	/*
@@ -165,8 +167,18 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->ss.ps.plan = (Plan *) node;
 	matstate->ss.ps.state = estate;
 
-	matstate->tuplestorestate = NULL;
+	/*
+	 * We must have random access to the subplan output to do backward scan
+	 * or mark/restore.  We also prefer to materialize the subplan output
+	 * if we might be called on to rewind and replay it many times.
+	 * However, if none of these cases apply, we can skip storing the data.
+	 */
+	matstate->randomAccess = (eflags & (EXEC_FLAG_REWIND |
+										EXEC_FLAG_BACKWARD |
+										EXEC_FLAG_MARK)) != 0;
+
 	matstate->eof_underlying = false;
+	matstate->tuplestorestate = NULL;
 
 	/*
 	 * Miscellaneous initialization
@@ -249,6 +261,8 @@ ExecEndMaterial(MaterialState *node)
 void
 ExecMaterialMarkPos(MaterialState *node)
 {
+	Assert(node->randomAccess);
+
 	/*
 	 * if we haven't materialized yet, just return.
 	 */
@@ -267,6 +281,8 @@ ExecMaterialMarkPos(MaterialState *node)
 void
 ExecMaterialRestrPos(MaterialState *node)
 {
+	Assert(node->randomAccess);
+
 	/*
 	 * if we haven't materialized yet, just return.
 	 */
@@ -288,29 +304,44 @@ ExecMaterialRestrPos(MaterialState *node)
 void
 ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 {
-	/*
-	 * If we haven't materialized yet, just return. If outerplan' chgParam is
-	 * not NULL then it will be re-scanned by ExecProcNode, else - no reason
-	 * to re-scan it at all.
-	 */
-	if (!node->tuplestorestate)
-		return;
-
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
-	/*
-	 * If subnode is to be rescanned then we forget previous stored results;
-	 * we have to re-read the subplan and re-store.
-	 *
-	 * Otherwise we can just rewind and rescan the stored output. The state of
-	 * the subnode does not change.
-	 */
-	if (((PlanState *) node)->lefttree->chgParam != NULL)
+	if (node->randomAccess)
 	{
-		tuplestore_end((Tuplestorestate *) node->tuplestorestate);
-		node->tuplestorestate = NULL;
-		node->eof_underlying = false;
+		/*
+		 * If we haven't materialized yet, just return. If outerplan' chgParam
+		 * is not NULL then it will be re-scanned by ExecProcNode, else - no
+		 * reason to re-scan it at all.
+		 */
+		if (!node->tuplestorestate)
+			return;
+
+		/*
+		 * If subnode is to be rescanned then we forget previous stored
+		 * results; we have to re-read the subplan and re-store.
+		 *
+		 * Otherwise we can just rewind and rescan the stored output. The
+		 * state of the subnode does not change.
+		 */
+		if (((PlanState *) node)->lefttree->chgParam != NULL)
+		{
+			tuplestore_end((Tuplestorestate *) node->tuplestorestate);
+			node->tuplestorestate = NULL;
+			node->eof_underlying = false;
+		}
+		else
+			tuplestore_rescan((Tuplestorestate *) node->tuplestorestate);
 	}
 	else
-		tuplestore_rescan((Tuplestorestate *) node->tuplestorestate);
+	{
+		/* In this case we are just passing on the subquery's output */
+
+		/*
+		 * if chgParam of subnode is not null then plan will be re-scanned by
+		 * first ExecProcNode.
+		 */
+		if (((PlanState *) node)->lefttree->chgParam == NULL)
+			ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
+		node->eof_underlying = false;
+	}
 }
