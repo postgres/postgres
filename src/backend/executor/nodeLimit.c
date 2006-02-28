@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.23 2005/11/23 20:27:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.24 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,10 +280,13 @@ recompute_limits(LimitState *node)
  * ----------------------------------------------------------------
  */
 LimitState *
-ExecInitLimit(Limit *node, EState *estate)
+ExecInitLimit(Limit *node, EState *estate, int eflags)
 {
 	LimitState *limitstate;
 	Plan	   *outerPlan;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & EXEC_FLAG_MARK));
 
 	/*
 	 * create state structure
@@ -321,7 +324,7 @@ ExecInitLimit(Limit *node, EState *estate)
 	 * then initialize outer plan
 	 */
 	outerPlan = outerPlan(node);
-	outerPlanState(limitstate) = ExecInitNode(outerPlan, estate);
+	outerPlanState(limitstate) = ExecInitNode(outerPlan, estate, eflags);
 
 	/*
 	 * limit nodes do no projections, so initialize projection info for this

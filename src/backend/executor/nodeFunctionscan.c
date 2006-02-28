@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.35 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.36 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ ExecFunctionScan(FunctionScanState *node)
  * ----------------------------------------------------------------
  */
 FunctionScanState *
-ExecInitFunctionScan(FunctionScan *node, EState *estate)
+ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 {
 	FunctionScanState *scanstate;
 	RangeTblEntry *rte;

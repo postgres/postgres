@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.4 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.5 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
  * ----------------------------------------------------------------
  */
 BitmapAndState *
-ExecInitBitmapAnd(BitmapAnd *node, EState *estate)
+ExecInitBitmapAnd(BitmapAnd *node, EState *estate, int eflags)
 {
 	BitmapAndState *bitmapandstate = makeNode(BitmapAndState);
 	PlanState **bitmapplanstates;
@@ -48,6 +48,9 @@ ExecInitBitmapAnd(BitmapAnd *node, EState *estate)
 	int			i;
 	ListCell   *l;
 	Plan	   *initNode;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	CXT1_printf("ExecInitBitmapAnd: context is %d\n", CurrentMemoryContext);
 
@@ -83,7 +86,7 @@ ExecInitBitmapAnd(BitmapAnd *node, EState *estate)
 	foreach(l, node->bitmapplans)
 	{
 		initNode = (Plan *) lfirst(l);
-		bitmapplanstates[i] = ExecInitNode(initNode, estate);
+		bitmapplanstates[i] = ExecInitNode(initNode, estate, eflags);
 		i++;
 	}
 

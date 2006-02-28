@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.99 2005/11/22 18:17:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.100 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,7 +330,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	if (es->qd->operation != CMD_UTILITY)
 	{
 		AfterTriggerBeginQuery();
-		ExecutorStart(es->qd, false);
+		ExecutorStart(es->qd, 0);
 	}
 
 	es->status = F_EXEC_RUN;

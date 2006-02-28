@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.124 2006/01/12 21:48:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.125 2006/02/28 04:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,39 @@
 #define EXECUTOR_H
 
 #include "executor/execdesc.h"
+
+
+/*
+ * The "eflags" argument to ExecutorStart and the various ExecInitNode
+ * routines is a bitwise OR of the following flag bits, which tell the
+ * called plan node what to expect.  Note that the flags will get modified
+ * as they are passed down the plan tree, since an upper node may require
+ * functionality in its subnode not demanded of the plan as a whole
+ * (example: MergeJoin requires mark/restore capability in its inner input),
+ * or an upper node may shield its input from some functionality requirement
+ * (example: Materialize shields its input from needing to do backward scan).
+ *
+ * EXPLAIN_ONLY indicates that the plan tree is being initialized just so
+ * EXPLAIN can print it out; it will not be run.  Hence, no side-effects
+ * of startup should occur (such as creating a SELECT INTO target table).
+ * However, error checks (such as permission checks) should be performed.
+ *
+ * REWIND indicates that the plan node should try to efficiently support
+ * rescans without parameter changes.  (Nodes must support ExecReScan calls
+ * in any case, but if this flag was not given, they are at liberty to do it
+ * through complete recalculation.  Note that a parameter change forces a
+ * full recalculation in any case.)
+ *
+ * BACKWARD indicates that the plan node must respect the es_direction flag.
+ * When this is not passed, the plan node will only be run forwards.
+ *
+ * MARK indicates that the plan node must support Mark/Restore calls.
+ * When this is not passed, no Mark/Restore will occur.
+ */
+#define EXEC_FLAG_EXPLAIN_ONLY	0x0001		/* EXPLAIN, no ANALYZE */
+#define EXEC_FLAG_REWIND		0x0002		/* need efficient rescan */
+#define EXEC_FLAG_BACKWARD		0x0004		/* need backward scan */
+#define EXEC_FLAG_MARK			0x0008		/* need mark/restore */
 
 
 /*
@@ -87,7 +120,7 @@ extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
 /*
  * prototypes from functions in execMain.c
  */
-extern void ExecutorStart(QueryDesc *queryDesc, bool explainOnly);
+extern void ExecutorStart(QueryDesc *queryDesc, int eflags);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc);
@@ -103,7 +136,7 @@ extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
 /*
  * prototypes from functions in execProcnode.c
  */
-extern PlanState *ExecInitNode(Plan *node, EState *estate);
+extern PlanState *ExecInitNode(Plan *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecProcNode(PlanState *node);
 extern Node *MultiExecProcNode(PlanState *node);
 extern int	ExecCountSlotsNode(Plan *node);

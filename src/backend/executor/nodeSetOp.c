@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.19 2005/11/23 20:27:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.20 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,9 +213,12 @@ ExecSetOp(SetOpState *node)
  * ----------------------------------------------------------------
  */
 SetOpState *
-ExecInitSetOp(SetOp *node, EState *estate)
+ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 {
 	SetOpState *setopstate;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
 	 * create state structure
@@ -252,7 +255,7 @@ ExecInitSetOp(SetOp *node, EState *estate)
 	/*
 	 * then initialize outer plan
 	 */
-	outerPlanState(setopstate) = ExecInitNode(outerPlan(node), estate);
+	outerPlanState(setopstate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
 	 * setop nodes do no projections, so initialize projection info for this

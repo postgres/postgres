@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.99 2005/11/23 20:27:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.100 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,9 +116,12 @@ MultiExecHash(HashState *node)
  * ----------------------------------------------------------------
  */
 HashState *
-ExecInitHash(Hash *node, EState *estate)
+ExecInitHash(Hash *node, EState *estate, int eflags)
 {
 	HashState  *hashstate;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	SO_printf("ExecInitHash: initializing hash node\n");
 
@@ -158,7 +161,7 @@ ExecInitHash(Hash *node, EState *estate)
 	/*
 	 * initialize child nodes
 	 */
-	outerPlanState(hashstate) = ExecInitNode(outerPlan(node), estate);
+	outerPlanState(hashstate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
 	 * initialize tuple type. no need to initialize projection info because

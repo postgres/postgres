@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.72 2005/12/28 01:29:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.73 2006/02/28 04:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -625,10 +625,14 @@ slotNoNulls(TupleTableSlot *slot)
 
 /* ----------------------------------------------------------------
  *		ExecInitSubPlan
+ *
+ * Note: the eflags are those passed to the parent plan node of this
+ * subplan; they don't directly describe the execution conditions the
+ * subplan will face.
  * ----------------------------------------------------------------
  */
 void
-ExecInitSubPlan(SubPlanState *node, EState *estate)
+ExecInitSubPlan(SubPlanState *node, EState *estate, int eflags)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	EState	   *sp_estate;
@@ -678,8 +682,16 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 
 	/*
 	 * Start up the subplan (this is a very cut-down form of InitPlan())
+	 *
+	 * The subplan will never need to do BACKWARD scan or MARK/RESTORE.
+	 * If it is a parameterless subplan (not initplan), we suggest that it
+	 * be prepared to handle REWIND efficiently; otherwise there is no need.
 	 */
-	node->planstate = ExecInitNode(subplan->plan, sp_estate);
+	eflags &= EXEC_FLAG_EXPLAIN_ONLY;
+	if (subplan->parParam == NIL && subplan->setParam == NIL)
+		eflags |= EXEC_FLAG_REWIND;
+
+	node->planstate = ExecInitNode(subplan->plan, sp_estate, eflags);
 
 	node->needShutdown = true;	/* now we need to shutdown the subplan */
 

@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.62 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.63 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,9 +154,12 @@ ExecGroup(GroupState *node)
  * -----------------
  */
 GroupState *
-ExecInitGroup(Group *node, EState *estate)
+ExecInitGroup(Group *node, EState *estate, int eflags)
 {
 	GroupState *grpstate;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
 	 * create state structure
@@ -192,7 +195,7 @@ ExecInitGroup(Group *node, EState *estate)
 	/*
 	 * initialize child nodes
 	 */
-	outerPlanState(grpstate) = ExecInitNode(outerPlan(node), estate);
+	outerPlanState(grpstate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
 	 * initialize tuple type.

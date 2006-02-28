@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.99 2006/02/21 23:01:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.100 2006/02/28 04:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,9 +164,9 @@ ProcessQuery(Query *parsetree,
 	AfterTriggerBeginQuery();
 
 	/*
-	 * Call ExecStart to prepare the plan for execution
+	 * Call ExecutorStart to prepare the plan for execution
 	 */
-	ExecutorStart(queryDesc, false);
+	ExecutorStart(queryDesc, 0);
 
 	/*
 	 * Run the plan to completion.
@@ -329,6 +329,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 	MemoryContext savePortalContext;
 	MemoryContext oldContext;
 	QueryDesc  *queryDesc;
+	int			eflags;
 
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->queryContext != NULL);	/* query defined? */
@@ -394,9 +395,18 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				 */
 
 				/*
-				 * Call ExecStart to prepare the plan for execution
+				 * If it's a scrollable cursor, executor needs to support
+				 * REWIND and backwards scan.
 				 */
-				ExecutorStart(queryDesc, false);
+				if (portal->cursorOptions & CURSOR_OPT_SCROLL)
+					eflags = EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD;
+				else
+					eflags = 0;		/* default run-to-completion flags */
+
+				/*
+				 * Call ExecutorStart to prepare the plan for execution
+				 */
+				ExecutorStart(queryDesc, eflags);
 
 				/*
 				 * This tells PortalCleanup to shut down the executor

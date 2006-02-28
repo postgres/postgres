@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.66 2006/02/05 02:59:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.67 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,13 +140,16 @@ exec_append_initialize_next(AppendState *appendstate)
  * ----------------------------------------------------------------
  */
 AppendState *
-ExecInitAppend(Append *node, EState *estate)
+ExecInitAppend(Append *node, EState *estate, int eflags)
 {
 	AppendState *appendstate = makeNode(AppendState);
 	PlanState **appendplanstates;
 	int			nplans;
 	int			i;
 	Plan	   *initNode;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & EXEC_FLAG_MARK));
 
 	CXT1_printf("ExecInitAppend: context is %d\n", CurrentMemoryContext);
 
@@ -213,7 +216,7 @@ ExecInitAppend(Append *node, EState *estate)
 		exec_append_initialize_next(appendstate);
 
 		initNode = (Plan *) list_nth(node->appendplans, i);
-		appendplanstates[i] = ExecInitNode(initNode, estate);
+		appendplanstates[i] = ExecInitNode(initNode, estate, eflags);
 	}
 
 	/*

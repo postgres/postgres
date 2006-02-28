@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.136 2005/11/22 18:17:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.137 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1031,7 +1031,7 @@ agg_retrieve_hash_table(AggState *aggstate)
  * -----------------
  */
 AggState *
-ExecInitAgg(Agg *node, EState *estate)
+ExecInitAgg(Agg *node, EState *estate, int eflags)
 {
 	AggState   *aggstate;
 	AggStatePerAgg peragg;
@@ -1040,6 +1040,9 @@ ExecInitAgg(Agg *node, EState *estate)
 	int			numaggs,
 				aggno;
 	ListCell   *l;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
 	 * create state structure
@@ -1107,9 +1110,14 @@ ExecInitAgg(Agg *node, EState *estate)
 
 	/*
 	 * initialize child nodes
+	 *
+	 * If we are doing a hashed aggregation then the child plan does not
+	 * need to handle REWIND efficiently; see ExecReScanAgg.
 	 */
+	if (node->aggstrategy == AGG_HASHED)
+		eflags &= ~EXEC_FLAG_REWIND;
 	outerPlan = outerPlan(node);
-	outerPlanState(aggstate) = ExecInitNode(outerPlan, estate);
+	outerPlanState(aggstate) = ExecInitNode(outerPlan, estate, eflags);
 
 	/*
 	 * initialize source tuple type.

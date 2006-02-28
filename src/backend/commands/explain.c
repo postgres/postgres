@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.143 2006/02/05 02:59:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.144 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,6 +233,7 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	double		totaltime = 0;
 	ExplainState *es;
 	StringInfo	str;
+	int			eflags;
 
 	INSTR_TIME_SET_CURRENT(starttime);
 
@@ -240,8 +241,14 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	if (stmt->analyze)
 		AfterTriggerBeginQuery();
 
+	/* Select execution options */
+	if (stmt->analyze)
+		eflags = 0;				/* default run-to-completion flags */
+	else
+		eflags = EXEC_FLAG_EXPLAIN_ONLY;
+
 	/* call ExecutorStart to prepare the plan for execution */
-	ExecutorStart(queryDesc, !stmt->analyze);
+	ExecutorStart(queryDesc, eflags);
 
 	/* Execute the plan for statistics if asked for */
 	if (stmt->analyze)

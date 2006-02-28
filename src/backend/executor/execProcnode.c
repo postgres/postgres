@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.52 2005/12/07 15:27:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.53 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
  *					DEPT		  EMP
  *				(name = "shoe")
  *
- *		ExecStart() is called first.
+ *		ExecutorStart() is called first.
  *		It calls InitPlan() which calls ExecInitNode() on
  *		the root of the plan -- the nest loop node.
  *
@@ -108,18 +108,19 @@
 /* ------------------------------------------------------------------------
  *		ExecInitNode
  *
- *		Recursively initializes all the nodes in the plan rooted
+ *		Recursively initializes all the nodes in the plan tree rooted
  *		at 'node'.
  *
- *		Initial States:
- *		  'node' is the plan produced by the query planner
- *		  'estate' is the shared execution state for the query tree
+ *		Inputs:
+ *		  'node' is the current node of the plan produced by the query planner
+ *		  'estate' is the shared execution state for the plan tree
+ *		  'eflags' is a bitwise OR of flag bits described in executor.h
  *
  *		Returns a PlanState node corresponding to the given Plan node.
  * ------------------------------------------------------------------------
  */
 PlanState *
-ExecInitNode(Plan *node, EState *estate)
+ExecInitNode(Plan *node, EState *estate, int eflags)
 {
 	PlanState  *result;
 	List	   *subps;
@@ -137,100 +138,122 @@ ExecInitNode(Plan *node, EState *estate)
 			 * control nodes
 			 */
 		case T_Result:
-			result = (PlanState *) ExecInitResult((Result *) node, estate);
+			result = (PlanState *) ExecInitResult((Result *) node,
+												  estate, eflags);
 			break;
 
 		case T_Append:
-			result = (PlanState *) ExecInitAppend((Append *) node, estate);
+			result = (PlanState *) ExecInitAppend((Append *) node,
+												  estate, eflags);
 			break;
 
 		case T_BitmapAnd:
-			result = (PlanState *) ExecInitBitmapAnd((BitmapAnd *) node, estate);
+			result = (PlanState *) ExecInitBitmapAnd((BitmapAnd *) node,
+													 estate, eflags);
 			break;
 
 		case T_BitmapOr:
-			result = (PlanState *) ExecInitBitmapOr((BitmapOr *) node, estate);
+			result = (PlanState *) ExecInitBitmapOr((BitmapOr *) node,
+													estate, eflags);
 			break;
 
 			/*
 			 * scan nodes
 			 */
 		case T_SeqScan:
-			result = (PlanState *) ExecInitSeqScan((SeqScan *) node, estate);
+			result = (PlanState *) ExecInitSeqScan((SeqScan *) node,
+												   estate, eflags);
 			break;
 
 		case T_IndexScan:
-			result = (PlanState *) ExecInitIndexScan((IndexScan *) node, estate);
+			result = (PlanState *) ExecInitIndexScan((IndexScan *) node,
+													 estate, eflags);
 			break;
 
 		case T_BitmapIndexScan:
-			result = (PlanState *) ExecInitBitmapIndexScan((BitmapIndexScan *) node, estate);
+			result = (PlanState *) ExecInitBitmapIndexScan((BitmapIndexScan *) node,
+														   estate, eflags);
 			break;
 
 		case T_BitmapHeapScan:
-			result = (PlanState *) ExecInitBitmapHeapScan((BitmapHeapScan *) node, estate);
+			result = (PlanState *) ExecInitBitmapHeapScan((BitmapHeapScan *) node,
+														  estate, eflags);
 			break;
 
 		case T_TidScan:
-			result = (PlanState *) ExecInitTidScan((TidScan *) node, estate);
+			result = (PlanState *) ExecInitTidScan((TidScan *) node,
+												   estate, eflags);
 			break;
 
 		case T_SubqueryScan:
-			result = (PlanState *) ExecInitSubqueryScan((SubqueryScan *) node, estate);
+			result = (PlanState *) ExecInitSubqueryScan((SubqueryScan *) node,
+														estate, eflags);
 			break;
 
 		case T_FunctionScan:
-			result = (PlanState *) ExecInitFunctionScan((FunctionScan *) node, estate);
+			result = (PlanState *) ExecInitFunctionScan((FunctionScan *) node,
+														estate, eflags);
 			break;
 
 			/*
 			 * join nodes
 			 */
 		case T_NestLoop:
-			result = (PlanState *) ExecInitNestLoop((NestLoop *) node, estate);
+			result = (PlanState *) ExecInitNestLoop((NestLoop *) node,
+													estate, eflags);
 			break;
 
 		case T_MergeJoin:
-			result = (PlanState *) ExecInitMergeJoin((MergeJoin *) node, estate);
+			result = (PlanState *) ExecInitMergeJoin((MergeJoin *) node,
+													 estate, eflags);
 			break;
 
 		case T_HashJoin:
-			result = (PlanState *) ExecInitHashJoin((HashJoin *) node, estate);
+			result = (PlanState *) ExecInitHashJoin((HashJoin *) node,
+													estate, eflags);
 			break;
 
 			/*
 			 * materialization nodes
 			 */
 		case T_Material:
-			result = (PlanState *) ExecInitMaterial((Material *) node, estate);
+			result = (PlanState *) ExecInitMaterial((Material *) node,
+													estate, eflags);
 			break;
 
 		case T_Sort:
-			result = (PlanState *) ExecInitSort((Sort *) node, estate);
+			result = (PlanState *) ExecInitSort((Sort *) node,
+												estate, eflags);
 			break;
 
 		case T_Group:
-			result = (PlanState *) ExecInitGroup((Group *) node, estate);
+			result = (PlanState *) ExecInitGroup((Group *) node,
+												 estate, eflags);
 			break;
 
 		case T_Agg:
-			result = (PlanState *) ExecInitAgg((Agg *) node, estate);
+			result = (PlanState *) ExecInitAgg((Agg *) node,
+											   estate, eflags);
 			break;
 
 		case T_Unique:
-			result = (PlanState *) ExecInitUnique((Unique *) node, estate);
+			result = (PlanState *) ExecInitUnique((Unique *) node,
+												  estate, eflags);
 			break;
 
 		case T_Hash:
-			result = (PlanState *) ExecInitHash((Hash *) node, estate);
+			result = (PlanState *) ExecInitHash((Hash *) node,
+												estate, eflags);
 			break;
 
 		case T_SetOp:
-			result = (PlanState *) ExecInitSetOp((SetOp *) node, estate);
+			result = (PlanState *) ExecInitSetOp((SetOp *) node,
+												 estate, eflags);
 			break;
 
 		case T_Limit:
-			result = (PlanState *) ExecInitLimit((Limit *) node, estate);
+			result = (PlanState *) ExecInitLimit((Limit *) node,
+												 estate, eflags);
 			break;
 
 		default:
@@ -251,7 +274,7 @@ ExecInitNode(Plan *node, EState *estate)
 
 		Assert(IsA(subplan, SubPlan));
 		sstate = ExecInitExprInitPlan(subplan, result);
-		ExecInitSubPlan(sstate, estate);
+		ExecInitSubPlan(sstate, estate, eflags);
 		subps = lappend(subps, sstate);
 	}
 	result->initPlan = subps;
@@ -267,7 +290,7 @@ ExecInitNode(Plan *node, EState *estate)
 		SubPlanState *sstate = (SubPlanState *) lfirst(l);
 
 		Assert(IsA(sstate, SubPlanState));
-		ExecInitSubPlan(sstate, estate);
+		ExecInitSubPlan(sstate, estate, eflags);
 	}
 
 	/* Set up instrumentation for this node if requested */

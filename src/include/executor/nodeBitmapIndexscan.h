@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeBitmapIndexscan.h,v 1.1 2005/04/19 22:35:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeBitmapIndexscan.h,v 1.2 2006/02/28 04:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "nodes/execnodes.h"
 
 extern int	ExecCountSlotsBitmapIndexScan(BitmapIndexScan *node);
-extern BitmapIndexScanState *ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate);
+extern BitmapIndexScanState *ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags);
 extern Node *MultiExecBitmapIndexScan(BitmapIndexScanState *node);
 extern void ExecEndBitmapIndexScan(BitmapIndexScanState *node);
 extern void ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt);

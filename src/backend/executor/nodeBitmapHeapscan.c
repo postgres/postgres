@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.8 2005/12/02 20:03:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.9 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -459,10 +459,13 @@ ExecEndBitmapHeapScan(BitmapHeapScanState *node)
  * ----------------------------------------------------------------
  */
 BitmapHeapScanState *
-ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
+ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 {
 	BitmapHeapScanState *scanstate;
 	Relation	currentRelation;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
 	 * Assert caller didn't ask for an unsafe snapshot --- see comments
@@ -552,7 +555,7 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 	 * relation's indexes, and we want to be sure we have acquired a lock
 	 * on the relation first.
 	 */
-	outerPlanState(scanstate) = ExecInitNode(outerPlan(node), estate);
+	outerPlanState(scanstate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
 	 * all done.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.146 2006/01/18 06:49:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.147 2006/02/28 04:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1553,7 +1553,7 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 
 	AfterTriggerBeginQuery();
 
-	ExecutorStart(queryDesc, false);
+	ExecutorStart(queryDesc, 0);
 
 	ExecutorRun(queryDesc, ForwardScanDirection, tcount);
 

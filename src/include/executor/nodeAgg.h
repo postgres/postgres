@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeAgg.h,v 1.24 2005/01/28 19:34:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeAgg.h,v 1.25 2006/02/28 04:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "nodes/execnodes.h"
 
 extern int	ExecCountSlotsAgg(Agg *node);
-extern AggState *ExecInitAgg(Agg *node, EState *estate);
+extern AggState *ExecInitAgg(Agg *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecAgg(AggState *node);
 extern void ExecEndAgg(AggState *node);
 extern void ExecReScanAgg(AggState *node, ExprContext *exprCtxt);

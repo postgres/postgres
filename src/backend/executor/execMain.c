@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.267 2006/02/21 23:01:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.268 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ typedef struct evalPlanQual
 } evalPlanQual;
 
 /* decls for local routines only used within this module */
-static void InitPlan(QueryDesc *queryDesc, bool explainOnly);
+static void InitPlan(QueryDesc *queryDesc, int eflags);
 static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  List *rangeTable,
@@ -105,15 +105,14 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
- * If explainOnly is true, we are not actually intending to run the plan,
- * only to set up for EXPLAIN; so skip unwanted side-effects.
+ * eflags contains flag bits as described in executor.h.
  *
  * NB: the CurrentMemoryContext when this is called will become the parent
  * of the per-query context used for this Executor invocation.
  * ----------------------------------------------------------------
  */
 void
-ExecutorStart(QueryDesc *queryDesc, bool explainOnly)
+ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
@@ -124,9 +123,9 @@ ExecutorStart(QueryDesc *queryDesc, bool explainOnly)
 
 	/*
 	 * If the transaction is read-only, we need to check if any writes are
-	 * planned to non-temporary tables.
+	 * planned to non-temporary tables.  EXPLAIN is considered read-only.
 	 */
-	if (XactReadOnly && !explainOnly)
+	if (XactReadOnly && !(eflags & EXEC_FLAG_EXPLAIN_ONLY))
 		ExecCheckXactReadOnly(queryDesc->parsetree);
 
 	/*
@@ -156,7 +155,7 @@ ExecutorStart(QueryDesc *queryDesc, bool explainOnly)
 	/*
 	 * Initialize the plan state tree
 	 */
-	InitPlan(queryDesc, explainOnly);
+	InitPlan(queryDesc, eflags);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -442,7 +441,7 @@ fail:
  * ----------------------------------------------------------------
  */
 static void
-InitPlan(QueryDesc *queryDesc, bool explainOnly)
+InitPlan(QueryDesc *queryDesc, int eflags)
 {
 	CmdType		operation = queryDesc->operation;
 	Query	   *parseTree = queryDesc->parsetree;
@@ -608,7 +607,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	 * tree.  This opens files, allocates storage and leaves us ready to start
 	 * processing tuples.
 	 */
-	planstate = ExecInitNode(plan, estate);
+	planstate = ExecInitNode(plan, estate, eflags);
 
 	/*
 	 * Get the tuple descriptor describing the type of tuples to return. (this
@@ -727,7 +726,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	 */
 	intoRelationDesc = NULL;
 
-	if (do_select_into && !explainOnly)
+	if (do_select_into && !(eflags & EXEC_FLAG_EXPLAIN_ONLY))
 	{
 		char	   *intoName;
 		Oid			namespaceId;
@@ -2283,7 +2282,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_tupleTable =
 		ExecCreateTupleTable(estate->es_tupleTable->size);
 
-	epq->planstate = ExecInitNode(estate->es_topPlan, epqstate);
+	epq->planstate = ExecInitNode(estate->es_topPlan, epqstate, 0);
 
 	MemoryContextSwitchTo(oldcontext);
 }

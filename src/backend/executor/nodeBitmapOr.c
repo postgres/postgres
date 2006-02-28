@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.3 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.4 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
  * ----------------------------------------------------------------
  */
 BitmapOrState *
-ExecInitBitmapOr(BitmapOr *node, EState *estate)
+ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 {
 	BitmapOrState *bitmaporstate = makeNode(BitmapOrState);
 	PlanState **bitmapplanstates;
@@ -49,6 +49,9 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate)
 	int			i;
 	ListCell   *l;
 	Plan	   *initNode;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	CXT1_printf("ExecInitBitmapOr: context is %d\n", CurrentMemoryContext);
 
@@ -84,7 +87,7 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate)
 	foreach(l, node->bitmapplans)
 	{
 		initNode = (Plan *) lfirst(l);
-		bitmapplanstates[i] = ExecInitNode(initNode, estate);
+		bitmapplanstates[i] = ExecInitNode(initNode, estate, eflags);
 		i++;
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.50 2005/11/23 20:27:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeUnique.c,v 1.51 2006/02/28 04:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,9 +109,12 @@ ExecUnique(UniqueState *node)
  * ----------------------------------------------------------------
  */
 UniqueState *
-ExecInitUnique(Unique *node, EState *estate)
+ExecInitUnique(Unique *node, EState *estate, int eflags)
 {
 	UniqueState *uniquestate;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & EXEC_FLAG_MARK));
 
 	/*
 	 * create state structure
@@ -144,7 +147,7 @@ ExecInitUnique(Unique *node, EState *estate)
 	/*
 	 * then initialize outer plan
 	 */
-	outerPlanState(uniquestate) = ExecInitNode(outerPlan(node), estate);
+	outerPlanState(uniquestate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
 	 * unique nodes do no projections, so initialize projection info for this

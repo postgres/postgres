@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.53 2006/02/26 22:58:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.54 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,11 +146,11 @@ ExecSort(SortState *node)
  *		ExecInitSort
  *
  *		Creates the run-time state information for the sort node
- *		produced by the planner and initailizes its outer subtree.
+ *		produced by the planner and initializes its outer subtree.
  * ----------------------------------------------------------------
  */
 SortState *
-ExecInitSort(Sort *node, EState *estate)
+ExecInitSort(Sort *node, EState *estate, int eflags)
 {
 	SortState  *sortstate;
 
@@ -185,9 +185,14 @@ ExecInitSort(Sort *node, EState *estate)
 	ExecInitScanTupleSlot(estate, &sortstate->ss);
 
 	/*
-	 * initializes child nodes
+	 * initialize child nodes
+	 *
+	 * We shield the child node from the need to support REWIND, BACKWARD,
+	 * or MARK/RESTORE.
 	 */
-	outerPlanState(sortstate) = ExecInitNode(outerPlan(node), estate);
+	eflags &= ~(EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK);
+
+	outerPlanState(sortstate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
 	 * initialize tuple type.  no need to initialize projection info because

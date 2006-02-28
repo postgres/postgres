@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.79 2005/11/28 23:46:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.80 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,7 +335,7 @@ ExecHashJoin(HashJoinState *node)
  * ----------------------------------------------------------------
  */
 HashJoinState *
-ExecInitHashJoin(HashJoin *node, EState *estate)
+ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 {
 	HashJoinState *hjstate;
 	Plan	   *outerNode;
@@ -344,6 +344,9 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	List	   *rclauses;
 	List	   *hoperators;
 	ListCell   *l;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
 	 * create state structure
@@ -378,12 +381,16 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 
 	/*
 	 * initialize child nodes
+	 *
+	 * Note: we could suppress the REWIND flag for the inner input, which
+	 * would amount to betting that the hash will be a single batch.  Not
+	 * clear if this would be a win or not.
 	 */
 	outerNode = outerPlan(node);
 	hashNode = (Hash *) innerPlan(node);
 
-	outerPlanState(hjstate) = ExecInitNode(outerNode, estate);
-	innerPlanState(hjstate) = ExecInitNode((Plan *) hashNode, estate);
+	outerPlanState(hjstate) = ExecInitNode(outerNode, estate, eflags);
+	innerPlanState(hjstate) = ExecInitNode((Plan *) hashNode, estate, eflags);
 
 #define HASHJOIN_NSLOTS 3
 

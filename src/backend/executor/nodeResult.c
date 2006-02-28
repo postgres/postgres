@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.32 2005/10/15 02:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.33 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,14 +170,18 @@ ExecResult(ResultState *node)
  *		ExecInitResult
  *
  *		Creates the run-time state information for the result node
- *		produced by the planner and initailizes outer relations
+ *		produced by the planner and initializes outer relations
  *		(child nodes).
  * ----------------------------------------------------------------
  */
 ResultState *
-ExecInitResult(Result *node, EState *estate)
+ExecInitResult(Result *node, EState *estate, int eflags)
 {
 	ResultState *resstate;
+
+	/* check for unsupported flags */
+	Assert(!(eflags & EXEC_FLAG_MARK));
+	Assert(!(eflags & EXEC_FLAG_BACKWARD) || outerPlan(node) != NULL);
 
 	/*
 	 * create state structure
@@ -218,7 +222,7 @@ ExecInitResult(Result *node, EState *estate)
 	/*
 	 * initialize child nodes
 	 */
-	outerPlanState(resstate) = ExecInitNode(outerPlan(node), estate);
+	outerPlanState(resstate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
 	 * we don't use inner plan

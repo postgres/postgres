@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.51 2005/11/23 20:27:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.52 2006/02/28 04:10:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ ExecMaterial(MaterialState *node)
  * ----------------------------------------------------------------
  */
 MaterialState *
-ExecInitMaterial(Material *node, EState *estate)
+ExecInitMaterial(Material *node, EState *estate, int eflags)
 {
 	MaterialState *matstate;
 	Plan	   *outerPlan;
@@ -186,10 +186,15 @@ ExecInitMaterial(Material *node, EState *estate)
 	ExecInitScanTupleSlot(estate, &matstate->ss);
 
 	/*
-	 * initializes child nodes
+	 * initialize child nodes
+	 *
+	 * We shield the child node from the need to support REWIND, BACKWARD,
+	 * or MARK/RESTORE.
 	 */
+	eflags &= ~(EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK);
+
 	outerPlan = outerPlan(node);
-	outerPlanState(matstate) = ExecInitNode(outerPlan, estate);
+	outerPlanState(matstate) = ExecInitNode(outerPlan, estate, eflags);
 
 	/*
 	 * initialize tuple type.  no need to initialize projection info because
