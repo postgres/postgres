@@ -4744,7 +4744,7 @@ fi
 
 # Supply a numeric version string for use by 3rd party add-ons
 PG_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/A-Za-z.*$//' |
-$AWK -F'\.' '{printf \"%d%02d%02d\", $1, $2, (NF >= 3) ? $3 : 0}'`"
+$AWK -F'.' '{printf \"%d%02d%02d\", $1, $2, (NF >= 3) ? $3 : 0}'`"
 
 cat >>confdefs.h <<_ACEOF
 #define PG_VERSION_NUM $PG_VERSION_NUM
