@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.60 2006/01/13 18:06:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.61 2006/02/28 22:37:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,6 +37,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
     [ , ELEMENT = <replaceable class="parameter">element</replaceable> ]
     [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
 )
+
+CREATE TYPE <replaceable class="parameter">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -142,17 +144,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
 
   <para>
    You should at this point be wondering how the input and output functions
-   can be declared to have results or arguments of the new type, when they have
-   to be created before the new type can be created.  The answer is that the
-   input function must be created first, then the output function (and
-   the binary I/O functions if wanted), and finally the data type.
-   <productname>PostgreSQL</productname> will first see the name of the new
-   data type as the return type of the input function.  It will create a
-   <quote>shell</> type, which is simply a placeholder entry in
-   the system catalog, and link the input function definition to the shell
-   type.  Similarly the other functions will be linked to the (now already
-   existing) shell type.  Finally, <command>CREATE TYPE</> replaces the
-   shell entry with a complete type definition, and the new type can be used.
+   can be declared to have results or arguments of the new type, when they
+   have to be created before the new type can be created.  The answer is that
+   the type should first be defined as a <firstterm>shell type</>, which is a
+   placeholder type that has no properties except a name and an owner.  This
+   is done by issuing the command <literal>CREATE TYPE
+   <replaceable>name</></literal>, with no additional parameters.  Then the
+   I/O functions can be defined referencing the shell type.  Finally,
+   <command>CREATE TYPE</> with a full definition replaces the shell entry
+   with a complete, valid type definition, after which the new type can be
+   used normally.
   </para>
 
   <para>
@@ -458,16 +459,32 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
   </para>
 
   <para>
+   Before <productname>PostgreSQL</productname> version 8.2, the syntax
+   <literal>CREATE TYPE <replaceable>name</></literal> did not exist.
+   The way to create a new base type was to create its input function first.
+   In this approach, <productname>PostgreSQL</productname> will first see
+   the name of the new data type as the return type of the input function.
+   The shell type is implicitly created in this situation, and then it
+   can be referenced in the definitions of the remaining I/O functions.
+   This approach still works, but is deprecated and may be disallowed in
+   some future release.  Also, to avoid accidentally cluttering
+   the catalogs with shell types as a result of simple typos in function
+   definitions, a shell type will only be made this way when the input
+   function is written in C.
+  </para>
+
+  <para>
    In <productname>PostgreSQL</productname> versions before 7.3, it
-   was customary to avoid creating a shell type by replacing the
+   was customary to avoid creating a shell type at all, by replacing the
    functions' forward references to the type name with the placeholder
    pseudotype <type>opaque</>.  The <type>cstring</> arguments and
    results also had to be declared as <type>opaque</> before 7.3.  To
    support loading of old dump files, <command>CREATE TYPE</> will
-   accept functions declared using <type>opaque</>, but it will issue
-   a notice and change the function's declaration to use the correct
+   accept I/O functions declared using <type>opaque</>, but it will issue
+   a notice and change the function declarations to use the correct
    types.
   </para>
+
  </refsect1>
  
  <refsect1>
@@ -489,6 +506,11 @@ $$ LANGUAGE SQL;
    This example creates the base data type <type>box</type> and then uses the
    type in a table definition:
 <programlisting>
+CREATE TYPE box;
+
+CREATE FUNCTION my_box_in_function(cstring) RETURNS box AS ... ;
+CREATE FUNCTION my_box_out_function(box) RETURNS cstring AS ... ;
+
 CREATE TYPE box (
     INTERNALLENGTH = 16,
     INPUT = my_box_in_function,

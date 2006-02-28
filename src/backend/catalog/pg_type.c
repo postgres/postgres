@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.104 2005/10/15 02:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.105 2006/02/28 22:37:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,11 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/typecmds.h"
 #include "miscadmin.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -29,14 +32,14 @@
 /* ----------------------------------------------------------------
  *		TypeShellMake
  *
- *		This procedure inserts a "shell" tuple into the type
- *		relation.  The type tuple inserted has invalid values
- *		and in particular, the "typisdefined" field is false.
+ *		This procedure inserts a "shell" tuple into the pg_type relation.
+ *		The type tuple inserted has valid but dummy values, and its
+ *		"typisdefined" field is false indicating it's not really defined.
  *
- *		This is used so that a tuple exists in the catalogs.
- *		The invalid fields should be fixed up sometime after
- *		this routine is called, and then the "typeisdefined"
- *		field is set to true. -cim 6/15/90
+ *		This is used so that a tuple exists in the catalogs.  The I/O
+ *		functions for the type will link to this tuple.  When the full
+ *		CREATE TYPE command is issued, the bogus values will be replaced
+ *		with correct ones, and "typisdefined" will be set to true.
  * ----------------------------------------------------------------
  */
 Oid
@@ -70,30 +73,35 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 
 	/*
 	 * initialize *values with the type name and dummy values
+	 *
+	 * The representational details are the same as int4 ... it doesn't
+	 * really matter what they are so long as they are consistent.  Also
+	 * note that we give it typtype = 'p' (pseudotype) as extra insurance
+	 * that it won't be mistaken for a usable type.
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
 	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
-	values[i++] = Int16GetDatum(0);		/* typlen */
-	values[i++] = BoolGetDatum(false);	/* typbyval */
-	values[i++] = CharGetDatum(0);		/* typtype */
-	values[i++] = BoolGetDatum(false);	/* typisdefined */
-	values[i++] = CharGetDatum(0);		/* typdelim */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typrelid */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typelem */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typinput */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typoutput */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typreceive */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typsend */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typanalyze */
-	values[i++] = CharGetDatum('i');	/* typalign */
-	values[i++] = CharGetDatum('p');	/* typstorage */
-	values[i++] = BoolGetDatum(false);	/* typnotnull */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typbasetype */
-	values[i++] = Int32GetDatum(-1);	/* typtypmod */
-	values[i++] = Int32GetDatum(0);		/* typndims */
+	values[i++] = Int16GetDatum(sizeof(int4));			/* typlen */
+	values[i++] = BoolGetDatum(true);					/* typbyval */
+	values[i++] = CharGetDatum('p');					/* typtype */
+	values[i++] = BoolGetDatum(false);					/* typisdefined */
+	values[i++] = CharGetDatum(DEFAULT_TYPDELIM);		/* typdelim */
+	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typrelid */
+	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typelem */
+	values[i++] = ObjectIdGetDatum(F_SHELL_IN);			/* typinput */
+	values[i++] = ObjectIdGetDatum(F_SHELL_OUT);		/* typoutput */
+	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typreceive */
+	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typsend */
+	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typanalyze */
+	values[i++] = CharGetDatum('i');					/* typalign */
+	values[i++] = CharGetDatum('p');					/* typstorage */
+	values[i++] = BoolGetDatum(false);					/* typnotnull */
+	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typbasetype */
+	values[i++] = Int32GetDatum(-1);					/* typtypmod */
+	values[i++] = Int32GetDatum(0);						/* typndims */
 	nulls[i++] = 'n';			/* typdefaultbin */
 	nulls[i++] = 'n';			/* typdefault */
 
@@ -118,8 +126,8 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 								 InvalidOid,
 								 0,
 								 GetUserId(),
-								 InvalidOid,
-								 InvalidOid,
+								 F_SHELL_IN,
+								 F_SHELL_OUT,
 								 InvalidOid,
 								 InvalidOid,
 								 InvalidOid,
@@ -289,7 +297,13 @@ TypeCreate(const char *typeName,
 					 errmsg("type \"%s\" already exists", typeName)));
 
 		/*
-		 * Okay to update existing "shell" type tuple
+		 * shell type must have been created by same owner
+		 */
+		if (((Form_pg_type) GETSTRUCT(tup))->typowner != GetUserId())
+			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE, typeName);
+
+		/*
+		 * Okay to update existing shell type tuple
 		 */
 		tup = heap_modifytuple(tup,
 							   RelationGetDescr(pg_type_desc),
@@ -350,8 +364,6 @@ TypeCreate(const char *typeName,
  * If rebuild is true, we remove existing dependencies and rebuild them
  * from scratch.  This is needed for ALTER TYPE, and also when replacing
  * a shell type.
- *
- * NOTE: a shell type will have a dependency to its namespace, and no others.
  */
 void
 GenerateTypeDependencies(Oid typeNamespace,

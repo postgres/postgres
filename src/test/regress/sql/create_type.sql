@@ -2,6 +2,11 @@
 -- CREATE_TYPE
 --
 
+--
+-- Note: widget_in/out were created in create_function_1, without any
+-- prior shell-type creation.  These commands therefore complete a test
+-- of the "old style" approach of making the functions first.
+--
 CREATE TYPE widget (
    internallength = 24, 
    input = widget_in,
@@ -16,7 +21,20 @@ CREATE TYPE city_budget (
    element = int4
 );
 
+-- Test creation and destruction of shell types
+CREATE TYPE shell;
+CREATE TYPE shell;   -- fail, type already present
+DROP TYPE shell;
+DROP TYPE shell;     -- fail, type not exist
+
+--
 -- Test type-related default values (broken in releases before PG 7.2)
+--
+-- This part of the test also exercises the "new style" approach of making
+-- a shell type and then filling it in.
+--
+CREATE TYPE int42;
+CREATE TYPE text_w_default;
 
 -- Make dummy I/O routines using the existing internal support for int4, text
 CREATE FUNCTION int42_in(cstring)
@@ -73,6 +91,9 @@ SELECT * FROM get_default_test();
 COMMENT ON TYPE bad IS 'bad comment';
 COMMENT ON TYPE default_test_row IS 'good comment';
 COMMENT ON TYPE default_test_row IS NULL;
+
+-- Check shell type create for existing types
+CREATE TYPE text_w_default;		-- should fail
 
 DROP TYPE default_test_row CASCADE;
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.530 2006/02/19 00:04:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.531 2006/02/28 22:37:26 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2688,6 +2688,15 @@ DefineStmt:
 					n->kind = OBJECT_TYPE;
 					n->defnames = $3;
 					n->definition = $4;
+					$$ = (Node *)n;
+				}
+			| CREATE TYPE_P any_name 
+				{
+					/* Shell type (identified by lack of definition) */
+					DefineStmt *n = makeNode(DefineStmt);
+					n->kind = OBJECT_TYPE;
+					n->defnames = $3;
+					n->definition = NIL;
 					$$ = (Node *)n;
 				}
 			| CREATE TYPE_P any_name AS '(' TableFuncElementList ')'

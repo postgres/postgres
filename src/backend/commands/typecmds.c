@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.86 2006/01/13 18:06:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.87 2006/02/28 22:37:26 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -138,6 +138,37 @@ DefineType(List *names, List *parameters)
 				 errmsg("type names must be %d characters or less",
 						NAMEDATALEN - 2)));
 
+	/*
+	 * Look to see if type already exists (presumably as a shell; if not,
+	 * TypeCreate will complain).  If it doesn't, create it as a shell, so
+	 * that the OID is known for use in the I/O function definitions.
+	 */
+	typoid = GetSysCacheOid(TYPENAMENSP,
+							CStringGetDatum(typeName),
+							ObjectIdGetDatum(typeNamespace),
+							0, 0);
+	if (!OidIsValid(typoid))
+	{
+		typoid = TypeShellMake(typeName, typeNamespace);
+		/* Make new shell type visible for modification below */
+		CommandCounterIncrement();
+
+		/*
+		 * If the command was a parameterless CREATE TYPE, we're done ---
+		 * creating the shell type was all we're supposed to do.
+		 */
+		if (parameters == NIL)
+			return;
+	}
+	else
+	{
+		/* Complain if dummy CREATE TYPE and entry already exists */
+		if (parameters == NIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("type \"%s\" already exists", typeName)));
+	}
+
 	foreach(pl, parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
@@ -239,22 +270,6 @@ DefineType(List *names, List *parameters)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("type output function must be specified")));
-
-	/*
-	 * Look to see if type already exists (presumably as a shell; if not,
-	 * TypeCreate will complain).  If it doesn't, create it as a shell, so
-	 * that the OID is known for use in the I/O function definitions.
-	 */
-	typoid = GetSysCacheOid(TYPENAMENSP,
-							CStringGetDatum(typeName),
-							ObjectIdGetDatum(typeNamespace),
-							0, 0);
-	if (!OidIsValid(typoid))
-	{
-		typoid = TypeShellMake(typeName, typeNamespace);
-		/* Make new shell type visible for modification below */
-		CommandCounterIncrement();
-	}
 
 	/*
 	 * Convert I/O proc names to OIDs

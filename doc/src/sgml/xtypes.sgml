@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.25 2005/01/10 00:04:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.26 2006/02/28 22:37:25 tgl Exp $
 -->
 
  <sect1 id="xtypes">
@@ -168,8 +168,16 @@ complex_send(PG_FUNCTION_ARGS)
  </para>
 
  <para>
-  To define the <type>complex</type> type, we need to create the
-  user-defined I/O functions before creating the type:
+  Once we have written the I/O functions and compiled them into a shared
+  library, we can define the <type>complex</type> type in SQL.
+  First we declare it as a shell type:
+
+<programlisting>
+CREATE TYPE complex;
+</programlisting>
+
+  This serves as a placeholder that allows us to reference the type while
+  defining its I/O functions.  Now we can define the I/O functions:
 
 <programlisting>
 CREATE FUNCTION complex_in(cstring)
@@ -192,15 +200,10 @@ CREATE FUNCTION complex_send(complex)
    AS '<replaceable>filename</replaceable>'
    LANGUAGE C IMMUTABLE STRICT;
 </programlisting>
-
-  Notice that the declarations of the input and output functions must
-  reference the not-yet-defined type.  This is allowed, but will draw
-  warning messages that may be ignored.  The input function must
-  appear first.
  </para>
 
  <para>
-  Finally, we can declare the data type:
+  Finally, we can provide the full definition of the data type:
 <programlisting>
 CREATE TYPE complex (
    internallength = 16, 
