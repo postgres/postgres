@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.72 2006/02/28 20:03:52 neilc Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.73 2006/02/28 20:56:14 neilc Exp $
  *
  *********************************************************************
  */
@@ -769,8 +769,8 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			if (plrv != Py_None)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("unexpected return value from plpython procedure"),
-						 errdetail("void-returning functions must return \"None\"")));
+						 errmsg("invalid return value from plpython function"),
+						 errdetail("Functions returning type \"void\" must return \"None\".")));
 
 			fcinfo->isnull = false;
 			rv = (Datum) 0;
