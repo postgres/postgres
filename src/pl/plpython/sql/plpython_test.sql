@@ -68,3 +68,8 @@ SELECT join_sequences(sequences) FROM sequences
 SELECT newline_lf();
 SELECT newline_cr();
 SELECT newline_crlf();
+
+-- Tests for functions returning void
+SELECT test_void_func1(), test_void_func1() IS NULL AS "is null";
+SELECT test_void_func2(); -- should fail
+SELECT test_return_none(), test_return_none() IS NULL AS "is null";

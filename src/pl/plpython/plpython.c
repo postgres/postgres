@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.71 2006/02/20 20:10:37 neilc Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.72 2006/02/28 20:03:52 neilc Exp $
  *
  *********************************************************************
  */
@@ -91,7 +91,8 @@ typedef union PLyTypeInput
  */
 typedef struct PLyObToDatum
 {
-	FmgrInfo	typfunc;
+	FmgrInfo	typfunc;		/* The type's input function */
+	Oid			typoid;			/* The OID of the type */
 	Oid			typioparam;
 	bool		typbyval;
 }	PLyObToDatum;
@@ -138,7 +139,7 @@ typedef struct PLyProcedure
 	int			nargs;
 	PyObject   *code;			/* compiled procedure code */
 	PyObject   *statics;		/* data saved across calls, local scope */
-	PyObject   *globals;		/* data saved across calls, global score */
+	PyObject   *globals;		/* data saved across calls, global scope */
 	PyObject   *me;				/* PyCObject containing pointer to this
 								 * PLyProcedure */
 }	PLyProcedure;
@@ -757,9 +758,24 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			elog(ERROR, "SPI_finish failed");
 
 		/*
-		 * convert the python PyObject to a postgresql Datum
+		 * If the function is declared to return void, the Python
+		 * return value must be None. For void-returning functions, we
+		 * also treat a None return value as a special "void datum"
+		 * rather than NULL (as is the case for non-void-returning
+		 * functions).
 		 */
-		if (plrv == Py_None)
+		if (proc->result.out.d.typoid == VOIDOID)
+		{
+			if (plrv != Py_None)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("unexpected return value from plpython procedure"),
+						 errdetail("void-returning functions must return \"None\"")));
+
+			fcinfo->isnull = false;
+			rv = (Datum) 0;
+		}
+		else if (plrv == Py_None)
 		{
 			fcinfo->isnull = true;
 			rv = PointerGetDatum(NULL);
@@ -1031,8 +1047,9 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 					 procStruct->prorettype);
 			rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
 
-			/* Disallow pseudotype result */
-			if (rvTypeStruct->typtype == 'p')
+			/* Disallow pseudotype result, except for void */
+			if (rvTypeStruct->typtype == 'p' &&
+				procStruct->prorettype != VOIDOID)
 			{
 				if (procStruct->prorettype == TRIGGEROID)
 					ereport(ERROR,
@@ -1329,6 +1346,7 @@ PLy_output_datum_func2(PLyObToDatum * arg, HeapTuple typeTup)
 	Form_pg_type typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 	perm_fmgr_info(typeStruct->typinput, &arg->typfunc);
+	arg->typoid = HeapTupleGetOid(typeTup);
 	arg->typioparam = getTypeIOParam(typeTup);
 	arg->typbyval = typeStruct->typbyval;
 }

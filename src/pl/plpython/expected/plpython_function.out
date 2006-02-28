@@ -289,3 +289,14 @@ plan = plpy.prepare("SELECT $1 AS testvalue1, $2 AS testvalue2", ["text", "text"
 rv = plpy.execute(plan, u"\\x80", 1)
 return rv[0]["testvalue1"]
 ' LANGUAGE plpythonu;
+-- Tests for functions that return void
+CREATE FUNCTION test_void_func1() RETURNS void AS $$
+x = 10
+$$ LANGUAGE plpythonu;
+-- illegal: can't return non-None value in void-returning func
+CREATE FUNCTION test_void_func2() RETURNS void AS $$
+return 10
+$$ LANGUAGE plpythonu;
+CREATE FUNCTION test_return_none() RETURNS int AS $$
+None
+$$ LANGUAGE plpythonu;

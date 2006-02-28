@@ -182,3 +182,19 @@ SELECT newline_crlf();
           123
 (1 row)
 
+-- Tests for functions returning void
+SELECT test_void_func1(), test_void_func1() IS NULL AS "is null";
+ test_void_func1 | is null 
+-----------------+---------
+                 | f
+(1 row)
+
+SELECT test_void_func2(); -- should fail
+ERROR:  unexpected return value from plpython procedure
+DETAIL:  void-returning functions must return "None"
+SELECT test_return_none(), test_return_none() IS NULL AS "is null";
+ test_return_none | is null 
+------------------+---------
+                  | t
+(1 row)
+
