@@ -307,19 +307,19 @@ ERROR:  bad cube representation
 DETAIL:  syntax error at or near ","
 SELECT '[(1,2,3),(2,3)]'::cube AS cube; -- 1
 ERROR:  bad cube representation
-DETAIL:  different point dimensions in (1,2,3) and (2,3)
+DETAIL:  Different point dimensions in (1,2,3) and (2,3).
 SELECT '[(1,2),(1,2,3)]'::cube AS cube; -- 1
 ERROR:  bad cube representation
-DETAIL:  different point dimensions in (1,2) and (1,2,3)
+DETAIL:  Different point dimensions in (1,2) and (1,2,3).
 SELECT '(1),(2),'::cube AS cube; -- 2
 ERROR:  bad cube representation
 DETAIL:  syntax error at or near ","
 SELECT '(1,2,3),(2,3)'::cube AS cube; -- 3
 ERROR:  bad cube representation
-DETAIL:  different point dimensions in (1,2,3) and (2,3)
+DETAIL:  Different point dimensions in (1,2,3) and (2,3).
 SELECT '(1,2),(1,2,3)'::cube AS cube; -- 3
 ERROR:  bad cube representation
-DETAIL:  different point dimensions in (1,2) and (1,2,3)
+DETAIL:  Different point dimensions in (1,2) and (1,2,3).
 SELECT '(1,2,3)ab'::cube AS cube; -- 4
 ERROR:  bad cube representation
 DETAIL:  syntax error at or near "a"
@@ -400,10 +400,10 @@ SELECT '(0)'::text::cube;
 --
 select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
 ERROR:  bad cube representation
-DETAIL:  more than 100 dimensions
+DETAIL:  A cube cannot have more than 100 dimensions.
 select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
 ERROR:  bad cube representation
-DETAIL:  more than 100 dimensions
+DETAIL:  A cube cannot have more than 100 dimensions.
 --
 -- testing the  operators
 --
