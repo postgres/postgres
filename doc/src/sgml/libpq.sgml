@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.199 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.199.2.1 2006/03/01 00:23:33 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -298,9 +298,7 @@ PGconn *PQconnectdb(const char *conninfo);
       Service name to use for additional parameters.  It specifies a service
       name in <filename>pg_service.conf</filename> that holds additional connection parameters.
       This allows applications to specify only a service name so connection parameters 
-      can be centrally maintained.  See 
-      <filename>share/pg_service.conf.sample</> in the installation
-      directory for information on how to set up the file.
+      can be centrally maintained. See <xref linkend="libpq-pgservice">.
      </para>
      </listitem>
     </varlistentry>
@@ -3993,6 +3991,35 @@ access to world or group; achieve this by the command
 If the permissions are less strict than this, the file will be ignored.
 (The file permissions are not currently checked on Microsoft Windows,
 however.)
+</para>
+</sect1>
+
+
+<sect1 id="libpq-pgservice">
+<title>The Connection Service File</title>
+
+<indexterm zone="libpq-pgservice">
+ <primary>connection service file</primary>
+</indexterm>
+<indexterm zone="libpq-pgservice">
+ <primary>pg_service.conf</primary>
+</indexterm>
+
+<para>
+The connection service file allows libpq connection parameters to be
+associated with a single service name. That service name can then be
+specified by a libpq connection, and the associated settings will be
+used. This allows connection parameters to be modified without requiring
+a recompile of the libpq application. The service name can also be
+specified using the <envar>PGSERVICE</envar> environment variable.
+</para>
+<para>
+To use this feature, copy
+<filename>share/pg_service.conf.sample</filename> to
+<filename>etc/pg_service.conf</filename> and edit the file to add
+service names and parameters. This file can be used for client-only
+installs too. The file's location can also be specified by the
+<envar>PGSYSCONFDIR</envar> environment variable.
 </para>
 </sect1>
 
