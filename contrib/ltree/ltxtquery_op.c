@@ -57,7 +57,7 @@ checkcondition_str(void *checkval, ITEM * val)
 	cmpptr = (val->flag & LVAR_INCASE) ? pg_strncasecmp : strncmp;
 	while (tlen > 0)
 	{
-		if (val->flag & LVAR_SUBLEXEM)
+		if (val->flag & LVAR_SUBLEXEME)
 		{
 			if (compare_subnode(level, op, val->length, cmpptr, (val->flag & LVAR_ANYEND)))
 				return true;

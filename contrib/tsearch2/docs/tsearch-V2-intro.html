@@ -322,7 +322,7 @@ result, and a NOTICE like this:</p>
 <pre>
         SELECT to_tsquery('default', 'a|is&amp;not|!the');
         NOTICE:  Query contains only stopword(s)
-                 or doesn't contain lexem(s), ignored
+                 or doesn't contain lexeme(s), ignored
          to_tsquery
         -----------
         (1 row)
@@ -730,7 +730,7 @@ the ISpell sources, and you can use them to integrate into
 tsearch2. This is not complicated, but is not very obvious to begin
 with. The tsearch2 ISpell interface needs only the listing of
 dictionary words, it will parse and load those words, and use the
-ISpell dictionary for lexem processing.</p>
+ISpell dictionary for lexeme processing.</p>
 
 <p>I found the ISPell make system to be very finicky. Their
 documentation actually states this to be the case. So I just did
@@ -769,7 +769,7 @@ to the stored procedures from the row where the dict_name =
                 WHERE dict_name = 'ispell_template');
 </pre>
 <p>Now that we have a dictionary we can specify it's use in a query
-to get a lexem. For this we will use the lexize function. The
+to get a lexeme. For this we will use the lexize function. The
 lexize function takes the name of the dictionary to use as an
 argument. Just as the other tsearch2 functions operate. You will
 need to stop your psql session and start it again in order for this
@@ -788,8 +788,8 @@ dictionary.</p>
 <pre>
   SELECT set_curdict('en_ispell');
 </pre>
-<p>Lexize is meant to turn a word into a lexem. It is possible to
-receive more than one lexem returned for a single word.</p>
+<p>Lexize is meant to turn a word into a lexeme. It is possible to
+receive more than one lexeme returned for a single word.</p>
 <pre>
  SELECT lexize('en_ispell', 'conditionally');
            lexize
@@ -798,7 +798,7 @@ receive more than one lexem returned for a single word.</p>
         (1 row)
 </pre>
 <p>The lexize function is not meant to take a full string as an
-argument to return lexems for. If you passed in an entire sentence,
+argument to return lexemes for. If you passed in an entire sentence,
 it attempts to find that entire sentence in the dictionary. Since
 the dictionary contains only words, you will receive an empty
 result set back.</p>
@@ -809,7 +809,7 @@ result set back.</p>
         
         (1 row)
         
-If you parse a lexem from a word not in the dictionary, then you will receive an empty result. This makes sense because the word "tsearch" is not in the english dictionary. You can create your own additions to the dictionary if you like. This may be useful for scientific or technical glossaries that need to be indexed. SELECT lexize('en_ispell', 'tsearch'); lexize -------- (1 row)
+If you parse a lexeme from a word not in the dictionary, then you will receive an empty result. This makes sense because the word "tsearch" is not in the english dictionary. You can create your own additions to the dictionary if you like. This may be useful for scientific or technical glossaries that need to be indexed. SELECT lexize('en_ispell', 'tsearch'); lexize -------- (1 row)
 
 </pre>
 <p>This is not to say that tsearch will be ignored when adding text
@@ -830,11 +830,11 @@ concerned with forcing the use of the ISpell dictionary.</p>
                VALUES ('default_english', 'lword', '{en_ispell,en_stem}');
 </pre>
 <p>We have just inserted 3 records to the configuration mapping,
-specifying that the lexem types for "lhword, lpart_hword and lword"
+specifying that the lexeme types for "lhword, lpart_hword and lword"
 are to be stemmed using the 'en_ispell' dictionary we added into
 pg_ts_dict, when using the configuration ' default_english' which
 we added to pg_ts_cfg.</p>
-<p>There are several other lexem types used that we do not need to
+<p>There are several other lexeme types used that we do not need to
 specify as using the ISpell dictionary. We can simply insert values
 using the 'simple' stemming process dictionary.</p>
 <pre>
@@ -889,10 +889,10 @@ configuration to be our default for en_US locale.</p>
         (1 row)
 </pre>
 <p>Notice here that words like "tsearch" are still parsed and
-indexed in the tsvector column. There is a lexem returned for the
+indexed in the tsvector column. There is a lexeme returned for the
 word becuase in the configuration mapping table, we specify words
 to be used from the 'en_ispell' dictionary first, but as a fallback
-to use the 'en_stem' dictionary. Therefore a lexem is not returned
+to use the 'en_stem' dictionary. Therefore a lexeme is not returned
 from en_ispell, but is returned from en_stem, and added to the
 tsvector.</p>
 <pre>
@@ -905,7 +905,7 @@ tsvector.</p>
 <p>Notice in this last example I added the word "computer" to the
 text to be converted into a tsvector. Because we have setup our
 default configuration to use the ISpell english dictionary, the
-words are lexized, and computer returns 2 lexems at the same
+words are lexized, and computer returns 2 lexemes at the same
 position. 'compute':7 and 'computer':7 are now both indexed for the
 word computer.</p>
 <p>You can create additional dictionary lists, or use the extra

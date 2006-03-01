@@ -44,7 +44,7 @@ box:
           ereport(ERROR,
                   (errcode(ERRCODE_SYNTAX_ERROR),
                    errmsg("bad cube representation"),
-                   errdetail("different point dimensions in (%s) and (%s)",
+                   errdetail("Different point dimensions in (%s) and (%s).",
                              $2, $4)));
 	      YYABORT;
 	    }
@@ -52,8 +52,8 @@ box:
               ereport(ERROR,
                       (errcode(ERRCODE_SYNTAX_ERROR),
                        errmsg("bad cube representation"),
-                       errdetail("more than %d dimensions",
-                                 CUBE_MAX_DIM)));
+                       errdetail("A cube cannot have more than %d dimensions.",
+								 CUBE_MAX_DIM)));
               YYABORT;
             }
 	    
@@ -70,7 +70,7 @@ box:
           ereport(ERROR,
                   (errcode(ERRCODE_SYNTAX_ERROR),
                    errmsg("bad cube representation"),
-                   errdetail("different point dimensions in (%s) and (%s)",
+                   errdetail("Different point dimensions in (%s) and (%s).",
                              $1, $3)));
 	      YYABORT;
 	    }
@@ -78,7 +78,7 @@ box:
               ereport(ERROR,
                       (errcode(ERRCODE_SYNTAX_ERROR),
                        errmsg("bad cube representation"),
-                       errdetail("more than %d dimensions",
+                       errdetail("A cube cannot have more than %d dimensions.",
                                  CUBE_MAX_DIM)));
               YYABORT;
             }
@@ -95,7 +95,7 @@ box:
               ereport(ERROR,
                       (errcode(ERRCODE_SYNTAX_ERROR),
                        errmsg("bad cube representation"),
-                       errdetail("more than %d dimensions",
+                       errdetail("A cube cannot have more than %d dimensions.",
                                  CUBE_MAX_DIM)));
               YYABORT;
             }
@@ -113,7 +113,7 @@ box:
               ereport(ERROR,
                       (errcode(ERRCODE_SYNTAX_ERROR),
                        errmsg("bad cube representation"),
-                       errdetail("more than %d dimensions",
+                       errdetail("A cube cannot have more than %d dimensions.",
                                  CUBE_MAX_DIM)));
               YYABORT;
             }
@@ -187,7 +187,8 @@ write_box(unsigned int dim, char *str1, char *str2)
 }
 
 
-static NDBOX * write_point_as_box(char *str, int dim)
+static NDBOX *
+write_point_as_box(char *str, int dim)
 {
   NDBOX * bp;
   int i, size;

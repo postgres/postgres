@@ -81,7 +81,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	if (doctree == NULL)
 	{
 		xmlCleanupParser();
-		elog_error(ERROR, "Error parsing XML document", 0);
+		elog_error(ERROR, "error parsing XML document", 0);
 
 		PG_RETURN_NULL();
 	}
@@ -95,7 +95,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		{
 			xmlFreeDoc(doctree);
 			xmlCleanupParser();
-			elog_error(ERROR, "Error parsing stylesheet as XML document", 0);
+			elog_error(ERROR, "error parsing stylesheet as XML document", 0);
 			PG_RETURN_NULL();
 		}
 
@@ -110,7 +110,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		xmlFreeDoc(doctree);
 		xsltCleanupGlobals();
 		xmlCleanupParser();
-		elog_error(ERROR, "Failed to parse stylesheet", 0);
+		elog_error(ERROR, "failed to parse stylesheet", 0);
 		PG_RETURN_NULL();
 	}
 

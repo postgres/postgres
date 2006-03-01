@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.34 2006/01/21 04:38:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.35 2006/03/01 06:30:32 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,42 +752,41 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-					 errdetail("could not open file \"%s\": %m",
-							   path)));
+					 errdetail("Could not open file \"%s\": %m.", path)));
 			break;
 		case SLRU_SEEK_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-				  errdetail("could not seek in file \"%s\" to offset %u: %m",
+				  errdetail("Could not seek in file \"%s\" to offset %u: %m.",
 							path, offset)));
 			break;
 		case SLRU_READ_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-				errdetail("could not read from file \"%s\" at offset %u: %m",
+				errdetail("Could not read from file \"%s\" at offset %u: %m.",
 						  path, offset)));
 			break;
 		case SLRU_WRITE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-				 errdetail("could not write to file \"%s\" at offset %u: %m",
+				 errdetail("Could not write to file \"%s\" at offset %u: %m.",
 						   path, offset)));
 			break;
 		case SLRU_FSYNC_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-					 errdetail("could not fsync file \"%s\": %m",
+					 errdetail("Could not fsync file \"%s\": %m.",
 							   path)));
 			break;
 		case SLRU_CLOSE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-					 errdetail("could not close file \"%s\": %m",
+					 errdetail("Could not close file \"%s\": %m.",
 							   path)));
 			break;
 		default:

@@ -144,7 +144,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 		PREPAREARR(r);
 
 		if (ARRNELEMS(r) >= 2 * MAXNUMRANGE)
-			elog(NOTICE, "Input array is too big (%d maximum allowed, %d current), use gist__intbig_ops opclass instead",
+			elog(NOTICE, "input array is too big (%d maximum allowed, %d current), use gist__intbig_ops opclass instead",
 				 2 * MAXNUMRANGE - 1, ARRNELEMS(r));
 
 		retval = palloc(sizeof(GISTENTRY));

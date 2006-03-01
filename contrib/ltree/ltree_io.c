@@ -80,8 +80,8 @@ ltree_in(PG_FUNCTION_ARGS)
 					ereport(ERROR,
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
-							 errdetail("name length is %d, must " \
-									   "be < 256, in position %d",
+							 errdetail("Name length is %d, must "
+									   "be < 256, in position %d.",
 									 lptr->len, (int) (lptr->start - buf))));
 
 				totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
@@ -104,8 +104,8 @@ ltree_in(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("name of level is too long"),
-					 errdetail("name length is %d, must " \
-							   "be < 256, in position %d",
+					 errdetail("Name length is %d, must "
+							   "be < 256, in position %d.",
 							   lptr->len, (int) (lptr->start - buf))));
 
 		totallen += MAXALIGN(lptr->len + LEVEL_HDRSIZE);
@@ -269,21 +269,21 @@ lquery_in(PG_FUNCTION_ARGS)
 			{
 				if (lptr->start == ptr)
 					UNCHAR;
-				lptr->flag |= LVAR_SUBLEXEM;
-				curqlevel->flag |= LVAR_SUBLEXEM;
+				lptr->flag |= LVAR_SUBLEXEME;
+				curqlevel->flag |= LVAR_SUBLEXEME;
 			}
 			else if (*ptr == '|')
 			{
 				lptr->len = ptr - lptr->start -
-					((lptr->flag & LVAR_SUBLEXEM) ? 1 : 0) -
+					((lptr->flag & LVAR_SUBLEXEME) ? 1 : 0) -
 					((lptr->flag & LVAR_INCASE) ? 1 : 0) -
 					((lptr->flag & LVAR_ANYEND) ? 1 : 0);
 				if (lptr->len > 255)
 					ereport(ERROR,
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
-							 errdetail("name length is %d, must " \
-									   "be < 256, in position %d",
+							 errdetail("Name length is %d, must "
+									   "be < 256, in position %d.",
 									 lptr->len, (int) (lptr->start - buf))));
 
 				state = LQPRS_WAITVAR;
@@ -291,15 +291,15 @@ lquery_in(PG_FUNCTION_ARGS)
 			else if (*ptr == '.')
 			{
 				lptr->len = ptr - lptr->start -
-					((lptr->flag & LVAR_SUBLEXEM) ? 1 : 0) -
+					((lptr->flag & LVAR_SUBLEXEME) ? 1 : 0) -
 					((lptr->flag & LVAR_INCASE) ? 1 : 0) -
 					((lptr->flag & LVAR_ANYEND) ? 1 : 0);
 				if (lptr->len > 255)
 					ereport(ERROR,
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
-							 errdetail("name length is %d, must " \
-									   "be < 256, in position %d",
+							 errdetail("Name length is %d, must "
+									   "be < 256, in position %d.",
 									 lptr->len, (int) (lptr->start - buf))));
 
 				state = LQPRS_WAITLEVEL;
@@ -398,7 +398,7 @@ lquery_in(PG_FUNCTION_ARGS)
 					 errdetail("Unexpected end of line.")));
 
 		lptr->len = ptr - lptr->start -
-			((lptr->flag & LVAR_SUBLEXEM) ? 1 : 0) -
+			((lptr->flag & LVAR_SUBLEXEME) ? 1 : 0) -
 			((lptr->flag & LVAR_INCASE) ? 1 : 0) -
 			((lptr->flag & LVAR_ANYEND) ? 1 : 0);
 		if (lptr->len == 0)
@@ -411,8 +411,8 @@ lquery_in(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("name of level is too long"),
-					 errdetail("name length is %d, must " \
-							   "be < 256, in position %d",
+					 errdetail("Name length is %d, must "
+							   "be < 256, in position %d.",
 							   lptr->len, (int) (lptr->start - buf))));
 	}
 	else if (state == LQPRS_WAITOPEN)
@@ -539,7 +539,7 @@ lquery_out(PG_FUNCTION_ARGS)
 				}
 				memcpy(ptr, curtlevel->name, curtlevel->len);
 				ptr += curtlevel->len;
-				if ((curtlevel->flag & LVAR_SUBLEXEM))
+				if ((curtlevel->flag & LVAR_SUBLEXEME))
 				{
 					*ptr = '%';
 					ptr++;

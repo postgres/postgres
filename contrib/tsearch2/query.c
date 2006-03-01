@@ -643,7 +643,7 @@ static QUERYTYPE *
 	pfree(state.valstate.word);
 	if (!state.num)
 	{
-		elog(NOTICE, "Query doesn't contain lexem(s)");
+		elog(NOTICE, "query doesn't contain lexeme(s)");
 		query = (QUERYTYPE *) palloc(HDRSIZEQT);
 		query->len = HDRSIZEQT;
 		query->size = 0;

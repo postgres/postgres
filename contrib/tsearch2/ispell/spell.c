@@ -869,7 +869,7 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 				char		regerrstr[ERRSTRSIZE];
 
 				pg_regerror(err, &(Affix->reg.regex), regerrstr, ERRSTRSIZE);
-				elog(ERROR, "Regex error in '%s': %s", Affix->mask, regerrstr);
+				elog(ERROR, "regex error in '%s': %s", Affix->mask, regerrstr);
 			}
 			Affix->compile = 0;
 		}

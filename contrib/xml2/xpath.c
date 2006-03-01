@@ -600,7 +600,7 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 			break;
 
 		default:
-			elog(NOTICE, "Unsupported XQuery result: %d", res->type);
+			elog(NOTICE, "unsupported XQuery result: %d", res->type);
 			xpresstr = xmlStrdup("<unsupported/>");
 	}
 
@@ -781,8 +781,8 @@ xpath_table(PG_FUNCTION_ARGS)
 	if (spi_tupdesc->natts != 2)
 	{
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("Expression returning multiple columns is not valid in parameter list"),
-						errdetail("Expected two columns in SPI result, got %d", spi_tupdesc->natts)));
+						errmsg("expression returning multiple columns is not valid in parameter list"),
+						errdetail("Expected two columns in SPI result, got %d.", spi_tupdesc->natts)));
 	}
 
 /* Setup the parser. Beware that this must happen in the same context as the
@@ -890,7 +890,7 @@ xpath_table(PG_FUNCTION_ARGS)
 								break;
 
 							default:
-								elog(NOTICE, "Unsupported XQuery result: %d", res->type);
+								elog(NOTICE, "unsupported XQuery result: %d", res->type);
 								resstr = xmlStrdup("<unsupported/>");
 						}
 

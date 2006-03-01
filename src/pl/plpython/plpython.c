@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.73 2006/02/28 20:56:14 neilc Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.74 2006/03/01 06:30:32 neilc Exp $
  *
  *********************************************************************
  */
@@ -404,7 +404,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_EXCEPTION),
 						 errmsg("unexpected return value from trigger procedure"),
-						 errdetail("expected None or a String")));
+						 errdetail("Expected None or a String.")));
 
 			srv = PyString_AsString(plrv);
 			if (pg_strcasecmp(srv, "SKIP") == 0)
@@ -428,7 +428,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_EXCEPTION),
 						 errmsg("unexpected return value from trigger procedure"),
-						 errdetail("expected None, \"OK\", \"SKIP\", or \"MODIFY\"")));
+						 errdetail("Expected None, \"OK\", \"SKIP\", or \"MODIFY\".")));
 			}
 		}
 	}
@@ -770,7 +770,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("invalid return value from plpython function"),
-						 errdetail("Functions returning type \"void\" must return \"None\".")));
+						 errdetail("Functions returning type \"void\" must return None.")));
 
 			fcinfo->isnull = false;
 			rv = (Datum) 0;

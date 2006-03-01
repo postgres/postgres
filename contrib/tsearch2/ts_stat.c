@@ -426,7 +426,7 @@ get_ti_Oid(void)
 
 	if (SPI_processed < 1)
 		/* internal error */
-		elog(ERROR, "There is no tsvector type");
+		elog(ERROR, "there is no tsvector type");
 	tiOid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
 	if (tiOid == InvalidOid)
 		/* internal error */

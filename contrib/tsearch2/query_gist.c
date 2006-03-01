@@ -138,14 +138,14 @@ Datum		gtsq_picksplit(PG_FUNCTION_ARGS);
 Datum
 gtsq_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Not implemented");
+	elog(ERROR, "not implemented");
 	PG_RETURN_DATUM(0);
 }
 
 Datum
 gtsq_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Not implemented");
+	elog(ERROR, "not implemented");
 	PG_RETURN_DATUM(0);
 }
 

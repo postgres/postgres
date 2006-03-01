@@ -40,7 +40,7 @@ typedef struct
 
 #define LVAR_ANYEND 0x01
 #define LVAR_INCASE 0x02
-#define LVAR_SUBLEXEM	0x04
+#define LVAR_SUBLEXEME	0x04
 
 typedef struct
 {
@@ -58,9 +58,9 @@ typedef struct
 
 #define LQL_NOT		0x10
 #ifdef LOWER_NODE
-#define FLG_CANLOOKSIGN(x) ( ( (x) & ( LQL_NOT | LVAR_ANYEND | LVAR_SUBLEXEM ) ) == 0 )
+#define FLG_CANLOOKSIGN(x) ( ( (x) & ( LQL_NOT | LVAR_ANYEND | LVAR_SUBLEXEME ) ) == 0 )
 #else
-#define FLG_CANLOOKSIGN(x) ( ( (x) & ( LQL_NOT | LVAR_ANYEND | LVAR_SUBLEXEM | LVAR_INCASE ) ) == 0 )
+#define FLG_CANLOOKSIGN(x) ( ( (x) & ( LQL_NOT | LVAR_ANYEND | LVAR_SUBLEXEME | LVAR_INCASE ) ) == 0 )
 #endif
 #define LQL_CANLOOKSIGN(x) FLG_CANLOOKSIGN( ((lquery_level*)(x))->flag )
 

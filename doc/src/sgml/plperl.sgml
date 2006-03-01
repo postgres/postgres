@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.49 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.50 2006/03/01 06:30:32 neilc Exp $
 -->
 
  <chapter id="plperl">
@@ -399,7 +399,7 @@ CREATE OR REPLACE FUNCTION lotsa_md5 (INTEGER) RETURNS SETOF foo_type AS $$
     my $t = localtime;
     elog(NOTICE, "opening file $file at $t" );
     open my $fh, '&lt;', $file # ooh, it's a file access!
-        or elog(ERROR, "Can't open $file for reading: $!");
+        or elog(ERROR, "can't open $file for reading: $!");
     my @words = &lt;$fh&gt;;
     close $fh;
     $t = localtime;
@@ -556,9 +556,9 @@ $$ LANGUAGE plperl;
 CREATE FUNCTION badfunc() RETURNS integer AS $$
     my $tmpfile = "/tmp/badfile";
     open my $fh, '&gt;', $tmpfile
-        or elog(ERROR, qq{Could not open the file "$tmpfile": $!});
+        or elog(ERROR, qq{could not open the file "$tmpfile": $!});
     print $fh "Testing writing to a file\n";
-    close $fh or elog(ERROR, qq{Could not close the file "$tmpfile": $!});
+    close $fh or elog(ERROR, qq{could not close the file "$tmpfile": $!});
     return 1;
 $$ LANGUAGE plperl;
 </programlisting>

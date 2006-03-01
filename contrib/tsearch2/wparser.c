@@ -342,14 +342,14 @@ set_curprs_byname(PG_FUNCTION_ARGS)
 typedef struct
 {
 	int			type;
-	char	   *lexem;
-}	LexemEntry;
+	char	   *lexeme;
+}	LexemeEntry;
 
 typedef struct
 {
-	int			cur;
-	int			len;
-	LexemEntry *list;
+	int			 cur;
+	int			 len;
+	LexemeEntry *list;
 }	PrsStorage;
 
 
@@ -370,7 +370,7 @@ prs_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 	st = (PrsStorage *) palloc(sizeof(PrsStorage));
 	st->cur = 0;
 	st->len = 16;
-	st->list = (LexemEntry *) palloc(sizeof(LexemEntry) * st->len);
+	st->list = (LexemeEntry *) palloc(sizeof(LexemeEntry) * st->len);
 
 	prs->prs = (void *) DatumGetPointer(
 										FunctionCall2(
@@ -390,11 +390,11 @@ prs_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 		if (st->cur >= st->len)
 		{
 			st->len = 2 * st->len;
-			st->list = (LexemEntry *) repalloc(st->list, sizeof(LexemEntry) * st->len);
+			st->list = (LexemeEntry *) repalloc(st->list, sizeof(LexemeEntry) * st->len);
 		}
-		st->list[st->cur].lexem = palloc(llen + 1);
-		memcpy(st->list[st->cur].lexem, lex, llen);
-		st->list[st->cur].lexem[llen] = '\0';
+		st->list[st->cur].lexeme = palloc(llen + 1);
+		memcpy(st->list[st->cur].lexeme, lex, llen);
+		st->list[st->cur].lexeme[llen] = '\0';
 		st->list[st->cur].type = type;
 		st->cur++;
 	}
@@ -430,7 +430,7 @@ prs_process_call(FuncCallContext *funcctx)
 
 		values[0] = tid;
 		sprintf(tid, "%d", st->list[st->cur].type);
-		values[1] = st->list[st->cur].lexem;
+		values[1] = st->list[st->cur].lexeme;
 		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
 		result = HeapTupleGetDatum(tuple);
 

@@ -13,7 +13,7 @@ set_limit(PG_FUNCTION_ARGS)
 	float4		nlimit = PG_GETARG_FLOAT4(0);
 
 	if (nlimit < 0 || nlimit > 1.0)
-		elog(ERROR, "Wrong limit, should be between 0 and 1");
+		elog(ERROR, "wrong limit, should be between 0 and 1");
 	trgm_limit = nlimit;
 	PG_RETURN_FLOAT4(trgm_limit);
 }

@@ -95,7 +95,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 					(*lenval)++;
 				}
 				else if (*(state->buf) == '%')
-					*flag |= LVAR_SUBLEXEM;
+					*flag |= LVAR_SUBLEXEME;
 				else if (*(state->buf) == '@')
 					*flag |= LVAR_INCASE;
 				else if (*(state->buf) == '*')
@@ -412,7 +412,7 @@ infix(INFIX * in, bool first)
 			op++;
 			in->cur++;
 		}
-		if (in->curpol->flag & LVAR_SUBLEXEM)
+		if (in->curpol->flag & LVAR_SUBLEXEME)
 		{
 			*(in->cur) = '%';
 			in->cur++;

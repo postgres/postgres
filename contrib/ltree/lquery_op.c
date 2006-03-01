@@ -26,7 +26,7 @@ typedef struct
 }	FieldNot;
 
 static char *
-getlexem(char *start, char *end, int *len)
+getlexeme(char *start, char *end, int *len)
 {
 	char	   *ptr;
 
@@ -45,7 +45,7 @@ getlexem(char *start, char *end, int *len)
 }
 
 bool
-			compare_subnode(ltree_level * t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
+compare_subnode(ltree_level * t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
 {
 	char	   *endt = t->name + t->len;
 	char	   *endq = qn + len;
@@ -54,11 +54,11 @@ bool
 				lenq;
 	bool		isok;
 
-	while ((qn = getlexem(qn, endq, &lenq)) != NULL)
+	while ((qn = getlexeme(qn, endq, &lenq)) != NULL)
 	{
 		tn = t->name;
 		isok = false;
-		while ((tn = getlexem(tn, endt, &lent)) != NULL)
+		while ((tn = getlexeme(tn, endt, &lent)) != NULL)
 		{
 			if (
 				(
@@ -93,7 +93,7 @@ checkLevel(lquery_level * curq, ltree_level * curt)
 	{
 		cmpptr = (curvar->flag & LVAR_INCASE) ? pg_strncasecmp : strncmp;
 
-		if (curvar->flag & LVAR_SUBLEXEM)
+		if (curvar->flag & LVAR_SUBLEXEME)
 		{
 			if (compare_subnode(curt, curvar->name, curvar->len, cmpptr, (curvar->flag & LVAR_ANYEND)))
 				return true;

@@ -318,7 +318,7 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 #endif
 		}
 
-		if (type >= cfg->len)	/* skip this type of lexem */
+		if (type >= cfg->len)	/* skip this type of lexeme */
 			continue;
 
 		for (i = 0; i < cfg->map[type].len; i++)
@@ -335,7 +335,7 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 													 PointerGetDatum(lenlemm)
 																	 )
 				);
-			if (!norms)			/* dictionary doesn't know this lexem */
+			if (!norms)			/* dictionary doesn't know this lexeme */
 				continue;
 
 			prs->pos++;			/* set pos */
@@ -357,7 +357,7 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 				prs->curwords++;
 			}
 			pfree(norms);
-			break;				/* lexem already normalized or is stop word */
+			break;				/* lexeme already normalized or is stop word */
 		}
 	}
 
@@ -472,7 +472,7 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 													 PointerGetDatum(lenlemm)
 																	 )
 				);
-			if (!norms)			/* dictionary doesn't know this lexem */
+			if (!norms)			/* dictionary doesn't know this lexeme */
 				continue;
 
 			while (ptr->lexeme)
@@ -482,7 +482,7 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 				ptr++;
 			}
 			pfree(norms);
-			break;				/* lexem already normalized or is stop word */
+			break;				/* lexeme already normalized or is stop word */
 		}
 	}
 

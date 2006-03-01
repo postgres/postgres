@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for ISBNs.
  *
- *	$PostgreSQL: pgsql/contrib/isbn_issn/isbn_issn.c,v 1.7 2003/11/29 22:39:20 pgsql Exp $
+ *	$PostgreSQL: pgsql/contrib/isbn_issn/isbn_issn.c,v 1.8 2006/03/01 06:30:31 neilc Exp $
  */
 
 #include "postgres.h"
@@ -45,28 +45,23 @@ isbn *
 isbn_in(char *str)
 {
 	isbn	   *result;
+	int			len;
 
-	if (strlen(str) != 13)
-	{
+	len = strlen(str);
+	if (len != 13)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid ISBN: \"%s\"", str),
-				 errdetail("incorrect length")));
+				 errdetail("ISBNs must be 13 characters in length.")));
 
-		return (NULL);
-	}
 	if (isbn_sum(str) != 0)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid ISBN: \"%s\"", str),
-				 errdetail("failed checksum")));
-		return (NULL);
-	}
+				 errdetail("ISBN failed checksum.")));
 
 	result = (isbn *) palloc(sizeof(isbn));
-
-	strncpy(result->num, str, 13);
+	memcpy(result->num, str, len);
 	memset(result->pad, ' ', 3);
 	return (result);
 }
@@ -239,28 +234,23 @@ issn *
 issn_in(char *str)
 {
 	issn	   *result;
+	int			len;
 
-	if (strlen(str) != 9)
-	{
+	len = strlen(str);
+	if (len != 9)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid ISSN: \"%s\"", str),
-				 errdetail("incorrect length")));
+				 errdetail("ISSNs must be 9 characters in length.")));
 
-		return (NULL);
-	}
 	if (issn_sum(str) != 0)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid ISSN: \"%s\"", str),
-				 errdetail("failed checksum")));
-		return (NULL);
-	}
+				 errdetail("ISSN failed checksum.")));
 
 	result = (issn *) palloc(sizeof(issn));
-
-	strncpy(result->num, str, 9);
+	memcpy(result->num, str, len);
 	memset(result->pad, ' ', 7);
 	return (result);
 }

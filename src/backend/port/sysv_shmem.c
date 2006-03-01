@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.44 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.45 2006/03/01 06:30:32 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -426,7 +426,7 @@ PGSharedMemoryReAttach(void)
 	UsedShmemSegAddr = origUsedShmemSegAddr;
 #endif
 
-	elog(DEBUG3, "Attaching to %p", UsedShmemSegAddr);
+	elog(DEBUG3, "attaching to %p", UsedShmemSegAddr);
 	hdr = (void *) PGSharedMemoryAttach((IpcMemoryKey) UsedShmemSegID, &shmid);
 	if (hdr == NULL)
 		elog(FATAL, "could not reattach to shared memory (key=%d, addr=%p): %m",

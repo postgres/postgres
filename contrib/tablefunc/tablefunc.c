@@ -894,9 +894,9 @@ get_crosstab_tuplestore(char *sql,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid return type"),
-					 errdetail("query-specified return " \
+					 errdetail("Query-specified return " \
 							   "tuple has %d columns but crosstab " \
-							   "returns %d", tupdesc->natts, result_ncols)));
+							   "returns %d.", tupdesc->natts, result_ncols)));
 
 		/* allocate space */
 		values = (char **) palloc(result_ncols * sizeof(char *));
@@ -1531,12 +1531,12 @@ validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool show_serial
 
 	/* check that the type of the fifth column is INT4 */
 	if (show_branch && show_serial && tupdesc->attrs[4]->atttypid != INT4OID)
-		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
+		elog(ERROR, "query-specified return tuple not valid for Connectby: "
 			 "fifth column must be type %s", format_type_be(INT4OID));
 
 	/* check that the type of the fifth column is INT4 */
 	if (!show_branch && show_serial && tupdesc->attrs[3]->atttypid != INT4OID)
-		elog(ERROR, "Query-specified return tuple not valid for Connectby: "
+		elog(ERROR, "query-specified return tuple not valid for Connectby: "
 			 "fourth column must be type %s", format_type_be(INT4OID));
 
 	/* OK, the tupdesc is valid for our purposes */

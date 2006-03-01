@@ -1,7 +1,7 @@
 /*
  * In/Out definitions for tsvector type
  * Internal structure:
- * string of values, array of position lexem in string and it's length
+ * string of values, array of position lexeme in string and it's length
  * Teodor Sigaev <teodor@sigaev.ru>
  */
 #include "postgres.h"
