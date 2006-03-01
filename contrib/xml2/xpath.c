@@ -668,7 +668,7 @@ xpath_table(PG_FUNCTION_ARGS)
 								 * document */
 	int			had_values;		/* To determine end of nodeset results */
 
-	StringInfo	querysql;
+	StringInfoData	query_buf;
 
 	/* We only have a valid tuple description in table function mode */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -746,11 +746,10 @@ xpath_table(PG_FUNCTION_ARGS)
 	} while ((pos != NULL) && (numpaths < (ret_tupdesc->natts - 1)));
 
 	/* Now build query */
-
-	querysql = makeStringInfo();
+	initStringInfo(&query_buf);
 
 	/* Build initial sql statement */
-	appendStringInfo(querysql, "SELECT %s, %s FROM %s WHERE %s",
+	appendStringInfo(&query_buf, "SELECT %s, %s FROM %s WHERE %s",
 					 pkeyfield,
 					 xmlfield,
 					 relname,
@@ -761,8 +760,8 @@ xpath_table(PG_FUNCTION_ARGS)
 	if ((ret = SPI_connect()) < 0)
 		elog(ERROR, "xpath_table: SPI_connect returned %d", ret);
 
-	if ((ret = SPI_exec(querysql->data, 0)) != SPI_OK_SELECT)
-		elog(ERROR, "xpath_table: SPI execution failed for query %s", querysql->data);
+	if ((ret = SPI_exec(query_buf.data, 0)) != SPI_OK_SELECT)
+		elog(ERROR, "xpath_table: SPI execution failed for query %s", query_buf.data);
 
 	proc = SPI_processed;
 	/* elog(DEBUG1,"xpath_table: SPI returned %d rows",proc); */

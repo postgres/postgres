@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.143 2006/02/26 02:23:41 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.144 2006/03/01 06:51:01 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2038,7 +2038,7 @@ replace_text(PG_FUNCTION_ARGS)
 	text	   *buf_text;
 	text	   *ret_text;
 	int			curr_posn;
-	StringInfo	str;
+	StringInfoData str;
 
 	if (src_text_len == 0 || from_sub_text_len == 0)
 		PG_RETURN_TEXT_P(src_text);
@@ -2049,7 +2049,7 @@ replace_text(PG_FUNCTION_ARGS)
 	if (curr_posn == 0)
 		PG_RETURN_TEXT_P(src_text);
 
-	str = makeStringInfo();
+	initStringInfo(&str);
 	buf_text = src_text;
 
 	while (curr_posn > 0)
@@ -2059,8 +2059,8 @@ replace_text(PG_FUNCTION_ARGS)
 		right_text = text_substring(PointerGetDatum(buf_text),
 									curr_posn + from_sub_text_len, -1, true);
 
-		appendStringInfoText(str, left_text);
-		appendStringInfoText(str, to_sub_text);
+		appendStringInfoText(&str, left_text);
+		appendStringInfoText(&str, to_sub_text);
 
 		if (buf_text != src_text)
 			pfree(buf_text);
@@ -2069,13 +2069,12 @@ replace_text(PG_FUNCTION_ARGS)
 		curr_posn = TEXTPOS(buf_text, from_sub_text);
 	}
 
-	appendStringInfoText(str, buf_text);
+	appendStringInfoText(&str, buf_text);
 	if (buf_text != src_text)
 		pfree(buf_text);
 
-	ret_text = PG_STR_GET_TEXT(str->data);
-	pfree(str->data);
-	pfree(str);
+	ret_text = PG_STR_GET_TEXT(str.data);
+	pfree(str.data);
 
 	PG_RETURN_TEXT_P(ret_text);
 }
@@ -2227,14 +2226,15 @@ replace_text_regexp(text *src_text, void *regexp,
 	text	   *ret_text;
 	regex_t    *re = (regex_t *) regexp;
 	int			src_text_len = VARSIZE(src_text) - VARHDRSZ;
-	StringInfo	str = makeStringInfo();
-	int			regexec_result;
+	StringInfoData	buf;
 	regmatch_t	pmatch[REGEXP_REPLACE_BACKREF_CNT];
 	pg_wchar   *data;
 	size_t		data_len;
 	int			search_start;
 	int			data_pos;
 	bool		have_escape;
+
+	initStringInfo(&buf);
 
 	/* Convert data string to wide characters. */
 	data = (pg_wchar *) palloc((src_text_len + 1) * sizeof(pg_wchar));
@@ -2245,6 +2245,8 @@ replace_text_regexp(text *src_text, void *regexp,
 
 	for (search_start = data_pos = 0; search_start <= data_len;)
 	{
+		int regexec_result;
+
 		regexec_result = pg_regexec(re,
 									data,
 									data_len,
@@ -2254,19 +2256,18 @@ replace_text_regexp(text *src_text, void *regexp,
 									pmatch,
 									0);
 
-		if (regexec_result != REG_OKAY && regexec_result != REG_NOMATCH)
+		if (regexec_result == REG_NOMATCH)
+			break;
+
+		if (regexec_result != REG_OKAY)
 		{
 			char		errMsg[100];
 
-			/* re failed??? */
 			pg_regerror(regexec_result, re, errMsg, sizeof(errMsg));
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 					 errmsg("regular expression failed: %s", errMsg)));
 		}
-
-		if (regexec_result == REG_NOMATCH)
-			break;
 
 		/*
 		 * Copy the text to the left of the match position.  Because we are
@@ -2281,7 +2282,7 @@ replace_text_regexp(text *src_text, void *regexp,
 									   data_pos + 1,
 									   pmatch[0].rm_so - data_pos,
 									   false);
-			appendStringInfoText(str, left_text);
+			appendStringInfoText(&buf, left_text);
 			pfree(left_text);
 		}
 
@@ -2290,9 +2291,9 @@ replace_text_regexp(text *src_text, void *regexp,
 		 * replace_text has escape characters.
 		 */
 		if (have_escape)
-			appendStringInfoRegexpSubstr(str, replace_text, pmatch, src_text);
+			appendStringInfoRegexpSubstr(&buf, replace_text, pmatch, src_text);
 		else
-			appendStringInfoText(str, replace_text);
+			appendStringInfoText(&buf, replace_text);
 
 		search_start = data_pos = pmatch[0].rm_eo;
 
@@ -2318,13 +2319,12 @@ replace_text_regexp(text *src_text, void *regexp,
 
 		right_text = text_substring(PointerGetDatum(src_text),
 									data_pos + 1, -1, true);
-		appendStringInfoText(str, right_text);
+		appendStringInfoText(&buf, right_text);
 		pfree(right_text);
 	}
 
-	ret_text = PG_STR_GET_TEXT(str->data);
-	pfree(str->data);
-	pfree(str);
+	ret_text = PG_STR_GET_TEXT(buf.data);
+	pfree(buf.data);
 	pfree(data);
 
 	return ret_text;
@@ -2512,7 +2512,7 @@ array_to_text(PG_FUNCTION_ARGS)
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
-	StringInfo	result_str = makeStringInfo();
+	StringInfoData	buf;
 	bool		printed = false;
 	char	   *p;
 	bits8	   *bitmap;
@@ -2529,6 +2529,7 @@ array_to_text(PG_FUNCTION_ARGS)
 		PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 
 	element_type = ARR_ELEMTYPE(v);
+	initStringInfo(&buf);
 
 	/*
 	 * We arrange to look up info about element type, including its output
@@ -2583,9 +2584,9 @@ array_to_text(PG_FUNCTION_ARGS)
 												  itemvalue));
 
 			if (printed)
-				appendStringInfo(result_str, "%s%s", fldsep, value);
+				appendStringInfo(&buf, "%s%s", fldsep, value);
 			else
-				appendStringInfoString(result_str, value);
+				appendStringInfoString(&buf, value);
 			printed = true;
 
 			p = att_addlength(p, typlen, PointerGetDatum(p));
@@ -2604,7 +2605,7 @@ array_to_text(PG_FUNCTION_ARGS)
 		}
 	}
 
-	PG_RETURN_TEXT_P(PG_STR_GET_TEXT(result_str->data));
+	PG_RETURN_TEXT_P(PG_STR_GET_TEXT(buf.data));
 }
 
 #define HEXBASE 16

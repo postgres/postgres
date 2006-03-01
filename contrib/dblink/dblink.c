@@ -301,11 +301,12 @@ dblink_open(PG_FUNCTION_ARGS)
 	char	   *curname = NULL;
 	char	   *sql = NULL;
 	char	   *conname = NULL;
-	StringInfo	str = makeStringInfo();
+	StringInfoData buf;
 	remoteConn *rconn = NULL;
 	bool		fail = true;	/* default to backward compatible behavior */
 
 	DBLINK_INIT;
+	initStringInfo(&buf);
 
 	if (PG_NARGS() == 2)
 	{
@@ -361,8 +362,8 @@ dblink_open(PG_FUNCTION_ARGS)
 	if (rconn->newXactForCursor)
 		(rconn->openCursorCount)++;
 
-	appendStringInfo(str, "DECLARE %s CURSOR FOR %s", curname, sql);
-	res = PQexec(conn, str->data);
+	appendStringInfo(&buf, "DECLARE %s CURSOR FOR %s", curname, sql);
+	res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		if (fail)
@@ -389,12 +390,13 @@ dblink_close(PG_FUNCTION_ARGS)
 	PGresult   *res = NULL;
 	char	   *curname = NULL;
 	char	   *conname = NULL;
-	StringInfo	str = makeStringInfo();
+	StringInfoData buf;
 	char	   *msg;
 	remoteConn *rconn = NULL;
 	bool		fail = true;	/* default to backward compatible behavior */
 
 	DBLINK_INIT;
+	initStringInfo(&buf);
 
 	if (PG_NARGS() == 1)
 	{
@@ -432,10 +434,10 @@ dblink_close(PG_FUNCTION_ARGS)
 	else
 		conn = rconn->conn;
 
-	appendStringInfo(str, "CLOSE %s", curname);
+	appendStringInfo(&buf, "CLOSE %s", curname);
 
 	/* close the cursor */
-	res = PQexec(conn, str->data);
+	res = PQexec(conn, buf.data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		if (fail)
@@ -493,7 +495,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		PGconn	   *conn = NULL;
-		StringInfo	str = makeStringInfo();
+		StringInfoData buf;
 		char	   *curname = NULL;
 		int			howmany = 0;
 		bool		fail = true;	/* default to backward compatible */
@@ -542,6 +544,9 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		if (!conn)
 			DBLINK_CONN_NOT_AVAIL;
 
+		initStringInfo(&buf);
+		appendStringInfo(&buf, "FETCH %d FROM %s", howmany, curname);
+
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
@@ -550,9 +555,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		appendStringInfo(str, "FETCH %d FROM %s", howmany, curname);
-
-		res = PQexec(conn, str->data);
+		res = PQexec(conn, buf.data);
 		if (!res ||
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
@@ -1547,12 +1550,13 @@ get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 	HeapTuple	tuple;
 	TupleDesc	tupdesc;
 	int			natts;
-	StringInfo	str = makeStringInfo();
-	char	   *sql;
+	StringInfoData buf;
 	char	   *val;
 	int16		key;
 	int			i;
 	bool		needComma;
+
+	initStringInfo(&buf);
 
 	/* get relation name including any needed schema prefix and quoting */
 	relname = generate_relation_name(relid);
@@ -1570,7 +1574,7 @@ get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 				(errcode(ERRCODE_CARDINALITY_VIOLATION),
 				 errmsg("source row not found")));
 
-	appendStringInfo(str, "INSERT INTO %s(", relname);
+	appendStringInfo(&buf, "INSERT INTO %s(", relname);
 
 	needComma = false;
 	for (i = 0; i < natts; i++)
@@ -1579,14 +1583,14 @@ get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			continue;
 
 		if (needComma)
-			appendStringInfo(str, ",");
+			appendStringInfo(&buf, ",");
 
-		appendStringInfo(str, "%s",
+		appendStringInfoString(&buf,
 					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 		needComma = true;
 	}
 
-	appendStringInfo(str, ") VALUES(");
+	appendStringInfo(&buf, ") VALUES(");
 
 	/*
 	 * remember attvals are 1 based
@@ -1598,7 +1602,7 @@ get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			continue;
 
 		if (needComma)
-			appendStringInfo(str, ",");
+			appendStringInfo(&buf, ",");
 
 		if (tgt_pkattvals != NULL)
 			key = get_attnum_pk_pos(pkattnums, pknumatts, i + 1);
@@ -1612,21 +1616,17 @@ get_sql_insert(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 
 		if (val != NULL)
 		{
-			appendStringInfo(str, "%s", quote_literal_cstr(val));
+			appendStringInfoString(&buf, quote_literal_cstr(val));
 			pfree(val);
 		}
 		else
-			appendStringInfo(str, "NULL");
+			appendStringInfo(&buf, "NULL");
 		needComma = true;
 	}
-	appendStringInfo(str, ")");
+	appendStringInfo(&buf, ")");
 
-	sql = pstrdup(str->data);
-	pfree(str->data);
-	pfree(str);
 	relation_close(rel, AccessShareLock);
-
-	return (sql);
+	return (buf.data);
 }
 
 static char *
@@ -1636,9 +1636,10 @@ get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pka
 	char	   *relname;
 	TupleDesc	tupdesc;
 	int			natts;
-	StringInfo	str = makeStringInfo();
-	char	   *sql;
+	StringInfoData	buf;
 	int			i;
+
+	initStringInfo(&buf);
 
 	/* get relation name including any needed schema prefix and quoting */
 	relname = generate_relation_name(relid);
@@ -1650,15 +1651,15 @@ get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pka
 	tupdesc = rel->rd_att;
 	natts = tupdesc->natts;
 
-	appendStringInfo(str, "DELETE FROM %s WHERE ", relname);
+	appendStringInfo(&buf, "DELETE FROM %s WHERE ", relname);
 	for (i = 0; i < pknumatts; i++)
 	{
 		int16		pkattnum = pkattnums->values[i];
 
 		if (i > 0)
-			appendStringInfo(str, " AND ");
+			appendStringInfo(&buf, " AND ");
 
-		appendStringInfo(str, "%s",
+		appendStringInfoString(&buf,
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (tgt_pkattvals == NULL)
@@ -1666,18 +1667,14 @@ get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pka
 			elog(ERROR, "target key array must not be NULL");
 
 		if (tgt_pkattvals[i] != NULL)
-			appendStringInfo(str, " = %s",
+			appendStringInfo(&buf, " = %s",
 							 quote_literal_cstr(tgt_pkattvals[i]));
 		else
-			appendStringInfo(str, " IS NULL");
+			appendStringInfo(&buf, " IS NULL");
 	}
 
-	sql = pstrdup(str->data);
-	pfree(str->data);
-	pfree(str);
 	relation_close(rel, AccessShareLock);
-
-	return (sql);
+	return (buf.data);
 }
 
 static char *
@@ -1688,12 +1685,13 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 	HeapTuple	tuple;
 	TupleDesc	tupdesc;
 	int			natts;
-	StringInfo	str = makeStringInfo();
-	char	   *sql;
+	StringInfoData buf;
 	char	   *val;
 	int16		key;
 	int			i;
 	bool		needComma;
+
+	initStringInfo(&buf);
 
 	/* get relation name including any needed schema prefix and quoting */
 	relname = generate_relation_name(relid);
@@ -1711,7 +1709,7 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 				(errcode(ERRCODE_CARDINALITY_VIOLATION),
 				 errmsg("source row not found")));
 
-	appendStringInfo(str, "UPDATE %s SET ", relname);
+	appendStringInfo(&buf, "UPDATE %s SET ", relname);
 
 	needComma = false;
 	for (i = 0; i < natts; i++)
@@ -1720,9 +1718,9 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 			continue;
 
 		if (needComma)
-			appendStringInfo(str, ", ");
+			appendStringInfo(&buf, ", ");
 
-		appendStringInfo(str, "%s = ",
+		appendStringInfo(&buf, "%s = ",
 					  quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 
 		if (tgt_pkattvals != NULL)
@@ -1737,24 +1735,24 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 
 		if (val != NULL)
 		{
-			appendStringInfo(str, "%s", quote_literal_cstr(val));
+			appendStringInfoString(&buf, quote_literal_cstr(val));
 			pfree(val);
 		}
 		else
-			appendStringInfo(str, "NULL");
+			appendStringInfoString(&buf, "NULL");
 		needComma = true;
 	}
 
-	appendStringInfo(str, " WHERE ");
+	appendStringInfo(&buf, " WHERE ");
 
 	for (i = 0; i < pknumatts; i++)
 	{
 		int16		pkattnum = pkattnums->values[i];
 
 		if (i > 0)
-			appendStringInfo(str, " AND ");
+			appendStringInfo(&buf, " AND ");
 
-		appendStringInfo(str, "%s",
+		appendStringInfo(&buf, "%s",
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (tgt_pkattvals != NULL)
@@ -1764,19 +1762,15 @@ get_sql_update(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pka
 
 		if (val != NULL)
 		{
-			appendStringInfo(str, " = %s", quote_literal_cstr(val));
+			appendStringInfo(&buf, " = %s", quote_literal_cstr(val));
 			pfree(val);
 		}
 		else
-			appendStringInfo(str, " IS NULL");
+			appendStringInfo(&buf, " IS NULL");
 	}
 
-	sql = pstrdup(str->data);
-	pfree(str->data);
-	pfree(str);
 	relation_close(rel, AccessShareLock);
-
-	return (sql);
+	return (buf.data);
 }
 
 /*
@@ -1836,11 +1830,12 @@ get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **
 	Relation	rel;
 	char	   *relname;
 	TupleDesc	tupdesc;
-	StringInfo	str = makeStringInfo();
-	char	   *sql = NULL;
+	StringInfoData buf;
 	int			ret;
 	HeapTuple	tuple;
 	int			i;
+
+	initStringInfo(&buf);
 
 	/* get relation name including any needed schema prefix and quoting */
 	relname = generate_relation_name(relid);
@@ -1863,34 +1858,30 @@ get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **
 	 * Build sql statement to look up tuple of interest Use src_pkattvals as
 	 * the criteria.
 	 */
-	appendStringInfo(str, "SELECT * FROM %s WHERE ", relname);
+	appendStringInfo(&buf, "SELECT * FROM %s WHERE ", relname);
 
 	for (i = 0; i < pknumatts; i++)
 	{
 		int16		pkattnum = pkattnums->values[i];
 
 		if (i > 0)
-			appendStringInfo(str, " AND ");
+			appendStringInfo(&buf, " AND ");
 
-		appendStringInfo(str, "%s",
+		appendStringInfoString(&buf,
 		   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (src_pkattvals[i] != NULL)
-			appendStringInfo(str, " = %s",
+			appendStringInfo(&buf, " = %s",
 							 quote_literal_cstr(src_pkattvals[i]));
 		else
-			appendStringInfo(str, " IS NULL");
+			appendStringInfo(&buf, " IS NULL");
 	}
-
-	sql = pstrdup(str->data);
-	pfree(str->data);
-	pfree(str);
 
 	/*
 	 * Retrieve the desired tuple
 	 */
-	ret = SPI_exec(sql, 0);
-	pfree(sql);
+	ret = SPI_exec(buf.data, 0);
+	pfree(buf.data);
 
 	/*
 	 * Only allow one qualifying tuple

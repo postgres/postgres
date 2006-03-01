@@ -1260,13 +1260,10 @@ build_tuplestore_recursively(char *key_fld,
 {
 	TupleDesc	tupdesc = attinmeta->tupdesc;
 	MemoryContext oldcontext;
-	StringInfo	sql = makeStringInfo();
 	int			ret;
 	int			proc;
 	int			serial_column;
-	StringInfo	branchstr = NULL;
-	StringInfo	chk_branchstr = NULL;
-	StringInfo	chk_current_key = NULL;
+	StringInfoData	sql;
 	char	  **values;
 	char	   *current_key;
 	char	   *current_key_parent;
@@ -1278,17 +1275,12 @@ build_tuplestore_recursively(char *key_fld,
 	if (max_depth > 0 && level > max_depth)
 		return tupstore;
 
-	/* start a new branch */
-	branchstr = makeStringInfo();
-
-	/* need these to check for recursion */
-	chk_branchstr = makeStringInfo();
-	chk_current_key = makeStringInfo();
+	initStringInfo(&sql);
 
 	/* Build initial sql statement */
 	if (!show_serial)
 	{
-		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = %s AND %s IS NOT NULL AND %s <> %s",
+		appendStringInfo(&sql, "SELECT %s, %s FROM %s WHERE %s = %s AND %s IS NOT NULL AND %s <> %s",
 						 key_fld,
 						 parent_key_fld,
 						 relname,
@@ -1299,7 +1291,7 @@ build_tuplestore_recursively(char *key_fld,
 	}
 	else
 	{
-		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = %s AND %s IS NOT NULL AND %s <> %s ORDER BY %s",
+		appendStringInfo(&sql, "SELECT %s, %s FROM %s WHERE %s = %s AND %s IS NOT NULL AND %s <> %s ORDER BY %s",
 						 key_fld,
 						 parent_key_fld,
 						 relname,
@@ -1359,7 +1351,7 @@ build_tuplestore_recursively(char *key_fld,
 	}
 
 	/* Retrieve the desired rows */
-	ret = SPI_execute(sql->data, true, 0);
+	ret = SPI_execute(sql.data, true, 0);
 	proc = SPI_processed;
 
 	/* Check for qualifying tuples */
@@ -1369,6 +1361,9 @@ build_tuplestore_recursively(char *key_fld,
 		SPITupleTable *tuptable = SPI_tuptable;
 		TupleDesc	spi_tupdesc = tuptable->tupdesc;
 		int			i;
+		StringInfoData	branchstr;
+		StringInfoData	chk_branchstr;
+		StringInfoData	chk_current_key;
 
 		/* First time through, do a little more setup */
 		if (level == 0)
@@ -1389,28 +1384,35 @@ build_tuplestore_recursively(char *key_fld,
 
 		for (i = 0; i < proc; i++)
 		{
+			/* start a new branch */
+			initStringInfo(&branchstr);
+
+			/* need these to check for recursion */
+			initStringInfo(&chk_branchstr);
+			initStringInfo(&chk_current_key);
+
 			/* initialize branch for this pass */
-			appendStringInfo(branchstr, "%s", branch);
-			appendStringInfo(chk_branchstr, "%s%s%s", branch_delim, branch, branch_delim);
+			appendStringInfo(&branchstr, "%s", branch);
+			appendStringInfo(&chk_branchstr, "%s%s%s", branch_delim, branch, branch_delim);
 
 			/* get the next sql result tuple */
 			spi_tuple = tuptable->vals[i];
 
 			/* get the current key and parent */
 			current_key = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
-			appendStringInfo(chk_current_key, "%s%s%s", branch_delim, current_key, branch_delim);
+			appendStringInfo(&chk_current_key, "%s%s%s", branch_delim, current_key, branch_delim);
 			current_key_parent = pstrdup(SPI_getvalue(spi_tuple, spi_tupdesc, 2));
 
 			/* get the current level */
 			sprintf(current_level, "%d", level);
 
 			/* check to see if this key is also an ancestor */
-			if (strstr(chk_branchstr->data, chk_current_key->data))
+			if (strstr(chk_branchstr.data, chk_current_key.data))
 				elog(ERROR, "infinite recursion detected");
 
 			/* OK, extend the branch */
-			appendStringInfo(branchstr, "%s%s", branch_delim, current_key);
-			current_branch = branchstr->data;
+			appendStringInfo(&branchstr, "%s%s", branch_delim, current_key);
+			current_branch = branchstr.data;
 
 			/* build a tuple */
 			values[0] = pstrdup(current_key);
@@ -1461,14 +1463,9 @@ build_tuplestore_recursively(char *key_fld,
 													tupstore);
 
 			/* reset branch for next pass */
-			xpfree(branchstr->data);
-			initStringInfo(branchstr);
-
-			xpfree(chk_branchstr->data);
-			initStringInfo(chk_branchstr);
-
-			xpfree(chk_current_key->data);
-			initStringInfo(chk_current_key);
+			xpfree(branchstr.data);
+			xpfree(chk_branchstr.data);
+			xpfree(chk_current_key.data);
 		}
 	}
 
