@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Thu Dec 8 17:26:16 EST 2005</p>
+<p>原文最終更新日:		Fri Feb 24 23:28:40 EST 2006</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:pgman at candle.pha.pa.us">pgman at candle.pha.pa.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -252,7 +252,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <h4 id="item1.6">1.6</a>) 最新版はどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.1.1 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.1.3 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -772,7 +772,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <p> 例題として、各行に整数とテキスト記述を持つ 100,000行のファイルを
     考えてみましょう。テキストの文字列の平均長さを20バイトと仮定すると、
     フラットファイルの大きさは約2.8MB です。このデータを含む PostgreSQL
-    データベースファイルの大きさは次のように約6.4MBと見積もることができ
+    データベースファイルの大きさは次のように約5.6MBと見積もることができ
     ます： 
 
 <pre>
@@ -824,16 +824,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
     しかし、<small>ORDER BY</small>と組み合わされた<small>LIMIT</small>
     は、テーブルの小さな部分を返すためにたびたびインデックスを使うでしょ
-    う。実際、MAX() や MIN() がインデックスを使わないとしても、このよう
-    な値をORDER BY と LIMIT を使ってインデックスを使って取り出すことが可
-    能です:
-
-<pre>
-    SELECT col
-    FROM tab
-    ORDER BY col [ DESC ]
-    LIMIT 1;
-</pre>
+    う。
 
     <p>もし、オプティマイザが間違ってシーケンシャルスキャンを選択したこ
     とに疑いがなければ、<CODE>SET enable_seqscan TO 'off'</CODE>に設定し
@@ -1181,7 +1172,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2005年12月14日
+  最終更新日:	2006年02月26日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
