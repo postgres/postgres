@@ -156,25 +156,65 @@
     
     <H3 id="item1.5">1.5) I've developed a patch, what next?</H3>
 
-    <P>Generate the patch in contextual diff format. If you are
-    unfamiliar with this, you might find the script
-    <I>src/tools/makediff/difforig</I> useful.  Unified diffs are
-    only preferrable if the file changes are single-line changes and
-    do not rely on the surrounding lines.</P>
-
-    <P>Ensure that your patch is generated against the most recent
-    version of the code. If it is a patch adding new functionality, the
-    most recent version is CVS HEAD; if it is a bug fix, this will be
-    the most recently version of the branch which suffers from the bug
-    (for more on branches in PostgreSQL, see <A href=
-    "#1.15">1.15</A>).</P>
-
-    <P>Finally, submit the patch to pgsql-patches@postgresql.org. It
+    <P>You will need to submit the patch to pgsql-patches@postgresql.org. It
     will be reviewed by other contributors to the project and will be
-    either accepted or sent back for further work. Also, please try to
-    include documentation changes as part of the patch. If you can't do
-    that, let us know and we will manually update the documentation when
-    the patch is applied.</P>
+    either accepted or sent back for further work. To help ensure your patch
+    is reviewed and committed in a timely fashion, please try to make sure your 
+    submission conforms to the following guidelines:
+
+    <ol>
+    <li>Ensure that your patch is generated against the most recent version 
+    of the code, which for developers is CVS HEAD. For more on branches in 
+    PostgreSQL, see <a href="#1.15">1.15</a>.</li>
+
+    <li>Try to make your patch as readable as possible by following the 
+    project's code-layout conventions.  This makes it easier for the
+    reviewer, and there's no point in trying to layout things
+    differently than pgindent.  Also avoid unnecessary whitespace
+    changes because they just distract the reviewer, and formatting
+    changes will be removed by the next run of pgindent.</li>
+
+    <li>The patch should be generated in contextual diff format (<i>diff
+    -c</i> and should be applicable from the root directory. If you are
+    unfamiliar with this, you might find the script
+    <I>src/tools/makediff/difforig</I> useful. (Unified diffs are only
+    preferable if the file changes are single-line changes and do not
+    rely on surrounding lines.)</li>
+    
+    <li>PostgreSQL is licensed under a BSD license, so any submissions must 
+    conform to the BSD license to be included. If you use code that is 
+    available under some other license that is BSD compatible (eg. public 
+    domain) please note that code in your email submission</li>
+
+    <li>Confirm that your changes can pass the regression tests. If your 
+    changes are port specific, please list the ports you have tested it
+    on.</li>
+
+    <li>Provide an implementation overview, preferably in code comments.
+    Following the surrounding code commenting style is usually a good
+    approach.</li>
+
+    <li>New feature patches should also be accompanied by documentation
+    patches.  If you need help checking the SQL standard, see <a href=
+    "#1.16">1.16</a>.</li>
+
+    <li>If you are adding a new feature, confirm that it has been tested
+    thoughly. Try to test the feature in all conceivable
+    scenarios.</li>
+
+    <li>If it is a performance patch, please provide confirming test
+    results to show the benefit of your patch. It is OK to post patches
+    without this information, though the patch will not be applied until
+    somebody has tested the patch and found a significant performance
+    improvement.</li>
+    </ol>
+
+    <p>Even if you pass all of the above, the patch might still be
+    rejected for other reasons. Please be prepared to listen to comments
+    and make modifications.</p>
+
+    <p>You will be notified via email when the patch is applied, and
+    your name will appear in the next version of the release notes.</p>
 
     <H3 id="item1.6">1.6) Where can I learn more about the
     code?</H3>
