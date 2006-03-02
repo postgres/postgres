@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.123 2005/12/03 21:06:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.124 2006/03/02 01:18:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@ typedef enum
 	/* When modifying this enum, update priority tables in pg_dump_sort.c! */
 	DO_NAMESPACE,
 	DO_TYPE,
+	DO_SHELL_TYPE,
 	DO_FUNC,
 	DO_AGG,
 	DO_OPERATOR,
@@ -89,6 +90,7 @@ typedef struct _dumpableObject
 	DumpId		dumpId;			/* assigned by AssignDumpId() */
 	char	   *name;			/* object name (should never be NULL) */
 	struct _namespaceInfo *namespace;	/* containing namespace, or NULL */
+	bool		dump;			/* true if we want to dump this object */
 	DumpId	   *dependencies;	/* dumpIds of objects this one depends on */
 	int			nDeps;			/* number of valid dependencies */
 	int			allocDeps;		/* allocated size of dependencies[] */
@@ -99,7 +101,6 @@ typedef struct _namespaceInfo
 	DumpableObject dobj;
 	char	   *rolname;		/* name of owner, or empty string */
 	char	   *nspacl;
-	bool		dump;			/* true if need to dump definition */
 } NamespaceInfo;
 
 typedef struct _typeInfo
@@ -111,17 +112,25 @@ typedef struct _typeInfo
 	 * produce something different than typname
 	 */
 	char	   *rolname;		/* name of owner, or empty string */
-	Oid			typinput;
 	Oid			typelem;
 	Oid			typrelid;
 	char		typrelkind;		/* 'r', 'v', 'c', etc */
 	char		typtype;		/* 'b', 'c', etc */
 	bool		isArray;		/* true if user-defined array type */
 	bool		isDefined;		/* true if typisdefined */
+	/* If it's a dumpable base type, we create a "shell type" entry for it */
+	struct _shellTypeInfo *shellType;	/* shell-type entry, or NULL */
 	/* If it's a domain, we store links to its constraints here: */
 	int			nDomChecks;
 	struct _constraintInfo *domChecks;
 } TypeInfo;
+
+typedef struct _shellTypeInfo
+{
+	DumpableObject dobj;
+
+	TypeInfo   *baseType;		/* back link to associated base type */
+} ShellTypeInfo;
 
 typedef struct _funcInfo
 {
@@ -181,7 +190,6 @@ typedef struct _tableInfo
 	int			owning_col;		/* attr # of column owning sequence */
 
 	bool		interesting;	/* true if need to collect more data */
-	bool		dump;			/* true if we want to dump it */
 
 	/*
 	 * These fields are computed only if we decide the table is interesting

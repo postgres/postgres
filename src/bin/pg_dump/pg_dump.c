@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.430 2006/02/21 18:01:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.431 2006/03/02 01:18:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ static void dumpType(Archive *fout, TypeInfo *tinfo);
 static void dumpBaseType(Archive *fout, TypeInfo *tinfo);
 static void dumpDomain(Archive *fout, TypeInfo *tinfo);
 static void dumpCompositeType(Archive *fout, TypeInfo *tinfo);
+static void dumpShellType(Archive *fout, ShellTypeInfo *stinfo);
 static void dumpProcLang(Archive *fout, ProcLangInfo *plang);
 static void dumpFunc(Archive *fout, FuncInfo *finfo);
 static void dumpCast(Archive *fout, CastInfo *cast);
@@ -734,19 +735,19 @@ selectDumpableNamespace(NamespaceInfo *nsinfo)
 	 * namespace. Otherwise, dump all non-system namespaces.
 	 */
 	if (selectTableName != NULL)
-		nsinfo->dump = false;
+		nsinfo->dobj.dump = false;
 	else if (selectSchemaName != NULL)
 	{
 		if (strcmp(nsinfo->dobj.name, selectSchemaName) == 0)
-			nsinfo->dump = true;
+			nsinfo->dobj.dump = true;
 		else
-			nsinfo->dump = false;
+			nsinfo->dobj.dump = false;
 	}
 	else if (strncmp(nsinfo->dobj.name, "pg_", 3) == 0 ||
 			 strcmp(nsinfo->dobj.name, "information_schema") == 0)
-		nsinfo->dump = false;
+		nsinfo->dobj.dump = false;
 	else
-		nsinfo->dump = true;
+		nsinfo->dobj.dump = true;
 }
 
 /*
@@ -761,18 +762,67 @@ selectDumpableTable(TableInfo *tbinfo)
 	 * tablename has been specified, dump matching table name; else, do not
 	 * dump.
 	 */
-	tbinfo->dump = false;
-	if (tbinfo->dobj.namespace->dump)
-		tbinfo->dump = true;
+	tbinfo->dobj.dump = false;
+	if (tbinfo->dobj.namespace->dobj.dump)
+		tbinfo->dobj.dump = true;
 	else if (selectTableName != NULL &&
 			 strcmp(tbinfo->dobj.name, selectTableName) == 0)
 	{
 		/* If both -s and -t specified, must match both to dump */
 		if (selectSchemaName == NULL)
-			tbinfo->dump = true;
+			tbinfo->dobj.dump = true;
 		else if (strcmp(tbinfo->dobj.namespace->dobj.name, selectSchemaName) == 0)
-			tbinfo->dump = true;
+			tbinfo->dobj.dump = true;
 	}
+}
+
+/*
+ * selectDumpableType: policy-setting subroutine
+ *		Mark a type as to be dumped or not
+ */
+static void
+selectDumpableType(TypeInfo *tinfo)
+{
+	/* Dump only types in dumpable namespaces */
+	if (!tinfo->dobj.namespace->dobj.dump)
+		tinfo->dobj.dump = false;
+
+	/* skip complex types, except for standalone composite types */
+	/* (note: this test should now be unnecessary) */
+	else if (OidIsValid(tinfo->typrelid) &&
+			 tinfo->typrelkind != RELKIND_COMPOSITE_TYPE)
+		tinfo->dobj.dump = false;
+
+	/* skip undefined placeholder types */
+	else if (!tinfo->isDefined)
+		tinfo->dobj.dump = false;
+
+	/* skip all array types that start w/ underscore */
+	else if ((tinfo->dobj.name[0] == '_') &&
+			 OidIsValid(tinfo->typelem))
+		tinfo->dobj.dump = false;
+
+	else
+		tinfo->dobj.dump = true;
+}
+
+/*
+ * selectDumpableObject: policy-setting subroutine
+ *		Mark a generic dumpable object as to be dumped or not
+ *
+ * Use this only for object types without a special-case routine above.
+ */
+static void
+selectDumpableObject(DumpableObject *dobj)
+{
+	/*
+	 * Default policy is to dump if parent namespace is dumpable,
+	 * or always for non-namespace-associated items.
+	 */
+	if (dobj->namespace)
+		dobj->dump = dobj->namespace->dobj.dump;
+	else
+		dobj->dump = true;
 }
 
 /*
@@ -1130,7 +1180,7 @@ getTableData(TableInfo *tblinfo, int numTables, bool oids)
 		if (tblinfo[i].relkind == RELKIND_SEQUENCE)
 			continue;
 
-		if (tblinfo[i].dump)
+		if (tblinfo[i].dobj.dump)
 		{
 			TableDataInfo *tdinfo;
 
@@ -1749,6 +1799,7 @@ getTypes(int *numTypes)
 	int			i;
 	PQExpBuffer query = createPQExpBuffer();
 	TypeInfo   *tinfo;
+	ShellTypeInfo *stinfo;
 	int			i_tableoid;
 	int			i_oid;
 	int			i_typname;
@@ -1838,9 +1889,6 @@ getTypes(int *numTypes)
 
 	for (i = 0; i < ntups; i++)
 	{
-		Oid			typoutput;
-		FuncInfo   *funcInfo;
-
 		tinfo[i].dobj.objType = DO_TYPE;
 		tinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		tinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
@@ -1849,12 +1897,11 @@ getTypes(int *numTypes)
 		tinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_typnamespace)),
 												tinfo[i].dobj.catId.oid);
 		tinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
-		tinfo[i].typinput = atooid(PQgetvalue(res, i, i_typinput));
-		typoutput = atooid(PQgetvalue(res, i, i_typoutput));
 		tinfo[i].typelem = atooid(PQgetvalue(res, i, i_typelem));
 		tinfo[i].typrelid = atooid(PQgetvalue(res, i, i_typrelid));
 		tinfo[i].typrelkind = *PQgetvalue(res, i, i_typrelkind);
 		tinfo[i].typtype = *PQgetvalue(res, i, i_typtype);
+		tinfo[i].shellType = NULL;
 
 		/*
 		 * If it's a table's rowtype, use special type code to facilitate
@@ -1880,28 +1927,86 @@ getTypes(int *numTypes)
 		else
 			tinfo[i].isDefined = false;
 
+		/* Decide whether we want to dump it */
+		selectDumpableType(&tinfo[i]);
+
 		/*
 		 * If it's a domain, fetch info about its constraints, if any
 		 */
 		tinfo[i].nDomChecks = 0;
 		tinfo[i].domChecks = NULL;
-		if (tinfo[i].typtype == 'd')
+		if (tinfo[i].dobj.dump && tinfo[i].typtype == 'd')
 			getDomainConstraints(&(tinfo[i]));
 
 		/*
-		 * Make sure there are dependencies from the type to its input and
-		 * output functions.  (We don't worry about typsend, typreceive, or
-		 * typanalyze since those are only valid in 7.4 and later, wherein the
-		 * standard dependency mechanism will pick them up.)
+		 * If it's a base type, make a DumpableObject representing a shell
+		 * definition of the type.  We will need to dump that ahead of the
+		 * I/O functions for the type.
+		 *
+		 * Note: the shell type doesn't have a catId.  You might think it
+		 * should copy the base type's catId, but then it might capture
+		 * the pg_depend entries for the type, which we don't want.
 		 */
-		funcInfo = findFuncByOid(tinfo[i].typinput);
-		if (funcInfo)
-			addObjectDependency(&tinfo[i].dobj,
-								funcInfo->dobj.dumpId);
-		funcInfo = findFuncByOid(typoutput);
-		if (funcInfo)
-			addObjectDependency(&tinfo[i].dobj,
-								funcInfo->dobj.dumpId);
+		if (tinfo[i].dobj.dump && tinfo[i].typtype == 'b')
+		{
+			stinfo = (ShellTypeInfo *) malloc(sizeof(ShellTypeInfo));
+			stinfo->dobj.objType = DO_SHELL_TYPE;
+			stinfo->dobj.catId = nilCatalogId;
+			AssignDumpId(&stinfo->dobj);
+			stinfo->dobj.name = strdup(tinfo[i].dobj.name);
+			stinfo->dobj.namespace = tinfo[i].dobj.namespace;
+			stinfo->baseType = &(tinfo[i]);
+			tinfo[i].shellType = stinfo;
+
+			/*
+			 * Initially mark the shell type as not to be dumped.  We'll
+			 * only dump it if the I/O functions need to be dumped; this
+			 * is taken care of while sorting dependencies.
+			 */
+			stinfo->dobj.dump = false;
+
+			/*
+			 * However, if dumping from pre-7.3, there will be no dependency
+			 * info so we have to fake it here.  We only need to worry about
+			 * typinput and typoutput since the other functions only exist
+			 * post-7.3.
+			 */
+			if (g_fout->remoteVersion < 70300)
+			{
+				Oid			typinput;
+				Oid			typoutput;
+				FuncInfo   *funcInfo;
+
+				typinput = atooid(PQgetvalue(res, i, i_typinput));
+				typoutput = atooid(PQgetvalue(res, i, i_typoutput));
+
+				funcInfo = findFuncByOid(typinput);
+				if (funcInfo && funcInfo->dobj.dump)
+				{
+					/* base type depends on function */
+					addObjectDependency(&tinfo[i].dobj,
+										funcInfo->dobj.dumpId);
+					/* function depends on shell type */
+					addObjectDependency(&funcInfo->dobj,
+										stinfo->dobj.dumpId);
+					/* mark shell type as to be dumped */
+					stinfo->dobj.dump = true;
+				}
+
+				funcInfo = findFuncByOid(typoutput);
+				if (funcInfo && funcInfo->dobj.dump)
+				{
+					/* base type depends on function */
+					addObjectDependency(&tinfo[i].dobj,
+										funcInfo->dobj.dumpId);
+					/* function depends on shell type */
+					addObjectDependency(&funcInfo->dobj,
+										stinfo->dobj.dumpId);
+					/* mark shell type as to be dumped */
+					stinfo->dobj.dump = true;
+				}
+			}
+		}
 
 		if (strlen(tinfo[i].rolname) == 0 && tinfo[i].isDefined)
 			write_msg(NULL, "WARNING: owner of data type \"%s\" appears to be invalid\n",
@@ -2004,6 +2109,9 @@ getOperators(int *numOprs)
 		oprinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
 		oprinfo[i].oprcode = atooid(PQgetvalue(res, i, i_oprcode));
 
+		/* Decide whether we want to dump it */
+		selectDumpableObject(&(oprinfo[i].dobj));
+
 		if (strlen(oprinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of operator \"%s\" appears to be invalid\n",
 					  oprinfo[i].dobj.name);
@@ -2082,6 +2190,9 @@ getConversions(int *numConversions)
 		convinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_connamespace)),
 												 convinfo[i].dobj.catId.oid);
 		convinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+
+		/* Decide whether we want to dump it */
+		selectDumpableObject(&(convinfo[i].dobj));
 	}
 
 	PQclear(res);
@@ -2169,6 +2280,9 @@ getOpclasses(int *numOpclasses)
 		opcinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_opcnamespace)),
 												  opcinfo[i].dobj.catId.oid);
 		opcinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+
+		/* Decide whether we want to dump it */
+		selectDumpableObject(&(opcinfo[i].dobj));
 
 		if (g_fout->remoteVersion >= 70300)
 		{
@@ -2290,6 +2404,9 @@ getAggregates(int *numAggs)
 		agginfo[i].aggfn.proacl = strdup(PQgetvalue(res, i, i_aggacl));
 		agginfo[i].anybasetype = false; /* computed when it's dumped */
 		agginfo[i].fmtbasetype = NULL;	/* computed when it's dumped */
+
+		/* Decide whether we want to dump it */
+		selectDumpableObject(&(agginfo[i].aggfn.dobj));
 	}
 
 	PQclear(res);
@@ -2417,6 +2534,9 @@ getFuncs(int *numFuncs)
 			parseOidArray(PQgetvalue(res, i, i_proargtypes),
 						  finfo[i].argtypes, finfo[i].nargs);
 		}
+
+		/* Decide whether we want to dump it */
+		selectDumpableObject(&(finfo[i].dobj));
 
 		if (strlen(finfo[i].rolname) == 0)
 			write_msg(NULL,
@@ -2681,12 +2801,12 @@ getTables(int *numTables)
 		 * their owning table's dump flag to them below.
 		 */
 		if (tblinfo[i].relkind == RELKIND_COMPOSITE_TYPE)
-			tblinfo[i].dump = false;
+			tblinfo[i].dobj.dump = false;
 		else if (OidIsValid(tblinfo[i].owning_tab))
-			tblinfo[i].dump = false;
+			tblinfo[i].dobj.dump = false;
 		else
 			selectDumpableTable(&tblinfo[i]);
-		tblinfo[i].interesting = tblinfo[i].dump;
+		tblinfo[i].interesting = tblinfo[i].dobj.dump;
 
 		/*
 		 * Read-lock target tables to make sure they aren't DROPPED or altered
@@ -2699,7 +2819,7 @@ getTables(int *numTables)
 		 * NOTE: it'd be kinda nice to lock views and sequences too, not only
 		 * plain tables, but the backend doesn't presently allow that.
 		 */
-		if (tblinfo[i].dump && tblinfo[i].relkind == RELKIND_RELATION)
+		if (tblinfo[i].dobj.dump && tblinfo[i].relkind == RELKIND_RELATION)
 		{
 			resetPQExpBuffer(lockquery);
 			appendPQExpBuffer(lockquery,
@@ -2832,7 +2952,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		if (tbinfo->relkind != RELKIND_RELATION || !tbinfo->hasindex)
 			continue;
 
-		if (!tbinfo->dump)
+		/* Ignore indexes of tables not to be dumped */
+		if (!tbinfo->dobj.dump)
 			continue;
 
 		if (g_verbose)
@@ -3068,7 +3189,7 @@ getConstraints(TableInfo tblinfo[], int numTables)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
-		if (tbinfo->ntrig == 0 || !tbinfo->dump)
+		if (tbinfo->ntrig == 0 || !tbinfo->dobj.dump)
 			continue;
 
 		if (g_verbose)
@@ -3290,6 +3411,7 @@ getRules(int *numRules)
 			exit_nicely();
 		}
 		ruleinfo[i].dobj.namespace = ruleinfo[i].ruletable->dobj.namespace;
+		ruleinfo[i].dobj.dump = ruleinfo[i].ruletable->dobj.dump;
 		ruleinfo[i].ev_type = *(PQgetvalue(res, i, i_ev_type));
 		ruleinfo[i].is_instead = *(PQgetvalue(res, i, i_is_instead)) == 't';
 		if (ruleinfo[i].ruletable)
@@ -3361,7 +3483,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
-		if (tbinfo->ntrig == 0 || !tbinfo->dump)
+		if (tbinfo->ntrig == 0 || !tbinfo->dobj.dump)
 			continue;
 
 		if (g_verbose)
@@ -3987,6 +4109,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				attrdefs[j].dobj.name = strdup(tbinfo->dobj.name);
 				attrdefs[j].dobj.namespace = tbinfo->dobj.namespace;
 
+				attrdefs[j].dobj.dump = tbinfo->dobj.dump;
+
 				/*
 				 * Defaults on a VIEW must always be dumped as separate ALTER
 				 * TABLE commands.	Defaults on regular tables are dumped as
@@ -4117,6 +4241,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				constrs[j].coninherited = false;
 				constrs[j].separate = false;
 
+				constrs[j].dobj.dump = tbinfo->dobj.dump;
+
 				/*
 				 * Mark the constraint as needing to appear before the table
 				 * --- this is so that any other dependencies of the
@@ -4167,7 +4293,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 					 */
 					tbinfo->attisserial[j] = true;
 					seqinfo->interesting = tbinfo->interesting;
-					seqinfo->dump = tbinfo->dump;
+					seqinfo->dobj.dump = tbinfo->dobj.dump;
 					break;
 				}
 			}
@@ -4513,6 +4639,9 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 		case DO_TYPE:
 			dumpType(fout, (TypeInfo *) dobj);
 			break;
+		case DO_SHELL_TYPE:
+			dumpShellType(fout, (ShellTypeInfo *) dobj);
+			break;
 		case DO_FUNC:
 			dumpFunc(fout, (FuncInfo *) dobj);
 			break;
@@ -4589,8 +4718,8 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	PQExpBuffer delq;
 	char	   *qnspname;
 
-	/* skip if not to be dumped */
-	if (!nspinfo->dump || dataOnly)
+	/* Skip if not to be dumped */
+	if (!nspinfo->dobj.dump || dataOnly)
 		return;
 
 	/* don't dump dummy namespace from pre-7.3 source */
@@ -4638,23 +4767,8 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 static void
 dumpType(Archive *fout, TypeInfo *tinfo)
 {
-	/* Dump only types in dumpable namespaces */
-	if (!tinfo->dobj.namespace->dump || dataOnly)
-		return;
-
-	/* skip complex types, except for standalone composite types */
-	/* (note: this test should now be unnecessary) */
-	if (OidIsValid(tinfo->typrelid) &&
-		tinfo->typrelkind != RELKIND_COMPOSITE_TYPE)
-		return;
-
-	/* skip undefined placeholder types */
-	if (!tinfo->isDefined)
-		return;
-
-	/* skip all array types that start w/ underscore */
-	if ((tinfo->dobj.name[0] == '_') &&
-		OidIsValid(tinfo->typelem))
+	/* Skip if not to be dumped */
+	if (!tinfo->dobj.dump || dataOnly)
 		return;
 
 	/* Dump out in proper style */
@@ -4844,7 +4958,10 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 		typdefault = NULL;
 
 	/*
-	 * DROP must be fully qualified in case same name appears in pg_catalog
+	 * DROP must be fully qualified in case same name appears in pg_catalog.
+	 * The reason we include CASCADE is that the circular dependency between
+	 * the type and its I/O functions makes it impossible to drop the type
+	 * any other way.
 	 */
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
 					  fmtId(tinfo->dobj.namespace->dobj.name));
@@ -5163,6 +5280,47 @@ dumpCompositeType(Archive *fout, TypeInfo *tinfo)
 }
 
 /*
+ * dumpShellType
+ *	  writes out to fout the queries to create a shell type
+ *
+ * We dump a shell definition in advance of the I/O functions for the type.
+ */
+static void
+dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
+{
+	PQExpBuffer q;
+
+	/* Skip if not to be dumped */
+	if (!stinfo->dobj.dump || dataOnly)
+		return;
+
+	q = createPQExpBuffer();
+
+	/*
+	 * Note the lack of a DROP command for the shell type; any required DROP
+	 * is driven off the base type entry, instead.  This interacts with
+	 * _printTocEntry()'s use of the presence of a DROP command to decide
+	 * whether an entry needs an ALTER OWNER command.  We don't want to
+	 * alter the shell type's owner immediately on creation; that should
+	 * happen only after it's filled in, otherwise the backend complains.
+	 */
+
+	appendPQExpBuffer(q, "CREATE TYPE %s;\n",
+					  fmtId(stinfo->dobj.name));
+
+	ArchiveEntry(fout, stinfo->dobj.catId, stinfo->dobj.dumpId,
+				 stinfo->dobj.name,
+				 stinfo->dobj.namespace->dobj.name,
+				 NULL,
+				 stinfo->baseType->rolname, false,
+				 "SHELL TYPE", q->data, "", NULL,
+				 stinfo->dobj.dependencies, stinfo->dobj.nDeps,
+				 NULL, NULL);
+
+	destroyPQExpBuffer(q);
+}
+
+/*
  * Determine whether we want to dump definitions for procedural languages.
  * Since the languages themselves don't have schemas, we can't rely on
  * the normal schema-based selection mechanism.  We choose to dump them
@@ -5213,13 +5371,13 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 	 */
 
 	funcInfo = findFuncByOid(plang->lanplcallfoid);
-	if (funcInfo != NULL && !funcInfo->dobj.namespace->dump)
+	if (funcInfo != NULL && !funcInfo->dobj.dump)
 		funcInfo = NULL;		/* treat not-dumped same as not-found */
 
 	if (OidIsValid(plang->lanvalidator))
 	{
 		validatorInfo = findFuncByOid(plang->lanvalidator);
-		if (validatorInfo != NULL && !validatorInfo->dobj.namespace->dump)
+		if (validatorInfo != NULL && !validatorInfo->dobj.dump)
 			validatorInfo = NULL;
 	}
 
@@ -5434,8 +5592,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	  **argmodes = NULL;
 	char	  **argnames = NULL;
 
-	/* Dump only funcs in dumpable namespaces */
-	if (!finfo->dobj.namespace->dump || dataOnly)
+	/* Skip if not to be dumped */
+	if (!finfo->dobj.dump || dataOnly)
 		return;
 
 	query = createPQExpBuffer();
@@ -5727,9 +5885,8 @@ dumpCast(Archive *fout, CastInfo *cast)
 	/*
 	 * As per discussion we dump casts if one or more of the underlying
 	 * objects (the conversion function and the two data types) are not
-	 * builtin AND if all of the non-builtin objects namespaces are included
-	 * in the dump. Builtin meaning, the namespace name does not start with
-	 * "pg_".
+	 * builtin AND if all of the non-builtin objects are included in the dump.
+	 * Builtin meaning, the namespace name does not start with "pg_".
 	 */
 	sourceInfo = findTypeByOid(cast->castsource);
 	targetInfo = findTypeByOid(cast->casttarget);
@@ -5747,25 +5904,25 @@ dumpCast(Archive *fout, CastInfo *cast)
 		return;
 
 	/*
-	 * Skip cast if function isn't from pg_ and that namespace is not dumped.
+	 * Skip cast if function isn't from pg_ and is not to be dumped.
 	 */
 	if (funcInfo &&
 		strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!funcInfo->dobj.namespace->dump)
+		!funcInfo->dobj.dump)
 		return;
 
 	/*
-	 * Same for the Source type
+	 * Same for the source type
 	 */
 	if (strncmp(sourceInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!sourceInfo->dobj.namespace->dump)
+		!sourceInfo->dobj.dump)
 		return;
 
 	/*
 	 * and the target type.
 	 */
 	if (strncmp(targetInfo->dobj.namespace->dobj.name, "pg_", 3) != 0 &&
-		!targetInfo->dobj.namespace->dump)
+		!targetInfo->dobj.dump)
 		return;
 
 	/* Make sure we are in proper schema (needed for getFormattedTypeName) */
@@ -5870,8 +6027,8 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	char	   *oprltcmpop;
 	char	   *oprgtcmpop;
 
-	/* Dump only operators in dumpable namespaces */
-	if (!oprinfo->dobj.namespace->dump || dataOnly)
+	/* Skip if not to be dumped */
+	if (!oprinfo->dobj.dump || dataOnly)
 		return;
 
 	/*
@@ -6220,8 +6377,8 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	bool		needComma;
 	int			i;
 
-	/* Dump only opclasses in dumpable namespaces */
-	if (!opcinfo->dobj.namespace->dump || dataOnly)
+	/* Skip if not to be dumped */
+	if (!opcinfo->dobj.dump || dataOnly)
 		return;
 
 	/*
@@ -6428,8 +6585,8 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 	const char *conproc;
 	bool		condefault;
 
-	/* Dump only conversions in dumpable namespaces */
-	if (!convinfo->dobj.namespace->dump || dataOnly)
+	/* Skip if not to be dumped */
+	if (!convinfo->dobj.dump || dataOnly)
 		return;
 
 	query = createPQExpBuffer();
@@ -6582,8 +6739,8 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	const char *agginitval;
 	bool		convertok;
 
-	/* Dump only aggs in dumpable namespaces */
-	if (!agginfo->aggfn.dobj.namespace->dump || dataOnly)
+	/* Skip if not to be dumped */
+	if (!agginfo->aggfn.dobj.dump || dataOnly)
 		return;
 
 	query = createPQExpBuffer();
@@ -6855,7 +7012,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 {
 	char	   *namecopy;
 
-	if (tbinfo->dump)
+	if (tbinfo->dobj.dump)
 	{
 		if (tbinfo->relkind == RELKIND_SEQUENCE)
 			dumpSequence(fout, tbinfo);
@@ -7178,7 +7335,7 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 	PQExpBuffer delq;
 
 	/* Only print it if "separate" mode is selected */
-	if (!tbinfo->dump || !adinfo->separate || dataOnly)
+	if (!tbinfo->dobj.dump || !adinfo->separate || dataOnly)
 		return;
 
 	/* Don't print inherited or serial defaults, either */
@@ -7331,9 +7488,8 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 	PQExpBuffer q;
 	PQExpBuffer delq;
 
-	if (dataOnly)
-		return;
-	if (tbinfo && !tbinfo->dump)
+	/* Skip if not to be dumped */
+	if (!coninfo->dobj.dump || dataOnly)
 		return;
 
 	q = createPQExpBuffer();
@@ -7477,8 +7633,8 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		/* CHECK constraint on a domain */
 		TypeInfo   *tinfo = coninfo->condomain;
 
-		/* Ignore if not to be dumped separately, or if not dumping domain */
-		if (coninfo->separate && tinfo->dobj.namespace->dump)
+		/* Ignore if not to be dumped separately */
+		if (coninfo->separate)
 		{
 			appendPQExpBuffer(q, "ALTER DOMAIN %s\n",
 							  fmtId(tinfo->dobj.name));
@@ -7995,10 +8151,8 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	PQExpBuffer delcmd;
 	PGresult   *res;
 
-	/*
-	 * Ignore rules for not-to-be-dumped tables
-	 */
-	if (tbinfo == NULL || !tbinfo->dump || dataOnly)
+	/* Skip if not to be dumped */
+	if (!rinfo->dobj.dump || dataOnly)
 		return;
 
 	/*

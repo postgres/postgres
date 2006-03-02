@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.12 2005/11/22 18:17:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.13 2006/03/02 01:18:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ static const int oldObjectTypePriority[] =
 {
 	1,							/* DO_NAMESPACE */
 	2,							/* DO_TYPE */
+	2,							/* DO_SHELL_TYPE */
 	2,							/* DO_FUNC */
 	3,							/* DO_AGG */
 	3,							/* DO_OPERATOR */
@@ -57,6 +58,7 @@ static const int newObjectTypePriority[] =
 {
 	1,							/* DO_NAMESPACE */
 	3,							/* DO_TYPE */
+	3,							/* DO_SHELL_TYPE */
 	4,							/* DO_FUNC */
 	5,							/* DO_AGG */
 	6,							/* DO_OPERATOR */
@@ -602,35 +604,25 @@ findLoop(DumpableObject *obj,
 /*
  * A user-defined datatype will have a dependency loop with each of its
  * I/O functions (since those have the datatype as input or output).
- * We want the dump ordering to be the input function, then any other
- * I/O functions, then the datatype.  So we break the circularity in
- * favor of the functions, and add a dependency from any non-input
- * function to the input function.
+ * Break the loop and make the I/O function depend on the associated
+ * shell type, instead.
  */
 static void
 repairTypeFuncLoop(DumpableObject *typeobj, DumpableObject *funcobj)
 {
 	TypeInfo   *typeInfo = (TypeInfo *) typeobj;
-	FuncInfo   *inputFuncInfo;
 
 	/* remove function's dependency on type */
 	removeObjectDependency(funcobj, typeobj->dumpId);
 
-	/* if this isn't the input function, make it depend on same */
-	if (funcobj->catId.oid == typeInfo->typinput)
-		return;					/* it is the input function */
-	inputFuncInfo = findFuncByOid(typeInfo->typinput);
-	if (inputFuncInfo == NULL)
-		return;
-	addObjectDependency(funcobj, inputFuncInfo->dobj.dumpId);
-
-	/*
-	 * Make sure the input function's dependency on type gets removed too; if
-	 * it hasn't been done yet, we'd end up with loops involving the type and
-	 * two or more functions, which repairDependencyLoop() is not smart enough
-	 * to handle.
-	 */
-	removeObjectDependency(&inputFuncInfo->dobj, typeobj->dumpId);
+	/* add function's dependency on shell type, instead */
+	if (typeInfo->shellType)
+	{
+		addObjectDependency(funcobj, typeInfo->shellType->dobj.dumpId);
+		/* Mark shell type as to be dumped if any I/O function is */
+		if (funcobj->dump)
+			typeInfo->shellType->dobj.dump = true;
+	}
 }
 
 /*
@@ -978,6 +970,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_TYPE:
 			snprintf(buf, bufsize,
 					 "TYPE %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_SHELL_TYPE:
+			snprintf(buf, bufsize,
+					 "SHELL TYPE %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_FUNC:
