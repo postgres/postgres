@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.37 2005/06/13 02:26:46 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.38 2006/03/02 21:49:09 tgl Exp $
 -->
 
  <chapter id="largeObjects">
@@ -527,7 +527,7 @@ overwrite(PGconn *conn, Oid lobjId, int start, int len)
     int         nwritten;
     int         i;
 
-    lobj_fd = lo_open(conn, lobjId, INV_READ);
+    lobj_fd = lo_open(conn, lobjId, INV_WRITE);
     if (lobj_fd &lt; 0)
     {
         fprintf(stderr, &quot;can't open large object %d\n&quot;,
@@ -553,7 +553,8 @@ overwrite(PGconn *conn, Oid lobjId, int start, int len)
 }
 
 /*
- * exportFile *    export large object &quot;lobjOid&quot; to file &quot;out_filename&quot;
+ * exportFile
+ *    export large object &quot;lobjOid&quot; to file &quot;out_filename&quot;
  *
  */
 void
@@ -566,7 +567,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
     int         fd;
 
     /*
-     * create an inversion &quot;object&quot;
+     * open the large object
      */
     lobj_fd = lo_open(conn, lobjId, INV_READ);
     if (lobj_fd &lt; 0)
@@ -586,7 +587,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
     }
 
     /*
-     * read in from the Unix file and write to the inversion file
+     * read in from the inversion file and write to the Unix file
      */
     while ((nbytes = lo_read(conn, lobj_fd, buf, BUFSIZE)) &gt; 0)
     {
