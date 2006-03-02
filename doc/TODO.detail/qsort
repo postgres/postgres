@@ -988,3 +988,92 @@ since
 > Servus
 >  Manfred
 
+From pgsql-hackers-owner@postgresql.org Mon Dec 19 13:36:58 2005
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 1E0CC9DC810
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 19 Dec 2005 13:36:58 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 89341-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 19 Dec 2005 13:36:52 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from mail.mi8.com (d01gw02.mi8.com [63.240.6.46])
+	by postgresql.org (Postfix) with ESMTP id 348A69DC9C2
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Dec 2005 13:36:51 -0400 (AST)
+Received: from 172.16.1.25 by mail.mi8.com with ESMTP (- Welcome to Mi8
+	Corporation www.Mi8.com (D2)); Mon, 19 Dec 2005 12:36:45 -0500
+X-Server-Uuid: 7829E76E-BB9E-4995-8473-3C0929DF7DD1
+Received: from MI8NYCMAIL06.Mi8.com ([172.16.1.175]) by
+	D01HOST03.Mi8.com with Microsoft SMTPSVC(6.0.3790.1830); Mon, 19 Dec
+	2005 12:36:44 -0500
+Received: from 67.103.45.218 ([67.103.45.218]) by MI8NYCMAIL06.Mi8.com (
+	[172.16.1.219]) via Exchange Front-End Server mi8owa.mi8.com (
+	[172.16.1.106]) with Microsoft Exchange Server HTTP-DAV ; Mon, 19 Dec
+	2005 17:36:44 +0000
+User-Agent: Microsoft-Entourage/11.2.1.051004
+Date: Mon, 19 Dec 2005 09:36:44 -0800
+Subject: Re: Re: Which qsort is used
+From: "Luke Lonergan" <llonergan@greenplum.com>
+To: "Martijn van Oosterhout" <kleptog@svana.org>,
+	"Dann Corbit" <DCorbit@connx.com>
+cc: "Tom Lane" <tgl@sss.pgh.pa.us>,
+	"Qingqing Zhou" <zhouqq@cs.toronto.edu>,
+	"Bruce Momjian" <pgman@candle.pha.pa.us>,
+	"Neil Conway" <neilc@samurai.com>,
+	pgsql-hackers@postgresql.org
+Message-ID: <BFCC2FAC.16CC0%llonergan@greenplum.com>
+Thread-Topic: [HACKERS] Re: Which qsort is used
+Thread-Index: AcYEkKvEA7duDr/yQneMyWGCfNr3rQAMhuDl
+In-Reply-To: <20051219113724.GD12251@svana.org>
+MIME-Version: 1.0
+X-OriginalArrivalTime: 19 Dec 2005 17:36:44.0849 (UTC)
+	FILETIME=[C7C6AA10:01C604C2]
+X-WSS-ID: 6FB830272346940585-01-01
+Content-Type: text/plain;
+	charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=1.253 required=5 tests=[AWL=0.000,
+	RCVD_NUMERIC_HELO=1.253]
+X-Spam-Score: 1.253
+X-Spam-Level: *
+X-Archive-Number: 200512/868
+X-Sequence-Number: 77716
+Status: OR
+
+Martin,
+
+On 12/19/05 3:37 AM, "Martijn van Oosterhout" <kleptog@svana.org> wrote:
+
+> I'm not sure whether we have a conclusion here, but I do have one
+> question: is there a significant difference in the number of times the
+> comparison routines are called? Comparisons in PostgreSQL are fairly
+> expensive given the fmgr overhead and when comparing tuples it's even
+> worse.
+
+It would be interesting to note the comparison count of the different
+routines.
+
+Something that really grabbed me about the results though is that the
+relative performance of the routines dramatically shifted when the indirect
+references in the comparators went in.  The first test I did sorted an array
+of int4 - these tests that Qingqing did sorted arrays using an indirect
+pointer list, at which point the same distributions performed very
+differently.
+
+I suspect that it is the number of comparisons that caused this, and further
+that the indirection has disabled the compiler optimizations for memory
+prefetch and other things that it could normally recognize.  Given the usage
+pattern in Postgres, where sorted things are a mix of strings and intrinsic
+types, I'm not sure those optimizations could be done by one routine.
+
+I haven't verified this, but it certainly seems that the NetBSD routine is
+the overall winner for the type of use that Postgres has (sorting the using
+a pointer list).
+
+- Luke
+
+
+
