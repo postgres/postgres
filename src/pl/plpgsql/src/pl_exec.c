@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.160 2006/01/10 18:50:43 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.161 2006/03/02 05:34:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -64,12 +64,8 @@ static const char *const raise_skip_msg = "RAISE";
  * function call creates its own "eval_econtext" ExprContext within this
  * estate.	We destroy the estate at transaction shutdown to ensure there
  * is no permanent leakage of memory (especially for xact abort case).
- *
- * If a simple PLpgSQL_expr has been used in the current xact, it is
- * linked into the active_simple_exprs list.
  */
 static EState *simple_eval_estate = NULL;
-static PLpgSQL_expr *active_simple_exprs = NULL;
 
 /************************************************************
  * Local function forward declarations
@@ -3783,6 +3779,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 {
 	Datum		retval;
 	ExprContext *econtext = estate->eval_econtext;
+	TransactionId curxid = GetTopTransactionId();
 	ParamListInfo paramLI;
 	int			i;
 	Snapshot	saveActiveSnapshot;
@@ -3796,13 +3793,11 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 * Prepare the expression for execution, if it's not been done already in
 	 * the current transaction.
 	 */
-	if (expr->expr_simple_state == NULL)
+	if (expr->expr_simple_xid != curxid)
 	{
 		expr->expr_simple_state = ExecPrepareExpr(expr->expr_simple_expr,
 												  simple_eval_estate);
-		/* Add it to list for cleanup */
-		expr->expr_simple_next = active_simple_exprs;
-		active_simple_exprs = expr;
+		expr->expr_simple_xid = curxid;
 	}
 
 	/*
@@ -4454,11 +4449,11 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 
 	/*
 	 * Yes - this is a simple expression.  Mark it as such, and initialize
-	 * state to "not executing".
+	 * state to "not valid in current transaction".
 	 */
 	expr->expr_simple_expr = tle->expr;
 	expr->expr_simple_state = NULL;
-	expr->expr_simple_next = NULL;
+	expr->expr_simple_xid = InvalidTransactionId;
 	/* Also stash away the expression result type */
 	expr->expr_simple_type = exprType((Node *) tle->expr);
 }
@@ -4502,8 +4497,7 @@ exec_set_found(PLpgSQL_execstate *estate, bool state)
  * plpgsql_xact_cb --- post-transaction-commit-or-abort cleanup
  *
  * If a simple_eval_estate was created in the current transaction,
- * it has to be cleaned up, and we have to mark all active PLpgSQL_expr
- * structs that are using it as no longer active.
+ * it has to be cleaned up.
  *
  * XXX Do we need to do anything at subtransaction events?
  * Maybe subtransactions need to have their own simple_eval_estate?
@@ -4512,18 +4506,6 @@ exec_set_found(PLpgSQL_execstate *estate, bool state)
 void
 plpgsql_xact_cb(XactEvent event, void *arg)
 {
-	PLpgSQL_expr *expr;
-	PLpgSQL_expr *enext;
-
-	/* Mark all active exprs as inactive */
-	for (expr = active_simple_exprs; expr; expr = enext)
-	{
-		enext = expr->expr_simple_next;
-		expr->expr_simple_state = NULL;
-		expr->expr_simple_next = NULL;
-	}
-	active_simple_exprs = NULL;
-
 	/*
 	 * If we are doing a clean transaction shutdown, free the EState (so that
 	 * any remaining resources will be released correctly). In an abort, we
