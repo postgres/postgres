@@ -1,111 +1,584 @@
-Index: doc/src/FAQ/FAQ_DEV.html
-===================================================================
-RCS file: /projects/cvsroot/pgsql/doc/src/FAQ/FAQ_DEV.html,v
-retrieving revision 1.107
-diff -c -r1.107 FAQ_DEV.html
-*** doc/src/FAQ/FAQ_DEV.html	24 Dec 2005 19:29:38 -0000	1.107
---- doc/src/FAQ/FAQ_DEV.html	16 Feb 2006 20:08:51 -0000
-***************
-*** 156,180 ****
-      
-      <H3 id="item1.5">1.5) I've developed a patch, what next?</H3>
-  
-!     <P>Generate the patch in contextual diff format. If you are
-!     unfamiliar with this, you might find the script
-!     <I>src/tools/makediff/difforig</I> useful.  Unified diffs are
-!     only preferrable if the file changes are single-line changes and
-!     do not rely on the surrounding lines.</P>
-! 
-!     <P>Ensure that your patch is generated against the most recent
-!     version of the code. If it is a patch adding new functionality, the
-!     most recent version is CVS HEAD; if it is a bug fix, this will be
-!     the most recently version of the branch which suffers from the bug
-!     (for more on branches in PostgreSQL, see <A href=
-!     "#1.15">1.15</A>).</P>
-! 
-!     <P>Finally, submit the patch to pgsql-patches@postgresql.org. It
-      will be reviewed by other contributors to the project and will be
-!     either accepted or sent back for further work. Also, please try to
-!     include documentation changes as part of the patch. If you can't do
-!     that, let us know and we will manually update the documentation when
-!     the patch is applied.</P>
-  
-      <H3 id="item1.6">1.6) Where can I learn more about the
-      code?</H3>
---- 156,231 ----
-      
-      <H3 id="item1.5">1.5) I've developed a patch, what next?</H3>
-  
-!     <P>You will need to submit the patch to pgsql-patches@postgresql.org. It
-      will be reviewed by other contributors to the project and will be
-!     either accepted or sent back for further work. To help ensure your patch
-! 	is reviewed and committed in a timely fasion, please try to make sure your 
-! 	submission conforms to the following guidelines:
-! 	<ol>
-! 		<li>Has the patch been discussed previously? If it has, give a direct link 
-! 		to the message and/or bug# from the mail archives 
-! 		(<a href="http://archives.postgresql.org/">http://archives.postgresql.org/</a>). 
-! 		If it has not and the patch is of any complexity it is strongly 
-! 		recommended you post a message to the appropriate list or you risk 
-! 		getting your patch rejected. Refer back to <a href="#1.4">1.4</a> for 
-! 		email guidelines.</li>
-! 	
-! 		<li>Ensure that your patch is generated against the most recent version 
-! 		of the code, which for developers is CVS HEAD. For more on branches in 
-! 		PostgreSQL, see <a href="#1.15">1.15</a>.</li>
-! 
-! 		<li>Try to make your patch as readable as possible. Try to follow the 
-! 		project's code-layout conventions; again, this makes it easier for the 
-! 		reviewer, and there's no point in trying to do it 
-! 		differently than pgindent.  Also avoid unnecessary whitespace 
-! 		changes, they just distract the reviewer, and your formatting changes 
-! 		will probably not survive the next pgindent run anyway.</li>
-! 
-! 		<li>The patch should be generated in contextual diff format and should 
-! 		be applicable from the root directory. If you are unfamiliar with 
-! 		this, you might find the script <I>src/tools/makediff/difforig</I> 
-! 		useful.</li>
-! 	
-! 		<li>PostgreSQL is licensed under a BSD license, so any submissions must 
-! 		conform to the BSD license to be included. If you use code that is 
-! 		available under some other license that is BSD compatible (eg. public 
-! 		domain) please note that code in your email submission</li>
-! 
-! 		<li>Confirm that your changes can pass the regression tests and list the 
-! 		platforms you have tested this on. If your changes are port specific, 
-! 		list the ports that it applies to.</li>
-! 
-! 		<li>Provide an implementation overview, preferably in code comments.</li>
-! 
-! 		<li>If it is a performance patch, provide confirming test results to 
-! 		show the benefits of your patch. It is OK to post patches without 
-! 		this information, though the patch will not be applied until *somebody* 
-! 		has tested the patches and found a valuable performance effect directly 
-! 		attributable to the patch. Given that writing performance tests is not 
-! 		terribly exciting, it is recommended you take this task upon yourself.</li>
-! 
-! 		<li>If it is a new feature patch, confirm that it has been tested for
-! 		all desired scenarios. If it has not, this should be clearly stated as 
-! 		a request for a particular kind of test to be performed. Note that the
-! 		patch will go no further until that test has been performed.</li>
-! 
-! 		<li>New feature patches should also be accompanied by doc patches, and 
-! 		pointers to any relevant sections of the SQL standard are recommended 
-! 		as well. See <a href="#1.16">1.16</a> for more information on the 
-! 		SQL standards.</li>
-! 
-! 		<li>If your patch changes any existing defaults, you will need to 
-! 		explain why this is *required* or the patch will likely be rejected.</li> 
-! 	</ol>
-! 
-! 	<p>Even if you pass all of the above, the patch may still be rejected
-! 	for other technical reasons. You should be prepared to listen to
-! 	comments received and perform any agreed rework. Even if you have
-! 	received positive comments from some community members, others may spot
-! 	problems with your approach, coding style or many other issues.</p>
-! 
-! 	<p>Successful patches will be notified to you by email and you will be
-! 	credited for that work in the next set of release notes.</p>
-  
-      <H3 id="item1.6">1.6) Where can I learn more about the
-      code?</H3>
+From pgsql-performance-owner+M17204@postgresql.org Wed Feb 15 16:28:34 2006
+Return-path: <pgsql-performance-owner+M17204@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k1FLSV527014
+	for <pgman@candle.pha.pa.us>; Wed, 15 Feb 2006 16:28:31 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 168C967B584;
+	Wed, 15 Feb 2006 17:28:29 -0400 (AST)
+X-Original-To: pgsql-performance-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id BB0AB9DCB9E
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>; Wed, 15 Feb 2006 17:27:56 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 22055-07
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>;
+	Wed, 15 Feb 2006 17:27:57 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id F385E9DCB98
+	for <pgsql-performance@postgresql.org>; Wed, 15 Feb 2006 17:27:53 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k1FLRsqd019780;
+	Wed, 15 Feb 2006 16:27:54 -0500 (EST)
+To: Gary Doades <gpd@gpdnet.co.uk>
+cc: pgsql-performance@postgresql.org
+Subject: Re: [PERFORM] Strange Create Index behaviour 
+In-Reply-To: <19510.1140036968@sss.pgh.pa.us> 
+References: <43F38867.6010701@gpdnet.co.uk> <19510.1140036968@sss.pgh.pa.us>
+Comments: In-reply-to Tom Lane <tgl@sss.pgh.pa.us>
+	message dated "Wed, 15 Feb 2006 15:56:08 -0500"
+Date: Wed, 15 Feb 2006 16:27:54 -0500
+Message-ID: <19779.1140038874@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.11 required=5 tests=[AWL=0.110]
+X-Spam-Score: 0.11
+X-Mailing-List: pgsql-performance
+List-Archive: <http://archives.postgresql.org/pgsql-performance>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-performance.postgresql.org>
+List-Owner: <mailto:pgsql-performance-owner@postgresql.org>
+List-Post: <mailto:pgsql-performance@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-performance>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-performance>
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Status: ORr
+
+I wrote:
+> Interesting.  I tried your test script and got fairly close times
+> for all the cases on two different machines:
+> 	old HPUX machine: shortest 5800 msec, longest 7960 msec
+> 	new Fedora 4 machine: shortest 461 msec, longest 608 msec
+
+> So what this looks like to me is a corner case that FreeBSD's qsort
+> fails to handle well.
+
+I tried forcing PG to use src/port/qsort.c on the Fedora machine,
+and lo and behold:
+	new Fedora 4 machine: shortest 434 msec, longest 8530 msec
+
+So it sure looks like this script does expose a problem on BSD-derived
+qsorts.  Curiously, the case that's much the worst for me is the third
+in the script, while the shortest time is the first case, which was slow
+for Gary.  So I'd venture that the *BSD code has been tweaked somewhere
+along the way, in a manner that moves the problem around without really
+fixing it.  (Anyone want to compare the actual FreeBSD source to what
+we have?)
+
+This is pretty relevant stuff, because there was a thread recently
+advocating that we stop using the platform qsort on all platforms:
+http://archives.postgresql.org/pgsql-hackers/2005-12/msg00610.php
+
+It's really interesting to see a case where port/qsort is radically
+worse than other qsorts ... unless we figure that out and fix it,
+I think the idea of using port/qsort everywhere has just taken a
+major hit.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: don't forget to increase your free space map settings
+
+From pgsql-performance-owner+M17212@postgresql.org Wed Feb 15 18:29:07 2006
+Return-path: <pgsql-performance-owner+M17212@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k1FNT6509074
+	for <pgman@candle.pha.pa.us>; Wed, 15 Feb 2006 18:29:06 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 2BE6267B58B;
+	Wed, 15 Feb 2006 19:29:04 -0400 (AST)
+X-Original-To: pgsql-performance-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 7C3D49DC803;
+	Wed, 15 Feb 2006 19:28:30 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 47149-10; Wed, 15 Feb 2006 19:28:32 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id C56AD9DC843;
+	Wed, 15 Feb 2006 19:28:27 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k1FNSTkm020782;
+	Wed, 15 Feb 2006 18:28:29 -0500 (EST)
+To: Gary Doades <gpd@gpdnet.co.uk>
+cc: pgsql-performance@postgresql.org, pgsql-hackers@postgresql.org
+Subject: qsort again (was Re: [PERFORM] Strange Create Index behaviour)
+In-Reply-To: <43F39E53.1020009@gpdnet.co.uk> 
+References: <43F38867.6010701@gpdnet.co.uk> <19510.1140036968@sss.pgh.pa.us> <19779.1140038874@sss.pgh.pa.us> <43F39E53.1020009@gpdnet.co.uk>
+Comments: In-reply-to Gary Doades <gpd@gpdnet.co.uk>
+	message dated "Wed, 15 Feb 2006 21:34:11 +0000"
+Date: Wed, 15 Feb 2006 18:28:29 -0500
+Message-ID: <20781.1140046109@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.11 required=5 tests=[AWL=0.110]
+X-Spam-Score: 0.11
+X-Mailing-List: pgsql-performance
+List-Archive: <http://archives.postgresql.org/pgsql-performance>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-performance.postgresql.org>
+List-Owner: <mailto:pgsql-performance-owner@postgresql.org>
+List-Post: <mailto:pgsql-performance@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-performance>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-performance>
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Status: OR
+
+Gary Doades <gpd@gpdnet.co.uk> writes:
+> If I run the script again, it is not always the first case that is slow, 
+> it varies from run to run, which is why I repeated it quite a few times 
+> for the test.
+
+For some reason I hadn't immediately twigged to the fact that your test
+script is just N repetitions of the exact same structure with random data.
+So it's not so surprising that you get random variations in behavior
+with different test data sets.
+
+I did some experimentation comparing the qsort from Fedora Core 4
+(glibc-2.3.5-10.3) with our src/port/qsort.c.  For those who weren't
+following the pgsql-performance thread, the test case is just this
+repeated a lot of times:
+
+create table atest(i int4, r int4);
+insert into atest (i,r) select generate_series(1,100000), 0;
+insert into atest (i,r) select generate_series(1,100000), random()*100000;
+\timing
+create index idx on atest(r);
+\timing
+drop table atest;
+
+I did this 100 times and sorted the reported runtimes.  (Investigation
+with trace_sort = on confirms that the runtime is almost entirely spent
+in qsort() called from our performsort --- the Postgres overhead is
+about 100msec on this machine.)  Results are below.
+
+It seems clear that our qsort.c is doing a pretty awful job of picking
+qsort pivots, while glibc is mostly managing not to make that mistake.
+I haven't looked at the glibc code yet to see what they are doing
+differently.
+
+I'd say this puts a considerable damper on my enthusiasm for using our
+qsort all the time, as was recently debated in this thread:
+http://archives.postgresql.org/pgsql-hackers/2005-12/msg00610.php
+We need to fix our qsort.c before pushing ahead with that idea.
+
+			regards, tom lane
+
+
+100 runtimes for glibc qsort, sorted ascending:
+
+Time: 459.860 ms
+Time: 460.209 ms
+Time: 460.704 ms
+Time: 461.317 ms
+Time: 461.538 ms
+Time: 461.652 ms
+Time: 461.988 ms
+Time: 462.573 ms
+Time: 462.638 ms
+Time: 462.716 ms
+Time: 462.917 ms
+Time: 463.219 ms
+Time: 463.455 ms
+Time: 463.650 ms
+Time: 463.723 ms
+Time: 463.737 ms
+Time: 463.750 ms
+Time: 463.852 ms
+Time: 463.964 ms
+Time: 463.988 ms
+Time: 464.003 ms
+Time: 464.135 ms
+Time: 464.372 ms
+Time: 464.458 ms
+Time: 464.496 ms
+Time: 464.551 ms
+Time: 464.599 ms
+Time: 464.655 ms
+Time: 464.656 ms
+Time: 464.722 ms
+Time: 464.814 ms
+Time: 464.827 ms
+Time: 464.878 ms
+Time: 464.899 ms
+Time: 464.905 ms
+Time: 464.987 ms
+Time: 465.055 ms
+Time: 465.138 ms
+Time: 465.159 ms
+Time: 465.194 ms
+Time: 465.310 ms
+Time: 465.316 ms
+Time: 465.375 ms
+Time: 465.450 ms
+Time: 465.535 ms
+Time: 465.595 ms
+Time: 465.680 ms
+Time: 465.769 ms
+Time: 465.865 ms
+Time: 465.892 ms
+Time: 465.903 ms
+Time: 466.003 ms
+Time: 466.154 ms
+Time: 466.164 ms
+Time: 466.203 ms
+Time: 466.305 ms
+Time: 466.344 ms
+Time: 466.364 ms
+Time: 466.388 ms
+Time: 466.502 ms
+Time: 466.593 ms
+Time: 466.725 ms
+Time: 466.794 ms
+Time: 466.798 ms
+Time: 466.904 ms
+Time: 466.971 ms
+Time: 466.997 ms
+Time: 467.122 ms
+Time: 467.146 ms
+Time: 467.221 ms
+Time: 467.224 ms
+Time: 467.244 ms
+Time: 467.277 ms
+Time: 467.587 ms
+Time: 468.142 ms
+Time: 468.207 ms
+Time: 468.237 ms
+Time: 468.471 ms
+Time: 468.663 ms
+Time: 468.700 ms
+Time: 469.235 ms
+Time: 469.840 ms
+Time: 470.472 ms
+Time: 471.140 ms
+Time: 472.811 ms
+Time: 472.959 ms
+Time: 474.858 ms
+Time: 477.210 ms
+Time: 479.571 ms
+Time: 479.671 ms
+Time: 482.797 ms
+Time: 488.852 ms
+Time: 514.639 ms
+Time: 529.287 ms
+Time: 612.185 ms
+Time: 660.748 ms
+Time: 742.227 ms
+Time: 866.814 ms
+Time: 1234.848 ms
+Time: 1267.398 ms
+
+
+100 runtimes for port/qsort.c, sorted ascending:
+
+Time: 418.905 ms
+Time: 420.611 ms
+Time: 420.764 ms
+Time: 420.904 ms
+Time: 421.706 ms
+Time: 422.466 ms
+Time: 422.627 ms
+Time: 423.189 ms
+Time: 423.302 ms
+Time: 425.096 ms
+Time: 425.731 ms
+Time: 425.851 ms
+Time: 427.253 ms
+Time: 430.113 ms
+Time: 432.756 ms
+Time: 432.963 ms
+Time: 440.502 ms
+Time: 440.640 ms
+Time: 450.452 ms
+Time: 458.143 ms
+Time: 459.212 ms
+Time: 467.706 ms
+Time: 468.006 ms
+Time: 468.574 ms
+Time: 470.003 ms
+Time: 472.313 ms
+Time: 483.622 ms
+Time: 492.395 ms
+Time: 509.564 ms
+Time: 531.037 ms
+Time: 533.366 ms
+Time: 535.610 ms
+Time: 575.523 ms
+Time: 582.688 ms
+Time: 593.545 ms
+Time: 647.364 ms
+Time: 660.612 ms
+Time: 677.312 ms
+Time: 680.288 ms
+Time: 697.626 ms
+Time: 833.066 ms
+Time: 834.511 ms
+Time: 851.819 ms
+Time: 920.443 ms
+Time: 926.731 ms
+Time: 954.289 ms
+Time: 1045.214 ms
+Time: 1059.200 ms
+Time: 1062.328 ms
+Time: 1136.018 ms
+Time: 1260.091 ms
+Time: 1276.883 ms
+Time: 1319.351 ms
+Time: 1438.854 ms
+Time: 1475.457 ms
+Time: 1538.211 ms
+Time: 1549.004 ms
+Time: 1744.642 ms
+Time: 1771.258 ms
+Time: 1959.530 ms
+Time: 2300.140 ms
+Time: 2589.641 ms
+Time: 2612.780 ms
+Time: 3100.024 ms
+Time: 3284.125 ms
+Time: 3379.792 ms
+Time: 3750.278 ms
+Time: 4302.278 ms
+Time: 4780.624 ms
+Time: 5000.056 ms
+Time: 5092.604 ms
+Time: 5168.722 ms
+Time: 5292.941 ms
+Time: 5895.964 ms
+Time: 7003.164 ms
+Time: 7099.449 ms
+Time: 7115.083 ms
+Time: 7384.940 ms
+Time: 8214.010 ms
+Time: 8700.771 ms
+Time: 9331.225 ms
+Time: 10503.360 ms
+Time: 12496.026 ms
+Time: 12982.474 ms
+Time: 15192.390 ms
+Time: 15392.161 ms
+Time: 15958.295 ms
+Time: 18375.693 ms
+Time: 18617.706 ms
+Time: 18927.515 ms
+Time: 19898.018 ms
+Time: 20865.979 ms
+Time: 21000.907 ms
+Time: 21297.585 ms
+Time: 21714.518 ms
+Time: 25423.235 ms
+Time: 27543.052 ms
+Time: 28314.182 ms
+Time: 29400.278 ms
+Time: 34142.534 ms
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: if posting/reading through Usenet, please send an appropriate
+       subscribe-nomail command to majordomo@postgresql.org so that your
+       message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M79733@postgresql.org Wed Feb 15 20:22:07 2006
+Return-path: <pgsql-hackers-owner+M79733@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k1G1M6529533
+	for <pgman@candle.pha.pa.us>; Wed, 15 Feb 2006 20:22:06 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id E5C5467B58F;
+	Wed, 15 Feb 2006 21:22:03 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 3DAA69DCACE;
+	Wed, 15 Feb 2006 21:21:34 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 76351-01; Wed, 15 Feb 2006 21:21:36 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id 2FBB59DCA3F;
+	Wed, 15 Feb 2006 21:21:31 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k1G1LXXi021616;
+	Wed, 15 Feb 2006 20:21:33 -0500 (EST)
+To: Ron <rjpeace@earthlink.net>
+cc: pgsql-performance@postgresql.org, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] qsort again (was Re: [PERFORM] Strange Create Index behaviour) 
+In-Reply-To: <7.0.1.0.2.20060215194635.03b55da0@earthlink.net> 
+References: <43F38867.6010701@gpdnet.co.uk> <19510.1140036968@sss.pgh.pa.us> <19779.1140038874@sss.pgh.pa.us> <43F39E53.1020009@gpdnet.co.uk> <20781.1140046109@sss.pgh.pa.us> <7.0.1.0.2.20060215194635.03b55da0@earthlink.net>
+Comments: In-reply-to Ron <rjpeace@earthlink.net>
+	message dated "Wed, 15 Feb 2006 19:57:51 -0500"
+Date: Wed, 15 Feb 2006 20:21:33 -0500
+Message-ID: <21615.1140052893@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.11 required=5 tests=[AWL=0.110]
+X-Spam-Score: 0.11
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Ron <rjpeace@earthlink.net> writes:
+> How are we choosing our pivots?
+
+See qsort.c: it looks like median of nine equally spaced inputs (ie,
+the 1/8th points of the initial input array, plus the end points),
+implemented as two rounds of median-of-three choices.  With half of the
+data inputs zero, it's not too improbable for two out of the three
+samples to be zeroes in which case I think the med3 result will be zero
+--- so choosing a pivot of zero is much more probable than one would
+like, and doing so in many levels of recursion causes the problem.
+
+I think.  I'm not too sure if the code isn't just being sloppy about the
+case where many data values are equal to the pivot --- there's a special
+case there to switch to insertion sort, and maybe that's getting invoked
+too soon.  It'd be useful to get a line-level profile of the behavior of
+this code in the slow cases...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faq
+
+From pgsql-performance-owner+M17282@postgresql.org Fri Feb 17 23:11:11 2006
+Return-path: <pgsql-performance-owner+M17282@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k1I4BA515503
+	for <pgman@candle.pha.pa.us>; Fri, 17 Feb 2006 23:11:10 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 2825F67B5F5;
+	Sat, 18 Feb 2006 00:11:07 -0400 (AST)
+X-Original-To: pgsql-performance-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 7BB8A9DCC4F;
+	Wed, 15 Feb 2006 21:37:57 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 79365-02; Wed, 15 Feb 2006 21:38:00 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from postal.corporate.connx.com (postal.corporate.connx.com [65.212.159.187])
+	by postgresql.org (Postfix) with ESMTP id 33BEA9DCACE;
+	Wed, 15 Feb 2006 21:37:54 -0400 (AST)
+X-MimeOLE: Produced By Microsoft Exchange V6.5
+Content-class: urn:content-classes:message
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Subject: Re: [HACKERS] qsort again (was Re: [PERFORM] Strange Create Index behaviour) 
+Date: Wed, 15 Feb 2006 17:37:58 -0800
+Message-ID: <D425483C2C5C9F49B5B7A41F8944154757D54C@postal.corporate.connx.com>
+Thread-Topic: [HACKERS] qsort again (was Re: [PERFORM] Strange Create Index behaviour) 
+Thread-Index: AcYyl2fPgxfNXHIRRyOEN4ZGeHtA3wAAEaNQ
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>, "Ron" <rjpeace@earthlink.net>
+cc: <pgsql-performance@postgresql.org>, <pgsql-hackers@postgresql.org>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.075 required=5 tests=[AWL=0.075]
+X-Spam-Score: 0.075
+X-Mailing-List: pgsql-performance
+List-Archive: <http://archives.postgresql.org/pgsql-performance>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-performance.postgresql.org>
+List-Owner: <mailto:pgsql-performance-owner@postgresql.org>
+List-Post: <mailto:pgsql-performance@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-performance>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-performance>
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id k1I4BA515503
+Status: ORr
+
+
+
+> -----Original Message-----
+> From: pgsql-hackers-owner@postgresql.org [mailto:pgsql-hackers-
+> owner@postgresql.org] On Behalf Of Tom Lane
+> Sent: Wednesday, February 15, 2006 5:22 PM
+> To: Ron
+> Cc: pgsql-performance@postgresql.org; pgsql-hackers@postgresql.org
+> Subject: Re: [HACKERS] qsort again (was Re: [PERFORM] Strange Create
+Index
+> behaviour)
+> 
+> Ron <rjpeace@earthlink.net> writes:
+> > How are we choosing our pivots?
+> 
+> See qsort.c: it looks like median of nine equally spaced inputs (ie,
+> the 1/8th points of the initial input array, plus the end points),
+> implemented as two rounds of median-of-three choices.  With half of
+the
+> data inputs zero, it's not too improbable for two out of the three
+> samples to be zeroes in which case I think the med3 result will be
+zero
+> --- so choosing a pivot of zero is much more probable than one would
+> like, and doing so in many levels of recursion causes the problem.
+
+Adding some randomness to the selection of the pivot is a known
+technique to fix the oddball partitions problem.  However, Bentley and
+Sedgewick proved that every quick sort algorithm has some input set that
+makes it go quadratic (hence the recent popularity of introspective
+sort, which switches to heapsort if quadratic behavior is detected.  The
+C++ template I submitted was an example of introspective sort, but
+PostgreSQL does not use C++ so it was not helpful).
+
+> I think.  I'm not too sure if the code isn't just being sloppy about
+the
+> case where many data values are equal to the pivot --- there's a
+special
+> case there to switch to insertion sort, and maybe that's getting
+invoked
+> too soon.  
+
+Here are some cases known to make qsort go quadratic:
+1. Data already sorted
+2. Data reverse sorted
+3. Data organ-pipe sorted or ramp
+4. Almost all data of the same value
+
+There are probably other cases.  Randomizing the pivot helps some, as
+does check for in-order or reverse order partitions.
+
+Imagine if 1/3 of the partitions fall into a category that causes
+quadratic behavior (have one of the above formats and have more than
+CUTOFF elements in them).
+
+It is doubtful that the switch to insertion sort is causing any sort of
+problems.  It is only going to be invoked on tiny sets, for which it has
+a fixed cost that is probably less that qsort() function calls on sets
+of the same size.
+
+>It'd be useful to get a line-level profile of the behavior of
+> this code in the slow cases...
+
+I guess that my in-order or presorted tests [which often arise when
+there are very few distinct values] may solve the bad partition
+problems.  Don't forget that the algorithm is called recursively.
+
+> 			regards, tom lane
+> 
+> ---------------------------(end of
+broadcast)---------------------------
+> TIP 3: Have you checked our extensive FAQ?
+> 
+>                http://www.postgresql.org/docs/faq
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: Don't 'kill -9' the postmaster
+
