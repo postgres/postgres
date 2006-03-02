@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.68 2005/10/15 02:49:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.68.2.1 2006/03/02 21:13:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,13 +212,28 @@ Datum
 int2vectorrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	FunctionCallInfoData locfcinfo;
 	int2vector *result;
 
-	result = (int2vector *)
-		DatumGetPointer(DirectFunctionCall3(array_recv,
-											PointerGetDatum(buf),
-											ObjectIdGetDatum(INT2OID),
-											Int32GetDatum(-1)));
+	/*
+	 * Normally one would call array_recv() using DirectFunctionCall3,
+	 * but that does not work since array_recv wants to cache some data
+	 * using fcinfo->flinfo->fn_extra.  So we need to pass it our own
+	 * flinfo parameter.
+	 */
+	InitFunctionCallInfoData(locfcinfo, fcinfo->flinfo, 3, NULL, NULL);
+
+	locfcinfo.arg[0] = PointerGetDatum(buf);
+	locfcinfo.arg[1] = ObjectIdGetDatum(INT2OID);
+	locfcinfo.arg[2] = Int32GetDatum(-1);
+	locfcinfo.argnull[0] = false;
+	locfcinfo.argnull[1] = false;
+	locfcinfo.argnull[2] = false;
+
+	result = (int2vector *) DatumGetPointer(array_recv(&locfcinfo));
+
+	Assert(!locfcinfo.isnull);
+
 	/* sanity checks: int2vector must be 1-D, no nulls */
 	if (result->ndim != 1 ||
 		result->flags != 0 ||
