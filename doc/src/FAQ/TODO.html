@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Feb 28 14:47:56 EST 2006
+Last updated:           Thu Mar  2 13:17:52 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1056,6 +1056,10 @@ first.
   </li><li>-<em>Remove BeOS and QNX-specific code</em>
   </li><li>Split out libpq pgpass and environment documentation sections to make
   it easier for non-developers to find
+  </li><li>Improve port/qsort() to handle sorts with 50% unique and 50% duplicate
+  value [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?qsort">qsort</a>]
+<p>  This involves choosing better pivot points for the quicksort.
+</p>
   </li><li>Win32
   <ul>
     <li>Remove configure.in check for link failure when cause is found

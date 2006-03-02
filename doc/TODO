@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Feb 28 14:47:56 EST 2006
+Last updated:		Thu Mar  2 13:17:52 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1165,6 +1165,10 @@ Source Code
 * -Remove BeOS and QNX-specific code
 * Split out libpq pgpass and environment documentation sections to make
   it easier for non-developers to find
+* Improve port/qsort() to handle sorts with 50% unique and 50% duplicate
+  value [qsort]
+
+  This involves choosing better pivot points for the quicksort.
 
 
 * Win32
