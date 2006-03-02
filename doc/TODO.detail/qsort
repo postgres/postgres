@@ -1,0 +1,111 @@
+Index: doc/src/FAQ/FAQ_DEV.html
+===================================================================
+RCS file: /projects/cvsroot/pgsql/doc/src/FAQ/FAQ_DEV.html,v
+retrieving revision 1.107
+diff -c -r1.107 FAQ_DEV.html
+*** doc/src/FAQ/FAQ_DEV.html	24 Dec 2005 19:29:38 -0000	1.107
+--- doc/src/FAQ/FAQ_DEV.html	16 Feb 2006 20:08:51 -0000
+***************
+*** 156,180 ****
+      
+      <H3 id="item1.5">1.5) I've developed a patch, what next?</H3>
+  
+!     <P>Generate the patch in contextual diff format. If you are
+!     unfamiliar with this, you might find the script
+!     <I>src/tools/makediff/difforig</I> useful.  Unified diffs are
+!     only preferrable if the file changes are single-line changes and
+!     do not rely on the surrounding lines.</P>
+! 
+!     <P>Ensure that your patch is generated against the most recent
+!     version of the code. If it is a patch adding new functionality, the
+!     most recent version is CVS HEAD; if it is a bug fix, this will be
+!     the most recently version of the branch which suffers from the bug
+!     (for more on branches in PostgreSQL, see <A href=
+!     "#1.15">1.15</A>).</P>
+! 
+!     <P>Finally, submit the patch to pgsql-patches@postgresql.org. It
+      will be reviewed by other contributors to the project and will be
+!     either accepted or sent back for further work. Also, please try to
+!     include documentation changes as part of the patch. If you can't do
+!     that, let us know and we will manually update the documentation when
+!     the patch is applied.</P>
+  
+      <H3 id="item1.6">1.6) Where can I learn more about the
+      code?</H3>
+--- 156,231 ----
+      
+      <H3 id="item1.5">1.5) I've developed a patch, what next?</H3>
+  
+!     <P>You will need to submit the patch to pgsql-patches@postgresql.org. It
+      will be reviewed by other contributors to the project and will be
+!     either accepted or sent back for further work. To help ensure your patch
+! 	is reviewed and committed in a timely fasion, please try to make sure your 
+! 	submission conforms to the following guidelines:
+! 	<ol>
+! 		<li>Has the patch been discussed previously? If it has, give a direct link 
+! 		to the message and/or bug# from the mail archives 
+! 		(<a href="http://archives.postgresql.org/">http://archives.postgresql.org/</a>). 
+! 		If it has not and the patch is of any complexity it is strongly 
+! 		recommended you post a message to the appropriate list or you risk 
+! 		getting your patch rejected. Refer back to <a href="#1.4">1.4</a> for 
+! 		email guidelines.</li>
+! 	
+! 		<li>Ensure that your patch is generated against the most recent version 
+! 		of the code, which for developers is CVS HEAD. For more on branches in 
+! 		PostgreSQL, see <a href="#1.15">1.15</a>.</li>
+! 
+! 		<li>Try to make your patch as readable as possible. Try to follow the 
+! 		project's code-layout conventions; again, this makes it easier for the 
+! 		reviewer, and there's no point in trying to do it 
+! 		differently than pgindent.  Also avoid unnecessary whitespace 
+! 		changes, they just distract the reviewer, and your formatting changes 
+! 		will probably not survive the next pgindent run anyway.</li>
+! 
+! 		<li>The patch should be generated in contextual diff format and should 
+! 		be applicable from the root directory. If you are unfamiliar with 
+! 		this, you might find the script <I>src/tools/makediff/difforig</I> 
+! 		useful.</li>
+! 	
+! 		<li>PostgreSQL is licensed under a BSD license, so any submissions must 
+! 		conform to the BSD license to be included. If you use code that is 
+! 		available under some other license that is BSD compatible (eg. public 
+! 		domain) please note that code in your email submission</li>
+! 
+! 		<li>Confirm that your changes can pass the regression tests and list the 
+! 		platforms you have tested this on. If your changes are port specific, 
+! 		list the ports that it applies to.</li>
+! 
+! 		<li>Provide an implementation overview, preferably in code comments.</li>
+! 
+! 		<li>If it is a performance patch, provide confirming test results to 
+! 		show the benefits of your patch. It is OK to post patches without 
+! 		this information, though the patch will not be applied until *somebody* 
+! 		has tested the patches and found a valuable performance effect directly 
+! 		attributable to the patch. Given that writing performance tests is not 
+! 		terribly exciting, it is recommended you take this task upon yourself.</li>
+! 
+! 		<li>If it is a new feature patch, confirm that it has been tested for
+! 		all desired scenarios. If it has not, this should be clearly stated as 
+! 		a request for a particular kind of test to be performed. Note that the
+! 		patch will go no further until that test has been performed.</li>
+! 
+! 		<li>New feature patches should also be accompanied by doc patches, and 
+! 		pointers to any relevant sections of the SQL standard are recommended 
+! 		as well. See <a href="#1.16">1.16</a> for more information on the 
+! 		SQL standards.</li>
+! 
+! 		<li>If your patch changes any existing defaults, you will need to 
+! 		explain why this is *required* or the patch will likely be rejected.</li> 
+! 	</ol>
+! 
+! 	<p>Even if you pass all of the above, the patch may still be rejected
+! 	for other technical reasons. You should be prepared to listen to
+! 	comments received and perform any agreed rework. Even if you have
+! 	received positive comments from some community members, others may spot
+! 	problems with your approach, coding style or many other issues.</p>
+! 
+! 	<p>Successful patches will be notified to you by email and you will be
+! 	credited for that work in the next set of release notes.</p>
+  
+      <H3 id="item1.6">1.6) Where can I learn more about the
+      code?</H3>
