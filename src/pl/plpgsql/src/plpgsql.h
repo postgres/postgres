@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.65.2.1 2005/11/22 18:23:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.65.2.2 2006/03/02 05:34:17 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -200,9 +200,12 @@ typedef struct PLpgSQL_expr
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
 	Oid			expr_simple_type;
-	/* if expr is simple AND in use in current xact, these fields are set: */
+	/*
+	 * if expr is simple AND in use in current xact, expr_simple_state is
+	 * valid.  Test validity by seeing if expr_simple_xid matches current XID.
+	 */
 	ExprState  *expr_simple_state;
-	struct PLpgSQL_expr *expr_simple_next;
+	TransactionId expr_simple_xid;
 	/* params to pass to expr */
 	int			nparams;
 	int			params[1];		/* VARIABLE SIZE ARRAY ... must be last */
