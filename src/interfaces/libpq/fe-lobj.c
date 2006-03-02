@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.54 2005/10/15 02:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.55 2006/03/02 21:56:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,11 +76,6 @@ lo_open(PGconn *conn, Oid lobjId, int mode)
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
-
-		/* have to do this to reset offset in shared fd cache */
-		/* but only if fd is valid */
-		if (fd >= 0 && lo_lseek(conn, fd, 0L, SEEK_SET) < 0)
-			return -1;
 		return fd;
 	}
 	else
