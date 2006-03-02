@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.23 2006/02/12 22:35:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.24 2006/03/02 19:35:14 momjian Exp $
 
 Typical markup:
 
@@ -132,7 +132,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 avoiding a kernel call per data line (Alon Goldshuv)</para></listitem>
 
 <listitem><para>Improve speed of <filename>/contrib/tsearch2</> index
-creation (Teodor)</para></listitem>
+creation (Tom)</para></listitem>
 
 </itemizedlist>
 
