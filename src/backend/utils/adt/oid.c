@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.66 2005/11/22 18:17:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.67 2006/03/02 21:13:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,13 +254,28 @@ Datum
 oidvectorrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	FunctionCallInfoData locfcinfo;
 	oidvector  *result;
 
-	result = (oidvector *)
-		DatumGetPointer(DirectFunctionCall3(array_recv,
-											PointerGetDatum(buf),
-											ObjectIdGetDatum(OIDOID),
-											Int32GetDatum(-1)));
+	/*
+	 * Normally one would call array_recv() using DirectFunctionCall3,
+	 * but that does not work since array_recv wants to cache some data
+	 * using fcinfo->flinfo->fn_extra.  So we need to pass it our own
+	 * flinfo parameter.
+	 */
+	InitFunctionCallInfoData(locfcinfo, fcinfo->flinfo, 3, NULL, NULL);
+
+	locfcinfo.arg[0] = PointerGetDatum(buf);
+	locfcinfo.arg[1] = ObjectIdGetDatum(OIDOID);
+	locfcinfo.arg[2] = Int32GetDatum(-1);
+	locfcinfo.argnull[0] = false;
+	locfcinfo.argnull[1] = false;
+	locfcinfo.argnull[2] = false;
+
+	result = (oidvector *) DatumGetPointer(array_recv(&locfcinfo));
+
+	Assert(!locfcinfo.isnull);
+
 	/* sanity checks: oidvector must be 1-D, no nulls */
 	if (ARR_NDIM(result) != 1 ||
 		ARR_HASNULL(result) ||
