@@ -582,3 +582,409 @@ broadcast)---------------------------
 ---------------------------(end of broadcast)---------------------------
 TIP 2: Don't 'kill -9' the postmaster
 
+From kleptog@svana.org Mon Dec 19 06:37:51 2005
+Return-path: <kleptog@svana.org>
+Received: from svana.org (mail@svana.org [203.20.62.76])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id jBJBboe20936
+	for <pgman@candle.pha.pa.us>; Mon, 19 Dec 2005 06:37:51 -0500 (EST)
+Received: from kleptog by svana.org with local (Exim 3.35 #1 (Debian))
+	id 1EoJKc-00045V-00; Mon, 19 Dec 2005 22:37:30 +1100
+Date: Mon, 19 Dec 2005 12:37:30 +0100
+From: Martijn van Oosterhout <kleptog@svana.org>
+To: Dann Corbit <DCorbit@connx.com>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Qingqing Zhou <zhouqq@cs.toronto.edu>,
+   Bruce Momjian <pgman@candle.pha.pa.us>,
+   Luke Lonergan <llonergan@greenplum.com>, Neil Conway <neilc@samurai.com>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Re: Which qsort is used
+Message-ID: <20051219113724.GD12251@svana.org>
+Reply-To: Martijn van Oosterhout <kleptog@svana.org>
+References: <D425483C2C5C9F49B5B7A41F8944154757D38D@postal.corporate.connx.com>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="5gxpn/Q6ypwruk0T"
+Content-Disposition: inline
+In-Reply-To: <D425483C2C5C9F49B5B7A41F8944154757D38D@postal.corporate.connx.com>
+User-Agent: Mutt/1.3.28i
+X-PGP-Key-ID: Length=1024; ID=0x0DC67BE6
+X-PGP-Key-Fingerprint: 295F A899 A81A 156D B522  48A7 6394 F08A 0DC6 7BE6
+X-PGP-Key-URL: <http://svana.org/kleptog/0DC67BE6.pgp.asc>
+Status: OR
+
+
+--5gxpn/Q6ypwruk0T
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Fri, Dec 16, 2005 at 10:43:58PM -0800, Dann Corbit wrote:
+> I am actually quite impressed with the excellence of Bentley's sort out
+> of the box.  It's definitely the best library implementation of a sort I
+> have seen.
+
+I'm not sure whether we have a conclusion here, but I do have one
+question: is there a significant difference in the number of times the
+comparison routines are called? Comparisons in PostgreSQL are fairly
+expensive given the fmgr overhead and when comparing tuples it's even
+worse.
+
+We don't want to accedently pick a routine that saves data shuffling by
+adding extra comparisons. The stats at [1] don't say. They try to
+factor in CPU cost but they seem to use unrealistically small values. I
+would think a number around 50 (or higher) would be more
+representative.
+
+[1] http://www.cs.toronto.edu/~zhouqq/postgresql/sort/sort.html
+
+Have a nice day,
+--=20
+Martijn van Oosterhout   <kleptog@svana.org>   http://svana.org/kleptog/
+> Patent. n. Genius is 5% inspiration and 95% perspiration. A patent is a
+> tool for doing 5% of the work and then sitting around waiting for someone
+> else to do the other 95% so you can sue them.
+
+--5gxpn/Q6ypwruk0T
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.6 (GNU/Linux)
+Comment: For info see http://www.gnupg.org
+
+iD8DBQFDpptzIB7bNG8LQkwRAmC6AJ4qYrIm3SYnBV3BybSmm+Gl4vpEywCfRDxg
+bnIK4INRqOVFNBAKR/gDPcM=
+=92qA
+-----END PGP SIGNATURE-----
+
+--5gxpn/Q6ypwruk0T--
+
+From mkoi-pg@aon.at Wed Dec 21 19:44:03 2005
+Return-path: <mkoi-pg@aon.at>
+Received: from email.aon.at (warsl404pip5.highway.telekom.at [195.3.96.77])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id jBM0i2e05649
+	for <pgman@candle.pha.pa.us>; Wed, 21 Dec 2005 19:44:02 -0500 (EST)
+Received: (qmail 12703 invoked from network); 22 Dec 2005 00:43:51 -0000
+Received: from m148p015.dipool.highway.telekom.at (HELO Sokrates) ([62.46.8.111])
+          (envelope-sender <mkoi-pg@aon.at>)
+          by smarthub78.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <tgl@sss.pgh.pa.us>; 22 Dec 2005 00:43:51 -0000
+From: Manfred Koizar <mkoi-pg@aon.at>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: "Dann Corbit" <DCorbit@connx.com>, "Qingqing Zhou" <zhouqq@cs.toronto.edu>,
+   "Bruce Momjian" <pgman@candle.pha.pa.us>,
+   "Luke Lonergan" <llonergan@greenplum.com>,
+   "Neil Conway" <neilc@samurai.com>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Re: Which qsort is used 
+Date: Thu, 22 Dec 2005 01:43:34 +0100
+Message-ID: <odqjq1tv6cb77ri4df0aehqal8o0ljtkar@4ax.com>
+References: <D425483C2C5C9F49B5B7A41F8944154757D386@postal.corporate.connx.com> <3148.1134795805@sss.pgh.pa.us>
+In-Reply-To: <3148.1134795805@sss.pgh.pa.us>
+X-Mailer: Forte Agent 3.1/32.783
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+On Sat, 17 Dec 2005 00:03:25 -0500, Tom Lane <tgl@sss.pgh.pa.us>
+wrote:
+>I've still got a problem with these checks; I think they are a net
+>waste of cycles on average.  [...]
+> and when they fail, those cycles are entirely wasted;
+>you have not advanced the state of the sort at all.
+
+How can we make the initial check "adavance the state of the sort"?
+One answer might be to exclude the sorted sequence at the start of the
+array from the qsort, and merge the two sorted lists as the final
+stage of the sort.
+
+Qsorting N elements costs O(N*lnN), so excluding H elements from the
+sort reduces the cost by at least O(H*lnN).  The merge step costs O(N)
+plus some (<=50%) more memory, unless someone knows a fast in-place
+merge.  So depending on the constant factors involved there might be a
+usable solution.
+
+I've been playing with some numbers and assuming the constant factors
+to be equal for all the O()'s this method starts to pay off at
+	  H      for N
+	  20       100
+	 130      1000
+	8000    100000
+Servus
+ Manfred
+
+From pgsql-hackers-owner+M77795=pgman=candle.pha.pa.us@postgresql.org Thu Dec 22 02:02:28 2005
+Return-path: <pgsql-hackers-owner+M77795=pgman=candle.pha.pa.us@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id jBM72Re16910
+	for <pgman@candle.pha.pa.us>; Thu, 22 Dec 2005 02:02:28 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id A31E067AAA0
+	for <pgman@candle.pha.pa.us>; Thu, 22 Dec 2005 03:02:22 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 2C8EC9DCA92
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 22 Dec 2005 03:01:56 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 26033-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 22 Dec 2005 03:01:55 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from svana.org (svana.org [203.20.62.76])
+	by postgresql.org (Postfix) with ESMTP id 800859DC81D
+	for <pgsql-hackers@postgresql.org>; Thu, 22 Dec 2005 03:01:51 -0400 (AST)
+Received: from kleptog by svana.org with local (Exim 3.35 #1 (Debian))
+	id 1EpKRg-0005ox-00; Thu, 22 Dec 2005 18:01:00 +1100
+Date: Thu, 22 Dec 2005 08:01:00 +0100
+From: Martijn van Oosterhout <kleptog@svana.org>
+To: Manfred Koizar <mkoi-pg@aon.at>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Dann Corbit <DCorbit@connx.com>,
+   Qingqing Zhou <zhouqq@cs.toronto.edu>,
+   Bruce Momjian <pgman@candle.pha.pa.us>,
+   Luke Lonergan <llonergan@greenplum.com>, Neil Conway <neilc@samurai.com>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Re: Which qsort is used
+Message-ID: <20051222070057.GA21783@svana.org>
+Reply-To: Martijn van Oosterhout <kleptog@svana.org>
+References: <D425483C2C5C9F49B5B7A41F8944154757D386@postal.corporate.connx.com> <3148.1134795805@sss.pgh.pa.us> <odqjq1tv6cb77ri4df0aehqal8o0ljtkar@4ax.com>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="FL5UXtIhxfXey3p5"
+Content-Disposition: inline
+In-Reply-To: <odqjq1tv6cb77ri4df0aehqal8o0ljtkar@4ax.com>
+User-Agent: Mutt/1.3.28i
+X-PGP-Key-ID: Length=1024; ID=0x0DC67BE6
+X-PGP-Key-Fingerprint: 295F A899 A81A 156D B522  48A7 6394 F08A 0DC6 7BE6
+X-PGP-Key-URL: <http://svana.org/kleptog/0DC67BE6.pgp.asc>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.065 required=5 tests=[AWL=0.065]
+X-Spam-Score: 0.065
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+--FL5UXtIhxfXey3p5
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Thu, Dec 22, 2005 at 01:43:34AM +0100, Manfred Koizar wrote:
+> Qsorting N elements costs O(N*lnN), so excluding H elements from the
+> sort reduces the cost by at least O(H*lnN).  The merge step costs O(N)
+> plus some (<=3D50%) more memory, unless someone knows a fast in-place
+> merge.  So depending on the constant factors involved there might be a
+> usable solution.
+
+But where are you including the cost to check how many cells are
+already sorted? That would be O(H), right? This is where we come back
+to the issue that comparisons in PostgreSQL are expensive. The cpu_cost
+in the tests I saw so far is unrealistically low.
+
+> I've been playing with some numbers and assuming the constant factors
+> to be equal for all the O()'s this method starts to pay off at
+> 	  H      for N
+> 	  20       100      20%
+> 	 130      1000      13%
+> 	8000    100000       8%
+
+Hmm, what are the chances you have 100000 unordered items to sort and
+that the first 8% will already be in order. ISTM that that probability
+will be close enough to zero to not matter...
+
+Have a nice day,
+--=20
+Martijn van Oosterhout   <kleptog@svana.org>   http://svana.org/kleptog/
+> Patent. n. Genius is 5% inspiration and 95% perspiration. A patent is a
+> tool for doing 5% of the work and then sitting around waiting for someone
+> else to do the other 95% so you can sue them.
+
+--FL5UXtIhxfXey3p5
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.6 (GNU/Linux)
+Comment: For info see http://www.gnupg.org
+
+iD8DBQFDqk8oIB7bNG8LQkwRAjJhAJ47eXRi1DJ02cfKcnN2iPkaBB0eaQCeIiF+
+HOAYIPQrU2gpUUiGT3aGUUw=
+=R0hU
+-----END PGP SIGNATURE-----
+
+--FL5UXtIhxfXey3p5--
+
+From pgsql-hackers-owner+M77831=pgman=candle.pha.pa.us@postgresql.org Thu Dec 22 16:59:19 2005
+Return-path: <pgsql-hackers-owner+M77831=pgman=candle.pha.pa.us@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id jBMLxJe07480
+	for <pgman@candle.pha.pa.us>; Thu, 22 Dec 2005 16:59:19 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id D1DBE67AC1B
+	for <pgman@candle.pha.pa.us>; Thu, 22 Dec 2005 17:59:16 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id BE8249DCBEB
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 22 Dec 2005 17:58:53 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 64765-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 22 Dec 2005 17:58:54 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from email.aon.at (warsl404pip7.highway.telekom.at [195.3.96.91])
+	by postgresql.org (Postfix) with ESMTP id 3E08E9DCA5C
+	for <pgsql-hackers@postgresql.org>; Thu, 22 Dec 2005 17:58:49 -0400 (AST)
+Received: (qmail 6986 invoked from network); 22 Dec 2005 21:58:49 -0000
+Received: from m150p015.dipool.highway.telekom.at (HELO Sokrates) ([62.46.8.175])
+          (envelope-sender <mkoi-pg@aon.at>)
+          by smarthub76.highway.telekom.at (qmail-ldap-1.03) with SMTP
+          for <kleptog@svana.org>; 22 Dec 2005 21:58:49 -0000
+From: Manfred Koizar <mkoi-pg@aon.at>
+To: Martijn van Oosterhout <kleptog@svana.org>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Dann Corbit <DCorbit@connx.com>,
+   Qingqing Zhou <zhouqq@cs.toronto.edu>,
+   Bruce Momjian <pgman@candle.pha.pa.us>,
+   Luke Lonergan <llonergan@greenplum.com>, Neil Conway <neilc@samurai.com>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Re: Which qsort is used
+Date: Thu, 22 Dec 2005 22:58:31 +0100
+Message-ID: <4r6mq19fe6937mu9130h45ip3oeg135qo3@4ax.com>
+References: <D425483C2C5C9F49B5B7A41F8944154757D386@postal.corporate.connx.com> <3148.1134795805@sss.pgh.pa.us> <odqjq1tv6cb77ri4df0aehqal8o0ljtkar@4ax.com> <20051222070057.GA21783@svana.org>
+In-Reply-To: <20051222070057.GA21783@svana.org>
+X-Mailer: Forte Agent 3.1/32.783
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.398 required=5 tests=[AWL=0.398]
+X-Spam-Score: 0.398
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Thu, 22 Dec 2005 08:01:00 +0100, Martijn van Oosterhout
+<kleptog@svana.org> wrote:
+>But where are you including the cost to check how many cells are
+>already sorted? That would be O(H), right?
+
+Yes.  I didn't mention it, because H < N.
+
+> This is where we come back
+>to the issue that comparisons in PostgreSQL are expensive.
+
+So we agree that we should try to reduce the number of comparisons.
+How many comparisons does it take to sort 100000 items?  1.5 million?
+
+>Hmm, what are the chances you have 100000 unordered items to sort and
+>that the first 8% will already be in order. ISTM that that probability
+>will be close enough to zero to not matter...
+
+If the items are totally unordered, the check is so cheap you won't
+even notice.  OTOH in Tom's example ...
+
+|What I think is much more probable in the Postgres environment
+|is almost-but-not-quite-ordered inputs --- eg, a table that was
+|perfectly ordered by key when filled, but some of the tuples have since
+|been moved by UPDATEs.
+
+... I'd not be surprised if H is 90% of N.
+Servus
+ Manfred
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: Don't 'kill -9' the postmaster
+
+From DCorbit@connx.com Thu Dec 22 17:22:03 2005
+Return-path: <DCorbit@connx.com>
+Received: from postal.corporate.connx.com (postal.corporate.connx.com [65.212.159.187])
+	by candle.pha.pa.us (8.11.6/8.11.6) with SMTP id jBMMLve11671
+	for <pgman@candle.pha.pa.us>; Thu, 22 Dec 2005 17:22:03 -0500 (EST)
+Content-class: urn:content-classes:message
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Subject: RE: [HACKERS] Re: Which qsort is used
+X-MimeOLE: Produced By Microsoft Exchange V6.5
+Date: Thu, 22 Dec 2005 14:21:49 -0800
+Message-ID: <D425483C2C5C9F49B5B7A41F8944154757D3AC@postal.corporate.connx.com>
+Thread-Topic: [HACKERS] Re: Which qsort is used
+Thread-Index: AcYHQuXJdKs8JVgmSKywUqld6KYccQAAfWAA
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Manfred Koizar" <mkoi-pg@aon.at>,
+   "Martijn van Oosterhout" <kleptog@svana.org>
+cc: "Tom Lane" <tgl@sss.pgh.pa.us>, "Qingqing Zhou" <zhouqq@cs.toronto.edu>,
+   "Bruce Momjian" <pgman@candle.pha.pa.us>,
+   "Luke Lonergan" <llonergan@greenplum.com>,
+   "Neil Conway" <neilc@samurai.com>, <pgsql-hackers@postgresql.org>
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id jBMMLve11671
+Status: OR
+
+An interesting article on sorting and comparison count:
+http://www.acm.org/jea/ARTICLES/Vol7Nbr5.pdf
+
+Here is the article, the code, and an implementation that I have been
+toying with:
+http://cap.connx.com/chess-engines/new-approach/algos.zip
+
+Algorithm quickheap is especially interesting because it does not
+require much additional space (just an array of integers up to size
+log(element_count) and in addition, it has very few data movements.
+
+> -----Original Message-----
+> From: Manfred Koizar [mailto:mkoi-pg@aon.at]
+> Sent: Thursday, December 22, 2005 1:59 PM
+> To: Martijn van Oosterhout
+> Cc: Tom Lane; Dann Corbit; Qingqing Zhou; Bruce Momjian; Luke
+Lonergan;
+> Neil Conway; pgsql-hackers@postgresql.org
+> Subject: Re: [HACKERS] Re: Which qsort is used
+> 
+> On Thu, 22 Dec 2005 08:01:00 +0100, Martijn van Oosterhout
+> <kleptog@svana.org> wrote:
+> >But where are you including the cost to check how many cells are
+> >already sorted? That would be O(H), right?
+> 
+> Yes.  I didn't mention it, because H < N.
+> 
+> > This is where we come back
+> >to the issue that comparisons in PostgreSQL are expensive.
+> 
+> So we agree that we should try to reduce the number of comparisons.
+> How many comparisons does it take to sort 100000 items?  1.5 million?
+> 
+> >Hmm, what are the chances you have 100000 unordered items to sort and
+> >that the first 8% will already be in order. ISTM that that
+probability
+> >will be close enough to zero to not matter...
+> 
+> If the items are totally unordered, the check is so cheap you won't
+> even notice.  OTOH in Tom's example ...
+> 
+> |What I think is much more probable in the Postgres environment
+> |is almost-but-not-quite-ordered inputs --- eg, a table that was
+> |perfectly ordered by key when filled, but some of the tuples have
+since
+> |been moved by UPDATEs.
+> 
+> ... I'd not be surprised if H is 90% of N.
+> Servus
+>  Manfred
+
