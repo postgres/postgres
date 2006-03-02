@@ -2315,9 +2315,9 @@ An hour of storm to place
 The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 '), to_tsquery('sea&thousand&years'));
- rank_cd 
----------
-     1.2
+  rank_cd  
+-----------
+ 0.0555556
 (1 row)
 
 select rank_cd(to_tsvector('Erosion It took the sea a thousand years,
@@ -2329,9 +2329,9 @@ An hour of storm to place
 The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 '), to_tsquery('granite&sea'));
- rank_cd  
-----------
- 0.880303
+  rank_cd  
+-----------
+ 0.0238095
 (1 row)
 
 select rank_cd(to_tsvector('Erosion It took the sea a thousand years,
@@ -2345,7 +2345,7 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
 '), to_tsquery('sea'));
  rank_cd 
 ---------
-       2
+     0.2
 (1 row)
 
 select get_covers(to_tsvector('Erosion It took the sea a thousand years,

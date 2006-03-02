@@ -41,7 +41,13 @@ static float weights[] = {0.1, 0.2, 0.4, 1.0};
 
 #define wpos(wep)	( w[ WEP_GETWEIGHT(wep) ] )
 
-#define DEF_NORM_METHOD 0
+#define	RANK_NO_NORM		0x00
+#define RANK_NORM_LOGLENGTH 	0x01
+#define RANK_NORM_LENGTH 	0x02
+#define	RANK_NORM_EXTDIST	0x04
+#define RANK_NORM_UNIQ		0x08
+#define RANK_NORM_LOGUNIQ	0x10
+#define DEF_NORM_METHOD 	RANK_NO_NORM
 
 static float calc_rank_or(float *w, tsvector * t, QUERYTYPE * q);
 static float calc_rank_and(float *w, tsvector * t, QUERYTYPE * q);
@@ -328,22 +334,20 @@ calc_rank(float *w, tsvector * t, QUERYTYPE * q, int4 method)
 	if (res < 0)
 		res = 1e-20;
 
-	switch (method)
-	{
-		case 0:
-			break;
-		case 1:
-			res /= log((float) (cnt_length(t) + 1)) / log(2.0);
-			break;
-		case 2:
-			len = cnt_length(t);
-			if (len > 0)
-				res /= (float) len;
-			break;
-		default:
-			/* internal error */
-			elog(ERROR, "unrecognized normalization method: %d", method);
+	if ( (method & RANK_NORM_LOGLENGTH) && t->size>0 )
+		res /= log((double) (cnt_length(t) + 1)) / log(2.0);
+
+	if ( method & RANK_NORM_LENGTH ) {
+		len = cnt_length(t);
+		if ( len>0 )
+			res /= (float) len;
 	}
+
+	if ( (method & RANK_NORM_UNIQ) && t->size > 0 )
+		res /= (float)( t->size );
+
+	if ( (method & RANK_NORM_LOGUNIQ) && t->size > 0 )
+		res /= log((double) (t->size + 1)) / log(2.0);
 
 	return res;
 }
@@ -420,6 +424,7 @@ typedef struct
 	ITEM	  **item;
 	int16		nitem;
 	bool		needfree;
+	uint8		wclass;
 	int32		pos;
 }	DocRepresentation;
 
@@ -452,19 +457,28 @@ reset_istrue_flag(QUERYTYPE * query)
 	}
 }
 
+typedef struct {
+	int	pos;
+	int	p;
+	int	q;
+	DocRepresentation	*begin;
+	DocRepresentation	*end;
+} Extention;
+
+
 static bool
-Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int *q)
+Cover(DocRepresentation * doc, int len, QUERYTYPE * query, Extention *ext)
 {
 	DocRepresentation *ptr;
-	int			lastpos = *pos;
+	int			lastpos = ext->pos;
 	int			i;
 	bool		found = false;
 
 	reset_istrue_flag(query);
 
-	*p = 0x7fffffff;
-	*q = 0;
-	ptr = doc + *pos;
+	ext->p = 0x7fffffff;
+	ext->q = 0;
+	ptr = doc + ext->pos;
 
 	/* find upper bound of cover from current position, move up */
 	while (ptr - doc < len)
@@ -473,9 +487,10 @@ Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int
 			ptr->item[i]->istrue = 1;
 		if (TS_execute(GETQUERY(query), NULL, false, checkcondition_ITEM))
 		{
-			if (ptr->pos > *q)
+			if (ptr->pos > ext->q)
 			{
-				*q = ptr->pos;
+				ext->q = ptr->pos;
+				ext->end = ptr;
 				lastpos = ptr - doc;
 				found = true;
 			}
@@ -498,25 +513,27 @@ Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int
 			ptr->item[i]->istrue = 1;
 		if (TS_execute(GETQUERY(query), NULL, true, checkcondition_ITEM))
 		{
-			if (ptr->pos < *p)
-				*p = ptr->pos;
+			if (ptr->pos < ext->p) {
+				ext->begin = ptr;
+				ext->p = ptr->pos;
+			}
 			break;
 		}
 		ptr--;
 	}
 
-	if (*p <= *q)
+	if (ext->p <= ext->q)
 	{
 		/*
 		 * set position for next try to next lexeme after begining of founded
 		 * cover
 		 */
-		*pos = (ptr - doc) + 1;
+		ext->pos = (ptr - doc) + 1;
 		return true;
 	}
 
-	(*pos)++;
-	return Cover(doc, len, query, pos, p, q);
+	ext->pos++;
+	return Cover(doc, len, query, ext);
 }
 
 static DocRepresentation *
@@ -593,6 +610,7 @@ get_docrep(tsvector * txt, QUERYTYPE * query, int *doclen)
 				doc[cur].item = doc[cur - 1].item;
 			}
 			doc[cur].pos = WEP_GETPOS(post[j]);
+			doc[cur].wclass = WEP_GETWEIGHT(post[j]);
 			cur++;
 		}
 	}
@@ -610,61 +628,110 @@ get_docrep(tsvector * txt, QUERYTYPE * query, int *doclen)
 	return NULL;
 }
 
-
-Datum
-rank_cd(PG_FUNCTION_ARGS)
-{
-	int			K = PG_GETARG_INT32(0);
-	tsvector   *txt = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
-	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(2));
-	int			method = DEF_NORM_METHOD;
+static float4
+calc_rank_cd(float4 *arrdata, tsvector *txt, QUERYTYPE *query, int method) {
 	DocRepresentation *doc;
-	float		res = 0.0;
-	int			p = 0,
-				q = 0,
-				len,
-				cur,
+	int 			len,
 				i,
 				doclen = 0;
+	Extention	ext;
+	double		Wdoc = 0.0;
+	double		invws[lengthof(weights)];
+	double		SumDist=0.0, PrevExtPos=0.0, CurExtPos=0.0;
+	int		NExtent=0;
+
+	for (i = 0; i < lengthof(weights); i++)
+	{
+		invws[i] = ((double)((arrdata[i] >= 0) ? arrdata[i] : weights[i]));
+		if (invws[i] > 1.0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("weight out of range")));
+		invws[i] = 1.0/invws[i]; 
+	}
 
 	doc = get_docrep(txt, query, &doclen);
-	if (!doc)
-	{
-		PG_FREE_IF_COPY(txt, 1);
-		PG_FREE_IF_COPY(query, 2);
-		PG_RETURN_FLOAT4(0.0);
+	if (!doc) 
+		return 0.0;
+
+	MemSet( &ext, 0, sizeof(Extention) );
+	while (Cover(doc, doclen, query, &ext)) {
+		double	Cpos = 0.0;
+		double	InvSum = 0.0;
+		DocRepresentation *ptr = ext.begin;
+
+		while ( ptr<=ext.end ) {
+			InvSum += invws[ ptr->wclass ];
+			ptr++;
+		}
+
+		Cpos = ((double)( ext.end-ext.begin+1 )) / InvSum;
+		Wdoc += Cpos / ( (double)(( 1 + (ext.q - ext.p) - (ext.end - ext.begin) )) ); 
+
+		CurExtPos = ((double)(ext.q + ext.p))/2.0; 
+		if ( NExtent>0 && CurExtPos > PrevExtPos /* prevent devision by zero in a case of multiple lexize */ ) 
+			SumDist += 1.0/( CurExtPos - PrevExtPos );
+
+		PrevExtPos = CurExtPos;
+		NExtent++; 
 	}
 
-	cur = 0;
-	if (K <= 0)
-		K = 4;
-	while (Cover(doc, doclen, query, &cur, &p, &q))
-		res += (q - p + 1 > K) ? ((float) K) / ((float) (q - p + 1)) : 1.0;
+	if ( (method & RANK_NORM_LOGLENGTH) && txt->size > 0 )
+		Wdoc /= log((double) (cnt_length(txt) + 1));
 
-	if (PG_NARGS() == 4)
-		method = PG_GETARG_INT32(3);
-
-	switch (method)
-	{
-		case 0:
-			break;
-		case 1:
-			res /= log((float) (cnt_length(txt) + 1));
-			break;
-		case 2:
-			len = cnt_length(txt);
-			if (len > 0)
-				res /= (float) len;
-			break;
-		default:
-			/* internal error */
-			elog(ERROR, "unrecognized normalization method: %d", method);
+	if ( method & RANK_NORM_LENGTH ) {
+		len = cnt_length(txt);
+		if ( len>0 )
+			Wdoc /= (double) len;
 	}
+
+	if ( (method & RANK_NORM_EXTDIST) && SumDist > 0 ) 
+		Wdoc /= ((double)NExtent) / SumDist;
+
+	if ( (method & RANK_NORM_UNIQ) && txt->size > 0 )
+		Wdoc /= (double)( txt->size );
+
+	if ( (method & RANK_NORM_LOGUNIQ) && txt->size > 0 )
+		Wdoc /= log((double) (txt->size + 1)) / log(2.0);
 
 	for (i = 0; i < doclen; i++)
 		if (doc[i].needfree)
 			pfree(doc[i].item);
 	pfree(doc);
+
+	return (float4)Wdoc;
+} 
+
+Datum
+rank_cd(PG_FUNCTION_ARGS)
+{
+	ArrayType *win =  (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
+	tsvector   *txt = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
+	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(2));
+	int			method = DEF_NORM_METHOD;
+	float4		res;
+
+	if (ARR_NDIM(win) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("array of weight must be one-dimensional")));
+
+	if (ARRNELEMS(win) < lengthof(weights))
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("array of weight is too short")));
+
+	if (ARR_HASNULL(win))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("array of weight must not contain nulls")));
+
+	if (PG_NARGS() == 4)
+		method = PG_GETARG_INT32(3);
+
+	res = calc_rank_cd( (float4 *) ARR_DATA_PTR(win), txt, query, method);
+
+	PG_FREE_IF_COPY(win, 0);
 	PG_FREE_IF_COPY(txt, 1);
 	PG_FREE_IF_COPY(query, 2);
 
@@ -675,13 +742,16 @@ rank_cd(PG_FUNCTION_ARGS)
 Datum
 rank_cd_def(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(DirectFunctionCall4(
-										rank_cd,
-										Int32GetDatum(-1),
-										PG_GETARG_DATUM(0),
-										PG_GETARG_DATUM(1),
-	  (PG_NARGS() == 3) ? PG_GETARG_DATUM(2) : Int32GetDatum(DEF_NORM_METHOD)
-										));
+	tsvector   *txt = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
+	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1));
+	float4 res;
+
+	res = calc_rank_cd( weights, txt, query, (PG_NARGS() == 3) ? PG_GETARG_DATUM(2) : DEF_NORM_METHOD);
+	
+	PG_FREE_IF_COPY(txt, 1);
+	PG_FREE_IF_COPY(query, 2);
+
+	PG_RETURN_FLOAT4(res);
 }
 
 /**************debug*************/
@@ -721,11 +791,9 @@ get_covers(PG_FUNCTION_ARGS)
 	text	   *out;
 	char	   *cptr;
 	DocRepresentation *doc;
-	int			pos = 0,
-				p,
-				q,
-				olddwpos = 0;
+	int 			olddwpos = 0;
 	int			ncover = 1;
+	Extention	ext;
 
 	doc = get_docrep(txt, query, &rlen);
 
@@ -765,14 +833,15 @@ get_covers(PG_FUNCTION_ARGS)
 	}
 	qsort((void *) dw, dlen, sizeof(DocWord), compareDocWord);
 
-	while (Cover(doc, rlen, query, &pos, &p, &q))
+	MemSet( &ext, 0, sizeof(Extention) );
+	while (Cover(doc, rlen, query, &ext))
 	{
 		dwptr = dw + olddwpos;
-		while (dwptr->pos < p && dwptr - dw < dlen)
+		while (dwptr->pos < ext.p && dwptr - dw < dlen)
 			dwptr++;
 		olddwpos = dwptr - dw;
 		dwptr->start = ncover;
-		while (dwptr->pos < q + 1 && dwptr - dw < dlen)
+		while (dwptr->pos < ext.q + 1 && dwptr - dw < dlen)
 			dwptr++;
 		(dwptr - 1)->finish = ncover;
 		len += 4 /* {}+two spaces */ + 2 * 16 /* numbers */ ;
