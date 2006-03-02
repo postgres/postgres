@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.361 2006/01/05 03:01:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.362 2006/03/02 20:30:21 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -886,19 +886,19 @@ sysctl -w kern.sysv.shmall
         changes take effect.  
        </para>
 
-<!--
-It might appear that we could recommend putting sysctl settings into
-/etc/sysctl.conf so that they aren't destroyed by OS version updates.
-This does not work as of OS X 10.4.2, however, because /etc/rc
-promptly overrides whatever SHM settings are read from sysctl.conf :-(
-Perhaps someday we can recommend this ...
--->
+       <para>
+        In OS X 10.3.9 and later, the file <filename>/etc/sysctl.conf</>
+        allows shared memory setting to be saved across operating system
+        upgrades, and is the recommended method for setting these
+        parameters. When using this file, all five shared memory values
+        must be set or the changes will be ignored.
+       </para>
 
        <para>
-        <varname>SHMALL</> is measured in 4KB pages on this platform.
-        Also note that some releases of OS X will reject attempts to
-        set <varname>SHMMAX</> to a value that isn't an exact multiple
-        of 4096.
+        <varname>SHMALL</> is measured in 4KB pages on this platform,
+        and recent releases of OS X reject attempts to set 
+        <varname>SHMALL</> and <varname>SHMMAX</> to a value 
+        that isn't an exact multiple of 4096.
        </para>
       </listitem>
      </varlistentry>
