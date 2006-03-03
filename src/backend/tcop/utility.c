@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.253 2006/03/03 03:30:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.254 2006/03/03 19:54:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,7 +636,13 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CopyStmt:
-			DoCopy((CopyStmt *) parsetree);
+			{
+				uint64	processed = DoCopy((CopyStmt *) parsetree);
+
+				if (completionTag)
+					snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+							 "COPY " UINT64_FORMAT, processed);
+			}
 			break;
 
 		case T_PrepareStmt:

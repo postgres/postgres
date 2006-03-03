@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.258 2006/02/03 12:41:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.259 2006/03/03 19:54:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,7 @@ typedef struct CopyStateData
 	int			client_encoding;	/* remote side's character encoding */
 	bool		need_transcoding;		/* client encoding diff from server? */
 	bool		encoding_embeds_ascii;	/* ASCII can be non-first byte? */
+	uint64		processed;		/* # of tuples processed */
 
 	/* parameters from the COPY command */
 	Relation	rel;			/* relation to copy to or from */
@@ -710,7 +711,7 @@ CopyLoadRawBuf(CopyState cstate)
  * Do not allow the copy if user doesn't have proper permission to access
  * the table.
  */
-void
+uint64
 DoCopy(const CopyStmt *stmt)
 {
 	CopyState	cstate;
@@ -724,6 +725,7 @@ DoCopy(const CopyStmt *stmt)
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
 	AclResult	aclresult;
 	ListCell   *option;
+	uint64		processed;
 
 	/* Allocate workspace and zero all fields */
 	cstate = (CopyStateData *) palloc0(sizeof(CopyStateData));
@@ -1019,6 +1021,7 @@ DoCopy(const CopyStmt *stmt)
 	cstate->line_buf_converted = false;
 	cstate->raw_buf = (char *) palloc(RAW_BUF_SIZE + 1);
 	cstate->raw_buf_index = cstate->raw_buf_len = 0;
+	cstate->processed = 0;
 
 	/* Set up encoding conversion info */
 	cstate->client_encoding = pg_get_client_encoding();
@@ -1161,10 +1164,14 @@ DoCopy(const CopyStmt *stmt)
 	heap_close(cstate->rel, (is_from ? NoLock : AccessShareLock));
 
 	/* Clean up storage (probably not really necessary) */
+	processed = cstate->processed;
+
 	pfree(cstate->attribute_buf.data);
 	pfree(cstate->line_buf.data);
 	pfree(cstate->raw_buf);
 	pfree(cstate);
+
+	return processed;
 }
 
 
@@ -1401,6 +1408,8 @@ CopyTo(CopyState cstate)
 		CopySendEndOfRow(cstate);
 
 		MemoryContextSwitchTo(oldcontext);
+		
+		cstate->processed++;
 	}
 
 	heap_endscan(scandesc);
@@ -2002,6 +2011,13 @@ CopyFrom(CopyState cstate)
 
 			/* AFTER ROW INSERT Triggers */
 			ExecARInsertTriggers(estate, resultRelInfo, tuple);
+
+			/*
+			 * We count only tuples not suppressed by a BEFORE INSERT trigger;
+			 * this is the same definition used by execMain.c for counting
+			 * tuples inserted by an INSERT command.
+			 */
+			cstate->processed++;
 		}
 	}
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.72 2005/12/28 14:38:32 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.73 2006/03/03 19:54:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -251,6 +251,20 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
    </varlistentry>
 
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Outputs</title>
+
+  <para>
+   On successful completion, a <command>COPY</> command returns a command
+   tag of the form
+<screen>
+COPY <replaceable class="parameter">count</replaceable>
+</screen>
+   The <replaceable class="parameter">count</replaceable> is the number
+   of rows inserted into or copied from the table.
+  </para>
  </refsect1>
 
  <refsect1>
