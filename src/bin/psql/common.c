@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.112 2006/02/12 03:30:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.113 2006/03/03 23:38:30 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -685,7 +685,10 @@ AcceptResult(const PGresult *result, const char *query)
 				break;
 
 			case PGRES_COPY_OUT:
-				/* keep cancel connection for copy out state */
+				/*
+				 * Keep cancel connection active during copy out state.
+				 * The matching ResetCancelConn() is in handleCopyOut.
+				 */
 				SetCancelConn();
 				break;
 
@@ -702,6 +705,7 @@ AcceptResult(const PGresult *result, const char *query)
 			psql_error("%s", error);
 
 		ReportSyntaxErrorPosition(result, query);
+
 		CheckConnection();
 	}
 
@@ -719,6 +723,9 @@ AcceptResult(const PGresult *result, const char *query)
  * In autocommit-off mode, a new transaction block is started if start_xact
  * is true; nothing special is done when start_xact is false.  Typically,
  * start_xact = false is used for SELECTs and explicit BEGIN/COMMIT commands.
+ *
+ * Caller is responsible for handling the ensuing processing if a COPY
+ * command is sent.
  *
  * Note: we don't bother to check PQclientEncoding; it is assumed that no
  * caller uses this path to issue "SET CLIENT_ENCODING".

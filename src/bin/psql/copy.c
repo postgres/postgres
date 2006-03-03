@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.58 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.59 2006/03/03 23:38:30 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -568,7 +568,9 @@ do_copy(const char *args)
 			break;
 		default:
 			success = false;
-			psql_error("\\copy: unexpected response (%d)\n", PQresultStatus(result));
+			psql_error("\\copy: unexpected response (%d)\n",
+					   PQresultStatus(result));
+			break;
 	}
 
 	PQclear(result);
@@ -586,85 +588,92 @@ do_copy(const char *args)
 }
 
 
-#define COPYBUFSIZ 8192			/* size doesn't matter */
-
+/*
+ * Functions for handling COPY IN/OUT data transfer.
+ *
+ * If you want to use COPY TO STDOUT/FROM STDIN in your application,
+ * this is the code to steal ;)
+ */
 
 /*
  * handleCopyOut
- * receives data as a result of a COPY ... TO stdout command
+ * receives data as a result of a COPY ... TO STDOUT command
  *
- * If you want to use COPY TO in your application, this is the code to steal :)
+ * conn should be a database connection that you just issued COPY TO on
+ * and got back a PGRES_COPY_OUT result.
+ * copystream is the file stream for the data to go to.
  *
- * conn should be a database connection that you just called COPY TO on
- * (and which gave you PGRES_COPY_OUT back);
- * copystream is the file stream you want the output to go to
+ * result is true if successful, false if not.
  */
 bool
 handleCopyOut(PGconn *conn, FILE *copystream)
 {
-	bool		copydone = false;		/* haven't started yet */
-	char		copybuf[COPYBUFSIZ];
-	int			ret;
+	bool	OK = true;
+	char	*buf;
+	int		 ret;
+	PGresult *res;
 
-	while (!copydone)
+	for (;;)
 	{
-		ret = PQgetline(conn, copybuf, COPYBUFSIZ);
+		ret = PQgetCopyData(conn, &buf, 0);
 
-		if (copybuf[0] == '\\' &&
-			copybuf[1] == '.' &&
-			copybuf[2] == '\0')
+		if (ret < 0)
+			break;				/* done or error */
+
+		if (buf)
 		{
-			copydone = true;	/* we're at the end */
-		}
-		else
-		{
-			fputs(copybuf, copystream);
-			switch (ret)
-			{
-				case EOF:
-					copydone = true;
-					/* FALLTHROUGH */
-				case 0:
-					fputc('\n', copystream);
-					break;
-				case 1:
-					break;
-			}
+			fputs(buf, copystream);
+			PQfreemem(buf);
 		}
 	}
+
 	fflush(copystream);
-	ret = !PQendcopy(conn);
+
+	if (ret == -2)
+	{
+		psql_error("COPY data transfer failed: %s", PQerrorMessage(conn));
+		OK = false;
+	}
+
+	/* Check command status and return to normal libpq state */
+	res = PQgetResult(conn);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		psql_error("%s", PQerrorMessage(conn));
+		OK = false;
+	}
+	PQclear(res);
+
+	/* Disable cancel connection (see AcceptResult in common.c) */
 	ResetCancelConn();
-	return ret;
+	
+	return OK;
 }
-
-
 
 /*
  * handleCopyIn
- * receives data as a result of a COPY ... FROM stdin command
+ * sends data to complete a COPY ... FROM STDIN command
  *
- * Again, if you want to use COPY FROM in your application, copy this.
+ * conn should be a database connection that you just issued COPY FROM on
+ * and got back a PGRES_COPY_IN result.
+ * copystream is the file stream to read the data from.
  *
- * conn should be a database connection that you just called COPY FROM on
- * (and which gave you PGRES_COPY_IN back);
- * copystream is the file stream you want the input to come from
+ * result is true if successful, false if not.
  */
+
+/* read chunk size for COPY IN - size is not critical */
+#define COPYBUFSIZ 8192
 
 bool
 handleCopyIn(PGconn *conn, FILE *copystream)
 {
+	bool		OK = true;
 	const char *prompt;
 	bool		copydone = false;
 	bool		firstload;
 	bool		linedone;
-	bool		saw_cr = false;
-	char		copybuf[COPYBUFSIZ];
-	char	   *s;
-	int			bufleft;
-	int			c = 0;
-	int			ret;
-	unsigned int linecount = 0;
+	char		buf[COPYBUFSIZ];
+	PGresult *res;
 
 	/* Prompt if interactive input */
 	if (isatty(fileno(copystream)))
@@ -684,64 +693,65 @@ handleCopyIn(PGconn *conn, FILE *copystream)
 			fputs(prompt, stdout);
 			fflush(stdout);
 		}
+		
 		firstload = true;
 		linedone = false;
 
 		while (!linedone)
 		{						/* for each bufferload in line ... */
-			/* Fetch string until \n, EOF, or buffer full */
-			s = copybuf;
-			for (bufleft = COPYBUFSIZ - 1; bufleft > 0; bufleft--)
+			int		linelen;
+
+			if (!fgets(buf, COPYBUFSIZ, copystream))
 			{
-				c = getc(copystream);
-				if (c == EOF)
-				{
-					linedone = true;
-					break;
-				}
-				*s++ = c;
-				if (c == '\n')
-				{
-					linedone = true;
-					break;
-				}
-				if (c == '\r')
-					saw_cr = true;
-			}
-			*s = '\0';
-			/* EOF with empty line-so-far? */
-			if (c == EOF && s == copybuf && firstload)
-			{
-				/*
-				 * We are guessing a little bit as to the right line-ending
-				 * here...
-				 */
-				if (saw_cr)
-					PQputline(conn, "\\.\r\n");
-				else
-					PQputline(conn, "\\.\n");
+				if (ferror(copystream))
+					OK = false;
 				copydone = true;
-				if (pset.cur_cmd_interactive)
-					puts("\\.");
 				break;
 			}
-			/* No, so pass the data to the backend */
-			PQputline(conn, copybuf);
-			/* Check for line consisting only of \. */
+
+			linelen = strlen(buf);
+
+			/* current line is done? */
+			if (linelen > 0 && buf[linelen-1] == '\n')
+				linedone = true;
+
+			/* check for EOF marker, but not on a partial line */
 			if (firstload)
 			{
-				if (strcmp(copybuf, "\\.\n") == 0 ||
-					strcmp(copybuf, "\\.\r\n") == 0)
+				if (strcmp(buf, "\\.\n") == 0 ||
+					strcmp(buf, "\\.\r\n") == 0)
 				{
 					copydone = true;
 					break;
 				}
+				
 				firstload = false;
 			}
+			
+			if (PQputCopyData(conn, buf, linelen) <= 0)
+			{
+				OK = false;
+				copydone = true;
+				break;
+			}
 		}
-		linecount++;
+		
+		pset.lineno++;
 	}
-	ret = !PQendcopy(conn);
-	pset.lineno += linecount;
-	return ret;
+
+	/* Terminate data transfer */
+	if (PQputCopyEnd(conn,
+					 OK ? NULL : _("aborted due to read failure")) <= 0)
+		OK = false;
+
+	/* Check command status and return to normal libpq state */
+	res = PQgetResult(conn);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		psql_error("%s", PQerrorMessage(conn));
+		OK = false;
+	}
+	PQclear(res);
+
+	return OK;
 }

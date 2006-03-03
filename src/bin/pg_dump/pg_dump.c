@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.431 2006/03/02 01:18:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.432 2006/03/03 23:38:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -831,8 +831,6 @@ selectDumpableObject(DumpableObject *dobj)
  *	  to be dumped.
  */
 
-#define COPYBUFSIZ		8192
-
 static int
 dumpTableData_copy(Archive *fout, void *dcontext)
 {
@@ -844,8 +842,7 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 	PQExpBuffer q = createPQExpBuffer();
 	PGresult   *res;
 	int			ret;
-	bool		copydone;
-	char		copybuf[COPYBUFSIZ];
+	char	   *copybuf;
 	const char *column_list;
 
 	if (g_verbose)
@@ -886,33 +883,19 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 	}
 	res = PQexec(g_conn, q->data);
 	check_sql_result(res, g_conn, q->data, PGRES_COPY_OUT);
+	PQclear(res);
 
-	copydone = false;
-
-	while (!copydone)
+	for (;;)
 	{
-		ret = PQgetline(g_conn, copybuf, COPYBUFSIZ);
+		ret = PQgetCopyData(g_conn, &copybuf, 0);
 
-		if (copybuf[0] == '\\' &&
-			copybuf[1] == '.' &&
-			copybuf[2] == '\0')
+		if (ret < 0)
+			break;				/* done or error */
+
+		if (copybuf)
 		{
-			copydone = true;	/* don't print this... */
-		}
-		else
-		{
-			archputs(copybuf, fout);
-			switch (ret)
-			{
-				case EOF:
-					copydone = true;
-					/* FALLTHROUGH */
-				case 0:
-					archputs("\n", fout);
-					break;
-				case 1:
-					break;
-			}
+			WriteData(fout, copybuf, ret);
+			PQfreemem(copybuf);
 		}
 
 		/*
@@ -920,7 +903,7 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 		 *
 		 * There was considerable discussion in late July, 2000 regarding
 		 * slowing down pg_dump when backing up large tables. Users with both
-		 * slow & fast (muti-processor) machines experienced performance
+		 * slow & fast (multi-processor) machines experienced performance
 		 * degradation when doing a backup.
 		 *
 		 * Initial attempts based on sleeping for a number of ms for each ms
@@ -957,16 +940,20 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 	}
 	archprintf(fout, "\\.\n\n\n");
 
-	ret = PQendcopy(g_conn);
-	if (ret != 0)
+	if (ret == -2)
 	{
-		write_msg(NULL, "SQL command to dump the contents of table \"%s\" failed: PQendcopy() failed.\n", classname);
+		/* copy data transfer failed */
+		write_msg(NULL, "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n", classname);
 		write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
 		write_msg(NULL, "The command was: %s\n", q->data);
 		exit_nicely();
 	}
 
+	/* Check command status and return to normal libpq state */
+	res = PQgetResult(g_conn);
+	check_sql_result(res, g_conn, q->data, PGRES_COMMAND_OK);
 	PQclear(res);
+
 	destroyPQExpBuffer(q);
 	return 1;
 }

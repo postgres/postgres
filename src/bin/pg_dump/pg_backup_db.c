@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.69 2006/02/12 06:11:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.70 2006/03/03 23:38:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,21 +391,28 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 	 * enter COPY mode; this allows us to behave reasonably when trying
 	 * to continue after an error in a COPY command.
 	 */
-	if (AH->pgCopyIn && PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
-		die_horribly(AH, modulename, "error returned by PQputline: %s",
+	if (AH->pgCopyIn &&
+		PQputCopyData(AH->connection, AH->pgCopyBuf->data,
+					  AH->pgCopyBuf->len) <= 0)
+		die_horribly(AH, modulename, "error returned by PQputCopyData: %s",
 					 PQerrorMessage(AH->connection));
 
 	resetPQExpBuffer(AH->pgCopyBuf);
 
-	/*
-	 * fprintf(stderr, "Buffer is '%s'\n", AH->pgCopyBuf->data);
-	 */
-
-	if (isEnd)
+	if (isEnd && AH->pgCopyIn)
 	{
-		if (AH->pgCopyIn && PQendcopy(AH->connection) != 0)
-			die_horribly(AH, modulename, "error returned by PQendcopy: %s",
+		PGresult   *res;
+
+		if (PQputCopyEnd(AH->connection, NULL) <= 0)
+			die_horribly(AH, modulename, "error returned by PQputCopyEnd: %s",
 						 PQerrorMessage(AH->connection));
+
+		/* Check command status and return to normal libpq state */
+		res = PQgetResult(AH->connection);
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			warn_or_die_horribly(AH, modulename, "COPY failed: %s",
+								 PQerrorMessage(AH->connection));
+		PQclear(res);
 
 		AH->pgCopyIn = false;
 	}
