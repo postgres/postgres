@@ -411,7 +411,7 @@ T411	UPDATE statement: SET ROW option			NO
 T431	Extended grouping capabilities			NO	
 T432	Nested and concatenated GROUPING SETS			NO	
 T433	Multiargument GROUPING function			NO	
-T434	GROUP BY DISINCT			NO	
+T434	GROUP BY DISTINCT			NO	
 T441	ABS and MOD functions			YES	
 T461	Symmetric BETWEEN predicate			YES	
 T471	Result sets return value			NO	
