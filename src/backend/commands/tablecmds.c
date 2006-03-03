@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.178 2006/03/03 03:30:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.179 2006/03/03 18:25:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,7 @@ typedef struct NewColumnValue
 } NewColumnValue;
 
 
+static void truncate_check_rel(Relation rel);
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, int *supOidCount);
 static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
@@ -539,33 +540,33 @@ void
 ExecuteTruncate(TruncateStmt *stmt)
 {
 	List	   *rels = NIL;
-	List	   *directRelids = NIL;
+	List	   *relids = NIL;
 	ListCell   *cell;
-	Oid			relid;
-	Relation	rel;
 
 	/*
-	 * Open and exclusive-lock all the explicitly-specified relations
+	 * Open, exclusive-lock, and check all the explicitly-specified relations
 	 */
 	foreach(cell, stmt->relations)
 	{
 		RangeVar   *rv = lfirst(cell);
+		Relation	rel;
 
 		rel = heap_openrv(rv, AccessExclusiveLock);
+		truncate_check_rel(rel);
 		rels = lappend(rels, rel);
-		directRelids = lappend_oid(directRelids, RelationGetRelid(rel));
+		relids = lappend_oid(relids, RelationGetRelid(rel));
 	}
 
 	/*
 	 * In CASCADE mode, suck in all referencing relations as well.  This
 	 * requires multiple iterations to find indirectly-dependent relations.
 	 * At each phase, we need to exclusive-lock new rels before looking
-	 * for their dependencies, else we might miss something.
+	 * for their dependencies, else we might miss something.  Also, we
+	 * check each rel as soon as we open it, to avoid a faux pas such as
+	 * holding lock for a long time on a rel we have no permissions for.
 	 */
 	if (stmt->behavior == DROP_CASCADE)
 	{
-		List   *relids = list_copy(directRelids);
-
 		for (;;)
 		{
 			List   *newrelids;
@@ -576,68 +577,18 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 			foreach(cell, newrelids)
 			{
-				relid = lfirst_oid(cell);
+				Oid		relid = lfirst_oid(cell);
+				Relation	rel;
+
 				rel = heap_open(relid, AccessExclusiveLock);
+				ereport(NOTICE,
+						(errmsg("truncate cascades to table \"%s\"",
+								RelationGetRelationName(rel))));
+				truncate_check_rel(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, relid);
 			}
 		}
-	}
-
-	/* now check all involved relations */
-	foreach(cell, rels)
-	{
-		rel = (Relation) lfirst(cell);
-		relid = RelationGetRelid(rel);
-
-		/*
-		 * If this table was added to the command by CASCADE, report it.
-		 * We don't do this earlier because if we error out on one of the
-		 * tables, it'd be confusing to list subsequently-added tables.
-		 */
-		if (stmt->behavior == DROP_CASCADE &&
-			!list_member_oid(directRelids, relid))
-			ereport(NOTICE,
-					(errmsg("truncate cascades to table \"%s\"",
-							RelationGetRelationName(rel))));
-
-		/* Only allow truncate on regular tables */
-		if (rel->rd_rel->relkind != RELKIND_RELATION)
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is not a table",
-							RelationGetRelationName(rel))));
-
-		/* Permissions checks */
-		if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-						   RelationGetRelationName(rel));
-
-		if (!allowSystemTableMods && IsSystemRelation(rel))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied: \"%s\" is a system catalog",
-							RelationGetRelationName(rel))));
-
-		/*
-		 * We can never allow truncation of shared or nailed-in-cache
-		 * relations, because we can't support changing their relfilenode
-		 * values.
-		 */
-		if (rel->rd_rel->relisshared || rel->rd_isnailed)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot truncate system relation \"%s\"",
-							RelationGetRelationName(rel))));
-
-		/*
-		 * Don't allow truncate on temp tables of other backends ... their
-		 * local buffer manager is not going to cope.
-		 */
-		if (isOtherTempNamespace(RelationGetNamespace(rel)))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("cannot truncate temporary tables of other sessions")));
 	}
 
 	/*
@@ -657,10 +608,9 @@ ExecuteTruncate(TruncateStmt *stmt)
 	 */
 	foreach(cell, rels)
 	{
+		Relation	rel = (Relation) lfirst(cell);
 		Oid			heap_relid;
 		Oid			toast_relid;
-
-		rel = (Relation) lfirst(cell);
 
 		/*
 		 * Create a new empty storage file for the relation, and assign it as
@@ -689,6 +639,51 @@ ExecuteTruncate(TruncateStmt *stmt)
 		 */
 		reindex_relation(heap_relid, true);
 	}
+}
+
+/*
+ * Check that a given rel is safe to truncate.  Subroutine for ExecuteTruncate
+ */
+static void
+truncate_check_rel(Relation rel)
+{
+	/* Only allow truncate on regular tables */
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table",
+						RelationGetRelationName(rel))));
+
+	/* Permissions checks */
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied: \"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
+
+	/*
+	 * We can never allow truncation of shared or nailed-in-cache
+	 * relations, because we can't support changing their relfilenode
+	 * values.
+	 */
+	if (rel->rd_rel->relisshared || rel->rd_isnailed)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot truncate system relation \"%s\"",
+						RelationGetRelationName(rel))));
+
+	/*
+	 * Don't allow truncate on temp tables of other backends ... their
+	 * local buffer manager is not going to cope.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(rel)))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot truncate temporary tables of other sessions")));
 }
 
 /*----------
