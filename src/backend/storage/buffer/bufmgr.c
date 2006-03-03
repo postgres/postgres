@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.202 2006/01/06 00:04:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.203 2006/03/03 00:02:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
+#include "postmaster/bgwriter.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "storage/bufpage.h"
@@ -60,6 +61,9 @@
 /* Note: this macro only works on local buffers, not shared ones! */
 #define LocalBufHdrGetBlock(bufHdr) \
 	LocalBufferBlockPointers[-((bufHdr)->buf_id + 2)]
+
+/* interval for calling AbsorbFsyncRequests in BufferSync */
+#define WRITES_PER_ABSORB		1000
 
 
 /* GUC variables */
@@ -892,6 +896,7 @@ BufferSync(void)
 {
 	int			buf_id;
 	int			num_to_scan;
+	int			absorb_counter;
 
 	/*
 	 * Find out where to start the circular scan.
@@ -905,9 +910,23 @@ BufferSync(void)
 	 * Loop over all buffers.
 	 */
 	num_to_scan = NBuffers;
+	absorb_counter = WRITES_PER_ABSORB;
 	while (num_to_scan-- > 0)
 	{
-		(void) SyncOneBuffer(buf_id, false);
+		if (SyncOneBuffer(buf_id, false))
+		{
+			/*
+			 * If in bgwriter, absorb pending fsync requests after each
+			 * WRITES_PER_ABSORB write operations, to prevent overflow of
+			 * the fsync request queue.  If not in bgwriter process, this is
+			 * a no-op.
+			 */
+			if (--absorb_counter <= 0)
+			{
+				AbsorbFsyncRequests();
+				absorb_counter = WRITES_PER_ABSORB;
+			}
+		}
 		if (++buf_id >= NBuffers)
 			buf_id = 0;
 	}
