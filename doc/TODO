@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Mar  3 15:37:18 EST 2006
+Last updated:		Fri Mar  3 15:42:50 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -354,7 +354,7 @@ SQL Commands
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * %Allow SET CONSTRAINTS to be qualified by schema/table name
-* %Allow TRUNCATE ... CASCADE/RESTRICT
+* -Allow TRUNCATE ... CASCADE/RESTRICT
 
   This is like DELETE CASCADE, but truncates.
 
