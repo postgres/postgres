@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.293 2005/11/22 18:17:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.294 2006/03/03 03:30:52 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2043,7 +2043,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 		if (con->contype != CONSTRAINT_FOREIGN)
 			continue;
 
-		/* Not for one of our list of tables */
+		/* Not referencing one of our list of tables */
 		if (!list_member_oid(oids, con->confrelid))
 			continue;
 
@@ -2066,11 +2066,67 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 								   get_rel_name(con->conrelid),
 								   get_rel_name(con->confrelid),
 								   NameStr(con->conname)),
-						 errhint("Truncate table \"%s\" at the same time.",
+						 errhint("Truncate table \"%s\" at the same time, "
+								 "or use TRUNCATE ... CASCADE.",
 								 get_rel_name(con->conrelid))));
 		}
 	}
 
 	systable_endscan(fkeyScan);
 	heap_close(fkeyRel, AccessShareLock);
+}
+
+/*
+ * heap_truncate_find_FKs
+ *		Find relations having foreign keys referencing any relations that
+ *		are to be truncated
+ *
+ * This is almost the same code as heap_truncate_check_FKs, but we don't
+ * raise an error if we find such relations; instead we return a list of
+ * their OIDs.  Also note that the input is a list of OIDs not a list
+ * of Relations.  The result list does *not* include any rels that are
+ * already in the input list.
+ *
+ * Note: caller should already have exclusive lock on all rels mentioned
+ * in relationIds.  Since adding or dropping an FK requires exclusive lock
+ * on both rels, this ensures that the answer will be stable.
+ */
+List *
+heap_truncate_find_FKs(List *relationIds)
+{
+	List	   *result = NIL;
+	Relation	fkeyRel;
+	SysScanDesc fkeyScan;
+	HeapTuple	tuple;
+
+	/*
+	 * Must scan pg_constraint.  Right now, it is a seqscan because
+	 * there is no available index on confrelid.
+	 */
+	fkeyRel = heap_open(ConstraintRelationId, AccessShareLock);
+
+	fkeyScan = systable_beginscan(fkeyRel, InvalidOid, false,
+								  SnapshotNow, 0, NULL);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		/* Not a foreign key */
+		if (con->contype != CONSTRAINT_FOREIGN)
+			continue;
+
+		/* Not referencing one of our list of tables */
+		if (!list_member_oid(relationIds, con->confrelid))
+			continue;
+
+		/* Add referencer unless already in input or result list */
+		if (!list_member_oid(relationIds, con->conrelid))
+			result = list_append_unique_oid(result, con->conrelid);
+	}
+
+	systable_endscan(fkeyScan);
+	heap_close(fkeyRel, AccessShareLock);
+
+	return result;
 }

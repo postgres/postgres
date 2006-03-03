@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.19 2005/02/22 19:06:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.20 2006/03/03 03:30:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...]
+TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -47,6 +47,27 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...]
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically truncate all tables that have foreign-key references
+      to any of the named tables, or to any tables added to the group
+      due to <literal>CASCADE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to truncate if any of the tables have foreign-key references
+      from tables that are not to be truncated.  This is the default.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -61,7 +82,10 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...]
    <command>TRUNCATE</> cannot be used on a table that has foreign-key
    references from other tables, unless all such tables are also truncated
    in the same command.  Checking validity in such cases would require table
-   scans, and the whole point is not to do one.
+   scans, and the whole point is not to do one.  The <literal>CASCADE</>
+   option can be used to automatically include all dependent tables &mdash;
+   but be very careful when using this option, else you might lose data you
+   did not intend to!
   </para>
 
   <para>
@@ -80,8 +104,18 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...]
 TRUNCATE TABLE bigtable, fattable;
 </programlisting>
   </para>
+
+  <para>
+   Truncate the table <literal>othertable</literal>, and cascade to any tables
+   that are referencing <literal>othertable</literal> via foreign-key
+   constraints:
+
+<programlisting>
+TRUNCATE othertable CASCADE;
+</programlisting>
+  </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.531 2006/02/28 22:37:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.532 2006/03/03 03:30:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2938,10 +2938,11 @@ attrs:		'.' attr_name
  *****************************************************************************/
 
 TruncateStmt:
-			TRUNCATE opt_table qualified_name_list
+			TRUNCATE opt_table qualified_name_list opt_drop_behavior
 				{
 					TruncateStmt *n = makeNode(TruncateStmt);
 					n->relations = $3;
+					n->behavior = $4;
 					$$ = (Node *)n;
 				}
 		;

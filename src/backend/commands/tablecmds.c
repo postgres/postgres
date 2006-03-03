@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.177 2006/01/30 16:18:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.178 2006/03/03 03:30:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,26 +527,79 @@ RemoveRelation(const RangeVar *relation, DropBehavior behavior)
  * ExecuteTruncate
  *		Executes a TRUNCATE command.
  *
- * This is a multi-relation truncate.  It first opens and grabs exclusive
- * locks on all relations involved, checking permissions and otherwise
- * verifying that the relation is OK for truncation.  When they are all
- * open, it checks foreign key references on them, namely that FK references
- * are all internal to the group that's being truncated.  Finally all
- * relations are truncated and reindexed.
+ * This is a multi-relation truncate.  We first open and grab exclusive
+ * lock on all relations involved, checking permissions and otherwise
+ * verifying that the relation is OK for truncation.  In CASCADE mode,
+ * relations having FK references to the targeted relations are automatically
+ * added to the group; in RESTRICT mode, we check that all FK references are
+ * internal to the group that's being truncated.  Finally all the relations
+ * are truncated and reindexed.
  */
 void
-ExecuteTruncate(List *relations)
+ExecuteTruncate(TruncateStmt *stmt)
 {
 	List	   *rels = NIL;
+	List	   *directRelids = NIL;
 	ListCell   *cell;
+	Oid			relid;
+	Relation	rel;
 
-	foreach(cell, relations)
+	/*
+	 * Open and exclusive-lock all the explicitly-specified relations
+	 */
+	foreach(cell, stmt->relations)
 	{
 		RangeVar   *rv = lfirst(cell);
-		Relation	rel;
 
-		/* Grab exclusive lock in preparation for truncate */
 		rel = heap_openrv(rv, AccessExclusiveLock);
+		rels = lappend(rels, rel);
+		directRelids = lappend_oid(directRelids, RelationGetRelid(rel));
+	}
+
+	/*
+	 * In CASCADE mode, suck in all referencing relations as well.  This
+	 * requires multiple iterations to find indirectly-dependent relations.
+	 * At each phase, we need to exclusive-lock new rels before looking
+	 * for their dependencies, else we might miss something.
+	 */
+	if (stmt->behavior == DROP_CASCADE)
+	{
+		List   *relids = list_copy(directRelids);
+
+		for (;;)
+		{
+			List   *newrelids;
+
+			newrelids = heap_truncate_find_FKs(relids);
+			if (newrelids == NIL)
+				break;			/* nothing else to add */
+
+			foreach(cell, newrelids)
+			{
+				relid = lfirst_oid(cell);
+				rel = heap_open(relid, AccessExclusiveLock);
+				rels = lappend(rels, rel);
+				relids = lappend_oid(relids, relid);
+			}
+		}
+	}
+
+	/* now check all involved relations */
+	foreach(cell, rels)
+	{
+		rel = (Relation) lfirst(cell);
+		relid = RelationGetRelid(rel);
+
+		/*
+		 * If this table was added to the command by CASCADE, report it.
+		 * We don't do this earlier because if we error out on one of the
+		 * tables, it'd be confusing to list subsequently-added tables.
+		 */
+		if (stmt->behavior == DROP_CASCADE &&
+			!list_member_oid(directRelids, relid))
+			ereport(NOTICE,
+					(errmsg("truncate cascades to table \"%s\"",
+							RelationGetRelationName(rel))));
 
 		/* Only allow truncate on regular tables */
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
@@ -585,24 +638,29 @@ ExecuteTruncate(List *relations)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			  errmsg("cannot truncate temporary tables of other sessions")));
-
-		/* Save it into the list of rels to truncate */
-		rels = lappend(rels, rel);
 	}
 
 	/*
-	 * Check foreign key references.
+	 * Check foreign key references.  In CASCADE mode, this should be
+	 * unnecessary since we just pulled in all the references; but as
+	 * a cross-check, do it anyway if in an Assert-enabled build.
 	 */
+#ifdef USE_ASSERT_CHECKING
 	heap_truncate_check_FKs(rels, false);
+#else
+	if (stmt->behavior == DROP_RESTRICT)
+		heap_truncate_check_FKs(rels, false);
+#endif
 
 	/*
 	 * OK, truncate each table.
 	 */
 	foreach(cell, rels)
 	{
-		Relation	rel = lfirst(cell);
 		Oid			heap_relid;
 		Oid			toast_relid;
+
+		rel = (Relation) lfirst(cell);
 
 		/*
 		 * Create a new empty storage file for the relation, and assign it as

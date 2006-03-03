@@ -30,6 +30,9 @@ TRUNCATE TABLE trunc_c,trunc_d,trunc_e;	-- ok
 TRUNCATE TABLE trunc_c,trunc_d,trunc_e,truncate_a;	-- fail
 TRUNCATE TABLE trunc_c,trunc_d,trunc_e,truncate_a,trunc_b;	-- ok
 
+TRUNCATE TABLE truncate_a RESTRICT; -- fail
+TRUNCATE TABLE truncate_a CASCADE;  -- ok
+
 -- circular references
 ALTER TABLE truncate_a ADD FOREIGN KEY (col1) REFERENCES trunc_c;
 
@@ -46,6 +49,24 @@ TRUNCATE TABLE trunc_c,trunc_d,trunc_e,truncate_a;
 TRUNCATE TABLE trunc_c,trunc_d,trunc_e,truncate_a,trunc_b;
 
 -- Verify that truncating did actually work
+SELECT * FROM truncate_a
+   UNION ALL
+ SELECT * FROM trunc_c
+   UNION ALL
+ SELECT * FROM trunc_b
+   UNION ALL
+ SELECT * FROM trunc_d;
+SELECT * FROM trunc_e;
+
+-- Add data again to test TRUNCATE ... CASCADE
+INSERT INTO trunc_c VALUES (1);
+INSERT INTO truncate_a VALUES (1);
+INSERT INTO trunc_b VALUES (1);
+INSERT INTO trunc_d VALUES (1);
+INSERT INTO trunc_e VALUES (1,1);
+
+TRUNCATE TABLE trunc_c CASCADE;  -- ok
+
 SELECT * FROM truncate_a
    UNION ALL
  SELECT * FROM trunc_c
