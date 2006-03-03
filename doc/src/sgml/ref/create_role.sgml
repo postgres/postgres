@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.4 2005/11/03 00:51:43 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.4.2.1 2006/03/03 03:06:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -342,6 +342,19 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
    users always had access to all privileges of groups they were members of.
    However, <literal>NOINHERIT</> provides a closer match to the semantics
    specified in the SQL standard.
+  </para>
+
+  <para>
+   Be careful with the <literal>CREATEROLE</> privilege. There is no concept of
+   inheritance for the privileges of a <literal>CREATEROLE</>-role. That
+   means that even if a role does not have a certain privilege but is allowed
+   to create other roles, it can easily create another role with different
+   privileges than its own (except for creating roles with superuser
+   privileges). For example, if the role <quote>user</> has the
+   <literal>CREATEROLE</> privilege but not the <literal>CREATEDB</> privilege,
+   nonetheless it can create a new role with the <literal>CREATEDB</>
+   privilege. Therefore, regard roles that have the <literal>CREATEROLE</>
+   privilege as almost-superuser-roles.
   </para>
 
   <para>
