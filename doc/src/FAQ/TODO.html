@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Thu Mar  2 22:13:06 EST 2006
+Last updated:           Fri Mar  3 15:37:18 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -456,7 +456,7 @@ first.
 <p>          This requires the use of a savepoint before each COPY line is
           processed, with ROLLBACK on COPY failure.
 </p>
-    </li><li>%Have COPY return the number of rows loaded/unloaded?
+    </li><li>-<em>Have COPY return the number of rows loaded/unloaded?</em>
     </li><li>Allow COPY on a newly-created table to skip WAL logging
 <p>          On crash recovery, the table involved in the COPY would
           be removed or have its heap and index files truncated.  One
