@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.204 2006/03/01 00:23:21 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.205 2006/03/03 20:57:32 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -2127,12 +2127,13 @@ char *PQcmdTuples(PGresult *res);
           affected by the <acronym>SQL</> statement that generated the
           <structname>PGresult</>. This function can only be used
           following the execution of an <command>INSERT</>,
-          <command>UPDATE</>, <command>DELETE</>, <command>MOVE</>, or
-          <command>FETCH</> statement, or an <command>EXECUTE</> of a
-          prepared query that contains a <command>INSERT</>,
+          <command>UPDATE</>, <command>DELETE</>, <command>MOVE</>,
+          <command>FETCH</>, or <command>COPY</> statement,
+          or an <command>EXECUTE</> of a
+          prepared query that contains an <command>INSERT</>,
           <command>UPDATE</>, or <command>DELETE</> statement.  If the
           command that generated the <structname>PGresult</> was
-          anything else, <function>PQcmdTuples</> returns the empty
+          anything else, <function>PQcmdTuples</> returns an empty
           string. The caller should not free the return value
           directly. It will be freed when the associated
           <structname>PGresult</> handle is passed to

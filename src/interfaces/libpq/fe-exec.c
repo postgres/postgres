@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.179 2006/01/25 20:44:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.180 2006/03/03 20:57:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
 
-#include <errno.h>
 #include <ctype.h>
 #include <fcntl.h>
 
@@ -2168,8 +2167,8 @@ PQoidValue(const PGresult *res)
 
 /*
  * PQcmdTuples -
- *	If the last command was an INSERT/UPDATE/DELETE/MOVE/FETCH, return a
- *	string containing the number of inserted/affected tuples. If not,
+ *	If the last command was INSERT/UPDATE/DELETE/MOVE/FETCH/COPY, return
+ *	a string containing the number of inserted/affected tuples. If not,
  *	return "".
  *
  *	XXX: this should probably return an int
@@ -2177,40 +2176,48 @@ PQoidValue(const PGresult *res)
 char *
 PQcmdTuples(PGresult *res)
 {
-	char	   *p;
+	char	   *p, *c;
 
 	if (!res)
 		return "";
 
 	if (strncmp(res->cmdStatus, "INSERT ", 7) == 0)
 	{
-		p = res->cmdStatus + 6;
-		p++;
-		/* INSERT: skip oid */
-		while (*p != ' ' && *p)
+		p = res->cmdStatus + 7;
+		/* INSERT: skip oid and space */
+		while (*p && *p != ' ')
 			p++;
+		if (*p == 0)
+			goto interpret_error;				/* no space? */
+		p++;
 	}
 	else if (strncmp(res->cmdStatus, "DELETE ", 7) == 0 ||
 			 strncmp(res->cmdStatus, "UPDATE ", 7) == 0)
-		p = res->cmdStatus + 6;
+		p = res->cmdStatus + 7;
 	else if (strncmp(res->cmdStatus, "FETCH ", 6) == 0)
+		p = res->cmdStatus + 6;
+	else if (strncmp(res->cmdStatus, "MOVE ", 5) == 0 ||
+			 strncmp(res->cmdStatus, "COPY ", 5) == 0)
 		p = res->cmdStatus + 5;
-	else if (strncmp(res->cmdStatus, "MOVE ", 5) == 0)
-		p = res->cmdStatus + 4;
 	else
 		return "";
 
-	p++;
-
-	if (*p == 0)
+	/* check that we have an integer (at least one digit, nothing else) */
+	for (c = p; *c; c++)
 	{
-		pqInternalNotice(&res->noticeHooks,
-						 "could not interpret result from server: %s",
-						 res->cmdStatus);
-		return "";
+		if (!isdigit((unsigned char) *c))
+			goto interpret_error;
 	}
+	if (c == p)
+		goto interpret_error;
 
 	return p;
+	
+interpret_error:
+	pqInternalNotice(&res->noticeHooks,
+					 "could not interpret result from server: %s",
+					 res->cmdStatus);
+	return "";
 }
 
 /*
