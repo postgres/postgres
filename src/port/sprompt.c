@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/sprompt.c,v 1.10 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/sprompt.c,v 1.10.4.1 2006/03/03 23:54:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 {
 	int			length;
 	char	   *destination;
-	FILE	   *termin,
-			   *termout;
+	FILE	   *termin = NULL,
+			   *termout = NULL;
 
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
@@ -64,8 +64,14 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	 * Do not try to collapse these into one "w+" mode file. Doesn't work
 	 * on some platforms (eg, HPUX 10.20).
 	 */
-	termin = fopen("/dev/tty", "r");
-	termout = fopen("/dev/tty", "w");
+#ifndef WIN32
+	/*
+	 *	Some win32 platforms actually have a /dev/tty file, but it isn't
+	 *	a device file, and it doesn't work as expected, so we avoid trying.
+	 */
+  	termin = fopen("/dev/tty", "r");
+  	termout = fopen("/dev/tty", "w");
+#endif
 	if (!termin || !termout)
 	{
 		if (termin)
