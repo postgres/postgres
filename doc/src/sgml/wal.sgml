@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.38 2005/11/04 23:14:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.39 2006/03/03 22:02:08 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -136,7 +136,7 @@
    <para>
     <acronym>WAL</acronym> also makes it possible to support on-line
     backup and point-in-time recovery, as described in <xref
-    linkend="backup-online">.  By archiving the WAL data we can support
+    linkend="continuous-archiving">.  By archiving the WAL data we can support
     reverting to any time instant covered by the available WAL data:
     we simply install a prior physical backup of the database, and
     replay the WAL log just as far as the desired time.  What's more,

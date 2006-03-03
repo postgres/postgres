@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.77 2006/02/24 14:03:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.78 2006/03/03 22:02:07 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -19,7 +19,7 @@ $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.77 2006/02/24 14:03:01 momjian E
   <itemizedlist>
    <listitem><para><acronym>SQL</> dump</para></listitem>
    <listitem><para>File system level backup</para></listitem>
-   <listitem><para>On-line backup</para></listitem>
+   <listitem><para>Continuous Archiving</para></listitem>
   </itemizedlist>
   Each has its own strengths and weaknesses.
  </para>
@@ -372,11 +372,11 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
  </sect1>
 
- <sect1 id="backup-online">
-  <title>On-line backup and point-in-time recovery (PITR)</title>
+ <sect1 id="continuous-archiving">
+  <title>Continuous Archiving and Point-In-Time Recovery (PITR)</title>
 
   <indexterm zone="backup">
-   <primary>on-line backup</primary>
+   <primary>continuous archiving</primary>
   </indexterm>
 
   <indexterm zone="backup">
@@ -452,7 +452,8 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
 
   <para>
-   To recover successfully using an on-line backup, you need a continuous
+   To recover successfully using continuous archiving (also called "online
+   backup" by many database vendors), you need a continuous
    sequence of archived WAL files that extends back at least as far as the
    start time of your backup.  So to get started, you should set up and test
    your procedure for archiving WAL files <emphasis>before</> you take your
@@ -783,12 +784,12 @@ SELECT pg_stop_backup();
     <function>pg_start_backup</> or <function>pg_stop_backup</>, and
     you will therefore be left to your own devices to keep track of which
     backup dump is which and how far back the associated WAL files go.
-    It is generally better to follow the on-line backup procedure above.
+    It is generally better to follow the continuous archiving procedure above.
    </para>
   </sect2>
 
   <sect2 id="backup-pitr-recovery">
-   <title>Recovering with an On-line Backup</title>
+   <title>Recovering using a Continuous Archive Backup</title>
 
    <para>
     Okay, the worst has happened and you need to recover from your backup.
@@ -1120,11 +1121,11 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    </para>
   </sect2>
 
-  <sect2 id="backup-online-caveats">
+  <sect2 id="continuous-archiving-caveats">
    <title>Caveats</title>
 
    <para>
-    At this writing, there are several limitations of the on-line backup
+    At this writing, there are several limitations of the continuous archiving
     technique.  These will probably be fixed in future releases:
 
   <itemizedlist>

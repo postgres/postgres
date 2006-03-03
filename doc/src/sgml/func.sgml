@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.307 2006/02/18 16:15:21 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.308 2006/03/03 22:02:07 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -9808,7 +9808,7 @@ SELECT set_config('log_statement_stats', 'off', false);
 
    <para>
     For details about proper usage of these functions, see
-    <xref linkend="backup-online">.
+    <xref linkend="continuous-archiving">.
    </para>
 
    <para>

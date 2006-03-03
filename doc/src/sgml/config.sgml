@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.47 2006/02/05 18:19:14 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.48 2006/03/03 22:02:07 momjian Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1387,7 +1387,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Turning off this parameter does not affect use of
         WAL archiving for point-in-time recovery (PITR)
-        (see <xref linkend="backup-online">).
+        (see <xref linkend="continuous-archiving">).
        </para>
 
        <para>
