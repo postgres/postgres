@@ -13,6 +13,7 @@
 #define ACCEPT_TYPE_ARG3 int
 
 #define MAXPGPATH 1024
+#define MEMSET_LOOP_LIMIT 1024
 
 #define INDEX_MAX_KEYS 32
 

@@ -29,6 +29,7 @@ REFDOCDIR= ../../../doc/src/sgml/ref
 CPP_PROJ=/nologo $(OPT) /W3 /GX /D "WIN32" $(DEBUGDEF) /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
  /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
+ /I ..\pg_dump /I ..\..\backend \
  /D "HAVE_STRDUP" /D "FRONTEND"
 
 CPP_OBJS=$(INTDIR)/
@@ -59,6 +60,8 @@ CLEAN :
 	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\pgstrcasecmp.obj"
 	-@erase "$(INTDIR)\sprompt.obj"
+	-@erase "$(INTDIR)\dumputils.obj"
+	-@erase "$(INTDIR)\keywords.obj"
 	-@erase "$(INTDIR)\*psql.pch"
 	-@erase "$(OUTDIR)\psql.exe"
 	-@erase "$(INTDIR)\..\..\port\pg_config_paths.h"
@@ -90,7 +93,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\getopt_long.obj" \
 	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
-	"$(INTDIR)\sprompt.obj"
+	"$(INTDIR)\sprompt.obj" \
+	"$(INTDIR)\dumputils.obj" \
+	"$(INTDIR)\keywords.obj" 
 
 !IFDEF DEBUG
 LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Debug\libpqddll.lib"
@@ -147,6 +152,16 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\libpqdll.lib"
 "$(INTDIR)\sprompt.obj" : "$(INTDIR)" ..\..\port\sprompt.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\sprompt.c
+<<
+
+"$(INTDIR)\dumputils.obj" : "$(INTDIR)" ..\pg_dump\dumputils.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\pg_dump\dumputils.c
+<<
+
+"$(INTDIR)\keywords.obj" : "$(INTDIR)" ..\..\backend\parser\keywords.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\backend\parser\keywords.c
 <<
 
 "sql_help.h" : create_help.pl

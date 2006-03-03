@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/win32.mak,v 1.11 2006/02/12 06:11:50 momjian Exp $
+# $PostgreSQL: pgsql/src/win32.mak,v 1.12 2006/03/03 23:11:48 momjian Exp $
 
 # Makefile for Microsoft Visual C++ 5.0 (or compat)
 # Top-file makefile for Win32 parts of postgresql.
@@ -20,8 +20,6 @@ ALL:
    nmake /f win32.mak $(MAKEMACRO)
    cd ..\..\bin\pg_dump
    nmake /f win32.mak $(MAKEMACRO)
-   cd ..\..\bin\scripts
-   nmake /f win32.mak $(MAKEMACRO)
    cd ..\..\bin\pg_config
    nmake /f win32.mak $(MAKEMACRO)
    cd ..\..
@@ -33,8 +31,6 @@ CLEAN:
    cd ..\..\bin\psql
    nmake /f win32.mak CLEAN
    cd ..\..\bin\pg_dump
-   nmake /f win32.mak CLEAN
-   cd ..\..\bin\scripts
    nmake /f win32.mak CLEAN
    cd ..\..\bin\pg_config
    nmake /f win32.mak CLEAN
