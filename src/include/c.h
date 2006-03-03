@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.196 2006/02/16 23:23:50 petere Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.197 2006/03/03 21:35:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,8 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
-#ifdef HAVE_STRINGS_H
+/* Some use MinGW-generated pg_config.h but MSVC for extensions. */
+#if defined(HAVE_STRINGS_H) && !defined(WIN32_CLIENT_ONLY)
 #include <strings.h>
 #endif
 #include <sys/types.h>
