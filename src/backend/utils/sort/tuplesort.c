@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.60 2006/02/26 22:58:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.61 2006/03/04 19:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -741,6 +741,13 @@ grow_memtuples(Tuplesortstate *state)
 	 */
 	if (state->availMem <= (long) (state->memtupsize * sizeof(SortTuple)))
 		return false;
+	/*
+	 * On a 64-bit machine, allowedMem could be high enough to get us into
+	 * trouble with MaxAllocSize, too.
+	 */
+	if ((Size) (state->memtupsize * 2) >= MaxAllocSize / sizeof(SortTuple))
+		return false;
+
 	FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
 	state->memtupsize *= 2;
 	state->memtuples = (SortTuple *)
