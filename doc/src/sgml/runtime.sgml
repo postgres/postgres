@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.362 2006/03/02 20:30:21 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.363 2006/03/04 03:47:29 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -897,8 +897,8 @@ sysctl -w kern.sysv.shmall
        <para>
         <varname>SHMALL</> is measured in 4KB pages on this platform,
         and recent releases of OS X reject attempts to set 
-        <varname>SHMALL</> and <varname>SHMMAX</> to a value 
-        that isn't an exact multiple of 4096.
+        and <varname>SHMMAX</> to a value that isn't an exact 
+        multiple of 4096.
        </para>
       </listitem>
      </varlistentry>
