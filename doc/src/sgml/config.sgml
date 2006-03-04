@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.48 2006/03/03 22:02:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.49 2006/03/04 22:19:31 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -47,7 +47,24 @@ search_path = '"$user", public'
     anywhere.  Parameter values that are not simple identifiers or
     numbers must be single-quoted.  To embed a single quote in a parameter
     value, write either two quotes (preferred) or backslash-quote.
-  </para>
+   </para>
+
+   <para>
+    <indexterm>
+     <primary><literal>include</></primary>
+     <secondary>in configuration file</secondary>
+    </indexterm>
+    In addition to parameter settings, the <filename>postgresql.conf</>
+    file can contain <firstterm>include directives</>, which specify
+    another file to read and process as if it were inserted into the
+    configuration file at this point.  Include directives simply look like
+<programlisting>
+include 'filename'
+</programlisting>
+    If the filename is not an absolute path, it is taken as relative to
+    the directory containing the referencing configuration file.
+    Inclusions can be nested.
+   </para>
 
    <para>
     <indexterm>
