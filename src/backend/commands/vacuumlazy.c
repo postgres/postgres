@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.61.2.1 2005/11/22 18:23:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.61.2.2 2006/03/04 19:09:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 #include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/pg_rusage.h"
 
 
@@ -955,6 +956,7 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 
 	maxtuples = (maintenance_work_mem * 1024L) / sizeof(ItemPointerData);
 	maxtuples = Min(maxtuples, INT_MAX);
+	maxtuples = Min(maxtuples, MaxAllocSize / sizeof(ItemPointerData));
 	/* stay sane if small maintenance_work_mem */
 	maxtuples = Max(maxtuples, MaxHeapTuplesPerPage);
 
@@ -964,6 +966,7 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 		palloc(maxtuples * sizeof(ItemPointerData));
 
 	maxpages = MaxFSMPages;
+	maxpages = Min(maxpages, MaxAllocSize / sizeof(PageFreeSpaceInfo));
 	/* No need to allocate more pages than the relation has blocks */
 	if (relblocks < (BlockNumber) maxpages)
 		maxpages = (int) relblocks;
