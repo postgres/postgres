@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.5.2.2 2006/03/04 12:32:59 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.5.2.3 2006/03/04 12:35:08 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #define PGSJISALTCODE 0x81ac
 #define PGEUCALTCODE 0xa2ae
 
-#define ISSJISHEAD(c) ((c >= 0x81 && c <= 0x9f) || (c >= 0xe0 && c <= 0xef))
+#define ISSJISHEAD(c) ((c >= 0x81 && c <= 0x9f) || (c >= 0xe0 && c <= 0xfc))
 #define ISSJISTAIL(c) ((c >= 0x40 && c <= 0x7e) || (c >= 0x80 && c <= 0xfc))
 
 /*
