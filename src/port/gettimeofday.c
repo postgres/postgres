@@ -2,7 +2,7 @@
  * gettimeofday.c
  *	  Win32 gettimeofday() replacement
  *
- * $PostgreSQL: pgsql/src/port/gettimeofday.c,v 1.8 2006/03/03 23:59:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/gettimeofday.c,v 1.9 2006/03/04 04:44:07 momjian Exp $
  *
  * Copyright (c) 2003 SRA, Inc.
  * Copyright (c) 2003 SKC, Inc.
@@ -32,7 +32,7 @@
 
 
 /* FILETIME of Jan 1 1970 00:00:00. */
-static const unsigned __int64 epoch = 116444736000000000LL;
+static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
 
 /*
  * timezone information is stored outside the kernel so tzp isn't used anymore.
