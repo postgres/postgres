@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.25 2005/11/22 18:17:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.26 2006/03/04 19:30:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,15 +316,28 @@ tuplestore_puttuple(Tuplestorestate *state, void *tuple)
 	switch (state->status)
 	{
 		case TSS_INMEM:
-			/* Grow the array as needed */
-			if (state->memtupcount >= state->memtupsize)
+			/*
+			 * Grow the array as needed.  Note that we try to grow the array
+			 * when there is still one free slot remaining --- if we fail,
+			 * there'll still be room to store the incoming tuple, and then
+			 * we'll switch to tape-based operation.
+			 */
+			if (state->memtupcount >= state->memtupsize - 1)
 			{
-				FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
-				state->memtupsize *= 2;
-				state->memtuples = (void **)
-					repalloc(state->memtuples,
-							 state->memtupsize * sizeof(void *));
-				USEMEM(state, GetMemoryChunkSpace(state->memtuples));
+				/*
+				 * See grow_memtuples() in tuplesort.c for the rationale
+				 * behind these two tests.
+				 */
+				if (state->availMem > (long) (state->memtupsize * sizeof(void *)) &&
+					(Size) (state->memtupsize * 2) < MaxAllocSize / sizeof(void *))
+				{
+					FREEMEM(state, GetMemoryChunkSpace(state->memtuples));
+					state->memtupsize *= 2;
+					state->memtuples = (void **)
+						repalloc(state->memtuples,
+								 state->memtupsize * sizeof(void *));
+					USEMEM(state, GetMemoryChunkSpace(state->memtuples));
+				}
 			}
 
 			/* Stash the tuple in the in-memory array */
@@ -335,9 +348,9 @@ tuplestore_puttuple(Tuplestorestate *state, void *tuple)
 				state->current = state->memtupcount;
 
 			/*
-			 * Done if we still fit in available memory.
+			 * Done if we still fit in available memory and have array slots.
 			 */
-			if (!LACKMEM(state))
+			if (state->memtupcount < state->memtupsize && !LACKMEM(state))
 				return;
 
 			/*
