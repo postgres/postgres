@@ -2,11 +2,11 @@
  *
  *	  EUC_JP, SJIS and MULE_INTERNAL
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.14 2005/12/26 19:30:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.15 2006/03/04 10:57:35 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,9 @@
  */
 #define PGSJISALTCODE 0x81ac
 #define PGEUCALTCODE 0xa2ae
+
+#define ISSJISHEAD(c) ((c >= 0x81 && c <= 0x9f) || (c >= 0xe0 && c <= 0xfc))
+#define ISSJISTAIL(c) ((c >= 0x40 && c <= 0x7e) || (c >= 0x80 && c <= 0xfc))
 
 /*
  * conversion table between SJIS UDC (IBM kanji) and EUC_JP
@@ -186,6 +189,11 @@ sjis2mic(unsigned char *sjis, unsigned char *p, int len)
 			 * JIS X0208, X0212, user defined extended characters
 			 */
 			c2 = *sjis++;
+			if (!ISSJISHEAD(c1) || !ISSJISTAIL(c2))
+				ereport(ERROR,
+						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					errmsg("invalid byte sequence for encoding \"SJIS\": 0x%02x%02x",
+						    c1, c2)));
 			k = (c1 << 8) + c2;
 /* Eiji Tokuya patched begin */
 			if (k >= 0xed40 && k < 0xf040)
@@ -557,6 +565,11 @@ sjis2euc_jp(unsigned char *sjis, unsigned char *p, int len)
 			 * JIS X0208, X0212, user defined extended characters
 			 */
 			c2 = *sjis++;
+			if (!ISSJISHEAD(c1) || !ISSJISTAIL(c2))
+				ereport(ERROR,
+						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					errmsg("invalid byte sequence for encoding \"SJIS\": 0x%02x%02x",
+						    c1, c2)));
 			k = (c1 << 8) + c2;
 			if (k >= 0xed40 && k < 0xf040)
 			{
