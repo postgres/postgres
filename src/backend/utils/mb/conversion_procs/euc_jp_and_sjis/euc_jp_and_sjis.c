@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.9.4.1 2005/06/11 02:46:16 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.9.4.2 2006/03/04 11:54:02 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,9 @@
  */
 #define PGSJISALTCODE 0x81ac
 #define PGEUCALTCODE 0xa2ae
+
+#define ISSJISHEAD(c) ((c >= 0x81 && c <= 0x9f) || (c >= 0xe0 && c <= 0xef))
+#define ISSJISTAIL(c) ((c >= 0x40 && c <= 0x7e) || (c >= 0x80 && c <= 0xfc))
 
 /*
  * conversion table between SJIS UDC (IBM kanji) and EUC_JP
@@ -192,6 +195,11 @@ sjis2mic(unsigned char *sjis, unsigned char *p, int len)
 			 * JIS X0208, X0212, user defined extended characters
 			 */
 			c2 = *sjis++;
+			if (!ISSJISHEAD(c1) || !ISSJISTAIL(c2))
+				ereport(ERROR,
+						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					errmsg("invalid byte sequence for encoding \"SJIS\": 0x%02x%02x",
+						    c1, c2)));
 			k = (c1 << 8) + c2;
 /* Eiji Tokuya patched begin */
 			if (k >= 0xed40 && k < 0xf040)
