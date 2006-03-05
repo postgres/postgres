@@ -4,10 +4,10 @@
  *	Basically this is stuff that is useful in both pg_dump and pg_dumpall.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.25 2006/01/21 02:16:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.26 2006/03/05 15:58:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

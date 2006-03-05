@@ -20,12 +20,12 @@
  * tree after local transformations that might introduce nested AND/ORs.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.53 2005/11/26 18:07:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.54 2006/03/05 15:58:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -5,10 +5,10 @@
  *	  However, we define it here so that the format is documented.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.26 2005/11/22 18:17:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.27 2006/03/05 15:58:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,10 +3,10 @@
  * slru.h
  *		Simple LRU buffering for transaction status logfiles
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.17 2005/12/06 23:08:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.18 2006/03/05 15:58:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

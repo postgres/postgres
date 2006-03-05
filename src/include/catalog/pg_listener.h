@@ -4,10 +4,10 @@
  *	  Asynchronous notification
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_listener.h,v 1.20 2005/10/15 02:49:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_listener.h,v 1.21 2006/03/05 15:58:54 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -4,10 +4,10 @@
  *	  definitions for ANSI floating point
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/port/sunos4/float.h,v 1.14 2004/12/31 22:00:35 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/port/sunos4/float.h,v 1.15 2006/03/05 15:58:35 momjian Exp $
  *
  * NOTES
  *	  These come straight out of ANSI X3.159-1989 (p.18) and

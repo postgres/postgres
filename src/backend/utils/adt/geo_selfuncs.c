@@ -4,12 +4,12 @@
  *	  Selectivity routines registered in the operator catalog in the
  *	  "oprrest" and "oprjoin" attributes.
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.26 2005/11/22 18:17:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.27 2006/03/05 15:58:42 momjian Exp $
  *
  *	XXX These are totally bogus.  Perhaps someone will make them do
  *	something reasonable, someday.

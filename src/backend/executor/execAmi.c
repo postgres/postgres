@@ -3,10 +3,10 @@
  * execAmi.c
  *	  miscellaneous executor access method routines
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.86 2005/11/22 18:17:10 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.87 2006/03/05 15:58:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

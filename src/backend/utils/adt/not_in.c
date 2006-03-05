@@ -3,12 +3,12 @@
  * not_in.c
  *	  Executes the "not_in" operator for any data type
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/not_in.c,v 1.43 2005/05/27 00:57:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/not_in.c,v 1.44 2006/03/05 15:58:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

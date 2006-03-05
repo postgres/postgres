@@ -3,12 +3,12 @@
  * sprompt.c
  *	  simple_prompt() routine
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/sprompt.c,v 1.15 2006/03/05 05:33:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/sprompt.c,v 1.16 2006/03/05 15:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

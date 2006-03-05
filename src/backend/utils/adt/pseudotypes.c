@@ -11,12 +11,12 @@
  * we do better?)
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pseudotypes.c,v 1.16 2006/02/28 22:37:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pseudotypes.c,v 1.17 2006/03/05 15:58:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

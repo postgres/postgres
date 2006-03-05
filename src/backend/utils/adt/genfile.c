@@ -4,12 +4,12 @@
  *		Functions for direct access to files
  *
  *
- * Copyright (c) 2004-2005, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2006, PostgreSQL Global Development Group
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.9 2005/10/29 00:31:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.10 2006/03/05 15:58:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

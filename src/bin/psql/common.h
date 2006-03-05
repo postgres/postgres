@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2005, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.45 2005/10/15 02:49:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.46 2006/03/05 15:58:51 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H

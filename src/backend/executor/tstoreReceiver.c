@@ -5,11 +5,11 @@
  *	  a Tuplestore
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.15 2005/11/03 17:11:36 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/tstoreReceiver.c,v 1.16 2006/03/05 15:58:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

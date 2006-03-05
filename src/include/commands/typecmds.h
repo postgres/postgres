@@ -4,10 +4,10 @@
  *	  prototypes for typecmds.c.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/typecmds.h,v 1.15 2005/11/19 17:39:45 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/commands/typecmds.h,v 1.16 2006/03/05 15:58:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

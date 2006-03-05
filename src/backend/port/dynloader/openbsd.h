@@ -3,10 +3,10 @@
  * openbsd.h
  *	  port-specific prototypes for OpenBSD
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/openbsd.h,v 1.15 2004/12/31 22:00:32 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/openbsd.h,v 1.16 2006/03/05 15:58:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

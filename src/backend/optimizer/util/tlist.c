@@ -3,12 +3,12 @@
  * tlist.c
  *	  Target list manipulation routines
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.71 2006/02/03 21:08:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.72 2006/03/05 15:58:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * pg_conversion.c
  *	  routines to support manipulation of the pg_conversion relation
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.28 2005/10/18 01:06:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.29 2006/03/05 15:58:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

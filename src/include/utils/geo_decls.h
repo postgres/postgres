@@ -3,10 +3,10 @@
  * geo_decls.h - Declarations for various 2D constructs.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.49 2005/11/07 17:36:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.50 2006/03/05 15:59:07 momjian Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.

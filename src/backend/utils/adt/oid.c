@@ -3,12 +3,12 @@
  * oid.c
  *	  Functions for the built-in type Oid ... also oidvector.
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.67 2006/03/02 21:13:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.68 2006/03/05 15:58:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

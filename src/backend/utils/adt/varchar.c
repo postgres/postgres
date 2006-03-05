@@ -3,12 +3,12 @@
  * varchar.c
  *	  Functions for the built-in types char(n) and varchar(n).
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.114 2005/12/22 22:50:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.115 2006/03/05 15:58:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

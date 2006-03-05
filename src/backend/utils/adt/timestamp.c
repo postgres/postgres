@@ -3,12 +3,12 @@
  * timestamp.c
  *	  Functions for the built-in SQL92 types "timestamp" and "interval".
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.160 2005/11/22 22:30:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.161 2006/03/05 15:58:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

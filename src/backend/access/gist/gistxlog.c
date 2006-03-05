@@ -4,11 +4,11 @@
  *	  WAL replay logic for GiST.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.9 2005/09/22 20:44:36 momjian Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.10 2006/03/05 15:58:20 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"

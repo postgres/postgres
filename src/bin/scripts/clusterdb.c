@@ -2,9 +2,9 @@
  *
  * clusterdb
  *
- * Portions Copyright (c) 2002-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.13 2005/06/21 04:02:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.14 2006/03/05 15:58:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

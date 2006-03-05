@@ -26,12 +26,12 @@
  * are passed to the free space map at conclusion of the scan.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.67 2006/03/04 19:09:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.68 2006/03/05 15:58:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

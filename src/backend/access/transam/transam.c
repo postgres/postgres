@@ -3,12 +3,12 @@
  * transam.c
  *	  postgres transaction log interface routines
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.67 2005/11/22 18:17:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.68 2006/03/05 15:58:22 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the

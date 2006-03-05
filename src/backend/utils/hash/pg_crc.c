@@ -14,12 +14,12 @@
  * code for possible future use.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.14 2005/10/15 02:49:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.15 2006/03/05 15:58:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

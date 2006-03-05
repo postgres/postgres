@@ -3,12 +3,12 @@
  * arrayfuncs.c
  *	  Support functions for arrays.
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.126 2005/11/22 18:17:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.127 2006/03/05 15:58:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

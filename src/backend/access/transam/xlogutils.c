@@ -8,10 +8,10 @@
  * None of this code is used during normal system operation.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.40 2006/01/11 08:43:12 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.41 2006/03/05 15:58:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

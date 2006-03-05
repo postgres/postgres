@@ -4,10 +4,10 @@
  * Postgres transaction log manager record pointer and
  * timeline number definitions
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.14 2004/12/31 22:03:21 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.15 2006/03/05 15:58:54 momjian Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H

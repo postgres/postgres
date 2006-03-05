@@ -3,12 +3,12 @@
  * nbtcompare.c
  *	  Comparison functions for btree access method.
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.51 2005/03/29 00:16:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.52 2006/03/05 15:58:21 momjian Exp $
  *
  * NOTES
  *

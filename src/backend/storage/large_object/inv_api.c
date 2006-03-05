@@ -4,12 +4,12 @@
  *	  routines for manipulating inversion fs large objects. This file
  *	  contains the user-level large object application interface routines.
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.114 2005/12/03 05:51:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.115 2006/03/05 15:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

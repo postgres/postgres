@@ -4,10 +4,10 @@
  *	  POSTGRES low-level lock mechanism
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.93 2005/12/11 21:02:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.94 2006/03/05 15:58:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

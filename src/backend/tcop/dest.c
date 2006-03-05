@@ -4,11 +4,11 @@
  *	  support for communication destinations
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.67 2005/11/03 17:11:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.68 2006/03/05 15:58:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

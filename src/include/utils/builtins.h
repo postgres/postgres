@@ -4,10 +4,10 @@
  *	  Declarations for operations on built-in types.
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.275 2006/02/28 22:37:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.276 2006/03/05 15:59:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

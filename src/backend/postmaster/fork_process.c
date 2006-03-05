@@ -4,10 +4,10 @@
  *	 EXEC_BACKEND case; it might be extended to do so, but it would be
  *	 considerably more complex.
  *
- * Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.5 2006/01/05 03:01:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/fork_process.c,v 1.6 2006/03/05 15:58:35 momjian Exp $
  */
 #include "postgres.h"
 #include "postmaster/fork_process.h"

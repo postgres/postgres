@@ -13,9 +13,9 @@
  * This code will also work on platforms where struct addrinfo is defined
  * in the system headers but no getaddrinfo() can be located.
  *
- * Copyright (c) 2003-2005, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.18 2005/12/08 17:52:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.19 2006/03/05 15:58:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

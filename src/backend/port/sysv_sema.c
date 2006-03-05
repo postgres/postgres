@@ -4,11 +4,11 @@
  *	  Implement PGSemaphores using SysV semaphore facilities
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_sema.c,v 1.18 2005/11/22 18:17:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_sema.c,v 1.19 2006/03/05 15:58:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

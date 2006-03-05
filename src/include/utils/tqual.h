@@ -5,10 +5,10 @@
  *
  *	  Should be moved/renamed...	- vadim 07/28/98
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.60 2005/11/26 03:03:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.61 2006/03/05 15:59:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *	  header file for resource usage measurement support routines
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_rusage.h,v 1.1 2005/10/03 22:52:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_rusage.h,v 1.2 2006/03/05 15:59:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

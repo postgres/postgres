@@ -2,9 +2,9 @@
 #
 # Makefile for src/bin/pg_config
 #
-# Copyright (c) 1998-2005, PostgreSQL Global Development Group
+# Copyright (c) 1998-2006, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.16 2005/12/09 21:19:35 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/Makefile,v 1.17 2006/03/05 15:58:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

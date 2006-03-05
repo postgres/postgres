@@ -3,12 +3,12 @@
  * misc.c
  *
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.50 2006/01/11 20:12:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.51 2006/03/05 15:58:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,10 +3,10 @@
  * explain.h
  *	  prototypes for explain.c
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.25 2005/11/29 01:25:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.26 2006/03/05 15:58:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -2,9 +2,9 @@
  * Portions Copyright (c) 1987, 1993, 1994
  * The Regents of the University of California.  All rights reserved.
  *
- * Portions Copyright (c) 2003-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/getopt_long.h,v 1.6 2005/01/01 20:44:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/getopt_long.h,v 1.7 2006/03/05 15:58:53 momjian Exp $
  */
 #ifndef GETOPT_LONG_H
 #define GETOPT_LONG_H
