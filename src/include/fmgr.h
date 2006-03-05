@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.40 2005/10/15 02:49:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.41 2006/03/05 04:43:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,10 +293,13 @@ typedef struct
 /* Expected signature of an info function */
 typedef Pg_finfo_record *(*PGFInfoFunction) (void);
 
-/* Macro to build an info function associated with the given function name */
-
+/*
+ *	Macro to build an info function associated with the given function name.
+ *	Win32 loadable functions usually link with 'dlltool --export-all', but it
+ *	doesn't hurt to add DLLIMPORT in case they don't.
+ */
 #define PG_FUNCTION_INFO_V1(funcname) \
-extern Pg_finfo_record * CppConcat(pg_finfo_,funcname) (void); \
+extern DLLIMPORT Pg_finfo_record * CppConcat(pg_finfo_,funcname) (void); \
 Pg_finfo_record * \
 CppConcat(pg_finfo_,funcname) (void) \
 { \
