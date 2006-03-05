@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.69.4.3 2006/03/04 04:31:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.69.4.4 2006/03/05 05:33:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ extern int find_other_exec(const char *argv0, const char *target,
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define DEVNULL "nul"
-/* "con" does not work from the MinGW 1.0.10 console. */
+/* "con" does not work from the Msys 1.0.10 console (part of MinGW). */
 #define DEVTTY	"con"
 #else
 #define DEVNULL "/dev/null"
