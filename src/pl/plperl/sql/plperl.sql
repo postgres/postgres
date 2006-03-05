@@ -261,6 +261,16 @@ return;
 $$ LANGUAGE plperl;
 SELECT * from perl_spi_func();
 
+--
+-- Test spi_fetchrow abort
+--
+CREATE OR REPLACE FUNCTION perl_spi_func2() RETURNS INTEGER AS $$
+my $x = spi_query("select 1 as a union select 2 as a");
+spi_cursor_close( $x);
+return 0;
+$$ LANGUAGE plperl;
+SELECT * from perl_spi_func2();
+
 
 ---
 --- Test recursion via SPI
@@ -300,4 +310,30 @@ LANGUAGE plperl as $$
     return [['a"b',undef,'c,d'],['e\\f',undef,'g']]; 
 $$;
 
-SELECT array_of_text(); 
+SELECT array_of_text();
+
+--
+-- Test spi_prepare/spi_exec_prepared/spi_freeplan
+--
+CREATE OR REPLACE FUNCTION perl_spi_prepared(INTEGER) RETURNS INTEGER AS $$
+   my $x = spi_prepare('select $1 AS a', 'INT4');
+   my $q = spi_exec_prepared( $x, $_[0] + 1);
+   spi_freeplan($x);
+return $q->{rows}->[0]->{a};
+$$ LANGUAGE plperl;
+SELECT * from perl_spi_prepared(42);
+
+--
+-- Test spi_prepare/spi_query_prepared/spi_freeplan
+--
+CREATE OR REPLACE FUNCTION perl_spi_prepared_set(INTEGER, INTEGER) RETURNS SETOF INTEGER AS $$
+  my $x = spi_prepare('SELECT $1 AS a union select $2 as a', 'INT4', 'INT4');
+  my $q = spi_query_prepared( $x, 1+$_[0], 2+$_[1]);
+  while (defined (my $y = spi_fetchrow($q))) {
+      return_next $y->{a};
+  }
+  spi_freeplan($x);
+  return;
+$$ LANGUAGE plperl;
+SELECT * from perl_spi_prepared_set(1,2);
+

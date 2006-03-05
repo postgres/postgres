@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.50 2006/03/01 06:30:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.51 2006/03/05 16:40:51 adunstan Exp $
 -->
 
  <chapter id="plperl">
@@ -296,7 +296,7 @@ BEGIN { strict->import(); }
   </para>
 
   <para>
-   PL/Perl provides three additional Perl commands:
+   PL/Perl provides additional Perl commands:
 
    <variablelist>
     <varlistentry>
@@ -306,9 +306,13 @@ BEGIN { strict->import(); }
      </indexterm>
 
      <term><literal><function>spi_exec_query</>(<replaceable>query</replaceable> [, <replaceable>max-rows</replaceable>])</literal></term>
-     <term><literal><function>spi_exec_query</>(<replaceable>command</replaceable>)</literal></term>
      <term><literal><function>spi_query</>(<replaceable>command</replaceable>)</literal></term>
-     <term><literal><function>spi_fetchrow</>(<replaceable>command</replaceable>)</literal></term>
+     <term><literal><function>spi_fetchrow</>(<replaceable>cursor</replaceable>)</literal></term>
+     <term><literal><function>spi_prepare</>(<replaceable>command</replaceable>, <replaceable>argument types</replaceable>)</literal></term>
+     <term><literal><function>spi_exec_prepared</>(<replaceable>plan</replaceable>)</literal></term>
+     <term><literal><function>spi_query_prepared</>(<replaceable>plan</replaceable> [, <replaceable>attributes</replaceable>], <replaceable>arguments</replaceable>)</literal></term>
+     <term><literal><function>spi_cursor_close</>(<replaceable>cursor</replaceable>)</literal></term>
+     <term><literal><function>spi_freeplan</>(<replaceable>plan</replaceable>)</literal></term>
 
      <listitem>
       <para>
@@ -419,6 +423,66 @@ $$ LANGUAGE plperlu;
 SELECT * from lotsa_md5(500);
 </programlisting>
     </para>
+      
+    <para>
+    <literal>spi_prepare</literal>, <literal>spi_query_prepared</literal>, <literal>spi_exec_prepared</literal>, 
+    and <literal>spi_freeplan</literal> implement the same functionality but for prepared queries. Once
+    a query plan is prepared by a call to <literal>spi_prepare</literal>, the plan can be used instead
+    of the string query, either in <literal>spi_exec_prepared</literal>, where the result is the same as returned
+    by <literal>spi_exec_query</literal>, or in <literal>spi_query_prepared</literal> which returns a cursor
+    exactly as <literal>spi_query</literal> does, which can be later passed to <literal>spi_fetchrow</literal>.
+    </para>
+    
+    <para>
+    The advantage of prepared queries is that is it possible to use one prepared plan for more
+    than one query execution. After the plan is not needed anymore, it must be freed with 
+    <literal>spi_freeplan</literal>:
+    </para>
+
+    <para>
+    <programlisting>
+CREATE OR REPLACE FUNCTION init() RETURNS INTEGER AS $$
+	$_SHARED{my_plan} = spi_prepare( 'SELECT (now() + $1)::date AS now', 'INTERVAL');
+$$ LANGUAGE plperl;
+
+CREATE OR REPLACE FUNCTION add_time( INTERVAL ) RETURNS TEXT AS $$
+	return spi_exec_prepared( 
+		$_SHARED{my_plan},
+		$_[0],
+	)->{rows}->[0]->{now};
+$$ LANGUAGE plperl;
+
+CREATE OR REPLACE FUNCTION done() RETURNS INTEGER AS $$
+	spi_freeplan( $_SHARED{my_plan});
+	undef $_SHARED{my_plan};
+$$ LANGUAGE plperl;
+
+SELECT init();
+SELECT add_time('1 day'), add_time('2 days'), add_time('3 days');
+SELECT done();
+
+  add_time  |  add_time  |  add_time  
+------------+------------+------------
+ 2005-12-10 | 2005-12-11 | 2005-12-12
+    </programlisting>
+    </para>
+
+    <para>
+    Note that the parameter subscript in <literal>spi_prepare</literal> is defined via
+    $1, $2, $3, etc, so avoid declaring query strings in double quotes that might easily
+    lead to hard-to-catch bugs.
+    </para>
+
+    <para>
+    <literal>spi_cursor_close</literal> can be used to abort sequence of
+    <literal>spi_fetchrow</literal> calls. Normally, the call to
+    <literal>spi_fetchrow</literal> that returns <literal>undef</literal> is
+    the signal that there are no more rows to read. Also
+    that call automatically frees the cursor associated with the query. If it is desired not
+    to read all retuned rows, <literal>spi_cursor_close</literal> must be
+    called to avoid memory leaks.  
+    </para>
+
 
      </listitem>
     </varlistentry>

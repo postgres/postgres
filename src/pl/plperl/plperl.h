@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.3 2006/03/05 15:59:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/pl/plperl/plperl.h,v 1.4 2006/03/05 16:40:51 adunstan Exp $
  */
 
 #ifndef PL_PERL_H
@@ -51,6 +51,12 @@ HV		   *plperl_spi_exec(char *, int);
 void		plperl_return_next(SV *);
 SV		   *plperl_spi_query(char *);
 SV		   *plperl_spi_fetchrow(char *);
+SV *plperl_spi_prepare(char *, int, SV **);
+HV *plperl_spi_exec_prepared(char *, HV *, int, SV **);
+SV *plperl_spi_query_prepared(char *, int, SV **);
+void plperl_spi_freeplan(char *);
+void plperl_spi_cursor_close(char *);
+
 
 
 #endif /* PL_PERL_H */
