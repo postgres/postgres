@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.363 2006/03/04 03:47:29 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.364 2006/03/05 03:50:44 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -878,27 +878,45 @@ sysctl -w kern.sysv.shmmni
 sysctl -w kern.sysv.shmseg
 sysctl -w kern.sysv.shmall
 </programlisting>
+       </para>
+
+       <para>
         In OS X 10.3 and later, these commands have been moved to
         <filename>/etc/rc</> and must be edited there.  Note that
         <filename>/etc/rc</> is usually overwritten by OS X updates (such as
         10.3.6 to 10.3.7) so you should expect to have to redo your editing
-        after each update.  In all versions, you'll need to reboot to make
-        changes take effect.  
+        after each update.
        </para>
 
        <para>
-        In OS X 10.3.9 and later, the file <filename>/etc/sysctl.conf</>
-        allows shared memory setting to be saved across operating system
-        upgrades, and is the recommended method for setting these
-        parameters. When using this file, all five shared memory values
-        must be set or the changes will be ignored.
+        In OS X 10.3.9 and later, instead of editing <filename>/etc/rc</>
+        you may create a file named <filename>/etc/sysctl.conf</>,
+        containing variable assignments such as
+<programlisting>
+kern.sysv.shmmax=4194304
+kern.sysv.shmmin=1
+kern.sysv.shmmni=32
+kern.sysv.shmseg=8
+kern.sysv.shmall=1024
+</programlisting>
+        This method is better than editing <filename>/etc/rc</> because
+        your changes will be preserved across system updates.  Note that
+        <emphasis>all five</> shared-memory parameters must be set in
+        <filename>/etc/sysctl.conf</>, else the values will be ignored.
        </para>
 
        <para>
-        <varname>SHMALL</> is measured in 4KB pages on this platform,
-        and recent releases of OS X reject attempts to set 
-        and <varname>SHMMAX</> to a value that isn't an exact 
-        multiple of 4096.
+        Beware that recent releases of OS X ignore attempts to set
+        <varname>SHMMAX</> to a value that isn't an exact multiple of 4096.
+       </para>
+
+       <para>
+        <varname>SHMALL</> is measured in 4KB pages on this platform.
+       </para>
+
+       <para>
+        In all OS X versions, you'll need to reboot to make changes in the
+        shared memory parameters take effect.  
        </para>
       </listitem>
      </varlistentry>
