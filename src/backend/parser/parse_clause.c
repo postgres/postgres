@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.146 2006/03/05 15:58:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.147 2006/03/05 21:34:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1296,6 +1296,16 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 	return target_result;
 }
 
+static GroupClause *
+make_group_clause(TargetEntry *tle, List *targetlist, Oid sortop)
+{
+	GroupClause *result;
+
+	result = makeNode(GroupClause);
+	result->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
+	result->sortop = sortop;
+	return result;
+}
 
 /*
  * transformGroupClause -
@@ -1303,71 +1313,105 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
  *
  * GROUP BY items will be added to the targetlist (as resjunk columns)
  * if not already present, so the targetlist must be passed by reference.
+ *
+ * The order of the elements of the grouping clause does not affect
+ * the semantics of the query. However, the optimizer is not currently
+ * smart enough to reorder the grouping clause, so we try to do some
+ * primitive reordering here.
  */
 List *
 transformGroupClause(ParseState *pstate, List *grouplist,
 					 List **targetlist, List *sortClause)
 {
-	List	   *glist = NIL;
-	ListCell   *gl;
-	ListCell   *sortItem;
+	List	   *result = NIL;
+	List	   *tle_list = NIL;
+	ListCell   *l;
 
-	sortItem = list_head(sortClause);
-
-	foreach(gl, grouplist)
+	/* Preprocess the grouping clause, lookup TLEs */
+	foreach (l, grouplist)
 	{
 		TargetEntry *tle;
-		Oid			restype;
-		Oid			ordering_op;
-		GroupClause *grpcl;
+		Oid			 restype;
 
-		tle = findTargetlistEntry(pstate, lfirst(gl),
+		tle = findTargetlistEntry(pstate, lfirst(l),
 								  targetlist, GROUP_CLAUSE);
-
-		/* avoid making duplicate grouplist entries */
-		if (targetIsInSortList(tle, glist))
-			continue;
 
 		/* if tlist item is an UNKNOWN literal, change it to TEXT */
 		restype = exprType((Node *) tle->expr);
 
 		if (restype == UNKNOWNOID)
-		{
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
 											 restype, TEXTOID, -1,
 											 COERCION_IMPLICIT,
 											 COERCE_IMPLICIT_CAST);
-			restype = TEXTOID;
-		}
 
-		/*
-		 * If the GROUP BY clause matches the ORDER BY clause, we want to
-		 * adopt the ordering operators from the latter rather than using the
-		 * default ops.  This allows "GROUP BY foo ORDER BY foo DESC" to be
-		 * done with only one sort step.  Note we are assuming that any
-		 * user-supplied ordering operator will bring equal values together,
-		 * which is all that GROUP BY needs.
-		 */
-		if (sortItem &&
-			((SortClause *) lfirst(sortItem))->tleSortGroupRef ==
-			tle->ressortgroupref)
-		{
-			ordering_op = ((SortClause *) lfirst(sortItem))->sortop;
-			sortItem = lnext(sortItem);
-		}
-		else
-		{
-			ordering_op = ordering_oper_opid(restype);
-			sortItem = NULL;	/* disregard ORDER BY once match fails */
-		}
-
-		grpcl = makeNode(GroupClause);
-		grpcl->tleSortGroupRef = assignSortGroupRef(tle, *targetlist);
-		grpcl->sortop = ordering_op;
-		glist = lappend(glist, grpcl);
+		tle_list = lappend(tle_list, tle);
 	}
 
-	return glist;
+	/*
+	 * Now iterate through the ORDER BY clause. If we find a grouping
+	 * element that matches the ORDER BY element, append the grouping
+	 * element to the result set immediately. Otherwise, stop
+	 * iterating. The effect of this is to look for a prefix of the
+	 * ORDER BY list in the grouping clauses, and to move that prefix
+	 * to the front of the GROUP BY.
+	 */
+	foreach (l, sortClause)
+	{
+		SortClause	*sc = (SortClause *) lfirst(l);
+		ListCell	*prev = NULL;
+		ListCell	*tl;
+		bool		 found = false;
+
+		foreach (tl, tle_list)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+
+			if (sc->tleSortGroupRef == tle->ressortgroupref)
+			{
+				GroupClause *gc;
+
+				tle_list = list_delete_cell(tle_list, tl, prev);
+
+				/* Use the sort clause's sorting operator */
+				gc = make_group_clause(tle, *targetlist, sc->sortop);
+				result = lappend(result, gc);
+				found = true;
+				break;
+			}
+
+			prev = tl;
+		}
+
+		/* As soon as we've failed to match an ORDER BY element, stop */
+		if (!found)
+			break;
+	}
+
+	/*
+	 * Now add any remaining elements of the GROUP BY list in the
+	 * order we received them.
+	 *
+	 * XXX: are there any additional criteria to consider when
+	 * ordering grouping clauses?
+	 */
+	foreach(l, tle_list)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+		GroupClause *gc;
+		Oid			 sort_op;
+
+		/* avoid making duplicate grouplist entries */
+		if (targetIsInSortList(tle, result))
+			continue;
+
+		sort_op = ordering_oper_opid(exprType((Node *) tle->expr));
+		gc = make_group_clause(tle, *targetlist, sort_op);
+		result = lappend(result, gc);
+	}
+
+	list_free(tle_list);
+	return result;
 }
 
 /*
