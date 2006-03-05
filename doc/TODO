@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Mar  4 00:02:00 EST 2006
+Last updated:		Sun Mar  5 10:16:55 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -65,7 +65,7 @@ Administration
 
 * Configuration files
 
-	o %Add "include file" functionality in postgresql.conf
+	o -Add "include file" functionality in postgresql.conf
 	o %Allow commenting of variables in postgresql.conf to restore them
 	  to defaults
 
