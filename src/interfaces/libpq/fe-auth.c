@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.107.2.1 2005/11/22 18:23:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.107.2.2 2006/03/06 17:59:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,22 +101,33 @@ pg_an_to_ln(char *aname)
  * Various krb5 state which is not connection specific, and a flag to
  * indicate whether we have initialised it yet.
  */
+/* 
 static int	pg_krb5_initialised;
 static krb5_context pg_krb5_context;
 static krb5_ccache pg_krb5_ccache;
 static krb5_principal pg_krb5_client;
 static char *pg_krb5_name;
+*/
+
+struct krb5_info
+{
+	int		pg_krb5_initialised;
+	krb5_context	pg_krb5_context;
+	krb5_ccache	pg_krb5_ccache;
+	krb5_principal	pg_krb5_client;
+	char		*pg_krb5_name;
+};
 
 
 static int
-pg_krb5_init(char *PQerrormsg)
+pg_krb5_init(char *PQerrormsg, struct krb5_info *info)
 {
 	krb5_error_code retval;
 
-	if (pg_krb5_initialised)
+	if (info->pg_krb5_initialised)
 		return STATUS_OK;
 
-	retval = krb5_init_context(&pg_krb5_context);
+	retval = krb5_init_context(&(info->pg_krb5_context));
 	if (retval)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
@@ -125,45 +136,55 @@ pg_krb5_init(char *PQerrormsg)
 		return STATUS_ERROR;
 	}
 
-	retval = krb5_cc_default(pg_krb5_context, &pg_krb5_ccache);
+	retval = krb5_cc_default(info->pg_krb5_context, &(info->pg_krb5_ccache));
 	if (retval)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_cc_default: %s\n",
 				 error_message(retval));
-		krb5_free_context(pg_krb5_context);
+		krb5_free_context(info->pg_krb5_context);
 		return STATUS_ERROR;
 	}
 
-	retval = krb5_cc_get_principal(pg_krb5_context, pg_krb5_ccache,
-								   &pg_krb5_client);
+	retval = krb5_cc_get_principal(info->pg_krb5_context, info->pg_krb5_ccache,
+								   &(info->pg_krb5_client));
 	if (retval)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_cc_get_principal: %s\n",
 				 error_message(retval));
-		krb5_cc_close(pg_krb5_context, pg_krb5_ccache);
-		krb5_free_context(pg_krb5_context);
+		krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
+		krb5_free_context(info->pg_krb5_context);
 		return STATUS_ERROR;
 	}
 
-	retval = krb5_unparse_name(pg_krb5_context, pg_krb5_client, &pg_krb5_name);
+	retval = krb5_unparse_name(info->pg_krb5_context, info->pg_krb5_client, &(info->pg_krb5_name));
 	if (retval)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_init: krb5_unparse_name: %s\n",
 				 error_message(retval));
-		krb5_free_principal(pg_krb5_context, pg_krb5_client);
-		krb5_cc_close(pg_krb5_context, pg_krb5_ccache);
-		krb5_free_context(pg_krb5_context);
+		krb5_free_principal(info->pg_krb5_context, info->pg_krb5_client);
+		krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
+		krb5_free_context(info->pg_krb5_context);
 		return STATUS_ERROR;
 	}
 
-	pg_krb5_name = pg_an_to_ln(pg_krb5_name);
+	info->pg_krb5_name = pg_an_to_ln(info->pg_krb5_name);
 
-	pg_krb5_initialised = 1;
+	info->pg_krb5_initialised = 1;
 	return STATUS_OK;
 }
+
+static void 
+pg_krb5_destroy(struct krb5_info *info)
+{
+	krb5_free_principal(info->pg_krb5_context, info->pg_krb5_client);
+	krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
+	krb5_free_context(info->pg_krb5_context);
+	free(info->pg_krb5_name);
+}
+
 
 
 /*
@@ -173,10 +194,16 @@ pg_krb5_init(char *PQerrormsg)
 static const char *
 pg_krb5_authname(char *PQerrormsg)
 {
-	if (pg_krb5_init(PQerrormsg) != STATUS_OK)
-		return NULL;
+	char *tmp_name;
+	struct krb5_info info;
+	info.pg_krb5_initialised = 0;
 
-	return pg_krb5_name;
+	if (pg_krb5_init(PQerrormsg, &info) != STATUS_OK)
+		return NULL;
+	tmp_name = strdup(info.pg_krb5_name);
+	pg_krb5_destroy(&info);
+
+	return tmp_name;
 }
 
 
@@ -192,6 +219,8 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 	krb5_principal server;
 	krb5_auth_context auth_context = NULL;
 	krb5_error *err_ret = NULL;
+	struct krb5_info info;
+	info.pg_krb5_initialised = 0;
 
 	if (!hostname)
 	{
@@ -200,17 +229,18 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 		return STATUS_ERROR;
 	}
 
-	ret = pg_krb5_init(PQerrormsg);
+	ret = pg_krb5_init(PQerrormsg, &info);
 	if (ret != STATUS_OK)
 		return ret;
 
-	retval = krb5_sname_to_principal(pg_krb5_context, hostname, servicename,
+	retval = krb5_sname_to_principal(info.pg_krb5_context, hostname, servicename,
 									 KRB5_NT_SRV_HST, &server);
 	if (retval)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "pg_krb5_sendauth: krb5_sname_to_principal: %s\n",
 				 error_message(retval));
+		pg_krb5_destroy(&info);
 		return STATUS_ERROR;
 	}
 
@@ -225,16 +255,17 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 libpq_gettext("could not set socket to blocking mode: %s\n"), pqStrerror(errno, sebuf, sizeof(sebuf)));
-		krb5_free_principal(pg_krb5_context, server);
+		krb5_free_principal(info.pg_krb5_context, server);
+		pg_krb5_destroy(&info);
 		return STATUS_ERROR;
 	}
 
-	retval = krb5_sendauth(pg_krb5_context, &auth_context,
+	retval = krb5_sendauth(info.pg_krb5_context, &auth_context,
 						   (krb5_pointer) & sock, (char *) servicename,
-						   pg_krb5_client, server,
+						   info.pg_krb5_client, server,
 						   AP_OPTS_MUTUAL_REQUIRED,
 						   NULL, 0,		/* no creds, use ccache instead */
-						   pg_krb5_ccache, &err_ret, NULL, NULL);
+						   info.pg_krb5_ccache, &err_ret, NULL, NULL);
 	if (retval)
 	{
 		if (retval == KRB5_SENDAUTH_REJECTED && err_ret)
@@ -259,12 +290,12 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 		}
 
 		if (err_ret)
-			krb5_free_error(pg_krb5_context, err_ret);
+			krb5_free_error(info.pg_krb5_context, err_ret);
 
 		ret = STATUS_ERROR;
 	}
 
-	krb5_free_principal(pg_krb5_context, server);
+	krb5_free_principal(info.pg_krb5_context, server);
 
 	if (!pg_set_noblock(sock))
 	{
@@ -275,6 +306,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 				 pqStrerror(errno, sebuf, sizeof(sebuf)));
 		ret = STATUS_ERROR;
 	}
+	pg_krb5_destroy(&info);
 
 	return ret;
 }
@@ -487,6 +519,9 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 char *
 pg_fe_getauthname(char *PQerrormsg)
 {
+#ifdef KRB5
+	const char *krb5_name = NULL;
+#endif
 	const char *name = NULL;
 	char	   *authn;
 
@@ -511,7 +546,12 @@ pg_fe_getauthname(char *PQerrormsg)
 	pglock_thread();
 
 #ifdef KRB5
-	name = pg_krb5_authname(PQerrormsg);
+	/* pg_krb5_authname gives us a strdup'd value that we need
+	 * to free later, however, we don't want to free 'name' directly
+	 * in case it's *not* a Kerberos login and we fall through to
+	 * name = pw->pw_name; */
+	krb5_name = pg_krb5_authname(PQerrormsg);
+	name = krb5_name;
 #endif
 
 	if (!name)
@@ -526,6 +566,12 @@ pg_fe_getauthname(char *PQerrormsg)
 	}
 
 	authn = name ? strdup(name) : NULL;
+
+#ifdef KRB5
+	/* Free the strdup'd string from pg_krb5_authname, if we got one */
+	if (krb5_name)
+		free(krb5_name);
+#endif
 
 	pgunlock_thread();
 
