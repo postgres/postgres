@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.130 2006/03/05 15:58:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.131 2006/03/06 19:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,13 +51,14 @@ static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char    *dolqstart;      /* current $foo$ quote start string */
 
 /*
- * GUC variable.  This is a DIRECT violation of the warning given at the
+ * GUC variables.  This is a DIRECT violation of the warning given at the
  * head of gram.y, ie flex/bison code must not depend on any GUC variables;
  * as such, changing its value can induce very unintuitive behavior.
  * But we shall have to live with it as a short-term thing until the switch
  * to SQL-standard string syntax is complete.
  */
 bool			escape_string_warning;
+bool			standard_conforming_strings;
 
 static bool		warn_on_first_escape;
 
@@ -77,6 +78,7 @@ static void addlitchar(unsigned char ychar);
 static char *litbufdup(void);
 static int	pg_err_position(void);
 static void check_escape_warning(void);
+static void check_string_escape_warning(unsigned char ychar);
 
 /*
  * When we parse a token that requires multiple lexer rules to process,
@@ -119,7 +121,8 @@ static unsigned char unescape_single_char(unsigned char c);
  *  <xc> extended C-style comments
  *  <xd> delimited identifiers (double-quoted identifiers)
  *  <xh> hexadecimal numeric string
- *  <xq> quoted strings
+ *  <xq> standard quoted strings
+ *  <xe> extended quoted strings (support backslash escape sequences)
  *  <xdolq> $foo$ quoted strings
  */
 
@@ -127,6 +130,7 @@ static unsigned char unescape_single_char(unsigned char c);
 %x xc
 %x xd
 %x xh
+%x xe
 %x xq
 %x xdolq
 
@@ -200,6 +204,10 @@ xnstart			[nN]{quote}
 
 /* Quoted string that allows backslash escapes */
 xestart			[eE]{quote}
+xeinside		[^\\']+
+xeescape		[\\][^0-7]
+xeoctesc		[\\][0-7]{1,3}
+xehexesc		[\\]x[0-9A-Fa-f]{1,2}
 
 /* Extended quote
  * xqdouble implements embedded quote, ''''
@@ -207,9 +215,7 @@ xestart			[eE]{quote}
 xqstart			{quote}
 xqdouble		{quote}{quote}
 xqinside		[^\\']+
-xqescape		[\\][^0-7]
-xqoctesc		[\\][0-7]{1,3}
-xqhexesc		[\\]x[0-9A-Fa-f]{1,2}
+xqbackslash	[\\]
 
 /* $foo$ style quotes ("dollar quoting")
  * The quoted string starts with $foo$ where "foo" is an optional string
@@ -428,73 +434,62 @@ other			.
 {xqstart}		{
 					warn_on_first_escape = true;
 					token_start = yytext;
-					BEGIN(xq);
+					if (standard_conforming_strings)
+						BEGIN(xq);
+					else
+						BEGIN(xe);
 					startlit();
 				}
 {xestart}		{
 					warn_on_first_escape = false;
 					token_start = yytext;
-					BEGIN(xq);
+					BEGIN(xe);
 					startlit();
 				}
-<xq>{quotestop}	|
-<xq>{quotefail} {
+<xq,xe>{quotestop}	|
+<xq,xe>{quotefail} {
 					yyless(1);
 					BEGIN(INITIAL);
 					yylval.str = litbufdup();
 					return SCONST;
 				}
-<xq>{xqdouble}  {
+<xq,xe>{xqdouble}  {
 					addlitchar('\'');
 				}
 <xq>{xqinside}  {
 					addlit(yytext, yyleng);
 				}
-<xq>{xqescape}  {
-					if (yytext[1] == '\'')
-					{
-						if (warn_on_first_escape && escape_string_warning)
-							ereport(WARNING,
-									(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
-									 errmsg("nonstandard use of \\' in a string literal"),
-									 errhint("Use '' to write quotes in strings, or use the escape string syntax (E'...')."),
-									 errposition(pg_err_position())));
-						warn_on_first_escape = false;	/* warn only once per string */
-					}
-					else if (yytext[1] == '\\')
-					{
-						if (warn_on_first_escape && escape_string_warning)
-							ereport(WARNING,
-									(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
-									 errmsg("nonstandard use of \\\\ in a string literal"),
-									 errhint("Use the escape string syntax for backslashes, e.g., E'\\\\'."),
-									 errposition(pg_err_position())));
-						warn_on_first_escape = false;	/* warn only once per string */
-					}
-					else
-						check_escape_warning();
+<xe>{xeinside}  {
+					addlit(yytext, yyleng);
+				}
+<xq>{xqbackslash} {
+					check_string_escape_warning(yytext[1]);
+					addlitchar('\\');
+                }
+<xe>{xeescape}  {
+					check_string_escape_warning(yytext[1]);
 					addlitchar(unescape_single_char(yytext[1]));
 				}
-<xq>{xqoctesc}  {
+<xe>{xeoctesc}  {
 					unsigned char c = strtoul(yytext+1, NULL, 8);
 
 					check_escape_warning();
 					addlitchar(c);
 				}
-<xq>{xqhexesc}  {
+<xe>{xehexesc}  {
 					unsigned char c = strtoul(yytext+2, NULL, 16);
 
 					check_escape_warning();
 					addlitchar(c);
 				}
-<xq>{quotecontinue} {
+<xq,xe>{quotecontinue} {
 					/* ignore */
 				}
-<xq>.			{
+<xe>.			{
 					/* This is only needed for \ just before EOF */
 					addlitchar(yytext[0]);
 				}
-<xq><<EOF>>		{ yyerror("unterminated quoted string"); }
+<xq,xe><<EOF>>		{ yyerror("unterminated quoted string"); }
 
 {dolqdelim}		{
 					token_start = yytext;
@@ -873,6 +868,33 @@ unescape_single_char(unsigned char c)
 		default:
 			return c;
 	}
+}
+
+static void
+check_string_escape_warning(unsigned char ychar)
+{
+	if (ychar == '\'')
+	{
+		if (warn_on_first_escape && escape_string_warning)
+			ereport(WARNING,
+					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
+					 errmsg("nonstandard use of \\' in a string literal"),
+					 errhint("Use '' to write quotes in strings, or use the escape string syntax (E'...')."),
+					 errposition(pg_err_position())));
+		warn_on_first_escape = false;	/* warn only once per string */
+	}
+	else if (ychar == '\\')
+	{
+		if (warn_on_first_escape && escape_string_warning)
+			ereport(WARNING,
+					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
+					 errmsg("nonstandard use of \\\\ in a string literal"),
+					 errhint("Use the escape string syntax for backslashes, e.g., E'\\\\'."),
+					 errposition(pg_err_position())));
+		warn_on_first_escape = false;	/* warn only once per string */
+	}
+	else
+		check_escape_warning();
 }
 
 static void

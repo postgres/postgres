@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.16 2006/03/05 15:58:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.17 2006/03/06 19:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,8 @@ static void emit(const char *txt, int len);
  *  <xc> extended C-style comments
  *  <xd> delimited identifiers (double-quoted identifiers)
  *  <xh> hexadecimal numeric string
- *  <xq> quoted strings
+ *  <xq> standard quoted strings
+ *  <xe> extended quoted strings (support backslash escape sequences)
  *  <xdolq> $foo$ quoted strings
  */
 
@@ -162,6 +163,7 @@ static void emit(const char *txt, int len);
 %x xc
 %x xd
 %x xh
+%x xe
 %x xq
 %x xdolq
 /* Additional exclusive states for psql only: lex backslash commands */
@@ -244,16 +246,17 @@ xnstart			[nN]{quote}
 
 /* Quoted string that allows backslash escapes */
 xestart			[eE]{quote}
+xeinside		[^\\']+
+xeescape		[\\][^0-7]
+xeoctesc		[\\][0-7]{1,3}
+xehexesc		[\\]x[0-9A-Fa-f]{1,2}
 
 /* Extended quote
  * xqdouble implements embedded quote, ''''
  */
 xqstart			{quote}
 xqdouble		{quote}{quote}
-xqinside		[^\\']+
-xqescape		[\\][^0-7]
-xqoctesc		[\\][0-7]{1,3}
-xqhexesc		[\\]x[0-9A-Fa-f]{1,2}
+xqinside		[^']+
 
 /* $foo$ style quotes ("dollar quoting")
  * The quoted string starts with $foo$ where "foo" is an optional string
@@ -448,38 +451,44 @@ other			.
 				}
 
 {xqstart}		{
-					BEGIN(xq);
+					if (standard_strings())
+						BEGIN(xq);
+					else
+						BEGIN(xe);
 					ECHO;
 				}
 {xestart}		{
-					BEGIN(xq);
+					BEGIN(xe);
 					ECHO;
 				}
-<xq>{quotestop}	|
-<xq>{quotefail} {
+<xq,xe>{quotestop}	|
+<xq,xe>{quotefail} {
 					yyless(1);
 					BEGIN(INITIAL);
 					ECHO;
 				}
-<xq>{xqdouble}  {
+<xq,xe>{xqdouble}  {
 					ECHO;
 				}
 <xq>{xqinside}  {
 					ECHO;
 				}
-<xq>{xqescape}  {
+<xe>{xeinside}  {
 					ECHO;
 				}
-<xq>{xqoctesc}  {
+<xe>{xeescape}  {
 					ECHO;
 				}
-<xq>{xqhexesc}  {
+<xe>{xeoctesc}  {
 					ECHO;
 				}
-<xq>{quotecontinue} {
+<xe>{xehexesc}  {
 					ECHO;
 				}
-<xq>.			{
+<xq,xe>{quotecontinue} {
+					ECHO;
+				}
+<xe>.			{
 					/* This is only needed for \ just before EOF */
 					ECHO;
 				}
@@ -858,13 +867,13 @@ other			.
 "\\r"			{ appendPQExpBufferChar(output_buf, '\r'); }
 "\\f"			{ appendPQExpBufferChar(output_buf, '\f'); }
 
-{xqoctesc}		{
+{xeoctesc}		{
 					/* octal case */
 					appendPQExpBufferChar(output_buf,
 										  (char) strtol(yytext + 1, NULL, 8));
 				}
 
-{xqhexesc}		{
+{xehexesc}		{
 					/* hex case */
 					appendPQExpBufferChar(output_buf,
 										  (char) strtol(yytext + 2, NULL, 16));
@@ -1125,6 +1134,10 @@ psql_scan(PsqlScanState state,
 					*prompt = PROMPT_SINGLEQUOTE;
 					break;
 				case xq:
+					result = PSCAN_INCOMPLETE;
+					*prompt = PROMPT_SINGLEQUOTE;
+					break;
+				case xe:
 					result = PSCAN_INCOMPLETE;
 					*prompt = PROMPT_SINGLEQUOTE;
 					break;

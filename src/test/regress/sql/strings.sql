@@ -81,8 +81,8 @@ SELECT SUBSTRING('abcdefg' FROM 'c.e') AS "cde";
 SELECT SUBSTRING('abcdefg' FROM 'b(.*)f') AS "cde";
 
 -- PostgreSQL extension to allow using back reference in replace string;
-SELECT regexp_replace('1112223333', '(\\d{3})(\\d{3})(\\d{4})', '(\\1) \\2-\\3');
-SELECT regexp_replace('AAA   BBB   CCC   ', '\\s+', ' ', 'g');
+SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3');
+SELECT regexp_replace('AAA   BBB   CCC   ', E'\\s+', ' ', 'g');
 SELECT regexp_replace('AAA', '^|$', 'Z', 'g');
 SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'gi');
 -- invalid option of REGEXP_REPLACE
@@ -352,3 +352,33 @@ select md5('abcdefghijklmnopqrstuvwxyz'::bytea) = 'c3fcd3d76192e4007dfb496cca67e
 select md5('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'::bytea) = 'd174ab98d277d9f5a5611c2c9f419d9f' AS "TRUE";
 
 select md5('12345678901234567890123456789012345678901234567890123456789012345678901234567890'::bytea) = '57edf4a22be3c955ac49da2e2107b67a' AS "TRUE";
+
+--
+-- test behavior of escape_string_warning and standard_conforming_strings options
+--
+set escape_string_warning = off;
+set standard_conforming_strings = off;
+
+show escape_string_warning;
+show standard_conforming_strings;
+
+set escape_string_warning = on;
+set standard_conforming_strings = on;
+
+show escape_string_warning;
+show standard_conforming_strings;
+
+select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6;
+
+set standard_conforming_strings = off;
+
+select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;
+
+set escape_string_warning = off;
+set standard_conforming_strings = on;
+
+select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6;
+
+set standard_conforming_strings = off;
+
+select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;

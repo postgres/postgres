@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.312 2006/03/05 15:58:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.313 2006/03/06 19:49:20 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -224,7 +224,6 @@ static int	max_index_keys;
 static int	max_identifier_length;
 static int	block_size;
 static bool integer_datetimes;
-static bool standard_conforming_strings;
 
 /* should be static, but commands/variable.c needs to get at these */
 char	   *role_string;
@@ -974,10 +973,10 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"standard_conforming_strings", PGC_INTERNAL, PRESET_OPTIONS,
+		{"standard_conforming_strings", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("'...' strings treat backslashes literally."),
 			NULL,
-			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_REPORT
 		},
 		&standard_conforming_strings,
 		false, NULL, NULL

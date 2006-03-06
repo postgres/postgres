@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.46 2006/03/05 15:58:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.47 2006/03/06 19:49:20 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -57,6 +57,7 @@ extern PGresult *PSQLexec(const char *query, bool start_xact);
 extern bool SendQuery(const char *query);
 
 extern bool is_superuser(void);
+extern bool standard_strings(void);
 extern const char *session_username(void);
 
 extern char *expand_tilde(char **filename);

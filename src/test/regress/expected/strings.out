@@ -193,13 +193,13 @@ SELECT SUBSTRING('abcdefg' FROM 'b(.*)f') AS "cde";
 (1 row)
 
 -- PostgreSQL extension to allow using back reference in replace string;
-SELECT regexp_replace('1112223333', '(\\d{3})(\\d{3})(\\d{4})', '(\\1) \\2-\\3');
+SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3');
  regexp_replace 
 ----------------
  (111) 222-3333
 (1 row)
 
-SELECT regexp_replace('AAA   BBB   CCC   ', '\\s+', ' ', 'g');
+SELECT regexp_replace('AAA   BBB   CCC   ', E'\\s+', ' ', 'g');
  regexp_replace 
 ----------------
  AAA BBB CCC 
@@ -893,5 +893,88 @@ select md5('12345678901234567890123456789012345678901234567890123456789012345678
  TRUE 
 ------
  t
+(1 row)
+
+--
+-- test behavior of escape_string_warning and standard_conforming_strings options
+--
+set escape_string_warning = off;
+set standard_conforming_strings = off;
+show escape_string_warning;
+ escape_string_warning 
+-----------------------
+ off
+(1 row)
+
+show standard_conforming_strings;
+ standard_conforming_strings 
+-----------------------------
+ off
+(1 row)
+
+set escape_string_warning = on;
+set standard_conforming_strings = on;
+show escape_string_warning;
+ escape_string_warning 
+-----------------------
+ on
+(1 row)
+
+show standard_conforming_strings;
+ standard_conforming_strings 
+-----------------------------
+ on
+(1 row)
+
+select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6;
+WARNING:  nonstandard use of escape in a string literal at character 8
+HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
+WARNING:  nonstandard use of escape in a string literal at character 23
+HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
+WARNING:  nonstandard use of escape in a string literal at character 40
+HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
+WARNING:  nonstandard use of escape in a string literal at character 59
+HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
+WARNING:  nonstandard use of escape in a string literal at character 76
+HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
+WARNING:  nonstandard use of escape in a string literal at character 93
+HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
+  f1   |   f2   |   f3    |  f4   |   f5   | f6 
+-------+--------+---------+-------+--------+----
+ a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
+(1 row)
+
+set standard_conforming_strings = off;
+select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;
+WARNING:  nonstandard use of \\ in a string literal at character 8
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+WARNING:  nonstandard use of \\ in a string literal at character 24
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+WARNING:  nonstandard use of \\ in a string literal at character 42
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+WARNING:  nonstandard use of \\ in a string literal at character 62
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+WARNING:  nonstandard use of \\ in a string literal at character 80
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+WARNING:  nonstandard use of \\ in a string literal at character 98
+HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+  f1   |   f2   |   f3    |  f4   |   f5   | f6 
+-------+--------+---------+-------+--------+----
+ a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
+(1 row)
+
+set escape_string_warning = off;
+set standard_conforming_strings = on;
+select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6;
+  f1   |   f2   |   f3    |  f4   |   f5   | f6 
+-------+--------+---------+-------+--------+----
+ a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
+(1 row)
+
+set standard_conforming_strings = off;
+select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;
+  f1   |   f2   |   f3    |  f4   |   f5   | f6 
+-------+--------+---------+-------+--------+----
+ a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\
 (1 row)
 
