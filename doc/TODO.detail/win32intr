@@ -47,7 +47,7 @@ List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
 List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
 Precedence: bulk
 Sender: pgsql-bugs-owner@postgresql.org
-Status: ORr
+Status: ROr
 
 I encountered an error when I fast shutdown 8.1.1 on Win2k:
 
@@ -153,7 +153,7 @@ List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
 List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
 Precedence: bulk
 Sender: pgsql-bugs-owner@postgresql.org
-Status: OR
+Status: RO
 
 Qingqing Zhou wrote:
 > I encountered an error when I fast shutdown 8.1.1 on Win2k:
@@ -273,7 +273,7 @@ List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
 List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
 Precedence: bulk
 Sender: pgsql-bugs-owner@postgresql.org
-Status: ORr
+Status: ROr
 
 
 "Bruce Momjian" <pgman@candle.pha.pa.us> wrote
@@ -397,7 +397,7 @@ List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
 List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
 Precedence: bulk
 Sender: pgsql-bugs-owner@postgresql.org
-Status: OR
+Status: RO
 
 Qingqing Zhou wrote:
 > 
@@ -455,81 +455,4 @@ OK, so how do we find the answer?
 
 ---------------------------(end of broadcast)---------------------------
 TIP 2: Don't 'kill -9' the postmaster
-
-From pgsql-bugs-owner+M14486@postgresql.org Tue Feb 28 22:21:21 2006
-Return-path: <pgsql-bugs-owner+M14486@postgresql.org>
-Received: from ams.hub.org (ams.hub.org [200.46.204.13])
-	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k213LKk11157
-	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 22:21:20 -0500 (EST)
-Received: from postgresql.org (postgresql.org [200.46.204.71])
-	by ams.hub.org (Postfix) with ESMTP id 9747667B7CC
-	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 23:21:17 -0400 (AST)
-X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
-Received: from localhost (av.hub.org [200.46.204.144])
-	by postgresql.org (Postfix) with ESMTP id 6FC2C9DC9A1
-	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Tue, 28 Feb 2006 23:20:52 -0400 (AST)
-Received: from postgresql.org ([200.46.204.71])
-	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
-	with ESMTP id 79679-03
-	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
-	Tue, 28 Feb 2006 23:20:56 -0400 (AST)
-Received: from svr4.postgresql.org (svr4.postgresql.org [66.98.251.159])
-	by postgresql.org (Postfix) with ESMTP id CD1939DC846
-	for <pgsql-bugs@postgresql.org>; Tue, 28 Feb 2006 23:20:49 -0400 (AST)
-Received: from cliff.cs.toronto.edu (cliff.cs.toronto.edu [128.100.3.120])
-	by svr4.postgresql.org (Postfix) with ESMTP id 656B95AF07C
-	for <pgsql-bugs@postgresql.org>; Wed,  1 Mar 2006 03:20:55 +0000 (GMT)
-Received: from eon.cs (eon.cs.toronto.edu [128.100.3.15])
-	by cliff.cs.toronto.edu (Postfix) with ESMTP id DE4EB5FD0C;
-	Tue, 28 Feb 2006 22:20:52 -0500 (EST)
-Received: by eon.cs (Postfix, from userid 1300)
-	id 127BA7BE; Tue, 28 Feb 2006 22:20:53 -0500 (EST)
-Received: from localhost (localhost [127.0.0.1])
-	by eon.cs (Postfix) with ESMTP
-	id 0653653C; Tue, 28 Feb 2006 22:20:53 -0500 (EST)
-Date: Tue, 28 Feb 2006 22:20:52 -0500 (EST)
-From: Qingqing Zhou <zhouqq@cs.toronto.edu>
-X-X-Sender: zhouqq@eon.cs
-To: Bruce Momjian <pgman@candle.pha.pa.us>
-cc: pgsql-bugs@postgresql.org
-Subject: Re: [BUGS] FATAL:  semctl(1672698088, 12, SETVAL, 0) failed
-In-Reply-To: <200603010308.k2138bO09022@candle.pha.pa.us>
-Message-ID: <Pine.LNX.4.58.0602282216010.22190@eon.cs>
-References: <200603010308.k2138bO09022@candle.pha.pa.us>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-X-Virus-Scanned: by amavisd-new at hub.org
-X-Spam-Status: No, score=0.442 required=5 tests=[AWL=-0.037,
-	DNS_FROM_RFC_ABUSE=0.479]
-X-Spam-Score: 0.442
-X-Mailing-List: pgsql-bugs
-List-Archive: <http://archives.postgresql.org/pgsql-bugs>
-List-Help: <mailto:majordomo@postgresql.org?body=help>
-List-Id: <pgsql-bugs.postgresql.org>
-List-Owner: <mailto:pgsql-bugs-owner@postgresql.org>
-List-Post: <mailto:pgsql-bugs@postgresql.org>
-List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
-List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
-Precedence: bulk
-Sender: pgsql-bugs-owner@postgresql.org
-Status: OR
-
-
-
-On Tue, 28 Feb 2006, Bruce Momjian wrote:
-
->
-> Uh, how do we handle it now?  I thought we did just that.
->
-> OK, so how do we find the answer?
->
-
-For both problems, I am uncertain (or I've sent a patch already :-(). Call
-more artillery support here ...
-
-Regards,
-Qingqing
-
----------------------------(end of broadcast)---------------------------
-TIP 5: don't forget to increase your free space map settings
 
