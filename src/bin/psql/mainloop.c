@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.72 2006/03/06 04:45:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.73 2006/03/06 15:09:04 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -237,23 +237,6 @@ MainLoop(FILE *source)
 			prompt_status = prompt_tmp;
 
 			/*
-			 *	If we append to history a backslash command that is inside
-			 *	a multi-line query, then when we recall the history, the
-			 *	backslash command will make the query invalid, so we write
-			 *	backslash commands immediately rather than keeping them
-			 *	as part of the current multi-line query.
-			 */
-			if (first_query_scan && pset.cur_cmd_interactive)
-			{
-				if (scan_result == PSCAN_BACKSLASH && query_buf->len != 0)
-					pg_write_history(line);
-				else
-					pg_append_history(line, history_buf);
-			}
-				
-			first_query_scan = false;
-			
-			/*
 			 * Send command if semicolon found, or if end of line and we're in
 			 * single-line mode.
 			 */
@@ -309,17 +292,35 @@ MainLoop(FILE *source)
 					/* flush any paren nesting info after forced send */
 					psql_scan_reset(scan_state);
 				}
-
-				if (slashCmdStatus == PSQL_CMD_TERMINATE)
-					break;
 			}
 
-			/* fall out of loop if lexer reached EOL */
-			if (scan_result == PSCAN_INCOMPLETE ||
+			/*
+			 *	If we append to history a backslash command that is inside
+			 *	a multi-line query, then when we recall the history, the
+			 *	backslash command will make the query invalid, so we write
+			 *	backslash commands immediately rather than keeping them
+			 *	as part of the current multi-line query.  We do the test
+			 *	down here so we can check for \g and other 'execute'
+			 *	backslash commands, which should be appended.
+			 */
+			if (first_query_scan && pset.cur_cmd_interactive)
+			{
+				/* Sending a command (PSQL_CMD_SEND) zeros the length */
+				if (scan_result == PSCAN_BACKSLASH && query_buf->len != 0)
+					pg_write_history(line);
+				else
+					pg_append_history(line, history_buf);
+			}
+
+			first_query_scan = false;
+
+			/* fall out of loop on \q or if lexer reached EOL */
+			if (slashCmdStatus == PSQL_CMD_TERMINATE ||
+				scan_result == PSCAN_INCOMPLETE ||
 				scan_result == PSCAN_EOL)
 				break;
 		}
-		
+
 		if (pset.cur_cmd_interactive && prompt_status != PROMPT_CONTINUE)
 		{
 			/*
