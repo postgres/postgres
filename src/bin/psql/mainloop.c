@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.71 2006/03/05 15:58:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.72 2006/03/06 04:45:21 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -41,6 +41,8 @@ MainLoop(FILE *source)
 	char	   *line;			/* current line of input */
 	int			added_nl_pos;
 	bool		success;
+	bool		first_query_scan;
+	
 	volatile int successResult = EXIT_SUCCESS;
 	volatile backslashResult slashCmdStatus = PSQL_CMD_UNKNOWN;
 	volatile promptStatus_t prompt_status = PROMPT_READY;
@@ -93,7 +95,7 @@ MainLoop(FILE *source)
 				successResult = EXIT_USER;
 				break;
 			}
-			pgclear_history(history_buf);			
+			pg_clear_history(history_buf);			
 			cancel_pressed = false;
 		}
 
@@ -110,7 +112,7 @@ MainLoop(FILE *source)
 			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
 			if (pset.cur_cmd_interactive)
-				pgclear_history(history_buf);			
+				pg_clear_history(history_buf);			
 
 			if (pset.cur_cmd_interactive)
 				putc('\n', stdout);
@@ -145,11 +147,14 @@ MainLoop(FILE *source)
 			prompt_status = PROMPT_READY;
 			
 			if (pset.cur_cmd_interactive)
+			{
 				/*
 				 *	Pass all the contents of history_buf to readline
 				 *	and free the history buffer.
 				 */
-				pgflush_history(history_buf);
+				pg_write_history(history_buf->data);
+				pg_clear_history(history_buf);
+			}
 		}
 		/* otherwise, get another line */
 		else if (pset.cur_cmd_interactive)
@@ -221,10 +226,7 @@ MainLoop(FILE *source)
 		 */
 		psql_scan_setup(scan_state, line, strlen(line));
 		success = true;
-		
-		if (pset.cur_cmd_interactive)
-			/* Put current line in the history buffer */
-			pgadd_history(line, history_buf);
+		first_query_scan = true;
 		
 		while (success || !die_on_error)
 		{
@@ -234,6 +236,23 @@ MainLoop(FILE *source)
 			scan_result = psql_scan(scan_state, query_buf, &prompt_tmp);
 			prompt_status = prompt_tmp;
 
+			/*
+			 *	If we append to history a backslash command that is inside
+			 *	a multi-line query, then when we recall the history, the
+			 *	backslash command will make the query invalid, so we write
+			 *	backslash commands immediately rather than keeping them
+			 *	as part of the current multi-line query.
+			 */
+			if (first_query_scan && pset.cur_cmd_interactive)
+			{
+				if (scan_result == PSCAN_BACKSLASH && query_buf->len != 0)
+					pg_write_history(line);
+				else
+					pg_append_history(line, history_buf);
+			}
+				
+			first_query_scan = false;
+			
 			/*
 			 * Send command if semicolon found, or if end of line and we're in
 			 * single-line mode.
@@ -302,11 +321,14 @@ MainLoop(FILE *source)
 		}
 		
 		if (pset.cur_cmd_interactive && prompt_status != PROMPT_CONTINUE)
+		{
 			/*
 			 *	Pass all the contents of history_buf to readline
 			 *	and free the history buffer.
 			 */
-			pgflush_history(history_buf);
+			pg_write_history(history_buf->data);
+			pg_clear_history(history_buf);
+		}
 
 		psql_scan_finish(scan_state);
 		free(line);
