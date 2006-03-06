@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.58 2006/03/05 15:59:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.59 2006/03/06 22:49:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,6 +234,7 @@ extern Datum interval_cmp(PG_FUNCTION_ARGS);
 extern Datum interval_hash(PG_FUNCTION_ARGS);
 extern Datum interval_smaller(PG_FUNCTION_ARGS);
 extern Datum interval_larger(PG_FUNCTION_ARGS);
+extern Datum interval_justify_interval(PG_FUNCTION_ARGS);
 extern Datum interval_justify_hours(PG_FUNCTION_ARGS);
 extern Datum interval_justify_days(PG_FUNCTION_ARGS);
 

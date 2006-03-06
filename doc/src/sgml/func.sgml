@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.309 2006/03/06 04:53:50 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.310 2006/03/06 22:49:15 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5288,10 +5288,13 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     <primary>isfinite</primary>
    </indexterm>
    <indexterm>
+    <primary>justify_days</primary>
+   </indexterm>
+   <indexterm>
     <primary>justify_hours</primary>
    </indexterm>
    <indexterm>
-    <primary>justify_days</primary>
+    <primary>justify_interval</primary>
    </indexterm>
    <indexterm>
     <primary>localtime</primary>
@@ -5430,6 +5433,14 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
 
        <row>
+        <entry><literal><function>justify_days</function>(<type>interval</type>)</literal></entry>
+        <entry><type>interval</type></entry>
+        <entry>Adjust interval so 30-day time periods are represented as months</entry>
+        <entry><literal>justify_days(interval '30 days')</literal></entry>
+        <entry><literal>1 month</literal></entry>
+       </row>
+
+       <row>
         <entry><literal><function>justify_hours</function>(<type>interval</type>)</literal></entry>
         <entry><type>interval</type></entry>
         <entry>Adjust interval so 24-hour time periods are represented as days</entry>
@@ -5438,11 +5449,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
 
        <row>
-        <entry><literal><function>justify_days</function>(<type>interval</type>)</literal></entry>
+        <entry><literal><function>justify_interval</function>(<type>interval</type>)</literal></entry>
         <entry><type>interval</type></entry>
-        <entry>Adjust interval so 30-day time periods are represented as months</entry>
-        <entry><literal>justify_days(interval '30 days')</literal></entry>
-        <entry><literal>1 month</literal></entry>
+        <entry>Adjust interval using <function>justify_days</> and <function>justify_hours</>, with additional sign adjustments</></entry>
+        <entry><literal>justify_interval(interval '1 mon -1 hour')</literal></entry>
+        <entry><literal>29 days 23:00:00</literal></entry>
        </row>
 
        <row>
@@ -5485,13 +5496,6 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
       </tbody>
      </tgroup>
     </table>
-
-   <para>
-    If you are using both <function>justify_hours</> and
-    <function>justify_days</>, it is best to use <function>justify_hours</>
-    first so any additional days will be included in the
-    <function>justify_days</> calculation.
-   </para>
 
    <para>
     In addition to these functions, the SQL <literal>OVERLAPS</> operator is

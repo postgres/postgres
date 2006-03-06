@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.161 2006/03/05 15:58:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.162 2006/03/06 22:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1975,6 +1975,82 @@ timestamp_mi(PG_FUNCTION_ARGS)
 }
 
 /*
+ *  interval_justify_interval()
+ *
+ *  Adjust interval so 'month', 'day', and 'time' portions are within
+ *  customary bounds.  Specifically:
+ *
+ *  	0 <= abs(time) < 24 hours
+ *  	0 <= abs(day)  < 30 days
+ *
+ *  Also, the sign bit on all three fields is made equal, so either
+ *  all three fields are negative or all are positive.
+ */
+Datum
+interval_justify_interval(PG_FUNCTION_ARGS)
+{
+	Interval   *span = PG_GETARG_INTERVAL_P(0);
+	Interval   *result;
+	
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		wholeday;
+#else
+	double		wholeday;
+#endif
+	int32		wholemonth;
+
+	result = (Interval *) palloc(sizeof(Interval));
+	result->month = span->month;
+	result->day = span->day;
+	result->time = span->time;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	TMODULO(result->time, wholeday, USECS_PER_DAY);
+#else
+	TMODULO(result->time, wholeday, (double) SECS_PER_DAY);
+#endif
+	result->day += wholeday;	/* could overflow... */
+
+	wholemonth = result->day / DAYS_PER_MONTH;
+	result->day -= wholemonth * DAYS_PER_MONTH;
+	result->month += wholemonth;
+
+	if (result->month > 0 &&
+		(result->day < 0 || (result->day == 0 && result->time < 0)))
+	{
+		result->day += DAYS_PER_MONTH;
+		result->month--;
+	}
+	else if (result->month < 0 &&
+		(result->day > 0 || (result->day == 0 && result->time > 0)))
+	{
+		result->day -= DAYS_PER_MONTH;
+		result->month++;
+	}
+
+	if (result->day > 0 && result->time < 0)
+	{
+#ifdef HAVE_INT64_TIMESTAMP
+		result->time += USECS_PER_DAY;
+#else
+		result->time += (double) SECS_PER_DAY;
+#endif
+		result->day--;
+	}
+	else if (result->day < 0 && result->time > 0)
+ 	{
+#ifdef HAVE_INT64_TIMESTAMP
+		result->time -= USECS_PER_DAY;
+#else
+		result->time -= (double) SECS_PER_DAY;
+#endif
+		result->day++;
+	}
+
+	PG_RETURN_INTERVAL_P(result);
+}
+
+/*
  *	interval_justify_hours()
  *
  *	Adjust interval so 'time' contains less than a whole day, adding
@@ -2006,6 +2082,25 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 #endif
 	result->day += wholeday;	/* could overflow... */
 
+	if (result->day > 0 && result->time < 0)
+	{
+#ifdef HAVE_INT64_TIMESTAMP
+		result->time += USECS_PER_DAY;
+#else
+		result->time += (double) SECS_PER_DAY;
+#endif
+		result->day--;
+	}
+	else if (result->day < 0 && result->time > 0)
+	{
+#ifdef HAVE_INT64_TIMESTAMP
+		result->time -= USECS_PER_DAY;
+#else
+		result->time -= (double) SECS_PER_DAY;
+#endif
+		result->day++;
+	}
+
 	PG_RETURN_INTERVAL_P(result);
 }
 
@@ -2030,6 +2125,17 @@ interval_justify_days(PG_FUNCTION_ARGS)
 	wholemonth = result->day / DAYS_PER_MONTH;
 	result->day -= wholemonth * DAYS_PER_MONTH;
 	result->month += wholemonth;
+
+	if (result->month > 0 && result->day < 0)
+	{
+		result->day += DAYS_PER_MONTH;
+		result->month--;
+	}
+	else if (result->month < 0 && result->day > 0)
+	{
+		result->day -= DAYS_PER_MONTH;
+		result->month++;
+	}
 
 	PG_RETURN_INTERVAL_P(result);
 }
