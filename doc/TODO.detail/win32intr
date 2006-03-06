@@ -1,0 +1,535 @@
+From pgsql-bugs-owner+M14436@postgresql.org Tue Feb 21 22:21:37 2006
+Return-path: <pgsql-bugs-owner+M14436@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k1M3La514372
+	for <pgman@candle.pha.pa.us>; Tue, 21 Feb 2006 22:21:37 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 3F65267B6A8
+	for <pgman@candle.pha.pa.us>; Tue, 21 Feb 2006 23:21:32 -0400 (AST)
+X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 39FB99DCBE3
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Tue, 21 Feb 2006 23:21:08 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 11699-01
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
+	Tue, 21 Feb 2006 23:21:12 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from floppy.pyrenet.fr (news.pyrenet.fr [194.116.145.2])
+	by postgresql.org (Postfix) with ESMTP id 271CB9DCABD
+	for <pgsql-bugs@postgresql.org>; Tue, 21 Feb 2006 23:21:05 -0400 (AST)
+Received: by floppy.pyrenet.fr (Postfix, from userid 106)
+	id 90AFD30BB2; Wed, 22 Feb 2006 04:21:09 +0100 (MET)
+From: "Qingqing Zhou" <zhouqq@cs.toronto.edu>
+X-Newsgroups: pgsql.bugs
+Subject: [BUGS] FATAL:  semctl(1672698088, 12, SETVAL, 0) failed
+Date: Wed, 22 Feb 2006 11:17:51 +0800
+Organization: Hub.Org Networking Services
+Lines: 50
+Message-ID: <dtglar$15tv$1@news.hub.org>
+X-Complaints-To: usenet@news.hub.org
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Newsreader: Microsoft Outlook Express 6.00.2800.1506
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1506
+To: pgsql-bugs@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.16 required=5 tests=[AWL=0.160]
+X-Spam-Score: 0.16
+X-Mailing-List: pgsql-bugs
+List-Archive: <http://archives.postgresql.org/pgsql-bugs>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-bugs.postgresql.org>
+List-Owner: <mailto:pgsql-bugs-owner@postgresql.org>
+List-Post: <mailto:pgsql-bugs@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+Status: ORr
+
+I encountered an error when I fast shutdown 8.1.1 on Win2k:
+
+    FATAL:  semctl(1672698088, 12, SETVAL, 0) failed:  A blocking operation
+    was interrupted by a call to WSACancelBlockingCall.
+
+A similar error on 8.1/win2003 was reported on pgsql-general (sorry, I can't
+dig out the
+original post from our web archives):
+
+    From:  Niederland
+    Date:  Tues, Dec 13 2005 9:49 am
+
+    2005-12-12 20:30:00 FATAL:  semctl(50884184, 15, SETVAL, 0) failed: A
+    non-blocking socket operation could not be completed immediately.
+
+---
+
+There are two problems here:
+
+(1) Why a socket error?
+In port/win32.h, we have
+
+#undef EAGAIN
+#undef EINTR
+#define EINTR WSAEINTR
+#define EAGAIN WSAEWOULDBLOCK
+
+What's the rationale of doing so?
+
+(2) What's happened here?
+It may come from PGSemaphoreReset(), and win32 semop() looks like this:
+
+  ret = WaitForMultipleObjectsEx(2, wh, FALSE, (sops[0].sem_flg &
+IPC_NOWAIT) ? 0 : INFINITE, TRUE);
+  ...
+  else if (ret == WAIT_OBJECT_0 + 1 || ret == WAIT_IO_COMPLETION)
+  {
+   pgwin32_dispatch_queued_signals();
+   errno = EINTR;
+  }
+  else if (ret == WAIT_TIMEOUT)
+   errno = EAGAIN;
+
+So it seems the EINTR is caused by an incoming signal, the EAGAIN is caused
+by a TIMEOUT ... any ideas?
+
+Regards,
+Qingqing
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: In versions below 8.0, the planner will ignore your desire to
+       choose an index scan if your joining column's datatypes do not
+       match
+
+From pgsql-bugs-owner+M14482@postgresql.org Tue Feb 28 14:05:23 2006
+Return-path: <pgsql-bugs-owner+M14482@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k1SJ5Mk19122
+	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 14:05:22 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id A3FB567B7BF
+	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 15:05:20 -0400 (AST)
+X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id DB1559DCB49
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Tue, 28 Feb 2006 15:05:04 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 86421-08
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
+	Tue, 28 Feb 2006 15:05:04 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from candle.pha.pa.us (candle.pha.pa.us [70.90.9.53])
+	by postgresql.org (Postfix) with ESMTP id 16D669DCAA8
+	for <pgsql-bugs@postgresql.org>; Tue, 28 Feb 2006 15:05:01 -0400 (AST)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.11.6) id k1SJ52b19021;
+	Tue, 28 Feb 2006 14:05:02 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200602281905.k1SJ52b19021@candle.pha.pa.us>
+Subject: Re: [BUGS] FATAL:  semctl(1672698088, 12, SETVAL, 0) failed
+In-Reply-To: <dtglar$15tv$1@news.hub.org>
+To: Qingqing Zhou <zhouqq@cs.toronto.edu>
+Date: Tue, 28 Feb 2006 14:05:02 -0500 (EST)
+cc: pgsql-bugs@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL121 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.4 required=5 tests=[AWL=-0.100, RAZOR2_CHECK=0.5]
+X-Spam-Score: 0.4
+X-Mailing-List: pgsql-bugs
+List-Archive: <http://archives.postgresql.org/pgsql-bugs>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-bugs.postgresql.org>
+List-Owner: <mailto:pgsql-bugs-owner@postgresql.org>
+List-Post: <mailto:pgsql-bugs@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+Status: OR
+
+Qingqing Zhou wrote:
+> I encountered an error when I fast shutdown 8.1.1 on Win2k:
+> 
+>     FATAL:  semctl(1672698088, 12, SETVAL, 0) failed:  A blocking operation
+>     was interrupted by a call to WSACancelBlockingCall.
+> 
+> A similar error on 8.1/win2003 was reported on pgsql-general (sorry, I can't
+> dig out the
+> original post from our web archives):
+> 
+>     From:  Niederland
+>     Date:  Tues, Dec 13 2005 9:49 am
+> 
+>     2005-12-12 20:30:00 FATAL:  semctl(50884184, 15, SETVAL, 0) failed: A
+>     non-blocking socket operation could not be completed immediately.
+> 
+> ---
+> 
+> There are two problems here:
+> 
+> (1) Why a socket error?
+> In port/win32.h, we have
+> 
+> #undef EAGAIN
+> #undef EINTR
+> #define EINTR WSAEINTR
+> #define EAGAIN WSAEWOULDBLOCK
+> 
+> What's the rationale of doing so?
+
+We did this so that our code could refer to EINTR/EAGAIN without
+port-specific tests.
+
+> (2) What's happened here?
+> It may come from PGSemaphoreReset(), and win32 semop() looks like this:
+> 
+>   ret = WaitForMultipleObjectsEx(2, wh, FALSE, (sops[0].sem_flg &
+> IPC_NOWAIT) ? 0 : INFINITE, TRUE);
+>   ...
+>   else if (ret == WAIT_OBJECT_0 + 1 || ret == WAIT_IO_COMPLETION)
+>   {
+>    pgwin32_dispatch_queued_signals();
+>    errno = EINTR;
+>   }
+>   else if (ret == WAIT_TIMEOUT)
+>    errno = EAGAIN;
+> 
+> So it seems the EINTR is caused by an incoming signal, the EAGAIN is caused
+> by a TIMEOUT ... any ideas?
+
+I looked at the documentation for the function:
+
+	http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dllproc/base/waitformultipleobjectsex.asp
+
+and it isn't clear what return failure values it has.  We certainly
+could loop on WSAEINTR.  Can you test it?
+
+-- 
+  Bruce Momjian   http://candle.pha.pa.us
+  SRA OSS, Inc.   http://www.sraoss.com
+
+  + If your life is a hard drive, Christ can be your backup. +
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faq
+
+From pgsql-bugs-owner+M14483@postgresql.org Tue Feb 28 21:12:39 2006
+Return-path: <pgsql-bugs-owner+M14483@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k212Cdk24423
+	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 21:12:39 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 2D9CF67B7CA
+	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 22:12:36 -0400 (AST)
+X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id D8B0B9DC837
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Tue, 28 Feb 2006 22:12:17 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 65124-06
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
+	Tue, 28 Feb 2006 22:12:21 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from floppy.pyrenet.fr (news.pyrenet.fr [194.116.145.2])
+	by postgresql.org (Postfix) with ESMTP id 7C5729DC81D
+	for <pgsql-bugs@postgresql.org>; Tue, 28 Feb 2006 22:12:15 -0400 (AST)
+Received: by floppy.pyrenet.fr (Postfix, from userid 106)
+	id 6A8CA30BA5; Wed,  1 Mar 2006 03:12:19 +0100 (MET)
+From: "Qingqing Zhou" <zhouqq@cs.toronto.edu>
+X-Newsgroups: pgsql.bugs
+Subject: Re: [BUGS] FATAL:  semctl(1672698088, 12, SETVAL, 0) failed
+Date: Wed, 1 Mar 2006 10:08:58 +0800
+Organization: Hub.Org Networking Services
+Lines: 68
+Message-ID: <du2vtq$eu3$1@news.hub.org>
+References: <dtglar$15tv$1@news.hub.org> <200602281905.k1SJ52b19021@candle.pha.pa.us>
+X-Complaints-To: usenet@news.hub.org
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Newsreader: Microsoft Outlook Express 6.00.2800.1506
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1506
+To: pgsql-bugs@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.169 required=5 tests=[AWL=0.169]
+X-Spam-Score: 0.169
+X-Mailing-List: pgsql-bugs
+List-Archive: <http://archives.postgresql.org/pgsql-bugs>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-bugs.postgresql.org>
+List-Owner: <mailto:pgsql-bugs-owner@postgresql.org>
+List-Post: <mailto:pgsql-bugs@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+Status: ORr
+
+
+"Bruce Momjian" <pgman@candle.pha.pa.us> wrote
+> > In port/win32.h, we have
+> >
+> > #undef EAGAIN
+> > #undef EINTR
+> > #define EINTR WSAEINTR
+> > #define EAGAIN WSAEWOULDBLOCK
+> >
+> > What's the rationale of doing so?
+>
+> We did this so that our code could refer to EINTR/EAGAIN without
+> port-specific tests.
+>
+
+AFAICS, by doing so, the EINTR/EAGAIN will be translated into
+WSAINTR/WSAEWOULDBLOCK through *all* the backend code. That's seems not
+appropriate for the code not involving any socket stuff ... I think we need
+a fix here.
+
+> > (2) What's happened here?
+> > It may come from PGSemaphoreReset(), and win32 semop() looks like this:
+> >
+> >   ret = WaitForMultipleObjectsEx(2, wh, FALSE, (sops[0].sem_flg &
+> > IPC_NOWAIT) ? 0 : INFINITE, TRUE);
+> >   ...
+> >   else if (ret == WAIT_OBJECT_0 + 1 || ret == WAIT_IO_COMPLETION)
+> >   {
+> >    pgwin32_dispatch_queued_signals();
+> >    errno = EINTR;
+> >   }
+> >   else if (ret == WAIT_TIMEOUT)
+> >    errno = EAGAIN;
+> >
+> > So it seems the EINTR is caused by an incoming signal, the EAGAIN is
+caused
+> > by a TIMEOUT ... any ideas?
+>
+> I looked at the documentation for the function:
+>
+>
+http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dllproc/base/waitformultipleobjectsex.asp
+>
+> and it isn't clear what return failure values it has.  We certainly
+> could loop on WSAEINTR.  Can you test it?
+>
+
+Yeah, looking at other code of using semop(), we could plug in a loop in the
+win32 semctl():
+
+   /* Quickly lock/unlock the semaphore (if we can) */
++ do
++ {
++    errStatus = semop(semId, &sops, 1);
++ } while (errStatus < 0 && errno == EINTR);
+
+   if (semop(semId, &sops, 1) < 0)
+    return -1;
+
+But:
+(1) The EINTR problem happens rather rare, so testing it is difficult;
+(2)  I would rather not doing the above changes before we understand what's
+happened here, especially when we have seen a EAGAIN reported here.
+
+Regards,
+Qingqing
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: if posting/reading through Usenet, please send an appropriate
+       subscribe-nomail command to majordomo@postgresql.org so that your
+       message can get through to the mailing list cleanly
+
+From pgsql-bugs-owner+M14485@postgresql.org Tue Feb 28 22:08:57 2006
+Return-path: <pgsql-bugs-owner+M14485@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2138uk09057
+	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 22:08:56 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id B4EFF67B7CA
+	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 23:08:53 -0400 (AST)
+X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 4A2B39DCB5D
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Tue, 28 Feb 2006 23:08:34 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 77300-07
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
+	Tue, 28 Feb 2006 23:08:38 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from candle.pha.pa.us (candle.pha.pa.us [70.90.9.53])
+	by postgresql.org (Postfix) with ESMTP id E8B109DCB0D
+	for <pgsql-bugs@postgresql.org>; Tue, 28 Feb 2006 23:08:31 -0400 (AST)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.11.6) id k2138bO09022;
+	Tue, 28 Feb 2006 22:08:37 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200603010308.k2138bO09022@candle.pha.pa.us>
+Subject: Re: [BUGS] FATAL:  semctl(1672698088, 12, SETVAL, 0) failed
+In-Reply-To: <du2vtq$eu3$1@news.hub.org>
+To: Qingqing Zhou <zhouqq@cs.toronto.edu>
+Date: Tue, 28 Feb 2006 22:08:37 -0500 (EST)
+cc: pgsql-bugs@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL121 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.404 required=5 tests=[AWL=-0.096, RAZOR2_CHECK=0.5]
+X-Spam-Score: 0.404
+X-Mailing-List: pgsql-bugs
+List-Archive: <http://archives.postgresql.org/pgsql-bugs>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-bugs.postgresql.org>
+List-Owner: <mailto:pgsql-bugs-owner@postgresql.org>
+List-Post: <mailto:pgsql-bugs@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+Status: OR
+
+Qingqing Zhou wrote:
+> 
+> "Bruce Momjian" <pgman@candle.pha.pa.us> wrote
+> > > In port/win32.h, we have
+> > >
+> > > #undef EAGAIN
+> > > #undef EINTR
+> > > #define EINTR WSAEINTR
+> > > #define EAGAIN WSAEWOULDBLOCK
+> > >
+> > > What's the rationale of doing so?
+> >
+> > We did this so that our code could refer to EINTR/EAGAIN without
+> > port-specific tests.
+> >
+> 
+> AFAICS, by doing so, the EINTR/EAGAIN will be translated into
+> WSAINTR/WSAEWOULDBLOCK through *all* the backend code. That's seems not
+> appropriate for the code not involving any socket stuff ... I think we need
+> a fix here.
+
+Uh, how do we handle it now?  I thought we did just that.
+
+> http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dllproc/base/waitformultipleobjectsex.asp
+> >
+> > and it isn't clear what return failure values it has.  We certainly
+> > could loop on WSAEINTR.  Can you test it?
+> >
+> 
+> Yeah, looking at other code of using semop(), we could plug in a loop in the
+> win32 semctl():
+> 
+>    /* Quickly lock/unlock the semaphore (if we can) */
+> + do
+> + {
+> +    errStatus = semop(semId, &sops, 1);
+> + } while (errStatus < 0 && errno == EINTR);
+> 
+>    if (semop(semId, &sops, 1) < 0)
+>     return -1;
+> 
+> But:
+> (1) The EINTR problem happens rather rare, so testing it is difficult;
+> (2)  I would rather not doing the above changes before we understand what's
+> happened here, especially when we have seen a EAGAIN reported here.
+
+OK, so how do we find the answer?
+
+-- 
+  Bruce Momjian   http://candle.pha.pa.us
+  SRA OSS, Inc.   http://www.sraoss.com
+
+  + If your life is a hard drive, Christ can be your backup. +
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: Don't 'kill -9' the postmaster
+
+From pgsql-bugs-owner+M14486@postgresql.org Tue Feb 28 22:21:21 2006
+Return-path: <pgsql-bugs-owner+M14486@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k213LKk11157
+	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 22:21:20 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 9747667B7CC
+	for <pgman@candle.pha.pa.us>; Tue, 28 Feb 2006 23:21:17 -0400 (AST)
+X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 6FC2C9DC9A1
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Tue, 28 Feb 2006 23:20:52 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 79679-03
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
+	Tue, 28 Feb 2006 23:20:56 -0400 (AST)
+Received: from svr4.postgresql.org (svr4.postgresql.org [66.98.251.159])
+	by postgresql.org (Postfix) with ESMTP id CD1939DC846
+	for <pgsql-bugs@postgresql.org>; Tue, 28 Feb 2006 23:20:49 -0400 (AST)
+Received: from cliff.cs.toronto.edu (cliff.cs.toronto.edu [128.100.3.120])
+	by svr4.postgresql.org (Postfix) with ESMTP id 656B95AF07C
+	for <pgsql-bugs@postgresql.org>; Wed,  1 Mar 2006 03:20:55 +0000 (GMT)
+Received: from eon.cs (eon.cs.toronto.edu [128.100.3.15])
+	by cliff.cs.toronto.edu (Postfix) with ESMTP id DE4EB5FD0C;
+	Tue, 28 Feb 2006 22:20:52 -0500 (EST)
+Received: by eon.cs (Postfix, from userid 1300)
+	id 127BA7BE; Tue, 28 Feb 2006 22:20:53 -0500 (EST)
+Received: from localhost (localhost [127.0.0.1])
+	by eon.cs (Postfix) with ESMTP
+	id 0653653C; Tue, 28 Feb 2006 22:20:53 -0500 (EST)
+Date: Tue, 28 Feb 2006 22:20:52 -0500 (EST)
+From: Qingqing Zhou <zhouqq@cs.toronto.edu>
+X-X-Sender: zhouqq@eon.cs
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: pgsql-bugs@postgresql.org
+Subject: Re: [BUGS] FATAL:  semctl(1672698088, 12, SETVAL, 0) failed
+In-Reply-To: <200603010308.k2138bO09022@candle.pha.pa.us>
+Message-ID: <Pine.LNX.4.58.0602282216010.22190@eon.cs>
+References: <200603010308.k2138bO09022@candle.pha.pa.us>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.442 required=5 tests=[AWL=-0.037,
+	DNS_FROM_RFC_ABUSE=0.479]
+X-Spam-Score: 0.442
+X-Mailing-List: pgsql-bugs
+List-Archive: <http://archives.postgresql.org/pgsql-bugs>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-bugs.postgresql.org>
+List-Owner: <mailto:pgsql-bugs-owner@postgresql.org>
+List-Post: <mailto:pgsql-bugs@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-bugs>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-bugs>
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+Status: OR
+
+
+
+On Tue, 28 Feb 2006, Bruce Momjian wrote:
+
+>
+> Uh, how do we handle it now?  I thought we did just that.
+>
+> OK, so how do we find the answer?
+>
+
+For both problems, I am uncertain (or I've sent a patch already :-(). Call
+more artillery support here ...
+
+Regards,
+Qingqing
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: don't forget to increase your free space map settings
+
