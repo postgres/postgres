@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.308 2006/03/03 22:02:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.309 2006/03/06 04:53:50 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1249,7 +1249,7 @@ PostgreSQL documentation
       <row>
        <entry><literal><function>ascii</function>(<type>text</type>)</literal></entry>
        <entry><type>int</type></entry>
-       <entry><acronym>ASCII</acronym> code of the first character of the argument</entry>
+       <entry><acronym>ASCII</acronym> code of the first byte of the argument</entry>
        <entry><literal>ascii('x')</literal></entry>
        <entry><literal>120</literal></entry>
       </row>
