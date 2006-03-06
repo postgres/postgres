@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Mar  6 10:13:39 EST 2006
+Last updated:           Mon Mar  6 10:19:42 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -628,17 +628,15 @@ first.
     </li><li>Add internationalized message strings
     </li><li>Add COPY TO STDIN / STDOUT handling
   </li></ul>
-</li></ul>
-<p>libpq
-</p>
-<ul>
-  <li>Add a function to support Parse/DescribeStatement capability
-  </li><li>Add PQescapeIdentifier()
-  </li><li>Prevent PQfnumber() from lowercasing unquoted the column name
+  </li><li>libpq
+  <ul>
+    <li>Add a function to support Parse/DescribeStatement capability
+    </li><li>Add PQescapeIdentifier()
+    </li><li>Prevent PQfnumber() from lowercasing unquoted the column name
 <p>          PQfnumber() should never have been doing lowercasing, but 
           historically it has so we need a way to prevent it
 </p>
-  </li><li>Allow statement results to be automatically batched to the client
+    </li><li>Allow statement results to be automatically batched to the client
 <p>          Currently, all statement results are transferred to the libpq
           client before libpq makes the results available to the 
           application.  This feature would allow the application to make
@@ -647,6 +645,7 @@ first.
           One complexity is that a statement like SELECT 1/col could error
           out mid-way through the result set.
 </p>
+  </li></ul>
 </li></ul>
 <h1><a name="section_10">Referential Integrity</a></h1>
 
@@ -1095,6 +1094,7 @@ first.
           code from the LibGW32C project as a guide.
 </p>
     </li><li>Port contrib/xml2
+    </li><li>Check WSACancelBlockingCall() for interrupts (win32intr)
   </li></ul>
   </li><li>Wire Protocol Changes
   <ul>

@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Mar  6 10:13:39 EST 2006
+Last updated:		Mon Mar  6 10:19:42 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -689,7 +689,7 @@ Clients
 	o Add COPY TO STDIN / STDOUT handling
 
 
-libpq
+* libpq
 
 	o Add a function to support Parse/DescribeStatement capability
 	o Add PQescapeIdentifier()
@@ -1206,6 +1206,8 @@ Source Code
 	  code from the LibGW32C project as a guide.
 
 	o Port contrib/xml2
+	o Check WSACancelBlockingCall() for interrupts (win32intr)
+
 
 * Wire Protocol Changes
 
