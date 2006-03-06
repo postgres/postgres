@@ -314,7 +314,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS configure_args build build_cpu build_vendor build_os host host_cpu host_vendor host_os PORTNAME docdir enable_nls WANTED_LANGUAGES default_port enable_shared enable_rpath enable_debug CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP GCC TAS autodepend INCLUDES enable_thread_safety with_tcl with_perl with_python with_krb5 krb_srvtab with_pam with_bonjour with_openssl with_zlib EGREP ELF_SYS LDFLAGS_SL AWK FLEX FLEXFLAGS LN_S LD with_gnu_ld ld_R_works RANLIB ac_ct_RANLIB LORDER TAR STRIP ac_ct_STRIP STRIP_STATIC_LIB STRIP_SHARED_LIB YACC YFLAGS PERL perl_archlibexp perl_privlibexp perl_useshrplib perl_embed_ldflags PYTHON python_version python_configdir python_includespec python_libdir python_libspec python_additional_libs HAVE_IPV6 LIBOBJS acx_pthread_config PTHREAD_CC PTHREAD_LIBS PTHREAD_CFLAGS HAVE_POSIX_SIGNALS MSGFMT MSGMERGE XGETTEXT localedir TCLSH TCL_CONFIG_SH TCL_INCLUDE_SPEC TCL_LIB_FILE TCL_LIBS TCL_LIB_SPEC TCL_SHARED_BUILD TCL_SHLIB_LD_LIBS NSGMLS JADE have_docbook DOCBOOKSTYLE COLLATEINDEX SGMLSPL vpath_build LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS configure_args build build_cpu build_vendor build_os host host_cpu host_vendor host_os PORTNAME docdir enable_nls WANTED_LANGUAGES default_port enable_shared enable_rpath enable_debug CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP GCC TAS autodepend INCLUDES enable_thread_safety with_tcl with_perl with_python with_krb5 krb_srvtab with_pam with_ldap with_bonjour with_openssl with_zlib EGREP ELF_SYS LDFLAGS_SL AWK FLEX FLEXFLAGS LN_S LD with_gnu_ld ld_R_works RANLIB ac_ct_RANLIB LORDER TAR STRIP ac_ct_STRIP STRIP_STATIC_LIB STRIP_SHARED_LIB YACC YFLAGS PERL perl_archlibexp perl_privlibexp perl_useshrplib perl_embed_ldflags PYTHON python_version python_configdir python_includespec python_libdir python_libspec python_additional_libs HAVE_IPV6 LIBOBJS acx_pthread_config PTHREAD_CC PTHREAD_LIBS PTHREAD_CFLAGS HAVE_POSIX_SIGNALS MSGFMT MSGMERGE XGETTEXT localedir TCLSH TCL_CONFIG_SH TCL_INCLUDE_SPEC TCL_LIB_FILE TCL_LIBS TCL_LIB_SPEC TCL_SHARED_BUILD TCL_SHLIB_LD_LIBS NSGMLS JADE have_docbook DOCBOOKSTYLE COLLATEINDEX SGMLSPL vpath_build LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -888,6 +888,7 @@ Optional Packages:
   --with-krb5             build with Kerberos 5 support
   --with-krb-srvnam=NAME  name of the default service principal in Kerberos [postgres]
   --with-pam              build with PAM support
+  --with-ldap             build with LDAP support
   --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support
   --with-libedit-preferred  prefer BSD Libedit over GNU Readline
@@ -3687,6 +3688,46 @@ fi;
 
 echo "$as_me:$LINENO: result: $with_pam" >&5
 echo "${ECHO_T}$with_pam" >&6
+
+
+
+#
+# LDAP
+#
+echo "$as_me:$LINENO: checking whether to build with LDAP support" >&5
+echo $ECHO_N "checking whether to build with LDAP support... $ECHO_C" >&6
+
+
+
+# Check whether --with-ldap or --without-ldap was given.
+if test "${with_ldap+set}" = set; then
+  withval="$with_ldap"
+
+  case $withval in
+    yes)
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_LDAP 1
+_ACEOF
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-ldap option" >&5
+echo "$as_me: error: no argument expected for --with-ldap option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_ldap=no
+
+fi;
+
+echo "$as_me:$LINENO: result: $with_ldap" >&5
+echo "${ECHO_T}$with_ldap" >&6
 
 
 
@@ -7170,6 +7211,168 @@ fi
 fi
 
 
+if test "$with_ldap" = yes ; then
+  if test "$PORTNAME" != "win32"; then
+
+echo "$as_me:$LINENO: checking for ldap_bind in -lldap" >&5
+echo $ECHO_N "checking for ldap_bind in -lldap... $ECHO_C" >&6
+if test "${ac_cv_lib_ldap_ldap_bind+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lldap  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char ldap_bind ();
+int
+main ()
+{
+ldap_bind ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_ldap_ldap_bind=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_ldap_ldap_bind=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_ldap_ldap_bind" >&5
+echo "${ECHO_T}$ac_cv_lib_ldap_ldap_bind" >&6
+if test $ac_cv_lib_ldap_ldap_bind = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBLDAP 1
+_ACEOF
+
+  LIBS="-lldap $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: library 'ldap' is required for LDAP" >&5
+echo "$as_me: error: library 'ldap' is required for LDAP" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+  else
+
+echo "$as_me:$LINENO: checking for ldap_bind in -lwldap32" >&5
+echo $ECHO_N "checking for ldap_bind in -lwldap32... $ECHO_C" >&6
+if test "${ac_cv_lib_wldap32_ldap_bind+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lwldap32  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char ldap_bind ();
+int
+main ()
+{
+ldap_bind ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_wldap32_ldap_bind=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_wldap32_ldap_bind=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_wldap32_ldap_bind" >&5
+echo "${ECHO_T}$ac_cv_lib_wldap32_ldap_bind" >&6
+if test $ac_cv_lib_wldap32_ldap_bind = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBWLDAP32 1
+_ACEOF
+
+  LIBS="-lwldap32 $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: library 'wldap32' is required for LDAP" >&5
+echo "$as_me: error: library 'wldap32' is required for LDAP" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+  fi
+fi
+
 ##
 ## Header files
 ##
@@ -10266,6 +10469,233 @@ fi
 
 done
 
+fi
+
+if test "$with_ldap" = yes ; then
+  if test "$PORTNAME" != "win32"; then
+
+for ac_header in ldap.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <$ac_header>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ---------------------------------------- ##
+## Report this to pgsql-bugs@postgresql.org ##
+## ---------------------------------------- ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=\$ac_header_preproc"
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  { { echo "$as_me:$LINENO: error: header file <ldap.h> is required for LDAP" >&5
+echo "$as_me: error: header file <ldap.h> is required for LDAP" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+done
+
+  else
+
+for ac_header in winldap.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <windows.h>
+
+
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_Header=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Header=no"
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+else
+  { { echo "$as_me:$LINENO: error: header file <winldap.h> is required for LDAP" >&5
+echo "$as_me: error: header file <winldap.h> is required for LDAP" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+done
+
+  fi
 fi
 
 if test "$with_bonjour" = yes ; then
@@ -22822,6 +23252,7 @@ s,@with_python@,$with_python,;t t
 s,@with_krb5@,$with_krb5,;t t
 s,@krb_srvtab@,$krb_srvtab,;t t
 s,@with_pam@,$with_pam,;t t
+s,@with_ldap@,$with_ldap,;t t
 s,@with_bonjour@,$with_bonjour,;t t
 s,@with_openssl@,$with_openssl,;t t
 s,@with_zlib@,$with_zlib,;t t

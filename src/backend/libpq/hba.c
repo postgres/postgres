@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.150 2006/03/05 15:58:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.151 2006/03/06 17:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,6 +612,10 @@ parse_hba_auth(ListCell **line_item, UserAuth *userauth_p,
 #ifdef USE_PAM
 	else if (strcmp(token, "pam") == 0)
 		*userauth_p = uaPAM;
+#endif
+#ifdef USE_LDAP
+    else if (strcmp(token,"ldap") == 0)
+        *userauth_p = uaLDAP;
 #endif
 	else
 	{

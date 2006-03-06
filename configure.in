@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.454 2006/03/05 15:58:18 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.455 2006/03/06 17:41:43 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -445,6 +445,17 @@ AC_SUBST(with_pam)
 
 
 #
+# LDAP
+#
+AC_MSG_CHECKING([whether to build with LDAP support])
+PGAC_ARG_BOOL(with, ldap, no,
+              [  --with-ldap             build with LDAP support],
+              [AC_DEFINE([USE_LDAP], 1, [Define to 1 to build with LDAP support. (--with-ldap)])])
+AC_MSG_RESULT([$with_ldap])
+AC_SUBST(with_ldap)
+
+
+#
 # Bonjour
 #
 AC_MSG_CHECKING([whether to build with Bonjour support])
@@ -669,6 +680,14 @@ if test "$with_pam" = yes ; then
 fi
 
 
+if test "$with_ldap" = yes ; then
+  if test "$PORTNAME" != "win32"; then
+     AC_CHECK_LIB(ldap,    ldap_bind, [], [AC_MSG_ERROR([library 'ldap' is required for LDAP])])
+  else
+     AC_CHECK_LIB(wldap32, ldap_bind, [], [AC_MSG_ERROR([library 'wldap32' is required for LDAP])])
+  fi
+fi
+
 ##
 ## Header files
 ##
@@ -742,6 +761,19 @@ if test "$with_pam" = yes ; then
   AC_CHECK_HEADERS(security/pam_appl.h, [],
                    [AC_CHECK_HEADERS(pam/pam_appl.h, [],
                                      [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
+fi
+
+if test "$with_ldap" = yes ; then
+  if test "$PORTNAME" != "win32"; then
+     AC_CHECK_HEADERS(ldap.h, [],
+                      [AC_MSG_ERROR([header file <ldap.h> is required for LDAP])])
+  else
+     AC_CHECK_HEADERS(winldap.h, [],
+                      [AC_MSG_ERROR([header file <winldap.h> is required for LDAP])],
+                      [AC_INCLUDES_DEFAULT
+#include <windows.h>
+                      ])
+  fi
 fi
 
 if test "$with_bonjour" = yes ; then

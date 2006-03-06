@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.134 2006/03/05 15:58:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.135 2006/03/06 17:41:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,32 @@ static char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
 static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 								 * pam_passwd_conv_proc */
 #endif   /* USE_PAM */
+
+#ifdef USE_LDAP
+#ifndef WIN32
+/* We use a deprecated function to keep the codepaths the same as the
+ * win32 one. */
+#define LDAP_DEPRECATED 1
+#include <ldap.h>
+#else
+/* Header broken in MingW */
+#define ldap_start_tls_sA __BROKEN_LDAP_HEADER
+#include <winldap.h>
+#undef ldap_start_tls_sA
+
+/* Correct header from the Platform SDK */
+WINLDAPAPI ULONG ldap_start_tls_sA (
+    IN   PLDAP          ExternalHandle,
+    OUT  PULONG         ServerReturnValue,
+    OUT  LDAPMessage    **result,
+    IN   PLDAPControlA  *ServerControls,
+    IN   PLDAPControlA  *ClientControls
+);
+#endif
+
+static int CheckLDAPAuth(Port *port);
+#endif
+
 
 #ifdef KRB5
 /*----------------------------------------------------------------
@@ -327,6 +353,11 @@ auth_failed(Port *port, int status)
 			errstr = gettext_noop("PAM authentication failed for user \"%s\"");
 			break;
 #endif   /* USE_PAM */
+#ifdef USE_LDAP
+        case uaLDAP:
+            errstr = gettext_noop("LDAP authentication failed for user \"%s\"");
+            break;
+#endif   /* USE_LDAP */
 		default:
 			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 			break;
@@ -454,6 +485,12 @@ ClientAuthentication(Port *port)
 			status = CheckPAMAuth(port, port->user_name, "");
 			break;
 #endif   /* USE_PAM */
+
+#ifdef USE_LDAP
+        case uaLDAP:
+            status = CheckLDAPAuth(port);
+            break;
+#endif
 
 		case uaTrust:
 			status = STATUS_OK;
@@ -673,6 +710,132 @@ CheckPAMAuth(Port *port, char *user, char *password)
 }
 #endif   /* USE_PAM */
 
+
+#ifdef USE_LDAP
+static int
+CheckLDAPAuth(Port *port)
+{
+    char *passwd;
+    char server[128];
+    char basedn[128];
+    char prefix[128];
+    char suffix[128];
+    LDAP *ldap;
+    int  ssl = 0;
+    int  r;
+    int  ldapversion = LDAP_VERSION3;
+    int  ldapport = LDAP_PORT;
+    char fulluser[128];
+
+    if (!port->auth_arg || port->auth_arg[0] == '\0')
+    {
+        ereport(LOG,
+                (errmsg("LDAP configuration URL not specified")));
+        return STATUS_ERROR;
+    }
+
+    /* 
+     * Crack the LDAP url. We do a very trivial parse..
+     * ldap[s]://<server>[:<port>]/<basedn>[;prefix[;suffix]]
+     */
+
+    server[0] = '\0';
+    basedn[0] = '\0';
+    prefix[0] = '\0';
+    suffix[0] = '\0';
+
+    /* ldap, including port number */
+    r = sscanf(port->auth_arg, 
+            "ldap://%127[^:]:%i/%127[^;];%127[^;];%127s",
+            server, &ldapport, basedn, prefix, suffix);
+    if (r < 3)
+    {
+        /* ldaps, including port number */
+        r = sscanf(port->auth_arg,
+                "ldaps://%127[^:]:%i/%127[^;];%127[^;];%127s",
+                server, &ldapport, basedn, prefix, suffix);
+        if (r >=3) ssl = 1;
+    }
+    if (r < 3)
+    {
+        /* ldap, no port number */
+        r = sscanf(port->auth_arg,
+                "ldap://%127[^/]/%127[^;];%127[^;];%127s",
+                server, basedn, prefix, suffix);
+    }
+    if (r < 2)
+    {
+        /* ldaps, no port number */
+        r = sscanf(port->auth_arg,
+                "ldaps://%127[^/]/%127[^;];%127[^;];%127s",
+                server, basedn, prefix, suffix);
+        if (r >= 2) ssl = 1;
+    }
+    if (r < 2)
+    {
+        ereport(LOG,
+                (errmsg("Invalid LDAP url: '%s'", port->auth_arg)));
+        return STATUS_ERROR;
+    }
+
+    sendAuthRequest(port, AUTH_REQ_PASSWORD);
+    
+    passwd = recv_password_packet(port);
+    if (passwd == NULL)
+        return STATUS_EOF; /* client wouldn't send password */
+
+   
+    ldap = ldap_init(server, ldapport);
+    if (!ldap)
+    {
+        ereport(LOG,
+                (errmsg("Failed to initialize LDAP: %i", 
+#ifndef WIN32
+                        errno
+#else
+                        (int)LdapGetLastError()
+#endif
+                        )));
+        return STATUS_ERROR;
+    }
+
+    if ((r = ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
+    {
+        ereport(LOG,
+                (errmsg("Failed to set LDAP version: %i", r)));
+        return STATUS_ERROR;
+    }
+    
+    if (ssl)
+    {
+#ifndef WIN32
+        if ((r = ldap_start_tls_s(ldap, NULL, NULL)) != LDAP_SUCCESS)
+#else
+        if ((r = ldap_start_tls_sA(ldap, NULL, NULL, NULL, NULL)) != LDAP_SUCCESS) 
+#endif
+        {
+            ereport(LOG,
+                    (errmsg("Failed to start LDAP TLS session: %i", r)));
+            return STATUS_ERROR;
+        }
+    }
+
+    snprintf(fulluser, sizeof(fulluser)-1, "%s%s%s", prefix, port->user_name, suffix);
+    fulluser[sizeof(fulluser)-1] = '\0';
+
+    r = ldap_simple_bind_s(ldap, fulluser, passwd);
+    ldap_unbind(ldap);
+
+    if (r != LDAP_SUCCESS)
+    {
+        ereport(LOG,
+                (errmsg("LDAP login failed for user '%s' on server '%s': %i",fulluser,server,r)));
+        return STATUS_ERROR;
+    }
+    
+    return STATUS_OK;
+}
+#endif   /* USE_LDAP */
 
 /*
  * Collect password response packet from frontend.

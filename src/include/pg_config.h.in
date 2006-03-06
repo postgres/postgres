@@ -204,11 +204,17 @@
 /* Define to 1 if you have the <langinfo.h> header file. */
 #undef HAVE_LANGINFO_H
 
+/* Define to 1 if you have the <ldap.h> header file. */
+#undef HAVE_LDAP_H
+
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #undef HAVE_LIBCRYPTO
 
 /* Define to 1 if you have the `eay32' library (-leay32). */
 #undef HAVE_LIBEAY32
+
+/* Define to 1 if you have the `ldap' library (-lldap). */
+#undef HAVE_LIBLDAP
 
 /* Define to 1 if you have the `pam' library (-lpam). */
 #undef HAVE_LIBPAM
@@ -221,6 +227,9 @@
 
 /* Define to 1 if you have the `ssleay32' library (-lssleay32). */
 #undef HAVE_LIBSSLEAY32
+
+/* Define to 1 if you have the `wldap32' library (-lwldap32). */
+#undef HAVE_LIBWLDAP32
 
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
@@ -513,6 +522,9 @@
 /* Define to 1 if you have the <wctype.h> header file. */
 #undef HAVE_WCTYPE_H
 
+/* Define to 1 if you have the <winldap.h> header file. */
+#undef HAVE_WINLDAP_H
+
 /* Define to the appropriate snprintf format for 64-bit ints, if any. */
 #undef INT64_FORMAT
 
@@ -588,6 +600,9 @@
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
 #undef USE_INTEGER_DATETIMES
+
+/* Define to 1 to build with LDAP support. (--with-ldap) */
+#undef USE_LDAP
 
 /* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES
