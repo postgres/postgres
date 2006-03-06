@@ -415,7 +415,7 @@
 #add_missing_from = off
 #array_nulls = on
 #default_with_oids = off
-#escape_string_warning = off		# warn about backslashes in string literals
+escape_string_warning = on		# warn about backslashes in string literals
 #standard_conforming_strings = off	# SQL standard string literal processing
 #regex_flavor = advanced		# advanced, extended, or basic
 #sql_inheritance = on
