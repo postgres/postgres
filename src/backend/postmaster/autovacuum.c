@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.12 2006/03/05 15:58:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.13 2006/03/06 05:14:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,9 @@ autovac_start(void)
 	/* Do nothing if no autovacuum process needed */
 	if (!AutoVacuumingActive())
 		return 0;
+
+	/* Even if zero_damaged_pages is true, we don't want autovacuum zeroing. */
+	zero_damaged_pages = false;
 
 	/*
 	 * Do nothing if too soon since last autovacuum exit.  This limits how
