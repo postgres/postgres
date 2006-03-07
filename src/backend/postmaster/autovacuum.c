@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.14 2006/03/07 03:03:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.15 2006/03/07 17:32:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,9 +124,6 @@ autovac_start(void)
 	/* Do nothing if no autovacuum process needed */
 	if (!AutoVacuumingActive())
 		return 0;
-
-	/* Even if zero_damaged_pages is true, we don't want autovacuum zeroing. */
-	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_SESSION);
 
 	/*
 	 * Do nothing if too soon since last autovacuum exit.  This limits how
@@ -306,6 +303,13 @@ AutoVacMain(int argc, char *argv[])
 	PG_exception_stack = &local_sigjmp_buf;
 
 	PG_SETMASK(&UnBlockSig);
+
+	/*
+	 * Force zero_damaged_pages OFF in the autovac process, even if it is
+	 * set in postgresql.conf.  We don't really want such a dangerous option
+	 * being applied non-interactively.
+	 */
+	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/* Get a list of databases */
 	dblist = autovac_get_database_list();
