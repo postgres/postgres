@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.62 2006/03/05 15:58:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.63 2006/03/07 19:06:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1384,7 +1384,8 @@ mergeruns(Tuplesortstate *state)
 	/*
 	 * If we produced only one initial run (quite likely if the total data
 	 * volume is between 1X and 2X workMem), we can just use that tape as the
-	 * finished output, rather than doing a useless merge.
+	 * finished output, rather than doing a useless merge.  (This obvious
+	 * optimization is not in Knuth's algorithm.)
 	 */
 	if (state->currentRun == 1)
 	{
@@ -1401,33 +1402,51 @@ mergeruns(Tuplesortstate *state)
 
 	for (;;)
 	{
-		/* Step D5: merge runs onto tape[T] until tape[P] is empty */
-		while (state->tp_runs[state->tapeRange - 1] ||
-			   state->tp_dummy[state->tapeRange - 1])
+		/*
+		 * At this point we know that tape[T] is empty.  If there's just one
+		 * (real or dummy) run left on each input tape, then only one merge
+		 * pass remains.  If we don't have to produce a materialized sorted
+		 * tape, we can stop at this point and do the final merge on-the-fly.
+		 */
+		if (!state->randomAccess)
 		{
-			bool		allDummy = true;
 			bool		allOneRun = true;
 
+			Assert(state->tp_runs[state->tapeRange] == 0);
 			for (tapenum = 0; tapenum < state->tapeRange; tapenum++)
 			{
-				if (state->tp_dummy[tapenum] == 0)
-					allDummy = false;
 				if (state->tp_runs[tapenum] + state->tp_dummy[tapenum] != 1)
+				{
 					allOneRun = false;
+					break;
+				}
 			}
-
-			/*
-			 * If we don't have to produce a materialized sorted tape, quit as
-			 * soon as we're down to one real/dummy run per tape.
-			 */
-			if (!state->randomAccess && allOneRun)
+			if (allOneRun)
 			{
-				Assert(!allDummy);
+				/* Tell logtape.c we won't be writing anymore */
+				LogicalTapeSetForgetFreeSpace(state->tapeset);
 				/* Initialize for the final merge pass */
 				beginmerge(state);
 				state->status = TSS_FINALMERGE;
 				return;
 			}
+		}
+
+		/* Step D5: merge runs onto tape[T] until tape[P] is empty */
+		while (state->tp_runs[state->tapeRange - 1] ||
+			   state->tp_dummy[state->tapeRange - 1])
+		{
+			bool		allDummy = true;
+
+			for (tapenum = 0; tapenum < state->tapeRange; tapenum++)
+			{
+				if (state->tp_dummy[tapenum] == 0)
+				{
+					allDummy = false;
+					break;
+				}
+			}
+
 			if (allDummy)
 			{
 				state->tp_dummy[state->tapeRange]++;
@@ -1437,6 +1456,7 @@ mergeruns(Tuplesortstate *state)
 			else
 				mergeonerun(state);
 		}
+
 		/* Step D6: decrease level */
 		if (--state->Level == 0)
 			break;

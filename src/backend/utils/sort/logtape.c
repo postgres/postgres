@@ -64,7 +64,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.19 2006/03/05 15:58:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.20 2006/03/07 19:06:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,12 @@ struct LogicalTapeSet
 	 * When there are no such blocks, we extend the underlying file.  Note
 	 * that the block numbers in freeBlocks are always in *decreasing* order,
 	 * so that removing the last entry gives us the lowest free block.
+	 *
+	 * If forgetFreeSpace is true then any freed blocks are simply forgotten
+	 * rather than being remembered in freeBlocks[].  See notes for
+	 * LogicalTapeSetForgetFreeSpace().
 	 */
+	bool		forgetFreeSpace;	/* are we remembering free blocks? */
 	long	   *freeBlocks;		/* resizable array */
 	int			nFreeBlocks;	/* # of currently free blocks */
 	int			freeBlocksLen;	/* current allocated length of freeBlocks[] */
@@ -246,6 +251,12 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 {
 	int			ndx;
 	long	   *ptr;
+
+	/*
+	 * Do nothing if we're no longer interested in remembering free space.
+	 */
+	if (lts->forgetFreeSpace)
+		return;
 
 	/*
 	 * Enlarge freeBlocks array if full.
@@ -491,6 +502,7 @@ LogicalTapeSetCreate(int ntapes)
 									(ntapes - 1) * sizeof(LogicalTape));
 	lts->pfile = BufFileCreateTemp(false);
 	lts->nFileBlocks = 0L;
+	lts->forgetFreeSpace = false;
 	lts->freeBlocksLen = 32;	/* reasonable initial guess */
 	lts->freeBlocks = (long *) palloc(lts->freeBlocksLen * sizeof(long));
 	lts->nFreeBlocks = 0;
@@ -544,6 +556,21 @@ LogicalTapeSetClose(LogicalTapeSet *lts)
 	}
 	pfree(lts->freeBlocks);
 	pfree(lts);
+}
+
+/*
+ * Mark a logical tape set as not needing management of free space anymore.
+ *
+ * This should be called if the caller does not intend to write any more data
+ * into the tape set, but is reading from un-frozen tapes.  Since no more
+ * writes are planned, remembering free blocks is no longer useful.  Setting
+ * this flag lets us avoid wasting time and space in ltsReleaseBlock(), which
+ * is not designed to handle large numbers of free blocks.
+ */
+void
+LogicalTapeSetForgetFreeSpace(LogicalTapeSet *lts)
+{
+	lts->forgetFreeSpace = true;
 }
 
 /*
