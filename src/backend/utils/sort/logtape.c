@@ -30,8 +30,7 @@
  * For simplicity, we allocate and release space in the underlying file
  * in BLCKSZ-size blocks.  Space allocation boils down to keeping track
  * of which blocks in the underlying file belong to which logical tape,
- * plus any blocks that are free (recycled and not yet reused).  Normally
- * there are not very many free blocks, so we just keep those in a list.
+ * plus any blocks that are free (recycled and not yet reused).
  * The blocks in each logical tape are remembered using a method borrowed
  * from the Unix HFS filesystem: we store data block numbers in an
  * "indirect block".  If an indirect block fills up, we write it out to
@@ -53,6 +52,13 @@
  * not clear this helps much, but it can't hurt.  (XXX perhaps a LIFO
  * policy for free blocks would be better?)
  *
+ * To support the above policy of writing to the lowest free block,
+ * ltsGetFreeBlock sorts the list of free block numbers into decreasing
+ * order each time it is asked for a block and the list isn't currently
+ * sorted.  This is an efficient way to handle it because we expect cycles
+ * of releasing many blocks followed by re-using many blocks, due to
+ * tuplesort.c's "preread" behavior.
+ *
  * Since all the bookkeeping and buffer memory is allocated with palloc(),
  * and the underlying file(s) are made with OpenTemporaryFile, all resources
  * for a logical tape set are certain to be cleaned up even if processing
@@ -64,7 +70,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.20 2006/03/07 19:06:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.21 2006/03/07 23:46:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,15 +149,19 @@ struct LogicalTapeSet
 
 	/*
 	 * We store the numbers of recycled-and-available blocks in freeBlocks[].
-	 * When there are no such blocks, we extend the underlying file.  Note
-	 * that the block numbers in freeBlocks are always in *decreasing* order,
-	 * so that removing the last entry gives us the lowest free block.
+	 * When there are no such blocks, we extend the underlying file.
 	 *
 	 * If forgetFreeSpace is true then any freed blocks are simply forgotten
 	 * rather than being remembered in freeBlocks[].  See notes for
 	 * LogicalTapeSetForgetFreeSpace().
+	 *
+	 * If blocksSorted is true then the block numbers in freeBlocks are in
+	 * *decreasing* order, so that removing the last entry gives us the lowest
+	 * free block.  We re-sort the blocks whenever a block is demanded; this
+	 * should be reasonably efficient given the expected usage pattern.
 	 */
 	bool		forgetFreeSpace;	/* are we remembering free blocks? */
+	bool		blocksSorted;	/* is freeBlocks[] currently in order? */
 	long	   *freeBlocks;		/* resizable array */
 	int			nFreeBlocks;	/* # of currently free blocks */
 	int			freeBlocksLen;	/* current allocated length of freeBlocks[] */
@@ -224,6 +234,23 @@ ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 }
 
 /*
+ * qsort comparator for sorting freeBlocks[] into decreasing order.
+ */
+static int
+freeBlocks_cmp(const void *a, const void *b)
+{
+	long		ablk = *((const long *) a);
+	long		bblk = *((const long *) b);
+
+	/* can't just subtract because long might be wider than int */
+	if (ablk < bblk)
+		return 1;
+	if (ablk > bblk)
+		return -1;
+	return 0;
+}
+
+/*
  * Select a currently unused block for writing to.
  *
  * NB: should only be called when writer is ready to write immediately,
@@ -234,11 +261,19 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 {
 	/*
 	 * If there are multiple free blocks, we select the one appearing last in
-	 * freeBlocks[].  If there are none, assign the next block at the end of
-	 * the file.
+	 * freeBlocks[] (after sorting the array if needed).  If there are none,
+	 * assign the next block at the end of the file.
 	 */
 	if (lts->nFreeBlocks > 0)
+	{
+		if (!lts->blocksSorted)
+		{
+			qsort((void *) lts->freeBlocks, lts->nFreeBlocks,
+				  sizeof(long), freeBlocks_cmp);
+			lts->blocksSorted = true;
+		}
 		return lts->freeBlocks[--lts->nFreeBlocks];
+	}
 	else
 		return lts->nFileBlocks++;
 }
@@ -250,7 +285,6 @@ static void
 ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 {
 	int			ndx;
-	long	   *ptr;
 
 	/*
 	 * Do nothing if we're no longer interested in remembering free space.
@@ -269,19 +303,13 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 	}
 
 	/*
-	 * Insert blocknum into array, preserving decreasing order (so that
-	 * ltsGetFreeBlock returns the lowest available block number). This could
-	 * get fairly slow if there were many free blocks, but we don't expect
-	 * there to be very many at one time.
+	 * Add blocknum to array, and mark the array unsorted if it's no longer
+	 * in decreasing order.
 	 */
 	ndx = lts->nFreeBlocks++;
-	ptr = lts->freeBlocks + ndx;
-	while (ndx > 0 && ptr[-1] < blocknum)
-	{
-		ptr[0] = ptr[-1];
-		ndx--, ptr--;
-	}
-	ptr[0] = blocknum;
+	lts->freeBlocks[ndx] = blocknum;
+	if (ndx > 0 && lts->freeBlocks[ndx-1] < blocknum)
+		lts->blocksSorted = false;
 }
 
 /*
@@ -503,6 +531,7 @@ LogicalTapeSetCreate(int ntapes)
 	lts->pfile = BufFileCreateTemp(false);
 	lts->nFileBlocks = 0L;
 	lts->forgetFreeSpace = false;
+	lts->blocksSorted = true;	/* a zero-length array is sorted ... */
 	lts->freeBlocksLen = 32;	/* reasonable initial guess */
 	lts->freeBlocks = (long *) palloc(lts->freeBlocksLen * sizeof(long));
 	lts->nFreeBlocks = 0;
