@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2006, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.119 2006/03/05 15:59:08 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.120 2006/03/07 00:48:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ clean distclean:
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h
 # garbage from development
-	@rm -f core a.out *~ *.output *.tab.c
+	@rm -f core a.out *.output *.tab.c
 
 # `make clean' does not remove preproc.c, preproc.h, or pgc.c since we
 # want to ship those files in the distribution for people with
