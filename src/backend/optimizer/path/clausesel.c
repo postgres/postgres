@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.78 2006/03/05 15:58:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.79 2006/03/07 01:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,8 +449,6 @@ clause_selectivity(PlannerInfo *root,
 					cacheable = true;
 					break;
 
-				case JOIN_UNION:
-					/* unimplemented anyway... */
 				case JOIN_IN:
 				case JOIN_REVERSE_IN:
 				case JOIN_UNIQUE_OUTER:

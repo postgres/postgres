@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.183 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.184 2006/03/07 01:00:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,13 +456,6 @@ typedef enum JoinType
 	JOIN_LEFT,					/* pairs + unmatched outer tuples */
 	JOIN_FULL,					/* pairs + unmatched outer + unmatched inner */
 	JOIN_RIGHT,					/* pairs + unmatched inner tuples */
-
-	/*
-	 * SQL92 considers UNION JOIN to be a kind of join, so list it here for
-	 * parser convenience, even though it's not implemented like a join in the
-	 * executor.  (The planner must convert it to an Append plan.)
-	 */
-	JOIN_UNION,
 
 	/*
 	 * These are used for queries like WHERE foo IN (SELECT bar FROM ...).

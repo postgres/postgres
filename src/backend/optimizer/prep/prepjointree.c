@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.36 2006/03/05 15:58:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.37 2006/03/07 01:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,16 +241,6 @@ pull_up_subqueries(PlannerInfo *root, Node *jtnode,
 											 true, false);
 				j->rarg = pull_up_subqueries(root, j->rarg,
 											 below_outer_join, false);
-				break;
-			case JOIN_UNION:
-
-				/*
-				 * This is where we fail if upper levels of planner haven't
-				 * rewritten UNION JOIN as an Append ...
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("UNION JOIN is not implemented")));
 				break;
 			default:
 				elog(ERROR, "unrecognized join type: %d",

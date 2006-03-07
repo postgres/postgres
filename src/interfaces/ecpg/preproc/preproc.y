@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.320 2006/02/08 09:10:04 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.321 2006/03/07 01:00:19 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -426,12 +426,6 @@ add_additional_variables(char *name, bool insert)
 	YEAR_P
 	ZONE
 
-/* The grammar thinks these are keywords, but they are not in the keywords.c
- * list and so can never be entered directly.  The filter in parser.c
- * creates these tokens when required.
- */
-%token	UNIONJOIN
-
 /* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BCONST XCONST DOLCONST
 %token <ival>	ICONST PARAM
@@ -465,7 +459,7 @@ add_additional_variables(char *name, bool insert)
 %left		'(' ')'
 %left		TYPECAST
 %left		'.'
-%left		JOIN UNIONJOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
+%left		JOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt RoleId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
@@ -3391,8 +3385,6 @@ joined_table:  '(' joined_table ')'
 			{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 		| table_ref CROSS JOIN table_ref
 			{ $$ = cat_str(3, $1, make_str("cross join"), $4); }
-		| table_ref UNIONJOIN table_ref
-			{ $$ = cat_str(3, $1, make_str("unionjoin"), $3); }
 		| table_ref join_type JOIN table_ref join_qual
 			{ $$ = cat_str(5, $1, $2, make_str("join"), $4, $5); }
 		| table_ref JOIN table_ref join_qual

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.533 2006/03/05 15:58:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.534 2006/03/07 01:00:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -95,6 +95,7 @@ static void doNegateFloat(Value *v);
 
 %}
 
+%name-prefix="base_yy"
 
 %union
 {
@@ -418,12 +419,6 @@ static void doNegateFloat(Value *v);
 
 	ZONE
 
-/* The grammar thinks these are keywords, but they are not in the keywords.c
- * list and so can never be entered directly.  The filter in parser.c
- * creates these tokens when required.
- */
-%token			UNIONJOIN
-
 /* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT FCONST SCONST BCONST XCONST Op
 %token <ival>	ICONST PARAM
@@ -464,7 +459,7 @@ static void doNegateFloat(Value *v);
  * They wouldn't be given a precedence at all, were it not that we need
  * left-associativity among the JOIN rules themselves.
  */
-%left		JOIN UNIONJOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
+%left		JOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
 %%
 
 /*
@@ -5770,20 +5765,6 @@ joined_table:
 					n->isNatural = FALSE;
 					n->larg = $1;
 					n->rarg = $4;
-					n->using = NIL;
-					n->quals = NULL;
-					$$ = n;
-				}
-			| table_ref UNIONJOIN table_ref
-				{
-					/* UNION JOIN is made into 1 token to avoid shift/reduce
-					 * conflict against regular UNION keyword.
-					 */
-					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = JOIN_UNION;
-					n->isNatural = FALSE;
-					n->larg = $1;
-					n->rarg = $3;
 					n->using = NIL;
 					n->quals = NULL;
 					$$ = n;

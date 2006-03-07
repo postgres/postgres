@@ -198,10 +198,6 @@ SELECT '' AS "xxx", *
 -- More complicated constructs
 --
 
--- UNION JOIN isn't implemented yet
-SELECT '' AS "xxx", *
-  FROM J1_TBL UNION JOIN J2_TBL;
-
 --
 -- Multiway full join
 --

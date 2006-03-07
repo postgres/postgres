@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.213 2006/01/26 17:08:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.214 2006/03/07 01:00:17 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -4357,11 +4357,6 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 										 -PRETTYINDENT_JOIN,
 										 PRETTYINDENT_JOIN, 0);
 					break;
-				case JOIN_UNION:
-					appendContextKeyword(context, "NATURAL UNION JOIN ",
-										 -PRETTYINDENT_JOIN,
-										 PRETTYINDENT_JOIN, 0);
-					break;
 				default:
 					elog(ERROR, "unrecognized join type: %d",
 						 (int) j->jointype);
@@ -4393,11 +4388,6 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					break;
 				case JOIN_RIGHT:
 					appendContextKeyword(context, " RIGHT JOIN ",
-										 -PRETTYINDENT_JOIN,
-										 PRETTYINDENT_JOIN, 2);
-					break;
-				case JOIN_UNION:
-					appendContextKeyword(context, " UNION JOIN ",
 										 -PRETTYINDENT_JOIN,
 										 PRETTYINDENT_JOIN, 2);
 					break;
