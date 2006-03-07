@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.313 2006/03/06 19:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.314 2006/03/07 02:54:23 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -969,7 +969,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&escape_string_warning,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
