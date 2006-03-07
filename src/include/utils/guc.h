@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.66 2006/03/06 19:49:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.67 2006/03/07 03:01:22 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -31,10 +31,10 @@
  *
  * SIGHUP options can only be set at postmaster startup or by changing
  * the configuration file and sending the HUP signal to the postmaster
- * or a backend process. (Notice that the signal receipt will be
- * evaluated immediately only in the postmaster. The backend checks it
- * at a certain point in its main loop. It's safer to wait than to
- * read a file asynchronously.)
+ * or a backend process. (Notice that the signal receipt will not be
+ * evaluated immediately. The postmaster and the backend check it at a
+ * certain point in their main loop. It's safer to wait than to read a
+ * file asynchronously.)
  *
  * BACKEND options can only be set at postmaster startup, from the
  * configuration file, or by client request in the connection startup
