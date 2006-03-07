@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.40 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.41 2006/03/07 01:03:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,10 @@ extern char *CleanUpStr(char *s);
 extern int	EnterString(char *str);
 extern void build_indices(void);
 
-extern int	Int_yylex(void);
-extern void Int_yyerror(const char *str);
+extern int	boot_yyparse(void);
+
+extern int	boot_yylex(void);
+extern void boot_yyerror(const char *str);
 
 #define BS_XLOG_NOP			0
 #define BS_XLOG_BOOTSTRAP	1

@@ -4,7 +4,7 @@
 #    Makefile for utils/misc
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/misc/Makefile,v 1.24 2005/10/03 22:52:23 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/misc/Makefile,v 1.25 2006/03/07 01:03:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,9 +33,7 @@ guc.o: $(srcdir)/guc-file.c
 
 $(srcdir)/guc-file.c: guc-file.l
 ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) $<
-	sed -e 's/^yy/GUC_yy/g' -e 's/\([^a-zA-Z0-9_]\)yy/\1GUC_yy/g' lex.yy.c > $@
-	rm -f lex.yy.c
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif

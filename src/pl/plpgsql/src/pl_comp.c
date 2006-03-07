@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.98 2005/12/28 18:11:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.99 2006/03/07 01:03:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -59,12 +59,6 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
-
-/* ----------
- * Variables in the parser that shouldn't go into plpgsql.h
- * ----------
- */
-extern PLPGSQL_YYSTYPE plpgsql_yylval;
 
 /* ----------
  * Our own local and global variables

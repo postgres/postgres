@@ -10,10 +10,7 @@
 
 #include "cubedata.h"
 
-#undef yylex                 /* failure to redefine yylex will result in a call to  the */
-#define yylex cube_yylex     /* wrong scanner when running inside the postgres backend  */
-
-extern int yylex(void);      /* defined as cube_yylex in cubescan.l */
+extern int cube_yylex(void);
 
 static char *scanbuf;
 static int	scanbuflen;
@@ -28,6 +25,8 @@ static NDBOX * write_point_as_box(char *s, int dim);
 %}
 
 /* BISON Declarations */
+%name-prefix="cube_yy"
+
 %token CUBEFLOAT O_PAREN C_PAREN O_BRACKET C_BRACKET COMMA
 %start box
 

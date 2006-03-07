@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.33 2006/01/05 01:56:29 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.34 2006/03/07 01:03:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,43 +20,37 @@ SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
 
-bootstrap.o bootparse.o: $(srcdir)/bootstrap_tokens.h
-
 # bootscanner is compiled as part of bootparse
 bootparse.o: $(srcdir)/bootscanner.c
 
-# `sed' rules to remove conflicts between bootstrap scanner and parser
-# and the SQL scanner and parser. For correctness' sake the rules that
-# use this must depend on this Makefile.
-define sed-magic
-sed -e 's/^yy/Int_yy/g' \
-    -e 's/\([^a-zA-Z0-9_]\)yy/\1Int_yy/g'
-endef
-
+# See notes in src/backend/parser/Makefile about the following two rules
 
 $(srcdir)/bootparse.c: $(srcdir)/bootstrap_tokens.h ;
 
-$(srcdir)/bootstrap_tokens.h: bootparse.y Makefile
+$(srcdir)/bootstrap_tokens.h: bootparse.y
 ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
-	$(sed-magic) < y.tab.c > $(srcdir)/bootparse.c
-	$(sed-magic) < y.tab.h > $(srcdir)/bootstrap_tokens.h
-	rm -f y.tab.c y.tab.h
+	mv -f y.tab.c $(srcdir)/bootparse.c
+	mv -f y.tab.h $(srcdir)/bootstrap_tokens.h
 else
 	@$(missing) bison $< $@
 endif
 
-$(srcdir)/bootscanner.c: bootscanner.l Makefile
+$(srcdir)/bootscanner.c: bootscanner.l
 ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) $<
-	$(sed-magic) lex.yy.c > $@
-	rm -f lex.yy.c
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
 
+# Force these dependencies to be known even without dependency info built:
+bootstrap.o bootparse.o: $(srcdir)/bootstrap_tokens.h
+
+
+# bootparse.c, bootstrap_tokens.h, and bootscanner.c are in the distribution
+# tarball, so they are not cleaned here.
 clean:
-	rm -f SUBSYS.o $(OBJS) bootstrap.o
+	rm -f SUBSYS.o $(OBJS)
 # And the garbage that might have been left behind by partial build:
 	@rm -f y.tab.h y.tab.c y.output lex.yy.c
 

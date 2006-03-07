@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.43 2006/02/27 16:09:50 petere Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.44 2006/03/07 01:03:12 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -73,6 +73,7 @@ bool plpgsql_SpaceScanned = false;
 %option nodefault
 %option nounput
 %option noyywrap
+%option prefix="plpgsql_base_yy"
 
 %option case-insensitive
 

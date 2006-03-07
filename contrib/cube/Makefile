@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.16 2006/02/27 12:54:38 petere Exp $
+# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.17 2006/03/07 01:03:12 tgl Exp $
 
 MODULE_big = cube
 OBJS= cube.o cubeparse.o
@@ -28,11 +28,13 @@ endif
 # cubescan is compiled as part of cubeparse
 cubeparse.o: cubescan.c
 
+# See notes in src/backend/parser/Makefile about the following two rules
+
 cubeparse.c: cubeparse.h ;
 
 cubeparse.h: cubeparse.y
 ifdef YACC
-	$(YACC) -d $(YFLAGS) -p cube_yy $<
+	$(YACC) -d $(YFLAGS) $<
 	mv -f y.tab.c cubeparse.c
 	mv -f y.tab.h cubeparse.h
 else

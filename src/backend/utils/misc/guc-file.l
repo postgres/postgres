@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.36 2006/03/05 15:58:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.37 2006/03/07 01:03:12 tgl Exp $
  */
 
 %{
@@ -61,6 +61,7 @@ static char *GUC_scanstr(const char *s);
 %option nodefault
 %option nounput
 %option noyywrap
+%option prefix="GUC_yy"
 
 
 SIGN            ("-"|"+")

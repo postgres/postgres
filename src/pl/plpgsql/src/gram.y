@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.85 2006/02/12 06:37:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.86 2006/03/07 01:03:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -63,6 +63,8 @@ static	void			 check_labels(const char *start_label,
 									  const char *end_label);
 
 %}
+
+%name-prefix="plpgsql_yy"
 
 %union {
 		int32					ival;
@@ -2362,5 +2364,8 @@ check_labels(const char *start_label, const char *end_label)
 		}
 	}
 }
+
+/* Needed to avoid conflict between different prefix settings: */
+#undef yylex
 
 #include "pl_scan.c"

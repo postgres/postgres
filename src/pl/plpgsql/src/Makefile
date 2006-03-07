@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.28 2006/01/05 01:56:30 momjian Exp $
+# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.29 2006/03/07 01:03:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,29 +48,28 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(pkglibdir)/plpgsql$(DLSUFFIX)'
 
+# Force these dependencies to be known even without dependency info built:
 pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl.tab.h
 
 # pl_scan is compiled as part of pl_gram
 pl_gram.o: $(srcdir)/pl_scan.c
 
-# Note: Since the yacc and lex files are shipped in the distribution,
-# they must be generated in the srcdir (as opposed to builddir).
+# See notes in src/backend/parser/Makefile about the following two rules
 
 $(srcdir)/pl_gram.c: $(srcdir)/pl.tab.h ;
 
 $(srcdir)/pl.tab.h: gram.y
 ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
-	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < y.tab.c > $(srcdir)/pl_gram.c
-	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < y.tab.h > $(srcdir)/pl.tab.h
-	rm -f y.tab.c y.tab.h
+	mv -f y.tab.c $(srcdir)/pl_gram.c
+	mv -f y.tab.h $(srcdir)/pl.tab.h
 else
 	@$(missing) bison $< $@
 endif
 
 $(srcdir)/pl_scan.c: scan.l
 ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) -Pplpgsql_base_yy -o'$@' $<
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
@@ -82,7 +81,7 @@ distprep: $(srcdir)/pl_scan.c $(srcdir)/pl.tab.h $(srcdir)/pl_gram.c
 clean distclean: clean-lib
 	rm -f $(OBJS)
 # And the garbage that might have been left behind by partial build:
-	@rm -f y.tab.c y.tab.h lex.yy.c
+	@rm -f y.tab.h y.tab.c y.output lex.yy.c
 
 maintainer-clean: clean
 	rm -f $(srcdir)/pl_gram.c $(srcdir)/pl.tab.h $(srcdir)/pl_scan.c

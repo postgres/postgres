@@ -2,14 +2,14 @@
 /*-------------------------------------------------------------------------
  *
  * bootparse.y
- *	  yacc parser grammar for the "backend" initialization program.
+ *	  yacc grammar for the "bootstrap" mode (BKI file format)
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.79 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.80 2006/03/07 01:03:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,8 @@ do_end(void)
 int num_columns_read = 0;
 
 %}
+
+%name-prefix="boot_yy"
 
 %union
 {

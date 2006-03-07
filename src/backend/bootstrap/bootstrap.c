@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.212 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.213 2006/03/07 01:03:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,6 @@ extern char *optarg;
 
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
-
-extern int	Int_yyparse(void);
 
 static void usage(void);
 static void bootstrap_signals(void);
@@ -468,11 +466,8 @@ BootstrapMain(int argc, char *argv[])
 
 	/*
 	 * Process bootstrap input.
-	 *
-	 * the sed script boot.sed renamed yyparse to Int_yyparse for the
-	 * bootstrap parser to avoid conflicts with the normal SQL parser
 	 */
-	Int_yyparse();
+	boot_yyparse();
 
 	/* Perform a checkpoint to ensure everything's down to disk */
 	SetProcessingMode(NormalProcessing);

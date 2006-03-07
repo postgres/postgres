@@ -9,14 +9,12 @@
 #include "utils/builtins.h"
 #include "segdata.h"
 
-#undef yylex                  /* failure to redefine yylex will result in calling the */
-#define yylex seg_yylex       /* wrong scanner when running inside postgres backend  */
+  extern int seg_yylex(void);
 
-  extern int yylex(void);     /* defined as seg_yylex in segscan.l */
   extern int significant_digits( char *str );    /* defined in seg.c */
   
   void seg_yyerror(const char *message);
-  int seg_yyparse( void *result );
+  int seg_yyparse(void *result);
 
   float seg_atof( char *value );
 
@@ -32,6 +30,8 @@
 %}
 
 /* BISON Declarations */
+%name-prefix="seg_yy"
+
 %union {
   struct BND {
     float val;

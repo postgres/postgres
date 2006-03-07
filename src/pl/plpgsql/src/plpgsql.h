@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.67 2006/03/02 05:34:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.68 2006/03/07 01:03:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -656,7 +656,7 @@ extern char *plpgsql_error_funcname;
 /* linkage to the real yytext variable */
 extern char *plpgsql_base_yytext;
 
-#define plpgsql_yytext plpgsql_base_yytext
+#define yytext plpgsql_base_yytext
 
 extern PLpgSQL_function *plpgsql_curr_compile;
 extern bool plpgsql_check_syntax;
