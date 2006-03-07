@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.13 2006/03/06 05:14:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.14 2006/03/07 03:03:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ autovac_start(void)
 		return 0;
 
 	/* Even if zero_damaged_pages is true, we don't want autovacuum zeroing. */
-	zero_damaged_pages = false;
+	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_SESSION);
 
 	/*
 	 * Do nothing if too soon since last autovacuum exit.  This limits how
