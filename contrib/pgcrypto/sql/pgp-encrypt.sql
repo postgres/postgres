@@ -85,12 +85,12 @@ select pgp_sym_decrypt(
 
 -- crlf
 select encode(pgp_sym_decrypt_bytea(
-	pgp_sym_encrypt('1\n2\n3\r\n', 'key', 'convert-crlf=1'),
+	pgp_sym_encrypt(E'1\n2\n3\r\n', 'key', 'convert-crlf=1'),
  	'key'), 'hex');
 
 -- conversion should be lossless
 select encode(digest(pgp_sym_decrypt(
-  pgp_sym_encrypt('\r\n0\n1\r\r\n\n2\r', 'key', 'convert-crlf=1'),
+  pgp_sym_encrypt(E'\r\n0\n1\r\r\n\n2\r', 'key', 'convert-crlf=1'),
  	'key', 'convert-crlf=1'), 'sha1'), 'hex') as result,
-  encode(digest('\r\n0\n1\r\r\n\n2\r', 'sha1'), 'hex') as expect;
+  encode(digest(E'\r\n0\n1\r\r\n\n2\r', 'sha1'), 'hex') as expect;
 
