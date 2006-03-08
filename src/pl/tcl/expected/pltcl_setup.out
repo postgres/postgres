@@ -56,7 +56,7 @@ create function check_pkey1_exists(int4, bpchar) returns bool as E'
 --
 -- Trigger function on every change to T_pkey1
 --
-create function trig_pkey1_before() returns trigger as '
+create function trig_pkey1_before() returns trigger as E'
     #
     # Create prepared plans on the first call
     #
