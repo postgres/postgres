@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.63 2006/03/07 19:06:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.64 2006/03/08 16:59:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,6 +296,7 @@ struct Tuplesortstate
 	int		   *tp_runs;		/* # of real runs on each tape */
 	int		   *tp_dummy;		/* # of dummy runs for each tape (D[]) */
 	int		   *tp_tapenum;		/* Actual tape numbers (TAPE[]) */
+	int			activeTapes;	/* # of active input tapes in merge pass */
 
 	/*
 	 * These variables are used after completion of sorting to keep track of
@@ -943,9 +944,15 @@ tuplesort_performsort(Tuplesortstate *state)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "performsort done%s: %s",
-			 (state->status == TSS_FINALMERGE) ? " (except final merge)" : "",
-			 pg_rusage_show(&state->ru_start));
+	{
+		if (state->status == TSS_FINALMERGE)
+			elog(LOG, "performsort done (except %d-way final merge): %s",
+				 state->activeTapes,
+				 pg_rusage_show(&state->ru_start));
+		else
+			elog(LOG, "performsort done: %s",
+				 pg_rusage_show(&state->ru_start));
+	}
 #endif
 
 	MemoryContextSwitchTo(oldcontext);
@@ -1566,7 +1573,7 @@ mergeonerun(Tuplesortstate *state)
 
 #ifdef TRACE_SORT
 	if (trace_sort)
-		elog(LOG, "finished merge step: %s",
+		elog(LOG, "finished %d-way merge step: %s", state->activeTapes,
 			 pg_rusage_show(&state->ru_start));
 #endif
 }
@@ -1614,6 +1621,7 @@ beginmerge(Tuplesortstate *state)
 			activeTapes++;
 		}
 	}
+	state->activeTapes = activeTapes;
 
 	/*
 	 * Initialize space allocation to let each active input tape have an equal
