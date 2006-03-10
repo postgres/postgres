@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.92 2006/03/05 15:58:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.93 2006/03/10 20:15:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2181,10 +2181,22 @@ numeric_avg(PG_FUNCTION_ARGS)
 										NumericGetDatum(N)));
 }
 
-Datum
-numeric_variance(PG_FUNCTION_ARGS)
+/*
+ * Workhorse routine for the standard deviance and variance
+ * aggregates. 'transarray' is the aggregate's transition
+ * array. 'variance' specifies whether we should calculate the
+ * variance or the standard deviation. 'sample' indicates whether the
+ * caller is interested in the sample or the population
+ * variance/stddev.
+ *
+ * If appropriate variance statistic is undefined for the input,
+ * *is_null is set to true and NULL is returned.
+ */
+static Numeric
+numeric_stddev_internal(ArrayType *transarray,
+						bool variance, bool sample,
+						bool *is_null)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	Datum	   *transdatums;
 	int			ndatums;
 	Numeric		N,
@@ -2195,7 +2207,10 @@ numeric_variance(PG_FUNCTION_ARGS)
 				vsumX,
 				vsumX2,
 				vNminus1;
+	NumericVar *comp;
 	int			rscale;
+
+	*is_null = false;
 
 	/* We assume the input is array of numeric */
 	deconstruct_array(transarray,
@@ -2208,16 +2223,26 @@ numeric_variance(PG_FUNCTION_ARGS)
 	sumX2 = DatumGetNumeric(transdatums[2]);
 
 	if (NUMERIC_IS_NAN(N) || NUMERIC_IS_NAN(sumX) || NUMERIC_IS_NAN(sumX2))
-		PG_RETURN_NUMERIC(make_result(&const_nan));
+		return make_result(&const_nan);
 
-	/* Sample variance is undefined when N is 0 or 1, so return NULL */
 	init_var(&vN);
 	set_var_from_num(N, &vN);
 
-	if (cmp_var(&vN, &const_one) <= 0)
+	/*
+	 * Sample stddev and variance are undefined when N <= 1;
+	 * population stddev is undefined when N == 0. Return NULL in
+	 * either case.
+	 */
+	if (sample)
+		comp = &const_one;
+	else
+		comp = &const_zero;
+
+	if (cmp_var(&vN, comp) <= 0)
 	{
 		free_var(&vN);
-		PG_RETURN_NULL();
+		*is_null = true;
+		return NULL;
 	}
 
 	init_var(&vNminus1);
@@ -2233,7 +2258,7 @@ numeric_variance(PG_FUNCTION_ARGS)
 
 	mul_var(&vsumX, &vsumX, &vsumX, rscale);	/* vsumX = sumX * sumX */
 	mul_var(&vN, &vsumX2, &vsumX2, rscale);		/* vsumX2 = N * sumX2 */
-	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
+	sub_var(&vsumX2, &vsumX, &vsumX2);			/* N * sumX2 - sumX * sumX */
 
 	if (cmp_var(&vsumX2, &const_zero) <= 0)
 	{
@@ -2242,9 +2267,11 @@ numeric_variance(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
+		mul_var(&vN, &vNminus1, &vNminus1, 0);				/* N * (N - 1) */
 		rscale = select_div_scale(&vsumX2, &vNminus1);
-		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);		/* variance */
+		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);	/* variance */
+		if (!variance)
+			sqrt_var(&vsumX, &vsumX, rscale);				/* stddev */
 
 		res = make_result(&vsumX);
 	}
@@ -2254,86 +2281,68 @@ numeric_variance(PG_FUNCTION_ARGS)
 	free_var(&vsumX);
 	free_var(&vsumX2);
 
-	PG_RETURN_NUMERIC(res);
+	return res;
 }
 
 Datum
-numeric_stddev(PG_FUNCTION_ARGS)
+numeric_var_samp(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
-	Datum	   *transdatums;
-	int			ndatums;
-	Numeric		N,
-				sumX,
-				sumX2,
-				res;
-	NumericVar	vN,
-				vsumX,
-				vsumX2,
-				vNminus1;
-	int			rscale;
+	Numeric res;
+	bool is_null;
 
-	/* We assume the input is array of numeric */
-	deconstruct_array(transarray,
-					  NUMERICOID, -1, false, 'i',
-					  &transdatums, NULL, &ndatums);
-	if (ndatums != 3)
-		elog(ERROR, "expected 3-element numeric array");
-	N = DatumGetNumeric(transdatums[0]);
-	sumX = DatumGetNumeric(transdatums[1]);
-	sumX2 = DatumGetNumeric(transdatums[2]);
+	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
+								  true, true, &is_null);
 
-	if (NUMERIC_IS_NAN(N) || NUMERIC_IS_NAN(sumX) || NUMERIC_IS_NAN(sumX2))
-		PG_RETURN_NUMERIC(make_result(&const_nan));
-
-	/* Sample stddev is undefined when N is 0 or 1, so return NULL */
-	init_var(&vN);
-	set_var_from_num(N, &vN);
-
-	if (cmp_var(&vN, &const_one) <= 0)
-	{
-		free_var(&vN);
+	if (is_null)
 		PG_RETURN_NULL();
-	}
-
-	init_var(&vNminus1);
-	sub_var(&vN, &const_one, &vNminus1);
-
-	init_var(&vsumX);
-	set_var_from_num(sumX, &vsumX);
-	init_var(&vsumX2);
-	set_var_from_num(sumX2, &vsumX2);
-
-	/* compute rscale for mul_var calls */
-	rscale = vsumX.dscale * 2;
-
-	mul_var(&vsumX, &vsumX, &vsumX, rscale);	/* vsumX = sumX * sumX */
-	mul_var(&vN, &vsumX2, &vsumX2, rscale);		/* vsumX2 = N * sumX2 */
-	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
-
-	if (cmp_var(&vsumX2, &const_zero) <= 0)
-	{
-		/* Watch out for roundoff error producing a negative numerator */
-		res = make_result(&const_zero);
-	}
 	else
-	{
-		mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
-		rscale = select_div_scale(&vsumX2, &vNminus1);
-		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);		/* variance */
-		sqrt_var(&vsumX, &vsumX, rscale);		/* stddev */
-
-		res = make_result(&vsumX);
-	}
-
-	free_var(&vN);
-	free_var(&vNminus1);
-	free_var(&vsumX);
-	free_var(&vsumX2);
-
-	PG_RETURN_NUMERIC(res);
+		PG_RETURN_NUMERIC(res);
 }
 
+Datum
+numeric_stddev_samp(PG_FUNCTION_ARGS)
+{
+	Numeric res;
+	bool is_null;
+
+	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
+								  false, true, &is_null);
+
+	if (is_null)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_NUMERIC(res);
+}
+
+Datum
+numeric_var_pop(PG_FUNCTION_ARGS)
+{
+	Numeric res;
+	bool is_null;
+
+	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
+								  true, false, &is_null);
+
+	if (is_null)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_NUMERIC(res);
+}
+
+Datum
+numeric_stddev_pop(PG_FUNCTION_ARGS)
+{
+	Numeric res;
+	bool is_null;
+
+	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
+								  false, false, &is_null);
+
+	if (is_null)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_NUMERIC(res);
+}
 
 /*
  * SUM transition functions for integer datatypes.

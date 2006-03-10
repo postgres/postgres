@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.276 2006/03/05 15:59:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.277 2006/03/10 20:15:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,8 +340,10 @@ extern Datum setseed(PG_FUNCTION_ARGS);
 extern Datum float8_accum(PG_FUNCTION_ARGS);
 extern Datum float4_accum(PG_FUNCTION_ARGS);
 extern Datum float8_avg(PG_FUNCTION_ARGS);
-extern Datum float8_variance(PG_FUNCTION_ARGS);
-extern Datum float8_stddev(PG_FUNCTION_ARGS);
+extern Datum float8_var_pop(PG_FUNCTION_ARGS);
+extern Datum float8_var_samp(PG_FUNCTION_ARGS);
+extern Datum float8_stddev_pop(PG_FUNCTION_ARGS);
+extern Datum float8_stddev_samp(PG_FUNCTION_ARGS);
 extern Datum float48pl(PG_FUNCTION_ARGS);
 extern Datum float48mi(PG_FUNCTION_ARGS);
 extern Datum float48mul(PG_FUNCTION_ARGS);
@@ -814,8 +816,10 @@ extern Datum int2_accum(PG_FUNCTION_ARGS);
 extern Datum int4_accum(PG_FUNCTION_ARGS);
 extern Datum int8_accum(PG_FUNCTION_ARGS);
 extern Datum numeric_avg(PG_FUNCTION_ARGS);
-extern Datum numeric_variance(PG_FUNCTION_ARGS);
-extern Datum numeric_stddev(PG_FUNCTION_ARGS);
+extern Datum numeric_var_pop(PG_FUNCTION_ARGS);
+extern Datum numeric_var_samp(PG_FUNCTION_ARGS);
+extern Datum numeric_stddev_pop(PG_FUNCTION_ARGS);
+extern Datum numeric_stddev_samp(PG_FUNCTION_ARGS);
 extern Datum int2_sum(PG_FUNCTION_ARGS);
 extern Datum int4_sum(PG_FUNCTION_ARGS);
 extern Datum int8_sum(PG_FUNCTION_ARGS);

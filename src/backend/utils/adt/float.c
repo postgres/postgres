@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.121 2006/03/05 15:58:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.122 2006/03/10 20:15:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1861,11 +1861,13 @@ setseed(PG_FUNCTION_ARGS)
  *		FLOAT AGGREGATE OPERATORS
  *		=========================
  *
- *		float8_accum	- accumulate for AVG(), STDDEV(), etc
- *		float4_accum	- same, but input data is float4
- *		float8_avg		- produce final result for float AVG()
- *		float8_variance - produce final result for float VARIANCE()
- *		float8_stddev	- produce final result for float STDDEV()
+ *		float8_accum		- accumulate for AVG(), variance aggregates, etc.
+ *		float4_accum		- same, but input data is float4
+ *		float8_avg			- produce final result for float AVG()
+ *		float8_var_samp		- produce final result for float VAR_SAMP()
+ *		float8_var_pop		- produce final result for float VAR_POP()
+ *		float8_stddev_samp	- produce final result for float STDDEV_SAMP()
+ *		float8_stddev_pop	- produce final result for float STDDEV_POP()
  *
  * The transition datatype for all these aggregates is a 3-element array
  * of float8, holding the values N, sum(X), sum(X*X) in that order.
@@ -2015,7 +2017,7 @@ float8_avg(PG_FUNCTION_ARGS)
 }
 
 Datum
-float8_variance(PG_FUNCTION_ARGS)
+float8_var_pop(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
@@ -2024,7 +2026,35 @@ float8_variance(PG_FUNCTION_ARGS)
 				sumX2,
 				numerator;
 
-	transvalues = check_float8_array(transarray, "float8_variance");
+	transvalues = check_float8_array(transarray, "float8_var_pop");
+	N = transvalues[0];
+	sumX = transvalues[1];
+	sumX2 = transvalues[2];
+
+	/* Population variance is undefined when N is 0, so return NULL */
+	if (N == 0.0)
+		PG_RETURN_NULL();
+
+	numerator = N * sumX2 - sumX * sumX;
+
+	/* Watch out for roundoff error producing a negative numerator */
+	if (numerator <= 0.0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8(numerator / (N * N));
+}
+
+Datum
+float8_var_samp(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	float8	   *transvalues;
+	float8		N,
+				sumX,
+				sumX2,
+				numerator;
+
+	transvalues = check_float8_array(transarray, "float8_var_samp");
 	N = transvalues[0];
 	sumX = transvalues[1];
 	sumX2 = transvalues[2];
@@ -2043,7 +2073,7 @@ float8_variance(PG_FUNCTION_ARGS)
 }
 
 Datum
-float8_stddev(PG_FUNCTION_ARGS)
+float8_stddev_pop(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
@@ -2052,7 +2082,35 @@ float8_stddev(PG_FUNCTION_ARGS)
 				sumX2,
 				numerator;
 
-	transvalues = check_float8_array(transarray, "float8_stddev");
+	transvalues = check_float8_array(transarray, "float8_stddev_pop");
+	N = transvalues[0];
+	sumX = transvalues[1];
+	sumX2 = transvalues[2];
+
+	/* Population stddev is undefined when N is 0, so return NULL */
+	if (N == 0.0)
+		PG_RETURN_NULL();
+
+	numerator = N * sumX2 - sumX * sumX;
+
+	/* Watch out for roundoff error producing a negative numerator */
+	if (numerator <= 0.0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8(sqrt(numerator / (N * N)));
+}
+
+Datum
+float8_stddev_samp(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	float8	   *transvalues;
+	float8		N,
+				sumX,
+				sumX2,
+				numerator;
+
+	transvalues = check_float8_array(transarray, "float8_stddev_samp");
 	N = transvalues[0];
 	sumX = transvalues[1];
 	sumX2 = transvalues[2];

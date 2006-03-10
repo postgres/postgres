@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.53 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.54 2006/03/10 20:15:26 neilc Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -144,21 +144,53 @@ DATA(insert ( 2245	bpchar_smaller	-				1058	1042	_null_ ));
  */
 DATA(insert ( 2147	int8inc		-					0	20		0 ));
 
-/* variance */
-DATA(insert ( 2148	int8_accum	numeric_variance	0	1231	"{0,0,0}" ));
-DATA(insert ( 2149	int4_accum	numeric_variance	0	1231	"{0,0,0}" ));
-DATA(insert ( 2150	int2_accum	numeric_variance	0	1231	"{0,0,0}" ));
-DATA(insert ( 2151	float4_accum	float8_variance 0	1022	"{0,0,0}" ));
-DATA(insert ( 2152	float8_accum	float8_variance 0	1022	"{0,0,0}" ));
-DATA(insert ( 2153	numeric_accum  numeric_variance 0	1231	"{0,0,0}" ));
+/* var_pop */
+DATA(insert ( 2718	int8_accum	numeric_var_pop	0	1231	"{0,0,0}" ));
+DATA(insert ( 2719	int4_accum	numeric_var_pop	0	1231	"{0,0,0}" ));
+DATA(insert ( 2720	int2_accum	numeric_var_pop	0	1231	"{0,0,0}" ));
+DATA(insert ( 2721	float4_accum	float8_var_pop 0	1022	"{0,0,0}" ));
+DATA(insert ( 2722	float8_accum	float8_var_pop 0	1022	"{0,0,0}" ));
+DATA(insert ( 2723	numeric_accum  numeric_var_pop 0	1231	"{0,0,0}" ));
 
-/* stddev */
-DATA(insert ( 2154	int8_accum	numeric_stddev		0	1231	"{0,0,0}" ));
-DATA(insert ( 2155	int4_accum	numeric_stddev		0	1231	"{0,0,0}" ));
-DATA(insert ( 2156	int2_accum	numeric_stddev		0	1231	"{0,0,0}" ));
-DATA(insert ( 2157	float4_accum	float8_stddev	0	1022	"{0,0,0}" ));
-DATA(insert ( 2158	float8_accum	float8_stddev	0	1022	"{0,0,0}" ));
-DATA(insert ( 2159	numeric_accum	numeric_stddev	0	1231	"{0,0,0}" ));
+/* var_samp */
+DATA(insert ( 2641	int8_accum	numeric_var_samp	0	1231	"{0,0,0}" ));
+DATA(insert ( 2642	int4_accum	numeric_var_samp	0	1231	"{0,0,0}" ));
+DATA(insert ( 2643	int2_accum	numeric_var_samp	0	1231	"{0,0,0}" ));
+DATA(insert ( 2644	float4_accum	float8_var_samp 0	1022	"{0,0,0}" ));
+DATA(insert ( 2645	float8_accum	float8_var_samp 0	1022	"{0,0,0}" ));
+DATA(insert ( 2646	numeric_accum  numeric_var_samp 0	1231	"{0,0,0}" ));
+
+/* variance: historical Postgres syntax for var_samp */
+DATA(insert ( 2148	int8_accum	numeric_var_samp	0	1231	"{0,0,0}" ));
+DATA(insert ( 2149	int4_accum	numeric_var_samp	0	1231	"{0,0,0}" ));
+DATA(insert ( 2150	int2_accum	numeric_var_samp	0	1231	"{0,0,0}" ));
+DATA(insert ( 2151	float4_accum	float8_var_samp 0	1022	"{0,0,0}" ));
+DATA(insert ( 2152	float8_accum	float8_var_samp 0	1022	"{0,0,0}" ));
+DATA(insert ( 2153	numeric_accum  numeric_var_samp 0	1231	"{0,0,0}" ));
+
+/* stddev_pop */
+DATA(insert ( 2724	int8_accum	numeric_stddev_pop		0	1231	"{0,0,0}" ));
+DATA(insert ( 2725	int4_accum	numeric_stddev_pop		0	1231	"{0,0,0}" ));
+DATA(insert ( 2726	int2_accum	numeric_stddev_pop		0	1231	"{0,0,0}" ));
+DATA(insert ( 2727	float4_accum	float8_stddev_pop	0	1022	"{0,0,0}" ));
+DATA(insert ( 2728	float8_accum	float8_stddev_pop	0	1022	"{0,0,0}" ));
+DATA(insert ( 2729	numeric_accum	numeric_stddev_pop	0	1231	"{0,0,0}" ));
+
+/* stddev_samp */
+DATA(insert ( 2712	int8_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
+DATA(insert ( 2713	int4_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
+DATA(insert ( 2714	int2_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
+DATA(insert ( 2715	float4_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
+DATA(insert ( 2716	float8_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
+DATA(insert ( 2717	numeric_accum	numeric_stddev_samp	0	1231	"{0,0,0}" ));
+
+/* stddev: historical Postgres syntax for stddev_samp */
+DATA(insert ( 2154	int8_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
+DATA(insert ( 2155	int4_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
+DATA(insert ( 2156	int2_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
+DATA(insert ( 2157	float4_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
+DATA(insert ( 2158	float8_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
+DATA(insert ( 2159	numeric_accum	numeric_stddev_samp	0	1231	"{0,0,0}" ));
 
 /* boolean-and and boolean-or */
 DATA(insert ( 2517	booland_statefunc	-			0	16		_null_ ));

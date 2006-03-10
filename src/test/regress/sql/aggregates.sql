@@ -15,25 +15,31 @@ SELECT avg(gpa) AS avg_3_4 FROM ONLY student;
 
 
 SELECT sum(four) AS sum_1500 FROM onek;
-
 SELECT sum(a) AS sum_198 FROM aggtest;
-
 SELECT sum(b) AS avg_431_773 FROM aggtest;
-
 SELECT sum(gpa) AS avg_6_8 FROM ONLY student;
 
-
 SELECT max(four) AS max_3 FROM onek;
-
 SELECT max(a) AS max_100 FROM aggtest;
-
 SELECT max(aggtest.b) AS max_324_78 FROM aggtest;
-
 SELECT max(student.gpa) AS max_3_7 FROM student;
 
+SELECT stddev_pop(b) FROM aggtest;
+SELECT stddev_samp(b) FROM aggtest;
+SELECT var_pop(b) FROM aggtest;
+SELECT var_samp(b) FROM aggtest;
+
+SELECT stddev_pop(b::numeric) FROM aggtest;
+SELECT stddev_samp(b::numeric) FROM aggtest;
+SELECT var_pop(b::numeric) FROM aggtest;
+SELECT var_samp(b::numeric) FROM aggtest;
+
+-- population variance is defined for a single tuple, sample variance
+-- is not
+SELECT var_pop(1.0), var_samp(2.0);
+SELECT stddev_pop(3.0::numeric), stddev_samp(4.0::numeric);
 
 SELECT count(four) AS cnt_1000 FROM onek;
-
 SELECT count(DISTINCT four) AS cnt_4 FROM onek;
 
 select ten, count(*), sum(four) from onek
@@ -44,9 +50,7 @@ group by ten order by ten;
 
 
 SELECT newavg(four) AS avg_1 FROM onek;
-
 SELECT newsum(four) AS sum_1500 FROM onek;
-
 SELECT newcnt(four) AS cnt_1000 FROM onek;
 
 

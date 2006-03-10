@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.403 2006/03/10 19:12:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.404 2006/03/10 20:15:26 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2668,10 +2668,14 @@ DESCR("join selectivity of case-insensitive regex non-match");
 /* Aggregate-related functions */
 DATA(insert OID = 1830 (  float8_avg	   PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_avg - _null_ ));
 DESCR("AVG aggregate final function");
-DATA(insert OID = 1831 (  float8_variance  PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_variance - _null_ ));
-DESCR("VARIANCE aggregate final function");
-DATA(insert OID = 1832 (  float8_stddev    PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_stddev - _null_ ));
-DESCR("STDDEV aggregate final function");
+DATA(insert OID = 2512 (  float8_var_pop   PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_var_pop - _null_ ));
+DESCR("VAR_POP aggregate final function");
+DATA(insert OID = 1831 (  float8_var_samp  PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_var_samp - _null_ ));
+DESCR("VAR_SAMP aggregate final function");
+DATA(insert OID = 2513 (  float8_stddev_pop PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_stddev_pop - _null_ ));
+DESCR("STDDEV_POP aggregate final function");
+DATA(insert OID = 1832 (  float8_stddev_samp    PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_stddev_samp - _null_ ));
+DESCR("STDDEV_SAMP aggregate final function");
 DATA(insert OID = 1833 (  numeric_accum    PGNSP PGUID 12 f f t f i 2 1231 "1231 1700" _null_ _null_ _null_ numeric_accum - _null_ ));
 DESCR("aggregate transition function");
 DATA(insert OID = 1834 (  int2_accum	   PGNSP PGUID 12 f f t f i 2 1231 "1231 21" _null_ _null_ _null_ int2_accum - _null_ ));
@@ -2682,10 +2686,14 @@ DATA(insert OID = 1836 (  int8_accum	   PGNSP PGUID 12 f f t f i 2 1231 "1231 20
 DESCR("aggregate transition function");
 DATA(insert OID = 1837 (  numeric_avg	   PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_avg - _null_ ));
 DESCR("AVG aggregate final function");
-DATA(insert OID = 1838 (  numeric_variance PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_variance - _null_ ));
-DESCR("VARIANCE aggregate final function");
-DATA(insert OID = 1839 (  numeric_stddev   PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_stddev - _null_ ));
-DESCR("STDDEV aggregate final function");
+DATA(insert OID = 2514 (  numeric_var_pop  PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_var_pop - _null_ ));
+DESCR("VAR_POP aggregate final function");
+DATA(insert OID = 1838 (  numeric_var_samp PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_var_samp - _null_ ));
+DESCR("VAR_SAMP aggregate final function");
+DATA(insert OID = 2596 (  numeric_stddev_pop PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_stddev_pop - _null_ ));
+DESCR("STDDEV_POP aggregate final function");
+DATA(insert OID = 1839 (  numeric_stddev_samp   PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_stddev_samp - _null_ ));
+DESCR("STDDEV_SAMP aggregate final function");
 DATA(insert OID = 1840 (  int2_sum		   PGNSP PGUID 12 f f f f i 2 20 "20 21" _null_ _null_ _null_ int2_sum - _null_ ));
 DESCR("SUM(int2) transition function");
 DATA(insert OID = 1841 (  int4_sum		   PGNSP PGUID 12 f f f f i 2 20 "20 23" _null_ _null_ _null_ int4_sum - _null_ ));
@@ -3115,12 +3123,40 @@ DATA(insert OID = 2245 (  min				PGNSP PGUID 12 t f f f i 1 1042 "1042" _null_ _
 
 DATA(insert OID = 2147 (  count				PGNSP PGUID 12 t f f f i 1 20 "2276" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 
+DATA(insert OID = 2718 (  var_pop			PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2719 (  var_pop			PGNSP PGUID 12 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2720 (  var_pop			PGNSP PGUID 12 t f f f i 1 1700 "21" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2721 (  var_pop			PGNSP PGUID 12 t f f f i 1 701 "700" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2722 (  var_pop			PGNSP PGUID 12 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2723 (  var_pop			PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ ));
+
+DATA(insert OID = 2641 (  var_samp			PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2642 (  var_samp			PGNSP PGUID 12 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2643 (  var_samp			PGNSP PGUID 12 t f f f i 1 1700 "21" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2644 (  var_samp			PGNSP PGUID 12 t f f f i 1 701 "700" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2645 (  var_samp			PGNSP PGUID 12 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2646 (  var_samp			PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ ));
+
 DATA(insert OID = 2148 (  variance			PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2149 (  variance			PGNSP PGUID 12 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2150 (  variance			PGNSP PGUID 12 t f f f i 1 1700 "21" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2151 (  variance			PGNSP PGUID 12 t f f f i 1 701 "700" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2152 (  variance			PGNSP PGUID 12 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2153 (  variance			PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ ));
+
+DATA(insert OID = 2724 (  stddev_pop		PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2725 (  stddev_pop		PGNSP PGUID 12 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2726 (  stddev_pop		PGNSP PGUID 12 t f f f i 1 1700 "21" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2727 (  stddev_pop		PGNSP PGUID 12 t f f f i 1 701 "700" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2728 (  stddev_pop		PGNSP PGUID 12 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2729 (  stddev_pop		PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ ));
+
+DATA(insert OID = 2712 (  stddev_samp		PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2713 (  stddev_samp		PGNSP PGUID 12 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2714 (  stddev_samp		PGNSP PGUID 12 t f f f i 1 1700 "21" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2715 (  stddev_samp		PGNSP PGUID 12 t f f f i 1 701 "700" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2716 (  stddev_samp		PGNSP PGUID 12 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2717 (  stddev_samp		PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ ));
 
 DATA(insert OID = 2154 (  stddev			PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2155 (  stddev			PGNSP PGUID 12 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ ));

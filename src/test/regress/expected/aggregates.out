@@ -75,6 +75,68 @@ SELECT max(student.gpa) AS max_3_7 FROM student;
      3.7
 (1 row)
 
+SELECT stddev_pop(b) FROM aggtest;
+   stddev_pop    
+-----------------
+ 131.10703231895
+(1 row)
+
+SELECT stddev_samp(b) FROM aggtest;
+   stddev_samp    
+------------------
+ 151.389360803998
+(1 row)
+
+SELECT var_pop(b) FROM aggtest;
+     var_pop      
+------------------
+ 17189.0539234823
+(1 row)
+
+SELECT var_samp(b) FROM aggtest;
+     var_samp     
+------------------
+ 22918.7385646431
+(1 row)
+
+SELECT stddev_pop(b::numeric) FROM aggtest;
+    stddev_pop    
+------------------
+ 151.389361431288
+(1 row)
+
+SELECT stddev_samp(b::numeric) FROM aggtest;
+   stddev_samp    
+------------------
+ 151.389361431288
+(1 row)
+
+SELECT var_pop(b::numeric) FROM aggtest;
+      var_pop       
+--------------------
+ 22918.738754573025
+(1 row)
+
+SELECT var_samp(b::numeric) FROM aggtest;
+      var_samp      
+--------------------
+ 22918.738754573025
+(1 row)
+
+-- population variance is defined for a single tuple, sample variance
+-- is not
+SELECT var_pop(1.0), var_samp(2.0);
+ var_pop | var_samp 
+---------+----------
+       0 |         
+(1 row)
+
+SELECT stddev_pop(3.0::numeric), stddev_samp(4.0::numeric);
+ stddev_pop | stddev_samp 
+------------+-------------
+          0 |            
+(1 row)
+
 SELECT count(four) AS cnt_1000 FROM onek;
  cnt_1000 
 ----------

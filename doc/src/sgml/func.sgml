@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.312 2006/03/10 19:10:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.313 2006/03/10 20:15:25 neilc Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7914,6 +7914,46 @@ SELECT NULLIF(value, '(none)') ...
        <type>double precision</type> for floating-point arguments,
        otherwise <type>numeric</type>
       </entry>
+      <entry>historical alias for <function>stddev_samp</function></entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>standard deviation</primary>
+        <secondary>population</secondary>
+       </indexterm>
+       <function>stddev_pop(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>smallint</type>, <type>int</type>,
+       <type>bigint</type>, <type>real</type>, <type>double
+       precision</type>, or <type>numeric</type>
+      </entry>
+      <entry>
+       <type>double precision</type> for floating-point arguments,
+       otherwise <type>numeric</type>
+      </entry>
+      <entry>population standard deviation of the input values</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>standard deviation</primary>
+        <secondary>sample</secondary>
+       </indexterm>
+       <function>stddev_samp(<replaceable class="parameter">expression</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>smallint</type>, <type>int</type>,
+       <type>bigint</type>, <type>real</type>, <type>double
+       precision</type>, or <type>numeric</type>
+      </entry>
+      <entry>
+       <type>double precision</type> for floating-point arguments,
+       otherwise <type>numeric</type>
+      </entry>
       <entry>sample standard deviation of the input values</entry>
      </row>
 
@@ -7951,9 +7991,48 @@ SELECT NULLIF(value, '(none)') ...
        <type>double precision</type> for floating-point arguments,
        otherwise <type>numeric</type>
       </entry>
-      <entry>sample variance of the input values (square of the sample standard deviation)</entry>
+      <entry>historical alias for <function>var_samp</function></entry>
      </row>
 
+     <row>
+      <entry>
+       <indexterm>
+        <primary>variance</primary>
+        <secondary>population</secondary>
+       </indexterm>
+       <function>var_pop</function>(<replaceable class="parameter">expression</replaceable>)
+      </entry>
+      <entry>
+       <type>smallint</type>, <type>int</type>,
+       <type>bigint</type>, <type>real</type>, <type>double
+       precision</type>, or <type>numeric</type>
+      </entry>
+      <entry>
+       <type>double precision</type> for floating-point arguments,
+       otherwise <type>numeric</type>
+      </entry>
+      <entry>population variance of the input values (square of the population standard deviation)</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>variance</primary>
+        <secondary>sample</secondary>
+       </indexterm>
+       <function>var_samp</function>(<replaceable class="parameter">expression</replaceable>)
+      </entry>
+      <entry>
+       <type>smallint</type>, <type>int</type>,
+       <type>bigint</type>, <type>real</type>, <type>double
+       precision</type>, or <type>numeric</type>
+      </entry>
+      <entry>
+       <type>double precision</type> for floating-point arguments,
+       otherwise <type>numeric</type>
+      </entry>
+      <entry>sample variance of the input values (square of the sample standard deviation)</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
