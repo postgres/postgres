@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.42 2005/11/07 17:36:44 tgl Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.43 2006/03/10 19:10:49 momjian Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>

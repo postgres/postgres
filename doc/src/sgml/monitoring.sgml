@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.30 2006/02/14 02:03:44 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.31 2006/03/10 19:10:48 momjian Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>

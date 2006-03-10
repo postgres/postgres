@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.27 2005/04/12 03:16:50 tgl Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.28 2006/03/10 19:10:48 momjian Exp $ -->
 
 <sect1 id="history">
  <title>A Brief History of <productname>PostgreSQL</productname></title>

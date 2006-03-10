@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.25 2005/01/05 23:42:02 tgl Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.26 2006/03/10 19:10:46 momjian Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>

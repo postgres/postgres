@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.16 2005/04/14 01:38:15 tgl Exp $
- -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.17 2006/03/10 19:10:46 momjian Exp $ -->
 
 <chapter id="bki">
  <title><acronym>BKI</acronym> Backend Interface</title>

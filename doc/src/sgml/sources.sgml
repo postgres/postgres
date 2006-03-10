@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.16 2004/12/13 18:05:09 petere Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.17 2006/03/10 19:10:49 momjian Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>

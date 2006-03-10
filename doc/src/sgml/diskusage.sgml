@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.15 2005/07/29 14:46:56 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.16 2006/03/10 19:10:47 momjian Exp $ -->
 
 <chapter id="diskusage">
  <title>Monitoring Disk Usage</title>

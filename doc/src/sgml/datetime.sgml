@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.47 2005/09/09 02:31:48 tgl Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.48 2006/03/10 19:10:47 momjian Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>

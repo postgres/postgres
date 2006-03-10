@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.45 2005/11/04 23:14:02 petere Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.46 2006/03/10 19:10:49 momjian Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>

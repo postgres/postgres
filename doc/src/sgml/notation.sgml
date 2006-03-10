@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/notation.sgml,v 1.26 2003/11/29 19:51:37 pgsql Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/notation.sgml,v 1.27 2006/03/10 19:10:48 momjian Exp $ -->
 
 <sect1 id="notation">
  <title>Conventions</title>

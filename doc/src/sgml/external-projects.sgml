@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.9 2005/04/09 03:52:43 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.10 2006/03/10 19:10:47 momjian Exp $ -->
 
  <appendix id="external-projects">
   <title>External Projects</title>

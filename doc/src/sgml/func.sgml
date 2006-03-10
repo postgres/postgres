@@ -1,7 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.311 2006/03/06 22:54:14 momjian Exp $
-PostgreSQL documentation
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.312 2006/03/10 19:10:47 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>

@@ -1,6 +1,5 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.51 2006/03/07 02:54:23 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.52 2006/03/10 19:10:47 momjian Exp $ -->
+
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
 

@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.205 2006/03/03 20:57:32 tgl Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.206 2006/03/10 19:10:48 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>

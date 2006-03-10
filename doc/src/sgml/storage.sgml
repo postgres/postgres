@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.8 2005/11/04 23:14:02 petere Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.9 2006/03/10 19:10:49 momjian Exp $ -->
 
 <chapter id="storage">
 

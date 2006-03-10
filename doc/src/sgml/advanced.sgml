@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.49 2005/04/09 03:52:43 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.50 2006/03/10 19:10:46 momjian Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>

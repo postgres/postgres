@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.53 2005/12/07 14:35:45 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.54 2006/03/10 19:10:48 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>

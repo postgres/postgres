@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.30 2005/11/04 02:56:31 tgl Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.31 2006/03/10 19:10:48 momjian Exp $ -->
 
 <preface id="preface">
  <title>Preface</title>

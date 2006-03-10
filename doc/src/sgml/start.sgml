@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.39 2005/06/21 04:02:30 tgl Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.40 2006/03/10 19:10:49 momjian Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>

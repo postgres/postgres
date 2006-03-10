@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.23 2005/04/09 03:52:43 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.24 2006/03/10 19:10:46 momjian Exp $ -->
 
  <bibliography id="biblio">
   <title>Bibliography</title>

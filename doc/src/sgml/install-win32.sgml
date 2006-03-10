@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.27 2006/02/12 06:11:50 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.28 2006/03/10 19:10:48 momjian Exp $ -->
 
 <chapter id="install-win32">
  <title>Client-Only Installation on <productname>Windows</productname></title>

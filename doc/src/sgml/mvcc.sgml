@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.54 2006/03/04 04:41:36 momjian Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.55 2006/03/10 19:10:48 momjian Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>

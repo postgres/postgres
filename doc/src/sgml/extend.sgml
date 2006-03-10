@@ -1,6 +1,4 @@
-<!--
-$PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.30 2005/10/15 01:47:11 neilc Exp $
--->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.31 2006/03/10 19:10:47 momjian Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
