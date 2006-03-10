@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.183.2.2 2005/12/14 16:28:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.183.2.3 2006/03/10 01:51:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1293,6 +1293,8 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	{
 		Datum		result;
 		HeapTuple	tuple;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * reset per-tuple memory context before each call of the function or
