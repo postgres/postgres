@@ -6,7 +6,7 @@ MODULE_big = pgxml
 OBJS = xpath.o xslt_proc.o
 
 # Remove -lxslt from the following line if you don't have libxslt.
-SHLIB_LINK = -lxml2 -lxslt
+SHLIB_LINK = -lxslt -lxml2
 
 DATA_built = pgxml.sql
 DATA = uninstall_pgxml.sql
