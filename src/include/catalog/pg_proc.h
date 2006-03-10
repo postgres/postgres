@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.402 2006/03/10 19:10:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.403 2006/03/10 19:12:51 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1613,8 +1613,6 @@ DESCR("convert date and time with time zone to timestamp with time zone");
 DATA(insert OID = 1298 (  timetzdate_pl    PGNSP PGUID 14 f f t f i 2 1184 "1266 1082" _null_ _null_ _null_ "select ($2 + $1)" - _null_ ));
 DESCR("convert time with time zone and date to timestamp with time zone");
 DATA(insert OID = 1299 (  now			   PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_	now - _null_ ));
-DESCR("current transaction time");
-DATA(insert OID = 2512 (  transaction_timestamp	   PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_	now - _null_ ));
 DESCR("current transaction time");
 
 /* OIDS 1300 - 1399 */
