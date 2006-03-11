@@ -1,8 +1,6 @@
 /* dynamic SQL test program
  *
- * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
- *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/test/dyntest2.pgc,v 1.6 2005/06/30 07:08:59 neilc Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/test/dyntest2.pgc,v 1.7 2006/03/11 16:57:44 momjian Exp $
  */
 
 #include <stdio.h>
