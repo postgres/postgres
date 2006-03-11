@@ -31,6 +31,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "libpq-fe.h"
 #include "fmgr.h"
 #include "funcapi.h"
@@ -1112,9 +1114,6 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 }
 
 
-#ifndef SHRT_MAX
-#define SHRT_MAX (0x7FFF)
-#endif
 /*
  * dblink_build_sql_insert
  *
