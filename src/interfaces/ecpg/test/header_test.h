@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/header_test.h,v 1.12 2006/03/11 04:38:40 momjian Exp $ */
+
 #include "stdlib.h"
 
 static void

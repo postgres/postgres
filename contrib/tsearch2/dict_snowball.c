@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_snowball.c,v 1.11 2006/03/11 04:38:30 momjian Exp $ */
+
 /*
  * example of Snowball dictionary
  * http://snowball.tartarus.org/

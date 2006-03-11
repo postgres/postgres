@@ -1,5 +1,7 @@
 #! /bin/sh
 
+# $PostgreSQL: pgsql/config/missing,v 1.4 2006/03/11 04:38:28 momjian Exp $
+
 # This is *not* the GNU `missing' script, although it is similar in
 # concept. You can call it from the makefiles to get consistent
 # behavior when certain utility programs are missing.

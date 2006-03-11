@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.17 2006/03/11 04:38:40 momjian Exp $ */
+
 #include "postgres_fe.h"
 
 #include "extern.h"

@@ -1,6 +1,7 @@
 /*
  * insert_username.c
  * $Modified: Thu Oct 16 08:13:42 1997 by brook $
+ * $PostgreSQL: pgsql/contrib/spi/insert_username.c,v 1.13 2006/03/11 04:38:30 momjian Exp $
  *
  * insert user name in response to a trigger
  * usage:  insert_username (column_name)

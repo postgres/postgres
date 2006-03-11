@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/port/getopt.c,v 1.10 2006/03/11 04:38:40 momjian Exp $ */
+
 /* This is used by psql under Win32 */
 
 /*

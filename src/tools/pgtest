@@ -1,4 +1,6 @@
-:
+#!/bin/sh
+
+# $PostgreSQL: pgsql/src/tools/pgtest,v 1.6 2006/03/11 04:38:41 momjian Exp $
 
 # This runs a build/initdb/regression test suite
 #

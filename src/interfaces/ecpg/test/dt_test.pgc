@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/dt_test.pgc,v 1.9 2006/03/11 04:38:40 momjian Exp $ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

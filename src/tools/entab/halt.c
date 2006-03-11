@@ -2,6 +2,8 @@
 **
 **		halt.c
 **
+** $PostgreSQL: pgsql/src/tools/entab/halt.c,v 1.9 2006/03/11 04:38:41 momjian Exp $
+**
 **		This is used to print out error messages and exit
 */
 

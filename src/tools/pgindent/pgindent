@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.87 2006/03/11 04:38:42 momjian Exp $
+
 # Known bugs:
 #
 # Blank line is added after, seen as a function definition, no space

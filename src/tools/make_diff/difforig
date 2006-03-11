@@ -1,4 +1,7 @@
-:
+#!/bin/sh
+
+# $PostgreSQL: pgsql/src/tools/make_diff/difforig,v 1.2 2006/03/11 04:38:42 momjian Exp $
+
 if [ "$#" -eq 0 ]
 then	APATH="."
 else	APATH="$1"

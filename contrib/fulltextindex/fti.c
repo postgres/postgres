@@ -8,6 +8,8 @@
 /*
  *	Trigger function accepts variable number of arguments:
  *
+ * $PostgreSQL: pgsql/contrib/fulltextindex/fti.c,v 1.26 2006/03/11 04:38:29 momjian Exp $
+ *
  *		1. relation in which to store the substrings
  *		2. fields to extract substrings from
  *

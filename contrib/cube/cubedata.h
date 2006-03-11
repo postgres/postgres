@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/cube/cubedata.h,v 1.7 2006/03/11 04:38:28 momjian Exp $ */
+
 #define CUBE_MAX_DIM (100)
 typedef struct NDBOX
 {

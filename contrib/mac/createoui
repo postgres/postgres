@@ -1,4 +1,7 @@
 #! /bin/sh
+
+# $PostgreSQL: pgsql/contrib/mac/createoui,v 1.3 2006/03/11 04:38:30 momjian Exp $
+
 # Utility to create manufacturer's oui table
 # OUI is "Organizationally Unique Identifier" assigned by IEEE.
 # There are currently three duplicate listings, so we can not enforce

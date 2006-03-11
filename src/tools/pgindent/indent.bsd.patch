@@ -1,3 +1,4 @@
+$PostgreSQL: pgsql/src/tools/pgindent/indent.bsd.patch,v 1.8 2006/03/11 04:38:42 momjian Exp $
 
 This patch contains several fixes to NetBSD's indent and should be
 applied before using pgindent.

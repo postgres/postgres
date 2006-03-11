@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/parser.h,v 1.11 2006/03/11 04:38:30 momjian Exp $ */
+
 #ifndef __PARSER_H__
 #define __PARSER_H__
 

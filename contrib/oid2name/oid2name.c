@@ -4,6 +4,7 @@
  *
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.29 2006/03/11 04:38:30 momjian Exp $
  */
 #include "postgres_fe.h"
 

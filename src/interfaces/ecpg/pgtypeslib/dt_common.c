@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.34 2006/03/11 04:38:39 momjian Exp $ */
+
 #include "postgres_fe.h"
 
 #include <time.h>

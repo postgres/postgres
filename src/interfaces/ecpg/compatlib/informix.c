@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.41 2006/03/11 04:38:39 momjian Exp $ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>

@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/tutorial/funcs.c,v 1.14 2006/03/11 04:38:42 momjian Exp $ */
+
 /******************************************************************************
   These are user-defined functions that can be bound to a Postgres backend
   and called by Postgres to execute SQL functions of the same name.

@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_numeric.h,v 1.15 2006/03/11 04:38:39 momjian Exp $ */
+
 #ifndef PGTYPES_NUMERIC
 #define PGTYPES_NUMERIC
 

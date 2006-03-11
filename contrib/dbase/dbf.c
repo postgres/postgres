@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/dbase/dbf.c,v 1.10 2006/03/11 04:38:28 momjian Exp $ */
+
 /* Routines to read and write xBase-files (.dbf)
 
    By Maarten Boekhold, 29th of oktober 1995

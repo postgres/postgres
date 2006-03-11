@@ -1,5 +1,7 @@
 #! /bin/sh
 # Utility to remove manufacturer's oui table
+# $PostgreSQL: pgsql/contrib/mac/dropoui,v 1.2 2006/03/11 04:38:30 momjian Exp $
+
 
 args=
 

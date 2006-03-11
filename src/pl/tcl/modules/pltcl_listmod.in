@@ -1,4 +1,6 @@
 #! /bin/sh
+# $PostgreSQL: pgsql/src/pl/tcl/modules/pltcl_listmod.in,v 1.3 2006/03/11 04:38:40 momjian Exp $
+#
 # Start tclsh \
 exec @TCLSH@ "$0" "$@"
 

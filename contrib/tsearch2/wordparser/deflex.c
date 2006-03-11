@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/deflex.c,v 1.4 2006/03/11 04:38:30 momjian Exp $ */
+
 #include "deflex.h"
 
 const char *lex_descr[] = {

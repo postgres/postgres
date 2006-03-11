@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/deflex.h,v 1.3 2006/03/11 04:38:30 momjian Exp $ */
+
 #ifndef __DEFLEX_H__
 #define __DEFLEX_H__
 

@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/libpq/libpqdll.c,v 1.10 2006/03/11 04:38:40 momjian Exp $ */
+
 #define WIN32_LEAN_AND_MEAN
 #include <winsock.h>
 #include <windows.h>

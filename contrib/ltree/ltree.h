@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/ltree/ltree.h,v 1.15 2006/03/11 04:38:29 momjian Exp $ */
+
 #ifndef __LTREE_H__
 #define __LTREE_H__
 

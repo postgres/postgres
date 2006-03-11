@@ -1,5 +1,7 @@
 # @(#)etcetera	7.12
 
+# $PostgreSQL: pgsql/src/timezone/data/etcetera,v 1.3 2006/03/11 04:38:41 momjian Exp $
+#
 # These entries are mostly present for historical reasons, so that
 # people in areas not otherwise covered by the tz files could "zic -l"
 # to a time zone that was right for their area.  These days, the

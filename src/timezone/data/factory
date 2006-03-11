@@ -1,5 +1,7 @@
 # @(#)factory	7.3
 
+# $PostgreSQL: pgsql/src/timezone/data/factory,v 1.2 2006/03/11 04:38:41 momjian Exp $
+
 # For companies who don't want to put time zone specification in
 # their installation procedures.  When users run date, they'll get the message.
 # Also useful for the "comp.sources" version.

@@ -2,6 +2,8 @@
  * Copyright (c) 1999
  *		University of California.  All rights reserved.
  *
+ * $PostgreSQL: pgsql/contrib/pgcrypto/misc.c,v 1.3 2006/03/11 04:38:30 momjian Exp $
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

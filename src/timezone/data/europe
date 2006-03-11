@@ -1,5 +1,7 @@
 # @(#)europe	7.95
 
+# $PostgreSQL: pgsql/src/timezone/data/europe,v 1.4 2006/03/11 04:38:41 momjian Exp $
+#
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).

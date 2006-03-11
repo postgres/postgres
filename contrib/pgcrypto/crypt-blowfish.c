@@ -1,4 +1,6 @@
 /*
+ * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-blowfish.c,v 1.11 2006/03/11 04:38:30 momjian Exp $
+ *
  * This code comes from John the Ripper password cracker, with reentrant
  * and crypt(3) interfaces added, but optimizations specific to password
  * cracking removed.

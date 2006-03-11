@@ -2,6 +2,8 @@
 
 # Allowance for leapseconds added to each timezone file.
 
+# $PostgreSQL: pgsql/src/timezone/data/leapseconds,v 1.4 2006/03/11 04:38:41 momjian Exp $
+
 # The International Earth Rotation Service periodically uses leap seconds
 # to keep UTC to within 0.9 s of UT1
 # (which measures the true angular orientation of the earth in space); see

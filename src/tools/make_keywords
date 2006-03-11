@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# $PostgreSQL: pgsql/src/tools/make_keywords,v 1.2 2006/03/11 04:38:41 momjian Exp $
+
 cat <<END
 To get a list of keywords compared to SQL'92, take the keywords out of
 backend/parser/keywords.c and tools/SQL_keywords.

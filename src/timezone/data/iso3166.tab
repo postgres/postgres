@@ -1,5 +1,7 @@
 # ISO 3166 alpha-2 country codes
 #
+# $PostgreSQL: pgsql/src/timezone/data/iso3166.tab,v 1.4 2006/03/11 04:38:41 momjian Exp $
+#
 # @(#)iso3166.tab	1.17
 #
 # From Paul Eggert (2004-06-14):

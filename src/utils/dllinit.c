@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/utils/dllinit.c,v 1.17 2006/03/11 04:38:42 momjian Exp $ */
+
 #ifdef __CYGWIN__
 #include <cygwin/version.h>
 #endif

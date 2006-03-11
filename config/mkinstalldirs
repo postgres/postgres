@@ -1,6 +1,8 @@
 #! /bin/sh
 # mkinstalldirs --- make directory hierarchy
 
+# $PostgreSQL: pgsql/config/mkinstalldirs,v 1.5 2006/03/11 04:38:28 momjian Exp $
+
 scriptversion=2005-02-02.21
 
 # Original author: Noah Friedman <friedman@prep.ai.mit.edu>

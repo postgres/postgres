@@ -1,4 +1,6 @@
 /******************************************************************************
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.24 2006/03/11 04:38:28 momjian Exp $
+
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
   format for these routines is dictated by Postgres architecture.

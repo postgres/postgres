@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/mSQL-interface/mpgsql.c,v 1.8 2006/03/11 04:38:29 momjian Exp $ */
+
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>

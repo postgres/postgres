@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.25 2006/03/11 04:38:40 momjian Exp $ */
+
 #include "postgres_fe.h"
 #include <ctype.h>
 #include <limits.h>

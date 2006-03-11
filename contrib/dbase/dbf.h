@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/dbase/dbf.h,v 1.9 2006/03/11 04:38:28 momjian Exp $ */
+
 /* header-file for dbf.c
    declares routines for reading and writing xBase-files (.dbf), and
    associated structures

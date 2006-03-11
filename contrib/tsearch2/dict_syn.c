@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_syn.c,v 1.9 2006/03/11 04:38:30 momjian Exp $ */
+
 /*
  * ISpell interface
  * Teodor Sigaev <teodor@sigaev.ru>

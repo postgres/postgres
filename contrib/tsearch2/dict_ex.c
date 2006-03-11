@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_ex.c,v 1.8 2006/03/11 04:38:30 momjian Exp $ */
+
 /*
  * example of dictionary
  * Teodor Sigaev <teodor@sigaev.ru>

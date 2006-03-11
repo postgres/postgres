@@ -1,6 +1,7 @@
 /*
  * op function for ltree and lquery
  * Teodor Sigaev <teodor@stack.net>
+ * $PostgreSQL: pgsql/contrib/ltree/lquery_op.c,v 1.10 2006/03/11 04:38:29 momjian Exp $
  */
 
 #include "ltree.h"

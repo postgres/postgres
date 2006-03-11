@@ -1,6 +1,8 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
  *
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.7 2006/03/11 04:38:29 momjian Exp $
+ *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
  * especially they can be a bit different, depending on pronunciation.
@@ -48,8 +50,8 @@
 
 
 /*
- * $Revision: 1.6 $
- * $Id: dmetaphone.c,v 1.6 2005/10/15 02:49:05 momjian Exp $
+ * $Revision: 1.7 $
+ * $Id: dmetaphone.c,v 1.7 2006/03/11 04:38:29 momjian Exp $
  */
 
 

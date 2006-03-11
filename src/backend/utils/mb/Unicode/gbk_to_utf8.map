@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/gbk_to_utf8.map,v 1.2 2006/03/11 04:38:37 momjian Exp $ */
+
 static pg_local_to_utf LUmapGBK[ 21792 ] = {
   {0x0080, 0xe282ac},
   {0x8140, 0xe4b882},

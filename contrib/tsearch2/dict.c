@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict.c,v 1.11 2006/03/11 04:38:30 momjian Exp $ */
+
 /*
  * interface functions to dictionary
  * Teodor Sigaev <teodor@sigaev.ru>

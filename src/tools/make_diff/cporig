@@ -1,4 +1,7 @@
-:
+#!/bin/sh
+
+# $PostgreSQL: pgsql/src/tools/make_diff/cporig,v 1.2 2006/03/11 04:38:42 momjian Exp $
+
 for FILE
 do
 	if [ ! -f "$FILE.orig" ]

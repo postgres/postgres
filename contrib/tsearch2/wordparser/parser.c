@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/parser.c,v 1.10 2006/03/11 04:38:30 momjian Exp $ */
+
 #include "postgres.h"
 
 #include "utils/builtins.h"

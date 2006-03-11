@@ -1,5 +1,7 @@
 /* Both POSIX and CRC32 checksums */
 
+/* $PostgreSQL: pgsql/contrib/ltree/crc32.c,v 1.6 2006/03/11 04:38:29 momjian Exp $ */
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <sys/types.h>

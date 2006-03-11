@@ -1,6 +1,7 @@
 %{
 /* 
 ** A scanner for EMP-style numeric ranges 
+ * $PostgreSQL: pgsql/contrib/cube/cubescan.l,v 1.11 2006/03/11 04:38:28 momjian Exp $
 */
 
 #include "postgres.h"

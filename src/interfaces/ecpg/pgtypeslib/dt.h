@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.34 2006/03/11 04:38:39 momjian Exp $ */
+
 #ifndef DT_H
 #define DT_H
 

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# $PostgreSQL: pgsql/src/test/bench/perquery,v 1.3 2006/03/11 04:38:41 momjian Exp $
+
 egrep 'x = "|elapse' | \
 awk 'BEGIN { x = 0; y = 0; z = 0; a = 0; } \
      /.*elapse.*/ {x = $2 + x; y = $4 + y; z = $6 + z;} \

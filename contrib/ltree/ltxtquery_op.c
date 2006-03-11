@@ -1,6 +1,7 @@
 /*
  * txtquery operations with ltree
  * Teodor Sigaev <teodor@stack.net>
+ * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_op.c,v 1.6 2006/03/11 04:38:29 momjian Exp $
  */
 
 #include "ltree.h"

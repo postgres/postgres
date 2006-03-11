@@ -3,6 +3,8 @@
  * Portions Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/openbsd.c,v 1.19 2006/03/11 04:38:31 momjian Exp $
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

@@ -1,5 +1,7 @@
 # /usr/bin/perl -w
 
+# $PostgreSQL: pgsql/doc/src/sgml/mk_feature_tables.pl,v 2.2 2006/03/11 04:38:30 momjian Exp $
+
 my $yesno = $ARGV[0];
 
 open PACK, $ARGV[1] or die;

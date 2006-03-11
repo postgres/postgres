@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.h,v 1.7 2006/03/11 04:38:30 momjian Exp $ */
+
 #ifndef __GISTIDX_H__
 #define __GISTIDX_H__
 

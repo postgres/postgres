@@ -1,3 +1,4 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/snowball/header.h,v 1.7 2006/03/11 04:38:30 momjian Exp $ */
 
 #include <limits.h>
 

@@ -5,6 +5,8 @@
  * DMN Digital Music Network.
  * www.dmn.com
  *
+ * $PostgreSQL: pgsql/contrib/intagg/int_aggregate.c,v 1.23 2006/03/11 04:38:29 momjian Exp $
+ *
  * Copyright (C) Digital Music Network
  * December 20, 2001
  *

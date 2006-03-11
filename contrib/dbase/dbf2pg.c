@@ -1,3 +1,5 @@
+/* $PostgreSQL: pgsql/contrib/dbase/dbf2pg.c,v 1.27 2006/03/11 04:38:28 momjian Exp $ */
+
 /* This program reads in an xbase-dbf file and sends 'inserts' to an
    PostgreSQL-server with the records in the xbase-file
 

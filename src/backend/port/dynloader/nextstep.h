@@ -3,9 +3,9 @@
  * port_protos.h
  *	  port-specific prototypes for NeXT
  *
-
--------------------------------------------------------------------------
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/nextstep.h,v 1.9 2006/03/11 04:38:31 momjian Exp $
  */
+
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 

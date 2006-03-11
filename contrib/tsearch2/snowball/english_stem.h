@@ -1,3 +1,4 @@
+/* $PostgreSQL: pgsql/contrib/tsearch2/snowball/english_stem.h,v 1.6 2006/03/11 04:38:30 momjian Exp $ */
 
 /* This file was generated automatically by the Snowball to ANSI C compiler */
 

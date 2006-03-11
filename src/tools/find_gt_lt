@@ -1,2 +1,6 @@
+#!/bin/sh
+
+# $PostgreSQL: pgsql/src/tools/find_gt_lt,v 1.2 2006/03/11 04:38:41 momjian Exp $
+
 grep  '[^]a-z0-9"/!-]>' *.sgml ref/*.sgml
 grep  '<[^]a-z0-9"/!-]' *.sgml ref/*.sgml

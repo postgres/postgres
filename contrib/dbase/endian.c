@@ -1,3 +1,4 @@
+/* $PostgreSQL: pgsql/contrib/dbase/endian.c,v 1.4 2006/03/11 04:38:28 momjian Exp $ */
 /* Maarten Boekhold (maarten.boekhold@reuters.com) oktober 1995 */
 
 #include <sys/types.h>

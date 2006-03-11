@@ -1,6 +1,7 @@
 :
 # report which #include files can not compile on their own
 # takes -v option to display compile failure message and line numbers
+# $PostgreSQL: pgsql/src/tools/pginclude/pgcompinclude,v 1.2 2006/03/11 04:38:42 momjian Exp $
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -name '*.[ch]' -type f -print | while read FILE
