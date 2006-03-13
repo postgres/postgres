@@ -2,7 +2,7 @@ SET search_path = public;
 
 BEGIN;
 
-DROP OPERATOR CLASS gist_trgm_ops;
+DROP OPERATOR CLASS gist_trgm_ops USING gist;
 
 DROP FUNCTION gtrgm_same(gtrgm, gtrgm, internal);
 
@@ -18,11 +18,7 @@ DROP FUNCTION gtrgm_compress(internal);
  
 DROP FUNCTION gtrgm_consistent(gtrgm,internal,int4);
 
-DROP TYPE gtrgm;
-
-DROP FUNCTION gtrgm_out(gtrgm);
-
-DROP FUNCTION gtrgm_in(cstring);
+DROP TYPE gtrgm CASCADE;
 
 DROP OPERATOR % (text, text);
 

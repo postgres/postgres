@@ -1,6 +1,6 @@
 SET search_path = public;
 
-DROP OPERATOR CLASS gist__ltree_ops;
+DROP OPERATOR CLASS gist__ltree_ops USING gist;
 
 DROP FUNCTION _ltree_same(internal, internal, internal);
 
@@ -90,7 +90,7 @@ DROP FUNCTION _ltree_r_isparent(ltree,_ltree);
 
 DROP FUNCTION _ltree_isparent(_ltree,ltree);
 
-DROP OPERATOR CLASS gist_ltree_ops;
+DROP OPERATOR CLASS gist_ltree_ops USING gist;
 
 DROP FUNCTION ltree_same(internal, internal, internal);
 
@@ -106,12 +106,8 @@ DROP FUNCTION ltree_compress(internal);
 
 DROP FUNCTION ltree_consistent(internal,internal,int2);
 
-DROP TYPE ltree_gist;   
+DROP TYPE ltree_gist CASCADE;
   
-DROP FUNCTION ltree_gist_out(ltree_gist);
-  
-DROP FUNCTION ltree_gist_in(cstring);
-
 DROP OPERATOR ^@ (ltxtquery, ltree);
 
 DROP OPERATOR ^@ (ltree, ltxtquery);
@@ -124,11 +120,7 @@ DROP FUNCTION ltxtq_rexec(ltxtquery, ltree);
 
 DROP FUNCTION ltxtq_exec(ltree, ltxtquery);
 
-DROP TYPE ltxtquery;
-
-DROP FUNCTION ltxtq_out(ltxtquery);
-
-DROP FUNCTION ltxtq_in(cstring);
+DROP TYPE ltxtquery CASCADE;
 
 DROP OPERATOR ^? (_lquery, ltree);
 
@@ -154,13 +146,9 @@ DROP FUNCTION ltq_rregex(lquery,ltree);
 
 DROP FUNCTION ltq_regex(ltree,lquery);
 
-DROP TYPE lquery;
+DROP TYPE lquery CASCADE;
 
-DROP FUNCTION lquery_out(lquery);
-
-DROP FUNCTION lquery_in(cstring);
-
-DROP OPERATOR CLASS ltree_ops;
+DROP OPERATOR CLASS ltree_ops USING btree;
 
 DROP OPERATOR || (text, ltree);
 
@@ -244,8 +232,4 @@ DROP FUNCTION ltree_lt(ltree,ltree);
 
 DROP FUNCTION ltree_cmp(ltree,ltree);
 
-DROP TYPE ltree;
-
-DROP FUNCTION ltree_out(ltree);
-
-DROP FUNCTION ltree_in(cstring);
+DROP TYPE ltree CASCADE;

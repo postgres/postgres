@@ -1,6 +1,6 @@
 SET search_path = public;
 
-DROP OPERATOR CLASS isbn_ops;
+DROP OPERATOR CLASS isbn_ops USING btree;
 
 DROP FUNCTION isbn_cmp(isbn, isbn);
 
@@ -28,13 +28,9 @@ DROP FUNCTION isbn_le(isbn, isbn);
 
 DROP FUNCTION isbn_lt(isbn, isbn);
 
-DROP TYPE isbn;
+DROP TYPE isbn CASCADE;
 
-DROP FUNCTION isbn_out(isbn);
-
-DROP FUNCTION isbn_in(cstring);
-
-DROP OPERATOR CLASS issn_ops;
+DROP OPERATOR CLASS issn_ops USING btree;
 
 DROP FUNCTION issn_cmp(issn, issn);
 
@@ -62,8 +58,4 @@ DROP FUNCTION issn_le(issn, issn);
 
 DROP FUNCTION issn_lt(issn, issn);
 
-DROP TYPE issn;
-
-DROP FUNCTION issn_out(issn);
-
-DROP FUNCTION issn_in(cstring);
+DROP TYPE issn CASCADE;

@@ -1,8 +1,8 @@
 SET search_path = public;
 
-DROP OPERATOR CLASS gist_cidr_ops;
+DROP OPERATOR CLASS gist_cidr_ops USING gist;
 
-DROP OPERATOR CLASS gist_inet_ops;
+DROP OPERATOR CLASS gist_inet_ops USING gist;
 
 DROP FUNCTION gbt_inet_same(internal, internal, internal);
 
@@ -12,17 +12,13 @@ DROP FUNCTION gbt_inet_picksplit(internal, internal);
 
 DROP FUNCTION gbt_inet_penalty(internal,internal,internal);
 
-DROP FUNCTION gbt_cidr_compress(internal);
-
 DROP FUNCTION gbt_inet_compress(internal);
-
-DROP FUNCTION gbt_cidr_consistent(internal,cidr,int2);
 
 DROP FUNCTION gbt_inet_consistent(internal,inet,int2);
 
-DROP OPERATOR CLASS gist_vbit_ops;
+DROP OPERATOR CLASS gist_vbit_ops USING gist;
 
-DROP OPERATOR CLASS gist_bit_ops;
+DROP OPERATOR CLASS gist_bit_ops USING gist;
 
 DROP FUNCTION gbt_bit_same(internal, internal, internal);
 
@@ -36,7 +32,7 @@ DROP FUNCTION gbt_bit_compress(internal);
 
 DROP FUNCTION gbt_bit_consistent(internal,bit,int2);
 
-DROP OPERATOR CLASS gist_numeric_ops;
+DROP OPERATOR CLASS gist_numeric_ops USING gist;
 
 DROP FUNCTION gbt_numeric_same(internal, internal, internal);
 
@@ -50,7 +46,7 @@ DROP FUNCTION gbt_numeric_compress(internal);
 
 DROP FUNCTION gbt_numeric_consistent(internal,numeric,int2);
 
-DROP OPERATOR CLASS gist_bytea_ops;
+DROP OPERATOR CLASS gist_bytea_ops USING gist;
 
 DROP FUNCTION gbt_bytea_same(internal, internal, internal);
 
@@ -64,9 +60,9 @@ DROP FUNCTION gbt_bytea_compress(internal);
 
 DROP FUNCTION gbt_bytea_consistent(internal,bytea,int2);
 
-DROP OPERATOR CLASS gist_bpchar_ops;
+DROP OPERATOR CLASS gist_bpchar_ops USING gist;
 
-DROP OPERATOR CLASS gist_text_ops;
+DROP OPERATOR CLASS gist_text_ops USING gist;
 
 DROP FUNCTION gbt_text_same(internal, internal, internal);
 
@@ -84,7 +80,7 @@ DROP FUNCTION gbt_bpchar_consistent(internal,bpchar,int2);
 
 DROP FUNCTION gbt_text_consistent(internal,text,int2);
 
-DROP OPERATOR CLASS gist_macaddr_ops;
+DROP OPERATOR CLASS gist_macaddr_ops USING gist;
 
 DROP FUNCTION gbt_macad_same(internal, internal, internal);
 
@@ -98,7 +94,7 @@ DROP FUNCTION gbt_macad_compress(internal);
 
 DROP FUNCTION gbt_macad_consistent(internal,macaddr,int2);
 
-DROP OPERATOR CLASS gist_cash_ops;
+DROP OPERATOR CLASS gist_cash_ops USING gist;
 
 DROP FUNCTION gbt_cash_same(internal, internal, internal);
 
@@ -112,7 +108,7 @@ DROP FUNCTION gbt_cash_compress(internal);
 
 DROP FUNCTION gbt_cash_consistent(internal,money,int2);
 
-DROP OPERATOR CLASS gist_interval_ops;
+DROP OPERATOR CLASS gist_interval_ops USING gist;
 
 DROP FUNCTION gbt_intv_same(internal, internal, internal);
 
@@ -128,7 +124,7 @@ DROP FUNCTION gbt_intv_compress(internal);
 
 DROP FUNCTION gbt_intv_consistent(internal,interval,int2);
 
-DROP OPERATOR CLASS gist_date_ops;
+DROP OPERATOR CLASS gist_date_ops USING gist;
 
 DROP FUNCTION gbt_date_same(internal, internal, internal);
 
@@ -142,9 +138,9 @@ DROP FUNCTION gbt_date_compress(internal);
 
 DROP FUNCTION gbt_date_consistent(internal,date,int2);
 
-DROP OPERATOR CLASS gist_timetz_ops;
+DROP OPERATOR CLASS gist_timetz_ops USING gist;
 
-DROP OPERATOR CLASS gist_time_ops;
+DROP OPERATOR CLASS gist_time_ops USING gist;
 
 DROP FUNCTION gbt_time_same(internal, internal, internal);
 
@@ -162,9 +158,9 @@ DROP FUNCTION gbt_timetz_consistent(internal,timetz,int2);
 
 DROP FUNCTION gbt_time_consistent(internal,time,int2);
 
-DROP OPERATOR CLASS gist_timestamptz_ops;
+DROP OPERATOR CLASS gist_timestamptz_ops USING gist;
 
-DROP OPERATOR CLASS gist_timestamp_ops;
+DROP OPERATOR CLASS gist_timestamp_ops USING gist;
 
 DROP FUNCTION gbt_ts_same(internal, internal, internal);
 
@@ -182,7 +178,7 @@ DROP FUNCTION gbt_tstz_consistent(internal,timestamptz,int2);
 
 DROP FUNCTION gbt_ts_consistent(internal,timestamp,int2);
 
-DROP OPERATOR CLASS gist_float8_ops;
+DROP OPERATOR CLASS gist_float8_ops USING gist;
 
 DROP FUNCTION gbt_float8_same(internal, internal, internal);
 
@@ -196,7 +192,7 @@ DROP FUNCTION gbt_float8_compress(internal);
 
 DROP FUNCTION gbt_float8_consistent(internal,float8,int2);
 
-DROP OPERATOR CLASS gist_float4_ops;
+DROP OPERATOR CLASS gist_float4_ops USING gist;
 
 DROP FUNCTION gbt_float4_same(internal, internal, internal);
 
@@ -210,7 +206,7 @@ DROP FUNCTION gbt_float4_compress(internal);
 
 DROP FUNCTION gbt_float4_consistent(internal,float4,int2);
 
-DROP OPERATOR CLASS gist_int8_ops;
+DROP OPERATOR CLASS gist_int8_ops USING gist;
 
 DROP FUNCTION gbt_int8_same(internal, internal, internal);
 
@@ -224,7 +220,7 @@ DROP FUNCTION gbt_int8_compress(internal);
 
 DROP FUNCTION gbt_int8_consistent(internal,int8,int2);
 
-DROP OPERATOR CLASS gist_int4_ops;
+DROP OPERATOR CLASS gist_int4_ops USING gist;
 
 DROP FUNCTION gbt_int4_same(internal, internal, internal);
 
@@ -238,7 +234,7 @@ DROP FUNCTION gbt_int4_compress(internal);
 
 DROP FUNCTION gbt_int4_consistent(internal,int4,int2);
 
-DROP OPERATOR CLASS gist_int2_ops;
+DROP OPERATOR CLASS gist_int2_ops USING gist;
 
 DROP FUNCTION gbt_int2_same(internal, internal, internal);
 
@@ -252,7 +248,7 @@ DROP FUNCTION gbt_int2_compress(internal);
 
 DROP FUNCTION gbt_int2_consistent(internal,int2,int2);
 
-DROP OPERATOR CLASS gist_oid_ops;
+DROP OPERATOR CLASS gist_oid_ops USING gist;
 
 DROP FUNCTION gbt_oid_same(internal, internal, internal);
 
@@ -270,32 +266,12 @@ DROP FUNCTION gbt_oid_compress(internal);
 
 DROP FUNCTION gbt_oid_consistent(internal,oid,int2);
 
-DROP TYPE gbtreekey_var;
+DROP TYPE gbtreekey_var CASCADE;
 
-DROP FUNCTION gbtreekey_var_out(gbtreekey_var);
+DROP TYPE gbtreekey32 CASCADE;
 
-DROP FUNCTION gbtreekey_var_in(cstring);
+DROP TYPE gbtreekey16 CASCADE;
 
-DROP TYPE gbtreekey32;
+DROP TYPE gbtreekey8 CASCADE;
 
-DROP FUNCTION gbtreekey32_out(gbtreekey32);
-
-DROP FUNCTION gbtreekey32_in(cstring);
-
-DROP TYPE gbtreekey16;
-
-DROP FUNCTION gbtreekey16_out(gbtreekey16);
-
-DROP FUNCTION gbtreekey16_in(cstring);
-
-DROP TYPE gbtreekey8;
-
-DROP FUNCTION gbtreekey8_out(gbtreekey8);
-
-DROP FUNCTION gbtreekey8_in(cstring);
-
-DROP TYPE gbtreekey4;
-
-DROP FUNCTION gbtreekey4_out(gbtreekey4);
-
-DROP FUNCTION gbtreekey4_in(cstring);
+DROP TYPE gbtreekey4 CASCADE;

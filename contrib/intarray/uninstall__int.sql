@@ -1,6 +1,6 @@
 SET search_path = public;
 
-DROP OPERATOR CLASS gist__intbig_ops;
+DROP OPERATOR CLASS gist__intbig_ops USING gist;
 
 DROP FUNCTION g_intbig_same(internal, internal, internal);
 
@@ -16,13 +16,9 @@ DROP FUNCTION g_intbig_compress(internal);
 
 DROP FUNCTION g_intbig_consistent(internal,internal,int4);
 
-DROP TYPE intbig_gkey;
+DROP TYPE intbig_gkey CASCADE;
 
-DROP FUNCTION _intbig_out(intbig_gkey);
-
-DROP FUNCTION _intbig_in(cstring);
-
-DROP OPERATOR CLASS gist__int_ops;
+DROP OPERATOR CLASS gist__int_ops USING gist;
 
 DROP FUNCTION g_int_same(_int4, _int4, internal);
 
@@ -116,8 +112,4 @@ DROP FUNCTION boolop(_int4, query_int);
 
 DROP FUNCTION querytree(query_int);
 
-DROP TYPE query_int;
-
-DROP FUNCTION bqarr_out(query_int);
-
-DROP FUNCTION bqarr_in(cstring);
+DROP TYPE query_int CASCADE;

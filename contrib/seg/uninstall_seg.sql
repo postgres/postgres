@@ -1,8 +1,8 @@
 SET search_path = public;
 
-DROP OPERATOR CLASS gist_seg_ops;
+DROP OPERATOR CLASS gist_seg_ops USING gist;
 
-DROP OPERATOR CLASS seg_ops;
+DROP OPERATOR CLASS seg_ops USING btree;
 
 DROP FUNCTION gseg_same(seg, seg, internal);
 
@@ -82,8 +82,4 @@ DROP FUNCTION seg_over_right(seg, seg);
 
 DROP FUNCTION seg_over_left(seg, seg);
 
-DROP TYPE seg;
-
-DROP FUNCTION seg_out(seg);
-
-DROP FUNCTION seg_in(cstring);
+DROP TYPE seg CASCADE;

@@ -1,8 +1,8 @@
 SET search_path = public;
 
-DROP OPERATOR CLASS gist_cube_ops;
+DROP OPERATOR CLASS gist_cube_ops USING gist;
 
-DROP OPERATOR CLASS cube_ops;
+DROP OPERATOR CLASS cube_ops USING btree;
 
 DROP FUNCTION g_cube_same(cube, cube, internal);
 
@@ -86,8 +86,4 @@ DROP CAST (text AS cube);
 
 DROP FUNCTION cube(text);
 
-DROP FUNCTION cube_out(cube);
-
-DROP TYPE cube;
-
-DROP FUNCTION cube_in(cstring);
+DROP TYPE cube CASCADE;
