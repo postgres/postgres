@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.535 2006/03/14 22:48:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.536 2006/03/14 23:03:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -63,7 +63,12 @@
 
 /* Location tracking support --- simpler than bison's default */
 #define YYLLOC_DEFAULT(Current, Rhs, N) \
-	Current = Rhs[1];
+	do { \
+		if (N) \
+			(Current) = (Rhs)[1]; \
+		else \
+			(Current) = (Rhs)[0]; \
+	} while (0)
 
 extern List *parsetree;			/* final parse result is delivered here */
 
