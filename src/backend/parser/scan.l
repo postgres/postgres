@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.132 2006/03/07 01:00:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.133 2006/03/14 22:48:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,20 +74,19 @@ static int		literalalloc;	/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar(unsigned char ychar);
 static char *litbufdup(void);
-static int	pg_err_position(void);
+
+static int	lexer_errposition(void);
 static void check_escape_warning(void);
 static void check_string_escape_warning(unsigned char ychar);
 
 /*
+ * Each call to yylex must set yylloc to the location of the found token
+ * (expressed as a byte offset from the start of the input text).
  * When we parse a token that requires multiple lexer rules to process,
- * we set token_start to point at the true start of the token, for use
- * by yyerror().  yytext will point at just the text consumed by the last
- * rule, so it's not very helpful (e.g., it might contain just the last
- * quote mark of a quoted identifier).  But to avoid cluttering every rule
- * with setting token_start, we allow token_start = NULL to denote that
- * it's okay to use yytext.
+ * this should be done in the first such rule, else yylloc will point
+ * into the middle of the token.
  */
-static char	   *token_start;
+#define SET_YYLLOC()  (yylloc = yytext - scanbuf)
 
 /* Handles to the buffer that the lexer uses internally */
 static YY_BUFFER_STATE scanbufhandle;
@@ -316,17 +315,13 @@ other			.
 
 %%
 
-%{
-					/* code to execute during start of each call of yylex() */
-					token_start = NULL;
-%}
-
 {whitespace}	{
 					/* ignore */
 				}
 
 {xcstart}		{
-					token_start = yytext;
+					/* Set location in case of syntax error in comment */
+					SET_YYLLOC();
 					xcdepth = 0;
 					BEGIN(xc);
 					/* Put back any characters past slash-star; see above */
@@ -341,11 +336,7 @@ other			.
 
 <xc>{xcstop}	{
 					if (xcdepth <= 0)
-					{
 						BEGIN(INITIAL);
-						/* reset token_start for next token */
-						token_start = NULL;
-					}
 					else
 						xcdepth--;
 				}
@@ -371,7 +362,7 @@ other			.
 					 * In the meantime, place a leading "b" on the string
 					 * to mark it for the input routine as a binary string.
 					 */
-					token_start = yytext;
+					SET_YYLLOC();
 					BEGIN(xb);
 					startlit();
 					addlitchar('b');
@@ -400,7 +391,7 @@ other			.
 					 * In the meantime, place a leading "x" on the string
 					 * to mark it for the input routine as a hex string.
 					 */
-					token_start = yytext;
+					SET_YYLLOC();
 					BEGIN(xh);
 					startlit();
 					addlitchar('x');
@@ -421,6 +412,7 @@ other			.
 					 */
 					const ScanKeyword *keyword;
 
+					SET_YYLLOC();
 					yyless(1);				/* eat only 'n' this time */
 					/* nchar had better be a keyword! */
 					keyword = ScanKeywordLookup("nchar");
@@ -431,7 +423,7 @@ other			.
 
 {xqstart}		{
 					warn_on_first_escape = true;
-					token_start = yytext;
+					SET_YYLLOC();
 					if (standard_conforming_strings)
 						BEGIN(xq);
 					else
@@ -440,7 +432,7 @@ other			.
 				}
 {xestart}		{
 					warn_on_first_escape = false;
-					token_start = yytext;
+					SET_YYLLOC();
 					BEGIN(xe);
 					startlit();
 				}
@@ -490,7 +482,7 @@ other			.
 <xq,xe><<EOF>>		{ yyerror("unterminated quoted string"); }
 
 {dolqdelim}		{
-					token_start = yytext;
+					SET_YYLLOC();
 					dolqstart = pstrdup(yytext);
 					BEGIN(xdolq);
 					startlit();
@@ -533,7 +525,7 @@ other			.
 <xdolq><<EOF>>	{ yyerror("unterminated dollar-quoted string"); }
 
 {xdstart}		{
-					token_start = yytext;
+					SET_YYLLOC();
 					BEGIN(xd);
 					startlit();
 				}
@@ -558,10 +550,12 @@ other			.
 <xd><<EOF>>		{ yyerror("unterminated quoted identifier"); }
 
 {typecast}		{
+					SET_YYLLOC();
 					return TYPECAST;
 				}
 
 {self}			{
+					SET_YYLLOC();
 					return yytext[0];
 				}
 
@@ -611,6 +605,8 @@ other			.
 						nchars--; /* else remove the +/-, and check again */
 					}
 
+					SET_YYLLOC();
+
 					if (nchars < yyleng)
 					{
 						/* Strip the unwanted chars from the token */
@@ -644,6 +640,7 @@ other			.
 				}
 
 {param}			{
+					SET_YYLLOC();
 					yylval.ival = atol(yytext + 1);
 					return PARAM;
 				}
@@ -652,6 +649,7 @@ other			.
 					long val;
 					char* endptr;
 
+					SET_YYLLOC();
 					errno = 0;
 					val = strtol(yytext, &endptr, 10);
 					if (*endptr != '\0' || errno == ERANGE
@@ -669,10 +667,12 @@ other			.
 					return ICONST;
 				}
 {decimal}		{
+					SET_YYLLOC();
 					yylval.str = pstrdup(yytext);
 					return FCONST;
 				}
 {real}			{
+					SET_YYLLOC();
 					yylval.str = pstrdup(yytext);
 					return FCONST;
 				}
@@ -684,12 +684,14 @@ other			.
 					 * syntax error anyway, we don't bother to distinguish.
 					 */
 					yyless(yyleng-1);
+					SET_YYLLOC();
 					yylval.str = pstrdup(yytext);
 					return FCONST;
 				}
 {realfail2}		{
 					/* throw back the [Ee][+-], and proceed as above */
 					yyless(yyleng-2);
+					SET_YYLLOC();
 					yylval.str = pstrdup(yytext);
 					return FCONST;
 				}
@@ -698,6 +700,8 @@ other			.
 {identifier}	{
 					const ScanKeyword *keyword;
 					char		   *ident;
+
+					SET_YYLLOC();
 
 					/* Is it a keyword? */
 					keyword = ScanKeywordLookup(yytext);
@@ -717,25 +721,52 @@ other			.
 				}
 
 {other}			{
+					SET_YYLLOC();
 					return yytext[0];
+				}
+
+<<EOF>>			{
+					SET_YYLLOC();
+					yyterminate();
 				}
 
 %%
 
+/*
+ * lexer_errposition
+ *		Report a lexical-analysis-time cursor position, if possible.
+ *
+ * This is expected to be used within an ereport() call.  The return value
+ * is a dummy (always 0, in fact).
+ *
+ * Note that this can only be used for messages from the lexer itself,
+ * since it depends on scanbuf to still be valid.
+ */
 static int
-pg_err_position(void)
+lexer_errposition(void)
 {
-	const char *loc = token_start ? token_start : yytext;
+	int		pos;
 
-	/* in multibyte encodings, return index in characters not bytes */
-	return pg_mbstrlen_with_len(scanbuf, loc - scanbuf) + 1;
+	/* Convert byte offset to character number */
+	pos = pg_mbstrlen_with_len(scanbuf, yylloc) + 1;
+	/* And pass it to the ereport mechanism */
+	return errposition(pos);
 }
 
+/*
+ * yyerror
+ *		Report a lexer or grammar error.
+ *
+ * The message's cursor position identifies the most recently lexed token.
+ * This is OK for syntax error messages from the Bison parser, because Bison
+ * parsers report error as soon as the first unparsable token is reached.
+ * Beware of using yyerror for other purposes, as the cursor position might
+ * be misleading!
+ */
 void
 yyerror(const char *message)
 {
-	const char *loc = token_start ? token_start : yytext;
-	int			cursorpos = pg_err_position();
+	const char *loc = scanbuf + yylloc;
 
 	if (*loc == YY_END_OF_BUFFER_CHAR)
 	{
@@ -743,7 +774,7 @@ yyerror(const char *message)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 /* translator: %s is typically "syntax error" */
 				 errmsg("%s at end of input", _(message)),
-				 errposition(cursorpos)));
+				 lexer_errposition()));
 	}
 	else
 	{
@@ -751,7 +782,7 @@ yyerror(const char *message)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 /* translator: first %s is typically "syntax error" */
 				 errmsg("%s at or near \"%s\"", _(message), loc),
-				 errposition(cursorpos)));
+				 lexer_errposition()));
 	}
 }
 
@@ -878,7 +909,7 @@ check_string_escape_warning(unsigned char ychar)
 					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 					 errmsg("nonstandard use of \\' in a string literal"),
 					 errhint("Use '' to write quotes in strings, or use the escape string syntax (E'...')."),
-					 errposition(pg_err_position())));
+					 lexer_errposition()));
 		warn_on_first_escape = false;	/* warn only once per string */
 	}
 	else if (ychar == '\\')
@@ -888,7 +919,7 @@ check_string_escape_warning(unsigned char ychar)
 					(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 					 errmsg("nonstandard use of \\\\ in a string literal"),
 					 errhint("Use the escape string syntax for backslashes, e.g., E'\\\\'."),
-					 errposition(pg_err_position())));
+					 lexer_errposition()));
 		warn_on_first_escape = false;	/* warn only once per string */
 	}
 	else
@@ -903,6 +934,6 @@ check_escape_warning(void)
 				(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
 				 errmsg("nonstandard use of escape in a string literal"),
 				 errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
-				 errposition(pg_err_position())));
+				 lexer_errposition()));
 	warn_on_first_escape = false;	/* warn only once per string */
 }

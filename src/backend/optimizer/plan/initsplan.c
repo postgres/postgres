@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.116 2006/03/07 01:00:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.117 2006/03/14 22:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -992,8 +992,9 @@ process_implied_equality(PlannerInfo *root,
 	 */
 	ltype = exprType(item1);
 	rtype = exprType(item2);
-	eq_operator = compatible_oper(list_make1(makeString("=")),
-								  ltype, rtype, true);
+	eq_operator = compatible_oper(NULL, list_make1(makeString("=")),
+								  ltype, rtype,
+								  true, -1);
 	if (!HeapTupleIsValid(eq_operator))
 	{
 		/*

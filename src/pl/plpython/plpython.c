@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.75 2006/03/11 16:43:22 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.76 2006/03/14 22:48:24 tgl Exp $
  *
  *********************************************************************
  */
@@ -23,6 +23,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -1873,6 +1874,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 				for (i = 0; i < nargs; i++)
 				{
 					char	   *sptr;
+					List	   *names;
 					HeapTuple	typeTup;
 					Form_pg_type typeStruct;
 
@@ -1882,9 +1884,13 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 					sptr = PyString_AsString(optr);
 
 					/*
-					 * XXX should extend this to allow qualified type names
+					 * Parse possibly-qualified type name and look it up in
+					 * pg_type
 					 */
-					typeTup = typenameType(makeTypeName(sptr));
+					names = stringToQualifiedNameList(sptr,
+													  "PLy_spi_prepare");
+					typeTup = typenameType(NULL,
+										   makeTypeNameFromNameList(names));
 					Py_DECREF(optr);
 					optr = NULL;	/* this is important */
 

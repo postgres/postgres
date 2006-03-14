@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.105 2006/03/11 16:43:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.106 2006/03/14 22:48:23 tgl Exp $
  *
  **********************************************************************/
 
@@ -19,12 +19,13 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "mb/pg_wchar.h"
+#include "miscadmin.h"
+#include "nodes/makefuncs.h"
+#include "parser/parse_type.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/typcache.h"
-#include "miscadmin.h"
-#include "mb/pg_wchar.h"
-#include "parser/parse_type.h"
 
 /* define this before the perl headers get a chance to mangle DLLIMPORT */
 extern DLLIMPORT bool check_function_bodies;
@@ -1950,7 +1951,6 @@ plperl_spi_prepare(char* query, int argc, SV ** argv)
 	plperl_query_desc *qdesc;
 	void	   *plan;
 	int			i;
-	HeapTuple	typeTup;
 
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
@@ -1977,33 +1977,18 @@ plperl_spi_prepare(char* query, int argc, SV ** argv)
 		 ************************************************************/
 		for (i = 0; i < argc; i++)
 		{
-			char	   *argcopy;
-			List	   *names = NIL;
-			ListCell   *l;
-			TypeName   *typename;
+			List	   *names;
+			HeapTuple	typeTup;
 
-			/************************************************************
-			 * Use SplitIdentifierString() on a copy of the type name,
-			 * turn the resulting pointer list into a TypeName node
-			 * and call typenameType() to get the pg_type tuple.
-			 ************************************************************/
-			argcopy = pstrdup(SvPV(argv[i],PL_na));
-			SplitIdentifierString(argcopy, '.', &names);
-			typename = makeNode(TypeName);
-			foreach(l, names)
-				typename->names = lappend(typename->names, makeString(lfirst(l)));
-
-			typeTup = typenameType(typename);
+			/* Parse possibly-qualified type name and look it up in pg_type */
+			names = stringToQualifiedNameList(SvPV(argv[i], PL_na),
+											  "plperl_spi_prepare");
+			typeTup = typenameType(NULL, makeTypeNameFromNameList(names));
 			qdesc->argtypes[i] = HeapTupleGetOid(typeTup);
 			perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 						   &(qdesc->arginfuncs[i]));
 			qdesc->argtypioparams[i] = getTypeIOParam(typeTup);
 			ReleaseSysCache(typeTup);
-
-			list_free(typename->names);
-			pfree(typename);
-			list_free(names);
-			pfree(argcopy);
 		}
 
 		/************************************************************

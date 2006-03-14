@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.147 2006/03/05 21:34:34 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.148 2006/03/14 22:48:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,9 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 		Node	   *rvar = (Node *) lfirst(rvars);
 		A_Expr	   *e;
 
-		e = makeSimpleA_Expr(AEXPR_OP, "=", copyObject(lvar), copyObject(rvar));
+		e = makeSimpleA_Expr(AEXPR_OP, "=",
+							 copyObject(lvar), copyObject(rvar),
+							 -1);
 
 		if (result == NULL)
 			result = (Node *) e;
@@ -311,7 +313,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 		{
 			A_Expr	   *a;
 
-			a = makeA_Expr(AEXPR_AND, NIL, result, (Node *) e);
+			a = makeA_Expr(AEXPR_AND, NIL, result, (Node *) e, -1);
 			result = (Node *) a;
 		}
 	}
@@ -1182,6 +1184,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 		list_length(((ColumnRef *) node)->fields) == 1)
 	{
 		char	   *name = strVal(linitial(((ColumnRef *) node)->fields));
+		int			location = ((ColumnRef *) node)->location;
 
 		if (clause == GROUP_CLAUSE)
 		{
@@ -1201,7 +1204,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 			 * breaks no cases that are legal per spec, and it seems a more
 			 * self-consistent behavior.
 			 */
-			if (colNameToVar(pstate, name, true) != NULL)
+			if (colNameToVar(pstate, name, true, location) != NULL)
 				name = NULL;
 		}
 
@@ -1225,7 +1228,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 							 * construct, eg ORDER BY
 							 */
 									 errmsg("%s \"%s\" is ambiguous",
-											clauseText[clause], name)));
+											clauseText[clause], name),
+									 parser_errposition(pstate, location)));
 					}
 					else
 						target_result = tle;

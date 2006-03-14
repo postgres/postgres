@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.329 2006/03/05 15:58:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.330 2006/03/14 22:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1418,6 +1418,7 @@ _copyAExpr(A_Expr *from)
 	COPY_NODE_FIELD(name);
 	COPY_NODE_FIELD(lexpr);
 	COPY_NODE_FIELD(rexpr);
+	COPY_SCALAR_FIELD(location);
 
 	return newnode;
 }
@@ -1428,6 +1429,7 @@ _copyColumnRef(ColumnRef *from)
 	ColumnRef  *newnode = makeNode(ColumnRef);
 
 	COPY_NODE_FIELD(fields);
+	COPY_SCALAR_FIELD(location);
 
 	return newnode;
 }
@@ -1482,6 +1484,7 @@ _copyFuncCall(FuncCall *from)
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(agg_star);
 	COPY_SCALAR_FIELD(agg_distinct);
+	COPY_SCALAR_FIELD(location);
 
 	return newnode;
 }
@@ -1532,6 +1535,7 @@ _copyTypeName(TypeName *from)
 	COPY_SCALAR_FIELD(pct_type);
 	COPY_SCALAR_FIELD(typmod);
 	COPY_NODE_FIELD(arrayBounds);
+	COPY_SCALAR_FIELD(location);
 
 	return newnode;
 }

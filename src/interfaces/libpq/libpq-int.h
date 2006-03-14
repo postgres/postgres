@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.111 2006/03/05 15:59:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.112 2006/03/14 22:48:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,6 +278,7 @@ struct pg_conn
 	PGAsyncStatusType asyncStatus;
 	PGTransactionStatusType xactStatus;		/* never changes to ACTIVE */
 	PGQueryClass queryclass;
+	char	   *last_query;		/* last SQL command, or NULL if unknown */
 	bool		options_valid;	/* true if OK to attempt connection */
 	bool		nonblocking;	/* whether this connection is using nonblock
 								 * sending semantics */

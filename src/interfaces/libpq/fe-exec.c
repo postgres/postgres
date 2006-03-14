@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.181 2006/03/05 15:59:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.182 2006/03/14 22:48:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,6 +667,12 @@ PQsendQuery(PGconn *conn, const char *query)
 	/* remember we are using simple query protocol */
 	conn->queryclass = PGQUERY_SIMPLE;
 
+	/* and remember the query text too, if possible */
+	/* if insufficient memory, last_query just winds up NULL */
+	if (conn->last_query)
+		free(conn->last_query);
+	conn->last_query = strdup(query);
+
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're unable
 	 * to send it all; PQgetResult() will do any additional flushing needed.
@@ -787,6 +793,12 @@ PQsendPrepare(PGconn *conn,
 
 	/* remember we are doing just a Parse */
 	conn->queryclass = PGQUERY_PREPARE;
+
+	/* and remember the query text too, if possible */
+	/* if insufficient memory, last_query just winds up NULL */
+	if (conn->last_query)
+		free(conn->last_query);
+	conn->last_query = strdup(query);
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're unable
@@ -1016,6 +1028,15 @@ PQsendQueryGuts(PGconn *conn,
 
 	/* remember we are using extended query protocol */
 	conn->queryclass = PGQUERY_EXTENDED;
+
+	/* and remember the query text too, if possible */
+	/* if insufficient memory, last_query just winds up NULL */
+	if (conn->last_query)
+		free(conn->last_query);
+	if (command)
+		conn->last_query = strdup(command);
+	else
+		conn->last_query = NULL;
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're unable

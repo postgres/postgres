@@ -140,6 +140,8 @@ BEGIN;
 	SAVEPOINT one;
 		SELECT foo;
 ERROR:  column "foo" does not exist
+LINE 1: SELECT foo;
+               ^
 	ROLLBACK TO SAVEPOINT one;
 	RELEASE SAVEPOINT one;
 	SAVEPOINT two;
@@ -188,6 +190,8 @@ BEGIN;
 		INSERT INTO savepoints VALUES (5);
 		SELECT foo;
 ERROR:  column "foo" does not exist
+LINE 1: SELECT foo;
+               ^
 COMMIT;
 SELECT * FROM savepoints;
  a 

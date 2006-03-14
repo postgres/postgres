@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.190 2006/03/05 15:58:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.191 2006/03/14 22:48:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,18 +57,18 @@ static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
 static Node *transformBooleanTest(ParseState *pstate, BooleanTest *b);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
-					 char *relname);
+					 char *relname, int location);
 static Node *transformBooleanTest(ParseState *pstate, BooleanTest *b);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
 static Node *typecast_expression(ParseState *pstate, Node *expr,
 					TypeName *typename);
 static Node *make_row_comparison_op(ParseState *pstate, List *opname,
-									List *largs, List *rargs);
+									List *largs, List *rargs, int location);
 static Node *make_row_distinct_op(ParseState *pstate, List *opname,
-					 RowExpr *lrow, RowExpr *rrow);
+					 RowExpr *lrow, RowExpr *rrow, int location);
 static Expr *make_distinct_op(ParseState *pstate, List *opname,
-				 Node *ltree, Node *rtree);
+				 Node *ltree, Node *rtree, int location);
 
 
 /*
@@ -308,7 +308,8 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 			result = ParseFuncOrColumn(pstate,
 									   list_make1(n),
 									   list_make1(result),
-									   false, false, true);
+									   false, false, true,
+									   -1);
 		}
 	}
 	/* process trailing subscripts, if any */
@@ -361,7 +362,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				char	   *name = strVal(linitial(cref->fields));
 
 				/* Try to identify as an unqualified column */
-				node = colNameToVar(pstate, name, false);
+				node = colNameToVar(pstate, name, false, cref->location);
 
 				if (node == NULL)
 				{
@@ -391,12 +392,14 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 */
 					if (refnameRangeTblEntry(pstate, NULL, name,
 											 &levels_up) != NULL)
-						node = transformWholeRowRef(pstate, NULL, name);
+						node = transformWholeRowRef(pstate, NULL, name,
+													cref->location);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
 								 errmsg("column \"%s\" does not exist",
-										name)));
+										name),
+								 parser_errposition(pstate, cref->location)));
 				}
 				break;
 			}
@@ -408,12 +411,14 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				/* Whole-row reference? */
 				if (strcmp(name2, "*") == 0)
 				{
-					node = transformWholeRowRef(pstate, NULL, name1);
+					node = transformWholeRowRef(pstate, NULL, name1,
+												cref->location);
 					break;
 				}
 
 				/* Try to identify as a once-qualified column */
-				node = qualifiedNameToVar(pstate, NULL, name1, name2, true);
+				node = qualifiedNameToVar(pstate, NULL, name1, name2, true,
+										  cref->location);
 				if (node == NULL)
 				{
 					/*
@@ -421,11 +426,13 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 * it as a function call.  Here, we will create an
 					 * implicit RTE for tables not already entered.
 					 */
-					node = transformWholeRowRef(pstate, NULL, name1);
+					node = transformWholeRowRef(pstate, NULL, name1,
+												cref->location);
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name2)),
 											 list_make1(node),
-											 false, false, true);
+											 false, false, true,
+											 cref->location);
 				}
 				break;
 			}
@@ -438,20 +445,24 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				/* Whole-row reference? */
 				if (strcmp(name3, "*") == 0)
 				{
-					node = transformWholeRowRef(pstate, name1, name2);
+					node = transformWholeRowRef(pstate, name1, name2,
+												cref->location);
 					break;
 				}
 
 				/* Try to identify as a twice-qualified column */
-				node = qualifiedNameToVar(pstate, name1, name2, name3, true);
+				node = qualifiedNameToVar(pstate, name1, name2, name3, true,
+										  cref->location);
 				if (node == NULL)
 				{
 					/* Try it as a function call */
-					node = transformWholeRowRef(pstate, name1, name2);
+					node = transformWholeRowRef(pstate, name1, name2,
+												cref->location);
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name3)),
 											 list_make1(node),
-											 false, false, true);
+											 false, false, true,
+											 cref->location);
 				}
 				break;
 			}
@@ -469,25 +480,30 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("cross-database references are not implemented: %s",
-									NameListToString(cref->fields))));
+									NameListToString(cref->fields)),
+							 parser_errposition(pstate, cref->location)));
 
 				/* Whole-row reference? */
 				if (strcmp(name4, "*") == 0)
 				{
-					node = transformWholeRowRef(pstate, name2, name3);
+					node = transformWholeRowRef(pstate, name2, name3,
+												cref->location);
 					break;
 				}
 
 				/* Try to identify as a twice-qualified column */
-				node = qualifiedNameToVar(pstate, name2, name3, name4, true);
+				node = qualifiedNameToVar(pstate, name2, name3, name4, true,
+										  cref->location);
 				if (node == NULL)
 				{
 					/* Try it as a function call */
-					node = transformWholeRowRef(pstate, name2, name3);
+					node = transformWholeRowRef(pstate, name2, name3,
+												cref->location);
 					node = ParseFuncOrColumn(pstate,
 											 list_make1(makeString(name4)),
 											 list_make1(node),
-											 false, false, true);
+											 false, false, true,
+											 cref->location);
 				}
 				break;
 			}
@@ -495,7 +511,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("improper qualified name (too many dotted names): %s",
-					   NameListToString(cref->fields))));
+					   NameListToString(cref->fields)),
+					 parser_errposition(pstate, cref->location)));
 			node = NULL;		/* keep compiler quiet */
 			break;
 	}
@@ -614,7 +631,8 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		result = make_row_comparison_op(pstate,
 										a->name,
 										((RowExpr *) lexpr)->args,
-										((RowExpr *) rexpr)->args);
+										((RowExpr *) rexpr)->args,
+										a->location);
 	}
 	else
 	{
@@ -625,7 +643,8 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		result = (Node *) make_op(pstate,
 								  a->name,
 								  lexpr,
-								  rexpr);
+								  rexpr,
+								  a->location);
 	}
 
 	return result;
@@ -678,7 +697,8 @@ transformAExprOpAny(ParseState *pstate, A_Expr *a)
 										 a->name,
 										 true,
 										 lexpr,
-										 rexpr);
+										 rexpr,
+										 a->location);
 }
 
 static Node *
@@ -691,7 +711,8 @@ transformAExprOpAll(ParseState *pstate, A_Expr *a)
 										 a->name,
 										 false,
 										 lexpr,
-										 rexpr);
+										 rexpr,
+										 a->location);
 }
 
 static Node *
@@ -706,7 +727,8 @@ transformAExprDistinct(ParseState *pstate, A_Expr *a)
 		/* "row op row" */
 		return make_row_distinct_op(pstate, a->name,
 									(RowExpr *) lexpr,
-									(RowExpr *) rexpr);
+									(RowExpr *) rexpr,
+									a->location);
 	}
 	else
 	{
@@ -714,7 +736,8 @@ transformAExprDistinct(ParseState *pstate, A_Expr *a)
 		return (Node *) make_distinct_op(pstate,
 										 a->name,
 										 lexpr,
-										 rexpr);
+										 rexpr,
+										 a->location);
 	}
 }
 
@@ -728,11 +751,13 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 	result = (Node *) make_op(pstate,
 							  a->name,
 							  lexpr,
-							  rexpr);
+							  rexpr,
+							  a->location);
 	if (((OpExpr *) result)->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("NULLIF requires = operator to yield boolean")));
+				 errmsg("NULLIF requires = operator to yield boolean"),
+				 parser_errposition(pstate, a->location)));
 
 	/*
 	 * We rely on NullIfExpr and OpExpr being the same struct
@@ -758,7 +783,7 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	ltype = exprType(lexpr);
 	foreach(telem, (List *) a->rexpr)
 	{
-		rtype = LookupTypeName(lfirst(telem));
+		rtype = typenameTypeId(pstate, lfirst(telem));
 		matched = (rtype == ltype);
 		if (matched)
 			break;
@@ -864,7 +889,8 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 												 a->name,
 												 useOr,
 												 lexpr,
-												 (Node *) newa);
+												 (Node *) newa,
+												 a->location);
 		}
 	}
 
@@ -883,17 +909,20 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 				!IsA(rexpr, RowExpr))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("arguments of row IN must all be row expressions")));
+						 errmsg("arguments of row IN must all be row expressions"),
+						 parser_errposition(pstate, a->location)));
 			cmp = make_row_comparison_op(pstate,
 										 a->name,
 										 (List *) copyObject(((RowExpr *) lexpr)->args),
-										 ((RowExpr *) rexpr)->args);
+										 ((RowExpr *) rexpr)->args,
+										 a->location);
 		}
 		else
 			cmp = (Node *) make_op(pstate,
 								   a->name,
 								   copyObject(lexpr),
-								   rexpr);
+								   rexpr,
+								   a->location);
 
 		cmp = coerce_to_boolean(pstate, cmp, "IN");
 		if (result == NULL)
@@ -931,7 +960,8 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 							 targs,
 							 fn->agg_star,
 							 fn->agg_distinct,
-							 false);
+							 false,
+							 fn->location);
 }
 
 static Node *
@@ -994,7 +1024,8 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 			/* shorthand form was specified, so expand... */
 			warg = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
 											 (Node *) placeholder,
-											 warg);
+											 warg,
+											 -1);
 		}
 		neww->expr = (Expr *) transformExpr(pstate, warg);
 
@@ -1173,7 +1204,8 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		sublink->testexpr = make_row_comparison_op(pstate,
 												   sublink->operName,
 												   left_list,
-												   right_list);
+												   right_list,
+												   -1);
 	}
 
 	return result;
@@ -1394,7 +1426,8 @@ transformBooleanTest(ParseState *pstate, BooleanTest *b)
  * a rowtype; either a named composite type, or RECORD.
  */
 static Node *
-transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname)
+transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
+					 int location)
 {
 	Node	   *result;
 	RangeTblEntry *rte;
@@ -1408,7 +1441,8 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname)
 							   &sublevels_up);
 
 	if (rte == NULL)
-		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, relname));
+		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, relname),
+							 location);
 
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
@@ -1877,7 +1911,7 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 	Oid			inputType = exprType(expr);
 	Oid			targetType;
 
-	targetType = typenameTypeId(typename);
+	targetType = typenameTypeId(pstate, typename);
 
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
@@ -1891,7 +1925,8 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 				(errcode(ERRCODE_CANNOT_COERCE),
 				 errmsg("cannot cast type %s to %s",
 						format_type_be(inputType),
-						format_type_be(targetType))));
+						format_type_be(targetType)),
+				 parser_errposition(pstate, typename->location)));
 
 	return expr;
 }
@@ -1910,7 +1945,7 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
  */
 static Node *
 make_row_comparison_op(ParseState *pstate, List *opname,
-					   List *largs, List *rargs)
+					   List *largs, List *rargs, int location)
 {
 	RowCompareExpr *rcexpr;
 	RowCompareType rctype;
@@ -1929,7 +1964,8 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	if (nopers != list_length(rargs))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unequal number of entries in row expressions")));
+				 errmsg("unequal number of entries in row expressions"),
+				 parser_errposition(pstate, location)));
 
 	/*
 	 * We can't compare zero-length rows because there is no principled
@@ -1938,7 +1974,8 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	if (nopers == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot compare rows of zero length")));
+				 errmsg("cannot compare rows of zero length"),
+				 parser_errposition(pstate, location)));
 
 	/*
 	 * Identify all the pairwise operators, using make_op so that
@@ -1951,7 +1988,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		Node	   *rarg = (Node *) lfirst(r);
 		OpExpr	   *cmp;
 
-		cmp = (OpExpr *) make_op(pstate, opname, larg, rarg);
+		cmp = (OpExpr *) make_op(pstate, opname, larg, rarg, location);
 		Assert(IsA(cmp, OpExpr));
 
 		/*
@@ -1964,11 +2001,13 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("row comparison operator must yield type boolean, "
 							"not type %s",
-							format_type_be(cmp->opresulttype))));
+							format_type_be(cmp->opresulttype)),
+					 parser_errposition(pstate, location)));
 		if (expression_returns_set((Node *) cmp))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("row comparison operator must not return a set")));
+					 errmsg("row comparison operator must not return a set"),
+					 parser_errposition(pstate, location)));
 		opexprs = lappend(opexprs, cmp);
 	}
 
@@ -2021,7 +2060,8 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("could not determine interpretation of row comparison operator %s",
 							strVal(llast(opname))),
-					 errhint("Row comparison operators must be associated with btree operator classes.")));
+					 errhint("Row comparison operators must be associated with btree operator classes."),
+					 parser_errposition(pstate, location)));
 			rctype = 0;			/* keep compiler quiet */
 			break;
 		case BMS_SINGLETON:
@@ -2069,7 +2109,8 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("could not determine interpretation of row comparison operator %s",
 									strVal(llast(opname))),
-							 errdetail("There are multiple equally-plausible candidates.")));
+							 errdetail("There are multiple equally-plausible candidates."),
+							 parser_errposition(pstate, location)));
 				break;
 			}
 	}
@@ -2120,7 +2161,8 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("could not determine interpretation of row comparison operator %s",
 							strVal(llast(opname))),
-					 errdetail("There are multiple equally-plausible candidates.")));
+					 errdetail("There are multiple equally-plausible candidates."),
+					 parser_errposition(pstate, location)));
 	}
 
 	/*
@@ -2158,7 +2200,8 @@ make_row_comparison_op(ParseState *pstate, List *opname,
  */
 static Node *
 make_row_distinct_op(ParseState *pstate, List *opname,
-					 RowExpr *lrow, RowExpr *rrow)
+					 RowExpr *lrow, RowExpr *rrow,
+					 int location)
 {
 	Node	   *result = NULL;
 	List	   *largs = lrow->args;
@@ -2169,7 +2212,8 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 	if (list_length(largs) != list_length(rargs))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unequal number of entries in row expressions")));
+				 errmsg("unequal number of entries in row expressions"),
+				 parser_errposition(pstate, location)));
 
 	forboth(l, largs, r, rargs)
 	{
@@ -2177,7 +2221,7 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 		Node	   *rarg = (Node *) lfirst(r);
 		Node	   *cmp;
 
-		cmp = (Node *) make_distinct_op(pstate, opname, larg, rarg);
+		cmp = (Node *) make_distinct_op(pstate, opname, larg, rarg, location);
 		if (result == NULL)
 			result = cmp;
 		else
@@ -2198,15 +2242,17 @@ make_row_distinct_op(ParseState *pstate, List *opname,
  * make the node for an IS DISTINCT FROM operator
  */
 static Expr *
-make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
+make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
+				 int location)
 {
 	Expr	   *result;
 
-	result = make_op(pstate, opname, ltree, rtree);
+	result = make_op(pstate, opname, ltree, rtree, location);
 	if (((OpExpr *) result)->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-		   errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
+				 errmsg("IS DISTINCT FROM requires = operator to yield boolean"),
+				 parser_errposition(pstate, location)));
 
 	/*
 	 * We rely on DistinctExpr and OpExpr being same struct

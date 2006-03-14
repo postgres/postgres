@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.42 2006/03/05 15:58:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.43 2006/03/14 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				 errmsg("must be superuser to create an operator class")));
 
 	/* Look up the datatype */
-	typeoid = typenameTypeId(stmt->datatype);
+	typeoid = typenameTypeId(NULL, stmt->datatype);
 
 #ifdef NOT_USED
 	/* XXX this is unnecessary given the superuser check above */
@@ -185,16 +185,16 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					TypeName   *typeName1 = (TypeName *) linitial(item->args);
 					TypeName   *typeName2 = (TypeName *) lsecond(item->args);
 
-					operOid = LookupOperNameTypeNames(item->name,
-													  typeName1,
-													  typeName2,
-													  false);
+					operOid = LookupOperNameTypeNames(NULL, item->name,
+													  typeName1, typeName2,
+													  false, -1);
 				}
 				else
 				{
 					/* Default to binary op on input datatype */
-					operOid = LookupOperName(item->name, typeoid, typeoid,
-											 false);
+					operOid = LookupOperName(NULL, item->name,
+											 typeoid, typeoid,
+											 false, -1);
 				}
 
 #ifdef NOT_USED
@@ -246,7 +246,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						   errmsg("storage type specified more than once")));
-				storageoid = typenameTypeId(item->storedtype);
+				storageoid = typenameTypeId(NULL, item->storedtype);
 
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */

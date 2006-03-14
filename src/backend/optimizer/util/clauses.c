@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.209 2006/03/05 15:58:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.210 2006/03/14 22:48:19 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2637,7 +2637,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
 
-	querytree_list = parse_analyze(linitial(raw_parsetree_list),
+	querytree_list = parse_analyze(linitial(raw_parsetree_list), src,
 								   argtypes, funcform->pronargs);
 
 	if (list_length(querytree_list) != 1)

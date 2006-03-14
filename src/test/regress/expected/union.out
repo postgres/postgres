@@ -405,6 +405,8 @@ ORDER BY q2,q1;
 -- This should fail, because q2 isn't a name of an EXCEPT output column
 SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1;
 ERROR:  column "q2" does not exist
+LINE 1: ... int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1...
+                                                             ^
 -- But this should work:
 SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1)));
         q1        

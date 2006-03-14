@@ -39,6 +39,8 @@ ERROR:  creation of Perl function failed: Global symbol "$global" requires expli
 Global symbol "$other_global" requires explicit package name at line 4.
 select uses_global();
 ERROR:  function uses_global() does not exist
+LINE 1: select uses_global();
+               ^
 HINT:  No function matches the given name and argument types. You may need to add explicit type casts.
 SET plperl.use_strict = false;
 create or replace function uses_global() returns text language plperl as $$

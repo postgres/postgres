@@ -116,6 +116,8 @@ HINT:  You will need to rewrite or cast the expression.
 -- invalid type
 PREPARE q4(nonexistenttype) AS SELECT $1;
 ERROR:  type "nonexistenttype" does not exist
+LINE 1: PREPARE q4(nonexistenttype) AS SELECT $1;
+                   ^
 -- create table as execute
 PREPARE q5(int, text) AS
 	SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2;

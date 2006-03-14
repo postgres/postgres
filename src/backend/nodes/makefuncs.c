@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.49 2006/03/05 15:58:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.50 2006/03/14 22:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,8 @@
  *		makes an A_Expr node
  */
 A_Expr *
-makeA_Expr(A_Expr_Kind kind, List *name, Node *lexpr, Node *rexpr)
+makeA_Expr(A_Expr_Kind kind, List *name,
+		   Node *lexpr, Node *rexpr, int location)
 {
 	A_Expr	   *a = makeNode(A_Expr);
 
@@ -33,6 +34,7 @@ makeA_Expr(A_Expr_Kind kind, List *name, Node *lexpr, Node *rexpr)
 	a->name = name;
 	a->lexpr = lexpr;
 	a->rexpr = rexpr;
+	a->location = location;
 	return a;
 }
 
@@ -42,7 +44,7 @@ makeA_Expr(A_Expr_Kind kind, List *name, Node *lexpr, Node *rexpr)
  */
 A_Expr *
 makeSimpleA_Expr(A_Expr_Kind kind, const char *name,
-				 Node *lexpr, Node *rexpr)
+				 Node *lexpr, Node *rexpr, int location)
 {
 	A_Expr	   *a = makeNode(A_Expr);
 
@@ -50,6 +52,7 @@ makeSimpleA_Expr(A_Expr_Kind kind, const char *name,
 	a->name = list_make1(makeString((char *) name));
 	a->lexpr = lexpr;
 	a->rexpr = rexpr;
+	a->location = location;
 	return a;
 }
 
@@ -253,6 +256,8 @@ makeRangeVar(char *schemaname, char *relname)
 /*
  * makeTypeName -
  *	build a TypeName node for an unqualified name.
+ *
+ * typmod is defaulted, but can be changed later by caller.
  */
 TypeName *
 makeTypeName(char *typnam)
@@ -261,6 +266,39 @@ makeTypeName(char *typnam)
 
 	n->names = list_make1(makeString(typnam));
 	n->typmod = -1;
+	n->location = -1;
+	return n;
+}
+
+/*
+ * makeTypeNameFromNameList -
+ *	build a TypeName node for a String list representing a qualified name.
+ *
+ * typmod is defaulted, but can be changed later by caller.
+ */
+TypeName *
+makeTypeNameFromNameList(List *names)
+{
+	TypeName   *n = makeNode(TypeName);
+
+	n->names = names;
+	n->typmod = -1;
+	n->location = -1;
+	return n;
+}
+
+/*
+ * makeTypeNameFromOid -
+ *	build a TypeName node to represent a type already known by OID.
+ */
+TypeName *
+makeTypeNameFromOid(Oid typeid, int32 typmod)
+{
+	TypeName   *n = makeNode(TypeName);
+
+	n->typeid = typeid;
+	n->typmod = typmod;
+	n->location = -1;
 	return n;
 }
 

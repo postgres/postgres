@@ -1747,7 +1747,7 @@ create function f1(in i int, out j int) returns int as $$
 begin
   return i+1;
 end$$ language plpgsql;
-ERROR:  RETURN cannot have a parameter in function with OUT parameters at or near "i" at character 74
+ERROR:  RETURN cannot have a parameter in function with OUT parameters at or near "i"
 LINE 3:   return i+1;
                  ^
 create function f1(in i int, out j int) as $$
@@ -2323,11 +2323,11 @@ begin
     a := 10;
     return a;
 end$$ language plpgsql;
-ERROR:  syntax error at or near "Johnny" at character 1
-QUERY:  Johnny Yuma
-CONTEXT:  SQL statement in PL/PgSQL function "bad_sql1" near line 4
+ERROR:  syntax error at or near "Johnny"
 LINE 1: Johnny Yuma
         ^
+QUERY:  Johnny Yuma
+CONTEXT:  SQL statement in PL/PgSQL function "bad_sql1" near line 4
 create function bad_sql2() returns int as $$
 declare r record;
 begin
@@ -2336,27 +2336,27 @@ begin
     end loop;
     return 5;
 end;$$ language plpgsql;
-ERROR:  syntax error at or near "fought" at character 11
-QUERY:   select I fought the law, the law won
-CONTEXT:  SQL statement in PL/PgSQL function "bad_sql2" near line 3
+ERROR:  syntax error at or near "fought"
 LINE 1:  select I fought the law, the law won
                   ^
+QUERY:   select I fought the law, the law won
+CONTEXT:  SQL statement in PL/PgSQL function "bad_sql2" near line 3
 -- a RETURN expression is mandatory, except for void-returning
 -- functions, where it is not allowed
 create function missing_return_expr() returns int as $$
 begin
     return ;
 end;$$ language plpgsql;
-ERROR:  syntax error at end of input at character 8
-QUERY:  SELECT 
-CONTEXT:  SQL statement in PL/PgSQL function "missing_return_expr" near line 2
+ERROR:  syntax error at end of input
 LINE 1: SELECT 
                ^
+QUERY:  SELECT 
+CONTEXT:  SQL statement in PL/PgSQL function "missing_return_expr" near line 2
 create function void_return_expr() returns void as $$
 begin
     return 5;
 end;$$ language plpgsql;
-ERROR:  RETURN cannot have a parameter in function returning void at or near "5" at character 72
+ERROR:  RETURN cannot have a parameter in function returning void at or near "5"
 LINE 3:     return 5;
                    ^
 -- VOID functions are allowed to omit RETURN
@@ -2426,8 +2426,10 @@ end; $$ language plpgsql;
 -- blocks
 select excpt_test1();
 ERROR:  column "sqlstate" does not exist
-CONTEXT:  SQL statement "SELECT  sqlstate"
-PL/pgSQL function "excpt_test1" line 2 at raise
+LINE 1: SELECT  sqlstate
+                ^
+QUERY:  SELECT  sqlstate
+CONTEXT:  PL/pgSQL function "excpt_test1" line 2 at raise
 create function excpt_test2() returns void as $$
 begin
     begin
@@ -2439,8 +2441,10 @@ end; $$ language plpgsql;
 -- should fail
 select excpt_test2();
 ERROR:  column "sqlstate" does not exist
-CONTEXT:  SQL statement "SELECT  sqlstate"
-PL/pgSQL function "excpt_test2" line 4 at raise
+LINE 1: SELECT  sqlstate
+                ^
+QUERY:  SELECT  sqlstate
+CONTEXT:  PL/pgSQL function "excpt_test2" line 4 at raise
 create function excpt_test3() returns void as $$
 begin
     begin
@@ -2695,7 +2699,7 @@ begin
   end loop flbl1;
 end;
 $$ language plpgsql;
-ERROR:  no such label at or near "flbl1" at character 101
+ERROR:  no such label at or near "flbl1"
 LINE 5:   end loop flbl1;
                    ^
 -- should fail: end label does not match start label

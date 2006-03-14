@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.88 2006/03/05 15:58:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.89 2006/03/14 22:48:18 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -47,7 +47,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
-#include "nodes/nodes.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/var.h"
@@ -80,7 +80,7 @@ static Oid	findTypeReceiveFunction(List *procname, Oid typeOid);
 static Oid	findTypeSendFunction(List *procname, Oid typeOid);
 static Oid	findTypeAnalyzeFunction(List *procname, Oid typeOid);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
-static void domainOwnerCheck(HeapTuple tup, TypeName *typename);
+static void checkDomainOwner(HeapTuple tup, TypeName *typename);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					Oid baseTypeOid,
 					int typMod, Constraint *constr,
@@ -196,7 +196,7 @@ DefineType(List *names, List *parameters)
 		}
 		else if (pg_strcasecmp(defel->defname, "element") == 0)
 		{
-			elemType = typenameTypeId(defGetTypeName(defel));
+			elemType = typenameTypeId(NULL, defGetTypeName(defel));
 			/* disallow arrays of pseudotypes */
 			if (get_typtype(elemType) == 'p')
 				ereport(ERROR,
@@ -445,13 +445,10 @@ RemoveType(List *names, DropBehavior behavior, bool missing_ok)
 	ObjectAddress object;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeNode(TypeName);
-	typename->names = names;
-	typename->typmod = -1;
-	typename->arrayBounds = NIL;
+	typename = makeTypeNameFromNameList(names);
 
 	/* Use LookupTypeName here so that shell types can be removed. */
-	typeoid = LookupTypeName(typename);
+	typeoid = LookupTypeName(NULL, typename);
 	if (!OidIsValid(typeoid))
 	{
 		if (!missing_ok)
@@ -586,7 +583,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	/*
 	 * Look up the base type.
 	 */
-	typeTup = typenameType(stmt->typename);
+	typeTup = typenameType(NULL, stmt->typename);
 
 	baseType = (Form_pg_type) GETSTRUCT(typeTup);
 	basetypeoid = HeapTupleGetOid(typeTup);
@@ -840,13 +837,10 @@ RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
 	ObjectAddress object;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeNode(TypeName);
-	typename->names = names;
-	typename->typmod = -1;
-	typename->arrayBounds = NIL;
+	typename = makeTypeNameFromNameList(names);
 
 	/* Use LookupTypeName here so that shell types can be removed. */
-	typeoid = LookupTypeName(typename);
+	typeoid = LookupTypeName(NULL, typename);
 	if (!OidIsValid(typeoid))
 	{
 		if (!missing_ok)
@@ -1172,38 +1166,26 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	Form_pg_type typTup;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeNode(TypeName);
-	typename->names = names;
-	typename->typmod = -1;
-	typename->arrayBounds = NIL;
+	typename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, typename);
 
-	/* Lock the domain in the type table */
+	/* Look up the domain in the type table */
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
-
-	/* Use LookupTypeName here so that shell types can be removed. */
-	domainoid = LookupTypeName(typename);
-	if (!OidIsValid(domainoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
+	typTup = (Form_pg_type) GETSTRUCT(tup);
 
-	/* Doesn't return if user isn't allowed to alter the domain */
-	domainOwnerCheck(tup, typename);
+	/* Check it's a domain and check user has permission for ALTER DOMAIN */
+	checkDomainOwner(tup, typename);
 
 	/* Setup new tuple */
 	MemSet(new_record, (Datum) 0, sizeof(new_record));
 	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
 	MemSet(new_record_repl, ' ', sizeof(new_record_repl));
-
-	/* Useful later */
-	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Store the new default, if null then skip this step */
 	if (defaultRaw)
@@ -1295,21 +1277,11 @@ AlterDomainNotNull(List *names, bool notNull)
 	Form_pg_type typTup;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeNode(TypeName);
-	typename->names = names;
-	typename->typmod = -1;
-	typename->arrayBounds = NIL;
+	typename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, typename);
 
-	/* Lock the type table */
+	/* Look up the domain in the type table */
 	typrel = heap_open(TypeRelationId, RowExclusiveLock);
-
-	/* Use LookupTypeName here so that shell types can be found (why?). */
-	domainoid = LookupTypeName(typename);
-	if (!OidIsValid(domainoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
@@ -1318,8 +1290,8 @@ AlterDomainNotNull(List *names, bool notNull)
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
-	/* Doesn't return if user isn't allowed to alter the domain */
-	domainOwnerCheck(tup, typename);
+	/* Check it's a domain and check user has permission for ALTER DOMAIN */
+	checkDomainOwner(tup, typename);
 
 	/* Is the domain already set to the desired constraint? */
 	if (typTup->typnotnull == notNull)
@@ -1394,7 +1366,8 @@ AlterDomainNotNull(List *names, bool notNull)
  * Implements the ALTER DOMAIN DROP CONSTRAINT statement
  */
 void
-AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior behavior)
+AlterDomainDropConstraint(List *names, const char *constrName,
+						  DropBehavior behavior)
 {
 	TypeName   *typename;
 	Oid			domainoid;
@@ -1406,21 +1379,11 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	HeapTuple	contup;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeNode(TypeName);
-	typename->names = names;
-	typename->typmod = -1;
-	typename->arrayBounds = NIL;
+	typename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, typename);
 
-	/* Lock the type table */
+	/* Look up the domain in the type table */
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
-
-	/* Use LookupTypeName here so that shell types can be removed. */
-	domainoid = LookupTypeName(typename);
-	if (!OidIsValid(domainoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
@@ -1428,8 +1391,8 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
 
-	/* Doesn't return if user isn't allowed to alter the domain */
-	domainOwnerCheck(tup, typename);
+	/* Check it's a domain and check user has permission for ALTER DOMAIN */
+	checkDomainOwner(tup, typename);
 
 	/* Grab an appropriate lock on the pg_constraint relation */
 	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
@@ -1491,21 +1454,11 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	Constraint *constr;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeNode(TypeName);
-	typename->names = names;
-	typename->typmod = -1;
-	typename->arrayBounds = NIL;
+	typename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, typename);
 
-	/* Lock the type table */
+	/* Look up the domain in the type table */
 	typrel = heap_open(TypeRelationId, RowExclusiveLock);
-
-	/* Use LookupTypeName here so that shell types can be found (why?). */
-	domainoid = LookupTypeName(typename);
-	if (!OidIsValid(domainoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
@@ -1514,8 +1467,8 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 		elog(ERROR, "cache lookup failed for type %u", domainoid);
 	typTup = (Form_pg_type) GETSTRUCT(tup);
 
-	/* Doesn't return if user isn't allowed to alter the domain */
-	domainOwnerCheck(tup, typename);
+	/* Check it's a domain and check user has permission for ALTER DOMAIN */
+	checkDomainOwner(tup, typename);
 
 	/* Check for unsupported constraint types */
 	if (IsA(newConstraint, FkConstraint))
@@ -1782,14 +1735,13 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 }
 
 /*
- * domainOwnerCheck
+ * checkDomainOwner
  *
- * Throw an error if the current user doesn't have permission to modify
- * the domain in an ALTER DOMAIN statement, or if the type isn't actually
- * a domain.
+ * Check that the type is actually a domain and that the current user
+ * has permission to do ALTER DOMAIN on it.  Throw an error if not.
  */
 static void
-domainOwnerCheck(HeapTuple tup, TypeName *typename)
+checkDomainOwner(HeapTuple tup, TypeName *typename)
 {
 	Form_pg_type typTup = (Form_pg_type) GETSTRUCT(tup);
 
@@ -2079,21 +2031,18 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 	AclResult	aclresult;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeNode(TypeName);
-	typename->names = names;
-	typename->typmod = -1;
-	typename->arrayBounds = NIL;
+	typename = makeTypeNameFromNameList(names);
 
-	/* Lock the type table */
-	rel = heap_open(TypeRelationId, RowExclusiveLock);
-
-	/* Use LookupTypeName here so that shell types can be processed (why?) */
-	typeOid = LookupTypeName(typename);
+	/* Use LookupTypeName here so that shell types can be processed */
+	typeOid = LookupTypeName(NULL, typename);
 	if (!OidIsValid(typeOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("type \"%s\" does not exist",
 						TypeNameToString(typename))));
+
+	/* Look up the type in the type table */
+	rel = heap_open(TypeRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(typeOid),
@@ -2206,19 +2155,9 @@ AlterTypeNamespace(List *names, const char *newschema)
 	Oid			typeOid;
 	Oid			nspOid;
 
-	/* get type OID */
-	typename = makeNode(TypeName);
-	typename->names = names;
-	typename->typmod = -1;
-	typename->arrayBounds = NIL;
-
-	typeOid = LookupTypeName(typename);
-
-	if (!OidIsValid(typeOid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
+	/* Make a TypeName so we can use standard type lookup machinery */
+	typename = makeTypeNameFromNameList(names);
+	typeOid = typenameTypeId(NULL, typename);
 
 	/* check permissions on type */
 	if (!pg_type_ownercheck(typeOid, GetUserId()))

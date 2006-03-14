@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.91 2006/03/05 15:58:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.92 2006/03/14 22:48:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
@@ -44,9 +45,43 @@ make_parsestate(ParseState *parentParseState)
 	pstate->p_next_resno = 1;
 
 	if (parentParseState)
+	{
+		pstate->p_sourcetext = parentParseState->p_sourcetext;
 		pstate->p_variableparams = parentParseState->p_variableparams;
+	}
 
 	return pstate;
+}
+
+
+/*
+ * parser_errposition
+ *		Report a parse-analysis-time cursor position, if possible.
+ *
+ * This is expected to be used within an ereport() call.  The return value
+ * is a dummy (always 0, in fact).
+ *
+ * The locations stored in raw parsetrees are byte offsets into the source
+ * string.  We have to convert them to 1-based character indexes for reporting
+ * to clients.  (We do things this way to avoid unnecessary overhead in the
+ * normal non-error case: computing character indexes would be much more
+ * expensive than storing token offsets.)
+ */
+int
+parser_errposition(ParseState *pstate, int location)
+{
+	int		pos;
+
+	/* No-op if location was not provided */
+	if (location < 0)
+		return 0;
+	/* Can't do anything if source text is not available */
+	if (pstate == NULL || pstate->p_sourcetext == NULL)
+		return 0;
+	/* Convert offset to character number */
+	pos = pg_mbstrlen_with_len(pstate->p_sourcetext, location) + 1;
+	/* And pass it to the ereport mechanism */
+	return errposition(pos);
 }
 
 

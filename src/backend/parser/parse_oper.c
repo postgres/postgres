@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.85 2006/03/05 15:58:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.86 2006/03/14 22:48:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,9 @@ static FuncDetailCode oper_select_candidate(int nargs,
 					  Oid *operOid);
 static const char *op_signature_string(List *op, char oprkind,
 					Oid arg1, Oid arg2);
-static void op_error(List *op, char oprkind, Oid arg1, Oid arg2,
-		 FuncDetailCode fdresult);
+static void op_error(ParseState *pstate, List *op, char oprkind,
+					 Oid arg1, Oid arg2,
+					 FuncDetailCode fdresult, int location);
 static Expr *make_op_expr(ParseState *pstate, Operator op,
 			 Node *ltree, Node *rtree,
 			 Oid ltypeId, Oid rtypeId);
@@ -56,10 +57,12 @@ static Expr *make_op_expr(ParseState *pstate, Operator op,
  * namespace search path.
  *
  * If the operator is not found, we return InvalidOid if noError is true,
- * else raise an error.
+ * else raise an error.  pstate and location are used only to report the
+ * error position; pass NULL/-1 if not available.
  */
 Oid
-LookupOperName(List *opername, Oid oprleft, Oid oprright, bool noError)
+LookupOperName(ParseState *pstate, List *opername, Oid oprleft, Oid oprright,
+			   bool noError, int location)
 {
 	FuncCandidateList clist;
 	char		oprkind;
@@ -86,7 +89,8 @@ LookupOperName(List *opername, Oid oprleft, Oid oprright, bool noError)
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s",
 						op_signature_string(opername, oprkind,
-											oprleft, oprright))));
+											oprleft, oprright)),
+				 parser_errposition(pstate, location)));
 
 	return InvalidOid;
 }
@@ -99,8 +103,9 @@ LookupOperName(List *opername, Oid oprleft, Oid oprright, bool noError)
  * Pass oprleft = NULL for a prefix op, oprright = NULL for a postfix op.
  */
 Oid
-LookupOperNameTypeNames(List *opername, TypeName *oprleft,
-						TypeName *oprright, bool noError)
+LookupOperNameTypeNames(ParseState *pstate, List *opername,
+						TypeName *oprleft, TypeName *oprright,
+						bool noError, int location)
 {
 	Oid			leftoid,
 				rightoid;
@@ -108,27 +113,15 @@ LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 	if (oprleft == NULL)
 		leftoid = InvalidOid;
 	else
-	{
-		leftoid = LookupTypeName(oprleft);
-		if (!OidIsValid(leftoid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type %s does not exist",
-							TypeNameToString(oprleft))));
-	}
+		leftoid = typenameTypeId(pstate, oprleft);
+
 	if (oprright == NULL)
 		rightoid = InvalidOid;
 	else
-	{
-		rightoid = LookupTypeName(oprright);
-		if (!OidIsValid(rightoid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("type %s does not exist",
-							TypeNameToString(oprright))));
-	}
+		rightoid = typenameTypeId(pstate, oprright);
 
-	return LookupOperName(opername, leftoid, rightoid, noError);
+	return LookupOperName(pstate, opername, leftoid, rightoid,
+						  noError, location);
 }
 
 /*
@@ -500,13 +493,15 @@ oper_select_candidate(int nargs,
  * you need an exact- or binary-compatible match; see compatible_oper.
  *
  * If no matching operator found, return NULL if noError is true,
- * raise an error if it is false.
+ * raise an error if it is false.  pstate and location are used only to report
+ * the error position; pass NULL/-1 if not available.
  *
  * NOTE: on success, the returned object is a syscache entry.  The caller
  * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
+oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
+	 bool noError, int location)
 {
 	FuncCandidateList clist;
 	Oid			inputOids[2];
@@ -549,7 +544,7 @@ oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
 	}
 
 	if (!HeapTupleIsValid(tup) && !noError)
-		op_error(opname, 'b', ltypeId, rtypeId, fdresult);
+		op_error(pstate, opname, 'b', ltypeId, rtypeId, fdresult, location);
 
 	return (Operator) tup;
 }
@@ -562,13 +557,14 @@ oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
  *	are accepted).	Otherwise, the semantics are the same.
  */
 Operator
-compatible_oper(List *op, Oid arg1, Oid arg2, bool noError)
+compatible_oper(ParseState *pstate, List *op, Oid arg1, Oid arg2,
+				bool noError, int location)
 {
 	Operator	optup;
 	Form_pg_operator opform;
 
 	/* oper() will find the best available match */
-	optup = oper(op, arg1, arg2, noError);
+	optup = oper(pstate, op, arg1, arg2, noError, location);
 	if (optup == (Operator) NULL)
 		return (Operator) NULL; /* must be noError case */
 
@@ -585,7 +581,8 @@ compatible_oper(List *op, Oid arg1, Oid arg2, bool noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator requires run-time type coercion: %s",
-						op_signature_string(op, 'b', arg1, arg2))));
+						op_signature_string(op, 'b', arg1, arg2)),
+				 parser_errposition(pstate, location)));
 
 	return (Operator) NULL;
 }
@@ -602,7 +599,7 @@ compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError)
 	Operator	optup;
 	Oid			result;
 
-	optup = compatible_oper(op, arg1, arg2, noError);
+	optup = compatible_oper(NULL, op, arg1, arg2, noError, -1);
 	if (optup != NULL)
 	{
 		result = oprid(optup);
@@ -621,13 +618,14 @@ compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError)
  * you need an exact- or binary-compatible match.
  *
  * If no matching operator found, return NULL if noError is true,
- * raise an error if it is false.
+ * raise an error if it is false.  pstate and location are used only to report
+ * the error position; pass NULL/-1 if not available.
  *
  * NOTE: on success, the returned object is a syscache entry.  The caller
  * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-right_oper(List *op, Oid arg, bool noError)
+right_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 {
 	FuncCandidateList clist;
 	Oid			operOid = InvalidOid;
@@ -669,7 +667,7 @@ right_oper(List *op, Oid arg, bool noError)
 	}
 
 	if (!HeapTupleIsValid(tup) && !noError)
-		op_error(op, 'r', arg, InvalidOid, fdresult);
+		op_error(pstate, op, 'r', arg, InvalidOid, fdresult, location);
 
 	return (Operator) tup;
 }
@@ -683,13 +681,14 @@ right_oper(List *op, Oid arg, bool noError)
  * you need an exact- or binary-compatible match.
  *
  * If no matching operator found, return NULL if noError is true,
- * raise an error if it is false.
+ * raise an error if it is false.  pstate and location are used only to report
+ * the error position; pass NULL/-1 if not available.
  *
  * NOTE: on success, the returned object is a syscache entry.  The caller
  * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-left_oper(List *op, Oid arg, bool noError)
+left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 {
 	FuncCandidateList clist;
 	Oid			operOid = InvalidOid;
@@ -736,7 +735,7 @@ left_oper(List *op, Oid arg, bool noError)
 	}
 
 	if (!HeapTupleIsValid(tup) && !noError)
-		op_error(op, 'l', InvalidOid, arg, fdresult);
+		op_error(pstate, op, 'l', InvalidOid, arg, fdresult, location);
 
 	return (Operator) tup;
 }
@@ -771,7 +770,9 @@ op_signature_string(List *op, char oprkind, Oid arg1, Oid arg2)
  * op_error - utility routine to complain about an unresolvable operator
  */
 static void
-op_error(List *op, char oprkind, Oid arg1, Oid arg2, FuncDetailCode fdresult)
+op_error(ParseState *pstate, List *op, char oprkind,
+		 Oid arg1, Oid arg2,
+		 FuncDetailCode fdresult, int location)
 {
 	if (fdresult == FUNCDETAIL_MULTIPLE)
 		ereport(ERROR,
@@ -779,14 +780,16 @@ op_error(List *op, char oprkind, Oid arg1, Oid arg2, FuncDetailCode fdresult)
 				 errmsg("operator is not unique: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
 				 errhint("Could not choose a best candidate operator. "
-						 "You may need to add explicit type casts.")));
+						 "You may need to add explicit type casts."),
+				 parser_errposition(pstate, location)));
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
 		  errhint("No operator matches the given name and argument type(s). "
-				  "You may need to add explicit type casts.")));
+				  "You may need to add explicit type casts."),
+				 parser_errposition(pstate, location)));
 }
 
 /*
@@ -800,7 +803,8 @@ op_error(List *op, char oprkind, Oid arg1, Oid arg2, FuncDetailCode fdresult)
  * processing is wanted.
  */
 Expr *
-make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
+make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
+		int location)
 {
 	Oid			ltypeId,
 				rtypeId;
@@ -813,21 +817,21 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 		/* right operator */
 		ltypeId = exprType(ltree);
 		rtypeId = InvalidOid;
-		tup = right_oper(opname, ltypeId, false);
+		tup = right_oper(pstate, opname, ltypeId, false, location);
 	}
 	else if (ltree == NULL)
 	{
 		/* left operator */
 		rtypeId = exprType(rtree);
 		ltypeId = InvalidOid;
-		tup = left_oper(opname, rtypeId, false);
+		tup = left_oper(pstate, opname, rtypeId, false, location);
 	}
 	else
 	{
 		/* otherwise, binary operator */
 		ltypeId = exprType(ltree);
 		rtypeId = exprType(rtree);
-		tup = oper(opname, ltypeId, rtypeId, false);
+		tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
 	}
 
 	/* Do typecasting and build the expression tree */
@@ -845,7 +849,8 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 Expr *
 make_scalar_array_op(ParseState *pstate, List *opname,
 					 bool useOr,
-					 Node *ltree, Node *rtree)
+					 Node *ltree, Node *rtree,
+					 int location)
 {
 	Oid			ltypeId,
 				rtypeId,
@@ -875,11 +880,12 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 		if (!OidIsValid(rtypeId))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("op ANY/ALL (array) requires array on right side")));
+					 errmsg("op ANY/ALL (array) requires array on right side"),
+					 parser_errposition(pstate, location)));
 	}
 
 	/* Now resolve the operator */
-	tup = oper(opname, ltypeId, rtypeId, false);
+	tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
 	opform = (Form_pg_operator) GETSTRUCT(tup);
 
 	args = list_make2(ltree, rtree);
@@ -904,11 +910,13 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	if (rettype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		   errmsg("op ANY/ALL (array) requires operator to yield boolean")));
+				 errmsg("op ANY/ALL (array) requires operator to yield boolean"),
+				 parser_errposition(pstate, location)));
 	if (get_func_retset(opform->oprcode))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		errmsg("op ANY/ALL (array) requires operator not to return a set")));
+				 errmsg("op ANY/ALL (array) requires operator not to return a set"),
+				 parser_errposition(pstate, location)));
 
 	/*
 	 * Now switch back to the array type on the right, arranging for any
@@ -919,7 +927,8 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("could not find array type for data type %s",
-						format_type_be(declared_arg_types[1]))));
+						format_type_be(declared_arg_types[1])),
+				 parser_errposition(pstate, location)));
 	actual_arg_types[1] = atypeId;
 	declared_arg_types[1] = res_atypeId;
 

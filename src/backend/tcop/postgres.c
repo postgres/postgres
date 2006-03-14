@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.481 2006/03/05 15:58:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.482 2006/03/14 22:48:21 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -501,6 +501,7 @@ pg_parse_and_rewrite(const char *query_string,	/* string to execute */
 
 		querytree_list = list_concat(querytree_list,
 									 pg_analyze_and_rewrite(parsetree,
+															query_string,
 															paramTypes,
 															numParams));
 	}
@@ -625,7 +626,8 @@ log_after_parse(List *raw_parsetree_list, const char *query_string,
  * NOTE: for reasons mentioned above, this must be separate from raw parsing.
  */
 List *
-pg_analyze_and_rewrite(Node *parsetree, Oid *paramTypes, int numParams)
+pg_analyze_and_rewrite(Node *parsetree, const char *query_string,
+					   Oid *paramTypes, int numParams)
 {
 	List	   *querytree_list;
 
@@ -635,7 +637,8 @@ pg_analyze_and_rewrite(Node *parsetree, Oid *paramTypes, int numParams)
 	if (log_parser_stats)
 		ResetUsage();
 
-	querytree_list = parse_analyze(parsetree, paramTypes, numParams);
+	querytree_list = parse_analyze(parsetree, query_string,
+								   paramTypes, numParams);
 
 	if (log_parser_stats)
 		ShowUsage("PARSE ANALYSIS STATISTICS");
@@ -946,7 +949,8 @@ exec_simple_query(const char *query_string)
 		 */
 		oldcontext = MemoryContextSwitchTo(MessageContext);
 
-		querytree_list = pg_analyze_and_rewrite(parsetree, NULL, 0);
+		querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
+												NULL, 0);
 
 		plantree_list = pg_plan_queries(querytree_list, NULL, true);
 
@@ -1257,6 +1261,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			ResetUsage();
 
 		querytree_list = parse_analyze_varparams(parsetree,
+												 query_string,
 												 &paramTypes,
 												 &numParams);
 

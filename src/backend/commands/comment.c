@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.87 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.88 2006/03/14 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
@@ -846,13 +847,11 @@ CommentType(List *typename, char *comment)
 	Oid			oid;
 
 	/* XXX a bit of a crock; should accept TypeName in COMMENT syntax */
-	tname = makeNode(TypeName);
-	tname->names = typename;
-	tname->typmod = -1;
+	tname = makeTypeNameFromNameList(typename);
 
 	/* Find the type's oid */
 
-	oid = typenameTypeId(tname);
+	oid = typenameTypeId(NULL, tname);
 
 	/* Check object security */
 
@@ -881,7 +880,7 @@ CommentAggregate(List *aggregate, List *arguments, char *comment)
 
 	/* First, attempt to determine the base aggregate oid */
 	if (aggtype)
-		baseoid = typenameTypeId(aggtype);
+		baseoid = typenameTypeId(NULL, aggtype);
 	else
 		baseoid = ANYOID;
 
@@ -945,9 +944,11 @@ CommentOperator(List *opername, List *arguments, char *comment)
 	Oid			oid;
 
 	/* Look up the operator */
-	oid = LookupOperNameTypeNames(opername, typenode1, typenode2, false);
+	oid = LookupOperNameTypeNames(NULL, opername,
+								  typenode1, typenode2,
+								  false, -1);
 
-	/* Valid user's ability to comment on this operator */
+	/* Check user's privilege to comment on this operator */
 	if (!pg_oper_ownercheck(oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
 					   NameListToString(opername));
@@ -1352,19 +1353,8 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	targettype = (TypeName *) linitial(arguments);
 	Assert(IsA(targettype, TypeName));
 
-	sourcetypeid = typenameTypeId(sourcetype);
-	if (!OidIsValid(sourcetypeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("source data type %s does not exist",
-						TypeNameToString(sourcetype))));
-
-	targettypeid = typenameTypeId(targettype);
-	if (!OidIsValid(targettypeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("target data type %s does not exist",
-						TypeNameToString(targettype))));
+	sourcetypeid = typenameTypeId(NULL, sourcetype);
+	targettypeid = typenameTypeId(NULL, targettype);
 
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(sourcetypeid),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.78 2006/03/05 15:58:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.79 2006/03/14 22:48:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,11 @@
  *
  * NB: even if the returned OID is not InvalidOid, the type might be
  * just a shell.  Caller should check typisdefined before using the type.
+ *
+ * pstate is only used for error location info, and may be NULL.
  */
 Oid
-LookupTypeName(const TypeName *typename)
+LookupTypeName(ParseState *pstate, const TypeName *typename)
 {
 	Oid			restype;
 
@@ -60,7 +62,8 @@ LookupTypeName(const TypeName *typename)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("improper %%TYPE reference (too few dotted names): %s",
-					   NameListToString(typename->names))));
+					   NameListToString(typename->names)),
+						 parser_errposition(pstate, typename->location)));
 				break;
 			case 2:
 				rel->relname = strVal(linitial(typename->names));
@@ -81,7 +84,8 @@ LookupTypeName(const TypeName *typename)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("improper %%TYPE reference (too many dotted names): %s",
-								NameListToString(typename->names))));
+								NameListToString(typename->names)),
+						 parser_errposition(pstate, typename->location)));
 				break;
 		}
 
@@ -92,7 +96,8 @@ LookupTypeName(const TypeName *typename)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("column \"%s\" of relation \"%s\" does not exist",
-							field, rel->relname)));
+							field, rel->relname),
+					 parser_errposition(pstate, typename->location)));
 		restype = get_atttype(relid, attnum);
 
 		/* this construct should never have an array indicator */
@@ -190,21 +195,24 @@ TypeNameToString(const TypeName *typename)
  * a suitable error message if the type cannot be found or is not defined.
  */
 Oid
-typenameTypeId(const TypeName *typename)
+typenameTypeId(ParseState *pstate, const TypeName *typename)
 {
 	Oid			typoid;
 
-	typoid = LookupTypeName(typename);
+	typoid = LookupTypeName(pstate, typename);
 	if (!OidIsValid(typoid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
+						TypeNameToString(typename)),
+				 parser_errposition(pstate, typename->location)));
+
 	if (!get_typisdefined(typoid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("type \"%s\" is only a shell",
-						TypeNameToString(typename))));
+						TypeNameToString(typename)),
+				 parser_errposition(pstate, typename->location)));
 	return typoid;
 }
 
@@ -215,17 +223,18 @@ typenameTypeId(const TypeName *typename)
  * NB: caller must ReleaseSysCache the type tuple when done with it.
  */
 Type
-typenameType(const TypeName *typename)
+typenameType(ParseState *pstate, const TypeName *typename)
 {
 	Oid			typoid;
 	HeapTuple	tup;
 
-	typoid = LookupTypeName(typename);
+	typoid = LookupTypeName(pstate, typename);
 	if (!OidIsValid(typoid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
+						TypeNameToString(typename)),
+				 parser_errposition(pstate, typename->location)));
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typoid),
 						 0, 0, 0);
@@ -235,7 +244,8 @@ typenameType(const TypeName *typename)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("type \"%s\" is only a shell",
-						TypeNameToString(typename))));
+						TypeNameToString(typename)),
+				 parser_errposition(pstate, typename->location)));
 	return (Type) tup;
 }
 
@@ -447,7 +457,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	if (typename->setof)
 		goto fail;
 
-	*type_id = typenameTypeId(typename);
+	*type_id = typenameTypeId(NULL, typename);
 	*typmod = typename->typmod;
 
 	pfree(buf.data);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.330 2006/03/05 15:58:32 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.331 2006/03/14 22:48:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,9 @@ static bool check_parameter_resolution_walker(Node *node,
  * parse_analyze
  *		Analyze a raw parse tree and transform it to Query form.
  *
+ * If available, pass the source text from which the raw parse tree was
+ * generated; it's OK to pass NULL if this is not available.
+ *
  * Optionally, information about $n parameter types can be supplied.
  * References to $n indexes not defined by paramTypes[] are disallowed.
  *
@@ -155,11 +158,13 @@ static bool check_parameter_resolution_walker(Node *node,
  * a dummy CMD_UTILITY Query node.
  */
 List *
-parse_analyze(Node *parseTree, Oid *paramTypes, int numParams)
+parse_analyze(Node *parseTree, const char *sourceText,
+			  Oid *paramTypes, int numParams)
 {
 	ParseState *pstate = make_parsestate(NULL);
 	List	   *result;
 
+	pstate->p_sourcetext = sourceText;
 	pstate->p_paramtypes = paramTypes;
 	pstate->p_numparams = numParams;
 	pstate->p_variableparams = false;
@@ -179,11 +184,13 @@ parse_analyze(Node *parseTree, Oid *paramTypes, int numParams)
  * be modified or enlarged (via repalloc).
  */
 List *
-parse_analyze_varparams(Node *parseTree, Oid **paramTypes, int *numParams)
+parse_analyze_varparams(Node *parseTree, const char *sourceText,
+						Oid **paramTypes, int *numParams)
 {
 	ParseState *pstate = make_parsestate(NULL);
 	List	   *result;
 
+	pstate->p_sourcetext = sourceText;
 	pstate->p_paramtypes = *paramTypes;
 	pstate->p_numparams = *numParams;
 	pstate->p_variableparams = true;
@@ -921,6 +928,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		funccallnode->args = list_make1(snamenode);
 		funccallnode->agg_star = false;
 		funccallnode->agg_distinct = false;
+		funccallnode->location = -1;
 
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_DEFAULT;
@@ -1097,7 +1105,6 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		Form_pg_attribute attribute = tupleDesc->attrs[parent_attno - 1];
 		char	   *attributeName = NameStr(attribute->attname);
 		ColumnDef  *def;
-		TypeName   *typename;
 
 		/*
 		 * Ignore dropped columns in the parent.
@@ -1113,10 +1120,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		 */
 		def = makeNode(ColumnDef);
 		def->colname = pstrdup(attributeName);
-		typename = makeNode(TypeName);
-		typename->typeid = attribute->atttypid;
-		typename->typmod = attribute->atttypmod;
-		def->typename = typename;
+		def->typename = makeTypeNameFromOid(attribute->atttypid,
+											attribute->atttypmod);
 		def->inhcount = 0;
 		def->is_local = false;
 		def->is_not_null = attribute->attnotnull;
@@ -2608,7 +2613,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 		foreach(l, stmt->argtypes)
 		{
 			TypeName   *tn = lfirst(l);
-			Oid			toid = typenameTypeId(tn);
+			Oid			toid = typenameTypeId(pstate, tn);
 
 			argtoids[i++] = toid;
 		}
@@ -2621,6 +2626,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	 * from context.
 	 */
 	queries = parse_analyze_varparams((Node *) stmt->query,
+									  pstate->p_sourcetext,
 									  &argtoids, &nargs);
 
 	/*
@@ -3029,7 +3035,7 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	/*
 	 * All we really need to do here is verify that the type is valid.
 	 */
-	Type		ctype = typenameType(column->typename);
+	Type		ctype = typenameType(pstate, column->typename);
 
 	ReleaseSysCache(ctype);
 }

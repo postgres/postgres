@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.47 2006/03/05 15:58:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.48 2006/03/14 22:48:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,15 @@
 
 /*
  * State information used during parse analysis
+ *
+ * parentParseState: NULL in a top-level ParseState.  When parsing a subquery,
+ * links to current parse state of outer query.
+ *
+ * p_sourcetext: source string that generated the raw parsetree being
+ * analyzed, or NULL if not available.  (The string is used only to
+ * generate cursor positions in error messages: we need it to convert
+ * byte-wise locations in parse structures to character-wise cursor
+ * positions.)
  *
  * p_rtable: list of RTEs that will become the rangetable of the query.
  * Note that neither relname nor refname of these entries are necessarily
@@ -53,6 +62,7 @@
 typedef struct ParseState
 {
 	struct ParseState *parentParseState;		/* stack link */
+	const char *p_sourcetext;	/* source text, or NULL if not available */
 	List	   *p_rtable;		/* range table so far */
 	List	   *p_joinlist;		/* join items so far (will become FromExpr
 								 * node's fromlist) */
@@ -73,6 +83,8 @@ typedef struct ParseState
 } ParseState;
 
 extern ParseState *make_parsestate(ParseState *parentParseState);
+extern int	parser_errposition(ParseState *pstate, int location);
+
 extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno);
 extern Oid	transformArrayType(Oid arrayType);
 extern ArrayRef *transformArraySubscripts(ParseState *pstate,

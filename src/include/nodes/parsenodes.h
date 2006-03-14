@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.303 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.304 2006/03/14 22:48:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,6 +142,11 @@ typedef struct Query
  *	Most of these node types appear in raw parsetrees output by the grammar,
  *	and get transformed to something else by the analyzer.	A few of them
  *	are used as-is in transformed querytrees.
+ *
+ *	Many of the node types used in raw parsetrees include a "location" field.
+ *	This is a byte (not character) offset in the original source text, to be
+ *	used for positioning an error cursor when there is an analysis-time
+ *	error related to the node.
  ****************************************************************************/
 
 /*
@@ -165,6 +170,7 @@ typedef struct TypeName
 	bool		pct_type;		/* %TYPE specified? */
 	int32		typmod;			/* type modifier */
 	List	   *arrayBounds;	/* array bounds */
+	int			location;		/* token location, or -1 if unknown */
 } TypeName;
 
 /*
@@ -182,6 +188,7 @@ typedef struct ColumnRef
 {
 	NodeTag		type;
 	List	   *fields;			/* field names (list of Value strings) */
+	int			location;		/* token location, or -1 if unknown */
 } ColumnRef;
 
 /*
@@ -217,6 +224,7 @@ typedef struct A_Expr
 	List	   *name;			/* possibly-qualified name of operator */
 	Node	   *lexpr;			/* left argument, or NULL if none */
 	Node	   *rexpr;			/* right argument, or NULL if none */
+	int			location;		/* token location, or -1 if unknown */
 } A_Expr;
 
 /*
@@ -226,7 +234,7 @@ typedef struct A_Const
 {
 	NodeTag		type;
 	Value		val;			/* the value (with the tag) */
-	TypeName   *typename;		/* typecast */
+	TypeName   *typename;		/* typecast, or NULL if none */
 } A_Const;
 
 /*
@@ -235,8 +243,8 @@ typedef struct A_Const
  * NOTE: for mostly historical reasons, A_Const parsenodes contain
  * room for a TypeName; we only generate a separate TypeCast node if the
  * argument to be casted is not a constant.  In theory either representation
- * would work, but it is convenient to have the target type immediately
- * available while resolving a constant's datatype.
+ * would work, but the combined representation saves a bit of code in many
+ * productions in gram.y.
  */
 typedef struct TypeCast
 {
@@ -260,6 +268,7 @@ typedef struct FuncCall
 	List	   *args;			/* the arguments (list of exprs) */
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
+	int			location;		/* token location, or -1 if unknown */
 } FuncCall;
 
 /*

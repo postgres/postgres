@@ -18,7 +18,7 @@ SELECT 'first line'
 ' - next line' /* this comment is not allowed here */
 ' - third line'
 	AS "Illegal comment within continuation";
-ERROR:  syntax error at or near "' - third line'" at character 75
+ERROR:  syntax error at or near "' - third line'"
 LINE 3: ' - third line'
         ^
 --
@@ -927,17 +927,29 @@ show standard_conforming_strings;
 (1 row)
 
 select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6;
-WARNING:  nonstandard use of escape in a string literal at character 8
+WARNING:  nonstandard use of escape in a string literal
+LINE 1: select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'a...
+               ^
 HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal at character 23
+WARNING:  nonstandard use of escape in a string literal
+LINE 1: select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'a...
+                              ^
 HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal at character 40
+WARNING:  nonstandard use of escape in a string literal
+LINE 1: select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'a...
+                                               ^
 HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal at character 59
+WARNING:  nonstandard use of escape in a string literal
+LINE 1: ...a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   ...
+                                                             ^
 HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal at character 76
+WARNING:  nonstandard use of escape in a string literal
+LINE 1: ...b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' ...
+                                                             ^
 HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal at character 93
+WARNING:  nonstandard use of escape in a string literal
+LINE 1: ...b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6...
+                                                             ^
 HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
   f1   |   f2   |   f3    |  f4   |   f5   | f6 
 -------+--------+---------+-------+--------+----
@@ -946,17 +958,29 @@ HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
 
 set standard_conforming_strings = off;
 select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as f6;
-WARNING:  nonstandard use of \\ in a string literal at character 8
+WARNING:  nonstandard use of \\ in a string literal
+LINE 1: select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3,...
+               ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal at character 24
+WARNING:  nonstandard use of \\ in a string literal
+LINE 1: select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3,...
+                               ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal at character 42
+WARNING:  nonstandard use of \\ in a string literal
+LINE 1: select 'a\\bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3,...
+                                                 ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal at character 62
+WARNING:  nonstandard use of \\ in a string literal
+LINE 1: ...bcd' as f1, 'a\\b\'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'  ...
+                                                             ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal at character 80
+WARNING:  nonstandard use of \\ in a string literal
+LINE 1: ...'cd' as f2, 'a\\b\'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd'...
+                                                             ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
-WARNING:  nonstandard use of \\ in a string literal at character 98
+WARNING:  nonstandard use of \\ in a string literal
+LINE 1: ...'''cd' as f3, 'abcd\\'   as f4, 'ab\\\'cd' as f5, '\\\\' as ...
+                                                             ^
 HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
   f1   |   f2   |   f3    |  f4   |   f5   | f6 
 -------+--------+---------+-------+--------+----

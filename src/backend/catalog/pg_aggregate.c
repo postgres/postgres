@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.78 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.79 2006/03/14 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,9 +171,9 @@ AggregateCreate(const char *aggName,
 
 	/* handle sortop, if supplied */
 	if (aggsortopName)
-		sortop = LookupOperName(aggsortopName,
+		sortop = LookupOperName(NULL, aggsortopName,
 								aggBaseType, aggBaseType,
-								false);
+								false, -1);
 
 	/*
 	 * Everything looks okay.  Try to create the pg_proc entry for the

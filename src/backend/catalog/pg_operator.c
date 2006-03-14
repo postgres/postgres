@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.95 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.96 2006/03/14 22:48:18 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -175,8 +175,9 @@ OperatorLookup(List *operatorName,
 	Oid			operatorObjectId;
 	RegProcedure oprcode;
 
-	operatorObjectId = LookupOperName(operatorName, leftObjectId,
-									  rightObjectId, true);
+	operatorObjectId = LookupOperName(NULL, operatorName,
+									  leftObjectId, rightObjectId,
+									  true, -1);
 	if (!OidIsValid(operatorObjectId))
 	{
 		*defined = false;

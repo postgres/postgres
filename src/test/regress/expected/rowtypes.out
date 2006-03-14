@@ -63,6 +63,8 @@ begin;
 set local add_missing_from = false;
 select f1, q.c1 from quadtable;		-- fails, q is a table reference
 ERROR:  missing FROM-clause entry for table "q"
+LINE 1: select f1, q.c1 from quadtable;
+                   ^
 rollback;
 select f1, (q).c1, (qq.q).c1.i from quadtable qq;
  f1 |    c1     |  i  
@@ -199,6 +201,8 @@ select ROW('ABC','DEF') ~>=~ ROW('DEF','ABC') as false;
 
 select ROW('ABC','DEF') ~~ ROW('DEF','ABC') as fail;
 ERROR:  could not determine interpretation of row comparison operator ~~
+LINE 1: select ROW('ABC','DEF') ~~ ROW('DEF','ABC') as fail;
+                                ^
 HINT:  Row comparison operators must be associated with btree operator classes.
 -- Check row comparison with a subselect
 select unique1, unique2 from tenk1

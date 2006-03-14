@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.32 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.33 2006/03/14 22:48:18 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -129,9 +129,9 @@ DefineAggregate(List *names, List *parameters)
 	if (pg_strcasecmp(TypeNameToString(baseType), "ANY") == 0)
 		baseTypeId = ANYOID;
 	else
-		baseTypeId = typenameTypeId(baseType);
+		baseTypeId = typenameTypeId(NULL, baseType);
 
-	transTypeId = typenameTypeId(transType);
+	transTypeId = typenameTypeId(NULL, transType);
 	if (get_typtype(transTypeId) == 'p' &&
 		transTypeId != ANYARRAYOID &&
 		transTypeId != ANYELEMENTOID)
@@ -176,7 +176,7 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 	 * that the aggregate is to apply to all basetypes (eg, COUNT).
 	 */
 	if (aggType)
-		basetypeID = typenameTypeId(aggType);
+		basetypeID = typenameTypeId(NULL, aggType);
 	else
 		basetypeID = ANYOID;
 
@@ -231,7 +231,7 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 	 * COUNT).
 	 */
 	if (basetype)
-		basetypeOid = typenameTypeId(basetype);
+		basetypeOid = typenameTypeId(NULL, basetype);
 	else
 		basetypeOid = ANYOID;
 
@@ -311,7 +311,7 @@ AlterAggregateOwner(List *name, TypeName *basetype, Oid newOwnerId)
 	 * COUNT).
 	 */
 	if (basetype)
-		basetypeOid = typenameTypeId(basetype);
+		basetypeOid = typenameTypeId(NULL, basetype);
 	else
 		basetypeOid = ANYOID;
 

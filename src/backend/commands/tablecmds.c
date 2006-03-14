@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.180 2006/03/05 15:58:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.181 2006/03/14 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -867,7 +867,6 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			char	   *attributeName = NameStr(attribute->attname);
 			int			exist_attno;
 			ColumnDef  *def;
-			TypeName   *typename;
 
 			/*
 			 * Ignore dropped columns in the parent.
@@ -897,7 +896,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 						(errmsg("merging multiple inherited definitions of column \"%s\"",
 								attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				if (typenameTypeId(def->typename) != attribute->atttypid ||
+				if (typenameTypeId(NULL, def->typename) != attribute->atttypid ||
 					def->typename->typmod != attribute->atttypmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -919,10 +918,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				 */
 				def = makeNode(ColumnDef);
 				def->colname = pstrdup(attributeName);
-				typename = makeNode(TypeName);
-				typename->typeid = attribute->atttypid;
-				typename->typmod = attribute->atttypmod;
-				def->typename = typename;
+				def->typename = makeTypeNameFromOid(attribute->atttypid,
+													attribute->atttypmod);
 				def->inhcount = 1;
 				def->is_local = false;
 				def->is_not_null = attribute->attnotnull;
@@ -1041,7 +1038,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				   (errmsg("merging column \"%s\" with inherited definition",
 						   attributeName)));
 				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
-				if (typenameTypeId(def->typename) != typenameTypeId(newdef->typename) ||
+				if (typenameTypeId(NULL, def->typename) != typenameTypeId(NULL, newdef->typename) ||
 					def->typename->typmod != newdef->typename->typmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -2955,7 +2952,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 			Form_pg_attribute childatt = (Form_pg_attribute) GETSTRUCT(tuple);
 
 			/* Okay if child matches by type */
-			if (typenameTypeId(colDef->typename) != childatt->atttypid ||
+			if (typenameTypeId(NULL, colDef->typename) != childatt->atttypid ||
 				colDef->typename->typmod != childatt->atttypmod)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -3009,7 +3006,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 						MaxHeapAttributeNumber)));
 	i = minattnum + 1;
 
-	typeTuple = typenameType(colDef->typename);
+	typeTuple = typenameType(NULL, colDef->typename);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	typeOid = HeapTupleGetOid(typeTuple);
 
@@ -3991,8 +3988,9 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		 * the right answer from the test below on opclass membership unless
 		 * we select the proper operator.)
 		 */
-		Operator	o = oper(list_make1(makeString("=")),
-							 pktypoid[i], fktypoid[i], true);
+		Operator	o = oper(NULL, list_make1(makeString("=")),
+							 pktypoid[i], fktypoid[i],
+							 true, -1);
 
 		if (o == NULL)
 			ereport(ERROR,
@@ -4773,12 +4771,7 @@ ATPrepAlterColumnType(List **wqueue,
 						colName)));
 
 	/* Look up the target type */
-	targettype = LookupTypeName(typename);
-	if (!OidIsValid(targettype))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
+	targettype = typenameTypeId(NULL, typename);
 
 	/* make sure datatype is legal for a column */
 	CheckAttributeType(colName, targettype);
@@ -4904,7 +4897,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 						colName)));
 
 	/* Look up the target type (should not fail, since prep found it) */
-	typeTuple = typenameType(typename);
+	typeTuple = typenameType(NULL, typename);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	targettype = HeapTupleGetOid(typeTuple);
 
@@ -5265,7 +5258,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 		Node	   *parsetree = (Node *) lfirst(list_item);
 
 		querytree_list = list_concat(querytree_list,
-									 parse_analyze(parsetree, NULL, 0));
+									 parse_analyze(parsetree, cmd, NULL, 0));
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.140 2006/03/05 15:58:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.141 2006/03/14 22:48:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -718,7 +718,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("cross-database references are not implemented: %s",
-										NameListToString(fields))));
+										NameListToString(fields)),
+								 parser_errposition(pstate, cref->location)));
 					schemaname = strVal(lsecond(fields));
 					relname = strVal(lthird(fields));
 					break;
@@ -727,7 +728,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("improper qualified name (too many dotted names): %s",
-					   NameListToString(fields))));
+					   NameListToString(fields)),
+						 parser_errposition(pstate, cref->location)));
 				schemaname = NULL;		/* keep compiler quiet */
 				relname = NULL;
 				break;
@@ -736,8 +738,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 		rte = refnameRangeTblEntry(pstate, schemaname, relname,
 								   &sublevels_up);
 		if (rte == NULL)
-			rte = addImplicitRTE(pstate, makeRangeVar(schemaname,
-													  relname));
+			rte = addImplicitRTE(pstate, makeRangeVar(schemaname, relname),
+								 cref->location);
 
 		rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 

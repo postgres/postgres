@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.269 2006/03/05 15:58:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.270 2006/03/14 22:48:19 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1400,6 +1400,7 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	WRITE_NODE_FIELD(args);
 	WRITE_BOOL_FIELD(agg_star);
 	WRITE_BOOL_FIELD(agg_distinct);
+	WRITE_INT_FIELD(location);
 }
 
 static void
@@ -1449,6 +1450,7 @@ _outTypeName(StringInfo str, TypeName *node)
 	WRITE_BOOL_FIELD(pct_type);
 	WRITE_INT_FIELD(typmod);
 	WRITE_NODE_FIELD(arrayBounds);
+	/* location is deliberately not stored */
 }
 
 static void
@@ -1648,6 +1650,7 @@ _outAExpr(StringInfo str, A_Expr *node)
 
 	WRITE_NODE_FIELD(lexpr);
 	WRITE_NODE_FIELD(rexpr);
+	WRITE_INT_FIELD(location);
 }
 
 static void
@@ -1687,6 +1690,7 @@ _outColumnRef(StringInfo str, ColumnRef *node)
 	WRITE_NODE_TYPE("COLUMNREF");
 
 	WRITE_NODE_FIELD(fields);
+	WRITE_INT_FIELD(location);
 }
 
 static void

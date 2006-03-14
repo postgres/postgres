@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.25 2006/03/05 15:59:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.26 2006/03/14 22:48:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
 
-#include <errno.h>
 #include <ctype.h>
 #include <fcntl.h>
 
@@ -51,6 +50,8 @@ static int	getParameterStatus(PGconn *conn);
 static int	getNotify(PGconn *conn);
 static int	getCopyStart(PGconn *conn, ExecStatusType copytype);
 static int	getReadyForQuery(PGconn *conn);
+static void reportErrorPosition(PQExpBuffer msg, const char *query,
+								int loc, int encoding);
 static int build_startup_packet(const PGconn *conn, char *packet,
 					 const PQEnvironmentOption *options);
 
@@ -614,6 +615,8 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	PQExpBufferData workBuf;
 	char		id;
 	const char *val;
+	const char *querytext = NULL;
+	int			querypos = 0;
 
 	/*
 	 * Since the fields might be pretty long, we create a temporary
@@ -666,22 +669,46 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	val = PQresultErrorField(res, PG_DIAG_STATEMENT_POSITION);
 	if (val)
 	{
-		/* translator: %s represents a digit string */
-		appendPQExpBuffer(&workBuf, libpq_gettext(" at character %s"), val);
+		if (conn->verbosity != PQERRORS_TERSE && conn->last_query != NULL)
+		{
+			/* emit position as a syntax cursor display */
+			querytext = conn->last_query;
+			querypos = atoi(val);
+		}
+		else
+		{
+			/* emit position as text addition to primary message */
+			/* translator: %s represents a digit string */
+			appendPQExpBuffer(&workBuf, libpq_gettext(" at character %s"),
+							  val);
+		}
 	}
 	else
 	{
 		val = PQresultErrorField(res, PG_DIAG_INTERNAL_POSITION);
 		if (val)
 		{
-			/* translator: %s represents a digit string */
-			appendPQExpBuffer(&workBuf, libpq_gettext(" at character %s"),
-							  val);
+			querytext = PQresultErrorField(res, PG_DIAG_INTERNAL_QUERY);
+			if (conn->verbosity != PQERRORS_TERSE && querytext != NULL)
+			{
+				/* emit position as a syntax cursor display */
+				querypos = atoi(val);
+			}
+			else
+			{
+				/* emit position as text addition to primary message */
+				/* translator: %s represents a digit string */
+				appendPQExpBuffer(&workBuf, libpq_gettext(" at character %s"),
+								  val);
+			}
 		}
 	}
 	appendPQExpBufferChar(&workBuf, '\n');
 	if (conn->verbosity != PQERRORS_TERSE)
 	{
+		if (querytext && querypos > 0)
+			reportErrorPosition(&workBuf, querytext, querypos,
+								conn->client_encoding);
 		val = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
 		if (val)
 			appendPQExpBuffer(&workBuf, libpq_gettext("DETAIL:  %s\n"), val);
@@ -744,6 +771,212 @@ fail:
 	PQclear(res);
 	termPQExpBuffer(&workBuf);
 	return EOF;
+}
+
+/*
+ * Add an error-location display to the error message under construction.
+ *
+ * The cursor location is measured in logical characters; the query string
+ * is presumed to be in the specified encoding.
+ */
+static void
+reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
+{
+#define DISPLAY_SIZE	60		/* screen width limit, in screen cols */
+#define MIN_RIGHT_CUT	10		/* try to keep this far away from EOL */
+
+	char	   *wquery;
+	int			clen,
+				slen,
+				i,
+				w,
+			   *qidx,
+			   *scridx,
+				qoffset,
+				scroffset,
+				ibeg,
+				iend,
+				loc_line;
+	bool		beg_trunc,
+				end_trunc;
+
+	/* Need a writable copy of the query */
+	wquery = strdup(query);
+	if (wquery == NULL)
+		return;					/* fail silently if out of memory */
+
+	/*
+	 * Each character might occupy multiple physical bytes in the string, and
+	 * in some Far Eastern character sets it might take more than one screen
+	 * column as well.	We compute the starting byte offset and starting
+	 * screen column of each logical character, and store these in qidx[] and
+	 * scridx[] respectively.
+	 */
+
+	/* we need a safe allocation size... */
+	slen = strlen(query) + 1;
+
+	qidx = (int *) malloc(slen * sizeof(int));
+	if (qidx == NULL)
+	{
+		free(wquery);
+		return;
+	}
+	scridx = (int *) malloc(slen * sizeof(int));
+	if (scridx == NULL)
+	{
+		free(qidx);
+		free(wquery);
+		return;
+	}
+
+	qoffset = 0;
+	scroffset = 0;
+	for (i = 0; query[qoffset] != '\0'; i++)
+	{
+		qidx[i] = qoffset;
+		scridx[i] = scroffset;
+		w = pg_encoding_dsplen(encoding, &query[qoffset]);
+		/* treat control chars as width 1; see tab hack below */
+		if (w <= 0)
+			w = 1;
+		scroffset += w;
+		qoffset += pg_encoding_mblen(encoding, &query[qoffset]);
+	}
+	qidx[i] = qoffset;
+	scridx[i] = scroffset;
+	clen = i;
+
+	/* convert loc to zero-based offset in qidx/scridx arrays */
+	loc--;
+
+	/* do we have something to show? */
+	if (loc >= 0 && loc <= clen)
+	{
+		/* input line number of our syntax error. */
+		loc_line = 1;
+		/* first included char of extract. */
+		ibeg = 0;
+		/* last-plus-1 included char of extract. */
+		iend = clen;
+
+		/*
+		 * Replace tabs with spaces in the writable copy.  (Later we might
+		 * want to think about coping with their variable screen width, but
+		 * not today.)
+		 *
+		 * Extract line number and begin and end indexes of line containing
+		 * error location.	There will not be any newlines or carriage returns
+		 * in the selected extract.
+		 */
+		for (i = 0; i < clen; i++)
+		{
+			/* character length must be 1 or it's not ASCII */
+			if ((qidx[i + 1] - qidx[i]) == 1)
+			{
+				if (wquery[qidx[i]] == '\t')
+					wquery[qidx[i]] = ' ';
+				else if (wquery[qidx[i]] == '\r' || wquery[qidx[i]] == '\n')
+				{
+					if (i < loc)
+					{
+						/*
+						 * count lines before loc. Each \r or \n counts
+						 * as a line except when \r \n appear together.
+						 */
+						if (wquery[qidx[i]] == '\r' ||
+							i == 0 ||
+							(qidx[i] - qidx[i - 1]) != 1 ||
+							wquery[qidx[i - 1]] != '\r')
+							loc_line++;
+						/* extract beginning = last line start before loc. */
+						ibeg = i + 1;
+					}
+					else
+					{
+						/* set extract end. */
+						iend = i;
+						/* done scanning. */
+						break;
+					}
+				}
+			}
+		}
+
+		/* If the line extracted is too long, we truncate it. */
+		beg_trunc = false;
+		end_trunc = false;
+		if (scridx[iend] - scridx[ibeg] > DISPLAY_SIZE)
+		{
+			/*
+			 * We first truncate right if it is enough.  This code might be
+			 * off a space or so on enforcing MIN_RIGHT_CUT if there's a wide
+			 * character right there, but that should be okay.
+			 */
+			if (scridx[ibeg] + DISPLAY_SIZE >= scridx[loc] + MIN_RIGHT_CUT)
+			{
+				while (scridx[iend] - scridx[ibeg] > DISPLAY_SIZE)
+					iend--;
+				end_trunc = true;
+			}
+			else
+			{
+				/* Truncate right if not too close to loc. */
+				while (scridx[loc] + MIN_RIGHT_CUT < scridx[iend])
+				{
+					iend--;
+					end_trunc = true;
+				}
+
+				/* Truncate left if still too long. */
+				while (scridx[iend] - scridx[ibeg] > DISPLAY_SIZE)
+				{
+					ibeg++;
+					beg_trunc = true;
+				}
+			}
+		}
+
+		/* truncate working copy at desired endpoint */
+		wquery[qidx[iend]] = '\0';
+
+		/* Begin building the finished message. */
+		i = msg->len;
+		appendPQExpBuffer(msg, libpq_gettext("LINE %d: "), loc_line);
+		if (beg_trunc)
+			appendPQExpBufferStr(msg, "...");
+
+		/*
+		 * While we have the prefix in the msg buffer, compute its screen
+		 * width.
+		 */
+		scroffset = 0;
+		for (; i < msg->len; i += pg_encoding_mblen(encoding, &msg->data[i]))
+		{
+			w = pg_encoding_dsplen(encoding, &msg->data[i]);
+			if (w <= 0)
+				w = 1;
+			scroffset += w;
+		}
+
+		/* Finish up the LINE message line. */
+		appendPQExpBufferStr(msg, &wquery[qidx[ibeg]]);
+		if (end_trunc)
+			appendPQExpBufferStr(msg, "...");
+		appendPQExpBufferChar(msg, '\n');
+
+		/* Now emit the cursor marker line. */
+		scroffset += scridx[loc] - scridx[ibeg];
+		for (i = 0; i < scroffset; i++)
+			appendPQExpBufferChar(msg, ' ');
+		appendPQExpBufferChar(msg, '^');
+		appendPQExpBufferChar(msg, '\n');
+	}
+
+	/* Clean up. */
+	free(scridx);
+	free(qidx);
+	free(wquery);
 }
 
 

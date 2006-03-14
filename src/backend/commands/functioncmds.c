@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.72 2006/03/05 15:58:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.73 2006/03/14 22:48:18 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -75,7 +75,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 {
 	Oid			rettype;
 
-	rettype = LookupTypeName(returnType);
+	rettype = LookupTypeName(NULL, returnType);
 
 	if (OidIsValid(rettype))
 	{
@@ -174,7 +174,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 		TypeName   *t = fp->argType;
 		Oid			toid;
 
-		toid = LookupTypeName(t);
+		toid = LookupTypeName(NULL, t);
 		if (OidIsValid(toid))
 		{
 			if (!get_typisdefined(toid))
@@ -1152,33 +1152,10 @@ CreateCast(CreateCastStmt *stmt)
 	ObjectAddress myself,
 				referenced;
 
-	sourcetypeid = LookupTypeName(stmt->sourcetype);
-	if (!OidIsValid(sourcetypeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("source data type %s does not exist",
-						TypeNameToString(stmt->sourcetype))));
+	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
+	targettypeid = typenameTypeId(NULL, stmt->targettype);
 
-	targettypeid = LookupTypeName(stmt->targettype);
-	if (!OidIsValid(targettypeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("target data type %s does not exist",
-						TypeNameToString(stmt->targettype))));
-
-	/* No shells, no pseudo-types allowed */
-	if (!get_typisdefined(sourcetypeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("source data type %s is only a shell",
-						TypeNameToString(stmt->sourcetype))));
-
-	if (!get_typisdefined(targettypeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("target data type %s is only a shell",
-						TypeNameToString(stmt->targettype))));
-
+	/* No pseudo-types allowed */
 	if (get_typtype(sourcetypeid) == 'p')
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -1400,19 +1377,8 @@ DropCast(DropCastStmt *stmt)
 	HeapTuple	tuple;
 	ObjectAddress object;
 
-	sourcetypeid = LookupTypeName(stmt->sourcetype);
-	if (!OidIsValid(sourcetypeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("source data type %s does not exist",
-						TypeNameToString(stmt->sourcetype))));
-
-	targettypeid = LookupTypeName(stmt->targettype);
-	if (!OidIsValid(targettypeid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("target data type %s does not exist",
-						TypeNameToString(stmt->targettype))));
+	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
+	targettypeid = typenameTypeId(NULL, stmt->targettype);
 
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(sourcetypeid),

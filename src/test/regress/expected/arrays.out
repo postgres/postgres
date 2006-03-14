@@ -393,8 +393,12 @@ select 33.4 > all (array[1,2,3]);
 -- errors
 select 33 * any ('{1,2,3}');
 ERROR:  op ANY/ALL (array) requires operator to yield boolean
+LINE 1: select 33 * any ('{1,2,3}');
+                  ^
 select 33 * any (44);
 ERROR:  op ANY/ALL (array) requires array on right side
+LINE 1: select 33 * any (44);
+                  ^
 -- nulls
 select 33 = any (null::int[]);
  ?column? 

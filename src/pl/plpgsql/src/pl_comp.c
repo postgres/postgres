@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.100 2006/03/09 21:29:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.101 2006/03/14 22:48:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1082,7 +1082,7 @@ plpgsql_parse_wordtype(char *word)
 	 * Word wasn't found on the namestack. Try to find a data type with that
 	 * name, but ignore pg_type entries that are in fact class types.
 	 */
-	typeOid = LookupTypeName(makeTypeName(cp[0]));
+	typeOid = LookupTypeName(NULL, makeTypeName(cp[0]));
 	if (OidIsValid(typeOid))
 	{
 		HeapTuple	typeTup;

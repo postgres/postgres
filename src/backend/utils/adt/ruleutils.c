@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.215 2006/03/11 16:43:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.216 2006/03/14 22:48:22 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -4479,7 +4479,7 @@ get_from_clause_coldeflist(List *coldeflist, deparse_context *context)
 		int32		atttypmod;
 
 		attname = n->colname;
-		atttypeid = typenameTypeId(n->typename);
+		atttypeid = typenameTypeId(NULL, n->typename);
 		atttypmod = n->typename->typmod;
 
 		if (i > 0)
@@ -4868,13 +4868,16 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 	switch (operform->oprkind)
 	{
 		case 'b':
-			p_result = oper(list_make1(makeString(oprname)), arg1, arg2, true);
+			p_result = oper(NULL, list_make1(makeString(oprname)), arg1, arg2,
+							true, -1);
 			break;
 		case 'l':
-			p_result = left_oper(list_make1(makeString(oprname)), arg2, true);
+			p_result = left_oper(NULL, list_make1(makeString(oprname)), arg2,
+								 true, -1);
 			break;
 		case 'r':
-			p_result = right_oper(list_make1(makeString(oprname)), arg1, true);
+			p_result = right_oper(NULL, list_make1(makeString(oprname)), arg1,
+								  true, -1);
 			break;
 		default:
 			elog(ERROR, "unrecognized oprkind: %d", operform->oprkind);

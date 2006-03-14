@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.184 2006/03/05 15:58:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.185 2006/03/14 22:48:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,9 @@
 
 
 static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
-					   Node *first_arg);
-static void unknown_attribute(ParseState *pstate, Node *relref, char *attname);
+					   Node *first_arg, int location);
+static void unknown_attribute(ParseState *pstate, Node *relref, char *attname,
+							  int location);
 
 
 /*
@@ -59,7 +60,8 @@ static void unknown_attribute(ParseState *pstate, Node *relref, char *attname);
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  bool agg_star, bool agg_distinct, bool is_column)
+				  bool agg_star, bool agg_distinct, bool is_column,
+				  int location)
 {
 	Oid			rettype;
 	Oid			funcid;
@@ -83,7 +85,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("cannot pass more than %d arguments to a function",
-						FUNC_MAX_ARGS)));
+						FUNC_MAX_ARGS),
+				 parser_errposition(pstate, location)));
 
 	/*
 	 * Extract arg type info in preparation for function lookup.
@@ -131,7 +134,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		{
 			retval = ParseComplexProjection(pstate,
 											strVal(linitial(funcname)),
-											first_arg);
+											first_arg,
+											location);
 			if (retval)
 				return retval;
 
@@ -174,12 +178,14 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 			   errmsg("%s(*) specified, but %s is not an aggregate function",
 					  NameListToString(funcname),
-					  NameListToString(funcname))));
+					  NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
 		if (agg_distinct)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 			errmsg("DISTINCT specified, but %s is not an aggregate function",
-				   NameListToString(funcname))));
+				   NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
 	}
 	else if (fdresult != FUNCDETAIL_AGGREGATE)
 	{
@@ -193,7 +199,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		{
 			Assert(nargs == 1);
 			Assert(list_length(funcname) == 1);
-			unknown_attribute(pstate, first_arg, strVal(linitial(funcname)));
+			unknown_attribute(pstate, first_arg, strVal(linitial(funcname)),
+							  location);
 		}
 
 		/*
@@ -206,7 +213,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
 					 errhint("Could not choose a best candidate function. "
-							 "You may need to add explicit type casts.")));
+							 "You may need to add explicit type casts."),
+					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -214,7 +222,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
 			errhint("No function matches the given name and argument types. "
-					"You may need to add explicit type casts.")));
+					"You may need to add explicit type casts."),
+					 parser_errposition(pstate, location)));
 	}
 
 	/*
@@ -262,7 +271,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (retset)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("aggregates may not return sets")));
+					 errmsg("aggregates may not return sets"),
+					 parser_errposition(pstate, location)));
 	}
 
 	return retval;
@@ -726,11 +736,9 @@ func_get_detail(List *funcname,
 		if (nargs == 1 && fargs != NIL)
 		{
 			Oid			targetType;
-			TypeName   *tn = makeNode(TypeName);
 
-			tn->names = funcname;
-			tn->typmod = -1;
-			targetType = LookupTypeName(tn);
+			targetType = LookupTypeName(NULL,
+										makeTypeNameFromNameList(funcname));
 			if (OidIsValid(targetType) &&
 				!ISCOMPLEX(targetType))
 			{
@@ -953,7 +961,8 @@ make_fn_arguments(ParseState *pstate,
  *	  transformed expression tree.	If not, return NULL.
  */
 static Node *
-ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
+ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
+					   int location)
 {
 	TupleDesc	tupdesc;
 	int			i;
@@ -977,7 +986,7 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 									 ((Var *) first_arg)->varno,
 									 ((Var *) first_arg)->varlevelsup);
 		/* Return a Var if funcname matches a column, else NULL */
-		return scanRTEForColumn(pstate, rte, funcname);
+		return scanRTEForColumn(pstate, rte, funcname, location);
 	}
 
 	/*
@@ -1019,7 +1028,8 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
  * helper routine for delivering "column does not exist" error message
  */
 static void
-unknown_attribute(ParseState *pstate, Node *relref, char *attname)
+unknown_attribute(ParseState *pstate, Node *relref, char *attname,
+				  int location)
 {
 	RangeTblEntry *rte;
 
@@ -1033,7 +1043,8 @@ unknown_attribute(ParseState *pstate, Node *relref, char *attname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("column %s.%s does not exist",
-						rte->eref->aliasname, attname)));
+						rte->eref->aliasname, attname),
+				 parser_errposition(pstate, location)));
 	}
 	else
 	{
@@ -1044,18 +1055,21 @@ unknown_attribute(ParseState *pstate, Node *relref, char *attname)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("column \"%s\" not found in data type %s",
-							attname, format_type_be(relTypeId))));
+							attname, format_type_be(relTypeId)),
+					 parser_errposition(pstate, location)));
 		else if (relTypeId == RECORDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 			   errmsg("could not identify column \"%s\" in record data type",
-					  attname)));
+					  attname),
+					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("column notation .%s applied to type %s, "
 							"which is not a composite type",
-							attname, format_type_be(relTypeId))));
+							attname, format_type_be(relTypeId)),
+					 parser_errposition(pstate, location)));
 	}
 }
 
@@ -1219,7 +1233,7 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	{
 		TypeName   *t = (TypeName *) lfirst(args_item);
 
-		argoids[i] = LookupTypeName(t);
+		argoids[i] = LookupTypeName(NULL, t);
 
 		if (!OidIsValid(argoids[i]))
 			ereport(ERROR,

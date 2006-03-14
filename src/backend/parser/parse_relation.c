@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.119 2006/03/05 15:58:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.120 2006/03/14 22:48:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 				bool include_dropped,
 				List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
-static void warnAutoRange(ParseState *pstate, RangeVar *relation);
+static void warnAutoRange(ParseState *pstate, RangeVar *relation,
+						  int location);
 
 
 /*
@@ -329,7 +330,8 @@ GetRTEByRangeTablePosn(ParseState *pstate,
  * FROM will be marked as requiring read access from the beginning.
  */
 Node *
-scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
+scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
+				 int location)
 {
 	Node	   *result = NULL;
 	int			attnum = 0;
@@ -357,7 +359,8 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 				ereport(ERROR,
 						(errcode(ERRCODE_AMBIGUOUS_COLUMN),
 						 errmsg("column reference \"%s\" is ambiguous",
-								colname)));
+								colname),
+						 parser_errposition(pstate, location)));
 			result = (Node *) make_var(pstate, rte, attnum);
 			/* Require read access */
 			rte->requiredPerms |= ACL_SELECT;
@@ -404,7 +407,8 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
  *	  If localonly is true, only names in the innermost query are considered.
  */
 Node *
-colNameToVar(ParseState *pstate, char *colname, bool localonly)
+colNameToVar(ParseState *pstate, char *colname, bool localonly,
+			 int location)
 {
 	Node	   *result = NULL;
 	ParseState *orig_pstate = pstate;
@@ -419,7 +423,7 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly)
 			Node	   *newresult;
 
 			/* use orig_pstate here to get the right sublevels_up */
-			newresult = scanRTEForColumn(orig_pstate, rte, colname);
+			newresult = scanRTEForColumn(orig_pstate, rte, colname, location);
 
 			if (newresult)
 			{
@@ -427,7 +431,8 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly)
 					ereport(ERROR,
 							(errcode(ERRCODE_AMBIGUOUS_COLUMN),
 							 errmsg("column reference \"%s\" is ambiguous",
-									colname)));
+									colname),
+							 parser_errposition(orig_pstate, location)));
 				result = newresult;
 			}
 		}
@@ -454,7 +459,8 @@ qualifiedNameToVar(ParseState *pstate,
 				   char *schemaname,
 				   char *refname,
 				   char *colname,
-				   bool implicitRTEOK)
+				   bool implicitRTEOK,
+				   int location)
 {
 	RangeTblEntry *rte;
 	int			sublevels_up;
@@ -465,10 +471,11 @@ qualifiedNameToVar(ParseState *pstate,
 	{
 		if (!implicitRTEOK)
 			return NULL;
-		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, refname));
+		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, refname),
+							 location);
 	}
 
-	return scanRTEForColumn(pstate, rte, colname);
+	return scanRTEForColumn(pstate, rte, colname, location);
 }
 
 /*
@@ -1043,12 +1050,12 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
  * a conflicting name.
  */
 RangeTblEntry *
-addImplicitRTE(ParseState *pstate, RangeVar *relation)
+addImplicitRTE(ParseState *pstate, RangeVar *relation, int location)
 {
 	RangeTblEntry *rte;
 
 	/* issue warning or error as needed */
-	warnAutoRange(pstate, relation);
+	warnAutoRange(pstate, relation, location);
 	/*
 	 * Note that we set inFromCl true, so that the RTE will be listed
 	 * explicitly if the parsetree is ever decompiled by ruleutils.c. This
@@ -1196,7 +1203,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 							Var		   *varnode;
 							Oid			atttypid;
 
-							atttypid = typenameTypeId(colDef->typename);
+							atttypid = typenameTypeId(NULL, colDef->typename);
 
 							varnode = makeVar(rtindex,
 											  attnum,
@@ -1543,7 +1550,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				{
 					ColumnDef  *colDef = list_nth(rte->coldeflist, attnum - 1);
 
-					*vartype = typenameTypeId(colDef->typename);
+					*vartype = typenameTypeId(NULL, colDef->typename);
 					*vartypmod = colDef->typename->typmod;
 				}
 				else
@@ -1802,7 +1809,7 @@ attnumTypeId(Relation rd, int attid)
  * a warning.
  */
 static void
-warnAutoRange(ParseState *pstate, RangeVar *relation)
+warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 {
 	RangeTblEntry *rte;
 	int			sublevels_up;
@@ -1841,7 +1848,8 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 					  errhint("Perhaps you meant to reference the table alias \"%s\".",
 							  badAlias) :
 					  errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
-							  rte->eref->aliasname))));
+							  rte->eref->aliasname)),
+					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
@@ -1849,7 +1857,8 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 					  errmsg("missing FROM-clause entry in subquery for table \"%s\"",
 							 relation->relname) :
 					  errmsg("missing FROM-clause entry for table \"%s\"",
-							 relation->relname))));
+							 relation->relname)),
+					 parser_errposition(pstate, location)));
 	}
 	else
 	{
@@ -1866,6 +1875,7 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 						  badAlias) :
 				  (rte ?
 				   errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
-						   rte->eref->aliasname) : 0))));
+						   rte->eref->aliasname) : 0)),
+				 parser_errposition(pstate, location)));
 	}
 }

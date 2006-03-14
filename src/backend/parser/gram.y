@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.534 2006/03/07 01:00:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.535 2006/03/14 22:48:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -61,6 +61,10 @@
 #include "utils/numeric.h"
 
 
+/* Location tracking support --- simpler than bison's default */
+#define YYLLOC_DEFAULT(Current, Rhs, N) \
+	Current = Rhs[1];
+
 extern List *parsetree;			/* final parse result is delivered here */
 
 static bool QueryIsRule = FALSE;
@@ -72,7 +76,7 @@ static bool QueryIsRule = FALSE;
  */
 /*#define __YYSCLASS*/
 
-static Node *makeColumnRef(char *relname, List *indirection);
+static Node *makeColumnRef(char *relname, List *indirection, int location);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeStringConst(char *str, TypeName *typename);
 static Node *makeIntConst(int val);
@@ -81,7 +85,7 @@ static Node *makeAConst(Value *v);
 static Node *makeRowNullTest(NullTestType test, RowExpr *row);
 static DefElem *makeDefElem(char *name, Node *arg);
 static A_Const *makeBoolAConst(bool state);
-static FuncCall *makeOverlaps(List *largs, List *rargs);
+static FuncCall *makeOverlaps(List *largs, List *rargs, int location);
 static void check_qualified_name(List *names);
 static List *check_func_name(List *names);
 static List *extractArgTypes(List *parameters);
@@ -90,12 +94,13 @@ static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, Node *lockingClause,
 								Node *limitOffset, Node *limitCount);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
-static Node *doNegate(Node *n);
+static Node *doNegate(Node *n, int location);
 static void doNegateFloat(Value *v);
 
 %}
 
 %name-prefix="base_yy"
+%locations
 
 %union
 {
@@ -3705,6 +3710,7 @@ func_type:	Typename								{ $$ = $1; }
 					$$->names = lcons(makeString($1), $2);
 					$$->pct_type = true;
 					$$->typmod = -1;
+					$$->location = @1;
 				}
 			| SETOF type_name attrs '%' TYPE_P
 				{
@@ -3713,6 +3719,7 @@ func_type:	Typename								{ $$ = $1; }
 					$$->pct_type = true;
 					$$->typmod = -1;
 					$$->setof = TRUE;
+					$$->location = @2;
 				}
 		;
 
@@ -6053,6 +6060,7 @@ SimpleTypename:
 					$$ = makeNode(TypeName);
 					$$->names = lcons(makeString($1), $2);
 					$$->typmod = -1;
+					$$->location = @1;
 				}
 		;
 
@@ -6077,6 +6085,7 @@ GenericType:
 			type_name
 				{
 					$$ = makeTypeName($1);
+					$$->location = @1;
 				}
 		;
 
@@ -6540,6 +6549,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($5, $1);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @2;
 					$$ = (Node *) n;
 				}
 		/*
@@ -6552,44 +6562,44 @@ a_expr:		c_expr									{ $$ = $1; }
 		 * also to b_expr and to the MathOp list above.
 		 */
 			| '+' a_expr					%prec UMINUS
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, $2); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, $2, @1); }
 			| '-' a_expr					%prec UMINUS
-				{ $$ = doNegate($2); }
+				{ $$ = doNegate($2, @1); }
 			| a_expr '+' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", $1, $3, @2); }
 			| a_expr '-' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", $1, $3, @2); }
 			| a_expr '*' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", $1, $3, @2); }
 			| a_expr '/' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", $1, $3, @2); }
 			| a_expr '%' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", $1, $3, @2); }
 			| a_expr '^' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", $1, $3, @2); }
 			| a_expr '<' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $3, @2); }
 			| a_expr '>' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $3, @2); }
 			| a_expr '=' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", $1, $3, @2); }
 
 			| a_expr qual_Op a_expr				%prec Op
-				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3, @2); }
 			| qual_Op a_expr					%prec Op
-				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $1, NULL, $2); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $1, NULL, $2, @1); }
 			| a_expr qual_Op					%prec POSTFIXOP
-				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, NULL); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, NULL, @2); }
 
 			| a_expr AND a_expr
-				{ $$ = (Node *) makeA_Expr(AEXPR_AND, NIL, $1, $3); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_AND, NIL, $1, $3, @2); }
 			| a_expr OR a_expr
-				{ $$ = (Node *) makeA_Expr(AEXPR_OR, NIL, $1, $3); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_OR, NIL, $1, $3, @2); }
 			| NOT a_expr
-				{ $$ = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, $2); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, $2, @1); }
 
 			| a_expr LIKE a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, $3, @2); }
 			| a_expr LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -6597,10 +6607,11 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, (Node *) n);
+					n->location = @4;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, (Node *) n, @2);
 				}
 			| a_expr NOT LIKE a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, $4); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, $4, @2); }
 			| a_expr NOT LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -6608,10 +6619,11 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, (Node *) n);
+					n->location = @5;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, (Node *) n, @2);
 				}
 			| a_expr ILIKE a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, $3, @2); }
 			| a_expr ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -6619,10 +6631,11 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, (Node *) n);
+					n->location = @4;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, (Node *) n, @2);
 				}
 			| a_expr NOT ILIKE a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, $4); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, $4, @2); }
 			| a_expr NOT ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -6630,7 +6643,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, (Node *) n);
+					n->location = @5;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, (Node *) n, @2);
 				}
 
 			| a_expr SIMILAR TO a_expr				%prec SIMILAR
@@ -6642,7 +6656,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($4, (Node *) c);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n);
+					n->location = @2;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
 				}
 			| a_expr SIMILAR TO a_expr ESCAPE a_expr
 				{
@@ -6651,7 +6666,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n);
+					n->location = @5;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n, @2);
 				}
 			| a_expr NOT SIMILAR TO a_expr			%prec SIMILAR
 				{
@@ -6662,7 +6678,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($5, (Node *) c);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n);
+					n->location = @5;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
 				}
 			| a_expr NOT SIMILAR TO a_expr ESCAPE a_expr
 				{
@@ -6671,7 +6688,8 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->args = list_make2($5, $7);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n);
+					n->location = @6;
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n, @2);
 				}
 
 			/* NullTest clause
@@ -6733,7 +6751,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| row OVERLAPS row
 				{
-					$$ = (Node *)makeOverlaps($1, $3);
+					$$ = (Node *)makeOverlaps($1, $3, @2);
 				}
 			| a_expr IS TRUE_P
 				{
@@ -6779,54 +6797,63 @@ a_expr:		c_expr									{ $$ = $1; }
 				}
 			| a_expr IS DISTINCT FROM a_expr			%prec IS
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $5);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $5, @2);
 				}
 			| a_expr IS NOT DISTINCT FROM a_expr		%prec IS
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL,
 									(Node *) makeSimpleA_Expr(AEXPR_DISTINCT,
-															  "=", $1, $6));
+															  "=", $1, $6, @2),
+											 @2);
 
 				}
 			| a_expr IS OF '(' type_list ')'			%prec IS
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", $1, (Node *) $5);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", $1, (Node *) $5, @2);
 				}
 			| a_expr IS NOT OF '(' type_list ')'		%prec IS
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6, @2);
 				}
 			| a_expr BETWEEN opt_asymmetric b_expr AND b_expr		%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_AND, NIL,
-						(Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $4),
-						(Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6));
+						(Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $4, @2),
+						(Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6, @2),
+											 @2);
 				}
 			| a_expr NOT BETWEEN opt_asymmetric b_expr AND b_expr	%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_OR, NIL,
-						(Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $5),
-						(Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7));
+						(Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $5, @2),
+						(Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7, @2),
+											 @2);
 				}
 			| a_expr BETWEEN SYMMETRIC b_expr AND b_expr			%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_OR, NIL,
 						(Node *) makeA_Expr(AEXPR_AND, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $4),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6)),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $4, @2),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6, @2),
+											@2),
 						(Node *) makeA_Expr(AEXPR_AND, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $6),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $4)));
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $6, @2),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $4, @2),
+											@2),
+											 @2);
 				}
 			| a_expr NOT BETWEEN SYMMETRIC b_expr AND b_expr		%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_AND, NIL,
 						(Node *) makeA_Expr(AEXPR_OR, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $5),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7)),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $5, @2),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7, @2),
+											@2),
 						(Node *) makeA_Expr(AEXPR_OR, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $7),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $5)));
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $7, @2),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $5, @2),
+											@2),
+											 @2);
 				}
 			| a_expr IN_P in_expr
 				{
@@ -6843,7 +6870,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					else
 					{
 						/* generate scalar IN expression */
-						$$ = (Node *) makeSimpleA_Expr(AEXPR_IN, "=", $1, $3);
+						$$ = (Node *) makeSimpleA_Expr(AEXPR_IN, "=", $1, $3, @2);
 					}
 				}
 			| a_expr NOT IN_P in_expr
@@ -6858,12 +6885,12 @@ a_expr:		c_expr									{ $$ = $1; }
 						n->testexpr = $1;
 						n->operName = list_make1(makeString("="));
 						/* Stick a NOT on top */
-						$$ = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (Node *) n);
+						$$ = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (Node *) n, @2);
 					}
 					else
 					{
 						/* generate scalar NOT IN expression */
-						$$ = (Node *) makeSimpleA_Expr(AEXPR_IN, "<>", $1, $4);
+						$$ = (Node *) makeSimpleA_Expr(AEXPR_IN, "<>", $1, $4, @2);
 					}
 				}
 			| a_expr subquery_Op sub_type select_with_parens	%prec Op
@@ -6878,9 +6905,9 @@ a_expr:		c_expr									{ $$ = $1; }
 			| a_expr subquery_Op sub_type '(' a_expr ')'		%prec Op
 				{
 					if ($3 == ANY_SUBLINK)
-						$$ = (Node *) makeA_Expr(AEXPR_OP_ANY, $2, $1, $5);
+						$$ = (Node *) makeA_Expr(AEXPR_OP_ANY, $2, $1, $5, @2);
 					else
-						$$ = (Node *) makeA_Expr(AEXPR_OP_ALL, $2, $1, $5);
+						$$ = (Node *) makeA_Expr(AEXPR_OP_ALL, $2, $1, $5, @2);
 				}
 			| UNIQUE select_with_parens
 				{
@@ -6913,49 +6940,49 @@ b_expr:		c_expr
 			| b_expr TYPECAST Typename
 				{ $$ = makeTypeCast($1, $3); }
 			| '+' b_expr					%prec UMINUS
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, $2); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, $2, @1); }
 			| '-' b_expr					%prec UMINUS
-				{ $$ = doNegate($2); }
+				{ $$ = doNegate($2, @1); }
 			| b_expr '+' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", $1, $3, @2); }
 			| b_expr '-' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", $1, $3, @2); }
 			| b_expr '*' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", $1, $3, @2); }
 			| b_expr '/' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", $1, $3, @2); }
 			| b_expr '%' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", $1, $3, @2); }
 			| b_expr '^' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", $1, $3, @2); }
 			| b_expr '<' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $3, @2); }
 			| b_expr '>' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $3, @2); }
 			| b_expr '=' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", $1, $3); }
+				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", $1, $3, @2); }
 			| b_expr qual_Op b_expr				%prec Op
-				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, $3, @2); }
 			| qual_Op b_expr					%prec Op
-				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $1, NULL, $2); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $1, NULL, $2, @1); }
 			| b_expr qual_Op					%prec POSTFIXOP
-				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, NULL); }
+				{ $$ = (Node *) makeA_Expr(AEXPR_OP, $2, $1, NULL, @2); }
 			| b_expr IS DISTINCT FROM b_expr		%prec IS
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $5);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $5, @2);
 				}
 			| b_expr IS NOT DISTINCT FROM b_expr	%prec IS
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_NOT, NIL,
-						NULL, (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $6));
+						NULL, (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", $1, $6, @2), @2);
 				}
 			| b_expr IS OF '(' type_list ')'		%prec IS
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", $1, (Node *) $5);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", $1, (Node *) $5, @2);
 				}
 			| b_expr IS NOT OF '(' type_list ')'	%prec IS
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", $1, (Node *) $6, @2);
 				}
 		;
 
@@ -7052,6 +7079,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| func_name '(' expr_list ')'
@@ -7061,6 +7089,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| func_name '(' ALL expr_list ')'
@@ -7074,6 +7103,7 @@ func_expr:	func_name '(' ')'
 					 * "must be an aggregate", but there's no provision
 					 * for that in FuncCall at the moment.
 					 */
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| func_name '(' DISTINCT expr_list ')'
@@ -7083,6 +7113,7 @@ func_expr:	func_name '(' ')'
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = TRUE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| func_name '(' '*' ')'
@@ -7108,6 +7139,7 @@ func_expr:	func_name '(' ')'
 					n->args = list_make1(star);
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| CURRENT_DATE
@@ -7196,6 +7228,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| CURRENT_TIMESTAMP '(' Iconst ')'
@@ -7331,6 +7364,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| CURRENT_USER
@@ -7340,6 +7374,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| SESSION_USER
@@ -7349,6 +7384,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| USER
@@ -7358,6 +7394,7 @@ func_expr:	func_name '(' ')'
 					n->args = NIL;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| CAST '(' a_expr AS Typename ')'
@@ -7369,6 +7406,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| OVERLAY '(' overlay_list ')'
@@ -7383,6 +7421,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| POSITION '(' position_list ')'
@@ -7393,6 +7432,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| SUBSTRING '(' substr_list ')'
@@ -7405,6 +7445,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| TREAT '(' a_expr AS Typename ')'
@@ -7413,7 +7454,7 @@ func_expr:	func_name '(' ')'
 					 * which is defined to be a subtype of the original expression.
 					 * In SQL99, this is intended for use with structured UDTs,
 					 * but let's make this a generally useful form allowing stronger
-					 * coersions than are handled by implicit casting.
+					 * coercions than are handled by implicit casting.
 					 */
 					FuncCall *n = makeNode(FuncCall);
 					/* Convert SystemTypeName() to SystemFuncName() even though
@@ -7421,6 +7462,9 @@ func_expr:	func_name '(' ')'
 					 */
 					n->funcname = SystemFuncName(((Value *)llast($5->names))->val.str);
 					n->args = list_make1($3);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| TRIM '(' BOTH trim_list ')'
@@ -7433,6 +7477,7 @@ func_expr:	func_name '(' ')'
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| TRIM '(' LEADING trim_list ')'
@@ -7442,6 +7487,7 @@ func_expr:	func_name '(' ')'
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| TRIM '(' TRAILING trim_list ')'
@@ -7451,6 +7497,7 @@ func_expr:	func_name '(' ')'
 					n->args = $4;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| TRIM '(' trim_list ')'
@@ -7460,6 +7507,7 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| CONVERT '(' a_expr USING any_name ')'
@@ -7474,6 +7522,7 @@ func_expr:	func_name '(' ')'
 					n->args = list_make2($3, c);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| CONVERT '(' expr_list ')'
@@ -7483,11 +7532,12 @@ func_expr:	func_name '(' ')'
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
+					n->location = @1;
 					$$ = (Node *)n;
 				}
 			| NULLIF '(' a_expr ',' a_expr ')'
 				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", $3, $5);
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", $3, $5, @1);
 				}
 			| COALESCE '(' expr_list ')'
 				{
@@ -7797,11 +7847,11 @@ case_arg:	a_expr									{ $$ = $1; }
  */
 columnref:	relation_name
 				{
-					$$ = makeColumnRef($1, NIL);
+					$$ = makeColumnRef($1, NIL, @1);
 				}
 			| relation_name indirection
 				{
-					$$ = makeColumnRef($1, $2);
+					$$ = makeColumnRef($1, $2, @1);
 				}
 		;
 
@@ -7875,6 +7925,7 @@ target_el:	a_expr AS ColLabel
 				{
 					ColumnRef *n = makeNode(ColumnRef);
 					n->fields = list_make1(makeString("*"));
+					n->location = @1;
 
 					$$ = makeNode(ResTarget);
 					$$->name = NULL;
@@ -8585,7 +8636,7 @@ SpecialRuleRelation:
 %%
 
 static Node *
-makeColumnRef(char *relname, List *indirection)
+makeColumnRef(char *relname, List *indirection, int location)
 {
 	/*
 	 * Generate a ColumnRef node, with an A_Indirection node added if there
@@ -8597,6 +8648,7 @@ makeColumnRef(char *relname, List *indirection)
 	int		nfields = 0;
 	ListCell *l;
 
+	c->location = location;
 	foreach(l, indirection)
 	{
 		if (IsA(lfirst(l), A_Indices))
@@ -8750,9 +8802,9 @@ makeRowNullTest(NullTestType test, RowExpr *row)
 		if (result == NULL)
 			result = (Node *) n;
 		else if (test == IS_NOT_NULL)
-			result = (Node *) makeA_Expr(AEXPR_OR, NIL, result, (Node *)n);
+			result = (Node *) makeA_Expr(AEXPR_OR, NIL, result, (Node *)n, -1);
 		else
-			result = (Node *) makeA_Expr(AEXPR_AND, NIL, result, (Node *)n);
+			result = (Node *) makeA_Expr(AEXPR_AND, NIL, result, (Node *)n, -1);
 	}
 
 	if (result == NULL)
@@ -8768,9 +8820,10 @@ makeRowNullTest(NullTestType test, RowExpr *row)
  * Create and populate a FuncCall node to support the OVERLAPS operator.
  */
 static FuncCall *
-makeOverlaps(List *largs, List *rargs)
+makeOverlaps(List *largs, List *rargs, int location)
 {
 	FuncCall *n = makeNode(FuncCall);
+
 	n->funcname = SystemFuncName("overlaps");
 	if (list_length(largs) == 1)
 		largs = lappend(largs, largs);
@@ -8787,6 +8840,7 @@ makeOverlaps(List *largs, List *rargs)
 	n->args = list_concat(largs, rargs);
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
+	n->location = location;
 	return n;
 }
 
@@ -8944,6 +8998,7 @@ SystemTypeName(char *name)
 
 	n->names = list_make2(makeString("pg_catalog"), makeString(name));
 	n->typmod = -1;
+	n->location = -1;
 	return n;
 }
 
@@ -8987,7 +9042,7 @@ exprIsNullConstant(Node *arg)
  * until we know what the desired type is.
  */
 static Node *
-doNegate(Node *n)
+doNegate(Node *n, int location)
 {
 	if (IsA(n, A_Const))
 	{
@@ -9005,7 +9060,7 @@ doNegate(Node *n)
 		}
 	}
 
-	return (Node *) makeSimpleA_Expr(AEXPR_OP, "-", NULL, n);
+	return (Node *) makeSimpleA_Expr(AEXPR_OP, "-", NULL, n, location);
 }
 
 static void

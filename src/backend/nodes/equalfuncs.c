@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.265 2006/03/05 15:58:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.266 2006/03/14 22:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1540,6 +1540,7 @@ _equalAExpr(A_Expr *a, A_Expr *b)
 	COMPARE_NODE_FIELD(name);
 	COMPARE_NODE_FIELD(lexpr);
 	COMPARE_NODE_FIELD(rexpr);
+	COMPARE_SCALAR_FIELD(location);
 
 	return true;
 }
@@ -1548,6 +1549,7 @@ static bool
 _equalColumnRef(ColumnRef *a, ColumnRef *b)
 {
 	COMPARE_NODE_FIELD(fields);
+	COMPARE_SCALAR_FIELD(location);
 
 	return true;
 }
@@ -1577,6 +1579,7 @@ _equalFuncCall(FuncCall *a, FuncCall *b)
 	COMPARE_NODE_FIELD(args);
 	COMPARE_SCALAR_FIELD(agg_star);
 	COMPARE_SCALAR_FIELD(agg_distinct);
+	COMPARE_SCALAR_FIELD(location);
 
 	return true;
 }
@@ -1619,6 +1622,7 @@ _equalTypeName(TypeName *a, TypeName *b)
 	COMPARE_SCALAR_FIELD(pct_type);
 	COMPARE_SCALAR_FIELD(typmod);
 	COMPARE_NODE_FIELD(arrayBounds);
+	COMPARE_SCALAR_FIELD(location);
 
 	return true;
 }
