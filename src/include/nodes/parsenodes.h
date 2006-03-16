@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.304 2006/03/14 22:48:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.305 2006/03/16 00:31:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,8 +362,8 @@ typedef struct RangeFunction
 	NodeTag		type;
 	Node	   *funccallnode;	/* untransformed function call tree */
 	Alias	   *alias;			/* table alias & optional column aliases */
-	List	   *coldeflist;		/* list of ColumnDef nodes for runtime
-								 * assignment of RECORD TupleDesc */
+	List	   *coldeflist;		/* list of ColumnDef nodes to describe
+								 * result of function returning RECORD */
 } RangeFunction;
 
 /*
@@ -547,10 +547,14 @@ typedef struct RangeTblEntry
 
 	/*
 	 * Fields valid for a function RTE (else NULL):
+	 *
+	 * If the function returns RECORD, funccoltypes lists the column types
+	 * declared in the RTE's column type specification, and funccoltypmods
+	 * lists their declared typmods.  Otherwise, both fields are NIL.
 	 */
 	Node	   *funcexpr;		/* expression tree for func call */
-	List	   *coldeflist;		/* list of ColumnDef nodes for runtime
-								 * assignment of RECORD TupleDesc */
+	List	   *funccoltypes;	/* OID list of column type OIDs */
+	List	   *funccoltypmods;	/* integer list of column typmods */
 
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):

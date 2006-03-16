@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.50 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.51 2006/03/16 00:31:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -850,11 +850,6 @@ doDeletion(const ObjectAddress *object)
  *
  * rtable is the rangetable to be used to interpret Vars with varlevelsup=0.
  * It can be NIL if no such variables are expected.
- *
- * XXX is it important to create dependencies on the datatypes mentioned in
- * the expression?	In most cases this would be redundant (eg, a ref to an
- * operator indirectly references its input and output datatypes), but I'm
- * not quite convinced there are no cases where we need it.
  */
 void
 recordDependencyOnExpr(const ObjectAddress *depender,
@@ -975,6 +970,13 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
  * To do so, we do not scan the joinaliasvars list of a join RTE while
  * scanning the query rangetable, but instead scan each individual entry
  * of the alias list when we find a reference to it.
+ *
+ * Note: in many cases we do not need to create dependencies on the datatypes
+ * involved in an expression, because we'll have an indirect dependency via
+ * some other object.  For instance Var nodes depend on a column which depends
+ * on the datatype, and OpExpr nodes depend on the operator which depends on
+ * the datatype.  However we do need a type dependency if there is no such
+ * indirect dependency, as for example in Const and CoerceToDomain nodes.
  */
 static bool
 find_expr_references_walker(Node *node,
@@ -1033,6 +1035,10 @@ find_expr_references_walker(Node *node,
 		Const	   *con = (Const *) node;
 		Oid			objoid;
 
+		/* A constant must depend on the constant's datatype */
+		add_object_address(OCLASS_TYPE, con->consttype, 0,
+						   &context->addrs);
+
 		/*
 		 * If it's a regclass or similar literal referring to an existing
 		 * object, add a reference to that object.	(Currently, only the
@@ -1080,6 +1086,14 @@ find_expr_references_walker(Node *node,
 			}
 		}
 		return false;
+	}
+	if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+
+		/* A parameter must depend on the parameter's datatype */
+		add_object_address(OCLASS_TYPE, param->paramtype, 0,
+						   &context->addrs);
 	}
 	if (IsA(node, FuncExpr))
 	{
@@ -1134,6 +1148,29 @@ find_expr_references_walker(Node *node,
 		/* Extra work needed here if we ever need this case */
 		elog(ERROR, "already-planned subqueries not supported");
 	}
+	if (IsA(node, RelabelType))
+	{
+		RelabelType	   *relab = (RelabelType *) node;
+
+		/* since there is no function dependency, need to depend on type */
+		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
+						   &context->addrs);
+	}
+	if (IsA(node, ConvertRowtypeExpr))
+	{
+		ConvertRowtypeExpr *cvt = (ConvertRowtypeExpr *) node;
+
+		/* since there is no function dependency, need to depend on type */
+		add_object_address(OCLASS_TYPE, cvt->resulttype, 0,
+						   &context->addrs);
+	}
+	if (IsA(node, RowExpr))
+	{
+		RowExpr	   *rowexpr = (RowExpr *) node;
+
+		add_object_address(OCLASS_TYPE, rowexpr->row_typeid, 0,
+						   &context->addrs);
+	}
 	if (IsA(node, RowCompareExpr))
 	{
 		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
@@ -1151,6 +1188,13 @@ find_expr_references_walker(Node *node,
 		}
 		/* fall through to examine arguments */
 	}
+	if (IsA(node, CoerceToDomain))
+	{
+		CoerceToDomain *cd = (CoerceToDomain *) node;
+
+		add_object_address(OCLASS_TYPE, cd->resulttype, 0,
+						   &context->addrs);
+	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
@@ -1160,17 +1204,32 @@ find_expr_references_walker(Node *node,
 
 		/*
 		 * Add whole-relation refs for each plain relation mentioned in the
-		 * subquery's rtable.  (Note: query_tree_walker takes care of
-		 * recursing into RTE_FUNCTION and RTE_SUBQUERY RTEs, so no need to do
-		 * that here.  But keep it from looking at join alias lists.)
+		 * subquery's rtable, as well as datatype refs for any datatypes used
+		 * as a RECORD function's output.  (Note: query_tree_walker takes care
+		 * of recursing into RTE_FUNCTION and RTE_SUBQUERY RTEs, so no need to
+		 * do that here.  But keep it from looking at join alias lists.)
 		 */
 		foreach(rtable, query->rtable)
 		{
 			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rtable);
+			ListCell   *ct;
 
-			if (rte->rtekind == RTE_RELATION)
-				add_object_address(OCLASS_CLASS, rte->relid, 0,
-								   &context->addrs);
+			switch (rte->rtekind)
+			{
+				case RTE_RELATION:
+					add_object_address(OCLASS_CLASS, rte->relid, 0,
+									   &context->addrs);
+					break;
+				case RTE_FUNCTION:
+					foreach(ct, rte->funccoltypes)
+					{
+						add_object_address(OCLASS_TYPE, lfirst_oid(ct), 0,
+										   &context->addrs);
+					}
+					break;
+				default:
+					break;
+			}
 		}
 
 		/* Examine substructure of query */

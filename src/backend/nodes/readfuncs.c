@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.186 2006/03/14 22:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.187 2006/03/16 00:31:55 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -863,42 +863,6 @@ _readFromExpr(void)
  *	Stuff from parsenodes.h.
  */
 
-static ColumnDef *
-_readColumnDef(void)
-{
-	READ_LOCALS(ColumnDef);
-
-	READ_STRING_FIELD(colname);
-	READ_NODE_FIELD(typename);
-	READ_INT_FIELD(inhcount);
-	READ_BOOL_FIELD(is_local);
-	READ_BOOL_FIELD(is_not_null);
-	READ_NODE_FIELD(raw_default);
-	READ_STRING_FIELD(cooked_default);
-	READ_NODE_FIELD(constraints);
-	READ_NODE_FIELD(support);
-
-	READ_DONE();
-}
-
-static TypeName *
-_readTypeName(void)
-{
-	READ_LOCALS(TypeName);
-
-	READ_NODE_FIELD(names);
-	READ_OID_FIELD(typeid);
-	READ_BOOL_FIELD(timezone);
-	READ_BOOL_FIELD(setof);
-	READ_BOOL_FIELD(pct_type);
-	READ_INT_FIELD(typmod);
-	READ_NODE_FIELD(arrayBounds);
-	/* location is deliberately not stored */
-	local_node->location = -1;
-
-	READ_DONE();
-}
-
 /*
  * _readRangeTblEntry
  */
@@ -923,7 +887,8 @@ _readRangeTblEntry(void)
 			break;
 		case RTE_FUNCTION:
 			READ_NODE_FIELD(funcexpr);
-			READ_NODE_FIELD(coldeflist);
+			READ_NODE_FIELD(funccoltypes);
+			READ_NODE_FIELD(funccoltypmods);
 			break;
 		case RTE_JOIN:
 			READ_ENUM_FIELD(jointype, JoinType);
@@ -1042,10 +1007,6 @@ parseNodeString(void)
 		return_value = _readJoinExpr();
 	else if (MATCH("FROMEXPR", 8))
 		return_value = _readFromExpr();
-	else if (MATCH("COLUMNDEF", 9))
-		return_value = _readColumnDef();
-	else if (MATCH("TYPENAME", 8))
-		return_value = _readTypeName();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
 	else if (MATCH("NOTIFY", 6))

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.266 2006/03/14 22:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.267 2006/03/16 00:31:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1730,7 +1730,8 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 	COMPARE_SCALAR_FIELD(relid);
 	COMPARE_NODE_FIELD(subquery);
 	COMPARE_NODE_FIELD(funcexpr);
-	COMPARE_NODE_FIELD(coldeflist);
+	COMPARE_NODE_FIELD(funccoltypes);
+	COMPARE_NODE_FIELD(funccoltypmods);
 	COMPARE_SCALAR_FIELD(jointype);
 	COMPARE_NODE_FIELD(joinaliasvars);
 	COMPARE_NODE_FIELD(alias);

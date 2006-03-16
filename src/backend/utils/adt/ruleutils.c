@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.216 2006/03/14 22:48:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.217 2006/03/16 00:31:55 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -176,7 +176,7 @@ static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
 static void get_from_clause_alias(Alias *alias, RangeTblEntry *rte,
 					  deparse_context *context);
-static void get_from_clause_coldeflist(List *coldeflist,
+static void get_from_clause_coldeflist(List *names, List *types, List *typmods,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
@@ -1497,13 +1497,16 @@ deparse_context_for_subplan(const char *name, List *tlist,
 
 	/*
 	 * We create an RTE_SPECIAL RangeTblEntry, and store the given tlist
-	 * in its coldeflist field.  This is a hack to make the tlist available
+	 * in its funccoltypes field.  This is a hack to make the tlist available
 	 * to get_name_for_var_field().  RTE_SPECIAL nodes shouldn't appear in
 	 * deparse contexts otherwise.
+	 *
+	 * XXX this desperately needs redesign, as it fails to handle cases where
+	 * we need to drill down through multiple tlists.
 	 */
 	rte->rtekind = RTE_SPECIAL;
 	rte->relid = InvalidOid;
-	rte->coldeflist = tlist;
+	rte->funccoltypes = tlist;
 	rte->eref = makeAlias(name, attrs);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -2678,9 +2681,9 @@ get_name_for_var_field(Var *var, int fieldno,
 			 * Look into the subplan's target list to get the referenced
 			 * expression, and then pass it to get_expr_result_type().
 			 */
-			if (rte->coldeflist)
+			if (rte->funccoltypes)
 			{
-				TargetEntry *ste = get_tle_by_resno(rte->coldeflist, attnum);
+				TargetEntry *ste = get_tle_by_resno(rte->funccoltypes, attnum);
 
 				if (ste != NULL)
 					expr = (Node *) ste->expr;
@@ -4205,7 +4208,6 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, query->rtable);
-		List	   *coldeflist = NIL;
 		bool		gavealias = false;
 
 		switch (rte->rtekind)
@@ -4226,8 +4228,6 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			case RTE_FUNCTION:
 				/* Function RTE */
 				get_rule_expr(rte->funcexpr, context, true);
-				/* might need to emit column list for RECORD function */
-				coldeflist = rte->coldeflist;
 				break;
 			default:
 				elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
@@ -4265,27 +4265,37 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			gavealias = true;
 		}
 
-		if (coldeflist != NIL)
+		if (rte->rtekind == RTE_FUNCTION)
 		{
-			if (!gavealias)
-				appendStringInfo(buf, " AS ");
-			get_from_clause_coldeflist(coldeflist, context);
+			if (rte->funccoltypes != NIL)
+			{
+				/* Function returning RECORD, reconstruct the columndefs */
+				if (!gavealias)
+					appendStringInfo(buf, " AS ");
+				get_from_clause_coldeflist(rte->eref->colnames,
+										   rte->funccoltypes,
+										   rte->funccoltypmods,
+										   context);
+			}
+			else
+			{
+				/*
+				 * For a function RTE, always emit a complete column alias
+				 * list; this is to protect against possible instability of
+				 * the default column names (eg, from altering parameter
+				 * names).
+				 */
+				get_from_clause_alias(rte->eref, rte, context);
+			}
 		}
 		else
 		{
 			/*
-			 * For a function RTE, always emit a complete column alias list;
-			 * this is to protect against possible instability of the default
-			 * column names (eg, from altering parameter names).  Otherwise
-			 * just report whatever the user originally gave as column
-			 * aliases.
+			 * For non-function RTEs, just report whatever the user originally
+			 * gave as column aliases.
 			 */
-			if (rte->rtekind == RTE_FUNCTION)
-				get_from_clause_alias(rte->eref, rte, context);
-			else
-				get_from_clause_alias(rte->alias, rte, context);
+			get_from_clause_alias(rte->alias, rte, context);
 		}
-
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -4463,30 +4473,35 @@ get_from_clause_alias(Alias *alias, RangeTblEntry *rte,
  * responsible for ensuring that an alias or AS is present before it.
  */
 static void
-get_from_clause_coldeflist(List *coldeflist, deparse_context *context)
+get_from_clause_coldeflist(List *names, List *types, List *typmods,
+						   deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	ListCell   *col;
+	ListCell   *l1;
+	ListCell   *l2;
+	ListCell   *l3;
 	int			i = 0;
 
 	appendStringInfoChar(buf, '(');
 
-	foreach(col, coldeflist)
+	l2 = list_head(types);
+	l3 = list_head(typmods);
+	foreach(l1, names)
 	{
-		ColumnDef  *n = lfirst(col);
-		char	   *attname;
-		Oid			atttypeid;
+		char	   *attname = strVal(lfirst(l1));
+		Oid			atttypid;
 		int32		atttypmod;
 
-		attname = n->colname;
-		atttypeid = typenameTypeId(NULL, n->typename);
-		atttypmod = n->typename->typmod;
+		atttypid = lfirst_oid(l2);
+		l2 = lnext(l2);
+		atttypmod = lfirst_int(l3);
+		l3 = lnext(l3);
 
 		if (i > 0)
 			appendStringInfo(buf, ", ");
 		appendStringInfo(buf, "%s %s",
 						 quote_identifier(attname),
-						 format_type_with_typemod(atttypeid, atttypmod));
+						 format_type_with_typemod(atttypid, atttypmod));
 		i++;
 	}
 

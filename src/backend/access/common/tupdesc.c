@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.115 2006/03/14 22:48:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.116 2006/03/16 00:31:54 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -550,6 +550,57 @@ BuildDescForRelation(List *schema)
 	{
 		pfree(constr);
 		desc->constr = NULL;
+	}
+
+	return desc;
+}
+
+/*
+ * BuildDescFromLists
+ *
+ * Build a TupleDesc given lists of column names (as String nodes),
+ * column type OIDs, and column typmods.  No constraints are generated.
+ *
+ * This is essentially a cut-down version of BuildDescForRelation for use
+ * with functions returning RECORD.
+ */
+TupleDesc
+BuildDescFromLists(List *names, List *types, List *typmods)
+{
+	int			natts;
+	AttrNumber	attnum;
+	ListCell   *l1;
+	ListCell   *l2;
+	ListCell   *l3;
+	TupleDesc	desc;
+
+	natts = list_length(names);
+	Assert(natts == list_length(types));
+	Assert(natts == list_length(typmods));
+
+	/*
+	 * allocate a new tuple descriptor
+	 */
+	desc = CreateTemplateTupleDesc(natts, false);
+
+	attnum = 0;
+
+	l2 = list_head(types);
+	l3 = list_head(typmods);
+	foreach(l1, names)
+	{
+		char	   *attname = strVal(lfirst(l1));
+		Oid			atttypid;
+		int32		atttypmod;
+
+		atttypid = lfirst_oid(l2);
+		l2 = lnext(l2);
+		atttypmod = lfirst_int(l3);
+		l3 = lnext(l3);
+
+		attnum++;
+
+		TupleDescInitEntry(desc, attnum, attname, atttypid, atttypmod, 0);
 	}
 
 	return desc;

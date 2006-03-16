@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.120 2006/03/14 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.121 2006/03/16 00:31:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -835,7 +835,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->relid = InvalidOid;
 	rte->subquery = NULL;
 	rte->funcexpr = funcexpr;
-	rte->coldeflist = coldeflist;
+	rte->funccoltypes = NIL;
+	rte->funccoltypmods = NIL;
 	rte->alias = alias;
 
 	eref = makeAlias(alias ? alias->aliasname : funcname, NIL);
@@ -883,14 +884,28 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	{
 		ListCell   *col;
 
-		/* Use the column definition list to form the alias list */
+		/*
+		 * Use the column definition list to form the alias list and
+		 * funccoltypes/funccoltypmods lists.
+		 */
 		foreach(col, coldeflist)
 		{
-			ColumnDef  *n = lfirst(col);
+			ColumnDef  *n = (ColumnDef *) lfirst(col);
 			char	   *attrname;
+			Oid			attrtype;
+			int32		attrtypmod;
 
 			attrname = pstrdup(n->colname);
+			if (n->typename->setof)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("column \"%s\" cannot be declared SETOF",
+								attrname)));
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
+			attrtype = typenameTypeId(pstate, n->typename);
+			attrtypmod = n->typename->typmod;
+			rte->funccoltypes = lappend_oid(rte->funccoltypes, attrtype);
+			rte->funccoltypmods = lappend_int(rte->funccoltypmods, attrtypmod);
 		}
 	}
 	else
@@ -1181,36 +1196,26 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				}
 				else if (functypclass == TYPEFUNC_RECORD)
 				{
-					List	   *coldeflist = rte->coldeflist;
-					ListCell   *col;
-					int			attnum = 0;
-
-					foreach(col, coldeflist)
+					if (colnames)
+						*colnames = copyObject(rte->eref->colnames);
+					if (colvars)
 					{
-						ColumnDef  *colDef = lfirst(col);
+						ListCell   *l1;
+						ListCell   *l2;
+						int			attnum = 0;
 
-						attnum++;
-						if (colnames)
+						forboth(l1, rte->funccoltypes, l2, rte->funccoltypmods)
 						{
-							char	   *attrname;
-
-							attrname = pstrdup(colDef->colname);
-							*colnames = lappend(*colnames, makeString(attrname));
-						}
-
-						if (colvars)
-						{
+							Oid			attrtype = lfirst_oid(l1);
+							int32		attrtypmod = lfirst_int(l2);
 							Var		   *varnode;
-							Oid			atttypid;
 
-							atttypid = typenameTypeId(NULL, colDef->typename);
-
+							attnum++;
 							varnode = makeVar(rtindex,
 											  attnum,
-											  atttypid,
-											  colDef->typename->typmod,
+											  attrtype,
+											  attrtypmod,
 											  sublevels_up);
-
 							*colvars = lappend(*colvars, varnode);
 						}
 					}
@@ -1548,10 +1553,8 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				}
 				else if (functypclass == TYPEFUNC_RECORD)
 				{
-					ColumnDef  *colDef = list_nth(rte->coldeflist, attnum - 1);
-
-					*vartype = typenameTypeId(NULL, colDef->typename);
-					*vartypmod = colDef->typename->typmod;
+					*vartype = list_nth_oid(rte->funccoltypes, attnum - 1);
+					*vartypmod = list_nth_int(rte->funccoltypmods, attnum - 1);
 				}
 				else
 				{
