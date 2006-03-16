@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.135 2006/03/06 17:41:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.136 2006/03/16 18:11:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -712,6 +712,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 
 
 #ifdef USE_LDAP
+
 static int
 CheckLDAPAuth(Port *port)
 {
@@ -774,7 +775,8 @@ CheckLDAPAuth(Port *port)
     if (r < 2)
     {
         ereport(LOG,
-                (errmsg("Invalid LDAP url: '%s'", port->auth_arg)));
+                (errmsg("invalid LDAP URL: \"%s\"",
+						port->auth_arg)));
         return STATUS_ERROR;
     }
 
@@ -783,26 +785,26 @@ CheckLDAPAuth(Port *port)
     passwd = recv_password_packet(port);
     if (passwd == NULL)
         return STATUS_EOF; /* client wouldn't send password */
-
    
     ldap = ldap_init(server, ldapport);
     if (!ldap)
     {
-        ereport(LOG,
-                (errmsg("Failed to initialize LDAP: %i", 
 #ifndef WIN32
-                        errno
+        ereport(LOG,
+                (errmsg("could not initialize LDAP: error %d", 
+                        errno)));
 #else
-                        (int)LdapGetLastError()
+        ereport(LOG,
+                (errmsg("could not initialize LDAP: error %d", 
+                        (int) LdapGetLastError())));
 #endif
-                        )));
         return STATUS_ERROR;
     }
 
     if ((r = ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
     {
         ereport(LOG,
-                (errmsg("Failed to set LDAP version: %i", r)));
+                (errmsg("could not set LDAP protocol version: error %d", r)));
         return STATUS_ERROR;
     }
     
@@ -815,12 +817,13 @@ CheckLDAPAuth(Port *port)
 #endif
         {
             ereport(LOG,
-                    (errmsg("Failed to start LDAP TLS session: %i", r)));
+                    (errmsg("could not start LDAP TLS session: error %d", r)));
             return STATUS_ERROR;
         }
     }
 
-    snprintf(fulluser, sizeof(fulluser)-1, "%s%s%s", prefix, port->user_name, suffix);
+    snprintf(fulluser, sizeof(fulluser)-1, "%s%s%s",
+			 prefix, port->user_name, suffix);
     fulluser[sizeof(fulluser)-1] = '\0';
 
     r = ldap_simple_bind_s(ldap, fulluser, passwd);
@@ -829,12 +832,14 @@ CheckLDAPAuth(Port *port)
     if (r != LDAP_SUCCESS)
     {
         ereport(LOG,
-                (errmsg("LDAP login failed for user '%s' on server '%s': %i",fulluser,server,r)));
+                (errmsg("LDAP login failed for user \"%s\" on server \"%s\": error %d",
+						fulluser, server, r)));
         return STATUS_ERROR;
     }
     
     return STATUS_OK;
 }
+
 #endif   /* USE_LDAP */
 
 /*
