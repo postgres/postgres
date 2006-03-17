@@ -373,3 +373,24 @@ DELETE FROM t3 USING t1 JOIN t2 USING (a) WHERE t3.x > t1.a;
 SELECT * FROM t3;
 DELETE FROM t3 USING t3 t3_other WHERE t3.x = t3_other.x AND t3.y = t3_other.y;
 SELECT * FROM t3;
+
+--
+-- regression test for 8.1 merge right join bug
+--
+
+CREATE TEMP TABLE tt1 ( tt1_id int4, joincol int4 );
+INSERT INTO tt1 VALUES (1, 11);
+INSERT INTO tt1 VALUES (2, NULL);
+
+CREATE TEMP TABLE tt2 ( tt2_id int4, joincol int4 );
+INSERT INTO tt2 VALUES (21, 11);
+INSERT INTO tt2 VALUES (22, 11);
+
+set enable_hashjoin to off;
+set enable_nestloop to off;
+
+-- these should give the same results
+
+select tt1.*, tt2.* from tt1 left join tt2 on tt1.joincol = tt2.joincol;
+
+select tt1.*, tt2.* from tt2 right join tt1 on tt1.joincol = tt2.joincol;

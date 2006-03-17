@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.75.2.1 2005/11/22 18:23:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.75.2.2 2006/03/17 19:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -948,9 +948,6 @@ ExecMergeJoin(MergeJoinState *node)
 				 * now we get the next inner tuple, if any.  If there's none,
 				 * advance to next outer tuple (which may be able to join to
 				 * previously marked tuples).
-				 *
-				 * If we find one but it cannot join to anything, stay in
-				 * NEXTINNER state to fetch the next one.
 				 */
 				innerTupleSlot = ExecProcNode(innerPlan);
 				node->mj_InnerTupleSlot = innerTupleSlot;
@@ -963,8 +960,17 @@ ExecMergeJoin(MergeJoinState *node)
 					break;
 				}
 
+				/*
+				 * Load up the new inner tuple's comparison values.  If we
+				 * see that it contains a NULL and hence can't match any
+				 * outer tuple, we can skip the comparison and assume the
+				 * new tuple is greater than current outer.
+				 */
 				if (!MJEvalInnerValues(node, innerTupleSlot))
-					break;		/* stay in NEXTINNER state */
+				{
+					node->mj_JoinState = EXEC_MJ_NEXTOUTER;
+					break;
+				}
 
 				/*
 				 * Test the new inner tuple to see if it matches outer.
@@ -1054,15 +1060,15 @@ ExecMergeJoin(MergeJoinState *node)
 				}
 
 				/* Compute join values and check for unmatchability */
-				if (!MJEvalOuterValues(node))
+				if (MJEvalOuterValues(node))
 				{
-					/* Stay in same state to fetch next outer tuple */
-					node->mj_JoinState = EXEC_MJ_NEXTOUTER;
+					/* Go test the new tuple against the marked tuple */
+					node->mj_JoinState = EXEC_MJ_TESTOUTER;
 				}
 				else
 				{
-					/* Go test the tuple */
-					node->mj_JoinState = EXEC_MJ_TESTOUTER;
+					/* Can't match, so fetch next outer tuple */
+					node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 				}
 				break;
 
@@ -1071,7 +1077,7 @@ ExecMergeJoin(MergeJoinState *node)
 				 * tuple satisfy the merge clause then we know we have
 				 * duplicates in the outer scan so we have to restore the
 				 * inner scan to the marked tuple and proceed to join the
-				 * new outer tuples with the inner tuples.
+				 * new outer tuple with the inner tuples.
 				 *
 				 * This is the case when
 				 *						  outer inner
@@ -1105,8 +1111,9 @@ ExecMergeJoin(MergeJoinState *node)
 				MJ_printf("ExecMergeJoin: EXEC_MJ_TESTOUTER\n");
 
 				/*
-				 * here we must compare the outer tuple with the marked inner
-				 * tuple
+				 * Here we must compare the outer tuple with the marked inner
+				 * tuple.  (We can ignore the result of MJEvalInnerValues,
+				 * since the marked inner tuple is certainly matchable.)
 				 */
 				innerTupleSlot = node->mj_MarkedTupleSlot;
 				(void) MJEvalInnerValues(node, innerTupleSlot);
@@ -1179,10 +1186,19 @@ ExecMergeJoin(MergeJoinState *node)
 					}
 
 					/* reload comparison data for current inner */
-					(void) MJEvalInnerValues(node, innerTupleSlot);
-
-					/* continue on to skip outer tuples */
-					node->mj_JoinState = EXEC_MJ_SKIP_TEST;
+					if (MJEvalInnerValues(node, innerTupleSlot))
+					{
+						/* proceed to compare it to the current outer */
+						node->mj_JoinState = EXEC_MJ_SKIP_TEST;
+					}
+					else
+					{
+						/*
+						 * current inner can't possibly match any outer;
+						 * better to advance the inner scan than the outer.
+						 */
+						node->mj_JoinState = EXEC_MJ_SKIPINNER_ADVANCE;
+					}
 				}
 				break;
 
@@ -1293,15 +1309,16 @@ ExecMergeJoin(MergeJoinState *node)
 				}
 
 				/* Compute join values and check for unmatchability */
-				if (!MJEvalOuterValues(node))
+				if (MJEvalOuterValues(node))
 				{
-					/* Stay in same state to fetch next outer tuple */
-					node->mj_JoinState = EXEC_MJ_SKIPOUTER_ADVANCE;
-					break;
+					/* Go test the new tuple against the current inner */
+					node->mj_JoinState = EXEC_MJ_SKIP_TEST;
 				}
-
-				/* Test the new tuple against the current inner */
-				node->mj_JoinState = EXEC_MJ_SKIP_TEST;
+				else
+				{
+					/* Can't match, so fetch next outer tuple */
+					node->mj_JoinState = EXEC_MJ_SKIPOUTER_ADVANCE;
+				}
 				break;
 
 				/*
@@ -1356,15 +1373,19 @@ ExecMergeJoin(MergeJoinState *node)
 				}
 
 				/* Compute join values and check for unmatchability */
-				if (!MJEvalInnerValues(node, innerTupleSlot))
+				if (MJEvalInnerValues(node, innerTupleSlot))
 				{
-					/* Stay in same state to fetch next inner tuple */
-					node->mj_JoinState = EXEC_MJ_SKIPINNER_ADVANCE;
-					break;
+					/* proceed to compare it to the current outer */
+					node->mj_JoinState = EXEC_MJ_SKIP_TEST;
 				}
-
-				/* Test the new tuple against the current outer */
-				node->mj_JoinState = EXEC_MJ_SKIP_TEST;
+				else
+				{
+					/*
+					 * current inner can't possibly match any outer;
+					 * better to advance the inner scan than the outer.
+					 */
+					node->mj_JoinState = EXEC_MJ_SKIPINNER_ADVANCE;
+				}
 				break;
 
 				/*
