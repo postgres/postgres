@@ -1993,6 +1993,10 @@ Tu Feb  7 18:48:14 CET 2006
 
 	- Bit field notation belongs to a variable not a variable list.
 	- Output of line number only done by one function.
+
+Fri, 17 Mar 2006 16:38:19 +0100
+
+	- Fixed bug 2330: Wrong error code in case of a duplicate key
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 
