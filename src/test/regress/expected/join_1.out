@@ -2182,3 +2182,31 @@ SELECT * FROM t3;
 ---+---
 (0 rows)
 
+--
+-- regression test for 8.1 merge right join bug
+--
+CREATE TEMP TABLE tt1 ( tt1_id int4, joincol int4 );
+INSERT INTO tt1 VALUES (1, 11);
+INSERT INTO tt1 VALUES (2, NULL);
+CREATE TEMP TABLE tt2 ( tt2_id int4, joincol int4 );
+INSERT INTO tt2 VALUES (21, 11);
+INSERT INTO tt2 VALUES (22, 11);
+set enable_hashjoin to off;
+set enable_nestloop to off;
+-- these should give the same results
+select tt1.*, tt2.* from tt1 left join tt2 on tt1.joincol = tt2.joincol;
+ tt1_id | joincol | tt2_id | joincol 
+--------+---------+--------+---------
+      1 |      11 |     21 |      11
+      1 |      11 |     22 |      11
+      2 |         |        |        
+(3 rows)
+
+select tt1.*, tt2.* from tt2 right join tt1 on tt1.joincol = tt2.joincol;
+ tt1_id | joincol | tt2_id | joincol 
+--------+---------+--------+---------
+      1 |      11 |     21 |      11
+      1 |      11 |     22 |      11
+      2 |         |        |        
+(3 rows)
+
