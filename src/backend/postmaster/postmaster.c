@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.347.2.2 2004/02/23 20:46:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.347.2.3 2006/03/18 22:10:44 neilc Exp $
  *
  * NOTES
  *
@@ -782,7 +782,7 @@ PostmasterMain(int argc, char *argv[])
 			DNSServiceRegistrationCreate(rendezvous_name,
 										 "_postgresql._tcp.",
 										 "",
-										 htonl(PostPortNumber),
+										 htons(PostPortNumber),
 										 "",
 								 (DNSServiceRegistrationReply) reg_reply,
 										 NULL);
