@@ -2197,16 +2197,16 @@ set enable_nestloop to off;
 select tt1.*, tt2.* from tt1 left join tt2 on tt1.joincol = tt2.joincol;
  tt1_id | joincol | tt2_id | joincol 
 --------+---------+--------+---------
-      1 |      11 |     21 |      11
       1 |      11 |     22 |      11
+      1 |      11 |     21 |      11
       2 |         |        |        
 (3 rows)
 
 select tt1.*, tt2.* from tt2 right join tt1 on tt1.joincol = tt2.joincol;
  tt1_id | joincol | tt2_id | joincol 
 --------+---------+--------+---------
-      1 |      11 |     21 |      11
       1 |      11 |     22 |      11
+      1 |      11 |     21 |      11
       2 |         |        |        
 (3 rows)
 
