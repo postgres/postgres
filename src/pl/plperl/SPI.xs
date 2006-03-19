@@ -151,8 +151,6 @@ spi_spi_prepare(query, ...)
 		if (items < 1) 
 			Perl_croak(aTHX_ "Usage: spi_prepare(query, ...)");
 		argv = ( SV**) palloc(( items - 1) * sizeof(SV*));
-		if ( argv == NULL) 
-			Perl_croak(aTHX_ "spi_prepare: not enough memory");
 		for ( i = 1; i < items; i++) 
 			argv[i - 1] = ST(i);
 		RETVAL = plperl_spi_prepare(query, items - 1, argv);
@@ -179,8 +177,6 @@ spi_spi_exec_prepared(query, ...)
 		}
 		argc = items - offset;
 		argv = ( SV**) palloc( argc * sizeof(SV*));
-		if ( argv == NULL) 
-			Perl_croak(aTHX_ "spi_exec_prepared: not enough memory");
 		for ( i = 0; offset < items; offset++, i++) 
 			argv[i] = ST(offset);
 		ret_hash = plperl_spi_exec_prepared(query, attr, argc, argv);
@@ -199,8 +195,6 @@ spi_spi_query_prepared(query, ...)
 			Perl_croak(aTHX_ "Usage: spi_query_prepared(query, "
 					   "[\\@bind_values])");
 		argv = ( SV**) palloc(( items - 1) * sizeof(SV*));
-		if ( argv == NULL) 
-			Perl_croak(aTHX_ "spi_query_prepared: not enough memory");
 		for ( i = 1; i < items; i++) 
 			argv[i - 1] = ST(i);
 		RETVAL = plperl_spi_query_prepared(query, items - 1, argv);

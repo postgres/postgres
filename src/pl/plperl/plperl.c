@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.106 2006/03/14 22:48:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.107 2006/03/19 22:22:56 neilc Exp $
  *
  **********************************************************************/
 
@@ -2122,8 +2122,6 @@ plperl_spi_exec_prepared(char* query, HV * attr, int argc, SV ** argv)
 		{
 			nulls = (char *)palloc( argc);
 			argvalues = (Datum *) palloc(argc * sizeof(Datum));
-			if ( nulls == NULL || argvalues == NULL) 
-				elog(ERROR, "spi_exec_prepared: not enough memory");
 		} 
 		else 
 		{
@@ -2253,8 +2251,6 @@ plperl_spi_query_prepared(char* query, int argc, SV ** argv)
 		{
 			nulls = (char *)palloc( argc);
 			argvalues = (Datum *) palloc(argc * sizeof(Datum));
-			if ( nulls == NULL || argvalues == NULL) 
-				elog(ERROR, "spi_query_prepared: not enough memory");
 		} 
 		else 
 		{

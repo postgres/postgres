@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.66 2005/10/15 02:49:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.67 2006/03/19 22:22:56 neilc Exp $
  */
 
 #include "postgres.h"
@@ -291,10 +291,7 @@ cash_out(PG_FUNCTION_ARGS)
 	/* see if we need to signify negative amount */
 	if (minus)
 	{
-		if (!PointerIsValid(result = palloc(CASH_BUFSZ + 2 - count + strlen(nsymbol))))
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
+		result = palloc(CASH_BUFSZ + 2 - count + strlen(nsymbol));
 
 		/* Position code of 0 means use parens */
 		if (convention == 0)
@@ -306,11 +303,7 @@ cash_out(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		if (!PointerIsValid(result = palloc(CASH_BUFSZ + 2 - count)))
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-
+		result = palloc(CASH_BUFSZ + 2 - count);
 		strcpy(result, buf + count);
 	}
 
