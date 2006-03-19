@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.10 2003/11/29 19:52:08 pgsql Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.10.4.1 2006/03/19 12:30:17 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -186,7 +186,7 @@ ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat)
 	/* assign SQLCODE for backward compatibility */
 	if (strncmp(sqlca->sqlstate, "23505", sizeof(sqlca->sqlstate)) == 0)
 		sqlca->sqlcode = INFORMIX_MODE(compat) ? ECPG_INFORMIX_DUPLICATE_KEY : ECPG_DUPLICATE_KEY;
-	if (strncmp(sqlca->sqlstate, "21000", sizeof(sqlca->sqlstate)) == 0)
+	else if (strncmp(sqlca->sqlstate, "21000", sizeof(sqlca->sqlstate)) == 0)
 		sqlca->sqlcode = INFORMIX_MODE(compat) ? ECPG_INFORMIX_SUBSELECT_NOT_ONE : ECPG_SUBSELECT_NOT_ONE;
 	else
 		sqlca->sqlcode = ECPG_PGSQL;
