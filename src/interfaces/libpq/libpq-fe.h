@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.125 2006/03/05 15:59:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.126 2006/03/20 15:07:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ typedef struct pg_cancel PGcancel;
 typedef struct pgNotify
 {
 	char	   *relname;		/* notification condition name */
-	int			be_pid;			/* process ID of server process */
+	int			be_pid;			/* process ID of notifying server process */
 	char	   *extra;			/* notification parameter */
 	/* Fields below here are private to libpq; apps should not use 'em */
 	struct pgNotify *next;		/* list link */
