@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.73 2006/03/06 15:09:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.74 2006/03/21 13:38:12 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -112,7 +112,7 @@ MainLoop(FILE *source)
 			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
 			if (pset.cur_cmd_interactive)
-				pg_clear_history(history_buf);			
+				pg_write_history(history_buf->data);
 
 			if (pset.cur_cmd_interactive)
 				putc('\n', stdout);
@@ -321,7 +321,8 @@ MainLoop(FILE *source)
 				break;
 		}
 
-		if (pset.cur_cmd_interactive && prompt_status != PROMPT_CONTINUE)
+		if ((pset.cur_cmd_interactive && prompt_status == PROMPT_READY) ||
+			(GetVariableBool(pset.vars, "SINGLELINE") && prompt_status == PROMPT_CONTINUE))
 		{
 			/*
 			 *	Pass all the contents of history_buf to readline
