@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.113 2006/03/05 15:58:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.114 2006/03/21 17:54:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,7 +178,6 @@ static void unlimit_systables(void);
 static void setup_depend(void);
 static void setup_sysviews(void);
 static void setup_description(void);
-static void setup_shared_description(void);
 static void setup_conversion(void);
 static void setup_privileges(void);
 static void set_info_version(void);
@@ -1725,7 +1724,7 @@ setup_description(void)
 {
 	PG_CMD_DECL;
 
-	fputs(_("loading pg_description ... "), stdout);
+	fputs(_("loading system objects' descriptions ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1749,41 +1748,18 @@ setup_description(void)
 				"  FROM tmp_pg_description t, pg_class c "
 				"    WHERE c.relname = t.classname;\n");
 
-	PG_CMD_CLOSE;
-
-	check_ok();
-}
-
-/*
- * load shared description data
- */
-static void
-setup_shared_description(void)
-{
-	PG_CMD_DECL;
-
-	fputs(_("loading pg_shdescription ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			"\"%s\" %s template1 >%s",
-			backend_exec, backend_options,
-			DEVNULL);
-
-	PG_CMD_OPEN;
-
 	PG_CMD_PUTS("CREATE TEMP TABLE tmp_pg_shdescription ( "
-			" objoid oid, "
-			" classname name, "
-			" description text) WITHOUT OIDS;\n");
+				" objoid oid, "
+				" classname name, "
+				" description text) WITHOUT OIDS;\n");
 
 	PG_CMD_PRINTF1("COPY tmp_pg_shdescription FROM '%s';\n",
-			shdesc_file);
+				   shdesc_file);
 
 	PG_CMD_PUTS("INSERT INTO pg_shdescription "
-			" SELECT t.objoid, c.oid, t.description "
-			"  FROM tmp_pg_shdescription t, pg_class c "
-			"   WHERE c.relname = t.classname;\n");
+				" SELECT t.objoid, c.oid, t.description "
+				"  FROM tmp_pg_shdescription t, pg_class c "
+				"   WHERE c.relname = t.classname;\n");
 
 	PG_CMD_CLOSE;
 
@@ -2959,8 +2935,6 @@ main(int argc, char *argv[])
 	setup_sysviews();
 
 	setup_description();
-
-	setup_shared_description();
 
 	setup_conversion();
 
