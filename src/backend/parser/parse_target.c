@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.141 2006/03/14 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.142 2006/03/23 00:19:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,8 @@ static Node *transformAssignmentIndirection(ParseState *pstate,
 							   Oid targetTypeId,
 							   int32 targetTypMod,
 							   ListCell *indirection,
-							   Node *rhs);
+							   Node *rhs,
+							   int location);
 static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref);
 static List *ExpandAllTables(ParseState *pstate);
 static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind);
@@ -247,13 +248,15 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
  * colname		target column name (ie, name of attribute to be assigned to)
  * attrno		target attribute number
  * indirection	subscripts/field names for target column, if any
+ * location		error cursor position (should point at column name), or -1
  */
 void
 updateTargetListEntry(ParseState *pstate,
 					  TargetEntry *tle,
 					  char *colname,
 					  int attrno,
-					  List *indirection)
+					  List *indirection,
+					  int location)
 {
 	Oid			type_id;		/* type of value provided */
 	Oid			attrtype;		/* type of target column */
@@ -265,7 +268,8 @@ updateTargetListEntry(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot assign to system column \"%s\"",
-						colname)));
+						colname),
+				 parser_errposition(pstate, location)));
 	attrtype = attnumTypeId(rd, attrno);
 	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
 
@@ -288,11 +292,13 @@ updateTargetListEntry(ParseState *pstate,
 			if (IsA(linitial(indirection), A_Indices))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot set an array element to DEFAULT")));
+						 errmsg("cannot set an array element to DEFAULT"),
+						 parser_errposition(pstate, location)));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot set a subfield to DEFAULT")));
+						 errmsg("cannot set a subfield to DEFAULT"),
+						 parser_errposition(pstate, location)));
 		}
 	}
 
@@ -336,7 +342,8 @@ updateTargetListEntry(ParseState *pstate,
 										   attrtype,
 										   attrtypmod,
 										   list_head(indirection),
-										   (Node *) tle->expr);
+										   (Node *) tle->expr,
+										   location);
 	}
 	else
 	{
@@ -358,7 +365,8 @@ updateTargetListEntry(ParseState *pstate,
 							colname,
 							format_type_be(attrtype),
 							format_type_be(type_id)),
-			   errhint("You will need to rewrite or cast the expression.")));
+					 errhint("You will need to rewrite or cast the expression."),
+					 parser_errposition(pstate, location)));
 	}
 
 	/*
@@ -395,6 +403,11 @@ updateTargetListEntry(ParseState *pstate,
  *
  * rhs is the already-transformed value to be assigned; note it has not been
  * coerced to any particular type.
+ *
+ * location is the cursor error position for any errors.  (Note: this points
+ * to the head of the target clause, eg "foo" in "foo.bar[baz]".  Later we
+ * might want to decorate indirection cells with their own location info,
+ * in which case the location argument could probably be dropped.)
  */
 static Node *
 transformAssignmentIndirection(ParseState *pstate,
@@ -404,7 +417,8 @@ transformAssignmentIndirection(ParseState *pstate,
 							   Oid targetTypeId,
 							   int32 targetTypMod,
 							   ListCell *indirection,
-							   Node *rhs)
+							   Node *rhs,
+							   int location)
 {
 	Node	   *result;
 	List	   *subscripts = NIL;
@@ -460,7 +474,8 @@ transformAssignmentIndirection(ParseState *pstate,
 													 typeNeeded,
 													 targetTypMod,
 													 i,
-													 rhs);
+													 rhs,
+													 location);
 				/* process subscripts */
 				return (Node *) transformArraySubscripts(pstate,
 														 basenode,
@@ -479,7 +494,8 @@ transformAssignmentIndirection(ParseState *pstate,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("cannot assign to field \"%s\" of column \"%s\" because its type %s is not a composite type",
 								strVal(n), targetName,
-								format_type_be(targetTypeId))));
+								format_type_be(targetTypeId)),
+						 parser_errposition(pstate, location)));
 
 			attnum = get_attnum(typrelid, strVal(n));
 			if (attnum == InvalidAttrNumber)
@@ -487,12 +503,14 @@ transformAssignmentIndirection(ParseState *pstate,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("cannot assign to field \"%s\" of column \"%s\" because there is no such column in data type %s",
 								strVal(n), targetName,
-								format_type_be(targetTypeId))));
+								format_type_be(targetTypeId)),
+						 parser_errposition(pstate, location)));
 			if (attnum < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("cannot assign to system column \"%s\"",
-								strVal(n))));
+								strVal(n)),
+						 parser_errposition(pstate, location)));
 
 			get_atttypetypmod(typrelid, attnum,
 							  &fieldTypeId, &fieldTypMod);
@@ -505,7 +523,8 @@ transformAssignmentIndirection(ParseState *pstate,
 												 fieldTypeId,
 												 fieldTypMod,
 												 lnext(i),
-												 rhs);
+												 rhs,
+												 location);
 
 			/* and build a FieldStore node */
 			fstore = makeNode(FieldStore);
@@ -532,7 +551,8 @@ transformAssignmentIndirection(ParseState *pstate,
 											 typeNeeded,
 											 targetTypMod,
 											 NULL,
-											 rhs);
+											 rhs,
+											 location);
 		/* process subscripts */
 		return (Node *) transformArraySubscripts(pstate,
 												 basenode,
@@ -560,7 +580,8 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-			   errhint("You will need to rewrite or cast the expression.")));
+					 errhint("You will need to rewrite or cast the expression."),
+					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -569,7 +590,8 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-			   errhint("You will need to rewrite or cast the expression.")));
+					 errhint("You will need to rewrite or cast the expression."),
+					 parser_errposition(pstate, location)));
 	}
 
 	return result;
@@ -607,6 +629,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			col->name = pstrdup(NameStr(attr[i]->attname));
 			col->indirection = NIL;
 			col->val = NULL;
+			col->location = -1;
 			cols = lappend(cols, col);
 			*attrnos = lappend_int(*attrnos, i + 1);
 		}
@@ -628,6 +651,13 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 			/* Lookup column name, ereport on failure */
 			attrno = attnameAttNum(pstate->p_target_relation, name, false);
+			if (attrno == InvalidAttrNumber)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation)),
+						 parser_errposition(pstate, col->location)));
 
 			/*
 			 * Check for duplicates, but only of whole columns --- we allow
@@ -641,7 +671,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
 							 errmsg("column \"%s\" specified more than once",
-									name)));
+									name),
+							 parser_errposition(pstate, col->location)));
 				wholecols = bms_add_member(wholecols, attrno);
 			}
 			else
@@ -651,7 +682,8 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_COLUMN),
 							 errmsg("column \"%s\" specified more than once",
-									name)));
+									name),
+							 parser_errposition(pstate, col->location)));
 				partialcols = bms_add_member(partialcols, attrno);
 			}
 

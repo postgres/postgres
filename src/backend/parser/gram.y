@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.536 2006/03/14 23:03:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.537 2006/03/23 00:19:29 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5187,6 +5187,7 @@ insert_column_item:
 					$$->name = $1;
 					$$->indirection = $2;
 					$$->val = NULL;
+					$$->location = @1;
 				}
 		;
 
@@ -7918,6 +7919,7 @@ target_el:	a_expr AS ColLabel
 					$$->name = $3;
 					$$->indirection = NIL;
 					$$->val = (Node *)$1;
+					$$->location = @1;
 				}
 			| a_expr
 				{
@@ -7925,6 +7927,7 @@ target_el:	a_expr AS ColLabel
 					$$->name = NULL;
 					$$->indirection = NIL;
 					$$->val = (Node *)$1;
+					$$->location = @1;
 				}
 			| '*'
 				{
@@ -7936,6 +7939,7 @@ target_el:	a_expr AS ColLabel
 					$$->name = NULL;
 					$$->indirection = NIL;
 					$$->val = (Node *)n;
+					$$->location = @1;
 				}
 		;
 
@@ -7951,6 +7955,7 @@ update_target_el:
 					$$->name = $1;
 					$$->indirection = $2;
 					$$->val = (Node *) $4;
+					$$->location = @1;
 				}
 			| ColId opt_indirection '=' DEFAULT
 				{
@@ -7958,6 +7963,7 @@ update_target_el:
 					$$->name = $1;
 					$$->indirection = $2;
 					$$->val = (Node *) makeNode(SetToDefault);
+					$$->location = @1;
 				}
 
 		;
@@ -7974,6 +7980,7 @@ insert_target_el:
 					$$->name = NULL;
 					$$->indirection = NIL;
 					$$->val = (Node *)$1;
+					$$->location = @1;
 				}
 			| DEFAULT
 				{
@@ -7981,6 +7988,7 @@ insert_target_el:
 					$$->name = NULL;
 					$$->indirection = NIL;
 					$$->val = (Node *) makeNode(SetToDefault);
+					$$->location = @1;
 				}
 		;
 

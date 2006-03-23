@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.267 2006/03/16 00:31:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.268 2006/03/23 00:19:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1608,6 +1608,7 @@ _equalResTarget(ResTarget *a, ResTarget *b)
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(indirection);
 	COMPARE_NODE_FIELD(val);
+	COMPARE_SCALAR_FIELD(location);
 
 	return true;
 }

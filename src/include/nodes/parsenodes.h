@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.305 2006/03/16 00:31:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.306 2006/03/23 00:19:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,6 +327,7 @@ typedef struct ResTarget
 	char	   *name;			/* column name or NULL */
 	List	   *indirection;	/* subscripts and field names, or NIL */
 	Node	   *val;			/* the value expression to compute or assign */
+	int			location;		/* token location, or -1 if unknown */
 } ResTarget;
 
 /*

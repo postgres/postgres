@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.121 2006/03/16 00:31:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.122 2006/03/23 00:19:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1703,7 +1703,9 @@ get_tle_by_resno(List *tlist, AttrNumber resno)
 }
 
 /*
- *	given relation and att name, return id of variable
+ *	given relation and att name, return attnum of variable
+ *
+ *	Returns InvalidAttrNumber if the attr doesn't exist (or is dropped).
  *
  *	This should only be used if the relation is already
  *	heap_open()'ed.  Use the cache version get_attnum()
@@ -1732,11 +1734,7 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 	}
 
 	/* on failure */
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("column \"%s\" of relation \"%s\" does not exist",
-					attname, RelationGetRelationName(rd))));
-	return InvalidAttrNumber;	/* keep compiler quiet */
+	return InvalidAttrNumber;
 }
 
 /* specialAttNum()

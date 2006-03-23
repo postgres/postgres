@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.260 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.261 2006/03/23 00:19:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3109,9 +3109,14 @@ CopyGetAttnums(Relation rel, List *attnamelist)
 			char	   *name = strVal(lfirst(l));
 			int			attnum;
 
-			/* Lookup column name, ereport on failure */
+			/* Lookup column name */
 			/* Note we disallow system columns here */
 			attnum = attnameAttNum(rel, name, false);
+			if (attnum == InvalidAttrNumber)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name, RelationGetRelationName(rel))));
 			/* Check for duplicates */
 			if (list_member_int(attnums, attnum))
 				ereport(ERROR,

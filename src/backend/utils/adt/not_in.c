@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/not_in.c,v 1.44 2006/03/05 15:58:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/not_in.c,v 1.45 2006/03/23 00:19:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,12 @@ int4notin(PG_FUNCTION_ARGS)
 
 	/* Find the column to search */
 	attrid = attnameAttNum(relation_to_scan, attribute, true);
+	if (attrid == InvalidAttrNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						attribute,
+						RelationGetRelationName(relation_to_scan))));
 
 	scan_descriptor = heap_beginscan(relation_to_scan, SnapshotNow,
 									 0, (ScanKey) NULL);

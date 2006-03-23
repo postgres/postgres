@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.331 2006/03/14 22:48:20 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.332 2006/03/23 00:19:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -700,7 +700,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 
 		Assert(!tle->resjunk);
 		updateTargetListEntry(pstate, tle, col->name, lfirst_int(attnos),
-							  col->indirection);
+							  col->indirection, col->location);
 
 		icols = lnext(icols);
 		attnos = lnext(attnos);
@@ -2360,6 +2360,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 		ResTarget  *origTarget;
+		int		attrno;
 
 		if (tle->resjunk)
 		{
@@ -2378,10 +2379,20 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		origTarget = (ResTarget *) lfirst(origTargetList);
 		Assert(IsA(origTarget, ResTarget));
 
+		attrno = attnameAttNum(pstate->p_target_relation,
+							   origTarget->name, true);
+		if (attrno == InvalidAttrNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							origTarget->name,
+							RelationGetRelationName(pstate->p_target_relation)),
+					 parser_errposition(pstate, origTarget->location)));
+
 		updateTargetListEntry(pstate, tle, origTarget->name,
-							  attnameAttNum(pstate->p_target_relation,
-											origTarget->name, true),
-							  origTarget->indirection);
+							  attrno,
+							  origTarget->indirection,
+							  origTarget->location);
 
 		origTargetList = lnext(origTargetList);
 	}

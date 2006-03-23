@@ -677,12 +677,16 @@ LINE 1: select * from atacc1 where "........pg.dropped.1........" = ...
 -- UPDATEs
 update atacc1 set a = 3;
 ERROR:  column "a" of relation "atacc1" does not exist
+LINE 1: update atacc1 set a = 3;
+                          ^
 update atacc1 set b = 2 where a = 3;
 ERROR:  column "a" does not exist
 LINE 1: update atacc1 set b = 2 where a = 3;
                                       ^
 update atacc1 set "........pg.dropped.1........" = 3;
 ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
+LINE 1: update atacc1 set "........pg.dropped.1........" = 3;
+                          ^
 update atacc1 set b = 2 where "........pg.dropped.1........" = 3;
 ERROR:  column "........pg.dropped.1........" does not exist
 LINE 1: update atacc1 set b = 2 where "........pg.dropped.1........"...
@@ -695,21 +699,37 @@ ERROR:  INSERT has more expressions than target columns
 insert into atacc1 values (11, 12, 13);
 insert into atacc1 (a) values (10);
 ERROR:  column "a" of relation "atacc1" does not exist
+LINE 1: insert into atacc1 (a) values (10);
+                            ^
 insert into atacc1 (a) values (default);
 ERROR:  column "a" of relation "atacc1" does not exist
+LINE 1: insert into atacc1 (a) values (default);
+                            ^
 insert into atacc1 (a,b,c,d) values (10,11,12,13);
 ERROR:  column "a" of relation "atacc1" does not exist
+LINE 1: insert into atacc1 (a,b,c,d) values (10,11,12,13);
+                            ^
 insert into atacc1 (a,b,c,d) values (default,11,12,13);
 ERROR:  column "a" of relation "atacc1" does not exist
+LINE 1: insert into atacc1 (a,b,c,d) values (default,11,12,13);
+                            ^
 insert into atacc1 (b,c,d) values (11,12,13);
 insert into atacc1 ("........pg.dropped.1........") values (10);
 ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
+LINE 1: insert into atacc1 ("........pg.dropped.1........") values (...
+                            ^
 insert into atacc1 ("........pg.dropped.1........") values (default);
 ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
+LINE 1: insert into atacc1 ("........pg.dropped.1........") values (...
+                            ^
 insert into atacc1 ("........pg.dropped.1........",b,c,d) values (10,11,12,13);
 ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
+LINE 1: insert into atacc1 ("........pg.dropped.1........",b,c,d) va...
+                            ^
 insert into atacc1 ("........pg.dropped.1........",b,c,d) values (default,11,12,13);
 ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
+LINE 1: insert into atacc1 ("........pg.dropped.1........",b,c,d) va...
+                            ^
 -- DELETEs
 delete from atacc1 where a = 3;
 ERROR:  column "a" does not exist
