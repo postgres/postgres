@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.87 2006/03/09 21:29:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.88 2006/03/23 04:22:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1714,6 +1714,44 @@ lno				:
 %%
 
 
+#define MAX_EXPR_PARAMS  1024
+
+/*
+ * determine the expression parameter position to use for a plpgsql datum
+ *
+ * It is important that any given plpgsql datum map to just one parameter.
+ * We used to be sloppy and assign a separate parameter for each occurrence
+ * of a datum reference, but that fails for situations such as "select DATUM
+ * from ... group by DATUM".
+ *
+ * The params[] array must be of size MAX_EXPR_PARAMS.
+ */
+static int
+assign_expr_param(int dno, int *params, int *nparams)
+{
+	int		i;
+
+	/* already have an instance of this dno? */
+	for (i = 0; i < *nparams; i++)
+	{
+		if (params[i] == dno)
+			return i+1;
+	}
+	/* check for array overflow */
+	if (*nparams >= MAX_EXPR_PARAMS)
+	{
+		plpgsql_error_lineno = plpgsql_scanner_lineno();
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("too many variables specified in SQL statement")));
+	}
+	/* add new parameter dno to array */
+	params[*nparams] = dno;
+	(*nparams)++;
+	return *nparams;
+}
+
+
 PLpgSQL_expr *
 plpgsql_read_expression(int until, const char *expected)
 {
@@ -1752,7 +1790,7 @@ read_sql_construct(int until,
 	PLpgSQL_dstring		ds;
 	int					parenlevel = 0;
 	int					nparams = 0;
-	int					params[1024];
+	int					params[MAX_EXPR_PARAMS];
 	char				buf[32];
 	PLpgSQL_expr		*expr;
 
@@ -1804,32 +1842,26 @@ read_sql_construct(int until,
 		if (plpgsql_SpaceScanned)
 			plpgsql_dstring_append(&ds, " ");
 
-		/* Check for array overflow */
-		if (nparams >= 1024)
-		{
-			plpgsql_error_lineno = lno;
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("too many variables specified in SQL statement")));
-		}
-
 		switch (tok)
 		{
 			case T_SCALAR:
-				params[nparams] = yylval.scalar->dno;
-				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				snprintf(buf, sizeof(buf), " $%d ",
+						 assign_expr_param(yylval.scalar->dno,
+										   params, &nparams));
 				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			case T_ROW:
-				params[nparams] = yylval.row->rowno;
-				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				snprintf(buf, sizeof(buf), " $%d ",
+						 assign_expr_param(yylval.row->rowno,
+										   params, &nparams));
 				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			case T_RECORD:
-				params[nparams] = yylval.rec->recno;
-				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				snprintf(buf, sizeof(buf), " $%d ",
+						 assign_expr_param(yylval.rec->recno,
+										   params, &nparams));
 				plpgsql_dstring_append(&ds, buf);
 				break;
 
@@ -1927,7 +1959,7 @@ make_select_stmt(void)
 {
 	PLpgSQL_dstring		ds;
 	int					nparams = 0;
-	int					params[1024];
+	int					params[MAX_EXPR_PARAMS];
 	char				buf[32];
 	PLpgSQL_expr		*expr;
 	PLpgSQL_row			*row = NULL;
@@ -1992,32 +2024,26 @@ make_select_stmt(void)
 		if (plpgsql_SpaceScanned)
 			plpgsql_dstring_append(&ds, " ");
 
-		/* Check for array overflow */
-		if (nparams >= 1024)
-		{
-			plpgsql_error_lineno = plpgsql_scanner_lineno();
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("too many parameters specified in SQL statement")));
-		}
-
 		switch (tok)
 		{
 			case T_SCALAR:
-				params[nparams] = yylval.scalar->dno;
-				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				snprintf(buf, sizeof(buf), " $%d ",
+						 assign_expr_param(yylval.scalar->dno,
+										   params, &nparams));
 				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			case T_ROW:
-				params[nparams] = yylval.row->rowno;
-				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				snprintf(buf, sizeof(buf), " $%d ",
+						 assign_expr_param(yylval.row->rowno,
+										   params, &nparams));
 				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			case T_RECORD:
-				params[nparams] = yylval.rec->recno;
-				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				snprintf(buf, sizeof(buf), " $%d ",
+						 assign_expr_param(yylval.rec->recno,
+										   params, &nparams));
 				plpgsql_dstring_append(&ds, buf);
 				break;
 

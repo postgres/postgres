@@ -2309,3 +2309,18 @@ end;
 $proc$ language plpgsql;
 
 select for_vect();
+
+-- regression test: verify that multiple uses of same plpgsql datum within
+-- a SQL command all get mapped to the same $n parameter.  The return value
+-- of the SELECT is not important, we only care that it doesn't fail with
+-- a complaint about an ungrouped column reference.
+create function multi_datum_use(p1 int) returns bool as $$
+declare
+  x int;
+  y int;
+begin
+  select into x,y unique1/p1, unique1/$1 from tenk1 group by unique1/p1;
+  return x = y;
+end$$ language plpgsql;
+
+select multi_datum_use(42);
