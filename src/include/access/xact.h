@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.80 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.81 2006/03/24 04:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,6 +175,6 @@ extern void RecordTransactionCommit(void);
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern void xact_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void xact_desc(char *buf, uint8 xl_info, char *rec);
+extern void xact_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 #endif   /* XACT_H */

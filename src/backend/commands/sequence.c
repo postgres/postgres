@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.129 2006/03/14 22:48:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.130 2006/03/24 04:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1170,19 +1170,19 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-seq_desc(char *buf, uint8 xl_info, char *rec)
+seq_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 	xl_seq_rec *xlrec = (xl_seq_rec *) rec;
 
 	if (info == XLOG_SEQ_LOG)
-		strcat(buf, "log: ");
+		appendStringInfo(buf, "log: ");
 	else
 	{
-		strcat(buf, "UNKNOWN");
+		appendStringInfo(buf, "UNKNOWN");
 		return;
 	}
 
-	sprintf(buf + strlen(buf), "rel %u/%u/%u",
+	appendStringInfo(buf, "rel %u/%u/%u",
 			xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
 }

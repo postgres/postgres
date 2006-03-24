@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.31 2006/03/05 15:58:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.32 2006/03/24 04:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1042,7 +1042,7 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-tblspc_desc(char *buf, uint8 xl_info, char *rec)
+tblspc_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 
@@ -1050,16 +1050,15 @@ tblspc_desc(char *buf, uint8 xl_info, char *rec)
 	{
 		xl_tblspc_create_rec *xlrec = (xl_tblspc_create_rec *) rec;
 
-		sprintf(buf + strlen(buf), "create ts: %u \"%s\"",
+		appendStringInfo(buf, "create ts: %u \"%s\"",
 				xlrec->ts_id, xlrec->ts_path);
 	}
 	else if (info == XLOG_TBLSPC_DROP)
 	{
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) rec;
 
-		sprintf(buf + strlen(buf), "drop ts: %u",
-				xlrec->ts_id);
+		appendStringInfo(buf, "drop ts: %u", xlrec->ts_id);
 	}
 	else
-		strcat(buf, "UNKNOWN");
+		appendStringInfo(buf, "UNKNOWN");
 }

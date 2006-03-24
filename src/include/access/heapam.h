@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.106 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.107 2006/03/24 04:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,7 +178,7 @@ extern void heap_markpos(HeapScanDesc scan);
 extern void heap_restrpos(HeapScanDesc scan);
 
 extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_desc(char *buf, uint8 xl_info, char *rec);
+extern void heap_desc(StringInfo buf, uint8 xl_info, char *rec);
 extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 			   OffsetNumber *unused, int uncnt);
 extern XLogRecPtr log_heap_move(Relation reln, Buffer oldbuf,

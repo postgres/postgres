@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.217 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.218 2006/03/24 04:32:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4179,22 +4179,22 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-xact_desc_commit(char *buf, xl_xact_commit *xlrec)
+xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 {
 	struct tm  *tm = localtime(&xlrec->xtime);
 	int			i;
 
-	sprintf(buf + strlen(buf), "%04u-%02u-%02u %02u:%02u:%02u",
+	appendStringInfo(buf, "%04u-%02u-%02u %02u:%02u:%02u",
 			tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 			tm->tm_hour, tm->tm_min, tm->tm_sec);
 	if (xlrec->nrels > 0)
 	{
-		sprintf(buf + strlen(buf), "; rels:");
+		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
 			RelFileNode rnode = xlrec->xnodes[i];
 
-			sprintf(buf + strlen(buf), " %u/%u/%u",
+			appendStringInfo(buf, " %u/%u/%u",
 					rnode.spcNode, rnode.dbNode, rnode.relNode);
 		}
 	}
@@ -4203,29 +4203,29 @@ xact_desc_commit(char *buf, xl_xact_commit *xlrec)
 		TransactionId *xacts = (TransactionId *)
 		&xlrec->xnodes[xlrec->nrels];
 
-		sprintf(buf + strlen(buf), "; subxacts:");
+		appendStringInfo(buf, "; subxacts:");
 		for (i = 0; i < xlrec->nsubxacts; i++)
-			sprintf(buf + strlen(buf), " %u", xacts[i]);
+			appendStringInfo(buf, " %u", xacts[i]);
 	}
 }
 
 static void
-xact_desc_abort(char *buf, xl_xact_abort *xlrec)
+xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 {
 	struct tm  *tm = localtime(&xlrec->xtime);
 	int			i;
 
-	sprintf(buf + strlen(buf), "%04u-%02u-%02u %02u:%02u:%02u",
+	appendStringInfo(buf, "%04u-%02u-%02u %02u:%02u:%02u",
 			tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 			tm->tm_hour, tm->tm_min, tm->tm_sec);
 	if (xlrec->nrels > 0)
 	{
-		sprintf(buf + strlen(buf), "; rels:");
+		appendStringInfo(buf, "; rels:");
 		for (i = 0; i < xlrec->nrels; i++)
 		{
 			RelFileNode rnode = xlrec->xnodes[i];
 
-			sprintf(buf + strlen(buf), " %u/%u/%u",
+			appendStringInfo(buf, " %u/%u/%u",
 					rnode.spcNode, rnode.dbNode, rnode.relNode);
 		}
 	}
@@ -4234,49 +4234,49 @@ xact_desc_abort(char *buf, xl_xact_abort *xlrec)
 		TransactionId *xacts = (TransactionId *)
 		&xlrec->xnodes[xlrec->nrels];
 
-		sprintf(buf + strlen(buf), "; subxacts:");
+		appendStringInfo(buf, "; subxacts:");
 		for (i = 0; i < xlrec->nsubxacts; i++)
-			sprintf(buf + strlen(buf), " %u", xacts[i]);
+			appendStringInfo(buf, " %u", xacts[i]);
 	}
 }
 
 void
-xact_desc(char *buf, uint8 xl_info, char *rec)
+xact_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	uint8			info = xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_XACT_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
 
-		strcat(buf, "commit: ");
+		appendStringInfo(buf, "commit: ");
 		xact_desc_commit(buf, xlrec);
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
 		xl_xact_abort *xlrec = (xl_xact_abort *) rec;
 
-		strcat(buf, "abort: ");
+		appendStringInfo(buf, "abort: ");
 		xact_desc_abort(buf, xlrec);
 	}
 	else if (info == XLOG_XACT_PREPARE)
 	{
-		strcat(buf, "prepare");
+		appendStringInfo(buf, "prepare");
 	}
 	else if (info == XLOG_XACT_COMMIT_PREPARED)
 	{
 		xl_xact_commit_prepared *xlrec = (xl_xact_commit_prepared *) rec;
 
-		sprintf(buf + strlen(buf), "commit %u: ", xlrec->xid);
+		appendStringInfo(buf, "commit %u: ", xlrec->xid);
 		xact_desc_commit(buf, &xlrec->crec);
 	}
 	else if (info == XLOG_XACT_ABORT_PREPARED)
 	{
 		xl_xact_abort_prepared *xlrec = (xl_xact_abort_prepared *) rec;
 
-		sprintf(buf + strlen(buf), "abort %u: ", xlrec->xid);
+		appendStringInfo(buf, "abort %u: ", xlrec->xid);
 		xact_desc_abort(buf, &xlrec->arec);
 	}
 	else
-		strcat(buf, "UNKNOWN");
+		appendStringInfo(buf, "UNKNOWN");
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.16 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.17 2006/03/24 04:32:13 tgl Exp $
  */
 #ifndef CLOG_H
 #define CLOG_H
@@ -48,6 +48,6 @@ extern void TruncateCLOG(TransactionId oldestXact);
 #define CLOG_ZEROPAGE		0x00
 
 extern void clog_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void clog_desc(char *buf, uint8 xl_info, char *rec);
+extern void clog_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 #endif   /* CLOG_H */

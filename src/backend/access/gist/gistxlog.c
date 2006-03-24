@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.10 2006/03/05 15:58:20 momjian Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.11 2006/03/24 04:32:12 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -442,67 +442,67 @@ gist_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-out_target(char *buf, RelFileNode node, ItemPointerData key)
+out_target(StringInfo buf, RelFileNode node, ItemPointerData key)
 {
-	sprintf(buf + strlen(buf), "rel %u/%u/%u; tid %u/%u",
+	appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
 			node.spcNode, node.dbNode, node.relNode,
 			ItemPointerGetBlockNumber(&key),
 			ItemPointerGetOffsetNumber(&key));
 }
 
 static void
-out_gistxlogEntryUpdate(char *buf, gistxlogEntryUpdate *xlrec)
+out_gistxlogEntryUpdate(StringInfo buf, gistxlogEntryUpdate *xlrec)
 {
 	out_target(buf, xlrec->node, xlrec->key);
-	sprintf(buf + strlen(buf), "; block number %u",
-			xlrec->blkno);
+	appendStringInfo(buf, "; block number %u", xlrec->blkno);
 }
 
 static void
-out_gistxlogPageSplit(char *buf, gistxlogPageSplit *xlrec)
+out_gistxlogPageSplit(StringInfo buf, gistxlogPageSplit *xlrec)
 {
-	strcat(buf, "page_split: ");
+	appendStringInfo(buf, "page_split: ");
 	out_target(buf, xlrec->node, xlrec->key);
-	sprintf(buf + strlen(buf), "; block number %u splits to %d pages",
+	appendStringInfo(buf, "; block number %u splits to %d pages",
 			xlrec->origblkno, xlrec->npage);
 }
 
 void
-gist_desc(char *buf, uint8 xl_info, char *rec)
+gist_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 
 	switch (info)
 	{
 		case XLOG_GIST_ENTRY_UPDATE:
-			strcat(buf, "entry_update: ");
+			appendStringInfo(buf, "entry_update: ");
 			out_gistxlogEntryUpdate(buf, (gistxlogEntryUpdate *) rec);
 			break;
 		case XLOG_GIST_ENTRY_DELETE:
-			strcat(buf, "entry_delete: ");
+			appendStringInfo(buf, "entry_delete: ");
 			out_gistxlogEntryUpdate(buf, (gistxlogEntryUpdate *) rec);
 			break;
 		case XLOG_GIST_NEW_ROOT:
-			strcat(buf, "new_root: ");
+			appendStringInfo(buf, "new_root: ");
 			out_target(buf, ((gistxlogEntryUpdate *) rec)->node, ((gistxlogEntryUpdate *) rec)->key);
 			break;
 		case XLOG_GIST_PAGE_SPLIT:
 			out_gistxlogPageSplit(buf, (gistxlogPageSplit *) rec);
 			break;
 		case XLOG_GIST_CREATE_INDEX:
-			sprintf(buf + strlen(buf), "create_index: rel %u/%u/%u",
+			appendStringInfo(buf, "create_index: rel %u/%u/%u",
 					((RelFileNode *) rec)->spcNode,
 					((RelFileNode *) rec)->dbNode,
 					((RelFileNode *) rec)->relNode);
 			break;
 		case XLOG_GIST_INSERT_COMPLETE:
-			sprintf(buf + strlen(buf), "complete_insert: rel %u/%u/%u",
+			appendStringInfo(buf, "complete_insert: rel %u/%u/%u",
 					((gistxlogInsertComplete *) rec)->node.spcNode,
 					((gistxlogInsertComplete *) rec)->node.dbNode,
 					((gistxlogInsertComplete *) rec)->node.relNode);
 			break;
 		default:
-			elog(PANIC, "gist_desc: unknown op code %u", info);
+			appendStringInfo(buf, "unknown gist op code %u", info);
+			break;
 	}
 }
 

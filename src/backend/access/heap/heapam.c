@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.208 2006/03/05 15:58:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.209 2006/03/24 04:32:12 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -3363,16 +3363,16 @@ heap_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-out_target(char *buf, xl_heaptid *target)
+out_target(StringInfo buf, xl_heaptid *target)
 {
-	sprintf(buf + strlen(buf), "rel %u/%u/%u; tid %u/%u",
+	appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
 			target->node.spcNode, target->node.dbNode, target->node.relNode,
 			ItemPointerGetBlockNumber(&(target->tid)),
 			ItemPointerGetOffsetNumber(&(target->tid)));
 }
 
 void
-heap_desc(char *buf, uint8 xl_info, char *rec)
+heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 
@@ -3381,14 +3381,14 @@ heap_desc(char *buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_insert *xlrec = (xl_heap_insert *) rec;
 
-		strcat(buf, "insert: ");
+		appendStringInfo(buf, "insert: ");
 		out_target(buf, &(xlrec->target));
 	}
 	else if (info == XLOG_HEAP_DELETE)
 	{
 		xl_heap_delete *xlrec = (xl_heap_delete *) rec;
 
-		strcat(buf, "delete: ");
+		appendStringInfo(buf, "delete: ");
 		out_target(buf, &(xlrec->target));
 	}
 	else if (info == XLOG_HEAP_UPDATE || info == XLOG_HEAP_MOVE)
@@ -3396,11 +3396,11 @@ heap_desc(char *buf, uint8 xl_info, char *rec)
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
 		if (info == XLOG_HEAP_UPDATE)
-			strcat(buf, "update: ");
+			appendStringInfo(buf, "update: ");
 		else
-			strcat(buf, "move: ");
+			appendStringInfo(buf, "move: ");
 		out_target(buf, &(xlrec->target));
-		sprintf(buf + strlen(buf), "; new %u/%u",
+		appendStringInfo(buf, "; new %u/%u",
 				ItemPointerGetBlockNumber(&(xlrec->newtid)),
 				ItemPointerGetOffsetNumber(&(xlrec->newtid)));
 	}
@@ -3408,7 +3408,7 @@ heap_desc(char *buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_clean *xlrec = (xl_heap_clean *) rec;
 
-		sprintf(buf + strlen(buf), "clean: rel %u/%u/%u; blk %u",
+		appendStringInfo(buf, "clean: rel %u/%u/%u; blk %u",
 				xlrec->node.spcNode, xlrec->node.dbNode,
 				xlrec->node.relNode, xlrec->block);
 	}
@@ -3416,7 +3416,7 @@ heap_desc(char *buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_newpage *xlrec = (xl_heap_newpage *) rec;
 
-		sprintf(buf + strlen(buf), "newpage: rel %u/%u/%u; blk %u",
+		appendStringInfo(buf, "newpage: rel %u/%u/%u; blk %u",
 				xlrec->node.spcNode, xlrec->node.dbNode,
 				xlrec->node.relNode, xlrec->blkno);
 	}
@@ -3425,16 +3425,16 @@ heap_desc(char *buf, uint8 xl_info, char *rec)
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;
 
 		if (xlrec->shared_lock)
-			strcat(buf, "shared_lock: ");
+			appendStringInfo(buf, "shared_lock: ");
 		else
-			strcat(buf, "exclusive_lock: ");
+			appendStringInfo(buf, "exclusive_lock: ");
 		if (xlrec->xid_is_mxact)
-			strcat(buf, "mxid ");
+			appendStringInfo(buf, "mxid ");
 		else
-			strcat(buf, "xid ");
-		sprintf(buf + strlen(buf), "%u ", xlrec->locking_xid);
+			appendStringInfo(buf, "xid ");
+		appendStringInfo(buf, "%u ", xlrec->locking_xid);
 		out_target(buf, &(xlrec->target));
 	}
 	else
-		strcat(buf, "UNKNOWN");
+		appendStringInfo(buf, "UNKNOWN");
 }

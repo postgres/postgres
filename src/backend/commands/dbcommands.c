@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.177 2006/03/05 15:58:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.178 2006/03/24 04:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1392,7 +1392,7 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-dbase_desc(char *buf, uint8 xl_info, char *rec)
+dbase_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 
@@ -1400,7 +1400,7 @@ dbase_desc(char *buf, uint8 xl_info, char *rec)
 	{
 		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) rec;
 
-		sprintf(buf + strlen(buf), "create db: copy dir %u/%u to %u/%u",
+		appendStringInfo(buf, "create db: copy dir %u/%u to %u/%u",
 				xlrec->src_db_id, xlrec->src_tablespace_id,
 				xlrec->db_id, xlrec->tablespace_id);
 	}
@@ -1408,9 +1408,9 @@ dbase_desc(char *buf, uint8 xl_info, char *rec)
 	{
 		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) rec;
 
-		sprintf(buf + strlen(buf), "drop db: dir %u/%u",
+		appendStringInfo(buf, "drop db: dir %u/%u",
 				xlrec->db_id, xlrec->tablespace_id);
 	}
 	else
-		strcat(buf, "UNKNOWN");
+		appendStringInfo(buf, "UNKNOWN");
 }

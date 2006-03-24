@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.87 2006/03/05 15:58:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.88 2006/03/24 04:32:12 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -675,6 +675,6 @@ hash_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-hash_desc(char *buf, uint8 xl_info, char *rec)
+hash_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
 }

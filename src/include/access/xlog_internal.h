@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.10 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.11 2006/03/24 04:32:13 tgl Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -228,7 +228,7 @@ typedef struct RmgrData
 {
 	const char *rm_name;
 	void		(*rm_redo) (XLogRecPtr lsn, XLogRecord *rptr);
-	void		(*rm_desc) (char *buf, uint8 xl_info, char *rec);
+	void		(*rm_desc) (StringInfo buf, uint8 xl_info, char *rec);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
 } RmgrData;

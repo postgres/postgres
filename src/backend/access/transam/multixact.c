@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.16 2006/03/05 15:58:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.17 2006/03/24 04:32:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1887,7 +1887,7 @@ multixact_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-multixact_desc(char *buf, uint8 xl_info, char *rec)
+multixact_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 
@@ -1896,25 +1896,25 @@ multixact_desc(char *buf, uint8 xl_info, char *rec)
 		int			pageno;
 
 		memcpy(&pageno, rec, sizeof(int));
-		sprintf(buf + strlen(buf), "zero offsets page: %d", pageno);
+		appendStringInfo(buf, "zero offsets page: %d", pageno);
 	}
 	else if (info == XLOG_MULTIXACT_ZERO_MEM_PAGE)
 	{
 		int			pageno;
 
 		memcpy(&pageno, rec, sizeof(int));
-		sprintf(buf + strlen(buf), "zero members page: %d", pageno);
+		appendStringInfo(buf, "zero members page: %d", pageno);
 	}
 	else if (info == XLOG_MULTIXACT_CREATE_ID)
 	{
 		xl_multixact_create *xlrec = (xl_multixact_create *) rec;
 		int			i;
 
-		sprintf(buf + strlen(buf), "create multixact %u offset %u:",
+		appendStringInfo(buf, "create multixact %u offset %u:",
 				xlrec->mid, xlrec->moff);
 		for (i = 0; i < xlrec->nxids; i++)
-			sprintf(buf + strlen(buf), " %u", xlrec->xids[i]);
+			appendStringInfo(buf, " %u", xlrec->xids[i]);
 	}
 	else
-		strcat(buf, "UNKNOWN");
+		appendStringInfo(buf, "UNKNOWN");
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.54 2006/03/05 15:59:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.55 2006/03/24 04:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ extern void smgrabort(void);
 extern void smgrsync(void);
 
 extern void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void smgr_desc(char *buf, uint8 xl_info, char *rec);
+extern void smgr_desc(StringInfo buf, uint8 xl_info, char *rec);
 
 
 /* internals: move me elsewhere -- ay 7/94 */

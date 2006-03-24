@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.26 2006/03/05 15:58:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.27 2006/03/24 04:32:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,16 +650,16 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-out_target(char *buf, xl_btreetid *target)
+out_target(StringInfo buf, xl_btreetid *target)
 {
-	sprintf(buf + strlen(buf), "rel %u/%u/%u; tid %u/%u",
+	appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
 			target->node.spcNode, target->node.dbNode, target->node.relNode,
 			ItemPointerGetBlockNumber(&(target->tid)),
 			ItemPointerGetOffsetNumber(&(target->tid)));
 }
 
 void
-btree_desc(char *buf, uint8 xl_info, char *rec)
+btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
 	uint8		info = xl_info & ~XLR_INFO_MASK;
 
@@ -669,7 +669,7 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-				strcat(buf, "insert: ");
+				appendStringInfo(buf, "insert: ");
 				out_target(buf, &(xlrec->target));
 				break;
 			}
@@ -677,7 +677,7 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-				strcat(buf, "insert_upper: ");
+				appendStringInfo(buf, "insert_upper: ");
 				out_target(buf, &(xlrec->target));
 				break;
 			}
@@ -685,7 +685,7 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_insert *xlrec = (xl_btree_insert *) rec;
 
-				strcat(buf, "insert_meta: ");
+				appendStringInfo(buf, "insert_meta: ");
 				out_target(buf, &(xlrec->target));
 				break;
 			}
@@ -693,9 +693,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-				strcat(buf, "split_l: ");
+				appendStringInfo(buf, "split_l: ");
 				out_target(buf, &(xlrec->target));
-				sprintf(buf + strlen(buf), "; oth %u; rgh %u",
+				appendStringInfo(buf, "; oth %u; rgh %u",
 						xlrec->otherblk, xlrec->rightblk);
 				break;
 			}
@@ -703,9 +703,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-				strcat(buf, "split_r: ");
+				appendStringInfo(buf, "split_r: ");
 				out_target(buf, &(xlrec->target));
-				sprintf(buf + strlen(buf), "; oth %u; rgh %u",
+				appendStringInfo(buf, "; oth %u; rgh %u",
 						xlrec->otherblk, xlrec->rightblk);
 				break;
 			}
@@ -713,9 +713,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-				strcat(buf, "split_l_root: ");
+				appendStringInfo(buf, "split_l_root: ");
 				out_target(buf, &(xlrec->target));
-				sprintf(buf + strlen(buf), "; oth %u; rgh %u",
+				appendStringInfo(buf, "; oth %u; rgh %u",
 						xlrec->otherblk, xlrec->rightblk);
 				break;
 			}
@@ -723,9 +723,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-				strcat(buf, "split_r_root: ");
+				appendStringInfo(buf, "split_r_root: ");
 				out_target(buf, &(xlrec->target));
-				sprintf(buf + strlen(buf), "; oth %u; rgh %u",
+				appendStringInfo(buf, "; oth %u; rgh %u",
 						xlrec->otherblk, xlrec->rightblk);
 				break;
 			}
@@ -733,7 +733,7 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-				sprintf(buf + strlen(buf), "delete: rel %u/%u/%u; blk %u",
+				appendStringInfo(buf, "delete: rel %u/%u/%u; blk %u",
 						xlrec->node.spcNode, xlrec->node.dbNode,
 						xlrec->node.relNode, xlrec->block);
 				break;
@@ -743,9 +743,9 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_delete_page *xlrec = (xl_btree_delete_page *) rec;
 
-				strcat(buf, "delete_page: ");
+				appendStringInfo(buf, "delete_page: ");
 				out_target(buf, &(xlrec->target));
-				sprintf(buf + strlen(buf), "; dead %u; left %u; right %u",
+				appendStringInfo(buf, "; dead %u; left %u; right %u",
 						xlrec->deadblk, xlrec->leftblk, xlrec->rightblk);
 				break;
 			}
@@ -753,7 +753,7 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_newroot *xlrec = (xl_btree_newroot *) rec;
 
-				sprintf(buf + strlen(buf), "newroot: rel %u/%u/%u; root %u lev %u",
+				appendStringInfo(buf, "newroot: rel %u/%u/%u; root %u lev %u",
 						xlrec->node.spcNode, xlrec->node.dbNode,
 						xlrec->node.relNode,
 						xlrec->rootblk, xlrec->level);
@@ -763,7 +763,7 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 			{
 				xl_btree_newmeta *xlrec = (xl_btree_newmeta *) rec;
 
-				sprintf(buf + strlen(buf), "newmeta: rel %u/%u/%u; root %u lev %u fast %u lev %u",
+				appendStringInfo(buf, "newmeta: rel %u/%u/%u; root %u lev %u fast %u lev %u",
 						xlrec->node.spcNode, xlrec->node.dbNode,
 						xlrec->node.relNode,
 						xlrec->meta.root, xlrec->meta.level,
@@ -771,7 +771,7 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 				break;
 			}
 		default:
-			strcat(buf, "UNKNOWN");
+			appendStringInfo(buf, "UNKNOWN");
 			break;
 	}
 }

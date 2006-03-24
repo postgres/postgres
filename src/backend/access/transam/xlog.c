@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.227 2006/03/05 15:58:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.228 2006/03/24 04:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,10 +498,11 @@ static char *str_time(time_t tnow);
 static void issue_xlog_fsync(void);
 
 #ifdef WAL_DEBUG
-static void xlog_outrec(char *buf, XLogRecord *record);
+static void xlog_outrec(StringInfo buf, XLogRecord *record);
 #endif
 static bool read_backup_label(XLogRecPtr *checkPointLoc);
 static void remove_backup_label(void);
+static void rm_redo_error_callback(void *arg);
 
 
 /*
@@ -852,16 +853,19 @@ begin:;
 #ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 	{
-		char		buf[8192];
+		StringInfoData	buf;
 
-		sprintf(buf, "INSERT @ %X/%X: ", RecPtr.xlogid, RecPtr.xrecoff);
-		xlog_outrec(buf, record);
+		initStringInfo(&buf);
+		appendStringInfo(&buf, "INSERT @ %X/%X: ", 
+							RecPtr.xlogid, RecPtr.xrecoff);
+		xlog_outrec(&buf, record);
 		if (rdata->data != NULL)
 		{
-			strcat(buf, " - ");
-			RmgrTable[record->xl_rmid].rm_desc(buf, record->xl_info, rdata->data);
+			appendStringInfo(&buf, " - ");
+			RmgrTable[record->xl_rmid].rm_desc(&buf, record->xl_info, rdata->data);
 		}
-		elog(LOG, "%s", buf);
+		elog(LOG, "%s", buf.data);
+		pfree(buf.data);
 	}
 #endif
 
@@ -4562,6 +4566,7 @@ StartupXLOG(void)
 		{
 			bool		recoveryContinue = true;
 			bool		recoveryApply = true;
+			ErrorContextCallback	errcontext;
 
 			InRedo = true;
 			ereport(LOG,
@@ -4576,16 +4581,19 @@ StartupXLOG(void)
 #ifdef WAL_DEBUG
 				if (XLOG_DEBUG)
 				{
-					char		buf[8192];
+					StringInfoData	buf;
 
-					sprintf(buf, "REDO @ %X/%X; LSN %X/%X: ",
+					initStringInfo(&buf);
+					appendStringInfo(&buf, "REDO @ %X/%X; LSN %X/%X: ",
 							ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
 							EndRecPtr.xlogid, EndRecPtr.xrecoff);
-					xlog_outrec(buf, record);
-					strcat(buf, " - ");
-					RmgrTable[record->xl_rmid].rm_desc(buf,
-									record->xl_info, XLogRecGetData(record));
-					elog(LOG, "%s", buf);
+					xlog_outrec(&buf, record);
+					appendStringInfo(&buf, " - ");
+					RmgrTable[record->xl_rmid].rm_desc(&buf,
+													   record->xl_info,
+													   XLogRecGetData(record));
+					elog(LOG, "%s", buf.data);
+					pfree(buf.data);
 				}
 #endif
 
@@ -4600,6 +4608,12 @@ StartupXLOG(void)
 						break;
 				}
 
+				/* Setup error traceback support for ereport() */
+				errcontext.callback = rm_redo_error_callback;
+				errcontext.arg = (void *) record;
+				errcontext.previous = error_context_stack;
+				error_context_stack = &errcontext;
+
 				/* nextXid must be beyond record's xid */
 				if (TransactionIdFollowsOrEquals(record->xl_xid,
 												 ShmemVariableCache->nextXid))
@@ -4612,6 +4626,9 @@ StartupXLOG(void)
 					RestoreBkpBlocks(record, EndRecPtr);
 
 				RmgrTable[record->xl_rmid].rm_redo(EndRecPtr, record);
+
+				/* Pop the error context stack */
+				error_context_stack = errcontext.previous;
 
 				LastRec = ReadRecPtr;
 
@@ -5400,16 +5417,16 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 }
 
 void
-xlog_desc(char *buf, uint8 xl_info, char *rec)
+xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
-	uint8		info = xl_info & ~XLR_INFO_MASK;
+	uint8			info = xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_CHECKPOINT_SHUTDOWN ||
 		info == XLOG_CHECKPOINT_ONLINE)
 	{
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
-		sprintf(buf + strlen(buf), "checkpoint: redo %X/%X; undo %X/%X; "
+		appendStringInfo(buf, "checkpoint: redo %X/%X; undo %X/%X; "
 				"tli %u; xid %u; oid %u; multi %u; offset %u; %s",
 				checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
 				checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
@@ -5424,21 +5441,21 @@ xlog_desc(char *buf, uint8 xl_info, char *rec)
 		Oid			nextOid;
 
 		memcpy(&nextOid, rec, sizeof(Oid));
-		sprintf(buf + strlen(buf), "nextOid: %u", nextOid);
+		appendStringInfo(buf, "nextOid: %u", nextOid);
 	}
 	else
-		strcat(buf, "UNKNOWN");
+		appendStringInfo(buf, "UNKNOWN");
 }
 
 #ifdef WAL_DEBUG
 
 static void
-xlog_outrec(char *buf, XLogRecord *record)
+xlog_outrec(StringInfo buf, XLogRecord *record)
 {
 	int			bkpb;
 	int			i;
 
-	sprintf(buf + strlen(buf), "prev %X/%X; xid %u",
+	appendStringInfo(buf, "prev %X/%X; xid %u",
 			record->xl_prev.xlogid, record->xl_prev.xrecoff,
 			record->xl_xid);
 
@@ -5450,9 +5467,9 @@ xlog_outrec(char *buf, XLogRecord *record)
 	}
 
 	if (bkpb)
-		sprintf(buf + strlen(buf), "; bkpb %d", bkpb);
+		appendStringInfo(buf, "; bkpb %d", bkpb);
 
-	sprintf(buf + strlen(buf), ": %s",
+	appendStringInfo(buf, ": %s",
 			RmgrTable[record->xl_rmid].rm_name);
 }
 #endif   /* WAL_DEBUG */
@@ -5975,4 +5992,25 @@ remove_backup_label(void)
 					(errcode_for_file_access(),
 					 errmsg("could not remove file \"%s\": %m",
 							BACKUP_LABEL_FILE)));
+}
+
+/*
+ * Error context callback for errors occurring during rm_redo().
+ */
+static void
+rm_redo_error_callback(void *arg)
+{
+	XLogRecord		*record = (XLogRecord *) arg;
+	StringInfoData	 buf;
+
+	initStringInfo(&buf);
+	RmgrTable[record->xl_rmid].rm_desc(&buf, 
+									   record->xl_info, 
+									   XLogRecGetData(record));
+
+	/* don't bother emitting empty description */
+	if (buf.len > 0)
+		errcontext("xlog redo %s", buf.data);
+
+	pfree(buf.data);
 }
