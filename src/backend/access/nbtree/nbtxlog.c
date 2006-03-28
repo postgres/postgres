@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.7 2003/09/29 23:40:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.7.2.1 2006/03/28 21:17:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 	rightsib = (onleft) ? xlrec->otherblk : targetblk;
 
 	/* Left (original) sibling */
-	buffer = XLogReadBuffer(false, reln, leftsib);
+	buffer = XLogReadBuffer(true, reln, leftsib);
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "btree_split_%s: lost left sibling", op);
 
@@ -524,7 +524,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 	}
 
 	/* Rewrite target page as empty deleted page */
-	buffer = XLogReadBuffer(false, reln, target);
+	buffer = XLogReadBuffer(true, reln, target);
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "btree_delete_page_%s: lost target page", op);
 	page = (Page) BufferGetPage(buffer);
