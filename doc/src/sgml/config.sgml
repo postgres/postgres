@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.36.2.2 2006/02/12 19:19:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.36.2.3 2006/03/28 22:01:24 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1354,40 +1354,14 @@ SET ENABLE_SEQSCAN TO OFF;
         When this option is on, the <productname>PostgreSQL</> server
         writes the entire content of each disk page to WAL during the
         first modification of that page after a checkpoint.
-        This is needed because
-        a page write that is in process during an operating system crash might
-        be only partially completed, leading to an on-disk page
-        that contains a mix of old and new data.  The row-level change data
-        normally stored in WAL will not be enough to completely restore
-        such a page during post-crash recovery.  Storing the full page image
-        guarantees that the page can be correctly restored, but at a price
-        in increasing the amount of data that must be written to WAL.
-        (Because WAL replay always starts from a checkpoint, it is sufficient
-        to do this during the first change of each page after a checkpoint.
-        Therefore, one way to reduce the cost of full-page writes is to
-        increase the checkpoint interval parameters.)
        </para>
 
        <para>
-        Turning this option off speeds normal operation, but
-        might lead to a corrupt database after an operating system crash
-        or power failure. The risks are similar to turning off
-        <varname>fsync</>, though smaller.  It may be safe to turn off
-        this option if you have hardware (such as a battery-backed disk
-        controller) or filesystem software (e.g., Reiser4) that reduces
-        the risk of partial page writes to an acceptably low level.
-       </para>
-
-       <para>
-        Turning off this option does not affect use of
-        WAL archiving for point-in-time recovery (PITR)
-        (see <xref linkend="backup-online">).
-       </para>
-
-       <para>
-        This option can be set at server start or in the
-        <filename>postgresql.conf</filename> file.  The default is
-        <literal>on</>.
+        This parameter is currently ignored (treated as always <literal>on</>)
+        because turning it off can cause failure to recover from crashes
+        even when no hardware or OS-level error occurred.  This will be
+        fixed in some future release, or else the parameter will be removed
+        entirely.
        </para>
       </listitem>
      </varlistentry>

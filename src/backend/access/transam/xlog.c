@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.222.2.2 2006/01/05 00:54:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.222.2.3 2006/03/28 22:01:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -976,8 +976,7 @@ XLogCheckBuffer(XLogRecData *rdata,
 	 */
 	*lsn = page->pd_lsn;
 
-	if (fullPageWrites &&
-		XLByteLE(page->pd_lsn, RedoRecPtr))
+	if (XLByteLE(page->pd_lsn, RedoRecPtr))
 	{
 		/*
 		 * The page needs to be backed up, so set up *bkpb
