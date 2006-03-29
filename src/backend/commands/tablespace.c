@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.15.4.1 2006/01/19 04:45:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.15.4.2 2006/03/29 15:16:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,9 +80,6 @@ static void set_short_version(const char *path);
  * object in the tablespace, create the subdirectory.  If the subdirectory
  * already exists, just fall through quietly.
  *
- * If tablespaces are not supported, this is just a no-op; CREATE DATABASE
- * is expected to create the default subdirectory for the database.
- *
  * isRedo indicates that we are creating an object during WAL replay.
  * In this case we will cope with the possibility of the tablespace
  * directory not being there either --- this could happen if we are
@@ -90,11 +87,14 @@ static void set_short_version(const char *path);
  * We handle this by making a directory in the place where the tablespace
  * symlink would normally be.  This isn't an exact replay of course, but
  * it's the best we can do given the available information.
+ *
+ * If tablespaces are not supported, you might think this could be a no-op,
+ * but you'd be wrong: we still need it in case we have to re-create a
+ * database subdirectory (of $PGDATA/base) during WAL replay.
  */
 void
 TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 {
-#ifdef HAVE_SYMLINK
 	struct stat st;
 	char	   *dir;
 
@@ -177,7 +177,6 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 	}
 
 	pfree(dir);
-#endif   /* HAVE_SYMLINK */
 }
 
 /*
