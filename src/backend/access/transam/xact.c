@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.218 2006/03/24 04:32:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.219 2006/03/29 21:17:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4097,7 +4097,7 @@ xact_redo_commit(xl_xact_commit *xlrec, TransactionId xid)
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
-		XLogCloseRelation(xlrec->xnodes[i]);
+		XLogDropRelation(xlrec->xnodes[i]);
 		smgrdounlink(smgropen(xlrec->xnodes[i]), false, true);
 	}
 }
@@ -4132,7 +4132,7 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 	/* Make sure files supposed to be dropped are dropped */
 	for (i = 0; i < xlrec->nrels; i++)
 	{
-		XLogCloseRelation(xlrec->xnodes[i]);
+		XLogDropRelation(xlrec->xnodes[i]);
 		smgrdounlink(smgropen(xlrec->xnodes[i]), false, true);
 	}
 }

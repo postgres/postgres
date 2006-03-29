@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.33 2006/03/29 15:15:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.34 2006/03/29 21:17:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -466,6 +466,12 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 
 		(void) XLogInsert(RM_TBLSPC_ID, XLOG_TBLSPC_DROP, rdata);
 	}
+
+	/*
+	 * Note: because we checked that the tablespace was empty, there should
+	 * be no need to worry about flushing shared buffers or free space map
+	 * entries for relations in the tablespace.
+	 */
 
 	/*
 	 * Allow TablespaceCreateDbspace again.

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.178 2006/03/24 04:32:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.179 2006/03/29 21:17:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,7 +671,7 @@ dropdb(const char *dbname, bool missing_ok)
 	 * is important to ensure that no remaining backend tries to write out a
 	 * dirty buffer to the dead database later...
 	 */
-	DropBuffers(db_id);
+	DropDatabaseBuffers(db_id);
 
 	/*
 	 * Also, clean out any entries in the shared free space map.
@@ -1377,11 +1377,16 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
 
-		/*
-		 * Drop pages for this database that are in the shared buffer cache
-		 */
-		DropBuffers(xlrec->db_id);
+		/* Drop pages for this database that are in the shared buffer cache */
+		DropDatabaseBuffers(xlrec->db_id);
 
+		/* Also, clean out any entries in the shared free space map */
+		FreeSpaceMapForgetDatabase(xlrec->db_id);
+
+		/* Clean out the xlog relcache too */
+		XLogDropDatabase(xlrec->db_id);
+
+		/* And remove the physical files */
 		if (!rmtree(dst_path, true))
 			ereport(WARNING,
 					(errmsg("could not remove database directory \"%s\"",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.130 2006/03/24 04:32:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.131 2006/03/29 21:17:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1140,14 +1140,8 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 		elog(PANIC, "seq_redo: unknown op code %u", info);
 
 	reln = XLogOpenRelation(xlrec->node);
-	if (!RelationIsValid(reln))
-		return;
-
-	buffer = XLogReadBuffer(true, reln, 0);
-	if (!BufferIsValid(buffer))
-		elog(PANIC, "seq_redo: can't read block 0 of rel %u/%u/%u",
-			 xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
-
+	buffer = XLogReadBuffer(reln, 0, true);
+	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 
 	/* Always reinit the page and reinstall the magic number */

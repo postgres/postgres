@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.41 2006/03/05 15:58:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.42 2006/03/29 21:17:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,44 +19,81 @@
 
 #include "access/xlogutils.h"
 #include "storage/bufmgr.h"
+#include "storage/bufpage.h"
 #include "storage/smgr.h"
 #include "utils/hsearch.h"
 
 
 /*
+ * XLogReadBuffer
+ *		Read a page during XLOG replay
  *
- * Storage related support functions
+ * This is functionally comparable to ReadBuffer followed by
+ * LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE): you get back a pinned
+ * and locked buffer.  (The lock is not really necessary, since we
+ * expect that this is only done during single-process XLOG replay,
+ * but in some places it simplifies sharing code with the non-XLOG case.)
  *
+ * If "init" is true then the caller intends to rewrite the page fully
+ * using the info in the XLOG record.  In this case we will extend the
+ * relation if needed to make the page exist, and we will not complain about
+ * the page being "new" (all zeroes).
+ *
+ * If "init" is false then the caller needs the page to be valid already.
+ * If the page doesn't exist or contains zeroes, we report failure.
+ *
+ * If the return value is InvalidBuffer (only possible when init = false),
+ * the caller should silently skip the update on this page.  This currently
+ * never happens, but we retain it as part of the API spec for possible future
+ * use.
  */
-
 Buffer
-XLogReadBuffer(bool extend, Relation reln, BlockNumber blkno)
+XLogReadBuffer(Relation reln, BlockNumber blkno, bool init)
 {
 	BlockNumber lastblock = RelationGetNumberOfBlocks(reln);
 	Buffer		buffer;
 
-	if (blkno >= lastblock)
+	Assert(blkno != P_NEW);
+
+	if (blkno < lastblock)
 	{
+		/* page exists in file */
+		buffer = ReadBuffer(reln, blkno);
+	}
+	else
+	{
+		/* hm, page doesn't exist in file */
+		if (!init)
+			elog(PANIC, "block %u of relation %u/%u/%u does not exist",
+				 blkno, reln->rd_node.spcNode,
+				 reln->rd_node.dbNode, reln->rd_node.relNode);
+		/* OK to extend the file */
+		/* we do this in recovery only - no rel-extension lock needed */
+		Assert(InRecovery);
 		buffer = InvalidBuffer;
-		if (extend)				/* we do this in recovery only - no locks */
+		while (blkno >= lastblock)
 		{
-			Assert(InRecovery);
-			while (lastblock <= blkno)
-			{
-				if (buffer != InvalidBuffer)
-					ReleaseBuffer(buffer);		/* must be WriteBuffer()? */
-				buffer = ReadBuffer(reln, P_NEW);
-				lastblock++;
-			}
+			if (buffer != InvalidBuffer)
+				ReleaseBuffer(buffer);		/* must be WriteBuffer()? */
+			buffer = ReadBuffer(reln, P_NEW);
+			lastblock++;
 		}
-		if (buffer != InvalidBuffer)
-			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		return buffer;
+		Assert(BufferGetBlockNumber(buffer) == blkno);
 	}
 
-	buffer = ReadBuffer(reln, blkno);
-	if (buffer != InvalidBuffer)
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+
+	if (!init)
+	{
+		/* check that page has been initialized */
+		Page	page = (Page) BufferGetPage(buffer);
+
+		if (PageIsNew((PageHeader) page))
+			elog(PANIC, "block %u of relation %u/%u/%u is uninitialized",
+				 blkno, reln->rd_node.spcNode,
+				 reln->rd_node.dbNode, reln->rd_node.relNode);
+	}
+
 	return buffer;
 }
 
@@ -184,6 +221,9 @@ XLogCloseRelationCache(void)
 
 /*
  * Open a relation during XLOG replay
+ *
+ * Note: this once had an API that allowed NULL return on failure, but it
+ * no longer does; any failure results in elog().
  */
 Relation
 XLogOpenRelation(RelFileNode rnode)
@@ -224,7 +264,7 @@ XLogOpenRelation(RelFileNode rnode)
 			hash_search(_xlrelcache, (void *) &rnode, HASH_ENTER, &found);
 
 		if (found)
-			elog(PANIC, "XLogOpenRelation: file found on insert into cache");
+			elog(PANIC, "xlog relation already present on insert into cache");
 
 		hentry->rdesc = res;
 
@@ -253,7 +293,7 @@ XLogOpenRelation(RelFileNode rnode)
 }
 
 /*
- * Close a relation during XLOG replay
+ * Drop a relation during XLOG replay
  *
  * This is called when the relation is about to be deleted; we need to ensure
  * that there is no dangling smgr reference in the xlog relation cache.
@@ -262,7 +302,7 @@ XLogOpenRelation(RelFileNode rnode)
  * cache, we just let it age out normally.
  */
 void
-XLogCloseRelation(RelFileNode rnode)
+XLogDropRelation(RelFileNode rnode)
 {
 	XLogRelDesc *rdesc;
 	XLogRelCacheEntry *hentry;
@@ -276,4 +316,26 @@ XLogCloseRelation(RelFileNode rnode)
 	rdesc = hentry->rdesc;
 
 	RelationCloseSmgr(&(rdesc->reldata));
+}
+
+/*
+ * Drop a whole database during XLOG replay
+ *
+ * As above, but for DROP DATABASE instead of dropping a single rel
+ */
+void
+XLogDropDatabase(Oid dbid)
+{
+	HASH_SEQ_STATUS status;
+	XLogRelCacheEntry *hentry;
+
+	hash_seq_init(&status, _xlrelcache);
+
+	while ((hentry = (XLogRelCacheEntry *) hash_seq_search(&status)) != NULL)
+	{
+		XLogRelDesc *rdesc = hentry->rdesc;
+
+		if (hentry->rnode.dbNode == dbid)
+			RelationCloseSmgr(&(rdesc->reldata));
+	}
 }

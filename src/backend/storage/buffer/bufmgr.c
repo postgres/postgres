@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.204 2006/03/05 15:58:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.205 2006/03/29 21:17:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1450,7 +1450,7 @@ DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,
 }
 
 /* ---------------------------------------------------------------------
- *		DropBuffers
+ *		DropDatabaseBuffers
  *
  *		This function removes all the buffers in the buffer cache for a
  *		particular database.  Dirty pages are simply dropped, without
@@ -1461,7 +1461,7 @@ DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,
  * --------------------------------------------------------------------
  */
 void
-DropBuffers(Oid dbid)
+DropDatabaseBuffers(Oid dbid)
 {
 	int			i;
 	volatile BufferDesc *bufHdr;

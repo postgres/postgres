@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.11 2006/03/24 04:32:12 tgl Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.12 2006/03/29 21:17:36 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -177,9 +177,7 @@ gistRedoEntryUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 	decodeEntryUpdateRecord(&xlrec, record);
 
 	reln = XLogOpenRelation(xlrec.data->node);
-	if (!RelationIsValid(reln))
-		return;
-	buffer = XLogReadBuffer(false, reln, xlrec.data->blkno);
+	buffer = XLogReadBuffer(reln, xlrec.data->blkno, false);
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "block %u unfound", xlrec.data->blkno);
 	page = (Page) BufferGetPage(buffer);
@@ -195,8 +193,6 @@ gistRedoEntryUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 	}
 	else
 	{
-		if (PageIsNew((PageHeader) page))
-			elog(PANIC, "uninitialized page %u", xlrec.data->blkno);
 		if (XLByteLE(lsn, PageGetLSN(page)))
 		{
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -302,17 +298,12 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 
 	decodePageSplitRecord(&xlrec, record);
 	reln = XLogOpenRelation(xlrec.data->node);
-	if (!RelationIsValid(reln))
-		return;
 
 	/* first of all wee need get F_LEAF flag from original page */
-	buffer = XLogReadBuffer(false, reln, xlrec.data->origblkno);
+	buffer = XLogReadBuffer(reln, xlrec.data->origblkno, false);
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "block %u unfound", xlrec.data->origblkno);
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "uninitialized page %u", xlrec.data->origblkno);
-
 	flags = (GistPageIsLeaf(page)) ? F_LEAF : 0;
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
@@ -323,7 +314,7 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 		NewPage    *newpage = xlrec.page + i;
 		bool		isorigpage = (xlrec.data->origblkno == newpage->header->blkno) ? true : false;
 
-		buffer = XLogReadBuffer(!isorigpage, reln, newpage->header->blkno);
+		buffer = XLogReadBuffer(reln, newpage->header->blkno, !isorigpage);
 		if (!BufferIsValid(buffer))
 			elog(PANIC, "block %u unfound", newpage->header->blkno);
 		page = (Page) BufferGetPage(buffer);
@@ -367,24 +358,15 @@ gistRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	Page		page;
 
 	reln = XLogOpenRelation(*node);
-	if (!RelationIsValid(reln))
-		return;
-	buffer = XLogReadBuffer(true, reln, GIST_ROOT_BLKNO);
-	if (!BufferIsValid(buffer))
-		elog(PANIC, "root block unfound");
+	buffer = XLogReadBuffer(reln, GIST_ROOT_BLKNO, true);
+	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
-
-	if (!PageIsNew((PageHeader) page) && XLByteLE(lsn, PageGetLSN(page)))
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return;
-	}
 
 	GISTInitBuffer(buffer, F_LEAF);
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
+
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
 }
@@ -527,12 +509,10 @@ gist_form_invalid_tuple(BlockNumber blkno)
 static Buffer
 gistXLogReadAndLockBuffer(Relation r, BlockNumber blkno)
 {
-	Buffer		buffer = XLogReadBuffer(false, r, blkno);
+	Buffer		buffer = XLogReadBuffer(r, blkno, false);
 
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "block %u unfound", blkno);
-	if (PageIsNew((PageHeader) (BufferGetPage(buffer))))
-		elog(PANIC, "uninitialized page %u", blkno);
 
 	return buffer;
 }
@@ -590,8 +570,6 @@ gistContinueInsert(gistIncompleteInsert *insert)
 	Relation	index;
 
 	index = XLogOpenRelation(insert->node);
-	if (!RelationIsValid(index))
-		return;
 
 	/*
 	 * needed vector itup never will be more than initial lenblkno+2, because
@@ -606,29 +584,22 @@ gistContinueInsert(gistIncompleteInsert *insert)
 	if (insert->origblkno == GIST_ROOT_BLKNO)
 	{
 		/*
-		 * it  was split root, so we should only make new root. it can't be
+		 * it was split root, so we should only make new root. it can't be
 		 * simple insert into root, look at call pushIncompleteInsert in
 		 * gistRedoPageSplitRecord
 		 */
-		Buffer		buffer = XLogReadBuffer(true, index, GIST_ROOT_BLKNO);
+		Buffer		buffer = XLogReadBuffer(index, GIST_ROOT_BLKNO, true);
 		Page		page;
 
-		if (!BufferIsValid(buffer))
-			elog(PANIC, "root block unfound");
-
+		Assert(BufferIsValid(buffer));
 		page = BufferGetPage(buffer);
-		if (XLByteLE(insert->lsn, PageGetLSN(page)))
-		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
-			return;
-		}
 
 		GISTInitBuffer(buffer, 0);
-		page = BufferGetPage(buffer);
 		gistfillbuffer(index, page, itup, lenitup, FirstOffsetNumber);
+
 		PageSetLSN(page, insert->lsn);
 		PageSetTLI(page, ThisTimeLineID);
+
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buffer);
 	}
@@ -654,12 +625,10 @@ gistContinueInsert(gistIncompleteInsert *insert)
 						childfound = 0;
 
 			numbuffer = 1;
-			buffers[numbuffer - 1] = XLogReadBuffer(false, index, insert->path[i]);
+			buffers[numbuffer - 1] = XLogReadBuffer(index, insert->path[i], false);
 			if (!BufferIsValid(buffers[numbuffer - 1]))
 				elog(PANIC, "block %u unfound", insert->path[i]);
 			pages[numbuffer - 1] = BufferGetPage(buffers[numbuffer - 1]);
-			if (PageIsNew((PageHeader) (pages[numbuffer - 1])))
-				elog(PANIC, "uninitialized page %u", insert->path[i]);
 
 			if (XLByteLE(insert->lsn, PageGetLSN(pages[numbuffer - 1])))
 			{
@@ -693,7 +662,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 			if (gistnospace(pages[numbuffer - 1], itup, lenitup))
 			{
 				/* no space left on page, so we should split */
-				buffers[numbuffer] = XLogReadBuffer(true, index, P_NEW);
+				buffers[numbuffer] = XLogReadBuffer(index, P_NEW, true);
 				if (!BufferIsValid(buffers[numbuffer]))
 					elog(PANIC, "could not obtain new block");
 				GISTInitBuffer(buffers[numbuffer], 0);
@@ -717,7 +686,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 							 RelationGetRelationName(index));
 
 					/* fill new page */
-					buffers[numbuffer] = XLogReadBuffer(true, index, P_NEW);
+					buffers[numbuffer] = XLogReadBuffer(index, P_NEW, true);
 					if (!BufferIsValid(buffers[numbuffer]))
 						elog(PANIC, "could not obtain new block");
 					GISTInitBuffer(buffers[numbuffer], 0);

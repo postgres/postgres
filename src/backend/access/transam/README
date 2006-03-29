@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.3 2005/05/19 21:35:45 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.4 2006/03/29 21:17:37 tgl Exp $
 
 The Transaction System
 ----------------------
@@ -252,3 +252,166 @@ slru.c is the supporting mechanism for both pg_clog and pg_subtrans.  It
 implements the LRU policy for in-memory buffer pages.  The high-level routines
 for pg_clog are implemented in transam.c, while the low-level functions are in
 clog.c.  pg_subtrans is contained completely in subtrans.c.
+
+
+Write-Ahead Log coding
+----------------------
+
+The WAL subsystem (also called XLOG in the code) exists to guarantee crash
+recovery.  It can also be used to provide point-in-time recovery, as well as
+hot-standby replication via log shipping.  Here are some notes about
+non-obvious aspects of its design.
+
+A basic assumption of a write AHEAD log is that log entries must reach stable
+storage before the data-page changes they describe.  This ensures that
+replaying the log to its end will bring us to a consistent state where there
+are no partially-performed transactions.  To guarantee this, each data page
+(either heap or index) is marked with the LSN (log sequence number --- in
+practice, a WAL file location) of the latest XLOG record affecting the page.
+Before the bufmgr can write out a dirty page, it must ensure that xlog has
+been flushed to disk at least up to the page's LSN.  This low-level
+interaction improves performance by not waiting for XLOG I/O until necessary.
+The LSN check exists only in the shared-buffer manager, not in the local
+buffer manager used for temp tables; hence operations on temp tables must not
+be WAL-logged.
+
+During WAL replay, we can check the LSN of a page to detect whether the change
+recorded by the current log entry is already applied (it has been, if the page
+LSN is >= the log entry's WAL location).
+
+Usually, log entries contain just enough information to redo a single
+incremental update on a page (or small group of pages).  This will work only
+if the filesystem and hardware implement data page writes as atomic actions,
+so that a page is never left in a corrupt partly-written state.  Since that's
+often an untenable assumption in practice, we log additional information to
+allow complete reconstruction of modified pages.  The first WAL record
+affecting a given page after a checkpoint is made to contain a copy of the
+entire page, and we implement replay by restoring that page copy instead of
+redoing the update.  (This is more reliable than the data storage itself would
+be because we can check the validity of the WAL record's CRC.)  We can detect
+the "first change after checkpoint" by noting whether the page's old LSN
+precedes the end of WAL as of the last checkpoint (the RedoRecPtr).
+
+The general schema for executing a WAL-logged action is
+
+1. Pin and exclusive-lock the shared buffer(s) containing the data page(s)
+to be modified.
+
+2. START_CRIT_SECTION()  (Any error during the next two steps must cause a
+PANIC because the shared buffers will contain unlogged changes, which we
+have to ensure don't get to disk.  Obviously, you should check conditions
+such as whether there's enough free space on the page before you start the
+critical section.)
+
+3. Apply the required changes to the shared buffer(s).
+
+4. Build a WAL log record and pass it to XLogInsert(); then update the page's
+LSN and TLI using the returned XLOG location.  For instance,
+
+		recptr = XLogInsert(rmgr_id, info, rdata);
+
+		PageSetLSN(dp, recptr);
+		PageSetTLI(dp, ThisTimeLineID);
+
+5. END_CRIT_SECTION()
+
+6. Unlock and write the buffer(s):
+
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
+
+(Note: WriteBuffer doesn't really "write" the buffer anymore, it just marks it
+dirty and unpins it.  The write will not happen until a checkpoint occurs or
+the shared buffer is needed for another page.)
+
+XLogInsert's "rdata" argument is an array of pointer/size items identifying
+chunks of data to be written in the XLOG record, plus optional shared-buffer
+IDs for chunks that are in shared buffers rather than temporary variables.
+The "rdata" array must mention (at least once) each of the shared buffers
+being modified, unless the action is such that the WAL replay routine can
+reconstruct the entire page contents.  XLogInsert includes the logic that
+tests to see whether a shared buffer has been modified since the last
+checkpoint.  If not, the entire page contents are logged rather than just the
+portion(s) pointed to by "rdata".
+
+Because XLogInsert drops the rdata components associated with buffers it
+chooses to log in full, the WAL replay routines normally need to test to see
+which buffers were handled that way --- otherwise they may be misled about
+what the XLOG record actually contains.  XLOG records that describe multi-page
+changes therefore require some care to design: you must be certain that you
+know what data is indicated by each "BKP" bit.  An example of the trickiness
+is that in a HEAP_UPDATE record, BKP(1) normally is associated with the source
+page and BKP(2) is associated with the destination page --- but if these are
+the same page, only BKP(1) would have been set.
+
+For this reason as well as the risk of deadlocking on buffer locks, it's best
+to design WAL records so that they reflect small atomic actions involving just
+one or a few pages.  The current XLOG infrastructure cannot handle WAL records
+involving references to more than three shared buffers, anyway.
+
+In the case where the WAL record contains enough information to re-generate
+the entire contents of a page, do *not* show that page's buffer ID in the
+rdata array, even if some of the rdata items point into the buffer.  This is
+because you don't want XLogInsert to log the whole page contents.  The
+standard replay-routine pattern for this case is
+
+	reln = XLogOpenRelation(rnode);
+	buffer = XLogReadBuffer(reln, blkno, true);
+	Assert(BufferIsValid(buffer));
+	page = (Page) BufferGetPage(buffer);
+
+	... initialize the page ...
+
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
+
+In the case where the WAL record provides only enough information to
+incrementally update the page, the rdata array *must* mention the buffer
+ID at least once; otherwise there is no defense against torn-page problems.
+The standard replay-routine pattern for this case is
+
+	if (record->xl_info & XLR_BKP_BLOCK_n)
+		<< do nothing, page was rewritten from logged copy >>;
+
+	reln = XLogOpenRelation(rnode);
+	buffer = XLogReadBuffer(reln, blkno, false);
+	if (!BufferIsValid(buffer))
+		<< do nothing, page has been deleted >>;
+	page = (Page) BufferGetPage(buffer);
+
+	if (XLByteLE(lsn, PageGetLSN(page)))
+	{
+		/* changes are already applied */
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
+		return;
+	}
+
+	... apply the change ...
+
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
+
+As noted above, for a multi-page update you need to be able to determine
+which XLR_BKP_BLOCK_n flag applies to each page.  If a WAL record reflects
+a combination of fully-rewritable and incremental updates, then the rewritable
+pages don't count for the XLR_BKP_BLOCK_n numbering.  (XLR_BKP_BLOCK_n is
+associated with the n'th distinct buffer ID seen in the "rdata" array, and
+per the above discussion, fully-rewritable buffers shouldn't be mentioned in
+"rdata".)
+
+Due to all these constraints, complex changes (such as a multilevel index
+insertion) normally need to be described by a series of atomic-action WAL
+records.  What do you do if the intermediate states are not self-consistent?
+The answer is that the WAL replay logic has to be able to fix things up.
+In btree indexes, for example, a page split requires insertion of a new key in
+the parent btree level, but for locking reasons this has to be reflected by
+two separate WAL records.  The replay code has to remember "unfinished" split
+operations, and match them up to subsequent insertions in the parent level.
+If no matching insert has been found by the time the WAL replay ends, the
+replay code has to do the insertion on its own to restore the index to
+consistency.

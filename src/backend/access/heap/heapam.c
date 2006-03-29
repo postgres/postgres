@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.209 2006/03/24 04:32:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.210 2006/03/29 21:17:36 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2888,16 +2888,10 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 		return;
 
 	reln = XLogOpenRelation(xlrec->node);
-	if (!RelationIsValid(reln))
-		return;
-
-	buffer = XLogReadBuffer(false, reln, xlrec->block);
+	buffer = XLogReadBuffer(reln, xlrec->block, false);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "heap_clean_redo: no block");
-
+		return;
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "heap_clean_redo: uninitialized page");
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
@@ -2943,16 +2937,9 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 	 * Note: the NEWPAGE log record is used for both heaps and indexes, so do
 	 * not do anything that assumes we are touching a heap.
 	 */
-
-	if (record->xl_info & XLR_BKP_BLOCK_1)
-		return;
-
 	reln = XLogOpenRelation(xlrec->node);
-	if (!RelationIsValid(reln))
-		return;
-	buffer = XLogReadBuffer(true, reln, xlrec->blkno);
-	if (!BufferIsValid(buffer))
-		elog(PANIC, "heap_newpage_redo: no block");
+	buffer = XLogReadBuffer(reln, xlrec->blkno, true);
+	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 
 	Assert(record->xl_len == SizeOfHeapNewpage + BLCKSZ);
@@ -2979,18 +2966,12 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 		return;
 
 	reln = XLogOpenRelation(xlrec->target.node);
-
-	if (!RelationIsValid(reln))
-		return;
-
-	buffer = XLogReadBuffer(false, reln,
-							ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+	buffer = XLogReadBuffer(reln,
+							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							false);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "heap_delete_redo: no block");
-
+		return;
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "heap_delete_redo: uninitialized page");
 
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
@@ -3045,27 +3026,31 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 
 	reln = XLogOpenRelation(xlrec->target.node);
 
-	if (!RelationIsValid(reln))
-		return;
-
-	buffer = XLogReadBuffer(true, reln,
-							ItemPointerGetBlockNumber(&(xlrec->target.tid)));
-	if (!BufferIsValid(buffer))
-		return;
-
-	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page) &&
-		!(record->xl_info & XLOG_HEAP_INIT_PAGE))
-		elog(PANIC, "heap_insert_redo: uninitialized page");
-
 	if (record->xl_info & XLOG_HEAP_INIT_PAGE)
-		PageInit(page, BufferGetPageSize(buffer), 0);
-
-	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return;
+		buffer = XLogReadBuffer(reln,
+							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							true);
+		Assert(BufferIsValid(buffer));
+		page = (Page) BufferGetPage(buffer);
+
+		PageInit(page, BufferGetPageSize(buffer), 0);
+	}
+	else
+	{
+		buffer = XLogReadBuffer(reln,
+							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							false);
+		if (!BufferIsValid(buffer))
+			return;
+		page = (Page) BufferGetPage(buffer);
+
+		if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
+		{
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
+			return;
+		}
 	}
 
 	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
@@ -3110,9 +3095,8 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 	xl_heap_update *xlrec = (xl_heap_update *) XLogRecGetData(record);
 	Relation	reln = XLogOpenRelation(xlrec->target.node);
 	Buffer		buffer;
-	bool		samepage =
-	(ItemPointerGetBlockNumber(&(xlrec->newtid)) ==
-	 ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+	bool		samepage = (ItemPointerGetBlockNumber(&(xlrec->newtid)) ==
+							ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	Page		page;
 	OffsetNumber offnum;
 	ItemId		lp = NULL;
@@ -3126,22 +3110,21 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 	int			hsize;
 	uint32		newlen;
 
-	if (!RelationIsValid(reln))
-		return;
-
 	if (record->xl_info & XLR_BKP_BLOCK_1)
+	{
+		if (samepage)
+			return;				/* backup block covered both changes */
 		goto newt;
+	}
 
 	/* Deal with old tuple version */
 
-	buffer = XLogReadBuffer(false, reln,
-							ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+	buffer = XLogReadBuffer(reln,
+							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							false);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "heap_update_redo: no block");
-
+		goto newt;
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "heap_update_redo: uninitialized old page");
 
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
@@ -3183,6 +3166,10 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 		/* Set forward chain link in t_ctid */
 		htup->t_ctid = xlrec->newtid;
 	}
+	/*
+	 * this test is ugly, but necessary to avoid thinking that insert change
+	 * is already applied
+	 */
 	if (samepage)
 		goto newsame;
 	PageSetLSN(page, lsn);
@@ -3194,31 +3181,37 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 
 newt:;
 
-	if ((record->xl_info & XLR_BKP_BLOCK_2) ||
-		((record->xl_info & XLR_BKP_BLOCK_1) && samepage))
+	if (record->xl_info & XLR_BKP_BLOCK_2)
 		return;
-
-	buffer = XLogReadBuffer(true, reln,
-							ItemPointerGetBlockNumber(&(xlrec->newtid)));
-	if (!BufferIsValid(buffer))
-		return;
-
-	page = (Page) BufferGetPage(buffer);
-
-newsame:;
-	if (PageIsNew((PageHeader) page) &&
-		!(record->xl_info & XLOG_HEAP_INIT_PAGE))
-		elog(PANIC, "heap_update_redo: uninitialized page");
 
 	if (record->xl_info & XLOG_HEAP_INIT_PAGE)
-		PageInit(page, BufferGetPageSize(buffer), 0);
-
-	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return;
+		buffer = XLogReadBuffer(reln,
+								ItemPointerGetBlockNumber(&(xlrec->newtid)),
+								true);
+		Assert(BufferIsValid(buffer));
+		page = (Page) BufferGetPage(buffer);
+
+		PageInit(page, BufferGetPageSize(buffer), 0);
 	}
+	else
+	{
+		buffer = XLogReadBuffer(reln,
+								ItemPointerGetBlockNumber(&(xlrec->newtid)),
+								false);
+		if (!BufferIsValid(buffer))
+			return;
+		page = (Page) BufferGetPage(buffer);
+
+		if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
+		{
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
+			return;
+		}
+	}
+
+newsame:;
 
 	offnum = ItemPointerGetOffsetNumber(&(xlrec->newtid));
 	if (PageGetMaxOffsetNumber(page) + 1 < offnum)
@@ -3288,18 +3281,12 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 		return;
 
 	reln = XLogOpenRelation(xlrec->target.node);
-
-	if (!RelationIsValid(reln))
-		return;
-
-	buffer = XLogReadBuffer(false, reln,
-							ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+	buffer = XLogReadBuffer(reln,
+							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							false);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "heap_lock_redo: no block");
-
+		return;
 	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "heap_lock_redo: uninitialized page");
 
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
@@ -3381,7 +3368,10 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_insert *xlrec = (xl_heap_insert *) rec;
 
-		appendStringInfo(buf, "insert: ");
+		if (xl_info & XLOG_HEAP_INIT_PAGE)
+			appendStringInfo(buf, "insert(init): ");
+		else
+			appendStringInfo(buf, "insert: ");
 		out_target(buf, &(xlrec->target));
 	}
 	else if (info == XLOG_HEAP_DELETE)
@@ -3391,12 +3381,25 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "delete: ");
 		out_target(buf, &(xlrec->target));
 	}
-	else if (info == XLOG_HEAP_UPDATE || info == XLOG_HEAP_MOVE)
+	else if (info == XLOG_HEAP_UPDATE)
 	{
 		xl_heap_update *xlrec = (xl_heap_update *) rec;
 
-		if (info == XLOG_HEAP_UPDATE)
+		if (xl_info & XLOG_HEAP_INIT_PAGE)
+			appendStringInfo(buf, "update(init): ");
+		else
 			appendStringInfo(buf, "update: ");
+		out_target(buf, &(xlrec->target));
+		appendStringInfo(buf, "; new %u/%u",
+				ItemPointerGetBlockNumber(&(xlrec->newtid)),
+				ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+	}
+	else if (info == XLOG_HEAP_MOVE)
+	{
+		xl_heap_update *xlrec = (xl_heap_update *) rec;
+
+		if (xl_info & XLOG_HEAP_INIT_PAGE)
+			appendStringInfo(buf, "move(init): ");
 		else
 			appendStringInfo(buf, "move: ");
 		out_target(buf, &(xlrec->target));

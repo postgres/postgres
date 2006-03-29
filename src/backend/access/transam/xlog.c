@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.229 2006/03/28 22:01:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.230 2006/03/29 21:17:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2509,34 +2509,28 @@ RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 		blk += sizeof(BkpBlock);
 
 		reln = XLogOpenRelation(bkpb.node);
+		buffer = XLogReadBuffer(reln, bkpb.block, true);
+		Assert(BufferIsValid(buffer));
+		page = (Page) BufferGetPage(buffer);
 
-		if (reln)
+		if (bkpb.hole_length == 0)
 		{
-			buffer = XLogReadBuffer(true, reln, bkpb.block);
-			if (BufferIsValid(buffer))
-			{
-				page = (Page) BufferGetPage(buffer);
-
-				if (bkpb.hole_length == 0)
-				{
-					memcpy((char *) page, blk, BLCKSZ);
-				}
-				else
-				{
-					/* must zero-fill the hole */
-					MemSet((char *) page, 0, BLCKSZ);
-					memcpy((char *) page, blk, bkpb.hole_offset);
-					memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
-						   blk + bkpb.hole_offset,
-						   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
-				}
-
-				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				WriteBuffer(buffer);
-			}
+			memcpy((char *) page, blk, BLCKSZ);
 		}
+		else
+		{
+			/* must zero-fill the hole */
+			MemSet((char *) page, 0, BLCKSZ);
+			memcpy((char *) page, blk, bkpb.hole_offset);
+			memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
+				   blk + bkpb.hole_offset,
+				   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
+		}
+
+		PageSetLSN(page, lsn);
+		PageSetTLI(page, ThisTimeLineID);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(buffer);
 
 		blk += BLCKSZ - bkpb.hole_length;
 	}
@@ -5451,25 +5445,19 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 static void
 xlog_outrec(StringInfo buf, XLogRecord *record)
 {
-	int			bkpb;
 	int			i;
 
 	appendStringInfo(buf, "prev %X/%X; xid %u",
-			record->xl_prev.xlogid, record->xl_prev.xrecoff,
-			record->xl_xid);
+					 record->xl_prev.xlogid, record->xl_prev.xrecoff,
+					 record->xl_xid);
 
-	for (i = 0, bkpb = 0; i < XLR_MAX_BKP_BLOCKS; i++)
+	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
 	{
-		if (!(record->xl_info & (XLR_SET_BKP_BLOCK(i))))
-			continue;
-		bkpb++;
+		if (record->xl_info & XLR_SET_BKP_BLOCK(i))
+			appendStringInfo(buf, "; bkpb%d", i+1);
 	}
 
-	if (bkpb)
-		appendStringInfo(buf, "; bkpb %d", bkpb);
-
-	appendStringInfo(buf, ": %s",
-			RmgrTable[record->xl_rmid].rm_name);
+	appendStringInfo(buf, ": %s", RmgrTable[record->xl_rmid].rm_name);
 }
 #endif   /* WAL_DEBUG */
 
