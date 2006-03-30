@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.72 2006/03/05 15:58:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.73 2006/03/30 01:08:15 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,7 +444,7 @@ dumpRoles(PGconn *conn)
 						  "true as rolcanlogin, "
 						  "-1 as rolconnlimit, "
 						  "passwd as rolpassword, "
-						  "valuntil as rolvaliduntil "
+						  "valuntil as rolvaliduntil, "
 						  "null as rolcomment "
 						  "FROM pg_shadow "
 						  "UNION ALL "
@@ -457,8 +457,8 @@ dumpRoles(PGconn *conn)
 						  "false as rolcanlogin, "
 						  "-1 as rolconnlimit, "
 						  "null::text as rolpassword, "
-						  "null::abstime as rolvaliduntil "
-						  "null "
+						  "null::abstime as rolvaliduntil, "
+						  "null as rolcomment "
 						  "FROM pg_group");
 
 	res = executeQuery(conn, buf->data);
