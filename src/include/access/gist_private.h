@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.11 2006/03/24 04:32:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.12 2006/03/30 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,11 +80,13 @@ typedef GISTScanOpaqueData *GISTScanOpaque;
 /* XLog stuff */
 extern const XLogRecPtr XLogRecPtrForTemp;
 
-#define XLOG_GIST_ENTRY_UPDATE	0x00
-#define XLOG_GIST_ENTRY_DELETE	0x10
-#define XLOG_GIST_NEW_ROOT	0x20
+#define XLOG_GIST_PAGE_UPDATE		0x00
+#define XLOG_GIST_NEW_ROOT			0x20
+#define XLOG_GIST_PAGE_SPLIT		0x30
+#define XLOG_GIST_INSERT_COMPLETE	0x40
+#define XLOG_GIST_CREATE_INDEX		0x50
 
-typedef struct gistxlogEntryUpdate
+typedef struct gistxlogPageUpdate
 {
 	RelFileNode node;
 	BlockNumber blkno;
@@ -100,17 +102,16 @@ typedef struct gistxlogEntryUpdate
 	/*
 	 * follow: 1. todelete OffsetNumbers 2. tuples to insert
 	 */
-} gistxlogEntryUpdate;
-
-#define XLOG_GIST_PAGE_SPLIT	0x30
+} gistxlogPageUpdate;
 
 typedef struct gistxlogPageSplit
 {
 	RelFileNode node;
 	BlockNumber origblkno;		/* splitted page */
+	bool		origleaf;		/* was splitted page a leaf page? */
 	uint16		npage;
 
-	/* see comments on gistxlogEntryUpdate */
+	/* see comments on gistxlogPageUpdate */
 	ItemPointerData key;
 
 	/*
@@ -118,21 +119,18 @@ typedef struct gistxlogPageSplit
 	 */
 } gistxlogPageSplit;
 
-#define XLOG_GIST_INSERT_COMPLETE  0x40
-
 typedef struct gistxlogPage
 {
 	BlockNumber blkno;
-	int			num;
+	int			num;			/* number of index tuples following */
 } gistxlogPage;
-
-#define XLOG_GIST_CREATE_INDEX	0x50
 
 typedef struct gistxlogInsertComplete
 {
 	RelFileNode node;
 	/* follows ItemPointerData key to clean */
 } gistxlogInsertComplete;
+
 
 /* SplitedPageLayout - gistSplit function result */
 typedef struct SplitedPageLayout
@@ -239,8 +237,7 @@ extern void gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, It
 extern IndexTuple *gistSplit(Relation r, Buffer buffer, IndexTuple *itup,
 		  int *len, SplitedPageLayout **dist, GISTSTATE *giststate);
 
-extern GISTInsertStack *gistFindPath(Relation r, BlockNumber child,
-			 Buffer (*myReadBuffer) (Relation, BlockNumber));
+extern GISTInsertStack *gistFindPath(Relation r, BlockNumber child);
 
 /* gistxlog.c */
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
@@ -249,11 +246,12 @@ extern void gist_xlog_startup(void);
 extern void gist_xlog_cleanup(void);
 extern IndexTuple gist_form_invalid_tuple(BlockNumber blkno);
 
-extern XLogRecData *formUpdateRdata(RelFileNode node, BlockNumber blkno,
+extern XLogRecData *formUpdateRdata(RelFileNode node, Buffer buffer,
 				OffsetNumber *todelete, int ntodelete, bool emptypage,
 				IndexTuple *itup, int ituplen, ItemPointer key);
 
-extern XLogRecData *formSplitRdata(RelFileNode node, BlockNumber blkno,
+extern XLogRecData *formSplitRdata(RelFileNode node,
+			   BlockNumber blkno, bool page_is_leaf,
 			   ItemPointer key, SplitedPageLayout *dist);
 
 extern XLogRecPtr gistxlogInsertCompletion(RelFileNode node, ItemPointerData *keys, int len);

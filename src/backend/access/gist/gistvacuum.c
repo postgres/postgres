@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.16 2006/03/05 15:58:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.17 2006/03/30 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,12 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 	gistcheckpage(gv->index, buffer);
 	page = (Page) BufferGetPage(buffer);
 	maxoff = PageGetMaxOffsetNumber(page);
+
+	/*
+	 * XXX need to reduce scope of changes to page so we can make this
+	 * critical section less extensive
+	 */
+	START_CRIT_SECTION();
 
 	if (GistPageIsLeaf(page))
 	{
@@ -188,10 +194,8 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 					ItemPointerSet(&key, blkno, TUPLE_IS_VALID);
 
 					rdata = formSplitRdata(gv->index->rd_node, blkno,
-										   &key, dist);
+										   false, &key, dist);
 					xlinfo = rdata->data;
-
-					START_CRIT_SECTION();
 
 					recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT, rdata);
 					ptr = dist;
@@ -202,7 +206,6 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 						ptr = ptr->next;
 					}
 
-					END_CRIT_SECTION();
 					pfree(xlinfo);
 					pfree(rdata);
 				}
@@ -235,8 +238,6 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 					oldCtx = MemoryContextSwitchTo(gv->opCtx);
 					gistnewroot(gv->index, buffer, res.itup, res.ituplen, &key);
 					MemoryContextSwitchTo(oldCtx);
-
-					WriteNoReleaseBuffer(buffer);
 				}
 
 				needwrite = false;
@@ -302,15 +303,14 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 			XLogRecPtr	recptr;
 			char	   *xlinfo;
 
-			rdata = formUpdateRdata(gv->index->rd_node, blkno, todelete, ntodelete,
-									res.emptypage, addon, curlenaddon, NULL);
+			rdata = formUpdateRdata(gv->index->rd_node, buffer,
+									todelete, ntodelete, res.emptypage,
+									addon, curlenaddon, NULL);
 			xlinfo = rdata->data;
 
-			START_CRIT_SECTION();
-			recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_ENTRY_UPDATE, rdata);
+			recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_UPDATE, rdata);
 			PageSetLSN(page, recptr);
 			PageSetTLI(page, ThisTimeLineID);
-			END_CRIT_SECTION();
 
 			pfree(xlinfo);
 			pfree(rdata);
@@ -321,6 +321,8 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 	}
 	else
 		ReleaseBuffer(buffer);
+
+	END_CRIT_SECTION();
 
 	if (ncompleted && !gv->index->rd_istemp)
 		gistxlogInsertCompletion(gv->index->rd_node, completed, ncompleted);
@@ -579,6 +581,17 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 			 */
 			pushStackIfSplited(page, stack);
 
+			/*
+			 * Remove deletable tuples from page
+			 *
+			 * XXX try to make this critical section shorter.  Could do it
+			 * by separating the callback loop from the actual tuple deletion,
+			 * but that would affect the definition of the todelete[] array
+			 * passed into the WAL record (because the indexes would all be
+			 * pre-deletion).
+			 */
+			START_CRIT_SECTION();
+
 			maxoff = PageGetMaxOffsetNumber(page);
 
 			for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
@@ -608,17 +621,17 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 				{
 					XLogRecData *rdata;
 					XLogRecPtr	recptr;
-					gistxlogEntryUpdate *xlinfo;
+					gistxlogPageUpdate *xlinfo;
 
-					rdata = formUpdateRdata(rel->rd_node, stack->blkno, todelete, ntodelete,
-											false, NULL, 0, NULL);
-					xlinfo = (gistxlogEntryUpdate *) rdata->data;
+					rdata = formUpdateRdata(rel->rd_node, buffer,
+											todelete, ntodelete, false,
+											NULL, 0,
+											NULL);
+					xlinfo = (gistxlogPageUpdate *) rdata->data;
 
-					START_CRIT_SECTION();
-					recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_ENTRY_UPDATE, rdata);
+					recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_UPDATE, rdata);
 					PageSetLSN(page, recptr);
 					PageSetTLI(page, ThisTimeLineID);
-					END_CRIT_SECTION();
 
 					pfree(xlinfo);
 					pfree(rdata);
@@ -627,6 +640,8 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					PageSetLSN(page, XLogRecPtrForTemp);
 				WriteNoReleaseBuffer(buffer);
 			}
+
+			END_CRIT_SECTION();
 		}
 		else
 		{
