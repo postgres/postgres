@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.93.2.2 2006/01/18 20:35:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.93.2.3 2006/03/30 22:11:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,8 +470,14 @@ smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
 	 */
 	FreeSpaceMapForgetRel(&rnode);
 
-	/* Tell the stats collector to forget it immediately, too. */
-	pgstat_drop_relation(rnode.relNode);
+	/*
+	 * Tell the stats collector to forget it immediately, too.  Skip this
+	 * in recovery mode, since the stats collector likely isn't running
+	 * (and if it is, pgstats.c will get confused because we aren't a real
+	 * backend process).
+	 */
+	if (!InRecovery)
+		pgstat_drop_relation(rnode.relNode);
 
 	/*
 	 * And delete the physical files.
