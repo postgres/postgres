@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.93 2006/03/05 15:58:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.94 2006/03/31 23:32:05 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -53,13 +53,16 @@ _bt_metapinit(Relation rel)
 
 	buf = ReadBuffer(rel, P_NEW);
 	Assert(BufferGetBlockNumber(buf) == BTREE_METAPAGE);
+	LockBuffer(buf, BT_WRITE);
 	pg = BufferGetPage(buf);
+
+	/* NO ELOG(ERROR) from here till newmeta op is logged */
+	START_CRIT_SECTION();
 
 	_bt_initmetapage(pg, P_NONE, 0);
 	metad = BTPageGetMeta(pg);
 
-	/* NO ELOG(ERROR) from here till newmeta op is logged */
-	START_CRIT_SECTION();
+	MarkBufferDirty(buf);
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -89,7 +92,7 @@ _bt_metapinit(Relation rel)
 
 	END_CRIT_SECTION();
 
-	WriteBuffer(buf);
+	UnlockReleaseBuffer(buf);
 }
 
 /*
@@ -235,6 +238,9 @@ _bt_getroot(Relation rel, int access)
 		metad->btm_fastroot = rootblkno;
 		metad->btm_fastlevel = 0;
 
+		MarkBufferDirty(rootbuf);
+		MarkBufferDirty(metabuf);
+
 		/* XLOG stuff */
 		if (!rel->rd_istemp)
 		{
@@ -261,8 +267,6 @@ _bt_getroot(Relation rel, int access)
 
 		END_CRIT_SECTION();
 
-		_bt_wrtnorelbuf(rel, rootbuf);
-
 		/*
 		 * swap root write lock for read lock.	There is no danger of anyone
 		 * else accessing the new root page while it's unlocked, since no one
@@ -271,8 +275,8 @@ _bt_getroot(Relation rel, int access)
 		LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
 		LockBuffer(rootbuf, BT_READ);
 
-		/* okay, metadata is correct, write and release it */
-		_bt_wrtbuf(rel, metabuf);
+		/* okay, metadata is correct, release lock on it */
+		_bt_relbuf(rel, metabuf);
 	}
 	else
 	{
@@ -581,49 +585,12 @@ _bt_relandgetbuf(Relation rel, Buffer obuf, BlockNumber blkno, int access)
 /*
  *	_bt_relbuf() -- release a locked buffer.
  *
- * Lock and pin (refcount) are both dropped.  Note that either read or
- * write lock can be dropped this way, but if we modified the buffer,
- * this is NOT the right way to release a write lock.
+ * Lock and pin (refcount) are both dropped.
  */
 void
 _bt_relbuf(Relation rel, Buffer buf)
 {
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buf);
-}
-
-/*
- *	_bt_wrtbuf() -- write a btree page to disk.
- *
- *		This routine releases the lock held on the buffer and our refcount
- *		for it.  It is an error to call _bt_wrtbuf() without a write lock
- *		and a pin on the buffer.
- *
- * NOTE: actually, the buffer manager just marks the shared buffer page
- * dirty here; the real I/O happens later.	This is okay since we are not
- * relying on write ordering anyway.  The WAL mechanism is responsible for
- * guaranteeing correctness after a crash.
- */
-void
-_bt_wrtbuf(Relation rel, Buffer buf)
-{
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buf);
-}
-
-/*
- *	_bt_wrtnorelbuf() -- write a btree page to disk, but do not release
- *						 our reference or lock.
- *
- *		It is an error to call _bt_wrtnorelbuf() without a write lock
- *		and a pin on the buffer.
- *
- * See above NOTE.
- */
-void
-_bt_wrtnorelbuf(Relation rel, Buffer buf)
-{
-	WriteNoReleaseBuffer(buf);
+	UnlockReleaseBuffer(buf);
 }
 
 /*
@@ -676,9 +643,8 @@ _bt_page_recyclable(Page page)
  * non-leaf page has to be done as part of an atomic action that includes
  * deleting the page it points to.
  *
- * This routine assumes that the caller has pinned and locked the buffer,
- * and will write the buffer afterwards.  Also, the given itemnos *must*
- * appear in increasing order in the array.
+ * This routine assumes that the caller has pinned and locked the buffer.
+ * Also, the given itemnos *must* appear in increasing order in the array.
  */
 void
 _bt_delitems(Relation rel, Buffer buf,
@@ -691,6 +657,8 @@ _bt_delitems(Relation rel, Buffer buf,
 
 	/* Fix the page */
 	PageIndexMultiDelete(page, itemnos, nitems);
+
+	MarkBufferDirty(buf);
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -1053,7 +1021,15 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 	{
 		metad->btm_fastroot = rightsib;
 		metad->btm_fastlevel = targetlevel;
+		MarkBufferDirty(metabuf);
 	}
+
+	/* Must mark buffers dirty before XLogInsert */
+	MarkBufferDirty(pbuf);
+	MarkBufferDirty(rbuf);
+	MarkBufferDirty(buf);
+	if (BufferIsValid(lbuf))
+		MarkBufferDirty(lbuf);
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -1143,14 +1119,14 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 
 	END_CRIT_SECTION();
 
-	/* Write and release buffers */
+	/* release buffers */
 	if (BufferIsValid(metabuf))
-		_bt_wrtbuf(rel, metabuf);
-	_bt_wrtbuf(rel, pbuf);
-	_bt_wrtbuf(rel, rbuf);
-	_bt_wrtbuf(rel, buf);
+		_bt_relbuf(rel, metabuf);
+	_bt_relbuf(rel, pbuf);
+	_bt_relbuf(rel, rbuf);
+	_bt_relbuf(rel, buf);
 	if (BufferIsValid(lbuf))
-		_bt_wrtbuf(rel, lbuf);
+		_bt_relbuf(rel, lbuf);
 
 	/*
 	 * If parent became half dead, recurse to try to delete it. Otherwise, if

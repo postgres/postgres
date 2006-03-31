@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.264 2006/03/24 23:02:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.265 2006/03/31 23:32:06 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1066,12 +1066,9 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	}
 
 	if (pg_class_scan)
-		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-
-	if (pg_class_scan)
 	{
-		/* Write the modified tuple in-place */
-		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
+		MarkBufferDirty(pg_class_scan->rs_cbuf);
+		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 		/* Send out shared cache inval if necessary */
 		if (!IsBootstrapProcessingMode())
 			CacheInvalidateHeapTuple(pg_class, tuple);
@@ -1294,8 +1291,8 @@ UpdateStats(Oid relid, double reltuples)
 			LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
 			rd_rel->relpages = (int32) relpages;
 			rd_rel->reltuples = (float4) reltuples;
+			MarkBufferDirty(pg_class_scan->rs_cbuf);
 			LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-			WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
 			if (!IsBootstrapProcessingMode())
 				CacheInvalidateHeapTuple(pg_class, tuple);
 		}

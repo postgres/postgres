@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.4 2006/03/29 21:17:37 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.5 2006/03/31 23:32:05 tgl Exp $
 
 The Transaction System
 ----------------------
@@ -297,7 +297,7 @@ The general schema for executing a WAL-logged action is
 1. Pin and exclusive-lock the shared buffer(s) containing the data page(s)
 to be modified.
 
-2. START_CRIT_SECTION()  (Any error during the next two steps must cause a
+2. START_CRIT_SECTION()  (Any error during the next three steps must cause a
 PANIC because the shared buffers will contain unlogged changes, which we
 have to ensure don't get to disk.  Obviously, you should check conditions
 such as whether there's enough free space on the page before you start the
@@ -305,7 +305,10 @@ critical section.)
 
 3. Apply the required changes to the shared buffer(s).
 
-4. Build a WAL log record and pass it to XLogInsert(); then update the page's
+4. Mark the shared buffer(s) as dirty with MarkBufferDirty().  (This must
+happen before the WAL record is inserted; see notes in SyncOneBuffer().)
+
+5. Build a WAL log record and pass it to XLogInsert(); then update the page's
 LSN and TLI using the returned XLOG location.  For instance,
 
 		recptr = XLogInsert(rmgr_id, info, rdata);
@@ -313,16 +316,9 @@ LSN and TLI using the returned XLOG location.  For instance,
 		PageSetLSN(dp, recptr);
 		PageSetTLI(dp, ThisTimeLineID);
 
-5. END_CRIT_SECTION()
+6. END_CRIT_SECTION()
 
-6. Unlock and write the buffer(s):
-
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
-
-(Note: WriteBuffer doesn't really "write" the buffer anymore, it just marks it
-dirty and unpins it.  The write will not happen until a checkpoint occurs or
-the shared buffer is needed for another page.)
+7. Unlock and unpin the buffer(s).
 
 XLogInsert's "rdata" argument is an array of pointer/size items identifying
 chunks of data to be written in the XLOG record, plus optional shared-buffer
@@ -364,8 +360,8 @@ standard replay-routine pattern for this case is
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 
 In the case where the WAL record provides only enough information to
 incrementally update the page, the rdata array *must* mention the buffer
@@ -384,8 +380,7 @@ The standard replay-routine pattern for this case is
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
 		/* changes are already applied */
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		return;
 	}
 
@@ -393,8 +388,8 @@ The standard replay-routine pattern for this case is
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 
 As noted above, for a multi-page update you need to be able to determine
 which XLR_BKP_BLOCK_n flag applies to each page.  If a WAL record reflects

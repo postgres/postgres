@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.51 2006/03/05 15:58:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.52 2006/03/31 23:32:05 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -146,7 +146,8 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 	ovflopaque->hasho_bucket = pageopaque->hasho_bucket;
 	ovflopaque->hasho_flag = LH_OVERFLOW_PAGE;
 	ovflopaque->hasho_filler = HASHO_FILL;
-	_hash_wrtnorelbuf(rel, ovflbuf);
+
+	MarkBufferDirty(ovflbuf);
 
 	/* logically chain overflow page to previous page */
 	pageopaque->hasho_nextblkno = ovflblkno;

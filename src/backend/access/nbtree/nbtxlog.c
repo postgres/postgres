@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.29 2006/03/29 21:17:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.30 2006/03/31 23:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,8 +69,7 @@ forget_matching_split(Relation reln, RelFileNode node,
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 	rightblk = ItemPointerGetBlockNumber(&(itup->t_tid));
 	Assert(ItemPointerGetOffsetNumber(&(itup->t_tid)) == P_HIKEY);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buffer);
+	UnlockReleaseBuffer(buffer);
 
 	foreach(l, incomplete_splits)
 	{
@@ -80,7 +79,8 @@ forget_matching_split(Relation reln, RelFileNode node,
 			rightblk == split->rightblk)
 		{
 			if (is_root != split->is_root)
-				elog(LOG, "forget_matching_split: fishy is_root data");
+				elog(LOG, "forget_matching_split: fishy is_root data (expected %d, got %d)",
+					 split->is_root, is_root);
 			incomplete_splits = list_delete_ptr(incomplete_splits, split);
 			break;				/* need not look further */
 		}
@@ -143,8 +143,8 @@ _bt_restore_meta(Relation reln, XLogRecPtr lsn,
 
 	PageSetLSN(metapg, lsn);
 	PageSetTLI(metapg, ThisTimeLineID);
-	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(metabuf);
+	MarkBufferDirty(metabuf);
+	UnlockReleaseBuffer(metabuf);
 }
 
 static void
@@ -185,8 +185,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 
 			if (XLByteLE(lsn, PageGetLSN(page)))
 			{
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				ReleaseBuffer(buffer);
+				UnlockReleaseBuffer(buffer);
 			}
 			else
 			{
@@ -197,8 +196,8 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 
 				PageSetLSN(page, lsn);
 				PageSetTLI(page, ThisTimeLineID);
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				WriteBuffer(buffer);
+				MarkBufferDirty(buffer);
+				UnlockReleaseBuffer(buffer);
 			}
 		}
 	}
@@ -255,8 +254,8 @@ btree_xlog_split(bool onleft, bool isroot,
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 
 	/* Right (new) sibling */
 	buffer = XLogReadBuffer(reln, rightsib, true);
@@ -277,8 +276,8 @@ btree_xlog_split(bool onleft, bool isroot,
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 
 	/* Fix left-link of right (next) page */
 	if (!(record->xl_info & XLR_BKP_BLOCK_1))
@@ -292,8 +291,7 @@ btree_xlog_split(bool onleft, bool isroot,
 
 				if (XLByteLE(lsn, PageGetLSN(page)))
 				{
-					LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-					ReleaseBuffer(buffer);
+					UnlockReleaseBuffer(buffer);
 				}
 				else
 				{
@@ -302,8 +300,8 @@ btree_xlog_split(bool onleft, bool isroot,
 
 					PageSetLSN(page, lsn);
 					PageSetTLI(page, ThisTimeLineID);
-					LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-					WriteBuffer(buffer);
+					MarkBufferDirty(buffer);
+					UnlockReleaseBuffer(buffer);
 				}
 			}
 		}
@@ -343,8 +341,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		return;
 	}
 
@@ -361,8 +358,8 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 static void
@@ -395,8 +392,7 @@ btree_xlog_delete_page(bool ismeta,
 			pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 			if (XLByteLE(lsn, PageGetLSN(page)))
 			{
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				ReleaseBuffer(buffer);
+				UnlockReleaseBuffer(buffer);
 			}
 			else
 			{
@@ -424,8 +420,8 @@ btree_xlog_delete_page(bool ismeta,
 
 				PageSetLSN(page, lsn);
 				PageSetTLI(page, ThisTimeLineID);
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				WriteBuffer(buffer);
+				MarkBufferDirty(buffer);
+				UnlockReleaseBuffer(buffer);
 			}
 		}
 	}
@@ -439,8 +435,7 @@ btree_xlog_delete_page(bool ismeta,
 			page = (Page) BufferGetPage(buffer);
 			if (XLByteLE(lsn, PageGetLSN(page)))
 			{
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				ReleaseBuffer(buffer);
+				UnlockReleaseBuffer(buffer);
 			}
 			else
 			{
@@ -449,8 +444,8 @@ btree_xlog_delete_page(bool ismeta,
 
 				PageSetLSN(page, lsn);
 				PageSetTLI(page, ThisTimeLineID);
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				WriteBuffer(buffer);
+				MarkBufferDirty(buffer);
+				UnlockReleaseBuffer(buffer);
 			}
 		}
 	}
@@ -466,8 +461,7 @@ btree_xlog_delete_page(bool ismeta,
 				page = (Page) BufferGetPage(buffer);
 				if (XLByteLE(lsn, PageGetLSN(page)))
 				{
-					LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-					ReleaseBuffer(buffer);
+					UnlockReleaseBuffer(buffer);
 				}
 				else
 				{
@@ -476,8 +470,8 @@ btree_xlog_delete_page(bool ismeta,
 
 					PageSetLSN(page, lsn);
 					PageSetTLI(page, ThisTimeLineID);
-					LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-					WriteBuffer(buffer);
+					MarkBufferDirty(buffer);
+					UnlockReleaseBuffer(buffer);
 				}
 			}
 		}
@@ -498,8 +492,8 @@ btree_xlog_delete_page(bool ismeta,
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 
 	/* Update metapage if needed */
 	if (ismeta)
@@ -544,8 +538,8 @@ btree_xlog_newroot(XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 
 	_bt_restore_meta(reln, lsn,
 					 xlrec->rootblk, xlrec->level,

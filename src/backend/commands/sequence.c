@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.131 2006/03/29 21:17:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.132 2006/03/31 23:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,6 +249,8 @@ DefineSequence(CreateSeqStmt *seq)
 		tuple->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
+	MarkBufferDirty(buf);
+
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
 	{
@@ -281,8 +283,8 @@ DefineSequence(CreateSeqStmt *seq)
 
 	END_CRIT_SECTION();
 
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buf);
+	UnlockReleaseBuffer(buf);
+
 	heap_close(rel, NoLock);
 }
 
@@ -331,6 +333,8 @@ AlterSequence(AlterSeqStmt *stmt)
 
 	START_CRIT_SECTION();
 
+	MarkBufferDirty(buf);
+
 	/* XLOG stuff */
 	if (!seqrel->rd_istemp)
 	{
@@ -358,9 +362,7 @@ AlterSequence(AlterSeqStmt *stmt)
 
 	END_CRIT_SECTION();
 
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-	WriteBuffer(buf);
+	UnlockReleaseBuffer(buf);
 
 	relation_close(seqrel, NoLock);
 }
@@ -550,6 +552,8 @@ nextval_internal(Oid relid)
 
 	START_CRIT_SECTION();
 
+	MarkBufferDirty(buf);
+
 	/* XLOG stuff */
 	if (logit && !seqrel->rd_istemp)
 	{
@@ -587,9 +591,7 @@ nextval_internal(Oid relid)
 
 	END_CRIT_SECTION();
 
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-	WriteBuffer(buf);
+	UnlockReleaseBuffer(buf);
 
 	relation_close(seqrel, NoLock);
 
@@ -720,6 +722,8 @@ do_setval(Oid relid, int64 next, bool iscalled)
 
 	START_CRIT_SECTION();
 
+	MarkBufferDirty(buf);
+
 	/* XLOG stuff */
 	if (!seqrel->rd_istemp)
 	{
@@ -758,9 +762,7 @@ do_setval(Oid relid, int64 next, bool iscalled)
 
 	END_CRIT_SECTION();
 
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-	WriteBuffer(buf);
+	UnlockReleaseBuffer(buf);
 
 	relation_close(seqrel, NoLock);
 }
@@ -1159,8 +1161,8 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 void

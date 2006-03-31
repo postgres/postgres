@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.210 2006/03/29 21:17:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.211 2006/03/31 23:32:05 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1252,15 +1252,13 @@ heap_get_latest_tid(Relation relation,
 		offnum = ItemPointerGetOffsetNumber(&ctid);
 		if (offnum < FirstOffsetNumber || offnum > PageGetMaxOffsetNumber(dp))
 		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
+			UnlockReleaseBuffer(buffer);
 			break;
 		}
 		lp = PageGetItemId(dp, offnum);
 		if (!ItemIdIsUsed(lp))
 		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
+			UnlockReleaseBuffer(buffer);
 			break;
 		}
 
@@ -1276,8 +1274,7 @@ heap_get_latest_tid(Relation relation,
 		if (TransactionIdIsValid(priorXmax) &&
 		  !TransactionIdEquals(priorXmax, HeapTupleHeaderGetXmin(tp.t_data)))
 		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
+			UnlockReleaseBuffer(buffer);
 			break;
 		}
 
@@ -1295,15 +1292,13 @@ heap_get_latest_tid(Relation relation,
 		if ((tp.t_data->t_infomask & (HEAP_XMAX_INVALID | HEAP_IS_LOCKED)) ||
 			ItemPointerEquals(&tp.t_self, &tp.t_data->t_ctid))
 		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
+			UnlockReleaseBuffer(buffer);
 			break;
 		}
 
 		ctid = tp.t_data->t_ctid;
 		priorXmax = HeapTupleHeaderGetXmax(tp.t_data);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 	}							/* end of loop */
 }
 
@@ -1391,6 +1386,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 
 	RelationPutHeapTuple(relation, buffer, heaptup);
 
+	MarkBufferDirty(buffer);
+
 	/* XLOG stuff */
 	if (relation->rd_istemp)
 	{
@@ -1455,14 +1452,13 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 
 	END_CRIT_SECTION();
 
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	UnlockReleaseBuffer(buffer);
 
 	/*
 	 * If tuple is cachable, mark it for invalidation from the caches in case
-	 * we abort.  Note it is OK to do this after WriteBuffer releases the
-	 * buffer, because the heaptup data structure is all in local memory, not
-	 * in the shared buffer.
+	 * we abort.  Note it is OK to do this after releasing the buffer, because
+	 * the heaptup data structure is all in local memory, not in the shared
+	 * buffer.
 	 */
 	CacheInvalidateHeapTuple(relation, heaptup);
 
@@ -1549,8 +1545,7 @@ l1:
 
 	if (result == HeapTupleInvisible)
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		elog(ERROR, "attempted to delete invisible tuple");
 	}
 	else if (result == HeapTupleBeingUpdated && wait)
@@ -1665,8 +1660,7 @@ l1:
 		Assert(!(tp.t_data->t_infomask & HEAP_XMAX_INVALID));
 		*ctid = tp.t_data->t_ctid;
 		*update_xmax = HeapTupleHeaderGetXmax(tp.t_data);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
 			UnlockTuple(relation, &(tp.t_self), ExclusiveLock);
 		return result;
@@ -1684,6 +1678,8 @@ l1:
 	HeapTupleHeaderSetCmax(tp.t_data, cid);
 	/* Make sure there is no forward chain link in t_ctid */
 	tp.t_data->t_ctid = tp.t_self;
+
+	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
 	if (!relation->rd_istemp)
@@ -1722,22 +1718,22 @@ l1:
 
 	/*
 	 * If the tuple has toasted out-of-line attributes, we need to delete
-	 * those items too.  We have to do this before WriteBuffer because we need
-	 * to look at the contents of the tuple, but it's OK to release the
-	 * context lock on the buffer first.
+	 * those items too.  We have to do this before releasing the buffer
+	 * because we need to look at the contents of the tuple, but it's OK to
+	 * release the content lock on the buffer first.
 	 */
 	if (HeapTupleHasExternal(&tp))
 		toast_delete(relation, &tp);
 
 	/*
 	 * Mark tuple for invalidation from system caches at next command
-	 * boundary. We have to do this before WriteBuffer because we need to look
-	 * at the contents of the tuple, so we need to hold our refcount on the
-	 * buffer.
+	 * boundary. We have to do this before releasing the buffer because we
+	 * need to look at the contents of the tuple.
 	 */
 	CacheInvalidateHeapTuple(relation, &tp);
 
-	WriteBuffer(buffer);
+	/* Now we can release the buffer */
+	ReleaseBuffer(buffer);
 
 	/*
 	 * Release the lmgr tuple lock, if we had it.
@@ -1864,8 +1860,7 @@ l2:
 
 	if (result == HeapTupleInvisible)
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		elog(ERROR, "attempted to update invisible tuple");
 	}
 	else if (result == HeapTupleBeingUpdated && wait)
@@ -1980,8 +1975,7 @@ l2:
 		Assert(!(oldtup.t_data->t_infomask & HEAP_XMAX_INVALID));
 		*ctid = oldtup.t_data->t_ctid;
 		*update_xmax = HeapTupleHeaderGetXmax(oldtup.t_data);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		if (have_tuple_lock)
 			UnlockTuple(relation, &(oldtup.t_self), ExclusiveLock);
 		return result;
@@ -2011,7 +2005,7 @@ l2:
 
 	/*
 	 * If the toaster needs to be activated, OR if the new tuple will not fit
-	 * on the same page as the old, then we need to release the context lock
+	 * on the same page as the old, then we need to release the content lock
 	 * (but not the pin!) on the old tuple's buffer while we are off doing
 	 * TOAST and/or table-file-extension work.	We must mark the old tuple to
 	 * show that it's already being updated, else other processes may try to
@@ -2137,6 +2131,10 @@ l2:
 	/* record address of new tuple in t_ctid of old one */
 	oldtup.t_data->t_ctid = heaptup->t_self;
 
+	if (newbuf != buffer)
+		MarkBufferDirty(newbuf);
+	MarkBufferDirty(buffer);
+
 	/* XLOG stuff */
 	if (!relation->rd_istemp)
 	{
@@ -2165,20 +2163,21 @@ l2:
 
 	/*
 	 * Mark old tuple for invalidation from system caches at next command
-	 * boundary. We have to do this before WriteBuffer because we need to look
-	 * at the contents of the tuple, so we need to hold our refcount.
+	 * boundary. We have to do this before releasing the buffer because we
+	 * need to look at the contents of the tuple.
 	 */
 	CacheInvalidateHeapTuple(relation, &oldtup);
 
+	/* Now we can release the buffer(s) */
 	if (newbuf != buffer)
-		WriteBuffer(newbuf);
-	WriteBuffer(buffer);
+		ReleaseBuffer(newbuf);
+	ReleaseBuffer(buffer);
 
 	/*
 	 * If new tuple is cachable, mark it for invalidation from the caches in
-	 * case we abort.  Note it is OK to do this after WriteBuffer releases the
-	 * buffer, because the heaptup data structure is all in local memory, not
-	 * in the shared buffer.
+	 * case we abort.  Note it is OK to do this after releasing the buffer,
+	 * because the heaptup data structure is all in local memory, not in the
+	 * shared buffer.
 	 */
 	CacheInvalidateHeapTuple(relation, heaptup);
 
@@ -2337,8 +2336,7 @@ l3:
 
 	if (result == HeapTupleInvisible)
 	{
-		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(*buffer);
+		UnlockReleaseBuffer(*buffer);
 		elog(ERROR, "attempted to lock invisible tuple");
 	}
 	else if (result == HeapTupleBeingUpdated)
@@ -2614,6 +2612,8 @@ l3:
 	/* Make sure there is no forward chain link in t_ctid */
 	tuple->t_data->t_ctid = *tid;
 
+	MarkBufferDirty(*buffer);
+
 	/*
 	 * XLOG stuff.	You might think that we don't need an XLOG record because
 	 * there is no state change worth restoring after a crash.	You would be
@@ -2662,8 +2662,6 @@ l3:
 	END_CRIT_SECTION();
 
 	LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
-
-	WriteNoReleaseBuffer(*buffer);
 
 	/*
 	 * Now that we have successfully marked the tuple as locked, we can
@@ -2739,6 +2737,10 @@ heap_restrpos(HeapScanDesc scan)
 	}
 }
 
+/*
+ * Perform XLogInsert for a heap-clean operation.  Caller must already
+ * have modified the buffer and marked it dirty.
+ */
 XLogRecPtr
 log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 {
@@ -2781,6 +2783,10 @@ log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 	return recptr;
 }
 
+/*
+ * Perform XLogInsert for a heap-update operation.  Caller must already
+ * have modified the buffer(s) and marked them dirty.
+ */
 static XLogRecPtr
 log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 				Buffer newbuf, HeapTuple newtup, bool move)
@@ -2869,6 +2875,10 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	return recptr;
 }
 
+/*
+ * Perform XLogInsert for a heap-move operation.  Caller must already
+ * have modified the buffers and marked them dirty.
+ */
 XLogRecPtr
 log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
 			  Buffer newbuf, HeapTuple newtup)
@@ -2895,8 +2905,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		return;
 	}
 
@@ -2921,8 +2930,8 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 static void
@@ -2947,8 +2956,8 @@ heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 static void
@@ -2975,8 +2984,7 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		return;
 	}
 
@@ -3000,8 +3008,8 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	htup->t_ctid = xlrec->target.tid;
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 static void
@@ -3047,8 +3055,7 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 
 		if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
+			UnlockReleaseBuffer(buffer);
 			return;
 		}
 	}
@@ -3082,8 +3089,8 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 		elog(PANIC, "heap_insert_redo: failed to add tuple");
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 /*
@@ -3128,8 +3135,7 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		if (samepage)
 			return;
 		goto newt;
@@ -3174,8 +3180,8 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 		goto newsame;
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 
 	/* Deal with new tuple */
 
@@ -3205,8 +3211,7 @@ newt:;
 
 		if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
+			UnlockReleaseBuffer(buffer);
 			return;
 		}
 	}
@@ -3262,8 +3267,8 @@ newsame:;
 		elog(PANIC, "heap_update_redo: failed to add tuple");
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 static void
@@ -3290,8 +3295,7 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 
 	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		return;
 	}
 
@@ -3321,8 +3325,8 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 	htup->t_ctid = xlrec->target.tid;
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 void

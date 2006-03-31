@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.56 2006/03/05 15:58:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.57 2006/03/31 23:32:05 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -129,22 +129,18 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 /*
  *	_hash_relbuf() -- release a locked buffer.
  *
- * Lock and pin (refcount) are both dropped.  Note that either read or
- * write lock can be dropped this way, but if we modified the buffer,
- * this is NOT the right way to release a write lock.
+ * Lock and pin (refcount) are both dropped.
  */
 void
 _hash_relbuf(Relation rel, Buffer buf)
 {
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buf);
+	UnlockReleaseBuffer(buf);
 }
 
 /*
  *	_hash_dropbuf() -- release an unlocked buffer.
  *
- * This is used to unpin a buffer on which we hold no lock.  It is assumed
- * that the buffer is not dirty.
+ * This is used to unpin a buffer on which we hold no lock.
  */
 void
 _hash_dropbuf(Relation rel, Buffer buf)
@@ -159,31 +155,16 @@ _hash_dropbuf(Relation rel, Buffer buf)
  *		for it.  It is an error to call _hash_wrtbuf() without a write lock
  *		and a pin on the buffer.
  *
- * NOTE: actually, the buffer manager just marks the shared buffer page
- * dirty here; the real I/O happens later.	This is okay since we are not
- * relying on write ordering anyway.  The WAL mechanism is responsible for
- * guaranteeing correctness after a crash.
+ * NOTE: this routine should go away when/if hash indexes are WAL-ified.
+ * The correct sequence of operations is to mark the buffer dirty, then
+ * write the WAL record, then release the lock and pin; so marking dirty
+ * can't be combined with releasing.
  */
 void
 _hash_wrtbuf(Relation rel, Buffer buf)
 {
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buf);
-}
-
-/*
- *	_hash_wrtnorelbuf() -- write a hash page to disk, but do not release
- *						 our reference or lock.
- *
- *		It is an error to call _hash_wrtnorelbuf() without a write lock
- *		and a pin on the buffer.
- *
- * See above NOTE.
- */
-void
-_hash_wrtnorelbuf(Relation rel, Buffer buf)
-{
-	WriteNoReleaseBuffer(buf);
+	MarkBufferDirty(buf);
+	UnlockReleaseBuffer(buf);
 }
 
 /*
@@ -204,11 +185,10 @@ _hash_chgbufaccess(Relation rel,
 				   int from_access,
 				   int to_access)
 {
+	if (from_access == HASH_WRITE)
+		MarkBufferDirty(buf);
 	if (from_access != HASH_NOLOCK)
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	if (from_access == HASH_WRITE)
-		WriteNoReleaseBuffer(buf);
-
 	if (to_access != HASH_NOLOCK)
 		LockBuffer(buf, to_access);
 }

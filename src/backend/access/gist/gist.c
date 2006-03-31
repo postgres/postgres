@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.130 2006/03/30 23:03:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.131 2006/03/31 23:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,6 +111,9 @@ gistbuild(PG_FUNCTION_ARGS)
 	START_CRIT_SECTION();
 
 	GISTInitBuffer(buffer, F_LEAF);
+
+	MarkBufferDirty(buffer);
+
 	if (!index->rd_istemp)
 	{
 		XLogRecPtr	recptr;
@@ -127,8 +130,8 @@ gistbuild(PG_FUNCTION_ARGS)
 	}
 	else
 		PageSetLSN(page, XLogRecPtrForTemp);
-	LockBuffer(buffer, GIST_UNLOCK);
-	WriteBuffer(buffer);
+
+	UnlockReleaseBuffer(buffer);
 
 	END_CRIT_SECTION();
 
@@ -345,6 +348,15 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 		itvec = gistjoinvector(itvec, &tlen, state->itup, state->ituplen);
 		newitup = gistSplit(state->r, state->stack->buffer, itvec, &tlen, &dist, giststate);
 
+		/*
+		 * must mark buffers dirty before XLogInsert, even though we'll
+		 * still be changing their opaque fields below
+		 */
+		for (ptr = dist; ptr; ptr = ptr->next)
+		{
+			MarkBufferDirty(ptr->buffer);
+		}
+
 		if (!state->r->rd_istemp)
 		{
 			XLogRecPtr	recptr;
@@ -354,21 +366,17 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 								   is_leaf, &(state->key), dist);
 
 			recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT, rdata);
-			ptr = dist;
-			while (ptr)
+			for (ptr = dist; ptr; ptr = ptr->next)
 			{
 				PageSetLSN(BufferGetPage(ptr->buffer), recptr);
 				PageSetTLI(BufferGetPage(ptr->buffer), ThisTimeLineID);
-				ptr = ptr->next;
 			}
 		}
 		else
 		{
-			ptr = dist;
-			while (ptr)
+			for (ptr = dist; ptr; ptr = ptr->next)
 			{
 				PageSetLSN(BufferGetPage(ptr->buffer), XLogRecPtrForTemp);
-				ptr = ptr->next;
 			}
 		}
 
@@ -379,17 +387,14 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 		{
 			gistnewroot(state->r, state->stack->buffer, state->itup, state->ituplen, &(state->key));
 			state->needInsertComplete = false;
-			ptr = dist;
-			while (ptr)
+			for (ptr = dist; ptr; ptr = ptr->next)
 			{
 				Page		page = (Page) BufferGetPage(ptr->buffer);
 
 				GistPageGetOpaque(page)->rightlink = (ptr->next) ?
 					ptr->next->block.blkno : InvalidBlockNumber;
 				GistPageGetOpaque(page)->nsn = PageGetLSN(page);
-				LockBuffer(ptr->buffer, GIST_UNLOCK);
-				WriteBuffer(ptr->buffer);
-				ptr = ptr->next;
+				UnlockReleaseBuffer(ptr->buffer);
 			}
 		}
 		else
@@ -430,11 +435,9 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			opaque->rightlink = ourpage->next->block.blkno;
 
 			/*
-			 * fills and write all new pages. They isn't linked into tree yet
+			 * fill and release all new pages. They isn't linked into tree yet
 			 */
-
-			ptr = ourpage->next;
-			while (ptr)
+			for (ptr = ourpage->next; ptr; ptr = ptr->next)
 			{
 				page = (Page) BufferGetPage(ptr->buffer);
 				GistPageGetOpaque(page)->rightlink = (ptr->next) ?
@@ -443,12 +446,8 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 				GistPageGetOpaque(page)->nsn = (ptr->next) ?
 					opaque->nsn : oldnsn;
 
-				LockBuffer(ptr->buffer, GIST_UNLOCK);
-				WriteBuffer(ptr->buffer);
-				ptr = ptr->next;
+				UnlockReleaseBuffer(ptr->buffer);
 			}
-
-			WriteNoReleaseBuffer(state->stack->buffer);
 		}
 
 		END_CRIT_SECTION();
@@ -459,6 +458,8 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 		XLogRecPtr	oldlsn;
 
 		gistfillbuffer(state->r, state->stack->page, state->itup, state->ituplen, InvalidOffsetNumber);
+
+		MarkBufferDirty(state->stack->buffer);
 
 		oldlsn = PageGetLSN(state->stack->page);
 		if (!state->r->rd_istemp)
@@ -489,7 +490,6 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 
 		if (state->stack->blkno == GIST_ROOT_BLKNO)
 			state->needInsertComplete = false;
-		WriteNoReleaseBuffer(state->stack->buffer);
 
 		END_CRIT_SECTION();
 
@@ -561,8 +561,7 @@ gistfindleaf(GISTInsertState *state, GISTSTATE *giststate)
 			 * caused split non-root page is detected, go up to parent to
 			 * choose best child
 			 */
-			LockBuffer(state->stack->buffer, GIST_UNLOCK);
-			ReleaseBuffer(state->stack->buffer);
+			UnlockReleaseBuffer(state->stack->buffer);
 			state->stack = state->stack->parent;
 			continue;
 		}
@@ -630,8 +629,7 @@ gistfindleaf(GISTInsertState *state, GISTSTATE *giststate)
 				 */
 
 				/* forget buffer */
-				LockBuffer(state->stack->buffer, GIST_UNLOCK);
-				ReleaseBuffer(state->stack->buffer);
+				UnlockReleaseBuffer(state->stack->buffer);
 
 				state->stack = state->stack->parent;
 				continue;
@@ -681,8 +679,7 @@ gistFindPath(Relation r, BlockNumber child)
 		if (GistPageIsLeaf(page))
 		{
 			/* we can safety go away, follows only leaf pages */
-			LockBuffer(buffer, GIST_UNLOCK);
-			ReleaseBuffer(buffer);
+			UnlockReleaseBuffer(buffer);
 			return NULL;
 		}
 
@@ -735,8 +732,7 @@ gistFindPath(Relation r, BlockNumber child)
 					ptr = ptr->parent;
 				}
 				top->childoffnum = i;
-				LockBuffer(buffer, GIST_UNLOCK);
-				ReleaseBuffer(buffer);
+				UnlockReleaseBuffer(buffer);
 				return top;
 			}
 			else
@@ -753,8 +749,7 @@ gistFindPath(Relation r, BlockNumber child)
 			}
 		}
 
-		LockBuffer(buffer, GIST_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		top = top->next;
 	}
 
@@ -801,8 +796,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 			}
 
 			parent->blkno = GistPageGetOpaque(parent->page)->rightlink;
-			LockBuffer(parent->buffer, GIST_UNLOCK);
-			ReleaseBuffer(parent->buffer);
+			UnlockReleaseBuffer(parent->buffer);
 			if (parent->blkno == InvalidBlockNumber)
 
 				/*
@@ -881,8 +875,7 @@ gistmakedeal(GISTInsertState *state, GISTSTATE *giststate)
 		is_splitted = gistplacetopage(state, giststate);
 
 		/* parent locked above, so release child buffer */
-		LockBuffer(state->stack->buffer, GIST_UNLOCK);
-		ReleaseBuffer(state->stack->buffer);
+		UnlockReleaseBuffer(state->stack->buffer);
 
 		/* pop parent page from stack */
 		state->stack = state->stack->parent;
@@ -1182,6 +1175,9 @@ gistSplit(Relation r,
 	return newtup;
 }
 
+/*
+ * buffer must be pinned and locked by caller
+ */
 void
 gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer key)
 {
@@ -1192,8 +1188,10 @@ gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer ke
 
 	START_CRIT_SECTION();
 
-	GISTInitBuffer(buffer, 0);	/* XXX not F_LEAF? */
+	GISTInitBuffer(buffer, 0);
 	gistfillbuffer(r, page, itup, len, FirstOffsetNumber);
+
+	MarkBufferDirty(buffer);
 
 	if (!r->rd_istemp)
 	{
@@ -1210,8 +1208,6 @@ gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer ke
 	}
 	else
 		PageSetLSN(page, XLogRecPtrForTemp);
-
-	WriteNoReleaseBuffer(buffer);
 
 	END_CRIT_SECTION();
 }

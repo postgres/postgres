@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.325 2006/03/05 15:58:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.326 2006/03/31 23:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -729,6 +729,8 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	if (!hasindex)
 		pgcform->relhaspkey = false;
 
+	MarkBufferDirty(buffer);
+
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	/*
@@ -739,8 +741,7 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	 */
 	CacheInvalidateHeapTuple(rd, &rtup);
 
-	/* Write the buffer */
-	WriteBuffer(buffer);
+	ReleaseBuffer(buffer);
 
 	heap_close(rd, RowExclusiveLock);
 }
@@ -795,11 +796,12 @@ vac_update_dbstats(Oid dbid,
 	dbform->datvacuumxid = vacuumXID;
 	dbform->datfrozenxid = frozenXID;
 
+	MarkBufferDirty(scan->rs_cbuf);
+
 	LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
-	/* invalidate the tuple in the cache and write the buffer */
+	/* invalidate the tuple in the cache so we'll see the change in cache */
 	CacheInvalidateHeapTuple(relation, tuple);
-	WriteNoReleaseBuffer(scan->rs_cbuf);
 
 	heap_endscan(scan);
 
@@ -1298,6 +1300,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			   (errmsg("relation \"%s\" page %u is uninitialized --- fixing",
 					   relname, blkno)));
 			PageInit(page, BufferGetPageSize(buf), 0);
+			MarkBufferDirty(buf);
 			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
 			free_space += vacpage->free;
 			empty_pages++;
@@ -1305,8 +1308,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			vacpagecopy = copy_vac_page(vacpage);
 			vpage_insert(vacuum_pages, vacpagecopy);
 			vpage_insert(fraged_pages, vacpagecopy);
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			WriteBuffer(buf);
+			UnlockReleaseBuffer(buf);
 			continue;
 		}
 
@@ -1321,8 +1323,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			vacpagecopy = copy_vac_page(vacpage);
 			vpage_insert(vacuum_pages, vacpagecopy);
 			vpage_insert(fraged_pages, vacpagecopy);
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buf);
+			UnlockReleaseBuffer(buf);
 			continue;
 		}
 
@@ -1527,11 +1528,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		else
 			empty_end_pages = 0;
 
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		if (pgchanged)
-			WriteBuffer(buf);
-		else
-			ReleaseBuffer(buf);
+			MarkBufferDirty(buf);
+		UnlockReleaseBuffer(buf);
 	}
 
 	pfree(vacpage);
@@ -1682,7 +1681,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		OffsetNumber offnum,
 					maxoff;
 		bool		isempty,
-					dowrite,
 					chain_tuple_moved;
 
 		vacuum_delay_point();
@@ -1714,8 +1712,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 		isempty = PageIsEmpty(page);
 
-		dowrite = false;
-
 		/* Is the page in the vacuum_pages list? */
 		if (blkno == last_vacuum_block)
 		{
@@ -1726,7 +1722,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 				vacuum_page(onerel, buf, last_vacuum_page);
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-				dowrite = true;
 			}
 			else
 				Assert(isempty);
@@ -1884,7 +1879,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 				if (dst_buffer != InvalidBuffer)
 				{
-					WriteBuffer(dst_buffer);
+					ReleaseBuffer(dst_buffer);
 					dst_buffer = InvalidBuffer;
 				}
 
@@ -2148,8 +2143,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					else
 						keep_tuples++;
 
-					WriteBuffer(dst_buffer);
-					WriteBuffer(Cbuf);
+					ReleaseBuffer(dst_buffer);
+					ReleaseBuffer(Cbuf);
 				}				/* end of move-the-tuple-chain loop */
 
 				dst_buffer = InvalidBuffer;
@@ -2166,7 +2161,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			{
 				if (dst_buffer != InvalidBuffer)
 				{
-					WriteBuffer(dst_buffer);
+					ReleaseBuffer(dst_buffer);
 					dst_buffer = InvalidBuffer;
 				}
 				for (i = 0; i < num_fraged_pages; i++)
@@ -2273,12 +2268,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					  sizeof(OffsetNumber), vac_cmp_offno);
 			}
 			vpage_insert(&Nvacpagelist, copy_vac_page(vacpage));
-			WriteBuffer(buf);
 		}
-		else if (dowrite)
-			WriteBuffer(buf);
-		else
-			ReleaseBuffer(buf);
+
+		ReleaseBuffer(buf);
 
 		if (offnum <= maxoff)
 			break;				/* had to quit early, see above note */
@@ -2290,7 +2282,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	if (dst_buffer != InvalidBuffer)
 	{
 		Assert(num_moved > 0);
-		WriteBuffer(dst_buffer);
+		ReleaseBuffer(dst_buffer);
 	}
 
 	if (num_moved > 0)
@@ -2332,8 +2324,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			page = BufferGetPage(buf);
 			if (!PageIsEmpty(page))
 				vacuum_page(onerel, buf, *curpage);
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			WriteBuffer(buf);
+			UnlockReleaseBuffer(buf);
 		}
 	}
 
@@ -2449,6 +2440,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 			uncnt = PageRepairFragmentation(page, unused);
 
+			MarkBufferDirty(buf);
+
 			/* XLOG stuff */
 			if (!onerel->rd_istemp)
 			{
@@ -2469,8 +2462,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 			END_CRIT_SECTION();
 
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			WriteBuffer(buf);
+			UnlockReleaseBuffer(buf);
 		}
 
 		/* now - free new list of reaped pages */
@@ -2601,6 +2593,10 @@ move_chain_tuple(Relation rel,
 		newtup.t_data->t_ctid = *ctid;
 	*ctid = newtup.t_self;
 
+	MarkBufferDirty(dst_buf);
+	if (dst_buf != old_buf)
+		MarkBufferDirty(old_buf);
+
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
 	{
@@ -2707,6 +2703,9 @@ move_plain_tuple(Relation rel,
 									 HEAP_MOVED_IN);
 	old_tup->t_data->t_infomask |= HEAP_MOVED_OFF;
 	HeapTupleHeaderSetXvac(old_tup->t_data, myXID);
+
+	MarkBufferDirty(dst_buf);
+	MarkBufferDirty(old_buf);
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -2832,8 +2831,8 @@ update_hint_bits(Relation rel, VacPageList fraged_pages, int num_fraged_pages,
 			else
 				htup->t_infomask |= HEAP_XMIN_INVALID;
 		}
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buf);
+		MarkBufferDirty(buf);
+		UnlockReleaseBuffer(buf);
 		Assert((*curpage)->offsets_used == num_tuples);
 		checked_moved += num_tuples;
 	}
@@ -2867,8 +2866,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 			buf = ReadBuffer(onerel, (*vacpage)->blkno);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			vacuum_page(onerel, buf, *vacpage);
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			WriteBuffer(buf);
+			UnlockReleaseBuffer(buf);
 		}
 	}
 
@@ -2889,6 +2887,8 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 /*
  *	vacuum_page() -- free dead tuples on a page
  *					 and repair its fragmentation.
+ *
+ * Caller must hold pin and lock on buffer.
  */
 static void
 vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
@@ -2911,6 +2911,8 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 	}
 
 	uncnt = PageRepairFragmentation(page, unused);
+
+	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
 	if (!onerel->rd_istemp)

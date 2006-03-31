@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.42 2006/03/29 21:17:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.43 2006/03/31 23:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,9 @@
  *
  * This is functionally comparable to ReadBuffer followed by
  * LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE): you get back a pinned
- * and locked buffer.  (The lock is not really necessary, since we
- * expect that this is only done during single-process XLOG replay,
- * but in some places it simplifies sharing code with the non-XLOG case.)
+ * and locked buffer.  (Getting the lock is not really necessary, since we
+ * expect that this is only used during single-process XLOG replay, but
+ * some subroutines such as MarkBufferDirty will complain if we don't.)
  *
  * If "init" is true then the caller intends to rewrite the page fully
  * using the info in the XLOG record.  In this case we will extend the
@@ -74,7 +74,7 @@ XLogReadBuffer(Relation reln, BlockNumber blkno, bool init)
 		while (blkno >= lastblock)
 		{
 			if (buffer != InvalidBuffer)
-				ReleaseBuffer(buffer);		/* must be WriteBuffer()? */
+				ReleaseBuffer(buffer);
 			buffer = ReadBuffer(reln, P_NEW);
 			lastblock++;
 		}

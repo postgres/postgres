@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.133 2006/03/05 15:58:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.134 2006/03/31 23:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -544,10 +544,13 @@ _bt_insertonpg(Relation rel,
 
 		_bt_pgaddtup(rel, page, itemsz, itup, newitemoff, "page");
 
+		MarkBufferDirty(buf);
+
 		if (BufferIsValid(metabuf))
 		{
 			metad->btm_fastroot = itup_blkno;
 			metad->btm_fastlevel = lpageop->btpo.level;
+			MarkBufferDirty(metabuf);
 		}
 
 		/* XLOG stuff */
@@ -619,11 +622,11 @@ _bt_insertonpg(Relation rel,
 
 		END_CRIT_SECTION();
 
-		/* Write out the updated page and release pin/lock */
+		/* release pin/lock */
 		if (BufferIsValid(metabuf))
-			_bt_wrtbuf(rel, metabuf);
+			_bt_relbuf(rel, metabuf);
 
-		_bt_wrtbuf(rel, buf);
+		_bt_relbuf(rel, buf);
 	}
 }
 
@@ -819,12 +822,21 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * Right sibling is locked, new siblings are prepared, but original page
 	 * is not updated yet. Log changes before continuing.
 	 *
-	 * NO EREPORT(ERROR) till right sibling is updated.
+	 * NO EREPORT(ERROR) till right sibling is updated.  We can get away with
+	 * not starting the critical section till here because we haven't been
+	 * scribbling on the original page yet, and we don't care about the
+	 * new sibling until it's linked into the btree.
 	 */
 	START_CRIT_SECTION();
 
+	MarkBufferDirty(buf);
+	MarkBufferDirty(rbuf);
+
 	if (!P_RIGHTMOST(ropaque))
+	{
 		sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
+		MarkBufferDirty(sbuf);
+	}
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -904,16 +916,22 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * original.  Note that this is not a waste of time, since we also require
 	 * (in the page management code) that the center of a page always be
 	 * clean, and the most efficient way to guarantee this is just to compact
-	 * the data by reinserting it into a new left page.
+	 * the data by reinserting it into a new left page.  (XXX the latter
+	 * comment is probably obsolete.)
+	 *
+	 * It's a bit weird that we don't fill in the left page till after writing
+	 * the XLOG entry, but not really worth changing.  Note that we use the
+	 * origpage data (specifically its BTP_ROOT bit) while preparing the XLOG
+	 * entry, so simply reshuffling the code won't do.
 	 */
 
 	PageRestoreTempPage(leftpage, origpage);
 
 	END_CRIT_SECTION();
 
-	/* write and release the old right sibling */
+	/* release the old right sibling */
 	if (!P_RIGHTMOST(ropaque))
-		_bt_wrtbuf(rel, sbuf);
+		_bt_relbuf(rel, sbuf);
 
 	/* split's done */
 	return rbuf;
@@ -1169,9 +1187,9 @@ _bt_insert_parent(Relation rel,
 		/* create a new root node and update the metapage */
 		rootbuf = _bt_newroot(rel, buf, rbuf);
 		/* release the split buffers */
-		_bt_wrtbuf(rel, rootbuf);
-		_bt_wrtbuf(rel, rbuf);
-		_bt_wrtbuf(rel, buf);
+		_bt_relbuf(rel, rootbuf);
+		_bt_relbuf(rel, rbuf);
+		_bt_relbuf(rel, buf);
 	}
 	else
 	{
@@ -1220,9 +1238,9 @@ _bt_insert_parent(Relation rel,
 
 		pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 
-		/* Now we can write and unlock the children */
-		_bt_wrtbuf(rel, rbuf);
-		_bt_wrtbuf(rel, buf);
+		/* Now we can unlock the children */
+		_bt_relbuf(rel, rbuf);
+		_bt_relbuf(rel, buf);
 
 		/* Check for error only after writing children */
 		if (pbuf == InvalidBuffer)
@@ -1370,7 +1388,6 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 {
 	Buffer		rootbuf;
 	Page		lpage,
-				rpage,
 				rootpage;
 	BlockNumber lbkno,
 				rbkno;
@@ -1387,7 +1404,6 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	lbkno = BufferGetBlockNumber(lbuf);
 	rbkno = BufferGetBlockNumber(rbuf);
 	lpage = BufferGetPage(lbuf);
-	rpage = BufferGetPage(rbuf);
 
 	/* get a new root page */
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
@@ -1451,6 +1467,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		elog(PANIC, "failed to add rightkey to new root page");
 	pfree(new_item);
 
+	MarkBufferDirty(rootbuf);
+	MarkBufferDirty(metabuf);
+
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
 	{
@@ -1483,16 +1502,12 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		PageSetTLI(rootpage, ThisTimeLineID);
 		PageSetLSN(metapg, recptr);
 		PageSetTLI(metapg, ThisTimeLineID);
-		PageSetLSN(lpage, recptr);
-		PageSetTLI(lpage, ThisTimeLineID);
-		PageSetLSN(rpage, recptr);
-		PageSetTLI(rpage, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
 
-	/* write and let go of metapage buffer */
-	_bt_wrtbuf(rel, metabuf);
+	/* done with metapage */
+	_bt_relbuf(rel, metabuf);
 
 	return rootbuf;
 }

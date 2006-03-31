@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.73 2006/03/05 15:58:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.74 2006/03/31 23:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,11 +209,11 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 }
 
 /*
- * WriteLocalBuffer -
- *	  writes out a local buffer (actually, just marks it dirty)
+ * MarkLocalBufferDirty -
+ *	  mark a local buffer dirty
  */
 void
-WriteLocalBuffer(Buffer buffer, bool release)
+MarkLocalBufferDirty(Buffer buffer)
 {
 	int			bufid;
 	BufferDesc *bufHdr;
@@ -221,7 +221,7 @@ WriteLocalBuffer(Buffer buffer, bool release)
 	Assert(BufferIsLocal(buffer));
 
 #ifdef LBDEBUG
-	fprintf(stderr, "LB WRITE %d\n", buffer);
+	fprintf(stderr, "LB DIRTY %d\n", buffer);
 #endif
 
 	bufid = -(buffer + 1);
@@ -230,15 +230,6 @@ WriteLocalBuffer(Buffer buffer, bool release)
 
 	bufHdr = &LocalBufferDescriptors[bufid];
 	bufHdr->flags |= BM_DIRTY;
-
-	if (release)
-	{
-		LocalRefCount[bufid]--;
-		if (LocalRefCount[bufid] == 0 &&
-			bufHdr->usage_count < BM_MAX_USAGE_COUNT)
-			bufHdr->usage_count++;
-		ResourceOwnerForgetBuffer(CurrentResourceOwner, buffer);
-	}
 }
 
 /*

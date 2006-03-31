@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.205 2006/03/29 21:17:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.206 2006/03/31 23:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,10 @@
  *		and pin it so that no one can destroy it while this process
  *		is using it.
  *
- * ReleaseBuffer() -- unpin the buffer
+ * ReleaseBuffer() -- unpin a buffer
  *
- * WriteNoReleaseBuffer() -- mark the buffer contents as "dirty"
- *		but don't unpin.  The disk IO is delayed until buffer
- *		replacement.
- *
- * WriteBuffer() -- WriteNoReleaseBuffer() + ReleaseBuffer()
+ * MarkBufferDirty() -- mark a pinned buffer's contents as "dirty".
+ *		The disk write is delayed until buffer replacement or checkpoint.
  *
  * BufferSync() -- flush all dirty buffers in the buffer pool.
  *
@@ -101,7 +98,6 @@ static volatile BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
 static void AtProcExit_Buffers(int code, Datum arg);
-static void write_buffer(Buffer buffer, bool unpin);
 
 
 /*
@@ -634,11 +630,16 @@ retry:
 }
 
 /*
- * write_buffer -- common functionality for
- *				   WriteBuffer and WriteNoReleaseBuffer
+ * MarkBufferDirty
+ *
+ *		Marks buffer contents as dirty (actual write happens later).
+ *
+ * Buffer must be pinned and exclusive-locked.  (If caller does not hold
+ * exclusive lock, then somebody could be in process of writing the buffer,
+ * leading to risk of bad data written to disk.)
  */
-static void
-write_buffer(Buffer buffer, bool unpin)
+void
+MarkBufferDirty(Buffer buffer)
 {
 	volatile BufferDesc *bufHdr;
 
@@ -647,13 +648,15 @@ write_buffer(Buffer buffer, bool unpin)
 
 	if (BufferIsLocal(buffer))
 	{
-		WriteLocalBuffer(buffer, unpin);
+		MarkLocalBufferDirty(buffer);
 		return;
 	}
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
 	Assert(PrivateRefCount[buffer - 1] > 0);
+	/* unfortunately we can't check if the lock is held exclusively */
+	Assert(LWLockHeldByMe(bufHdr->content_lock));
 
 	LockBufHdr(bufHdr);
 
@@ -668,35 +671,6 @@ write_buffer(Buffer buffer, bool unpin)
 	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 
 	UnlockBufHdr(bufHdr);
-
-	if (unpin)
-		UnpinBuffer(bufHdr, true, true);
-}
-
-/*
- * WriteBuffer
- *
- *		Marks buffer contents as dirty (actual write happens later).
- *
- * Assume that buffer is pinned.  Assume that reln is valid.
- *
- * Side Effects:
- *		Pin count is decremented.
- */
-void
-WriteBuffer(Buffer buffer)
-{
-	write_buffer(buffer, true);
-}
-
-/*
- * WriteNoReleaseBuffer -- like WriteBuffer, but do not unpin the buffer
- *						   when the operation is complete.
- */
-void
-WriteNoReleaseBuffer(Buffer buffer)
-{
-	write_buffer(buffer, false);
 }
 
 /*
@@ -1617,8 +1591,7 @@ FlushRelationBuffers(Relation rel)
 }
 
 /*
- * ReleaseBuffer -- remove the pin on a buffer without
- *		marking it dirty.
+ * ReleaseBuffer -- release the pin on a buffer
  */
 void
 ReleaseBuffer(Buffer buffer)
@@ -1652,6 +1625,18 @@ ReleaseBuffer(Buffer buffer)
 }
 
 /*
+ * UnlockReleaseBuffer -- release the content lock and pin on a buffer
+ *
+ * This is just a shorthand for a common combination.
+ */
+void
+UnlockReleaseBuffer(Buffer buffer)
+{
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	ReleaseBuffer(buffer);
+}
+
+/*
  * IncrBufferRefCount
  *		Increment the pin count on a buffer that we have *already* pinned
  *		at least once.
@@ -1676,20 +1661,13 @@ IncrBufferRefCount(Buffer buffer)
  *
  *	Mark a buffer dirty when we have updated tuple commit-status bits in it.
  *
- * This is essentially the same as WriteNoReleaseBuffer.  We preserve the
- * distinction as a way of documenting that the caller has not made a critical
- * data change --- the status-bit update could be redone by someone else just
- * as easily.  Therefore, no WAL log record need be generated, whereas calls
- * to WriteNoReleaseBuffer really ought to be associated with a WAL-entry-
- * creating action.
- *
- * This routine might get called many times on the same page, if we are making
- * the first scan after commit of an xact that added/deleted many tuples.
- * So, be as quick as we can if the buffer is already dirty.  We do this by
- * not acquiring spinlock if it looks like the status bits are already OK.
- * (Note it is okay if someone else clears BM_JUST_DIRTIED immediately after
- * we look, because the buffer content update is already done and will be
- * reflected in the I/O.)
+ * This is essentially the same as MarkBufferDirty, except that the caller
+ * might have only share-lock instead of exclusive-lock on the buffer's
+ * content lock.  We preserve the distinction mainly as a way of documenting
+ * that the caller has not made a critical data change --- the status-bit
+ * update could be redone by someone else just as easily.  Therefore, no WAL
+ * log record need be generated, whereas calls to MarkBufferDirty really ought
+ * to be associated with a WAL-entry-creating action.
  */
 void
 SetBufferCommitInfoNeedsSave(Buffer buffer)
@@ -1701,19 +1679,32 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 
 	if (BufferIsLocal(buffer))
 	{
-		WriteLocalBuffer(buffer, false);
+		MarkLocalBufferDirty(buffer);
 		return;
 	}
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
 	Assert(PrivateRefCount[buffer - 1] > 0);
+	/* here, either share or exclusive lock is OK */
+	Assert(LWLockHeldByMe(bufHdr->content_lock));
 
+	/*
+	 * This routine might get called many times on the same page, if we are
+	 * making the first scan after commit of an xact that added/deleted many
+	 * tuples.  So, be as quick as we can if the buffer is already dirty.  We
+	 * do this by not acquiring spinlock if it looks like the status bits are
+	 * already OK.  (Note it is okay if someone else clears BM_JUST_DIRTIED
+	 * immediately after we look, because the buffer content update is already
+	 * done and will be reflected in the I/O.)
+	 */
 	if ((bufHdr->flags & (BM_DIRTY | BM_JUST_DIRTIED)) !=
 		(BM_DIRTY | BM_JUST_DIRTIED))
 	{
 		LockBufHdr(bufHdr);
 		Assert(bufHdr->refcount > 0);
+		if (!(bufHdr->flags & BM_DIRTY) && VacuumCostActive)
+			VacuumCostBalance += VacuumCostPageDirty;
 		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 		UnlockBufHdr(bufHdr);
 	}
@@ -1767,7 +1758,7 @@ LockBuffer(Buffer buffer, int mode)
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
-		return;
+		return;					/* local buffers need no lock */
 
 	buf = &(BufferDescriptors[buffer - 1]);
 
@@ -1776,19 +1767,7 @@ LockBuffer(Buffer buffer, int mode)
 	else if (mode == BUFFER_LOCK_SHARE)
 		LWLockAcquire(buf->content_lock, LW_SHARED);
 	else if (mode == BUFFER_LOCK_EXCLUSIVE)
-	{
 		LWLockAcquire(buf->content_lock, LW_EXCLUSIVE);
-
-		/*
-		 * This is not the best place to mark buffer dirty (eg indices do not
-		 * always change buffer they lock in excl mode). But please remember
-		 * that it's critical to set dirty bit *before* logging changes with
-		 * XLogInsert() - see comments in SyncOneBuffer().
-		 */
-		LockBufHdr(buf);
-		buf->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		UnlockBufHdr(buf);
-	}
 	else
 		elog(ERROR, "unrecognized buffer lock mode: %d", mode);
 }
@@ -1809,21 +1788,7 @@ ConditionalLockBuffer(Buffer buffer)
 
 	buf = &(BufferDescriptors[buffer - 1]);
 
-	if (LWLockConditionalAcquire(buf->content_lock, LW_EXCLUSIVE))
-	{
-		/*
-		 * This is not the best place to mark buffer dirty (eg indices do not
-		 * always change buffer they lock in excl mode). But please remember
-		 * that it's critical to set dirty bit *before* logging changes with
-		 * XLogInsert() - see comments in SyncOneBuffer().
-		 */
-		LockBufHdr(buf);
-		buf->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		UnlockBufHdr(buf);
-
-		return true;
-	}
-	return false;
+	return LWLockConditionalAcquire(buf->content_lock, LW_EXCLUSIVE);
 }
 
 /*

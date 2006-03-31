@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.68 2006/03/05 15:58:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.69 2006/03/31 23:32:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,8 +317,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				lazy_record_free_space(vacrelstats, blkno,
 									   PageGetFreeSpace(page));
 			}
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			WriteBuffer(buf);
+			MarkBufferDirty(buf);
+			UnlockReleaseBuffer(buf);
 			continue;
 		}
 
@@ -327,8 +327,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			empty_pages++;
 			lazy_record_free_space(vacrelstats, blkno,
 								   PageGetFreeSpace(page));
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buf);
+			UnlockReleaseBuffer(buf);
 			continue;
 		}
 
@@ -439,12 +438,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if (hastup)
 			vacrelstats->nonempty_pages = blkno + 1;
 
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
 		if (pgchanged)
-			WriteBuffer(buf);
-		else
-			ReleaseBuffer(buf);
+			MarkBufferDirty(buf);
+		UnlockReleaseBuffer(buf);
 	}
 
 	/* save stats for use later */
@@ -524,8 +520,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		page = BufferGetPage(buf);
 		lazy_record_free_space(vacrelstats, tblk,
 							   PageGetFreeSpace(page));
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buf);
+		UnlockReleaseBuffer(buf);
 		npages++;
 	}
 
@@ -541,7 +536,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
  *	lazy_vacuum_page() -- free dead tuples on a page
  *					 and repair its fragmentation.
  *
- * Caller is expected to handle reading, locking, and writing the buffer.
+ * Caller must hold pin and lock on the buffer.
  *
  * tupindex is the index in vacrelstats->dead_tuples of the first dead
  * tuple for this page.  We assume the rest follow sequentially.
@@ -557,6 +552,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	ItemId		itemid;
 
 	START_CRIT_SECTION();
+
 	for (; tupindex < vacrelstats->num_dead_tuples; tupindex++)
 	{
 		BlockNumber tblk;
@@ -571,6 +567,8 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	}
 
 	uncnt = PageRepairFragmentation(page, unused);
+
+	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
 	if (!onerel->rd_istemp)
@@ -871,8 +869,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 		if (PageIsNew(page) || PageIsEmpty(page))
 		{
 			/* PageIsNew probably shouldn't happen... */
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buf);
+			UnlockReleaseBuffer(buf);
 			continue;
 		}
 
@@ -928,9 +925,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 			}
 		}						/* scan along page */
 
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-		ReleaseBuffer(buf);
+		UnlockReleaseBuffer(buf);
 
 		/* Done scanning if we found a tuple here */
 		if (hastup)

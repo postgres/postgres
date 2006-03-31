@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.99 2006/03/29 21:17:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.100 2006/03/31 23:32:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,9 +115,9 @@ extern DLLIMPORT int32 *LocalRefCount;
  */
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern void ReleaseBuffer(Buffer buffer);
+extern void UnlockReleaseBuffer(Buffer buffer);
+extern void MarkBufferDirty(Buffer buffer);
 extern void IncrBufferRefCount(Buffer buffer);
-extern void WriteBuffer(Buffer buffer);
-extern void WriteNoReleaseBuffer(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 					 BlockNumber blockNum);
 

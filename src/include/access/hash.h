@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.67 2006/03/24 04:32:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.68 2006/03/31 23:32:06 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -278,7 +278,6 @@ extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno, int access);
 extern void _hash_relbuf(Relation rel, Buffer buf);
 extern void _hash_dropbuf(Relation rel, Buffer buf);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);
-extern void _hash_wrtnorelbuf(Relation rel, Buffer buf);
 extern void _hash_chgbufaccess(Relation rel, Buffer buf, int from_access,
 				   int to_access);
 extern void _hash_metapinit(Relation rel);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.230 2006/03/29 21:17:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.231 2006/03/31 23:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2529,8 +2529,8 @@ RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 
 		PageSetLSN(page, lsn);
 		PageSetTLI(page, ThisTimeLineID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
+		MarkBufferDirty(buffer);
+		UnlockReleaseBuffer(buffer);
 
 		blk += BLCKSZ - bkpb.hole_length;
 	}

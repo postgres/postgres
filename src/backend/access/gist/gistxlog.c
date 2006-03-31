@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.13 2006/03/30 23:03:10 tgl Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.14 2006/03/31 23:32:05 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -192,8 +192,7 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		return;
 	}
 
@@ -236,8 +235,8 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 	GistPageGetOpaque(page)->rightlink = InvalidBlockNumber;
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 
 	if (ItemPointerIsValid(&(xlrec.data->key)))
 	{
@@ -313,8 +312,8 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 
 		PageSetLSN(page, lsn);
 		PageSetTLI(page, ThisTimeLineID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
+		MarkBufferDirty(buffer);
+		UnlockReleaseBuffer(buffer);
 	}
 
 	if (ItemPointerIsValid(&(xlrec.data->key)))
@@ -346,8 +345,8 @@ gistRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
 
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
 }
 
 static void
@@ -561,8 +560,8 @@ gistContinueInsert(gistIncompleteInsert *insert)
 		PageSetLSN(page, insert->lsn);
 		PageSetTLI(page, ThisTimeLineID);
 
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
+		MarkBufferDirty(buffer);
+		UnlockReleaseBuffer(buffer);
 
 		/*
 		 * XXX fall out to avoid making LOG message at bottom of routine.
@@ -598,8 +597,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 
 			if (XLByteLE(insert->lsn, PageGetLSN(pages[numbuffer - 1])))
 			{
-				LockBuffer(buffers[numbuffer - 1], BUFFER_LOCK_UNLOCK);
-				ReleaseBuffer(buffers[numbuffer - 1]);
+				UnlockReleaseBuffer(buffers[numbuffer - 1]);
 				return;
 			}
 
@@ -685,8 +683,8 @@ gistContinueInsert(gistIncompleteInsert *insert)
 				PageSetLSN(pages[j], insert->lsn);
 				PageSetTLI(pages[j], ThisTimeLineID);
 				GistPageGetOpaque(pages[j])->rightlink = InvalidBlockNumber;
-				LockBuffer(buffers[j], BUFFER_LOCK_UNLOCK);
-				WriteBuffer(buffers[j]);
+				MarkBufferDirty(buffers[j]);
+				UnlockReleaseBuffer(buffers[j]);
 			}
 		}
 	}

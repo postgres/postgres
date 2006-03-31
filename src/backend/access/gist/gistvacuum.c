@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.17 2006/03/30 23:03:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.18 2006/03/31 23:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,11 +71,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 	vacuum_delay_point();
 
 	buffer = ReadBuffer(gv->index, blkno);
-
-	/*
-	 * This is only used during VACUUM FULL, so we need not bother to lock
-	 * individual index pages
-	 */
+	LockBuffer(buffer, GIST_EXCLUSIVE);
 	gistcheckpage(gv->index, buffer);
 	page = (Page) BufferGetPage(buffer);
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -183,6 +179,11 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 				}
 				res.itup = vec;
 
+				for (ptr = dist; ptr; ptr = ptr->next)
+				{
+					MarkBufferDirty(ptr->buffer);
+				}
+
 				if (!gv->index->rd_istemp)
 				{
 					XLogRecPtr	recptr;
@@ -198,12 +199,10 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 					xlinfo = rdata->data;
 
 					recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT, rdata);
-					ptr = dist;
-					while (ptr)
+					for (ptr = dist; ptr; ptr = ptr->next)
 					{
 						PageSetLSN(BufferGetPage(ptr->buffer), recptr);
 						PageSetTLI(BufferGetPage(ptr->buffer), ThisTimeLineID);
-						ptr = ptr->next;
 					}
 
 					pfree(xlinfo);
@@ -211,21 +210,18 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 				}
 				else
 				{
-					ptr = dist;
-					while (ptr)
+					for (ptr = dist; ptr; ptr = ptr->next)
 					{
 						PageSetLSN(BufferGetPage(ptr->buffer), XLogRecPtrForTemp);
-						ptr = ptr->next;
 					}
 				}
 
-				ptr = dist;
-				while (ptr)
+				for (ptr = dist; ptr; ptr = ptr->next)
 				{
+					/* we must keep the buffer lock on the head page */
 					if (BufferGetBlockNumber(ptr->buffer) != blkno)
 						LockBuffer(ptr->buffer, GIST_UNLOCK);
-					WriteBuffer(ptr->buffer);
-					ptr = ptr->next;
+					ReleaseBuffer(ptr->buffer);
 				}
 
 				if (blkno == GIST_ROOT_BLKNO)
@@ -297,6 +293,8 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 	if (needwrite)
 	{
+		MarkBufferDirty(buffer);
+
 		if (!gv->index->rd_istemp)
 		{
 			XLogRecData *rdata;
@@ -317,12 +315,11 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 		}
 		else
 			PageSetLSN(page, XLogRecPtrForTemp);
-		WriteBuffer(buffer);
 	}
-	else
-		ReleaseBuffer(buffer);
 
 	END_CRIT_SECTION();
+
+	UnlockReleaseBuffer(buffer);
 
 	if (ncompleted && !gv->index->rd_istemp)
 		gistxlogInsertCompletion(gv->index->rd_node, completed, ncompleted);
@@ -429,8 +426,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		}
 		else
 			lastFilledBlock = blkno;
-		LockBuffer(buffer, GIST_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 	}
 	lastBlock = npages - 1;
 
@@ -569,8 +565,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 			if (stack->blkno == GIST_ROOT_BLKNO && !GistPageIsLeaf(page))
 			{
 				/* only the root can become non-leaf during relock */
-				LockBuffer(buffer, GIST_UNLOCK);
-				ReleaseBuffer(buffer);
+				UnlockReleaseBuffer(buffer);
 				/* one more check */
 				continue;
 			}
@@ -617,6 +612,8 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 			{
 				GistMarkTuplesDeleted(page);
 
+				MarkBufferDirty(buffer);
+
 				if (!rel->rd_istemp)
 				{
 					XLogRecData *rdata;
@@ -638,7 +635,6 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 				}
 				else
 					PageSetLSN(page, XLogRecPtrForTemp);
-				WriteNoReleaseBuffer(buffer);
 			}
 
 			END_CRIT_SECTION();
@@ -666,8 +662,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 			}
 		}
 
-		LockBuffer(buffer, GIST_UNLOCK);
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 
 		ptr = stack->next;
 		pfree(stack);

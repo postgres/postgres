@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.142 2006/03/05 15:58:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.143 2006/03/31 23:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,18 +624,13 @@ btbulkdelete(PG_FUNCTION_ARGS)
 				}
 			}
 
-			/*
-			 * If we need to delete anything, do it and write the buffer; else
-			 * just release the buffer.
-			 */
-			nextpage = opaque->btpo_next;
+			/* Apply any needed deletes */
 			if (ndeletable > 0)
-			{
 				_bt_delitems(rel, buf, deletable, ndeletable);
-				_bt_wrtbuf(rel, buf);
-			}
-			else
-				_bt_relbuf(rel, buf);
+
+			/* Fetch nextpage link before releasing the buffer */
+			nextpage = opaque->btpo_next;
+			_bt_relbuf(rel, buf);
 
 			/* call vacuum_delay_point while not holding any buffer lock */
 			vacuum_delay_point();
