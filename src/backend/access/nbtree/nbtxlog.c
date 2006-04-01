@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.30 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.31 2006/04/01 03:03:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -556,18 +556,6 @@ btree_xlog_newroot(XLogRecPtr lsn, XLogRecord *record)
 	}
 }
 
-static void
-btree_xlog_newmeta(XLogRecPtr lsn, XLogRecord *record)
-{
-	xl_btree_newmeta *xlrec = (xl_btree_newmeta *) XLogRecGetData(record);
-	Relation	reln;
-
-	reln = XLogOpenRelation(xlrec->node);
-	_bt_restore_meta(reln, lsn,
-					 xlrec->meta.root, xlrec->meta.level,
-					 xlrec->meta.fastroot, xlrec->meta.fastlevel);
-}
-
 
 void
 btree_redo(XLogRecPtr lsn, XLogRecord *record)
@@ -608,9 +596,6 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 			break;
 		case XLOG_BTREE_NEWROOT:
 			btree_xlog_newroot(lsn, record);
-			break;
-		case XLOG_BTREE_NEWMETA:
-			btree_xlog_newmeta(lsn, record);
 			break;
 		default:
 			elog(PANIC, "btree_redo: unknown op code %u", info);
@@ -725,17 +710,6 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 						xlrec->node.spcNode, xlrec->node.dbNode,
 						xlrec->node.relNode,
 						xlrec->rootblk, xlrec->level);
-				break;
-			}
-		case XLOG_BTREE_NEWMETA:
-			{
-				xl_btree_newmeta *xlrec = (xl_btree_newmeta *) rec;
-
-				appendStringInfo(buf, "newmeta: rel %u/%u/%u; root %u lev %u fast %u lev %u",
-						xlrec->node.spcNode, xlrec->node.dbNode,
-						xlrec->node.relNode,
-						xlrec->meta.root, xlrec->meta.level,
-						xlrec->meta.fastroot, xlrec->meta.fastlevel);
 				break;
 			}
 		default:

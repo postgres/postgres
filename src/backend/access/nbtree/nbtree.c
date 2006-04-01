@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.143 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.144 2006/04/01 03:03:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 /* Working state for btbuild and its callback */
 typedef struct
 {
-	bool		usefast;
 	bool		isUnique;
 	bool		haveDead;
 	Relation	heapRel;
@@ -47,8 +46,6 @@ typedef struct
 	double		indtuples;
 } BTBuildState;
 
-
-bool		FastBuild = true;	/* use SORT instead of insertion build */
 
 static void _bt_restscan(IndexScanDesc scan);
 static void btbuildCallback(Relation index,
@@ -71,13 +68,6 @@ btbuild(PG_FUNCTION_ARGS)
 	double		reltuples;
 	BTBuildState buildstate;
 
-	/*
-	 * bootstrap processing does something strange, so don't use sort/build
-	 * for initial catalog indices.  at some point i need to look harder at
-	 * this.  (there is some kind of incremental processing going on there.)
-	 * -- pma 08/29/95
-	 */
-	buildstate.usefast = (FastBuild && IsNormalProcessingMode());
 	buildstate.isUnique = indexInfo->ii_Unique;
 	buildstate.haveDead = false;
 	buildstate.heapRel = heap;
@@ -98,22 +88,14 @@ btbuild(PG_FUNCTION_ARGS)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
-	if (buildstate.usefast)
-	{
-		buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique, false);
+	buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique, false);
 
-		/*
-		 * If building a unique index, put dead tuples in a second spool to
-		 * keep them out of the uniqueness check.
-		 */
-		if (indexInfo->ii_Unique)
-			buildstate.spool2 = _bt_spoolinit(index, false, true);
-	}
-	else
-	{
-		/* if using slow build, initialize the btree index metadata page */
-		_bt_metapinit(index);
-	}
+	/*
+	 * If building a unique index, put dead tuples in a second spool to
+	 * keep them out of the uniqueness check.
+	 */
+	if (indexInfo->ii_Unique)
+		buildstate.spool2 = _bt_spoolinit(index, false, true);
 
 	/* do the heap scan */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
@@ -128,17 +110,14 @@ btbuild(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * if we are doing bottom-up btree build, finish the build by (1)
-	 * completing the sort of the spool file, (2) inserting the sorted tuples
-	 * into btree pages and (3) building the upper levels.
+	 * Finish the build by (1) completing the sort of the spool file, (2)
+	 * inserting the sorted tuples into btree pages and (3) building the upper
+	 * levels.
 	 */
-	if (buildstate.usefast)
-	{
-		_bt_leafbuild(buildstate.spool, buildstate.spool2);
-		_bt_spooldestroy(buildstate.spool);
-		if (buildstate.spool2)
-			_bt_spooldestroy(buildstate.spool2);
-	}
+	_bt_leafbuild(buildstate.spool, buildstate.spool2);
+	_bt_spooldestroy(buildstate.spool);
+	if (buildstate.spool2)
+		_bt_spooldestroy(buildstate.spool2);
 
 #ifdef BTREE_BUILD_STATS
 	if (log_btree_build_stats)
@@ -173,24 +152,16 @@ btbuildCallback(Relation index,
 	itup->t_tid = htup->t_self;
 
 	/*
-	 * if we are doing bottom-up btree build, we insert the index into a spool
-	 * file for subsequent processing.	otherwise, we insert into the btree.
+	 * insert the index tuple into the appropriate spool file for subsequent
+	 * processing
 	 */
-	if (buildstate->usefast)
-	{
-		if (tupleIsAlive || buildstate->spool2 == NULL)
-			_bt_spool(itup, buildstate->spool);
-		else
-		{
-			/* dead tuples are put into spool2 */
-			buildstate->haveDead = true;
-			_bt_spool(itup, buildstate->spool2);
-		}
-	}
+	if (tupleIsAlive || buildstate->spool2 == NULL)
+		_bt_spool(itup, buildstate->spool);
 	else
 	{
-		_bt_doinsert(index, itup,
-					 buildstate->isUnique, buildstate->heapRel);
+		/* dead tuples are put into spool2 */
+		buildstate->haveDead = true;
+		_bt_spool(itup, buildstate->spool2);
 	}
 
 	buildstate->indtuples += 1;

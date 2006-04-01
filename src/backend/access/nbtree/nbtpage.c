@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.94 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.95 2006/04/01 03:03:36 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -27,73 +27,6 @@
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
 
-
-/*
- *	_bt_metapinit() -- Initialize the metadata page of a new btree.
- *
- * Note: this is actually not used for standard btree index building;
- * nbtsort.c prefers not to make the metadata page valid until completion
- * of build.
- *
- * Note: there's no real need for any locking here.  Since the transaction
- * creating the index hasn't committed yet, no one else can even see the index
- * much less be trying to use it.  (In a REINDEX-in-place scenario, that's
- * not true, but we assume the caller holds sufficient locks on the index.)
- */
-void
-_bt_metapinit(Relation rel)
-{
-	Buffer		buf;
-	Page		pg;
-	BTMetaPageData *metad;
-
-	if (RelationGetNumberOfBlocks(rel) != 0)
-		elog(ERROR, "cannot initialize non-empty btree index \"%s\"",
-			 RelationGetRelationName(rel));
-
-	buf = ReadBuffer(rel, P_NEW);
-	Assert(BufferGetBlockNumber(buf) == BTREE_METAPAGE);
-	LockBuffer(buf, BT_WRITE);
-	pg = BufferGetPage(buf);
-
-	/* NO ELOG(ERROR) from here till newmeta op is logged */
-	START_CRIT_SECTION();
-
-	_bt_initmetapage(pg, P_NONE, 0);
-	metad = BTPageGetMeta(pg);
-
-	MarkBufferDirty(buf);
-
-	/* XLOG stuff */
-	if (!rel->rd_istemp)
-	{
-		xl_btree_newmeta xlrec;
-		XLogRecPtr	recptr;
-		XLogRecData rdata[1];
-
-		xlrec.node = rel->rd_node;
-		xlrec.meta.root = metad->btm_root;
-		xlrec.meta.level = metad->btm_level;
-		xlrec.meta.fastroot = metad->btm_fastroot;
-		xlrec.meta.fastlevel = metad->btm_fastlevel;
-
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBtreeNewmeta;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = NULL;
-
-		recptr = XLogInsert(RM_BTREE_ID,
-							XLOG_BTREE_NEWMETA,
-							rdata);
-
-		PageSetLSN(pg, recptr);
-		PageSetTLI(pg, ThisTimeLineID);
-	}
-
-	END_CRIT_SECTION();
-
-	UnlockReleaseBuffer(buf);
-}
 
 /*
  *	_bt_initmetapage() -- Fill a page buffer with a correct metapage image
