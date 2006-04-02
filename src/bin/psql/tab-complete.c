@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.149 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.150 2006/04/02 09:02:41 alvherre Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -465,6 +465,7 @@ static const pgsql_thing_t words_after_create[] = {
 /* Forward declaration of functions */
 static char **psql_completion(char *text, int start, int end);
 static char *create_command_generator(const char *text, int state);
+static char *drop_command_generator(const char *text, int state);
 static char *complete_from_query(const char *text, int state);
 static char *complete_from_schema_query(const char *text, int state);
 static char *_complete_from_query(int is_schema_query,
@@ -521,11 +522,13 @@ psql_completion(char *text, int start, int end)
 			   *prev5_wd;
 
 	static const char *const sql_commands[] = {
-		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER", "COMMENT",
-		"COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE", "DELETE FROM", "DROP", "END", "EXECUTE",
-		"EXPLAIN", "FETCH", "GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY",
-		"PREPARE", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK", "SAVEPOINT",
-		"SELECT", "SET", "SHOW", "START", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", NULL
+		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER",
+		"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
+		"DELETE FROM", "DROP", "END", "EXECUTE", "EXPLAIN", "FETCH", "GRANT",
+		"INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "PREPARE",
+		"REASSIGN", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK",
+		"SAVEPOINT", "SELECT", "SET", "SHOW", "START", "TRUNCATE", "UNLISTEN",
+		"UPDATE", "VACUUM", NULL
 	};
 
 	static const char *const backslash_commands[] = {
@@ -536,7 +539,8 @@ psql_completion(char *text, int start, int end)
 		"\\e", "\\echo", "\\encoding",
 		"\\f", "\\g", "\\h", "\\help", "\\H", "\\i", "\\l",
 		"\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
-		"\\o", "\\p", "\\password", "\\pset", "\\q", "\\qecho", "\\r", "\\set", "\\t", "\\T",
+		"\\o", "\\p", "\\password", "\\pset", "\\q", "\\qecho", "\\r",
+		"\\set", "\\t", "\\T",
 		"\\timing", "\\unset", "\\x", "\\w", "\\z", "\\!", NULL
 	};
 
@@ -570,14 +574,18 @@ psql_completion(char *text, int start, int end)
 	else if (!prev_wd)
 		COMPLETE_WITH_LIST(sql_commands);
 
-/* CREATE or DROP but not ALTER (TABLE|DOMAIN|GROUP) sth DROP */
-	/* complete with something you can create or drop */
-	else if (pg_strcasecmp(prev_wd, "CREATE") == 0 ||
-			 (pg_strcasecmp(prev_wd, "DROP") == 0 &&
-			  pg_strcasecmp(prev3_wd, "TABLE") != 0 &&
-			  pg_strcasecmp(prev3_wd, "DOMAIN") != 0 &&
-			  pg_strcasecmp(prev3_wd, "GROUP") != 0))
+/* CREATE */
+	/* complete with something you can create */
+	else if (pg_strcasecmp(prev_wd, "CREATE") == 0)
 		matches = completion_matches(text, create_command_generator);
+
+/* DROP, except ALTER (TABLE|DOMAIN|GROUP) sth DROP */
+	/* complete with something you can drop */
+	else if (pg_strcasecmp(prev_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev3_wd, "TABLE") != 0 &&
+			 pg_strcasecmp(prev3_wd, "DOMAIN") != 0 &&
+			 pg_strcasecmp(prev3_wd, "GROUP") != 0)
+		matches = completion_matches(text, drop_command_generator);
 
 /* ALTER */
 
@@ -1248,23 +1256,22 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev3_wd, "AGGREGATE") == 0 &&
 			  prev_wd[strlen(prev_wd) - 1] == ')'))
 	{
-		
 		if ((pg_strcasecmp(prev3_wd, "DROP") == 0) && (pg_strcasecmp(prev2_wd, "FUNCTION") == 0))
-                {
-                        if (find_open_parenthesis(end))
+		{
+			if (find_open_parenthesis(end))
 			{
 				static const char func_args_query[] = "select pg_catalog.oidvectortypes(proargtypes)||')' from pg_proc where proname='%s'";
-                        	char *tmp_buf = malloc(strlen(func_args_query) + strlen(prev_wd));
-                        	sprintf(tmp_buf, func_args_query, prev_wd);
-                        	COMPLETE_WITH_QUERY(tmp_buf);
-                        	free(tmp_buf);
+				char *tmp_buf = malloc(strlen(func_args_query) + strlen(prev_wd));
+				sprintf(tmp_buf, func_args_query, prev_wd);
+				COMPLETE_WITH_QUERY(tmp_buf);
+				free(tmp_buf);
 			}
 			else
 			{
-                        	COMPLETE_WITH_CONST("(");
+				COMPLETE_WITH_CONST("(");
 			}
-                }
-                else
+		}
+		else
 		{
 			static const char *const list_DROPCR[] =
 			{"CASCADE", "RESTRICT", NULL};
@@ -1274,7 +1281,7 @@ psql_completion(char *text, int start, int end)
 	}
 	else if (pg_strcasecmp(prev4_wd, "DROP") == 0 &&
 			pg_strcasecmp(prev3_wd, "FUNCTION") == 0 &&
-			pg_strcasecmp(prev_wd, "(") == 0 )
+			pg_strcasecmp(prev_wd, "(") == 0)
 	{
 		static const char func_args_query[] = "select pg_catalog.oidvectortypes(proargtypes)||')' from pg_proc where proname='%s'";
 		char *tmp_buf = malloc(strlen(func_args_query) + strlen(prev2_wd));
@@ -1282,6 +1289,14 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_QUERY(tmp_buf);
 		free(tmp_buf);
 	}
+	/* DROP OWNED BY */
+	else if (pg_strcasecmp(prev2_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev_wd, "OWNED") == 0)
+		COMPLETE_WITH_CONST("BY");
+	else if (pg_strcasecmp(prev3_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev2_wd, "OWNED") == 0 &&
+			 pg_strcasecmp(prev_wd, "BY") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 
 
 
@@ -1502,7 +1517,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "NOTIFY") == 0)
 		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s'");
 
-/* OWNER TO  - complete with available roles*/
+/* OWNER TO  - complete with available roles */
 	else if (pg_strcasecmp(prev2_wd, "OWNER") == 0 &&
 			 pg_strcasecmp(prev_wd, "TO") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
@@ -1526,6 +1541,25 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_PREPARE);
 	}
 
+/* REASSIGN OWNED BY xxx TO yyy */
+	else if (pg_strcasecmp(prev_wd, "REASSIGN") == 0)
+		COMPLETE_WITH_CONST("OWNED");
+	else if (pg_strcasecmp(prev_wd, "OWNED") == 0 &&
+			 pg_strcasecmp(prev2_wd, "REASSIGN") == 0)
+		COMPLETE_WITH_CONST("BY");
+	else if (pg_strcasecmp(prev_wd, "BY") == 0 &&
+			 pg_strcasecmp(prev2_wd, "OWNED") == 0 &&
+			 pg_strcasecmp(prev3_wd, "REASSIGN") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
+	else if (pg_strcasecmp(prev2_wd, "BY") == 0 &&
+			 pg_strcasecmp(prev3_wd, "OWNED") == 0 &&
+			 pg_strcasecmp(prev4_wd, "REASSIGN") == 0)
+		COMPLETE_WITH_CONST("TO");
+	else if (pg_strcasecmp(prev_wd, "TO") == 0 &&
+			 pg_strcasecmp(prev3_wd, "BY") == 0 &&
+			 pg_strcasecmp(prev4_wd, "OWNED") == 0 &&
+			 pg_strcasecmp(prev5_wd, "REASSIGN") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 
 /* REINDEX */
 	else if (pg_strcasecmp(prev_wd, "REINDEX") == 0)
@@ -1909,7 +1943,7 @@ psql_completion(char *text, int start, int end)
    something of that sort.
 */
 
-/* This one gives you one from a list of things you can put after CREATE or DROP
+/* This one gives you one from a list of things you can put after CREATE
    as defined above.
 */
 static char *
@@ -1935,6 +1969,51 @@ create_command_generator(const char *text, int state)
 	return NULL;
 }
 
+/*
+ * This function gives you a list of things you can put after a DROP command.
+ * Very similar to create_command_generator, but has an additional entry for
+ * OWNED BY.  (We do it this way in order not to duplicate the
+ * words_after_create list.)
+ */
+static char *
+drop_command_generator(const char *text, int state)
+{
+	static int	list_index,
+				string_length;
+	const char *name;
+
+	if (state == 0)
+	{
+		/* If this is the first time for this completion, init some values */
+		list_index = 0;
+		string_length = strlen(text);
+
+		/*
+		 * DROP can be followed by "OWNED BY", which is not found in the list
+		 * for CREATE matches, so make it the first state. (We do not make it
+		 * the last state because it would be more difficult to detect when we
+		 * have to return NULL instead.)
+		 *
+		 * Make sure we advance to the next state.
+		 */
+		list_index++;
+		if (pg_strncasecmp("OWNED", text, string_length) == 0)
+			return pg_strdup("OWNED");
+	}
+
+	/*
+	 * In subsequent attempts, try to complete with the same items we use for
+	 * CREATE
+	 */
+	while ((name = words_after_create[list_index++ - 1].name))
+	{
+		if (pg_strncasecmp(name, text, string_length) == 0)
+			return pg_strdup(name);
+	}
+
+	/* if nothing matches, return NULL */
+	return NULL;
+}
 
 /* The following two functions are wrappers for _complete_from_query */
 
