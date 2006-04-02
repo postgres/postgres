@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.24 2006/01/18 21:02:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.25 2006/04/02 17:38:13 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -92,7 +92,7 @@
      <term><type>time_stamp</type></term>
      <listitem>
       <para>
-       A domain over the type <type>timestamp</type>
+       A domain over the type <type>timestamp with time zone</type>
       </para>
      </listitem>
     </varlistentry>
@@ -144,15 +144,65 @@
   </table>
  </sect1>
 
+ <sect1 id="infoschema-administrable-role-authorizations">
+  <title><literal>administrable_role_authorizations</literal></title>
+
+  <para>
+   The view <literal>administrable_role_authorizations</literal>
+   identifies all roles that the current user has the admin option
+   for.
+  </para>
+
+  <table>
+   <title><literal>administrable_role_authorizations</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantee</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the role to which this role membership was granted (may
+       be the current user, or a different role in case of nested role
+       memberships)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>role_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of a role</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always <literal>YES</literal></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-applicable-roles">
   <title><literal>applicable_roles</literal></title>
 
   <para>
-   The view <literal>applicable_roles</literal> identifies all groups
-   that the current user is a member of.  (A role is the same thing as
-   a group.)  Generally, it is better to use the view
-   <literal>enabled_roles</literal> instead of this one; see also
-   there.
+   The view <literal>applicable_roles</literal> identifies all roles
+   whose privileges the current user can use.  This means there is
+   some chain of role grants from the current user to the role in
+   question.  The current user itself is also an applicable role.  The
+   set of applicable roles is generally used for permission checking.
+   <indexterm><primary>applicable role</primary></indexterm>
+   <indexterm><primary>role</primary><secondary>applicable</secondary></indexterm>
   </para>
 
   <table>
@@ -171,19 +221,335 @@
      <row>
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Always the name of the current user</entry>
+      <entry>
+       Name of the role to which this role membership was granted (may
+       be the current user, or a different role in case of nested role
+       memberships)
+      </entry>
      </row>
 
      <row>
       <entry><literal>role_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of a group</entry>
+      <entry>Name of a role</entry>
      </row>
 
      <row>
       <entry><literal>is_grantable</literal></entry>
       <entry><type>character_data</type></entry>
+      <entry>
+       <literal>YES</literal> if the grantee has the admin option on
+       the role, <literal>NO</literal> if not
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-attributes">
+  <title><literal>attributes</literal></title>
+
+  <para>
+   The view <literal>attributes</literal> contains information about
+   the attributes of composite data types defined in the database.
+   (Note that the view does not give information about table columns,
+   which are sometimes called attributes in PostgreSQL contexts.)
+  </para>
+
+  <table>
+   <title><literal>attributes</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the data type (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the data type</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the data type</entry>
+     </row>
+
+     <row>
+      <entry><literal>attribute_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the attribute</entry>
+     </row>
+
+     <row>
+      <entry><literal>ordinal_position</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Ordinal position of the attribute within the data type (count starts at 1)</entry>
+     </row>
+
+     <row>
+      <entry><literal>attribute_default</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Default expression of the attribute</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_nullable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       <literal>YES</literal> if the attribute is possibly nullable,
+       <literal>NO</literal> if it is known not nullable.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Data type of the attribute, if it is a built-in type, or
+       <literal>ARRAY</literal> if it is some array (in that case, see
+       the view <literal>element_types</literal>), else
+       <literal>USER-DEFINED</literal> (in that case, the type is
+       identified in <literal>attribute_udt_name</literal> and
+       associated columns).
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>character_maximum_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If <literal>data_type</literal> identifies a character or bit
+       string type, the declared maximum length; null for all other
+       data types or if no maximum length was declared.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>character_octet_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If <literal>data_type</literal> identifies a character type,
+       the maximum possible length in octets (bytes) of a datum (this
+       should not be of concern to
+       <productname>PostgreSQL</productname> users); null for all
+       other data types.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If <literal>data_type</literal> identifies a numeric type, this
+       column contains the (declared or implicit) precision of the
+       type for this attribute.  The precision indicates the number of
+       significant digits.  It may be expressed in decimal (base 10)
+       or binary (base 2) terms, as specified in the column
+       <literal>numeric_precision_radix</literal>.  For all other data
+       types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If <literal>data_type</literal> identifies a numeric type, this
+       column indicates in which base the values in the columns
+       <literal>numeric_precision</literal> and
+       <literal>numeric_scale</literal> are expressed.  The value is
+       either 2 or 10.  For all other data types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If <literal>data_type</literal> identifies an exact numeric
+       type, this column contains the (declared or implicit) scale of
+       the type for this attribute.  The scale indicates the number of
+       significant digits to the right of the decimal point.  It may
+       be expressed in decimal (base 10) or binary (base 2) terms, as
+       specified in the column
+       <literal>numeric_precision_radix</literal>.  For all other data
+       types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>datetime_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If <literal>data_type</literal> identifies a date, time, or
+       interval type, the declared precision; null for all other data
+       types or if no precision was declared.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>attribute_udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the database that the attribute data type is defined in
+       (always the current database)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>attribute_udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the schema that the attribute data type is defined in
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>attribute_udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the attribute data type
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>maximum_cardinality</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       An identifier of the data type descriptor of the column, unique
+       among the data type descriptors pertaining to the table.  This
+       is mainly useful for joining with other instances of such
+       identifiers.  (The specific format of the identifier is not
+       defined and not guaranteed to remain the same in future
+       versions.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_derived_reference_attribute</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   See also under <xref linkend="infoschema-columns">, a similarly
+   structured view, for further information on some of the columns.
+  </para>
+ </sect1>
+
+ <sect1 id="infoschema-check-constraint-routine-usage">
+  <title><literal>check_constraint_routine_usage</literal></title>
+
+  <para>
+   The view <literal>check_constraint_routine_usage</literal>
+   identifies routines (functions and procedures) that are used by a
+   check constraint.  Only those routines are shown that are owned by
+   a currently enabled role.
+  </para>
+
+  <table>
+   <title><literal>check_constraint_routine_usage</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>constraint_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the constraint (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>
+       The <quote>specific name</quote> of the function.  See <xref
+       linkend="infoschema-routines"> for more information.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -196,8 +562,8 @@
   <para>
    The view <literal>check_constraints</literal> contains all check
    constraints, either defined on a table or on a domain, that are
-   owned by the current user.  (The owner of the table or domain is
-   the owner of the constraint.)
+   owned by a currently enabled role.  (The owner of the table or
+   domain is the owner of the constraint.)
   </para>
 
   <table>
@@ -247,7 +613,7 @@
   <para>
    The view <literal>column_domain_usage</literal> identifies all
    columns (of a table or a view) that make use of some domain defined
-   in the current database and owned by the current user.
+   in the current database and owned by a currently enabled role.
   </para>
 
   <table>
@@ -314,10 +680,9 @@
 
   <para>
    The view <literal>column_privileges</literal> identifies all
-   privileges granted on columns to the current user or by the current
-   user.  There is one row for each combination of column, grantor,
-   and grantee.  Privileges granted to groups are identified in the
-   view <literal>role_column_grants</literal>.
+   privileges granted on columns to a currently enabled role or by a
+   currently enabled role.  There is one row for each combination of
+   column, grantor, and grantee.
   </para>
 
   <para>
@@ -351,13 +716,13 @@
      <row>
       <entry><literal>grantor</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that granted the privilege</entry>
+      <entry>Name of the role that granted the privilege</entry>
      </row>
 
      <row>
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user or group that the privilege was granted to</entry>
+      <entry>Name of the role that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -402,14 +767,6 @@
     </tbody>
    </tgroup>
   </table>
-
-  <para>
-   Note that the column <literal>grantee</literal> makes no
-   distinction between users and groups.  If you have users and groups
-   with the same name, there is unfortunately no way to distinguish
-   them.  A future version of <productname>PostgreSQL</productname>
-   will possibly prohibit having users and groups with the same name.
-  </para>
  </sect1>
 
  <sect1 id="infoschema-column-udt-usage">
@@ -417,7 +774,7 @@
 
   <para>
    The view <literal>column_udt_usage</literal> identifies all columns
-   that use data types owned by the current user.  Note that in
+   that use data types owned by a currently enabled role.  Note that in
    <productname>PostgreSQL</productname>, built-in data types behave
    like user-defined types, so they are included here as well.  See
    also <xref linkend="infoschema-columns"> for details.
@@ -549,10 +906,7 @@
      <row>
       <entry><literal>column_default</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>
-       Default expression of the column (null if the current user is
-       not the owner of the table containing the column)
-      </entry>
+      <entry>Default expression of the column</entry>
      </row>
 
      <row>
@@ -797,6 +1151,70 @@
       <entry><type>character_data</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
+
+     <row>
+      <entry><literal>is_identity</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>identity_generation</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>identity_start</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>identity_increment</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>identity_maximum</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>identity_minimum</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>identity_cycle</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>is_generated</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>generation_expression</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>is_updatable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       <literal>YES</literal> if the column is updatable,
+       <literal>NO</literal> if not (Columns in base tables are always
+       updatable, columns in views not necessarily)
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -837,12 +1255,12 @@
   <para>
    The view <literal>constraint_column_usage</literal> identifies all
    columns in the current database that are used by some constraint.
-   Only those columns are shown that are contained in a table owned
-   the current user.  For a check constraint, this view identifies the
-   columns that are used in the check expression.  For a foreign key
-   constraint, this view identifies the columns that the foreign key
-   references.  For a unique or primary key constraint, this view
-   identifies the constrained columns.
+   Only those columns are shown that are contained in a table owned by
+   a currently enabled role.  For a check constraint, this view
+   identifies the columns that are used in the check expression.  For
+   a foreign key constraint, this view identifies the columns that the
+   foreign key references.  For a unique or primary key constraint,
+   this view identifies the constrained columns.
   </para>
 
   <table>
@@ -922,9 +1340,9 @@
   <para>
    The view <literal>constraint_table_usage</literal> identifies all
    tables in the current database that are used by some constraint and
-   are owned by the current user.  (This is different from the view
-   <literal>table_constraints</literal>, which identifies all table
-   constraints along with the table they are defined on.)  For a
+   are owned by a currently enabled role.  (This is different from the
+   view <literal>table_constraints</literal>, which identifies all
+   table constraints along with the table they are defined on.)  For a
    foreign key constraint, this view identifies the table that the
    foreign key references.  For a unique or primary key constraint,
    this view simply identifies the table the constraint belongs to.
@@ -1072,7 +1490,7 @@
 
   <para>
    The view <literal>domain_constraints</literal> contains all
-   constraints belonging to domains owned by the current user.
+   constraints belonging to domains defined in the current database.
   </para>
 
   <table>
@@ -1144,10 +1562,11 @@
   <title><literal>domain_udt_usage</literal></title>
 
   <para>
-   The view <literal>domain_udt_usage</literal> identifies all columns
-   that use data types owned by the current user. Note that in
-   <productname>PostgreSQL</productname>, built-in data types behave
-   like user-defined types, so they are included here as well.
+   The view <literal>domain_udt_usage</literal> identifies all domains
+   that are based on data types owned by a currently enabled role.
+   Note that in <productname>PostgreSQL</productname>, built-in data
+   types behave like user-defined types, so they are included here as
+   well.
   </para>
 
   <table>
@@ -1695,14 +2114,22 @@ ORDER BY c.ordinal_position;
   <title><literal>enabled_roles</literal></title>
 
   <para>
-   The view <literal>enabled_roles</literal> identifies all groups
-   that the current user is a member of.  (A role is the same thing as
-   a group.)  The difference between this view and
-   <literal>applicable_roles</literal> is that in the future there may
-   be a mechanism to enable and disable groups during a session.  In
-   that case this view identifies those groups that are currently
-   enabled.
+   The view <literal>enabled_roles</literal> identifies the currently
+   <quote>enabled roles</quote>.  The enabled roles are recursively
+   defined as the current user together with all roles that have been
+   granted to the enabled roles with automatic inheritance.  In other
+   words, these are all roles that the current user has direct or
+   indirect, automatically inheriting membership in.
+   <indexterm><primary>enabled role</primary></indexterm>
+   <indexterm><primary>role</primary><secondary>enabled</secondary></indexterm>
   </para>
+
+  <para>
+   For permission checking, the set of <quote>applicable roles</quote>
+   is applied, which may be broader than the set of enabled roles.  So
+   generally, it is better to use the view
+   <literal>applicable_roles</literal> instead of this one; see also
+   there.
 
   <table>
    <title><literal>enabled_roles</literal> Columns</title>
@@ -1720,7 +2147,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>role_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of a group</entry>
+      <entry>Name of a role</entry>
      </row>
     </tbody>
    </tgroup>
@@ -1734,8 +2161,8 @@ ORDER BY c.ordinal_position;
    The view <literal>key_column_usage</literal> identifies all columns
    in the current database that are restricted by some unique, primary
    key, or foreign key constraint.  Check constraints are not included
-   in this view.  Only those columns are shown that are contained in a
-   table owned by the current user.
+   in this view.  Only those columns are shown that the current user
+   has access to, by way of being the owner or having some privilege.
   </para>
 
   <table>
@@ -1811,6 +2238,14 @@ ORDER BY c.ordinal_position;
       <entry>
        Ordinal position of the column within the constraint key (count
        starts at 1)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>position_in_unique_constraint</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       Not yet implemented
       </entry>
      </row>
     </tbody>
@@ -2069,7 +2504,7 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>referential_constraints</literal> contains all
    referential (foreign key) constraints in the current database that
-   belong to a table owned by the current user.
+   belong to a table owned by a currently enabled role.
   </para>
 
   <table>
@@ -2172,8 +2607,8 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>role_column_grants</literal> identifies all
-   privileges granted on columns to a group that the current user is a
-   member of.  Further information can be found under
+   privileges granted on columns where the grantor or grantee is a
+   currently enabled role.  Further information can be found under
    <literal>column_privileges</literal>.
   </para>
 
@@ -2193,13 +2628,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>grantor</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that granted the privilege</entry>
+      <entry>Name of the role that granted the privilege</entry>
      </row>
 
      <row>
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the group that the privilege was granted to</entry>
+      <entry>Name of the role that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -2251,8 +2686,8 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>role_routine_grants</literal> identifies all
-   privileges granted on functions to a group that the current user is
-   a member of.  Further information can be found under
+   privileges granted on functions where the grantor or grantee is a
+   currently enabled role.  Further information can be found under
    <literal>routine_privileges</literal>.
   </para>
 
@@ -2272,13 +2707,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>grantor</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that granted the privilege</entry>
+      <entry>Name of the role that granted the privilege</entry>
      </row>
 
      <row>
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the group that the privilege was granted to</entry>
+      <entry>Name of the role that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -2341,9 +2776,9 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>role_table_grants</literal> identifies all
-   privileges granted on tables or views to a group that the current
-   user is a member of.  Further information can be found under
-   <literal>table_privileges</literal>.
+   privileges granted on tables or views where the grantor or grantee
+   is a currently enabled role.  Further information can be found
+   under <literal>table_privileges</literal>.
   </para>
 
   <table>
@@ -2362,13 +2797,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>grantor</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that granted the privilege</entry>
+      <entry>Name of the role that granted the privilege</entry>
      </row>
 
      <row>
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the group that the privilege was granted to</entry>
+      <entry>Name of the role that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -2422,12 +2857,13 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>role_usage_grants</literal> is meant to identify
    <literal>USAGE</literal> privileges granted on various kinds of
-   objects to a group that the current user is a member of.  In
-   <productname>PostgreSQL</productname>, this currently only applies
-   to domains, and since domains do not have real privileges in
-   <productname>PostgreSQL</productname>, this view is empty.  Further
-   information can be found under <literal>usage_privileges</literal>.
-   In the future, this view may contain more useful information.
+   objects to a currently enabled role or by a currently enabled role.
+   In <productname>PostgreSQL</productname>, this currently only
+   applies to domains, and since domains do not have real privileges
+   in <productname>PostgreSQL</productname>, this view is empty.
+   Further information can be found under
+   <literal>usage_privileges</literal>.  In the future, this view may
+   contain more useful information.
   </para>
 
   <table>
@@ -2446,13 +2882,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>grantor</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>In the future, the name of the user that granted the privilege</entry>
+      <entry>In the future, the name of the role that granted the privilege</entry>
      </row>
 
      <row>
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>In the future, the name of the group that the privilege was granted to</entry>
+      <entry>In the future, the name of the role that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -2500,10 +2936,9 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>routine_privileges</literal> identifies all
-   privileges granted on functions to the current user or by the
-   current user.  There is one row for each combination of function,
-   grantor, and grantee.  Privileges granted to groups are identified
-   in the view <literal>role_routine_grants</literal>.
+   privileges granted to a currently enabled role or by a currently
+   enabled role.  There is one row for each combination of function,
+   grantor, and grantee.
   </para>
 
   <table>
@@ -2522,13 +2957,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>grantor</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that granted the privilege</entry>
+      <entry>Name of the role that granted the privilege</entry>
      </row>
 
      <row>
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user or group that the privilege was granted to</entry>
+      <entry>Name of the role that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -2584,14 +3019,6 @@ ORDER BY c.ordinal_position;
     </tbody>
    </tgroup>
   </table>
-
-  <para>
-   Note that the column <literal>grantee</literal> makes no
-   distinction between users and groups.  If you have users and groups
-   with the same name, there is unfortunately no way to distinguish
-   them.  A future version of <productname>PostgreSQL</productname>
-   will possibly prohibit having users and groups with the same name.
-  </para>
  </sect1>
 
  <sect1 id="infoschema-routines">
@@ -2877,8 +3304,8 @@ ORDER BY c.ordinal_position;
       <entry><literal>routine_definition</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       The source text of the function (null if the current user is
-       not the owner of the function).  (According to the SQL
+       The source text of the function (null if the function is not
+       owned by a currently enabled role).  (According to the SQL
        standard, this column is only applicable if
        <literal>routine_body</literal> is <literal>SQL</literal>, but
        in <productname>PostgreSQL</productname> it will contain
@@ -3012,6 +3439,174 @@ ORDER BY c.ordinal_position;
       <entry><type>character_data</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
+
+     <row>
+      <entry><literal>created</literal></entry>
+      <entry><type>time_stamp</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>last_altered</literal></entry>
+      <entry><type>time_stamp</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>new_savepoint_level</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>is_udt_dependent</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_from_data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_as_locator</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_char_max_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_char_octet_length</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_char_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_char_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_char_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_collation_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_collation_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_collation_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_datetime_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_interval_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_interval_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_type_udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_type_udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_type_udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_scope_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_scope_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_scope_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_maximum_cardinality</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>result_cast_dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -3022,7 +3617,7 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>schemata</literal> contains all schemas in the
-   current database that are owned by the current user.
+   current database that are owned by a currently enabled role.
   </para>
 
   <table>
@@ -3078,6 +3673,121 @@ ORDER BY c.ordinal_position;
       <entry><literal>sql_path</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-sequences">
+  <title><literal>sequences</literal></title>
+
+  <para>
+   The view <literal>sequences</literal> contains all sequences
+   defined in the current database.  Only those sequences are shown
+   that the current user has access to (by way of being the owner or
+   having some privilege).
+  </para>
+
+  <table>
+   <title><literal>sequences</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>sequence_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the sequence (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>sequence_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the sequence</entry>
+     </row>
+
+     <row>
+      <entry><literal>sequence_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the sequence</entry>
+     </row>
+
+     <row>
+      <entry><literal>data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The data type of the sequence.  In
+       <productname>PostgreSQL</productname>, this is currently always
+       <literal>bigint</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       This column contains the (declared or implicit) precision of
+       the sequence data type (see above).  The precision indicates
+       the number of significant digits.  It may be expressed in
+       decimal (base 10) or binary (base 2) terms, as specified in the
+       column <literal>numeric_precision_radix</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       This column indicates in which base the values in the columns
+       <literal>numeric_precision</literal> and
+       <literal>numeric_scale</literal> are expressed.  The value is
+       either 2 or 10.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       This column contains the (declared or implicit) scale of the
+       sequence data type (see above).  The scale indicates the number
+       of significant digits to the right of the decimal point.  It
+       may be expressed in decimal (base 10) or binary (base 2) terms,
+       as specified in the column
+       <literal>numeric_precision_radix</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>maximum_value</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>minimum_value</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>increment</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>cycle_option</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
      </row>
     </tbody>
    </tgroup>
@@ -3379,6 +4089,69 @@ ORDER BY c.ordinal_position;
   </table>
  </sect1>
 
+ <sect1 id="infoschema-sql-parts">
+  <title><literal>sql_parts</literal></title>
+
+  <para>
+   The table <literal>sql_parts</literal> contains information about
+   which of the several parts of the SQL standard are supported by
+   <productname>PostgreSQL</productname>.
+  </para>
+
+  <table>
+   <title><literal>sql_parts</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>feature_id</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>An identifier string containing the number of the part</entry>
+     </row>
+
+     <row>
+      <entry><literal>feature_name</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Descriptive name of the part</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_supported</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       <literal>YES</literal> if the part is fully supported by the
+       current version of <productname>PostgreSQL</>,
+       <literal>NO</literal> if not
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_verified_by</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always null, since the <productname>PostgreSQL</> development group does not
+       perform formal testing of feature conformance
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>comments</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Possibly a comment about the supported status of the part</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-sql-sizing">
   <title><literal>sql_sizing</literal></title>
 
@@ -3505,7 +4278,8 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>table_constraints</literal> contains all
-   constraints belonging to tables owned by the current user.
+   constraints belonging to tables that the current user owns or has
+   some privilege on.
   </para>
 
   <table>
@@ -3588,10 +4362,9 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>table_privileges</literal> identifies all
-   privileges granted on tables or views to the current user or by the
-   current user.  There is one row for each combination of table,
-   grantor, and grantee.  Privileges granted to groups are identified
-   in the view <literal>role_table_grants</literal>.
+   privileges granted on tables or views to a currently enabled role
+   or by a currently enabled role.  There is one row for each
+   combination of table, grantor, and grantee.
   </para>
 
   <table>
@@ -3610,13 +4383,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>grantor</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user that granted the privilege</entry>
+      <entry>Name of the role that granted the privilege</entry>
      </row>
 
      <row>
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the user or group that the privilege was granted to</entry>
+      <entry>Name of the role that the privilege was granted to</entry>
      </row>
 
      <row>
@@ -3662,14 +4435,6 @@ ORDER BY c.ordinal_position;
     </tbody>
    </tgroup>
   </table>
-
-  <para>
-   Note that the column <literal>grantee</literal> makes no
-   distinction between users and groups.  If you have users and groups
-   with the same name, there is unfortunately no way to distinguish
-   them.  A future version of <productname>PostgreSQL</productname>
-   will possibly prohibit having users and groups with the same name.
-  </para>
  </sect1>
 
  <sect1 id="infoschema-tables">
@@ -3753,6 +4518,33 @@ ORDER BY c.ordinal_position;
       <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
+
+     <row>
+      <entry><literal>is_insertable_into</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       <literal>YES</literal> if the table is insertable into,
+       <literal>NO</literal> if not (Base tables are always insertable
+       into, views not necessarily.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_typed</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>commit_action</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       If the table is a temporary table, then
+       <literal>PRESERVE</literal>, else null.  (The SQL standard
+       defines other commit actions for temporary tables, which are
+       not supported by <productname>PostgreSQL</>.)
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -3763,8 +4555,8 @@ ORDER BY c.ordinal_position;
 
   <para>
    The view <literal>triggers</literal> contains all triggers defined
-   in the current database that are owned by the current user.  (The
-   owner of the table is the owner of the trigger.)
+   in the current database on tables that the current user owns or has
+   some privilege on.
   </para>
 
   <table>
@@ -3880,6 +4672,24 @@ ORDER BY c.ordinal_position;
       <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
+
+     <row>
+      <entry><literal>condition_reference_old_row</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>condition_reference_new_row</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
+
+     <row>
+      <entry><literal>created</literal></entry>
+      <entry><type>time_stamp</type></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -3917,10 +4727,10 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>usage_privileges</literal> is meant to identify
    <literal>USAGE</literal> privileges granted on various kinds of
-   objects to the current user or by the current user.  In
-   <productname>PostgreSQL</productname>, this currently only applies
-   to domains, and since domains do not have real privileges in
-   <productname>PostgreSQL</productname>, this view shows implicit
+   objects to a currently enabled role or by a currently enabled role.
+   In <productname>PostgreSQL</productname>, this currently only
+   applies to domains, and since domains do not have real privileges
+   in <productname>PostgreSQL</productname>, this view shows implicit
    <literal>USAGE</literal> privileges granted to
    <literal>PUBLIC</literal> for all domains.  In the future, this
    view may contain more useful information.
@@ -3998,8 +4808,8 @@ ORDER BY c.ordinal_position;
    The view <literal>view_column_usage</literal> identifies all
    columns that are used in the query expression of a view (the
    <command>SELECT</command> statement that defines the view).  A
-   column is only included if the current user is the owner of the
-   table that contains the column.
+   column is only included if the table that contains the column is
+   owned by a currently enabled role.
   </para>
 
   <note>
@@ -4077,6 +4887,73 @@ ORDER BY c.ordinal_position;
   </table>
  </sect1>
 
+ <sect1 id="infoschema-view-routine-usage">
+  <title><literal>view_routine_usage</literal></title>
+
+  <para>
+   The view <literal>view_routine_usage</literal> identifies all
+   routines (functions and procedures) that are used in the query
+   expression of a view (the <command>SELECT</command> statement that
+   defines the view).  A routine is only included if that routine is
+   owned by a currently enabled role.
+  </para>
+
+  <table>
+   <title><literal>view_routine_usage</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the view (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the view</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the view</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the function (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the function</entry>
+     </row>
+
+     <row>
+      <entry><literal>specific_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>
+       The <quote>specific name</quote> of the function.  See <xref
+       linkend="infoschema-routines"> for more information.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
  <sect1 id="infoschema-view-table-usage">
   <title><literal>view_table_usage</literal></title>
 
@@ -4084,8 +4961,8 @@ ORDER BY c.ordinal_position;
    The view <literal>view_table_usage</literal> identifies all tables
    that are used in the query expression of a view (the
    <command>SELECT</command> statement that defines the view).  A
-   table is only included if the current user is the owner of that
-   table.
+   table is only included if that table is owned by a currently
+   enabled role.
   </para>
 
   <note>
@@ -4199,8 +5076,8 @@ ORDER BY c.ordinal_position;
       <entry><literal>view definition</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       Query expression defining the view (null if the current user is
-       not the owner of the view)
+       Query expression defining the view (null if the view is not
+       owned by a currently enabled role)
       </entry>
      </row>
 
@@ -4213,13 +5090,20 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>is_updatable</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry>
+       <literal>YES</literal> if the view is updatable (allows
+       <command>UPDATE</command> and <command>DELETE</command>),
+       <literal>NO</literal> if not
+      </entry>
      </row>
 
      <row>
       <entry><literal>is_insertable_into</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Not yet implemented</entry>
+      <entry>
+       <literal>YES</literal> if the view is insertable into (allows
+       <command>INSERT</command>), <literal>NO</literal> if not
+      </entry>
      </row>
     </tbody>
    </tgroup>
