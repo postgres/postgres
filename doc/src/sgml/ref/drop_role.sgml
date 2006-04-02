@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_role.sgml,v 1.3 2006/02/04 22:38:39 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_role.sgml,v 1.4 2006/04/02 04:02:40 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -38,7 +38,10 @@ DROP ROLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
    A role cannot be removed if it is still referenced in any database
    of the cluster; an error will be raised if so.  Before dropping the role,
    you must drop all the objects it owns (or reassign their ownership)
-   and revoke any privileges the role has been granted.
+   and revoke any privileges the role has been granted. The <xref
+   linkend="sql-reassign-owned" endterm="sql-reassign-owned-title">
+   and <xref linkend="sql-drop-owned" endterm="sql-drop-owned-title">
+   commands can be useful for this purpose.
   </para>
 
   <para>

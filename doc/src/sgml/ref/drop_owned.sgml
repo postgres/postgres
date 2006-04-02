@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_owned.sgml,v 1.1 2005/11/21 12:49:30 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_owned.sgml,v 1.2 2006/04/02 04:02:40 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP OWNED <replaceable class="PARAMETER">name</replaceable> [, ...] [ RESTRICT | CASCADE ]
+DROP OWNED BY <replaceable class="PARAMETER">name</replaceable> [, ...] [ RESTRICT | CASCADE ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -28,36 +28,68 @@ DROP OWNED <replaceable class="PARAMETER">name</replaceable> [, ...] [ RESTRICT 
   <title>Description</title>
 
   <para>
-   The <command>DROP OWNED</command> instructs the system to drop those
-   database objects owned by one of the given roles which reside on the
-   current database.  All privileges granted to the given roles will also be
-   revoked.
+   <command>DROP OWNED</command> drops all the objects in the current
+   database that are owned by one of the specified roles. Any
+   privileges granted to the given roles on objects in the current
+   database will also be revoked.
   </para>
+ </refsect1>
 
-  <para>
-   If <literal>CASCADE</> is specified, <command>DROP OWNED</command>
-   will behave like a <command>DROP ... CASCADE</command> was issued
-   for each object, that is, objects dependent on the ones owned by the
-   given users will be dropped as well.  
-  </para>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a role whose objects will be dropped, and whose
+      privileges will be revoked.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the affected objects.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the objects owned by a role if any other database
+      objects depend on one of the affected objects. This is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>
   <title>Notes</title>
   <para>
-   The <command>DROP OWNED</command> command is mostly used in preparation to
-   drop the roles.  It may be necessary to issue the command in more than one
-   database.
+   <command>DROP OWNED</command> is often used to prepare for the
+   removal of one or more roles. Because <command>DROP OWNED</command>
+   only affects the objects in the current database, it is usually
+   necessary to execute this command in each database that contains
+   objects owned by a role that is to be removed.
   </para>
 
   <para>
-   Using the <literal>CASCADE</literal> option may make the command recurse to
-   objects owned by other users.
+   Using the <literal>CASCADE</literal> option may make the command
+   recurse to objects owned by other users.
   </para>
 
   <para>
-   See the <command>REASSIGN OWNED</command> command for an alternative that
-   gives the objects away to another role.
+   The <xref linkend="sql-reassign-owned"
+   endterm="sql-reassign-owned-title"> command is an alternative that
+   reassigns the ownership of all the database objects owned by one or
+   more roles.
   </para>
  </refsect1>
 
