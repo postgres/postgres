@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.165 2006/03/21 13:38:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.166 2006/04/02 20:08:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -55,7 +55,7 @@ static backslashResult exec_command(const char *cmd,
 			 PsqlScanState scan_state,
 			 PQExpBuffer query_buf);
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
-static bool do_connect(const char *new_dbname, const char *new_user, const char *new_host, const char *new_port);
+static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
 
 
@@ -154,6 +154,39 @@ HandleSlashCmds(PsqlScanState scan_state,
 }
 
 /*
+ * Read and interpret an argument to the \connect slash command.
+ */
+static char *
+read_connect_arg(PsqlScanState scan_state)
+{
+	char *result;
+	char  quote;
+
+	/*
+	 * Ideally we should treat the arguments as SQL identifiers.  But
+	 * for backwards compatibility with 7.2 and older pg_dump files,
+	 * we have to take unquoted arguments verbatim (don't downcase
+	 * them). For now, double-quoted arguments may be stripped of
+	 * double quotes (as if SQL identifiers).  By 7.4 or so, pg_dump
+	 * files can be expected to double-quote all mixed-case \connect
+	 * arguments, and then we can get rid of OT_SQLIDHACK.
+	 */
+	result = psql_scan_slash_option(scan_state, OT_SQLIDHACK, &quote, true);
+
+	if (!result)
+		return NULL;
+
+	if (quote)
+		return result;
+
+	if (*result == '\0' || strcmp(result, "-") == 0)
+		return NULL;
+
+	return result;
+}
+	
+
+/*
  * Subroutine to actually try to execute a backslash command.
  */
 static backslashResult
@@ -188,17 +221,22 @@ exec_command(const char *cmd,
 		free(opt);
 	}
 
-	/*----------
-	 * \c or \connect -- connect to new database or as different user,
-	 * and/or new host and/or port
+	/*
+	 * \c or \connect -- connect to database using the specified parameters.
 	 *
-	 * \c foo bar [-]  [-]        connect to db "foo" as user "bar" on current host and port
-	 * \c foo [-]  [-]  [-]       connect to db "foo" as current user on current host and port
-	 * \c - bar  [-]  [-]         connect to current db as user "bar" on current host and port
-	 * \c - - host.domain.tld [-] connect to default db as default user on host.domain.tld on default port
-	 * \c - - - 5555              connect to default db as default user on default host at port 5555
-	 * \c		   connect to default db as default user
-	 *----------
+	 * \c dbname user host port
+	 *
+	 * If any of these parameters are omitted or specified as '-', the
+	 * current value of the parameter will be used instead. If the
+	 * parameter has no current value, the default value for that
+	 * parameter will be used. Some examples:
+	 *
+	 * \c - - hst		Connect to current database on current port of
+	 *					host "hst" as current user.
+	 * \c - usr - prt	Connect to current database on "prt" port of current
+	 *					host as user "usr".
+	 * \c dbs			Connect to "dbs" database on current port of current
+	 *					host as current user.
 	 */
 	else if (strcmp(cmd, "c") == 0 || strcmp(cmd, "connect") == 0)
 	{
@@ -206,66 +244,13 @@ exec_command(const char *cmd,
 				   *opt2,
 				   *opt3,
 				   *opt4;
-		char		opt1q,
-					opt2q,
-					opt3q,
-					opt4q;
 
-		/*
-		 * Ideally we should treat the arguments as SQL identifiers.  But for
-		 * backwards compatibility with 7.2 and older pg_dump files, we have
-		 * to take unquoted arguments verbatim (don't downcase them). For now,
-		 * double-quoted arguments may be stripped of double quotes (as if SQL
-		 * identifiers).  By 7.4 or so, pg_dump files can be expected to
-		 * double-quote all mixed-case \connect arguments, and then we can get
-		 * rid of OT_SQLIDHACK.
-		 */
-		opt1 = psql_scan_slash_option(scan_state,
-									  OT_SQLIDHACK, &opt1q, true);
-		opt2 = psql_scan_slash_option(scan_state,
-									  OT_SQLIDHACK, &opt2q, true);
-		opt3 = psql_scan_slash_option(scan_state,
-									  OT_SQLIDHACK, &opt3q, true);
-		opt4 = psql_scan_slash_option(scan_state,
-									  OT_SQLIDHACK, &opt4q, true);
+		opt1 = read_connect_arg(scan_state);
+		opt2 = read_connect_arg(scan_state);
+		opt3 = read_connect_arg(scan_state);
+		opt4 = read_connect_arg(scan_state);
 
-		if (opt4)
-			/* gave port */
-			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 ||
-											strcmp(opt1, "") == 0) ? "" : opt1,
-								 !opt2q && (strcmp(opt2, "-") == 0 ||
-											strcmp(opt2, "") == 0) ? "" : opt2,
-								 !opt3q && (strcmp(opt3, "-") == 0 ||
-											strcmp(opt3, "") == 0) ? "" : opt3,
-								 !opt3q && (strcmp(opt3, "-") == 0 ||
-											strcmp(opt3, "") == 0) ? "" : opt3);
-		if (opt3)
-			/* gave host */
-			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 ||
-											strcmp(opt1, "") == 0) ? "" : opt1,
-								 !opt2q && (strcmp(opt2, "-") == 0 ||
-											strcmp(opt2, "") == 0) ? "" : opt2,
-								 !opt3q && (strcmp(opt3, "-") == 0 ||
-											strcmp(opt3, "") == 0) ? "" : opt3,
-								 NULL);
-		if (opt2)
-			/* gave username */
-			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 ||
-											strcmp(opt1, "") == 0) ? "" : opt1,
-								 !opt2q && (strcmp(opt2, "-") == 0 ||
-											strcmp(opt2, "") == 0) ? "" : opt2,
-								 NULL,
-								 NULL);
-		else if (opt1)
-			/* gave database name */
-			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 ||
-											strcmp(opt1, "") == 0) ? "" : opt1,
-								 "",
-								 NULL,
-								 NULL);
-		else
-			/* connect to default db as default user */
-			success = do_connect(NULL, NULL, NULL, NULL);
+		success = do_connect(opt1, opt2, opt3, opt4);
 
 		free(opt1);
 		free(opt2);
@@ -985,167 +970,168 @@ exec_command(const char *cmd,
 	return status;
 }
 
-
-
-/* do_connect
- * -- handler for \connect
- *
- * Connects to a database (new_dbname) as a certain user (new_user).
- * The new user can be NULL. A db name of "-" is the same as the old one.
- * (That is, the one currently in pset. But pset.db can also be NULL. A NULL
- * dbname is handled by libpq.)
- * Returns true if all ok, false if the new connection couldn't be established.
- * The old connection will be kept if the session is interactive.
+/*
+ * Ask the user for a password; 'username' is the username the
+ * password is for, if one has been explicitly specified. Returns a
+ * malloc'd string.
  */
-static bool
-do_connect(const char *new_dbname, const char *new_user, const char *new_host, const char *new_port)
+static char *
+prompt_for_password(const char *username)
 {
-	PGconn	   *oldconn = pset.db;
-	const char *dbparam = NULL;
-	const char *userparam = NULL;
-	const char *hostparam = NULL;
-	const char *portparam = NULL;
-	const char *pwparam = NULL;
-	char	   *password_prompt = NULL;
-	char	   *prompted_password = NULL;
-	bool		need_pass;
-	bool		success = false;
+	char *result;
 
-	/* Delete variables (in case we fail before setting them anew) */
-	UnsyncVariables();
-
-	/* If dbname is "" then use old name, else new one (even if NULL) */
-	if (oldconn && new_dbname && PQdb(oldconn) && strcmp(new_dbname, "") == 0)
-		dbparam = PQdb(oldconn);
-	else
-		dbparam = new_dbname;
-
-	/* If user is "" then use the old one */
-	if (new_user && PQuser(oldconn) && strcmp(new_user, "") == 0)
-		userparam = PQuser(oldconn);
-	else
-		userparam = new_user;
-
-	/* If host is "" then use the old one */
-	if (new_host && PQhost(oldconn) && strcmp(new_host, "") == 0)
-		hostparam = PQhost(oldconn);
-	else
-		hostparam = new_host;
-
-	/* If port is "" then use the old one */
-	if (new_port && PQport(oldconn) && strcmp(new_port, "") == 0)
-		portparam = PQport(oldconn);
-	else
-		portparam = new_port;
-
-	if (userparam == NULL)
-		password_prompt = strdup("Password: ");
+	if (username == NULL)
+		result = simple_prompt("Password: ", 100, false);
 	else
 	{
-		password_prompt = malloc(strlen(_("Password for user %s: ")) - 2 +
-								 strlen(userparam) + 1);
-		sprintf(password_prompt, _("Password for user %s: "), userparam);
+		char *prompt_text;
+
+		prompt_text = malloc(strlen(username) + 32);
+		sprintf(prompt_text, "Password for user \"%s\": ", username);
+		result = simple_prompt(prompt_text, 100, false);
+		free(prompt_text);
 	}
 
-	/* need to prompt for password? */
+	return result;
+}
+
+static bool
+param_is_newly_set(const char *old_val, const char *new_val)
+{
+	if (new_val == NULL)
+		return false;
+
+	if (old_val == NULL || strcmp(old_val, new_val) != 0)
+		return true;
+
+	return false;
+}
+
+/*
+ * do_connect -- handler for \connect
+ *
+ * Connects to a database with given parameters. If there exists an
+ * established connection, NULL values will be replaced with the ones
+ * in the current connection. Otherwise NULL will be passed for that
+ * parameter to PQsetdbLogin(), so the libpq defaults will be used.
+ *
+ * In interactive mode, if connection fails with the given parameters,
+ * the old connection will be kept.
+ */
+static bool
+do_connect(char *dbname, char *user, char *host, char *port)
+{
+	PGconn		*o_conn = pset.db,
+				*n_conn;
+	char		*password = NULL;
+
+	if (!dbname)
+		dbname = PQdb(o_conn);
+	if (!user)
+		user = PQuser(o_conn);
+	if (!host)
+		host = PQhost(o_conn);
+	if (!port)
+		port = PQport(o_conn);
+
+	/*
+	 * If the user asked to be prompted for a password, ask for one
+	 * now. If not, use the password from the old connection, provided
+	 * the username has not changed. Otherwise, try to connect without
+	 * a password first, and then ask for a password if we got the
+	 * appropriate error message.
+	 *
+	 * XXX: this behavior is broken. It leads to spurious connection
+	 * attempts in the postmaster's log, and doing a string comparison
+	 * against the returned error message is pretty fragile.
+	 */
 	if (pset.getPassword)
-		pwparam = prompted_password = simple_prompt(password_prompt, 100, false);
-
-	/*
-	 * Use old password (if any) if no new one given and we are reconnecting
-	 * as same user
-	 */
-	if (!pwparam && oldconn && PQuser(oldconn) && userparam &&
-		strcmp(PQuser(oldconn), userparam) == 0)
-		pwparam = PQpass(oldconn);
-
-	do
 	{
-		need_pass = false;
-		pset.db = PQsetdbLogin(hostparam, portparam,
-							   NULL, NULL, dbparam, userparam, pwparam);
+		password = prompt_for_password(user);
+	}
+	else if (o_conn && user && strcmp(PQuser(o_conn), user) == 0)
+	{
+		password = strdup(PQpass(o_conn));
+	}
 
-		if (PQstatus(pset.db) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(pset.db), PQnoPasswordSupplied) == 0 &&
-			!feof(stdin))
+	while (true)
+	{
+		n_conn = PQsetdbLogin(host, port, NULL, NULL,
+							  dbname, user, password);
+
+		/* We can immediately discard the password -- no longer needed */
+		if (password)
+			free(password);
+
+		if (PQstatus(n_conn) == CONNECTION_OK)
+			break;
+
+		/*
+		 * Connection attempt failed; either retry the connection
+		 * attempt with a new password, or give up.
+		 */
+		if (strcmp(PQerrorMessage(n_conn), PQnoPasswordSupplied) == 0)
 		{
-			PQfinish(pset.db);
-			need_pass = true;
-			free(prompted_password);
-			prompted_password = NULL;
-			pwparam = prompted_password = simple_prompt(password_prompt, 100, false);
+			PQfinish(n_conn);
+			password = prompt_for_password(user);
+			continue;
 		}
-	} while (need_pass);
 
-	free(prompted_password);
-	free(password_prompt);
-
-	/*
-	 * If connection failed, try at least keep the old one. That's probably
-	 * more convenient than just kicking you out of the program.
-	 */
-	if (!pset.db || PQstatus(pset.db) == CONNECTION_BAD)
-	{
+		/*
+		 * Failed to connect to the database. In interactive mode,
+		 * keep the previous connection to the DB; in scripting mode,
+		 * close our previous connection as well.
+		 */
 		if (pset.cur_cmd_interactive)
 		{
-			psql_error("%s", PQerrorMessage(pset.db));
-			PQfinish(pset.db);
-			if (oldconn)
-			{
-				fputs(_("Previous connection kept\n"), stderr);
-				pset.db = oldconn;
-			}
-			else
-				pset.db = NULL;
+			psql_error("%s", PQerrorMessage(n_conn));
+
+			/* pset.db is left unmodified */
+			if (o_conn)
+				fputs(_("Previous connection kept.\n"), stderr);
 		}
 		else
 		{
-			/*
-			 * we don't want unpredictable things to happen in scripting mode
-			 */
-			psql_error("\\connect: %s", PQerrorMessage(pset.db));
-			PQfinish(pset.db);
-			if (oldconn)
-				PQfinish(oldconn);
-			pset.db = NULL;
-		}
-	}
-	else
-	{
-		if (!QUIET())
-		{
-			if ((hostparam == new_host) && (portparam == new_port)) /* no new host or port */
+			psql_error("\\connect: %s", PQerrorMessage(n_conn));
+			if (o_conn)
 			{
-				if (userparam != new_user)	/* no new user */
-					printf(_("You are now connected to database \"%s\".\n"), dbparam);
-				else if (dbparam != new_dbname)		/* no new db */
-					printf(_("You are now connected as new user \"%s\".\n"), new_user);
-				else
-					/* both new */
-					printf(_("You are now connected to database \"%s\" as user \"%s\".\n"),
-						   PQdb(pset.db), PQuser(pset.db));
-			}
-			else /* At least one of host and port are new */
-			{
-				printf(
-					_("You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port %s.\n"),
-					PQdb(pset.db), PQuser(pset.db), PQhost(pset.db),
-					PQport(pset.db));
+				PQfinish(o_conn);
+				pset.db = NULL;
 			}
 		}
 
-		if (oldconn)
-			PQfinish(oldconn);
-
-		success = true;
+		PQfinish(n_conn);
+		return false;
 	}
 
-	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
-
-	/* Update variables */
+	/*
+	 * Replace the old connection with the new one, and update
+	 * connection-dependent variables.
+	 */
+	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
+	pset.db = n_conn;
 	SyncVariables();
 
-	return success;
+	/* Tell the user about the new connection */
+	if (!QUIET())
+	{
+		printf(_("You are now connected to database \"%s\""), PQdb(pset.db));
+
+		if (param_is_newly_set(PQuser(o_conn), PQuser(pset.db)))
+			printf(_(" as user \"%s\""), PQuser(pset.db));
+
+		if (param_is_newly_set(PQhost(o_conn), PQhost(pset.db)))
+			printf(_(" on host \"%s\""), PQhost(pset.db));
+
+		if (param_is_newly_set(PQport(o_conn), PQport(pset.db)))
+			printf(_(" at port \"%s\""), PQport(pset.db));
+
+		printf(".\n");
+	}
+
+	if (o_conn)
+		PQfinish(o_conn);
+	return true;
 }
 
 
