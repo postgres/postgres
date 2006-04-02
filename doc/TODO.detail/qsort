@@ -1077,3 +1077,1382 @@ a pointer list).
 
 
 
+From pgsql-hackers-owner+M81165@postgresql.org Thu Mar 16 18:37:28 2006
+Return-path: <pgsql-hackers-owner+M81165@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2GNbOu11277
+	for <pgman@candle.pha.pa.us>; Thu, 16 Mar 2006 18:37:25 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id A609567BADC;
+	Thu, 16 Mar 2006 19:37:21 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 8E8E19DC828
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 16 Mar 2006 19:36:50 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 31174-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 16 Mar 2006 19:36:52 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id 8CA419DC840
+	for <pgsql-hackers@postgresql.org>; Thu, 16 Mar 2006 19:36:46 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k2GNagfd023078;
+	Thu, 16 Mar 2006 18:36:42 -0500 (EST)
+To: "Dann Corbit" <DCorbit@connx.com>
+cc: "Jonah H. Harris" <jonah.harris@gmail.com>, pgsql-hackers@postgresql.org,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+Subject: Re: [HACKERS] qsort, once again 
+In-Reply-To: <D425483C2C5C9F49B5B7A41F8944154757D67F@postal.corporate.connx.com> 
+References: <D425483C2C5C9F49B5B7A41F8944154757D67F@postal.corporate.connx.com>
+Comments: In-reply-to "Dann Corbit" <DCorbit@connx.com>
+	message dated "Thu, 16 Mar 2006 13:27:33 -0800"
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="----- =_aaaaaaaaaa0"
+Content-ID: <23060.1142551929.0@sss.pgh.pa.us>
+Date: Thu, 16 Mar 2006 18:36:42 -0500
+Message-ID: <23077.1142552202@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.113 required=5 tests=[AWL=0.113]
+X-Spam-Score: 0.113
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+------- =_aaaaaaaaaa0
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <23060.1142551929.1@sss.pgh.pa.us>
+
+>> So at least on randomized data, the swap_cnt thing is a serious loser.
+>> Need to run some tests on special-case inputs though.  Anyone have a
+>> test suite they like?
+
+> Here is a distribution maker that will create some torture tests for
+> sorting programs.
+
+I fleshed out the sort tester that Bentley & McIlroy give pseudocode for
+in their paper (attached below in case anyone wants to hack on it).  Not
+very surprisingly, it shows the unmodified B&M algorithm as
+significantly better than the BSD-lite version:
+
+Our current BSD qsort:
+distribution SAWTOOTH: max cratio 12.9259, average 0.870261 over 252 tests
+distribution RAND: max cratio 1.07917, average 0.505924 over 252 tests
+distribution STAGGER: max cratio 12.9259, average 1.03706 over 252 tests
+distribution PLATEAU: max cratio 12.9259, average 0.632514 over 252 tests
+distribution SHUFFLE: max cratio 12.9259, average 1.21631 over 252 tests
+method COPY: max cratio 3.87533, average 0.666927 over 210 tests
+method REVERSE: max cratio 5.6248, average 0.710284 over 210 tests
+method FREVERSE: max cratio 12.9259, average 1.58323 over 210 tests
+method BREVERSE: max cratio 5.72661, average 1.13674 over 210 tests
+method SORT: max cratio 0.758625, average 0.350092 over 210 tests
+method DITHER: max cratio 3.13417, average 0.667222 over 210 tests
+Overall: average cratio 0.852415 over 1260 tests
+
+without the swap_cnt code:
+distribution SAWTOOTH: max cratio 5.6248, average 0.745818 over 252 tests
+distribution RAND: max cratio 1.07917, average 0.510097 over 252 tests
+distribution STAGGER: max cratio 5.6248, average 1.0494 over 252 tests
+distribution PLATEAU: max cratio 3.57655, average 0.411549 over 252 tests
+distribution SHUFFLE: max cratio 5.72661, average 1.05988 over 252 tests
+method COPY: max cratio 3.87533, average 0.712122 over 210 tests
+method REVERSE: max cratio 5.6248, average 0.751011 over 210 tests
+method FREVERSE: max cratio 4.80869, average 0.690224 over 210 tests
+method BREVERSE: max cratio 5.72661, average 1.13673 over 210 tests
+method SORT: max cratio 0.806618, average 0.539829 over 210 tests
+method DITHER: max cratio 3.13417, average 0.702174 over 210 tests
+Overall: average cratio 0.755348 over 1260 tests
+
+("cratio" is the ratio of the actual number of comparison function calls
+to the theoretical expectation of N*lg2(N).)  The insertion sort
+switchover is a loser for both average and worst-case measurements.
+
+I tried Dann's distributions too, with N = 100000:
+
+Our current BSD qsort:
+dist fib: cratio 0.0694229
+dist camel: cratio 0.0903228
+dist constant: cratio 0.0602126
+dist five: cratio 0.132288
+dist ramp: cratio 4.29937
+dist random: cratio 1.09286
+dist reverse: cratio 0.5663
+dist sorted: cratio 0.18062
+dist ten: cratio 0.174781
+dist twenty: cratio 0.238098
+dist two: cratio 0.090365
+dist perverse: cratio 0.334503
+dist trig: cratio 0.679846
+Overall: max cratio 4.29937, average cratio 0.616076 over 13 tests
+
+without the swap_cnt code:
+dist fib: cratio 0.0694229
+dist camel: cratio 0.0903228
+dist constant: cratio 0.0602126
+dist five: cratio 0.132288
+dist ramp: cratio 4.29937
+dist random: cratio 1.09286
+dist reverse: cratio 0.89184
+dist sorted: cratio 0.884907
+dist ten: cratio 0.174781
+dist twenty: cratio 0.238098
+dist two: cratio 0.090365
+dist perverse: cratio 0.334503
+dist trig: cratio 0.679846
+Overall: max cratio 4.29937, average cratio 0.695293 over 13 tests
+
+In this set of tests the behavior is just about identical, except for
+the case of already-sorted input, where the BSD coding runs in O(N)
+instead of O(N lg2 N) time.  So that evidently is why some unknown
+person put in the special case.
+
+Some further experimentation destroys my original proposal to limit the
+size of subfile we'll use the swap_cnt code for: it turns out that that
+eliminates the BSD code's advantage for presorted input (at least for
+inputs bigger than the limit) without doing anything much in return.
+
+So my feeling is we should just remove the swap_cnt code and return to
+the original B&M algorithm.  Being much faster than expected for
+presorted input doesn't justify being far slower than expected for
+other inputs, IMHO.  In the context of Postgres I doubt that perfectly
+sorted input shows up very often anyway.
+
+Comments?
+
+			regards, tom lane
+
+
+------- =_aaaaaaaaaa0
+Content-Type: application/octet-stream
+Content-ID: <23060.1142551929.2@sss.pgh.pa.us>
+Content-Description: sorttester.c
+Content-Transfer-Encoding: base64
+
+I2luY2x1ZGUgPHN0ZGlvLmg+CiNpbmNsdWRlIDxzdGRsaWIuaD4KI2luY2x1
+ZGUgPHN0cmluZy5oPgojaW5jbHVkZSA8bWF0aC5oPgoKI2lmZGVmIFVTRV9R
+U09SVAojZGVmaW5lIHRlc3RfcXNvcnQgcXNvcnQKI2Vsc2UKZXh0ZXJuIHZv
+aWQgdGVzdF9xc29ydCh2b2lkICphLCBzaXplX3Qgbiwgc2l6ZV90IGVzLAoJ
+CQkJCSAgIGludCAoKmNtcCkgKGNvbnN0IHZvaWQgKiwgY29uc3Qgdm9pZCAq
+KSk7CiNlbmRpZgoKc3RhdGljIGNvbnN0IGludCBuX3ZhbHVlc1tdID0geyAx
+MDAsIDEwMjMsIDEwMjQsIDEwMjUgfSA7CiNkZWZpbmUgTUFYX04gMTAyNQoK
+dHlwZWRlZiBlbnVtCnsKCVNBV1RPT1RILCBSQU5ELCBTVEFHR0VSLCBQTEFU
+RUFVLCBTSFVGRkxFCn0gRElTVDsKI2RlZmluZSBESVNUX0ZJUlNUCVNBV1RP
+T1RICiNkZWZpbmUgRElTVF9MQVNUCVNIVUZGTEUKCnN0YXRpYyBjb25zdCBj
+aGFyICogY29uc3QgZGlzdG5hbWVbXSA9IHsKCSJTQVdUT09USCIsICJSQU5E
+IiwgIlNUQUdHRVIiLCAiUExBVEVBVSIsICJTSFVGRkxFIgp9OwoKdHlwZWRl
+ZiBlbnVtCnsKCU1DT1BZLCBNUkVWRVJTRSwgTUZSRVZFUlNFLCBNQlJFVkVS
+U0UsIE1TT1JULCBNRElUSEVSCn0gTU9ETUVUSE9EOwojZGVmaW5lIE1FVEhf
+RklSU1QJTUNPUFkKI2RlZmluZSBNRVRIX0xBU1QJTURJVEhFUgoKc3RhdGlj
+IGNvbnN0IGNoYXIgKiBjb25zdCBtZXRobmFtZVtdID0gewoJIkNPUFkiLCAi
+UkVWRVJTRSIsICJGUkVWRVJTRSIsICJCUkVWRVJTRSIsICJTT1JUIiwgIkRJ
+VEhFUiIKfTsKCi8qIHBlci10ZXN0IGNvdW50ZXIgKi8Kc3RhdGljIGxvbmcg
+bmNvbXBhcmVzOwoKLyogYWNjdW11bGF0ZSByZXN1bHRzIGFjcm9zcyB0ZXN0
+cywgZGlzdC13aXNlICovCnN0YXRpYyBkb3VibGUgc3VtY3JhdGlvX2RbRElT
+VF9MQVNUKzFdOwpzdGF0aWMgZG91YmxlIG1heGNyYXRpb19kW0RJU1RfTEFT
+VCsxXTsKc3RhdGljIGludCBudGVzdHNfZFtESVNUX0xBU1QrMV07Ci8qIGFj
+Y3VtdWxhdGUgcmVzdWx0cyBhY3Jvc3MgdGVzdHMsIG1vZC1tZXRob2Qtd2lz
+ZSAqLwpzdGF0aWMgZG91YmxlIHN1bWNyYXRpb19tW01FVEhfTEFTVCsxXTsK
+c3RhdGljIGRvdWJsZSBtYXhjcmF0aW9fbVtNRVRIX0xBU1QrMV07CnN0YXRp
+YyBpbnQgbnRlc3RzX21bTUVUSF9MQVNUKzFdOwoKCnN0YXRpYyBpbnQKaW50
+X2NtcChjb25zdCB2b2lkICphLCBjb25zdCB2b2lkICpiKQp7CglpbnQJCWFh
+ID0gKihjb25zdCBpbnQgKikgYTsKCWludAkJYmIgPSAqKGNvbnN0IGludCAq
+KSBiOwoKCW5jb21wYXJlcysrOwoKCWlmIChhYSA8IGJiKQoJCXJldHVybiAt
+MTsKCWlmIChhYSA+IGJiKQoJCXJldHVybiAxOwoJcmV0dXJuIDA7Cn0KCgpz
+dGF0aWMgdm9pZAp0ZXN0X2NvbW1vbihESVNUIGRpc3QsIE1PRE1FVEhPRCBt
+ZXRoLCB2b2lkICp4dCwgc2l6ZV90IG4sIHNpemVfdCBzeiwKCQkJaW50ICgq
+Y21wKSAoY29uc3Qgdm9pZCAqLCBjb25zdCB2b2lkICopKQp7Cglkb3VibGUg
+bmxvZ247Cglkb3VibGUgY3JhdGlvOwoKCW5jb21wYXJlcyA9IDA7Cgl0ZXN0
+X3Fzb3J0KHh0LCBuLCBzeiwgY21wKTsKCW5sb2duID0gbiAqIGxvZygoZG91
+YmxlKSBuKSAvIGxvZygyLjApOwoJY3JhdGlvID0gbmNvbXBhcmVzIC8gbmxv
+Z247CglzdW1jcmF0aW9fZFtkaXN0XSArPSBjcmF0aW87CglpZiAoY3JhdGlv
+ID4gbWF4Y3JhdGlvX2RbZGlzdF0pCgkJbWF4Y3JhdGlvX2RbZGlzdF0gPSBj
+cmF0aW87CgludGVzdHNfZFtkaXN0XSsrOwoJc3VtY3JhdGlvX21bbWV0aF0g
+Kz0gY3JhdGlvOwoJaWYgKGNyYXRpbyA+IG1heGNyYXRpb19tW21ldGhdKQoJ
+CW1heGNyYXRpb19tW21ldGhdID0gY3JhdGlvOwoJbnRlc3RzX21bbWV0aF0r
+KzsKfQoKCi8qIHdvcmsgb24gYSBjb3B5IG9mIHggKi8Kc3RhdGljIHZvaWQK
+dGVzdF9pbnRfY29weShESVNUIGRpc3QsIGludCB4W10sIGludCBuKQp7Cglp
+bnQJCXh0W01BWF9OXTsKCgltZW1jcHkoeHQsIHgsIG4gKiBzaXplb2YoaW50
+KSk7Cgl0ZXN0X2NvbW1vbihkaXN0LCBNQ09QWSwgKHZvaWQgKikgeHQsIG4s
+IHNpemVvZihpbnQpLCBpbnRfY21wKTsKfQoKLyogcmV2ZXJzZSB0aGUgcmFu
+Z2Ugc3RhcnQgPD0gaSA8IHN0b3AgKi8Kc3RhdGljIHZvaWQKdGVzdF9pbnRf
+cmV2ZXJzZShESVNUIGRpc3QsIE1PRE1FVEhPRCBtZXRoLCBpbnQgeFtdLCBp
+bnQgbiwgaW50IHN0YXJ0LCBpbnQgc3RvcCkKewoJaW50CQl4dFtNQVhfTl07
+CglpbnQJCWk7CgoJbWVtY3B5KHh0LCB4LCBuICogc2l6ZW9mKGludCkpOwoJ
+Zm9yIChpID0gc3RhcnQ7IGkgPCBzdG9wOyBpKyspCgl7CgkJeHRbaV0gPSB4
+W3N0b3AgLSAxIC0gaV07Cgl9Cgl0ZXN0X2NvbW1vbihkaXN0LCBtZXRoLCAo
+dm9pZCAqKSB4dCwgbiwgc2l6ZW9mKGludCksIGludF9jbXApOwp9CgovKiBw
+cmUtc29ydCB1c2luZyBhIHRydXN0ZWQgc29ydCAqLwpzdGF0aWMgdm9pZAp0
+ZXN0X2ludF9zb3J0KERJU1QgZGlzdCwgaW50IHhbXSwgaW50IG4pCnsKCWlu
+dAkJeHRbTUFYX05dOwoKCW1lbWNweSh4dCwgeCwgbiAqIHNpemVvZihpbnQp
+KTsKCXFzb3J0KCh2b2lkICopIHh0LCBuLCBzaXplb2YoaW50KSwgaW50X2Nt
+cCk7Cgl0ZXN0X2NvbW1vbihkaXN0LCBNU09SVCwgKHZvaWQgKikgeHQsIG4s
+IHNpemVvZihpbnQpLCBpbnRfY21wKTsKfQoKLyogYWRkIGklNSB0byB4W2ld
+ICovCnN0YXRpYyB2b2lkCnRlc3RfaW50X2RpdGhlcihESVNUIGRpc3QsIGlu
+dCB4W10sIGludCBuKQp7CglpbnQJCXh0W01BWF9OXTsKCWludAkJaTsKCglm
+b3IgKGkgPSAwOyBpIDwgbjsgaSsrKQoJewoJCXh0W2ldID0geFtpXSArIGkl
+NTsKCX0KCXRlc3RfY29tbW9uKGRpc3QsIE1ESVRIRVIsICh2b2lkICopIHh0
+LCBuLCBzaXplb2YoaW50KSwgaW50X2NtcCk7Cn0KCgppbnQKbWFpbigpCnsK
+CWludAkJeFtNQVhfTl07CglpbnQJCWlfbjsKCWludAkJbjsKCWludAkJbTsK
+CURJU1QJZGlzdDsKCU1PRE1FVEhPRCBtZXRoOwoJaW50CQlpOwoJaW50CQlq
+OwoJaW50CQlrOwoJZG91YmxlCXN1bWNyYXRpbzsKCWludAkJbnRlc3RzOwoK
+CWZvciAoaV9uID0gMDsgaV9uIDwgc2l6ZW9mKG5fdmFsdWVzKS9zaXplb2Yo
+bl92YWx1ZXNbMF0pOyBpX24rKykKCXsKCQluID0gbl92YWx1ZXNbaV9uXTsK
+CQlmb3IgKG0gPSAxOyBtIDwgMipuOyBtICo9IDIpCgkJewoJCQlmb3IgKGRp
+c3QgPSBESVNUX0ZJUlNUOyBkaXN0IDw9IERJU1RfTEFTVDsgZGlzdCsrKQoJ
+CQl7CgkJCQlzd2l0Y2ggKGRpc3QpCgkJCQl7CgkJCQkJY2FzZSBTQVdUT09U
+SDoKCQkJCQkJZm9yIChpID0gaiA9IDAsIGsgPSAxOyBpIDwgbjsgaSsrKQoJ
+CQkJCQl7CgkJCQkJCQl4W2ldID0gaSAlIG07CgkJCQkJCX0KCQkJCQkJYnJl
+YWs7CgkJCQkJY2FzZSBSQU5EOgoJCQkJCQlmb3IgKGkgPSBqID0gMCwgayA9
+IDE7IGkgPCBuOyBpKyspCgkJCQkJCXsKCQkJCQkJCXhbaV0gPSByYW5kKCkg
+JSBtOwoJCQkJCQl9CgkJCQkJCWJyZWFrOwoJCQkJCWNhc2UgU1RBR0dFUjoK
+CQkJCQkJZm9yIChpID0gaiA9IDAsIGsgPSAxOyBpIDwgbjsgaSsrKQoJCQkJ
+CQl7CgkJCQkJCQl4W2ldID0gKGkqbSArIGkpICUgbjsKCQkJCQkJfQoJCQkJ
+CQlicmVhazsKCQkJCQljYXNlIFBMQVRFQVU6CgkJCQkJCWZvciAoaSA9IGog
+PSAwLCBrID0gMTsgaSA8IG47IGkrKykKCQkJCQkJewoJCQkJCQkJeFtpXSA9
+IGkgPCBtID8gaSA6IG07CgkJCQkJCX0KCQkJCQkJYnJlYWs7CgkJCQkJY2Fz
+ZSBTSFVGRkxFOgoJCQkJCQlmb3IgKGkgPSBqID0gMCwgayA9IDE7IGkgPCBu
+OyBpKyspCgkJCQkJCXsKCQkJCQkJCXhbaV0gPSAocmFuZCgpJW0pID8gKGor
+PTIpIDogKGsrPTIpOwoJCQkJCQl9CgkJCQkJCWJyZWFrOwoJCQkJfQoJCQkJ
+dGVzdF9pbnRfY29weShkaXN0LCB4LCBuKTsgLyogd29yayBvbiBhIGNvcHkg
+b2YgeCAqLwoJCQkJdGVzdF9pbnRfcmV2ZXJzZShkaXN0LCBNUkVWRVJTRSwg
+eCwgbiwgMCwgbik7IC8qIG9uIGEgcmV2ZXJzZWQgY29weSAqLwoJCQkJdGVz
+dF9pbnRfcmV2ZXJzZShkaXN0LCBNRlJFVkVSU0UsIHgsIG4sIDAsIG4vMik7
+CS8qIGZyb250IGhhbGYgcmV2ZXJzZWQgKi8KCQkJCXRlc3RfaW50X3JldmVy
+c2UoZGlzdCwgTUJSRVZFUlNFLCB4LCBuLCBuLzIsIG4pOwkvKiBiYWNrIGhh
+bGYgcmV2ZXJzZWQgKi8KCQkJCXRlc3RfaW50X3NvcnQoZGlzdCwgeCwgbik7
+IC8qIGFuIG9yZGVyZWQgY29weSAqLwoJCQkJdGVzdF9pbnRfZGl0aGVyKGRp
+c3QsIHgsIG4pOyAvKiBhZGQgaSU1IHRvIHhbaV0gKi8KCQkJfQoJCX0KCX0K
+Cglmb3IgKGRpc3QgPSBESVNUX0ZJUlNUOyBkaXN0IDw9IERJU1RfTEFTVDsg
+ZGlzdCsrKQoJewoJCXByaW50ZigiZGlzdHJpYnV0aW9uICVzOiBtYXggY3Jh
+dGlvICVnLCBhdmVyYWdlICVnIG92ZXIgJWQgdGVzdHNcbiIsCgkJCSAgIGRp
+c3RuYW1lW2Rpc3RdLAoJCQkgICBtYXhjcmF0aW9fZFtkaXN0XSwKCQkJICAg
+c3VtY3JhdGlvX2RbZGlzdF0gLyBudGVzdHNfZFtkaXN0XSwKCQkJICAgbnRl
+c3RzX2RbZGlzdF0pOwoJfQoKCXN1bWNyYXRpbyA9IDA7CgludGVzdHMgPSAw
+OwoKCWZvciAobWV0aCA9IE1FVEhfRklSU1Q7IG1ldGggPD0gTUVUSF9MQVNU
+OyBtZXRoKyspCgl7CgkJcHJpbnRmKCJtZXRob2QgJXM6IG1heCBjcmF0aW8g
+JWcsIGF2ZXJhZ2UgJWcgb3ZlciAlZCB0ZXN0c1xuIiwKCQkJICAgbWV0aG5h
+bWVbbWV0aF0sCgkJCSAgIG1heGNyYXRpb19tW21ldGhdLAoJCQkgICBzdW1j
+cmF0aW9fbVttZXRoXSAvIG50ZXN0c19tW21ldGhdLAoJCQkgICBudGVzdHNf
+bVttZXRoXSk7CgkJc3VtY3JhdGlvICs9IHN1bWNyYXRpb19tW21ldGhdOwoJ
+CW50ZXN0cyArPSBudGVzdHNfbVttZXRoXTsKCX0KCglwcmludGYoIk92ZXJh
+bGw6IGF2ZXJhZ2UgY3JhdGlvICVnIG92ZXIgJWQgdGVzdHNcbiIsCgkJICAg
+c3VtY3JhdGlvIC8gbnRlc3RzLAoJCSAgIG50ZXN0cyk7CgoJcmV0dXJuIDA7
+Cn0K
+
+------- =_aaaaaaaaaa0
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: explain analyze is your friend
+
+------- =_aaaaaaaaaa0--
+
+From pgsql-hackers-owner+M81167@postgresql.org Thu Mar 16 18:48:37 2006
+Return-path: <pgsql-hackers-owner+M81167@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2GNmbu12770
+	for <pgman@candle.pha.pa.us>; Thu, 16 Mar 2006 18:48:37 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 570D567BADC;
+	Thu, 16 Mar 2006 19:48:35 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id B49219DCBC2
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 16 Mar 2006 19:48:12 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 28142-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 16 Mar 2006 19:48:15 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id 9E95A9DCBAD
+	for <pgsql-hackers@postgresql.org>; Thu, 16 Mar 2006 19:48:10 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k2GNm9Kt023199;
+	Thu, 16 Mar 2006 18:48:09 -0500 (EST)
+To: Darcy Buskermolen <darcy@wavefire.com>
+cc: pgsql-hackers@postgresql.org, "Dann Corbit" <DCorbit@connx.com>,
+   "Jonah H. Harris" <jonah.harris@gmail.com>,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+Subject: Re: [HACKERS] qsort, once again 
+In-Reply-To: <200603161541.25929.darcy@wavefire.com> 
+References: <D425483C2C5C9F49B5B7A41F8944154757D67D@postal.corporate.connx.com> <19646.1142539750@sss.pgh.pa.us> <200603161541.25929.darcy@wavefire.com>
+Comments: In-reply-to Darcy Buskermolen <darcy@wavefire.com>
+	message dated "Thu, 16 Mar 2006 15:41:24 -0800"
+Date: Thu, 16 Mar 2006 18:48:09 -0500
+Message-ID: <23198.1142552889@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.113 required=5 tests=[AWL=0.113]
+X-Spam-Score: 0.113
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Darcy Buskermolen <darcy@wavefire.com> writes:
+> On Thursday 16 March 2006 12:09, Tom Lane wrote:
+>> So we still have a problem of software archaeology: who added the
+>> insertion sort switch to the NetBSD version, and on what grounds?
+
+> This is when that particular code was pushed in, as to why exactly, you'll 
+> have to ask mycroft.
+> http://cvsweb.netbsd.org/bsdweb.cgi/src/lib/libc/stdlib/qsort.c.diff?r1=1.3&r2=1.4&only_with_tag=MAIN
+
+Interesting.  It looks to me like he replaced the former
+vaguely-Knuth-based coding with B&M's code, but kept the insertion-
+sort-after-no-swap special case that was in the previous code.  I'll
+betcha he didn't test to see whether this was actually such a great
+idea ...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: if posting/reading through Usenet, please send an appropriate
+       subscribe-nomail command to majordomo@postgresql.org so that your
+       message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M81168@postgresql.org Thu Mar 16 19:42:51 2006
+Return-path: <pgsql-hackers-owner+M81168@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2H0gpu19805
+	for <pgman@candle.pha.pa.us>; Thu, 16 Mar 2006 19:42:51 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 5F20967BADE;
+	Thu, 16 Mar 2006 20:42:48 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id AA2239DCBAD
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 16 Mar 2006 20:42:20 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 46728-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 16 Mar 2006 20:42:23 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from postal.corporate.connx.com (postal.corporate.connx.com [65.212.159.187])
+	by postgresql.org (Postfix) with ESMTP id 062EC9DCBA4
+	for <pgsql-hackers@postgresql.org>; Thu, 16 Mar 2006 20:42:17 -0400 (AST)
+X-MimeOLE: Produced By Microsoft Exchange V6.5
+Content-class: urn:content-classes:message
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Subject: Re: [HACKERS] qsort, once again 
+Date: Thu, 16 Mar 2006 16:42:20 -0800
+Message-ID: <D425483C2C5C9F49B5B7A41F8944154757D688@postal.corporate.connx.com>
+Thread-Topic: [HACKERS] qsort, once again 
+Thread-Index: AcZJUnwKofAzJ+OKTcqF67UTsFWJEQACP7AA
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Jonah H. Harris" <jonah.harris@gmail.com>, <pgsql-hackers@postgresql.org>,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.096 required=5 tests=[AWL=0.096]
+X-Spam-Score: 0.096
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id k2H0gpu19805
+Status: OR
+
+> So my feeling is we should just remove the swap_cnt code and return to
+> the original B&M algorithm.  Being much faster than expected for
+> presorted input doesn't justify being far slower than expected for
+> other inputs, IMHO.  In the context of Postgres I doubt that perfectly
+> sorted input shows up very often anyway.
+> 
+> Comments?
+
+Checking for presorted input is O(n).
+If the input is random, an average of 3 elements will be tested.
+So adding an in-order check of the data should not be too expensive.
+
+I would benchmark several approaches and see which one is best when used
+in-place.
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faq
+
+From pgsql-hackers-owner+M81169@postgresql.org Thu Mar 16 20:13:08 2006
+Return-path: <pgsql-hackers-owner+M81169@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2H1D7u25008
+	for <pgman@candle.pha.pa.us>; Thu, 16 Mar 2006 20:13:07 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 6B48F67BADE;
+	Thu, 16 Mar 2006 21:13:04 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 19FAD9DCC5C
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 16 Mar 2006 21:12:36 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 53608-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 16 Mar 2006 21:12:37 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from postal.corporate.connx.com (postal.corporate.connx.com [65.212.159.187])
+	by postgresql.org (Postfix) with ESMTP id 839069DCC2D
+	for <pgsql-hackers@postgresql.org>; Thu, 16 Mar 2006 21:12:32 -0400 (AST)
+X-MimeOLE: Produced By Microsoft Exchange V6.5
+Content-class: urn:content-classes:message
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Subject: Re: [HACKERS] qsort, once again 
+Date: Thu, 16 Mar 2006 17:12:35 -0800
+Message-ID: <D425483C2C5C9F49B5B7A41F8944154757D68B@postal.corporate.connx.com>
+Thread-Topic: [HACKERS] qsort, once again 
+Thread-Index: AcZJUnwKofAzJ+OKTcqF67UTsFWJEQACP7AAAADU8dA=
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Dann Corbit" <DCorbit@connx.com>, "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Jonah H. Harris" <jonah.harris@gmail.com>, <pgsql-hackers@postgresql.org>,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.096 required=5 tests=[AWL=0.096]
+X-Spam-Score: 0.096
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id k2H1D7u25008
+Status: OR
+
+> -----Original Message-----
+> From: pgsql-hackers-owner@postgresql.org [mailto:pgsql-hackers-
+> owner@postgresql.org] On Behalf Of Dann Corbit
+> Sent: Thursday, March 16, 2006 4:42 PM
+> To: Tom Lane
+> Cc: Jonah H. Harris; pgsql-hackers@postgresql.org; Jerry Sievers
+> Subject: Re: [HACKERS] qsort, once again
+> 
+> > So my feeling is we should just remove the swap_cnt code and return
+to
+> > the original B&M algorithm.  Being much faster than expected for
+> > presorted input doesn't justify being far slower than expected for
+> > other inputs, IMHO.  In the context of Postgres I doubt that
+perfectly
+> > sorted input shows up very often anyway.
+> >
+> > Comments?
+> 
+> Checking for presorted input is O(n).
+> If the input is random, an average of 3 elements will be tested.
+> So adding an in-order check of the data should not be too expensive.
+> 
+> I would benchmark several approaches and see which one is best when
+used
+> in-place.
+
+Even if "hunks" of the input are sorted, the test is a very good idea.
+
+Recall that we are sorting recursively and so we divide the data into
+chunks.
+
+Consider an example...
+
+Quicksort of a field that contains Sex as 'M' for male, 'F' for female,
+or NULL for unknown.
+
+The median selection is going to pick one of 'M', 'F', or NULL.
+After pass 1 of qsort we will have two partitions.  One partition will
+have all of one type and the other partition will have the other two
+types.
+
+An in-order check will tell us that the monotone partition is sorted and
+we are done with it.
+
+Imagine also a table that was clustered but for which we have not
+updated statistics.  Perhaps it is 98% sorted.  Checking for order in
+our partitions is probably a good idea.
+
+I think you could also get a good optimization if you are checking for
+partitions and find a big section of the partition is not ordered (even
+though the whole thing is not).  If you could perk the ordered size up
+the tree, you could just add another partition to the merge list and
+sort the unordered part.
+
+In "C Unleashed" I call this idea partition discovery mergesort.
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M81172@postgresql.org Fri Mar 17 00:27:41 2006
+Return-path: <pgsql-hackers-owner+M81172@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2H5Reu14258
+	for <pgman@candle.pha.pa.us>; Fri, 17 Mar 2006 00:27:40 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id CE86767BAEA;
+	Fri, 17 Mar 2006 01:27:36 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 465549DC874
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 17 Mar 2006 01:27:11 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 76897-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 17 Mar 2006 01:27:10 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id 2456F9DC871
+	for <pgsql-hackers@postgresql.org>; Fri, 17 Mar 2006 01:27:08 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k2H5R6PF025295;
+	Fri, 17 Mar 2006 00:27:06 -0500 (EST)
+To: "Dann Corbit" <DCorbit@connx.com>
+cc: "Jonah H. Harris" <jonah.harris@gmail.com>, pgsql-hackers@postgresql.org,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+Subject: Re: [HACKERS] qsort, once again 
+In-Reply-To: <D425483C2C5C9F49B5B7A41F8944154757D68B@postal.corporate.connx.com> 
+References: <D425483C2C5C9F49B5B7A41F8944154757D68B@postal.corporate.connx.com>
+Comments: In-reply-to "Dann Corbit" <DCorbit@connx.com>
+	message dated "Thu, 16 Mar 2006 17:12:35 -0800"
+Date: Fri, 17 Mar 2006 00:27:05 -0500
+Message-ID: <25294.1142573225@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.113 required=5 tests=[AWL=0.113]
+X-Spam-Score: 0.113
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+"Dann Corbit" <DCorbit@connx.com> writes:
+>> So my feeling is we should just remove the swap_cnt code and return
+>> to the original B&M algorithm.
+
+> Even if "hunks" of the input are sorted, the test is a very good idea.
+
+Yah know, guys, Bentley and McIlroy are each smarter than any five of
+us, and I'm quite certain it occurred to them to try prechecking for
+sorted input.  If that case is not in their code then it's probably
+because it's a net loss.  Unless you have reason to think that sorted
+input is *more* common than other cases for the Postgres environment,
+which is certainly a fact not in evidence.
+
+(Bentley was my thesis adviser for awhile before he went to Bell Labs,
+so my respect for him is based on direct personal experience.  McIlroy
+I only know by reputation, but he's sure got a ton of that.)
+
+> Imagine also a table that was clustered but for which we have not
+> updated statistics.  Perhaps it is 98% sorted.  Checking for order in
+> our partitions is probably a good idea.
+
+If we are using the sort code rather than the recently-clustered index
+for such a case, then we have problems elsewhere.  This scenario is not
+a good argument that the sort code needs to be specialized to handle
+this case at the expense of other cases; the place to be fixing it is
+the planner or the statistics-management code.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: In versions below 8.0, the planner will ignore your desire to
+       choose an index scan if your joining column's datatypes do not
+       match
+
+From pgsql-hackers-owner+M81173@postgresql.org Fri Mar 17 00:29:24 2006
+Return-path: <pgsql-hackers-owner+M81173@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2H5TNu14505
+	for <pgman@candle.pha.pa.us>; Fri, 17 Mar 2006 00:29:23 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id A271D67BAEA;
+	Fri, 17 Mar 2006 01:29:19 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id C96D79DCA40
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 17 Mar 2006 01:28:55 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 44062-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 17 Mar 2006 01:28:54 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from postal.corporate.connx.com (postal.corporate.connx.com [65.212.159.187])
+	by postgresql.org (Postfix) with ESMTP id CDE6C9DCA4B
+	for <pgsql-hackers@postgresql.org>; Fri, 17 Mar 2006 01:28:53 -0400 (AST)
+X-MimeOLE: Produced By Microsoft Exchange V6.5
+Content-class: urn:content-classes:message
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Subject: Re: [HACKERS] qsort, once again 
+Date: Thu, 16 Mar 2006 21:28:52 -0800
+Message-ID: <D425483C2C5C9F49B5B7A41F8944154757D6A1@postal.corporate.connx.com>
+Thread-Topic: [HACKERS] qsort, once again 
+Thread-Index: AcZJg2/Nvc2IdeFUT0id8WtNczZvGQAACfYw
+From: "Dann Corbit" <DCorbit@connx.com>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Jonah H. Harris" <jonah.harris@gmail.com>, <pgsql-hackers@postgresql.org>,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.097 required=5 tests=[AWL=0.097]
+X-Spam-Score: 0.097
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id k2H5TNu14505
+Status: OR
+
+Well, my point was that it is a snap to implement and test.
+
+It will be better, worse, or the same.
+
+I agree that Bentley is a bloody genius.
+
+> -----Original Message-----
+> From: Tom Lane [mailto:tgl@sss.pgh.pa.us]
+> Sent: Thursday, March 16, 2006 9:27 PM
+> To: Dann Corbit
+> Cc: Jonah H. Harris; pgsql-hackers@postgresql.org; Jerry Sievers
+> Subject: Re: [HACKERS] qsort, once again
+> 
+> "Dann Corbit" <DCorbit@connx.com> writes:
+> >> So my feeling is we should just remove the swap_cnt code and return
+> >> to the original B&M algorithm.
+> 
+> > Even if "hunks" of the input are sorted, the test is a very good
+idea.
+> 
+> Yah know, guys, Bentley and McIlroy are each smarter than any five of
+> us, and I'm quite certain it occurred to them to try prechecking for
+> sorted input.  If that case is not in their code then it's probably
+> because it's a net loss.  Unless you have reason to think that sorted
+> input is *more* common than other cases for the Postgres environment,
+> which is certainly a fact not in evidence.
+> 
+> (Bentley was my thesis adviser for awhile before he went to Bell Labs,
+> so my respect for him is based on direct personal experience.  McIlroy
+> I only know by reputation, but he's sure got a ton of that.)
+> 
+> > Imagine also a table that was clustered but for which we have not
+> > updated statistics.  Perhaps it is 98% sorted.  Checking for order
+in
+> > our partitions is probably a good idea.
+> 
+> If we are using the sort code rather than the recently-clustered index
+> for such a case, then we have problems elsewhere.  This scenario is
+not
+> a good argument that the sort code needs to be specialized to handle
+> this case at the expense of other cases; the place to be fixing it is
+> the planner or the statistics-management code.
+> 
+> 			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M81277@postgresql.org Tue Mar 21 13:53:08 2006
+Return-path: <pgsql-hackers-owner+M81277@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2LIr6M03797
+	for <pgman@candle.pha.pa.us>; Tue, 21 Mar 2006 13:53:06 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 01A8467BBF2;
+	Tue, 21 Mar 2006 14:53:00 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 0ED1D9DCCD2
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 21 Mar 2006 14:52:29 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 38232-04-3
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 21 Mar 2006 14:52:26 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id 1A0EE9DCC2C
+	for <pgsql-hackers@postgresql.org>; Tue, 21 Mar 2006 14:52:22 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k2LIqHPc018733;
+	Tue, 21 Mar 2006 13:52:17 -0500 (EST)
+To: "Dann Corbit" <DCorbit@connx.com>
+cc: "Jonah H. Harris" <jonah.harris@gmail.com>, pgsql-hackers@postgresql.org,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+Subject: Re: [HACKERS] qsort, once again 
+In-Reply-To: <D425483C2C5C9F49B5B7A41F8944154757D6A1@postal.corporate.connx.com> 
+References: <D425483C2C5C9F49B5B7A41F8944154757D6A1@postal.corporate.connx.com>
+Comments: In-reply-to "Dann Corbit" <DCorbit@connx.com>
+	message dated "Thu, 16 Mar 2006 21:28:52 -0800"
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="----- =_aaaaaaaaaa0"
+Content-ID: <18685.1142966822.0@sss.pgh.pa.us>
+Date: Tue, 21 Mar 2006 13:52:17 -0500
+Message-ID: <18732.1142967137@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.113 required=5 tests=[AWL=0.113]
+X-Spam-Score: 0.113
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+------- =_aaaaaaaaaa0
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <18685.1142966822.1@sss.pgh.pa.us>
+
+"Dann Corbit" <DCorbit@connx.com> writes:
+> Well, my point was that it is a snap to implement and test.
+
+Well, having done this, I have to eat my words: it does seem to be a
+pretty good idea.
+
+The following test numbers are using Bentley & McIlroy's test framework,
+but modified to test only the case N=10000 rather than the four smaller
+N values they originally used.  I did that because it exposes quadratic
+behavior more obviously, and the variance in N made it harder to compare
+comparison ratios for different cases.  I also added a "NEARSORT" test
+method, which sorts the input distribution and then exchanges two
+elements chosen at random.  I did that because I was concerned that
+nearly sorted input would be the worst case for the presorted-input
+check, as it would waste the most cycles before failing on such input.
+
+With our existing qsort code, the results look like
+
+distribution SAWTOOTH: max cratio 94.17, min 0.08, average 1.56 over 105 tests
+distribution RAND: max cratio 1.06, min 0.08, average 0.51 over 105 tests
+distribution STAGGER: max cratio 6.08, min 0.23, average 1.01 over 105 tests
+distribution PLATEAU: max cratio 94.17, min 0.08, average 2.12 over 105 tests
+distribution SHUFFLE: max cratio 94.17, min 0.23, average 1.92 over 105 tests
+method COPY: max cratio 6.08, min 0.08, average 0.72 over 75 tests
+method REVERSE: max cratio 5.34, min 0.08, average 0.69 over 75 tests
+method FREVERSE: max cratio 94.17, min 0.08, average 5.71 over 75 tests
+method BREVERSE: max cratio 3.86, min 0.08, average 1.41 over 75 tests
+method SORT: max cratio 0.82, min 0.08, average 0.31 over 75 tests
+method NEARSORT: max cratio 0.82, min 0.08, average 0.36 over 75 tests
+method DITHER: max cratio 5.52, min 0.18, average 0.77 over 75 tests
+Overall: average cratio 1.42 over 525 tests
+
+("cratio" is the ratio of the actual number of comparison function calls
+to the theoretical expectation, N log2(N))
+
+That's pretty awful: there are several test cases that make it use
+nearly 100 times the expected number of comparisons.
+
+Removing the swap_cnt test to bring it close to B&M's original
+recommendations, we get
+
+distribution SAWTOOTH: max cratio 3.85, min 0.08, average 0.70 over 105 tests
+distribution RAND: max cratio 1.06, min 0.08, average 0.52 over 105 tests
+distribution STAGGER: max cratio 6.08, min 0.58, average 1.12 over 105 tests
+distribution PLATEAU: max cratio 3.70, min 0.08, average 0.34 over 105 tests
+distribution SHUFFLE: max cratio 3.86, min 0.86, average 1.24 over 105 tests
+method COPY: max cratio 6.08, min 0.08, average 0.76 over 75 tests
+method REVERSE: max cratio 5.34, min 0.08, average 0.75 over 75 tests
+method FREVERSE: max cratio 4.56, min 0.08, average 0.73 over 75 tests
+method BREVERSE: max cratio 3.86, min 0.08, average 1.41 over 75 tests
+method SORT: max cratio 0.86, min 0.08, average 0.56 over 75 tests
+method NEARSORT: max cratio 0.86, min 0.08, average 0.56 over 75 tests
+method DITHER: max cratio 3.73, min 0.18, average 0.72 over 75 tests
+Overall: average cratio 0.78 over 525 tests
+
+which is a whole lot better as to both average and worst cases.
+
+I then added some code to check for presorted input (just after the
+n<7 insertion sort code):
+
+#ifdef CHECK_SORTED
+	presorted = 1;
+	for (pm = (char *) a + es; pm < (char *) a + n * es; pm += es)
+	{
+		if (cmp(pm - es, pm) > 0)
+		{
+			presorted = 0;
+			break;
+		}
+	}
+	if (presorted)
+		return;
+#endif
+
+This gives
+
+distribution SAWTOOTH: max cratio 3.88, min 0.08, average 0.62 over 105 tests
+distribution RAND: max cratio 1.06, min 0.08, average 0.46 over 105 tests
+distribution STAGGER: max cratio 6.15, min 0.08, average 0.98 over 105 tests
+distribution PLATEAU: max cratio 3.79, min 0.08, average 0.31 over 105 tests
+distribution SHUFFLE: max cratio 3.91, min 0.08, average 1.09 over 105 tests
+method COPY: max cratio 6.15, min 0.08, average 0.72 over 75 tests
+method REVERSE: max cratio 5.34, min 0.08, average 0.76 over 75 tests
+method FREVERSE: max cratio 4.58, min 0.08, average 0.73 over 75 tests
+method BREVERSE: max cratio 3.91, min 0.08, average 1.44 over 75 tests
+method SORT: max cratio 0.08, min 0.08, average 0.08 over 75 tests
+method NEARSORT: max cratio 0.89, min 0.08, average 0.39 over 75 tests
+method DITHER: max cratio 3.73, min 0.18, average 0.72 over 75 tests
+Overall: average cratio 0.69 over 525 tests
+
+So the worst case seems only very marginally worse, and there is a
+definite improvement in the average case, even for inputs that aren't
+entirely sorted.  Importantly, the "near sorted" case that I thought
+might send it into quadratic behavior doesn't seem to do that.
+
+So, unless anyone wants to do further testing, I'll go ahead and commit
+these changes.
+
+			regards, tom lane
+
+PS: Just as a comparison point, here are the results when testing HPUX's
+library qsort:
+
+distribution SAWTOOTH: max cratio 7.00, min 0.08, average 0.76 over 105 tests
+distribution RAND: max cratio 1.11, min 0.08, average 0.53 over 105 tests
+distribution STAGGER: max cratio 7.05, min 0.58, average 1.24 over 105 tests
+distribution PLATEAU: max cratio 7.00, min 0.08, average 0.43 over 105 tests
+distribution SHUFFLE: max cratio 7.00, min 0.86, average 1.54 over 105 tests
+method COPY: max cratio 6.70, min 0.08, average 0.79 over 75 tests
+method REVERSE: max cratio 7.05, min 0.08, average 0.78 over 75 tests
+method FREVERSE: max cratio 7.00, min 0.08, average 0.77 over 75 tests
+method BREVERSE: max cratio 7.00, min 0.08, average 2.11 over 75 tests
+method SORT: max cratio 0.86, min 0.08, average 0.56 over 75 tests
+method NEARSORT: max cratio 0.86, min 0.08, average 0.56 over 75 tests
+method DITHER: max cratio 4.06, min 0.16, average 0.74 over 75 tests
+Overall: average cratio 0.90 over 525 tests
+
+and here are the results using glibc's qsort, which of course isn't
+quicksort at all but some kind of merge sort:
+
+distribution SAWTOOTH: max cratio 0.90, min 0.49, average 0.65 over 105 tests
+distribution RAND: max cratio 0.91, min 0.49, average 0.76 over 105 tests
+distribution STAGGER: max cratio 0.92, min 0.49, average 0.70 over 105 tests
+distribution PLATEAU: max cratio 0.84, min 0.49, average 0.54 over 105 tests
+distribution SHUFFLE: max cratio 0.64, min 0.49, average 0.52 over 105 tests
+method COPY: max cratio 0.92, min 0.49, average 0.66 over 75 tests
+method REVERSE: max cratio 0.92, min 0.49, average 0.68 over 75 tests
+method FREVERSE: max cratio 0.92, min 0.49, average 0.67 over 75 tests
+method BREVERSE: max cratio 0.92, min 0.49, average 0.68 over 75 tests
+method SORT: max cratio 0.49, min 0.49, average 0.49 over 75 tests
+method NEARSORT: max cratio 0.55, min 0.49, average 0.51 over 75 tests
+method DITHER: max cratio 0.92, min 0.50, average 0.74 over 75 tests
+Overall: average cratio 0.63 over 525 tests
+
+PPS: final version of test framework attached for the archives.
+
+
+------- =_aaaaaaaaaa0
+Content-Type: application/octet-stream
+Content-ID: <18685.1142966822.2@sss.pgh.pa.us>
+Content-Description: sorttester.c
+Content-Transfer-Encoding: base64
+
+I2luY2x1ZGUgPHN0ZGlvLmg+CiNpbmNsdWRlIDxzdGRsaWIuaD4KI2luY2x1
+ZGUgPHN0cmluZy5oPgojaW5jbHVkZSA8bWF0aC5oPgoKI2lmZGVmIFVTRV9R
+U09SVAojZGVmaW5lIHRlc3RfcXNvcnQgcXNvcnQKI2Vsc2UKZXh0ZXJuIHZv
+aWQgdGVzdF9xc29ydCh2b2lkICphLCBzaXplX3Qgbiwgc2l6ZV90IGVzLAoJ
+CQkJCSAgIGludCAoKmNtcCkgKGNvbnN0IHZvaWQgKiwgY29uc3Qgdm9pZCAq
+KSk7CiNlbmRpZgoKLy9zdGF0aWMgY29uc3QgaW50IG5fdmFsdWVzW10gPSB7
+IDEwMCwgMTAyMywgMTAyNCwgMTAyNSwgMTAwMDAgfSA7CnN0YXRpYyBjb25z
+dCBpbnQgbl92YWx1ZXNbXSA9IHsgMTAwMDAgfSA7CiNkZWZpbmUgTUFYX04g
+MTAwMDAKCnR5cGVkZWYgZW51bQp7CglTQVdUT09USCwgUkFORCwgU1RBR0dF
+UiwgUExBVEVBVSwgU0hVRkZMRQp9IERJU1Q7CiNkZWZpbmUgRElTVF9GSVJT
+VAlTQVdUT09USAojZGVmaW5lIERJU1RfTEFTVAlTSFVGRkxFCgpzdGF0aWMg
+Y29uc3QgY2hhciAqIGNvbnN0IGRpc3RuYW1lW10gPSB7CgkiU0FXVE9PVEgi
+LCAiUkFORCIsICJTVEFHR0VSIiwgIlBMQVRFQVUiLCAiU0hVRkZMRSIKfTsK
+CnR5cGVkZWYgZW51bQp7CglNQ09QWSwgTVJFVkVSU0UsIE1GUkVWRVJTRSwg
+TUJSRVZFUlNFLCBNU09SVCwgTU5FQVJTT1JULCBNRElUSEVSCn0gTU9ETUVU
+SE9EOwojZGVmaW5lIE1FVEhfRklSU1QJTUNPUFkKI2RlZmluZSBNRVRIX0xB
+U1QJTURJVEhFUgoKc3RhdGljIGNvbnN0IGNoYXIgKiBjb25zdCBtZXRobmFt
+ZVtdID0gewoJIkNPUFkiLCAiUkVWRVJTRSIsICJGUkVWRVJTRSIsICJCUkVW
+RVJTRSIsICJTT1JUIiwgIk5FQVJTT1JUIiwgIkRJVEhFUiIKfTsKCi8qIHBl
+ci10ZXN0IGNvdW50ZXIgKi8Kc3RhdGljIGxvbmcgbmNvbXBhcmVzOwoKLyog
+YWNjdW11bGF0ZSByZXN1bHRzIGFjcm9zcyB0ZXN0cywgZGlzdC13aXNlICov
+CnN0YXRpYyBkb3VibGUgc3VtY3JhdGlvX2RbRElTVF9MQVNUKzFdOwpzdGF0
+aWMgZG91YmxlIG1heGNyYXRpb19kW0RJU1RfTEFTVCsxXTsKc3RhdGljIGRv
+dWJsZSBtaW5jcmF0aW9fZFtESVNUX0xBU1QrMV07CnN0YXRpYyBpbnQgbnRl
+c3RzX2RbRElTVF9MQVNUKzFdOwovKiBhY2N1bXVsYXRlIHJlc3VsdHMgYWNy
+b3NzIHRlc3RzLCBtb2QtbWV0aG9kLXdpc2UgKi8Kc3RhdGljIGRvdWJsZSBz
+dW1jcmF0aW9fbVtNRVRIX0xBU1QrMV07CnN0YXRpYyBkb3VibGUgbWF4Y3Jh
+dGlvX21bTUVUSF9MQVNUKzFdOwpzdGF0aWMgZG91YmxlIG1pbmNyYXRpb19t
+W01FVEhfTEFTVCsxXTsKc3RhdGljIGludCBudGVzdHNfbVtNRVRIX0xBU1Qr
+MV07CgoKc3RhdGljIGludAppbnRfY21wKGNvbnN0IHZvaWQgKmEsIGNvbnN0
+IHZvaWQgKmIpCnsKCWludAkJYWEgPSAqKGNvbnN0IGludCAqKSBhOwoJaW50
+CQliYiA9ICooY29uc3QgaW50ICopIGI7CgoJbmNvbXBhcmVzKys7CgoJaWYg
+KGFhIDwgYmIpCgkJcmV0dXJuIC0xOwoJaWYgKGFhID4gYmIpCgkJcmV0dXJu
+IDE7CglyZXR1cm4gMDsKfQoKCnN0YXRpYyB2b2lkCnRlc3RfY29tbW9uKERJ
+U1QgZGlzdCwgTU9ETUVUSE9EIG1ldGgsIHZvaWQgKnh0LCBzaXplX3Qgbiwg
+c2l6ZV90IHN6LAoJCQlpbnQgKCpjbXApIChjb25zdCB2b2lkICosIGNvbnN0
+IHZvaWQgKikpCnsKCWRvdWJsZSBubG9nbjsKCWRvdWJsZSBjcmF0aW87CgoJ
+bmNvbXBhcmVzID0gMDsKCXRlc3RfcXNvcnQoeHQsIG4sIHN6LCBjbXApOwoJ
+LyogbG9nIHRoZSBjb3N0IGJlZm9yZSBkb2luZyBtb3JlIGNtcHMgKi8KCW5s
+b2duID0gbiAqIGxvZygoZG91YmxlKSBuKSAvIGxvZygyLjApOwoJY3JhdGlv
+ID0gbmNvbXBhcmVzIC8gbmxvZ247CglzdW1jcmF0aW9fZFtkaXN0XSArPSBj
+cmF0aW87CglpZiAobnRlc3RzX2RbZGlzdF0gPT0gMCkKCXsKCQltYXhjcmF0
+aW9fZFtkaXN0XSA9IG1pbmNyYXRpb19kW2Rpc3RdID0gY3JhdGlvOwoJfQoJ
+ZWxzZQoJewoJCWlmIChjcmF0aW8gPiBtYXhjcmF0aW9fZFtkaXN0XSkKCQkJ
+bWF4Y3JhdGlvX2RbZGlzdF0gPSBjcmF0aW87CgkJaWYgKGNyYXRpbyA8IG1p
+bmNyYXRpb19kW2Rpc3RdKQoJCQltaW5jcmF0aW9fZFtkaXN0XSA9IGNyYXRp
+bzsKCX0KCW50ZXN0c19kW2Rpc3RdKys7CglzdW1jcmF0aW9fbVttZXRoXSAr
+PSBjcmF0aW87CglpZiAobnRlc3RzX21bbWV0aF0gPT0gMCkKCXsKCQltYXhj
+cmF0aW9fbVttZXRoXSA9IG1pbmNyYXRpb19tW21ldGhdID0gY3JhdGlvOwoJ
+fQoJZWxzZQoJewoJCWlmIChjcmF0aW8gPiBtYXhjcmF0aW9fbVttZXRoXSkK
+CQkJbWF4Y3JhdGlvX21bbWV0aF0gPSBjcmF0aW87CgkJaWYgKGNyYXRpbyA8
+IG1pbmNyYXRpb19tW21ldGhdKQoJCQltaW5jcmF0aW9fbVttZXRoXSA9IGNy
+YXRpbzsKCX0KCW50ZXN0c19tW21ldGhdKys7CgkvKiBub3cgY2hlY2sgZm9y
+IGNvcnJlY3Qgc29ydGluZyAqLwoJewoJCWNoYXIgKnAgPSB4dDsKCQl3aGls
+ZSAobi0tID4gMSkKCQl7CgkJCWlmIChjbXAocCwgcCArIHN6KSA+IDApCgkJ
+CXsKCQkJCWZwcmludGYoc3RkZXJyLCAid3Jvbmcgc29ydCByZXN1bHQgZm9y
+ICVzLyVzIVxuIiwKCQkJCQkJZGlzdG5hbWVbZGlzdF0sIG1ldGhuYW1lW21l
+dGhdKTsKCQkJCWV4aXQoMSk7CgkJCX0KCQkJcCArPSBzejsKCQl9Cgl9Cn0K
+CgovKiB3b3JrIG9uIGEgY29weSBvZiB4ICovCnN0YXRpYyB2b2lkCnRlc3Rf
+aW50X2NvcHkoRElTVCBkaXN0LCBpbnQgeFtdLCBpbnQgbikKewoJaW50CQl4
+dFtNQVhfTl07CgoJbWVtY3B5KHh0LCB4LCBuICogc2l6ZW9mKGludCkpOwoJ
+dGVzdF9jb21tb24oZGlzdCwgTUNPUFksICh2b2lkICopIHh0LCBuLCBzaXpl
+b2YoaW50KSwgaW50X2NtcCk7Cn0KCi8qIHJldmVyc2UgdGhlIHJhbmdlIHN0
+YXJ0IDw9IGkgPCBzdG9wICovCnN0YXRpYyB2b2lkCnRlc3RfaW50X3JldmVy
+c2UoRElTVCBkaXN0LCBNT0RNRVRIT0QgbWV0aCwgaW50IHhbXSwgaW50IG4s
+IGludCBzdGFydCwgaW50IHN0b3ApCnsKCWludAkJeHRbTUFYX05dOwoJaW50
+CQlpOwoKCW1lbWNweSh4dCwgeCwgbiAqIHNpemVvZihpbnQpKTsKCWZvciAo
+aSA9IHN0YXJ0OyBpIDwgc3RvcDsgaSsrKQoJewoJCXh0W2ldID0geFtzdG9w
+IC0gMSAtIGldOwoJfQoJdGVzdF9jb21tb24oZGlzdCwgbWV0aCwgKHZvaWQg
+KikgeHQsIG4sIHNpemVvZihpbnQpLCBpbnRfY21wKTsKfQoKLyogcHJlLXNv
+cnQgdXNpbmcgYSB0cnVzdGVkIHNvcnQgKi8Kc3RhdGljIHZvaWQKdGVzdF9p
+bnRfc29ydChESVNUIGRpc3QsIGludCB4W10sIGludCBuKQp7CglpbnQJCXh0
+W01BWF9OXTsKCgltZW1jcHkoeHQsIHgsIG4gKiBzaXplb2YoaW50KSk7Cglx
+c29ydCgodm9pZCAqKSB4dCwgbiwgc2l6ZW9mKGludCksIGludF9jbXApOwoJ
+dGVzdF9jb21tb24oZGlzdCwgTVNPUlQsICh2b2lkICopIHh0LCBuLCBzaXpl
+b2YoaW50KSwgaW50X2NtcCk7Cn0KCi8qIG5lYXItc29ydGVkICovCnN0YXRp
+YyB2b2lkCnRlc3RfaW50X25lYXJzb3J0KERJU1QgZGlzdCwgaW50IHhbXSwg
+aW50IG4pCnsKCWludAkJeHRbTUFYX05dOwoKCW1lbWNweSh4dCwgeCwgbiAq
+IHNpemVvZihpbnQpKTsKCXFzb3J0KCh2b2lkICopIHh0LCBuLCBzaXplb2Yo
+aW50KSwgaW50X2NtcCk7CgkvKiBzd2FwIGEgcmFuZG9tIHR3byBlbGVtZW50
+cyAqLwoJewoJCWludCBpID0gcmFuZCgpICUgbjsKCQlpbnQgaiA9IHJhbmQo
+KSAlIG47CgkJaW50IHQgPSB4dFtpXTsKCQl4dFtpXSA9IHh0W2pdOwoJCXh0
+W2pdID0gdDsKCX0KCXRlc3RfY29tbW9uKGRpc3QsIE1ORUFSU09SVCwgKHZv
+aWQgKikgeHQsIG4sIHNpemVvZihpbnQpLCBpbnRfY21wKTsKfQoKLyogYWRk
+IGklNSB0byB4W2ldICovCnN0YXRpYyB2b2lkCnRlc3RfaW50X2RpdGhlcihE
+SVNUIGRpc3QsIGludCB4W10sIGludCBuKQp7CglpbnQJCXh0W01BWF9OXTsK
+CWludAkJaTsKCglmb3IgKGkgPSAwOyBpIDwgbjsgaSsrKQoJewoJCXh0W2ld
+ID0geFtpXSArIGklNTsKCX0KCXRlc3RfY29tbW9uKGRpc3QsIE1ESVRIRVIs
+ICh2b2lkICopIHh0LCBuLCBzaXplb2YoaW50KSwgaW50X2NtcCk7Cn0KCgpp
+bnQKbWFpbigpCnsKCWludAkJeFtNQVhfTl07CglpbnQJCWlfbjsKCWludAkJ
+bjsKCWludAkJbTsKCURJU1QJZGlzdDsKCU1PRE1FVEhPRCBtZXRoOwoJaW50
+CQlpOwoJaW50CQlqOwoJaW50CQlrOwoJZG91YmxlCXN1bWNyYXRpbzsKCWlu
+dAkJbnRlc3RzOwoKCWZvciAoaV9uID0gMDsgaV9uIDwgc2l6ZW9mKG5fdmFs
+dWVzKS9zaXplb2Yobl92YWx1ZXNbMF0pOyBpX24rKykKCXsKCQluID0gbl92
+YWx1ZXNbaV9uXTsKCQlmb3IgKG0gPSAxOyBtIDwgMipuOyBtICo9IDIpCgkJ
+ewoJCQlmb3IgKGRpc3QgPSBESVNUX0ZJUlNUOyBkaXN0IDw9IERJU1RfTEFT
+VDsgZGlzdCsrKQoJCQl7CgkJCQlzd2l0Y2ggKGRpc3QpCgkJCQl7CgkJCQkJ
+Y2FzZSBTQVdUT09USDoKCQkJCQkJZm9yIChpID0gaiA9IDAsIGsgPSAxOyBp
+IDwgbjsgaSsrKQoJCQkJCQl7CgkJCQkJCQl4W2ldID0gaSAlIG07CgkJCQkJ
+CX0KCQkJCQkJYnJlYWs7CgkJCQkJY2FzZSBSQU5EOgoJCQkJCQlmb3IgKGkg
+PSBqID0gMCwgayA9IDE7IGkgPCBuOyBpKyspCgkJCQkJCXsKCQkJCQkJCXhb
+aV0gPSByYW5kKCkgJSBtOwoJCQkJCQl9CgkJCQkJCWJyZWFrOwoJCQkJCWNh
+c2UgU1RBR0dFUjoKCQkJCQkJZm9yIChpID0gaiA9IDAsIGsgPSAxOyBpIDwg
+bjsgaSsrKQoJCQkJCQl7CgkJCQkJCQl4W2ldID0gKGkqbSArIGkpICUgbjsK
+CQkJCQkJfQoJCQkJCQlicmVhazsKCQkJCQljYXNlIFBMQVRFQVU6CgkJCQkJ
+CWZvciAoaSA9IGogPSAwLCBrID0gMTsgaSA8IG47IGkrKykKCQkJCQkJewoJ
+CQkJCQkJeFtpXSA9IGkgPCBtID8gaSA6IG07CgkJCQkJCX0KCQkJCQkJYnJl
+YWs7CgkJCQkJY2FzZSBTSFVGRkxFOgoJCQkJCQlmb3IgKGkgPSBqID0gMCwg
+ayA9IDE7IGkgPCBuOyBpKyspCgkJCQkJCXsKCQkJCQkJCXhbaV0gPSAocmFu
+ZCgpJW0pID8gKGorPTIpIDogKGsrPTIpOwoJCQkJCQl9CgkJCQkJCWJyZWFr
+OwoJCQkJfQoJCQkJdGVzdF9pbnRfY29weShkaXN0LCB4LCBuKTsgLyogd29y
+ayBvbiBhIGNvcHkgb2YgeCAqLwoJCQkJdGVzdF9pbnRfcmV2ZXJzZShkaXN0
+LCBNUkVWRVJTRSwgeCwgbiwgMCwgbik7IC8qIG9uIGEgcmV2ZXJzZWQgY29w
+eSAqLwoJCQkJdGVzdF9pbnRfcmV2ZXJzZShkaXN0LCBNRlJFVkVSU0UsIHgs
+IG4sIDAsIG4vMik7CS8qIGZyb250IGhhbGYgcmV2ZXJzZWQgKi8KCQkJCXRl
+c3RfaW50X3JldmVyc2UoZGlzdCwgTUJSRVZFUlNFLCB4LCBuLCBuLzIsIG4p
+OwkvKiBiYWNrIGhhbGYgcmV2ZXJzZWQgKi8KCQkJCXRlc3RfaW50X3NvcnQo
+ZGlzdCwgeCwgbik7IC8qIGFuIG9yZGVyZWQgY29weSAqLwoJCQkJdGVzdF9p
+bnRfbmVhcnNvcnQoZGlzdCwgeCwgbik7IC8qIGFuIGFsbW9zdCBvcmRlcmVk
+IGNvcHkgKi8KCQkJCXRlc3RfaW50X2RpdGhlcihkaXN0LCB4LCBuKTsgLyog
+YWRkIGklNSB0byB4W2ldICovCgkJCX0KCQl9Cgl9CgoJZm9yIChkaXN0ID0g
+RElTVF9GSVJTVDsgZGlzdCA8PSBESVNUX0xBU1Q7IGRpc3QrKykKCXsKCQlw
+cmludGYoImRpc3RyaWJ1dGlvbiAlczogbWF4IGNyYXRpbyAlLjJmLCBtaW4g
+JS4yZiwgYXZlcmFnZSAlLjJmIG92ZXIgJWQgdGVzdHNcbiIsCgkJCSAgIGRp
+c3RuYW1lW2Rpc3RdLAoJCQkgICBtYXhjcmF0aW9fZFtkaXN0XSwKCQkJICAg
+bWluY3JhdGlvX2RbZGlzdF0sCgkJCSAgIHN1bWNyYXRpb19kW2Rpc3RdIC8g
+bnRlc3RzX2RbZGlzdF0sCgkJCSAgIG50ZXN0c19kW2Rpc3RdKTsKCX0KCglz
+dW1jcmF0aW8gPSAwOwoJbnRlc3RzID0gMDsKCglmb3IgKG1ldGggPSBNRVRI
+X0ZJUlNUOyBtZXRoIDw9IE1FVEhfTEFTVDsgbWV0aCsrKQoJewoJCXByaW50
+ZigibWV0aG9kICVzOiBtYXggY3JhdGlvICUuMmYsIG1pbiAlLjJmLCBhdmVy
+YWdlICUuMmYgb3ZlciAlZCB0ZXN0c1xuIiwKCQkJICAgbWV0aG5hbWVbbWV0
+aF0sCgkJCSAgIG1heGNyYXRpb19tW21ldGhdLAoJCQkgICBtaW5jcmF0aW9f
+bVttZXRoXSwKCQkJICAgc3VtY3JhdGlvX21bbWV0aF0gLyBudGVzdHNfbVtt
+ZXRoXSwKCQkJICAgbnRlc3RzX21bbWV0aF0pOwoJCXN1bWNyYXRpbyArPSBz
+dW1jcmF0aW9fbVttZXRoXTsKCQludGVzdHMgKz0gbnRlc3RzX21bbWV0aF07
+Cgl9CgoJcHJpbnRmKCJPdmVyYWxsOiBhdmVyYWdlIGNyYXRpbyAlLjJmIG92
+ZXIgJWQgdGVzdHNcbiIsCgkJICAgc3VtY3JhdGlvIC8gbnRlc3RzLAoJCSAg
+IG50ZXN0cyk7CgoJcmV0dXJuIDA7Cn0K
+
+------- =_aaaaaaaaaa0
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: don't forget to increase your free space map settings
+
+------- =_aaaaaaaaaa0--
+
+From pgsql-hackers-owner+M81283@postgresql.org Tue Mar 21 15:18:07 2006
+Return-path: <pgsql-hackers-owner+M81283@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2LKI7M12970
+	for <pgman@candle.pha.pa.us>; Tue, 21 Mar 2006 15:18:07 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id AABA167BBF8;
+	Tue, 21 Mar 2006 16:18:04 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 3E6009DC827
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 21 Mar 2006 16:17:38 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 56406-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 21 Mar 2006 16:17:38 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from stark.xeocode.com (stark.xeocode.com [216.58.44.227])
+	by postgresql.org (Postfix) with ESMTP id 21DCF9DC809
+	for <pgsql-hackers@postgresql.org>; Tue, 21 Mar 2006 16:17:35 -0400 (AST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1FLnI7-0004xB-00; Tue, 21 Mar 2006 15:17:19 -0500
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: "Dann Corbit" <DCorbit@connx.com>,
+   "Jonah H. Harris" <jonah.harris@gmail.com>, pgsql-hackers@postgresql.org,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+Subject: Re: [HACKERS] qsort, once again
+References: <D425483C2C5C9F49B5B7A41F8944154757D6A1@postal.corporate.connx.com>
+	<18732.1142967137@sss.pgh.pa.us>
+In-Reply-To: <18732.1142967137@sss.pgh.pa.us>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 21 Mar 2006 15:17:19 -0500
+Message-ID: <87lkv3mu28.fsf@stark.xeocode.com>
+Lines: 13
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.4
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.128 required=5 tests=[AWL=0.128]
+X-Spam-Score: 0.128
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+Tom Lane <tgl@sss.pgh.pa.us> writes:
+
+> and here are the results using glibc's qsort, which of course isn't
+> quicksort at all but some kind of merge sort:
+> ...
+> Overall: average cratio 0.63 over 525 tests
+
+That looks better both on average and in the worst case. Are the time
+constants that much worse that the merge sort still takes longer?
+
+-- 
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M81285@postgresql.org Tue Mar 21 15:38:06 2006
+Return-path: <pgsql-hackers-owner+M81285@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2LKc6M14799
+	for <pgman@candle.pha.pa.us>; Tue, 21 Mar 2006 15:38:06 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 0917767BBF8;
+	Tue, 21 Mar 2006 16:38:03 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 069389DC843
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 21 Mar 2006 16:37:39 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 60037-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 21 Mar 2006 16:37:39 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id BDC039DC827
+	for <pgsql-hackers@postgresql.org>; Tue, 21 Mar 2006 16:37:36 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k2LKbZid019858;
+	Tue, 21 Mar 2006 15:37:35 -0500 (EST)
+To: Greg Stark <gsstark@mit.edu>
+cc: "Dann Corbit" <DCorbit@connx.com>,
+   "Jonah H. Harris" <jonah.harris@gmail.com>, pgsql-hackers@postgresql.org,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+Subject: Re: [HACKERS] qsort, once again 
+In-Reply-To: <87lkv3mu28.fsf@stark.xeocode.com> 
+References: <D425483C2C5C9F49B5B7A41F8944154757D6A1@postal.corporate.connx.com> <18732.1142967137@sss.pgh.pa.us> <87lkv3mu28.fsf@stark.xeocode.com>
+Comments: In-reply-to Greg Stark <gsstark@mit.edu>
+	message dated "21 Mar 2006 15:17:19 -0500"
+Date: Tue, 21 Mar 2006 15:37:35 -0500
+Message-ID: <19857.1142973455@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.113 required=5 tests=[AWL=0.113]
+X-Spam-Score: 0.113
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Greg Stark <gsstark@mit.edu> writes:
+> That looks better both on average and in the worst case. Are the time
+> constants that much worse that the merge sort still takes longer?
+
+Keep in mind that this is only counting the number of
+comparison-function calls; it's not accounting for any other effects.
+In particular, for a large sort operation quicksort might win because of
+its more cache-friendly memory access patterns.
+
+The whole question of our qsort vs the system library's qsort probably
+needs to be revisited, however, now that we've identified and fixed this
+particular performance issue.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M81289@postgresql.org Tue Mar 21 16:27:30 2006
+Return-path: <pgsql-hackers-owner+M81289@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2LLRTM20101
+	for <pgman@candle.pha.pa.us>; Tue, 21 Mar 2006 16:27:30 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id ACB4F67BBFD;
+	Tue, 21 Mar 2006 17:27:27 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 16E0E9DCA0F
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 21 Mar 2006 17:27:01 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 69903-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 21 Mar 2006 17:27:02 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from stark.xeocode.com (stark.xeocode.com [216.58.44.227])
+	by postgresql.org (Postfix) with ESMTP id 107429DC867
+	for <pgsql-hackers@postgresql.org>; Tue, 21 Mar 2006 17:26:58 -0400 (AST)
+Received: from localhost ([127.0.0.1] helo=stark.xeocode.com)
+	by stark.xeocode.com with smtp (Exim 3.36 #1 (Debian))
+	id 1FLoNU-0006M4-00; Tue, 21 Mar 2006 16:26:56 -0500
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Greg Stark <gsstark@mit.edu>, "Dann Corbit" <DCorbit@connx.com>,
+   "Jonah H. Harris" <jonah.harris@gmail.com>, pgsql-hackers@postgresql.org,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+Subject: Re: [HACKERS] qsort, once again
+References: <D425483C2C5C9F49B5B7A41F8944154757D6A1@postal.corporate.connx.com>
+	<18732.1142967137@sss.pgh.pa.us> <87lkv3mu28.fsf@stark.xeocode.com>
+	<19857.1142973455@sss.pgh.pa.us>
+In-Reply-To: <19857.1142973455@sss.pgh.pa.us>
+From: Greg Stark <gsstark@mit.edu>
+Organization: The Emacs Conspiracy; member since 1992
+Date: 21 Mar 2006 16:26:55 -0500
+Message-ID: <87acbjmqu8.fsf@stark.xeocode.com>
+Lines: 22
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.4
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.128 required=5 tests=[AWL=0.128]
+X-Spam-Score: 0.128
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane <tgl@sss.pgh.pa.us> writes:
+
+> Greg Stark <gsstark@mit.edu> writes:
+> > That looks better both on average and in the worst case. Are the time
+> > constants that much worse that the merge sort still takes longer?
+> 
+> Keep in mind that this is only counting the number of
+> comparison-function calls; it's not accounting for any other effects.
+> In particular, for a large sort operation quicksort might win because of
+> its more cache-friendly memory access patterns.
+
+My question explicitly recognized that possibility. I'm just a little
+skeptical since the comparison function in Postgres is often not some simple
+bit of tightly optimized C code, but rather a complex locale sensitive
+comparison function or even a bit of SQL expression to evaluate.
+
+Cache effectiveness is may be a minimal factor anyways when the comparison is
+executing more than a minimal amount of code. And one extra comparison is
+going to cost a lot more too.
+
+-- 
+greg
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: In versions below 8.0, the planner will ignore your desire to
+       choose an index scan if your joining column's datatypes do not
+       match
+
+From pgsql-hackers-owner+M81290@postgresql.org Tue Mar 21 16:48:00 2006
+Return-path: <pgsql-hackers-owner+M81290@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2LLlxM22215
+	for <pgman@candle.pha.pa.us>; Tue, 21 Mar 2006 16:47:59 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 28A9867BBFD;
+	Tue, 21 Mar 2006 17:47:57 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 1B4849DCC25
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 21 Mar 2006 17:47:27 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 72535-05
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 21 Mar 2006 17:47:28 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id D27239DCC21
+	for <pgsql-hackers@postgresql.org>; Tue, 21 Mar 2006 17:47:24 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k2LLlNpJ002194;
+	Tue, 21 Mar 2006 16:47:23 -0500 (EST)
+To: Greg Stark <gsstark@mit.edu>
+cc: "Dann Corbit" <DCorbit@connx.com>,
+   "Jonah H. Harris" <jonah.harris@gmail.com>, pgsql-hackers@postgresql.org,
+   "Jerry Sievers" <jerry@jerrysievers.com>
+Subject: Re: [HACKERS] qsort, once again 
+In-Reply-To: <87acbjmqu8.fsf@stark.xeocode.com> 
+References: <D425483C2C5C9F49B5B7A41F8944154757D6A1@postal.corporate.connx.com> <18732.1142967137@sss.pgh.pa.us> <87lkv3mu28.fsf@stark.xeocode.com> <19857.1142973455@sss.pgh.pa.us> <87acbjmqu8.fsf@stark.xeocode.com>
+Comments: In-reply-to Greg Stark <gsstark@mit.edu>
+	message dated "21 Mar 2006 16:26:55 -0500"
+Date: Tue, 21 Mar 2006 16:47:23 -0500
+Message-ID: <2193.1142977643@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.113 required=5 tests=[AWL=0.113]
+X-Spam-Score: 0.113
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Greg Stark <gsstark@mit.edu> writes:
+> My question explicitly recognized that possibility. I'm just a little
+> skeptical since the comparison function in Postgres is often not some simple
+> bit of tightly optimized C code, but rather a complex locale sensitive
+> comparison function or even a bit of SQL expression to evaluate.
+
+Yeah, I'd guess the same way, but OTOH at least a few people have
+reported that our qsort code is consistently faster than glibc's (and
+that was before this fix).  See this thread:
+http://archives.postgresql.org/pgsql-hackers/2005-12/msg00610.php
+
+Currently I believe that we only use our qsort on Solaris, not any other
+platform, so if you think that glibc's qsort is better then you've
+already got your wish.  It seems to need more investigation though.
+In particular, I'm thinking that the various adjustments we've made
+to the sort support code over the past month probably invalidate any
+previous testing of the point, and that we ought to go back and redo
+those comparisons.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: don't forget to increase your free space map settings
+
