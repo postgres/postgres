@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.18 2006/03/05 15:58:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.19 2006/04/03 13:44:33 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,6 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		}
 
 		/* Clean up index scans too */
-		ReleaseResources_gist();
 		ReleaseResources_hash();
 	}
 

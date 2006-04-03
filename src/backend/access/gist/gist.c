@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.131 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.132 2006/04/03 13:44:33 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -492,11 +492,6 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			state->needInsertComplete = false;
 
 		END_CRIT_SECTION();
-
-		if (!is_leaf)			/* small optimization: inform scan ablout
-								 * deleting... */
-			gistadjscans(state->r, GISTOP_DEL, state->stack->blkno,
-						 state->stack->childoffnum, PageGetLSN(state->stack->page), oldlsn);
 
 		if (state->ituplen > 1)
 		{						/* previous is_splitted==true */
