@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Apr 2 23:39:13 EDT 2006
+   Last updated: Sun Apr 2 23:40:12 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -506,8 +506,8 @@
    from the operating system. Large tables are stored as multiple 1 GB
    files so file system size limits are not important.
    
-   The maximum table size and maximum number of columns can be quadrupled
-   by increasing the default block size to 32k.
+   The maximum table size, row size, and maximum number of columns can be
+   quadrupled by increasing the default block size to 32k.
    
    One limitation is that indexes can not be created on columns longer
    than about 2,000 characters. Fortunately, such indexes are rarely
