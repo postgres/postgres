@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.14 2006/03/31 23:32:05 tgl Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.15 2006/04/03 16:45:50 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -173,12 +173,25 @@ decodePageUpdateRecord(PageUpdateRecord *decoded, XLogRecord *record)
 static void
 gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 {
+	gistxlogPageUpdate *xldata = (gistxlogPageUpdate *) XLogRecGetData(record);
 	PageUpdateRecord xlrec;
 	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 
-	/* nothing to do if whole page was backed up (and no info to do it with) */
+	/* we must fix incomplete_inserts list even if XLR_BKP_BLOCK_1 is set */
+	if (ItemPointerIsValid(&(xldata->key)))
+	{
+		if (incomplete_inserts != NIL)
+			forgetIncompleteInsert(xldata->node, xldata->key);
+
+		if (!isnewroot && xldata->blkno != GIST_ROOT_BLKNO)
+			pushIncompleteInsert(xldata->node, lsn, xldata->key,
+								 &(xldata->blkno), 1,
+								 NULL);
+	}
+
+	/* nothing else to do if page was backed up (and no info to do it with) */
 	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
@@ -237,17 +250,6 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
-
-	if (ItemPointerIsValid(&(xlrec.data->key)))
-	{
-		if (incomplete_inserts != NIL)
-			forgetIncompleteInsert(xlrec.data->node, xlrec.data->key);
-
-		if (!isnewroot && xlrec.data->blkno != GIST_ROOT_BLKNO)
-			pushIncompleteInsert(xlrec.data->node, lsn, xlrec.data->key,
-								 &(xlrec.data->blkno), 1,
-								 NULL);
-	}
 }
 
 static void
