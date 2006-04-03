@@ -440,22 +440,27 @@ Datum
 g_intbig_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	ArrayType  *query = (ArrayType *) PG_GETARG_POINTER(1);
+	ArrayType  *query = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_POINTER(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 
-	if ( ISALLTRUE(DatumGetPointer(entry->key)) )
+	if ( ISALLTRUE(DatumGetPointer(entry->key)) ) {
+		PG_FREE_IF_COPY(query, 1);
 		PG_RETURN_BOOL(true);
+	}
 	
 	if (strategy == BooleanSearchStrategy) {
-		PG_RETURN_BOOL(signconsistent((QUERYTYPE *) query,
+		retval = signconsistent((QUERYTYPE *) query,
 					   GETSIGN(DatumGetPointer(entry->key)),
-									  false));
+									  false);
+		PG_FREE_IF_COPY(query, 1);
+		PG_RETURN_BOOL( retval );
 	}
 
-	/* XXX what about toasted input? */
-	if (ARRISVOID(query))
-		return FALSE;
+	if (ARRISVOID(query)) {
+		PG_FREE_IF_COPY(query, 1);
+		PG_RETURN_BOOL( FALSE );
+	}
 
 	switch (strategy)
 	{
@@ -520,6 +525,8 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 		default:
 			retval = FALSE;
 	}
+
+	PG_FREE_IF_COPY(query, 1);
 	PG_RETURN_BOOL(retval);
 }
 
