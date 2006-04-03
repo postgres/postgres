@@ -510,12 +510,14 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 									  GETSIGN(DatumGetPointer(entry->key)),
 									  false);
 		PG_FREE_IF_COPY( query, 1 );
-		return retval;
+		PG_RETURN_BOOL(retval);
 	}
 
 	CHECKARRVALID(query);
-	if (ARRISVOID(query))
-		return FALSE;
+	if (ARRISVOID(query)) {
+		PG_FREE_IF_COPY( query, 1 );
+		PG_RETURN_BOOL(FALSE);
+	}
 
 	switch (strategy)
 	{

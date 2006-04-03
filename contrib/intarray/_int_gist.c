@@ -47,8 +47,10 @@ g_int_consistent(PG_FUNCTION_ARGS)
 
 	/* sort query for fast search, key is already sorted */
 	CHECKARRVALID(query);
-	if (ARRISVOID(query))
+	if (ARRISVOID(query)) {
+		pfree( query );
 		PG_RETURN_BOOL(false);
+	}
 	PREPAREARR(query);
 
 	switch (strategy)
