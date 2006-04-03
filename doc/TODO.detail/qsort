@@ -2456,3 +2456,171 @@ those comparisons.
 ---------------------------(end of broadcast)---------------------------
 TIP 5: don't forget to increase your free space map settings
 
+From pgsql-hackers-owner+M81282@postgresql.org Tue Mar 21 14:09:22 2006
+Return-path: <pgsql-hackers-owner+M81282@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k2LK9KM11902
+	for <pgman@candle.pha.pa.us>; Tue, 21 Mar 2006 15:09:21 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 6B1CF67BBF6;
+	Tue, 21 Mar 2006 16:09:18 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 0B2E19DCA0F;
+	Tue, 21 Mar 2006 16:08:50 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 54998-02; Tue, 21 Mar 2006 16:08:50 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by postgresql.org (Postfix) with ESMTP id C39619DC9E6;
+	Tue, 21 Mar 2006 16:08:45 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id k2LK8flq019571;
+	Tue, 21 Mar 2006 15:08:41 -0500 (EST)
+To: Gary Doades <gpd@gpdnet.co.uk>
+cc: pgsql-performance@postgresql.org, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] qsort again (was Re: [PERFORM] Strange Create Index behaviour) 
+In-Reply-To: <20781.1140046109@sss.pgh.pa.us> 
+References: <43F38867.6010701@gpdnet.co.uk> <19510.1140036968@sss.pgh.pa.us> <19779.1140038874@sss.pgh.pa.us> <43F39E53.1020009@gpdnet.co.uk> <20781.1140046109@sss.pgh.pa.us>
+Comments: In-reply-to Tom Lane <tgl@sss.pgh.pa.us>
+	message dated "Wed, 15 Feb 2006 18:28:29 -0500"
+Date: Tue, 21 Mar 2006 15:08:40 -0500
+Message-ID: <19570.1142971720@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.113 required=5 tests=[AWL=0.113]
+X-Spam-Score: 0.113
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Last month I wrote:
+> It seems clear that our qsort.c is doing a pretty awful job of picking
+> qsort pivots, while glibc is mostly managing not to make that mistake.
+
+I re-ran Gary's test script using the just-committed improvements to
+qsort.c, and got pretty nice numbers (attached --- compare to
+http://archives.postgresql.org/pgsql-performance/2006-02/msg00227.php).
+So it was wrong to blame his problems on the pivot selection --- the
+culprit was that ill-considered switch to insertion sort.
+
+			regards, tom lane
+
+100 runtimes for latest port/qsort.c, sorted ascending:
+
+Time: 335.481 ms
+Time: 335.606 ms
+Time: 335.932 ms
+Time: 336.039 ms
+Time: 336.182 ms
+Time: 336.231 ms
+Time: 336.711 ms
+Time: 336.721 ms
+Time: 336.971 ms
+Time: 336.982 ms
+Time: 337.036 ms
+Time: 337.190 ms
+Time: 337.223 ms
+Time: 337.312 ms
+Time: 337.350 ms
+Time: 337.423 ms
+Time: 337.523 ms
+Time: 337.528 ms
+Time: 337.565 ms
+Time: 337.566 ms
+Time: 337.732 ms
+Time: 337.741 ms
+Time: 337.744 ms
+Time: 337.786 ms
+Time: 337.790 ms
+Time: 337.898 ms
+Time: 337.905 ms
+Time: 337.952 ms
+Time: 337.976 ms
+Time: 338.017 ms
+Time: 338.123 ms
+Time: 338.206 ms
+Time: 338.306 ms
+Time: 338.514 ms
+Time: 338.594 ms
+Time: 338.597 ms
+Time: 338.683 ms
+Time: 338.705 ms
+Time: 338.729 ms
+Time: 338.748 ms
+Time: 338.816 ms
+Time: 338.958 ms
+Time: 338.963 ms
+Time: 338.997 ms
+Time: 339.074 ms
+Time: 339.106 ms
+Time: 339.134 ms
+Time: 339.159 ms
+Time: 339.226 ms
+Time: 339.260 ms
+Time: 339.289 ms
+Time: 339.341 ms
+Time: 339.500 ms
+Time: 339.585 ms
+Time: 339.595 ms
+Time: 339.774 ms
+Time: 339.897 ms
+Time: 339.927 ms
+Time: 340.064 ms
+Time: 340.133 ms
+Time: 340.172 ms
+Time: 340.219 ms
+Time: 340.261 ms
+Time: 340.323 ms
+Time: 340.708 ms
+Time: 340.761 ms
+Time: 340.785 ms
+Time: 340.900 ms
+Time: 340.986 ms
+Time: 341.339 ms
+Time: 341.564 ms
+Time: 341.707 ms
+Time: 342.155 ms
+Time: 342.213 ms
+Time: 342.452 ms
+Time: 342.515 ms
+Time: 342.540 ms
+Time: 342.928 ms
+Time: 343.548 ms
+Time: 343.663 ms
+Time: 344.192 ms
+Time: 344.952 ms
+Time: 345.152 ms
+Time: 345.174 ms
+Time: 345.444 ms
+Time: 346.848 ms
+Time: 348.144 ms
+Time: 348.842 ms
+Time: 354.550 ms
+Time: 356.877 ms
+Time: 357.475 ms
+Time: 358.487 ms
+Time: 364.178 ms
+Time: 370.730 ms
+Time: 493.098 ms
+Time: 648.009 ms
+Time: 849.345 ms
+Time: 860.616 ms
+Time: 936.800 ms
+Time: 1727.085 ms
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faq
+
