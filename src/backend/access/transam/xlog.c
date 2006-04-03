@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.231 2006/03/31 23:32:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.232 2006/04/03 23:35:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,10 +113,10 @@
 
 /*
  * Limitation of buffer-alignment for direct IO depends on OS and filesystem,
- * but BLCKSZ is assumed to be enough for it.
+ * but XLOG_BLCKSZ is assumed to be enough for it.
  */
 #ifdef O_DIRECT
-#define ALIGNOF_XLOG_BUFFER		BLCKSZ
+#define ALIGNOF_XLOG_BUFFER		XLOG_BLCKSZ
 #else
 #define ALIGNOF_XLOG_BUFFER		ALIGNOF_BUFFER
 #endif
@@ -374,7 +374,7 @@ typedef struct XLogCtlData
 	 * and xlblocks values depends on WALInsertLock and WALWriteLock.
 	 */
 	char	   *pages;			/* buffers for unwritten XLOG pages */
-	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
+	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + XLOG_BLCKSZ */
 	Size		XLogCacheByte;	/* # bytes in xlog buffers */
 	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
 	TimeLineID	ThisTimeLineID;
@@ -397,7 +397,7 @@ static ControlFileData *ControlFile = NULL;
 
 /* Free space remaining in the current xlog page buffer */
 #define INSERT_FREESPACE(Insert)  \
-	(BLCKSZ - ((Insert)->currpos - (char *) (Insert)->currpage))
+	(XLOG_BLCKSZ - ((Insert)->currpos - (char *) (Insert)->currpage))
 
 /* Construct XLogRecPtr value for current insertion point */
 #define INSERT_RECPTR(recptr,Insert,curridx)  \
@@ -441,7 +441,7 @@ static uint32 readId = 0;
 static uint32 readSeg = 0;
 static uint32 readOff = 0;
 
-/* Buffer for currently read page (BLCKSZ bytes) */
+/* Buffer for currently read page (XLOG_BLCKSZ bytes) */
 static char *readBuf = NULL;
 
 /* Buffer for current ReadRecord result (expandable) */
@@ -706,7 +706,7 @@ begin:;
 	 * If cache is half filled then try to acquire write lock and do
 	 * XLogWrite. Ignore any fractional blocks in performing this check.
 	 */
-	LogwrtRqst.Write.xrecoff -= LogwrtRqst.Write.xrecoff % BLCKSZ;
+	LogwrtRqst.Write.xrecoff -= LogwrtRqst.Write.xrecoff % XLOG_BLCKSZ;
 	if (LogwrtRqst.Write.xlogid != LogwrtResult.Write.xlogid ||
 		(LogwrtRqst.Write.xrecoff >= LogwrtResult.Write.xrecoff +
 		 XLogCtl->XLogCacheByte / 2))
@@ -1228,12 +1228,12 @@ AdvanceXLInsertBuffer(void)
 	{
 		/* crossing a logid boundary */
 		NewPageEndPtr.xlogid += 1;
-		NewPageEndPtr.xrecoff = BLCKSZ;
+		NewPageEndPtr.xrecoff = XLOG_BLCKSZ;
 	}
 	else
-		NewPageEndPtr.xrecoff += BLCKSZ;
+		NewPageEndPtr.xrecoff += XLOG_BLCKSZ;
 	XLogCtl->xlblocks[nextidx] = NewPageEndPtr;
-	NewPage = (XLogPageHeader) (XLogCtl->pages + nextidx * (Size) BLCKSZ);
+	NewPage = (XLogPageHeader) (XLogCtl->pages + nextidx * (Size) XLOG_BLCKSZ);
 
 	Insert->curridx = nextidx;
 	Insert->currpage = NewPage;
@@ -1244,7 +1244,7 @@ AdvanceXLInsertBuffer(void)
 	 * Be sure to re-zero the buffer so that bytes beyond what we've written
 	 * will look like zeroes and not valid XLOG records...
 	 */
-	MemSet((char *) NewPage, 0, BLCKSZ);
+	MemSet((char *) NewPage, 0, XLOG_BLCKSZ);
 
 	/*
 	 * Fill the new page's header
@@ -1254,7 +1254,7 @@ AdvanceXLInsertBuffer(void)
 	/* NewPage->xlp_info = 0; */	/* done by memset */
 	NewPage   ->xlp_tli = ThisTimeLineID;
 	NewPage   ->xlp_pageaddr.xlogid = NewPageEndPtr.xlogid;
-	NewPage   ->xlp_pageaddr.xrecoff = NewPageEndPtr.xrecoff - BLCKSZ;
+	NewPage   ->xlp_pageaddr.xrecoff = NewPageEndPtr.xrecoff - XLOG_BLCKSZ;
 
 	/*
 	 * If first page of an XLOG segment file, make it a long header.
@@ -1428,7 +1428,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 		{
 			/* first of group */
 			startidx = curridx;
-			startoffset = (LogwrtResult.Write.xrecoff - BLCKSZ) % XLogSegSize;
+			startoffset = (LogwrtResult.Write.xrecoff - XLOG_BLCKSZ) % XLogSegSize;
 		}
 		npages++;
 
@@ -1439,7 +1439,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 		 * segment.
 		 */
 		finishing_seg = !ispartialpage &&
-			(startoffset + npages * BLCKSZ) >= XLogSegSize;
+			(startoffset + npages * XLOG_BLCKSZ) >= XLogSegSize;
 
 		if (!XLByteLT(LogwrtResult.Write, WriteRqst.Write) ||
 			curridx == XLogCtl->XLogCacheBlck ||
@@ -1461,8 +1461,8 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 			}
 
 			/* OK to write the page(s) */
-			from = XLogCtl->pages + startidx * (Size) BLCKSZ;
-			nbytes = npages * (Size) BLCKSZ;
+			from = XLogCtl->pages + startidx * (Size) XLOG_BLCKSZ;
+			nbytes = npages * (Size) XLOG_BLCKSZ;
 			errno = 0;
 			if (write(openLogFile, from, nbytes) != nbytes)
 			{
@@ -1720,7 +1720,7 @@ XLogFileInit(uint32 log, uint32 seg,
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
-	char		zbuffer[BLCKSZ];
+	char		zbuffer[XLOG_BLCKSZ];
 	uint32		installed_log;
 	uint32		installed_seg;
 	int			max_advance;
@@ -1858,7 +1858,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
-	char		buffer[BLCKSZ];
+	char		buffer[XLOG_BLCKSZ];
 	int			srcfd;
 	int			fd;
 	int			nbytes;
@@ -2637,7 +2637,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 		 * (2) a static char array isn't guaranteed to have any particular
 		 * alignment, whereas malloc() will provide MAXALIGN'd storage.
 		 */
-		readBuf = (char *) malloc(BLCKSZ);
+		readBuf = (char *) malloc(XLOG_BLCKSZ);
 		Assert(readBuf != NULL);
 	}
 
@@ -2651,8 +2651,8 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 			goto got_record;
 		}
 		/* align old recptr to next page */
-		if (tmpRecPtr.xrecoff % BLCKSZ != 0)
-			tmpRecPtr.xrecoff += (BLCKSZ - tmpRecPtr.xrecoff % BLCKSZ);
+		if (tmpRecPtr.xrecoff % XLOG_BLCKSZ != 0)
+			tmpRecPtr.xrecoff += (XLOG_BLCKSZ - tmpRecPtr.xrecoff % XLOG_BLCKSZ);
 		if (tmpRecPtr.xrecoff >= XLogFileSize)
 		{
 			(tmpRecPtr.xlogid)++;
@@ -2696,7 +2696,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 		readOff = (uint32) (-1);	/* force read to occur below */
 	}
 
-	targetPageOff = ((RecPtr->xrecoff % XLogSegSize) / BLCKSZ) * BLCKSZ;
+	targetPageOff = ((RecPtr->xrecoff % XLogSegSize) / XLOG_BLCKSZ) * XLOG_BLCKSZ;
 	if (readOff != targetPageOff)
 	{
 		readOff = targetPageOff;
@@ -2708,7 +2708,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 							readId, readSeg, readOff)));
 			goto next_record_is_invalid;
 		}
-		if (read(readFile, readBuf, BLCKSZ) != BLCKSZ)
+		if (read(readFile, readBuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 		{
 			ereport(emode,
 					(errcode_for_file_access(),
@@ -2720,7 +2720,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 			goto next_record_is_invalid;
 	}
 	pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) readBuf);
-	targetRecOff = RecPtr->xrecoff % BLCKSZ;
+	targetRecOff = RecPtr->xrecoff % XLOG_BLCKSZ;
 	if (targetRecOff == 0)
 	{
 		/*
@@ -2746,7 +2746,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 						RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
 	}
-	record = (XLogRecord *) ((char *) readBuf + RecPtr->xrecoff % BLCKSZ);
+	record = (XLogRecord *) ((char *) readBuf + RecPtr->xrecoff % XLOG_BLCKSZ);
 
 got_record:;
 
@@ -2811,17 +2811,18 @@ got_record:;
 
 	/*
 	 * Allocate or enlarge readRecordBuf as needed.  To avoid useless small
-	 * increases, round its size to a multiple of BLCKSZ, and make sure it's
-	 * at least 4*BLCKSZ to start with.  (That is enough for all "normal"
-	 * records, but very large commit or abort records might need more space.)
+	 * increases, round its size to a multiple of XLOG_BLCKSZ, and make sure
+	 * it's at least 4*Max(BLCKSZ, XLOG_BLCKSZ) to start with.  (That is
+	 * enough for all "normal" records, but very large commit or abort records
+	 * might need more space.)
 	 */
 	total_len = record->xl_tot_len;
 	if (total_len > readRecordBufSize)
 	{
 		uint32		newSize = total_len;
 
-		newSize += BLCKSZ - (newSize % BLCKSZ);
-		newSize = Max(newSize, 4 * BLCKSZ);
+		newSize += XLOG_BLCKSZ - (newSize % XLOG_BLCKSZ);
+		newSize = Max(newSize, 4 * Max(BLCKSZ, XLOG_BLCKSZ));
 		if (readRecordBuf)
 			free(readRecordBuf);
 		readRecordBuf = (char *) malloc(newSize);
@@ -2839,7 +2840,7 @@ got_record:;
 
 	buffer = readRecordBuf;
 	nextRecord = NULL;
-	len = BLCKSZ - RecPtr->xrecoff % BLCKSZ;
+	len = XLOG_BLCKSZ - RecPtr->xrecoff % XLOG_BLCKSZ;
 	if (total_len > len)
 	{
 		/* Need to reassemble record */
@@ -2851,7 +2852,7 @@ got_record:;
 		buffer += len;
 		for (;;)
 		{
-			readOff += BLCKSZ;
+			readOff += XLOG_BLCKSZ;
 			if (readOff >= XLogSegSize)
 			{
 				close(readFile);
@@ -2862,7 +2863,7 @@ got_record:;
 					goto next_record_is_invalid;
 				readOff = 0;
 			}
-			if (read(readFile, readBuf, BLCKSZ) != BLCKSZ)
+			if (read(readFile, readBuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 			{
 				ereport(emode,
 						(errcode_for_file_access(),
@@ -2890,7 +2891,7 @@ got_record:;
 								readId, readSeg, readOff)));
 				goto next_record_is_invalid;
 			}
-			len = BLCKSZ - pageHeaderSize - SizeOfXLogContRecord;
+			len = XLOG_BLCKSZ - pageHeaderSize - SizeOfXLogContRecord;
 			if (contrecord->xl_rem_len > len)
 			{
 				memcpy(buffer, (char *) contrecord + SizeOfXLogContRecord, len);
@@ -2905,7 +2906,7 @@ got_record:;
 		if (!RecordIsValid(record, *RecPtr, emode))
 			goto next_record_is_invalid;
 		pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) readBuf);
-		if (BLCKSZ - SizeOfXLogRecord >= pageHeaderSize +
+		if (XLOG_BLCKSZ - SizeOfXLogRecord >= pageHeaderSize +
 			MAXALIGN(SizeOfXLogContRecord + contrecord->xl_rem_len))
 		{
 			nextRecord = (XLogRecord *) ((char *) contrecord +
@@ -2922,7 +2923,7 @@ got_record:;
 	/* Record does not cross a page boundary */
 	if (!RecordIsValid(record, *RecPtr, emode))
 		goto next_record_is_invalid;
-	if (BLCKSZ - SizeOfXLogRecord >= RecPtr->xrecoff % BLCKSZ +
+	if (XLOG_BLCKSZ - SizeOfXLogRecord >= RecPtr->xrecoff % XLOG_BLCKSZ +
 		MAXALIGN(total_len))
 		nextRecord = (XLogRecord *) ((char *) record + MAXALIGN(total_len));
 	EndRecPtr.xlogid = RecPtr->xlogid;
@@ -3404,6 +3405,7 @@ WriteControlFile(void)
 
 	ControlFile->blcksz = BLCKSZ;
 	ControlFile->relseg_size = RELSEG_SIZE;
+	ControlFile->xlog_blcksz = XLOG_BLCKSZ;
 	ControlFile->xlog_seg_size = XLOG_SEG_SIZE;
 
 	ControlFile->nameDataLen = NAMEDATALEN;
@@ -3572,6 +3574,13 @@ ReadControlFile(void)
 				  " but the server was compiled with RELSEG_SIZE %d.",
 				  ControlFile->relseg_size, RELSEG_SIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
+	if (ControlFile->xlog_blcksz != XLOG_BLCKSZ)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+			 errdetail("The database cluster was initialized with XLOG_BLCKSZ %d,"
+					   " but the server was compiled with XLOG_BLCKSZ %d.",
+					   ControlFile->xlog_blcksz, XLOG_BLCKSZ),
+				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->xlog_seg_size != XLOG_SEG_SIZE)
 		ereport(FATAL,
 				(errmsg("database files are incompatible with server"),
@@ -3696,7 +3705,7 @@ XLOGShmemSize(void)
 	/* extra alignment padding for XLOG I/O buffers */
 	size = add_size(size, ALIGNOF_XLOG_BUFFER);
 	/* and the buffers themselves */
-	size = add_size(size, mul_size(BLCKSZ, XLOGbuffers));
+	size = add_size(size, mul_size(XLOG_BLCKSZ, XLOGbuffers));
 
 	/*
 	 * Note: we don't count ControlFileData, it comes out of the "slop factor"
@@ -3743,13 +3752,13 @@ XLOGShmemInit(void)
 	 */
 	allocptr = (char *) TYPEALIGN(ALIGNOF_XLOG_BUFFER, allocptr);
 	XLogCtl->pages = allocptr;
-	memset(XLogCtl->pages, 0, (Size) BLCKSZ * XLOGbuffers);
+	memset(XLogCtl->pages, 0, (Size) XLOG_BLCKSZ * XLOGbuffers);
 
 	/*
 	 * Do basic initialization of XLogCtl shared data. (StartupXLOG will fill
 	 * in additional info.)
 	 */
-	XLogCtl->XLogCacheByte = (Size) BLCKSZ *XLOGbuffers;
+	XLogCtl->XLogCacheByte = (Size) XLOG_BLCKSZ * XLOGbuffers;
 
 	XLogCtl->XLogCacheBlck = XLOGbuffers - 1;
 	XLogCtl->Insert.currpage = (XLogPageHeader) (XLogCtl->pages);
@@ -3801,9 +3810,9 @@ BootStrapXLOG(void)
 	ThisTimeLineID = 1;
 
 	/* page buffer must be aligned suitably for O_DIRECT */
-	buffer = (char *) palloc(BLCKSZ + ALIGNOF_XLOG_BUFFER);
+	buffer = (char *) palloc(XLOG_BLCKSZ + ALIGNOF_XLOG_BUFFER);
 	page = (XLogPageHeader) TYPEALIGN(ALIGNOF_XLOG_BUFFER, buffer);
-	memset(page, 0, BLCKSZ);
+	memset(page, 0, XLOG_BLCKSZ);
 
 	/* Set up information for the initial checkpoint record */
 	checkPoint.redo.xlogid = 0;
@@ -3855,7 +3864,7 @@ BootStrapXLOG(void)
 
 	/* Write the first page with the initial record */
 	errno = 0;
-	if (write(openLogFile, page, BLCKSZ) != BLCKSZ)
+	if (write(openLogFile, page, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
@@ -4712,17 +4721,17 @@ StartupXLOG(void)
 	Insert->PrevRecord = LastRec;
 	XLogCtl->xlblocks[0].xlogid = openLogId;
 	XLogCtl->xlblocks[0].xrecoff =
-		((EndOfLog.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
+		((EndOfLog.xrecoff - 1) / XLOG_BLCKSZ + 1) * XLOG_BLCKSZ;
 
 	/*
 	 * Tricky point here: readBuf contains the *last* block that the LastRec
 	 * record spans, not the one it starts in.	The last block is indeed the
 	 * one we want to use.
 	 */
-	Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - BLCKSZ) % XLogSegSize);
-	memcpy((char *) Insert->currpage, readBuf, BLCKSZ);
+	Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - XLOG_BLCKSZ) % XLogSegSize);
+	memcpy((char *) Insert->currpage, readBuf, XLOG_BLCKSZ);
 	Insert->currpos = (char *) Insert->currpage +
-		(EndOfLog.xrecoff + BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
+		(EndOfLog.xrecoff + XLOG_BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
 
 	LogwrtResult.Write = LogwrtResult.Flush = EndOfLog;
 

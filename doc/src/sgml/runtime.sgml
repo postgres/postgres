@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.365 2006/03/10 19:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.366 2006/04/03 23:35:02 tgl Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1061,7 +1061,7 @@ set semsys:seminfo_semmsl=32
 
       <row>
        <entry><xref linkend="guc-wal-buffers"></>
-       <entry>8200 (assuming 8K <symbol>BLCKSZ</>)</entry>
+       <entry>8200 (assuming 8K <symbol>XLOG_BLCKSZ</>)</entry>
       </row>
 
       <row>

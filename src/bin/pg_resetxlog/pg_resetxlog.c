@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.40 2006/03/05 15:58:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.41 2006/04/03 23:35:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,6 +457,7 @@ GuessControlValues(void)
 	ControlFile.floatFormat = FLOATFORMAT_VALUE;
 	ControlFile.blcksz = BLCKSZ;
 	ControlFile.relseg_size = RELSEG_SIZE;
+	ControlFile.xlog_blcksz = XLOG_BLCKSZ;
 	ControlFile.xlog_seg_size = XLOG_SEG_SIZE;
 	ControlFile.nameDataLen = NAMEDATALEN;
 	ControlFile.indexMaxKeys = INDEX_MAX_KEYS;
@@ -526,6 +527,8 @@ PrintControlValues(bool guessed)
 	/* we don't print floatFormat since can't say much useful about it */
 	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
+	printf(_("WAL block size:                       %u\n"), ControlFile.xlog_blcksz);
+	printf(_("Bytes per WAL segment:                %u\n"), ControlFile.xlog_seg_size);
 	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
 	printf(_("Maximum columns in an index:          %u\n"), ControlFile.indexMaxKeys);
 	printf(_("Date/time type storage:               %s\n"),
@@ -705,9 +708,9 @@ WriteEmptyXLOG(void)
 	int			nbytes;
 
 	/* Use malloc() to ensure buffer is MAXALIGNED */
-	buffer = (char *) malloc(BLCKSZ);
+	buffer = (char *) malloc(XLOG_BLCKSZ);
 	page = (XLogPageHeader) buffer;
-	memset(buffer, 0, BLCKSZ);
+	memset(buffer, 0, XLOG_BLCKSZ);
 
 	/* Set up the XLOG page header */
 	page->xlp_magic = XLOG_PAGE_MAGIC;
@@ -756,7 +759,7 @@ WriteEmptyXLOG(void)
 	}
 
 	errno = 0;
-	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+	if (write(fd, buffer, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
@@ -767,11 +770,11 @@ WriteEmptyXLOG(void)
 	}
 
 	/* Fill the rest of the file with zeroes */
-	memset(buffer, 0, BLCKSZ);
-	for (nbytes = BLCKSZ; nbytes < XLogSegSize; nbytes += BLCKSZ)
+	memset(buffer, 0, XLOG_BLCKSZ);
+	for (nbytes = XLOG_BLCKSZ; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
-		if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+		if (write(fd, buffer, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 		{
 			if (errno == 0)
 				errno = ENOSPC;

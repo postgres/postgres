@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.27 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.28 2006/04/03 23:35:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	812
+#define PG_CONTROL_VERSION	820
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -126,9 +126,10 @@ typedef struct ControlFileData
 	 * This data is used to make sure that configuration of this database is
 	 * compatible with the backend executable.
 	 */
-	uint32		blcksz;			/* block size for this DB */
+	uint32		blcksz;			/* data block size for this DB */
 	uint32		relseg_size;	/* blocks per segment of large relation */
 
+	uint32		xlog_blcksz;	/* block size within WAL files */
 	uint32		xlog_seg_size;	/* size of each WAL segment */
 
 	uint32		nameDataLen;	/* catalog name field width */

@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.27 2005/10/15 02:49:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.28 2006/04/03 23:35:04 tgl Exp $
  */
 #include "postgres.h"
 
@@ -172,6 +172,7 @@ main(int argc, char *argv[])
 	/* we don't print floatFormat since can't say much useful about it */
 	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
+	printf(_("WAL block size:                       %u\n"), ControlFile.xlog_blcksz);
 	printf(_("Bytes per WAL segment:                %u\n"), ControlFile.xlog_seg_size);
 	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
 	printf(_("Maximum columns in an index:          %u\n"), ControlFile.indexMaxKeys);
