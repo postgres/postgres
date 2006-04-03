@@ -32,20 +32,23 @@ Datum
 g_int_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	ArrayType  *query = (ArrayType *) PG_GETARG_POINTER(1);
+	ArrayType  *query = (ArrayType *) PG_DETOAST_DATUM_COPY(PG_GETARG_POINTER(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 
-	if (strategy == BooleanSearchStrategy)
-		PG_RETURN_BOOL(execconsistent((QUERYTYPE *) query,
+	if (strategy == BooleanSearchStrategy) {
+		retval = execconsistent((QUERYTYPE *) query,
 								   (ArrayType *) DatumGetPointer(entry->key),
-					  ISLEAFKEY((ArrayType *) DatumGetPointer(entry->key))));
+					  ISLEAFKEY((ArrayType *) DatumGetPointer(entry->key)));
+		pfree( query );
+		PG_RETURN_BOOL(retval);
+	}
 
-	/* XXX are we sure it's safe to scribble on the query object here? */
-	/* XXX what about toasted input? */
 	/* sort query for fast search, key is already sorted */
-	if (ARRISVOID(query))
+	if (ARRISVOID(query)) {
+		pfree( query );
 		PG_RETURN_BOOL(false);
+	}
 	PREPAREARR(query);
 
 	switch (strategy)
@@ -81,6 +84,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 		default:
 			retval = FALSE;
 	}
+	pfree( query );
 	PG_RETURN_BOOL(retval);
 }
 
