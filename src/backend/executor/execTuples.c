@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.92 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.93 2006/04/04 19:35:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -928,6 +928,7 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 /*
  * BuildTupleFromCStrings - build a HeapTuple given user data in C string form.
  * values is an array of C strings, one for each attribute of the return tuple.
+ * A NULL string pointer indicates we want to create a NULL field.
  */
 HeapTuple
 BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
@@ -937,35 +938,25 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	Datum	   *dvalues;
 	char	   *nulls;
 	int			i;
-	Oid			attioparam;
-	int32		atttypmod;
 	HeapTuple	tuple;
 
 	dvalues = (Datum *) palloc(natts * sizeof(Datum));
 	nulls = (char *) palloc(natts * sizeof(char));
 
-	/* Call the "in" function for each non-null, non-dropped attribute */
+	/* Call the "in" function for each non-dropped attribute */
 	for (i = 0; i < natts; i++)
 	{
 		if (!tupdesc->attrs[i]->attisdropped)
 		{
 			/* Non-dropped attributes */
+			dvalues[i] = InputFunctionCall(&attinmeta->attinfuncs[i],
+										   values[i],
+										   attinmeta->attioparams[i],
+										   attinmeta->atttypmods[i]);
 			if (values[i] != NULL)
-			{
-				attioparam = attinmeta->attioparams[i];
-				atttypmod = attinmeta->atttypmods[i];
-
-				dvalues[i] = FunctionCall3(&attinmeta->attinfuncs[i],
-										   CStringGetDatum(values[i]),
-										   ObjectIdGetDatum(attioparam),
-										   Int32GetDatum(atttypmod));
 				nulls[i] = ' ';
-			}
 			else
-			{
-				dvalues[i] = (Datum) 0;
 				nulls[i] = 'n';
-			}
 		}
 		else
 		{

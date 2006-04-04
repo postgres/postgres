@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.94 2006/03/05 15:58:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.95 2006/04/04 19:35:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,8 +331,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			/* Text output */
 			char	   *outputstr;
 
-			outputstr = DatumGetCString(FunctionCall1(&thisState->finfo,
-													  attr));
+			outputstr = OutputFunctionCall(&thisState->finfo, attr);
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
@@ -341,9 +340,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			/* Binary output */
 			bytea	   *outputbytes;
 
-			outputbytes = DatumGetByteaP(FunctionCall1(&thisState->finfo,
-													   attr));
-			/* We assume the result will not have been toasted */
+			outputbytes = SendFunctionCall(&thisState->finfo, attr);
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
@@ -429,8 +426,7 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 		else
 			attr = origattr;
 
-		outputstr = DatumGetCString(FunctionCall1(&thisState->finfo,
-												  attr));
+		outputstr = OutputFunctionCall(&thisState->finfo, attr);
 		pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
 		pfree(outputstr);
 
@@ -542,8 +538,7 @@ debugtup(TupleTableSlot *slot, DestReceiver *self)
 		else
 			attr = origattr;
 
-		value = DatumGetCString(OidFunctionCall1(typoutput,
-												 attr));
+		value = OidOutputFunctionCall(typoutput, attr);
 
 		printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 
@@ -632,8 +627,7 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 		else
 			attr = origattr;
 
-		outputbytes = DatumGetByteaP(FunctionCall1(&thisState->finfo,
-												   attr));
+		outputbytes = SendFunctionCall(&thisState->finfo, attr);
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),

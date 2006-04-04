@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.145 2006/03/05 15:58:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.146 2006/04/04 19:35:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2580,8 +2580,7 @@ array_to_text(PG_FUNCTION_ARGS)
 		{
 			itemvalue = fetch_att(p, typbyval, typlen);
 
-			value = DatumGetCString(FunctionCall1(&my_extra->proc,
-												  itemvalue));
+			value = OutputFunctionCall(&my_extra->proc, itemvalue);
 
 			if (printed)
 				appendStringInfo(&buf, "%s%s", fldsep, value);

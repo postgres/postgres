@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.217 2006/03/16 00:31:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.218 2006/04/04 19:35:36 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -3921,8 +3921,7 @@ get_const_expr(Const *constval, deparse_context *context)
 	getTypeOutputInfo(constval->consttype,
 					  &typoutput, &typIsVarlena);
 
-	extval = DatumGetCString(OidFunctionCall1(typoutput,
-											  constval->constvalue));
+	extval = OidOutputFunctionCall(typoutput, constval->constvalue);
 
 	switch (constval->consttype)
 	{

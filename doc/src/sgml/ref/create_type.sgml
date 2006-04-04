@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.61 2006/02/28 22:37:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.62 2006/04/04 19:35:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -97,8 +97,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   <para>
    The <replaceable class="parameter">input_function</replaceable>
    converts the type's external textual representation to the internal
-   representation  used by the
-   operators and functions defined for the type.
+   representation used by the operators and functions defined for the type.
    <replaceable class="parameter">output_function</replaceable>
    performs the reverse transformation.  The input function may be
    declared as taking one argument of type <type>cstring</type>,
@@ -110,9 +109,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    and the third is the <literal>typmod</> of the destination column, if known
    (-1 will be passed if not).
    The input function must return a value of the data type itself.
+   Usually, an input function should be declared STRICT; if it is not,
+   it will be called with a NULL first parameter when reading a NULL
+   input value.  The function must still return NULL in this case, unless
+   it raises an error.
+   (This case is mainly meant to support domain input functions, which
+   may need to reject NULL inputs.)
    The output function must be
    declared as taking one argument of the new data type.
    The output function must return type <type>cstring</type>.
+   Output functions are not invoked for NULL values.
   </para>
 
   <para>
@@ -133,6 +139,12 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    holding the received byte string; the optional arguments are the
    same as for the text input function.
    The receive function must return a value of the data type itself.
+   Usually, a receive function should be declared STRICT; if it is not,
+   it will be called with a NULL first parameter when reading a NULL
+   input value.  The function must still return NULL in this case, unless
+   it raises an error.
+   (This case is mainly meant to support domain receive functions, which
+   may need to reject NULL inputs.)
    Similarly, the optional
    <replaceable class="parameter">send_function</replaceable> converts
    from the internal representation to the external binary representation.
@@ -140,6 +152,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    output.  The send function must be
    declared as taking one argument of the new data type.
    The send function must return type <type>bytea</type>.
+   Send functions are not invoked for NULL values.
   </para>
 
   <para>

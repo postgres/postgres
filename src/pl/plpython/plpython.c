@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.76 2006/03/14 22:48:24 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.77 2006/04/04 19:35:37 tgl Exp $
  *
  *********************************************************************
  */
@@ -482,17 +482,24 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 
 			modattrs[i] = attn;
 
-			if (plval != Py_None && !tupdesc->attrs[atti]->attisdropped)
+			if (tupdesc->attrs[atti]->attisdropped)
+			{
+				modvalues[i] = (Datum) 0;
+				modnulls[i] = 'n';
+			}
+			else if (plval != Py_None)
 			{
 				plstr = PyObject_Str(plval);
 				if (!plstr)
-					PLy_elog(ERROR, "function \"%s\" could not modify tuple", proc->proname);
+					PLy_elog(ERROR, "function \"%s\" could not modify tuple",
+							 proc->proname);
 				src = PyString_AsString(plstr);
 
-				modvalues[i] = FunctionCall3(&proc->result.out.r.atts[atti].typfunc,
-											 CStringGetDatum(src),
-				  ObjectIdGetDatum(proc->result.out.r.atts[atti].typioparam),
-							 Int32GetDatum(tupdesc->attrs[atti]->atttypmod));
+				modvalues[i] =
+					InputFunctionCall(&proc->result.out.r.atts[atti].typfunc,
+									  src,
+									  proc->result.out.r.atts[atti].typioparam,
+									  tupdesc->attrs[atti]->atttypmod);
 				modnulls[i] = ' ';
 
 				Py_DECREF(plstr);
@@ -500,7 +507,11 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 			}
 			else
 			{
-				modvalues[i] = PointerGetDatum(NULL);
+				modvalues[i] =
+					InputFunctionCall(&proc->result.out.r.atts[atti].typfunc,
+									  NULL,
+									  proc->result.out.r.atts[atti].typioparam,
+									  tupdesc->attrs[atti]->atttypmod);
 				modnulls[i] = 'n';
 			}
 
@@ -751,7 +762,10 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 		else if (plrv == Py_None)
 		{
 			fcinfo->isnull = true;
-			rv = PointerGetDatum(NULL);
+			rv = InputFunctionCall(&proc->result.out.d.typfunc,
+								   NULL,
+								   proc->result.out.d.typioparam,
+								   -1);
 		}
 		else
 		{
@@ -760,10 +774,10 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			if (!plrv_so)
 				PLy_elog(ERROR, "function \"%s\" could not create return value", proc->proname);
 			plrv_sc = PyString_AsString(plrv_so);
-			rv = FunctionCall3(&proc->result.out.d.typfunc,
-							   PointerGetDatum(plrv_sc),
-							   ObjectIdGetDatum(proc->result.out.d.typioparam),
-							   Int32GetDatum(-1));
+			rv = InputFunctionCall(&proc->result.out.d.typfunc,
+								   plrv_sc,
+								   proc->result.out.d.typioparam,
+								   -1);
 		}
 	}
 	PG_CATCH();
@@ -861,13 +875,9 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				else
 				{
 					char	   *ct;
-					Datum		dt;
 
-					dt = FunctionCall3(&(proc->args[i].in.d.typfunc),
-									   fcinfo->arg[i],
-							 ObjectIdGetDatum(proc->args[i].in.d.typioparam),
-									   Int32GetDatum(-1));
-					ct = DatumGetCString(dt);
+					ct = OutputFunctionCall(&(proc->args[i].in.d.typfunc),
+											fcinfo->arg[i]);
 					arg = (proc->args[i].in.d.func) (ct);
 					pfree(ct);
 				}
@@ -1454,8 +1464,7 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 		{
 			char	   *key,
 					   *vsrc;
-			Datum		vattr,
-						vdat;
+			Datum		vattr;
 			bool		is_null;
 			PyObject   *value;
 
@@ -1469,11 +1478,8 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 				PyDict_SetItemString(dict, key, Py_None);
 			else
 			{
-				vdat = FunctionCall3(&info->in.r.atts[i].typfunc,
-									 vattr,
-							 ObjectIdGetDatum(info->in.r.atts[i].typioparam),
-								   Int32GetDatum(desc->attrs[i]->atttypmod));
-				vsrc = DatumGetCString(vdat);
+				vsrc = OutputFunctionCall(&info->in.r.atts[i].typfunc,
+										  vattr);
 
 				/*
 				 * no exceptions allowed
@@ -2035,10 +2041,10 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 					char *sv = PyString_AsString(so);
 
 					plan->values[i] =
-						FunctionCall3(&(plan->args[i].out.d.typfunc),
-									  CStringGetDatum(sv),
-								ObjectIdGetDatum(plan->args[i].out.d.typioparam),
-									  Int32GetDatum(-1));
+						InputFunctionCall(&(plan->args[i].out.d.typfunc),
+										  sv,
+										  plan->args[i].out.d.typioparam,
+										  -1);
 				}
 				PG_CATCH();
 				{
@@ -2053,7 +2059,11 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 			else
 			{
 				Py_DECREF(elem);
-				plan->values[i] = PointerGetDatum(NULL);
+				plan->values[i] =
+					InputFunctionCall(&(plan->args[i].out.d.typfunc),
+									  NULL,
+									  plan->args[i].out.d.typioparam,
+									  -1);
 				nulls[i] = 'n';
 			}
 		}

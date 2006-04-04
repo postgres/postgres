@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.42 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.43 2006/04/04 19:35:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,8 @@
 
 /* We don't want to include primnodes.h here, so make a stub reference */
 typedef struct Node *fmNodePtr;
+/* Likewise, avoid including stringinfo.h here */
+typedef struct StringInfoData *fmStringInfo;
 
 
 /*
@@ -393,6 +395,20 @@ extern Datum OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg3, Datum arg4, Datum arg5,
 				 Datum arg6, Datum arg7, Datum arg8,
 				 Datum arg9);
+
+/* Special cases for convenient invocation of datatype I/O functions. */
+extern Datum InputFunctionCall(FmgrInfo *flinfo, char *str,
+							   Oid typioparam, int32 typmod);
+extern Datum OidInputFunctionCall(Oid functionId, char *str,
+								  Oid typioparam, int32 typmod);
+extern char *OutputFunctionCall(FmgrInfo *flinfo, Datum val);
+extern char *OidOutputFunctionCall(Oid functionId, Datum val);
+extern Datum ReceiveFunctionCall(FmgrInfo *flinfo, fmStringInfo buf,
+								 Oid typioparam, int32 typmod);
+extern Datum OidReceiveFunctionCall(Oid functionId, fmStringInfo buf,
+									Oid typioparam, int32 typmod);
+extern bytea *SendFunctionCall(FmgrInfo *flinfo, Datum val);
+extern bytea *OidSendFunctionCall(Oid functionId, Datum val);
 
 
 /*

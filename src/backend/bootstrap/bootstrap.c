@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.213 2006/03/07 01:03:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.214 2006/04/04 19:35:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -826,11 +826,11 @@ InsertOneValue(char *value, int i)
 		if (ap == NULL)
 			elog(ERROR, "could not find atttypid %u in Typ list", typoid);
 
-		/* XXX this should match getTypeIOParam() */
-		if (ap->am_typ.typtype == 'c')
-			typioparam = typoid;
-		else
+		/* XXX this logic should match getTypeIOParam() */
+		if (OidIsValid(ap->am_typ.typelem))
 			typioparam = ap->am_typ.typelem;
+		else
+			typioparam = typoid;
 
 		typinput = ap->am_typ.typinput;
 		typoutput = ap->am_typ.typoutput;
@@ -850,19 +850,18 @@ InsertOneValue(char *value, int i)
 			elog(ERROR, "type oid %u not found", typoid);
 		elog(DEBUG5, "Typ == NULL, typeindex = %u", typeindex);
 
-		/* XXX there are no composite types in TypInfo */
-		typioparam = TypInfo[typeindex].elem;
+		/* XXX this logic should match getTypeIOParam() */
+		if (OidIsValid(TypInfo[typeindex].elem))
+			typioparam = TypInfo[typeindex].elem;
+		else
+			typioparam = typoid;
 
 		typinput = TypInfo[typeindex].inproc;
 		typoutput = TypInfo[typeindex].outproc;
 	}
 
-	values[i] = OidFunctionCall3(typinput,
-								 CStringGetDatum(value),
-								 ObjectIdGetDatum(typioparam),
-								 Int32GetDatum(-1));
-	prt = DatumGetCString(OidFunctionCall1(typoutput,
-										   values[i]));
+	values[i] = OidInputFunctionCall(typinput, value, typioparam, -1);
+	prt = OidOutputFunctionCall(typoutput, values[i]);
 	elog(DEBUG4, "inserted -> %s", prt);
 	pfree(prt);
 }

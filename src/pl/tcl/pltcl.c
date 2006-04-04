@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.101 2006/03/14 22:48:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.102 2006/04/04 19:35:37 tgl Exp $
  *
  **********************************************************************/
 
@@ -524,8 +524,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 				{
 					char	   *tmp;
 
-					tmp = DatumGetCString(FunctionCall1(&prodesc->arg_out_func[i],
-														fcinfo->arg[i]));
+					tmp = OutputFunctionCall(&prodesc->arg_out_func[i],
+											 fcinfo->arg[i]);
 					UTF_BEGIN;
 					Tcl_DStringAppendElement(&tcl_cmd, UTF_E2U(tmp));
 					UTF_END;
@@ -578,14 +578,17 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "SPI_finish() failed");
 
 	if (fcinfo->isnull)
-		retval = (Datum) 0;
+		retval = InputFunctionCall(&prodesc->result_in_func,
+								   NULL,
+								   prodesc->result_typioparam,
+								   -1);
 	else
 	{
 		UTF_BEGIN;
-		retval = FunctionCall3(&prodesc->result_in_func,
-							   PointerGetDatum(UTF_U2E(interp->result)),
-							   ObjectIdGetDatum(prodesc->result_typioparam),
-							   Int32GetDatum(-1));
+		retval = InputFunctionCall(&prodesc->result_in_func,
+								   UTF_U2E(interp->result),
+								   prodesc->result_typioparam,
+								   -1);
 		UTF_END;
 	}
 
@@ -805,7 +808,6 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	/* Use a TRY to ensure ret_values will get freed */
 	PG_TRY();
 	{
-
 		if (ret_numvals % 2 != 0)
 			elog(ERROR, "invalid return list from trigger - must have even # of elements");
 
@@ -871,11 +873,10 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			modnulls[attnum - 1] = ' ';
 			fmgr_info(typinput, &finfo);
 			UTF_BEGIN;
-			modvalues[attnum - 1] =
-				FunctionCall3(&finfo,
-							  CStringGetDatum(UTF_U2E(ret_value)),
-							  ObjectIdGetDatum(typioparam),
-					   Int32GetDatum(tupdesc->attrs[attnum - 1]->atttypmod));
+			modvalues[attnum - 1] = InputFunctionCall(&finfo,
+													  (char *) UTF_U2E(ret_value),
+													  typioparam,
+													  tupdesc->attrs[attnum - 1]->atttypmod);
 			UTF_END;
 		}
 
@@ -2041,17 +2042,18 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		{
 			if (nulls && nulls[j] == 'n')
 			{
-				/* don't try to convert the input for a null */
-				argvalues[j] = (Datum) 0;
+				argvalues[j] = InputFunctionCall(&qdesc->arginfuncs[j],
+												 NULL,
+												 qdesc->argtypioparams[j],
+												 -1);
 			}
 			else
 			{
 				UTF_BEGIN;
-				argvalues[j] =
-					FunctionCall3(&qdesc->arginfuncs[j],
-								  CStringGetDatum(UTF_U2E(callargs[j])),
-								  ObjectIdGetDatum(qdesc->argtypioparams[j]),
-								  Int32GetDatum(-1));
+				argvalues[j] = InputFunctionCall(&qdesc->arginfuncs[j],
+												 (char *) UTF_U2E(callargs[j]),
+												 qdesc->argtypioparams[j],
+												 -1);
 				UTF_END;
 			}
 		}
@@ -2185,8 +2187,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 		 ************************************************************/
 		if (!isnull && OidIsValid(typoutput))
 		{
-			outputstr = DatumGetCString(OidFunctionCall1(typoutput,
-														 attr));
+			outputstr = OidOutputFunctionCall(typoutput, attr);
 			UTF_BEGIN;
 			Tcl_SetVar2(interp, *arrptr, *nameptr, UTF_E2U(outputstr), 0);
 			UTF_END;
@@ -2255,8 +2256,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		 ************************************************************/
 		if (!isnull && OidIsValid(typoutput))
 		{
-			outputstr = DatumGetCString(OidFunctionCall1(typoutput,
-														 attr));
+			outputstr = OidOutputFunctionCall(typoutput, attr);
 			Tcl_DStringAppendElement(retval, attname);
 			UTF_BEGIN;
 			Tcl_DStringAppendElement(retval, UTF_E2U(outputstr));

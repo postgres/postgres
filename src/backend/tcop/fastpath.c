@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.85 2006/03/05 15:58:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.86 2006/04/04 19:35:35 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -154,8 +154,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 			char	   *outputstr;
 
 			getTypeOutputInfo(rettype, &typoutput, &typisvarlena);
-			outputstr = DatumGetCString(OidFunctionCall1(typoutput,
-														 retval));
+			outputstr = OidOutputFunctionCall(typoutput, retval);
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
@@ -166,9 +165,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 			bytea	   *outputbytes;
 
 			getTypeBinaryOutputInfo(rettype, &typsend, &typisvarlena);
-			outputbytes = DatumGetByteaP(OidFunctionCall1(typsend,
-														  retval));
-			/* We assume the result will not have been toasted */
+			outputbytes = OidSendFunctionCall(typsend, retval);
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
@@ -433,23 +430,25 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 		if (argsize == -1)
 		{
 			fcinfo->argnull[i] = true;
-			continue;
 		}
-		fcinfo->argnull[i] = false;
-		if (argsize < 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				  errmsg("invalid argument size %d in function call message",
-						 argsize)));
+		else
+		{
+			fcinfo->argnull[i] = false;
+			if (argsize < 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("invalid argument size %d in function call message",
+								argsize)));
 
-		/* Reset abuf to empty, and insert raw data into it */
-		abuf.len = 0;
-		abuf.data[0] = '\0';
-		abuf.cursor = 0;
+			/* Reset abuf to empty, and insert raw data into it */
+			abuf.len = 0;
+			abuf.data[0] = '\0';
+			abuf.cursor = 0;
 
-		appendBinaryStringInfo(&abuf,
-							   pq_getmsgbytes(msgBuf, argsize),
-							   argsize);
+			appendBinaryStringInfo(&abuf,
+								   pq_getmsgbytes(msgBuf, argsize),
+								   argsize);
+		}
 
 		if (numAFormats > 1)
 			aformat = aformats[i];
@@ -472,31 +471,36 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 			 * have to do encoding conversion before calling the typinput
 			 * routine, though.
 			 */
-			pstring = pg_client_to_server(abuf.data, argsize);
-			fcinfo->arg[i] =
-				OidFunctionCall3(typinput,
-								 CStringGetDatum(pstring),
-								 ObjectIdGetDatum(typioparam),
-								 Int32GetDatum(-1));
+			if (argsize == -1)
+				pstring = NULL;
+			else
+				pstring = pg_client_to_server(abuf.data, argsize);
+
+			fcinfo->arg[i] = OidInputFunctionCall(typinput, pstring,
+												  typioparam, -1);
 			/* Free result of encoding conversion, if any */
-			if (pstring != abuf.data)
+			if (pstring && pstring != abuf.data)
 				pfree(pstring);
 		}
 		else if (aformat == 1)
 		{
 			Oid			typreceive;
 			Oid			typioparam;
+			StringInfo	bufptr;
 
 			/* Call the argument type's binary input converter */
 			getTypeBinaryInputInfo(fip->argtypes[i], &typreceive, &typioparam);
 
-			fcinfo->arg[i] = OidFunctionCall3(typreceive,
-											  PointerGetDatum(&abuf),
-											  ObjectIdGetDatum(typioparam),
-											  Int32GetDatum(-1));
+			if (argsize == -1)
+				bufptr = NULL;
+			else
+				bufptr = &abuf;
+
+			fcinfo->arg[i] = OidReceiveFunctionCall(typreceive, bufptr,
+													typioparam, -1);
 
 			/* Trouble if it didn't eat the whole buffer */
-			if (abuf.cursor != abuf.len)
+			if (argsize != -1 && abuf.cursor != abuf.len)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				errmsg("incorrect binary data format in function argument %d",
@@ -552,18 +556,22 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 		Oid			typreceive;
 		Oid			typioparam;
 
+		getTypeBinaryInputInfo(fip->argtypes[i], &typreceive, &typioparam);
+
 		argsize = pq_getmsgint(msgBuf, 4);
 		if (argsize == -1)
 		{
 			fcinfo->argnull[i] = true;
+			fcinfo->arg[i] = OidReceiveFunctionCall(typreceive, NULL,
+													typioparam, -1);
 			continue;
 		}
 		fcinfo->argnull[i] = false;
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-				  errmsg("invalid argument size %d in function call message",
-						 argsize)));
+					 errmsg("invalid argument size %d in function call message",
+							argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		abuf.len = 0;
@@ -574,13 +582,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 							   pq_getmsgbytes(msgBuf, argsize),
 							   argsize);
 
-		/* Call the argument type's binary input converter */
-		getTypeBinaryInputInfo(fip->argtypes[i], &typreceive, &typioparam);
-
-		fcinfo->arg[i] = OidFunctionCall3(typreceive,
-										  PointerGetDatum(&abuf),
-										  ObjectIdGetDatum(typioparam),
-										  Int32GetDatum(-1));
+		fcinfo->arg[i] = OidReceiveFunctionCall(typreceive, &abuf,
+												typioparam, -1);
 
 		/* Trouble if it didn't eat the whole buffer */
 		if (abuf.cursor != abuf.len)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.135 2006/03/05 15:58:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.136 2006/04/04 19:35:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,26 +166,21 @@ coerce_type(ParseState *pstate, Node *node,
 		newcon->constbyval = typeByVal(targetType);
 		newcon->constisnull = con->constisnull;
 
+		/*
+		 * We pass typmod -1 to the input routine, primarily because
+		 * existing input routines follow implicit-coercion semantics for
+		 * length checks, which is not always what we want here. Any
+		 * length constraint will be applied later by our caller.
+		 *
+		 * We assume here that UNKNOWN's internal representation is the
+		 * same as CSTRING.
+		 */
 		if (!con->constisnull)
-		{
-			/*
-			 * We assume here that UNKNOWN's internal representation is the
-			 * same as CSTRING
-			 */
-			char	   *val = DatumGetCString(con->constvalue);
-
-			/*
-			 * We pass typmod -1 to the input routine, primarily because
-			 * existing input routines follow implicit-coercion semantics for
-			 * length checks, which is not always what we want here. Any
-			 * length constraint will be applied later by our caller.
-			 *
-			 * Note that we call stringTypeDatum using the domain's pg_type
-			 * row, if it's a domain.  This works because the domain row has
-			 * the same typinput and typelem as the base type --- ugly...
-			 */
-			newcon->constvalue = stringTypeDatum(targetType, val, -1);
-		}
+			newcon->constvalue = stringTypeDatum(targetType,
+											DatumGetCString(con->constvalue),
+												 -1);
+		else
+			newcon->constvalue = stringTypeDatum(targetType, NULL, -1);
 
 		result = (Node *) newcon;
 

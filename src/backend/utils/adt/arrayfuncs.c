@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.127 2006/03/05 15:58:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.128 2006/04/04 19:35:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -787,14 +787,14 @@ ReadArrayStr(char *arrayStr,
 			pg_strcasecmp(itemstart, "NULL") == 0)
 		{
 			/* it's a NULL item */
+			values[i] = InputFunctionCall(inputproc, NULL,
+										  typioparam, typmod);
 			nulls[i] = true;
 		}
 		else
 		{
-			values[i] = FunctionCall3(inputproc,
-									  CStringGetDatum(itemstart),
-									  ObjectIdGetDatum(typioparam),
-									  Int32GetDatum(typmod));
+			values[i] = InputFunctionCall(inputproc, itemstart,
+										  typioparam, typmod);
 			nulls[i] = false;
 		}
 	}
@@ -1018,8 +1018,7 @@ array_out(PG_FUNCTION_ARGS)
 			Datum		itemvalue;
 
 			itemvalue = fetch_att(p, typbyval, typlen);
-			values[i] = DatumGetCString(FunctionCall1(&my_extra->proc,
-													  itemvalue));
+			values[i] = OutputFunctionCall(&my_extra->proc, itemvalue);
 			p = att_addlength(p, typlen, PointerGetDatum(p));
 			p = (char *) att_align(p, typalign);
 
@@ -1357,6 +1356,8 @@ ReadArrayBinary(StringInfo buf,
 		if (itemlen == -1)
 		{
 			/* -1 length means NULL */
+			values[i] = ReceiveFunctionCall(receiveproc, NULL,
+											typioparam, typmod);
 			nulls[i] = true;
 			continue;
 		}
@@ -1378,10 +1379,8 @@ ReadArrayBinary(StringInfo buf,
 		buf->data[buf->cursor] = '\0';
 
 		/* Now call the element's receiveproc */
-		values[i] = FunctionCall3(receiveproc,
-								  PointerGetDatum(&elem_buf),
-								  ObjectIdGetDatum(typioparam),
-								  Int32GetDatum(typmod));
+		values[i] = ReceiveFunctionCall(receiveproc, &elem_buf,
+										typioparam, typmod);
 		nulls[i] = false;
 
 		/* Trouble if it didn't eat the whole buffer */
@@ -1515,10 +1514,7 @@ array_send(PG_FUNCTION_ARGS)
 			bytea	   *outputbytes;
 
 			itemvalue = fetch_att(p, typbyval, typlen);
-
-			outputbytes = DatumGetByteaP(FunctionCall1(&my_extra->proc,
-													   itemvalue));
-			/* We assume the result will not have been toasted */
+			outputbytes = SendFunctionCall(&my_extra->proc, itemvalue);
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.99 2006/03/05 15:58:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.100 2006/04/04 19:35:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1679,6 +1679,172 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 		elog(ERROR, "function %u returned NULL", flinfo.fn_oid);
 
 	return result;
+}
+
+
+/*
+ * Special cases for convenient invocation of datatype I/O functions.
+ */
+
+/*
+ * Call a previously-looked-up datatype input function.
+ *
+ * "str" may be NULL to indicate we are reading a NULL.  In this case
+ * the caller should assume the result is NULL, but we'll call the input
+ * function anyway if it's not strict.  So this is almost but not quite
+ * the same as FunctionCall3.
+ */
+Datum
+InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
+{
+	FunctionCallInfoData fcinfo;
+	Datum		result;
+
+	if (str == NULL && flinfo->fn_strict)
+		return (Datum) 0;		/* just return null result */
+
+	InitFunctionCallInfoData(fcinfo, flinfo, 3, NULL, NULL);
+
+	fcinfo.arg[0] = CStringGetDatum(str);
+	fcinfo.arg[1] = ObjectIdGetDatum(typioparam);
+	fcinfo.arg[2] = Int32GetDatum(typmod);
+	fcinfo.argnull[0] = (str == NULL);
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+
+	result = FunctionCallInvoke(&fcinfo);
+
+	/* Should get null result if and only if str is NULL */
+	if (str == NULL)
+	{
+		if (!fcinfo.isnull)
+			elog(ERROR, "input function %u returned non-NULL",
+				 fcinfo.flinfo->fn_oid);
+	}
+	else
+	{
+		if (fcinfo.isnull)
+			elog(ERROR, "input function %u returned NULL",
+				 fcinfo.flinfo->fn_oid);
+	}
+
+	return result;
+}
+
+/*
+ * Call a previously-looked-up datatype output function.
+ *
+ * Do not call this on NULL datums.
+ *
+ * This is mere window dressing for FunctionCall1, but its use is recommended
+ * anyway so that code invoking output functions can be identified easily.
+ */
+char *
+OutputFunctionCall(FmgrInfo *flinfo, Datum val)
+{
+	return DatumGetCString(FunctionCall1(flinfo, val));
+}
+
+/*
+ * Call a previously-looked-up datatype binary-input function.
+ *
+ * "buf" may be NULL to indicate we are reading a NULL.  In this case
+ * the caller should assume the result is NULL, but we'll call the receive
+ * function anyway if it's not strict.  So this is almost but not quite
+ * the same as FunctionCall3.
+ */
+Datum
+ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
+					Oid typioparam, int32 typmod)
+{
+	FunctionCallInfoData fcinfo;
+	Datum		result;
+
+	if (buf == NULL && flinfo->fn_strict)
+		return (Datum) 0;		/* just return null result */
+
+	InitFunctionCallInfoData(fcinfo, flinfo, 3, NULL, NULL);
+
+	fcinfo.arg[0] = PointerGetDatum(buf);
+	fcinfo.arg[1] = ObjectIdGetDatum(typioparam);
+	fcinfo.arg[2] = Int32GetDatum(typmod);
+	fcinfo.argnull[0] = (buf == NULL);
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+
+	result = FunctionCallInvoke(&fcinfo);
+
+	/* Should get null result if and only if buf is NULL */
+	if (buf == NULL)
+	{
+		if (!fcinfo.isnull)
+			elog(ERROR, "receive function %u returned non-NULL",
+				 fcinfo.flinfo->fn_oid);
+	}
+	else
+	{
+		if (fcinfo.isnull)
+			elog(ERROR, "receive function %u returned NULL",
+				 fcinfo.flinfo->fn_oid);
+	}
+
+	return result;
+}
+
+/*
+ * Call a previously-looked-up datatype binary-output function.
+ *
+ * Do not call this on NULL datums.
+ *
+ * This is little more than window dressing for FunctionCall1, but its use is
+ * recommended anyway so that code invoking output functions can be identified
+ * easily.  Note however that it does guarantee a non-toasted result.
+ */
+bytea *
+SendFunctionCall(FmgrInfo *flinfo, Datum val)
+{
+	return DatumGetByteaP(FunctionCall1(flinfo, val));
+}
+
+/*
+ * As above, for I/O functions identified by OID.  These are only to be used
+ * in seldom-executed code paths.  They are not only slow but leak memory.
+ */
+Datum
+OidInputFunctionCall(Oid functionId, char *str, Oid typioparam, int32 typmod)
+{
+	FmgrInfo	flinfo;
+
+	fmgr_info(functionId, &flinfo);
+	return InputFunctionCall(&flinfo, str, typioparam, typmod);
+}
+
+char *
+OidOutputFunctionCall(Oid functionId, Datum val)
+{
+	FmgrInfo	flinfo;
+
+	fmgr_info(functionId, &flinfo);
+	return OutputFunctionCall(&flinfo, val);
+}
+
+Datum
+OidReceiveFunctionCall(Oid functionId, StringInfo buf,
+					   Oid typioparam, int32 typmod)
+{
+	FmgrInfo	flinfo;
+
+	fmgr_info(functionId, &flinfo);
+	return ReceiveFunctionCall(&flinfo, buf, typioparam, typmod);
+}
+
+bytea *
+OidSendFunctionCall(Oid functionId, Datum val)
+{
+	FmgrInfo	flinfo;
+
+	fmgr_info(functionId, &flinfo);
+	return SendFunctionCall(&flinfo, val);
 }
 
 

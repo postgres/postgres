@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.261 2006/03/23 00:19:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.262 2006/04/04 19:35:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1382,8 +1382,8 @@ CopyTo(CopyState cstate)
 			{
 				if (!cstate->binary)
 				{
-					string = DatumGetCString(FunctionCall1(&out_functions[attnum - 1],
-														   value));
+					string = OutputFunctionCall(&out_functions[attnum - 1],
+												value);
 					if (cstate->csv_mode)
 						CopyAttributeOutCSV(cstate, string,
 											force_quote[attnum - 1],
@@ -1395,9 +1395,8 @@ CopyTo(CopyState cstate)
 				{
 					bytea	   *outputbytes;
 
-					outputbytes = DatumGetByteaP(FunctionCall1(&out_functions[attnum - 1],
-															   value));
-					/* We assume the result will not have been toasted */
+					outputbytes = SendFunctionCall(&out_functions[attnum - 1],
+												   value);
 					CopySendInt32(cstate, VARSIZE(outputbytes) - VARHDRSZ);
 					CopySendData(cstate, VARDATA(outputbytes),
 								 VARSIZE(outputbytes) - VARHDRSZ);
@@ -1458,6 +1457,13 @@ copy_in_error_callback(void *arg)
 					   cstate->cur_relname, cstate->cur_lineno,
 					   cstate->cur_attname, attval);
 			pfree(attval);
+		}
+		else if (cstate->cur_attname)
+		{
+			/* error is relevant to a particular column, value is NULL */
+			errcontext("COPY %s, line %d, column %s: NULL input",
+					   cstate->cur_relname, cstate->cur_lineno,
+					   cstate->cur_attname);
 		}
 		else
 		{
@@ -1854,19 +1860,16 @@ CopyFrom(CopyState cstate)
 					string = cstate->null_print;
 				}
 
-				/* If we read an SQL NULL, no need to do anything */
+				cstate->cur_attname = NameStr(attr[m]->attname);
+				cstate->cur_attval = string;
+				values[m] = InputFunctionCall(&in_functions[m],
+											  string,
+											  typioparams[m],
+											  attr[m]->atttypmod);
 				if (string != NULL)
-				{
-					cstate->cur_attname = NameStr(attr[m]->attname);
-					cstate->cur_attval = string;
-					values[m] = FunctionCall3(&in_functions[m],
-											  CStringGetDatum(string),
-											ObjectIdGetDatum(typioparams[m]),
-										  Int32GetDatum(attr[m]->atttypmod));
 					nulls[m] = ' ';
-					cstate->cur_attname = NULL;
-					cstate->cur_attval = NULL;
-				}
+				cstate->cur_attname = NULL;
+				cstate->cur_attval = NULL;
 			}
 
 			Assert(fieldno == nfields);
@@ -2900,7 +2903,7 @@ CopyReadBinaryAttribute(CopyState cstate,
 	if (fld_size == -1)
 	{
 		*isnull = true;
-		return (Datum) 0;
+		return ReceiveFunctionCall(flinfo, NULL, typioparam, typmod);
 	}
 	if (fld_size < 0)
 		ereport(ERROR,
@@ -2924,10 +2927,8 @@ CopyReadBinaryAttribute(CopyState cstate,
 	cstate->attribute_buf.data[fld_size] = '\0';
 
 	/* Call the column type's binary input converter */
-	result = FunctionCall3(flinfo,
-						   PointerGetDatum(&cstate->attribute_buf),
-						   ObjectIdGetDatum(typioparam),
-						   Int32GetDatum(typmod));
+	result = ReceiveFunctionCall(flinfo, &cstate->attribute_buf,
+								 typioparam, typmod);
 
 	/* Trouble if it didn't eat the whole buffer */
 	if (cstate->attribute_buf.cursor != cstate->attribute_buf.len)

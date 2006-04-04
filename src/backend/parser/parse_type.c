@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.79 2006/03/14 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.80 2006/04/04 19:35:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,7 +326,8 @@ typeTypeRelid(Type typ)
 
 /*
  * Given a type structure and a string, returns the internal representation
- * of that string
+ * of that string.  The "string" can be NULL to perform conversion of a NULL
+ * (which might result in failure, if the input function rejects NULLs).
  */
 Datum
 stringTypeDatum(Type tp, char *string, int32 atttypmod)
@@ -336,10 +337,8 @@ stringTypeDatum(Type tp, char *string, int32 atttypmod)
 
 	typinput = ((Form_pg_type) GETSTRUCT(tp))->typinput;
 	typioparam = getTypeIOParam(tp);
-	return OidFunctionCall3(typinput,
-							CStringGetDatum(string),
-							ObjectIdGetDatum(typioparam),
-							Int32GetDatum(atttypmod));
+	return OidInputFunctionCall(typinput, string,
+								typioparam, atttypmod);
 }
 
 /* given a typeid, return the type's typrelid (associated relation, if any) */

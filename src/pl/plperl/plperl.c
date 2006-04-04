@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.107 2006/03/19 22:22:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.108 2006/04/04 19:35:37 tgl Exp $
  *
  **********************************************************************/
 
@@ -585,31 +585,35 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 	while ((val = hv_iternextsv(hvNew, &key, &klen)))
 	{
 		int			attn = SPI_fnumber(tupdesc, key);
+		Oid			typinput;
+		Oid			typioparam;
+		int32		atttypmod;
+		FmgrInfo	finfo;
 
 		if (attn <= 0 || tupdesc->attrs[attn - 1]->attisdropped)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
 							key)));
+		/* XXX would be better to cache these lookups */
+		getTypeInputInfo(tupdesc->attrs[attn - 1]->atttypid,
+						 &typinput, &typioparam);
+		fmgr_info(typinput, &finfo);
+		atttypmod = tupdesc->attrs[attn - 1]->atttypmod;
 		if (SvOK(val) && SvTYPE(val) != SVt_NULL)
 		{
-			Oid			typinput;
-			Oid			typioparam;
-			FmgrInfo	finfo;
-
-			/* XXX would be better to cache these lookups */
-			getTypeInputInfo(tupdesc->attrs[attn - 1]->atttypid,
-							 &typinput, &typioparam);
-			fmgr_info(typinput, &finfo);
-			modvalues[slotsused] = FunctionCall3(&finfo,
-										   CStringGetDatum(SvPV(val, PL_na)),
-												 ObjectIdGetDatum(typioparam),
-						 Int32GetDatum(tupdesc->attrs[attn - 1]->atttypmod));
+			modvalues[slotsused] = InputFunctionCall(&finfo,
+													 SvPV(val, PL_na),
+													 typioparam,
+													 atttypmod);
 			modnulls[slotsused] = ' ';
 		}
 		else
 		{
-			modvalues[slotsused] = (Datum) 0;
+			modvalues[slotsused] = InputFunctionCall(&finfo,
+													 NULL,
+													 typioparam,
+													 atttypmod);
 			modnulls[slotsused] = 'n';
 		}
 		modattrs[slotsused] = attn;
@@ -897,8 +901,8 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		{
 			char	   *tmp;
 
-			tmp = DatumGetCString(FunctionCall1(&(desc->arg_out_func[i]),
-												fcinfo->arg[i]));
+			tmp = OutputFunctionCall(&(desc->arg_out_func[i]),
+									 fcinfo->arg[i]);
 			sv = newSVpv(tmp, 0);
 #if PERL_BCDVERSION >= 0x5006000L
 			if (GetDatabaseEncoding() == PG_UTF8)
@@ -1091,8 +1095,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		/* Return NULL if Perl code returned undef */
 		if (rsi && IsA(rsi, ReturnSetInfo))
 			rsi->isDone = ExprEndResult;
+		retval = InputFunctionCall(&prodesc->result_in_func, NULL,
+								   prodesc->result_typioparam, -1);
 		fcinfo->isnull = true;
-		retval = (Datum) 0;
 	}
 	else if (prodesc->fn_retistuple)
 	{
@@ -1138,10 +1143,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 		val = SvPV(perlret, PL_na);
 
-		retval = FunctionCall3(&prodesc->result_in_func,
-							   CStringGetDatum(val),
-							   ObjectIdGetDatum(prodesc->result_typioparam),
-							   Int32GetDatum(-1));
+		retval = InputFunctionCall(&prodesc->result_in_func, val,
+								   prodesc->result_typioparam, -1);
 	}
 
 	if (array_ret == NULL)
@@ -1534,7 +1537,7 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
 						  &typoutput, &typisvarlena);
 
-		outputstr = DatumGetCString(OidFunctionCall1(typoutput, attr));
+		outputstr = OidOutputFunctionCall(typoutput, attr);
 
 		sv = newSVpv(outputstr, 0);
 #if PERL_BCDVERSION >= 0x5006000L
@@ -1750,18 +1753,22 @@ plperl_return_next(SV *sv)
 	}
 	else
 	{
-		Datum		ret = (Datum) 0;
-		bool		isNull = true;
+		Datum		ret;
+		bool		isNull;
 
 		if (SvOK(sv) && SvTYPE(sv) != SVt_NULL)
 		{
 			char	   *val = SvPV(sv, PL_na);
 
-			ret = FunctionCall3(&prodesc->result_in_func,
-								PointerGetDatum(val),
-								ObjectIdGetDatum(prodesc->result_typioparam),
-								Int32GetDatum(-1));
+			ret = InputFunctionCall(&prodesc->result_in_func, val,
+									prodesc->result_typioparam, -1);
 			isNull = false;
+		}
+		else
+		{
+			ret = InputFunctionCall(&prodesc->result_in_func, NULL,
+									prodesc->result_typioparam, -1);
+			isNull = true;
 		}
 
 		tuple = heap_form_tuple(current_call_data->ret_tdesc, &ret, &isNull);
@@ -2118,9 +2125,9 @@ plperl_spi_exec_prepared(char* query, HV * attr, int argc, SV ** argv)
 		/************************************************************
 		 * Set up arguments
 		 ************************************************************/
-		if ( argc > 0) 
+		if (argc > 0) 
 		{
-			nulls = (char *)palloc( argc);
+			nulls = (char *) palloc(argc);
 			argvalues = (Datum *) palloc(argc * sizeof(Datum));
 		} 
 		else 
@@ -2129,21 +2136,22 @@ plperl_spi_exec_prepared(char* query, HV * attr, int argc, SV ** argv)
 			argvalues = NULL;
 		}
 
-		for ( i = 0; i < argc; i++) 
+		for (i = 0; i < argc; i++) 
 		{
-			if ( SvTYPE( argv[i]) != SVt_NULL) 
+			if (SvTYPE(argv[i]) != SVt_NULL) 
 			{
-				argvalues[i] =
-					FunctionCall3( &qdesc->arginfuncs[i],
-						  CStringGetDatum( SvPV( argv[i], PL_na)),
-						  ObjectIdGetDatum( qdesc->argtypioparams[i]),
-						  Int32GetDatum(-1)
-					);
+				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
+												 SvPV(argv[i], PL_na),
+												 qdesc->argtypioparams[i],
+												 -1);
 				nulls[i] = ' ';
 			} 
 			else 
 			{
-				argvalues[i] = (Datum) 0;
+				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
+												 NULL,
+												 qdesc->argtypioparams[i],
+												 -1);
 				nulls[i] = 'n';
 			}
 		}
@@ -2247,9 +2255,9 @@ plperl_spi_query_prepared(char* query, int argc, SV ** argv)
 		/************************************************************
 		 * Set up arguments
 		 ************************************************************/
-		if ( argc > 0) 
+		if (argc > 0) 
 		{
-			nulls = (char *)palloc( argc);
+			nulls = (char *) palloc(argc);
 			argvalues = (Datum *) palloc(argc * sizeof(Datum));
 		} 
 		else 
@@ -2258,21 +2266,22 @@ plperl_spi_query_prepared(char* query, int argc, SV ** argv)
 			argvalues = NULL;
 		}
 
-		for ( i = 0; i < argc; i++) 
+		for (i = 0; i < argc; i++) 
 		{
-			if ( SvTYPE( argv[i]) != SVt_NULL) 
+			if (SvTYPE(argv[i]) != SVt_NULL) 
 			{
-				argvalues[i] =
-					FunctionCall3( &qdesc->arginfuncs[i],
-						  CStringGetDatum( SvPV( argv[i], PL_na)),
-						  ObjectIdGetDatum( qdesc->argtypioparams[i]),
-						  Int32GetDatum(-1)
-					);
+				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
+												 SvPV(argv[i], PL_na),
+												 qdesc->argtypioparams[i],
+												 -1);
 				nulls[i] = ' ';
 			} 
 			else 
 			{
-				argvalues[i] = (Datum) 0;
+				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
+												 NULL,
+												 qdesc->argtypioparams[i],
+												 -1);
 				nulls[i] = 'n';
 			}
 		}

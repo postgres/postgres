@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.482 2006/03/14 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.483 2006/04/04 19:35:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1486,6 +1486,9 @@ exec_bind_message(StringInfo input_message)
 			Oid			ptype = lfirst_oid(l);
 			int32		plength;
 			bool		isNull;
+			StringInfoData pbuf;
+			char		csave;
+			int16		pformat;
 
 			plength = pq_getmsgint(input_message, 4);
 			isNull = (plength == -1);
@@ -1493,16 +1496,6 @@ exec_bind_message(StringInfo input_message)
 			if (!isNull)
 			{
 				const char *pvalue = pq_getmsgbytes(input_message, plength);
-				int16		pformat;
-				StringInfoData pbuf;
-				char		csave;
-
-				if (numPFormats > 1)
-					pformat = pformats[i];
-				else if (numPFormats > 0)
-					pformat = pformats[0];
-				else
-					pformat = 0;	/* default = text */
 
 				/*
 				 * Rather than copying data around, we just set up a phony
@@ -1519,63 +1512,80 @@ exec_bind_message(StringInfo input_message)
 
 				csave = pbuf.data[plength];
 				pbuf.data[plength] = '\0';
-
-				if (pformat == 0)
-				{
-					Oid			typinput;
-					Oid			typioparam;
-					char	   *pstring;
-
-					getTypeInputInfo(ptype, &typinput, &typioparam);
-
-					/*
-					 * We have to do encoding conversion before calling the
-					 * typinput routine.
-					 */
-					pstring = pg_client_to_server(pbuf.data, plength);
-					params[i].value =
-						OidFunctionCall3(typinput,
-										 CStringGetDatum(pstring),
-										 ObjectIdGetDatum(typioparam),
-										 Int32GetDatum(-1));
-					/* Free result of encoding conversion, if any */
-					if (pstring != pbuf.data)
-						pfree(pstring);
-				}
-				else if (pformat == 1)
-				{
-					Oid			typreceive;
-					Oid			typioparam;
-
-					/*
-					 * Call the parameter type's binary input converter
-					 */
-					getTypeBinaryInputInfo(ptype, &typreceive, &typioparam);
-
-					params[i].value =
-						OidFunctionCall3(typreceive,
-										 PointerGetDatum(&pbuf),
-										 ObjectIdGetDatum(typioparam),
-										 Int32GetDatum(-1));
-
-					/* Trouble if it didn't eat the whole buffer */
-					if (pbuf.cursor != pbuf.len)
-						ereport(ERROR,
-							 (errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-							  errmsg("incorrect binary data format in bind parameter %d",
-									 i + 1)));
-				}
-				else
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unsupported format code: %d",
-									pformat)));
-				}
-
-				/* Restore message buffer contents */
-				pbuf.data[plength] = csave;
 			}
+			else
+			{
+				pbuf.data = NULL;		/* keep compiler quiet */
+				csave = 0;
+			}
+
+			if (numPFormats > 1)
+				pformat = pformats[i];
+			else if (numPFormats > 0)
+				pformat = pformats[0];
+			else
+				pformat = 0;	/* default = text */
+
+			if (pformat == 0)
+			{
+				Oid			typinput;
+				Oid			typioparam;
+				char	   *pstring;
+
+				getTypeInputInfo(ptype, &typinput, &typioparam);
+
+				/*
+				 * We have to do encoding conversion before calling the
+				 * typinput routine.
+				 */
+				if (isNull)
+					pstring = NULL;
+				else
+					pstring = pg_client_to_server(pbuf.data, plength);
+
+				params[i].value = OidInputFunctionCall(typinput, pstring,
+													   typioparam, -1);
+				/* Free result of encoding conversion, if any */
+				if (pstring && pstring != pbuf.data)
+					pfree(pstring);
+			}
+			else if (pformat == 1)
+			{
+				Oid			typreceive;
+				Oid			typioparam;
+				StringInfo	bufptr;
+
+				/*
+				 * Call the parameter type's binary input converter
+				 */
+				getTypeBinaryInputInfo(ptype, &typreceive, &typioparam);
+
+				if (isNull)
+					bufptr = NULL;
+				else
+					bufptr = &pbuf;
+
+				params[i].value = OidReceiveFunctionCall(typreceive, bufptr,
+														 typioparam, -1);
+
+				/* Trouble if it didn't eat the whole buffer */
+				if (!isNull && pbuf.cursor != pbuf.len)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+							 errmsg("incorrect binary data format in bind parameter %d",
+									i + 1)));
+			}
+			else
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unsupported format code: %d",
+								pformat)));
+			}
+
+			/* Restore message buffer contents */
+			if (!isNull)
+				pbuf.data[plength] = csave;
 
 			params[i].kind = PARAM_NUM;
 			params[i].id = i + 1;
