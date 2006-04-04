@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.28 2006/04/03 23:35:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.29 2006/04/04 22:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,5 +146,14 @@ typedef struct ControlFileData
 	/* CRC of all above ... MUST BE LAST! */
 	pg_crc32	crc;
 } ControlFileData;
+
+/*
+ * Physical size of the pg_control file.  Note that this is considerably
+ * bigger than the actually used size (ie, sizeof(ControlFileData)).
+ * The idea is to keep the physical size constant independent of format
+ * changes, so that ReadControlFile will deliver a suitable wrong-version
+ * message instead of a read error if it's looking at an incompatible file.
+ */
+#define PG_CONTROL_SIZE		8192
 
 #endif   /* PG_CONTROL_H */

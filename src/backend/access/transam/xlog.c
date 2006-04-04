@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.232 2006/04/03 23:35:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.233 2006/04/04 22:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3391,7 +3391,7 @@ static void
 WriteControlFile(void)
 {
 	int			fd;
-	char		buffer[BLCKSZ]; /* need not be aligned */
+	char		buffer[PG_CONTROL_SIZE]; /* need not be aligned */
 	char	   *localeptr;
 
 	/*
@@ -3437,17 +3437,16 @@ WriteControlFile(void)
 	FIN_CRC32(ControlFile->crc);
 
 	/*
-	 * We write out BLCKSZ bytes into pg_control, zero-padding the excess over
-	 * sizeof(ControlFileData).  This reduces the odds of premature-EOF errors
-	 * when reading pg_control.  We'll still fail when we check the contents
-	 * of the file, but hopefully with a more specific error than "couldn't
-	 * read pg_control".
+	 * We write out PG_CONTROL_SIZE bytes into pg_control, zero-padding the
+	 * excess over sizeof(ControlFileData).  This reduces the odds of
+	 * premature-EOF errors when reading pg_control.  We'll still fail when we
+	 * check the contents of the file, but hopefully with a more specific
+	 * error than "couldn't read pg_control".
 	 */
-	if (sizeof(ControlFileData) > BLCKSZ)
-		ereport(PANIC,
-				(errmsg("sizeof(ControlFileData) is larger than BLCKSZ; fix either one")));
+	if (sizeof(ControlFileData) > PG_CONTROL_SIZE)
+		elog(PANIC, "sizeof(ControlFileData) is larger than PG_CONTROL_SIZE; fix either one");
 
-	memset(buffer, 0, BLCKSZ);
+	memset(buffer, 0, PG_CONTROL_SIZE);
 	memcpy(buffer, ControlFile, sizeof(ControlFileData));
 
 	fd = BasicOpenFile(XLOG_CONTROL_FILE,
@@ -3460,7 +3459,7 @@ WriteControlFile(void)
 						XLOG_CONTROL_FILE)));
 
 	errno = 0;
-	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+	if (write(fd, buffer, PG_CONTROL_SIZE) != PG_CONTROL_SIZE)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)

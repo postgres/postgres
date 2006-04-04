@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.41 2006/04/03 23:35:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.42 2006/04/04 22:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,9 +365,9 @@ ReadControlFile(void)
 	}
 
 	/* Use malloc to ensure we have a maxaligned buffer */
-	buffer = (char *) malloc(BLCKSZ);
+	buffer = (char *) malloc(PG_CONTROL_SIZE);
 
-	len = read(fd, buffer, BLCKSZ);
+	len = read(fd, buffer, PG_CONTROL_SIZE);
 	if (len < 0)
 	{
 		fprintf(stderr, _("%s: could not read file \"%s\": %s\n"),
@@ -546,7 +546,7 @@ static void
 RewriteControlFile(void)
 {
 	int			fd;
-	char		buffer[BLCKSZ]; /* need not be aligned */
+	char		buffer[PG_CONTROL_SIZE]; /* need not be aligned */
 
 	/*
 	 * Adjust fields as needed to force an empty XLOG starting at the next
@@ -587,21 +587,21 @@ RewriteControlFile(void)
 	FIN_CRC32(ControlFile.crc);
 
 	/*
-	 * We write out BLCKSZ bytes into pg_control, zero-padding the excess over
-	 * sizeof(ControlFileData).  This reduces the odds of premature-EOF errors
-	 * when reading pg_control.  We'll still fail when we check the contents
-	 * of the file, but hopefully with a more specific error than "couldn't
-	 * read pg_control".
+	 * We write out PG_CONTROL_SIZE bytes into pg_control, zero-padding the
+	 * excess over sizeof(ControlFileData).  This reduces the odds of
+	 * premature-EOF errors when reading pg_control.  We'll still fail when we
+	 * check the contents of the file, but hopefully with a more specific
+	 * error than "couldn't read pg_control".
 	 */
-	if (sizeof(ControlFileData) > BLCKSZ)
+	if (sizeof(ControlFileData) > PG_CONTROL_SIZE)
 	{
 		fprintf(stderr,
-				_("%s: internal error -- sizeof(ControlFileData) is too large ... fix xlog.c\n"),
+				_("%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"),
 				progname);
 		exit(1);
 	}
 
-	memset(buffer, 0, BLCKSZ);
+	memset(buffer, 0, PG_CONTROL_SIZE);
 	memcpy(buffer, &ControlFile, sizeof(ControlFileData));
 
 	unlink(XLOG_CONTROL_FILE);
@@ -617,7 +617,7 @@ RewriteControlFile(void)
 	}
 
 	errno = 0;
-	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+	if (write(fd, buffer, PG_CONTROL_SIZE) != PG_CONTROL_SIZE)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
