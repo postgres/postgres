@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Feb 24 23:28:40 EST 2006
+   Last updated: Sun Apr 2 23:40:12 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -123,7 +123,7 @@
    
    PostgreSQL Data Base Management System
    
-   Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+   Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-1996 Regents of the University of
    California
    
@@ -491,7 +491,7 @@
    
    Maximum size for a database? unlimited (32 TB databases exist)
    Maximum size for a table? 32 TB
-   Maximum size for a row? 1.6TB
+   Maximum size for a row? 400 GB
    Maximum size for a field? 1 GB
    Maximum number of rows in a table? unlimited
    Maximum number of columns in a table? 250-1600 depending on column
@@ -506,8 +506,8 @@
    from the operating system. Large tables are stored as multiple 1 GB
    files so file system size limits are not important.
    
-   The maximum table size and maximum number of columns can be quadrupled
-   by increasing the default block size to 32k.
+   The maximum table size, row size, and maximum number of columns can be
+   quadrupled by increasing the default block size to 32k.
    
    One limitation is that indexes can not be created on columns longer
    than about 2,000 characters. Fortunately, such indexes are rarely

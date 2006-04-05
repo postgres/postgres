@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Feb 24 23:28:40 EST 2006</P>
+    <P>Last updated: Sun Apr  2 23:40:12 EDT 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -169,7 +169,7 @@
 
     <P>PostgreSQL Data Base Management System</P>
 
-    <P>Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+    <P>Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
     Portions Copyright (c) 1994-1996 Regents of the University of California</P>
 
     <P>Permission to use, copy, modify, and distribute this software
@@ -654,7 +654,7 @@
 <TR><TD>Maximum size for a database?</TD><TD>unlimited (32 TB databases
 exist)</TD></TR>
 <TR><TD>Maximum size for a table?</TD><TD>32 TB</TD></TR>
-<TR><TD>Maximum size for a row?</TD><TD>1.6TB</TD></TR>
+<TR><TD>Maximum size for a row?</TD><TD>400 GB</TD></TR>
 <TR><TD>Maximum size for a field?</TD><TD>1 GB</TD></TR>
 <TR><TD>Maximum number of rows in a table?</TD><TD>unlimited</TD></TR>
 <TR><TD>Maximum number of columns in a table?</TD><TD>250-1600 depending
@@ -673,8 +673,8 @@ table?</TD><TD>unlimited</TD></TR>
     multiple 1 GB files so file system size limits are not
     important.</P>
 
-    <P>The maximum table size and maximum number of columns can be
-    quadrupled by increasing the default block size to 32k.</P>
+    <P>The maximum table size, row size, and maximum number of columns
+    can be quadrupled by increasing the default block size to 32k.</P>
 
     <P>One limitation is that indexes can not be created on columns
     longer than about 2,000 characters. Fortunately, such indexes are
