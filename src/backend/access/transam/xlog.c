@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.233 2006/04/04 22:39:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.234 2006/04/05 03:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1265,6 +1265,7 @@ AdvanceXLInsertBuffer(void)
 
 		NewLongPage->xlp_sysid = ControlFile->system_identifier;
 		NewLongPage->xlp_seg_size = XLogSegSize;
+		NewLongPage->xlp_xlog_blcksz = XLOG_BLCKSZ;
 		NewPage   ->xlp_info |= XLP_LONG_HEADER;
 
 		Insert->currpos = ((char *) NewPage) +SizeOfXLogLongPHD;
@@ -2994,6 +2995,13 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode)
 					 errdetail("Incorrect XLOG_SEG_SIZE in page header.")));
 			return false;
 		}
+		if (longhdr->xlp_xlog_blcksz != XLOG_BLCKSZ)
+		{
+			ereport(emode,
+					(errmsg("WAL file is from different system"),
+					 errdetail("Incorrect XLOG_BLCKSZ in page header.")));
+			return false;
+		}
 	}
 	recaddr.xlogid = readId;
 	recaddr.xrecoff = readSeg * XLogSegSize + readOff;
@@ -3838,6 +3846,7 @@ BootStrapXLOG(void)
 	longpage = (XLogLongPageHeader) page;
 	longpage->xlp_sysid = sysidentifier;
 	longpage->xlp_seg_size = XLogSegSize;
+	longpage->xlp_xlog_blcksz = XLOG_BLCKSZ;
 
 	/* Insert the initial checkpoint record */
 	record = (XLogRecord *) ((char *) page + SizeOfXLogLongPHD);
