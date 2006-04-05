@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.80 2006/03/05 15:58:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.81 2006/04/05 22:11:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ expand_targetlist(List *tlist, int command_type,
 													  true,		/* isnull */
 													  att_tup->attbyval);
 						new_expr = coerce_to_domain(new_expr,
-													InvalidOid,
+													InvalidOid, -1,
 													atttype,
 													COERCE_IMPLICIT_CAST,
 													false,

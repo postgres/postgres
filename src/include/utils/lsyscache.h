@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.103 2006/03/05 15:59:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.104 2006/04/05 22:11:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,6 @@ extern void get_type_io_data(Oid typid,
 				 Oid *typioparam,
 				 Oid *func);
 extern char get_typstorage(Oid typid);
-extern int32 get_typtypmod(Oid typid);
 extern Node *get_typdefault(Oid typid);
 extern char get_typtype(Oid typid);
 extern Oid	get_typ_typrelid(Oid typid);
@@ -97,6 +96,7 @@ extern void getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena);
 extern void getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typIOParam);
 extern void getTypeBinaryOutputInfo(Oid type, Oid *typSend, bool *typIsVarlena);
 extern Oid	getBaseType(Oid typid);
+extern Oid	getBaseTypeAndTypmod(Oid typid, int32 *typmod);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);
 extern int32 get_attavgwidth(Oid relid, AttrNumber attnum);
 extern bool get_attstatsslot(HeapTuple statstuple,

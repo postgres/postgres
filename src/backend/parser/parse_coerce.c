@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.136 2006/04/04 19:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.137 2006/04/05 22:11:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,10 +158,24 @@ coerce_type(ParseState *pstate, Node *node,
 		 */
 		Const	   *con = (Const *) node;
 		Const	   *newcon = makeNode(Const);
-		Type		targetType = typeidType(targetTypeId);
-		char		targetTyptype = typeTypType(targetType);
+		Oid			baseTypeId;
+		int32		baseTypeMod;
+		Type		targetType;
 
-		newcon->consttype = targetTypeId;
+		/*
+		 * If the target type is a domain, we want to call its base type's
+		 * input routine, not domain_in().  This is to avoid premature
+		 * failure when the domain applies a typmod: existing input
+		 * routines follow implicit-coercion semantics for length checks,
+		 * which is not always what we want here.  The needed check will
+		 * be applied properly inside coerce_to_domain().
+		 */
+		baseTypeMod = -1;
+		baseTypeId = getBaseTypeAndTypmod(targetTypeId, &baseTypeMod);
+
+		targetType = typeidType(baseTypeId);
+
+		newcon->consttype = baseTypeId;
 		newcon->constlen = typeLen(targetType);
 		newcon->constbyval = typeByVal(targetType);
 		newcon->constisnull = con->constisnull;
@@ -185,8 +199,10 @@ coerce_type(ParseState *pstate, Node *node,
 		result = (Node *) newcon;
 
 		/* If target is a domain, apply constraints. */
-		if (targetTyptype == 'd')
-			result = coerce_to_domain(result, InvalidOid, targetTypeId,
+		if (baseTypeId != targetTypeId)
+			result = coerce_to_domain(result,
+									  baseTypeId, baseTypeMod,
+									  targetTypeId,
 									  cformat, false, false);
 
 		ReleaseSysCache(targetType);
@@ -239,9 +255,7 @@ coerce_type(ParseState *pstate, Node *node,
 
 		param->paramtype = targetTypeId;
 
-		/* Apply domain constraints, if necessary */
-		return coerce_to_domain((Node *) param, InvalidOid, targetTypeId,
-								cformat, false, false);
+		return (Node *) param;
 	}
 	if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 							  &funcId))
@@ -255,13 +269,11 @@ coerce_type(ParseState *pstate, Node *node,
 			 * and we need to extract the correct typmod to use from the
 			 * domain's typtypmod.
 			 */
-			Oid			baseTypeId = getBaseType(targetTypeId);
+			Oid			baseTypeId;
 			int32		baseTypeMod;
 
-			if (targetTypeId != baseTypeId)
-				baseTypeMod = get_typtypmod(targetTypeId);
-			else
-				baseTypeMod = targetTypeMod;
+			baseTypeMod = targetTypeMod;
+			baseTypeId = getBaseTypeAndTypmod(targetTypeId, &baseTypeMod);
 
 			result = build_coercion_expression(node, funcId,
 											   baseTypeId, baseTypeMod,
@@ -274,7 +286,8 @@ coerce_type(ParseState *pstate, Node *node,
 			 * selected coercion function was a type-and-length coercion.
 			 */
 			if (targetTypeId != baseTypeId)
-				result = coerce_to_domain(result, baseTypeId, targetTypeId,
+				result = coerce_to_domain(result, baseTypeId, baseTypeMod,
+										  targetTypeId,
 										  cformat, true,
 										  exprIsLengthCoercion(result,
 															   NULL));
@@ -290,7 +303,7 @@ coerce_type(ParseState *pstate, Node *node,
 			 * that must be accounted for.	If the destination is a domain
 			 * then we won't need a RelabelType node.
 			 */
-			result = coerce_to_domain(node, InvalidOid, targetTypeId,
+			result = coerce_to_domain(node, InvalidOid, -1, targetTypeId,
 									  cformat, false, false);
 			if (result == node)
 			{
@@ -439,15 +452,18 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
  * 'arg': input expression
  * 'baseTypeId': base type of domain, if known (pass InvalidOid if caller
  *		has not bothered to look this up)
+ * 'baseTypeMod': base type typmod of domain, if known (pass -1 if caller
+ *		has not bothered to look this up)
  * 'typeId': target type to coerce to
  * 'cformat': coercion format
  * 'hideInputCoercion': if true, hide the input coercion under this one.
- * 'lengthCoercionDone': if true, caller already accounted for length.
+ * 'lengthCoercionDone': if true, caller already accounted for length,
+ *		ie the input is already of baseTypMod as well as baseTypeId.
  *
  * If the target type isn't a domain, the given 'arg' is returned as-is.
  */
 Node *
-coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId,
+coerce_to_domain(Node *arg, Oid baseTypeId, int32 baseTypeMod, Oid typeId,
 				 CoercionForm cformat, bool hideInputCoercion,
 				 bool lengthCoercionDone)
 {
@@ -455,7 +471,7 @@ coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId,
 
 	/* Get the base type if it hasn't been supplied */
 	if (baseTypeId == InvalidOid)
-		baseTypeId = getBaseType(typeId);
+		baseTypeId = getBaseTypeAndTypmod(typeId, &baseTypeMod);
 
 	/* If it isn't a domain, return the node as it was passed in */
 	if (baseTypeId == typeId)
@@ -480,10 +496,8 @@ coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId,
 	 */
 	if (!lengthCoercionDone)
 	{
-		int32		typmod = get_typtypmod(typeId);
-
-		if (typmod >= 0)
-			arg = coerce_type_typmod(arg, baseTypeId, typmod,
+		if (baseTypeMod >= 0)
+			arg = coerce_type_typmod(arg, baseTypeId, baseTypeMod,
 									 COERCE_IMPLICIT_CAST,
 									 (cformat != COERCE_IMPLICIT_CAST),
 									 false);

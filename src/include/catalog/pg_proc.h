@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.404 2006/03/10 20:15:26 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.405 2006/04/05 22:11:55 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3362,6 +3362,10 @@ DESCR("I/O");
 DATA(insert OID = 2398 (  shell_in			PGNSP PGUID 12 f f t f i 1 2282 "2275" _null_ _null_ _null_ shell_in - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2399 (  shell_out			PGNSP PGUID 12 f f t f i 1 2275 "2282" _null_ _null_ _null_ shell_out - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2597 (  domain_in			PGNSP PGUID 12 f f f f v 3 2276 "2275 26 23" _null_ _null_ _null_ domain_in - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2598 (  domain_recv		PGNSP PGUID 12 f f f f v 3 2276 "2281 26 23" _null_ _null_ _null_ domain_recv - _null_ ));
 DESCR("I/O");
 
 /* cryptographic */

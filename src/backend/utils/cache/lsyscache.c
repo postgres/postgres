@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.133 2006/04/04 19:35:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.134 2006/04/05 22:11:55 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1470,33 +1470,6 @@ get_typstorage(Oid typid)
 }
 
 /*
- * get_typtypmod
- *
- *		Given the type OID, return the typtypmod field (domain's typmod
- *		for base type)
- */
-int32
-get_typtypmod(Oid typid)
-{
-	HeapTuple	tp;
-
-	tp = SearchSysCache(TYPEOID,
-						ObjectIdGetDatum(typid),
-						0, 0, 0);
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
-		int32		result;
-
-		result = typtup->typtypmod;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
-		return -1;
-}
-
-/*
  * get_typdefault
  *	  Given a type OID, return the type's default value, if any.
  *
@@ -1584,6 +1557,23 @@ get_typdefault(Oid typid)
 Oid
 getBaseType(Oid typid)
 {
+	int32		typmod = -1;
+
+	return getBaseTypeAndTypmod(typid, &typmod);
+}
+
+/*
+ * getBaseTypeAndTypmod
+ *		If the given type is a domain, return its base type and typmod;
+ *		otherwise return the type's own OID, and leave *typmod unchanged.
+ *
+ * Note that the "applied typmod" should be -1 for every domain level
+ * above the bottommost; therefore, if the passed-in typid is indeed
+ * a domain, *typmod should be -1.
+ */
+Oid
+getBaseTypeAndTypmod(Oid typid, int32 *typmod)
+{
 	/*
 	 * We loop to find the bottom base type in a stack of domains.
 	 */
@@ -1605,7 +1595,10 @@ getBaseType(Oid typid)
 			break;
 		}
 
+		Assert(*typmod == -1);
 		typid = typTup->typbasetype;
+		*typmod = typTup->typtypmod;
+
 		ReleaseSysCache(tup);
 	}
 

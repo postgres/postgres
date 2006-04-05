@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.161 2006/03/05 15:58:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.162 2006/04/05 22:11:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -599,7 +599,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 												  att_tup->attbyval);
 					/* this is to catch a NOT NULL domain constraint */
 					new_expr = coerce_to_domain(new_expr,
-												InvalidOid,
+												InvalidOid, -1,
 												att_tup->atttypid,
 												COERCE_IMPLICIT_CAST,
 												false,

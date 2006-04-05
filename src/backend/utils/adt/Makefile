@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.59 2005/08/12 03:24:08 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.60 2006/04/05 22:11:55 tgl Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -16,7 +16,8 @@ endif
 endif
 
 OBJS = acl.o arrayfuncs.o array_userfuncs.o arrayutils.o bool.o \
-	cash.o char.o date.o datetime.o datum.o float.o format_type.o \
+	cash.o char.o date.o datetime.o datum.o domains.o \
+	float.o format_type.o \
 	geo_ops.o geo_selfuncs.o int.o int8.o like.o lockfuncs.o \
 	misc.o nabstime.o name.o not_in.o numeric.o numutils.o \
 	oid.o oracle_compat.o pseudotypes.o rowtypes.o \

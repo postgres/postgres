@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.89 2006/03/14 22:48:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.90 2006/04/05 22:11:55 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -536,6 +536,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	Oid			sendProcedure;
 	Oid			analyzeProcedure;
 	bool		byValue;
+	Oid			typelem;
 	char		delimiter;
 	char		alignment;
 	char		storage;
@@ -547,7 +548,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	char	   *defaultValueBin = NULL;
 	bool		typNotNull = false;
 	bool		nullDefined = false;
-	Oid			basetypelem;
 	int32		typNDims = list_length(stmt->typename->arrayBounds);
 	HeapTuple	typeTup;
 	List	   *schema = stmt->constraints;
@@ -589,12 +589,12 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypeoid = HeapTupleGetOid(typeTup);
 
 	/*
-	 * Base type must be a plain base type.  Domains over pseudo types would
-	 * create a security hole.	Domains of domains might be made to work in
-	 * the future, but not today.  Ditto for domains over complex types.
+	 * Base type must be a plain base type or another domain.  Domains over
+	 * pseudotypes would create a security hole.  Domains over composite
+	 * types might be made to work in the future, but not today.
 	 */
 	typtype = baseType->typtype;
-	if (typtype != 'b')
+	if (typtype != 'b' && typtype != 'd')
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("\"%s\" is not a valid base type for a domain",
@@ -612,13 +612,16 @@ DefineDomain(CreateDomainStmt *stmt)
 	/* Storage Length */
 	internalLength = baseType->typlen;
 
+	/* Array element type (in case base type is an array) */
+	typelem = baseType->typelem;
+
 	/* Array element Delimiter */
 	delimiter = baseType->typdelim;
 
 	/* I/O Functions */
-	inputProcedure = baseType->typinput;
+	inputProcedure = F_DOMAIN_IN;
 	outputProcedure = baseType->typoutput;
-	receiveProcedure = baseType->typreceive;
+	receiveProcedure = F_DOMAIN_RECV;
 	sendProcedure = baseType->typsend;
 
 	/* Analysis function */
@@ -635,13 +638,6 @@ DefineDomain(CreateDomainStmt *stmt)
 							Anum_pg_type_typdefaultbin, &isnull);
 	if (!isnull)
 		defaultValueBin = DatumGetCString(DirectFunctionCall1(textout, datum));
-
-	/*
-	 * Pull out the typelem name of the parent OID.
-	 *
-	 * This is what enables us to make a domain of an array
-	 */
-	basetypelem = baseType->typelem;
 
 	/*
 	 * Run through constraints manually to avoid the additional processing
@@ -776,7 +772,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   receiveProcedure,	/* receive procedure */
 				   sendProcedure,		/* send procedure */
 				   analyzeProcedure,	/* analyze procedure */
-				   basetypelem, /* element type ID */
+				   typelem,		/* element type ID */
 				   basetypeoid, /* base type ID */
 				   defaultValue,	/* default type value (text) */
 				   defaultValueBin,		/* default type value (binary) */

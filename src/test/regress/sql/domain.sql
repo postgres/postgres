@@ -1,13 +1,17 @@
-
+--
+-- Test domains.
+--
 
 -- Test Comment / Drop
 create domain domaindroptest int4;
 comment on domain domaindroptest is 'About to drop this..';
 
--- currently this will be disallowed
-create domain basetypetest domaindroptest;
+create domain dependenttypetest domaindroptest;
 
+-- fail because of dependent type
 drop domain domaindroptest;
+
+drop domain domaindroptest cascade;
 
 -- this should fail because already gone
 drop domain domaindroptest cascade;
@@ -101,7 +105,11 @@ INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 
 -- Test copy
 COPY nulltest FROM stdin; --fail
-a	b	\N	d	\N
+a	b	\N	d	d
+\.
+
+COPY nulltest FROM stdin; --fail
+a	b	c	d	\N
 \.
 
 -- Last row is bad
@@ -245,6 +253,30 @@ drop domain ddef4 restrict;
 drop domain ddef5 restrict;
 drop sequence ddef4_seq;
 
+-- Test domains over domains
+create domain vchar4 varchar(4);
+create domain dinter vchar4 check (substring(VALUE, 1, 1) = 'x');
+create domain dtop dinter check (substring(VALUE, 2, 1) = '1');
+
+select 'x123'::dtop;
+select 'x1234'::dtop; -- explicit coercion should truncate
+select 'y1234'::dtop; -- fail
+select 'y123'::dtop; -- fail
+select 'yz23'::dtop; -- fail
+select 'xz23'::dtop; -- fail
+
+create temp table dtest(f1 dtop);
+
+insert into dtest values('x123');
+insert into dtest values('x1234'); -- fail, implicit coercion
+insert into dtest values('y1234'); -- fail, implicit coercion
+insert into dtest values('y123'); -- fail
+insert into dtest values('yz23'); -- fail
+insert into dtest values('xz23'); -- fail
+
+drop table dtest;
+drop domain vchar4 cascade;
+
 -- Make sure that constraints of newly-added domain columns are
 -- enforced correctly, even if there's no default value for the new
 -- column. Per bug #1433
@@ -271,3 +303,19 @@ prepare s1 as select $1::pos_int = 10 as "is_ten";
 execute s1(10);
 execute s1(0); -- should fail
 execute s1(NULL); -- should fail
+
+-- Check that domain constraints on plpgsql function parameters, results,
+-- and local variables are enforced correctly.
+
+create function doubledecrement(p1 pos_int) returns pos_int as $$
+declare v pos_int;
+begin
+    v := p1 - 1;
+    return v - 1;
+end$$ language plpgsql;
+
+select doubledecrement(null); -- fail before call
+select doubledecrement(0); -- fail before call
+select doubledecrement(1); -- fail at assignment to v
+select doubledecrement(2); -- fail at return
+select doubledecrement(3); -- good

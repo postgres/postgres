@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.27 2005/12/25 01:41:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.28 2006/04/05 22:11:54 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,8 +35,10 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
   <title>Description</title>
 
   <para>
-   <command>CREATE DOMAIN</command> creates a new data domain.  The
-   user who defines a domain becomes its owner.
+   <command>CREATE DOMAIN</command> creates a new domain.  A domain is
+   essentially a data type with optional constraints (restrictions on
+   the allowed set of values).
+   The user who defines a domain becomes its owner.
   </para>
 
   <para>
@@ -48,24 +50,13 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
   </para>
 
   <para>
-   Domains are useful for abstracting common fields between tables
-   into a single location for maintenance.  For example, an email address
-   column may be used in several tables, all with the same properties.
-   Define a domain and use that rather than setting up each table's
-   constraints individually. 
+   Domains are useful for abstracting common constraints on fields into
+   a single location for maintenance.  For example, several tables might
+   contain email address columns, all requiring the same CHECK constraint
+   to verify the address syntax.
+   Define a domain rather than setting up each table's constraint
+   individually.
   </para>
-
-  <caution>
-  <para>
-   At present, declaring a function result value as a domain 
-   is pretty dangerous, because none of the procedural languages enforce domain constraints 
-   on their results.  You'll need to make sure that the function code itself
-   respects the constraints.  In <application>PL/pgSQL</>, one possible
-   workaround is to explicitly cast the result value to the domain type
-   when you return it.  <application>PL/pgSQL</> does not enforce domain
-   constraints for local variables within functions, either.
-  </para>
-  </caution>
  </refsect1>
 
  <refsect1>
@@ -156,7 +147,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <literal>CHECK</> clauses specify integrity constraints or tests
       which values of the domain must satisfy.
       Each constraint must be an expression
-      producing a Boolean result.  It should use the name <literal>VALUE</>
+      producing a Boolean result.  It should use the key word <literal>VALUE</>
       to refer to the value being tested.
      </para>
 
@@ -185,12 +176,12 @@ OR VALUE ~ '^\\d{5}-\\d{4}$'
 );
 
 CREATE TABLE us_snail_addy (
-  address_id SERIAL PRIMARY KEY
-, street1 TEXT NOT NULL
-, street2 TEXT
-, street3 TEXT
-, city TEXT NOT NULL
-, postal us_postal_code NOT NULL
+  address_id SERIAL PRIMARY KEY,
+  street1 TEXT NOT NULL,
+  street2 TEXT,
+  street3 TEXT,
+  city TEXT NOT NULL,
+  postal us_postal_code NOT NULL
 );
 </programlisting>
   </para>

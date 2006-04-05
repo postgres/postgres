@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.262 2006/04/04 19:35:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.263 2006/04/05 22:11:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1545,9 +1545,7 @@ CopyFrom(CopyState cstate)
 	FmgrInfo	oid_in_function;
 	Oid		   *typioparams;
 	Oid			oid_typioparam;
-	ExprState **constraintexprs;
 	bool	   *force_notnull;
-	bool		hasConstraints = false;
 	int			attnum;
 	int			i;
 	Oid			in_func_oid;
@@ -1608,7 +1606,6 @@ CopyFrom(CopyState cstate)
 	typioparams = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
 	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
 	defexprs = (ExprState **) palloc(num_phys_attrs * sizeof(ExprState *));
-	constraintexprs = (ExprState **) palloc0(num_phys_attrs * sizeof(ExprState *));
 	force_notnull = (bool *) palloc(num_phys_attrs * sizeof(bool));
 
 	for (attnum = 1; attnum <= num_phys_attrs; attnum++)
@@ -1645,35 +1642,6 @@ CopyFrom(CopyState cstate)
 				defmap[num_defaults] = attnum - 1;
 				num_defaults++;
 			}
-		}
-
-		/* If it's a domain type, set up to check domain constraints */
-		if (get_typtype(attr[attnum - 1]->atttypid) == 'd')
-		{
-			Param	   *prm;
-			Node	   *node;
-
-			/*
-			 * Easiest way to do this is to use parse_coerce.c to set up an
-			 * expression that checks the constraints.	(At present, the
-			 * expression might contain a length-coercion-function call and/or
-			 * CoerceToDomain nodes.)  The bottom of the expression is a Param
-			 * node so that we can fill in the actual datum during the data
-			 * input loop.
-			 */
-			prm = makeNode(Param);
-			prm->paramkind = PARAM_EXEC;
-			prm->paramid = 0;
-			prm->paramtype = getBaseType(attr[attnum - 1]->atttypid);
-
-			node = coerce_to_domain((Node *) prm,
-									prm->paramtype,
-									attr[attnum - 1]->atttypid,
-									COERCE_IMPLICIT_CAST, false, false);
-
-			constraintexprs[attnum - 1] = ExecPrepareExpr((Expr *) node,
-														  estate);
-			hasConstraints = true;
 		}
 	}
 
@@ -1742,11 +1710,6 @@ CopyFrom(CopyState cstate)
 	/* create workspace for CopyReadAttributes results */
 	nfields = file_has_oids ? (attr_count + 1) : attr_count;
 	field_strings = (char **) palloc(nfields * sizeof(char *));
-
-	/* Make room for a PARAM_EXEC value for domain constraint checks */
-	if (hasConstraints)
-		econtext->ecxt_param_exec_vals = (ParamExecData *)
-			palloc0(sizeof(ParamExecData));
 
 	/* Initialize state variables */
 	cstate->fe_eof = false;
@@ -1942,33 +1905,6 @@ CopyFrom(CopyState cstate)
 				nulls[defmap[i]] = ' ';
 		}
 
-		/* Next apply any domain constraints */
-		if (hasConstraints)
-		{
-			ParamExecData *prmdata = &econtext->ecxt_param_exec_vals[0];
-
-			for (i = 0; i < num_phys_attrs; i++)
-			{
-				ExprState  *exprstate = constraintexprs[i];
-
-				if (exprstate == NULL)
-					continue;	/* no constraint for this attr */
-
-				/* Insert current row's value into the Param value */
-				prmdata->value = values[i];
-				prmdata->isnull = (nulls[i] == 'n');
-
-				/*
-				 * Execute the constraint expression.  Allow the expression to
-				 * replace the value (consider e.g. a timestamp precision
-				 * restriction).
-				 */
-				values[i] = ExecEvalExpr(exprstate, econtext,
-										 &isnull, NULL);
-				nulls[i] = isnull ? 'n' : ' ';
-			}
-		}
-
 		/* And now we can form the input tuple. */
 		tuple = heap_formtuple(tupDesc, values, nulls);
 
@@ -2043,7 +1979,6 @@ CopyFrom(CopyState cstate)
 	pfree(typioparams);
 	pfree(defmap);
 	pfree(defexprs);
-	pfree(constraintexprs);
 	pfree(force_notnull);
 
 	ExecDropSingleTupleTableSlot(slot);

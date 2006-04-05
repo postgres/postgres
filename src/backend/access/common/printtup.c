@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.95 2006/04/04 19:35:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.96 2006/04/05 22:11:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,6 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 	{
 		Oid			atttypid = attrs[i]->atttypid;
 		int32		atttypmod = attrs[i]->atttypmod;
-		Oid			basetype;
 
 		pq_sendstring(&buf, NameStr(attrs[i]->attname));
 		/* column ID info appears in protocol 3.0 and up */
@@ -203,12 +202,7 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 			}
 		}
 		/* If column is a domain, send the base type and typmod instead */
-		basetype = getBaseType(atttypid);
-		if (basetype != atttypid)
-		{
-			atttypmod = get_typtypmod(atttypid);
-			atttypid = basetype;
-		}
+		atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod);
 		pq_sendint(&buf, (int) atttypid, sizeof(atttypid));
 		pq_sendint(&buf, attrs[i]->attlen, sizeof(attrs[i]->attlen));
 		/* typmod appears in protocol 2.0 and up */

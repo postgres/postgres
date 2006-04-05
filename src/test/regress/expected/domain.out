@@ -1,10 +1,17 @@
+--
+-- Test domains.
+--
 -- Test Comment / Drop
 create domain domaindroptest int4;
 comment on domain domaindroptest is 'About to drop this..';
--- currently this will be disallowed
-create domain basetypetest domaindroptest;
-ERROR:  "domaindroptest" is not a valid base type for a domain
+create domain dependenttypetest domaindroptest;
+-- fail because of dependent type
 drop domain domaindroptest;
+NOTICE:  type dependenttypetest depends on type domaindroptest
+ERROR:  cannot drop type domaindroptest because other objects depend on it
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop domain domaindroptest cascade;
+NOTICE:  drop cascades to type dependenttypetest
 -- this should fail because already gone
 drop domain domaindroptest cascade;
 ERROR:  type "domaindroptest" does not exist
@@ -40,7 +47,7 @@ INSERT INTO basictest values ('88', 'haha', 'short', '123.1212');    -- Truncate
 -- Test copy
 COPY basictest (testvarchar) FROM stdin; -- fail
 ERROR:  value too long for type character varying(5)
-CONTEXT:  COPY basictest, line 1: "notsoshorttext"
+CONTEXT:  COPY basictest, line 1, column testvarchar: "notsoshorttext"
 COPY basictest (testvarchar) FROM stdin;
 select * from basictest;
  testint4 | testtext | testvarchar | testnumeric 
@@ -126,8 +133,11 @@ ERROR:  null value in column "col3" violates not-null constraint
 INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
+ERROR:  null value in column "col3" violates not-null constraint
+CONTEXT:  COPY nulltest, line 1: "a	b	\N	d	d"
+COPY nulltest FROM stdin; --fail
 ERROR:  domain dcheck does not allow null values
-CONTEXT:  COPY nulltest, line 1: "a	b	\N	d	\N"
+CONTEXT:  COPY nulltest, line 1, column col5: NULL input
 -- Last row is bad
 COPY nulltest FROM stdin;
 ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5_check"
@@ -300,6 +310,46 @@ drop domain ddef3 restrict;
 drop domain ddef4 restrict;
 drop domain ddef5 restrict;
 drop sequence ddef4_seq;
+-- Test domains over domains
+create domain vchar4 varchar(4);
+create domain dinter vchar4 check (substring(VALUE, 1, 1) = 'x');
+create domain dtop dinter check (substring(VALUE, 2, 1) = '1');
+select 'x123'::dtop;
+ dtop 
+------
+ x123
+(1 row)
+
+select 'x1234'::dtop; -- explicit coercion should truncate
+ dtop 
+------
+ x123
+(1 row)
+
+select 'y1234'::dtop; -- fail
+ERROR:  value for domain dtop violates check constraint "dinter_check"
+select 'y123'::dtop; -- fail
+ERROR:  value for domain dtop violates check constraint "dinter_check"
+select 'yz23'::dtop; -- fail
+ERROR:  value for domain dtop violates check constraint "dinter_check"
+select 'xz23'::dtop; -- fail
+ERROR:  value for domain dtop violates check constraint "dtop_check"
+create temp table dtest(f1 dtop);
+insert into dtest values('x123');
+insert into dtest values('x1234'); -- fail, implicit coercion
+ERROR:  value too long for type character varying(4)
+insert into dtest values('y1234'); -- fail, implicit coercion
+ERROR:  value too long for type character varying(4)
+insert into dtest values('y123'); -- fail
+ERROR:  value for domain dtop violates check constraint "dinter_check"
+insert into dtest values('yz23'); -- fail
+ERROR:  value for domain dtop violates check constraint "dinter_check"
+insert into dtest values('xz23'); -- fail
+ERROR:  value for domain dtop violates check constraint "dtop_check"
+drop table dtest;
+drop domain vchar4 cascade;
+NOTICE:  drop cascades to type dinter
+NOTICE:  drop cascades to type dtop
 -- Make sure that constraints of newly-added domain columns are
 -- enforced correctly, even if there's no default value for the new
 -- column. Per bug #1433
@@ -328,3 +378,27 @@ execute s1(0); -- should fail
 ERROR:  value for domain pos_int violates check constraint "pos_int_check"
 execute s1(NULL); -- should fail
 ERROR:  domain pos_int does not allow null values
+-- Check that domain constraints on plpgsql function parameters, results,
+-- and local variables are enforced correctly.
+create function doubledecrement(p1 pos_int) returns pos_int as $$
+declare v pos_int;
+begin
+    v := p1 - 1;
+    return v - 1;
+end$$ language plpgsql;
+select doubledecrement(null); -- fail before call
+ERROR:  domain pos_int does not allow null values
+select doubledecrement(0); -- fail before call
+ERROR:  value for domain pos_int violates check constraint "pos_int_check"
+select doubledecrement(1); -- fail at assignment to v
+ERROR:  value for domain pos_int violates check constraint "pos_int_check"
+CONTEXT:  PL/pgSQL function "doubledecrement" line 3 at assignment
+select doubledecrement(2); -- fail at return
+ERROR:  value for domain pos_int violates check constraint "pos_int_check"
+CONTEXT:  PL/pgSQL function "doubledecrement" while casting return value to function's return type
+select doubledecrement(3); -- good
+ doubledecrement 
+-----------------
+               1
+(1 row)
+
