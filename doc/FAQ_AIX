@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2005/12/08 21:36:50 $
+$Date: 2006/04/05 22:55:05 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -129,14 +129,18 @@ for details about the problem.
 
 Working around the problem:
 ---------------------------
-1) Use the new 8.2devel backend Makefile:
+Try one of the following:
+
+o  Use the new 8.2devel backend Makefile:
+
 After the matter of readline's export list and the problems that were
 occurring on AIX because of it being linked to the backend, a filter
 to exclude unneeded libraries from being linked against the backend was
 added.  Get revision 1.112 of src/backend/Makefile from CVS and replace
 the copy that came with postgres with it.  Build normally.
 
-2) Use libedit:
+o  Use libedit
+
 There are a few libedit ports available online.  Build and install the
 desired port.  If libreadline.a can be found in /lib, /usr/lib, or in
 any location passed to postgres' configure via "--with-libraries=",
@@ -154,14 +158,16 @@ If the version of libedit used calls its "history.h" something other
 than history.h, place a symlink called history.h to it somewhere that
 the C preprocessor will check.
 
-3) Configure with "--without-readline":
+o  Configure with "--without-readline"
+
 postgres can be configured with the option "--without-readline".  When
 this is enabled, postgres will not link against libreadline or libedit.
 psql will not have history, tab completion, or any of the other niceties
 that readline and libedit bring, but external readline wrappers exist
 that add that functionality.
 
-4) Use readline 5.0:
+o  Use readline 5.0
+
 Readline 5.0 does not induce the problems, however it does export
 memcpy and strncpy when built using the easy method of "-bexpall".  Like
 4.3, it is possible to do a build that does not export these symbols,
