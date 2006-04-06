@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.75 2005/01/04 21:03:30 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.76 2006/04/06 18:54:36 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -196,7 +196,8 @@ HISTORY.html: release.sgml
 
 regress_README.html: regress.sgml
 	( echo '<!doctype chapter PUBLIC "-//OASIS//DTD DocBook V4.2//EN" ['; \
-	  echo '<!entity % standalone-ignore "IGNORE"> ]>'; \
+	  echo '<!entity % standalone-ignore "IGNORE">'; \
+	  echo '<!entity % standalone-include "INCLUDE"> ]>'; \
 	  cat $< ) >tempfile_regress_README.sgml
 	$(JADE.text) -V nochunks tempfile_regress_README.sgml >$@
 	rm tempfile_regress_README.sgml

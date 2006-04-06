@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.50 2006/01/22 05:20:32 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.51 2006/04/06 18:54:36 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -313,7 +313,9 @@ exclusion of those that don't.
      If the <literal>errors</literal> test results in a server crash
      at the <literal>select infinite_recurse()</> command, it means that
      the platform's limit on process stack size is smaller than the
-     <xref linkend="guc-max-stack-depth"> parameter indicates.  This
+     <![%standalone-ignore;[<xref linkend="guc-max-stack-depth">]]>
+     <![%standalone-include;[<literal>max_stack_depth</literal>]]>
+     parameter indicates.  This
      can be fixed by running the postmaster under a higher stack
      size limit (4MB is recommended with the default value of 
      <varname>max_stack_depth</>).  If you are unable to do that, an

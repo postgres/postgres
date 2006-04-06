@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.43 2006/04/03 18:47:41 petere Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.44 2006/04/06 18:54:36 petere Exp $
 #
 
 subdir =
@@ -108,6 +108,10 @@ distdir:
 	  fi || exit; \
 	done
 	$(MAKE) -C $(distdir) distprep
+	$(MAKE) -C $(distdir)/doc/src/sgml/ HISTORY INSTALL regress_README
+	cp $(distdir)/doc/src/sgml/HISTORY $(distdir)/
+	cp $(distdir)/doc/src/sgml/INSTALL $(distdir)/
+	cp $(distdir)/doc/src/sgml/regress_README $(distdir)/src/test/regress/README
 	$(MAKE) -C $(distdir) distclean
 	rm -f $(distdir)/README.CVS
 
