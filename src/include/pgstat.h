@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.42 2006/03/05 15:58:53 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.43 2006/04/06 20:38:00 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -271,16 +271,18 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BC94
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BC95
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
+ *
+ * Note: n_backends is not maintained within the collector.  It's computed
+ * when a backend reads the stats file for use.
  * ----------
  */
 typedef struct PgStat_StatDBEntry
 {
 	Oid			databaseid;
-	int			destroy;
 	int			n_backends;
 	PgStat_Counter n_xact_commit;
 	PgStat_Counter n_xact_rollback;
@@ -326,31 +328,12 @@ typedef struct PgStat_StatBeEntry
 
 
 /* ----------
- * PgStat_StatBeDead			Because UDP packets can arrive out of
- *								order, we need to keep some information
- *								about backends that are known to be
- *								dead for some seconds. This info is held
- *								in a hash table of these structs.
- *
- * (This struct is not used in the stats file.)
- * ----------
- */
-typedef struct PgStat_StatBeDead
-{
-	int			procpid;
-	int			backendid;
-	int			destroy;
-} PgStat_StatBeDead;
-
-
-/* ----------
  * PgStat_StatTabEntry			The collector's data per table (or index)
  * ----------
  */
 typedef struct PgStat_StatTabEntry
 {
 	Oid			tableid;
-	int			destroy;
 
 	PgStat_Counter numscans;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.15 2006/03/07 17:32:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.16 2006/04/06 20:38:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,19 +384,7 @@ AutoVacMain(int argc, char *argv[])
 			continue;
 
 		/*
-		 * Don't try to access a database that was dropped.  This could only
-		 * happen if we read the pg_database flat file right before it was
-		 * modified, after the database was dropped from the pg_database
-		 * table.  (This is of course a not-very-bulletproof test, but it's
-		 * cheap to make.  If we do mistakenly choose a recently dropped
-		 * database, InitPostgres will fail and we'll drop out until the next
-		 * autovac run.)
-		 */
-		if (tmp->entry->destroy != 0)
-			continue;
-
-		/*
-		 * Else remember the db with oldest autovac time.
+		 * Remember the db with oldest autovac time.
 		 */
 		if (db == NULL ||
 			tmp->entry->last_autovac_time < db->entry->last_autovac_time)
@@ -417,6 +405,9 @@ AutoVacMain(int argc, char *argv[])
 
 		/*
 		 * Connect to the selected database
+		 *
+		 * Note: if we have selected a just-deleted database (due to using
+		 * stale stats info), we'll fail and exit here.
 		 */
 		InitPostgres(db->name, NULL);
 		SetProcessingMode(NormalProcessing);

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.121 2006/03/05 15:58:36 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.122 2006/04/06 20:38:00 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -68,12 +68,6 @@
  */
 #define PGSTAT_STAT_INTERVAL	500		/* How often to write the status file;
 										 * in milliseconds. */
-
-#define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed objects
-										 * known, to give delayed UDP packets
-										 * time to arrive; in milliseconds. */
-
-#define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY / PGSTAT_STAT_INTERVAL)
 
 #define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart a
 										 * failed statistics collector; in
@@ -141,7 +135,6 @@ static int	pgStatXactRollback = 0;
 
 static TransactionId pgStatDBHashXact = InvalidTransactionId;
 static HTAB *pgStatDBHash = NULL;
-static HTAB *pgStatBeDead = NULL;
 static PgStat_StatBeEntry *pgStatBeTable = NULL;
 static int	pgStatNumBackends = 0;
 
@@ -1552,7 +1545,6 @@ PgstatCollectorMain(int argc, char *argv[])
 	int			readPipe;
 	int			len = 0;
 	struct itimerval timeout;
-	HASHCTL		hash_ctl;
 	bool		need_timer = false;
 
 	MyProcPid = getpid();		/* reset MyProcPid */
@@ -1613,16 +1605,6 @@ PgstatCollectorMain(int argc, char *argv[])
 	 */
 	pgStatRunningInCollector = true;
 	pgstat_read_statsfile(&pgStatDBHash, InvalidOid, NULL, NULL);
-
-	/*
-	 * Create the dead backend hashtable
-	 */
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize = sizeof(int);
-	hash_ctl.entrysize = sizeof(PgStat_StatBeDead);
-	hash_ctl.hash = tag_hash;
-	pgStatBeDead = hash_create("Dead Backends", PGSTAT_BE_HASH_SIZE,
-							   &hash_ctl, HASH_ELEM | HASH_FUNCTION);
 
 	/*
 	 * Create the known backends table
@@ -2085,7 +2067,6 @@ static int
 pgstat_add_backend(PgStat_MsgHdr *msg)
 {
 	PgStat_StatBeEntry *beentry;
-	PgStat_StatBeDead *deadbe;
 
 	/*
 	 * Check that the backend ID is valid
@@ -2111,32 +2092,13 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	if (beentry->procpid > 0 && beentry->procpid == msg->m_procpid)
 		return 0;
 
-	/*
-	 * Lookup if this backend is known to be dead. This can be caused due to
-	 * messages arriving in the wrong order - e.g. postmaster's BETERM message
-	 * might have arrived before we received all the backends stats messages,
-	 * or even a new backend with the same backendid was faster in sending his
-	 * BESTART.
-	 *
-	 * If the backend is known to be dead, we ignore this add.
-	 */
-	deadbe = (PgStat_StatBeDead *) hash_search(pgStatBeDead,
-											   (void *) &(msg->m_procpid),
-											   HASH_FIND, NULL);
-	if (deadbe)
-		return 1;
-
-	/*
-	 * Backend isn't known to be dead. If it's slot is currently used, we have
-	 * to kick out the old backend.
-	 */
-	if (beentry->procpid > 0)
-		pgstat_sub_backend(beentry->procpid);
-
 	/* Must be able to distinguish between empty and non-empty slots */
 	Assert(msg->m_procpid > 0);
 
-	/* Put this new backend into the slot */
+	/*
+	 * Put this new backend into the slot (possibly overwriting an old entry,
+	 * if we missed its BETERM or the BETERM hasn't arrived yet).
+	 */
 	beentry->procpid = msg->m_procpid;
 	beentry->start_timestamp = GetCurrentTimestamp();
 	beentry->activity_start_timestamp = 0;
@@ -2185,7 +2147,6 @@ pgstat_get_db_entry(Oid databaseid, bool create)
 		result->n_xact_rollback = 0;
 		result->n_blocks_fetched = 0;
 		result->n_blocks_hit = 0;
-		result->destroy = 0;
 		result->last_autovac_time = 0;
 
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
@@ -2211,8 +2172,6 @@ static void
 pgstat_sub_backend(int procpid)
 {
 	int			i;
-	PgStat_StatBeDead *deadbe;
-	bool		found;
 
 	/*
 	 * Search in the known-backends table for the slot containing this PID.
@@ -2222,28 +2181,7 @@ pgstat_sub_backend(int procpid)
 		if (pgStatBeTable[i].procpid == procpid)
 		{
 			/*
-			 * That's him. Add an entry to the known to be dead backends. Due
-			 * to possible misorder in the arrival of UDP packets it's
-			 * possible that even if we know the backend is dead, there could
-			 * still be messages queued that arrive later. Those messages must
-			 * not cause our number of backends statistics to get screwed up,
-			 * so we remember for a couple of seconds that this PID is dead
-			 * and ignore them (only the counting of backends, not the table
-			 * access stats they sent).
-			 */
-			deadbe = (PgStat_StatBeDead *) hash_search(pgStatBeDead,
-													   (void *) &procpid,
-													   HASH_ENTER,
-													   &found);
-
-			if (!found)
-			{
-				deadbe->backendid = i + 1;
-				deadbe->destroy = PGSTAT_DESTROY_COUNT;
-			}
-
-			/*
-			 * Declare the backend slot empty.
+			 * That's him.  Mark the backend slot empty.
 			 */
 			pgStatBeTable[i].procpid = 0;
 			return;
@@ -2270,7 +2208,6 @@ pgstat_write_statsfile(void)
 	HASH_SEQ_STATUS tstat;
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatTabEntry *tabentry;
-	PgStat_StatBeDead *deadbe;
 	FILE	   *fpout;
 	int			i;
 	int32		format_id;
@@ -2301,31 +2238,6 @@ pgstat_write_statsfile(void)
 	while ((dbentry = (PgStat_StatDBEntry *) hash_seq_search(&hstat)) != NULL)
 	{
 		/*
-		 * If this database is marked destroyed, count down and do so if it
-		 * reaches 0.
-		 */
-		if (dbentry->destroy > 0)
-		{
-			if (--(dbentry->destroy) == 0)
-			{
-				if (dbentry->tables != NULL)
-					hash_destroy(dbentry->tables);
-
-				if (hash_search(pgStatDBHash,
-								(void *) &(dbentry->databaseid),
-								HASH_REMOVE, NULL) == NULL)
-					ereport(ERROR,
-							(errmsg("database hash table corrupted "
-									"during cleanup --- abort")));
-			}
-
-			/*
-			 * Don't include statistics for it.
-			 */
-			continue;
-		}
-
-		/*
 		 * Write out the DB entry including the number of live backends.
 		 * We don't write the tables pointer since it's of no use to any
 		 * other process.
@@ -2339,30 +2251,6 @@ pgstat_write_statsfile(void)
 		hash_seq_init(&tstat, dbentry->tables);
 		while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&tstat)) != NULL)
 		{
-			/*
-			 * If table entry marked for destruction, same as above for the
-			 * database entry.
-			 */
-			if (tabentry->destroy > 0)
-			{
-				if (--(tabentry->destroy) == 0)
-				{
-					if (hash_search(dbentry->tables,
-									(void *) &(tabentry->tableid),
-									HASH_REMOVE, NULL) == NULL)
-						ereport(ERROR,
-								(errmsg("tables hash table for "
-										"database %u corrupted during "
-										"cleanup --- abort",
-										dbentry->databaseid)));
-				}
-				continue;
-			}
-
-			/*
-			 * At least we think this is still a live table.  Emit its access
-			 * stats.
-			 */
 			fputc('T', fpout);
 			fwrite(tabentry, sizeof(PgStat_StatTabEntry), 1, fpout);
 		}
@@ -2427,26 +2315,6 @@ pgstat_write_statsfile(void)
 				 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
 						PGSTAT_STAT_TMPFILE, PGSTAT_STAT_FILENAME)));
 		unlink(PGSTAT_STAT_TMPFILE);
-	}
-
-	/*
-	 * Clear out the dead backends table
-	 */
-	hash_seq_init(&hstat, pgStatBeDead);
-	while ((deadbe = (PgStat_StatBeDead *) hash_seq_search(&hstat)) != NULL)
-	{
-		/*
-		 * Count down the destroy delay and remove entries where it reaches 0.
-		 */
-		if (--(deadbe->destroy) <= 0)
-		{
-			if (hash_search(pgStatBeDead,
-							(void *) &(deadbe->procpid),
-							HASH_REMOVE, NULL) == NULL)
-				ereport(ERROR,
-						(errmsg("dead-server-process hash table corrupted "
-								"during cleanup --- abort")));
-		}
 	}
 }
 
@@ -2595,7 +2463,6 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 
 				memcpy(dbentry, &dbbuf, sizeof(PgStat_StatDBEntry));
 				dbentry->tables = NULL;
-				dbentry->destroy = 0;
 				dbentry->n_backends = 0;
 
 				/*
@@ -3005,12 +2872,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
 
 	/*
-	 * If the database is marked for destroy, this is a delayed UDP packet and
-	 * not worth being counted.
+	 * Update database-wide stats.
 	 */
-	if (dbentry->destroy > 0)
-		return;
-
 	dbentry->n_xact_commit += (PgStat_Counter) (msg->m_xact_commit);
 	dbentry->n_xact_rollback += (PgStat_Counter) (msg->m_xact_rollback);
 
@@ -3043,8 +2906,6 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 
 			tabentry->blocks_fetched = tabmsg[i].t_blocks_fetched;
 			tabentry->blocks_hit = tabmsg[i].t_blocks_hit;
-
-			tabentry->destroy = 0;
 		}
 		else
 		{
@@ -3085,7 +2946,6 @@ static void
 pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 {
 	PgStat_StatDBEntry *dbentry;
-	PgStat_StatTabEntry *tabentry;
 	int			i;
 
 	/*
@@ -3103,22 +2963,14 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 		return;
 
 	/*
-	 * If the database is marked for destroy, this is a delayed UDP packet and
-	 * the tables will go away at DB destruction.
-	 */
-	if (dbentry->destroy > 0)
-		return;
-
-	/*
 	 * Process all table entries in the message.
 	 */
 	for (i = 0; i < msg->m_nentries; i++)
 	{
-		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
-											   (void *) &(msg->m_tableid[i]),
-													   HASH_FIND, NULL);
-		if (tabentry)
-			tabentry->destroy = PGSTAT_DESTROY_COUNT;
+		/* Remove from hashtable if present; we don't care if it's not. */
+		(void) hash_search(dbentry->tables,
+						   (void *) &(msg->m_tableid[i]),
+						   HASH_REMOVE, NULL);
 	}
 }
 
@@ -3146,10 +2998,20 @@ pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 	dbentry = pgstat_get_db_entry(msg->m_databaseid, false);
 
 	/*
-	 * Mark the database for destruction.
+	 * If found, remove it.
 	 */
 	if (dbentry)
-		dbentry->destroy = PGSTAT_DESTROY_COUNT;
+	{
+		if (dbentry->tables != NULL)
+			hash_destroy(dbentry->tables);
+
+		if (hash_search(pgStatDBHash,
+						(void *) &(dbentry->databaseid),
+						HASH_REMOVE, NULL) == NULL)
+			ereport(ERROR,
+					(errmsg("database hash table corrupted "
+							"during cleanup --- abort")));
+	}
 }
 
 
@@ -3191,7 +3053,6 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	dbentry->n_xact_rollback = 0;
 	dbentry->n_blocks_fetched = 0;
 	dbentry->n_blocks_hit = 0;
-	dbentry->destroy = 0;
 
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(Oid);
