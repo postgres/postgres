@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.69 2005/10/15 02:49:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.69.2.1 2006/04/07 21:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,7 +419,8 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil "
-						  "FROM pg_authid");
+						  "FROM pg_authid "
+						  "ORDER BY 1");
 	else
 		printfPQExpBuffer(buf,
 						  "SELECT usename as rolname, "
@@ -444,7 +445,10 @@ dumpRoles(PGconn *conn)
 						  "-1 as rolconnlimit, "
 						  "null::text as rolpassword, "
 						  "null::abstime as rolvaliduntil "
-						  "FROM pg_group");
+						  "FROM pg_group "
+						  "WHERE NOT EXISTS (SELECT 1 FROM pg_shadow "
+						  " WHERE usename = groname) "
+						  "ORDER BY 1");
 
 	res = executeQuery(conn, buf->data);
 
@@ -556,7 +560,8 @@ dumpRoleMembership(PGconn *conn)
 					   "FROM pg_auth_members a "
 					   "LEFT JOIN pg_authid ur on ur.oid = a.roleid "
 					   "LEFT JOIN pg_authid um on um.oid = a.member "
-					   "LEFT JOIN pg_authid ug on ug.oid = a.grantor");
+					   "LEFT JOIN pg_authid ug on ug.oid = a.grantor "
+					   "ORDER BY 1,2,3");
 
 	if (PQntuples(res) > 0)
 		printf("--\n-- Role memberships\n--\n\n");
@@ -595,7 +600,8 @@ dumpGroups(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	res = executeQuery(conn, "SELECT groname, grolist FROM pg_group");
+	res = executeQuery(conn,
+					   "SELECT groname, grolist FROM pg_group ORDER BY 1");
 
 	if (PQntuples(res) > 0)
 		printf("--\n-- Role memberships\n--\n\n");
@@ -603,34 +609,43 @@ dumpGroups(PGconn *conn)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		char	   *groname = PQgetvalue(res, i, 0);
-		char	   *val;
-		char	   *tok;
+		char	   *grolist = PQgetvalue(res, i, 1);
+		PGresult   *res2;
+		int			j;
 
-		val = strdup(PQgetvalue(res, i, 1));
+		/*
+		 * Array representation is {1,2,3} ... convert to (1,2,3)
+		 */
+		if (strlen(grolist) < 3)
+			continue;
 
-		tok = strtok(val, ",{}");
-		while (tok)
+		grolist = strdup(grolist);
+		grolist[0] = '(';
+		grolist[strlen(grolist) - 1] = ')';
+		printfPQExpBuffer(buf,
+						  "SELECT usename FROM pg_shadow "
+						  "WHERE usesysid IN %s ORDER BY 1",
+						  grolist);
+		free(grolist);
+
+		res2 = executeQuery(conn, buf->data);
+
+		for (j = 0; j < PQntuples(res2); j++)
 		{
-			PGresult   *res2;
-			int			j;
+			char	   *usename = PQgetvalue(res2, j, 0);
 
-			printfPQExpBuffer(buf,
-						 "SELECT usename FROM pg_shadow WHERE usesysid = %s",
-							  tok);
+			/*
+			 * Don't try to grant a role to itself; can happen if old
+			 * installation has identically named user and group.
+			 */
+			if (strcmp(groname, usename) == 0)
+				continue;
 
-			res2 = executeQuery(conn, buf->data);
-
-			for (j = 0; j < PQntuples(res2); j++)
-			{
-				printf("GRANT %s", fmtId(groname));
-				printf(" TO %s;\n", fmtId(PQgetvalue(res2, j, 0)));
-			}
-
-			PQclear(res2);
-
-			tok = strtok(NULL, ",{}");
+			printf("GRANT %s", fmtId(groname));
+			printf(" TO %s;\n", fmtId(usename));
 		}
-		free(val);
+
+		PQclear(res2);
 	}
 
 	PQclear(res);
@@ -656,7 +671,8 @@ dumpTablespaces(PGconn *conn)
 					   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 					   "spclocation, spcacl "
 					   "FROM pg_catalog.pg_tablespace "
-					   "WHERE spcname NOT LIKE 'pg!_%' ESCAPE '!'");
+					   "WHERE spcname !~ '^pg_' "
+					   "ORDER BY 1");
 
 	if (PQntuples(res) > 0)
 		printf("--\n-- Tablespaces\n--\n\n");
