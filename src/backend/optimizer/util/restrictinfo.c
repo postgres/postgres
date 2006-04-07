@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.46 2006/03/05 15:58:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.47 2006/04/07 17:05:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,13 +160,44 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 				 */
 				return NIL;
 			}
-			/* Create AND subclause with RestrictInfos */
-			withris = lappend(withris,
-							  make_ands_explicit(sublist));
-			/* And one without */
-			sublist = get_actual_clauses(sublist);
-			withoutris = lappend(withoutris,
-								 make_ands_explicit(sublist));
+			/*
+			 * If the sublist contains multiple RestrictInfos, we create an
+			 * AND subclause.  If there's just one, we have to check if it's
+			 * an OR clause, and if so flatten it to preserve AND/OR flatness
+			 * of our output.
+			 *
+			 * We construct lists with and without sub-RestrictInfos, so
+			 * as not to have to regenerate duplicate RestrictInfos below.
+			 */
+			if (list_length(sublist) > 1)
+			{
+				withris = lappend(withris, make_andclause(sublist));
+				sublist = get_actual_clauses(sublist);
+				withoutris = lappend(withoutris, make_andclause(sublist));
+			}
+			else
+			{
+				RestrictInfo   *subri = (RestrictInfo *) linitial(sublist);
+
+				Assert(IsA(subri, RestrictInfo));
+				if (restriction_is_or_clause(subri))
+				{
+					BoolExpr   *subor = (BoolExpr *) subri->orclause;
+
+					Assert(or_clause((Node *) subor));
+					withris = list_concat(withris,
+										  list_copy(subor->args));
+					subor = (BoolExpr *) subri->clause;
+					Assert(or_clause((Node *) subor));
+					withoutris = list_concat(withoutris,
+											 list_copy(subor->args));
+				}
+				else
+				{
+					withris = lappend(withris, subri);
+					withoutris = lappend(withoutris, subri->clause);
+				}
+			}
 		}
 
 		/*
