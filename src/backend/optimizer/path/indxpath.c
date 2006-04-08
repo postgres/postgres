@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.5 2006/01/29 17:27:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.6 2006/04/08 21:32:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,6 +242,10 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 	List	   *result = NIL;
 	List	   *all_clauses = NIL;		/* not computed till needed */
 	ListCell   *ilist;
+
+	/* quick exit if no available clauses */
+	if (clauses == NIL)
+		return NIL;
 
 	foreach(ilist, rel->indexlist)
 	{
@@ -1178,16 +1182,20 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * Find all the relevant restriction and join clauses.
+	 * Find all the relevant join clauses.
 	 */
 	clause_list = find_clauses_for_join(root, rel, outer_relids, isouterjoin);
 
 	/*
 	 * Find all the index paths that are usable for this join, except for
-	 * stuff involving OR clauses.
+	 * stuff involving OR clauses.  We can use both
+	 * join and restriction clauses as indexquals, but we insist the path
+	 * use at least one join clause (else it'd not be an "inner indexscan"
+	 * but a plain indexscan, and those have already been considered).
 	 */
 	indexpaths = find_usable_indexes(root, rel,
-									 clause_list, NIL,
+									 clause_list,
+									 rel->baserestrictinfo,
 									 false, true,
 									 outer_relids);
 
@@ -1196,7 +1204,8 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 * clause list.
 	 */
 	bitindexpaths = generate_bitmap_or_paths(root, rel,
-											 clause_list, NIL,
+											 clause_list,
+											 rel->baserestrictinfo,
 											 true,
 											 outer_relids);
 
@@ -1246,13 +1255,12 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * find_clauses_for_join
- *	  Generate a list of clauses that are potentially useful for
+ *	  Generate a list of join clauses that are potentially useful for
  *	  scanning rel as the inner side of a nestloop join.
  *
- * We consider both join and restriction clauses.  Any joinclause that uses
- * only otherrels in the specified outer_relids is fair game.  But there must
- * be at least one such joinclause in the final list, otherwise we return NIL
- * indicating that there isn't any potential win here.
+ * Any joinclause that uses only otherrels in the specified outer_relids is
+ * fair game.  Note that restriction clauses on rel can also be used in
+ * forming index conditions, but we do not include those here.
  */
 static List *
 find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
@@ -1280,28 +1288,28 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 
 	bms_free(join_relids);
 
-	/* if no join clause was matched then forget it, per comments above */
+	/* quick exit if no join clause was matched */
 	if (clause_list == NIL)
 		return NIL;
-
-	/*
-	 * We can also use any plain restriction clauses for the rel.  We put
-	 * these at the front of the clause list for the convenience of
-	 * remove_redundant_join_clauses, which can never remove non-join clauses
-	 * and hence won't be able to get rid of a non-join clause if it appears
-	 * after a join clause it is redundant with.
-	 */
-	clause_list = list_concat(list_copy(rel->baserestrictinfo), clause_list);
 
 	/*
 	 * We may now have clauses that are known redundant.  Get rid of 'em.
 	 */
 	if (list_length(clause_list) > 1)
-	{
 		clause_list = remove_redundant_join_clauses(root,
 													clause_list,
 													isouterjoin);
-	}
+
+	/*
+	 * We might have found join clauses that are known redundant with
+	 * restriction clauses on rel (due to conclusions drawn by implied
+	 * equality deduction; without that, this would obviously never happen).
+	 * Get rid of them too.
+	 */
+	if (rel->baserestrictinfo != NIL)
+		clause_list = select_nonredundant_join_clauses(root, clause_list,
+													   rel->baserestrictinfo,
+													   isouterjoin);
 
 	return clause_list;
 }
