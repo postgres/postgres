@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/sema.c,v 1.12 2006/03/05 15:58:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/sema.c,v 1.13 2006/04/09 19:21:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,7 @@ semget(int semKey, int semNum, int flags)
 	HANDLE	   *sem_handles = NULL;
 	int		   *sem_counts = NULL;
 	int			i;
+	win32_sem_set_hdr *new_set;
 
 	sec_attrs.nLength = sizeof(sec_attrs);
 	sec_attrs.lpSecurityDescriptor = NULL;
@@ -144,7 +145,7 @@ semget(int semKey, int semNum, int flags)
 
 	strcpy(num_part, _itoa(_getpid() * -1, cur_num, 10));		/* For shared memory,
 																 * include the pid */
-	win32_sem_set_hdr *new_set = (win32_sem_set_hdr *) ShmemInitStruct(semname, sem_set_size, &found);
+	new_set = (win32_sem_set_hdr *) ShmemInitStruct(semname, sem_set_size, &found);
 
 	if (found)
 	{

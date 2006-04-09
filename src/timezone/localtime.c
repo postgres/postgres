@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.12 2005/10/15 02:49:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.13 2006/04/09 19:21:34 tgl Exp $
  */
 
 /*
@@ -456,7 +456,7 @@ getrule(const char *strp, struct rule * rulep)
  * calculate the Epoch-relative time that rule takes effect.
  */
 static pg_time_t
-transtime(const pg_time_t janfirst, int year,
+transtime(pg_time_t janfirst, int year,
 		  const struct rule * rulep, long offset)
 {
 	int			leapyear;
