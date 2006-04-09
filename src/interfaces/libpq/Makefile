@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.141 2006/03/05 15:59:08 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.142 2006/04/09 20:27:27 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,10 @@ ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
 
-# Need to recomple any libpgport object files
+# Need to recomple any libpgport object files because we need these
+# object files to use the same compile flags as libpq.  If we used
+# the object files from libpgport, this would not be true on all
+# platforms.
 LIBS := $(patsubst -lpgport,, $(LIBS))
 
 OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
