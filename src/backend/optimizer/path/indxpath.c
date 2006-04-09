@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.203 2006/04/08 21:32:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.204 2006/04/09 18:18:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths);
 static int	bitmap_path_comparator(const void *a, const void *b);
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths);
+static List *pull_indexpath_quals(Path *bitmapqual);
 static bool lists_intersect_ptr(List *list1, List *list2);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol, Oid opclass,
@@ -252,10 +253,6 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 	List	   *result = NIL;
 	List	   *all_clauses = NIL;		/* not computed till needed */
 	ListCell   *ilist;
-
-	/* quick exit if no available clauses */
-	if (clauses == NIL)
-		return NIL;
 
 	foreach(ilist, rel->indexlist)
 	{
@@ -581,9 +578,10 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	 * lower estimated cost.
 	 *
 	 * We also make some effort to detect directly redundant input paths, as
-	 * can happen if there are multiple possibly usable indexes.  For this we
-	 * look only at plain IndexPath and single-element BitmapOrPath inputs
-	 * (the latter can arise in the presence of ScalarArrayOpExpr quals).  We
+	 * can happen if there are multiple possibly usable indexes.  (Another
+	 * way it can happen is that best_inner_indexscan will find the same OR
+	 * join clauses that create_or_index_quals has pulled OR restriction
+	 * clauses out of, and then both versions show up as duplicate paths.)  We
 	 * consider an index redundant if any of its index conditions were already
 	 * used by earlier indexes.  (We could use predicate_implied_by to have a
 	 * more intelligent, but much more expensive, check --- but in most cases
@@ -620,53 +618,31 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 
 	paths = list_make1(patharray[0]);
 	costsofar = bitmap_and_cost_est(root, rel, paths);
-	qualsofar = NIL;
-	if (IsA(patharray[0], IndexPath))
-		qualsofar = list_copy(((IndexPath *) patharray[0])->indexclauses);
-	else if (IsA(patharray[0], BitmapOrPath))
-	{
-		List   *orquals = ((BitmapOrPath *) patharray[0])->bitmapquals;
-
-		if (list_length(orquals) == 1 &&
-			IsA(linitial(orquals), IndexPath))
-		qualsofar = list_copy(((IndexPath *) linitial(orquals))->indexclauses);
-	}
+	qualsofar = pull_indexpath_quals(patharray[0]);
 	lastcell = list_head(paths);	/* for quick deletions */
 
 	for (i = 1; i < npaths; i++)
 	{
 		Path	   *newpath = patharray[i];
-		List	   *newqual = NIL;
+		List	   *newqual;
 		Cost		newcost;
 
-		if (IsA(newpath, IndexPath))
-		{
-			newqual = ((IndexPath *) newpath)->indexclauses;
-			if (lists_intersect_ptr(newqual, qualsofar))
-				continue;		/* redundant */
-		}
-		else if (IsA(newpath, BitmapOrPath))
-		{
-			List   *orquals = ((BitmapOrPath *) newpath)->bitmapquals;
-
-			if (list_length(orquals) == 1 &&
-				IsA(linitial(orquals), IndexPath))
-				newqual = ((IndexPath *) linitial(orquals))->indexclauses;
-			if (lists_intersect_ptr(newqual, qualsofar))
-				continue;		/* redundant */
-		}
-
+		newqual = pull_indexpath_quals(newpath);
+		if (lists_intersect_ptr(newqual, qualsofar))
+			continue;			/* consider it redundant */
+		/* tentatively add newpath to paths, so we can estimate cost */
 		paths = lappend(paths, newpath);
 		newcost = bitmap_and_cost_est(root, rel, paths);
 		if (newcost < costsofar)
 		{
+			/* keep newpath in paths, update subsidiary variables */
 			costsofar = newcost;
-			if (newqual)
-				qualsofar = list_concat(qualsofar, list_copy(newqual));
+			qualsofar = list_concat(qualsofar, newqual);
 			lastcell = lnext(lastcell);
 		}
 		else
 		{
+			/* reject newpath, remove it from paths list */
 			paths = list_delete_cell(paths, lnext(lastcell), lastcell);
 		}
 		Assert(lnext(lastcell) == NULL);
@@ -731,6 +707,62 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	cost_bitmap_heap_scan(&bpath, root, rel, (Path *) &apath, false);
 
 	return bpath.total_cost;
+}
+
+/*
+ * pull_indexpath_quals
+ *
+ * Given the Path structure for a plain or bitmap indexscan, extract a
+ * list of RestrictInfo nodes for all the indexquals used in the Path.
+ *
+ * This is sort of a simplified version of make_restrictinfo_from_bitmapqual;
+ * here, we are not trying to produce an accurate representation of the AND/OR
+ * semantics of the Path, but just find out all the base conditions used.
+ *
+ * The result list contains pointers to the RestrictInfos used in the Path,
+ * but all the list cells are freshly built, so it's safe to destructively
+ * modify the list (eg, by concat'ing it with other lists).
+ */
+static List *
+pull_indexpath_quals(Path *bitmapqual)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	if (IsA(bitmapqual, BitmapAndPath))
+	{
+		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
+
+		foreach(l, apath->bitmapquals)
+		{
+			List	   *sublist;
+
+			sublist = pull_indexpath_quals((Path *) lfirst(l));
+			result = list_concat(result, sublist);
+		}
+	}
+	else if (IsA(bitmapqual, BitmapOrPath))
+	{
+		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
+
+		foreach(l, opath->bitmapquals)
+		{
+			List	   *sublist;
+
+			sublist = pull_indexpath_quals((Path *) lfirst(l));
+			result = list_concat(result, sublist);
+		}
+	}
+	else if (IsA(bitmapqual, IndexPath))
+	{
+		IndexPath  *ipath = (IndexPath *) bitmapqual;
+
+		result = list_copy(ipath->indexclauses);
+	}
+	else
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+
+	return result;
 }
 
 
@@ -1374,20 +1406,24 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * Find all the relevant join clauses.
+	 * Find all the relevant restriction and join clauses.
+	 *
+	 * Note: because we include restriction clauses, we will find indexscans
+	 * that could be plain indexscans, ie, they don't require the join context
+	 * at all.  This may seem redundant, but we need to include those scans in
+	 * the input given to choose_bitmap_and() to be sure we find optimal AND
+	 * combinations of join and non-join scans.  The worst case is that we
+	 * might return a "best inner indexscan" that's really just a plain
+	 * indexscan, causing some redundant effort in joinpath.c.
 	 */
 	clause_list = find_clauses_for_join(root, rel, outer_relids, isouterjoin);
 
 	/*
 	 * Find all the index paths that are usable for this join, except for
-	 * stuff involving OR and ScalarArrayOpExpr clauses.  We can use both
-	 * join and restriction clauses as indexquals, but we insist the path
-	 * use at least one join clause (else it'd not be an "inner indexscan"
-	 * but a plain indexscan, and those have already been considered).
+	 * stuff involving OR and ScalarArrayOpExpr clauses.
 	 */
 	indexpaths = find_usable_indexes(root, rel,
-									 clause_list,
-									 rel->baserestrictinfo,
+									 clause_list, NIL,
 									 false, true,
 									 outer_relids,
 									 SAOP_FORBID);
@@ -1397,8 +1433,7 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 * clauses present in the clause list.
 	 */
 	bitindexpaths = generate_bitmap_or_paths(root, rel,
-											 clause_list,
-											 rel->baserestrictinfo,
+											 clause_list, NIL,
 											 true,
 											 outer_relids);
 
@@ -1448,12 +1483,13 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * find_clauses_for_join
- *	  Generate a list of join clauses that are potentially useful for
+ *	  Generate a list of clauses that are potentially useful for
  *	  scanning rel as the inner side of a nestloop join.
  *
- * Any joinclause that uses only otherrels in the specified outer_relids is
- * fair game.  Note that restriction clauses on rel can also be used in
- * forming index conditions, but we do not include those here.
+ * We consider both join and restriction clauses.  Any joinclause that uses
+ * only otherrels in the specified outer_relids is fair game.  But there must
+ * be at least one such joinclause in the final list, otherwise we return NIL
+ * indicating that there isn't any potential win here.
  */
 static List *
 find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
@@ -1481,28 +1517,28 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 
 	bms_free(join_relids);
 
-	/* quick exit if no join clause was matched */
+	/* if no join clause was matched then forget it, per comments above */
 	if (clause_list == NIL)
 		return NIL;
+
+	/*
+	 * We can also use any plain restriction clauses for the rel.  We put
+	 * these at the front of the clause list for the convenience of
+	 * remove_redundant_join_clauses, which can never remove non-join clauses
+	 * and hence won't be able to get rid of a non-join clause if it appears
+	 * after a join clause it is redundant with.
+	 */
+	clause_list = list_concat(list_copy(rel->baserestrictinfo), clause_list);
 
 	/*
 	 * We may now have clauses that are known redundant.  Get rid of 'em.
 	 */
 	if (list_length(clause_list) > 1)
+	{
 		clause_list = remove_redundant_join_clauses(root,
 													clause_list,
 													isouterjoin);
-
-	/*
-	 * We might have found join clauses that are known redundant with
-	 * restriction clauses on rel (due to conclusions drawn by implied
-	 * equality deduction; without that, this would obviously never happen).
-	 * Get rid of them too.
-	 */
-	if (rel->baserestrictinfo != NIL)
-		clause_list = select_nonredundant_join_clauses(root, clause_list,
-													   rel->baserestrictinfo,
-													   isouterjoin);
+	}
 
 	return clause_list;
 }
