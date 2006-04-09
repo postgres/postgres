@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Mar  6 17:51:00 EST 2006
+Last updated:		Sat Apr  8 23:26:57 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -827,7 +827,14 @@ Indexes
 * Allow accurate statistics to be collected on indexes with more than
   one column or expression indexes, perhaps using per-index statistics
 * Add fillfactor to control reserved free space during index creation
-* Allow the creation of indexes with mixed ascending/descending specifiers
+* Allow the creation of indexes with mixed ascending/descending
+  specifiers
+
+  This is possible now by creating an operator class with reversed sort
+  operators.  One complexity is that NULLs would then appear at the start
+  of the result set, and this might affect certain sort types, like
+  merge join.
+
 * Allow constraint_exclusion to work for UNIONs like it does for
   inheritance, allow it to work for UPDATE and DELETE statements, and allow
   it to be used for all statements with little performance impact

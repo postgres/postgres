@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Mar  6 17:51:00 EST 2006
+Last updated:           Sat Apr  8 23:26:57 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -752,7 +752,13 @@ first.
   </li><li>Allow accurate statistics to be collected on indexes with more than
   one column or expression indexes, perhaps using per-index statistics
   </li><li>Add fillfactor to control reserved free space during index creation
-  </li><li>Allow the creation of indexes with mixed ascending/descending specifiers
+  </li><li>Allow the creation of indexes with mixed ascending/descending
+  specifiers
+<p>  This is possible now by creating an operator class with reversed sort
+  operators.  One complexity is that NULLs would then appear at the start
+  of the result set, and this might affect certain sort types, like
+  merge join.
+</p>
   </li><li>Allow constraint_exclusion to work for UNIONs like it does for
   inheritance, allow it to work for UPDATE and DELETE statements, and allow
   it to be used for all statements with little performance impact
