@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Apr  8 23:26:57 EDT 2006
+Last updated:           Sun Apr  9 16:24:16 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -900,12 +900,16 @@ first.
 <h1><a name="section_18">Startup Time Improvements</a></h1>
 
 <ul>
-  <li>Experiment with multi-threaded backend [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?thread">thread</a>]
+  <li>Experiment with multi-threaded backend for backend creation [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?thread">thread</a>]
 <p>  This would prevent the overhead associated with process creation. Most
   operating systems have trivial process creation time compared to
   database startup overhead, but a few operating systems (Win32,
   Solaris) might benefit from threading.  Also explore the idea of
   a single session using multiple threads to execute a statement faster.
+</p>
+  </li><li>Experiment with multi-threaded backend better resource utilization
+<p>  This would allow a single query to make use of multiple CPU's or
+  multiple I/O channels simultaneously.
 </p>
   </li><li>Add connection pooling
 <p>  It is unclear if this should be done inside the backend code or done

@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr  8 23:26:57 EDT 2006
+Last updated:		Sun Apr  9 16:24:16 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -994,13 +994,18 @@ Locking
 Startup Time Improvements
 =========================
 
-* Experiment with multi-threaded backend [thread]
+* Experiment with multi-threaded backend for backend creation [thread]
 
   This would prevent the overhead associated with process creation. Most
   operating systems have trivial process creation time compared to
   database startup overhead, but a few operating systems (Win32,
   Solaris) might benefit from threading.  Also explore the idea of
   a single session using multiple threads to execute a statement faster.
+
+* Experiment with multi-threaded backend better resource utilization
+
+  This would allow a single query to make use of multiple CPU's or
+  multiple I/O channels simultaneously.
 
 * Add connection pooling
 
