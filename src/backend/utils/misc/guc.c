@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.314 2006/03/07 02:54:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.315 2006/04/10 21:53:38 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -202,8 +202,10 @@ static char *log_error_verbosity_str;
 static char *log_statement_str;
 static char *log_min_error_statement_str;
 static char *log_destination_string;
+#ifdef HAVE_SYSLOG
 static char *syslog_facility_str;
 static char *syslog_ident_str;
+#endif
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
