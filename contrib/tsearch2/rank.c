@@ -748,8 +748,8 @@ rank_cd_def(PG_FUNCTION_ARGS)
 
 	res = calc_rank_cd( weights, txt, query, (PG_NARGS() == 3) ? PG_GETARG_DATUM(2) : DEF_NORM_METHOD);
 	
-	PG_FREE_IF_COPY(txt, 1);
-	PG_FREE_IF_COPY(query, 2);
+	PG_FREE_IF_COPY(txt, 0);
+	PG_FREE_IF_COPY(query, 1);
 
 	PG_RETURN_FLOAT4(res);
 }
