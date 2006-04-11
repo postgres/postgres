@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.367 2006/04/11 19:26:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.368 2006/04/11 19:42:27 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -767,9 +767,9 @@ options "SEMMNS=240"
         If running in FreeBSD jails by enabling <application>sysconf</>'s
         <literal>security.jail.sysvipc_allowed</>, <application>postmaster</>s
         running in different jails should be run by different operating system
-        users.  This improves security because it prevents one jail from
-        interfering with shared memory or semaphores in another, and it
-        allows the PostgreSQL IPC cleanup code to function properly.  
+        users.  This improves security because it prevents non-root users
+        from interfering with shared memory or semaphores in different jail, and it
+        allows the PostgreSQL IPC cleanup code to function properly.
         (In FreeBSD 6.0 and later the IPC cleanup code doesn't properly detect
         processes in other jails, preventing the running of postmasters on the
         same port in different jails.)
