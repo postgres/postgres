@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Fri Feb 24 23:28:40 EST 2006</p>
+<p>原文最終更新日:		Sun Apr  2 23:40:12 EDT 2006</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:pgman at candle.pha.pa.us">pgman at candle.pha.pa.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -737,7 +737,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <table>
 <tr><td>データベースの最大サイズ?</td><td>制限無し (32 TB のデータベースも存在します)</td></tr>
 <tr><td>テーブルの最大サイズ?</td><td>32 TB</td></tr>
-<tr><td>ロウの最大サイズ?</td><td>1.6TB</td></tr>
+<tr><td>ロウの最大サイズ?</td><td>400 GB</td></tr>
 <tr><td>フィールドの最大サイズ?</td><td>1 GB</td></tr>
 <tr><td>テーブル内での最大ロウ数?</td><td>制限無し</td></tr>
 <tr><td>テーブル内での最大カラム数?</td><td>カラムの型によって 250-1600</td></tr>
@@ -754,8 +754,8 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     に分けて保存されますので、ファイルシステムの制限は重要ではありません。
     </p>
 
-    <p> デフォルトのブロックサイズを32kにすることで、最大テーブルサイズ
-    と最大カラム数とを4倍にすることができます。</p> 
+    <p> デフォルトのブロックサイズを32kに増加することで、最大テーブルサイズ
+    と行サイズと最大カラム数とを4倍にすることができます。</p> 
 
     <p>ひとつの制限は、約2,000文字以上の長さのカラムにインデックスを付
     けることができないことです。 幸いにも、そのようなインデックスは実際
@@ -1172,7 +1172,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2006年02月26日
+  最終更新日:	2006年04月03日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
