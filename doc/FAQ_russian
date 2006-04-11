@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Pyatnica 16 sentyabrya 14:07:22 EDT 2005
+   Data poslednego obnovleniya: Pyatnica 24 fevralya 23:28:40 EDT 2006
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -18,19 +18,19 @@
                               Obschie voprosy
                                       
    1.1) CHto takoe PostgreSQL? Kak proiznositsya `eto nazvanie?
-   1.2) Kakovy avtorskie prava na PostgreSQL?
-   1.3) Na kakih platformah rabotaet PostgreSQL?
-   1.4) Gde mozhno vzyat' PostgreSQL?
-   1.5) Gde poluchit' podderzhku?
-   1.6) Kak mne soobschit' ob oshibke?
-   1.7) Kakaya versiya poslednyaya?
-   1.8) Kakaya dokumentaciya imeetsya v nalichii?
+   1.2) Kto upravlyaet PostgreSQL?
+   1.3) Kakovy avtorskie prava na PostgreSQL?
+   1.4) Na kakih platformah rabotaet PostgreSQL?
+   1.5) Gde mozhno vzyat' PostgreSQL?
+   1.6) Kakaya versiya poslednyaya?
+   1.7) Gde poluchit' podderzhku?
+   1.8) Kak mne soobschit' ob oshibke?
    1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
    vozmozhnostyah?
-   1.10) Kak nauchit'sya SQL?
-   1.11) Kak prisoedinitsya k komande razrabotchikov?
-   1.12) Kak sravnivat' PostgreSQL s drugimi SUBD?
-   1.13) Kto upravlyaet PostgreSQL?
+   1.10) Kakaya dokumentaciya imeetsya v nalichii?
+   1.11) Kak nauchit'sya SQL?
+   1.12) Kak prisoedinitsya k komande razrabotchikov?
+   1.13) Kak sravnit' PostgreSQL s drugimi SUBD?
    
                  Voprosy pol'zovatelej po klientskoj chasti
                                       
@@ -43,7 +43,7 @@
                                       
    3.1) Kak mne ustanovit' PostgreSQL v mesto otlichnoe ot
    /usr/local/pgsql?
-   3.2) Kak mne upravlyat' soedineniyami s drugih komp'yuterov?
+   3.2) Kak mne upravlyat' soedineniyami ot drugih komp'yuterov?
    3.3) Kakie nastrojki mne nuzhno sdelat' dlya uluchsheniya
    proizvoditel'nosti?
    3.4) Kakie vozmozhnosti dlya otladki est' v nalichii?
@@ -118,18 +118,28 @@
    Podrobnosti smotrite v FAQ dlya razrabotchikov,
    http://www.PostgreSQL.org/files/documentation/faqs/FAQ_DEV.html
    
-  1.2) Kakovy avtorskie prava na PostgreSQL?
+  1.2) Kto upravlyaet PostgreSQL?
+  
+   Esli vy ischite kakogo-to osobennogo cheloveka, central'nyj komitet
+   ili upravlyayuschuyu kompaniyu, to naprasno --- ih net. U nas est'
+   yadro komiteta i razrabotchikov, rabotayuschih s CVS, no `eti gruppy
+   sluzhat bol'she dlya administrativnyh celej, chem dlya upravleniya.
+   Proekt napryamuyu funkcioniruet s pomosch'yu soobschestva
+   razrabotchikov i pol'zovatelej, k kotoromu mozhet prisoedinitsya
+   kazhdyj. Vsio chto nuzhno -- `eto podpisat'sya na spiski rassylki i
+   uchastvovat' v diskussiyah. (Podrobnosti o tom kak vklyuchit'sya v
+   razrabotku PostgreSQL smotrite v FAQ dlya razrabotchikov.)
+   
+  1.3) Kakovy avtorskie prava na PostgreSQL?
   
    PostgreSQL rasprostranyaetsya po klassicheskoj licenzii BSD. `Eta
    licenziya ne soderzhit ogranichenij na to, kak budet ispol'zovat'sya
    ishodnyj kod. Nam nravitsya `eta licenziya i u nas net namerenij eio
-   menyat'.
-   
-   Vot `eta licenziya BSD, kotoruyu my ispol'zuem:
+   menyat'. Vot `eta licenziya BSD, kotoruyu my ispol'zuem:
    
    Sistema Upravleniya Bazami Dannyh PostgreSQL
    
-   Portions copyright (c) 1996-2005, PostgreSQL Global Development Group
+   Portions copyright (c) 1996-2006, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-1996 Regents of the University of
    California
    
@@ -155,7 +165,7 @@
    PREDOSTAVLYAT' SOPROVOZHDENIE, PODDERZHKU, OBNOVLENIYA, RASSHIRENIYA
    ILI IZMENENIYA.
    
-  1.3) Na kakih platformah rabotaet PostgreSQL?
+  1.4) Na kakih platformah rabotaet PostgreSQL?
   
    Obychno, PostgreSQL mozhet rabotat' na lyuboj sovremennoj platforme
    sovmestimoj s Unix. V instrukcii po ustanovke, vy najdete spisok teh
@@ -174,12 +184,19 @@
    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
    SQL&stype=all&sort=type&dir=%2F.
    
-  1.4) Gde mozhno vzyat' PostgreSQL?
+  1.5) Gde mozhno vzyat' PostgreSQL?
   
    CHerez brauzer, ispol'zuya http://www.postgresql.org/ftp/ i cherez
    ftp, ispol'zuya ftp://ftp.PostgreSQL.org/pub/.
    
-  1.5) Gde poluchit' podderzhku?
+  1.6) Kakaya poslednyaya versiya?
+  
+   Poslednij vypusk PostgreSQL - `eto versiya 8.1.3
+   
+   My planiruem vypuskat' novye starshie versii kazhdyj god, a mladshie
+   versii kazhdye neskol'ko mesyacev.
+   
+  1.7) Gde poluchit' podderzhku?
   
    Soobschestvo PostgreSQL predostavlyaet pomosch' mnozhestvu
    pol'zovatelej cherez E-mail. Osnovnoj web-sajt dlya podpiski na spiski
@@ -198,22 +215,63 @@
    Spisok kommercheskoj podderzhki kompanij dostupen na
    http://techdocs.postgresql.org/companies.php.
    
-  1.6) Kak mne soobschit' ob oshibke?
+  1.8) Kak mne soobschit' ob oshibke?
   
    Posetite stranichku so special'noj formoj otchiota ob oshibke v
    PostgreSQL po adresu: http://www.postgresql.org/support/submitbug.
-   
    Takzhe prover'te nalichie bolee svezhej versii PostgreSQL na nashem
    FTP sajte ftp://ftp.PostgreSQL.org/pub/.
    
-  1.7) Kakaya poslednyaya versiya?
+   Na oshibki, uvedomlenie o kotoryh byli sdelany cherez special'nuyu
+   formu ili otpravlennye v kakoj-libo spisok rassylki PostgreSQL,
+   obychno generiruetsya odin iz sleduyuschih otvetov:
+     * `Eto ne oshibka i pochemu
+     * `Eto izvestnaya oshibka i ona uzhe est' v spiske TODO
+     * Dannaya oshibka byla ispravlena v tekuschem vypuske
+     * Dannaya oshibka byla ispravlena, no ispravlenie poka ne popalo v
+       oficial'nyj vypusk
+     * Zaprashivaetsya bolee detal'naya informaciya:
+          + Operacionnaya sistema
+          + Versiya PostgreSQL
+          + Test, vosproizvodyaschij oshibku
+          + Otladochnaya informaciya
+          + Vyvod backtrace otladchika
+     * `Eto novaya oshibka. Mozhet proizojti sleduyuschee:
+          + Budet sozdano ispravlenie, kotoroe budet vklyucheno v
+            sleduyuschij vypusk
+          + Oshibka ne mozhet byt' ispravlena nemedlenno i budet
+            dobavlena v spisok TODO
+       
+  1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
+  vozmozhnostyah?
   
-   Poslednij vypusk PostgreSQL - `eto versiya 8.0.3
+   PostgreSQL podderzhivaet rasshirennyj podklass SQL:2003. Smotrite nash
+   spisok TODO na predmet izvestnyh oshibok, otsutstvuyuschih
+   vozmozhnostej i buduschih planov.
    
-   My planiruem vypuskat' novye starshie versii kazhdyj god, a mladshie
-   versii kazhdye neskol'ko mesyacev.
+   Na zapros kakoj-libo vozmozhnosti obychno prihodyat sleduyuschie
+   otvety:
+     * Dannaya vozmozhnost' uzhe est' v spiske TODO
+     * Dannaya vozmozhnost' nezhelatel'na potomu chto:
+          + Ona dubliruet suschestvuyuschuyu funkcional'nost', kotoraya
+            sleduet standartu SQL
+          + Dannaya vozmozhnost' sil'no uslozhnila by kod, no dala by
+            malen'kuyu vygodu
+          + Dannaya vozmozhnost' nebezopasna ili nenadiozhna
+     * Dannaya novaya vozmozhnost' dobavlena v spisok TODO
+       
+   PostgreSQL ne ispol'zuet kakuyu-libo sistemu otslezhivaniya oshibok,
+   potomu chto my obnaruzhili, chto ispol'zovanie pryamogo obrascheniya
+   po `elektronnoj pochte i obnovlyaemogo spiska TODO yavlyaetsya bolee
+   `effektivnym. Na praktike, oshibki v programmnom obespechenii
+   sohranyayutsya ochen' nedolgo, a oshibki, kotorye vazhny bol'shomu
+   kolichestvu pol'zovatelej ispravlyayutsya momental'no. Est' tol'ko
+   odno mesto, gde mozhno najti vse izmeneniya, uluchsheniya i
+   ispravleniya, sdelannye v vypuske PostgreSQL - `eto zhurnaly
+   soobschenij sistemy kontrolya versij CVS. Dazhe zamechaniya k vypuskam
+   ne soderzhat vse izmeneniya, sdelannye v programmnom obespechenii.
    
-  1.8) Kakaya dokumentaciya imeetsya v nalichii?
+  1.10) Kakaya dokumentaciya imeetsya v nalichii?
   
    PostgreSQL soderzhit mnogo dokumentacii, vklyuchaya bol'shoe
    rukovodstvo, stranicy `elektronnogo rukovodstva man i nekotorye
@@ -237,14 +295,7 @@
    
    Nash sajt soderzhit esche bol'she informacii.
    
-  1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
-  vozmozhnostyah?
-  
-   PostgreSQL podderzhivaet rasshirennyj podklass SQL-92. Smotrite nash
-   spisok TODO na predmet izvestnyh oshibok, otsutstvuyuschih
-   vozmozhnostej i buduschih planov.
-   
-  1.10) Kak mne nauchit'sya SQL?
+  1.11) Kak mne nauchit'sya SQL?
   
    Vo-pervyh, voz'mite odnu iz knig po PostgreSQL, o kotoryh govorilos'
    vyshe. Esche odin uchebnik - `eto kniga "Teach Yourself SQL in 21
@@ -258,11 +309,11 @@
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
    i na http://sqlcourse.com.
    
-  1.11) Kak prisoedinitsya k komande razrabotchikov?
+  1.12) Kak prisoedinitsya k komande razrabotchikov?
   
    Smotrite FAQ dlya razrabotchikov.
    
-  1.12) Kak sravnivat' PostgreSQL s drugimi SUBD?
+  1.13) Kak sravnit' PostgreSQL s drugimi SUBD?
   
    Suschestvuet neskol'ko metodov sravneniya programmnogo obespecheniya:
    vozmozhnosti, proizvoditel'nost', nadezhnost', podderzhka i cena.
@@ -304,7 +355,7 @@
           podderzhku PostgreSQL prevoshodyaschej drugie SUBD.
           Suschestvuet kommercheskaya podderzhka po rezul'tam voznikshih
           incidentov, kotoraya dostupna dlya teh komu ona nuzhna.
-          (Smotrite Sekciyu 1.5.)
+          (Smotrite Sekciyu 1.7.)
           
    Cena
           Nash produkt besplaten kak dlya kommercheskogo tak, i ne dlya
@@ -312,18 +363,6 @@
           nash produkt bez ogranichenij, za isklyucheniem teh, chto
           opisyvayutsya v nashej licenzii stilya BSD, kotoraya privedena
           vyshe.
-          
-  1.13) Kto upravlyaet PostgreSQL?
-  
-   Esli vy ischite kakogo-to osobennogo cheloveka, central'nyj komitet
-   ili upravlyayuschuyu kompaniyu, to naprasno --- ih net. U nas est'
-   yadro komiteta i razrabotchikov, rabotayuschih s CVS, no `eti gruppy
-   sluzhat bol'she dlya administrativnyh celej, chem dlya upravleniya.
-   Proekt napryamuyu funkcioniruet s pomosch'yu soobschestva
-   razrabotchikov i pol'zovatelej, k kotoromu mozhet prisoedinitsya
-   kazhdyj. Vsio chto nuzhno -- `eto podpisat'sya na spiski rassylki i
-   uchastvovat' v diskussiyah. (Podrobnosti o tom kak vklyuchit'sya v
-   razrabotku PostgreSQL smotrite v FAQ dlya razrabotchikov.)
      _________________________________________________________________
    
                  Voprosy pol'zovatelej po klientskoj chasti
@@ -365,7 +404,7 @@
   
    Zadajte opciyu --prefix kogda zapuskaete configure.
    
-  3.2) Kak mne upravlyat' soedineniyami s drugih komp'yuterov?
+  3.2) Kak mne upravlyat' soedineniyami ot drugih komp'yuterov?
   
    Po umolchaniyu, PostgreSQL razreshaet tol'ko soedineniya na lokal'noj
    mashine cherez sokety domena Unix ili TCP/IP soedineniya. Dlya togo,
@@ -555,7 +594,7 @@
    kotoryh celoe chislo i tekstovoe opisanie. Pri `etom dlina teksta, v
    srednem, sostavlyaet 20 bajt. Razmer prostogo fajla sostavit 2.8 MB.
    Razmer bazy PostgreSQL, soderzhaschej `eti zhe dannye sostavit
-   priblizitel'no 6.4 MB iz kotoryh:
+   priblizitel'no 5.6 MB iz kotoryh:
     28 bajt: na kazhdyj zagolovok stroki v tablice (priblizitel'no)
   + 24 bajta: odno pole s celochislennym tipom i odno tekstovoe pole
   +  4 bajta: ukazatel' na stranice dlya vsej tablichnoj stroki
@@ -605,14 +644,8 @@
    sortirovkoj obychno bystree, chem poisk po indeksam v bol'shoj
    tablice. Odnako, ORDER BY chasto kombiniruetsya s LIMIT i v `etom
    sluchae indeks budet ispol'zovat'sya, poskol'ku pri vypolnenii budet
-   vozvraschat'sya nebol'shaya chast' tablicy. Fakticheski MAX() i MIN()
-   ne ispol'zuyut indeksy, no indeks ispol'zuetsya pri postroenii
-   zaprosov s ORDER BY i LIMIT:
-    SELECT col
-    FROM tab
-    ORDER BY col [ DESC ]
-    LIMIT 1;
-
+   vozvraschat'sya nebol'shaya chast' tablicy.
+   
    Esli vam kazhetsya, chto optimizator nekorrektno vybiraet
    posledovatel'nyj perebor, ispol'zujte SET enable_seqscan TO 'off' i
    zapustite zapros snova, chtoby uvidet', dejstvitel'no li skanirovanie
