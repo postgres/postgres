@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.369 2006/04/11 19:45:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.370 2006/04/11 21:04:52 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -764,7 +764,7 @@ options "SEMMNS=240"
        </para>
 
        <para>
-        If running in FreeBSD jails by enabling <application>sysconf</>'s
+        If running in FreeBSD jails by enabling <application>sysctl</>'s
         <literal>security.jail.sysvipc_allowed</>, <application>postmaster</>s
         running in different jails should be run by different operating system
         users.  This improves security because it prevents non-root users
