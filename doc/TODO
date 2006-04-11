@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 10 19:15:36 EDT 2006
+Last updated:		Mon Apr 10 22:08:01 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -312,7 +312,7 @@ Functions
 	o to_char(INTERVAL '3 years 5 months','MM') => 41
 
 * -Add sleep() function, remove from regress.c
-* Allow user-defined functions retuning a domain value to enforce domain
+* -Allow user-defined functions retuning a domain value to enforce domain
   constraints
 * Add SPI_gettypmod() to return the typemod for a TupleDesc
 
