@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Apr  2 23:40:12 EDT 2006</P>
+    <P>Last updated: Wed Apr 12 14:55:59 EDT 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -674,7 +674,8 @@ table?</TD><TD>unlimited</TD></TR>
     important.</P>
 
     <P>The maximum table size, row size, and maximum number of columns
-    can be quadrupled by increasing the default block size to 32k.</P>
+    can be quadrupled by increasing the default block size to 32k.  The
+    maximum table size can also be increased using table partitioning.</P>
 
     <P>One limitation is that indexes can not be created on columns
     longer than about 2,000 characters. Fortunately, such indexes are
