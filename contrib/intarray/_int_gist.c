@@ -195,7 +195,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 					min = (dr[i] - dr[i - 1]);
 					cand = i;
 				}
-			memmove((void *) &dr[cand - 1], (void *) &dr[cand + 1], (len - cand - 1) * sizeof(int));
+			memmove((void *) &dr[cand - 1], (void *) &dr[cand + 1], (len - cand - 1) * sizeof(int32));
 			len -= 2;
 		}
 		r = resize_intArrayType(r, len);
