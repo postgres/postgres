@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 12 14:55:59 EDT 2006
+   Last updated: Wed Apr 12 16:03:39 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -25,7 +25,7 @@
    1.9) How do I find out about known bugs or missing features?
    1.10) What documentation is available?
    1.11) How can I learn SQL?
-   1.12) How do I join the development team?
+   1.12) How do I submit a patch or join the development team?
    1.13) How does PostgreSQL compare to other DBMSs?
    
                            User Client Questions
@@ -275,7 +275,7 @@
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
    and at http://sqlcourse.com.
    
-  1.12) How do I join the development team?
+  1.12) How do I submit a patch or join the development team?
   
    See the Developer's FAQ.
    
