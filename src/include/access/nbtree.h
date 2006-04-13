@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.95 2006/04/01 03:03:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.96 2006/04/13 03:53:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,6 +206,7 @@ typedef struct xl_btree_metadata
 typedef struct xl_btree_insert
 {
 	xl_btreetid target;			/* inserted tuple id */
+	/* BlockNumber downlink field FOLLOWS IF NOT XLOG_BTREE_INSERT_LEAF */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_INSERT_META */
 	/* INDEX TUPLE FOLLOWS AT END OF STRUCT */
 } xl_btree_insert;

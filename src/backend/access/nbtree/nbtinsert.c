@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.134 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.135 2006/04/13 03:53:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,9 +323,9 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
  *			   child page on the parent.
  *			+  updates the metapage if a true root or fast root is split.
  *
- *		On entry, we must have the right buffer on which to do the
- *		insertion, and the buffer must be pinned and locked.  On return,
- *		we will have dropped both the pin and the write lock on the buffer.
+ *		On entry, we must have the right buffer in which to do the
+ *		insertion, and the buffer must be pinned and write-locked.  On return,
+ *		we will have dropped both the pin and the lock on the buffer.
  *
  *		If 'afteritem' is >0 then the new tuple must be inserted after the
  *		existing item of that number, noplace else.  If 'afteritem' is 0
@@ -527,6 +527,8 @@ _bt_insertonpg(Relation rel,
 		 */
 		if (split_only_page)
 		{
+			Assert(!P_ISLEAF(lpageop));
+
 			metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 			metapg = BufferGetPage(metabuf);
 			metad = BTPageGetMeta(metapg);
@@ -557,10 +559,11 @@ _bt_insertonpg(Relation rel,
 		if (!rel->rd_istemp)
 		{
 			xl_btree_insert xlrec;
+			BlockNumber	xldownlink;
 			xl_btree_metadata xlmeta;
 			uint8		xlinfo;
 			XLogRecPtr	recptr;
-			XLogRecData rdata[3];
+			XLogRecData rdata[4];
 			XLogRecData *nextrdata;
 			IndexTupleData trunctuple;
 
@@ -571,6 +574,22 @@ _bt_insertonpg(Relation rel,
 			rdata[0].len = SizeOfBtreeInsert;
 			rdata[0].buffer = InvalidBuffer;
 			rdata[0].next = nextrdata = &(rdata[1]);
+
+			if (P_ISLEAF(lpageop))
+				xlinfo = XLOG_BTREE_INSERT_LEAF;
+			else
+			{
+				xldownlink = ItemPointerGetBlockNumber(&(itup->t_tid));
+				Assert(ItemPointerGetOffsetNumber(&(itup->t_tid)) == P_HIKEY);
+
+				nextrdata->data = (char *) &xldownlink;
+				nextrdata->len = sizeof(BlockNumber);
+				nextrdata->buffer = InvalidBuffer;
+				nextrdata->next = nextrdata + 1;
+				nextrdata++;
+
+				xlinfo = XLOG_BTREE_INSERT_UPPER;
+			}
 
 			if (BufferIsValid(metabuf))
 			{
@@ -584,12 +603,9 @@ _bt_insertonpg(Relation rel,
 				nextrdata->buffer = InvalidBuffer;
 				nextrdata->next = nextrdata + 1;
 				nextrdata++;
+
 				xlinfo = XLOG_BTREE_INSERT_META;
 			}
-			else if (P_ISLEAF(lpageop))
-				xlinfo = XLOG_BTREE_INSERT_LEAF;
-			else
-				xlinfo = XLOG_BTREE_INSERT_UPPER;
 
 			/* Read comments in _bt_pgaddtup */
 			if (!P_ISLEAF(lpageop) && newitemoff == P_FIRSTDATAKEY(lpageop))
@@ -633,7 +649,7 @@ _bt_insertonpg(Relation rel,
 /*
  *	_bt_split() -- split a page in the btree.
  *
- *		On entry, buf is the page to split, and is write-locked and pinned.
+ *		On entry, buf is the page to split, and is pinned and write-locked.
  *		firstright is the item index of the first item to be moved to the
  *		new right page.  newitemoff etc. tell us about the new item that
  *		must be inserted along with the data from the old page.
@@ -860,7 +876,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		 * Direct access to page is not good but faster - we should implement
 		 * some new func in page API.  Note we only store the tuples
 		 * themselves, knowing that the item pointers are in the same order
-		 * and can be reconstructed by scanning the tuples.
+		 * and can be reconstructed by scanning the tuples.  See comments
+		 * for _bt_restore_page().
 		 */
 		xlrec.leftlen = ((PageHeader) leftpage)->pd_special -
 			((PageHeader) leftpage)->pd_upper;
@@ -1445,6 +1462,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * Insert the left page pointer into the new root page.  The root page is
 	 * the rightmost page on its level so there is no "high key" in it; the
 	 * two items will go into positions P_HIKEY and P_FIRSTKEY.
+	 *
+	 * Note: we *must* insert the two items in item-number order, for the
+	 * benefit of _bt_restore_page().
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add leftkey to new root page");
