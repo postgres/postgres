@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49.4.2 2004/11/24 22:44:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.49.4.3 2006/04/13 18:01:53 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -480,11 +480,36 @@ similar_escape(PG_FUNCTION_ARGS)
 			  errhint("Escape string must be empty or one character.")));
 	}
 
-	/* We need room for ^, $, and up to 2 output bytes per input byte */
-	result = (text *) palloc(VARHDRSZ + 2 + 2 * plen);
+	/*----------
+	 * We surround the transformed input string with
+	 *			***:^(?: ... )$
+	 * which is bizarre enough to require some explanation.  "***:" is a
+	 * director prefix to force the regex to be treated as an ARE regardless
+	 * of the current regex_flavor setting.  We need "^" and "$" to force
+	 * the pattern to match the entire input string as per SQL99 spec.  The
+	 * "(?:" and ")" are a non-capturing set of parens; we have to have
+	 * parens in case the string contains "|", else the "^" and "$" will
+	 * be bound into the first and last alternatives which is not what we
+	 * want, and the parens must be non capturing because we don't want them
+	 * to count when selecting output for SUBSTRING.
+	 *----------
+	 */
+
+	/*
+	 * We need room for the prefix/postfix plus as many as 2 output bytes per
+	 * input byte
+	 */
+	result = (text *) palloc(VARHDRSZ + 10 + 2 * plen);
 	r = VARDATA(result);
 
+	*r++ = '*';
+	*r++ = '*';
+	*r++ = '*';
+	*r++ = ':';
 	*r++ = '^';
+	*r++ = '(';
+	*r++ = '?';
+	*r++ = ':';
 
 	while (plen > 0)
 	{
@@ -524,6 +549,7 @@ similar_escape(PG_FUNCTION_ARGS)
 		p++, plen--;
 	}
 
+	*r++ = ')';
 	*r++ = '$';
 
 	VARATT_SIZEP(result) = r - ((unsigned char *) result);
