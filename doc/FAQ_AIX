@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2006/04/05 22:55:05 $
+$Date: 2006/04/13 11:41:02 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -113,6 +113,68 @@ libraries, the following URLs may help you...
 http://www.faqs.org/faqs/aix-faq/part4/section-22.html
 
 http://www.han.de/~jum/aix/ldd.c
+
+---
+From: Christopher Browne <cbbrowne@ca.afilias.info>
+Date: 2005-11-02
+
+On AIX 5.3 ML3 (e.g. maintenance level 5300-03), there is some problem
+with the handling of the pointer to memcpy.  It is speculated that
+this relates to some linker bug that may have been introduced between
+5300-02 and 5300-03, but we have so far been unable to track down the
+cause.
+
+At any rate, the following patch, which "unwraps" the function
+reference, has been observed to allow PG 8.1 pre-releases to pass
+regression tests.
+
+The same behaviour (albeit with varying underlying functions to
+"blame") has been observed when compiling with either GCC 4.0 or IBM
+XLC.
+
+------------ per Seneca Cunningham -------------------
+
+The following patch works on the AIX 5.3 ML3 box here and didn't cause
+any problems with postgres on the x86 desktop.  It's just a cleaner
+version of what I tried earlier.
+
+*** dynahash.c.orig Tue Nov  1 19:41:42 2005
+--- dynahash.c  Tue Nov  1 20:30:33 2005
+***************
+*** 670,676 ****
+
+
+            /* copy key into record */
+            currBucket->hashvalue = hashvalue;
+!           hashp->keycopy(ELEMENTKEY(currBucket), keyPtr, keysize);
+
+
+            /* caller is expected to fill the data field on return */
+
+
+--- 670,687 ----
+
+
+            /* copy key into record */
+            currBucket->hashvalue = hashvalue;
+!           if (hashp->keycopy == memcpy)
+!           {
+!               memcpy(ELEMENTKEY(currBucket), keyPtr, keysize);
+!           }
+!           else if (hashp->keycopy == strncpy)
+!           {
+!               strncpy(ELEMENTKEY(currBucket), keyPtr, keysize);
+!           }
+!           else
+!           {
+!               hashp->keycopy(ELEMENTKEY(currBucket), keyPtr, keysize);
+!           }
+
+
+            /* caller is expected to fill the data field on return */
+
+------------ per Seneca Cunningham -------------------
+
 ---
 
 AIX, readline, and postgres 8.1.x:
@@ -181,6 +243,124 @@ References
   http://www.redbooks.ibm.com/redbooks/pdfs/sg246034.pdf
   http://www.redbooks.ibm.com/abstracts/sg246034.html?Open
   
+"Developing and Porting C and C++ Applications on AIX"
+  IBM Redbook
+  http://www.redbooks.ibm.com/redbooks/pdfs/sg245674.pdf
+  http://www.redbooks.ibm.com/abstracts/sg245674.html?Open
+
+-----
+
+AIX Memory Management: An Overview
+==================================
+
+by Seneca Cunningham...
+
+AIX can be somewhat peculiar with regards to the way it does memory
+management.  You can have a server with many multiples of gigabytes of
+RAM free, but still get out of memory or address space errors when
+running applications.
+
+Two examples of AIX-specific memory problems
+--------------------------------------------
+Both examples were from systems with gigabytes of free RAM.
+
+a) createlang failing with unusual errors
+    Running as the owner of the postgres install:
+        -bash-3.00$ createlang plpgsql template1
+        createlang: language installation failed: ERROR:  could not load library
+        "/opt/dbs/pgsql748/lib/plpgsql.so": A memory address is not in the 
+        address space for the process.
+    
+    Running as a non-owner in the group posessing the postgres install:
+        -bash-3.00$ createlang plpgsql template1
+        createlang: language installation failed: ERROR:  could not load library 
+        "/opt/dbs/pgsql748/lib/plpgsql.so": Bad address
+
+b) out of memory errors in the postgres logs
+    Every memory allocation near or greater than 256MB failing.
+
+
+The cause of these problems
+----------------------------
+
+The overall cause of all these problems is the default bittedness and
+memory model used by the postmaster process.
+
+By default, all binaries built on AIX are 32-bit.  This does not
+depend upon hardware type or kernel in use.  These 32-bit processes
+are limited to 4GB of memory laid out in 256MB segments using one of a
+few models.  The default allows for less than 256MB in the heap as it
+shares a single segment with the stack.
+
+In the case of example a), above, check your umask and the permissions
+of the binaries in your postgres install.  The binaries involved in
+that example were 32-bit and installed as mode 750 instead of 755.
+Due to the permissions being set in this fashion, only the owner or a
+member of the possessing group can load the library.  Since it isn't
+world-readable, the loader places the object into the process' heap
+instead of the shared library segments where it would otherwise be
+placed.
+
+Solutions and workarounds
+-------------------------
+In this section, all build flag syntax is presented for gcc.
+
+The "ideal" solution for this is to use a 64-bit build of postgres,
+but that's not always practical.  Systems with 32-bit processors can
+build, but not run, 64-bit binaries.  
+
+If a 32-bit binary is desired, set LDR_CNTRL to "MAXDATA=0xn0000000",
+where 1 <= n <= 8, before starting the postmaster and try different
+values and postgresql.conf settings to find a configuration that works
+satisfactorily.  This use of LDR_CNTRL tells AIX that you want the
+postmaster to have $MAXDATA bytes set aside for the heap, allocated in
+256MB segments.
+
+When you find a workable configuration, ldedit can be used to modify
+the binaries so that they default to using the desired heap size.
+
+PostgreSQL might also be rebuilt, passing configure
+LDFLAGS="-Wl,-bmaxdata:0xn0000000" to achieve the same effect.
+
+For a 64-bit build, set OBJECT_MODE to 64 and pass CC="gcc -maix64"
+and LDFLAGS="-Wl,-bbigtoc" to configure.  If you omit the export of
+OBJECT_MODE, your build may fail with linker errors.  When OBJECT_MODE
+is set, it tells AIX's build utilities such as ar, as, and ld what
+type of objects to default to handling.
+
+Overcommit
+----------
+
+By default, overcommit of paging space can happen.  While I have not
+seen this occur, AIX will kill processes when it runs out of memory
+and the overcommit is accessed.  The closest to this that I have seen
+is fork failing because the system decided that there was not enough
+memory for another process.  Like many other parts of AIX, the paging
+space allocation method and out-of-memory kill is configurable on a
+system- or process-wide basis if this becomes a problem.
+
+References and resources
+------------------------
+"Large Program Support"
+  AIX Documentation: General Programming Concepts: Writing and Debugging Programs
+  http://publib.boulder.ibm.com/infocenter/pseries/topic/com.ibm.aix.doc/aixprggd/genprogc/lrg_prg_support.htm
+
+"Program Address Space Overview"
+  AIX Documentation: General Programming Concepts: Writing and Debugging Programs
+  http://publib.boulder.ibm.com/infocenter/pseries/topic/com.ibm.aix.doc/aixprggd/genprogc/address_space.htm
+
+"Performance Overview of the Virtual Memory Manager (VMM)"
+  AIX Documentation: Performance Management Guide
+  http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/resmgmt2.htm
+
+"Page Space Allocation"
+  AIX Documentation: Performance Management Guide
+  http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/memperf7.htm
+
+"Paging-space thresholds tuning"
+  AIX Documentation: Performance Management Guide
+  http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/memperf6.htm
+
 "Developing and Porting C and C++ Applications on AIX"
   IBM Redbook
   http://www.redbooks.ibm.com/redbooks/pdfs/sg245674.pdf
