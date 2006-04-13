@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 12 16:03:39 EDT 2006
+   Last updated: Thu Apr 13 08:08:50 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -272,8 +272,8 @@
    
    There is also a nice tutorial at
    http://www.intermedia.net/support/sql/sqltut.shtm, at
-   http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
-   and at http://sqlcourse.com.
+   http://mysite.verizon.net/Graeme_Birchall/id1.html, and at
+   http://sqlcourse.com.
    
   1.12) How do I submit a patch or join the development team?
   
