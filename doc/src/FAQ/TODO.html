@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Apr 10 22:08:01 EDT 2006
+Last updated:           Thu Apr 13 06:50:02 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -915,7 +915,10 @@ first.
 </p>
   </li><li>Experiment with multi-threaded backend better resource utilization
 <p>  This would allow a single query to make use of multiple CPU's or
-  multiple I/O channels simultaneously.
+  multiple I/O channels simultaneously.  One idea is to create a
+  background reader that can pre-fetch sequential and index scan
+  pages needed by other backends.  This could be expanded to allow
+  concurrent reads from multiple devices in a partitioned table.
 </p>
   </li><li>Add connection pooling
 <p>  It is unclear if this should be done inside the backend code or done

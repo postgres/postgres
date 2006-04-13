@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 10 22:08:01 EDT 2006
+Last updated:		Thu Apr 13 06:50:02 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1012,7 +1012,10 @@ Startup Time Improvements
 * Experiment with multi-threaded backend better resource utilization
 
   This would allow a single query to make use of multiple CPU's or
-  multiple I/O channels simultaneously.
+  multiple I/O channels simultaneously.  One idea is to create a
+  background reader that can pre-fetch sequential and index scan
+  pages needed by other backends.  This could be expanded to allow
+  concurrent reads from multiple devices in a partitioned table.
 
 * Add connection pooling
 
