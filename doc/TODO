@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Apr 13 06:50:02 EDT 2006
+Last updated:		Fri Apr 14 18:26:14 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -55,7 +55,7 @@ Administration
   This would allow administrators to see more detailed information from
   specific sections of the backend, e.g. checkpoints, autovacuum, etc.
 
-* Re-enable the GUC full_page_writes in 8.2 when reliability issues have
+* -Re-enable the GUC full_page_writes in 8.2 when reliability issues have
   been addressed
 
 
