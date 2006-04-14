@@ -11,13 +11,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.98 2006/03/30 22:11:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.99 2006/04/14 20:27:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "access/xlogutils.h"
 #include "commands/tablespace.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
@@ -942,6 +943,9 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 					 reln->smgr_rnode.dbNode,
 					 reln->smgr_rnode.relNode,
 					 xlrec->blkno)));
+
+		/* Also tell xlogutils.c about it */
+		XLogTruncateRelation(xlrec->rnode, xlrec->blkno);
 	}
 	else
 		elog(PANIC, "smgr_redo: unknown op code %u", info);

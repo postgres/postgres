@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.234 2006/04/05 03:34:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.235 2006/04/14 20:27:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -980,7 +980,8 @@ XLogCheckBuffer(XLogRecData *rdata,
 	 */
 	*lsn = page->pd_lsn;
 
-	if (XLByteLE(page->pd_lsn, RedoRecPtr))
+	if (fullPageWrites &&
+		XLByteLE(page->pd_lsn, RedoRecPtr))
 	{
 		/*
 		 * The page needs to be backed up, so set up *bkpb
@@ -4785,6 +4786,12 @@ StartupXLOG(void)
 			if (RmgrTable[rmid].rm_cleanup != NULL)
 				RmgrTable[rmid].rm_cleanup();
 		}
+
+		/*
+		 * Check to see if the XLOG sequence contained any unresolved
+		 * references to uninitialized pages.
+		 */
+		XLogCheckInvalidPages();
 
 		/*
 		 * Reset pgstat data, because it may be invalid after recovery.
