@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.163 2006/03/05 15:58:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.164 2006/04/14 03:38:55 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -1116,10 +1116,12 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 }
 
 /*
- * Remove a proc from the wait-queue it is on
- * (caller must know it is on one).
+ * Remove a proc from the wait-queue it is on (caller must know it is on one).
+ * This is only used when the proc has failed to get the lock, so we set its
+ * waitStatus to STATUS_ERROR.
  *
- * Appropriate partition lock must be held by caller.
+ * Appropriate partition lock must be held by caller.  Also, caller is
+ * responsible for signaling the proc if needed.
  *
  * NB: this does not clean up any locallock object that may exist for the lock.
  */
@@ -1132,6 +1134,7 @@ RemoveFromWaitQueue(PGPROC *proc, int partition)
 	LOCKMETHODID lockmethodid = LOCK_LOCKMETHOD(*waitLock);
 
 	/* Make sure proc is waiting */
+	Assert(proc->waitStatus == STATUS_WAITING);
 	Assert(proc->links.next != INVALID_OFFSET);
 	Assert(waitLock);
 	Assert(waitLock->waitProcs.size > 0);
@@ -1151,9 +1154,10 @@ RemoveFromWaitQueue(PGPROC *proc, int partition)
 	if (waitLock->granted[lockmode] == waitLock->requested[lockmode])
 		waitLock->waitMask &= LOCKBIT_OFF(lockmode);
 
-	/* Clean up the proc's own state */
+	/* Clean up the proc's own state, and pass it the ok/fail signal */
 	proc->waitLock = NULL;
 	proc->waitProcLock = NULL;
+	proc->waitStatus = STATUS_ERROR;
 
 	/*
 	 * Delete the proclock immediately if it represents no already-held locks.

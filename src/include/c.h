@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.199 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.200 2006/04/14 03:38:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -710,6 +710,7 @@ typedef NameData *Name;
 #define STATUS_ERROR			(-1)
 #define STATUS_EOF				(-2)
 #define STATUS_FOUND			(1)
+#define STATUS_WAITING			(2)
 
 
 /* ----------------------------------------------------------------

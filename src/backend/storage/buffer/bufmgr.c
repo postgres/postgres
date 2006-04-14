@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.206 2006/03/31 23:32:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.207 2006/04/14 03:38:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1726,8 +1726,6 @@ UnlockBuffers(void)
 
 	if (buf)
 	{
-		HOLD_INTERRUPTS();		/* don't want to die() partway through... */
-
 		LockBufHdr(buf);
 
 		/*
@@ -1740,11 +1738,7 @@ UnlockBuffers(void)
 
 		UnlockBufHdr(buf);
 
-		ProcCancelWaitForSignal();
-
 		PinCountWaitBuf = NULL;
-
-		RESUME_INTERRUPTS();
 	}
 }
 

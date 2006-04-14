@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.173 2006/03/05 15:58:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.174 2006/04/14 03:38:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,7 +267,8 @@ InitProcess(void)
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
-	 * be careful and reinitialize its value here.
+	 * be careful and reinitialize its value here.  (This is not strictly
+	 * necessary anymore, but seems like a good idea for cleanliness.)
 	 */
 	PGSemaphoreReset(&MyProc->sem);
 
@@ -397,7 +398,8 @@ InitDummyProcess(void)
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
-	 * be careful and reinitialize its value here.
+	 * be careful and reinitialize its value here.  (This is not strictly
+	 * necessary anymore, but seems like a good idea for cleanliness.)
 	 */
 	PGSemaphoreReset(&MyProc->sem);
 
@@ -465,7 +467,6 @@ LockWaitCancel(void)
 	if (MyProc->links.next != INVALID_OFFSET)
 	{
 		/* We could not have been granted the lock yet */
-		Assert(MyProc->waitStatus == STATUS_ERROR);
 		RemoveFromWaitQueue(MyProc, lockAwaited->partition);
 	}
 	else
@@ -485,15 +486,14 @@ LockWaitCancel(void)
 	LWLockRelease(partitionLock);
 
 	/*
-	 * Reset the proc wait semaphore to zero.  This is necessary in the
-	 * scenario where someone else granted us the lock we wanted before we
-	 * were able to remove ourselves from the wait-list.  The semaphore will
-	 * have been bumped to 1 by the would-be grantor, and since we are no
-	 * longer going to wait on the sema, we have to force it back to zero.
-	 * Otherwise, our next attempt to wait for a lock will fall through
-	 * prematurely.
+	 * We used to do PGSemaphoreReset() here to ensure that our proc's wait
+	 * semaphore is reset to zero.  This prevented a leftover wakeup signal
+	 * from remaining in the semaphore if someone else had granted us the
+	 * lock we wanted before we were able to remove ourselves from the
+	 * wait-list.  However, now that ProcSleep loops until waitStatus changes,
+	 * a leftover wakeup signal isn't harmful, and it seems not worth
+	 * expending cycles to get rid of a signal that most likely isn't there.
 	 */
-	PGSemaphoreReset(&MyProc->sem);
 
 	/*
 	 * Return true even if we were kicked off the lock before we were able to
@@ -767,7 +767,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	MyProc->waitProcLock = proclock;
 	MyProc->waitLockMode = lockmode;
 
-	MyProc->waitStatus = STATUS_ERROR;	/* initialize result for error */
+	MyProc->waitStatus = STATUS_WAITING;
 
 	/*
 	 * If we detected deadlock, give up without waiting.  This must agree with
@@ -808,9 +808,11 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	/*
 	 * If someone wakes us between LWLockRelease and PGSemaphoreLock,
 	 * PGSemaphoreLock will not block.	The wakeup is "saved" by the semaphore
-	 * implementation.	Note also that if CheckDeadLock is invoked but does
-	 * not detect a deadlock, PGSemaphoreLock() will continue to wait.	There
-	 * used to be a loop here, but it was useless code...
+	 * implementation.  While this is normally good, there are cases where
+	 * a saved wakeup might be leftover from a previous operation (for
+	 * example, we aborted ProcWaitForSignal just before someone did
+	 * ProcSendSignal).  So, loop to wait again if the waitStatus shows
+	 * we haven't been granted nor denied the lock yet.
 	 *
 	 * We pass interruptOK = true, which eliminates a window in which
 	 * cancel/die interrupts would be held off undesirably.  This is a promise
@@ -820,7 +822,9 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 * updating the locallock table, but if we lose control to an error,
 	 * LockWaitCancel will fix that up.
 	 */
-	PGSemaphoreLock(&MyProc->sem, true);
+	do {
+		PGSemaphoreLock(&MyProc->sem, true);
+	} while (MyProc->waitStatus == STATUS_WAITING);
 
 	/*
 	 * Disable the timer, if it's still running
@@ -865,6 +869,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
  * XXX: presently, this code is only used for the "success" case, and only
  * works correctly for that case.  To clean up in failure case, would need
  * to twiddle the lock's request counts too --- see RemoveFromWaitQueue.
+ * Hence, in practice the waitStatus parameter must be STATUS_OK.
  */
 PGPROC *
 ProcWakeup(PGPROC *proc, int waitStatus)
@@ -875,6 +880,7 @@ ProcWakeup(PGPROC *proc, int waitStatus)
 	if (proc->links.prev == INVALID_OFFSET ||
 		proc->links.next == INVALID_OFFSET)
 		return NULL;
+	Assert(proc->waitStatus == STATUS_WAITING);
 
 	/* Save next process before we zap the list link */
 	retProc = (PGPROC *) MAKE_PTR(proc->links.next);
@@ -1014,15 +1020,12 @@ CheckDeadLock(void)
 	 * efficiently by relying on lockAwaited, but use this coding to preserve
 	 * the flexibility to kill some other transaction than the one detecting
 	 * the deadlock.)
+	 *
+	 * RemoveFromWaitQueue sets MyProc->waitStatus to STATUS_ERROR, so
+	 * ProcSleep will report an error after we return from the signal handler.
 	 */
 	Assert(MyProc->waitLock != NULL);
 	RemoveFromWaitQueue(MyProc, LockTagToPartition(&(MyProc->waitLock->tag)));
-
-	/*
-	 * Set MyProc->waitStatus to STATUS_ERROR so that ProcSleep will report an
-	 * error after we return from the signal handler.
-	 */
-	MyProc->waitStatus = STATUS_ERROR;
 
 	/*
 	 * Unlock my semaphore so that the interrupted ProcSleep() call can
@@ -1058,25 +1061,15 @@ check_done:
  * This can share the semaphore normally used for waiting for locks,
  * since a backend could never be waiting for a lock and a signal at
  * the same time.  As with locks, it's OK if the signal arrives just
- * before we actually reach the waiting state.
+ * before we actually reach the waiting state.  Also as with locks,
+ * it's necessary that the caller be robust against bogus wakeups:
+ * always check that the desired state has occurred, and wait again
+ * if not.  This copes with possible "leftover" wakeups.
  */
 void
 ProcWaitForSignal(void)
 {
 	PGSemaphoreLock(&MyProc->sem, true);
-}
-
-/*
- * ProcCancelWaitForSignal - clean up an aborted wait for signal
- *
- * We need this in case the signal arrived after we aborted waiting,
- * or if it arrived but we never reached ProcWaitForSignal() at all.
- * Caller should call this after resetting the signal request status.
- */
-void
-ProcCancelWaitForSignal(void)
-{
-	PGSemaphoreReset(&MyProc->sem);
 }
 
 /*
