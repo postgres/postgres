@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.82 2006/03/17 16:02:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.83 2006/04/15 18:11:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -173,6 +173,9 @@ PostgreSQL documentation
         non-<productname>PostgreSQL</productname> databases.  Note that
         the restore may fail altogether if you have rearranged column order.
         The <option>-D</option> option is safer, though even slower.
+        Also, while this option generates errors for invalid data, 
+        it allows other <command>INSERT</command>s to continue loading
+        data into the table.
        </para>
       </listitem>
      </varlistentry>
@@ -190,6 +193,9 @@ PostgreSQL documentation
         ...</literal>).  This will make restoration very slow; it is mainly
         useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
+        Also, while this option generates errors for invalid data, 
+        it allows other <command>INSERT</command>s to continue loading
+        data into the table.
        </para>
       </listitem>
      </varlistentry>
