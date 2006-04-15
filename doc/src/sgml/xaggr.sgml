@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.30 2006/03/10 19:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.31 2006/04/15 17:45:33 tgl Exp $ -->
 
  <sect1 id="xaggr">
   <title>User-Defined Aggregates</title>
@@ -43,23 +43,24 @@
    The aggregate definition would be:
    
 <screen>
-CREATE AGGREGATE complex_sum (
+CREATE AGGREGATE sum (complex)
+(
     sfunc = complex_add,
-    basetype = complex,
     stype = complex,
     initcond = '(0,0)'
 );
 
-SELECT complex_sum(a) FROM test_complex;
+SELECT sum(a) FROM test_complex;
 
- complex_sum
--------------
+   sum
+-----------
  (34,53.9)
 </screen>
 
-   (In practice, we'd just name the aggregate <function>sum</function> and rely on
-   <productname>PostgreSQL</productname> to figure out which kind
-   of sum to apply to a column of type <type>complex</type>.)
+   (Notice that we are relying on function overloading: there is more than
+    one aggregate named <function>sum</>, but
+   <productname>PostgreSQL</productname> can figure out which kind
+   of sum applies to a column of type <type>complex</type>.)
   </para>
 
   <para>
@@ -99,9 +100,9 @@ SELECT complex_sum(a) FROM test_complex;
    looks like:
 
 <programlisting>
-CREATE AGGREGATE avg (
+CREATE AGGREGATE avg (float8)
+(
     sfunc = float8_accum,
-    basetype = float8,
     stype = float8[],
     finalfunc = float8_avg,
     initcond = '{0,0}'
@@ -116,14 +117,14 @@ CREATE AGGREGATE avg (
    See <xref linkend="extend-types-polymorphic">
    for an explanation of polymorphic functions.
    Going a step further, the aggregate function itself may be specified
-   with a polymorphic base type and state type, allowing a single
+   with a polymorphic input type and state type, allowing a single
    aggregate definition to serve for multiple input data types.
    Here is an example of a polymorphic aggregate:
 
 <programlisting>
-CREATE AGGREGATE array_accum (
+CREATE AGGREGATE array_accum (anyelement)
+(
     sfunc = array_append,
-    basetype = anyelement,
     stype = anyarray,
     initcond = '{}'
 );
@@ -167,7 +168,7 @@ SELECT attrelid::regclass, array_accum(atttypid)
 <programlisting>
         if (fcinfo->context &amp;&amp; IsA(fcinfo->context, AggState))
 </programlisting>
-   One reason for checking this is that when it is true, the left input
+   One reason for checking this is that when it is true, the first input
    must be a temporary transition value and can therefore safely be modified
    in-place rather than allocating a new copy.  (This is the <emphasis>only</>
    case where it is safe for a function to modify a pass-by-reference input.)

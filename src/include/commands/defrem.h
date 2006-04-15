@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.71 2006/03/05 15:58:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.72 2006/04/15 17:45:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,22 +57,23 @@ extern void AlterFunction(AlterFunctionStmt *stmt);
 extern void CreateCast(CreateCastStmt *stmt);
 extern void DropCast(DropCastStmt *stmt);
 extern void DropCastById(Oid castOid);
-extern void AlterFunctionNamespace(List *name, List *argtypes,
+extern void AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema);
 
 /* commands/operatorcmds.c */
 extern void DefineOperator(List *names, List *parameters);
-extern void RemoveOperator(RemoveOperStmt *stmt);
+extern void RemoveOperator(RemoveFuncStmt *stmt);
 extern void RemoveOperatorById(Oid operOid);
 extern void AlterOperatorOwner(List *name, TypeName *typeName1,
 				   TypeName *typename2, Oid newOwnerId);
 extern void AlterOperatorOwner_oid(Oid operOid, Oid newOwnerId);
 
 /* commands/aggregatecmds.c */
-extern void DefineAggregate(List *names, List *parameters);
-extern void RemoveAggregate(RemoveAggrStmt *stmt);
-extern void RenameAggregate(List *name, TypeName *basetype, const char *newname);
-extern void AlterAggregateOwner(List *name, TypeName *basetype, Oid newOwnerId);
+extern void DefineAggregate(List *name, List *args, bool oldstyle,
+							List *parameters);
+extern void RemoveAggregate(RemoveFuncStmt *stmt);
+extern void RenameAggregate(List *name, List *args, const char *newname);
+extern void AlterAggregateOwner(List *name, List *args, Oid newOwnerId);
 
 /* commands/opclasscmds.c */
 extern void DefineOpClass(CreateOpClassStmt *stmt);

@@ -133,7 +133,7 @@ ERROR:  function int2um(integer) does not exist
 create aggregate newcnt1 (sfunc = int4inc,
 			  stype = int4,
 			  initcond = '0');
-ERROR:  aggregate basetype must be specified
+ERROR:  aggregate input type must be specified
 --
 -- DROP INDEX
  

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.537 2006/03/23 00:19:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.538 2006/04/15 17:45:34 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -224,8 +224,9 @@ static void doNegateFloat(Value *v);
 
 %type <list>	stmtblock stmtmulti
 				OptTableElementList TableElementList OptInherit definition
-				opt_distinct opt_definition func_args
-				func_args_list func_as createfunc_opt_list alterfunc_opt_list
+				opt_distinct opt_definition func_args func_args_list
+				func_as createfunc_opt_list alterfunc_opt_list
+				aggr_args aggr_args_list old_aggr_definition old_aggr_list
 				oper_argtypes RuleActionList RuleActionMulti
 				opt_column_list columnList opt_name_list
 				sort_clause opt_sort_clause sortby_list index_params
@@ -246,7 +247,7 @@ static void doNegateFloat(Value *v);
 %type <defelt>	createfunc_opt_item common_func_opt_item
 %type <fun_param> func_arg
 %type <fun_param_mode> arg_class
-%type <typnam>	func_return func_type aggr_argtype
+%type <typnam>	func_return func_type
 
 %type <boolean>  TriggerForType OptTemp
 %type <oncommit> OnCommitOption
@@ -285,7 +286,7 @@ static void doNegateFloat(Value *v);
 
 %type <node>	TableElement ConstraintElem TableFuncElement
 %type <node>	columnDef
-%type <defelt>	def_elem
+%type <defelt>	def_elem old_aggr_elem
 %type <node>	def_arg columnElem where_clause
 				a_expr b_expr c_expr func_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
@@ -2671,11 +2672,24 @@ DropAssertStmt:
  *****************************************************************************/
 
 DefineStmt:
-			CREATE AGGREGATE func_name definition
+			CREATE AGGREGATE func_name aggr_args definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_AGGREGATE;
+					n->oldstyle = false;
 					n->defnames = $3;
+					n->args = $4;
+					n->definition = $5;
+					$$ = (Node *)n;
+				}
+			| CREATE AGGREGATE func_name old_aggr_definition
+				{
+					/* old-style (pre-8.2) syntax for CREATE AGGREGATE */
+					DefineStmt *n = makeNode(DefineStmt);
+					n->kind = OBJECT_AGGREGATE;
+					n->oldstyle = true;
+					n->defnames = $3;
+					n->args = NIL;
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
@@ -2683,7 +2697,9 @@ DefineStmt:
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_OPERATOR;
+					n->oldstyle = false;
 					n->defnames = $3;
+					n->args = NIL;
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
@@ -2691,7 +2707,9 @@ DefineStmt:
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TYPE;
+					n->oldstyle = false;
 					n->defnames = $3;
+					n->args = NIL;
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
@@ -2700,7 +2718,9 @@ DefineStmt:
 					/* Shell type (identified by lack of definition) */
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TYPE;
+					n->oldstyle = false;
 					n->defnames = $3;
+					n->args = NIL;
 					n->definition = NIL;
 					$$ = (Node *)n;
 				}
@@ -2762,6 +2782,28 @@ def_arg:	func_type						{ $$ = (Node *)$1; }
 			| qual_all_Op					{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
 			| Sconst						{ $$ = (Node *)makeString($1); }
+		;
+
+aggr_args:	'(' aggr_args_list ')'					{ $$ = $2; }
+			| '(' '*' ')'							{ $$ = NIL; }
+		;
+
+aggr_args_list:
+			Typename								{ $$ = list_make1($1); }
+			| aggr_args_list ',' Typename			{ $$ = lappend($1, $3); }
+		;
+
+old_aggr_definition: '(' old_aggr_list ')'			{ $$ = $2; }
+		;
+
+old_aggr_list: old_aggr_elem						{ $$ = list_make1($1); }
+			| old_aggr_list ',' old_aggr_elem		{ $$ = lappend($1, $3); }
+		;
+
+old_aggr_elem:  IDENT '=' def_arg
+				{
+					$$ = makeDefElem($1, (Node *)$3);
+				}
 		;
 
 
@@ -2960,7 +3002,7 @@ TruncateStmt:
  *	COMMENT ON [ [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW |
  *				   CONVERSION | LANGUAGE | OPERATOR CLASS | LARGE OBJECT |
  *				   CAST | COLUMN | SCHEMA | TABLESPACE | ROLE ] <objname> |
- *				 AGGREGATE <aggname> (<aggtype>) |
+ *				 AGGREGATE <aggname> (arg1, ...) |
  *				 FUNCTION <funcname> (arg1, arg2, ...) |
  *				 OPERATOR <op> (leftoperand_typ, rightoperand_typ) |
  *				 TRIGGER <triggername> ON <relname> |
@@ -2980,14 +3022,13 @@ CommentStmt:
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON AGGREGATE func_name '(' aggr_argtype ')'
-			IS comment_text
+			| COMMENT ON AGGREGATE func_name aggr_args IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_AGGREGATE;
 					n->objname = $4;
-					n->objargs = list_make1($6);
-					n->comment = $9;
+					n->objargs = $5;
+					n->comment = $7;
 					$$ = (Node *) n;
 				}
 			| COMMENT ON FUNCTION func_name func_args IS comment_text
@@ -3844,7 +3885,7 @@ opt_restrict:
  *		QUERY:
  *
  *		DROP FUNCTION funcname (arg1, arg2, ...) [ RESTRICT | CASCADE ]
- *		DROP AGGREGATE aggname (aggtype) [ RESTRICT | CASCADE ]
+ *		DROP AGGREGATE aggname (arg1, ...) [ RESTRICT | CASCADE ]
  *		DROP OPERATOR opname (leftoperand_typ, rightoperand_typ) [ RESTRICT | CASCADE ]
  *
  *****************************************************************************/
@@ -3853,7 +3894,8 @@ RemoveFuncStmt:
 			DROP FUNCTION func_name func_args opt_drop_behavior
 				{
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
-					n->funcname = $3;
+					n->kind = OBJECT_FUNCTION;
+					n->name = $3;
 					n->args = extractArgTypes($4);
 					n->behavior = $5;
 					$$ = (Node *)n;
@@ -3861,26 +3903,23 @@ RemoveFuncStmt:
 		;
 
 RemoveAggrStmt:
-			DROP AGGREGATE func_name '(' aggr_argtype ')' opt_drop_behavior
+			DROP AGGREGATE func_name aggr_args opt_drop_behavior
 				{
-						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
-						n->aggname = $3;
-						n->aggtype = $5;
-						n->behavior = $7;
-						$$ = (Node *)n;
+					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
+					n->kind = OBJECT_AGGREGATE;
+					n->name = $3;
+					n->args = $4;
+					n->behavior = $5;
+					$$ = (Node *)n;
 				}
-		;
-
-aggr_argtype:
-			Typename								{ $$ = $1; }
-			| '*'									{ $$ = NULL; }
 		;
 
 RemoveOperStmt:
 			DROP OPERATOR any_operator '(' oper_argtypes ')' opt_drop_behavior
 				{
-					RemoveOperStmt *n = makeNode(RemoveOperStmt);
-					n->opname = $3;
+					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
+					n->kind = OBJECT_OPERATOR;
+					n->name = $3;
 					n->args = $5;
 					n->behavior = $7;
 					$$ = (Node *)n;
@@ -4013,13 +4052,13 @@ opt_force:	FORCE									{  $$ = TRUE; }
  *
  *****************************************************************************/
 
-RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
+RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_AGGREGATE;
 					n->object = $3;
-					n->objarg = list_make1($5);
-					n->newname = $9;
+					n->objarg = $4;
+					n->newname = $7;
 					$$ = (Node *)n;
 				}
 			| ALTER CONVERSION_P any_name RENAME TO name
@@ -4153,13 +4192,13 @@ opt_column: COLUMN									{ $$ = COLUMN; }
  *****************************************************************************/
 
 AlterObjectSchemaStmt:
-			ALTER AGGREGATE func_name '(' aggr_argtype ')' SET SCHEMA name
+			ALTER AGGREGATE func_name aggr_args SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_AGGREGATE;
 					n->object = $3;
-					n->objarg = list_make1($5);
-					n->newschema = $9;
+					n->objarg = $4;
+					n->newschema = $7;
 					$$ = (Node *)n;
 				}
 			| ALTER DOMAIN_P any_name SET SCHEMA name
@@ -4211,13 +4250,13 @@ AlterObjectSchemaStmt:
  *
  *****************************************************************************/
 
-AlterOwnerStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' OWNER TO RoleId
+AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_AGGREGATE;
 					n->object = $3;
-					n->objarg = list_make1($5);
-					n->newowner = $9;
+					n->objarg = $4;
+					n->newowner = $7;
 					$$ = (Node *)n;
 				}
 			| ALTER CONVERSION_P any_name OWNER TO RoleId

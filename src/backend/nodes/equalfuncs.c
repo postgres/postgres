@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.268 2006/03/23 00:19:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.269 2006/04/15 17:45:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -909,7 +909,9 @@ static bool
 _equalDefineStmt(DefineStmt *a, DefineStmt *b)
 {
 	COMPARE_SCALAR_FIELD(kind);
+	COMPARE_SCALAR_FIELD(oldstyle);
 	COMPARE_NODE_FIELD(defnames);
+	COMPARE_NODE_FIELD(args);
 	COMPARE_NODE_FIELD(definition);
 
 	return true;
@@ -1007,29 +1009,10 @@ _equalAlterFunctionStmt(AlterFunctionStmt *a, AlterFunctionStmt *b)
 }
 
 static bool
-_equalRemoveAggrStmt(RemoveAggrStmt *a, RemoveAggrStmt *b)
-{
-	COMPARE_NODE_FIELD(aggname);
-	COMPARE_NODE_FIELD(aggtype);
-	COMPARE_SCALAR_FIELD(behavior);
-
-	return true;
-}
-
-static bool
 _equalRemoveFuncStmt(RemoveFuncStmt *a, RemoveFuncStmt *b)
 {
-	COMPARE_NODE_FIELD(funcname);
-	COMPARE_NODE_FIELD(args);
-	COMPARE_SCALAR_FIELD(behavior);
-
-	return true;
-}
-
-static bool
-_equalRemoveOperStmt(RemoveOperStmt *a, RemoveOperStmt *b)
-{
-	COMPARE_NODE_FIELD(opname);
+	COMPARE_SCALAR_FIELD(kind);
+	COMPARE_NODE_FIELD(name);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_SCALAR_FIELD(behavior);
 
@@ -2112,14 +2095,8 @@ equal(void *a, void *b)
 		case T_AlterFunctionStmt:
 			retval = _equalAlterFunctionStmt(a, b);
 			break;
-		case T_RemoveAggrStmt:
-			retval = _equalRemoveAggrStmt(a, b);
-			break;
 		case T_RemoveFuncStmt:
 			retval = _equalRemoveFuncStmt(a, b);
-			break;
-		case T_RemoveOperStmt:
-			retval = _equalRemoveOperStmt(a, b);
 			break;
 		case T_RemoveOpClassStmt:
 			retval = _equalRemoveOpClassStmt(a, b);

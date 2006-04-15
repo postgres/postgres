@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.255 2006/03/05 15:58:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.256 2006/04/15 17:45:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,7 +333,6 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateTrigStmt:
 		case T_CompositeTypeStmt:
 		case T_ViewStmt:
-		case T_RemoveAggrStmt:
 		case T_DropCastStmt:
 		case T_DropStmt:
 		case T_DropdbStmt:
@@ -341,7 +340,6 @@ check_xact_readonly(Node *parsetree)
 		case T_RemoveFuncStmt:
 		case T_DropRoleStmt:
 		case T_DropPLangStmt:
-		case T_RemoveOperStmt:
 		case T_RemoveOpClassStmt:
 		case T_DropPropertyStmt:
 		case T_GrantStmt:
@@ -730,7 +728,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 			/*
-			 * **************** object creation / destruction ******************
+			 * **************** object creation / destruction *****************
 			 */
 		case T_DefineStmt:
 			{
@@ -739,12 +737,15 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->kind)
 				{
 					case OBJECT_AGGREGATE:
-						DefineAggregate(stmt->defnames, stmt->definition);
+						DefineAggregate(stmt->defnames, stmt->args,
+										stmt->oldstyle, stmt->definition);
 						break;
 					case OBJECT_OPERATOR:
+						Assert(stmt->args == NIL);
 						DefineOperator(stmt->defnames, stmt->definition);
 						break;
 					case OBJECT_TYPE:
+						Assert(stmt->args == NIL);
 						DefineType(stmt->defnames, stmt->definition);
 						break;
 					default:
@@ -815,16 +816,27 @@ ProcessUtility(Node *parsetree,
 			AlterSequence((AlterSeqStmt *) parsetree);
 			break;
 
-		case T_RemoveAggrStmt:
-			RemoveAggregate((RemoveAggrStmt *) parsetree);
-			break;
-
 		case T_RemoveFuncStmt:
-			RemoveFunction((RemoveFuncStmt *) parsetree);
-			break;
+			{
+				RemoveFuncStmt *stmt = (RemoveFuncStmt *) parsetree;
 
-		case T_RemoveOperStmt:
-			RemoveOperator((RemoveOperStmt *) parsetree);
+				switch (stmt->kind)
+				{
+					case OBJECT_FUNCTION:
+						RemoveFunction(stmt);
+						break;
+					case OBJECT_AGGREGATE:
+						RemoveAggregate(stmt);
+						break;
+					case OBJECT_OPERATOR:
+						RemoveOperator(stmt);
+						break;
+					default:
+						elog(ERROR, "unrecognized object type: %d",
+							 (int) stmt->kind);
+						break;
+				}
+			}
 			break;
 
 		case T_CreatedbStmt:
@@ -1576,16 +1588,21 @@ CreateCommandTag(Node *parsetree)
 			tag = "ALTER SEQUENCE";
 			break;
 
-		case T_RemoveAggrStmt:
-			tag = "DROP AGGREGATE";
-			break;
-
 		case T_RemoveFuncStmt:
-			tag = "DROP FUNCTION";
-			break;
-
-		case T_RemoveOperStmt:
-			tag = "DROP OPERATOR";
+			switch (((RemoveFuncStmt *) parsetree)->kind)
+			{
+				case OBJECT_FUNCTION:
+					tag = "DROP FUNCTION";
+					break;
+				case OBJECT_AGGREGATE:
+					tag = "DROP AGGREGATE";
+					break;
+				case OBJECT_OPERATOR:
+					tag = "DROP OPERATOR";
+					break;
+				default:
+					tag = "???";
+			}
 			break;
 
 		case T_CreatedbStmt:

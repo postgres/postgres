@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.33 2005/11/04 23:14:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.34 2006/04/15 17:45:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,8 +20,18 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
+CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">input_data_type</replaceable> ) (
+    SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
+    STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
+    [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
+    [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
+)
+
+or the old syntax
+
 CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
-    BASETYPE = <replaceable class="PARAMETER">input_data_type</replaceable>,
+    BASETYPE = <replaceable class="PARAMETER">base_type</replaceable>,
     SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
@@ -87,7 +97,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   <para>
    An aggregate function may provide an initial condition,
    that is, an initial value for the internal state value.
-   This is specified and stored in the database as a column of type
+   This is specified and stored in the database as a value of type
    <type>text</type>, but it must be a valid external representation
    of a constant of the state value data type.  If it is not supplied
    then the state value starts out null.
@@ -146,8 +156,9 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    Ordinarily, a data type's <literal>&lt;</> operator is the proper sort
    operator for <function>MIN</>, and <literal>&gt;</> is the proper sort
    operator for <function>MAX</>.  Note that the optimization will never
-   actually take effect unless the specified operator is the <quote>less than</quote> or
-   <quote>greater than</quote> strategy member of a B-tree index operator class.
+   actually take effect unless the specified operator is the <quote>less
+   than</quote> or <quote>greater than</quote> strategy member of a B-tree
+   index operator class.
   </para>
  </refsect1>
 
@@ -170,9 +181,23 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The input data type on which this aggregate function operates.
-      This can be specified as <literal>"ANY"</> for an aggregate that
+      This can be specified as <literal>*</> for an aggregate that
       does not examine its input values (an example is
       <function>count(*)</function>).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">base_type</replaceable></term>
+    <listitem>
+     <para>
+      In the old syntax for <command>CREATE AGGREGATE</>, the input data type
+      is specified by a <literal>basetype</> parameter rather than being
+      written next to the aggregate name.  Note that this syntax allows
+      only one input parameter.  To define an aggregate that does not examine
+      its input values, specify the <literal>basetype</> as
+      <literal>"ANY"</> (not <literal>*</>).
      </para>
     </listitem>
    </varlistentry>

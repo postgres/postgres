@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.55 2006/03/14 22:48:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_func.h,v 1.56 2006/04/15 17:45:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,11 +72,11 @@ extern const char *funcname_signature_string(const char *funcname,
 extern const char *func_signature_string(List *funcname,
 					  int nargs, const Oid *argtypes);
 
-extern Oid	find_aggregate_func(List *aggname, Oid basetype, bool noError);
-
 extern Oid LookupFuncName(List *funcname, int nargs, const Oid *argtypes,
 			   bool noError);
 extern Oid LookupFuncNameTypeNames(List *funcname, List *argtypes,
+						bool noError);
+extern Oid LookupAggNameTypeNames(List *aggname, List *argtypes,
 						bool noError);
 
 #endif   /* PARSE_FUNC_H */

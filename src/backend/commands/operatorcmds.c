@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.29 2006/03/14 22:48:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.30 2006/04/15 17:45:34 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -201,15 +201,16 @@ DefineOperator(List *names, List *parameters)
  *		Deletes an operator.
  */
 void
-RemoveOperator(RemoveOperStmt *stmt)
+RemoveOperator(RemoveFuncStmt *stmt)
 {
-	List	   *operatorName = stmt->opname;
+	List	   *operatorName = stmt->name;
 	TypeName   *typeName1 = (TypeName *) linitial(stmt->args);
 	TypeName   *typeName2 = (TypeName *) lsecond(stmt->args);
 	Oid			operOid;
 	HeapTuple	tup;
 	ObjectAddress object;
 
+	Assert(list_length(stmt->args) == 2);
 	operOid = LookupOperNameTypeNames(NULL, operatorName,
 									  typeName1, typeName2,
 									  false, -1);

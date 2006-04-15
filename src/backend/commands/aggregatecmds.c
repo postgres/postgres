@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.33 2006/03/14 22:48:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.34 2006/04/15 17:45:33 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -41,9 +41,13 @@
 
 /*
  *	DefineAggregate
+ *
+ * "oldstyle" signals the old (pre-8.2) style where the aggregate input type
+ * is specified by a BASETYPE element in the parameters.  Otherwise,
+ * "args" defines the input type(s).
  */
 void
-DefineAggregate(List *names, List *parameters)
+DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 {
 	char	   *aggName;
 	Oid			aggNamespace;
@@ -59,7 +63,7 @@ DefineAggregate(List *names, List *parameters)
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
-	aggNamespace = QualifiedNameGetCreationNamespace(names, &aggName);
+	aggNamespace = QualifiedNameGetCreationNamespace(name, &aggName);
 
 	/* Check we have creation rights in target namespace */
 	aclresult = pg_namespace_aclcheck(aggNamespace, GetUserId(), ACL_CREATE);
@@ -103,10 +107,6 @@ DefineAggregate(List *names, List *parameters)
 	/*
 	 * make sure we have our required definitions
 	 */
-	if (baseType == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("aggregate basetype must be specified")));
 	if (transType == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -117,20 +117,63 @@ DefineAggregate(List *names, List *parameters)
 				 errmsg("aggregate sfunc must be specified")));
 
 	/*
-	 * look up the aggregate's base type (input datatype) and transtype.
+	 * look up the aggregate's input datatype.
+	 */
+	if (oldstyle)
+	{
+		/*
+		 * Old style: use basetype parameter.  This supports only one input.
+		 *
+		 * Historically we allowed the command to look like basetype = 'ANY'
+		 * so we must do a case-insensitive comparison for the name ANY. Ugh.
+		 */
+		if (baseType == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("aggregate input type must be specified")));
+
+		if (pg_strcasecmp(TypeNameToString(baseType), "ANY") == 0)
+			baseTypeId = ANYOID;
+		else
+			baseTypeId = typenameTypeId(NULL, baseType);
+	}
+	else
+	{
+		/*
+		 * New style: args is a list of TypeNames.  For the moment, though,
+		 * we allow at most one.
+		 */
+		if (baseType != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("basetype is redundant with aggregate input type specification")));
+
+		if (args == NIL)
+		{
+			/* special case for agg(*) */
+			baseTypeId = ANYOID;
+		}
+		else if (list_length(args) != 1)
+		{
+			/* temporarily reject > 1 arg */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("aggregates can have only one input")));
+			baseTypeId = InvalidOid;	/* keep compiler quiet */
+		}
+		else
+		{
+			baseTypeId = typenameTypeId(NULL, (TypeName *) linitial(args));
+		}
+	}
+
+	/*
+	 * look up the aggregate's transtype.
 	 *
-	 * We have historically allowed the command to look like basetype = 'ANY'
-	 * so we must do a case-insensitive comparison for the name ANY.  Ugh.
-	 *
-	 * basetype can be a pseudo-type, but transtype can't, since we need to be
+	 * transtype can't be a pseudo-type, since we need to be
 	 * able to store values of the transtype.  However, we can allow
 	 * polymorphic transtype in some cases (AggregateCreate will check).
 	 */
-	if (pg_strcasecmp(TypeNameToString(baseType), "ANY") == 0)
-		baseTypeId = ANYOID;
-	else
-		baseTypeId = typenameTypeId(NULL, baseType);
-
 	transTypeId = typenameTypeId(NULL, transType);
 	if (get_typtype(transTypeId) == 'p' &&
 		transTypeId != ANYARRAYOID &&
@@ -159,28 +202,16 @@ DefineAggregate(List *names, List *parameters)
  *		Deletes an aggregate.
  */
 void
-RemoveAggregate(RemoveAggrStmt *stmt)
+RemoveAggregate(RemoveFuncStmt *stmt)
 {
-	List	   *aggName = stmt->aggname;
-	TypeName   *aggType = stmt->aggtype;
-	Oid			basetypeID;
+	List	   *aggName = stmt->name;
+	List	   *aggArgs = stmt->args;
 	Oid			procOid;
 	HeapTuple	tup;
 	ObjectAddress object;
 
-	/*
-	 * if a basetype is passed in, then attempt to find an aggregate for that
-	 * specific type.
-	 *
-	 * else attempt to find an aggregate with a basetype of ANYOID. This means
-	 * that the aggregate is to apply to all basetypes (eg, COUNT).
-	 */
-	if (aggType)
-		basetypeID = typenameTypeId(NULL, aggType);
-	else
-		basetypeID = ANYOID;
-
-	procOid = find_aggregate_func(aggName, basetypeID, false);
+	/* Look up function and make sure it's an aggregate */
+	procOid = LookupAggNameTypeNames(aggName, aggArgs, false);
 
 	/*
 	 * Find the function tuple, do permissions and validity checks
@@ -198,8 +229,6 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
 					   NameListToString(aggName));
 
-	/* find_aggregate_func already checked it is an aggregate */
-
 	ReleaseSysCache(tup);
 
 	/*
@@ -214,9 +243,8 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 
 
 void
-RenameAggregate(List *name, TypeName *basetype, const char *newname)
+RenameAggregate(List *name, List *args, const char *newname)
 {
-	Oid			basetypeOid;
 	Oid			procOid;
 	Oid			namespaceOid;
 	HeapTuple	tup;
@@ -224,20 +252,10 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 	Relation	rel;
 	AclResult	aclresult;
 
-	/*
-	 * if a basetype is passed in, then attempt to find an aggregate for that
-	 * specific type; else attempt to find an aggregate with a basetype of
-	 * ANYOID. This means that the aggregate applies to all basetypes (eg,
-	 * COUNT).
-	 */
-	if (basetype)
-		basetypeOid = typenameTypeId(NULL, basetype);
-	else
-		basetypeOid = ANYOID;
-
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
-	procOid = find_aggregate_func(name, basetypeOid, false);
+	/* Look up function and make sure it's an aggregate */
+	procOid = LookupAggNameTypeNames(name, args, false);
 
 	tup = SearchSysCacheCopy(PROCOID,
 							 ObjectIdGetDatum(procOid),
@@ -254,22 +272,13 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 							 PointerGetDatum(&procForm->proargtypes),
 							 ObjectIdGetDatum(namespaceOid),
 							 0))
-	{
-		if (basetypeOid == ANYOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_FUNCTION),
-					 errmsg("function %s(*) already exists in schema \"%s\"",
-							newname,
-							get_namespace_name(namespaceOid))));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_FUNCTION),
-					 errmsg("function %s already exists in schema \"%s\"",
-							funcname_signature_string(newname,
-													  procForm->pronargs,
-											   procForm->proargtypes.values),
-							get_namespace_name(namespaceOid))));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_FUNCTION),
+				 errmsg("function %s already exists in schema \"%s\"",
+						funcname_signature_string(newname,
+												  procForm->pronargs,
+												  procForm->proargtypes.values),
+						get_namespace_name(namespaceOid))));
 
 	/* must be owner */
 	if (!pg_proc_ownercheck(procOid, GetUserId()))
@@ -295,29 +304,18 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
  * Change aggregate owner
  */
 void
-AlterAggregateOwner(List *name, TypeName *basetype, Oid newOwnerId)
+AlterAggregateOwner(List *name, List *args, Oid newOwnerId)
 {
-	Oid			basetypeOid;
 	Oid			procOid;
 	HeapTuple	tup;
 	Form_pg_proc procForm;
 	Relation	rel;
 	AclResult	aclresult;
 
-	/*
-	 * if a basetype is passed in, then attempt to find an aggregate for that
-	 * specific type; else attempt to find an aggregate with a basetype of
-	 * ANYOID. This means that the aggregate applies to all basetypes (eg,
-	 * COUNT).
-	 */
-	if (basetype)
-		basetypeOid = typenameTypeId(NULL, basetype);
-	else
-		basetypeOid = ANYOID;
-
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
-	procOid = find_aggregate_func(name, basetypeOid, false);
+	/* Look up function and make sure it's an aggregate */
+	procOid = LookupAggNameTypeNames(name, args, false);
 
 	tup = SearchSysCacheCopy(PROCOID,
 							 ObjectIdGetDatum(procOid),

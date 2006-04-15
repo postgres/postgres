@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.185 2006/03/14 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.186 2006/04/15 17:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,65 +1116,6 @@ func_signature_string(List *funcname, int nargs, const Oid *argtypes)
 }
 
 /*
- * find_aggregate_func
- *		Convenience routine to check that a function exists and is an
- *		aggregate.
- *
- * Note: basetype is ANYOID if we are looking for an aggregate on
- * all types.
- */
-Oid
-find_aggregate_func(List *aggname, Oid basetype, bool noError)
-{
-	Oid			oid;
-	HeapTuple	ftup;
-	Form_pg_proc pform;
-
-	oid = LookupFuncName(aggname, 1, &basetype, true);
-
-	if (!OidIsValid(oid))
-	{
-		if (noError)
-			return InvalidOid;
-		if (basetype == ANYOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("aggregate %s(*) does not exist",
-							NameListToString(aggname))));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("aggregate %s(%s) does not exist",
-							NameListToString(aggname),
-							format_type_be(basetype))));
-	}
-
-	/* Make sure it's an aggregate */
-	ftup = SearchSysCache(PROCOID,
-						  ObjectIdGetDatum(oid),
-						  0, 0, 0);
-	if (!HeapTupleIsValid(ftup))	/* should not happen */
-		elog(ERROR, "cache lookup failed for function %u", oid);
-	pform = (Form_pg_proc) GETSTRUCT(ftup);
-
-	if (!pform->proisagg)
-	{
-		ReleaseSysCache(ftup);
-		if (noError)
-			return InvalidOid;
-		/* we do not use the (*) notation for functions... */
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("function %s(%s) is not an aggregate",
-					  NameListToString(aggname), format_type_be(basetype))));
-	}
-
-	ReleaseSysCache(ftup);
-
-	return oid;
-}
-
-/*
  * LookupFuncName
  *		Given a possibly-qualified function name and a set of argument types,
  *		look up the function.
@@ -1245,4 +1186,102 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	}
 
 	return LookupFuncName(funcname, argcount, argoids, noError);
+}
+
+/*
+ * LookupAggNameTypeNames
+ *		Find an aggregate function given a name and list of TypeName nodes.
+ *
+ * This is almost like LookupFuncNameTypeNames, but the error messages refer
+ * to aggregates rather than plain functions, and we verify that the found
+ * function really is an aggregate, and we recognize the convention used by
+ * the grammar that agg(*) translates to a NIL list, which we have to treat
+ * as one ANY argument.  (XXX this ought to be changed)
+ */
+Oid
+LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
+{
+	Oid			argoids[FUNC_MAX_ARGS];
+	int			argcount;
+	int			i;
+	ListCell   *args_item;
+	Oid			oid;
+	HeapTuple	ftup;
+	Form_pg_proc pform;
+
+	argcount = list_length(argtypes);
+	if (argcount > FUNC_MAX_ARGS)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg("functions cannot have more than %d arguments",
+						FUNC_MAX_ARGS)));
+
+	if (argcount == 0)
+	{
+		/* special case for agg(*) */
+		argoids[0] = ANYOID;
+		argcount = 1;
+	}
+	else
+	{
+		args_item = list_head(argtypes);
+		for (i = 0; i < argcount; i++)
+		{
+			TypeName   *t = (TypeName *) lfirst(args_item);
+
+			argoids[i] = LookupTypeName(NULL, t);
+
+			if (!OidIsValid(argoids[i]))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("type \"%s\" does not exist",
+								TypeNameToString(t))));
+
+			args_item = lnext(args_item);
+		}
+	}
+
+	oid = LookupFuncName(aggname, argcount, argoids, true);
+
+	if (!OidIsValid(oid))
+	{
+		if (noError)
+			return InvalidOid;
+		if (argcount == 1 && argoids[0] == ANYOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("aggregate %s(*) does not exist",
+							NameListToString(aggname))));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("aggregate %s does not exist",
+							func_signature_string(aggname,
+												  argcount, argoids))));
+	}
+
+	/* Make sure it's an aggregate */
+	ftup = SearchSysCache(PROCOID,
+						  ObjectIdGetDatum(oid),
+						  0, 0, 0);
+	if (!HeapTupleIsValid(ftup))	/* should not happen */
+		elog(ERROR, "cache lookup failed for function %u", oid);
+	pform = (Form_pg_proc) GETSTRUCT(ftup);
+
+	if (!pform->proisagg)
+	{
+		ReleaseSysCache(ftup);
+		if (noError)
+			return InvalidOid;
+		/* we do not use the (*) notation for functions... */
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("function %s is not an aggregate",
+						func_signature_string(aggname,
+											  argcount, argoids))));
+	}
+
+	ReleaseSysCache(ftup);
+
+	return oid;
 }

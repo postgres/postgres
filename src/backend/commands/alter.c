@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.18 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.19 2006/04/15 17:45:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,7 @@ ExecRenameStmt(RenameStmt *stmt)
 	switch (stmt->renameType)
 	{
 		case OBJECT_AGGREGATE:
-			RenameAggregate(stmt->object,
-							(TypeName *) linitial(stmt->objarg),
-							stmt->newname);
+			RenameAggregate(stmt->object, stmt->objarg, stmt->newname);
 			break;
 
 		case OBJECT_CONVERSION:
@@ -152,8 +150,12 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 	switch (stmt->objectType)
 	{
 		case OBJECT_AGGREGATE:
+			AlterFunctionNamespace(stmt->object, stmt->objarg, true,
+								   stmt->newschema);
+			break;
+
 		case OBJECT_FUNCTION:
-			AlterFunctionNamespace(stmt->object, stmt->objarg,
+			AlterFunctionNamespace(stmt->object, stmt->objarg, false,
 								   stmt->newschema);
 			break;
 
@@ -186,9 +188,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 	switch (stmt->objectType)
 	{
 		case OBJECT_AGGREGATE:
-			AlterAggregateOwner(stmt->object,
-								(TypeName *) linitial(stmt->objarg),
-								newowner);
+			AlterAggregateOwner(stmt->object, stmt->objarg, newowner);
 			break;
 
 		case OBJECT_CONVERSION:
@@ -204,6 +204,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 			break;
 
 		case OBJECT_OPERATOR:
+			Assert(list_length(stmt->objarg) == 2);
 			AlterOperatorOwner(stmt->object,
 							   (TypeName *) linitial(stmt->objarg),
 							   (TypeName *) lsecond(stmt->objarg),

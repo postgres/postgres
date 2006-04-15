@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.306 2006/03/23 00:19:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.307 2006/04/15 17:45:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1242,7 +1242,9 @@ typedef struct DefineStmt
 {
 	NodeTag		type;
 	ObjectType	kind;			/* aggregate, operator, type */
+	bool		oldstyle;		/* hack to signal old CREATE AGG syntax */
 	List	   *defnames;		/* qualified name (list of Value strings) */
+	List	   *args;			/* a list of TypeName (if needed) */
 	List	   *definition;		/* a list of DefElem */
 } DefineStmt;
 
@@ -1456,40 +1458,17 @@ typedef struct AlterFunctionStmt
 } AlterFunctionStmt;
 
 /* ----------------------
- *		Drop Aggregate Statement
- * ----------------------
- */
-typedef struct RemoveAggrStmt
-{
-	NodeTag		type;
-	List	   *aggname;		/* aggregate to drop */
-	TypeName   *aggtype;		/* TypeName for input datatype, or NULL */
-	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
-} RemoveAggrStmt;
-
-/* ----------------------
- *		Drop Function Statement
+ *		Drop {Function|Aggregate|Operator} Statement
  * ----------------------
  */
 typedef struct RemoveFuncStmt
 {
 	NodeTag		type;
-	List	   *funcname;		/* function to drop */
+	ObjectType	kind;			/* function, aggregate, operator */
+	List	   *name;			/* qualified name of object to drop */
 	List	   *args;			/* types of the arguments */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } RemoveFuncStmt;
-
-/* ----------------------
- *		Drop Operator Statement
- * ----------------------
- */
-typedef struct RemoveOperStmt
-{
-	NodeTag		type;
-	List	   *opname;			/* operator to drop */
-	List	   *args;			/* types of the arguments */
-	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
-} RemoveOperStmt;
 
 /* ----------------------
  *		Drop Operator Class Statement

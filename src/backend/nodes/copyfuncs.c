@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.332 2006/03/23 00:19:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.333 2006/04/15 17:45:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1942,7 +1942,9 @@ _copyDefineStmt(DefineStmt *from)
 	DefineStmt *newnode = makeNode(DefineStmt);
 
 	COPY_SCALAR_FIELD(kind);
+	COPY_SCALAR_FIELD(oldstyle);
 	COPY_NODE_FIELD(defnames);
+	COPY_NODE_FIELD(args);
 	COPY_NODE_FIELD(definition);
 
 	return newnode;
@@ -2055,36 +2057,13 @@ _copyAlterFunctionStmt(AlterFunctionStmt *from)
 	return newnode;
 }
 
-static RemoveAggrStmt *
-_copyRemoveAggrStmt(RemoveAggrStmt *from)
-{
-	RemoveAggrStmt *newnode = makeNode(RemoveAggrStmt);
-
-	COPY_NODE_FIELD(aggname);
-	COPY_NODE_FIELD(aggtype);
-	COPY_SCALAR_FIELD(behavior);
-
-	return newnode;
-}
-
 static RemoveFuncStmt *
 _copyRemoveFuncStmt(RemoveFuncStmt *from)
 {
 	RemoveFuncStmt *newnode = makeNode(RemoveFuncStmt);
 
-	COPY_NODE_FIELD(funcname);
-	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(behavior);
-
-	return newnode;
-}
-
-static RemoveOperStmt *
-_copyRemoveOperStmt(RemoveOperStmt *from)
-{
-	RemoveOperStmt *newnode = makeNode(RemoveOperStmt);
-
-	COPY_NODE_FIELD(opname);
+	COPY_SCALAR_FIELD(kind);
+	COPY_NODE_FIELD(name);
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(behavior);
 
@@ -3092,14 +3071,8 @@ copyObject(void *from)
 		case T_AlterFunctionStmt:
 			retval = _copyAlterFunctionStmt(from);
 			break;
-		case T_RemoveAggrStmt:
-			retval = _copyRemoveAggrStmt(from);
-			break;
 		case T_RemoveFuncStmt:
 			retval = _copyRemoveFuncStmt(from);
-			break;
-		case T_RemoveOperStmt:
-			retval = _copyRemoveOperStmt(from);
 			break;
 		case T_RemoveOpClassStmt:
 			retval = _copyRemoveOpClassStmt(from);
