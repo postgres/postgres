@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Apr 14 18:26:14 EDT 2006
+Last updated:		Sat Apr 15 14:13:07 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -660,7 +660,6 @@ Clients
 
 * pg_dump
 
-	o %Have pg_dump use multi-statement transactions for INSERT dumps
 	o %Allow pg_dump to use multiple -t and -n switches [pg_dump]
 	o %Add dumping of comments on index columns and composite type columns
 	o %Add full object name to the tag field.  eg. for operators we need
