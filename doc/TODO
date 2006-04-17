@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 15 14:13:07 EDT 2006
+Last updated:		Sun Apr 16 23:18:03 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -666,7 +666,7 @@ Clients
 	  '=(integer, integer)', instead of just '='.
 	o Add pg_dumpall custom format dumps?
 	o %Add CSV output format
-	o Update pg_dump and psql to use the new COPY libpq API (Christopher)
+	o -Update pg_dump and psql to use the new COPY libpq API (Christopher)
 	o Remove unnecessary function pointer abstractions in pg_dump source
 	  code
 	o Allow selection of individual object(s) of all types, not just
