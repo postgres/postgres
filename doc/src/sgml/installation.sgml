@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.252 2006/01/05 03:01:32 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.253 2006/04/18 22:52:07 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -439,19 +439,6 @@ su - postgres
 <userinput>/etc/rc.d/init.d/postgresql stop</userinput>
 </screen>
      works.
-    </para>
-
-    <para>
-     Very old versions might not have <application>pg_ctl</>.  If you
-     can't find it or it doesn't work, find out the process ID of the
-     old server, for example by typing
-<screen>
-<userinput>ps ax | grep postmaster</userinput>
-</screen>
-     and signal it to stop this way:
-<screen>
-<userinput>kill -INT <replaceable>processID</></userinput>
-</screen>
     </para>
    </step>
 
