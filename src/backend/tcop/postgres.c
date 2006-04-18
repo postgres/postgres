@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468.2.3 2005/12/14 17:06:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468.2.4 2006/04/18 00:52:41 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -578,19 +578,21 @@ log_after_parse(List *raw_parsetree_list, const char *query_string,
 
 		/*
 		 * For the first EXECUTE we find, record the client statement used by
-		 * the PREPARE.
+		 * the PREPARE.  PREPARE doesn't save the parse tree so we have no
+		 * way to conditionally output based on the type of query prepared.
 		 */
 		if (IsA(parsetree, ExecuteStmt))
 		{
 			ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
 			PreparedStatement *entry;
 
-			if ((entry = FetchPreparedStatement(stmt->name, false)) != NULL &&
+			if (*prepare_string == NULL &&
+				(entry = FetchPreparedStatement(stmt->name, false)) != NULL &&
 				entry->query_string)
 			{
 				*prepare_string = palloc(strlen(entry->query_string) +
-									  strlen("  [client PREPARE:  %s]") - 1);
-				sprintf(*prepare_string, "  [client PREPARE:  %s]",
+									  strlen("  [PREPARE:  %s]") - 2 + 1);
+				sprintf(*prepare_string, "  [PREPARE:  %s]",
 						entry->query_string);
 			}
 		}
