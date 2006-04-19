@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.109 2006/04/19 14:48:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.110 2006/04/19 18:49:09 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2006, PostgreSQL Global Development Group
@@ -917,6 +917,7 @@ static void dump_node(FormatNode *node, int max);
 
 static char *get_th(char *num, int type);
 static char *str_numth(char *dest, char *num, int type);
+static int	strspace_len(char *str);
 static int	strdigits_len(char *str);
 static char *str_toupper(char *buff);
 static char *str_tolower(char *buff);
@@ -1687,11 +1688,27 @@ is_next_separator(FormatNode *n)
 }
 
 static int
+strspace_len(char *str)
+{
+	int			len = 0;
+
+	while (*str && isspace((unsigned char) *str))
+	{
+		str++;
+		len++;
+	}
+	return len;
+}
+
+static int
 strdigits_len(char *str)
 {
 	char	   *p = str;
-	int			len = 0;
+	int			len;
 
+	len = strspace_len(str);
+	p += len;
+	
 	while (*p && isdigit((unsigned char) *p) && len <= DCH_MAX_ITEM_SIZ)
 	{
 		len++;
@@ -1826,7 +1843,7 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->hh);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -1848,7 +1865,7 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->hh);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -1870,7 +1887,7 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->mi);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -1892,7 +1909,7 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->ss);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -1998,7 +2015,7 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%05d", &tmfc->ssss);
-					return 5 + SKIP_THth(suf);
+					return strspace_len(inout) + 5 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -2249,7 +2266,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->mm);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -2323,7 +2340,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%03d", &tmfc->ddd);
-					return 3 + SKIP_THth(suf);
+					return strspace_len(inout) + 3 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -2345,7 +2362,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->dd);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -2360,7 +2377,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			else
 			{
 				sscanf(inout, "%1d", &tmfc->d);
-				return 1 + SKIP_THth(suf);
+				return strspace_len(inout) + 1 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_WW:
@@ -2382,7 +2399,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->ww);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -2405,7 +2422,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->iw);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -2422,7 +2439,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			else
 			{
 				sscanf(inout, "%1d", &tmfc->q);
-				return 1 + SKIP_THth(suf);
+				return strspace_len(inout) + 1 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_CC:
@@ -2447,7 +2464,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 				{
 					sscanf(inout, "%02d", &tmfc->cc);
-					return 2 + SKIP_THth(suf);
+					return strspace_len(inout) + 2 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -2507,7 +2524,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				{
 					sscanf(inout, "%04d", &tmfc->year);
 					tmfc->yysz = 4;
-					return 4 + SKIP_THth(suf);
+					return strspace_len(inout) + 4 + SKIP_THth(suf);
 				}
 			}
 			break;
@@ -2540,7 +2557,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 					tmfc->year += 2000;
 				tmfc->yysz = 3;
-				return 3 + SKIP_THth(suf);
+				return strspace_len(inout) + 3 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_YY:
@@ -2572,7 +2589,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				else
 					tmfc->year += 1900;
 				tmfc->yysz = 2;
-				return 2 + SKIP_THth(suf);
+				return strspace_len(inout) + 2 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_Y:
@@ -2600,7 +2617,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 				 */
 				tmfc->year += 2000;
 				tmfc->yysz = 1;
-				return 1 + SKIP_THth(suf);
+				return strspace_len(inout) + 1 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_RM:
@@ -2652,7 +2669,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			else
 			{
 				sscanf(inout, "%1d", &tmfc->w);
-				return 1 + SKIP_THth(suf);
+				return strspace_len(inout) + 1 + SKIP_THth(suf);
 			}
 			break;
 		case DCH_J:
