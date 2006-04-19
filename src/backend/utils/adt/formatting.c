@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.108 2006/03/05 15:58:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.109 2006/04/19 14:48:06 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2006, PostgreSQL Global Development Group
@@ -1096,7 +1096,6 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 				num->pre_lsign_num = num->pre;
 				num->need_locale = TRUE;
 				num->flag |= NUM_F_LSIGN;
-
 			}
 			else if (num->lsign == NUM_LSIGN_NONE)
 			{
@@ -1228,7 +1227,6 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
 		 */
 		if (*str && (n->key = index_seq_search(str, kw, index)) != NULL)
 		{
-
 			n->type = NODE_TYPE_ACTION;
 			n->suffix = 0;
 			node_set = 1;
@@ -1250,7 +1248,6 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
 				if (s->len)
 					str += s->len;
 			}
-
 		}
 		else if (*str)
 		{
@@ -1259,7 +1256,6 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
 			 */
 			if (*str == '"' && last != '\\')
 			{
-
 				int			x = 0;
 
 				while (*(++str))
@@ -1284,13 +1280,11 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
 				node_set = 0;
 				suffix = 0;
 				last = 0;
-
 			}
 			else if (*str && *str == '\\' && last != '\\' && *(str + 1) == '"')
 			{
 				last = *str;
 				str++;
-
 			}
 			else if (*str)
 			{
@@ -1301,7 +1295,6 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
 				last = 0;
 				str++;
 			}
-
 		}
 
 		/* end */
@@ -1314,7 +1307,6 @@ parse_format(FormatNode *node, char *str, const KeyWord *kw,
 			n->suffix = 0;
 			node_set = 0;
 		}
-
 	}
 
 	n->type = NODE_TYPE_END;
@@ -1422,7 +1414,6 @@ dump_node(FormatNode *node, int max)
 		}
 		else
 			elog(DEBUG_elog_output, "%d:\t unknown NODE!", a);
-
 	}
 }
 #endif   /* DEBUG */
@@ -1558,14 +1549,12 @@ seq_search(char *name, char **array, int type, int max, int *len)
 
 	for (last = 0, a = array; *a != NULL; a++)
 	{
-
 		/* comperate first chars */
 		if (*name != **a)
 			continue;
 
 		for (i = 1, p = *a + 1, n = name + 1;; n++, p++, i++)
 		{
-
 			/* search fragment (max) only */
 			if (max && i == max)
 			{
@@ -2703,7 +2692,6 @@ DCH_cache_getnew(char *str)
 	 */
 	if (n_DCHCache > DCH_CACHE_FIELDS)
 	{
-
 		DCHCacheEntry *old = DCHCache + 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
@@ -3226,7 +3214,6 @@ do_to_timestamp(text *date_txt, text *fmt,
 
 			if ((ent = DCH_cache_search(fmt_str)) == NULL)
 			{
-
 				ent = DCH_cache_getnew(fmt_str);
 
 				/*
@@ -3475,7 +3462,6 @@ NUM_cache_getnew(char *str)
 	 */
 	if (n_NUMCache > NUM_CACHE_FIELDS)
 	{
-
 		NUMCacheEntry *old = NUMCache + 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
@@ -3503,7 +3489,6 @@ NUM_cache_getnew(char *str)
 		old->age = (++NUMCounter);
 
 		ent = old;
-
 	}
 	else
 	{
@@ -3598,7 +3583,6 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree)
 					 NULL, NUM_index, NUM_TYPE, Num);
 
 		(format + len)->type = NODE_TYPE_END;	/* Paranoia? */
-
 	}
 	else
 	{
@@ -3611,7 +3595,6 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree)
 
 		if ((ent = NUM_cache_search(str)) == NULL)
 		{
-
 			ent = NUM_cache_getnew(str);
 
 			/*
@@ -3622,7 +3605,6 @@ NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree)
 						 NULL, NUM_index, NUM_TYPE, &ent->Num);
 
 			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoia? */
-
 		}
 
 		format = ent->format;
@@ -3705,7 +3687,6 @@ NUM_prepare_locale(NUMProc *Np)
 {
 	if (Np->Num->need_locale)
 	{
-
 		struct lconv *lconv;
 
 		/*
@@ -3829,7 +3810,6 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	if (*Np->number == ' ' && (id == NUM_0 || id == NUM_9) &&
 		(Np->read_pre + Np->read_post) == 0)
 	{
-
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Try read sign (%c), locale positive: %s, negative: %s",
 			 *Np->inout_p, Np->L_positive_sign, Np->L_negative_sign);
@@ -3872,14 +3852,11 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 			if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
 										*Np->inout_p == '<'))
 			{
-
 				*Np->number = '-';		/* set - */
 				Np->inout_p++;
-
 			}
 			else if (*Np->inout_p == '+')
 			{
-
 				*Np->number = '+';		/* set + */
 				Np->inout_p++;
 			}
@@ -3898,7 +3875,6 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	 */
 	if (isdigit((unsigned char) *Np->inout_p))
 	{
-
 		if (Np->read_dec && Np->read_post == Np->Num->post)
 			return;
 
@@ -3922,13 +3898,11 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 	}
 	else if (IS_DECIMAL(Np->Num) && Np->read_dec == FALSE)
 	{
-
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Try read decimal point (%c)", *Np->inout_p);
 #endif
 		if (*Np->inout_p == '.')
 		{
-
 			*Np->number_p = '.';
 			Np->number_p++;
 			Np->read_dec = TRUE;
@@ -4123,7 +4097,6 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				*Np->inout_p = ' ';		/* Write ' ' */
 				++Np->inout_p;
 			}
-
 		}
 		else if (IS_ZERO(Np->Num) &&
 				 Np->num_curr < Np->num_pre &&
@@ -4135,7 +4108,6 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			*Np->inout_p = '0'; /* Write '0' */
 			++Np->inout_p;
 			Np->num_in = TRUE;
-
 		}
 		else
 		{
@@ -4144,7 +4116,6 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			 */
 			if (*Np->number_p == '.')
 			{
-
 				if (!Np->last_relevant || *Np->last_relevant != '.')
 				{
 					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
@@ -4157,11 +4128,9 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				else if (IS_FILLMODE(Np->Num) &&
 						 Np->last_relevant && *Np->last_relevant == '.')
 				{
-
 					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
 					Np->inout_p += strlen(Np->inout_p);
 				}
-
 			}
 			else
 			{
@@ -4408,7 +4377,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			 */
 			switch (n->key->id)
 			{
-
 				case NUM_9:
 				case NUM_0:
 				case NUM_DEC:
@@ -4467,7 +4435,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 							strcpy(Np->inout_p, Np->L_thousands_sep);
 							Np->inout_p += strlen(Np->inout_p) - 1;
 						}
-
 					}
 					else
 					{
@@ -4485,7 +4452,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					{
 						strcpy(Np->inout_p, Np->L_currency_symbol);
 						Np->inout_p += strlen(Np->inout_p) - 1;
-
 					}
 					else
 						Np->inout_p += strlen(Np->L_currency_symbol) - 1;
@@ -4546,7 +4512,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 							continue;
 						else
 							*Np->inout_p = ' ';
-
 					}
 					else
 					{
@@ -4564,7 +4529,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 							continue;
 						else
 							*Np->inout_p = ' ';
-
 					}
 					else
 					{
@@ -4591,7 +4555,6 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 					continue;
 					break;
 			}
-
 		}
 		else
 		{
