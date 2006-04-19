@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Apr 18 22:46:31 EDT 2006
+Last updated:		Wed Apr 19 17:50:14 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -720,6 +720,16 @@ Clients
 	  held on the server waiting for them to be requested by libpq.
 	  One complexity is that a statement like SELECT 1/col could error
 	  out mid-way through the result set.
+
+	o Add new version of PQescapeString() that doesn't double backslashes
+	  that are part of a client-only multibyte sequence
+
+	  Single-quote is not a valid byte in any supported client-only
+	  encoding.
+
+	o Add new version of PQescapeString() that doesn't double
+	  backslashes when standard_conforming_strings is true and
+	  non-E strings are used
 
 
 Referential Integrity
