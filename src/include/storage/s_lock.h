@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.148 2006/03/05 15:59:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.149 2006/04/19 23:11:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,10 +323,10 @@ tas(volatile slock_t *lock)
 
 
 /* PowerPC */
-#if defined(__ppc__) || defined(__powerpc__) || defined(__powerpc64__)
+#if defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__) || defined(__powerpc64__)
 #define HAS_TEST_AND_SET
 
-#if defined(__powerpc64__)
+#if defined(__ppc64__) || defined(__powerpc64__)
 typedef unsigned long slock_t;
 #else
 typedef unsigned int slock_t;
