@@ -21,7 +21,7 @@ else
 	$(LD) $(LDREL) $(LDOUT) $<.obj -x $<
 	@echo building shared object $@
 	@rm -f $@.pic
-	@${AR} cq $@.pic `lorder $<.obj | tsort`
+	@${AR} cq $@.pic $<.obj
 	${RANLIB} $@.pic
 	@rm -f $@
 	$(LD) -x -Bshareable -Bforcearchive -o $@ $@.pic

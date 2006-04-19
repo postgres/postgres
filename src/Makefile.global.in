@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.221 2006/02/12 07:29:36 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.222 2006/04/19 16:32:08 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -222,7 +222,6 @@ LDFLAGS_SL = @LDFLAGS_SL@
 LDREL = -r
 LDOUT = -o
 RANLIB = @RANLIB@
-LORDER = @LORDER@
 X = @EXEEXT@
 
 # Perl 

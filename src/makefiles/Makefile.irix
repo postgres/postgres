@@ -1,4 +1,3 @@
-MK_NO_LORDER= true
 AROPT = crs
 rpath = -Wl,-rpath,'$(rpathdir)'
 

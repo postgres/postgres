@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.102 2006/01/05 03:01:34 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.103 2006/04/19 16:32:08 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -266,17 +266,9 @@ all-static-lib: lib$(NAME).a
 
 all-shared-lib: $(shlib)
 
-ifndef LORDER
-MK_NO_LORDER := true
-endif
-
 ifndef haslibarule
 lib$(NAME).a: $(OBJS)
-ifdef MK_NO_LORDER
 	$(LINK.static) $@ $^
-else
-	$(LINK.static) $@ `$(LORDER) $^ | tsort`
-endif
 	$(RANLIB) $@
 endif #haslibarule
 

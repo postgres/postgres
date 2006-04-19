@@ -3,7 +3,6 @@
 MAKE_EXPORTS= true
 
 RANLIB= touch
-MK_NO_LORDER= true
 AROPT = crs
 
 DLSUFFIX = .so
