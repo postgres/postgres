@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Apr 16 23:18:03 EDT 2006
+Last updated:		Tue Apr 18 22:46:31 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -164,6 +164,8 @@ Administration
 	    This is useful for checking PITR recovery.
 
 	  o Allow the PITR process to be debugged and data examined
+	  o Add reporting of the current WAL file, perhaps as part of
+	    partial log file archiving
 
 
 Monitoring
