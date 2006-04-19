@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.64.2.2 2006/02/07 00:26:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.64.2.3 2006/04/19 16:15:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -751,8 +751,10 @@ PQprintTuples(const PGresult *res,
 				fprintf(fout, "|\n%s\n", tborder);
 		}
 	}
-}
 
+	if (tborder)
+		free(tborder);
+}
 
 
 /* simply send out max-length number of filler characters to fp */
