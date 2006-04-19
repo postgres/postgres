@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.43 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.44 2006/04/19 16:02:17 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -250,14 +250,13 @@ get_prompt(promptStatus_t status)
 					/* execute command */
 				case '`':
 					{
-						FILE	   *fd = NULL;
+						FILE	   *fd;
 						char	   *file = pg_strdup(p + 1);
 						int			cmdend;
 
 						cmdend = strcspn(file, "`");
 						file[cmdend] = '\0';
-						if (file)
-							fd = popen(file, "r");
+						fd = popen(file, "r");
 						if (fd)
 						{
 							fgets(buf, MAX_PROMPT_SIZE - 1, fd);

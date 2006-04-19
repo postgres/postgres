@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.126 2006/04/12 22:18:48 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.127 2006/04/19 16:02:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2203,7 +2203,7 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 	PQExpBuffer qry;
 
 	if (!schemaName || *schemaName == '\0' ||
-		strcmp(AH->currSchema, schemaName) == 0)
+		(AH->currSchema && strcmp(AH->currSchema, schemaName) == 0))
 		return;					/* no need to do anything */
 
 	qry = createPQExpBuffer();
