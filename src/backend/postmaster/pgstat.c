@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.122 2006/04/06 20:38:00 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.123 2006/04/20 10:51:32 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -216,7 +216,8 @@ pgstat_init(void)
 	struct timeval tv;
 	char		test_byte;
 	int			sel_res;
-
+	int			tries = 0;
+	
 #define TESTBYTEVAL ((char) 199)
 
 	/*
@@ -276,6 +277,10 @@ pgstat_init(void)
 			continue;
 #endif
 
+		if (++tries > 1)
+			ereport(LOG,
+				(errmsg("trying another address for the statistics collector")));
+		
 		/*
 		 * Create the socket.
 		 */
