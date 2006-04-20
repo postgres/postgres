@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.198 2006/03/05 15:58:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.199 2006/04/20 17:50:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3736,14 +3736,8 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 		bytea	   *bstr = DatumGetByteaP(patt_const->constvalue);
 
 		pattlen = VARSIZE(bstr) - VARHDRSZ;
-		if (pattlen > 0)
-		{
-			patt = (char *) palloc(pattlen);
-			memcpy(patt, VARDATA(bstr), pattlen);
-		}
-		else
-			patt = NULL;
-
+		patt = (char *) palloc(pattlen);
+		memcpy(patt, VARDATA(bstr), pattlen);
 		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
 			pfree(bstr);
 	}
@@ -3761,7 +3755,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 		if (patt[pos] == '\\')
 		{
 			pos++;
-			if (patt[pos] == '\0' && typeid != BYTEAOID)
+			if (pos >= pattlen)
 				break;
 		}
 
@@ -3794,8 +3788,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 		*rest_const = string_to_bytea_const(rest, pattlen - pos);
 	}
 
-	if (patt != NULL)
-		pfree(patt);
+	pfree(patt);
 	pfree(match);
 
 	/* in LIKE, an empty pattern is an exact match! */
@@ -4101,7 +4094,6 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 {
 	Selectivity sel = 1.0;
 	int			pos;
-	int			start;
 	Oid			typeid = patt_const->consttype;
 	char	   *patt;
 	int			pattlen;
@@ -4124,23 +4116,20 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 		bytea	   *bstr = DatumGetByteaP(patt_const->constvalue);
 
 		pattlen = VARSIZE(bstr) - VARHDRSZ;
-		if (pattlen > 0)
-		{
-			patt = (char *) palloc(pattlen);
-			memcpy(patt, VARDATA(bstr), pattlen);
-		}
-		else
-			patt = NULL;
-
+		patt = (char *) palloc(pattlen);
+		memcpy(patt, VARDATA(bstr), pattlen);
 		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
 			pfree(bstr);
 	}
-	/* patt should never be NULL in practice */
-	Assert(patt != NULL);
 
-	/* Skip any leading %; it's already factored into initial sel */
-	start = (*patt == '%') ? 1 : 0;
-	for (pos = start; pos < pattlen; pos++)
+	/* Skip any leading wildcard; it's already factored into initial sel */
+	for (pos = 0; pos < pattlen; pos++)
+	{
+		if (patt[pos] != '%' && patt[pos] != '_')
+			break;
+	}
+
+	for (; pos < pattlen; pos++)
 	{
 		/* % and _ are wildcard characters in LIKE */
 		if (patt[pos] == '%')
@@ -4151,7 +4140,7 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 		{
 			/* Backslash quotes the next character */
 			pos++;
-			if (patt[pos] == '\0' && typeid != BYTEAOID)
+			if (pos >= pattlen)
 				break;
 			sel *= FIXED_CHAR_SEL;
 		}
@@ -4161,6 +4150,8 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 	/* Could get sel > 1 if multiple wildcards */
 	if (sel > 1.0)
 		sel = 1.0;
+
+	pfree(patt);
 	return sel;
 }
 
@@ -4366,14 +4357,8 @@ make_greater_string(const Const *str_const)
 		bytea	   *bstr = DatumGetByteaP(str_const->constvalue);
 
 		len = VARSIZE(bstr) - VARHDRSZ;
-		if (len > 0)
-		{
-			workstr = (char *) palloc(len);
-			memcpy(workstr, VARDATA(bstr), len);
-		}
-		else
-			workstr = NULL;
-
+		workstr = (char *) palloc(len);
+		memcpy(workstr, VARDATA(bstr), len);
 		if ((Pointer) bstr != DatumGetPointer(str_const->constvalue))
 			pfree(bstr);
 	}
@@ -4429,8 +4414,7 @@ make_greater_string(const Const *str_const)
 	}
 
 	/* Failed... */
-	if (workstr != NULL)
-		pfree(workstr);
+	pfree(workstr);
 
 	return NULL;
 }
