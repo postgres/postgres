@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.38 2006/03/05 15:58:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.39 2006/04/21 16:45:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "access/multixact.h"
 #include "access/subtrans.h"
 #include "miscadmin.h"
+#include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
@@ -84,6 +85,13 @@ NON_EXEC_STATIC LWLockPadded *LWLockArray = NULL;
 static int	num_held_lwlocks = 0;
 static LWLockId held_lwlocks[MAX_SIMUL_LWLOCKS];
 
+#ifdef LWLOCK_STATS
+static int	counts_for_pid = 0;
+static int *sh_acquire_counts;
+static int *ex_acquire_counts;
+static int *block_counts;
+#endif
+
 
 #ifdef LOCK_DEBUG
 bool		Trace_lwlocks = false;
@@ -108,6 +116,31 @@ LOG_LWDEBUG(const char *where, LWLockId lockid, const char *msg)
 #define PRINT_LWDEBUG(a,b,c)
 #define LOG_LWDEBUG(a,b,c)
 #endif   /* LOCK_DEBUG */
+
+#ifdef LWLOCK_STATS
+
+static void
+print_lwlock_stats(int code, Datum arg)
+{
+	int			i;
+	int		   *LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
+	int			numLocks = LWLockCounter[1];
+
+	/* Grab an LWLock to keep different backends from mixing reports */
+	LWLockAcquire(0, LW_EXCLUSIVE);
+
+	for (i = 0; i < numLocks; i++)
+	{
+		if (sh_acquire_counts[i] || ex_acquire_counts[i] || block_counts[i])
+			fprintf(stderr, "PID %d lwlock %d: shacq %u exacq %u blk %u\n",
+					MyProcPid, i, sh_acquire_counts[i], ex_acquire_counts[i],
+					block_counts[i]);
+	}
+
+	LWLockRelease(0);
+}
+
+#endif /* LWLOCK_STATS */
 
 
 /*
@@ -263,6 +296,26 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 
 	PRINT_LWDEBUG("LWLockAcquire", lockid, lock);
 
+#ifdef LWLOCK_STATS
+	/* Set up local count state first time through in a given process */
+	if (counts_for_pid != MyProcPid)
+	{
+		int	   *LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
+		int		numLocks = LWLockCounter[1];
+
+		sh_acquire_counts = calloc(numLocks, sizeof(int));
+		ex_acquire_counts = calloc(numLocks, sizeof(int));
+		block_counts = calloc(numLocks, sizeof(int));
+		counts_for_pid = MyProcPid;
+		on_shmem_exit(print_lwlock_stats, 0);
+	}
+	/* Count lock acquisition attempts */
+	if (mode == LW_EXCLUSIVE)
+		ex_acquire_counts[lockid]++;
+	else
+		sh_acquire_counts[lockid]++;
+#endif /* LWLOCK_STATS */
+
 	/*
 	 * We can't wait if we haven't got a PGPROC.  This should only occur
 	 * during bootstrap or shared memory initialization.  Put an Assert here
@@ -368,6 +421,10 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 * signal when it next waits.
 		 */
 		LOG_LWDEBUG("LWLockAcquire", lockid, "waiting");
+
+#ifdef LWLOCK_STATS
+		block_counts[lockid]++;
+#endif
 
 		for (;;)
 		{
