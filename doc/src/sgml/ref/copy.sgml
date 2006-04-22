@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.73 2006/03/03 19:54:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.74 2006/04/22 03:03:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -106,7 +106,9 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     <term><replaceable class="parameter">filename</replaceable></term>
     <listitem>
      <para>
-      The absolute path name of the input or output file.
+      The absolute path name of the input or output file.  Windows users
+      might need to use an <literal>E''</> string and double backslashes
+      used as path separators.
      </para>
     </listitem>
    </varlistentry>
