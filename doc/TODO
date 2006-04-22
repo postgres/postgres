@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Apr 21 16:45:19 EDT 2006
+Last updated:		Sat Apr 22 12:06:27 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -621,7 +621,10 @@ Clients
 	  This would allow non-psql clients to pull the same information out
 	  of the database as psql.
 
-	o Fix psql's display of schema information (Neil)
+	o Fix psql's \dn for various schema combinations (Neil)
+
+	  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php
+
 	o Allow psql \pset boolean variables to set to fixed values, rather
 	  than toggle
 	o Consistently display privilege information for all objects in psql
