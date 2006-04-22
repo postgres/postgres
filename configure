@@ -2715,7 +2715,8 @@ fi
 
 # The Intel compiler on Linux supports most gcc options, but not
 # all of them, so only add these options if we are really using
-# gcc
+# gcc.  Intel compiler has a bug in checking for division by NAN
+# (NaN == 0), -mp1 fixes it, so someday we might way to add it.
 
 if test "$GCC" = yes; then
 
