@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.189 2006/03/10 01:51:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.190 2006/04/22 01:25:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -605,13 +605,12 @@ ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone)
 {
 	Param	   *expression = (Param *) exprstate->expr;
-	int			thisParamKind = expression->paramkind;
-	AttrNumber	thisParamId = expression->paramid;
+	int			thisParamId = expression->paramid;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
 
-	if (thisParamKind == PARAM_EXEC)
+	if (expression->paramkind == PARAM_EXEC)
 	{
 		/*
 		 * PARAM_EXEC params (internal executor parameters) are stored in the
@@ -633,18 +632,27 @@ ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 	else
 	{
 		/*
-		 * All other parameter types must be sought in ecxt_param_list_info.
+		 * PARAM_EXTERN parameters must be sought in ecxt_param_list_info.
 		 */
-		ParamListInfo paramInfo;
+		ParamListInfo paramInfo = econtext->ecxt_param_list_info;
 
-		paramInfo = lookupParam(econtext->ecxt_param_list_info,
-								thisParamKind,
-								expression->paramname,
-								thisParamId,
-								false);
-		Assert(paramInfo->ptype == expression->paramtype);
-		*isNull = paramInfo->isnull;
-		return paramInfo->value;
+		Assert(expression->paramkind == PARAM_EXTERN);
+		if (paramInfo &&
+			thisParamId > 0 && thisParamId <= paramInfo->numParams)
+		{
+			ParamExternData *prm = &paramInfo->params[thisParamId - 1];
+
+			if (OidIsValid(prm->ptype))
+			{
+				Assert(prm->ptype == expression->paramtype);
+				*isNull = prm->isnull;
+				return prm->value;
+			}
+		}
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("no value found for parameter %d", thisParamId)));
+		return (Datum) 0;		/* keep compiler quiet */
 	}
 }
 

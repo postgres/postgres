@@ -1,13 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * params.c
- *	  Support functions for plan parameter lists.
+ *	  Support for finding the values associated with Param nodes.
+ *
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.5 2006/03/05 15:58:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/params.c,v 1.6 2006/04/22 01:25:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +21,7 @@
 
 
 /*
- * Copy a ParamList.
+ * Copy a ParamListInfo structure.
  *
  * The result is allocated in CurrentMemoryContext.
  */
@@ -28,97 +29,34 @@ ParamListInfo
 copyParamList(ParamListInfo from)
 {
 	ParamListInfo retval;
-	int			i,
-				size;
+	Size		size;
+	int			i;
 
-	if (from == NULL)
+	if (from == NULL || from->numParams <= 0)
 		return NULL;
 
-	size = 0;
-	while (from[size].kind != PARAM_INVALID)
-		size++;
+	/* sizeof(ParamListInfoData) includes the first array element */
+	size = sizeof(ParamListInfoData) +
+		(from->numParams - 1) * sizeof(ParamExternData);
 
-	retval = (ParamListInfo) palloc0((size + 1) * sizeof(ParamListInfoData));
+	retval = (ParamListInfo) palloc(size);
+	memcpy(retval, from, size);
 
-	for (i = 0; i < size; i++)
+	/*
+	 * Flat-copy is not good enough for pass-by-ref data values, so make
+	 * a pass over the array to copy those.
+	 */
+	for (i = 0; i < retval->numParams; i++)
 	{
-		/* copy metadata */
-		retval[i].kind = from[i].kind;
-		if (from[i].kind == PARAM_NAMED)
-			retval[i].name = pstrdup(from[i].name);
-		retval[i].id = from[i].id;
-		retval[i].ptype = from[i].ptype;
+		ParamExternData *prm = &retval->params[i];
+		int16		typLen;
+		bool		typByVal;
 
-		/* copy value */
-		retval[i].isnull = from[i].isnull;
-		if (from[i].isnull)
-		{
-			retval[i].value = from[i].value;	/* nulls just copy */
-		}
-		else
-		{
-			int16		typLen;
-			bool		typByVal;
-
-			get_typlenbyval(from[i].ptype, &typLen, &typByVal);
-			retval[i].value = datumCopy(from[i].value, typByVal, typLen);
-		}
+		if (prm->isnull || !OidIsValid(prm->ptype))
+			continue;
+		get_typlenbyval(prm->ptype, &typLen, &typByVal);
+		prm->value = datumCopy(prm->value, typByVal, typLen);
 	}
-
-	retval[size].kind = PARAM_INVALID;
 
 	return retval;
-}
-
-/*
- * Search a ParamList for a given parameter.
- *
- * On success, returns a pointer to the parameter's entry.
- * On failure, returns NULL if noError is true, else ereports the error.
- */
-ParamListInfo
-lookupParam(ParamListInfo paramList, int thisParamKind,
-			const char *thisParamName, AttrNumber thisParamId,
-			bool noError)
-{
-	if (paramList != NULL)
-	{
-		while (paramList->kind != PARAM_INVALID)
-		{
-			if (thisParamKind == paramList->kind)
-			{
-				switch (thisParamKind)
-				{
-					case PARAM_NAMED:
-						if (strcmp(paramList->name, thisParamName) == 0)
-							return paramList;
-						break;
-					case PARAM_NUM:
-						if (paramList->id == thisParamId)
-							return paramList;
-						break;
-					default:
-						elog(ERROR, "unrecognized paramkind: %d",
-							 thisParamKind);
-				}
-			}
-			paramList++;
-		}
-	}
-
-	if (!noError)
-	{
-		if (thisParamKind == PARAM_NAMED)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("no value found for parameter \"%s\"",
-							thisParamName)));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("no value found for parameter %d",
-							thisParamId)));
-	}
-
-	return NULL;
 }

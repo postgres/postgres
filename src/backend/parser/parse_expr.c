@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.191 2006/03/14 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.192 2006/04/22 01:26:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -568,8 +568,8 @@ transformParamRef(ParseState *pstate, ParamRef *pref)
 	}
 
 	param = makeNode(Param);
-	param->paramkind = PARAM_NUM;
-	param->paramid = (AttrNumber) paramno;
+	param->paramkind = PARAM_EXTERN;
+	param->paramid = paramno;
 	param->paramtype = toppstate->p_paramtypes[paramno - 1];
 
 	return (Node *) param;
@@ -1177,7 +1177,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 
 			param = makeNode(Param);
 			param->paramkind = PARAM_SUBLINK;
-			param->paramid = (AttrNumber) tent->resno;
+			param->paramid = tent->resno;
 			param->paramtype = exprType((Node *) tent->expr);
 
 			right_list = lappend(right_list, param);

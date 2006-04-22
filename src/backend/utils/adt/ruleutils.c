@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.219 2006/04/08 18:49:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.220 2006/04/22 01:26:00 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -3120,24 +3120,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		case T_Param:
-			{
-				Param	   *param = (Param *) node;
-
-				switch (param->paramkind)
-				{
-					case PARAM_NAMED:
-						appendStringInfo(buf, "$%s", param->paramname);
-						break;
-					case PARAM_NUM:
-					case PARAM_EXEC:
-					case PARAM_SUBLINK:
-						appendStringInfo(buf, "$%d", param->paramid);
-						break;
-					default:
-						appendStringInfo(buf, "(param)");
-						break;
-				}
-			}
+			appendStringInfo(buf, "$%d", ((Param *) node)->paramid);
 			break;
 
 		case T_Aggref:

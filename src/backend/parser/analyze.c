@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.332 2006/03/23 00:19:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.333 2006/04/22 01:25:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3205,7 +3205,7 @@ check_parameter_resolution_walker(Node *node,
 	{
 		Param	   *param = (Param *) node;
 
-		if (param->paramkind == PARAM_NUM)
+		if (param->paramkind == PARAM_EXTERN)
 		{
 			int			paramno = param->paramid;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.484 2006/04/18 00:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.485 2006/04/22 01:26:00 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1479,8 +1479,10 @@ exec_bind_message(StringInfo input_message)
 
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-		params = (ParamListInfo)
-			palloc0((numParams + 1) * sizeof(ParamListInfoData));
+		/* sizeof(ParamListInfoData) includes the first array element */
+		params = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
+								(numParams - 1) * sizeof(ParamExternData));
+		params->numParams = numParams;
 
 		i = 0;
 		foreach(l, pstmt->argtype_list)
@@ -1545,8 +1547,10 @@ exec_bind_message(StringInfo input_message)
 				else
 					pstring = pg_client_to_server(pbuf.data, plength);
 
-				params[i].value = OidInputFunctionCall(typinput, pstring,
-													   typioparam, -1);
+				params->params[i].value = OidInputFunctionCall(typinput,
+															   pstring,
+															   typioparam,
+															   -1);
 				/* Free result of encoding conversion, if any */
 				if (pstring && pstring != pbuf.data)
 					pfree(pstring);
@@ -1567,8 +1571,10 @@ exec_bind_message(StringInfo input_message)
 				else
 					bufptr = &pbuf;
 
-				params[i].value = OidReceiveFunctionCall(typreceive, bufptr,
-														 typioparam, -1);
+				params->params[i].value = OidReceiveFunctionCall(typreceive,
+																 bufptr,
+																 typioparam,
+																 -1);
 
 				/* Trouble if it didn't eat the whole buffer */
 				if (!isNull && pbuf.cursor != pbuf.len)
@@ -1589,15 +1595,11 @@ exec_bind_message(StringInfo input_message)
 			if (!isNull)
 				pbuf.data[plength] = csave;
 
-			params[i].kind = PARAM_NUM;
-			params[i].id = i + 1;
-			params[i].ptype = ptype;
-			params[i].isnull = isNull;
+			params->params[i].isnull = isNull;
+			params->params[i].ptype = ptype;
 
 			i++;
 		}
-
-		params[i].kind = PARAM_INVALID;
 
 		MemoryContextSwitchTo(oldContext);
 	}

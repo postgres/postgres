@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.137 2006/04/05 22:11:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.138 2006/04/22 01:25:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ coerce_type(ParseState *pstate, Node *node,
 		return result;
 	}
 	if (inputTypeId == UNKNOWNOID && IsA(node, Param) &&
-		((Param *) node)->paramkind == PARAM_NUM &&
+		((Param *) node)->paramkind == PARAM_EXTERN &&
 		pstate != NULL && pstate->p_variableparams)
 	{
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.163 2006/04/04 19:35:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.164 2006/04/22 01:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3786,24 +3786,27 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 * back for subscript evaluation, and so there can be a need to have more
 	 * than one active param list.
 	 */
-	paramLI = (ParamListInfo)
-		MemoryContextAlloc(econtext->ecxt_per_tuple_memory,
-						   (expr->nparams + 1) * sizeof(ParamListInfoData));
-
-	/*
-	 * Put the parameter values into the parameter list entries.
-	 */
-	for (i = 0; i < expr->nparams; i++)
+	if (expr->nparams > 0)
 	{
-		PLpgSQL_datum *datum = estate->datums[expr->params[i]];
+		/* sizeof(ParamListInfoData) includes the first array element */
+		paramLI = (ParamListInfo)
+			MemoryContextAlloc(econtext->ecxt_per_tuple_memory,
+							   sizeof(ParamListInfoData) +
+							   (expr->nparams - 1) * sizeof(ParamExternData));
+		paramLI->numParams = expr->nparams;
 
-		paramLI[i].kind = PARAM_NUM;
-		paramLI[i].id = i + 1;
-		exec_eval_datum(estate, datum, expr->plan_argtypes[i],
-						&paramLI[i].ptype,
-						&paramLI[i].value, &paramLI[i].isnull);
+		for (i = 0; i < expr->nparams; i++)
+		{
+			ParamExternData *prm = &paramLI->params[i];
+			PLpgSQL_datum *datum = estate->datums[expr->params[i]];
+
+			exec_eval_datum(estate, datum, expr->plan_argtypes[i],
+							&prm->ptype,
+							&prm->value, &prm->isnull);
+		}
 	}
-	paramLI[i].kind = PARAM_INVALID;
+	else
+		paramLI = NULL;
 
 	/*
 	 * Now we can safely make the econtext point to the param list.

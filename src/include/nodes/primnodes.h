@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.112 2006/03/05 15:58:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.113 2006/04/22 01:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,18 +146,15 @@ typedef struct Const
 /* ----------------
  * Param
  *		paramkind - specifies the kind of parameter. The possible values
- *		for this field are specified in "params.h", and they are:
+ *		for this field are:
  *
- *		PARAM_NAMED: The parameter has a name, i.e. something
- *				like `$.salary' or `$.foobar'.
- *				In this case field `paramname' must be a valid name.
+ *		PARAM_EXTERN:  The parameter value is supplied from outside the plan.
+ *				Such parameters are numbered from 1 to n.
  *
- *		PARAM_NUM:	 The parameter has only a numeric identifier,
- *				i.e. something like `$1', `$2' etc.
- *				The number is contained in the `paramid' field.
- *
- *		PARAM_EXEC:  The parameter is an internal executor parameter.
- *				It has a number contained in the `paramid' field.
+ *		PARAM_EXEC:  The parameter is an internal executor parameter, used
+ *				for passing values into and out of sub-queries.
+ *				For historical reasons, such parameters are numbered from 0.
+ *				These numbers are independent of PARAM_EXTERN numbers.
  *
  *		PARAM_SUBLINK:  The parameter represents an output column of a SubLink
  *				node's sub-select.  The column number is contained in the
@@ -165,12 +162,18 @@ typedef struct Const
  *				PARAM_EXEC during planning.)
  * ----------------
  */
+typedef enum ParamKind
+{
+	PARAM_EXTERN,
+	PARAM_EXEC,
+	PARAM_SUBLINK
+} ParamKind;
+
 typedef struct Param
 {
 	Expr		xpr;
-	int			paramkind;		/* kind of parameter. See above */
-	AttrNumber	paramid;		/* numeric ID for parameter ("$1") */
-	char	   *paramname;		/* name for parameter ("$.foo") */
+	ParamKind	paramkind;		/* kind of parameter. See above */
+	int			paramid;		/* numeric ID for parameter */
 	Oid			paramtype;		/* PG_TYPE OID of parameter's datatype */
 } Param;
 

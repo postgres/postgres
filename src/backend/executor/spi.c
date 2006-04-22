@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.150 2006/04/04 19:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.151 2006/04/22 01:25:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -885,19 +885,21 @@ SPI_cursor_open(const char *name, void *plan,
 	/* If the plan has parameters, set them up */
 	if (spiplan->nargs > 0)
 	{
-		paramLI = (ParamListInfo) palloc0((spiplan->nargs + 1) *
-										  sizeof(ParamListInfoData));
+		/* sizeof(ParamListInfoData) includes the first array element */
+		paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
+							(spiplan->nargs - 1) * sizeof(ParamExternData));
+		paramLI->numParams = spiplan->nargs;
 
 		for (k = 0; k < spiplan->nargs; k++)
 		{
-			paramLI[k].kind = PARAM_NUM;
-			paramLI[k].id = k + 1;
-			paramLI[k].ptype = spiplan->argtypes[k];
-			paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
-			if (paramLI[k].isnull)
+			ParamExternData *prm = &paramLI->params[k];
+
+			prm->ptype = spiplan->argtypes[k];
+			prm->isnull = (Nulls && Nulls[k] == 'n');
+			if (prm->isnull)
 			{
 				/* nulls just copy */
-				paramLI[k].value = Values[k];
+				prm->value = Values[k];
 			}
 			else
 			{
@@ -905,13 +907,11 @@ SPI_cursor_open(const char *name, void *plan,
 				int16		paramTypLen;
 				bool		paramTypByVal;
 
-				get_typlenbyval(spiplan->argtypes[k],
-								&paramTypLen, &paramTypByVal);
-				paramLI[k].value = datumCopy(Values[k],
-											 paramTypByVal, paramTypLen);
+				get_typlenbyval(prm->ptype, &paramTypLen, &paramTypByVal);
+				prm->value = datumCopy(Values[k],
+									   paramTypByVal, paramTypLen);
 			}
 		}
-		paramLI[k].kind = PARAM_INVALID;
 	}
 	else
 		paramLI = NULL;
@@ -1334,18 +1334,19 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 		{
 			int			k;
 
-			paramLI = (ParamListInfo)
-				palloc0((nargs + 1) * sizeof(ParamListInfoData));
+			/* sizeof(ParamListInfoData) includes the first array element */
+			paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
+									 (nargs - 1) * sizeof(ParamExternData));
+			paramLI->numParams = nargs;
 
 			for (k = 0; k < nargs; k++)
 			{
-				paramLI[k].kind = PARAM_NUM;
-				paramLI[k].id = k + 1;
-				paramLI[k].ptype = plan->argtypes[k];
-				paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
-				paramLI[k].value = Values[k];
+				ParamExternData *prm = &paramLI->params[k];
+
+				prm->value = Values[k];
+				prm->isnull = (Nulls && Nulls[k] == 'n');
+				prm->ptype = plan->argtypes[k];
 			}
-			paramLI[k].kind = PARAM_INVALID;
 		}
 		else
 			paramLI = NULL;

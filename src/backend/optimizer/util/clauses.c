@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.210 2006/03/14 22:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.211 2006/04/22 01:25:59 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1500,36 +1500,35 @@ eval_const_expressions_mutator(Node *node,
 		Param	   *param = (Param *) node;
 
 		/* OK to try to substitute value? */
-		if (context->estimate && param->paramkind != PARAM_EXEC &&
+		if (context->estimate && param->paramkind == PARAM_EXTERN &&
 			PlannerBoundParamList != NULL)
 		{
-			ParamListInfo paramInfo;
-
-			/* Search to see if we've been given a value for this Param */
-			paramInfo = lookupParam(PlannerBoundParamList,
-									param->paramkind,
-									param->paramname,
-									param->paramid,
-									true);
-			if (paramInfo)
+			/* Look to see if we've been given a value for this Param */
+			if (param->paramid > 0 &&
+				param->paramid <= PlannerBoundParamList->numParams)
 			{
-				/*
-				 * Found it, so return a Const representing the param value.
-				 * Note that we don't copy pass-by-ref datatypes, so the Const
-				 * will only be valid as long as the bound parameter list
-				 * exists. This is okay for intended uses of
-				 * estimate_expression_value().
-				 */
-				int16		typLen;
-				bool		typByVal;
+				ParamExternData *prm = &PlannerBoundParamList->params[param->paramid - 1];
 
-				Assert(paramInfo->ptype == param->paramtype);
-				get_typlenbyval(param->paramtype, &typLen, &typByVal);
-				return (Node *) makeConst(param->paramtype,
-										  (int) typLen,
-										  paramInfo->value,
-										  paramInfo->isnull,
-										  typByVal);
+				if (OidIsValid(prm->ptype))
+				{
+					/*
+					 * Found it, so return a Const representing the param
+					 * value.  Note that we don't copy pass-by-ref datatypes,
+					 * so the Const will only be valid as long as the bound
+					 * parameter list exists.  This is okay for intended uses
+					 * of estimate_expression_value().
+					 */
+					int16		typLen;
+					bool		typByVal;
+
+					Assert(prm->ptype == param->paramtype);
+					get_typlenbyval(param->paramtype, &typLen, &typByVal);
+					return (Node *) makeConst(param->paramtype,
+											  (int) typLen,
+											  prm->value,
+											  prm->isnull,
+											  typByVal);
+				}
 			}
 		}
 		/* Not replaceable, so just copy the Param (no need to recurse) */
@@ -2810,8 +2809,8 @@ substitute_actual_parameters_mutator(Node *node,
 	{
 		Param	   *param = (Param *) node;
 
-		if (param->paramkind != PARAM_NUM)
-			elog(ERROR, "unexpected paramkind: %d", param->paramkind);
+		if (param->paramkind != PARAM_EXTERN)
+			elog(ERROR, "unexpected paramkind: %d", (int) param->paramkind);
 		if (param->paramid <= 0 || param->paramid > context->nargs)
 			elog(ERROR, "invalid paramid: %d", param->paramid);
 

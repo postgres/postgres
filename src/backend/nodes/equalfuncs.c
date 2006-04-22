@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.269 2006/04/15 17:45:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.270 2006/04/22 01:25:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,22 +147,8 @@ static bool
 _equalParam(Param *a, Param *b)
 {
 	COMPARE_SCALAR_FIELD(paramkind);
+	COMPARE_SCALAR_FIELD(paramid);
 	COMPARE_SCALAR_FIELD(paramtype);
-
-	switch (a->paramkind)
-	{
-		case PARAM_NAMED:
-			COMPARE_STRING_FIELD(paramname);
-			break;
-		case PARAM_NUM:
-		case PARAM_EXEC:
-		case PARAM_SUBLINK:
-			COMPARE_SCALAR_FIELD(paramid);
-			break;
-		default:
-			elog(ERROR, "unrecognized paramkind: %d",
-				 a->paramkind);
-	}
 
 	return true;
 }

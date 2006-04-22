@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.104 2006/03/05 15:58:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.105 2006/04/22 01:25:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ replace_outer_var(Var *var)
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = (AttrNumber) i;
+	retval->paramid = i;
 	retval->paramtype = var->vartype;
 
 	return retval;
@@ -201,7 +201,7 @@ replace_outer_agg(Aggref *agg)
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = (AttrNumber) i;
+	retval->paramid = i;
 	retval->paramtype = agg->aggtype;
 
 	return retval;
@@ -222,7 +222,7 @@ generate_new_param(Oid paramtype, int32 paramtypmod)
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = (AttrNumber) list_length(PlannerParamList);
+	retval->paramid = list_length(PlannerParamList);
 	retval->paramtype = paramtype;
 
 	pitem = (PlannerParamItem *) palloc(sizeof(PlannerParamItem));
@@ -1211,7 +1211,7 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 	{
 		if (((Param *) node)->paramkind == PARAM_EXEC)
 		{
-			int			paramid = (int) ((Param *) node)->paramid;
+			int			paramid = ((Param *) node)->paramid;
 
 			context->paramids = bms_add_member(context->paramids, paramid);
 		}
