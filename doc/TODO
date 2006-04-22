@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 22 14:17:50 EDT 2006
+Last updated:		Sat Apr 22 14:18:18 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -621,7 +621,7 @@ Clients
 	  This would allow non-psql clients to pull the same information out
 	  of the database as psql.
 
-	o Fix psql's backslash commands more consistent
+	o Fix psql's \d commands more consistent
 
 	  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php
 	  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php
