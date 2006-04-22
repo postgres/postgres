@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.459 2006/04/22 00:27:30 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.460 2006/04/22 00:29:41 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -250,8 +250,7 @@ fi
 
 # The Intel compiler on Linux supports most gcc options, but not
 # all of them, so only add these options if we are really using
-# gcc.  Intel compiler has a bug in checking for division by NAN
-# (NaN == 0), -mp1 fixes it, so someday we might way to add it.
+# gcc.
 
 if test "$GCC" = yes; then
 AC_TRY_COMPILE([], [@%:@ifndef __INTEL_COMPILER
