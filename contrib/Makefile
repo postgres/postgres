@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.64 2006/04/03 18:47:41 petere Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.65 2006/04/23 02:17:59 ishii Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -25,6 +25,7 @@ WANTED_DIRS = \
 		pg_trgm		\
 		pgbench		\
 		pgcrypto	\
+		pgrowlocks	\
 		pgstattuple	\
 		seg		\
 		spi		\

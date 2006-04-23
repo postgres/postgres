@@ -113,16 +113,20 @@ pg_trgm -
 
 pgbench -
 	TPC-B like benchmarking tool
-	by Tatsuo Ishii <t-ishii@sra.co.jp>
+	by Tatsuo Ishii <ishii@sraoss.co.jp>
 
 pgcrypto -
 	Cryptographic functions
 	by Marko Kreen <marko@l-t.ee>
 
+pgrowlocks -
+	A function to return row locking information
+	by Tatsuo Ishii <ishii@sraoss.co.jp>
+
 pgstattuple -
 	A function to return statistics about "dead" tuples and free
 	space within a table
-	by Tatsuo Ishii <t-ishii@sra.co.jp>
+	by Tatsuo Ishii <ishii@sraoss.co.jp>
 
 seg -
 	Confidence-interval datatype (GiST indexing example)
