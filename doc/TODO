@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 22 14:18:18 EDT 2006
+Last updated:		Sat Apr 22 23:59:59 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -434,7 +434,15 @@ SQL Commands
 * Allow EXPLAIN to identify tables that were skipped because of 
   constraint_exclusion
 * Allow EXPLAIN output to be more easily processed by scripts
-* -Eventually enable escape_string_warning and standard_conforming_strings
+* -Enable escape_string_warning and standard_conforming_strings
+* Make standard_conforming_strings the default in 8.3?
+
+  When this is done, backslash-quote should be prohibited in non-E''
+  strings because of possible confusion over how such strings treat
+  backslashes.  Basically, '' is always safe for a literal single
+  quote, while \' might or might not be based on the backslash
+  handling rules.
+
 * Simplify dropping roles that have objects in several databases
 * Allow COMMENT ON to accept an expression rather than just a string
 * Allow the count returned by SELECT, etc to be to represent as an int64

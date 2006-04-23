@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Apr 22 14:18:18 EDT 2006
+Last updated:           Sat Apr 22 23:59:59 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -399,7 +399,14 @@ first.
   </li><li>Allow EXPLAIN to identify tables that were skipped because of 
   constraint_exclusion
   </li><li>Allow EXPLAIN output to be more easily processed by scripts
-  </li><li>-<em>Eventually enable escape_string<u>warning and standard</u>conforming_strings</em>
+  </li><li>-<em>Enable escape_string<u>warning and standard</u>conforming_strings</em>
+  </li><li>Make standard_conforming_strings the default in 8.3?
+<p>  When this is done, backslash-quote should be prohibited in non-E''
+  strings because of possible confusion over how such strings treat
+  backslashes.  Basically, '' is always safe for a literal single
+  quote, while \' might or might not be based on the backslash
+  handling rules.
+</p>
   </li><li>Simplify dropping roles that have objects in several databases
   </li><li>Allow COMMENT ON to accept an expression rather than just a string
   </li><li>Allow the count returned by SELECT, etc to be to represent as an int64
