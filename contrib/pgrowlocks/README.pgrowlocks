@@ -1,0 +1,98 @@
+$PostgreSQL: pgsql/contrib/pgrowlocks/README.pgrowlocks,v 1.1 2006/04/23 01:12:58 ishii Exp $
+
+pgrowlocks README			Tatsuo Ishii
+
+1. What is pgrowlocks?
+
+   pgrowlocks shows row locking information for specified table.
+
+   pgrowlocks returns following data type:
+
+CREATE TYPE pgrowlocks_type AS (
+	locked_row TID,		-- row TID
+	lock_type TEXT,		-- lock type
+	locker XID,		-- locking XID
+	multi bool,		-- multi XID?
+	xids xid[],		-- multi XIDs
+	pids INTEGER[]		-- locker's process id
+);
+
+  Here is a sample execution of pgrowlocks:
+
+test=# SELECT * FROM pgrowlocks('t1');
+ locked_row | lock_type | locker | multi |   xids    |     pids      
+------------+-----------+--------+-------+-----------+---------------
+      (0,1) | Shared    |     19 | t     | {804,805} | {29066,29068}
+      (0,2) | Shared    |     19 | t     | {804,805} | {29066,29068}
+      (0,3) | Exclusive |    804 | f     | {804}     | {29066}
+      (0,4) | Exclusive |    804 | f     | {804}     | {29066}
+(4 rows)
+
+  locked_row		-- tuple ID(TID) of each locked rows
+  lock_type		-- "Shared" for shared lock, "Exclusive" for exclusive lock
+  locker		-- transaction ID of locker (note 1)
+  multi			-- "t" if locker is a multi transaction, otherwise "f"
+  xids			-- XIDs of lockers (note 2)
+  pids			-- process ids of locking backends
+
+  note1: if the locker is multi transaction, it represents the multi ID
+
+  note2: if the locker is multi, multiple data are shown
+
+2. Installing pgrowlocks
+
+   Installing pgrowlocks requires PostgreSQL 8.0 or later source tree.
+
+      $ cd /usr/local/src/postgresql-8.1/contrib
+      $ tar xfz /tmp/pgrowlocks-1.0.tar.gz
+
+   If you are using PostgreSQL 8.0, you need to modify pgrowlocks source code.
+   Around line 61, you will see:
+
+      #undef MAKERANGEVARFROMNAMELIST_HAS_TWO_ARGS
+
+   change this to:
+
+      #define MAKERANGEVARFROMNAMELIST_HAS_TWO_ARGS
+
+      $ make
+      $ make install
+
+      $ psql -e -f pgrowlocks.sql test
+
+3. How to use pgrowlocks
+
+   The calling sequence for pgrowlocks is as follows:
+
+   CREATE OR REPLACE FUNCTION pgrowlocks(text) RETURNS pgrowlocks_type
+     AS 'MODULE_PATHNAME', 'pgrowlocks'
+     LANGUAGE 'c' WITH (isstrict);
+
+   The parameter is a name of table. pgrowlocks returns type pgrowlocks_type.
+
+   pgrowlocks grab AccessShareLock for the target table and read each
+   row one by one to get the row locking information. You should
+   notice that:
+
+   1) if the table is exclusive locked by someone else, pgrowlocks
+      will be blocked.
+
+   2) pgrowlocks may show incorrect information if there's a new
+      lock or a lock is freeed while its execution.
+
+   pgrowlocks does not show the contents of locked rows. If you want
+   to take a look at the row contents at the same time, you could do
+   something like this:
+
+   SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p WHERE p.locked_ row = a.ctid;
+
+
+4. License
+
+   pgrowlocks is distribute under (modified) BSD license described in
+   the source file.
+
+5. History
+
+   2006/03/21 pgrowlocks version 1.1 released (tested on 8.2 current)
+   2005/08/22 pgrowlocks version 1.0 released

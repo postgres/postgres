@@ -1,0 +1,121 @@
+$PostgreSQL: pgsql/contrib/pgrowlocks/README.pgrowlocks.euc_jp,v 1.1 2006/04/23 01:12:58 ishii Exp $
+
+pgrowlocks README		石井達夫
+
+1. pgrowlocksとは
+
+   pgrowlocksは，指定されたテーブルの行ロックに関する情報を表示します．
+
+   pgrowlocksの返す型は，以下のようになります．
+
+CREATE TYPE pgrowlocks_type AS (
+	locked_row TID,		-- row TID
+	lock_type TEXT,		-- lock type
+	locker XID,		-- locking XID
+	multi bool,		-- multi XID?
+	xids xid[],		-- multi XIDs
+	pids INTEGER[]		-- locker's process id
+);
+
+  実行例を示します．
+
+test=# SELECT * FROM pgrowlocks('t1');
+ locked_row | lock_type | locker | multi |   xids    |     pids      
+------------+-----------+--------+-------+-----------+---------------
+      (0,1) | Shared    |     19 | t     | {804,805} | {29066,29068}
+      (0,2) | Shared    |     19 | t     | {804,805} | {29066,29068}
+      (0,3) | Exclusive |    804 | f     | {804}     | {29066}
+      (0,4) | Exclusive |    804 | f     | {804}     | {29066}
+(4 rows)
+
+  各項目の説明です．
+
+  locked_row		-- ロックされた行のタプルID(TID)
+  lock_type		-- 共有ロックなら"Shared"，排他ロックなら"Exclusive"
+  locker		-- ロックをかけているトランザクションID[注1]
+  multi			-- lockerがマルチトランザクションならtそうでなければf
+  xids			-- ロックをかけているトランザクションID[注2]
+  pids			-- ロックをかけているバックエンドプロセスのプロセスID[注2]
+
+  [注1: lockerがマルチなら，トランザクションIDではなくてマルチIDになり
+  ます．]
+
+  [注2: lockerがマルチの場合，複数のデータが表示されます．]
+
+2. pgrowlocksのインストール
+
+   pgrowlocksのインストールには，PostgreSQLをインストールしたときのソー
+   スツリーが必要です．今のところ対応しているバージョンはPostgreSQL
+   8.0以降です．
+
+   ここではPostgreSQLのソースは/usr/local/src/postgresql-8.1/に展開さ
+   れているものとします．
+
+   1) pgrowlocksのソースを展開します．ソースファイルは
+      /tmp/pgrowlocks-1.0.tar.gzに置いてあるものとします．
+
+      $ cd /usr/local/src/postgresql-8.1/contrib
+      $ tar xfz pgrowlocks-1.0.tar.gz
+
+   2) PostgreSQL 8.0の場合は，ソースの一部に修正が必要です．
+      pgrowlocks.cの61行目辺りに
+
+      #undef MAKERANGEVARFROMNAMELIST_HAS_TWO_ARGS
+
+      というのがあるので，これを
+
+      #define MAKERANGEVARFROMNAMELIST_HAS_TWO_ARGS
+
+      に書き換えます(undef->defineにします)．
+
+   3) コンパイルして関数の共有ライブラリをインストールします．
+
+      $ make
+      $ make install
+
+   4) ユーザ定義関数を登録します．
+
+      $ psql -e -f /usr/local/pgsql/share/contrib/pgrowlocks.sql test
+
+      この例では"test"というデータベースに登録していますが，もし他のデー
+      タベースに登録する場合はここを読み替えてください．
+
+3. pgrowlocksの使い方
+
+   pgrowlocksの呼び出し形式は以下です．
+
+   CREATE OR REPLACE FUNCTION pgrowlocks(text) RETURNS pgrowlocks_type
+     AS 'MODULE_PATHNAME', 'pgrowlocks'
+     LANGUAGE 'c' WITH (isstrict);
+
+   第一引数: テーブル名
+
+   関数の戻りはpgrowlocks_type型です．
+
+   pgrowlocksはテーブルにAccessShareLockロックをかけ，1行ずつ読み出し
+   ては行ロックがかかっているかどうかチェックします．以下の点に注意し
+   てください．
+
+   1) 該当テーブルに排他ロックがかかっていると，pgrowlocksの実行はブロッ
+      クされます．
+
+   2) pgrowlocksの実行中に新たにかかったり，解除された行ロックに関する
+      情報はpgrowlocksの実行結果に反映されていない可能性があります．
+
+
+   pgrowlocksはロックされた行の内容は表示しません．行内容を見たい場合
+   は，テーブルをpgrowlocksのlocked_rows列で結合します．例を示します．
+
+   SELECT * FROM accounts AS a, pgrowlocks('accounts') AS p WHERE p.locked_ row = a.ctid;
+
+
+4. pgrowlocksのライセンス条件について
+
+   pgrowlocks.cの冒頭に書いてある通りです(修正BSDライセンスに準じてい
+   ます)．また，pgrowlocks は完全に無保証です．pgrowlocks を使用したこ
+   とによって生じるいかなる結果に関しても責任を負いません．
+
+5. 改訂履歴
+
+   2006/03/21 pgrowlocks バージョン 1.1リリース(8.2 currentでテスト)
+   2005/08/22 pgrowlocks バージョン 1.0リリース

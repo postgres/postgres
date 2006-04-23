@@ -1,0 +1,16 @@
+-- Adjust this setting to control where the objects get created.
+SET search_path = public;
+
+CREATE TYPE pgrowlocks_type AS (
+	locked_row TID,		-- row TID
+	lock_type TEXT,		-- lock type
+	locker XID,		-- locking XID
+	multi bool,		-- multi XID?
+	xids xid[],		-- multi XIDs
+	pids INTEGER[]		-- locker's process id
+);
+
+CREATE OR REPLACE FUNCTION pgrowlocks(text)
+RETURNS setof pgrowlocks_type
+AS 'MODULE_PATHNAME', 'pgrowlocks'
+LANGUAGE 'C' STRICT;
