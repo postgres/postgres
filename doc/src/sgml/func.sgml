@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.313 2006/03/10 20:15:25 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.314 2006/04/23 03:39:50 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -6117,14 +6117,6 @@ LOCALTIMESTAMP (<replaceable>precision</replaceable>)
      to that many fractional digits in the seconds field.  Without a precision parameter,
      the result is given to the full available precision.
     </para>
-
-    <note>
-     <para>
-      Prior to <productname>PostgreSQL</productname> 7.2, the precision
-      parameters were unimplemented, and the result was always given
-      in integer seconds.
-     </para>
-    </note>
 
    <para>
     Some examples:

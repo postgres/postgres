@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.54 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.55 2006/04/23 03:39:52 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -82,15 +82,9 @@
   </para>
 
   <para>
-   Beginning in <productname>PostgreSQL</productname> 7.2, the standard form
-   of <command>VACUUM</> can run in parallel with normal database operations
-   (selects, inserts, updates, deletes, but not changes to table definitions).
-   Routine vacuuming is therefore not nearly as intrusive as it was in prior
-   releases, and it is not as critical to try to schedule it at low-usage
-   times of day.
-  </para>
-
-  <para>
+   The standard form of <command>VACUUM</> can run in parallel with 
+   normal database operations (SELECTs, INSERTs, UPDATEs, DELETEs, but not 
+   changes to table definitions).
    Beginning in <productname>PostgreSQL</productname> 8.0, there are
    configuration parameters that can be adjusted to further reduce the
    performance impact of background vacuuming.  See
@@ -245,12 +239,9 @@
     It is possible to run <command>ANALYZE</> on specific tables and even
     just specific columns of a table, so the flexibility exists to update some
     statistics more frequently than others if your application requires it.
-    In practice, however, the usefulness of this feature is doubtful.
-    Beginning in <productname>PostgreSQL</productname> 7.2,
-    <command>ANALYZE</> is a fairly fast operation even on large tables,
-    because it uses a statistical random sampling of the rows of a table
-    rather than reading every single row.  So it's probably much simpler
-    to just run it over the whole database every so often.
+    In practice, however, it is usually best to just analyze the entire database
+    because it is a fast operation.  It uses a statistical random sampling of 
+    the rows of a table rather than reading every single row.
    </para>
 
    <tip>
@@ -295,18 +286,8 @@
     transactions that were in the past appear to be in the future &mdash; which
     means their outputs become invisible.  In short, catastrophic data loss.
     (Actually the data is still there, but that's cold comfort if you can't
-    get at it.)
-   </para>
-
-   <para>
-    Prior to <productname>PostgreSQL</productname> 7.2, the only defense
-    against XID wraparound was to re-<command>initdb</> at least every 4
-    billion transactions. This of course was not very satisfactory for
-    high-traffic sites, so a better solution has been devised. The new
-    approach allows a server to remain up indefinitely, without
-    <command>initdb</> or any sort of restart. The price is this
-    maintenance requirement: <emphasis>every table in the database must
-    be vacuumed at least once every billion transactions</emphasis>.
+    get at it.)  To avoid this, it is <emphasis>necessary to vacuum every table
+    in every database at least once every billion transactions</emphasis>.
    </para>
 
    <para>

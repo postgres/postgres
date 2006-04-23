@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.166 2006/03/10 19:10:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.167 2006/04/23 03:39:49 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -894,22 +894,14 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     string.
    </para>
 
-    <para>
-     If one explicitly casts a value to <type>character
-     varying(<replaceable>n</>)</type> or
-     <type>character(<replaceable>n</>)</type>, then an over-length
-     value will be truncated to <replaceable>n</> characters without
-     raising an error. (This too is required by the
-     <acronym>SQL</acronym> standard.)
-    </para>
-
-   <note>
-    <para>
-     Prior to <productname>PostgreSQL</> 7.2, strings that were too long were
-     always truncated without raising an error, in either explicit or
-     implicit casting contexts.
-    </para>
-   </note>
+   <para>
+    If one explicitly casts a value to <type>character
+    varying(<replaceable>n</>)</type> or
+    <type>character(<replaceable>n</>)</type>, then an over-length
+    value will be truncated to <replaceable>n</> characters without
+    raising an error. (This too is required by the
+    <acronym>SQL</acronym> standard.)
+   </para>
 
    <para>
     The notations <type>varchar(<replaceable>n</>)</type> and
@@ -2896,15 +2888,6 @@ SELECT * FROM test1 WHERE a;
      if one explicitly casts a bit-string value to
      <type>bit varying(<replaceable>n</>)</type>, it will be truncated
      on the right if it is more than <replaceable>n</> bits.
-    </para>
-   </note>
-
-   <note>
-    <para>
-     Prior to <productname>PostgreSQL</> 7.2, <type>bit</type> data
-     was always silently truncated or zero-padded on the right, with
-     or without an explicit cast. This was changed to comply with the
-     <acronym>SQL</acronym> standard.
     </para>
    </note>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.111 2006/03/10 19:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.112 2006/04/23 03:39:52 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1192,15 +1192,6 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     command <literal>pg_config --pkglibdir</literal>.
    </para>
 
-   <para>
-    Before <productname>PostgreSQL</productname> release 7.2, only
-    exact absolute paths to object files could be specified in
-    <command>CREATE FUNCTION</>.  This approach is now deprecated
-    since it makes the function definition unnecessarily unportable.
-    It's best to specify just the shared library name with no path nor
-    extension, and let the search mechanism provide that information
-    instead.
-   </para>
   </sect2>
 
    <sect2 id="xfunc-c-basetype">
@@ -1915,15 +1906,7 @@ concat_text(PG_FUNCTION_ARGS)
         --includedir-server</literal><indexterm><primary>pg_config</><secondary>with user-defined C functions</></>
         to find out where the <productname>PostgreSQL</> server header
         files are installed on your system (or the system that your
-        users will be running on).  This option is new with
-        <productname>PostgreSQL</> 7.2.  For
-        <productname>PostgreSQL</> 7.1 you should use the option
-        <option>--includedir</option>.  (<command>pg_config</command>
-        will exit with a non-zero status if it encounters an unknown
-        option.)  For releases prior to 7.1 you will have to guess,
-        but since that was before the current calling conventions were
-        introduced, it is unlikely that you want to support those
-        releases.
+        users will be running on).
        </para>
       </listitem>
 

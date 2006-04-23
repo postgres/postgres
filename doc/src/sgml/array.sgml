@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.48 2005/11/19 01:50:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.49 2006/04/23 03:39:47 momjian Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -559,8 +559,7 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
    embedded in element values will be backslash-escaped.  For numeric
    data types it is safe to assume that double quotes will never appear, but
    for textual data types one should be prepared to cope with either presence
-   or absence of quotes.  (This is a change in behavior from pre-7.2
-   <productname>PostgreSQL</productname> releases.)
+   or absence of quotes.
   </para>
 
   <para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.79 2006/03/10 19:10:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.80 2006/04/23 03:39:48 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1211,8 +1211,8 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    the number after the first dot changes). This does not apply to
    different minor releases under the same major release (where the
    number after the second dot changes); these always have compatible
-   storage formats. For example, releases 7.0.1, 7.1.2, and 7.2 are
-   not compatible, whereas 7.1.1 and 7.1.2 are. When you update
+   storage formats. For example, releases 7.2.1, 7.3.2, and 7.4 are
+   not compatible, whereas 7.2.1 and 7.2.2 are. When you update
    between compatible versions, you can simply replace the executables
    and reuse the data directory on disk. Otherwise you need to back
    up your data and restore it on the new server.  This has to be done

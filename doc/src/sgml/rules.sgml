@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.44 2005/10/22 14:44:35 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.45 2006/04/23 03:39:52 momjian Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -2043,10 +2043,7 @@ Nestloop
 <para>
     Another situation is cases on <command>UPDATE</command> where it depends on the
     change of an attribute if an action should be performed or
-    not. In <productname>PostgreSQL</productname> version 6.4, the
-    attribute specification for rule events is disabled (it will have
-    its comeback latest in 6.5, maybe earlier 
-    - stay tuned). So for now the only way to
+    not. The only way to
     create a rule as in the shoelace_log example is to do it with
     a rule qualification. That results in an extra query that is
     performed always, even if the attribute of interest cannot

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.55 2006/02/18 23:14:45 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.56 2006/04/23 03:39:50 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2145,21 +2145,11 @@ VALUES ('New York', NULL, NULL, 'NY');
   <note>
    <title>Deprecated</title>
    <para>
-     In previous versions of <productname>PostgreSQL</productname>, the
+     In releases of <productname>PostgreSQL</productname> prior to 7.1, the
      default behavior was not to include child tables in queries. This was
-     found to be error prone and is also in violation of the SQL
-     standard. Under the old syntax, to include the child tables you append
-     <literal>*</literal> to the table name. For example:
-<programlisting>
-SELECT * from cities*;
-</programlisting>
-     You can still explicitly specify scanning child tables by
-     appending <literal>*</literal>, as well as explicitly specify not
-     scanning child tables by writing <literal>ONLY</literal>.  But
-     beginning in version 7.1, the default behavior for an undecorated
-     table name is to scan its child tables too, whereas before the
-     default was not to do so.  To get the old default behavior,
-     disable the <xref linkend="guc-sql-inheritance"> configuration
+     found to be error prone and also in violation of the SQL
+     standard.  You can get the pre-7.1 behavior by turning off the
+     <xref linkend="guc-sql-inheritance"> configuration
      option.
    </para>
   </note>

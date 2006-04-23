@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.206 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.207 2006/04/23 03:39:51 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -686,14 +686,10 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
 <indexterm><primary>libpq-int.h</></>
 <application>libpq</application> application programmers should be careful to
 maintain the <structname>PGconn</structname> abstraction.  Use the accessor
-functions described below to get
-at the contents of <structname>PGconn</structname>.  Avoid directly referencing the fields of the
-<structname>PGconn</> structure because they are subject to change in the future.
-(Beginning in <productname>PostgreSQL</productname> release 6.4, the
-definition of the <type>struct</type> behind <structname>PGconn</> is not even provided in <filename>libpq-fe.h</filename>.
-If you have old code that accesses <structname>PGconn</structname> fields directly, you can keep using it
-by including <filename>libpq-int.h</filename> too, but you are encouraged to fix the code
-soon.)
+functions described below to get at the contents of <structname>PGconn</structname>.
+Reference to internal <structname>PGconn</structname> fields using 
+<filename>libpq-int.h</> is not recommended because they are subject to change
+in the future.
 </para>
 </tip>
 
@@ -2972,7 +2968,7 @@ PGnotify *PQnotifies(PGconn *conn);
 
 typedef struct pgNotify {
     char *relname;              /* notification condition name */
-    int  be_pid;                /* process ID of server process */
+    int  be_pid;                /* process ID of notifying server process */
     char *extra;                /* notification parameter */
 } PGnotify;
 </synopsis>
@@ -2985,14 +2981,6 @@ do not represent separate allocations.
 (At present, the <structfield>extra</structfield> field is unused and will
 always point to an empty string.)
 </para>
-
-<note>
-<para>
- In <productname>PostgreSQL</productname> 6.4 and later,
- the <structfield>be_pid</structfield> is that of the notifying server process,
- whereas in earlier versions it was always the <acronym>PID</acronym> of your own server process.
-</para>
-</note>
 
 <para>
 <xref linkend="libpq-example-2"> gives a sample program that illustrates the use
@@ -4286,16 +4274,6 @@ testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'
      </para>
     </listitem>
    </itemizedlist>
-  </para>
-
-  <para>
-   <indexterm><primary>libpq-int.h</></>
-   If your codes references the header file
-   <filename>libpq-int.h</filename> and you refuse to fix your code to
-   not use it, starting in <productname>PostgreSQL</> 7.2, this file will be found in
-   <filename><replaceable>includedir</replaceable>/postgresql/internal/libpq-int.h</filename>,
-   so you need to add the appropriate <option>-I</option> option to
-   your compiler command line.
   </para>
 
  </sect1>

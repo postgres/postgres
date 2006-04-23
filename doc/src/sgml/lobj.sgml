@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.39 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.40 2006/04/23 03:39:52 momjian Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -25,43 +25,26 @@
     values.  This is not described here.
    </para>
 
-  <sect1 id="lo-history">
-   <title>History</title>
+  <sect1 id="lo-intro">
+   <title>Introduction</title>
+
+   <indexterm>
+    <primary>TOAST</primary>
+    <secondary>versus large objects</secondary>
+   </indexterm>
 
    <para>
-    <productname>POSTGRES 4.2</productname>, the indirect predecessor
-    of <productname>PostgreSQL</productname>, supported three standard
-    implementations of large objects: as files external to the
-    <productname>POSTGRES</productname> server, as external files
-    managed by the <productname>POSTGRES</productname> server, and as
-    data stored within the <productname>POSTGRES</productname>
-    database. This caused considerable confusion among users. As a
-    result, only support for large objects as data stored within the
-    database is retained in <productname>PostgreSQL</productname>.
-    Even though this is slower to access, it provides stricter data
-    integrity.  For historical reasons, this storage scheme is
-    referred to as <firstterm>Inversion large
-    objects</firstterm>. (You will see the term Inversion used
-    occasionally to mean the same thing as large object.)  Since
-    <productname>PostgreSQL 7.1</productname>, all large objects are
-    placed in one system table called
+    All large objects are placed in a single system table called
     <classname>pg_largeobject</classname>.
-   </para>
-
-   <para>
-    <indexterm>
-     <primary>TOAST</primary>
-     <secondary>versus large objects</secondary>
-    </indexterm>
-    <productname>PostgreSQL</productname> 7.1 introduced a mechanism
-    (nicknamed <quote><acronym>TOAST</acronym></quote>) that allows
-    data values to be much larger than single pages.  This
-    makes the large object facility partially obsolete.  One
+    <productname>PostgreSQL</productname> also supports a storage system called
+    <quote><acronym>TOAST</acronym></quote> that automatically stores values
+    larger than a single database page into a secondary storage area per table.
+    This makes the large object facility partially obsolete.  One
     remaining advantage of the large object facility is that it allows values
     up to 2 GB in size, whereas <acronym>TOAST</acronym>ed fields can be at
-    most 1 GB.  Also, large objects can be manipulated piece-by-piece much more
-    easily than ordinary data fields, so the practical limits are considerably
-    different.
+    most 1 GB.  Also, large objects can be randomly modified using a read/write 
+    API that is more efficient than performing such operations using
+    <acronym>TOAST</acronym>.
    </para>
 
   </sect1>
@@ -70,8 +53,8 @@
    <title>Implementation Features</title>
 
    <para>
-    The large object implementation breaks  large
-    objects  up  into  <quote>chunks</quote>  and  stores  the chunks in
+    The large object implementation breaks large
+    objects up into <quote>chunks</quote> and stores the chunks in
     rows in the database.  A B-tree index guarantees fast
     searches for the correct chunk number when doing random
     access reads and writes.
@@ -86,10 +69,7 @@
     <productname>PostgreSQL</productname> client interface libraries
     provide for accessing large objects.  All large object
     manipulation using these functions <emphasis>must</emphasis> take
-    place within an SQL transaction block.  (This requirement is
-    strictly enforced as of <productname>PostgreSQL 6.5</>, though it
-    has been an implicit requirement in previous versions, resulting
-    in misbehavior if ignored.)
+    place within an SQL transaction block.
     The  <productname>PostgreSQL</productname>  large  object interface is modeled after
     the <acronym>Unix</acronym>  file-system  interface,  with  analogues  of
     <function>open</function>,  <function>read</function>,

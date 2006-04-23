@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.54 2006/04/18 12:41:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.55 2006/04/23 03:39:48 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3789,14 +3789,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <indexterm><primary>inheritance</></>
       <listitem>
        <para>
-        This controls the inheritance semantics, in particular whether
-        subtables are included by various commands by default. They were
-        not included in versions prior to 7.1. If you need the old
-        behavior you can set this variable to <literal>off</>, but in
-        the long run you are encouraged to change your applications to
-        use the <literal>ONLY</literal> key word to exclude subtables.
-        See <xref linkend="ddl-inherit"> for more information about
-        inheritance.
+        This controls the inheritance semantics.  If turned <literal>off</>,
+        subtables are not included by various commands by default; basically
+        an implied <literal>ONLY</literal> key word.  This was added for 
+        compatibility with releases prior to 7.1.  See
+        <xref linkend="ddl-inherit"> for more information.
        </para>
       </listitem>
      </varlistentry>
