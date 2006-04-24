@@ -164,15 +164,15 @@ ecpg_strndup(const char *str, size_t len)
 int
 deccvasc(char *cp, int len, decimal *np)
 {
-	char	   *str = ecpg_strndup(cp, len);	/* decimal_in always converts
-												 * the complete string */
-	int			ret = 0;
-	numeric    *result;
+	char		*str;
+	int		ret = 0;
+	numeric		*result;
 
 	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CSTRINGTYPE, cp))
 		return 0;
 
+	str = ecpg_strndup(cp, len);	/* decimal_in always converts the complete string */
 	if (!str)
 		ret = ECPG_INFORMIX_NUM_UNDERFLOW;
 	else
