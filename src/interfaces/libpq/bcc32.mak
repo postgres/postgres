@@ -141,7 +141,7 @@ config: ..\..\include\pg_config.h pg_config_paths.h
 
 # Have to use \# so # isn't treated as a comment, but MSVC doesn't like this
 pg_config_paths.h: bcc32.mak
-	echo \#define SYSCONFDIR "" > pg_config_paths.h
+	echo \#define SYSCONFDIR \"\" > pg_config_paths.h
 
 "$(OUTDIR)" :
 	@if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
