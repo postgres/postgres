@@ -1997,6 +1997,10 @@ Tu Feb  7 18:48:14 CET 2006
 Fri, 17 Mar 2006 16:38:19 +0100
 
 	- Fixed bug 2330: Wrong error code in case of a duplicate key
+
+Mo Apr 24 11:40:05 CEST 2006
+
+	- Fixed memory leak bugs found by Martijn Oosterhout.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.25 2006/03/11 04:38:40 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.26 2006/04/24 09:45:22 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <ctype.h>
@@ -364,24 +364,19 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 	numeric    *value = (numeric *) pgtypes_alloc(sizeof(numeric));
 	int			ret;
 
-#if 0
-	long		typmod = -1;
-#endif
 	char	   *realptr;
 	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
 
-	if (!value)
+	if (!value)	
 		return (NULL);
 
 	ret = set_var_from_str(str, ptr, value);
 	if (ret)
+	{
+		free(value);
 		return (NULL);
+	}
 
-#if 0
-	ret = apply_typmod(value, typmod);
-	if (ret)
-		return (NULL);
-#endif
 	return (value);
 }
 

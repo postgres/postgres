@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.41 2006/03/11 04:38:39 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.42 2006/04/24 09:45:22 meskes Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -166,15 +166,15 @@ ecpg_strndup(const char *str, size_t len)
 int
 deccvasc(char *cp, int len, decimal *np)
 {
-	char	   *str = ecpg_strndup(cp, len);	/* decimal_in always converts
-												 * the complete string */
-	int			ret = 0;
-	numeric    *result;
+	char		*str;
+	int		ret = 0;
+	numeric		*result;
 
 	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CSTRINGTYPE, cp))
 		return 0;
 
+	str = ecpg_strndup(cp, len);	/* decimal_in always converts the complete string */
 	if (!str)
 		ret = ECPG_INFORMIX_NUM_UNDERFLOW;
 	else
