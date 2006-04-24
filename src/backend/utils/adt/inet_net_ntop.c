@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.21 2005/10/15 02:49:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.22 2006/04/24 19:51:13 momjian Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -289,7 +289,7 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		}
 	}
 	/* Format CIDR /width. */
-	SPRINTF((cp, "/%u", bits));
+	(void) SPRINTF((cp, "/%u", bits));
 	if (strlen(outbuf) + 1 > size)
 		goto emsgsize;
 	strcpy(dst, outbuf);
