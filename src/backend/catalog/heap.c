@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.295 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.296 2006/04/24 01:40:48 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -772,7 +772,13 @@ heap_create_with_catalog(const char *relname,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
+		/*
+		 * For composite types, the dependency on owner is tracked for the
+		 * pg_type entry, so don't record it here.  All other relkinds need
+		 * their ownership tracked.
+		 */
+		if (relkind != RELKIND_COMPOSITE_TYPE)
+			recordDependencyOnOwner(RelationRelationId, relid, ownerid);
 	}
 
 	/*
