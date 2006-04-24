@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.123 2006/03/11 01:19:22 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.124 2006/04/24 20:36:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2373,11 +2373,22 @@ float84ge(PG_FUNCTION_ARGS)
 /* ========== PRIVATE ROUTINES ========== */
 
 #ifndef HAVE_CBRT
+
 static double
 cbrt(double x)
 {
 	int			isneg = (x < 0.0);
-	double		tmpres = pow(fabs(x), (double) 1.0 / (double) 3.0);
+	double		absx = fabs(x);
+	double		tmpres = pow(absx, (double) 1.0 / (double) 3.0);
+
+	/*
+	 * The result is somewhat inaccurate --- not really pow()'s fault,
+	 * as the exponent it's handed contains roundoff error.  We can improve
+	 * the accuracy by doing one iteration of Newton's formula.  Beware of
+	 * zero input however.
+	 */
+	if (tmpres > 0.0)
+		tmpres -= (tmpres - absx/(tmpres*tmpres)) / (double) 3.0;
 
 	return isneg ? -tmpres : tmpres;
 }
