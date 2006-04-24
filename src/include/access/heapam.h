@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.109 2006/04/24 22:17:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.110 2006/04/24 22:24:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 #define fastgetattr(tup, attnum, tupleDesc, isnull)					\
 (																	\
 	AssertMacro((attnum) > 0),										\
-	((isnull) ? (*(isnull) = false) : (dummyret)NULL),				\
+	(((isnull) != NULL) ? (*(isnull) = false) : (dummyret)NULL),				\
 	HeapTupleNoNulls(tup) ?											\
 	(																\
 		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ?			\
@@ -61,7 +61,7 @@
 	(																\
 		att_isnull((attnum)-1, (tup)->t_data->t_bits) ?				\
 		(															\
-			((isnull) ? (*(isnull) = true) : (dummyret)NULL),		\
+			(((isnull) != NULL) ? (*(isnull) = true) : (dummyret)NULL),		\
 			(Datum)NULL												\
 		)															\
 		:															\
