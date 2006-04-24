@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.107 2006/03/24 04:32:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.108 2006/04/24 22:06:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 		( \
 			((attnum) > (int) (tup)->t_data->t_natts) ? \
 			( \
-				((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
+				((isnull) != NULL) ? (*(isnull) = true) : (dummyret)NULL), \
 				(Datum)NULL \
 			) \
 			: \
