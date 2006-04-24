@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Apr 22 23:59:59 EDT 2006
+Last updated:           Mon Apr 24 18:59:31 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -207,7 +207,6 @@ first.
           computations should adjust based on the time zone rules.
 </p>
     </li><li>Fix SELECT '0.01 years'::interval, '0.01 months'::interval
-    </li><li>Fix SELECT INTERVAL '1' MONTH
     </li><li>Add a GUC variable to allow output of interval values in ISO8601 
           format
     </li><li>Improve timestamptz subtraction to be DST-aware
@@ -222,8 +221,9 @@ first.
     </li><li>Add overflow checking to timestamp and interval arithmetic    
     </li><li>Add ISO INTERVAL handling
     <ul>
-      <li>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO 
+      <li>-<em>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO </em>
                   SECOND
+      </li><li>Fix SELECT INTERVAL '1' MONTH
       </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
       </li><li>For syntax that isn't uniquely ISO or PG syntax, like '1:30' or
                   '1', treat as ISO if there is a range specification clause,
