@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.538 2006/04/15 17:45:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.539 2006/04/24 22:56:11 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1152,6 +1152,7 @@ zone_value:
 					A_Const *n = (A_Const *) makeStringConst($2, $1);
 					if ($3 != INTERVAL_FULL_RANGE)
 					{
+						ereport(LOG, (errmsg("1.0")));
 						if (($3 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1163,6 +1164,7 @@ zone_value:
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
 				{
 					A_Const *n = (A_Const *) makeStringConst($5, $1);
+						ereport(LOG, (errmsg("2.0")));
 					if ($3 < 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -6078,12 +6080,14 @@ SimpleTypename:
 			| ConstDatetime							{ $$ = $1; }
 			| ConstInterval opt_interval
 				{
+						ereport(LOG, (errmsg("3.0")));
 					$$ = $1;
 					if ($2 != INTERVAL_FULL_RANGE)
 						$$->typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, $2);
 				}
 			| ConstInterval '(' Iconst ')' opt_interval
 				{
+						ereport(LOG, (errmsg("4.0")));
 					$$ = $1;
 					if ($3 < 0)
 						ereport(ERROR,
@@ -6102,6 +6106,7 @@ SimpleTypename:
 				}
 			| type_name attrs
 				{
+						ereport(LOG, (errmsg("5.0")));
 					$$ = makeNode(TypeName);
 					$$->names = lcons(makeString($1), $2);
 					$$->typmod = -1;
@@ -8179,6 +8184,7 @@ AexprConst: Iconst
 			| ConstInterval Sconst opt_interval
 				{
 					A_Const *n = makeNode(A_Const);
+						ereport(LOG, (errmsg("6.0")));
 					n->typename = $1;
 					n->val.type = T_String;
 					n->val.val.str = $2;
@@ -8190,6 +8196,7 @@ AexprConst: Iconst
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
 				{
 					A_Const *n = makeNode(A_Const);
+						ereport(LOG, (errmsg("7.0")));
 					n->typename = $1;
 					n->val.type = T_String;
 					n->val.val.str = $5;

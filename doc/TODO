@@ -225,7 +225,6 @@ Data Types
 	  computations should adjust based on the time zone rules.
 
 	o Fix SELECT '0.01 years'::interval, '0.01 months'::interval
-	o Fix SELECT INTERVAL '1' MONTH
 	o Add a GUC variable to allow output of interval values in ISO8601 
 	  format
 	o Improve timestamptz subtraction to be DST-aware
@@ -240,8 +239,9 @@ Data Types
 	o Fix interval display to support values exceeding 2^31 hours
 	o Add overflow checking to timestamp and interval arithmetic	
 	o Add ISO INTERVAL handling
-		o Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO 
+		o -Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO 
 		  SECOND
+		o Fix SELECT INTERVAL '1' MONTH
 		o Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
 		o For syntax that isn't uniquely ISO or PG syntax, like '1:30' or
 		  '1', treat as ISO if there is a range specification clause,
