@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.202.2.2 2006/01/29 18:55:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.202.2.3 2006/04/25 16:54:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -816,8 +816,12 @@ create_indexscan_plan(PlannerInfo *root,
 	 * are not equal to, but are logically implied by, the index quals; so we
 	 * also try a predicate_implied_by() check to see if we can discard quals
 	 * that way.  (predicate_implied_by assumes its first input contains only
-	 * immutable functions, so we have to check that.)	We can also discard
-	 * quals that are implied by a partial index's predicate.
+	 * immutable functions, so we have to check that.)
+	 *
+	 * We can also discard quals that are implied by a partial index's
+	 * predicate, but only in a plain SELECT; when scanning a target relation
+	 * of UPDATE/DELETE/SELECT FOR UPDATE, we must leave such quals in the
+	 * plan so that they'll be properly rechecked by EvalPlanQual testing.
 	 *
 	 * While at it, we strip off the RestrictInfos to produce a list of plain
 	 * expressions.
@@ -836,8 +840,14 @@ create_indexscan_plan(PlannerInfo *root,
 
 			if (predicate_implied_by(clausel, nonlossy_indexquals))
 				continue;
-			if (predicate_implied_by(clausel, best_path->indexinfo->indpred))
-				continue;
+			if (best_path->indexinfo->indpred)
+			{
+				if (baserelid != root->parse->resultRelation &&
+					!list_member_int(root->parse->rowMarks, baserelid))
+					if (predicate_implied_by(clausel,
+											 best_path->indexinfo->indpred))
+						continue;
+			}
 		}
 		qpqual = lappend(qpqual, rinfo->clause);
 	}
@@ -920,8 +930,12 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 * but are logically implied by, the index quals; so we also try a
 	 * predicate_implied_by() check to see if we can discard quals that way.
 	 * (predicate_implied_by assumes its first input contains only immutable
-	 * functions, so we have to check that.)  We can also discard quals that
-	 * are implied by a partial index's predicate.
+	 * functions, so we have to check that.)
+	 *
+	 * We can also discard quals that are implied by a partial index's
+	 * predicate, but only in a plain SELECT; when scanning a target relation
+	 * of UPDATE/DELETE/SELECT FOR UPDATE, we must leave such quals in the
+	 * plan so that they'll be properly rechecked by EvalPlanQual testing.
 	 *
 	 * XXX For the moment, we only consider partial index predicates in the
 	 * simple single-index-scan case.  Is it worth trying to be smart about
@@ -945,8 +959,14 @@ create_bitmap_scan_plan(PlannerInfo *root,
 			{
 				IndexPath  *ipath = (IndexPath *) best_path->bitmapqual;
 
-				if (predicate_implied_by(clausel, ipath->indexinfo->indpred))
-					continue;
+				if (ipath->indexinfo->indpred)
+				{
+					if (baserelid != root->parse->resultRelation &&
+						!list_member_int(root->parse->rowMarks, baserelid))
+						if (predicate_implied_by(clausel,
+												 ipath->indexinfo->indpred))
+							continue;
+				}
 			}
 		}
 		qpqual = lappend(qpqual, clause);
@@ -1282,7 +1302,9 @@ create_nestloop_plan(PlannerInfo *root,
 		 * join quals; failing to prove that doesn't result in an incorrect
 		 * plan.  It is the right way to proceed because adding more quals to
 		 * the stuff we got from the original query would just make it harder
-		 * to detect duplication.
+		 * to detect duplication.  (Also, to change this we'd have to be
+		 * wary of UPDATE/DELETE/SELECT FOR UPDATE target relations; see
+		 * notes above about EvalPlanQual.)
 		 */
 		BitmapHeapPath *innerpath = (BitmapHeapPath *) best_path->innerjoinpath;
 
