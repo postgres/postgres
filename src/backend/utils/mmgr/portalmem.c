@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.86 2006/04/25 14:09:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.87 2006/04/25 14:11:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,9 +402,6 @@ DropDependentPortals(MemoryContext queryContext)
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
 
-	if (PortalHashTable == NULL)
-		return;
-
 	hash_seq_init(&status, PortalHashTable);
 
 	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
@@ -412,30 +409,6 @@ DropDependentPortals(MemoryContext queryContext)
 		Portal		portal = hentry->portal;
 
 		if (portal->queryContext == queryContext)
-			PortalDrop(portal, false);
-	}
-}
-
-/*
- * Delete all WITH HOLD cursors, used by RESET CONNECTION
- */
-void
-PortalHashTableDeleteAll(void)
-{
-	HASH_SEQ_STATUS status;
-	PortalHashEnt *hentry;
-
-	if (PortalHashTable == NULL)
-		return;
-
-	hash_seq_init(&status, PortalHashTable);
-
-	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
-	{
-		Portal		portal = hentry->portal;
-
-		if	((portal->cursorOptions & CURSOR_OPT_HOLD) &&
-			 portal->status != PORTAL_ACTIVE)
 			PortalDrop(portal, false);
 	}
 }

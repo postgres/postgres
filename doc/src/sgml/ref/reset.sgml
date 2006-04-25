@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.27 2006/04/25 14:09:06 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.28 2006/04/25 14:11:51 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -11,8 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>RESET</refname>
-  <refpurpose>restore the value of a run-time parameter to the default value,
-  or reset all aspects of a session</refpurpose>
+  <refpurpose>restore the value of a run-time parameter to the default value</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-reset">
@@ -23,7 +22,6 @@ PostgreSQL documentation
 <synopsis>
 RESET <replaceable class="PARAMETER">name</replaceable>
 RESET ALL
-RESET CONNECTION
 </synopsis>
  </refsynopsisdiv>
   
@@ -81,20 +79,7 @@ SET <replaceable class="parameter">parameter</replaceable> TO DEFAULT
      </para>
     </listitem>
    </varlistentry>
-
-   <varlistentry>
-    <term><literal>CONNECTION</literal></term>
-    <listitem>
-     <para>
-      Reset the all aspects of a session, including runtime parameters,
-      transaction status, temporary tables, <literal>WITH HOLD</literal>
-      cursors, prepared statements, and <command>LISTEN</command>
-      registrations.
-     </para>
-    </listitem>
-   </varlistentry>
   </variablelist>
-
  </refsect1>
 
  <refsect1>

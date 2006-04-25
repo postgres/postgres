@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.83 2006/04/25 14:09:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.84 2006/04/25 14:11:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,7 @@ char	   *namespace_search_path = NULL;
 /* Local functions */
 static void recomputeNamespacePath(void);
 static void InitTempTableNamespace(void);
+static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(int code, Datum arg);
 static void NamespaceCallback(Datum arg, Oid relid);
 
@@ -1728,7 +1729,7 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
  * in order to clean out any relations that might have been created by
  * a crashed backend.
  */
-void
+static void
 RemoveTempRelations(Oid tempNamespaceId)
 {
 	ObjectAddress object;

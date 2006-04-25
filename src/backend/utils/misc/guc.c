@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.316 2006/04/25 14:09:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.317 2006/04/25 14:11:56 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
-#include "commands/prepare.h"
 #include "commands/variable.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
@@ -54,7 +53,6 @@
 #include "postmaster/bgwriter.h"
 #include "postmaster/syslogger.h"
 #include "postmaster/postmaster.h"
-#include "storage/backendid.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
@@ -63,12 +61,10 @@
 #include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
-#include "utils/portal.h"
-#include "utils/syscache.h"
 #include "pgstat.h"
+
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
@@ -4653,33 +4649,8 @@ GetPGVariableResultDesc(const char *name)
 void
 ResetPGVariable(const char *name)
 {
-	char			namespaceName[NAMEDATALEN];
-	Oid			namespaceId;
-
 	if (pg_strcasecmp(name, "all") == 0)
-		/* resetting all GUC variables */
 		ResetAllOptions();
-	else if	(pg_strcasecmp(name, "connection") == 0)
-	{
-		ResetAllOptions();
-
-		/* Clean temp-tables */
-		snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d",
-				 MyBackendId);
-		namespaceId = GetSysCacheOid(NAMESPACENAME,
-									 CStringGetDatum(namespaceName), 0, 0, 0);
-		RemoveTempRelations(namespaceId);
-
-		DropAllPreparedStatements();
-
-		Async_UnlistenAll();
-
-		/* Delete cursors, including WITH HOLD */
-		PortalHashTableDeleteAll();
-
-		if (IsTransactionBlock())
-			UserAbortTransactionBlock();
-	}
 	else
 		set_config_option(name,
 						  NULL,
