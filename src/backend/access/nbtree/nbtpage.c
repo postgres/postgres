@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.95 2006/04/01 03:03:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.96 2006/04/25 22:46:05 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/lmgr.h"
+#include "utils/inval.h"
 
 
 /*
@@ -98,6 +99,49 @@ _bt_getroot(Relation rel, int access)
 	BlockNumber rootblkno;
 	uint32		rootlevel;
 	BTMetaPageData *metad;
+
+	/*
+	 * Try to use previously-cached metapage data to find the root.  This
+	 * normally saves one buffer access per index search, which is a very
+	 * helpful savings in bufmgr traffic and hence contention.
+	 */
+	if (rel->rd_amcache != NULL)
+	{
+		metad = (BTMetaPageData *) rel->rd_amcache;
+		/* We shouldn't have cached it if any of these fail */
+		Assert(metad->btm_magic == BTREE_MAGIC);
+		Assert(metad->btm_version == BTREE_VERSION);
+		Assert(metad->btm_root != P_NONE);
+
+		rootblkno = metad->btm_fastroot;
+		Assert(rootblkno != P_NONE);
+		rootlevel = metad->btm_fastlevel;
+
+		rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
+		rootpage = BufferGetPage(rootbuf);
+		rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
+
+		/*
+		 * Since the cache might be stale, we check the page more carefully
+		 * here than normal.  We *must* check that it's not deleted.
+		 * If it's not alone on its level, then we reject too --- this
+		 * may be overly paranoid but better safe than sorry.  Note we
+		 * don't check P_ISROOT, because that's not set in a "fast root".
+		 */
+		if (!P_IGNORE(rootopaque) &&
+			rootopaque->btpo.level == rootlevel &&
+			P_LEFTMOST(rootopaque) &&
+			P_RIGHTMOST(rootopaque))
+		{
+			/* OK, accept cached page as the root */
+			return rootbuf;
+		}
+		_bt_relbuf(rel, rootbuf);
+		/* Cache is stale, throw it away */
+		if (rel->rd_amcache)
+			pfree(rel->rd_amcache);
+		rel->rd_amcache = NULL;
+	}
 
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
@@ -201,6 +245,12 @@ _bt_getroot(Relation rel, int access)
 		END_CRIT_SECTION();
 
 		/*
+		 * Send out relcache inval for metapage change (probably unnecessary
+		 * here, but let's be safe).
+		 */
+		CacheInvalidateRelcache(rel);
+
+		/*
 		 * swap root write lock for read lock.	There is no danger of anyone
 		 * else accessing the new root page while it's unlocked, since no one
 		 * else knows where it is yet.
@@ -216,6 +266,13 @@ _bt_getroot(Relation rel, int access)
 		rootblkno = metad->btm_fastroot;
 		Assert(rootblkno != P_NONE);
 		rootlevel = metad->btm_fastlevel;
+
+		/*
+		 * Cache the metapage data for next time
+		 */
+		rel->rd_amcache = MemoryContextAlloc(rel->rd_indexcxt,
+											 sizeof(BTMetaPageData));
+		memcpy(rel->rd_amcache, metad, sizeof(BTMetaPageData));
 
 		/*
 		 * We are done with the metapage; arrange to release it via first
@@ -279,6 +336,16 @@ _bt_gettrueroot(Relation rel)
 	BlockNumber rootblkno;
 	uint32		rootlevel;
 	BTMetaPageData *metad;
+
+	/*
+	 * We don't try to use cached metapage data here, since (a) this path is
+	 * not performance-critical, and (b) if we are here it suggests our cache
+	 * is out-of-date anyway.  In light of point (b), it's probably safest to
+	 * actively flush any cached metapage info.
+	 */
+	if (rel->rd_amcache)
+		pfree(rel->rd_amcache);
+	rel->rd_amcache = NULL;
 
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
 	metapg = BufferGetPage(metabuf);
@@ -1052,9 +1119,12 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 
 	END_CRIT_SECTION();
 
-	/* release buffers */
+	/* release buffers; send out relcache inval if metapage changed */
 	if (BufferIsValid(metabuf))
+	{
+		CacheInvalidateRelcache(rel);
 		_bt_relbuf(rel, metabuf);
+	}
 	_bt_relbuf(rel, pbuf);
 	_bt_relbuf(rel, rbuf);
 	_bt_relbuf(rel, buf);

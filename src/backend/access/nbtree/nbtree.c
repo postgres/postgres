@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.144 2006/04/01 03:03:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.145 2006/04/25 22:46:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/smgr.h"
+#include "utils/inval.h"
 #include "utils/memutils.h"
 
 
@@ -126,6 +127,17 @@ btbuild(PG_FUNCTION_ARGS)
 		ResetUsage();
 	}
 #endif   /* BTREE_BUILD_STATS */
+
+	/*
+	 * If we are reindexing a pre-existing index, it is critical to send out
+	 * a relcache invalidation SI message to ensure all backends re-read the
+	 * index metapage.  In most circumstances the update-stats operation will
+	 * cause that to happen, but at the moment there are corner cases where
+	 * no pg_class update will occur, so force an inval here.  XXX FIXME:
+	 * the upper levels of CREATE INDEX should handle the stats update as
+	 * well as guaranteeing relcache inval.
+	 */
+	CacheInvalidateRelcache(index);
 
 	/* since we just counted the # of tuples, may as well update stats */
 	IndexCloseAndUpdateStats(heap, reltuples, index, buildstate.indtuples);

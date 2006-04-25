@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.9 2006/01/17 00:09:00 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.10 2006/04/25 22:46:05 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -316,7 +316,17 @@ Other things that are handy to know
 
 Page zero of every btree is a meta-data page.  This page stores the
 location of the root page --- both the true root and the current effective
-root ("fast" root).
+root ("fast" root).  To avoid fetching the metapage for every single index
+search, we cache a copy of the meta-data information in the index's
+relcache entry (rd_amcache).  This is a bit ticklish since using the cache
+implies following a root page pointer that could be stale.  We require
+every metapage update to send out a SI "relcache inval" message on the
+index relation.  That ensures that each backend will flush its cached copy
+not later than the start of its next transaction.  Therefore, stale
+pointers cannot be used for longer than the current transaction, which
+reduces the problem to the same one already dealt with for concurrent
+VACUUM --- we can just imagine that each open transaction is potentially
+"already in flight" to the old root.
 
 The algorithm assumes we can fit at least three items per page
 (a "high key" and two real data items).  Therefore it's unsafe

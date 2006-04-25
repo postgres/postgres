@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.238 2006/03/05 15:58:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.239 2006/04/25 22:46:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -948,6 +948,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	 */
 	relation->rd_indexprs = NIL;
 	relation->rd_indpred = NIL;
+	relation->rd_amcache = NULL;
 }
 
 /*
@@ -1481,6 +1482,10 @@ RelationReloadClassinfo(Relation relation)
 	RelationInitPhysicalAddr(relation);
 	/* Make sure targblock is reset in case rel was truncated */
 	relation->rd_targblock = InvalidBlockNumber;
+	/* Must free any AM cached data, too */
+	if (relation->rd_amcache)
+		pfree(relation->rd_amcache);
+	relation->rd_amcache = NULL;
 	/* Okay, now it's valid again */
 	relation->rd_isvalid = true;
 }
@@ -3141,6 +3146,7 @@ load_relcache_init_file(void)
 		rel->rd_indexlist = NIL;
 		rel->rd_oidindex = InvalidOid;
 		rel->rd_createSubid = InvalidSubTransactionId;
+		rel->rd_amcache = NULL;
 		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));
 
 		/*

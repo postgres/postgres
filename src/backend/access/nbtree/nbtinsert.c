@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.135 2006/04/13 03:53:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.136 2006/04/25 22:46:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "miscadmin.h"
+#include "utils/inval.h"
 
 
 typedef struct
@@ -638,9 +639,12 @@ _bt_insertonpg(Relation rel,
 
 		END_CRIT_SECTION();
 
-		/* release pin/lock */
+		/* release buffers; send out relcache inval if metapage changed */
 		if (BufferIsValid(metabuf))
+		{
+			CacheInvalidateRelcache(rel);
 			_bt_relbuf(rel, metabuf);
+		}
 
 		_bt_relbuf(rel, buf);
 	}
@@ -1525,6 +1529,9 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	}
 
 	END_CRIT_SECTION();
+
+	/* send out relcache inval for metapage change */
+	CacheInvalidateRelcache(rel);
 
 	/* done with metapage */
 	_bt_relbuf(rel, metabuf);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.88 2006/03/05 15:59:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.89 2006/04/25 22:46:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,13 @@ typedef struct RelationData
 	 * cached, namely those with subtype zero.	The arrays are indexed by
 	 * strategy or support number, which is a sufficient identifier given that
 	 * restriction.
+	 *
+	 * Note: rd_amcache is available for index AMs to cache private data about
+	 * an index.  This must be just a cache since it may get reset at any time
+	 * (in particular, it will get reset by a relcache inval message for the
+	 * index).  If used, it must point to a single memory chunk palloc'd in
+	 * rd_indexcxt.  A relcache reset will include freeing that chunk and
+	 * setting rd_amcache = NULL.
 	 */
 	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
 	RelationAmInfo *rd_aminfo;	/* lookup info for funcs found in pg_am */
@@ -175,6 +182,7 @@ typedef struct RelationData
 	FmgrInfo   *rd_supportinfo; /* lookup info for support procedures */
 	List	   *rd_indexprs;	/* index expression trees, if any */
 	List	   *rd_indpred;		/* index predicate tree, if any */
+	void	   *rd_amcache;		/* available for use by index AM */
 
 	/* statistics collection area */
 	PgStat_Info pgstat_info;
