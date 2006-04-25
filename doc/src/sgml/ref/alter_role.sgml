@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.4 2006/04/25 14:47:29 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.5 2006/04/25 14:56:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -36,8 +36,8 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
 
 ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
 
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>varname</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
-ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>varname</replaceable>
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>configuration_parameter</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -143,7 +143,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable>varname</replaceable></term>
+      <term><replaceable>configuration_parameter</replaceable></term>
       <term><replaceable>value</replaceable></term>
       <listitem>
        <para>
