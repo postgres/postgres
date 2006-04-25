@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.255 2006/04/25 15:17:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.256 2006/04/25 15:19:16 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1049,7 +1049,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>COLLATEINDEX=<replaceable></></option></term>
+       <term><option>COLLATEINDEX</option></term>
        <listitem>
         <para>
          Used for building the SGML documentation.
