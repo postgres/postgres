@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 24 22:58:22 EDT 2006
+Last updated:		Tue Apr 25 10:30:50 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -435,7 +435,7 @@ SQL Commands
   the SQL standard requires it to be processed as a column-by-column
   comparison, so the proper comparison is '(a < 1) OR (a = 1 AND b < 2)'.
 
-* Add RESET CONNECTION command to reset all session state
+* Add RESET SESSION command to reset all session state
 
   This would include resetting of all variables (RESET ALL), dropping of
   temporary tables, removing any NOTIFYs, cursors, open transactions,
@@ -444,7 +444,7 @@ SQL Commands
   The difficult of this features is allowing RESET ALL to not affect 
   changes made by the interface driver for its internal use.  One idea 
   is for this to be a protocol-only feature.  Another approach is to 
-  notify the protocol when a RESET CONNECTION command is used.
+  notify the protocol when a RESET SESSION command is used.
 
 * Add GUC to issue notice about statements that use unjoined tables
 * Allow EXPLAIN to identify tables that were skipped because of 
