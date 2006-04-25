@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.254 2006/04/25 15:14:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.255 2006/04/25 15:17:04 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1078,7 +1078,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>DOCBOOKSTYLE=<replaceable></></option></term>
+       <term><option>DOCBOOKSTYLE</option></term>
        <listitem>
         <para>
          Used for building the SGML documentation.
@@ -1087,7 +1087,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>JADE=<replaceable></></option></term>
+       <term><option>JADE</option></term>
        <listitem>
         <para>
          Used for building the SGML documentation.
@@ -1106,7 +1106,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>LDFLAGS_SL=<replaceable></></option></term>
+       <term><option>LDFLAGS_SL</option></term>
        <listitem>
         <para>
          Used for shared library linking.
@@ -1125,7 +1125,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>MSGFMT=<replaceable></></option></term>
+       <term><option>MSGFMT</option></term>
        <listitem>
         <para>
          Used for Native Language Support (NLS).
@@ -1134,7 +1134,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>MSGMERGE=<replaceable></></option></term>
+       <term><option>MSGMERGE</option></term>
        <listitem>
         <para>
          Used for Native Language Support (NLS).
@@ -1143,7 +1143,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>NSGMLS=<replaceable></></option></term>
+       <term><option>NSGMLS</option></term>
        <listitem>
         <para>
          Used for building the SGML documentation.
@@ -1163,7 +1163,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>PTHREAD_CC=<replaceable></></option></term>
+       <term><option>PTHREAD_CC</option></term>
        <listitem>
         <para>
          Used for adding thread-safety flags.
@@ -1193,7 +1193,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>SGMLSPL=<replaceable></></option></term>
+       <term><option>SGMLSPL</option></term>
        <listitem>
         <para>
          Used for building the SGML documentation.
