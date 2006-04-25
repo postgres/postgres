@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.314 2006/04/23 03:39:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.315 2006/04/25 00:25:15 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5303,6 +5303,15 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     <primary>now</primary>
    </indexterm>
    <indexterm>
+    <primary>transaction_timestamp</primary>
+   </indexterm>
+   <indexterm>
+    <primary>statement_timestamp</primary>
+   </indexterm>
+   <indexterm>
+    <primary>clock_timestamp</primary>
+   </indexterm>
+   <indexterm>
     <primary>timeofday</primary>
    </indexterm>
 
@@ -5358,7 +5367,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry><literal><function>current_timestamp</function></literal></entry>
         <entry><type>timestamp with time zone</type></entry>
-        <entry>Date and time; see <xref linkend="functions-datetime-current">
+        <entry>Date and time of start of current transaction; see <xref linkend="functions-datetime-current">
         </entry>
         <entry></entry>
         <entry></entry>
@@ -5474,8 +5483,36 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry><literal><function>now</function>()</literal></entry>
         <entry><type>timestamp with time zone</type></entry>
-        <entry>Current date and time (equivalent to
-         <function>current_timestamp</function>); see <xref linkend="functions-datetime-current">
+        <entry>Date and time of start of current transaction (equivalent to
+         <function>CURRENT_TIMESTAMP</function>); see <xref linkend="functions-datetime-current">
+        </entry>
+        <entry></entry>
+        <entry></entry>
+       </row>
+
+       <row>
+        <entry><literal><function>transaction_timestamp</function>()</literal></entry>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>Date and time of start of current transaction (equivalent to
+         <function>CURRENT_TIMESTAMP</function>); see <xref linkend="functions-datetime-current">
+        </entry>
+        <entry></entry>
+        <entry></entry>
+       </row>
+
+       <row>
+        <entry><literal><function>statement_timestamp</function>()</literal></entry>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>Date and time of start of current statement; see <xref linkend="functions-datetime-current">
+        </entry>
+        <entry></entry>
+        <entry></entry>
+       </row>
+
+       <row>
+        <entry><literal><function>clock_timestamp</function>()</literal></entry>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>Current date and time (changes during statement execution); see <xref linkend="functions-datetime-current">
         </entry>
         <entry></entry>
         <entry></entry>
@@ -5484,7 +5521,8 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <row>
         <entry><literal><function>timeofday</function>()</literal></entry>
         <entry><type>text</type></entry>
-        <entry>Current date and time; see <xref linkend="functions-datetime-current">
+        <entry>Current date and time (like <function>clock_timestamp</>), but as a Unix-style <type>text</> value; 
+        see <xref linkend="functions-datetime-current">
         </entry>
         <entry></entry>
         <entry></entry>
@@ -6072,7 +6110,7 @@ SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
   </sect2>
 
   <sect2 id="functions-datetime-current">
-   <title>Current Date/Time</title>
+   <title>Date/Time of Transaction Start</title>
 
    <indexterm>
     <primary>date</primary>
@@ -6085,8 +6123,8 @@ SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
    </indexterm>
 
    <para>
-    The following functions are available to obtain the current date and/or
-    time:
+    The following functions are available to obtain the date and/or
+    time of the start of the current transaction:
 <synopsis>
 CURRENT_DATE
 CURRENT_TIME
@@ -6139,12 +6177,6 @@ SELECT LOCALTIMESTAMP;
    </para>
 
    <para>
-    The function <function>now()</function> is the traditional
-    <productname>PostgreSQL</productname> equivalent to
-    <function>CURRENT_TIMESTAMP</function>.
-   </para>
-
-   <para>
     It is important to know that
     <function>CURRENT_TIMESTAMP</function> and related functions return
     the start time of the current transaction; their values do not
@@ -6152,26 +6184,31 @@ SELECT LOCALTIMESTAMP;
     the intent is to allow a single transaction to have a consistent
     notion of the <quote>current</quote> time, so that multiple
     modifications within the same transaction bear the same
-    time stamp.
+    time stamp.  Consider using <function>statement_timestamp</> or
+    <function>clock_timestamp</> if you need something that changes
+    more frequently.
    </para>
 
-   <note>
-    <para>
-     Other database systems may advance these values more
-     frequently.
-    </para>
-   </note>
+   <para>
+    <function>CURRENT_TIMESTAMP</> might not be the 
+    transaction start time on other database systems.
+    For this reason, and for completeness, 
+    <function>transaction_timestamp</> is provided.
+    The function <function>now()</function> is the traditional
+    <productname>PostgreSQL</productname> equivalent to
+    the SQL-standard <function>CURRENT_TIMESTAMP</function>.
+   </para>
 
    <para>
-    There is also the function <function>timeofday()</function> which
-    returns the wall-clock time and advances during transactions.  For
-    historical reasons <function>timeofday()</function> returns a
-    <type>text</type> string rather than a <type>timestamp</type>
-    value:
-<screen>
-SELECT timeofday();
-<lineannotation>Result: </lineannotation><computeroutput>Sat Feb 17 19:07:32.000126 2001 EST</computeroutput>
-</screen>
+    <function>STATEMENT_TIMESTAMP</> is the time the statement
+    arrived at the server from the client.  It is not the time
+    the command started execution.  If multiple commands were
+    sent as a single query string to the server, each command
+    has the same <function>STATEMENT_TIMESTAMP</> because they
+    all arrived at the same time.  Also, commands executed
+    by server-side functions have a <function>STATEMENT_TIMESTAMP</>
+    based on the time the client sent the query that triggered
+    the function, not the time the function was executed.
    </para>
 
    <para>

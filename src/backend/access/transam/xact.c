@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.219 2006/03/29 21:17:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.220 2006/04/25 00:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,7 @@ static CommandId currentCommandId;
  * keep it inside the TransactionState stack.
  */
 static TimestampTz xactStartTimestamp;
+static TimestampTz stmtStartTimestamp;
 
 /*
  * GID to be used for preparing the current transaction.  This is also
@@ -425,6 +426,24 @@ TimestampTz
 GetCurrentTransactionStartTimestamp(void)
 {
 	return xactStartTimestamp;
+}
+
+/*
+ *	GetCurrentStatementStartTimestamp
+ */
+TimestampTz
+GetCurrentStatementStartTimestamp(void)
+{
+	return stmtStartTimestamp;
+}
+
+/*
+ *	SetCurrentStatementStartTimestamp
+ */
+void
+SetCurrentStatementStartTimestamp(void)
+{
+	stmtStartTimestamp = GetCurrentTimestamp();
 }
 
 /*
@@ -1367,9 +1386,9 @@ StartTransaction(void)
 	XactLockTableInsert(s->transactionId);
 
 	/*
-	 * set now()
+	 * now() and statement_timestamp() should be the same time
 	 */
-	xactStartTimestamp = GetCurrentTimestamp();
+	xactStartTimestamp = stmtStartTimestamp;
 
 	/*
 	 * initialize current transaction state fields

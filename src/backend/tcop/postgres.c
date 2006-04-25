@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.485 2006/04/22 01:26:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.486 2006/04/25 00:25:18 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -119,6 +119,12 @@ static volatile sig_atomic_t got_SIGHUP = false;
 static bool xact_started = false;
 
 /*
+ * Flag to keep track of whether we have done statement initialization.
+ * For extended query protocol this has to be remembered across messages.
+ */
+static bool command_initialized = false;
+
+/*
  * Flag to indicate that we are doing the outer loop's read-from-client,
  * as opposed to any random read from client that might happen within
  * commands like COPY FROM STDIN.
@@ -164,6 +170,8 @@ static int	ReadCommand(StringInfo inBuf);
 static bool log_after_parse(List *raw_parsetree_list,
 				const char *query_string, char **prepare_string);
 static List *pg_rewrite_queries(List *querytree_list);
+static void initialize_command(void);
+static void finalize_command(void);
 static void start_xact_command(void);
 static void finish_xact_command(void);
 static bool IsTransactionExitStmt(Node *parsetree);
@@ -858,7 +866,7 @@ exec_simple_query(const char *query_string)
 	 * one of those, else bad things will happen in xact.c. (Note that this
 	 * will normally change current memory context.)
 	 */
-	start_xact_command();
+	initialize_command();
 
 	/*
 	 * Zap any pre-existing unnamed statement.	(While not strictly necessary,
@@ -1067,7 +1075,7 @@ exec_simple_query(const char *query_string)
 	/*
 	 * Close down transaction statement, if one is open.
 	 */
-	finish_xact_command();
+	finalize_command();
 
 	/*
 	 * If there were no parsetrees, return EmptyQueryResponse message.
@@ -1170,7 +1178,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	 * that this will normally change current memory context.) Nothing happens
 	 * if we are already in one.
 	 */
-	start_xact_command();
+	initialize_command();
 
 	/*
 	 * Switch to appropriate context for constructing parsetrees.
@@ -1393,7 +1401,7 @@ exec_bind_message(StringInfo input_message)
 	 * this will normally change current memory context.) Nothing happens if
 	 * we are already in one.
 	 */
-	start_xact_command();
+	initialize_command();
 
 	/* Switch back to message context */
 	MemoryContextSwitchTo(MessageContext);
@@ -1759,7 +1767,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 * Ensure we are in a transaction command (this should normally be the
 	 * case already due to prior BIND).
 	 */
-	start_xact_command();
+	initialize_command();
 
 	/*
 	 * If we are in aborted transaction state, the only portals we can
@@ -1883,7 +1891,7 @@ exec_describe_statement_message(const char *stmt_name)
 	 * Start up a transaction command. (Note that this will normally change
 	 * current memory context.) Nothing happens if we are already in one.
 	 */
-	start_xact_command();
+	initialize_command();
 
 	/* Switch back to message context */
 	MemoryContextSwitchTo(MessageContext);
@@ -1961,7 +1969,7 @@ exec_describe_portal_message(const char *portal_name)
 	 * Start up a transaction command. (Note that this will normally change
 	 * current memory context.) Nothing happens if we are already in one.
 	 */
-	start_xact_command();
+	initialize_command();
 
 	/* Switch back to message context */
 	MemoryContextSwitchTo(MessageContext);
@@ -2000,7 +2008,44 @@ exec_describe_portal_message(const char *portal_name)
 
 
 /*
- * Convenience routines for starting/committing a single command.
+ *	Start xact if necessary, and set statement_timestamp() and optionally
+ *	statement_timeout.
+ */
+static void
+initialize_command(void)
+{
+	if (!command_initialized)
+	{
+		SetCurrentStatementStartTimestamp();
+
+		/* Set statement timeout running, if any */
+		if (StatementTimeout > 0)
+			enable_sig_alarm(StatementTimeout, true);
+		else
+			cancel_from_timeout = false;
+
+		command_initialized = true;
+	}
+	start_xact_command();
+}
+
+static void
+finalize_command(void)
+{
+	if (command_initialized)
+	{
+		/* Cancel any active statement timeout before committing */
+		disable_sig_alarm(true);
+
+		command_initialized = false;
+	}
+	finish_xact_command();
+}
+
+
+/*
+ *	Check if the newly-arrived query string needs to have an implicit
+ *	transaction started.
  */
 static void
 start_xact_command(void)
@@ -2009,13 +2054,8 @@ start_xact_command(void)
 	{
 		ereport(DEBUG3,
 				(errmsg_internal("StartTransactionCommand")));
-		StartTransactionCommand();
 
-		/* Set statement timeout running, if any */
-		if (StatementTimeout > 0)
-			enable_sig_alarm(StatementTimeout, true);
-		else
-			cancel_from_timeout = false;
+		StartTransactionCommand();
 
 		xact_started = true;
 	}
@@ -2026,10 +2066,6 @@ finish_xact_command(void)
 {
 	if (xact_started)
 	{
-		/* Cancel any active statement timeout before committing */
-		disable_sig_alarm(true);
-
-		/* Now commit the command */
 		ereport(DEBUG3,
 				(errmsg_internal("CommitTransactionCommand")));
 
@@ -3137,7 +3173,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 		/* We don't have a transaction command open anymore */
 		xact_started = false;
-
+		command_initialized = false;
+		
 		/* Now we can allow interrupts again */
 		RESUME_INTERRUPTS();
 	}
@@ -3305,7 +3342,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				pgstat_report_activity("<FASTPATH> function call");
 
 				/* start an xact for this function invocation */
-				start_xact_command();
+				initialize_command();
 
 				/* switch back to message context */
 				MemoryContextSwitchTo(MessageContext);
@@ -3328,7 +3365,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				}
 
 				/* commit the function-invocation transaction */
-				finish_xact_command();
+				finalize_command();
 
 				send_ready_for_query = true;
 				break;
@@ -3416,7 +3453,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 			case 'S':			/* sync */
 				pq_getmsgend(&input_message);
-				finish_xact_command();
+				finalize_command();
 				send_ready_for_query = true;
 				break;
 

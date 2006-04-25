@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.81 2006/03/24 04:32:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.82 2006/04/25 00:25:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,6 +141,8 @@ extern TransactionId GetCurrentTransactionIdIfAny(void);
 extern SubTransactionId GetCurrentSubTransactionId(void);
 extern CommandId GetCurrentCommandId(void);
 extern TimestampTz GetCurrentTransactionStartTimestamp(void);
+extern TimestampTz GetCurrentStatementStartTimestamp(void);
+extern void SetCurrentStatementStartTimestamp(void);
 extern int	GetCurrentTransactionNestLevel(void);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern void CommandCounterIncrement(void);

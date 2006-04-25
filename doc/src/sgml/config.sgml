@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.55 2006/04/23 03:39:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.56 2006/04/25 00:25:15 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3279,7 +3279,8 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Abort any statement that takes over the specified number of
-        milliseconds.  If <varname>log_min_error_statement</> is set to
+        milliseconds, starting from the time the command arrives at the server
+        from the client.  If <varname>log_min_error_statement</> is set to
         <literal>ERROR</> or lower, the statement that timed out will also be
         logged.  A value of zero (the default) turns off the 
         limitation.
