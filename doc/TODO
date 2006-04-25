@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 24 20:06:13 EDT 2006
+Last updated:		Mon Apr 24 20:26:45 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -295,7 +295,7 @@ Functions
 =========
 
 * Allow INET subnet tests using non-constants to be indexed
-* Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
+* -Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
   functionality
 
   Current CURRENT_TIMESTAMP returns the start time of the current
