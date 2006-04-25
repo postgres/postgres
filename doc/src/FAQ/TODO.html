@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Apr 24 18:59:31 EDT 2006
+Last updated:           Mon Apr 24 20:00:38 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -223,20 +223,35 @@ first.
     <ul>
       <li>-<em>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO </em>
                   SECOND
-      </li><li>Fix SELECT INTERVAL '1' MONTH
+      </li><li>Support ISO INTERVAL syntax if units cannot be determined from
+                  the string, and are supplied after the string
+<p>                  The SQL standard states that the units after the string specify
+                  the units of the string, e.g. INTERVAL '2' MINUTE should
+                  return '00:02:00'.  The current behavior has the units
+                  restrict the interval value to the specified unit or unit range,
+                  INTERVAL '70' SECOND returns '00:00:10'.
+</p>
+<p>                  For syntax that isn't uniquely ISO or PG syntax, like '1' or
+                  '1:30', treat as ISO if there is a range specification clause,
+                  and as PG if there no clause is present, e.g. interpret
+                  '1:30' MINUTE TO SECOND as '1 minute 30 seconds', and
+                  interpret '1:30' as '1 hour, 30 minutes'.
+</p>
+<p>                  This makes common cases like SELECT INTERVAL '1' MONTH 
+                  SQL-standard results.  The SQL standard supports a limited
+                  number of unit combinations and doesn't support unit names
+                  in the string.  The PostgreSQL syntax is more flexible in
+                  the range of units supported, e.g. PostgreSQL supports 
+                  '1 year 1 hour', while the SQL standard does not.
+</p>
       </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
-      </li><li>For syntax that isn't uniquely ISO or PG syntax, like '1:30' or
-                  '1', treat as ISO if there is a range specification clause,
-                  and as PG if there no clause is present, e.g. interpret 
-<p>                          '1:30' MINUTE TO SECOND as '1 minute 30 seconds', and 
-                          interpret '1:30' as '1 hour, 30 minutes'
-      <li>Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1 year' AS
+      </li><li>Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1 year' AS
                   INTERVAL MONTH), and this should return '12 months'
       </li><li>Round or truncate values to the requested precision, e.g.
                   INTERVAL '11 months' AS YEAR should return one or zero
       </li><li>Support precision, CREATE TABLE foo (a INTERVAL MONTH(3))
     </li></ul>
-  </p></ul>
+  </li></ul>
   </li><li>Arrays
   <ul>
     <li>-<em>Allow NULLs in arrays</em>
@@ -1176,6 +1191,6 @@ first.
   </li><li>Teodor is Teodor Sigaev &lt;<a href="mailto:teodor@sigaev.ru">teodor@sigaev.ru</a>&gt;
   </li><li>Tom is Tom Lane &lt;<a href="mailto:tgl@sss.pgh.pa.us">tgl@sss.pgh.pa.us</a>&gt; of Red Hat
 </li></ul>
-</li></ul></li></ul>
+
 </body>
 </html>

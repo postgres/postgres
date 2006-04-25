@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 24 18:59:31 EDT 2006
+Last updated:		Mon Apr 24 20:00:38 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -241,13 +241,29 @@ Data Types
 	o Add ISO INTERVAL handling
 		o -Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO 
 		  SECOND
-		o Fix SELECT INTERVAL '1' MONTH
+		o Support ISO INTERVAL syntax if units cannot be determined from
+		  the string, and are supplied after the string
+
+		  The SQL standard states that the units after the string specify
+		  the units of the string, e.g. INTERVAL '2' MINUTE should
+		  return '00:02:00'.  The current behavior has the units
+		  restrict the interval value to the specified unit or unit range,
+		  INTERVAL '70' SECOND returns '00:00:10'.
+
+		  For syntax that isn't uniquely ISO or PG syntax, like '1' or
+		  '1:30', treat as ISO if there is a range specification clause,
+	          and as PG if there no clause is present, e.g. interpret
+		  '1:30' MINUTE TO SECOND as '1 minute 30 seconds', and
+		  interpret '1:30' as '1 hour, 30 minutes'.
+
+		  This makes common cases like SELECT INTERVAL '1' MONTH 
+		  SQL-standard results.  The SQL standard supports a limited
+		  number of unit combinations and doesn't support unit names
+		  in the string.  The PostgreSQL syntax is more flexible in
+                  the range of units supported, e.g. PostgreSQL supports 
+		  '1 year 1 hour', while the SQL standard does not.
+
 		o Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
-		o For syntax that isn't uniquely ISO or PG syntax, like '1:30' or
-		  '1', treat as ISO if there is a range specification clause,
-	          and as PG if there no clause is present, e.g. interpret 
-			  '1:30' MINUTE TO SECOND as '1 minute 30 seconds', and 
-			  interpret '1:30' as '1 hour, 30 minutes'
 		o Interpret INTERVAL '1 year' MONTH as CAST (INTERVAL '1 year' AS
 		  INTERVAL MONTH), and this should return '12 months'
 		o Round or truncate values to the requested precision, e.g.
