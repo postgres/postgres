@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.86 2004/08/10 00:55:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.87 2006/04/25 14:47:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-SET [ SESSION | LOCAL ] <replaceable class="PARAMETER">name</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+SET [ SESSION | LOCAL ] <replaceable class="PARAMETER">varname</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
 SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</replaceable> | LOCAL | DEFAULT }
 </synopsis>
  </refsynopsisdiv>
@@ -91,7 +91,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="PARAMETER">varname</replaceable></term>
     <listitem>
      <para>
       Name of a settable run-time parameter.  Available parameters are
