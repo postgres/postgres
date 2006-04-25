@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.253 2006/04/18 22:52:07 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.254 2006/04/25 15:14:16 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1010,6 +1010,254 @@ su - postgres
 <screen>
 <userinput>./configure CC=/opt/bin/gcc CFLAGS='-O2 -pipe'</>
 </screen>
+    </para>
+
+    <para>
+    Here's a list of the significant environment variables:
+    </para>
+
+    <para>
+     <variablelist>
+
+      <varlistentry>
+       <term><option>AWK=<replaceable>/path/to/awk</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/awk</> is the full path to <application>awk</>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>CC=<replaceable>/path/to/cc</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/cc</> is the full path to your C compiler, such
+         as <application>gcc</>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>CFLAGS=<replaceable>FLAGS</></option></term>
+       <listitem>
+        <para>
+         <replaceable>FLAGS</> is the a list of flags to pass to the C
+         compiler.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>COLLATEINDEX=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for building the SGML documentation.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>CPP=<replaceable>/path/to/cpp</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/cpp</> is the full path to your C preprocessor,
+         such as <application>gcc</>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>CPPFLAGS=<replaceable>FLAGS</></option></term>
+       <listitem>
+        <para>
+         <replaceable>FLAGS</> is the a list of flags to pass to the C
+         preprocessor.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>DOCBOOKSTYLE=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for building the SGML documentation.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>JADE=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for building the SGML documentation.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>LDFLAGS=<replaceable>FLAGS</></option></term>
+       <listitem>
+        <para>
+         <replaceable>FLAGS</> is the a list of flags to pass to the link file
+         editor.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>LDFLAGS_SL=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for shared library linking.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>LORDER=<replaceable>/path/to/lorder</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/lorder</> is the full path to your dependency
+         listing program.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>MSGFMT=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for Native Language Support (NLS).
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>MSGMERGE=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for Native Language Support (NLS).
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>NSGMLS=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for building the SGML documentation.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>PERL=<replaceable>/path/to/perl</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/perl</> is the full path to your Perl 5
+         interpreter. Note that this wil be used to determine the dependencies
+         for building PL/Perl.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>PTHREAD_CC=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for adding thread-safety flags.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>PYTHON=<replaceable>/path/to/python</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/python</> is the full path to your Python
+         interpreter. Note that this wil be used to determine the dependencies
+         for building PL/Python.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>RANLIB=<replaceable>/path/to/ranlib</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/ranlib</> is the full path to your archive
+         library table of contents editor.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>SGMLSPL=<replaceable></></option></term>
+       <listitem>
+        <para>
+         Used for building the SGML documentation.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>STRIP=<replaceable>/path/to/strip</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/strip</> is the full path to your strip program.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>TCL=<replaceable>/path/to/tcl</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/tcl</> is the full path to your TCL
+         interpreter. Note that this wil be used to determine the dependencies
+         for building PL/TCL.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>TAR=<replaceable>/path/to/tar</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/tar</> is the full path to your tar program.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>TCLISH=<replaceable>/path/to/tclish</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/tclish</> is the full path to your tclish program.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>XGETTEXT=<replaceable>/path/to/xgettext</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/xgettext</> is the full path to your xgettext program.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>YACC=<replaceable>/path/to/yacc</></option></term>
+       <listitem>
+        <para>
+         <replaceable>/path/to/yacc</> is the full path to your yacc program.
+        </para>
+       </listitem>
+      </varlistentry>
+
+     </variablelist>
     </para>
    </step>
 
