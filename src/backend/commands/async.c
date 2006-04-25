@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.129 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.130 2006/04/25 14:09:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,6 @@ static bool unlistenExitRegistered = false;
 bool		Trace_notify = false;
 
 
-static void Async_UnlistenAll(void);
 static void Async_UnlistenOnExit(int code, Datum arg);
 static void ProcessIncomingNotify(void);
 static void NotifyMyFrontEnd(char *relname, int32 listenerPID);
@@ -335,7 +334,7 @@ Async_Unlisten(const char *relname)
  *
  *--------------------------------------------------------------
  */
-static void
+void
 Async_UnlistenAll(void)
 {
 	Relation	lRel;

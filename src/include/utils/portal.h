@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.59 2006/03/05 15:59:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.60 2006/04/25 14:09:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,6 +200,7 @@ extern void AtSubAbort_Portals(SubTransactionId mySubid,
 extern void AtSubCleanup_Portals(SubTransactionId mySubid);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
+extern void PortalHashTableDeleteAll(void);
 extern void PortalDrop(Portal portal, bool isTopCommit);
 extern void DropDependentPortals(MemoryContext queryContext);
 extern Portal GetPortalByName(const char *name);

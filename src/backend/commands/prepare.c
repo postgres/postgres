@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.50 2006/04/22 01:25:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.51 2006/04/25 14:09:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 #include "utils/guc.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
-
 
 /*
  * The hash table in which prepared queries are stored. This is
@@ -545,6 +544,30 @@ void
 DeallocateQuery(DeallocateStmt *stmt)
 {
 	DropPreparedStatement(stmt->name, true);
+}
+
+/*
+ * Remove all prepared plans from the backend.
+ */
+void
+DropAllPreparedStatements(void)
+{
+	PreparedStatement	*prep_statement;
+	HASH_SEQ_STATUS         status;
+
+	if	(!prepared_queries)
+		return;
+
+	hash_seq_init(&status, prepared_queries);
+
+	while ((prep_statement = (PreparedStatement *) hash_seq_search(&status)))
+	{
+		DropDependentPortals(prep_statement->context);
+
+		/* Flush the context holding the subsidiary data */
+		MemoryContextDelete(prep_statement->context);
+                hash_search(prepared_queries, prep_statement->stmt_name, HASH_REMOVE, NULL);
+	}
 }
 
 /*

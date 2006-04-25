@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.540 2006/04/24 22:59:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.541 2006/04/25 14:09:12 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1242,6 +1242,12 @@ VariableResetStmt:
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name = $2;
+					$$ = (Node *) n;
+				}
+			| RESET CONNECTION
+				{
+					VariableResetStmt *n = makeNode(VariableResetStmt);
+					n->name = "connection";
 					$$ = (Node *) n;
 				}
 			| RESET TIME ZONE
