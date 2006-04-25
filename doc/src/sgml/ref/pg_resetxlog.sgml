@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.12 2005/11/04 23:14:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.13 2006/04/25 21:02:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -18,13 +18,13 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_resetxlog</command>
-   <arg> -f </arg>
-   <arg> -n </arg>
-   <arg> -o <replaceable class="parameter">oid</replaceable> </arg>
-   <arg> -x <replaceable class="parameter">xid</replaceable> </arg>
-   <arg> -m <replaceable class="parameter">mxid</replaceable> </arg>
-   <arg> -O <replaceable class="parameter">mxoff</replaceable> </arg>
-   <arg> -l <replaceable class="parameter">timelineid</replaceable>,<replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable> </arg>
+   <arg>-f</arg>
+   <arg>-n</arg>
+   <arg>-o<replaceable class="parameter">oid</replaceable> </arg>
+   <arg>-x <replaceable class="parameter">xid</replaceable> </arg>
+   <arg>-m <replaceable class="parameter">mxid</replaceable> </arg>
+   <arg>-O <replaceable class="parameter">mxoff</replaceable> </arg>
+   <arg>-l <replaceable class="parameter">timelineid</replaceable>,<replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable> </arg>
    <arg choice="plain"><replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
