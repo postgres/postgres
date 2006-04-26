@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.28 2006/04/26 18:28:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.29 2006/04/26 22:32:52 momjian Exp $
  *
  *	XXX These are totally bogus.  Perhaps someone will make them do
  *	something reasonable, someday.
@@ -19,6 +19,7 @@
 #include "postgres.h"
 
 #include "utils/geo_decls.h"
+
 
 /*
  *	Selectivity functions for geometric operators.	These are bogus -- unless
@@ -92,4 +93,3 @@ contjoinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_FLOAT8(0.001);
 }
-

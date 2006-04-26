@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.29 2006/04/26 18:28:34 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.30 2006/04/26 22:33:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #define SELFUNCS_H
 
 #include "fmgr.h"
+#include "access/htup.h"
 #include "nodes/relation.h"
 
 
@@ -60,6 +61,26 @@
 		else if (p > 1.0) \
 			p = 1.0; \
 	} while (0)
+
+
+/* Return data from examine_variable and friends */
+typedef struct
+{
+	Node	   *var;			/* the Var or expression tree */
+	RelOptInfo *rel;			/* Relation, or NULL if not identifiable */
+	HeapTuple	statsTuple;		/* pg_statistic tuple, or NULL if none */
+	/* NB: if statsTuple!=NULL, it must be freed when caller is done */
+	Oid			vartype;		/* exposed type of expression */
+	Oid			atttype;		/* type to pass to get_attstatsslot */
+	int32		atttypmod;		/* typmod to pass to get_attstatsslot */
+	bool		isunique;		/* true if matched to a unique index */
+} VariableStatData;
+
+#define ReleaseVariableStats(vardata)  \
+	do { \
+		if (HeapTupleIsValid((vardata).statsTuple)) \
+			ReleaseSysCache((vardata).statsTuple); \
+	} while(0)
 
 
 typedef enum
@@ -133,7 +154,8 @@ extern Selectivity estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey,
 extern Datum btcostestimate(PG_FUNCTION_ARGS);
 extern Datum hashcostestimate(PG_FUNCTION_ARGS);
 extern Datum gistcostestimate(PG_FUNCTION_ARGS);
-
-extern Datum parentsel(PG_FUNCTION_ARGS);
+extern bool get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
+						 VariableStatData *vardata, Node **other,
+						 bool *varonleft);
 
 #endif   /* SELFUNCS_H */
