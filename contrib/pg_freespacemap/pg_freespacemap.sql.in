@@ -2,18 +2,34 @@
 BEGIN;
 SET search_path = public;
 
--- Register the function.
-CREATE OR REPLACE FUNCTION pg_freespacemap()
+
+-- Register the functions.
+CREATE OR REPLACE FUNCTION pg_freespacemap_pages()
 RETURNS SETOF RECORD
-AS 'MODULE_PATHNAME', 'pg_freespacemap'
+AS 'MODULE_PATHNAME', 'pg_freespacemap_pages'
 LANGUAGE C;
 
--- Create a view for convenient access.
-CREATE VIEW pg_freespacemap AS
-	SELECT P.* FROM pg_freespacemap() AS P
+CREATE OR REPLACE FUNCTION pg_freespacemap_relations()
+RETURNS SETOF RECORD
+AS 'MODULE_PATHNAME', 'pg_freespacemap_relations'
+LANGUAGE C;
+
+
+-- Create views for convenient access.
+CREATE VIEW pg_freespacemap_pages AS
+	SELECT P.* FROM pg_freespacemap_pages() AS P
  	(reltablespace oid, reldatabase oid, relfilenode oid, relblocknumber int8, bytes int4);
  
+CREATE VIEW pg_freespacemap_relations AS
+	SELECT P.* FROM pg_freespacemap_relations() AS P
+ 	(reltablespace oid, reldatabase oid, relfilenode oid, avgrequest int8, lastpagecount integer, nextpage integer);
+
+ 
 -- Don't want these to be available at public.
-REVOKE ALL ON FUNCTION pg_freespacemap() FROM PUBLIC;
-REVOKE ALL ON pg_freespacemap FROM PUBLIC;
+REVOKE ALL ON FUNCTION pg_freespacemap_pages() FROM PUBLIC;
+REVOKE ALL ON pg_freespacemap_pages FROM PUBLIC;
+
+REVOKE ALL ON FUNCTION pg_freespacemap_relations() FROM PUBLIC;
+REVOKE ALL ON pg_freespacemap_relations FROM PUBLIC;
+
 COMMIT;

@@ -1,15 +1,17 @@
 Pg_freespacemap - Real time queries on the free space map (FSM).
 ---------------
 
-  This module consists of a C function 'pg_freespacemap()' that returns 
-  a set of records, and a view 'pg_freespacemap' to wrapper the function.
+  This module consists of two C functions: 'pg_freespacemap_relations()' and
+  'pg_freespacemap_pages()' that return a set of records, plus two views 
+  'pg_freespacemap_relations' and 'pg_freespacemap_pages' for more
+  user-friendly access to the functions.
 
   The module provides the ability to examine the contents of the free space
   map, without having to restart or rebuild the server with additional
   debugging code.
 
-  By default public access is REVOKED from both of these, just in case there
-  are security issues lurking.
+  By default public access is REVOKED from the functions and views, just in 
+  case there are security issues present in the code.
 
 
 Installation
@@ -22,7 +24,7 @@ Installation
   $ gmake install
 
 
-  To register the functions:
+  To register the functions and views:
 
   $ psql -d <database> -f pg_freespacemap.sql
 
@@ -30,67 +32,130 @@ Installation
 Notes
 -----
 
-  The definition of the columns exposed in the view is:
+  The definitions for the columns exposed in the views are:
+
+   pg_freespacemap_relations
 
        Column     |  references          | Description
   ----------------+----------------------+------------------------------------
    reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
    reldatabase    | pg_database.oid      | Database for the relation.
    relfilenode    | pg_class.relfilenode | Refilenode of the relation.
-   relblocknumber |                      | Offset of the page in the relation.
-   bytes          |                      | Free bytes in the block/page, or NULL
+   avgrequest     |                      | Moving average of free space 
+                  |                      | requests.
+   lastpagecount  |                      | Count of pages examined for useful
+                  |                      | free space.
+   nextpage       |                      | page index (from 0) to start next 
+                  |                      | search at.
+
+
+   pg_freespacemap_pages
+
+       Column     |  references          | Description
+  ----------------+----------------------+------------------------------------
+   reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
+   reldatabase    | pg_database.oid      | Database for the relation.
+   relfilenode    | pg_class.relfilenode | Refilenode of the relation.
+   relblocknumber |                      | Page offset in the relation.
+   bytes          |                      | Free bytes in the page, or NULL
                   |                      | for an index page (see below).
 
 
-  There is one row for each page in the free space map.
+  For pg_freespacemap_relations, there is one row for each relation in the free
+  space map.
 
-  Because the map is shared by all the databases, there are pages from
-  relations not belonging to the current database.
+  For pg_freespacemap_pages, there is one row for each page in the free space 
+  map.
 
-  The free space map can contain pages for btree indexes if they were emptied 
-  by a vacuum process. The bytes field is set to NULL in this case.
+  Because the map is shared by all the databases, there are relations and pages
+  from relations not belonging to the current database.
 
-  When the pg_freespacemap view is accessed, internal free space map locks are
-  taken, and a copy of the map data is made for the view to display. 
-  This ensures that the view produces a consistent set of results, while not 
+  The view 'freespacemap_pages'  can contain pages for btree indexes if they 
+  were emptied by a vacuum process. The bytes field is set to NULL in this case.
+
+  When either of the views are accessed, internal free space map locks are
+  taken, and a copy of the map data is made for them to display. 
+  This ensures that the views produce a consistent set of results, while not 
   blocking normal activity longer than necessary.  Nonetheless there 
-  could be some impact on database performance if this view is read often.
+  could be some impact on database performance if they are read often.
 
 
-Sample output
+Sample output - pg_freespacemap_relations
 -------------
 
-  regression=# \d pg_freespacemap
-     View "public.pg_freespacemap"
-      Column     |  Type   | Modifiers 
- ----------------+---------+-----------
-  reltablespace  | oid     | 
-  reldatabase    | oid     | 
-  relfilenode    | oid     | 
-  relblocknumber | bigint  | 
-  bytes          | integer | 
- View definition:
+regression=# \d pg_freespacemap_relations
+View "public.pg_freespacemap_relations"
+    Column     |  Type   | Modifiers 
+---------------+---------+-----------
+ reltablespace | oid     | 
+ reldatabase   | oid     | 
+ relfilenode   | oid     | 
+ avgrequest    | bigint  | 
+ lastpagecount | integer | 
+ nextpage      | integer | 
+View definition:
+ SELECT p.reltablespace, p.reldatabase, p.relfilenode, p.avgrequest, p.lastpagecount, p.nextpage
+   FROM pg_freespacemap_relations() p(reltablespace oid, reldatabase oid, relfilenode oid, avgrequest bigint, lastpagecount integer, nextpage integer);
+
+regression=# SELECT c.relname, r.avgrequest, r.lastpagecount, r.nextpage
+             FROM pg_freespacemap_relations r INNER JOIN pg_class c
+             ON c.relfilenode = r.relfilenode INNER JOIN pg_database d
+             ON r.reldatabase = d.oid AND (d.datname = current_database()) 
+             ORDER BY c.relname LIMIT 10;
+   relname    | avgrequest | lastpagecount | nextpage 
+--------------+------------+---------------+----------
+ a_star       |        250 |             1 |        0
+ abstime_tbl  |        249 |             1 |        0
+ aggtest      |        250 |             1 |        0
+ altinhoid    |        250 |             1 |        0
+ altstartwith |        250 |             1 |        0
+ arrtest      |        254 |             1 |        0
+ b_star       |        250 |             1 |        0
+ box_tbl      |        250 |             1 |        0
+ bt_f8_heap   |         92 |             1 |        0
+ bt_i4_heap   |         94 |             1 |        0
+(10 rows)
+
+regression=# 
+
+
+Sample output - pg_freespacemap_pages
+-------------
+
+regression=# \d pg_freespacemap_pages;
+ View "public.pg_freespacemap_pages"
+     Column     |  Type   | Modifiers 
+----------------+---------+-----------
+ reltablespace  | oid     | 
+ reldatabase    | oid     | 
+ relfilenode    | oid     | 
+ relblocknumber | bigint  | 
+ bytes          | integer | 
+View definition:
  SELECT p.reltablespace, p.reldatabase, p.relfilenode, p.relblocknumber, p.bytes
- FROM pg_freespacemap() p(reltablespace oid, reldatabase oid, relfilenode oid, relblocknumber bigint, bytes integer);
+   FROM pg_freespacemap_pages() p(reltablespace oid, reldatabase oid, relfilenode oid, relblocknumber bigint, bytes integer);
 
-  regression=# SELECT c.relname, m.relblocknumber, m.bytes  
-               FROM pg_freespacemap m INNER JOIN pg_class c 
-               ON c.relfilenode = m.relfilenode LIMIT 10;
-      relname             | relblocknumber |  bytes 
-  ------------------------+----------------+--------
-  sql_features            |              5 |   2696
-  sql_implementation_info |              0 |   7104
-  sql_languages           |              0 |   8016
-  sql_packages            |              0 |   7376
-  sql_sizing              |              0 |   6032
-  pg_authid               |              0 |   7424
-  pg_toast_2618           |             13 |   4588
-  pg_toast_2618           |             12 |   1680
-  pg_toast_2618           |             10 |   1436
-  pg_toast_2618           |              7 |   1136
-  (10 rows)
+regression=# SELECT c.relname, p.relblocknumber, p.bytes
+             FROM pg_freespacemap_pages p INNER JOIN pg_class c
+             ON c.relfilenode = p.relfilenode INNER JOIN pg_database d
+             ON (p.reldatabase = d.oid AND d.datname = current_database()) 
+             ORDER BY c.relname LIMIT 10;
+   relname    | relblocknumber | bytes 
+--------------+----------------+-------
+ a_star       |              0 |  8040
+ abstime_tbl  |              0 |  7908
+ aggtest      |              0 |  8008
+ altinhoid    |              0 |  8128
+ altstartwith |              0 |  8128
+ arrtest      |              0 |  7172
+ b_star       |              0 |  7976
+ box_tbl      |              0 |  7912
+ bt_f8_heap   |             54 |  7728
+ bt_i4_heap   |             49 |  8008
+(10 rows)
 
-  regression=# 
+regression=# 
+
 
 
 Author
