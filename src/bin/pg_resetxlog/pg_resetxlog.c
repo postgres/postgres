@@ -4,26 +4,29 @@
  *	  A utility to "zero out" the xlog when it's corrupt beyond recovery.
  *	  Can also rebuild pg_control if needed.
  *
- * The theory of operation is fairly simple:
+ * The theory of reset operation is fairly simple:
  *	  1. Read the existing pg_control (which will include the last
  *		 checkpoint record).  If it is an old format then update to
  *		 current format.
- *	  2. If pg_control is corrupt, attempt to intuit reasonable values,
- *		 by scanning the old xlog if necessary.
+ *	  2. If pg_control is corrupt, attempt to rebuild the values,
+ *		 by scanning the old xlog; if it fail then try to guess it.
  *	  3. Modify pg_control to reflect a "shutdown" state with a checkpoint
  *		 record at the start of xlog.
  *	  4. Flush the existing xlog files and write a new segment with
  *		 just a checkpoint record in it.  The new segment is positioned
  *		 just past the end of the old xlog, so that existing LSNs in
  *		 data pages will appear to be "in the past".
- * This is all pretty straightforward except for the intuition part of
- * step 2 ...
  *
- *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * The algorithm of restoring the pg_control value from old xlog file:
+ *	1. Retrieve all of the active xlog files from xlog direcotry into a list 
+ *	   by increasing order, according their timeline, log id, segment id.
+ *	2. Search the list to find the oldest xlog file of the lastest time line.
+ *	3. Search the records from the oldest xlog file of latest time line
+ *	   to the latest xlog file of latest time line, if the checkpoint record
+ *	   has been found, update the latest checkpoint and previous checkpoint.
+ * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.43 2006/04/05 03:34:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +49,9 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 
+#define GUESS	0
+#define WAL	1
+
 extern int	optind;
 extern char *optarg;
 
@@ -53,23 +59,75 @@ extern char *optarg;
 static ControlFileData ControlFile;		/* pg_control values */
 static uint32 newXlogId,
 			newXlogSeg;			/* ID/Segment of new XLOG segment */
-static bool guessed = false;	/* T if we had to guess at any values */
 static const char *progname;
+static uint64		sysidentifier=-1;
+
+/* 
+ * We use a list to store the active xlog files we had found in the 
+ * xlog directory in increasing order according the time line, logid, 
+ * segment id.
+ * 
+ */
+typedef struct XLogFileName {
+	TimeLineID tli; 
+	uint32 logid; 
+	uint32 seg;
+	char fname[256];
+	struct XLogFileName *next;
+}	XLogFileName;
+
+/* The list head */
+static XLogFileName *xlogfilelist=NULL;
+
+/* LastXLogfile is the latest file in the latest time line, 
+   CurXLogfile is the oldest file in the lastest time line
+   */
+static XLogFileName *CurXLogFile, *LastXLogFile; 
+
+/* The last checkpoint found in xlog file.*/
+static CheckPoint      lastcheckpoint;
+
+/* The last and previous checkpoint pointers found in xlog file.*/
+static XLogRecPtr 	prevchkp, lastchkp; 
+
+/* the database state.*/
+static DBState	state=DB_SHUTDOWNED; 
+
+/* the total checkpoint numbers which had been found in the xlog file.*/
+static int 		found_checkpoint=0;	
+
 
 static bool ReadControlFile(void);
-static void GuessControlValues(void);
-static void PrintControlValues(bool guessed);
+static bool RestoreControlValues(int mode);
+static void PrintControlValues(void);
+static void UpdateCtlFile4Reset(void);
 static void RewriteControlFile(void);
 static void KillExistingXLOG(void);
 static void WriteEmptyXLOG(void);
 static void usage(void);
 
+static void GetXLogFiles(void);
+static bool ValidXLogFileName(char * fname);
+static bool ValidXLogFileHeader(XLogFileName *segfile);
+static bool ValidXLOGPageHeader(XLogPageHeader hdr, uint tli, uint id, uint seg);
+static bool CmpXLogFileOT(XLogFileName * f1, XLogFileName *f2);
+static bool IsNextSeg(XLogFileName *prev, XLogFileName *cur);
+static void InsertXLogFile( char * fname );
+static bool ReadXLogPage(void);
+static bool RecordIsValid(XLogRecord *record, XLogRecPtr recptr);
+static bool FetchRecord(void);
+static void UpdateCheckPoint(XLogRecord *record);
+static void SelectStartXLog(void);
+static int SearchLastCheckpoint(void);
+static int OpenXLogFile(XLogFileName *sf);
+static void CleanUpList(XLogFileName *list);
 
 int
 main(int argc, char *argv[])
 {
 	int			c;
 	bool		force = false;
+	bool		restore = false;
 	bool		noupdate = false;
 	TransactionId set_xid = 0;
 	Oid			set_oid = 0;
@@ -84,7 +142,9 @@ main(int argc, char *argv[])
 	char	   *DataDir;
 	int			fd;
 	char		path[MAXPGPATH];
-
+	bool		ctlcorrupted = false;
+	bool		PidLocked = false;
+	
 	set_pglocale_pgservice(argv[0], "pg_resetxlog");
 
 	progname = get_progname(argv[0]);
@@ -104,14 +164,18 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "fl:m:no:O:x:")) != -1)
+	while ((c = getopt(argc, argv, "fl:m:no:O:x:r")) != -1)
 	{
 		switch (c)
 		{
 			case 'f':
 				force = true;
 				break;
-
+				
+			case 'r':
+				restore = true;
+				break;
+				
 			case 'n':
 				noupdate = true;
 				break;
@@ -255,17 +319,17 @@ main(int argc, char *argv[])
 	}
 	else
 	{
-		fprintf(stderr, _("%s: lock file \"%s\" exists\n"
-						  "Is a server running?  If not, delete the lock file and try again.\n"),
-				progname, path);
-		exit(1);
+		PidLocked = true;
 	}
 
 	/*
 	 * Attempt to read the existing pg_control file
 	 */
 	if (!ReadControlFile())
-		GuessControlValues();
+	{
+		/* The control file has been corruptted.*/
+		ctlcorrupted = true;
+	}
 
 	/*
 	 * Adjust fields if required by switches.  (Do this now so that printout,
@@ -294,26 +358,81 @@ main(int argc, char *argv[])
 		ControlFile.logSeg = minXlogSeg;
 	}
 
-	/*
-	 * If we had to guess anything, and -f was not given, just print the
-	 * guessed values and exit.  Also print if -n is given.
-	 */
-	if ((guessed && !force) || noupdate)
+	/* retore the broken control file from WAL file.*/
+	if (restore)
 	{
-		PrintControlValues(guessed);
-		if (!noupdate)
+
+		/* If the control fine is fine, don't touch it.*/
+		if ( !ctlcorrupted )
 		{
-			printf(_("\nIf these values seem acceptable, use -f to force reset.\n"));
-			exit(1);
-		}
-		else
+			printf(_("\nThe control file seems fine, not need to restore it.\n"));
+			printf(_("If you want to restore it anyway, use -f option, but this also will reset the log file.\n"));
 			exit(0);
+		}
+		
+		
+		/* Try to restore control values from old xlog file, or complain it.*/
+		if (RestoreControlValues(WAL))
+		{
+			/* Success in restoring the checkpoint information from old xlog file.*/
+			
+			/* Print it out.*/
+			PrintControlValues();
+
+			/* In case the postmaster is crashed.
+			 * But it may be dangerous for the living one.
+			 * It may need a more good way.
+			 */
+			if (PidLocked)
+			{
+				ControlFile.state = DB_IN_PRODUCTION;
+			}
+			/* Write the new control file. */
+			RewriteControlFile();
+			printf(_("\nThe control file had been restored.\n"));
+		} 
+		else 
+		{ 
+			/* Fail in restoring the checkpoint information from old xlog file. */
+			printf(_("\nCan not restore the control file from XLog file..\n"));
+			printf(_("\nIf you want to restore it anyway, use -f option to guess the information, but this also will reset the log file.\n"));
+		}
+
+		exit(0);
+		
+	}	
+	if (PidLocked)
+	{  
+		fprintf(stderr, _("%s: lock file \"%s\" exists\n"
+						  "Is a server running?  If not, delete the lock file and try again.\n"),
+				progname, path);
+		exit(1);
+
+	}
+	/*
+	* Print out the values in control file if -n is given. if the control file is 
+	* corrupted, then inform user to restore it first.
+	 */
+	if (noupdate)
+	{
+		if (!ctlcorrupted)
+		{
+			/* The control file is fine, print the values out.*/
+			PrintControlValues();
+			exit(0);
+		}
+		else{
+			/* The control file is corrupted.*/
+			printf(_("The control file had been corrupted.\n"));
+			printf(_("Please use -r option to restore it first.\n"));
+			exit(1);
+			}
 	}
 
 	/*
 	 * Don't reset from a dirty pg_control without -f, either.
 	 */
-	if (ControlFile.state != DB_SHUTDOWNED && !force)
+	if (ControlFile.state != DB_SHUTDOWNED && !force && !ctlcorrupted)
 	{
 		printf(_("The database server was not shut down cleanly.\n"
 				 "Resetting the transaction log may cause data to be lost.\n"
@@ -321,14 +440,35 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/*
-	 * Else, do the dirty deed.
+/*
+	 * Try to reset the xlog file.
 	 */
+	 
+	/* If the control file is corrupted, and -f option is given, resotre it first.*/
+	if ( ctlcorrupted )
+	{
+		if (force)
+		{
+			if (!RestoreControlValues(WAL))
+			{
+				printf(_("fails to recover the control file from old xlog files, so we had to guess it.\n"));
+				RestoreControlValues(GUESS);
+			}
+			printf(_("Restored the control file from old xlog files.\n"));
+		}
+		else
+		{
+			printf(_("Control file corrupted.\nIf you want to proceed anyway, use -f to force reset.\n"));
+			exit(1);
+			}
+	} 
+	
+	/* Reset the xlog fille.*/
+	UpdateCtlFile4Reset();
 	RewriteControlFile();
 	KillExistingXLOG();
 	WriteEmptyXLOG();
-
-	printf(_("Transaction log reset\n"));
+	printf(_("Transaction log reset\n"));	
 	return 0;
 }
 
@@ -397,7 +537,6 @@ ReadControlFile(void)
 				progname);
 		/* We will use the data anyway, but treat it as guessed. */
 		memcpy(&ControlFile, buffer, sizeof(ControlFile));
-		guessed = true;
 		return true;
 	}
 
@@ -408,51 +547,81 @@ ReadControlFile(void)
 }
 
 
+
+
 /*
- * Guess at pg_control values when we can't read the old ones.
+ *  Restore the pg_control values by scanning old xlog files or by guessing it.
+ *
+ * Input parameter:
+ *	WAL:  Restore the pg_control values by scanning old xlog files.
+ *	GUESS: Restore the pg_control values by guessing.
+ * Return:
+ *	TRUE: success in restoring.
+ *	FALSE: fail to restore the values. 
+ * 
  */
-static void
-GuessControlValues(void)
+static bool 
+RestoreControlValues(int mode)
 {
-	uint64		sysidentifier;
 	struct timeval tv;
 	char	   *localeptr;
+	bool	successed=true;
 
 	/*
 	 * Set up a completely default set of pg_control values.
 	 */
-	guessed = true;
 	memset(&ControlFile, 0, sizeof(ControlFile));
 
 	ControlFile.pg_control_version = PG_CONTROL_VERSION;
 	ControlFile.catalog_version_no = CATALOG_VERSION_NO;
 
-	/*
-	 * Create a new unique installation identifier, since we can no longer use
-	 * any old XLOG records.  See notes in xlog.c about the algorithm.
+	/* 
+	 * update the checkpoint value in control file,by searching 
+	 * xlog segment file, or just guessing it.
 	 */
-	gettimeofday(&tv, NULL);
-	sysidentifier = ((uint64) tv.tv_sec) << 32;
-	sysidentifier |= (uint32) (tv.tv_sec | tv.tv_usec);
+	 if (mode == WAL)
+	 {
+		int result = SearchLastCheckpoint();
+		if ( result > 0 ) /* The last checkpoint had been found. */
+		{
+			ControlFile.checkPointCopy = lastcheckpoint;
+			ControlFile.checkPoint = lastchkp;
+			ControlFile.prevCheckPoint = prevchkp;
+			ControlFile.logId = LastXLogFile->logid;
+			ControlFile.logSeg = LastXLogFile->seg + 1;
+			ControlFile.checkPointCopy.ThisTimeLineID = LastXLogFile->tli;
+			ControlFile.state = state;
+		} else 	successed = false;
+		
+		/* Clean up the list. */
+		CleanUpList(xlogfilelist);		
+		
+	 } 	
+	
+	if (mode == GUESS)
+	{
+		ControlFile.checkPointCopy.redo.xlogid = 0;
+		ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogLongPHD;
+		ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
+		ControlFile.checkPointCopy.nextXid = (TransactionId) 514;	/* XXX */
+		ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
+		ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
+		ControlFile.checkPointCopy.nextMultiOffset = 0;
+		ControlFile.checkPointCopy.time = time(NULL);
+		ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
+		/*
+		 * Create a new unique installation identifier, since we can no longer
+		 * use any old XLOG records.  See notes in xlog.c about the algorithm.
+		 */
+		gettimeofday(&tv, NULL);
+		sysidentifier = ((uint64) tv.tv_sec) << 32;
+		sysidentifier |= (uint32) (tv.tv_sec | tv.tv_usec);
+		ControlFile.state = DB_SHUTDOWNED;
+		
+	}
 
-	ControlFile.system_identifier = sysidentifier;
-
-	ControlFile.checkPointCopy.redo.xlogid = 0;
-	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogLongPHD;
-	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
-	ControlFile.checkPointCopy.ThisTimeLineID = 1;
-	ControlFile.checkPointCopy.nextXid = (TransactionId) 514;	/* XXX */
-	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
-	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
-	ControlFile.checkPointCopy.nextMultiOffset = 0;
-	ControlFile.checkPointCopy.time = time(NULL);
-
-	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = time(NULL);
-	ControlFile.logId = 0;
-	ControlFile.logSeg = 1;
-	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
-
+	ControlFile.system_identifier = sysidentifier;
 	ControlFile.maxAlign = MAXIMUM_ALIGNOF;
 	ControlFile.floatFormat = FLOATFORMAT_VALUE;
 	ControlFile.blcksz = BLCKSZ;
@@ -483,28 +652,22 @@ GuessControlValues(void)
 	}
 	StrNCpy(ControlFile.lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
 
-	/*
-	 * XXX eventually, should try to grovel through old XLOG to develop more
-	 * accurate values for TimeLineID, nextXID, etc.
-	 */
+	return successed;	
 }
 
 
 /*
- * Print the guessed pg_control values when we had to guess.
+ * Print the out pg_control values.
  *
  * NB: this display should be just those fields that will not be
  * reset by RewriteControlFile().
  */
 static void
-PrintControlValues(bool guessed)
+PrintControlValues(void)
 {
 	char		sysident_str[32];
 
-	if (guessed)
-		printf(_("Guessed pg_control values:\n\n"));
-	else
-		printf(_("pg_control values:\n\n"));
+	printf(_("pg_control values:\n\n"));
 
 	/*
 	 * Format system_identifier separately to keep platform-dependent format
@@ -538,16 +701,12 @@ PrintControlValues(bool guessed)
 	printf(_("LC_CTYPE:                             %s\n"), ControlFile.lc_ctype);
 }
 
-
 /*
- * Write out the new pg_control file.
- */
-static void
-RewriteControlFile(void)
+* Update the control file before reseting it.
+*/
+static void 
+UpdateCtlFile4Reset(void)
 {
-	int			fd;
-	char		buffer[PG_CONTROL_SIZE]; /* need not be aligned */
-
 	/*
 	 * Adjust fields as needed to force an empty XLOG starting at the next
 	 * available segment.
@@ -578,6 +737,17 @@ RewriteControlFile(void)
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 	ControlFile.prevCheckPoint.xlogid = 0;
 	ControlFile.prevCheckPoint.xrecoff = 0;
+}
+
+/*
+ * Write out the new pg_control file.
+ */
+static void
+RewriteControlFile(void)
+{
+	int			fd;
+	char		buffer[PG_CONTROL_SIZE]; /* need not be aligned */
+
 
 	/* Contents are protected with a CRC */
 	INIT_CRC32(ControlFile.crc);
@@ -672,7 +842,6 @@ KillExistingXLOG(void)
 		errno = 0;
 	}
 #ifdef WIN32
-
 	/*
 	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
 	 * released version
@@ -801,14 +970,664 @@ usage(void)
 	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
-	printf(_("  -f              force update to be done\n"));
+	printf(_("  -f              force reset xlog to be done, if the control file is corrupted, then try to restore it.\n"));
+	printf(_("  -r              restore the pg_control file from old XLog files, resets is not done..\n"));	
 	printf(_("  -l TLI,FILE,SEG force minimum WAL starting location for new transaction log\n"));
-	printf(_("  -m XID          set next multitransaction ID\n"));
-	printf(_("  -n              no update, just show extracted control values (for testing)\n"));
+	printf(_("  -n              show extracted control values of existing pg_control file.\n"));
+	printf(_("  -m multiXID     set next multi transaction ID\n"));
 	printf(_("  -o OID          set next OID\n"));
-	printf(_("  -O OFFSET       set next multitransaction offset\n"));
+	printf(_("  -O multiOffset  set next multi transaction offset\n"));
 	printf(_("  -x XID          set next transaction ID\n"));
 	printf(_("  --help          show this help, then exit\n"));
 	printf(_("  --version       output version information, then exit\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
+
+
+
+/*
+ * The following routines are mainly used for getting pg_control values 
+ * from the xlog file.
+ */
+
+ /* some local varaibles.*/
+static int              logFd=0; /* kernel FD for current input file */
+static int              logRecOff;      /* offset of next record in page */
+static char             pageBuffer[BLCKSZ];     /* current page */
+static XLogRecPtr       curRecPtr;      /* logical address of current record */
+static XLogRecPtr       prevRecPtr;     /* logical address of previous record */
+static char             *readRecordBuf = NULL; /* ReadRecord result area */
+static uint32           readRecordBufSize = 0;
+static int32            logPageOff;     /* offset of current page in file */
+static uint32           logId;          /* current log file id */
+static uint32           logSeg;         /* current log file segment */
+static uint32           logTli;         /* current log file timeline */
+
+/*
+ * Get existing XLOG files
+ */
+static void
+GetXLogFiles(void)
+{
+	DIR		   *xldir;
+	struct dirent *xlde;
+
+	/* Open the xlog direcotry.*/
+	xldir = opendir(XLOGDIR);
+	if (xldir == NULL)
+	{
+		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
+				progname, XLOGDIR, strerror(errno));
+		exit(1);
+	}
+
+	/* Search the directory, insert the segment files into the xlogfilelist.*/
+	errno = 0;
+	while ((xlde = readdir(xldir)) != NULL)
+	{
+		if (ValidXLogFileName(xlde->d_name)) {
+			/* XLog file is found, insert it into the xlogfilelist.*/
+			InsertXLogFile(xlde->d_name);
+		};
+		errno = 0;
+	}
+#ifdef WIN32
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+
+	if (errno)
+	{
+		fprintf(stderr, _("%s: could not read from directory \"%s\": %s\n"),
+				progname, XLOGDIR, strerror(errno));
+		exit(1);
+	}
+	closedir(xldir);
+}
+
+/*
+ * Insert a file while had been found in the xlog folder into xlogfilelist.
+ * The xlogfile list is matained in a increasing order.
+ * 
+ * The input parameter is the name of the xlog  file, the name is assumpted
+ * valid.
+ */
+static void 
+InsertXLogFile( char * fname )
+{
+	XLogFileName * NewSegFile, *Curr, *Prev;
+	bool append2end = false;
+
+	/* Allocate a new node for the new file. */
+	NewSegFile = (XLogFileName *) malloc(sizeof(XLogFileName));
+	strcpy(NewSegFile->fname,fname); /* setup the name */
+	/* extract the time line, logid, and segment number from the name.*/
+	sscanf(fname, "%8x%8x%8x", &(NewSegFile->tli), &(NewSegFile->logid), &(NewSegFile->seg));
+	NewSegFile->next = NULL;
+	
+	/* Ensure the xlog file is active and valid.*/
+	if (! ValidXLogFileHeader(NewSegFile))
+	{
+		free(NewSegFile);
+		return;
+	}
+	
+	/* the list is empty.*/
+	if ( xlogfilelist == NULL ) {
+		xlogfilelist = NewSegFile;
+		return;
+	};
+
+    /* try to search the list and find the insert point. */
+	Prev=Curr=xlogfilelist;
+	while( CmpXLogFileOT(NewSegFile, Curr))
+    {
+		/* the node is appended to the end of the list.*/
+		if (Curr->next == NULL)
+		{
+			append2end = true;
+			break;
+		}
+		Prev=Curr;
+		Curr = Curr->next;
+	}
+	
+	/* Insert the new node to the list.*/
+	if ( append2end )
+	{
+		/* We need to append the new node to the end of the list */		
+		Curr->next = NewSegFile;
+	} 
+	else 
+	{
+		NewSegFile->next = Curr;
+		/* prev should not be the list head. */
+		if ( Prev != NULL && Prev != xlogfilelist)
+		{
+			Prev->next = NewSegFile;
+		}
+	}
+	/* Update the list head if it is needed.*/
+	if ((Curr == xlogfilelist) && !append2end) 
+	{
+		xlogfilelist = NewSegFile;
+	}
+	
+}
+
+/*
+ * compare two xlog file from their name to see which one is latest.
+ *
+ * Return true for file 2 is the lastest file.
+ *
+ */
+static bool
+CmpXLogFileOT(XLogFileName * f1, XLogFileName *f2)
+{
+        if (f2->tli >= f1->tli)
+        {
+                if (f2->logid >= f1->logid)
+                {
+                        if (f2->seg > f1->seg) return false;
+                }
+        }
+        return true;
+
+}
+
+/* check is two segment file is continous.*/
+static bool 
+IsNextSeg(XLogFileName *prev, XLogFileName *cur)
+{
+	uint32 logid, logseg;
+	
+	if (prev->tli != cur->tli) return false;
+	
+	logid = prev->logid;
+	logseg = prev->seg;
+	NextLogSeg(logid, logseg);
+	
+	if ((logid == cur->logid) && (logseg == cur->seg)) return true;
+
+	return false;
+
+}
+
+
+/*
+* Select the oldest xlog file in the latest time line. 
+*/
+static void
+SelectStartXLog( void )
+{
+	XLogFileName *tmp;
+	CurXLogFile = xlogfilelist;
+	
+	if (xlogfilelist == NULL) 
+	{
+		return;
+	}
+	
+	tmp=LastXLogFile=CurXLogFile=xlogfilelist;
+	
+	while(tmp->next != NULL)
+	{
+		
+		/* 
+		 * we should ensure that from the first to 
+		 * the last segment file is continous.
+		 * */
+		if (!IsNextSeg(tmp, tmp->next)) 
+		{
+			CurXLogFile = tmp->next;
+		}
+		tmp=tmp->next;
+	}
+
+	LastXLogFile = tmp;
+
+}
+
+/*
+ * Check if the file is a valid xlog file.
+ *
+ * Return true for the input file is a valid xlog file.
+ * 
+ * The input parameter is the name of the xlog file.
+ * 
+ */
+static bool
+ValidXLogFileName(char * fname)
+{
+	uint logTLI, logId, logSeg;
+	if (strlen(fname) != 24 || 
+	    strspn(fname, "0123456789ABCDEF") != 24 ||
+	    sscanf(fname, "%8x%8x%8x", &logTLI, &logId, &logSeg) != 3)
+		return false;
+	return true;
+
+}
+
+/* Ensure the xlog file is active and valid.*/
+static bool 
+ValidXLogFileHeader(XLogFileName *segfile)
+{
+	int fd;
+	char buffer[BLCKSZ];
+	char		path[MAXPGPATH];
+	size_t nread;
+	
+	snprintf(path, MAXPGPATH, "%s/%s", XLOGDIR, segfile->fname);
+	fd = open(path, O_RDONLY | PG_BINARY, 0);
+        if (fd < 0)
+	{
+		return false;
+	}
+	nread = read(fd, buffer, BLCKSZ);
+	if (nread == BLCKSZ)
+	{
+		XLogPageHeader hdr = (XLogPageHeader)buffer;
+		
+		if (ValidXLOGPageHeader(hdr, segfile->tli, segfile->logid, segfile->seg))
+		{
+			return true;
+		}
+
+	}
+	return false;
+
+}
+static bool
+ValidXLOGPageHeader(XLogPageHeader hdr, uint tli, uint id, uint seg)
+{
+	XLogRecPtr	recaddr;
+
+	if (hdr->xlp_magic != XLOG_PAGE_MAGIC)
+	{
+		return false;
+	}
+	if ((hdr->xlp_info & ~XLP_ALL_FLAGS) != 0)
+	{
+		return false;
+	}
+	if (hdr->xlp_info & XLP_LONG_HEADER)
+	{
+		XLogLongPageHeader longhdr = (XLogLongPageHeader) hdr;
+
+		if (longhdr->xlp_seg_size != XLogSegSize)
+		{
+			return false;
+		}
+		/* Get the system identifier from the segment file header.*/
+		sysidentifier = ((XLogLongPageHeader) pageBuffer)->xlp_sysid;
+	}
+		
+	recaddr.xlogid = id;
+	recaddr.xrecoff = seg * XLogSegSize + logPageOff;
+	if (!XLByteEQ(hdr->xlp_pageaddr, recaddr))
+	{
+		return false;
+	}
+
+	if (hdr->xlp_tli != tli)
+	{
+		return false;
+	}
+	return true;
+}
+
+
+/* Read another page, if possible */
+static bool
+ReadXLogPage(void)
+{
+	size_t nread;
+	
+	/* Need to advance to the new segment file.*/
+	if ( logPageOff >= XLogSegSize ) 
+	{ 
+		close(logFd);
+		logFd = 0;
+	}
+	
+	/* Need to open the segement file.*/
+	if ((logFd <= 0) && (CurXLogFile != NULL))
+	{
+		if (OpenXLogFile(CurXLogFile) < 0)
+		{
+			return false;
+		}
+		CurXLogFile = CurXLogFile->next;
+	}
+	
+	/* Read a page from the openning segement file.*/
+	nread = read(logFd, pageBuffer, BLCKSZ);
+
+	if (nread == BLCKSZ)
+	{
+		logPageOff += BLCKSZ;
+		if (ValidXLOGPageHeader( (XLogPageHeader)pageBuffer, logTli, logId, logSeg))
+			return true;
+	} 
+	
+	return false;
+}
+
+/*
+ * CRC-check an XLOG record.  We do not believe the contents of an XLOG
+ * record (other than to the minimal extent of computing the amount of
+ * data to read in) until we've checked the CRCs.
+ *
+ * We assume all of the record has been read into memory at *record.
+ */
+static bool
+RecordIsValid(XLogRecord *record, XLogRecPtr recptr)
+{
+	pg_crc32	crc;
+	int			i;
+	uint32		len = record->xl_len;
+	BkpBlock	bkpb;
+	char	   *blk;
+
+	/* First the rmgr data */
+	INIT_CRC32(crc);
+	COMP_CRC32(crc, XLogRecGetData(record), len);
+
+	/* Add in the backup blocks, if any */
+	blk = (char *) XLogRecGetData(record) + len;
+	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
+	{
+		uint32	blen;
+
+		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
+			continue;
+
+		memcpy(&bkpb, blk, sizeof(BkpBlock));
+		if (bkpb.hole_offset + bkpb.hole_length > BLCKSZ)
+		{
+			return false;
+		}
+		blen = sizeof(BkpBlock) + BLCKSZ - bkpb.hole_length;
+		COMP_CRC32(crc, blk, blen);
+		blk += blen;
+	}
+
+	/* Check that xl_tot_len agrees with our calculation */
+	if (blk != (char *) record + record->xl_tot_len)
+	{
+		return false;
+	}
+
+	/* Finally include the record header */
+	COMP_CRC32(crc, (char *) record + sizeof(pg_crc32),
+			   SizeOfXLogRecord - sizeof(pg_crc32));
+	FIN_CRC32(crc);
+
+	if (!EQ_CRC32(record->xl_crc, crc))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
+
+/*
+ * Attempt to read an XLOG record into readRecordBuf.
+ */
+static bool
+FetchRecord(void)
+{
+	char	   *buffer;
+	XLogRecord *record;
+	XLogContRecord *contrecord;
+	uint32		len, total_len;
+
+
+	while (logRecOff <= 0 || logRecOff > BLCKSZ - SizeOfXLogRecord)
+	{
+		/* Need to advance to new page */
+		if (! ReadXLogPage())
+		{
+			return false;
+		}
+		
+		logRecOff = XLogPageHeaderSize((XLogPageHeader) pageBuffer);
+		if ((((XLogPageHeader) pageBuffer)->xlp_info & ~XLP_LONG_HEADER) != 0)
+		{
+			/* Check for a continuation record */
+			if (((XLogPageHeader) pageBuffer)->xlp_info & XLP_FIRST_IS_CONTRECORD)
+			{
+				contrecord = (XLogContRecord *) (pageBuffer + logRecOff);
+				logRecOff += MAXALIGN(contrecord->xl_rem_len + SizeOfXLogContRecord);
+			}
+		}
+	}
+
+	curRecPtr.xlogid = logId;
+	curRecPtr.xrecoff = logSeg * XLogSegSize + logPageOff + logRecOff;
+	record = (XLogRecord *) (pageBuffer + logRecOff);
+
+	if (record->xl_len == 0)
+	{
+		return false;
+	}
+
+	total_len = record->xl_tot_len;
+
+	/*
+	 * Allocate or enlarge readRecordBuf as needed.  To avoid useless
+	 * small increases, round its size to a multiple of BLCKSZ, and make
+	 * sure it's at least 4*BLCKSZ to start with.  (That is enough for all
+	 * "normal" records, but very large commit or abort records might need
+	 * more space.)
+	 */
+	if (total_len > readRecordBufSize)
+	{
+		uint32		newSize = total_len;
+
+		newSize += BLCKSZ - (newSize % BLCKSZ);
+		newSize = Max(newSize, 4 * BLCKSZ);
+		if (readRecordBuf)
+			free(readRecordBuf);
+		readRecordBuf = (char *) malloc(newSize);
+		if (!readRecordBuf)
+		{
+			readRecordBufSize = 0;
+			return false;
+		}
+		readRecordBufSize = newSize;
+	}
+
+	buffer = readRecordBuf;
+	len = BLCKSZ - curRecPtr.xrecoff % BLCKSZ; /* available in block */
+	if (total_len > len)
+	{
+		/* Need to reassemble record */
+		uint32			gotlen = len;
+
+		memcpy(buffer, record, len);
+		record = (XLogRecord *) buffer;
+		buffer += len;
+		for (;;)
+		{
+			uint32	pageHeaderSize;
+
+			if (!ReadXLogPage())
+			{
+				return false;
+			}
+			if (!(((XLogPageHeader) pageBuffer)->xlp_info & XLP_FIRST_IS_CONTRECORD))
+			{
+				return false;
+			}
+			pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) pageBuffer);
+			contrecord = (XLogContRecord *) (pageBuffer + pageHeaderSize);
+			if (contrecord->xl_rem_len == 0 || 
+				total_len != (contrecord->xl_rem_len + gotlen))
+			{
+				return false;
+			}
+			len = BLCKSZ - pageHeaderSize - SizeOfXLogContRecord;
+			if (contrecord->xl_rem_len > len)
+			{
+				memcpy(buffer, (char *)contrecord + SizeOfXLogContRecord, len);
+				gotlen += len;
+				buffer += len;
+				continue;
+			}
+			memcpy(buffer, (char *) contrecord + SizeOfXLogContRecord,
+				   contrecord->xl_rem_len);
+			logRecOff = MAXALIGN(pageHeaderSize + SizeOfXLogContRecord + contrecord->xl_rem_len);
+			break;
+		}
+		if (!RecordIsValid(record, curRecPtr))
+		{
+			return false;
+		}
+		return true;
+	}
+	/* Record is contained in this page */
+	memcpy(buffer, record, total_len);
+	record = (XLogRecord *) buffer;
+	logRecOff += MAXALIGN(total_len);
+	if (!RecordIsValid(record, curRecPtr))
+	{
+
+		return false;
+	}
+	return true;
+}
+
+/*
+ * if the record is checkpoint, update the lastest checkpoint record.
+ */
+static void
+UpdateCheckPoint(XLogRecord *record)
+{
+	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	
+	if ((info == XLOG_CHECKPOINT_SHUTDOWN) ||
+		(info == XLOG_CHECKPOINT_ONLINE))
+	{
+		 CheckPoint *chkpoint = (CheckPoint*) XLogRecGetData(record);
+		 prevchkp = lastchkp;
+		 lastchkp = curRecPtr;
+		 lastcheckpoint = *chkpoint;
+		 
+		 /* update the database state.*/
+		 switch(info)
+		 {
+			case XLOG_CHECKPOINT_SHUTDOWN:
+				state = DB_SHUTDOWNED;
+				break;
+			case XLOG_CHECKPOINT_ONLINE:
+				state = DB_IN_PRODUCTION;
+				break;
+		 }
+		 found_checkpoint ++ ;
+	}
+}
+
+static int
+OpenXLogFile(XLogFileName *sf)
+{
+
+	char		path[MAXPGPATH];
+
+	if ( logFd > 0 ) close(logFd);
+	
+	/* Open a  Xlog segment file. */
+	snprintf(path, MAXPGPATH, "%s/%s", XLOGDIR, sf->fname);
+	logFd = open(path, O_RDONLY | PG_BINARY, 0);
+    
+	if (logFd < 0)
+	{
+		fprintf(stderr, _("%s: Can not open xlog file %s.\n"), progname,path);		
+		return -1;
+	}
+	
+	/* Setup the parameter for searching. */
+	logPageOff = -BLCKSZ;		/* so 1st increment in readXLogPage gives 0 */
+	logRecOff = 0;
+	logId = sf->logid;
+	logSeg = sf->seg;
+	logTli = sf->tli;
+	return logFd;
+}
+
+/*
+ * Search the lastest checkpoint in the lastest XLog segment file.
+ *
+ * The return value is the total checkpoints which had been found 
+ * in the XLog segment file. 
+ */
+static int 
+SearchLastCheckpoint(void)
+{
+
+	/* retrive all of the active xlog files from xlog direcotry 
+	 * into a list by increasing order, according their timeline, 
+	 * log id, segment id.
+	*/
+	GetXLogFiles();
+	
+	/* Select the oldest segment file in the lastest time line.*/
+	SelectStartXLog();
+	
+	/* No segment file was found.*/
+	if ( CurXLogFile == NULL ) 
+	{
+		return 0;
+	}
+
+	/* initial it . */
+	logFd=logId=logSeg=logTli=0;
+
+	/* 
+	 * Search the XLog segment file from beginning to end, 
+	 * if checkpoint record is found, then update the 
+	 * latest check point.
+	 */
+	while (FetchRecord())
+	{
+		/* To see if the record is checkpoint record. */
+		if (((XLogRecord *) readRecordBuf)->xl_rmid == RM_XLOG_ID)
+			UpdateCheckPoint((XLogRecord *) readRecordBuf);
+		prevRecPtr = curRecPtr;
+	}
+
+	/* We can not know clearly if we had reached the end.
+	 * But just check if we reach the last segment file,
+	 * if it is not, then some problem there.
+	 * (We need a better way to know the abnormal broken during the search)
+	 */
+	if ((logId != LastXLogFile->logid) && (logSeg != LastXLogFile->seg))
+	{
+		return 0;
+	}
+	
+	/* 
+	 * return the checkpoints which had been found yet, 
+	 * let others know how much checkpointes are found. 
+	 */
+	return found_checkpoint;
+}
+
+/* Clean up the allocated list.*/
+static void
+CleanUpList(XLogFileName *list)
+{
+
+	XLogFileName *tmp;
+	tmp = list;
+	while(list != NULL)
+	{
+		tmp=list->next;
+		free(list);
+		list=tmp;
+	}
+	
+}
+
