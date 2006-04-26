@@ -11,7 +11,7 @@ LANGUAGE C;
 -- Create a view for convenient access.
 CREATE VIEW pg_freespacemap AS
 	SELECT P.* FROM pg_freespacemap() AS P
- 	(blockid int4, relfilenode oid, reltablespace oid, reldatabase oid, relblocknumber int8, blockfreebytes int4);
+ 	(reltablespace oid, reldatabase oid, relfilenode oid, relblocknumber int8, bytes int4);
  
 -- Don't want these to be available at public.
 REVOKE ALL ON FUNCTION pg_freespacemap() FROM PUBLIC;

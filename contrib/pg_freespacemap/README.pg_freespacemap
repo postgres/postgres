@@ -34,18 +34,21 @@ Notes
 
        Column     |  references          | Description
   ----------------+----------------------+------------------------------------
-   blockid        |                      | Id, 1.. max_fsm_pages
-   relfilenode    | pg_class.relfilenode | Refilenode of the relation.
    reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
    reldatabase    | pg_database.oid      | Database for the relation.
+   relfilenode    | pg_class.relfilenode | Refilenode of the relation.
    relblocknumber |                      | Offset of the page in the relation.
-   blockfreebytes |                      | Free bytes in the block/page.
+   bytes          |                      | Free bytes in the block/page, or NULL
+                  |                      | for an index page (see below).
 
 
   There is one row for each page in the free space map.
 
   Because the map is shared by all the databases, there are pages from
   relations not belonging to the current database.
+
+  The free space map can contain pages for btree indexes if they were emptied 
+  by a vacuum process. The bytes field is set to NULL in this case.
 
   When the pg_freespacemap view is accessed, internal free space map locks are
   taken, and a copy of the map data is made for the view to display. 
@@ -58,34 +61,33 @@ Sample output
 -------------
 
   regression=# \d pg_freespacemap
-      View "public.pg_freespacemap"
+     View "public.pg_freespacemap"
       Column     |  Type   | Modifiers 
-  ---------------+---------+-----------
-  blockid        | integer | 
-  relfilenode    | oid     | 
+ ----------------+---------+-----------
   reltablespace  | oid     | 
   reldatabase    | oid     | 
+  relfilenode    | oid     | 
   relblocknumber | bigint  | 
-  blockfreebytes | integer | 
+  bytes          | integer | 
  View definition:
-  SELECT p.blockid, p.relfilenode, p.reltablespace, p.reldatabase, p.relblocknumber, p.blockfreebytes
-    FROM pg_freespacemap() p(blockid integer, relfilenode oid, reltablespace oid, reldatabase oid, relblocknumber bigint, blockfreebytes integer);
+ SELECT p.reltablespace, p.reldatabase, p.relfilenode, p.relblocknumber, p.bytes
+ FROM pg_freespacemap() p(reltablespace oid, reldatabase oid, relfilenode oid, relblocknumber bigint, bytes integer);
 
-  regression=# SELECT c.relname, m.relblocknumber, m.blockfreebytes  
+  regression=# SELECT c.relname, m.relblocknumber, m.bytes  
                FROM pg_freespacemap m INNER JOIN pg_class c 
                ON c.relfilenode = m.relfilenode LIMIT 10;
-      relname             | relblocknumber | blockfreebytes 
-  ------------------------+----------------+----------------
-  sql_features            |              5 |           2696
-  sql_implementation_info |              0 |           7104
-  sql_languages           |              0 |           8016
-  sql_packages            |              0 |           7376
-  sql_sizing              |              0 |           6032
-  pg_authid               |              0 |           7424
-  pg_toast_2618           |             13 |           4588
-  pg_toast_2618           |             12 |           1680
-  pg_toast_2618           |             10 |           1436
-  pg_toast_2618           |              7 |           1136
+      relname             | relblocknumber |  bytes 
+  ------------------------+----------------+--------
+  sql_features            |              5 |   2696
+  sql_implementation_info |              0 |   7104
+  sql_languages           |              0 |   8016
+  sql_packages            |              0 |   7376
+  sql_sizing              |              0 |   6032
+  pg_authid               |              0 |   7424
+  pg_toast_2618           |             13 |   4588
+  pg_toast_2618           |             12 |   1680
+  pg_toast_2618           |             10 |   1436
+  pg_toast_2618           |              7 |   1136
   (10 rows)
 
   regression=# 

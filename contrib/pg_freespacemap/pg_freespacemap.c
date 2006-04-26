@@ -3,7 +3,7 @@
  * pg_freespacemap.c
  *	  display some contents of the free space map.
  *
- *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.2 2006/02/14 15:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.3 2006/04/26 22:41:18 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -12,7 +12,7 @@
 #include "storage/freespace.h"
 #include "utils/relcache.h"
 
-#define		NUM_FREESPACE_PAGES_ELEM 	6
+#define		NUM_FREESPACE_PAGES_ELEM 	5
 
 #if defined(WIN32) || defined(__CYGWIN__)
 /* Need DLLIMPORT for some things that are not so marked in main headers */
@@ -29,12 +29,12 @@ Datum		pg_freespacemap(PG_FUNCTION_ARGS);
 typedef struct
 {
 
-	uint32				blockid;
-	uint32				relfilenode;
 	uint32				reltablespace;
 	uint32				reldatabase;
+	uint32				relfilenode;
 	uint32				relblocknumber;
-	uint32				blockfreebytes;
+	uint32				bytes;
+	bool				isindex;
 
 }	FreeSpacePagesRec;
 
@@ -91,17 +91,15 @@ pg_freespacemap(PG_FUNCTION_ARGS)
 
 		/* Construct a tuple to return. */
 		tupledesc = CreateTemplateTupleDesc(NUM_FREESPACE_PAGES_ELEM, false);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "blockid",
-						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 2, "relfilenode",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "reltablespace",
 						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 3, "reltablespace",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 2, "reldatabase",
 						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 4, "reldatabase",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 3, "relfilenode",
 						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "relblocknumber",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 4, "relblocknumber",
 						   INT8OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "blockfreebytes",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "bytes",
 						   INT4OID, -1, 0);
 
 		/* Generate attribute metadata needed later to produce tuples */
@@ -129,7 +127,6 @@ pg_freespacemap(PG_FUNCTION_ARGS)
 		fctx->values[2] = (char *) palloc(3 * sizeof(uint32) + 1);
 		fctx->values[3] = (char *) palloc(3 * sizeof(uint32) + 1);
 		fctx->values[4] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[5] = (char *) palloc(3 * sizeof(uint32) + 1);
 
 
 		/* Return to original context when allocating transient memory */
@@ -158,12 +155,12 @@ pg_freespacemap(PG_FUNCTION_ARGS)
 				for (nPages = 0; nPages < fsmrel->storedPages; nPages++)
 				{
 
-					fctx->record[i].blockid = i;
-					fctx->record[i].relfilenode = fsmrel->key.relNode;
 					fctx->record[i].reltablespace = fsmrel->key.spcNode;
 					fctx->record[i].reldatabase = fsmrel->key.dbNode;
+					fctx->record[i].relfilenode = fsmrel->key.relNode;
 					fctx->record[i].relblocknumber = IndexFSMPageGetPageNum(page);	
-					fctx->record[i].blockfreebytes = 0;	/* index.*/
+					fctx->record[i].bytes = 0;	
+					fctx->record[i].isindex = true;	
 
 					page++;
 					i++;
@@ -178,12 +175,12 @@ pg_freespacemap(PG_FUNCTION_ARGS)
 
 				for (nPages = 0; nPages < fsmrel->storedPages; nPages++)
 				{
-					fctx->record[i].blockid = i;
-					fctx->record[i].relfilenode = fsmrel->key.relNode;
 					fctx->record[i].reltablespace = fsmrel->key.spcNode;
 					fctx->record[i].reldatabase = fsmrel->key.dbNode;
+					fctx->record[i].relfilenode = fsmrel->key.relNode;
 					fctx->record[i].relblocknumber = FSMPageGetPageNum(page);
-					fctx->record[i].blockfreebytes = FSMPageGetSpace(page);	
+					fctx->record[i].bytes = FSMPageGetSpace(page);	
+					fctx->record[i].isindex = false;	
 					
 					page++;
 					i++;
@@ -209,19 +206,41 @@ pg_freespacemap(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		uint32		i = funcctx->call_cntr;
+		char		*values[NUM_FREESPACE_PAGES_ELEM];
+		int			j;
+
+		/*
+		 * Use a temporary values array, initially pointing to fctx->values,
+		 * so it can be reassigned w/o losing the storage for subsequent
+		 * calls.
+		 */
+		for (j = 0; j < NUM_FREESPACE_PAGES_ELEM; j++)
+		{
+			values[j] = fctx->values[j];
+		}
 
 
-		sprintf(fctx->values[0], "%u", fctx->record[i].blockid);
-		sprintf(fctx->values[1], "%u", fctx->record[i].relfilenode);
-		sprintf(fctx->values[2], "%u", fctx->record[i].reltablespace);
-		sprintf(fctx->values[3], "%u", fctx->record[i].reldatabase);
-		sprintf(fctx->values[4], "%u", fctx->record[i].relblocknumber);
-		sprintf(fctx->values[5], "%u", fctx->record[i].blockfreebytes);
+		sprintf(values[0], "%u", fctx->record[i].reltablespace);
+		sprintf(values[1], "%u", fctx->record[i].reldatabase);
+		sprintf(values[2], "%u", fctx->record[i].relfilenode);
+		sprintf(values[3], "%u", fctx->record[i].relblocknumber);
 
+
+		/*
+		 * Set (free) bytes to NULL for an index relation.
+		 */
+		if (fctx->record[i].isindex == true)
+		{
+			values[4] = NULL;
+		}
+		else
+		{
+			sprintf(values[4], "%u", fctx->record[i].bytes);
+		}
 
 
 		/* Build and return the tuple. */
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, fctx->values);
+		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
 		result = HeapTupleGetDatum(tuple);
 
 
