@@ -4,12 +4,20 @@
  *	  routines for manipulating inversion fs large objects. This file
  *	  contains the user-level large object application interface routines.
  *
+ *
+ * Note: many of these routines leak memory in CurrentMemoryContext, as indeed
+ * does most of the backend code.  We expect that CurrentMemoryContext will
+ * be a short-lived context.  Data that must persist across function calls
+ * is kept either in CacheMemoryContext (the Relation structs) or in the
+ * memory context given to inv_open (for LargeObjectDesc structs).
+ *
+ *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.113 2005/10/15 02:49:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.113.2.1 2006/04/26 00:35:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,14 +213,17 @@ inv_create(Oid lobjId)
  *	inv_open -- access an existing large object.
  *
  *		Returns:
- *		  large object descriptor, appropriately filled in.
+ *		  Large object descriptor, appropriately filled in.  The descriptor
+ *		  and subsidiary data are allocated in the specified memory context,
+ *		  which must be suitably long-lived for the caller's purposes.
  */
 LargeObjectDesc *
-inv_open(Oid lobjId, int flags)
+inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 {
 	LargeObjectDesc *retval;
 
-	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));
+	retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
+													sizeof(LargeObjectDesc));
 
 	retval->id = lobjId;
 	retval->subid = GetCurrentSubTransactionId();
@@ -225,9 +236,12 @@ inv_open(Oid lobjId, int flags)
 	}
 	else if (flags & INV_READ)
 	{
-		/* be sure to copy snap into fscxt */
+		/* be sure to copy snap into mcxt */
+		MemoryContext oldContext = MemoryContextSwitchTo(mcxt);
+
 		retval->snapshot = CopySnapshot(ActiveSnapshot);
 		retval->flags = IFS_RDLOCK;
+		MemoryContextSwitchTo(oldContext);
 	}
 	else
 		elog(ERROR, "invalid flags: %d", flags);
@@ -242,7 +256,8 @@ inv_open(Oid lobjId, int flags)
 }
 
 /*
- * Closes an existing large object descriptor.
+ * Closes a large object descriptor previously made by inv_open(), and
+ * releases the long-term memory used by it.
  */
 void
 inv_close(LargeObjectDesc *obj_desc)
