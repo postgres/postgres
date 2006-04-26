@@ -8,15 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.81 2006/03/05 15:58:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.82 2006/04/26 00:34:57 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
  *	  for lack of a better place.
  *
- *	  These functions operate in a private MemoryContext, which means
- *	  that large object descriptors hang around until we destroy the context
- *	  at transaction end.  It'd be possible to prolong the lifetime
+ *	  These functions store LargeObjectDesc structs in a private MemoryContext,
+ *	  which means that large object descriptors hang around until we destroy
+ *	  the context at transaction end.  It'd be possible to prolong the lifetime
  *	  of the context so that LO FDs are good across transactions (for example,
  *	  we could release the context only if we see that no FDs remain open).
  *	  But we'd need additional state in order to do the right thing at the
@@ -29,8 +29,9 @@
  *
  *	  As of PostgreSQL 8.0, much of the angst expressed above is no longer
  *	  relevant, and in fact it'd be pretty easy to allow LO FDs to stay
- *	  open across transactions.  However backwards compatibility suggests
- *	  that we should stick to the status quo.
+ *	  open across transactions.  (Snapshot relevancy would still be an issue.)
+ *	  However backwards compatibility suggests that we should stick to the
+ *	  status quo.
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +57,9 @@
  * LO "FD"s are indexes into the cookies array.
  *
  * A non-null entry is a pointer to a LargeObjectDesc allocated in the
- * LO private memory context.  The cookies array itself is also dynamically
- * allocated in that context.  Its current allocated size is cookies_len
- * entries, of which any unused entries will be NULL.
+ * LO private memory context "fscxt".  The cookies array itself is also
+ * dynamically allocated in that context.  Its current allocated size is
+ * cookies_len entries, of which any unused entries will be NULL.
  */
 static LargeObjectDesc **cookies = NULL;
 static int	cookies_size = 0;
@@ -91,7 +92,6 @@ lo_open(PG_FUNCTION_ARGS)
 	int32		mode = PG_GETARG_INT32(1);
 	LargeObjectDesc *lobjDesc;
 	int			fd;
-	MemoryContext currentContext;
 
 #if FSDB
 	elog(DEBUG4, "lo_open(%u,%d)", lobjId, mode);
@@ -99,13 +99,10 @@ lo_open(PG_FUNCTION_ARGS)
 
 	CreateFSContext();
 
-	currentContext = MemoryContextSwitchTo(fscxt);
-
-	lobjDesc = inv_open(lobjId, mode);
+	lobjDesc = inv_open(lobjId, mode, fscxt);
 
 	if (lobjDesc == NULL)
 	{							/* lookup failed */
-		MemoryContextSwitchTo(currentContext);
 #if FSDB
 		elog(DEBUG4, "could not open large object %u", lobjId);
 #endif
@@ -114,8 +111,6 @@ lo_open(PG_FUNCTION_ARGS)
 
 	fd = newLOfd(lobjDesc);
 
-	MemoryContextSwitchTo(currentContext);
-
 	PG_RETURN_INT32(fd);
 }
 
@@ -123,7 +118,6 @@ Datum
 lo_close(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
-	MemoryContext currentContext;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
 	{
@@ -136,14 +130,9 @@ lo_close(PG_FUNCTION_ARGS)
 	elog(DEBUG4, "lo_close(%d)", fd);
 #endif
 
-	Assert(fscxt != NULL);
-	currentContext = MemoryContextSwitchTo(fscxt);
-
 	inv_close(cookies[fd]);
 
 	deleteLOfd(fd);
-
-	MemoryContextSwitchTo(currentContext);
 
 	PG_RETURN_INT32(0);
 }
@@ -160,7 +149,6 @@ lo_close(PG_FUNCTION_ARGS)
 int
 lo_read(int fd, char *buf, int len)
 {
-	MemoryContext currentContext;
 	int			status;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
@@ -171,12 +159,7 @@ lo_read(int fd, char *buf, int len)
 		return -1;
 	}
 
-	Assert(fscxt != NULL);
-	currentContext = MemoryContextSwitchTo(fscxt);
-
 	status = inv_read(cookies[fd], buf, len);
-
-	MemoryContextSwitchTo(currentContext);
 
 	return status;
 }
@@ -184,7 +167,6 @@ lo_read(int fd, char *buf, int len)
 int
 lo_write(int fd, char *buf, int len)
 {
-	MemoryContext currentContext;
 	int			status;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
@@ -201,12 +183,7 @@ lo_write(int fd, char *buf, int len)
 			  errmsg("large object descriptor %d was not opened for writing",
 					 fd)));
 
-	Assert(fscxt != NULL);
-	currentContext = MemoryContextSwitchTo(fscxt);
-
 	status = inv_write(cookies[fd], buf, len);
-
-	MemoryContextSwitchTo(currentContext);
 
 	return status;
 }
@@ -218,7 +195,6 @@ lo_lseek(PG_FUNCTION_ARGS)
 	int32		fd = PG_GETARG_INT32(0);
 	int32		offset = PG_GETARG_INT32(1);
 	int32		whence = PG_GETARG_INT32(2);
-	MemoryContext currentContext;
 	int			status;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
@@ -229,12 +205,7 @@ lo_lseek(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(-1);
 	}
 
-	Assert(fscxt != NULL);
-	currentContext = MemoryContextSwitchTo(fscxt);
-
 	status = inv_seek(cookies[fd], offset, whence);
-
-	MemoryContextSwitchTo(currentContext);
 
 	PG_RETURN_INT32(status);
 }
@@ -243,16 +214,14 @@ Datum
 lo_creat(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId;
-	MemoryContext currentContext;
 
-	/* do we actually need fscxt for this? */
+	/*
+	 * We don't actually need to store into fscxt, but create it anyway to
+	 * ensure that AtEOXact_LargeObject knows there is state to clean up
+	 */
 	CreateFSContext();
 
-	currentContext = MemoryContextSwitchTo(fscxt);
-
 	lobjId = inv_create(InvalidOid);
-
-	MemoryContextSwitchTo(currentContext);
 
 	PG_RETURN_OID(lobjId);
 }
@@ -261,16 +230,14 @@ Datum
 lo_create(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
-	MemoryContext currentContext;
 
-	/* do we actually need fscxt for this? */
+	/*
+	 * We don't actually need to store into fscxt, but create it anyway to
+	 * ensure that AtEOXact_LargeObject knows there is state to clean up
+	 */
 	CreateFSContext();
 
-	currentContext = MemoryContextSwitchTo(fscxt);
-
 	lobjId = inv_create(lobjId);
-
-	MemoryContextSwitchTo(currentContext);
 
 	PG_RETURN_OID(lobjId);
 }
@@ -288,10 +255,6 @@ lo_tell(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(-1);
 	}
 
-	/*
-	 * We assume we do not need to switch contexts for inv_tell. That is true
-	 * for now, but is probably more than this module ought to assume...
-	 */
 	PG_RETURN_INT32(inv_tell(cookies[fd]));
 }
 
@@ -305,10 +268,8 @@ lo_unlink(PG_FUNCTION_ARGS)
 	 */
 	if (fscxt != NULL)
 	{
-		MemoryContext currentContext;
 		int			i;
 
-		currentContext = MemoryContextSwitchTo(fscxt);
 		for (i = 0; i < cookies_size; i++)
 		{
 			if (cookies[i] != NULL && cookies[i]->id == lobjId)
@@ -317,13 +278,11 @@ lo_unlink(PG_FUNCTION_ARGS)
 				deleteLOfd(i);
 			}
 		}
-		MemoryContextSwitchTo(currentContext);
 	}
 
 	/*
-	 * inv_drop does not need a context switch, indeed it doesn't touch any
-	 * LO-specific data structures at all.	(Again, that's probably more than
-	 * this module ought to be assuming.)
+	 * inv_drop does not create a need for end-of-transaction cleanup and
+	 * hence we don't need to have created fscxt.
 	 */
 	PG_RETURN_INT32(inv_drop(lobjId));
 }
@@ -391,10 +350,6 @@ lo_import(PG_FUNCTION_ARGS)
 				 errhint("Anyone can use the client-side lo_import() provided by libpq.")));
 #endif
 
-	/*
-	 * We don't actually need to switch into fscxt, but create it anyway to
-	 * ensure that AtEOXact_LargeObject knows there is state to clean up
-	 */
 	CreateFSContext();
 
 	/*
@@ -420,7 +375,7 @@ lo_import(PG_FUNCTION_ARGS)
 	/*
 	 * read in from the filesystem and write to the inversion object
 	 */
-	lobj = inv_open(lobjOid, INV_WRITE);
+	lobj = inv_open(lobjOid, INV_WRITE, fscxt);
 
 	while ((nbytes = FileRead(fd, buf, BUFSIZE)) > 0)
 	{
@@ -465,16 +420,12 @@ lo_export(PG_FUNCTION_ARGS)
 				 errhint("Anyone can use the client-side lo_export() provided by libpq.")));
 #endif
 
-	/*
-	 * We don't actually need to switch into fscxt, but create it anyway to
-	 * ensure that AtEOXact_LargeObject knows there is state to clean up
-	 */
 	CreateFSContext();
 
 	/*
 	 * open the inversion object (no need to test for failure)
 	 */
-	lobj = inv_open(lobjId, INV_READ);
+	lobj = inv_open(lobjId, INV_READ, fscxt);
 
 	/*
 	 * open the file to be written to
@@ -524,12 +475,9 @@ void
 AtEOXact_LargeObject(bool isCommit)
 {
 	int			i;
-	MemoryContext currentContext;
 
 	if (fscxt == NULL)
 		return;					/* no LO operations in this xact */
-
-	currentContext = MemoryContextSwitchTo(fscxt);
 
 	/*
 	 * Close LO fds and clear cookies array so that LO fds are no longer good.
@@ -548,8 +496,6 @@ AtEOXact_LargeObject(bool isCommit)
 	/* Needn't actually pfree since we're about to zap context */
 	cookies = NULL;
 	cookies_size = 0;
-
-	MemoryContextSwitchTo(currentContext);
 
 	/* Release the LO memory context to prevent permanent memory leaks. */
 	MemoryContextDelete(fscxt);
@@ -623,8 +569,7 @@ newLOfd(LargeObjectDesc *lobjCookie)
 		i = 0;
 		newsize = 64;
 		cookies = (LargeObjectDesc **)
-			palloc(newsize * sizeof(LargeObjectDesc *));
-		MemSet(cookies, 0, newsize * sizeof(LargeObjectDesc *));
+			MemoryContextAllocZero(fscxt, newsize * sizeof(LargeObjectDesc *));
 		cookies_size = newsize;
 	}
 	else
