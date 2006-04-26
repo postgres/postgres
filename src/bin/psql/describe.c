@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.133 2006/03/05 15:58:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.134 2006/04/26 23:15:45 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -362,14 +362,21 @@ listAllDbs(bool verbose)
 			",\n       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\"",
 					  _("Encoding"));
 	if (verbose)
+	{
+		appendPQExpBuffer(&buf,
+						  ",\n       t.spcname as \"%s\"",
+						  _("Tablespace"));
 		appendPQExpBuffer(&buf,
 						  ",\n       pg_catalog.shobj_description(d.oid, 'pg_database') as \"%s\"",
 						  _("Description"));
+	}
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_database d"
-				  "\n  JOIN pg_catalog.pg_roles r ON d.datdba = r.oid\n"
-					  "ORDER BY 1;");
-
+				  "\n  JOIN pg_catalog.pg_roles r ON d.datdba = r.oid\n");
+	if (verbose)
+		appendPQExpBuffer(&buf,
+					"  JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid\n");	
+	appendPQExpBuffer(&buf,"ORDER BY 1;");
 	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
