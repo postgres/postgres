@@ -565,7 +565,7 @@ RestoreControlValues(int mode)
 {
 	struct timeval tv;
 	char	   *localeptr;
-	bool	successed=true;
+	bool	successed = true;
 
 	/*
 	 * Set up a completely default set of pg_control values.
@@ -579,27 +579,30 @@ RestoreControlValues(int mode)
 	 * update the checkpoint value in control file,by searching 
 	 * xlog segment file, or just guessing it.
 	 */
-	 if (mode == WAL)
-	 {
+	if (mode == WAL)
+	{
 		int result = SearchLastCheckpoint();
-		if ( result > 0 ) /* The last checkpoint had been found. */
+
+		if (result > 0) /* The last checkpoint had been found. */
 		{
 			ControlFile.checkPointCopy = lastcheckpoint;
+			ControlFile.checkPointCopy.ThisTimeLineID = LastXLogFile->tli;
 			ControlFile.checkPoint = lastchkp;
 			ControlFile.prevCheckPoint = prevchkp;
+
 			ControlFile.logId = LastXLogFile->logid;
 			ControlFile.logSeg = LastXLogFile->seg + 1;
-			ControlFile.checkPointCopy.ThisTimeLineID = LastXLogFile->tli;
 			ControlFile.state = state;
-		} else 	successed = false;
+		}
+		else
+			successed = false;
 		
 		/* Clean up the list. */
 		CleanUpList(xlogfilelist);		
-		
-	 } 	
-	
-	if (mode == GUESS)
+	}
+	else	/* GUESS */
 	{
+		ControlFile.checkPointCopy.ThisTimeLineID = 2;
 		ControlFile.checkPointCopy.redo.xlogid = 0;
 		ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogLongPHD;
 		ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
@@ -609,6 +612,7 @@ RestoreControlValues(int mode)
 		ControlFile.checkPointCopy.nextMultiOffset = 0;
 		ControlFile.checkPointCopy.time = time(NULL);
 		ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
+
 		/*
 		 * Create a new unique installation identifier, since we can no longer
 		 * use any old XLOG records.  See notes in xlog.c about the algorithm.
@@ -644,6 +648,7 @@ RestoreControlValues(int mode)
 		exit(1);
 	}
 	StrNCpy(ControlFile.lc_collate, localeptr, LOCALE_NAME_BUFLEN);
+
 	localeptr = setlocale(LC_CTYPE, "");
 	if (!localeptr)
 	{
