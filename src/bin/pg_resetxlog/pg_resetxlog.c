@@ -109,7 +109,7 @@ static void usage(void);
 static void GetXLogFiles(void);
 static bool ValidXLogFileName(char * fname);
 static bool ValidXLogFileHeader(XLogFileName *segfile);
-static bool ValidXLOGPageHeader(XLogPageHeader hdr, uint tli, uint id, uint seg);
+static bool ValidXLOGPageHeader(XLogPageHeader hdr, uint32 tli, uint32 id, uint32 seg);
 static bool CmpXLogFileOT(XLogFileName * f1, XLogFileName *f2);
 static bool IsNextSeg(XLogFileName *prev, XLogFileName *cur);
 static void InsertXLogFile( char * fname );
@@ -1204,7 +1204,7 @@ SelectStartXLog( void )
 static bool
 ValidXLogFileName(char * fname)
 {
-	uint logTLI, logId, logSeg;
+	uint32 logTLI, logId, logSeg;
 	if (strlen(fname) != 24 || 
 	    strspn(fname, "0123456789ABCDEF") != 24 ||
 	    sscanf(fname, "%8x%8x%8x", &logTLI, &logId, &logSeg) != 3)
@@ -1243,7 +1243,7 @@ ValidXLogFileHeader(XLogFileName *segfile)
 
 }
 static bool
-ValidXLOGPageHeader(XLogPageHeader hdr, uint tli, uint id, uint seg)
+ValidXLOGPageHeader(XLogPageHeader hdr, uint32 tli, uint32 id, uint32 seg)
 {
 	XLogRecPtr	recaddr;
 
