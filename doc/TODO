@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Apr 25 10:33:19 EDT 2006
+Last updated:		Tue Apr 25 22:15:17 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1089,7 +1089,7 @@ Write-Ahead Log
   entire rows?
 * Allow the pg_xlog directory location to be specified during initdb
   with a symlink back to the /data location
-* Allow WAL information to recover corrupted pg_controldata
+* -Allow WAL information to recover corrupted pg_controldata
 * Find a way to reduce rotational delay when repeatedly writing
   last WAL page
 
