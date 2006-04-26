@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.199 2006/04/20 17:50:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.200 2006/04/26 18:28:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4852,3 +4852,182 @@ gistcostestimate(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
+
+
+#define DEFAULT_PARENT_SEL 0.001
+
+/*
+ *	parentsel - Selectivity of parent relationship for ltree data types.
+ */
+Datum
+parentsel(PG_FUNCTION_ARGS)
+{
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
+	Oid			operator = PG_GETARG_OID(1);
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	int			varRelid = PG_GETARG_INT32(3);
+	VariableStatData vardata;
+	Node	   *other;
+	bool		varonleft;
+	Datum	   *values;
+	int			nvalues;
+	float4	   *numbers;
+	int			nnumbers;
+	double		selec = 0.0;
+
+	/*
+	 * If expression is not variable <@ something or something <@ variable,
+	 * then punt and return a default estimate.
+	 */
+	if (!get_restriction_variable(root, args, varRelid,
+								  &vardata, &other, &varonleft))
+		PG_RETURN_FLOAT8(DEFAULT_PARENT_SEL);
+
+	/*
+	 * If the something is a NULL constant, assume operator is strict and
+	 * return zero, ie, operator will never return TRUE.
+	 */
+	if (IsA(other, Const) &&
+		((Const *) other)->constisnull)
+	{
+		ReleaseVariableStats(vardata);
+		PG_RETURN_FLOAT8(0.0);
+	}
+
+	if (HeapTupleIsValid(vardata.statsTuple))
+	{
+		Form_pg_statistic stats;
+		double		mcvsum = 0.0;
+		double		mcvsel = 0.0;
+		double		hissel = 0.0;
+
+		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+
+		if (IsA(other, Const))
+		{
+			/* Variable is being compared to a known non-null constant */
+			Datum		constval = ((Const *) other)->constvalue;
+			bool		match = false;
+			int			i;
+
+			/*
+			 * Is the constant "<@" to any of the column's most common values?
+			 */
+			if (get_attstatsslot(vardata.statsTuple,
+								 vardata.atttype, vardata.atttypmod,
+								 STATISTIC_KIND_MCV, InvalidOid,
+								 &values, &nvalues,
+								 &numbers, &nnumbers))
+			{
+				FmgrInfo	contproc;
+
+				fmgr_info(get_opcode(operator), &contproc);
+
+				for (i = 0; i < nvalues; i++)
+				{
+					/* be careful to apply operator right way 'round */
+					if (varonleft)
+						match = DatumGetBool(FunctionCall2(&contproc,
+														   values[i],
+														   constval));
+					else
+						match = DatumGetBool(FunctionCall2(&contproc,
+														   constval,
+														   values[i]));
+
+					/* calculate total selectivity of all most-common-values */
+					mcvsum += numbers[i];
+
+					/* calculate selectivity of matching most-common-values */
+					if (match)
+						mcvsel += numbers[i];
+				}
+			}
+			else
+			{
+				/* no most-common-values info available */
+				values = NULL;
+				numbers = NULL;
+				i = nvalues = nnumbers = 0;
+			}
+
+			free_attstatsslot(vardata.atttype, values, nvalues, NULL, 0);
+
+			/*
+			 * Is the constant "<@" to any of the column's histogram values?
+			 */
+			if (get_attstatsslot(vardata.statsTuple,
+								 vardata.atttype, vardata.atttypmod,
+								 STATISTIC_KIND_HISTOGRAM, InvalidOid,
+								 &values, &nvalues,
+								 NULL, NULL))
+			{
+				FmgrInfo	contproc;
+
+				fmgr_info(get_opcode(operator), &contproc);
+
+				for (i = 0; i < nvalues; i++)
+				{
+					/* be careful to apply operator right way 'round */
+					if (varonleft)
+						match = DatumGetBool(FunctionCall2(&contproc,
+														   values[i],
+														   constval));
+					else
+						match = DatumGetBool(FunctionCall2(&contproc,
+														   constval,
+														   values[i]));
+					/* count matching histogram values */
+					if (match)
+						hissel++;
+				}
+
+				if (hissel > 0.0)
+				{
+					/*
+					 * some matching values found inside histogram, divide
+					 * matching entries number by total histogram entries to
+					 * get the histogram related selectivity
+					 */
+					hissel /= nvalues;
+				}
+			}
+			else
+			{
+				/* no histogram info available */
+				values = NULL;
+				i = nvalues = 0;
+			}
+
+			free_attstatsslot(vardata.atttype, values, nvalues,
+							  NULL, 0);
+
+
+			/*
+			 * calculate selectivity based on MCV and histogram result
+			 * histogram selectivity needs to be scaled down if there are any
+			 * most-common-values
+			 */
+			selec = mcvsel + hissel * (1.0 - mcvsum);
+
+			/*
+			 * don't return 0.0 selectivity unless all table values are inside
+			 * mcv
+			 */
+			if (selec == 0.0 && mcvsum != 1.0)
+				selec = DEFAULT_PARENT_SEL;
+		}
+		else
+			selec = DEFAULT_PARENT_SEL;
+	}
+	else
+		selec = DEFAULT_PARENT_SEL;
+
+	ReleaseVariableStats(vardata);
+
+	/* result should be in range, but make sure... */
+	CLAMP_PROBABILITY(selec);
+
+	PG_RETURN_FLOAT8((float8) selec);
+}
+

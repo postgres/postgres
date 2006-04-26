@@ -230,7 +230,7 @@ CREATE OPERATOR @> (
 	RIGHTARG = ltree,
 	PROCEDURE = ltree_isparent,
         COMMUTATOR = '<@',
-        RESTRICT = contsel,
+        RESTRICT = parentsel,
 	JOIN = contjoinsel
 );
 
@@ -248,7 +248,7 @@ CREATE OPERATOR <@ (
 	RIGHTARG = ltree,
 	PROCEDURE = ltree_risparent,
         COMMUTATOR = '@>',
-        RESTRICT = contsel,
+        RESTRICT = parentsel,
 	JOIN = contjoinsel
 );
 
