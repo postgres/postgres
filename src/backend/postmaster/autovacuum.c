@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.16 2006/04/06 20:38:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.17 2006/04/27 15:57:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,7 +412,7 @@ AutoVacMain(int argc, char *argv[])
 		InitPostgres(db->name, NULL);
 		SetProcessingMode(NormalProcessing);
 		set_ps_display(db->name);
-		ereport(LOG,
+		ereport(DEBUG1,
 				(errmsg("autovacuum: processing database \"%s\"", db->name)));
 
 		/* Create the memory context where cross-transaction state is stored */
