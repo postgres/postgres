@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.78 2006/04/27 14:01:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.79 2006/04/27 14:02:36 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -122,14 +122,14 @@
 #ifdef USE_SSL
 
 #ifndef WIN32
-#define USER_CERT_FILE	".postgresql/postgresql.crt"
+#define USER_CERT_FILE		".postgresql/postgresql.crt"
 #define USER_KEY_FILE		".postgresql/postgresql.key"
-#define ROOT_CERT_FILE	".postgresql/root.crt"
+#define ROOT_CERT_FILE		".postgresql/root.crt"
 #else
 /* On Windows, the "home" directory is already PostgreSQL-specific */
-#define USER_CERT_FILE	"postgresql.crt"
+#define USER_CERT_FILE		"postgresql.crt"
 #define USER_KEY_FILE		"postgresql.key"
-#define ROOT_CERT_FILE	"root.crt"
+#define ROOT_CERT_FILE		"root.crt"
 #endif
 
 #ifdef NOT_USED
