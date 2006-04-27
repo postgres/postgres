@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.123 2006/04/20 10:51:32 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.124 2006/04/27 00:06:58 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -28,6 +28,7 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/stat.h>
 
 #include "pgstat.h"
 
@@ -66,12 +67,15 @@
  * Timer definitions.
  * ----------
  */
-#define PGSTAT_STAT_INTERVAL	500		/* How often to write the status file;
-										 * in milliseconds. */
 
-#define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart a
-										 * failed statistics collector; in
-										 * seconds. */
+/* How often to write the status file, in milliseconds. */
+#define PGSTAT_STAT_INTERVAL	(5*60*1000)
+
+/*
+ *	How often to attempt to restart a failed statistics collector; in ms.
+ *	Must be at least PGSTAT_STAT_INTERVAL.
+ */
+#define PGSTAT_RESTART_INTERVAL (5*60*1000)
 
 /* ----------
  * Amount of space reserved in pgstat_recvbuffer().
@@ -172,11 +176,12 @@ static void pgstat_drop_database(Oid databaseid);
 static void pgstat_write_statsfile(void);
 static void pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 					  PgStat_StatBeEntry **betab,
-					  int *numbackends);
+					  int *numbackends, bool rewrite);
 static void backend_read_statsfile(void);
 
 static void pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype);
 static void pgstat_send(void *msg, int len);
+static void pgstat_send_rewrite(void);
 
 static void pgstat_recv_bestart(PgStat_MsgBestart *msg, int len);
 static void pgstat_recv_beterm(PgStat_MsgBeterm *msg, int len);
@@ -1449,6 +1454,24 @@ pgstat_send(void *msg, int len)
 #endif
 }
 
+/*
+ * pgstat_send_rewrite() -
+ *
+ *	Send a command to the collector to rewrite the stats file.
+ * ----------
+ */
+static void
+pgstat_send_rewrite(void)
+{
+    PgStat_MsgRewrite msg;
+
+	if (pgStatSock < 0)
+		return;
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_REWRITE);
+	pgstat_send(&msg, sizeof(msg));
+}
+
 
 /* ----------
  * PgstatBufferMain() -
@@ -1549,7 +1572,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	fd_set		rfds;
 	int			readPipe;
 	int			len = 0;
-	struct itimerval timeout;
+	struct itimerval timeout, canceltimeout;
 	bool		need_timer = false;
 
 	MyProcPid = getpid();		/* reset MyProcPid */
@@ -1604,12 +1627,15 @@ PgstatCollectorMain(int argc, char *argv[])
 	timeout.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
 	timeout.it_value.tv_usec = PGSTAT_STAT_INTERVAL % 1000;
 
+	/* Values set to zero will cancel the active timer */
+	MemSet(&canceltimeout, 0, sizeof(struct itimerval));
+
 	/*
 	 * Read in an existing statistics stats file or initialize the stats to
 	 * zero.
 	 */
 	pgStatRunningInCollector = true;
-	pgstat_read_statsfile(&pgStatDBHash, InvalidOid, NULL, NULL);
+	pgstat_read_statsfile(&pgStatDBHash, InvalidOid, NULL, NULL, false);
 
 	/*
 	 * Create the known backends table
@@ -1762,6 +1788,12 @@ PgstatCollectorMain(int argc, char *argv[])
 
 				case PGSTAT_MTYPE_ANALYZE:
 					pgstat_recv_analyze((PgStat_MsgAnalyze *) &msg, nread);
+					break;
+
+				case PGSTAT_MTYPE_REWRITE:
+					need_statwrite = true;
+					/* Disable the timer - it will be restarted on next data update */
+					setitimer(ITIMER_REAL, &canceltimeout, NULL);
 					break;
 
 				default:
@@ -2344,7 +2376,7 @@ comparePids(const void *v1, const void *v2)
  */
 static void
 pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
-					  PgStat_StatBeEntry **betab, int *numbackends)
+					  PgStat_StatBeEntry **betab, int *numbackends, bool rewrite)
 {
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatDBEntry dbbuf;
@@ -2362,6 +2394,71 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	int		   *live_pids;
 	MemoryContext use_mcxt;
 	int			mcxt_flags;
+
+
+	if (rewrite)
+	{
+		/*
+		 * To force a rewrite of the stats file from the collector, send
+		 * a REWRITE message to the stats collector. Then wait for the file
+		 * to change. On Unix, we wait for the inode to change (as the file
+		 * is renamed into place from a different file). Win32 has no concept
+		 * of inodes, so we wait for the date on the file to change instead.
+		 * We can do this on win32 because we have high-res timing on the 
+		 * file dates, but we can't on unix, because it has 1sec resolution
+		 * on the fields in struct stat.
+		 */
+		int i;
+#ifndef WIN32
+		struct stat st1, st2;
+
+		if (stat(PGSTAT_STAT_FILENAME, &st1))
+		{
+			/* Assume no file there yet */
+			st1.st_ino = 0;
+		}
+		st2.st_ino = 0;
+#else
+		WIN32_FILE_ATTRIBUTE_DATA fd1, fd2;
+
+		if (!GetFileAttributesEx(PGSTAT_STAT_FILENAME, GetFileExInfoStandard, &fd1))
+		{
+			fd1.ftLastWriteTime.dwLowDateTime = 0;
+			fd1.ftLastWriteTime.dwHighDateTime = 0;
+		}
+		fd2.ftLastWriteTime.dwLowDateTime = 0;
+		fd2.ftLastWriteTime.dwHighDateTime = 0;
+#endif
+
+
+		/* Send rewrite message */
+		pgstat_send_rewrite();
+
+		/* Now wait for the file to change */
+		for (i=0; i < 50; i++)
+		{
+#ifndef WIN32
+			if (!stat(PGSTAT_STAT_FILENAME, &st2))
+			{
+				if (st2.st_ino != st1.st_ino)
+					break;
+			}
+#else
+			if (GetFileAttributesEx(PGSTAT_STAT_FILENAME, GetFileExInfoStandard, &fd2))
+			{
+				if (fd1.ftLastWriteTime.dwLowDateTime != fd2.ftLastWriteTime.dwLowDateTime ||
+					fd1.ftLastWriteTime.dwHighDateTime != fd2.ftLastWriteTime.dwHighDateTime)
+					break;
+			}
+#endif
+
+			pg_usleep(50000); 
+		}
+		if (i >= 50)
+			ereport(WARNING,
+				(errmsg("pgstat update timeout")));
+		/* Fallthrough and read the old file anyway - old data better than no data */
+	}
 
 	/*
 	 * If running in the collector or the autovacuum process, we use the
@@ -2681,7 +2778,7 @@ backend_read_statsfile(void)
 			return;
 		Assert(!pgStatRunningInCollector);
 		pgstat_read_statsfile(&pgStatDBHash, InvalidOid,
-							  &pgStatBeTable, &pgStatNumBackends);
+							  &pgStatBeTable, &pgStatNumBackends, true);
 	}
 	else
 	{
@@ -2691,7 +2788,7 @@ backend_read_statsfile(void)
 		{
 			Assert(!pgStatRunningInCollector);
 			pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId,
-								  &pgStatBeTable, &pgStatNumBackends);
+								  &pgStatBeTable, &pgStatNumBackends, true);
 			pgStatDBHashXact = topXid;
 		}
 	}

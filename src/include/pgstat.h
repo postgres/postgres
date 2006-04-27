@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.43 2006/04/06 20:38:00 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.44 2006/04/27 00:06:59 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -32,7 +32,8 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_RESETCOUNTER,
 	PGSTAT_MTYPE_AUTOVAC_START,
 	PGSTAT_MTYPE_VACUUM,
-	PGSTAT_MTYPE_ANALYZE
+	PGSTAT_MTYPE_ANALYZE,
+	PGSTAT_MTYPE_REWRITE
 } StatMsgType;
 
 /* ----------
@@ -106,6 +107,15 @@ typedef struct PgStat_MsgDummy
 	PgStat_MsgHdr m_hdr;
 	char		m_dummy[512];
 } PgStat_MsgDummy;
+
+/* ----------
+ * PgStat_MsgRewrite            Sent by backends to cause a rewrite of the stats file
+ * ----------
+ */
+typedef struct Pgstat_MsgRewrite
+{
+	PgStat_MsgHdr m_hdr;
+} PgStat_MsgRewrite;
 
 /* ----------
  * PgStat_MsgBestart			Sent by the backend on startup
