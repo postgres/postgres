@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Apr 25 22:15:17 EDT 2006
+Last updated:           Wed Apr 26 22:41:35 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -368,6 +368,8 @@ first.
   manually or automatically when statistics for execute parameters
   differ dramatically from those used during planning.
 </p>
+  </li><li>Invalidate prepared queries, like INSERT, when the table definition
+  is altered
   </li><li>Allow LISTEN/NOTIFY to store info in memory rather than tables?
 <p>  Currently LISTEN/NOTIFY information is stored in pg_listener. Storing
   such information in memory would improve performance.
