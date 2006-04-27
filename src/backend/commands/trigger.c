@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.200 2006/03/05 15:58:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.201 2006/04/27 00:33:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
@@ -37,6 +38,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 
@@ -2922,65 +2924,133 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 
 		foreach(l, stmt->constraints)
 		{
-			char	   *cname = strVal(lfirst(l));
+			RangeVar   *constraint = lfirst(l);
 			ScanKeyData skey;
 			SysScanDesc tgscan;
 			HeapTuple	htup;
 			bool		found;
+			List	   *namespaceSearchList;
+			ListCell   *namespaceSearchCell;
 
-			/*
-			 * Check that only named constraints are set explicitly
-			 */
-			if (strlen(cname) == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_NAME),
-					errmsg("unnamed constraints cannot be set explicitly")));
-
-			/*
-			 * Setup to scan pg_trigger by tgconstrname ...
-			 */
-			ScanKeyInit(&skey,
-						Anum_pg_trigger_tgconstrname,
-						BTEqualStrategyNumber, F_NAMEEQ,
-						PointerGetDatum(cname));
-
-			tgscan = systable_beginscan(tgrel, TriggerConstrNameIndexId, true,
-										SnapshotNow, 1, &skey);
-
-			/*
-			 * ... and search for the constraint trigger row
-			 */
-			found = false;
-
-			while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
+			if (constraint->catalogname)
 			{
-				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
-
-				/*
-				 * If we found some, check that they fit the deferrability but
-				 * skip referential action ones, since they are silently never
-				 * deferrable.
-				 */
-				if (pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
-					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL &&
-					pg_trigger->tgfoid != F_RI_FKEY_CASCADE_UPD &&
-					pg_trigger->tgfoid != F_RI_FKEY_CASCADE_DEL &&
-					pg_trigger->tgfoid != F_RI_FKEY_SETNULL_UPD &&
-					pg_trigger->tgfoid != F_RI_FKEY_SETNULL_DEL &&
-					pg_trigger->tgfoid != F_RI_FKEY_SETDEFAULT_UPD &&
-					pg_trigger->tgfoid != F_RI_FKEY_SETDEFAULT_DEL)
-				{
-					if (stmt->deferred && !pg_trigger->tgdeferrable)
-						ereport(ERROR,
-								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("constraint \"%s\" is not deferrable",
-										cname)));
-					oidlist = lappend_oid(oidlist, HeapTupleGetOid(htup));
-				}
-				found = true;
+				if (strcmp(constraint->catalogname, get_database_name(MyDatabaseId)) != 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
+									constraint->catalogname, constraint->schemaname,
+									constraint->relname)));
 			}
 
-			systable_endscan(tgscan);
+			/* 
+			 * If we're given the schema name with the constraint, look only
+			 * in that schema.  If given a bare constraint name, use the
+			 * search path to find the first matching constraint.
+			 */
+			if (constraint->schemaname) {
+				Oid namespaceId = LookupExplicitNamespace(constraint->schemaname);
+				namespaceSearchList = list_make1_oid(namespaceId);
+			} else {
+				namespaceSearchList = fetch_search_path(true);
+			}
+
+			found = false;
+			foreach(namespaceSearchCell, namespaceSearchList)
+			{
+				Oid searchNamespaceId = lfirst_oid(namespaceSearchCell);
+
+				/*
+				 * Setup to scan pg_trigger by tgconstrname ...
+				 */
+				ScanKeyInit(&skey,
+							Anum_pg_trigger_tgconstrname,
+							BTEqualStrategyNumber, F_NAMEEQ,
+							PointerGetDatum(constraint->relname));
+
+				tgscan = systable_beginscan(tgrel, TriggerConstrNameIndexId, true,
+											SnapshotNow, 1, &skey);
+
+				/*
+				 * ... and search for the constraint trigger row
+				 */
+				while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
+				{
+					Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
+					Relation constraintRel;
+					Oid constraintNamespaceId;
+
+					/*
+					 * Foreign key constraints have triggers on both the
+					 * parent and child tables.  Since these tables may be
+					 * in different schemas we must pick the child table
+					 * because that table "owns" the constraint.
+					 *
+					 * Referential triggers on the parent table other than
+					 * NOACTION_DEL and NOACTION_UPD are ignored below, so
+					 * it is possible to not check them here, but it seems
+					 * safer to always check.
+					 */
+					if (pg_trigger->tgfoid == F_RI_FKEY_NOACTION_DEL ||
+						pg_trigger->tgfoid == F_RI_FKEY_NOACTION_UPD ||
+						pg_trigger->tgfoid == F_RI_FKEY_RESTRICT_UPD ||
+						pg_trigger->tgfoid == F_RI_FKEY_RESTRICT_DEL ||
+						pg_trigger->tgfoid == F_RI_FKEY_CASCADE_UPD ||
+						pg_trigger->tgfoid == F_RI_FKEY_CASCADE_DEL ||
+						pg_trigger->tgfoid == F_RI_FKEY_SETNULL_UPD ||
+						pg_trigger->tgfoid == F_RI_FKEY_SETNULL_DEL ||
+						pg_trigger->tgfoid == F_RI_FKEY_SETDEFAULT_UPD ||
+						pg_trigger->tgfoid == F_RI_FKEY_SETDEFAULT_DEL)
+					{
+						constraintRel = RelationIdGetRelation(pg_trigger->tgconstrrelid);
+					} else {
+						constraintRel = RelationIdGetRelation(pg_trigger->tgrelid);
+					}
+					constraintNamespaceId = RelationGetNamespace(constraintRel);
+					RelationClose(constraintRel);
+
+					/*
+					 * If this constraint is not in the schema we're
+					 * currently searching for, keep looking.
+					 */
+					if (constraintNamespaceId != searchNamespaceId)
+						continue;
+
+					/*
+					 * If we found some, check that they fit the deferrability but
+					 * skip referential action ones, since they are silently never
+					 * deferrable.
+					 */
+					if (pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
+						pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL &&
+						pg_trigger->tgfoid != F_RI_FKEY_CASCADE_UPD &&
+						pg_trigger->tgfoid != F_RI_FKEY_CASCADE_DEL &&
+						pg_trigger->tgfoid != F_RI_FKEY_SETNULL_UPD &&
+						pg_trigger->tgfoid != F_RI_FKEY_SETNULL_DEL &&
+						pg_trigger->tgfoid != F_RI_FKEY_SETDEFAULT_UPD &&
+						pg_trigger->tgfoid != F_RI_FKEY_SETDEFAULT_DEL)
+					{
+						if (stmt->deferred && !pg_trigger->tgdeferrable)
+							ereport(ERROR,
+									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+									 errmsg("constraint \"%s\" is not deferrable",
+											constraint->relname)));
+						oidlist = lappend_oid(oidlist, HeapTupleGetOid(htup));
+					}
+					found = true;
+				}
+
+				systable_endscan(tgscan);
+
+				/*
+				 * Once we've found a matching constraint we do not search
+				 * later parts of the search path.
+				 */
+				if (found)
+					break;
+
+			}
+
+			list_free(namespaceSearchList);
 
 			/*
 			 * Not found ?
@@ -2989,7 +3059,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("constraint \"%s\" does not exist",
-								cname)));
+								constraint->relname)));
 		}
 		heap_close(tgrel, AccessShareLock);
 

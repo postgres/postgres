@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.307 2006/04/15 17:45:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.308 2006/04/27 00:33:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1782,7 +1782,7 @@ typedef struct LockStmt
 typedef struct ConstraintsSetStmt
 {
 	NodeTag		type;
-	List	   *constraints;	/* List of names as Value strings */
+	List	   *constraints;	/* List of names as RangeVars */
 	bool		deferred;
 } ConstraintsSetStmt;
 

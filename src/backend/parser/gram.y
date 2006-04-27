@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.542 2006/04/25 14:11:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.543 2006/04/27 00:33:45 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1283,7 +1283,7 @@ ConstraintsSetStmt:
 
 constraints_set_list:
 			ALL										{ $$ = NIL; }
-			| name_list								{ $$ = $1; }
+			| qualified_name_list					{ $$ = $1; }
 		;
 
 constraints_set_mode:

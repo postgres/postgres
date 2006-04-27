@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.12 2004/09/10 18:39:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.13 2006/04/27 00:33:32 momjian Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
@@ -45,10 +45,10 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
 
   <para>
    <command>SET CONSTRAINTS</command> with a list of constraint names changes
-   the mode of just those constraints (which must all be deferrable).  If
-   there are multiple constraints matching any given name, all are affected.
-   <command>SET CONSTRAINTS ALL</command> changes the mode of all deferrable
-   constraints.
+   the mode of just those constraints (which must all be deferrable).  The
+   current schema search path is used to find the first matching name if
+   no schema name is specified.  <command>SET CONSTRAINTS ALL</command> 
+   changes the mode of all deferrable constraints.
   </para>
 
   <para>
@@ -93,13 +93,6 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
    foreign-key constraints.
   </para>
 
-  <para>
-   The SQL standard says that constraint names appearing in <command>SET
-   CONSTRAINTS</command> can be schema-qualified.  This is not yet
-   supported by <productname>PostgreSQL</productname>: the names must
-   be unqualified, and all constraints matching the command will be
-   affected no matter which schema they are in.
-  </para>
  </refsect1>
 </refentry>
 
