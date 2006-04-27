@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.77 2006/04/27 00:53:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.78 2006/04/27 14:01:46 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -122,14 +122,14 @@
 #ifdef USE_SSL
 
 #ifndef WIN32
-#define USERCERTFILE	".postgresql/postgresql.crt"
-#define USERKEYFILE		".postgresql/postgresql.key"
-#define ROOTCERTFILE	".postgresql/root.crt"
+#define USER_CERT_FILE	".postgresql/postgresql.crt"
+#define USER_KEY_FILE		".postgresql/postgresql.key"
+#define ROOT_CERT_FILE	".postgresql/root.crt"
 #else
 /* On Windows, the "home" directory is already PostgreSQL-specific */
-#define USERCERTFILE	"postgresql.crt"
-#define USERKEYFILE		"postgresql.key"
-#define ROOTCERTFILE	"root.crt"
+#define USER_CERT_FILE	"postgresql.crt"
+#define USER_KEY_FILE		"postgresql.key"
+#define ROOT_CERT_FILE	"root.crt"
 #endif
 
 #ifdef NOT_USED
@@ -589,7 +589,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 
 	/* read the user certificate */
-	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USERCERTFILE);
+	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -611,7 +611,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	fclose(fp);
 
 	/* read the user key */
-	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USERKEYFILE);
+	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
 	if (stat(fnbuf, &buf) == -1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -781,7 +781,7 @@ initialize_SSL(PGconn *conn)
 	/* Set up to verify server cert, if root.crt is present */
 	if (pqGetHomeDirectory(homedir, sizeof(homedir)))
 	{
-		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOTCERTFILE);
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
 		if (stat(fnbuf, &buf) == 0)
 		{
 			if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
