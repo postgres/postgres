@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.126 2006/03/20 15:07:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.127 2006/04/27 00:53:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,6 @@ extern		"C"
  * such as Oid.
  */
 #include "postgres_ext.h"
-
-/* SSL type is needed here only to declare PQgetssl() */
-#ifdef USE_SSL
-#include <openssl/ssl.h>
-#endif
 
 /* Application-visible enum types */
 
@@ -271,12 +266,9 @@ extern int	PQbackendPID(const PGconn *conn);
 extern int	PQclientEncoding(const PGconn *conn);
 extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
 
-#ifdef USE_SSL
-/* Get the SSL structure associated with a connection */
-extern SSL *PQgetssl(PGconn *conn);
-#else
+/* Get the OpenSSL structure associated with a connection. Returns NULL for
+ * unencrypted connections or if any other TLS library is in use. */
 extern void *PQgetssl(PGconn *conn);
-#endif
 
 /* Tell libpq whether it needs to initialize OpenSSL */
 extern void PQinitSSL(int do_init);
