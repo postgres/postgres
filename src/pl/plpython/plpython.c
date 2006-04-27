@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.77 2006/04/04 19:35:37 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.78 2006/04/27 01:05:05 momjian Exp $
  *
  *********************************************************************
  */
@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "funcapi.h"
 #include "fmgr.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
@@ -108,6 +109,11 @@ typedef struct PLyProcedure
 	bool		fn_readonly;
 	PLyTypeInfo result;			/* also used to store info for trigger tuple
 								 * type */
+	bool	    is_setof;		/* true, if procedure returns result set */
+	PyObject    *setof;		/* contents of result set. */
+	int	    setof_count;	/* numbef of items to return in result set */
+	int	    setof_current;	/* current item in result set */
+	char	    **argnames;		/* Argument names */
 	PLyTypeInfo args[FUNC_MAX_ARGS];
 	int			nargs;
 	PyObject   *code;			/* compiled procedure code */
@@ -184,6 +190,7 @@ static Datum PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure *);
 static HeapTuple PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure *);
 
 static PyObject *PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *);
+static void PLy_function_delete_args(PLyProcedure *);
 static PyObject *PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *,
 					   HeapTuple *);
 static HeapTuple PLy_modify_tuple(PLyProcedure *, PyObject *,
@@ -218,6 +225,7 @@ static PyObject *PLyFloat_FromString(const char *);
 static PyObject *PLyInt_FromString(const char *);
 static PyObject *PLyLong_FromString(const char *);
 static PyObject *PLyString_FromString(const char *);
+static HeapTuple PLyDict_ToTuple(PLyTypeInfo *, PyObject *);
 
 
 /* global data */
@@ -726,11 +734,17 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 
 	PG_TRY();
 	{
-		plargs = PLy_function_build_args(fcinfo, proc);
-		plrv = PLy_procedure_call(proc, "args", plargs);
-
-		Assert(plrv != NULL);
-		Assert(!PLy_error_in_progress);
+		if (!proc->is_setof || proc->setof_count == -1)
+		{
+			/* python function not called yet, do it */
+			plargs = PLy_function_build_args(fcinfo, proc);
+			plrv = PLy_procedure_call(proc, "args", plargs);
+			if (!proc->is_setof)
+				/* SETOF function parameters are deleted when called last row is returned */
+				PLy_function_delete_args(proc);
+			Assert(plrv != NULL);
+			Assert(!PLy_error_in_progress);
+		}
 
 		/*
 		 * Disconnect from SPI manager and then create the return values datum
@@ -740,6 +754,76 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 		 */
 		if (SPI_finish() != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed");
+
+		if (proc->is_setof)
+		{
+			bool is_done = false;
+			ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
+
+			if (proc->setof_current == -1)
+			{
+				/* first time -- do checks and setup */
+				if (!rsi || !IsA(rsi, ReturnSetInfo) ||
+						(rsi->allowedModes & SFRM_ValuePerCall) == 0)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("only value per call is allowed")));
+				}
+				rsi->returnMode = SFRM_ValuePerCall;
+
+				/* fetch information about returned object */
+				proc->setof = plrv;
+				plrv = NULL;
+				if (PyList_Check(proc->setof))
+					/* SETOF as list */
+					proc->setof_count = PyList_GET_SIZE(proc->setof);
+				else if (PyIter_Check(proc->setof))
+					/* SETOF as iterator, unknown number of items */
+					proc->setof_current = proc->setof_count = 0;
+				else
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+							 errmsg("SETOF must be returned as list or iterator")));
+				}
+			}
+
+			Assert(proc->setof != NULL);
+
+			/* Fetch next of SETOF */
+			if (PyList_Check(proc->setof))
+			{
+				is_done = ++proc->setof_current == proc->setof_count;
+				if (!is_done)
+					plrv = PyList_GET_ITEM(proc->setof, proc->setof_current);
+			}
+			else if (PyIter_Check(proc->setof))
+			{
+				plrv = PyIter_Next(proc->setof);
+				is_done = plrv == NULL;
+			}
+
+			if (!is_done)
+			{
+				rsi->isDone = ExprMultipleResult;
+			}
+			else
+			{
+				rsi->isDone = ExprEndResult;
+				proc->setof_count = proc->setof_current = -1;
+				Py_DECREF(proc->setof);
+				proc->setof = NULL;
+
+				Py_XDECREF(plargs);
+				Py_XDECREF(plrv);
+				Py_XDECREF(plrv_so);
+
+				PLy_function_delete_args(proc);
+				fcinfo->isnull = true;
+				return (Datum)NULL;
+			}
+		}
 
 		/*
 		 * If the function is declared to return void, the Python
@@ -766,6 +850,26 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 								   NULL,
 								   proc->result.out.d.typioparam,
 								   -1);
+		}
+		else if (proc->result.is_rowtype >= 1)
+		{
+			HeapTuple   tuple;
+
+			/* returning composite type */
+			if (!PyDict_Check(plrv))
+				elog(ERROR, "tuple must be returned as dictionary");
+
+			tuple = PLyDict_ToTuple(&proc->result, plrv);
+			if (tuple != NULL)
+			{
+				fcinfo->isnull = false;
+				rv = HeapTupleGetDatum(tuple);
+			}
+			else
+			{
+				fcinfo->isnull = true;
+				rv = (Datum) NULL;
+			}
 		}
 		else
 		{
@@ -893,6 +997,7 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			 * FIXME -- error check this
 			 */
 			PyList_SetItem(args, i, arg);
+			PyDict_SetItemString(proc->globals, proc->argnames[i], arg);
 			arg = NULL;
 		}
 	}
@@ -906,6 +1011,16 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 	PG_END_TRY();
 
 	return args;
+}
+
+
+static void
+PLy_function_delete_args(PLyProcedure *proc)
+{
+	int	i;
+
+	for (i = 0; i < proc->nargs; i++)
+		PyDict_DelItemString(proc->globals, proc->argnames[i]);
 }
 
 
@@ -979,6 +1094,9 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 	bool		isnull;
 	int			i,
 				rv;
+	Datum		argnames;
+	Datum	    	*elems;
+	int		nelems;
 
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
@@ -1010,6 +1128,10 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 	proc->nargs = 0;
 	proc->code = proc->statics = NULL;
 	proc->globals = proc->me = NULL;
+	proc->is_setof = procStruct->proretset;
+	proc->setof = NULL;
+	proc->setof_count = proc->setof_current = -1;
+	proc->argnames = NULL;
 
 	PG_TRY();
 	{
@@ -1046,9 +1168,11 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 			}
 
 			if (rvTypeStruct->typtype == 'c')
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("plpython functions cannot return tuples yet")));
+			{
+				/* Tuple: set up later, during first call to PLy_function_handler */
+				proc->result.out.d.typoid = procStruct->prorettype;
+				proc->result.is_rowtype = 2;
+			}
 			else
 				PLy_output_datum_func(&proc->result, rvTypeTup);
 
@@ -1071,6 +1195,21 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 		 * arguments.
 		 */
 		proc->nargs = fcinfo->nargs;
+		proc->argnames = NULL;
+		if (proc->nargs)
+		{
+			argnames = SysCacheGetAttr(PROCOID, procTup, Anum_pg_proc_proargnames, &isnull);
+			if (!isnull)
+			{
+				deconstruct_array(DatumGetArrayTypeP(argnames), TEXTOID, -1, false, 'i',
+						&elems, NULL, &nelems);
+				if (nelems != proc->nargs)
+					elog(ERROR,
+							"proargnames must have the same number of elements "
+							"as the function has arguments");
+				proc->argnames = (char **) PLy_malloc(sizeof(char *)*proc->nargs);
+			}
+		}
 		for (i = 0; i < fcinfo->nargs; i++)
 		{
 			HeapTuple	argTypeTup;
@@ -1099,8 +1238,11 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 				proc->args[i].is_rowtype = 2;	/* still need to set I/O funcs */
 
 			ReleaseSysCache(argTypeTup);
-		}
 
+			/* Fetch argument name */
+			if (proc->argnames)
+				proc->argnames[i] = PLy_strdup(DatumGetCString(DirectFunctionCall1(textout, elems[i])));
+		}
 
 		/*
 		 * get the text of the function.
@@ -1236,6 +1378,7 @@ PLy_procedure_delete(PLyProcedure * proc)
 	if (proc->pyname)
 		PLy_free(proc->pyname);
 	for (i = 0; i < proc->nargs; i++)
+	{
 		if (proc->args[i].is_rowtype == 1)
 		{
 			if (proc->args[i].in.r.atts)
@@ -1243,6 +1386,11 @@ PLy_procedure_delete(PLyProcedure * proc)
 			if (proc->args[i].out.r.atts)
 				PLy_free(proc->args[i].out.r.atts);
 		}
+		if (proc->argnames && proc->argnames[i])
+			PLy_free(proc->argnames[i]);
+	}
+	if (proc->argnames)
+		PLy_free(proc->argnames);
 }
 
 /* conversion functions.  remember output from python is
@@ -1499,6 +1647,78 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 	PG_END_TRY();
 
 	return dict;
+}
+
+
+static HeapTuple
+PLyDict_ToTuple(PLyTypeInfo *info, PyObject *dict)
+{
+	TupleDesc	desc;
+	HeapTuple	tuple;
+	Datum		*values;
+	char		*nulls;
+	int		i;
+
+	desc = CreateTupleDescCopy(lookup_rowtype_tupdesc(info->out.d.typoid, -1));
+
+	/* Set up tuple type, if neccessary */
+	if (info->is_rowtype == 2)
+	{
+		PLy_output_tuple_funcs(info, desc);
+		info->is_rowtype = 1;
+	}
+	Assert(info->is_rowtype == 1);
+
+	/* Build tuple */
+	values = palloc(sizeof(Datum)*desc->natts);
+	nulls = palloc(sizeof(char)*desc->natts);
+	for (i = 0;  i < desc->natts;  ++i)
+	{
+		char		*key;
+		PyObject	*value,
+				*so;
+
+		key = NameStr(desc->attrs[i]->attname);
+		value = so = NULL;
+		PG_TRY();
+		{
+			value = PyDict_GetItemString(dict, key);
+			if (value != Py_None && value != NULL)
+			{
+				char *valuestr;
+
+				so = PyObject_Str(value);
+				valuestr = PyString_AsString(so);
+				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
+						, valuestr
+						, info->out.r.atts[i].typioparam
+						, -1);
+				Py_DECREF(so);
+				value = so = NULL;
+				nulls[i] = ' ';
+			}
+			else
+			{
+				value = NULL;
+				values[i] = (Datum) NULL;
+				nulls[i] = 'n';
+			}
+		}
+		PG_CATCH();
+		{
+			Py_XDECREF(value);
+			Py_XDECREF(so);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+	}
+
+	tuple = heap_formtuple(desc, values, nulls);
+	FreeTupleDesc(desc);
+	pfree(values);
+	pfree(nulls);
+
+	return tuple;
 }
 
 /* initialization, some python variables function declared here */
@@ -2644,3 +2864,4 @@ PLy_free(void *ptr)
 {
 	free(ptr);
 }
+/* vim: set noexpandtab nosmarttab shiftwidth=8 cinoptions=l1j1: */
