@@ -4,29 +4,21 @@ if test "$GCC" != yes ; then
   if test "$enable_debug" != yes; then
     CFLAGS="$CFLAGS -O"		# any optimization breaks debug
   fi
+else
+  # Pick the right test-and-set (TAS) code for the Sun compiler.
+  # We would like to use in-line assembler, but the compiler
+  # requires *.il files to be on every compile line, making 
+  # the build system too fragile.
+  case $host in
+    sparc-*-solaris*)
+	need_tas=yes
+	tas_file=solaris_sparc.s
+    ;;
+    i?86-*-solaris*)
+	need_tas=yes
+	tas_file=solaris_x86.s
+    ;;
+  esac
 fi
-
-# Pick right test-and-set (TAS) code.  We need out-of-line assembler
-# when not using gcc.
-case $host in
-  sparc-*-solaris*)
-	if test "$GCC" != yes ; then
-		need_tas=yes
-		tas_file=solaris_sparc.s
-	fi
-    ;;
-  i?86-*-solaris*)
-	if test "$GCC" != yes ; then
-		if isainfo | grep amd64
-		then
-			need_tas=yes
-			tas_file=solaris_x86_64.s
-		else
-			need_tas=yes
-			tas_file=solaris_i386.s
-		fi
-	fi
-    ;;
-esac
 
 # -D_POSIX_PTHREAD_SEMANTICS enables 5-arg getpwuid_r, among other things
