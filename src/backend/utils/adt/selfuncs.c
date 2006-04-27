@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.201 2006/04/26 22:32:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.202 2006/04/27 00:46:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,8 +111,6 @@
 #include "utils/syscache.h"
 
 
-static double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
-							  Datum constval, double *sumcommonp);
 static double ineq_histogram_selectivity(VariableStatData *vardata,
 										 FmgrInfo *opproc, bool isgt,
 										 Datum constval, Oid consttype);
@@ -138,12 +136,6 @@ static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
 static char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
-static void get_join_variables(PlannerInfo *root, List *args,
-				   VariableStatData *vardata1,
-				   VariableStatData *vardata2);
-static void examine_variable(PlannerInfo *root, Node *node, int varRelid,
-				 VariableStatData *vardata);
-static double get_variable_numdistinct(VariableStatData *vardata);
 static bool get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 					 Oid sortop, Datum *max);
 static Selectivity prefix_selectivity(VariableStatData *vardata,
@@ -476,7 +468,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
  * total population is returned into *sumcommonp.  Zeroes are returned
  * if there is no MCV list.
  */
-static double
+double
 mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc, Datum constval,
 				double *sumcommonp)
 {
@@ -3203,7 +3195,7 @@ get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
  * get_join_variables
  *		Apply examine_variable() to each side of a join clause.
  */
-static void
+void
 get_join_variables(PlannerInfo *root, List *args,
 				   VariableStatData *vardata1, VariableStatData *vardata2)
 {
@@ -3246,7 +3238,7 @@ get_join_variables(PlannerInfo *root, List *args,
  *
  * Caller is responsible for doing ReleaseVariableStats() before exiting.
  */
-static void
+void
 examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				 VariableStatData *vardata)
 {
@@ -3429,7 +3421,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
  * NB: be careful to produce an integral result, since callers may compare
  * the result to exact integer counts.
  */
-static double
+double
 get_variable_numdistinct(VariableStatData *vardata)
 {
 	double		stadistinct;
