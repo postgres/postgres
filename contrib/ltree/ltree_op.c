@@ -1,18 +1,17 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.10 2006/04/26 22:32:36 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.11 2006/04/27 18:24:35 tgl Exp $
  */
 
 #include "ltree.h"
+
 #include <ctype.h>
 
-#include "access/heapam.h"
-#include "catalog/pg_statistic.h"
-#include "nodes/relation.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
+
 
 /* compare functions */
 PG_FUNCTION_INFO_V1(ltree_cmp);
@@ -34,6 +33,8 @@ PG_FUNCTION_INFO_V1(ltree_textadd);
 PG_FUNCTION_INFO_V1(lca);
 PG_FUNCTION_INFO_V1(ltree2text);
 PG_FUNCTION_INFO_V1(text2ltree);
+PG_FUNCTION_INFO_V1(ltreeparentsel);
+
 Datum		ltree_cmp(PG_FUNCTION_ARGS);
 Datum		ltree_lt(PG_FUNCTION_ARGS);
 Datum		ltree_le(PG_FUNCTION_ARGS);
@@ -576,11 +577,7 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 	VariableStatData vardata;
 	Node	   *other;
 	bool		varonleft;
-	Datum	   *values;
-	int			nvalues;
-	float4	   *numbers;
-	int			nnumbers;
-	double		selec = 0.0;
+	double		selec;
 
 	/*
 	 * If expression is not variable <@ something or something <@ variable,
@@ -601,131 +598,27 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(0.0);
 	}
 
-	if (HeapTupleIsValid(vardata.statsTuple))
+	if (IsA(other, Const))
 	{
-		Form_pg_statistic stats;
-		double		mcvsum = 0.0;
-		double		mcvsel = 0.0;
-		double		hissel = 0.0;
+		/* Variable is being compared to a known non-null constant */
+		Datum		constval = ((Const *) other)->constvalue;
+		FmgrInfo	contproc;
+		double		mcvsum;
+		double		mcvsel;
 
-		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
+		fmgr_info(get_opcode(operator), &contproc);
 
-		if (IsA(other, Const))
-		{
-			/* Variable is being compared to a known non-null constant */
-			Datum		constval = ((Const *) other)->constvalue;
-			bool		match = false;
-			int			i;
+		/*
+		 * Is the constant "<@" to any of the column's most common values?
+		 */
+		mcvsel = mcv_selectivity(&vardata, &contproc, constval, varonleft,
+								 &mcvsum);
 
-			/*
-			 * Is the constant "<@" to any of the column's most common values?
-			 */
-			if (get_attstatsslot(vardata.statsTuple,
-								 vardata.atttype, vardata.atttypmod,
-								 STATISTIC_KIND_MCV, InvalidOid,
-								 &values, &nvalues,
-								 &numbers, &nnumbers))
-			{
-				FmgrInfo	contproc;
-
-				fmgr_info(get_opcode(operator), &contproc);
-
-				for (i = 0; i < nvalues; i++)
-				{
-					/* be careful to apply operator right way 'round */
-					if (varonleft)
-						match = DatumGetBool(FunctionCall2(&contproc,
-														   values[i],
-														   constval));
-					else
-						match = DatumGetBool(FunctionCall2(&contproc,
-														   constval,
-														   values[i]));
-
-					/* calculate total selectivity of all most-common-values */
-					mcvsum += numbers[i];
-
-					/* calculate selectivity of matching most-common-values */
-					if (match)
-						mcvsel += numbers[i];
-				}
-			}
-			else
-			{
-				/* no most-common-values info available */
-				values = NULL;
-				numbers = NULL;
-				i = nvalues = nnumbers = 0;
-			}
-
-			free_attstatsslot(vardata.atttype, values, nvalues, NULL, 0);
-
-			/*
-			 * Is the constant "<@" to any of the column's histogram values?
-			 */
-			if (get_attstatsslot(vardata.statsTuple,
-								 vardata.atttype, vardata.atttypmod,
-								 STATISTIC_KIND_HISTOGRAM, InvalidOid,
-								 &values, &nvalues,
-								 NULL, NULL))
-			{
-				FmgrInfo	contproc;
-
-				fmgr_info(get_opcode(operator), &contproc);
-
-				for (i = 0; i < nvalues; i++)
-				{
-					/* be careful to apply operator right way 'round */
-					if (varonleft)
-						match = DatumGetBool(FunctionCall2(&contproc,
-														   values[i],
-														   constval));
-					else
-						match = DatumGetBool(FunctionCall2(&contproc,
-														   constval,
-														   values[i]));
-					/* count matching histogram values */
-					if (match)
-						hissel++;
-				}
-
-				if (hissel > 0.0)
-				{
-					/*
-					 * some matching values found inside histogram, divide
-					 * matching entries number by total histogram entries to
-					 * get the histogram related selectivity
-					 */
-					hissel /= nvalues;
-				}
-			}
-			else
-			{
-				/* no histogram info available */
-				values = NULL;
-				i = nvalues = 0;
-			}
-
-			free_attstatsslot(vardata.atttype, values, nvalues,
-							  NULL, 0);
-
-
-			/*
-			 * calculate selectivity based on MCV and histogram result
-			 * histogram selectivity needs to be scaled down if there are any
-			 * most-common-values
-			 */
-			selec = mcvsel + hissel * (1.0 - mcvsum);
-
-			/*
-			 * don't return 0.0 selectivity unless all table values are inside
-			 * mcv
-			 */
-			if (selec == 0.0 && mcvsum != 1.0)
-				selec = DEFAULT_PARENT_SEL;
-		}
-		else
-			selec = DEFAULT_PARENT_SEL;
+		/*
+		 * We have the exact selectivity for values appearing in the MCV list;
+		 * use the default selectivity for the rest of the population.
+		 */
+		selec = mcvsel + DEFAULT_PARENT_SEL * (1.0 - mcvsum);
 	}
 	else
 		selec = DEFAULT_PARENT_SEL;
