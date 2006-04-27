@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.63 2006/03/21 18:18:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.64 2006/04/27 02:29:14 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -102,6 +102,7 @@
 #ifdef USE_SSL
 
 #define ROOT_CERT_FILE			"root.crt"
+#define ROOT_CRL_FILE			"root.crl"
 #define SERVER_CERT_FILE		"server.crt"
 #define SERVER_PRIVATE_KEY_FILE "server.key"
 
@@ -794,6 +795,28 @@ initialize_SSL(void)
 	}
 	else
 	{
+		/*
+		 *	Check the Certificate Revocation List (CRL) if file exists.
+		 *	http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
+		 */
+		X509_STORE *cvstore = SSL_CTX_get_cert_store(SSL_context);
+
+		if (cvstore)
+		{
+			if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) != 0)
+			   /* setting the flags to check against the complete CRL chain */
+			   X509_STORE_set_flags(cvstore,
+							X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL);
+			else
+			{
+				/* Not fatal - we do not require CRL */
+				ereport(LOG,
+					(errmsg("SSL Certificate Revocation List (CRL) file \"%s\" not found, skipping: %s",
+							ROOT_CRL_FILE, SSLerrmessage()),
+					 errdetail("Will not check certificates against CRL.")));
+			}
+		}
+
 		SSL_CTX_set_verify(SSL_context,
 						   (SSL_VERIFY_PEER |
 							SSL_VERIFY_FAIL_IF_NO_PEER_CERT |

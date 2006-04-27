@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.370 2006/04/11 21:04:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.371 2006/04/27 02:29:14 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1553,7 +1553,9 @@ chmod og-rwx server.key
    the file <filename>root.crt</filename> in the data directory.  When
    present, a client certificate will be requested from the client
    during SSL connection startup, and it must have been signed by one of the
-   certificates present in <filename>root.crt</filename>.
+   certificates present in <filename>root.crt</filename>.  Certificate 
+   Revocation List (CRL) entries are also checked if the file 
+   <filename>root.crl</filename> exists.
   </para>
 
   <para>
@@ -1564,9 +1566,9 @@ chmod og-rwx server.key
 
   <para>
    The files <filename>server.key</>, <filename>server.crt</>,
-   and <filename>root.crt</filename> are only examined during server
-   start; so you must restart the server to make changes in them take
-   effect.
+   <filename>root.crt</filename>, and <filename>root.crl</filename>
+   are only examined during server start; so you must restart 
+   the server to make changes in them take effect.
   </para>
  </sect1>
 
