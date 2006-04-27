@@ -3,11 +3,14 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.131 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.132 2006/04/27 02:58:08 momjian Exp $
  */
 #include "postgres_fe.h"
 
 #include <sys/types.h>
+#ifdef USE_SSL
+#include <openssl/ssl.h>
+#endif
 
 #ifndef WIN32
 #include <unistd.h>
