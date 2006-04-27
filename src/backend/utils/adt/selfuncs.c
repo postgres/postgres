@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.202 2006/04/27 00:46:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.203 2006/04/27 17:52:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,7 +420,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	 * to the result selectivity.  Also add up the total fraction represented
 	 * by MCV entries.
 	 */
-	mcv_selec = mcv_selectivity(vardata, &opproc, constval,
+	mcv_selec = mcv_selectivity(vardata, &opproc, constval, true,
 								&sumcommon);
 
 	/*
@@ -460,16 +460,17 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
  *	mcv_selectivity				- Examine the MCV list for scalarineqsel
  *
  * Determine the fraction of the variable's MCV population that satisfies
- * the predicate (VAR OP CONST), as well as the fraction of the total column
- * population represented by the MCV list.  This code will work for any
- * boolean-returning predicate operator.
+ * the predicate (VAR OP CONST), or (CONST OP VAR) if !varonleft.  Also
+ * compute the fraction of the total column population represented by the MCV
+ * list.  This code will work for any boolean-returning predicate operator.
  *
  * The function result is the MCV selectivity, and the fraction of the
  * total population is returned into *sumcommonp.  Zeroes are returned
  * if there is no MCV list.
  */
 double
-mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc, Datum constval,
+mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
+				Datum constval, bool varonleft,
 				double *sumcommonp)
 {
 	double		mcv_selec,
@@ -483,11 +484,6 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc, Datum constval,
 	mcv_selec = 0.0;
 	sumcommon = 0.0;
 
-	/*
-	 * If we have most-common-values info, add up the fractions of the MCV
-	 * entries that satisfy MCV OP CONST.  Also add up the total fraction
-	 * represented by MCV entries.
-	 */
 	if (HeapTupleIsValid(vardata->statsTuple) &&
 		get_attstatsslot(vardata->statsTuple,
 						 vardata->atttype, vardata->atttypmod,
@@ -497,9 +493,13 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc, Datum constval,
 	{
 		for (i = 0; i < nvalues; i++)
 		{
-			if (DatumGetBool(FunctionCall2(opproc,
+			if (varonleft ?
+				DatumGetBool(FunctionCall2(opproc,
 										   values[i],
-										   constval)))
+										   constval)) :
+				DatumGetBool(FunctionCall2(opproc,
+										   constval,
+										   values[i])))
 				mcv_selec += numbers[i];
 			sumcommon += numbers[i];
 		}
@@ -1018,7 +1018,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		 * represented by MCV entries.
 		 */
 		fmgr_info(get_opcode(operator), &opproc);
-		mcv_selec = mcv_selectivity(&vardata, &opproc, constval,
+		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
 									&sumcommon);
 
 		/*

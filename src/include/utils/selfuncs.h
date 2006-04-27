@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.31 2006/04/27 00:46:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.32 2006/04/27 17:52:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,8 @@ extern void get_join_variables(PlannerInfo *root, List *args,
 							   VariableStatData *vardata2);
 extern double get_variable_numdistinct(VariableStatData *vardata);
 extern double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
-							  Datum constval, double *sumcommonp);
+							  Datum constval, bool varonleft,
+							  double *sumcommonp);
 
 extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,
