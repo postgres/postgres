@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.64 2006/04/27 02:29:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.65 2006/04/27 15:25:04 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -810,8 +810,8 @@ initialize_SSL(void)
 			else
 			{
 				/* Not fatal - we do not require CRL */
-				ereport(LOG,
-					(errmsg("SSL Certificate Revocation List (CRL) file \"%s\" not found, skipping: %s",
+				ereport(DEBUG1,
+					(errmsg("SSL Certificate Revocation List (CRL) file \"%s\" not found: %s",
 							ROOT_CRL_FILE, SSLerrmessage()),
 					 errdetail("Will not check certificates against CRL.")));
 			}
