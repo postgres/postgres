@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.103 2006/04/19 16:32:08 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.104 2006/04/28 02:53:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -107,11 +107,11 @@ ifeq ($(PORTNAME), darwin)
   ifeq ($(DLTYPE), library)
     # linkable library
     DLSUFFIX		:= .dylib
-    LINK.shared		= $(COMPILER) -dynamiclib -install_name $(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX) $(version_link) -multiply_defined suppress
+    LINK.shared		= $(COMPILER) -dynamiclib -install_name $(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX) $(version_link) $(exported_symbols_list) -multiply_defined suppress
   else
     # loadable module (default case)
     DLSUFFIX		:= .so
-    LINK.shared		= $(COMPILER) -bundle
+    LINK.shared		= $(COMPILER) -bundle -multiply_defined suppress
   endif
   shlib			= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
   shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
@@ -186,7 +186,7 @@ ifeq ($(PORTNAME), irix)
 endif
 
 ifeq ($(PORTNAME), linux)
-  LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname)
+  LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname) $(exported_symbols_list)
 endif
 
 ifeq ($(PORTNAME), solaris)

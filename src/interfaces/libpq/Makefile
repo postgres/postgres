@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.143 2006/04/11 20:26:40 neilc Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.144 2006/04/28 02:53:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,8 +16,8 @@ include $(top_builddir)/src/Makefile.global
 
 # shared library parameters
 NAME= pq
-SO_MAJOR_VERSION= 4
-SO_MINOR_VERSION= 2
+SO_MAJOR_VERSION= 5
+SO_MINOR_VERSION= 0
 DLTYPE= library
 
 override CPPFLAGS :=  -DFRONTEND -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port
@@ -125,6 +125,31 @@ $(srcdir)/blibpqdll.def: exports.txt
 	echo '; Aliases for MS compatible names' >> $@
 	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1= _\1/' < $< | sed 's/ *$$//' >> $@
 
+# Where possible, restrict the symbols exported by the library to just the
+# official list, so as to avoid unintentional ABI changes.  On recent Darwin
+# this also quiets multiply-defined-symbol warnings in programs that use
+# libpgport along with libpq.
+
+ifeq ($(PORTNAME), darwin)
+$(shlib): exports.list
+
+exports.list: exports.txt
+	$(AWK) '/^[^#]/ {printf "_%s\n",$$1}' $< >$@
+
+exported_symbols_list = -exported_symbols_list exports.list
+endif
+
+ifeq ($(PORTNAME), linux)
+$(shlib): exports.list
+
+exports.list: exports.txt
+	echo '{ global:' >$@
+	$(AWK) '/^[^#]/ {printf "%s;\n",$$1}' $< >>$@
+	echo ' local: *; };' >>$@
+
+exported_symbols_list = -Wl,--version-script=exports.list
+endif
+
 # depend on Makefile.global to force rebuild on re-run of configure
 $(srcdir)/libpq.rc: libpq.rc.in $(top_builddir)/src/Makefile.global
 	sed -e 's/\(VERSION.*\),0 *$$/\1,'`date '+%y%j' | sed 's/^0*//'`'/' < $< > $@
@@ -147,7 +172,7 @@ uninstall: uninstall-lib
 	rm -f '$(DESTDIR)$(includedir)/libpq-fe.h' '$(DESTDIR)$(includedir_internal)/libpq-int.h' '$(DESTDIR)$(includedir_internal)/pqexpbuffer.h' '$(DESTDIR)$(datadir)/pg_service.conf.sample'
 
 clean distclean: clean-lib
-	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c thread.c md5.c ip.c encnames.c wchar.c pthread.h
+	rm -f $(OBJS) pg_config_paths.h crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c thread.c md5.c ip.c encnames.c wchar.c pthread.h exports.list
 	rm -f pg_config_paths.h	# Might be left over from a Win32 client-only build
 
 maintainer-clean: distclean
