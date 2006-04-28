@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.150 2006/04/27 22:28:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.151 2006/04/28 03:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,7 +767,7 @@ typedef unsigned char slock_t;
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
 
-extern volatile slock_t pg_atomic_cas(volatile slock_t *lock, slock_t with,
+extern slock_t pg_atomic_cas(volatile slock_t *lock, slock_t with,
 									  slock_t cmp);
 
 #define TAS(a) (pg_atomic_cas((a), 1, 0) != 0)
