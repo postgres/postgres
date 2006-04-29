@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.39 2006/04/28 02:53:20 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.40 2006/04/29 20:13:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,8 +25,13 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 LIBS := $(filter-out -lpgport, $(LIBS))
 
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
-	connect.o misc.o path.o exec.o thread.o \
+	connect.o misc.o path.o exec.o \
 	$(filter snprintf.o, $(LIBOBJS))
+
+# thread.c is needed only for non-WIN32 implementation of path.c
+ifneq ($(PORTNAME), win32)
+OBJS += thread.o
+endif
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) \
 	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(PTHREAD_LIBS)
