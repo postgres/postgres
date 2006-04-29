@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Apr 27 11:56:04 EDT 2006
+Last updated:		Sat Apr 29 12:44:26 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -200,7 +200,7 @@ Data Types
   The positive modulus result returned by NUMERICs might be considered
   inaccurate, in one sense.
 
-* %Disallow changing default expression of a SERIAL column
+* -Disallow changing default expression of a SERIAL column
 * %Disallow ALTER SEQUENCE changes for SERIAL sequences because pg_dump
   does not dump the changes
 * Fix data types where equality comparison isn't intuitive, e.g. box
