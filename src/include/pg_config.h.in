@@ -129,7 +129,7 @@
 /* Define to 1 if your compiler understands __FUNCTION__. */
 #undef HAVE_FUNCNAME__FUNCTION
 
-/* Define to 1 if you have getaddrinfo(). */
+/* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
 /* Define to 1 if you have the `gethostbyname_r' function. */
@@ -624,6 +624,9 @@
 
 /* Define to select unnamed POSIX semaphores. */
 #undef USE_UNNAMED_POSIX_SEMAPHORES
+
+/* Define to select Win32-style semaphores. */
+#undef USE_WIN32_SEMAPHORES
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS

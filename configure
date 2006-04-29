@@ -2713,11 +2713,13 @@ else
   fi
 fi
 
-# The Intel compiler on Linux supports most gcc options, but not
-# all of them, so only add these options if we are really using
-# gcc.
+# Some versions of GCC support some additional useful warning flags.
+# Check whether they are supported, and add them to CFLAGS if so.
 
 if test "$GCC" = yes; then
+
+# ICC pretends to be GCC but it's lying; it doesn't support these options.
+# So we have to check if "GCC" is really ICC.
 
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -2766,11 +2768,10 @@ sed 's/^/| /' conftest.$ac_ext >&5
 ICC=no
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
   if test "$ICC" = no; then
     CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith -Winline"
 
-    # Some versions of GCC support some additional useful warning flags.
-    # Check whether they are supported, and add them to CFLAGS if so.
     echo "$as_me:$LINENO: checking if $CC supports -Wdeclaration-after-statement" >&5
 echo $ECHO_N "checking if $CC supports -Wdeclaration-after-statement... $ECHO_C" >&6
 pgac_save_CFLAGS=$CFLAGS
@@ -21621,29 +21622,38 @@ esac
 
 
 # Select semaphore implementation type.
-if test x"$USE_NAMED_POSIX_SEMAPHORES" = x"1" ; then
+if test "$PORTNAME" != "win32"; then
+  if test x"$USE_NAMED_POSIX_SEMAPHORES" = x"1" ; then
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_NAMED_POSIX_SEMAPHORES 1
 _ACEOF
 
-  SEMA_IMPLEMENTATION="src/backend/port/posix_sema.c"
-else
-  if test x"$USE_UNNAMED_POSIX_SEMAPHORES" = x"1" ; then
+    SEMA_IMPLEMENTATION="src/backend/port/posix_sema.c"
+  else
+    if test x"$USE_UNNAMED_POSIX_SEMAPHORES" = x"1" ; then
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_UNNAMED_POSIX_SEMAPHORES 1
 _ACEOF
 
-    SEMA_IMPLEMENTATION="src/backend/port/posix_sema.c"
-  else
+      SEMA_IMPLEMENTATION="src/backend/port/posix_sema.c"
+    else
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_SYSV_SEMAPHORES 1
 _ACEOF
 
-    SEMA_IMPLEMENTATION="src/backend/port/sysv_sema.c"
+      SEMA_IMPLEMENTATION="src/backend/port/sysv_sema.c"
+    fi
   fi
+else
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_WIN32_SEMAPHORES 1
+_ACEOF
+
+  SEMA_IMPLEMENTATION="src/backend/port/win32_sema.c"
 fi
 
 
