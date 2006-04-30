@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.125 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.126 2006/04/30 02:09:07 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1368,6 +1368,8 @@ string_to_privilege(const char *privname)
 		return ACL_CREATE_TEMP;
 	if (strcmp(privname, "temp") == 0)
 		return ACL_CREATE_TEMP;
+	if (strcmp(privname, "connection") == 0)
+		return ACL_CONNECT;
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("unrecognized privilege type \"%s\"", privname)));
@@ -1401,6 +1403,8 @@ privilege_to_string(AclMode privilege)
 			return "CREATE";
 		case ACL_CREATE_TEMP:
 			return "TEMP";
+		case ACL_CONNECT:
+			return "CONNECTION";
 		default:
 			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}

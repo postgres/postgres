@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.308 2006/04/27 00:33:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.309 2006/04/30 02:09:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,8 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_USAGE		(1<<8)	/* for languages and namespaces */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
-#define N_ACL_RIGHTS	11		/* 1 plus the last 1<<x */
+#define ACL_CONNECT	(1<<11) /* for database connection privilege */
+#define N_ACL_RIGHTS	12		/* 1 plus the last 1<<x */
 #define ACL_NO_RIGHTS	0
 /* Currently, SELECT ... FOR UPDATE/FOR SHARE requires UPDATE privileges */
 #define ACL_SELECT_FOR_UPDATE	ACL_UPDATE

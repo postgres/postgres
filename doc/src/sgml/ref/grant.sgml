@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.52 2006/02/14 03:32:14 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.53 2006/04/30 02:09:06 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ GRANT { { USAGE | SELECT | UPDATE }
     ON SEQUENCE <replaceable class="PARAMETER">sequencename</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
-GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
+GRANT { { CREATE | TEMPORARY | TEMP | CONNECTION } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
@@ -230,6 +230,18 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
     </varlistentry>
 
     <varlistentry>
+     <term>CONNECTION</term>
+     <listitem>
+      <para>
+       Allows the ability to connect to the specified database.
+       By default, Grant permissions allow users to connect to any database,
+       though <filename>pg_hba.conf</> can add additional connection
+       restrictions.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term>TEMPORARY</term>
      <term>TEMP</term>
      <listitem>
@@ -417,6 +429,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
                   X -- EXECUTE
                   U -- USAGE
                   C -- CREATE
+                  c -- CONNECTION
                   T -- TEMPORARY
             arwdRxt -- ALL PRIVILEGES (for tables)
                   * -- grant option for preceding privilege

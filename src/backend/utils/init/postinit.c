@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.162 2006/03/29 21:17:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.163 2006/04/30 02:09:07 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -51,7 +51,7 @@
 
 
 static bool FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace);
-static void ReverifyMyDatabase(const char *name);
+static void ReverifyMyDatabase(const char *name, const char *user_name);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
 static bool ThereIsAtLeastOneRole(void);
@@ -130,8 +130,9 @@ FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
  * during session startup, this place is also fitting to set up any
  * database-specific configuration variables.
  */
+ 
 static void
-ReverifyMyDatabase(const char *name)
+ReverifyMyDatabase(const char *name, const char *user_name)
 {
 	Relation	pgdbrel;
 	SysScanDesc pgdbscan;
@@ -211,6 +212,23 @@ ReverifyMyDatabase(const char *name)
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("too many connections for database \"%s\"",
 							name)));
+
+		/*
+		 * Checking for privilege to connect to the database
+		 * We want to bypass the test if we are running in bootstrap mode
+		 */
+		if (!IsBootstrapProcessingMode())
+		{
+				if(pg_database_aclcheck(MyDatabaseId,GetUserId()
+					,ACL_CONNECT) != ACLCHECK_OK )
+				{
+					ereport(FATAL,
+                			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+                 				errmsg("couldn't connect to database %s", NameStr(dbform->datname)),
+                 				errdetail("User %s doesn't have the CONNECTION privilege for database %s.",
+                                user_name, NameStr(dbform->datname))));				
+				}
+		}
 	}
 
 	/*
@@ -487,7 +505,7 @@ InitPostgres(const char *dbname, const char *username)
 	 * superuser, so the above stuff has to happen first.)
 	 */
 	if (!bootstrap)
-		ReverifyMyDatabase(dbname);
+		ReverifyMyDatabase(dbname,username);
 
 	/*
 	 * Final phase of relation cache startup: write a new cache file if

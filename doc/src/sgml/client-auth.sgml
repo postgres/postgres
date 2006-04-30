@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.87 2006/03/10 19:10:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.88 2006/04/30 02:09:06 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -206,6 +206,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        Multiple user names can be supplied by separating them with commas.
        A separate file containing user names can be specified by preceding the
        file name with <literal>@</>.
+       User and group connectivity can also be restricted by <command>GRANT
+       CONNECTION ON DATABASE</>.
       </para>
      </listitem>
     </varlistentry>
