@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.297 2006/04/29 16:43:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.298 2006/04/30 01:08:06 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2135,51 +2135,4 @@ heap_truncate_find_FKs(List *relationIds)
 	heap_close(fkeyRel, AccessShareLock);
 
 	return result;
-}
-
-
-/* Detach the default sequence and the relation */
-
-void 
-RemoveSequenceDefault(Oid relid, AttrNumber attnum,
-				  DropBehavior behavior, bool flag)
-{
-	Relation	attrdef_rel;
-	ScanKeyData scankeys[2];
-	SysScanDesc scan;
-	HeapTuple	tuple;
-
-	attrdef_rel = heap_open(AttrDefaultRelationId, RowExclusiveLock);
-
-	ScanKeyInit(&scankeys[0],
-				Anum_pg_attrdef_adrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
-	ScanKeyInit(&scankeys[1],
-				Anum_pg_attrdef_adnum,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(attnum));
-
-	scan = systable_beginscan(attrdef_rel, AttrDefaultIndexId, true,
-							  SnapshotNow, 2, scankeys);
-
-	/* There should be at most one matching tuple, but we loop anyway */
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-	{
-		ObjectAddress object;
-
-		object.classId = AttrDefaultRelationId;
-		object.objectId = HeapTupleGetOid(tuple);
-		object.objectSubId = 0;
-
-		if(flag == true) /* Detach the sequence */
-  			performSequenceDefaultDeletion(&object, behavior, 0);
-		else	/* Don't allow to change the default sequence */
-			performSequenceDefaultDeletion(&object, behavior, 2);
-
-	}
-
-	systable_endscan(scan);
-	heap_close(attrdef_rel, RowExclusiveLock);
-
 }
