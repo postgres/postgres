@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 29 21:45:16 EDT 2006
+Last updated:		Sat Apr 29 22:10:37 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -81,7 +81,7 @@ Administration
 	  Currently, if a variable is commented out, it keeps the
 	  previous uncommented value until a server restarted.
 
-	o %Allow per-database permissions to be set via GRANT
+	o -Allow per-database permissions to be set via GRANT
 
 	  Allow database connection checks based on GRANT rules in
 	  addition to the existing access checks in pg_hba.conf.
