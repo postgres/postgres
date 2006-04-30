@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.309 2006/04/30 02:09:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.310 2006/04/30 18:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_USAGE		(1<<8)	/* for languages and namespaces */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
-#define ACL_CONNECT	(1<<11) /* for database connection privilege */
+#define ACL_CONNECT		(1<<11)	/* for databases */
 #define N_ACL_RIGHTS	12		/* 1 plus the last 1<<x */
 #define ACL_NO_RIGHTS	0
 /* Currently, SELECT ... FOR UPDATE/FOR SHARE requires UPDATE privileges */
@@ -102,13 +102,6 @@ typedef struct Query
 	List	   *rtable;			/* list of range table entries */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
 
-	List	   *rowMarks;		/* integer list of RT indexes of relations
-								 * that are selected FOR UPDATE/SHARE */
-
-	bool		forUpdate;		/* true if rowMarks are FOR UPDATE, false if
-								 * they are FOR SHARE */
-	bool		rowNoWait;		/* FOR UPDATE/SHARE NOWAIT option */
-
 	List	   *targetList;		/* target list (of TargetEntry) */
 
 	List	   *groupClause;	/* a list of GroupClause's */
@@ -121,6 +114,8 @@ typedef struct Query
 
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
+
+	List	   *rowMarks;		/* a list of RowMarkClause's */
 
 	Node	   *setOperations;	/* set-operation tree if this is top level of
 								 * a UNION/INTERSECT/EXCEPT query */
@@ -448,7 +443,7 @@ typedef struct LockingClause
 	NodeTag		type;
 	List	   *lockedRels;		/* FOR UPDATE or FOR SHARE relations */
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
-	bool		nowait;			/* NOWAIT option */
+	bool		noWait;			/* NOWAIT option */
 } LockingClause;
 
 
@@ -615,6 +610,19 @@ typedef struct SortClause
  */
 typedef SortClause GroupClause;
 
+/*
+ * RowMarkClause -
+ *	   representation of FOR UPDATE/SHARE clauses
+ *
+ * We create a separate RowMarkClause node for each target relation
+ */
+typedef struct RowMarkClause
+{
+	NodeTag		type;
+	Index		rti;			/* range table index of target relation */
+	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
+	bool		noWait;			/* NOWAIT option */
+} RowMarkClause;
 
 /*****************************************************************************
  *		Optimizable Statements
@@ -724,7 +732,7 @@ typedef struct SelectStmt
 	List	   *sortClause;		/* sort clause (a list of SortBy's) */
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
-	LockingClause *lockingClause;		/* FOR UPDATE/FOR SHARE */
+	List	   *lockingClause;	/* FOR UPDATE (list of LockingClause's) */
 
 	/*
 	 * These fields are used only in upper-level SelectStmts.

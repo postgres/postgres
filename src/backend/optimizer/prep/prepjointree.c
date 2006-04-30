@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.37 2006/03/07 01:00:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.38 2006/04/30 18:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,29 +409,9 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 
 	/*
 	 * Pull up any FOR UPDATE/SHARE markers, too.  (OffsetVarNodes
-	 * already adjusted the marker values, so just list_concat the
-	 * list.)
-	 *
-	 * Executor can't handle multiple FOR UPDATE/SHARE/NOWAIT flags,
-	 * so complain if they are valid but different
+	 * already adjusted the marker rtindexes, so just concat the lists.)
 	 */
-	if (parse->rowMarks && subquery->rowMarks)
-	{
-		if (parse->forUpdate != subquery->forUpdate)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
-		if (parse->rowNoWait != subquery->rowNoWait)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use both wait and NOWAIT in one query")));
-	}
 	parse->rowMarks = list_concat(parse->rowMarks, subquery->rowMarks);
-	if (subquery->rowMarks)
-	{
-		parse->forUpdate = subquery->forUpdate;
-		parse->rowNoWait = subquery->rowNoWait;
-	}
 
 	/*
 	 * We also have to fix the relid sets of any parent InClauseInfo

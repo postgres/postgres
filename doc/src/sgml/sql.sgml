@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.39 2006/03/10 19:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.40 2006/04/30 18:30:38 tgl Exp $ -->
 
  <chapter id="sql-intro">
   <title>SQL</title>
@@ -863,7 +863,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
-    [ FOR { UPDATE | SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ] ]
+    [ FOR { UPDATE | SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ] [...] ]
      </synopsis>
     </para>
 

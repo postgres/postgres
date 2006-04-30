@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.133 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.134 2006/04/30 18:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,8 +204,6 @@ CreateExecutorState(void)
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 	estate->es_rowMarks = NIL;
-	estate->es_forUpdate = false;
-	estate->es_rowNoWait = false;
 
 	estate->es_instrument = false;
 	estate->es_select_into = false;

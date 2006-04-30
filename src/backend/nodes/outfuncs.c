@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.273 2006/04/22 01:25:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.274 2006/04/30 18:30:39 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1418,7 +1418,7 @@ _outLockingClause(StringInfo str, LockingClause *node)
 
 	WRITE_NODE_FIELD(lockedRels);
 	WRITE_BOOL_FIELD(forUpdate);
-	WRITE_BOOL_FIELD(nowait);
+	WRITE_BOOL_FIELD(noWait);
 }
 
 static void
@@ -1514,9 +1514,6 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_BOOL_FIELD(hasSubLinks);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
-	WRITE_NODE_FIELD(rowMarks);
-	WRITE_BOOL_FIELD(forUpdate);
-	WRITE_BOOL_FIELD(rowNoWait);
 	WRITE_NODE_FIELD(targetList);
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(havingQual);
@@ -1524,6 +1521,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(sortClause);
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
+	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
 	WRITE_NODE_FIELD(resultRelations);
 }
@@ -1544,6 +1542,16 @@ _outGroupClause(StringInfo str, GroupClause *node)
 
 	WRITE_UINT_FIELD(tleSortGroupRef);
 	WRITE_OID_FIELD(sortop);
+}
+
+static void
+_outRowMarkClause(StringInfo str, RowMarkClause *node)
+{
+	WRITE_NODE_TYPE("ROWMARKCLAUSE");
+
+	WRITE_UINT_FIELD(rti);
+	WRITE_BOOL_FIELD(forUpdate);
+	WRITE_BOOL_FIELD(noWait);
 }
 
 static void
@@ -2112,6 +2120,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_GroupClause:
 				_outGroupClause(str, obj);
+				break;
+			case T_RowMarkClause:
+				_outRowMarkClause(str, obj);
 				break;
 			case T_SetOperationStmt:
 				_outSetOperationStmt(str, obj);

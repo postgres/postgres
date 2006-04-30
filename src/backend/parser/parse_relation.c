@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.122 2006/03/23 00:19:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.123 2006/04/30 18:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1001,6 +1001,8 @@ addRangeTableEntryForJoin(ParseState *pstate,
 
 /*
  * Has the specified refname been selected FOR UPDATE/FOR SHARE?
+ *
+ * Note: we pay no attention to whether it's FOR UPDATE vs FOR SHARE.
  */
 static bool
 isLockedRel(ParseState *pstate, char *refname)
@@ -1008,9 +1010,13 @@ isLockedRel(ParseState *pstate, char *refname)
 	/* Outer loop to check parent query levels as well as this one */
 	while (pstate != NULL)
 	{
-		if (pstate->p_locking_clause)
+		ListCell   *l;
+
+		foreach(l, pstate->p_locking_clause)
 		{
-			if (pstate->p_locking_clause->lockedRels == NIL)
+			LockingClause *lc = (LockingClause *) lfirst(l);
+
+			if (lc->lockedRels == NIL)
 			{
 				/* all tables used in query */
 				return true;
@@ -1018,11 +1024,11 @@ isLockedRel(ParseState *pstate, char *refname)
 			else
 			{
 				/* just the named tables */
-				ListCell   *l;
+				ListCell   *l2;
 
-				foreach(l, pstate->p_locking_clause->lockedRels)
+				foreach(l2, lc->lockedRels)
 				{
-					char	   *rname = strVal(lfirst(l));
+					char	   *rname = strVal(lfirst(l2));
 
 					if (strcmp(refname, rname) == 0)
 						return true;
@@ -1698,6 +1704,26 @@ get_tle_by_resno(List *tlist, AttrNumber resno)
 
 		if (tle->resno == resno)
 			return tle;
+	}
+	return NULL;
+}
+
+/*
+ * Given a Query and rangetable index, return relation's RowMarkClause if any
+ *
+ * Returns NULL if relation is not selected FOR UPDATE/SHARE
+ */
+RowMarkClause *
+get_rowmark(Query *qry, Index rtindex)
+{
+	ListCell   *l;
+
+	foreach(l, qry->rowMarks)
+	{
+		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+
+		if (rc->rti == rtindex)
+			return rc;
 	}
 	return NULL;
 }

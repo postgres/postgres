@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.162 2006/04/05 22:11:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.163 2006/04/30 18:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ AcquireRewriteLocks(Query *parsetree)
 				 */
 				if (rt_index == parsetree->resultRelation)
 					lockmode = RowExclusiveLock;
-				else if (list_member_int(parsetree->rowMarks, rt_index))
+				else if (get_rowmark(parsetree, rt_index))
 					lockmode = RowShareLock;
 				else
 					lockmode = AccessShareLock;
@@ -907,6 +907,7 @@ ApplyRetrieveRule(Query *parsetree,
 	Query	   *rule_action;
 	RangeTblEntry *rte,
 			   *subrte;
+	RowMarkClause *rc;
 
 	if (list_length(rule->actions) != 1)
 		elog(ERROR, "expected just one rule action");
@@ -954,20 +955,20 @@ ApplyRetrieveRule(Query *parsetree,
 	/*
 	 * FOR UPDATE/SHARE of view?
 	 */
-	if (list_member_int(parsetree->rowMarks, rt_index))
+	if ((rc = get_rowmark(parsetree, rt_index)) != NULL)
 	{
 		/*
 		 * Remove the view from the list of rels that will actually be marked
-		 * FOR UPDATE/SHARE by the executor.  It will still be access- checked
+		 * FOR UPDATE/SHARE by the executor.  It will still be access-checked
 		 * for write access, though.
 		 */
-		parsetree->rowMarks = list_delete_int(parsetree->rowMarks, rt_index);
+		parsetree->rowMarks = list_delete_ptr(parsetree->rowMarks, rc);
 
 		/*
 		 * Set up the view's referenced tables as if FOR UPDATE/SHARE.
 		 */
-		markQueryForLocking(rule_action, parsetree->forUpdate,
-							parsetree->rowNoWait, true);
+		markQueryForLocking(rule_action, rc->forUpdate,
+							rc->noWait, true);
 	}
 
 	return parsetree;
@@ -987,20 +988,6 @@ markQueryForLocking(Query *qry, bool forUpdate, bool noWait, bool skipOldNew)
 	Index		rti = 0;
 	ListCell   *l;
 
-	if (qry->rowMarks)
-	{
-		if (forUpdate != qry->forUpdate)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
-		if (noWait != qry->rowNoWait)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use both wait and NOWAIT in one query")));
-	}
-	qry->forUpdate = forUpdate;
-	qry->rowNoWait = noWait;
-
 	foreach(l, qry->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
@@ -1014,7 +1001,7 @@ markQueryForLocking(Query *qry, bool forUpdate, bool noWait, bool skipOldNew)
 
 		if (rte->rtekind == RTE_RELATION)
 		{
-			qry->rowMarks = list_append_unique_int(qry->rowMarks, rti);
+			applyLockingClause(qry, rti, forUpdate, noWait);
 			rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)

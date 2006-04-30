@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.209 2006/04/25 16:54:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.210 2006/04/30 18:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -843,7 +843,7 @@ create_indexscan_plan(PlannerInfo *root,
 			if (best_path->indexinfo->indpred)
 			{
 				if (baserelid != root->parse->resultRelation &&
-					!list_member_int(root->parse->rowMarks, baserelid))
+					get_rowmark(root->parse, baserelid) == NULL)
 					if (predicate_implied_by(clausel,
 											 best_path->indexinfo->indpred))
 						continue;
@@ -962,7 +962,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 				if (ipath->indexinfo->indpred)
 				{
 					if (baserelid != root->parse->resultRelation &&
-						!list_member_int(root->parse->rowMarks, baserelid))
+						get_rowmark(root->parse, baserelid) == NULL)
 						if (predicate_implied_by(clausel,
 												 ipath->indexinfo->indpred))
 							continue;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.333 2006/04/22 01:25:59 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.334 2006/04/30 18:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1805,6 +1805,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 	Node	   *qual;
+	ListCell   *l;
 
 	qry->commandType = CMD_SELECT;
 
@@ -1870,8 +1871,10 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
-	if (stmt->lockingClause)
-		transformLockingClause(qry, stmt->lockingClause);
+	foreach(l, stmt->lockingClause)
+	{
+		transformLockingClause(qry, (LockingClause *) lfirst(l));
+	}
 
 	return qry;
 }
@@ -1899,10 +1902,11 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	List	   *sortClause;
 	Node	   *limitOffset;
 	Node	   *limitCount;
-	LockingClause *lockingClause;
+	List	   *lockingClause;
 	Node	   *node;
 	ListCell   *left_tlist,
-			   *dtlist;
+			   *dtlist,
+			   *l;
 	List	   *targetvars,
 			   *targetnames,
 			   *sv_relnamespace,
@@ -1942,7 +1946,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	stmt->sortClause = NIL;
 	stmt->limitOffset = NULL;
 	stmt->limitCount = NULL;
-	stmt->lockingClause = NULL;
+	stmt->lockingClause = NIL;
 
 	/* We don't support FOR UPDATE/SHARE with set ops at the moment. */
 	if (lockingClause)
@@ -2084,8 +2088,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
-	if (lockingClause)
-		transformLockingClause(qry, lockingClause);
+	foreach(l, lockingClause)
+	{
+		transformLockingClause(qry, (LockingClause *) lfirst(l));
+	}
 
 	return qry;
 }
@@ -2743,44 +2749,34 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 
 /* exported so planner can check again after rewriting, query pullup, etc */
 void
-CheckSelectLocking(Query *qry, bool forUpdate)
+CheckSelectLocking(Query *qry)
 {
-	const char *operation;
-
-	if (forUpdate)
-		operation = "SELECT FOR UPDATE";
-	else
-		operation = "SELECT FOR SHARE";
-
 	if (qry->setOperations)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		/* translator: %s is a SQL command, like SELECT FOR UPDATE */
-		errmsg("%s is not allowed with UNION/INTERSECT/EXCEPT", operation)));
+				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
 	if (qry->distinctClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		/* translator: %s is a SQL command, like SELECT FOR UPDATE */
-			   errmsg("%s is not allowed with DISTINCT clause", operation)));
+				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with DISTINCT clause")));
 	if (qry->groupClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		/* translator: %s is a SQL command, like SELECT FOR UPDATE */
-			   errmsg("%s is not allowed with GROUP BY clause", operation)));
+				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with GROUP BY clause")));
 	if (qry->havingQual != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		/* translator: %s is a SQL command, like SELECT FOR UPDATE */
-				 errmsg("%s is not allowed with HAVING clause", operation)));
+				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with HAVING clause")));
 	if (qry->hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		/* translator: %s is a SQL command, like SELECT FOR UPDATE */
-		   errmsg("%s is not allowed with aggregate functions", operation)));
+				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with aggregate functions")));
 }
 
 /*
- * Convert FOR UPDATE/SHARE name list into rowMarks list of integer relids
+ * Transform a FOR UPDATE/SHARE clause
+ *
+ * This basically involves replacing names by integer relids.
  *
  * NB: if you need to change this, see also markQueryForLocking()
  * in rewriteHandler.c.
@@ -2789,35 +2785,18 @@ static void
 transformLockingClause(Query *qry, LockingClause *lc)
 {
 	List	   *lockedRels = lc->lockedRels;
-	List	   *rowMarks;
 	ListCell   *l;
 	ListCell   *rt;
 	Index		i;
 	LockingClause *allrels;
 
-	if (qry->rowMarks)
-	{
-		if (lc->forUpdate != qry->forUpdate)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
-		if (lc->nowait != qry->rowNoWait)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use both wait and NOWAIT in one query")));
-	}
-	qry->forUpdate = lc->forUpdate;
-	qry->rowNoWait = lc->nowait;
-
-	CheckSelectLocking(qry, lc->forUpdate);
+	CheckSelectLocking(qry);
 
 	/* make a clause we can pass down to subqueries to select all rels */
 	allrels = makeNode(LockingClause);
 	allrels->lockedRels = NIL;	/* indicates all rels */
 	allrels->forUpdate = lc->forUpdate;
-	allrels->nowait = lc->nowait;
-
-	rowMarks = qry->rowMarks;
+	allrels->noWait = lc->noWait;
 
 	if (lockedRels == NIL)
 	{
@@ -2831,8 +2810,7 @@ transformLockingClause(Query *qry, LockingClause *lc)
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-					/* use list_append_unique to avoid duplicates */
-					rowMarks = list_append_unique_int(rowMarks, i);
+					applyLockingClause(qry, i, lc->forUpdate, lc->noWait);
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
@@ -2867,8 +2845,8 @@ transformLockingClause(Query *qry, LockingClause *lc)
 					switch (rte->rtekind)
 					{
 						case RTE_RELATION:
-							/* use list_append_unique to avoid duplicates */
-							rowMarks = list_append_unique_int(rowMarks, i);
+							applyLockingClause(qry, i,
+											   lc->forUpdate, lc->noWait);
 							rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 							break;
 						case RTE_SUBQUERY:
@@ -2909,8 +2887,41 @@ transformLockingClause(Query *qry, LockingClause *lc)
 								relname)));
 		}
 	}
+}
 
-	qry->rowMarks = rowMarks;
+/*
+ * Record locking info for a single rangetable item
+ */
+void
+applyLockingClause(Query *qry, Index rtindex, bool forUpdate, bool noWait)
+{
+	RowMarkClause *rc;
+
+	/* Check for pre-existing entry for same rtindex */
+	if ((rc = get_rowmark(qry, rtindex)) != NULL)
+	{
+		/*
+		 * If the same RTE is specified both FOR UPDATE and FOR SHARE,
+		 * treat it as FOR UPDATE.  (Reasonable, since you can't take
+		 * both a shared and exclusive lock at the same time; it'll
+		 * end up being exclusive anyway.)
+		 *
+		 * We also consider that NOWAIT wins if it's specified both ways.
+		 * This is a bit more debatable but raising an error doesn't
+		 * seem helpful.  (Consider for instance SELECT FOR UPDATE NOWAIT
+		 * from a view that internally contains a plain FOR UPDATE spec.)
+		 */
+		rc->forUpdate |= forUpdate;
+		rc->noWait |= noWait;
+		return;
+	}
+
+	/* Make a new RowMarkClause */
+	rc = makeNode(RowMarkClause);
+	rc->rti = rtindex;
+	rc->forUpdate = forUpdate;
+	rc->noWait = noWait;
+	qry->rowMarks = lappend(qry->rowMarks, rc);
 }
 
 

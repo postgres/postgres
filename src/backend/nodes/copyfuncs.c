@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.334 2006/04/22 01:25:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.335 2006/04/30 18:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1409,6 +1409,18 @@ _copyGroupClause(GroupClause *from)
 	return newnode;
 }
 
+static RowMarkClause *
+_copyRowMarkClause(RowMarkClause *from)
+{
+	RowMarkClause *newnode = makeNode(RowMarkClause);
+
+	COPY_SCALAR_FIELD(rti);
+	COPY_SCALAR_FIELD(forUpdate);
+	COPY_SCALAR_FIELD(noWait);
+
+	return newnode;
+}
+
 static A_Expr *
 _copyAExpr(A_Expr *from)
 {
@@ -1650,7 +1662,7 @@ _copyLockingClause(LockingClause *from)
 
 	COPY_NODE_FIELD(lockedRels);
 	COPY_SCALAR_FIELD(forUpdate);
-	COPY_SCALAR_FIELD(nowait);
+	COPY_SCALAR_FIELD(noWait);
 
 	return newnode;
 }
@@ -1673,9 +1685,6 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
-	COPY_NODE_FIELD(rowMarks);
-	COPY_SCALAR_FIELD(forUpdate);
-	COPY_SCALAR_FIELD(rowNoWait);
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingQual);
@@ -1683,6 +1692,7 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(sortClause);
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
+	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(resultRelations);
 
@@ -3283,6 +3293,9 @@ copyObject(void *from)
 			break;
 		case T_GroupClause:
 			retval = _copyGroupClause(from);
+			break;
+		case T_RowMarkClause:
+			retval = _copyRowMarkClause(from);
 			break;
 		case T_FkConstraint:
 			retval = _copyFkConstraint(from);

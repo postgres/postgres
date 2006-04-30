@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.188 2006/04/22 01:25:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.189 2006/04/30 18:30:39 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -147,9 +147,6 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
-	READ_NODE_FIELD(rowMarks);
-	READ_BOOL_FIELD(forUpdate);
-	READ_BOOL_FIELD(rowNoWait);
 	READ_NODE_FIELD(targetList);
 	READ_NODE_FIELD(groupClause);
 	READ_NODE_FIELD(havingQual);
@@ -157,6 +154,7 @@ _readQuery(void)
 	READ_NODE_FIELD(sortClause);
 	READ_NODE_FIELD(limitOffset);
 	READ_NODE_FIELD(limitCount);
+	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
 	READ_NODE_FIELD(resultRelations);
 
@@ -215,6 +213,21 @@ _readGroupClause(void)
 
 	READ_UINT_FIELD(tleSortGroupRef);
 	READ_OID_FIELD(sortop);
+
+	READ_DONE();
+}
+
+/*
+ * _readRowMarkClause
+ */
+static RowMarkClause *
+_readRowMarkClause(void)
+{
+	READ_LOCALS(RowMarkClause);
+
+	READ_UINT_FIELD(rti);
+	READ_BOOL_FIELD(forUpdate);
+	READ_BOOL_FIELD(noWait);
 
 	READ_DONE();
 }
@@ -934,6 +947,8 @@ parseNodeString(void)
 		return_value = _readSortClause();
 	else if (MATCH("GROUPCLAUSE", 11))
 		return_value = _readGroupClause();
+	else if (MATCH("ROWMARKCLAUSE", 13))
+		return_value = _readRowMarkClause();
 	else if (MATCH("SETOPERATIONSTMT", 16))
 		return_value = _readSetOperationStmt();
 	else if (MATCH("ALIAS", 5))

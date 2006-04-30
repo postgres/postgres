@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.256 2006/04/15 17:45:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.257 2006/04/30 18:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1796,7 +1796,7 @@ CreateQueryTag(Query *parsetree)
 				tag = "SELECT INTO";
 			else if (parsetree->rowMarks != NIL)
 			{
-				if (parsetree->forUpdate)
+				if (((RowMarkClause *) linitial(parsetree->rowMarks))->forUpdate)
 					tag = "SELECT FOR UPDATE";
 				else
 					tag = "SELECT FOR SHARE";

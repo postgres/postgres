@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.270 2006/04/22 01:25:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.271 2006/04/30 18:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -665,9 +665,6 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(hasSubLinks);
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
-	COMPARE_NODE_FIELD(rowMarks);
-	COMPARE_SCALAR_FIELD(forUpdate);
-	COMPARE_SCALAR_FIELD(rowNoWait);
 	COMPARE_NODE_FIELD(targetList);
 	COMPARE_NODE_FIELD(groupClause);
 	COMPARE_NODE_FIELD(havingQual);
@@ -675,6 +672,7 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_NODE_FIELD(sortClause);
 	COMPARE_NODE_FIELD(limitOffset);
 	COMPARE_NODE_FIELD(limitCount);
+	COMPARE_NODE_FIELD(rowMarks);
 	COMPARE_NODE_FIELD(setOperations);
 	COMPARE_NODE_FIELD(resultRelations);
 
@@ -1688,7 +1686,7 @@ _equalLockingClause(LockingClause *a, LockingClause *b)
 {
 	COMPARE_NODE_FIELD(lockedRels);
 	COMPARE_SCALAR_FIELD(forUpdate);
-	COMPARE_SCALAR_FIELD(nowait);
+	COMPARE_SCALAR_FIELD(noWait);
 
 	return true;
 }
@@ -1719,6 +1717,16 @@ _equalSortClause(SortClause *a, SortClause *b)
 {
 	COMPARE_SCALAR_FIELD(tleSortGroupRef);
 	COMPARE_SCALAR_FIELD(sortop);
+
+	return true;
+}
+
+static bool
+_equalRowMarkClause(RowMarkClause *a, RowMarkClause *b)
+{
+	COMPARE_SCALAR_FIELD(rti);
+	COMPARE_SCALAR_FIELD(forUpdate);
+	COMPARE_SCALAR_FIELD(noWait);
 
 	return true;
 }
@@ -2296,6 +2304,9 @@ equal(void *a, void *b)
 		case T_GroupClause:
 			/* GroupClause is equivalent to SortClause */
 			retval = _equalSortClause(a, b);
+			break;
+		case T_RowMarkClause:
+			retval = _equalRowMarkClause(a, b);
 			break;
 		case T_FkConstraint:
 			retval = _equalFkConstraint(a, b);

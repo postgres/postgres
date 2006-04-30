@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parsetree.h,v 1.32 2006/03/05 15:58:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parsetree.h,v 1.33 2006/04/30 18:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,5 +69,12 @@ extern bool get_rte_attribute_is_dropped(RangeTblEntry *rte,
  */
 
 extern TargetEntry *get_tle_by_resno(List *tlist, AttrNumber resno);
+
+/* ----------------
+ *		FOR UPDATE/SHARE info
+ * ----------------
+ */
+
+extern RowMarkClause *get_rowmark(Query *qry, Index rtindex);
 
 #endif   /* PARSETREE_H */

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.543 2006/04/27 00:33:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.544 2006/04/30 18:30:39 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -96,7 +96,7 @@ static List *check_func_name(List *names);
 static List *extractArgTypes(List *parameters);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
-								List *sortClause, Node *lockingClause,
+								List *sortClause, List *lockingClause,
 								Node *limitOffset, Node *limitCount);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n, int location);
@@ -253,7 +253,8 @@ static void doNegateFloat(Value *v);
 %type <oncommit> OnCommitOption
 %type <withoids> OptWithOids
 
-%type <node>	for_locking_clause opt_for_locking_clause
+%type <node>	for_locking_item
+%type <list>	for_locking_clause opt_for_locking_clause for_locking_items
 %type <list>	locked_rels_list
 %type <boolean>	opt_all
 
@@ -5400,7 +5401,7 @@ select_no_parens:
 			simple_select						{ $$ = $1; }
 			| select_clause sort_clause
 				{
-					insertSelectOptions((SelectStmt *) $1, $2, NULL,
+					insertSelectOptions((SelectStmt *) $1, $2, NIL,
 										NULL, NULL);
 					$$ = $1;
 				}
@@ -5644,12 +5645,27 @@ having_clause:
 		;
 
 for_locking_clause:
+			for_locking_items						{ $$ = $1; }
+			| FOR READ ONLY							{ $$ = NIL; }
+		;
+
+opt_for_locking_clause:
+			for_locking_clause						{ $$ = $1; }
+			| /* EMPTY */							{ $$ = NIL; }
+		;
+
+for_locking_items:
+			for_locking_item						{ $$ = list_make1($1); }
+			| for_locking_items for_locking_item	{ $$ = lappend($1, $2); }
+		;
+
+for_locking_item:
 			FOR UPDATE locked_rels_list opt_nowait
 				{
 					LockingClause *n = makeNode(LockingClause);
 					n->lockedRels = $3;
 					n->forUpdate = TRUE;
-					n->nowait = $4;
+					n->noWait = $4;
 					$$ = (Node *) n;
 				}
 			| FOR SHARE locked_rels_list opt_nowait
@@ -5657,15 +5673,9 @@ for_locking_clause:
 					LockingClause *n = makeNode(LockingClause);
 					n->lockedRels = $3;
 					n->forUpdate = FALSE;
-					n->nowait = $4;
+					n->noWait = $4;
 					$$ = (Node *) n;
 				}
-			| FOR READ ONLY							{ $$ = NULL; }
-		;
-
-opt_for_locking_clause:
-			for_locking_clause						{ $$ = $1; }
-			| /* EMPTY */							{ $$ = NULL; }
 		;
 
 locked_rels_list:
@@ -8976,7 +8986,7 @@ findLeftmostSelect(SelectStmt *node)
  */
 static void
 insertSelectOptions(SelectStmt *stmt,
-					List *sortClause, Node *lockingClause,
+					List *sortClause, List *lockingClause,
 					Node *limitOffset, Node *limitCount)
 {
 	/*
@@ -8991,14 +9001,8 @@ insertSelectOptions(SelectStmt *stmt,
 					 errmsg("multiple ORDER BY clauses not allowed")));
 		stmt->sortClause = sortClause;
 	}
-	if (lockingClause)
-	{
-		if (stmt->lockingClause)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("multiple FOR UPDATE/FOR SHARE clauses not allowed")));
-		stmt->lockingClause = (LockingClause *) lockingClause;
-	}
+	/* We can handle multiple locking clauses, though */
+	stmt->lockingClause = list_concat(stmt->lockingClause, lockingClause);
 	if (limitOffset)
 	{
 		if (stmt->limitOffset)

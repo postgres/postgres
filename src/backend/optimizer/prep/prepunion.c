@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.131 2006/03/05 15:58:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.132 2006/04/30 18:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -816,7 +816,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	 */
 	if (rti == parse->resultRelation)
 		lockmode = RowExclusiveLock;
-	else if (list_member_int(parse->rowMarks, rti))
+	else if (get_rowmark(parse, rti))
 		lockmode = RowShareLock;
 	else
 		lockmode = AccessShareLock;

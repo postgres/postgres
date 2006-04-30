@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.220 2006/04/22 01:26:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.221 2006/04/30 18:30:40 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -1858,27 +1858,21 @@ get_select_query_def(Query *query, deparse_context *context,
 			get_rule_expr(query->limitCount, context, false);
 	}
 
-	/* Add the FOR UPDATE/SHARE clause if present */
-	if (query->rowMarks != NIL)
+	/* Add FOR UPDATE/SHARE clauses if present */
+	foreach(l, query->rowMarks)
 	{
-		if (query->forUpdate)
-			appendContextKeyword(context, " FOR UPDATE OF ",
+		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+		RangeTblEntry *rte = rt_fetch(rc->rti, query->rtable);
+
+		if (rc->forUpdate)
+			appendContextKeyword(context, " FOR UPDATE",
 								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
 		else
-			appendContextKeyword(context, " FOR SHARE OF ",
+			appendContextKeyword(context, " FOR SHARE",
 								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
-		sep = "";
-		foreach(l, query->rowMarks)
-		{
-			int			rtindex = lfirst_int(l);
-			RangeTblEntry *rte = rt_fetch(rtindex, query->rtable);
-
-			appendStringInfo(buf, "%s%s",
-							 sep,
-							 quote_identifier(rte->eref->aliasname));
-			sep = ", ";
-		}
-		if (query->rowNoWait)
+		appendStringInfo(buf, " OF %s",
+						 quote_identifier(rte->eref->aliasname));
+		if (rc->noWait)
 			appendStringInfo(buf, " NOWAIT");
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.98 2006/04/05 22:11:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.99 2006/04/30 18:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,7 +240,11 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 			if (qry->resultRelation)
 				qry->resultRelation += offset;
 			foreach(l, qry->rowMarks)
-				lfirst_int(l) += offset;
+			{
+				RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+
+				rc->rti += offset;
+			}
 		}
 		query_tree_walker(qry, OffsetVarNodes_walker,
 						  (void *) &context, 0);
@@ -395,8 +399,10 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 				qry->resultRelation = new_index;
 			foreach(l, qry->rowMarks)
 			{
-				if (lfirst_int(l) == rt_index)
-					lfirst_int(l) = new_index;
+				RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+
+				if (rc->rti == rt_index)
+					rc->rti = new_index;
 			}
 		}
 		query_tree_walker(qry, ChangeVarNodes_walker,

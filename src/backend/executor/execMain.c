@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.269 2006/03/05 15:58:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.270 2006/04/30 18:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,6 +452,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	Relation	intoRelationDesc;
 	bool		do_select_into;
 	TupleDesc	tupType;
+	ListCell   *l;
 
 	/*
 	 * Do permissions checks.  It's sufficient to examine the query's top
@@ -486,7 +487,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			 * parseTree->resultRelations identifies them all
 			 */
 			ResultRelInfo *resultRelInfo;
-			ListCell   *l;
 
 			numResultRelations = list_length(resultRelations);
 			resultRelInfos = (ResultRelInfo *)
@@ -549,26 +549,21 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 * Have to lock relations selected FOR UPDATE/FOR SHARE
 	 */
 	estate->es_rowMarks = NIL;
-	estate->es_forUpdate = parseTree->forUpdate;
-	estate->es_rowNoWait = parseTree->rowNoWait;
-	if (parseTree->rowMarks != NIL)
+	foreach(l, parseTree->rowMarks)
 	{
-		ListCell   *l;
+		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
+		Oid			relid = getrelid(rc->rti, rangeTable);
+		Relation	relation;
+		ExecRowMark *erm;
 
-		foreach(l, parseTree->rowMarks)
-		{
-			Index		rti = lfirst_int(l);
-			Oid			relid = getrelid(rti, rangeTable);
-			Relation	relation;
-			ExecRowMark *erm;
-
-			relation = heap_open(relid, RowShareLock);
-			erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
-			erm->relation = relation;
-			erm->rti = rti;
-			snprintf(erm->resname, sizeof(erm->resname), "ctid%u", rti);
-			estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
-		}
+		relation = heap_open(relid, RowShareLock);
+		erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
+		erm->relation = relation;
+		erm->rti = rc->rti;
+		erm->forUpdate = rc->forUpdate;
+		erm->noWait = rc->noWait;
+		snprintf(erm->resname, sizeof(erm->resname), "ctid%u", rc->rti);
+		estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
 	}
 
 	/*
@@ -1222,7 +1217,7 @@ lnext:	;
 
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 
-					if (estate->es_forUpdate)
+					if (erm->forUpdate)
 						lockmode = LockTupleExclusive;
 					else
 						lockmode = LockTupleShared;
@@ -1230,7 +1225,7 @@ lnext:	;
 					test = heap_lock_tuple(erm->relation, &tuple, &buffer,
 										   &update_ctid, &update_xmax,
 										   estate->es_snapshot->curcid,
-										   lockmode, estate->es_rowNoWait);
+										   lockmode, erm->noWait);
 					ReleaseBuffer(buffer);
 					switch (test)
 					{
@@ -2258,8 +2253,6 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 		epqstate->es_param_exec_vals = (ParamExecData *)
 			palloc0(estate->es_topPlan->nParamExec * sizeof(ParamExecData));
 	epqstate->es_rowMarks = estate->es_rowMarks;
-	epqstate->es_forUpdate = estate->es_forUpdate;
-	epqstate->es_rowNoWait = estate->es_rowNoWait;
 	epqstate->es_instrument = estate->es_instrument;
 	epqstate->es_select_into = estate->es_select_into;
 	epqstate->es_into_oids = estate->es_into_oids;
