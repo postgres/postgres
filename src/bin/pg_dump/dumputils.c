@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.26 2006/03/05 15:58:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.27 2006/04/30 21:15:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -605,6 +605,7 @@ do { \
 	else if (strcmp(type, "DATABASE") == 0)
 	{
 		CONVERT_PRIV('C', "CREATE");
+		CONVERT_PRIV('c', "CONNECT");
 		CONVERT_PRIV('T', "TEMPORARY");
 	}
 	else if (strcmp(type, "TABLESPACE") == 0)

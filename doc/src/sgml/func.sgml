@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.315 2006/04/25 00:25:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.316 2006/04/30 21:15:32 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9227,6 +9227,7 @@ SELECT has_table_privilege('myschema.mytable', 'select');
     arguments are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>CREATE</literal>,
+    <literal>CONNECT</literal>,
     <literal>TEMPORARY</literal>, or
     <literal>TEMP</literal> (which is equivalent to
     <literal>TEMPORARY</literal>).

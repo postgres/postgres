@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.163 2006/04/30 02:09:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.164 2006/04/30 21:15:33 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -51,7 +51,7 @@
 
 
 static bool FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace);
-static void ReverifyMyDatabase(const char *name, const char *user_name);
+static void ReverifyMyDatabase(const char *name, bool am_superuser);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
 static bool ThereIsAtLeastOneRole(void);
@@ -127,12 +127,11 @@ FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace)
  * of pg_database.
  *
  * To avoid having to read pg_database more times than necessary
- * during session startup, this place is also fitting to set up any
- * database-specific configuration variables.
+ * during session startup, this place is also fitting to check CONNECT
+ * privilege and set up any database-specific configuration variables.
  */
- 
 static void
-ReverifyMyDatabase(const char *name, const char *user_name)
+ReverifyMyDatabase(const char *name, bool am_superuser)
 {
 	Relation	pgdbrel;
 	SysScanDesc pgdbscan;
@@ -196,6 +195,22 @@ ReverifyMyDatabase(const char *name, const char *user_name)
 					name)));
 
 		/*
+		 * Check privilege to connect to the database.  To avoid making
+		 * a whole extra search of pg_database here, we don't go through
+		 * pg_database_aclcheck, but instead use a lower-level routine
+		 * that we can pass the pg_database tuple to.
+		 */
+		if (!am_superuser &&
+			pg_database_tuple_aclmask(tup, RelationGetDescr(pgdbrel),
+									  GetUserId(),
+									  ACL_CONNECT, ACLMASK_ANY) == 0)
+			ereport(FATAL,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied for database %s",
+							NameStr(dbform->datname)),
+					 errdetail("User does not have CONNECT privilege.")));
+
+		/*
 		 * Check connection limit for this database.
 		 *
 		 * There is a race condition here --- we create our PGPROC before
@@ -206,29 +221,12 @@ ReverifyMyDatabase(const char *name, const char *user_name)
 		 * just document that the connection limit is approximate.
 		 */
 		if (dbform->datconnlimit >= 0 &&
-			!superuser() &&
+			!am_superuser &&
 			CountDBBackends(MyDatabaseId) > dbform->datconnlimit)
 			ereport(FATAL,
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("too many connections for database \"%s\"",
 							name)));
-
-		/*
-		 * Checking for privilege to connect to the database
-		 * We want to bypass the test if we are running in bootstrap mode
-		 */
-		if (!IsBootstrapProcessingMode())
-		{
-				if(pg_database_aclcheck(MyDatabaseId,GetUserId()
-					,ACL_CONNECT) != ACLCHECK_OK )
-				{
-					ereport(FATAL,
-                			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-                 				errmsg("couldn't connect to database %s", NameStr(dbform->datname)),
-                 				errdetail("User %s doesn't have the CONNECTION privilege for database %s.",
-                                user_name, NameStr(dbform->datname))));				
-				}
-		}
 	}
 
 	/*
@@ -476,15 +474,20 @@ InitPostgres(const char *dbname, const char *username)
 	RelationCacheInitializePhase2();
 
 	/*
-	 * Figure out our postgres user id.  In standalone mode and in the
-	 * autovacuum process, we use a fixed id, otherwise we figure it out from
-	 * the authenticated user name.
+	 * Figure out our postgres user id, and see if we are a superuser.
+	 *
+	 * In standalone mode and in the autovacuum process, we use a fixed id,
+	 * otherwise we figure it out from the authenticated user name.
 	 */
 	if (bootstrap || autovacuum)
+	{
 		InitializeSessionUserIdStandalone();
+		am_superuser = true;
+	}
 	else if (!IsUnderPostmaster)
 	{
 		InitializeSessionUserIdStandalone();
+		am_superuser = true;
 		if (!ThereIsAtLeastOneRole())
 			ereport(WARNING,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -496,7 +499,11 @@ InitPostgres(const char *dbname, const char *username)
 	{
 		/* normal multiuser case */
 		InitializeSessionUserId(username);
+		am_superuser = superuser();
 	}
+
+	/* set up ACL framework (so ReverifyMyDatabase can check permissions) */
+	initialize_acl();
 
 	/*
 	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo() got
@@ -505,7 +512,7 @@ InitPostgres(const char *dbname, const char *username)
 	 * superuser, so the above stuff has to happen first.)
 	 */
 	if (!bootstrap)
-		ReverifyMyDatabase(dbname,username);
+		ReverifyMyDatabase(dbname, am_superuser);
 
 	/*
 	 * Final phase of relation cache startup: write a new cache file if
@@ -513,14 +520,6 @@ InitPostgres(const char *dbname, const char *username)
 	 * cache file into a dead database.
 	 */
 	RelationCacheInitializePhase3();
-
-	/*
-	 * Check if user is a superuser.
-	 */
-	if (bootstrap || autovacuum)
-		am_superuser = true;
-	else
-		am_superuser = superuser();
 
 	/*
 	 * Check a normal user hasn't connected to a superuser reserved slot.
@@ -539,9 +538,6 @@ InitPostgres(const char *dbname, const char *username)
 
 	/* set default namespace search path */
 	InitializeSearchPath();
-
-	/* set up ACL framework (currently just sets RolMemCache callback) */
-	initialize_acl();
 
 	/* initialize client encoding */
 	InitializeClientEncoding();

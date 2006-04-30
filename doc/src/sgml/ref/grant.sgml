@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.53 2006/04/30 02:09:06 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.54 2006/04/30 21:15:33 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ GRANT { { USAGE | SELECT | UPDATE }
     ON SEQUENCE <replaceable class="PARAMETER">sequencename</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
-GRANT { { CREATE | TEMPORARY | TEMP | CONNECTION } [,...] | ALL [ PRIVILEGES ] }
+GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
@@ -118,7 +118,8 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
    Depending on the type of object, the initial default privileges may
    include granting some privileges to <literal>PUBLIC</literal>.
    The default is no public access for tables, schemas, and tablespaces;
-   <literal>TEMP</> table creation privilege for databases;
+   <literal>CONNECT</> privilege and <literal>TEMP</> table creation privilege
+   for databases;
    <literal>EXECUTE</> privilege for functions; and
    <literal>USAGE</> privilege for languages.
    The object owner may of course revoke these privileges.  (For maximum
@@ -230,13 +231,12 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
     </varlistentry>
 
     <varlistentry>
-     <term>CONNECTION</term>
+     <term>CONNECT</term>
      <listitem>
       <para>
-       Allows the ability to connect to the specified database.
-       By default, Grant permissions allow users to connect to any database,
-       though <filename>pg_hba.conf</> can add additional connection
-       restrictions.
+       Allows the user to connect to the specified database.  This
+       privilege is checked at connection startup (in addition to checking
+       any restrictions imposed by <filename>pg_hba.conf</>).
       </para>
      </listitem>
     </varlistentry>
@@ -429,7 +429,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
                   X -- EXECUTE
                   U -- USAGE
                   C -- CREATE
-                  c -- CONNECTION
+                  c -- CONNECT
                   T -- TEMPORARY
             arwdRxt -- ALL PRIVILEGES (for tables)
                   * -- grant option for preceding privilege

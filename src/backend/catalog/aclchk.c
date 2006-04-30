@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.126 2006/04/30 02:09:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.127 2006/04/30 21:15:33 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1368,7 +1368,7 @@ string_to_privilege(const char *privname)
 		return ACL_CREATE_TEMP;
 	if (strcmp(privname, "temp") == 0)
 		return ACL_CREATE_TEMP;
-	if (strcmp(privname, "connection") == 0)
+	if (strcmp(privname, "connect") == 0)
 		return ACL_CONNECT;
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1404,7 +1404,7 @@ privilege_to_string(AclMode privilege)
 		case ACL_CREATE_TEMP:
 			return "TEMP";
 		case ACL_CONNECT:
-			return "CONNECTION";
+			return "CONNECT";
 		default:
 			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}
@@ -1661,10 +1661,6 @@ pg_database_aclmask(Oid db_oid, Oid roleid,
 	ScanKeyData entry[1];
 	SysScanDesc scan;
 	HeapTuple	tuple;
-	Datum		aclDatum;
-	bool		isNull;
-	Acl		   *acl;
-	Oid			ownerId;
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(roleid))
@@ -1688,10 +1684,33 @@ pg_database_aclmask(Oid db_oid, Oid roleid,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database with OID %u does not exist", db_oid)));
 
-	ownerId = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
+	result = pg_database_tuple_aclmask(tuple, RelationGetDescr(pg_database),
+									   roleid, mask, how);
 
-	aclDatum = heap_getattr(tuple, Anum_pg_database_datacl,
-							RelationGetDescr(pg_database), &isNull);
+	systable_endscan(scan);
+	heap_close(pg_database, AccessShareLock);
+
+	return result;
+}
+
+/*
+ * This is split out so that ReverifyMyDatabase can perform an ACL check
+ * without a whole extra search of pg_database
+ */
+AclMode
+pg_database_tuple_aclmask(HeapTuple db_tuple, TupleDesc tupdesc,
+						  Oid roleid, AclMode mask, AclMaskHow how)
+{
+	AclMode		result;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
+	Oid			ownerId;
+
+	ownerId = ((Form_pg_database) GETSTRUCT(db_tuple))->datdba;
+
+	aclDatum = heap_getattr(db_tuple, Anum_pg_database_datacl,
+							tupdesc, &isNull);
 
 	if (isNull)
 	{
@@ -1710,9 +1729,6 @@ pg_database_aclmask(Oid db_oid, Oid roleid,
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
 		pfree(acl);
-
-	systable_endscan(scan);
-	heap_close(pg_database, AccessShareLock);
 
 	return result;
 }

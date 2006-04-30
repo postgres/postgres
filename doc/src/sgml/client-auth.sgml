@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.88 2006/04/30 02:09:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.89 2006/04/30 21:15:32 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -206,8 +206,6 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        Multiple user names can be supplied by separating them with commas.
        A separate file containing user names can be specified by preceding the
        file name with <literal>@</>.
-       User and group connectivity can also be restricted by <command>GRANT
-       CONNECTION ON DATABASE</>.
       </para>
      </listitem>
     </varlistentry>
@@ -435,6 +433,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
    re-read the file.
   </para>
+
+  <tip>
+   <para>
+    To connect to a particular database, a user must not only pass the
+    <filename>pg_hba.conf</filename> checks, but must have the
+    <literal>CONNECT</> privilege for the database.  If you wish to
+    restrict which users can connect to which databases, it's usually
+    easier to control this by granting/revoking <literal>CONNECT</> privilege
+    than to put the rules into <filename>pg_hba.conf</filename> entries.
+   </para>
+  </tip>
 
   <para>
    Some examples of <filename>pg_hba.conf</filename> entries are shown in

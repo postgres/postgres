@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.132 2006/04/30 02:09:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.133 2006/04/30 21:15:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -553,7 +553,8 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 			owner_default = ACL_ALL_RIGHTS_SEQUENCE;
 			break;
 		case ACL_OBJECT_DATABASE:
-			world_default = ACL_CREATE_TEMP | ACL_CONNECT;	/* not NO_RIGHTS! */
+			/* for backwards compatibility, grant some rights by default */
+			world_default = ACL_CREATE_TEMP | ACL_CONNECT;
 			owner_default = ACL_ALL_RIGHTS_DATABASE;
 			break;
 		case ACL_OBJECT_FUNCTION:
@@ -1341,6 +1342,8 @@ convert_priv_string(text *priv_type_text)
 		return ACL_CREATE_TEMP;
 	if (pg_strcasecmp(priv_type, "TEMPORARY") == 0)
 		return ACL_CREATE_TEMP;
+	if (pg_strcasecmp(priv_type, "CONNECT") == 0)
+		return ACL_CONNECT;
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1777,6 +1780,11 @@ convert_database_priv_string(text *priv_type_text)
 		return ACL_CREATE_TEMP;
 	if (pg_strcasecmp(priv_type, "TEMP WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP);
+
+	if (pg_strcasecmp(priv_type, "CONNECT") == 0)
+		return ACL_CONNECT;
+	if (pg_strcasecmp(priv_type, "CONNECT WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_CONNECT);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

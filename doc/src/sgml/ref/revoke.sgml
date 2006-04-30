@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.37 2006/04/30 02:09:06 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.38 2006/04/30 21:15:33 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,7 +35,7 @@ REVOKE [ GRANT OPTION FOR ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
-    { { CREATE | TEMPORARY | TEMP | CONNECTION } [,...] | ALL [ PRIVILEGES ] }
+    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
