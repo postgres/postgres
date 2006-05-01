@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.86 2006/03/14 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.87 2006/05/01 23:22:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,7 @@
 #include "utils/typcache.h"
 
 
-static Oid binary_oper_exact(Oid arg1, Oid arg2,
-				  FuncCandidateList candidates);
+static Oid binary_oper_exact(List *opname, Oid arg1, Oid arg2);
 static FuncDetailCode oper_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  FuncCandidateList candidates,
@@ -64,33 +63,31 @@ Oid
 LookupOperName(ParseState *pstate, List *opername, Oid oprleft, Oid oprright,
 			   bool noError, int location)
 {
-	FuncCandidateList clist;
-	char		oprkind;
+	Oid			result;
 
-	if (!OidIsValid(oprleft))
-		oprkind = 'l';
-	else if (!OidIsValid(oprright))
-		oprkind = 'r';
-	else
-		oprkind = 'b';
-
-	clist = OpernameGetCandidates(opername, oprkind);
-
-	while (clist)
-	{
-		if (clist->args[0] == oprleft && clist->args[1] == oprright)
-			return clist->oid;
-		clist = clist->next;
-	}
+	result = OpernameGetOprid(opername, oprleft, oprright);
+	if (OidIsValid(result))
+		return result;
 
 	/* we don't use op_error here because only an exact match is wanted */
 	if (!noError)
+	{
+		char		oprkind;
+
+		if (!OidIsValid(oprleft))
+			oprkind = 'l';
+		else if (!OidIsValid(oprright))
+			oprkind = 'r';
+		else
+			oprkind = 'b';
+
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s",
 						op_signature_string(opername, oprkind,
 											oprleft, oprright)),
 				 parser_errposition(pstate, location)));
+	}
 
 	return InvalidOid;
 }
@@ -387,10 +384,9 @@ oprfuncid(Operator op)
  * be reduced to its base type to find an "exact" match.
  */
 static Oid
-binary_oper_exact(Oid arg1, Oid arg2,
-				  FuncCandidateList candidates)
+binary_oper_exact(List *opname, Oid arg1, Oid arg2)
 {
-	FuncCandidateList cand;
+	Oid			result;
 	bool		was_unknown = false;
 
 	/* Unspecified type for one of the arguments? then use the other */
@@ -405,11 +401,9 @@ binary_oper_exact(Oid arg1, Oid arg2,
 		was_unknown = true;
 	}
 
-	for (cand = candidates; cand != NULL; cand = cand->next)
-	{
-		if (arg1 == cand->args[0] && arg2 == cand->args[1])
-			return cand->oid;
-	}
+	result = OpernameGetOprid(opname, arg1, arg2);
+	if (OidIsValid(result))
+		return result;
 
 	if (was_unknown)
 	{
@@ -418,11 +412,9 @@ binary_oper_exact(Oid arg1, Oid arg2,
 
 		if (basetype != arg1)
 		{
-			for (cand = candidates; cand != NULL; cand = cand->next)
-			{
-				if (basetype == cand->args[0] && basetype == cand->args[1])
-					return cand->oid;
-			}
+			result = OpernameGetOprid(opname, basetype, basetype);
+			if (OidIsValid(result))
+				return result;
 		}
 	}
 
@@ -503,32 +495,33 @@ Operator
 oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 	 bool noError, int location)
 {
-	FuncCandidateList clist;
-	Oid			inputOids[2];
 	Oid			operOid;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
-	/* Get binary operators of given name */
-	clist = OpernameGetCandidates(opname, 'b');
-
-	/* No operators found? Then fail... */
-	if (clist != NULL)
+	/*
+	 * First try for an "exact" match.
+	 */
+	operOid = binary_oper_exact(opname, ltypeId, rtypeId);
+	if (!OidIsValid(operOid))
 	{
 		/*
-		 * Check for an "exact" match.
+		 * Otherwise, search for the most suitable candidate.
 		 */
-		operOid = binary_oper_exact(ltypeId, rtypeId, clist);
-		if (!OidIsValid(operOid))
-		{
-			/*
-			 * Otherwise, search for the most suitable candidate.
-			 */
+		FuncCandidateList clist;
 
+		/* Get binary operators of given name */
+		clist = OpernameGetCandidates(opname, 'b');
+
+		/* No operators found? Then fail... */
+		if (clist != NULL)
+		{
 			/*
 			 * Unspecified type for one of the arguments? then use the other
 			 * (XXX this is probably dead code?)
 			 */
+			Oid			inputOids[2];
+
 			if (rtypeId == InvalidOid)
 				rtypeId = ltypeId;
 			else if (ltypeId == InvalidOid)
@@ -537,11 +530,12 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 			inputOids[1] = rtypeId;
 			fdresult = oper_select_candidate(2, inputOids, clist, &operOid);
 		}
-		if (OidIsValid(operOid))
-			tup = SearchSysCache(OPEROID,
-								 ObjectIdGetDatum(operOid),
-								 0, 0, 0);
 	}
+
+	if (OidIsValid(operOid))
+		tup = SearchSysCache(OPEROID,
+							 ObjectIdGetDatum(operOid),
+							 0, 0, 0);
 
 	if (!HeapTupleIsValid(tup) && !noError)
 		op_error(pstate, opname, 'b', ltypeId, rtypeId, fdresult, location);
@@ -627,32 +621,26 @@ compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError)
 Operator
 right_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 {
-	FuncCandidateList clist;
-	Oid			operOid = InvalidOid;
+	Oid			operOid;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
-	/* Find candidates */
-	clist = OpernameGetCandidates(op, 'r');
-
-	if (clist != NULL)
+	/*
+	 * First try for an "exact" match.
+	 */
+	operOid = OpernameGetOprid(op, arg, InvalidOid);
+	if (!OidIsValid(operOid))
 	{
 		/*
-		 * First, quickly check to see if there is an exactly matching
-		 * operator (there can be only one such entry in the list).
+		 * Otherwise, search for the most suitable candidate.
 		 */
-		FuncCandidateList clisti;
+		FuncCandidateList clist;
 
-		for (clisti = clist; clisti != NULL; clisti = clisti->next)
-		{
-			if (arg == clisti->args[0])
-			{
-				operOid = clisti->oid;
-				break;
-			}
-		}
+		/* Get postfix operators of given name */
+		clist = OpernameGetCandidates(op, 'r');
 
-		if (!OidIsValid(operOid))
+		/* No operators found? Then fail... */
+		if (clist != NULL)
 		{
 			/*
 			 * We must run oper_select_candidate even if only one candidate,
@@ -660,11 +648,12 @@ right_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 			 */
 			fdresult = oper_select_candidate(1, &arg, clist, &operOid);
 		}
-		if (OidIsValid(operOid))
-			tup = SearchSysCache(OPEROID,
-								 ObjectIdGetDatum(operOid),
-								 0, 0, 0);
 	}
+
+	if (OidIsValid(operOid))
+		tup = SearchSysCache(OPEROID,
+							 ObjectIdGetDatum(operOid),
+							 0, 0, 0);
 
 	if (!HeapTupleIsValid(tup) && !noError)
 		op_error(pstate, op, 'r', arg, InvalidOid, fdresult, location);
@@ -690,49 +679,52 @@ right_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 Operator
 left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 {
-	FuncCandidateList clist;
-	Oid			operOid = InvalidOid;
+	Oid			operOid;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
-	/* Find candidates */
-	clist = OpernameGetCandidates(op, 'l');
-
-	if (clist != NULL)
+	/*
+	 * First try for an "exact" match.
+	 */
+	operOid = OpernameGetOprid(op, InvalidOid, arg);
+	if (!OidIsValid(operOid))
 	{
 		/*
-		 * First, quickly check to see if there is an exactly matching
-		 * operator (there can be only one such entry in the list).
-		 *
-		 * The returned list has args in the form (0, oprright).  Move the
-		 * useful data into args[0] to keep oper_select_candidate simple. XXX
-		 * we are assuming here that we may scribble on the list!
+		 * Otherwise, search for the most suitable candidate.
 		 */
-		FuncCandidateList clisti;
+		FuncCandidateList clist;
 
-		for (clisti = clist; clisti != NULL; clisti = clisti->next)
+		/* Get prefix operators of given name */
+		clist = OpernameGetCandidates(op, 'l');
+
+		/* No operators found? Then fail... */
+		if (clist != NULL)
 		{
-			clisti->args[0] = clisti->args[1];
-			if (arg == clisti->args[0])
+			/*
+			 * The returned list has args in the form (0, oprright).
+			 * Move the useful data into args[0] to keep oper_select_candidate
+			 * simple.  XXX we are assuming here that we may scribble on the
+			 * list!
+			 */
+			FuncCandidateList clisti;
+
+			for (clisti = clist; clisti != NULL; clisti = clisti->next)
 			{
-				operOid = clisti->oid;
-				break;
+				clisti->args[0] = clisti->args[1];
 			}
-		}
 
-		if (!OidIsValid(operOid))
-		{
 			/*
 			 * We must run oper_select_candidate even if only one candidate,
 			 * otherwise we may falsely return a non-type-compatible operator.
 			 */
 			fdresult = oper_select_candidate(1, &arg, clist, &operOid);
 		}
-		if (OidIsValid(operOid))
-			tup = SearchSysCache(OPEROID,
-								 ObjectIdGetDatum(operOid),
-								 0, 0, 0);
 	}
+
+	if (OidIsValid(operOid))
+		tup = SearchSysCache(OPEROID,
+							 ObjectIdGetDatum(operOid),
+							 0, 0, 0);
 
 	if (!HeapTupleIsValid(tup) && !noError)
 		op_error(pstate, op, 'l', InvalidOid, arg, fdresult, location);

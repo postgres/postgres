@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.84 2006/04/25 14:11:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.85 2006/05/01 23:22:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -683,6 +683,95 @@ FunctionIsVisible(Oid funcid)
 
 
 /*
+ * OpernameGetOprid
+ *		Given a possibly-qualified operator name and exact input datatypes,
+ *		look up the operator.  Returns InvalidOid if not found.
+ *
+ * Pass oprleft = InvalidOid for a prefix op, oprright = InvalidOid for
+ * a postfix op.
+ *
+ * If the operator name is not schema-qualified, it is sought in the current
+ * namespace search path.
+ */
+Oid
+OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
+{
+	char	   *schemaname;
+	char	   *opername;
+	CatCList   *catlist;
+	ListCell   *l;
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(names, &schemaname, &opername);
+
+	if (schemaname)
+	{
+		/* search only in exact schema given */
+		Oid			namespaceId;
+		HeapTuple	opertup;
+
+		namespaceId = LookupExplicitNamespace(schemaname);
+		opertup = SearchSysCache(OPERNAMENSP,
+								 CStringGetDatum(opername),
+								 ObjectIdGetDatum(oprleft),
+								 ObjectIdGetDatum(oprright),
+								 ObjectIdGetDatum(namespaceId));
+		if (HeapTupleIsValid(opertup))
+		{
+			Oid		result = HeapTupleGetOid(opertup);
+
+			ReleaseSysCache(opertup);
+			return result;
+		}
+		return InvalidOid;
+	}
+
+	/* Search syscache by name and argument types */
+	catlist = SearchSysCacheList(OPERNAMENSP, 3,
+								 CStringGetDatum(opername),
+								 ObjectIdGetDatum(oprleft),
+								 ObjectIdGetDatum(oprright),
+								 0);
+
+	if (catlist->n_members == 0)
+	{
+		/* no hope, fall out early */
+		ReleaseSysCacheList(catlist);
+		return InvalidOid;
+	}
+
+	/*
+	 * We have to find the list member that is first in the search path,
+	 * if there's more than one.  This doubly-nested loop looks ugly,
+	 * but in practice there should usually be few catlist members.
+	 */
+	recomputeNamespacePath();
+
+	foreach(l, namespaceSearchPath)
+	{
+		Oid			namespaceId = lfirst_oid(l);
+		int			i;
+
+		for (i = 0; i < catlist->n_members; i++)
+		{
+			HeapTuple	opertup = &catlist->members[i]->tuple;
+			Form_pg_operator operform = (Form_pg_operator) GETSTRUCT(opertup);
+
+			if (operform->oprnamespace == namespaceId)
+			{
+				Oid		result = HeapTupleGetOid(opertup);
+
+				ReleaseSysCacheList(catlist);
+				return result;
+			}
+		}
+	}
+
+	ReleaseSysCacheList(catlist);
+	return InvalidOid;
+}
+
+/*
  * OpernameGetCandidates
  *		Given a possibly-qualified operator name and operator kind,
  *		retrieve a list of the possible matches.
@@ -883,26 +972,13 @@ OperatorIsVisible(Oid oprid)
 		 * If it is in the path, it might still not be visible; it could be
 		 * hidden by another operator of the same name and arguments earlier
 		 * in the path.  So we must do a slow check to see if this is the same
-		 * operator that would be found by OpernameGetCandidates.
+		 * operator that would be found by OpernameGetOprId.
 		 */
 		char	   *oprname = NameStr(oprform->oprname);
-		FuncCandidateList clist;
 
-		visible = false;
-
-		clist = OpernameGetCandidates(list_make1(makeString(oprname)),
-									  oprform->oprkind);
-
-		for (; clist; clist = clist->next)
-		{
-			if (clist->args[0] == oprform->oprleft &&
-				clist->args[1] == oprform->oprright)
-			{
-				/* Found the expected entry; is it the right op? */
-				visible = (clist->oid == oprid);
-				break;
-			}
-		}
+		visible = (OpernameGetOprid(list_make1(makeString(oprname)),
+									oprform->oprleft, oprform->oprright)
+				   == oprid);
 	}
 
 	ReleaseSysCache(oprtup);
