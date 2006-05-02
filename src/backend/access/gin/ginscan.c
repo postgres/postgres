@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.1 2006/05/02 11:28:54 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.2 2006/05/02 15:48:11 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -66,6 +66,8 @@ fillScanKey( GinState *ginstate, GinScanKey key, Datum query,
 	}
 }
 
+#ifdef NOT_USED
+
 static void
 resetScanKeys(GinScanKey keys, uint32 nkeys) {
 	uint32	i, j;
@@ -91,6 +93,8 @@ resetScanKeys(GinScanKey keys, uint32 nkeys) {
 		}
 	}
 }
+
+#endif
 
 static void
 freeScanKeys(GinScanKey keys, uint32 nkeys, bool removeRes) {

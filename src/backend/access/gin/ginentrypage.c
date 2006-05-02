@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.1 2006/05/02 11:28:54 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.2 2006/05/02 15:48:11 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -116,7 +116,7 @@ entryIsMoveRight(GinBtree btree, Page page) {
 static BlockNumber
 entryLocateEntry(GinBtree btree, GinBtreeStack *stack) {
 	OffsetNumber low, high, maxoff;
-	IndexTuple  itup;
+	IndexTuple  itup = NULL;
 	int result;
 	Page page = BufferGetPage( stack->buffer );
 
