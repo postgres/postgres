@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.137.2.2 2006/02/13 16:22:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.137.2.3 2006/05/02 04:34:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,6 +262,13 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not supported for inheritance queries")));
+
+	/*
+	 * We might have looked up indexes for the parent rel, but they're
+	 * really not relevant to the appendrel.  Reset the pointer to avoid
+	 * any confusion.
+	 */
+	rel->indexlist = NIL;
 
 	/*
 	 * Initialize to compute size estimates for whole inheritance tree

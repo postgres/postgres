@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.191.2.1 2005/11/22 18:23:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.191.2.2 2006/05/02 04:34:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2970,19 +2970,27 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		(varRelid == 0 || varRelid == ((Var *) basenode)->varno))
 	{
 		Var		   *var = (Var *) basenode;
-		Oid			relid;
+		RangeTblEntry *rte;
 
 		vardata->var = basenode;	/* return Var without relabeling */
 		vardata->rel = find_base_rel(root, var->varno);
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
 
-		relid = getrelid(var->varno, root->parse->rtable);
+		rte = rt_fetch(var->varno, root->parse->rtable);
 
-		if (OidIsValid(relid))
+		if (rte->inh)
+		{
+			/*
+			 * XXX This means the Var represents a column of an append relation.
+			 * Later add code to look at the member relations and try to derive
+			 * some kind of combined statistics?
+			 */
+		}
+		else if (rte->rtekind == RTE_RELATION)
 		{
 			vardata->statsTuple = SearchSysCache(STATRELATT,
-												 ObjectIdGetDatum(relid),
+												 ObjectIdGetDatum(rte->relid),
 												 Int16GetDatum(var->varattno),
 												 0, 0);
 		}
