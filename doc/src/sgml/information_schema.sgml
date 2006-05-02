@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.25 2006/04/02 17:38:13 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.26 2006/05/02 18:07:51 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2130,6 +2130,7 @@ ORDER BY c.ordinal_position;
    generally, it is better to use the view
    <literal>applicable_roles</literal> instead of this one; see also
    there.
+  </para>
 
   <table>
    <title><literal>enabled_roles</literal> Columns</title>
