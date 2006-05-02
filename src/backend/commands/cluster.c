@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.145 2006/05/02 11:28:54 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.146 2006/05/02 15:45:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,9 +379,8 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 	if (!OldIndex->rd_am->amclusterable) 
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster on index \"%s\" because access method does not clusterable",
-			   	RelationGetRelationName(OldIndex))));
-
+				 errmsg("cannot cluster on index \"%s\" because access method does not support clustering",
+						RelationGetRelationName(OldIndex))));
 
 	/*
 	 * Disallow clustering system relations.  This will definitely NOT work
