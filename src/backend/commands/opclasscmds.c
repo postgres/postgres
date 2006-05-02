@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.44 2006/05/02 11:28:54 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.45 2006/05/02 22:25:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,11 +77,13 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				opclassoid;		/* oid of opclass we create */
 	int			numOperators,	/* amstrategies value */
 				numProcs;		/* amsupport value */
+	bool		amstorage;		/* amstorage flag */
 	List	   *operators;		/* OpClassMember list for operators */
 	List	   *procedures;		/* OpClassMember list for support procs */
 	ListCell   *l;
 	Relation	rel;
 	HeapTuple	tup;
+	Form_pg_am	pg_am;
 	Datum		values[Natts_pg_opclass];
 	char		nulls[Natts_pg_opclass];
 	AclResult	aclresult;
@@ -111,8 +113,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						stmt->amname)));
 
 	amoid = HeapTupleGetOid(tup);
-	numOperators = ((Form_pg_am) GETSTRUCT(tup))->amstrategies;
-	numProcs = ((Form_pg_am) GETSTRUCT(tup))->amsupport;
+	pg_am = (Form_pg_am) GETSTRUCT(tup);
+	numOperators = pg_am->amstrategies;
+	numProcs = pg_am->amsupport;
+	amstorage = pg_am->amstorage;
 
 	/* XXX Should we make any privilege check against the AM? */
 
@@ -270,19 +274,11 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		/* Just drop the spec if same as column datatype */
 		if (storageoid == typeoid)
 			storageoid = InvalidOid;
-		else
-		{
-			/*
-			 * Currently, only GiST and GIN allows storagetype different from
-			 * datatype.  This hardcoded test should be eliminated in favor of
-			 * adding another boolean column to pg_am ...
-			 */
-			if (!(amoid == GIST_AM_OID || amoid == GIN_AM_OID))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("storage type may not be different from data type for access method \"%s\"",
-								stmt->amname)));
-		}
+		else if (!amstorage)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("storage type may not be different from data type for access method \"%s\"",
+							stmt->amname)));
 	}
 
 	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.68 2006/03/31 23:32:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.69 2006/05/02 22:25:10 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -233,6 +233,7 @@ extern Datum hashendscan(PG_FUNCTION_ARGS);
 extern Datum hashmarkpos(PG_FUNCTION_ARGS);
 extern Datum hashrestrpos(PG_FUNCTION_ARGS);
 extern Datum hashbulkdelete(PG_FUNCTION_ARGS);
+extern Datum hashvacuumcleanup(PG_FUNCTION_ARGS);
 
 /*
  * Datatype-specific hash functions in hashfunc.c.

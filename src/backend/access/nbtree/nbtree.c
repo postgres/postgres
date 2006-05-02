@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.145 2006/04/25 22:46:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.146 2006/05/02 22:25:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,15 +518,15 @@ btrestrpos(PG_FUNCTION_ARGS)
 Datum
 btbulkdelete(PG_FUNCTION_ARGS)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
-	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
-	IndexBulkDeleteResult *result;
+	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
+	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
+	Relation	rel = info->index;
 	double		tuples_removed = 0;
 	OffsetNumber deletable[MaxOffsetNumber];
 	int			ndeletable;
 	Buffer		buf;
-	BlockNumber num_pages;
 
 	/*
 	 * The outer loop iterates over index leaf pages, the inner over items on
@@ -543,14 +543,8 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	 * further to its right, which the indexscan will have no pin on.)	We can
 	 * skip obtaining exclusive lock on empty pages though, since no indexscan
 	 * could be stopped on those.
-	 *
-	 * We can skip the scan entirely if there's nothing to delete (indicated
-	 * by callback_state == NULL).
 	 */
-	if (callback_state)
-		buf = _bt_get_endpoint(rel, 0, false);
-	else
-		buf = InvalidBuffer;
+	buf = _bt_get_endpoint(rel, 0, false);
 
 	if (BufferIsValid(buf))		/* check for empty index */
 	{
@@ -626,14 +620,12 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	}
 
 	/* return statistics */
-	num_pages = RelationGetNumberOfBlocks(rel);
+	if (stats == NULL)
+		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+	stats->tuples_removed += tuples_removed;
+	/* btvacuumcleanup will fill in num_pages and num_index_tuples */
 
-	result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
-	result->num_pages = num_pages;
-	/* btvacuumcleanup will fill in num_index_tuples */
-	result->tuples_removed = tuples_removed;
-
-	PG_RETURN_POINTER(result);
+	PG_RETURN_POINTER(stats);
 }
 
 /*
@@ -646,9 +638,9 @@ btbulkdelete(PG_FUNCTION_ARGS)
 Datum
 btvacuumcleanup(PG_FUNCTION_ARGS)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	IndexVacuumCleanupInfo *info = (IndexVacuumCleanupInfo *) PG_GETARG_POINTER(1);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(2);
+	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	Relation	rel = info->index;
 	BlockNumber num_pages;
 	BlockNumber blkno;
 	BlockNumber *freePages;
@@ -660,7 +652,9 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	bool		needLock;
 
-	Assert(stats != NULL);
+	/* Set up all-zero stats if btbulkdelete wasn't called */
+	if (stats == NULL)
+		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
 
 	/*
 	 * First find out the number of pages in the index.  We must acquire the

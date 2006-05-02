@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.121 2006/03/10 19:10:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.122 2006/05/02 22:25:09 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -395,10 +395,24 @@
      </row>
 
      <row>
+      <entry><structfield>amstorage</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Can index storage data type differ from column data type?</entry>
+     </row>
+
+     <row>
       <entry><structfield>amconcurrent</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Does the access method support concurrent updates?</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amclusterable</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Can an index of this type be CLUSTERed on?</entry>
      </row>
 
      <row>

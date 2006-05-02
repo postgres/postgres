@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.327 2006/05/02 11:28:54 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.328 2006/05/02 22:25:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,7 +230,6 @@ static void vacuum_index(VacPageList vacpagelist, Relation indrel,
 			 double num_tuples, int keep_tuples);
 static void scan_index(Relation indrel, double num_tuples);
 static bool tid_reaped(ItemPointer itemptr, void *state);
-static bool dummy_tid_reaped(ItemPointer itemptr, void *state);
 static void vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 			   BlockNumber rel_pages);
 static VacPage copy_vac_page(VacPage vacpage);
@@ -2933,7 +2932,7 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 }
 
 /*
- *	scan_index() -- scan one index relation to update statistic.
+ *	scan_index() -- scan one index relation to update pg_class statistics.
  *
  * We use this when we have no deletions to do.
  */
@@ -2941,25 +2940,17 @@ static void
 scan_index(Relation indrel, double num_tuples)
 {
 	IndexBulkDeleteResult *stats;
-	IndexVacuumCleanupInfo vcinfo;
+	IndexVacuumInfo ivinfo;
 	PGRUsage	ru0;
 
 	pg_rusage_init(&ru0);
 
-	/*
-	 * Even though we're not planning to delete anything, we use the
-	 * ambulkdelete call, because (a) the scan happens within the index AM for
-	 * more speed, and (b) it may want to pass private statistics to the
-	 * amvacuumcleanup call.
-	 */
-	stats = index_bulk_delete(indrel, dummy_tid_reaped, NULL);
+	ivinfo.index = indrel;
+	ivinfo.vacuum_full = true;
+	ivinfo.message_level = elevel;
+	ivinfo.num_heap_tuples = num_tuples;
 
-	/* Do post-VACUUM cleanup, even though we deleted nothing */
-	vcinfo.vacuum_full = true;
-	vcinfo.message_level = elevel;
-	vcinfo.num_heap_tuples = num_tuples;
-
-	stats = index_vacuum_cleanup(indrel, &vcinfo, stats);
+	stats = index_vacuum_cleanup(&ivinfo, NULL);
 
 	if (!stats)
 		return;
@@ -2982,16 +2973,7 @@ scan_index(Relation indrel, double num_tuples)
 	/*
 	 * Check for tuple count mismatch.	If the index is partial, then it's OK
 	 * for it to have fewer tuples than the heap; else we got trouble.
-	 *
-	 * XXX Hack. Since GIN stores every pointer to heap several times and
-	 * counting num_index_tuples during vacuum is very comlpex and slow
-	 * we just copy num_tuples to num_index_tuples as upper limit to avoid
-	 * WARNING and optimizer mistakes.
 	 */
-	if ( indrel->rd_rel->relam == GIN_AM_OID ) 
-	{
-		stats->num_index_tuples = num_tuples; 
-	} else
 	if (stats->num_index_tuples != num_tuples)
 	{
 		if (stats->num_index_tuples > num_tuples ||
@@ -3023,20 +3005,21 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 			 double num_tuples, int keep_tuples)
 {
 	IndexBulkDeleteResult *stats;
-	IndexVacuumCleanupInfo vcinfo;
+	IndexVacuumInfo ivinfo;
 	PGRUsage	ru0;
 
 	pg_rusage_init(&ru0);
 
+	ivinfo.index = indrel;
+	ivinfo.vacuum_full = true;
+	ivinfo.message_level = elevel;
+	ivinfo.num_heap_tuples = num_tuples + keep_tuples;
+
 	/* Do bulk deletion */
-	stats = index_bulk_delete(indrel, tid_reaped, (void *) vacpagelist);
+	stats = index_bulk_delete(&ivinfo, NULL, tid_reaped, (void *) vacpagelist);
 
 	/* Do post-VACUUM cleanup */
-	vcinfo.vacuum_full = true;
-	vcinfo.message_level = elevel;
-	vcinfo.num_heap_tuples = num_tuples + keep_tuples;
-
-	stats = index_vacuum_cleanup(indrel, &vcinfo, stats);
+	stats = index_vacuum_cleanup(&ivinfo, stats);
 
 	if (!stats)
 		return;
@@ -3061,16 +3044,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	/*
 	 * Check for tuple count mismatch.	If the index is partial, then it's OK
 	 * for it to have fewer tuples than the heap; else we got trouble.
-	 *
-	 * XXX Hack. Since GIN stores every pointer to heap several times and
-	 * counting num_index_tuples during vacuum is very comlpex and slow
-	 * we just copy num_tuples to num_index_tuples as upper limit to avoid
-	 * WARNING and optimizer mistakes.
 	 */
-	if ( indrel->rd_rel->relam == GIN_AM_OID ) 
-	{
-		stats->num_index_tuples = num_tuples; 
-	} else
 	if (stats->num_index_tuples != num_tuples + keep_tuples)
 	{
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
@@ -3135,15 +3109,6 @@ tid_reaped(ItemPointer itemptr, void *state)
 
 	/* tid is reaped */
 	return true;
-}
-
-/*
- * Dummy version for scan_index.
- */
-static bool
-dummy_tid_reaped(ItemPointer itemptr, void *state)
-{
-	return false;
 }
 
 /*

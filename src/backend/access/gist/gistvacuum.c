@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.18 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.19 2006/05/02 22:25:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,9 +343,9 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 Datum
 gistvacuumcleanup(PG_FUNCTION_ARGS)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	IndexVacuumCleanupInfo *info = (IndexVacuumCleanupInfo *) PG_GETARG_POINTER(1);
-	GistBulkDeleteResult *stats = (GistBulkDeleteResult *) PG_GETARG_POINTER(2);
+	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
+	GistBulkDeleteResult *stats = (GistBulkDeleteResult *) PG_GETARG_POINTER(1);
+	Relation	rel = info->index;
 	BlockNumber npages,
 				blkno;
 	BlockNumber nFreePages,
@@ -354,6 +354,19 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	BlockNumber lastBlock = GIST_ROOT_BLKNO,
 				lastFilledBlock = GIST_ROOT_BLKNO;
 	bool		needLock;
+
+	/* Set up all-zero stats if gistbulkdelete wasn't called */
+	if (stats == NULL)
+	{
+		stats = (GistBulkDeleteResult *) palloc0(sizeof(GistBulkDeleteResult));
+		/* use heap's tuple count */
+		Assert(info->num_heap_tuples >= 0);
+		stats->std.num_index_tuples = info->num_heap_tuples;
+		/*
+		 * XXX the above is wrong if index is partial.  Would it be OK to
+		 * just return NULL, or is there work we must do below?
+		 */
+	}
 
 	/* gistVacuumUpdate may cause hard work */
 	if (info->vacuum_full)
@@ -460,13 +473,6 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	if (info->vacuum_full)
 		UnlockRelation(rel, AccessExclusiveLock);
 
-	/* if gistbulkdelete skipped the scan, use heap's tuple count */
-	if (stats->std.num_index_tuples < 0)
-	{
-		Assert(info->num_heap_tuples >= 0);
-		stats->std.num_index_tuples = info->num_heap_tuples;
-	}
-
 	PG_RETURN_POINTER(stats);
 }
 
@@ -509,36 +515,22 @@ pushStackIfSplited(Page page, GistBDItem *stack)
 Datum
 gistbulkdelete(PG_FUNCTION_ARGS)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
-	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
-	GistBulkDeleteResult *result;
+	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
+	GistBulkDeleteResult *stats = (GistBulkDeleteResult *) PG_GETARG_POINTER(1);
+	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
+	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
+	Relation	rel = info->index;
 	GistBDItem *stack,
 			   *ptr;
-	bool		needLock;
 
-	result = (GistBulkDeleteResult *) palloc0(sizeof(GistBulkDeleteResult));
+	/* first time through? */
+	if (stats == NULL)
+		stats = (GistBulkDeleteResult *) palloc0(sizeof(GistBulkDeleteResult));
+	/* we'll re-count the tuples each time */
+	stats->std.num_index_tuples = 0;
 
-	/*
-	 * We can skip the scan entirely if there's nothing to delete (indicated
-	 * by callback_state == NULL) and the index isn't partial.  For a partial
-	 * index we must scan in order to derive a trustworthy tuple count.
-	 *
-	 * XXX as of PG 8.2 this is dead code because GIST indexes are always
-	 * effectively partial ... but keep it anyway in case our null-handling
-	 * gets fixed.
-	 */
-	if (callback_state || vac_is_partial_index(rel))
-	{
-		stack = (GistBDItem *) palloc0(sizeof(GistBDItem));
-		stack->blkno = GIST_ROOT_BLKNO;
-	}
-	else
-	{
-		/* skip scan and set flag for gistvacuumcleanup */
-		stack = NULL;
-		result->std.num_index_tuples = -1;
-	}
+	stack = (GistBDItem *) palloc0(sizeof(GistBDItem));
+	stack->blkno = GIST_ROOT_BLKNO;
 
 	while (stack)
 	{
@@ -601,11 +593,11 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					i--;
 					maxoff--;
 					ntodelete++;
-					result->std.tuples_removed += 1;
+					stats->std.tuples_removed += 1;
 					Assert(maxoff == PageGetMaxOffsetNumber(page));
 				}
 				else
-					result->std.num_index_tuples += 1;
+					stats->std.num_index_tuples += 1;
 			}
 
 			if (ntodelete)
@@ -658,7 +650,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 				stack->next = ptr;
 
 				if (GistTupleIsInvalid(idxtuple))
-					result->needFullVacuum = true;
+					stats->needFullVacuum = true;
 			}
 		}
 
@@ -671,13 +663,5 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 		vacuum_delay_point();
 	}
 
-	needLock = !RELATION_IS_LOCAL(rel);
-
-	if (needLock)
-		LockRelationForExtension(rel, ExclusiveLock);
-	result->std.num_pages = RelationGetNumberOfBlocks(rel);
-	if (needLock)
-		UnlockRelationForExtension(rel, ExclusiveLock);
-
-	PG_RETURN_POINTER(result);
+	PG_RETURN_POINTER(stats);
 }

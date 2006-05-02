@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.9 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.10 2006/05/02 22:25:09 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -184,44 +184,52 @@ aminsert (Relation indexRelation,
   <para>
 <programlisting>
 IndexBulkDeleteResult *
-ambulkdelete (Relation indexRelation,
+ambulkdelete (IndexVacuumInfo *info,
+              IndexBulkDeleteResult *stats,
               IndexBulkDeleteCallback callback,
               void *callback_state);
 </programlisting>
    Delete tuple(s) from the index.  This is a <quote>bulk delete</> operation
    that is intended to be implemented by scanning the whole index and checking
    each entry to see if it should be deleted.
-   The passed-in <literal>callback</> function may be called, in the style
+   The passed-in <literal>callback</> function must be called, in the style
    <literal>callback(<replaceable>TID</>, callback_state) returns bool</literal>,
    to determine whether any particular index entry, as identified by its
    referenced TID, is to be deleted.  Must return either NULL or a palloc'd
    struct containing statistics about the effects of the deletion operation.
+   It is OK to return NULL if no information needs to be passed on to
+   <function>amvacuumcleanup</>.
   </para>
 
   <para>
-   If <literal>callback_state</> is NULL then no tuples are to be deleted.
-   The index AM may choose to optimize this case (eg by not scanning the
-   index) but it is still expected to deliver accurate statistics.
+   Because of limited <varname>maintenance_work_mem</>,
+   <function>ambulkdelete</> may need to be called more than once when many
+   tuples are to be deleted.  The <literal>stats</> argument is the result
+   of the previous call for this index (it is NULL for the first call within a
+   <command>VACUUM</> operation).  This allows the AM to accumulate statistics
+   across the whole operation.  Typically, <function>ambulkdelete</> will
+   modify and return the same struct if the passed <literal>stats</> is not
+   null.
   </para>
 
   <para>
 <programlisting>
 IndexBulkDeleteResult *
-amvacuumcleanup (Relation indexRelation,
-                 IndexVacuumCleanupInfo *info,
+amvacuumcleanup (IndexVacuumInfo *info,
                  IndexBulkDeleteResult *stats);
 </programlisting>
-   Clean up after a <command>VACUUM</command> operation (one or more
-   <function>ambulkdelete</> calls).  An index access method does not have
-   to provide this function (if so, the entry in <structname>pg_am</> must
-   be zero).  If it is provided, it is typically used for bulk cleanup
-   such as reclaiming empty index pages.  <literal>info</>
-   provides some additional arguments such as a message level for statistical
-   reports, and <literal>stats</> is whatever the last
-   <function>ambulkdelete</> call returned.  <function>amvacuumcleanup</>
-   may replace or modify this struct before returning it.  If the result
-   is not NULL it must be a palloc'd struct.  The statistics it contains
-   will be reported by <command>VACUUM</> if <literal>VERBOSE</> is given.
+   Clean up after a <command>VACUUM</command> operation (zero or more
+   <function>ambulkdelete</> calls).  This does not have to do anything
+   beyond returning index statistics, but it may perform bulk cleanup
+   such as reclaiming empty index pages.  <literal>stats</> is whatever the
+   last <function>ambulkdelete</> call returned, or NULL if
+   <function>ambulkdelete</> was not called because no tuples needed to be
+   deleted.  If the result is not NULL it must be a palloc'd struct.
+   The statistics it contains will be used to update <structname>pg_class</>,
+   and will be reported by <command>VACUUM</> if <literal>VERBOSE</> is given.
+   It is OK to return NULL if the index was not changed at all during the
+   <command>VACUUM</command> operation, but otherwise correct stats should
+   be returned.
   </para>
 
   <para>

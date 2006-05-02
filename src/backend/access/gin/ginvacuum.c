@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.1 2006/05/02 11:28:54 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.2 2006/05/02 22:25:10 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -474,17 +474,25 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 
 Datum
 ginbulkdelete(PG_FUNCTION_ARGS) {
-	Relation    index = (Relation) PG_GETARG_POINTER(0);
-	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
-	void       *callback_state = (void *) PG_GETARG_POINTER(2);
+	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
+	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
+	Relation	index = info->index;
 	BlockNumber	blkno = GIN_ROOT_BLKNO;
 	GinVacuumState	gvs;
 	Buffer 		buffer;
 	BlockNumber	rootOfPostingTree[ BLCKSZ/ (sizeof(IndexTupleData)+sizeof(ItemId)) ];
 	uint32 nRoot;
 
+	/* first time through? */
+	if (stats == NULL)
+		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+	/* we'll re-count the tuples each time */
+	stats->num_index_tuples = 0;
+
 	gvs.index = index;
-	gvs.result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+	gvs.result = stats;
 	gvs.callback = callback;
 	gvs.callback_state = callback_state;
 	initGinState(&gvs.ginstate, index);
@@ -564,9 +572,9 @@ ginbulkdelete(PG_FUNCTION_ARGS) {
 
 Datum 
 ginvacuumcleanup(PG_FUNCTION_ARGS) {
-	Relation    index = (Relation) PG_GETARG_POINTER(0);
-	IndexVacuumCleanupInfo *info = (IndexVacuumCleanupInfo *) PG_GETARG_POINTER(1);
-	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(2);
+	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	Relation    index = info->index;
 	bool	 needLock = !RELATION_IS_LOCAL(index);
     BlockNumber npages,
 				blkno;
@@ -576,6 +584,15 @@ ginvacuumcleanup(PG_FUNCTION_ARGS) {
 	BlockNumber lastBlock = GIN_ROOT_BLKNO,
 				   lastFilledBlock = GIN_ROOT_BLKNO;
 
+	/* Set up all-zero stats if ginbulkdelete wasn't called */
+	if (stats == NULL)
+		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+	/*
+	 * XXX we always report the heap tuple count as the number of index
+	 * entries.  This is bogus if the index is partial, but it's real hard
+	 * to tell how many distinct heap entries are referenced by a GIN index.
+	 */
+	stats->num_index_tuples = info->num_heap_tuples;
 
 	if (info->vacuum_full) {
 		LockRelation(index, AccessExclusiveLock);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.58 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.59 2006/05/02 22:25:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,29 @@
 
 
 /*
- * Struct for statistics returned by bulk-delete operation
+ * Struct for input arguments passed to ambulkdelete and amvacuumcleanup
  *
- * This is now also passed to the index AM's vacuum-cleanup operation,
- * if it has one, which can modify the results as needed.  Note that
- * an index AM could choose to have bulk-delete return a larger struct
- * of which this is just the first field; this provides a way for bulk-delete
- * to communicate additional private data to vacuum-cleanup.
+ * Note that num_heap_tuples will not be valid during ambulkdelete,
+ * only amvacuumcleanup.
+ */
+typedef struct IndexVacuumInfo
+{
+	Relation	index;			/* the index being vacuumed */
+	bool		vacuum_full;	/* VACUUM FULL (we have exclusive lock) */
+	int			message_level;	/* ereport level for progress messages */
+	double		num_heap_tuples;	/* tuples remaining in heap */
+} IndexVacuumInfo;
+
+/*
+ * Struct for statistics returned by ambulkdelete and amvacuumcleanup
+ *
+ * This struct is normally allocated by the first ambulkdelete call and then
+ * passed along through subsequent ones until amvacuumcleanup; however,
+ * amvacuumcleanup must be prepared to allocate it in the case where no
+ * ambulkdelete calls were made (because no tuples needed deletion).
+ * Note that an index AM could choose to return a larger struct
+ * of which this is just the first field; this provides a way for ambulkdelete
+ * to communicate additional private data to amvacuumcleanup.
  *
  * Note: pages_removed is the amount by which the index physically shrank,
  * if any (ie the change in its total size on disk).  pages_deleted and
@@ -36,23 +52,15 @@
 typedef struct IndexBulkDeleteResult
 {
 	BlockNumber num_pages;		/* pages remaining in index */
-	BlockNumber pages_removed;	/* # removed by bulk-delete operation */
+	BlockNumber pages_removed;	/* # removed during vacuum operation */
 	double		num_index_tuples;		/* tuples remaining */
-	double		tuples_removed; /* # removed by bulk-delete operation */
+	double		tuples_removed; /* # removed during vacuum operation */
 	BlockNumber pages_deleted;	/* # unused pages in index */
 	BlockNumber pages_free;		/* # pages available for reuse */
 } IndexBulkDeleteResult;
 
 /* Typedef for callback function to determine if a tuple is bulk-deletable */
 typedef bool (*IndexBulkDeleteCallback) (ItemPointer itemptr, void *state);
-
-/* Struct for additional arguments passed to vacuum-cleanup operation */
-typedef struct IndexVacuumCleanupInfo
-{
-	bool		vacuum_full;	/* VACUUM FULL (we have exclusive lock) */
-	int			message_level;	/* ereport level for progress messages */
-	double		num_heap_tuples;	/* tuples remaining in heap */
-} IndexVacuumCleanupInfo;
 
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData
@@ -98,11 +106,11 @@ extern bool index_getmulti(IndexScanDesc scan,
 			   ItemPointer tids, int32 max_tids,
 			   int32 *returned_tids);
 
-extern IndexBulkDeleteResult *index_bulk_delete(Relation indexRelation,
+extern IndexBulkDeleteResult *index_bulk_delete(IndexVacuumInfo *info,
+				  IndexBulkDeleteResult *stats,
 				  IndexBulkDeleteCallback callback,
 				  void *callback_state);
-extern IndexBulkDeleteResult *index_vacuum_cleanup(Relation indexRelation,
-					 IndexVacuumCleanupInfo *info,
+extern IndexBulkDeleteResult *index_vacuum_cleanup(IndexVacuumInfo *info,
 					 IndexBulkDeleteResult *stats);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);

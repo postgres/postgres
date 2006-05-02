@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.88 2006/03/24 04:32:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.89 2006/05/02 22:25:10 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -478,11 +478,11 @@ hashrestrpos(PG_FUNCTION_ARGS)
 Datum
 hashbulkdelete(PG_FUNCTION_ARGS)
 {
-	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
-	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
-	IndexBulkDeleteResult *result;
-	BlockNumber num_pages;
+	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
+	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
+	Relation	rel = info->index;
 	double		tuples_removed;
 	double		num_index_tuples;
 	double		orig_ntuples;
@@ -517,18 +517,6 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	cur_maxbucket = orig_maxbucket;
 
 loop_top:
-
-	/*
-	 * If we don't have anything to delete, skip the scan, and report the
-	 * number of tuples shown in the metapage.  (Unlike btree and gist,
-	 * we can trust this number even for a partial index.)
-	 */
-	if (!callback_state)
-	{
-		cur_bucket = cur_maxbucket + 1;
-		num_index_tuples = local_metapage.hashm_ntuples;
-	}
-
 	while (cur_bucket <= cur_maxbucket)
 	{
 		BlockNumber bucket_blkno;
@@ -657,14 +645,37 @@ loop_top:
 	_hash_wrtbuf(rel, metabuf);
 
 	/* return statistics */
+	if (stats == NULL)
+		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+	stats->num_index_tuples = num_index_tuples;
+	stats->tuples_removed += tuples_removed;
+	/* hashvacuumcleanup will fill in num_pages */
+
+	PG_RETURN_POINTER(stats);
+}
+
+/*
+ * Post-VACUUM cleanup.
+ *
+ * Result: a palloc'd struct containing statistical info for VACUUM displays.
+ */
+Datum
+hashvacuumcleanup(PG_FUNCTION_ARGS)
+{
+	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	Relation	rel = info->index;
+	BlockNumber num_pages;
+
+	/* If hashbulkdelete wasn't called, return NULL signifying no change */
+	if (stats == NULL)
+		PG_RETURN_POINTER(NULL);
+
+	/* update statistics */
 	num_pages = RelationGetNumberOfBlocks(rel);
+	stats->num_pages = num_pages;
 
-	result = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
-	result->num_pages = num_pages;
-	result->num_index_tuples = num_index_tuples;
-	result->tuples_removed = tuples_removed;
-
-	PG_RETURN_POINTER(result);
+	PG_RETURN_POINTER(stats);
 }
 
 

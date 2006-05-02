@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.146 2006/05/02 15:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.147 2006/05/02 22:25:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,6 +339,12 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 				 errmsg("cannot cluster on partial index \"%s\"",
 						RelationGetRelationName(OldIndex))));
 
+	if (!OldIndex->rd_am->amclusterable) 
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot cluster on index \"%s\" because access method does not support clustering",
+						RelationGetRelationName(OldIndex))));
+
 	if (!OldIndex->rd_am->amindexnulls)
 	{
 		AttrNumber	colno;
@@ -375,12 +381,6 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 					 errmsg("cannot cluster on expressional index \"%s\" because its index access method does not handle null values",
 							RelationGetRelationName(OldIndex))));
 	}
-
-	if (!OldIndex->rd_am->amclusterable) 
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot cluster on index \"%s\" because access method does not support clustering",
-						RelationGetRelationName(OldIndex))));
 
 	/*
 	 * Disallow clustering system relations.  This will definitely NOT work
