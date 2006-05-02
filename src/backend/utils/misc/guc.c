@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.317 2006/04/25 14:11:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.318 2006/05/02 11:28:55 teodor Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "pgstat.h"
-
+#include "access/gin.h"
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
@@ -1570,6 +1570,16 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&tcp_keepalives_count,
 		0, 0, INT_MAX, assign_tcp_keepalives_count, show_tcp_keepalives_count
+	},
+
+	{
+		{"gin_fuzzy_search_limit", PGC_USERSET, UNGROUPED,
+			gettext_noop("Sets the maximum allowed result for exact search by gin."),
+			NULL,
+			0
+		},
+		&GinFuzzySearchLimit,
+		0, 0, INT_MAX, NULL, NULL
 	},
 
 	/* End-of-list marker */

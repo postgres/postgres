@@ -1146,8 +1146,54 @@ AS
         FUNCTION        7       gtsq_same (gtsq, gtsq, internal),
         STORAGE         gtsq;
 
+--GIN support function
+CREATE FUNCTION gin_extract_tsvector(tsvector,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C RETURNS NULL ON NULL INPUT;
+
+CREATE FUNCTION gin_extract_tsquery(tsquery,internal,internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C RETURNS NULL ON NULL INPUT;
+
+CREATE FUNCTION gin_ts_consistent(internal,internal,tsquery)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C RETURNS NULL ON NULL INPUT;
+
+CREATE OPERATOR @@@ (
+        LEFTARG = tsvector,
+        RIGHTARG = tsquery,
+        PROCEDURE = exectsq,
+        COMMUTATOR = '@@@',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+CREATE OPERATOR @@@ (
+        LEFTARG = tsquery,
+        RIGHTARG = tsvector,
+        PROCEDURE = rexectsq,
+        COMMUTATOR = '@@@',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR CLASS gin_tsvector_ops
+DEFAULT FOR TYPE tsvector USING gin
+AS
+        OPERATOR        1       @@ (tsvector, tsquery),
+        OPERATOR        2       @@@ (tsvector, tsquery) RECHECK,
+        FUNCTION        1       bttextcmp(text, text),
+        FUNCTION        2       gin_extract_tsvector(tsvector,internal),
+        FUNCTION        3       gin_extract_tsquery(tsquery,internal,internal),
+        FUNCTION        4       gin_ts_consistent(internal,internal,tsquery),
+        STORAGE         text;
+
+
 --example of ISpell dictionary
 --update pg_ts_dict set dict_initoption='DictFile="/usr/local/share/ispell/russian.dict" ,AffFile ="/usr/local/share/ispell/russian.aff", StopFile="/usr/local/share/ispell/russian.stop"' where dict_name='ispell_template';
 --example of synonym dict
 --update pg_ts_dict set dict_initoption='/usr/local/share/ispell/english.syn' where dict_id=5;
+
 END;

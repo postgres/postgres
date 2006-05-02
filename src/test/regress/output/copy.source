@@ -31,6 +31,8 @@ COPY bt_i4_heap FROM '@abs_srcdir@/data/desc.data';
 COPY bt_name_heap FROM '@abs_srcdir@/data/hash.data';
 COPY bt_txt_heap FROM '@abs_srcdir@/data/desc.data';
 COPY bt_f8_heap FROM '@abs_srcdir@/data/hash.data';
+COPY array_op_test FROM '@abs_srcdir@/data/array.data';
+COPY array_index_op_test FROM '@abs_srcdir@/data/array.data';
 --- test copying in CSV mode with various styles
 --- of embedded line ending characters
 create temp table copytest (

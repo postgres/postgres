@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.142 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.143 2006/05/02 11:28:55 teodor Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -870,6 +870,11 @@ DATA(insert OID = 2576 (  "|&>"    PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 
 DATA(insert OID = 2577 (  "|>>"    PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_above positionsel positionjoinsel ));
 DATA(insert OID = 2589 (  "&<|"    PGNSP PGUID b f 718 718	16	 0	 0	 0	 0	 0	 0 circle_overbelow positionsel positionjoinsel ));
 DATA(insert OID = 2590 (  "|&>"    PGNSP PGUID b f 718 718	16	 0	 0	 0	 0	 0	 0 circle_overabove positionsel positionjoinsel ));
+
+/* overlap/contains/contained from arrays */
+DATA(insert OID = 2750 (  "&&"	   PGNSP PGUID b f 2277 2277	16 2750	 0	 0	 0	 0	 0 arrayoverlap areasel areajoinsel ));
+DATA(insert OID = 2751 (  "@"	   PGNSP PGUID b f 2277 2277	16 2752	 0	 0	 0	 0	 0 arraycontains contsel contjoinsel ));
+DATA(insert OID = 2752 (  "~"	   PGNSP PGUID b f 2277 2277	16 2751	 0	 0	 0	 0	 0 arraycontained contsel contjoinsel ));
 
 
 /*

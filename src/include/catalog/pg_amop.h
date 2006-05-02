@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.69 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.70 2006/05/02 11:28:55 teodor Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -635,5 +635,19 @@ DATA(insert (	2595	0 9  t	2589 ));
 DATA(insert (	2595	0 10 t	1515 ));
 DATA(insert (	2595	0 11 t	1514 ));
 DATA(insert (	2595	0 12 t	2590 ));
+
+/*
+ * gin _int4_ops
+ */
+DATA(insert (	2745	0 1  f	2750 ));
+DATA(insert (	2745	0 2  f	2751 ));
+DATA(insert (	2745	0 3  t	2752 ));
+
+/*
+ * gin _text_ops
+ */
+DATA(insert (	2746	0 1  f	2750 ));
+DATA(insert (	2746	0 2  f	2751 ));
+DATA(insert (	2746	0 3  t	2752 ));
 
 #endif   /* PG_AMOP_H */

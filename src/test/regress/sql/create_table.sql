@@ -220,3 +220,14 @@ CREATE TABLE bt_f8_heap (
 	random 		int4
 );
 
+CREATE TABLE array_op_test (
+	seqno		int4,
+	i			int4[],
+	t			text[]
+);
+
+CREATE TABLE array_index_op_test (
+	seqno		int4,
+	i			int4[],
+	t			text[]
+);

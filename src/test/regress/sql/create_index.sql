@@ -134,6 +134,39 @@ RESET enable_indexscan;
 RESET enable_bitmapscan;
 
 --
+-- GIN over int[]
+--
+
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
+
+CREATE INDEX intarrayidx ON array_index_op_test USING gin (i);
+
+SELECT * FROM array_index_op_test WHERE i @ '{32}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @ '{17}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{17}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @ '{32,17}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i && '{32,17}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i ~ '{38,34,32,89}' ORDER BY seqno;
+
+CREATE INDEX textarrayidx ON array_index_op_test USING gin (t);
+
+SELECT * FROM array_index_op_test WHERE t @ '{AAAAAAAA72908}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t && '{AAAAAAAA72908}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t @ '{AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t && '{AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t @ '{AAAAAAAA72908,AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t && '{AAAAAAAA72908,AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t ~ '{AAAAAAAA72908,AAAAAAAAAAAAAAAAAAA17075,AA88409,AAAAAAAAAAAAAAAAAA36842,AAAAAAA48038,AAAAAAAAAAAAAA10611}' ORDER BY seqno;
+
+
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
+
+--
 -- HASH
 --
 CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);

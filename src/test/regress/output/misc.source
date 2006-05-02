@@ -570,6 +570,8 @@ SELECT user_relns() AS user_relns
  a_star
  abstime_tbl
  aggtest
+ array_index_op_test
+ array_op_test
  arrtest
  b
  b_star
@@ -663,7 +665,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(97 rows)
+(99 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

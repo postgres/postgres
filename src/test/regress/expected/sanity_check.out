@@ -10,6 +10,7 @@ SELECT relname, relhasindex
    ORDER BY relname;
        relname       | relhasindex 
 ---------------------+-------------
+ array_index_op_test | t
  bt_f8_heap          | t
  bt_i4_heap          | t
  bt_name_heap        | t
@@ -69,7 +70,7 @@ SELECT relname, relhasindex
  shighway            | t
  tenk1               | t
  tenk2               | t
-(59 rows)
+(60 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

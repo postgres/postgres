@@ -157,6 +157,22 @@ SELECT ARRAY[[1,2],[3,4]] || ARRAY[5,6] AS "{{1,2},{3,4},{5,6}}";
 SELECT ARRAY[0,0] || ARRAY[1,1] || ARRAY[2,2] AS "{0,0,1,1,2,2}";
 SELECT 0 || ARRAY[1,2] || 3 AS "{0,1,2,3}";
 
+SELECT * FROM array_op_test WHERE i @ '{32}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i && '{32}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i @ '{17}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i && '{17}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i @ '{32,17}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i && '{32,17}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE i ~ '{38,34,32,89}' ORDER BY seqno;
+
+SELECT * FROM array_op_test WHERE t @ '{AAAAAAAA72908}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE t && '{AAAAAAAA72908}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE t @ '{AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE t && '{AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE t @ '{AAAAAAAA72908,AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE t && '{AAAAAAAA72908,AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_op_test WHERE t ~ '{AAAAAAAA72908,AAAAAAAAAAAAAAAAAAA17075,AA88409,AAAAAAAAAAAAAAAAAA36842,AAAAAAA48038,AAAAAAAAAAAAAA10611}' ORDER BY seqno;
+
 -- array casts
 SELECT ARRAY[1,2,3]::text[]::int[]::float8[] AS "{1,2,3}";
 SELECT ARRAY[1,2,3]::text[]::int[]::float8[] is of (float8[]) as "TRUE";

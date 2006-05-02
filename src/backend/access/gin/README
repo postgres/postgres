@@ -1,0 +1,153 @@
+Gin for PostgreSQL
+==================
+
+Gin was sponsored by jfg://networks (http://www.jfg-networks.com/)
+
+Gin stands for Generalized Inverted Index and should be considered as a genie,
+not a drink.
+
+Generalized means that the index does not know which operation it accelerates.
+It instead works with custom strategies, defined for specific data types (read 
+"Index Method Strategies" in the PostgreSQL documentation). In that sense, Gin 
+is similar to GiST and differs from btree indices, which have predefined,
+comparison-based operations.
+
+An inverted index is an index structure storing a set of (key, posting list) 
+pairs, where 'posting list' is a set of documents in which the key occurs. 
+(A text document would usually contain many keys.)  The primary goal of 
+Gin indices is support for highly scalable, full-text search in PostgreSQL.
+
+Gin consists of a B-tree index constructed over entries (ET, entries tree),
+where each entry is an element of the indexed value (element of array, lexeme
+for tsvector) and where each tuple in a leaf page is either a pointer to a 
+B-tree over item pointers (PT, posting tree), or a list of item pointers 
+(PL, posting list) if the tuple is small enough.
+
+Note: There is no delete operation for ET. The reason for this is that from
+our experience, a set of unique words over a large collection change very
+rarely.  This greatly simplifies the code and concurrency algorithms.
+
+Gin comes with built-in support for one-dimensional arrays (eg. integer[], 
+text[]), but no support for NULL elements.  The following operations are
+available:
+
+  * contains: value_array @ query_array
+  * overlap: value_array && query_array
+  * contained: value_array ~ query_array
+
+Synopsis
+--------
+
+=# create index txt_idx on aa using gin(a);
+
+Features
+--------
+
+  * Concurrency
+  * Write-Ahead Logging (WAL).  (Recoverability from crashes.)
+  * User-defined opclasses.  (The scheme is similar to GiST.)
+  * Optimized index creation (Makes use of maintenance_work_mem to accumulate
+    postings in memory.)
+  * Tsearch2 support via an opclass
+  * Soft upper limit on the returned results set using a GUC variable:
+    gin_fuzzy_search_limit
+
+Gin Fuzzy Limit
+---------------
+
+There are often situations when a full-text search returns a very large set of
+results.  Since reading tuples from the disk and sorting them could take a
+lot of time, this is unacceptable for production.  (Note that the search 
+itself is very fast.)
+
+Such queries usually contain very frequent lexemes, so the results are not 
+very helpful. To facilitate execution of such queries Gin has a configurable 
+soft upper limit of the size of the returned set, determined by the 
+'gin_fuzzy_search_limit' GUC variable.  This is set to 0 by default (no 
+limit).
+
+If a non-zero search limit is set, then the returned set is a subset of the
+whole result set, chosen at random.
+
+"Soft" means that the actual number of returned results could slightly differ
+from the specified limit, depending on the query and the quality of the 
+system's random number generator.
+
+From experience, a value of 'gin_fuzzy_search_limit' in the thousands
+(eg. 5000-20000) works well.  This means that 'gin_fuzzy_search_limit' will
+have no effect for queries returning a result set with less tuples than this 
+number.
+
+Limitations
+-----------
+
+  * No support for multicolumn indices
+  * Gin doesn't uses scan->kill_prior_tuple & scan->ignore_killed_tuples
+  * Gin searches entries only by equality matching.  This may be improved in
+    future.
+  * Gin doesn't support full scans of indices.
+  * Gin doesn't index NULL values.
+
+Gin Interface
+-------------
+
+Opclass interface pseudocode. An example for a Gin opclass can be found in
+ginarayproc.c.
+
+Datum* extractValue(Datum inputValue, uint32* nentries)
+
+    Returns an array of Datum of entries of the value to be indexed.  nentries 
+    should contain the number of returned entries.
+    
+int compareEntry(Datum a, Datum b)
+
+    Compares two entries (not the indexing values)
+    
+Datum* extractQuery(Datum query, uint32* nentries, StrategyNumber n)
+
+    Returns an array of Datum of entries of the query to be executed.
+    n contains the strategy number of the operation.
+    
+bool consistent(bool[] check, StrategyNumber n, Datum query)
+
+    The size of the check array is the same as sizeof of the array returned by
+    extractQuery. Each element of the check array is true if the indexed value
+    has a corresponding entry in the query.  i.e. if (check[i] == TRUE) then 
+    the i-th entry of the query is present in the indexed value.  The Function
+    should return true if the indexed value matches by StrategyNumber and
+    the query.
+
+Open Items
+----------
+
+We appreciate any comments, help and suggestions.
+
+  * Teach optimizer/executor that GIN is intrinsically clustered. i.e., it
+    always returns ItemPointer in ascending order.
+  * Tweak gincostestimate.
+  * GIN stores several ItemPointer to heap tuple, so VACUUM FULL produces
+    this warning message:
+
+     WARNING:  index "idx" contains 88395 row versions, but table contains 
+     				51812 row versions
+     HINT:  Rebuild the index with REINDEX.
+	**** Workaround added
+
+TODO
+----
+
+Nearest future:
+
+  * Opclasses for all types (no programming, just many catalog changes).
+
+Distant future:
+
+  * Replace B-tree of entries to something like GiST
+  * Add multicolumn support
+  * Optimize insert operations (background index insertion)
+
+Authors
+-------
+
+All work was done by Teodor Sigaev (teodor@sigaev.ru) and Oleg Bartunov 
+(oleg@sai.msu.su).

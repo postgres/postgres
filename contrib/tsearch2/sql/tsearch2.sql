@@ -363,3 +363,14 @@ select * from ts_debug('Tsearch module for PostgreSQL 7.3.3');
 insert into test_tsvector values (null, null);
 select a is null, a from test_tsvector order by a;
 
+drop index wowidx;
+create index wowidx on test_tsvector using gin (a);
+set enable_seqscan=off;
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+

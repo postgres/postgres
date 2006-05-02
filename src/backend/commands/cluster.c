@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.144 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.145 2006/05/02 11:28:54 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,6 +375,13 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 					 errmsg("cannot cluster on expressional index \"%s\" because its index access method does not handle null values",
 							RelationGetRelationName(OldIndex))));
 	}
+
+	if (!OldIndex->rd_am->amclusterable) 
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			   errmsg("cannot cluster on index \"%s\" because access method does not clusterable",
+			   	RelationGetRelationName(OldIndex))));
+
 
 	/*
 	 * Disallow clustering system relations.  This will definitely NOT work

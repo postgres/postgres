@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.408 2006/04/26 22:33:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.409 2006/05/02 11:28:55 teodor Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3813,6 +3813,45 @@ DESCR("GiST support");
 DATA(insert OID = 2592 (  gist_circle_compress	PGNSP PGUID 12 f f t f i 1 2281 "2281" _null_ _null_ _null_ gist_circle_compress - _null_ ));
 DESCR("GiST support");
 
+/* GIN */
+DATA(insert OID = 2730 (  gingettuple	   PGNSP PGUID 12 f f t f v 2 16 "2281 2281" _null_ _null_ _null_  gingettuple - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2731 (  gingetmulti	   PGNSP PGUID 12 f f t f v 4 16 "2281 2281 2281 2281" _null_ _null_ _null_  gingetmulti - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2732 (  gininsert		   PGNSP PGUID 12 f f t f v 6 16 "2281 2281 2281 2281 2281 2281" _null_ _null_ _null_	gininsert - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2733 (  ginbeginscan	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_	ginbeginscan - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2734 (  ginrescan		   PGNSP PGUID 12 f f t f v 2 2278 "2281 2281" _null_ _null_ _null_ ginrescan - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2735 (  ginendscan	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	ginendscan - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2736 (  ginmarkpos	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	ginmarkpos - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2737 (  ginrestrpos	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	ginrestrpos - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2738 (  ginbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 2281 2281" _null_ _null_ _null_ ginbuild - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2739 (  ginbulkdelete    PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_ ginbulkdelete - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2740 (  ginvacuumcleanup PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_ ginvacuumcleanup - _null_ ));
+DESCR("gin(internal)");
+DATA(insert OID = 2741 (  gincostestimate  PGNSP PGUID 12 f f t f v 7 2278 "2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_  gincostestimate - _null_ ));
+DESCR("gin(internal)");
+
+/* GIN array support */
+DATA(insert OID = 2743 (  ginarrayextract    PGNSP PGUID 12 f f t f i 2 2281 "2277 2281" _null_ _null_ _null_	ginarrayextract - _null_ ));
+DESCR("GIN array support");
+DATA(insert OID = 2744 (  ginarrayconsistent PGNSP PGUID 12 f f t f i 3 16 "2281 21 2281" _null_ _null_ _null_	ginarrayconsistent - _null_ ));
+DESCR("GIN array support");
+
+/* overlap/contains/contained */
+DATA(insert OID = 2747 (  arrayoverlap		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" _null_ _null_ _null_ arrayoverlap - _null_ ));
+DESCR("anyarray overlap");
+DATA(insert OID = 2748 (  arraycontains		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" _null_ _null_ _null_ arraycontains - _null_ ));
+DESCR("anyarray contains");
+DATA(insert OID = 2749 (  arraycontained	   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" _null_ _null_ _null_ arraycontained - _null_ ));
+DESCR("anyarray contained");
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result
