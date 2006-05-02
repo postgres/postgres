@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.70 2006/05/02 11:28:55 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.71 2006/05/02 15:23:16 teodor Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -649,5 +649,201 @@ DATA(insert (	2745	0 3  t	2752 ));
 DATA(insert (	2746	0 1  f	2750 ));
 DATA(insert (	2746	0 2  f	2751 ));
 DATA(insert (	2746	0 3  t	2752 ));
+
+/*
+ * gin _abstime_ops
+ */
+DATA(insert (	2753	0 1  f  2750 ));
+DATA(insert (	2753	0 2  f  2751 ));
+DATA(insert (	2753	0 3  t  2752 ));
+
+/*
+ * gin _bit_ops
+ */
+DATA(insert (	2754	0 1  f  2750 ));
+DATA(insert (	2754	0 2  f  2751 ));
+DATA(insert (	2754	0 3  t  2752 ));
+
+/*
+ * gin _bool_ops
+ */
+DATA(insert (	2755	0 1  f  2750 ));
+DATA(insert (	2755	0 2  f  2751 ));
+DATA(insert (	2755	0 3  t  2752 ));
+
+/*
+ * gin _bpchar_ops
+ */
+DATA(insert (	2756	0 1  f  2750 ));
+DATA(insert (	2756	0 2  f  2751 ));
+DATA(insert (	2756	0 3  t  2752 ));
+
+/*
+ * gin _bytea_ops
+ */
+DATA(insert (	2757	0 1  f  2750 ));
+DATA(insert (	2757	0 2  f  2751 ));
+DATA(insert (	2757	0 3  t  2752 ));
+
+/*
+ * gin _char_ops
+ */
+DATA(insert (	2758	0 1  f  2750 ));
+DATA(insert (	2758	0 2  f  2751 ));
+DATA(insert (	2758	0 3  t  2752 ));
+
+/*
+ * gin _cidr_ops
+ */
+DATA(insert (	2759	0 1  f  2750 ));
+DATA(insert (	2759	0 2  f  2751 ));
+DATA(insert (	2759	0 3  t  2752 ));
+
+/*
+ * gin _date_ops
+ */
+DATA(insert (	2760	0 1  f  2750 ));
+DATA(insert (	2760	0 2  f  2751 ));
+DATA(insert (	2760	0 3  t  2752 ));
+
+/*
+ * gin _float4_ops
+ */
+DATA(insert (	2761	0 1  f  2750 ));
+DATA(insert (	2761	0 2  f  2751 ));
+DATA(insert (	2761	0 3  t  2752 ));
+
+/*
+ * gin _float8_ops
+ */
+DATA(insert (	2762	0 1  f  2750 ));
+DATA(insert (	2762	0 2  f  2751 ));
+DATA(insert (	2762	0 3  t  2752 ));
+
+/*
+ * gin _inet_ops
+ */
+DATA(insert (	2763	0 1  f  2750 ));
+DATA(insert (	2763	0 2  f  2751 ));
+DATA(insert (	2763	0 3  t  2752 ));
+
+/*
+ * gin _int2_ops
+ */
+DATA(insert (	2764	0 1  f  2750 ));
+DATA(insert (	2764	0 2  f  2751 ));
+DATA(insert (	2764	0 3  t  2752 ));
+
+/*
+ * gin _int8_ops
+ */
+DATA(insert (	2765	0 1  f  2750 ));
+DATA(insert (	2765	0 2  f  2751 ));
+DATA(insert (	2765	0 3  t  2752 ));
+
+/*
+ * gin _interval_ops
+ */
+DATA(insert (	2766	0 1  f  2750 ));
+DATA(insert (	2766	0 2  f  2751 ));
+DATA(insert (	2766	0 3  t  2752 ));
+
+/*
+ * gin _macaddr_ops
+ */
+DATA(insert (	2767	0 1  f  2750 ));
+DATA(insert (	2767	0 2  f  2751 ));
+DATA(insert (	2767	0 3  t  2752 ));
+
+/*
+ * gin _name_ops
+ */
+DATA(insert (	2768	0 1  f  2750 ));
+DATA(insert (	2768	0 2  f  2751 ));
+DATA(insert (	2768	0 3  t  2752 ));
+
+/*
+ * gin _numeric_ops
+ */
+DATA(insert (	2769	0 1  f  2750 ));
+DATA(insert (	2769	0 2  f  2751 ));
+DATA(insert (	2769	0 3  t  2752 ));
+
+/*
+ * gin _oid_ops
+ */
+DATA(insert (	2770	0 1  f  2750 ));
+DATA(insert (	2770	0 2  f  2751 ));
+DATA(insert (	2770	0 3  t  2752 ));
+
+/*
+ * gin _oidvector_ops
+ */
+DATA(insert (	2771	0 1  f  2750 ));
+DATA(insert (	2771	0 2  f  2751 ));
+DATA(insert (	2771	0 3  t  2752 ));
+
+/*
+ * gin _time_ops
+ */
+DATA(insert (	2772	0 1  f  2750 ));
+DATA(insert (	2772	0 2  f  2751 ));
+DATA(insert (	2772	0 3  t  2752 ));
+
+/*
+ * gin _timestamptz_ops
+ */
+DATA(insert (	2773	0 1  f  2750 ));
+DATA(insert (	2773	0 2  f  2751 ));
+DATA(insert (	2773	0 3  t  2752 ));
+
+/*
+ * gin _timetz_ops
+ */
+DATA(insert (	2774	0 1  f  2750 ));
+DATA(insert (	2774	0 2  f  2751 ));
+DATA(insert (	2774	0 3  t  2752 ));
+
+/*
+ * gin _varbit_ops
+ */
+DATA(insert (	2775	0 1  f  2750 ));
+DATA(insert (	2775	0 2  f  2751 ));
+DATA(insert (	2775	0 3  t  2752 ));
+
+/*
+ * gin _varchar_ops
+ */
+DATA(insert (	2776	0 1  f  2750 ));
+DATA(insert (	2776	0 2  f  2751 ));
+DATA(insert (	2776	0 3  t  2752 ));
+
+/*
+ * gin _timestamp_ops
+ */
+DATA(insert (	2777	0 1  f  2750 ));
+DATA(insert (	2777	0 2  f  2751 ));
+DATA(insert (	2777	0 3  t  2752 ));
+
+/*
+ * gin _money_ops
+ */
+DATA(insert (	2778	0 1  f  2750 ));
+DATA(insert (	2778	0 2  f  2751 ));
+DATA(insert (	2778	0 3  t  2752 ));
+
+/*
+ * gin _reltime_ops
+ */
+DATA(insert (	2779	0 1  f  2750 ));
+DATA(insert (	2779	0 2  f  2751 ));
+DATA(insert (	2779	0 3  t  2752 ));
+
+/*
+ * gin _tinterval_ops
+ */
+DATA(insert (	2780	0 1  f  2750 ));
+DATA(insert (	2780	0 2  f  2751 ));
+DATA(insert (	2780	0 3  t  2752 ));
 
 #endif   /* PG_AMOP_H */
