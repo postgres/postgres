@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.164 2006/04/30 21:15:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.165 2006/05/03 22:45:26 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -195,19 +195,16 @@ ReverifyMyDatabase(const char *name, bool am_superuser)
 					name)));
 
 		/*
-		 * Check privilege to connect to the database.  To avoid making
-		 * a whole extra search of pg_database here, we don't go through
-		 * pg_database_aclcheck, but instead use a lower-level routine
-		 * that we can pass the pg_database tuple to.
+		 * Check privilege to connect to the database.  (The am_superuser
+		 * test is redundant, but since we have the flag, might as well
+		 * check it and save a few cycles.)
 		 */
 		if (!am_superuser &&
-			pg_database_tuple_aclmask(tup, RelationGetDescr(pgdbrel),
-									  GetUserId(),
-									  ACL_CONNECT, ACLMASK_ANY) == 0)
+			pg_database_aclcheck(MyDatabaseId, GetUserId(),
+								 ACL_CONNECT) != ACLCHECK_OK)
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied for database %s",
-							NameStr(dbform->datname)),
+					 errmsg("permission denied for database \"%s\"", name),
 					 errdetail("User does not have CONNECT privilege.")));
 
 		/*

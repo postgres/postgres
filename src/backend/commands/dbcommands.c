@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.179 2006/03/29 21:17:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.180 2006/05/03 22:45:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -556,8 +556,6 @@ dropdb(const char *dbname, bool missing_ok)
 	Oid			db_id;
 	bool		db_istemplate;
 	Relation	pgdbrel;
-	SysScanDesc pgdbscan;
-	ScanKeyData key;
 	HeapTuple	tup;
 
 	PreventTransactionChain((void *) dbname, "DROP DATABASE");
@@ -629,31 +627,17 @@ dropdb(const char *dbname, bool missing_ok)
 						dbname)));
 
 	/*
-	 * Find the database's tuple by OID (should be unique).
+	 * Remove the database's tuple from pg_database.
 	 */
-	ScanKeyInit(&key,
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(db_id));
-
-	pgdbscan = systable_beginscan(pgdbrel, DatabaseOidIndexId, true,
-								  SnapshotNow, 1, &key);
-
-	tup = systable_getnext(pgdbscan);
+	tup = SearchSysCache(DATABASEOID,
+						 ObjectIdGetDatum(db_id),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-	{
-		/*
-		 * This error should never come up since the existence of the database
-		 * is checked earlier
-		 */
-		elog(ERROR, "database \"%s\" doesn't exist despite earlier reports to the contrary",
-			 dbname);
-	}
+		elog(ERROR, "cache lookup failed for database %u", db_id);
 
-	/* Remove the database's tuple from pg_database */
 	simple_heap_delete(pgdbrel, &tup->t_self);
 
-	systable_endscan(pgdbscan);
+	ReleaseSysCache(tup);
 
 	/*
 	 * Delete any comments associated with the database
@@ -1262,7 +1246,10 @@ get_database_oid(const char *dbname)
 	HeapTuple	dbtuple;
 	Oid			oid;
 
-	/* There's no syscache for pg_database, so must look the hard way */
+	/*
+	 * There's no syscache for pg_database indexed by name,
+	 * so we must look the hard way.
+	 */
 	pg_database = heap_open(DatabaseRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
 				Anum_pg_database_datname,
@@ -1296,31 +1283,19 @@ get_database_oid(const char *dbname)
 char *
 get_database_name(Oid dbid)
 {
-	Relation	pg_database;
-	ScanKeyData entry[1];
-	SysScanDesc scan;
 	HeapTuple	dbtuple;
 	char	   *result;
 
-	/* There's no syscache for pg_database, so must look the hard way */
-	pg_database = heap_open(DatabaseRelationId, AccessShareLock);
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(dbid));
-	scan = systable_beginscan(pg_database, DatabaseOidIndexId, true,
-							  SnapshotNow, 1, entry);
-
-	dbtuple = systable_getnext(scan);
-
-	/* We assume that there can be at most one matching tuple */
+	dbtuple = SearchSysCache(DATABASEOID,
+							 ObjectIdGetDatum(dbid),
+							 0, 0, 0);
 	if (HeapTupleIsValid(dbtuple))
+	{
 		result = pstrdup(NameStr(((Form_pg_database) GETSTRUCT(dbtuple))->datname));
+		ReleaseSysCache(dbtuple);
+	}
 	else
 		result = NULL;
-
-	systable_endscan(scan);
-	heap_close(pg_database, AccessShareLock);
 
 	return result;
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.17 2006/04/27 15:57:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.18 2006/05/03 22:45:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -493,9 +494,6 @@ autovac_get_database_list(void)
 static void
 process_whole_db(void)
 {
-	Relation	dbRel;
-	ScanKeyData entry[1];
-	SysScanDesc scan;
 	HeapTuple	tup;
 	Form_pg_database dbForm;
 	bool		freeze;
@@ -511,21 +509,12 @@ process_whole_db(void)
 	 */
 	pgstat_vacuum_tabstat();
 
-	dbRel = heap_open(DatabaseRelationId, AccessShareLock);
-
-	/* Must use a table scan, since there's no syscache for pg_database */
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(MyDatabaseId));
-
-	scan = systable_beginscan(dbRel, DatabaseOidIndexId, true,
-							  SnapshotNow, 1, entry);
-
-	tup = systable_getnext(scan);
-
+	/* Look up the pg_database entry and decide whether to FREEZE */
+	tup = SearchSysCache(DATABASEOID,
+						 ObjectIdGetDatum(MyDatabaseId),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "could not find tuple for database %u", MyDatabaseId);
+		elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
 
 	dbForm = (Form_pg_database) GETSTRUCT(tup);
 
@@ -534,9 +523,7 @@ process_whole_db(void)
 	else
 		freeze = false;
 
-	systable_endscan(scan);
-
-	heap_close(dbRel, AccessShareLock);
+	ReleaseSysCache(tup);
 
 	elog(DEBUG2, "autovacuum: VACUUM%s whole database",
 		 (freeze) ? " FREEZE" : "");

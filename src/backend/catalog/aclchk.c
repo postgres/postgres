@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.127 2006/04/30 21:15:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.128 2006/05/03 22:45:26 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -34,6 +34,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "utils/acl.h"
@@ -412,8 +413,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 		case ACL_OBJECT_SEQUENCE:
 			foreach(cell, objnames)
 			{
-				Oid			relOid;
 				RangeVar   *relvar = (RangeVar *) lfirst(cell);
+				Oid			relOid;
 
 				relOid = RangeVarGetRelid(relvar, false);
 				objects = lappend_oid(objects, relOid);
@@ -423,32 +424,15 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 			foreach(cell, objnames)
 			{
 				char	   *dbname = strVal(lfirst(cell));
-				ScanKeyData entry[1];
-				HeapScanDesc scan;
-				HeapTuple	tuple;
-				Relation	relation;
+				Oid			dbid;
 
-				relation = heap_open(DatabaseRelationId, AccessShareLock);
-
-				/*
-				 * There's no syscache for pg_database, so we must look the
-				 * hard way.
-				 */
-				ScanKeyInit(&entry[0],
-							Anum_pg_database_datname,
-							BTEqualStrategyNumber, F_NAMEEQ,
-							CStringGetDatum(dbname));
-				scan = heap_beginscan(relation, SnapshotNow, 1, entry);
-				tuple = heap_getnext(scan, ForwardScanDirection);
-				if (!HeapTupleIsValid(tuple))
+				dbid = get_database_oid(dbname);
+				if (!OidIsValid(dbid))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_DATABASE),
-						  errmsg("database \"%s\" does not exist", dbname)));
-				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
-
-				heap_close(relation, AccessShareLock);
-
-				heap_endscan(scan);
+							 errmsg("database \"%s\" does not exist",
+									dbname)));
+				objects = lappend_oid(objects, dbid);
 			}
 			break;
 		case ACL_OBJECT_FUNCTION:
@@ -474,7 +458,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				if (!HeapTupleIsValid(tuple))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
-						errmsg("language \"%s\" does not exist", langname)));
+							 errmsg("language \"%s\" does not exist",
+									langname)));
 
 				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
 
@@ -493,7 +478,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				if (!HeapTupleIsValid(tuple))
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_SCHEMA),
-						   errmsg("schema \"%s\" does not exist", nspname)));
+							 errmsg("schema \"%s\" does not exist",
+									nspname)));
 
 				objects = lappend_oid(objects, HeapTupleGetOid(tuple));
 
@@ -764,22 +750,13 @@ ExecGrant_Database(InternalGrant *istmt)
 		int			nnewmembers;
 		Oid		   *oldmembers;
 		Oid		   *newmembers;
-		ScanKeyData entry[1];
-		SysScanDesc scan;
 		HeapTuple	tuple;
 
-		/* There's no syscache for pg_database, so must look the hard way */
-		ScanKeyInit(&entry[0],
-					ObjectIdAttributeNumber,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(datId));
-		scan = systable_beginscan(relation, DatabaseOidIndexId, true,
-								  SnapshotNow, 1, entry);
-
-		tuple = systable_getnext(scan);
-
+		tuple = SearchSysCache(DATABASEOID,
+							   ObjectIdGetDatum(datId),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "could not find tuple for database %u", datId);
+			elog(ERROR, "cache lookup failed for database %u", datId);
 
 		pg_database_tuple = (Form_pg_database) GETSTRUCT(tuple);
 
@@ -847,7 +824,7 @@ ExecGrant_Database(InternalGrant *istmt)
 							  noldmembers, oldmembers,
 							  nnewmembers, newmembers);
 
-		systable_endscan(scan);
+		ReleaseSysCache(tuple);
 
 		pfree(new_acl);
 
@@ -1657,10 +1634,11 @@ pg_database_aclmask(Oid db_oid, Oid roleid,
 					AclMode mask, AclMaskHow how)
 {
 	AclMode		result;
-	Relation	pg_database;
-	ScanKeyData entry[1];
-	SysScanDesc scan;
 	HeapTuple	tuple;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
+	Oid			ownerId;
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(roleid))
@@ -1668,50 +1646,19 @@ pg_database_aclmask(Oid db_oid, Oid roleid,
 
 	/*
 	 * Get the database's ACL from pg_database
-	 *
-	 * There's no syscache for pg_database, so must look the hard way
 	 */
-	pg_database = heap_open(DatabaseRelationId, AccessShareLock);
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(db_oid));
-	scan = systable_beginscan(pg_database, DatabaseOidIndexId, true,
-							  SnapshotNow, 1, entry);
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache(DATABASEOID,
+						   ObjectIdGetDatum(db_oid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database with OID %u does not exist", db_oid)));
 
-	result = pg_database_tuple_aclmask(tuple, RelationGetDescr(pg_database),
-									   roleid, mask, how);
+	ownerId = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
 
-	systable_endscan(scan);
-	heap_close(pg_database, AccessShareLock);
-
-	return result;
-}
-
-/*
- * This is split out so that ReverifyMyDatabase can perform an ACL check
- * without a whole extra search of pg_database
- */
-AclMode
-pg_database_tuple_aclmask(HeapTuple db_tuple, TupleDesc tupdesc,
-						  Oid roleid, AclMode mask, AclMaskHow how)
-{
-	AclMode		result;
-	Datum		aclDatum;
-	bool		isNull;
-	Acl		   *acl;
-	Oid			ownerId;
-
-	ownerId = ((Form_pg_database) GETSTRUCT(db_tuple))->datdba;
-
-	aclDatum = heap_getattr(db_tuple, Anum_pg_database_datacl,
-							tupdesc, &isNull);
-
+	aclDatum = SysCacheGetAttr(DATABASEOID, tuple, Anum_pg_database_datacl,
+							   &isNull);
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
@@ -1729,6 +1676,8 @@ pg_database_tuple_aclmask(HeapTuple db_tuple, TupleDesc tupdesc,
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
 		pfree(acl);
+
+	ReleaseSysCache(tuple);
 
 	return result;
 }
@@ -2298,36 +2247,24 @@ pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
 bool
 pg_database_ownercheck(Oid db_oid, Oid roleid)
 {
-	Relation	pg_database;
-	ScanKeyData entry[1];
-	SysScanDesc scan;
-	HeapTuple	dbtuple;
+	HeapTuple	tuple;
 	Oid			dba;
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(roleid))
 		return true;
 
-	/* There's no syscache for pg_database, so must look the hard way */
-	pg_database = heap_open(DatabaseRelationId, AccessShareLock);
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(db_oid));
-	scan = systable_beginscan(pg_database, DatabaseOidIndexId, true,
-							  SnapshotNow, 1, entry);
-
-	dbtuple = systable_getnext(scan);
-
-	if (!HeapTupleIsValid(dbtuple))
+	tuple = SearchSysCache(DATABASEOID,
+						   ObjectIdGetDatum(db_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database with OID %u does not exist", db_oid)));
 
-	dba = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
+	dba = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
 
-	systable_endscan(scan);
-	heap_close(pg_database, AccessShareLock);
+	ReleaseSysCache(tuple);
 
 	return has_privs_of_role(roleid, dba);
 }

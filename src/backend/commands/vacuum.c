@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.328 2006/05/02 22:25:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.329 2006/05/03 22:45:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "access/subtrans.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
@@ -767,27 +768,33 @@ vac_update_dbstats(Oid dbid,
 {
 	Relation	relation;
 	ScanKeyData entry[1];
-	HeapScanDesc scan;
+	SysScanDesc	scan;
 	HeapTuple	tuple;
+	Buffer		buf;
 	Form_pg_database dbform;
 
 	relation = heap_open(DatabaseRelationId, RowExclusiveLock);
 
-	/* Must use a heap scan, since there's no syscache for pg_database */
 	ScanKeyInit(&entry[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(dbid));
 
-	scan = heap_beginscan(relation, SnapshotNow, 1, entry);
+	scan = systable_beginscan(relation, DatabaseOidIndexId, true,
+							  SnapshotNow, 1, entry);
 
-	tuple = heap_getnext(scan, ForwardScanDirection);
+	tuple = systable_getnext(scan);
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for database %u", dbid);
 
+	if (scan->irel)
+		buf = scan->iscan->xs_cbuf;
+	else
+		buf = scan->scan->rs_cbuf;
+
 	/* ensure no one else does this at the same time */
-	LockBuffer(scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
+	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	dbform = (Form_pg_database) GETSTRUCT(tuple);
 
@@ -795,14 +802,14 @@ vac_update_dbstats(Oid dbid,
 	dbform->datvacuumxid = vacuumXID;
 	dbform->datfrozenxid = frozenXID;
 
-	MarkBufferDirty(scan->rs_cbuf);
+	MarkBufferDirty(buf);
 
-	LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 	/* invalidate the tuple in the cache so we'll see the change in cache */
 	CacheInvalidateHeapTuple(relation, tuple);
 
-	heap_endscan(scan);
+	systable_endscan(scan);
 
 	heap_close(relation, RowExclusiveLock);
 

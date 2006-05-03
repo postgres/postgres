@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.102 2006/03/05 15:58:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.103 2006/05/03 22:45:26 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -31,6 +31,7 @@
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_conversion.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_language.h"
@@ -265,6 +266,16 @@ static const struct cachedesc cacheinfo[] = {
 	}},
 	{ConversionRelationId,		/* CONOID */
 		ConversionOidIndexId,
+		0,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+	}},
+	{DatabaseRelationId,		/* DATABASEOID */
+		DatabaseOidIndexId,
 		0,
 		1,
 		{
