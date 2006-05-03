@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.100.2.2 2006/04/28 20:57:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.100.2.3 2006/05/03 00:25:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -894,9 +894,11 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 void
 SS_finalize_plan(Plan *plan, List *rtable)
 {
-	Bitmapset  *outer_params = NULL;
-	Bitmapset  *valid_params = NULL;
-	Cost		initplan_cost = 0;
+	Bitmapset  *outer_params,
+			   *valid_params,
+			   *initExtParam,
+			   *initSetParam;
+	Cost		initplan_cost;
 	int			paramid;
 	ListCell   *l;
 
@@ -905,6 +907,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	 * available from outer query levels and my own query level. We do this
 	 * once to save time in the per-plan recursion steps.
 	 */
+	outer_params = valid_params = NULL;
 	paramid = 0;
 	foreach(l, PlannerParamList)
 	{
@@ -936,7 +939,11 @@ SS_finalize_plan(Plan *plan, List *rtable)
 
 	/*
 	 * Finally, attach any initPlans to the topmost plan node, and add their
-	 * extParams to the topmost node's, too.
+	 * extParams to the topmost node's, too.  However, any setParams of the
+	 * initPlans should not be present in the topmost node's extParams, only
+	 * in its allParams.  (As of PG 8.1, it's possible that some initPlans
+	 * have extParams that are setParams of other initPlans, so we have to
+	 * take care of this situation explicitly.)
 	 *
 	 * We also add the total_cost of each initPlan to the startup cost of the
 	 * top node.  This is a conservative overestimate, since in fact each
@@ -945,17 +952,29 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	plan->initPlan = PlannerInitPlan;
 	PlannerInitPlan = NIL;		/* make sure they're not attached twice */
 
+	initExtParam = initSetParam = NULL;
+	initplan_cost = 0;
 	foreach(l, plan->initPlan)
 	{
 		SubPlan    *initplan = (SubPlan *) lfirst(l);
+		ListCell   *l2;
 
-		plan->extParam = bms_add_members(plan->extParam,
-										 initplan->plan->extParam);
-		/* allParam must include all members of extParam */
-		plan->allParam = bms_add_members(plan->allParam,
-										 plan->extParam);
+		initExtParam = bms_add_members(initExtParam,
+									   initplan->plan->extParam);
+		foreach(l2, initplan->setParam)
+		{
+			initSetParam = bms_add_member(initSetParam, lfirst_int(l2));
+		}
 		initplan_cost += initplan->plan->total_cost;
 	}
+	/* allParam must include all these params */
+	plan->allParam = bms_add_members(plan->allParam, initExtParam);
+	plan->allParam = bms_add_members(plan->allParam, initSetParam);
+	/* but extParam shouldn't include any setParams */
+	initExtParam = bms_del_members(initExtParam, initSetParam);
+	/* empty test ensures extParam is exactly NULL if it's empty */
+	if (!bms_is_empty(initExtParam))
+		plan->extParam = bms_join(plan->extParam, initExtParam);
 
 	plan->startup_cost += initplan_cost;
 	plan->total_cost += initplan_cost;
