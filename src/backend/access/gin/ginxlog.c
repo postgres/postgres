@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.1 2006/05/02 11:28:54 teodor Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.2 2006/05/03 06:56:47 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -266,7 +266,7 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record) {
 	}
 
 	PageSetLSN(rpage, lsn);
-	PageSetTLI(lpage, ThisTimeLineID);
+	PageSetTLI(rpage, ThisTimeLineID);
 	MarkBufferDirty(rbuffer);
 
 	PageSetLSN(lpage, lsn);
