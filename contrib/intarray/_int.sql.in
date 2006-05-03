@@ -6,6 +6,8 @@
 -- opclasses get created.
 SET search_path = public;
 
+BEGIN;
+
 -- Query type
 CREATE FUNCTION bqarr_in(cstring)
 RETURNS query_int
@@ -431,3 +433,35 @@ AS
 	FUNCTION	6	g_intbig_picksplit (internal, internal),
 	FUNCTION	7	g_intbig_same (internal, internal, internal),
 	STORAGE		intbig_gkey;
+
+--GIN
+--mark built-in gin's _int4_ops as non default
+update pg_opclass set opcdefault = 'f' where 
+	pg_opclass.opcamid = (select pg_am.oid from pg_am where amname='gin') and
+	opcname = '_int4_ops';
+
+CREATE FUNCTION ginint4_queryextract(internal, internal, int2)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE FUNCTION ginint4_consistent(internal, int2, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE OPERATOR CLASS gin__int_ops
+DEFAULT FOR TYPE _int4 USING gin
+AS
+	OPERATOR	3	&&,
+	OPERATOR	6	= (anyarray, anyarray)	RECHECK,
+	OPERATOR	7	@,
+	OPERATOR	8	~	RECHECK,
+	OPERATOR	20	@@ (_int4, query_int),
+	FUNCTION	1	btint4cmp (int4, int4),
+	FUNCTION	2	ginarrayextract (anyarray, internal),
+	FUNCTION	3	ginint4_queryextract (internal, internal, int2),
+	FUNCTION	4	ginint4_consistent (internal, int2, internal),
+	STORAGE		int4;
+
+COMMIT;

@@ -3,12 +3,12 @@
 -- does not depend on contents of _int.sql.
 --
 \set ECHO none
-psql:_int.sql:13: NOTICE:  type "query_int" is not yet defined
+psql:_int.sql:15: NOTICE:  type "query_int" is not yet defined
 DETAIL:  Creating a shell type definition.
-psql:_int.sql:18: NOTICE:  argument type query_int is only a shell
-psql:_int.sql:368: NOTICE:  type "intbig_gkey" is not yet defined
+psql:_int.sql:20: NOTICE:  argument type query_int is only a shell
+psql:_int.sql:370: NOTICE:  type "intbig_gkey" is not yet defined
 DETAIL:  Creating a shell type definition.
-psql:_int.sql:373: NOTICE:  argument type intbig_gkey is only a shell
+psql:_int.sql:375: NOTICE:  argument type intbig_gkey is only a shell
 SELECT intset(1234);
  intset 
 --------
@@ -471,6 +471,56 @@ SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
 
 DROP INDEX text_idx;
 CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops );
+SELECT count(*) from test__int WHERE a && '{23,50}';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23|50';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{23,50}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23&50';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{20,23}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '50&68';
+ count 
+-------
+     9
+(1 row)
+
+SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
+ count 
+-------
+    21
+(1 row)
+
+DROP INDEX text_idx;
+CREATE INDEX text_idx on test__int using gin ( a );
 SELECT count(*) from test__int WHERE a && '{23,50}';
  count 
 -------

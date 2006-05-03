@@ -107,3 +107,15 @@ SELECT count(*) from test__int WHERE a @ '{20,23}';
 SELECT count(*) from test__int WHERE a @@ '50&68';
 SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
 SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
+
+DROP INDEX text_idx;
+CREATE INDEX text_idx on test__int using gin ( a );
+
+SELECT count(*) from test__int WHERE a && '{23,50}';
+SELECT count(*) from test__int WHERE a @@ '23|50';
+SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @@ '23&50';
+SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @@ '50&68';
+SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';

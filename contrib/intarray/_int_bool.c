@@ -232,7 +232,7 @@ typedef struct
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_arr(void *checkval, int4 val)
+checkcondition_arr(void *checkval, ITEM *item)
 {
 	int4	   *StopLow = ((CHKVAL *) checkval)->arrb;
 	int4	   *StopHigh = ((CHKVAL *) checkval)->arre;
@@ -243,9 +243,9 @@ checkcondition_arr(void *checkval, int4 val)
 	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-		if (*StopMiddle == val)
+		if (*StopMiddle == item->val)
 			return (true);
-		else if (*StopMiddle < val)
+		else if (*StopMiddle < item->val)
 			StopLow = StopMiddle + 1;
 		else
 			StopHigh = StopMiddle;
@@ -254,20 +254,20 @@ checkcondition_arr(void *checkval, int4 val)
 }
 
 static bool
-checkcondition_bit(void *checkval, int4 val)
+checkcondition_bit(void *checkval, ITEM *item)
 {
-	return GETBIT(checkval, HASHVAL(val));
+	return GETBIT(checkval, HASHVAL(item->val));
 }
 
 /*
  * check for boolean condition
  */
 static bool
-execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, int4 val))
+execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM *item))
 {
 
 	if (curitem->type == VAL)
-		return (*chkcond) (checkval, curitem->val);
+		return (*chkcond) (checkval, curitem);
 	else if (curitem->val == (int4) '!')
 	{
 		return (calcnot) ?
@@ -317,6 +317,40 @@ execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot)
 				   (void *) &chkval, calcnot,
 				   checkcondition_arr
 		);
+}
+
+typedef struct {
+	ITEM	*first;
+	bool	*mapped_check;
+} GinChkVal;
+
+static bool
+checkcondition_gin(void *checkval, ITEM *item) {
+	GinChkVal   *gcv = (GinChkVal*)checkval;
+
+	return gcv->mapped_check[ item - gcv->first ];
+}
+
+bool
+ginconsistent(QUERYTYPE * query, bool *check) {
+	GinChkVal   gcv;
+	ITEM    *items = GETQUERY(query);
+	int i, j=0;
+
+	if ( query->size < 0 )
+		return FALSE;
+
+	gcv.first = items;
+	gcv.mapped_check = (bool*)palloc( sizeof(bool)*query->size );
+	for(i=0; i<query->size; i++)
+		if ( items[i].type == VAL ) 
+			gcv.mapped_check[ i ] = check[ j++ ];
+
+	return execute( 
+		GETQUERY(query) + query->size - 1,
+		(void *) &gcv, true,
+		checkcondition_gin
+	);
 }
 
 /*
@@ -588,7 +622,7 @@ countdroptree(ITEM * q, int4 pos)
  * result of all '!' will be = 'true', so
  * we can modify query tree for clearing
  */
-static int4
+int4
 shorterquery(ITEM * q, int4 len)
 {
 	int4		index,

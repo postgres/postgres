@@ -151,10 +151,17 @@ typedef struct
 #define COMPUTESIZE(size)	( HDRSIZEQT + size * sizeof(ITEM) )
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 
+#define END     0
+#define ERR     1
+#define VAL     2
+#define OPR     3
+#define OPEN    4
+#define CLOSE   5
+
 bool		signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot);
 bool		execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot);
-
-
+bool 		ginconsistent(QUERYTYPE * query, bool *check);
+int4 		shorterquery(ITEM * q, int4 len);
 
 int			compASC(const void *a, const void *b);
 
