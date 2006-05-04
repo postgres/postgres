@@ -18,14 +18,24 @@ LANGUAGE C;
 -- Create views for convenient access.
 CREATE VIEW pg_freespacemap_pages AS
 	SELECT P.* FROM pg_freespacemap_pages() AS P
- 	(reltablespace oid, reldatabase oid, relfilenode oid, relblocknumber int8, bytes int4);
+	(reltablespace oid,
+	 reldatabase oid,
+	 relfilenode oid,
+	 relblocknumber bigint,
+	 bytes integer);
  
 CREATE VIEW pg_freespacemap_relations AS
 	SELECT P.* FROM pg_freespacemap_relations() AS P
- 	(reltablespace oid, reldatabase oid, relfilenode oid, avgrequest int8, lastpagecount integer, nextpage integer);
+	(reltablespace oid,
+	 reldatabase oid,
+	 relfilenode oid,
+	 avgrequest integer,
+	 lastpagecount integer,
+	 storedpages integer,
+	 nextpage integer);
 
  
--- Don't want these to be available at public.
+-- Don't want these to be available to public.
 REVOKE ALL ON FUNCTION pg_freespacemap_pages() FROM PUBLIC;
 REVOKE ALL ON pg_freespacemap_pages FROM PUBLIC;
 

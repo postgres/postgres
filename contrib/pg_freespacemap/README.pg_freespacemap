@@ -39,13 +39,15 @@ Notes
        Column     |  references          | Description
   ----------------+----------------------+------------------------------------
    reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
-   reldatabase    | pg_database.oid      | Database for the relation.
-   relfilenode    | pg_class.relfilenode | Refilenode of the relation.
+   reldatabase    | pg_database.oid      | Database oid of the relation.
+   relfilenode    | pg_class.relfilenode | Relfilenode of the relation.
    avgrequest     |                      | Moving average of free space 
-                  |                      | requests.
-   lastpagecount  |                      | Count of pages examined for useful
-                  |                      | free space.
-   nextpage       |                      | page index (from 0) to start next 
+                  |                      | requests (NULL for indexes)
+   lastpagecount  |                      | Count of pages last reported as
+                  |                      | containing useful free space.
+   storedpages    |                      | Count of pages actually stored
+                  |                      | in free space map.
+   nextpage       |                      | Page index (from 0) to start next 
                   |                      | search at.
 
 
@@ -54,24 +56,33 @@ Notes
        Column     |  references          | Description
   ----------------+----------------------+------------------------------------
    reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
-   reldatabase    | pg_database.oid      | Database for the relation.
-   relfilenode    | pg_class.relfilenode | Refilenode of the relation.
-   relblocknumber |                      | Page offset in the relation.
+   reldatabase    | pg_database.oid      | Database oid of the relation.
+   relfilenode    | pg_class.relfilenode | Relfilenode of the relation.
+   relblocknumber |                      | Page number in the relation.
    bytes          |                      | Free bytes in the page, or NULL
                   |                      | for an index page (see below).
 
 
   For pg_freespacemap_relations, there is one row for each relation in the free
-  space map.
+  space map.  storedpages is the number of pages actually stored in the map,
+  while lastpagecount is the number of pages VACUUM last tried to store
+  (ie, the number that VACUUM thought had useful amounts of free space).
+
+  If storedpages is consistently less than lastpagecount then it'd be a good
+  idea to increase max_fsm_pages.  Also, if the number of rows in
+  pg_freespacemap_relations is close to max_fsm_relations, then you should
+  consider increasing max_fsm_relations.
 
   For pg_freespacemap_pages, there is one row for each page in the free space 
-  map.
+  map.  The number of rows for a relation will match the storedpages column
+  in pg_freespacemap_relations.
 
-  Because the map is shared by all the databases, there are relations and pages
-  from relations not belonging to the current database.
+  For indexes, what is tracked is entirely-unused pages, rather than free
+  space within pages.  Therefore, the average request size and free bytes
+  within a page are not meaningful, and are shown as NULL.
 
-  The view 'freespacemap_pages'  can contain pages for btree indexes if they 
-  were emptied by a vacuum process. The bytes field is set to NULL in this case.
+  Because the map is shared by all the databases, it will include relations
+  not belonging to the current database.
 
   When either of the views are accessed, internal free space map locks are
   taken, and a copy of the map data is made for them to display. 
@@ -85,44 +96,43 @@ Sample output - pg_freespacemap_relations
 
 regression=# \d pg_freespacemap_relations
 View "public.pg_freespacemap_relations"
-    Column     |  Type   | Modifiers 
+    Column     |  Type   | Modifiers
 ---------------+---------+-----------
- reltablespace | oid     | 
- reldatabase   | oid     | 
- relfilenode   | oid     | 
- avgrequest    | bigint  | 
- lastpagecount | integer | 
- nextpage      | integer | 
+ reltablespace | oid     |
+ reldatabase   | oid     |
+ relfilenode   | oid     |
+ avgrequest    | integer |
+ lastpagecount | integer |
+ storedpages   | integer |
+ nextpage      | integer |
 View definition:
- SELECT p.reltablespace, p.reldatabase, p.relfilenode, p.avgrequest, p.lastpagecount, p.nextpage
-   FROM pg_freespacemap_relations() p(reltablespace oid, reldatabase oid, relfilenode oid, avgrequest bigint, lastpagecount integer, nextpage integer);
+ SELECT p.reltablespace, p.reldatabase, p.relfilenode, p.avgrequest, p.lastpagecount, p.storedpages, p.nextpage
+   FROM pg_freespacemap_relations() p(reltablespace oid, reldatabase oid, relfilenode oid, avgrequest integer, lastpagecount integer, storedpages integer, nextpage integer);
 
-regression=# SELECT c.relname, r.avgrequest, r.lastpagecount, r.nextpage
+regression=# SELECT c.relname, r.avgrequest, r.lastpagecount, r.storedpages
              FROM pg_freespacemap_relations r INNER JOIN pg_class c
              ON c.relfilenode = r.relfilenode INNER JOIN pg_database d
              ON r.reldatabase = d.oid AND (d.datname = current_database()) 
-             ORDER BY c.relname LIMIT 10;
-   relname    | avgrequest | lastpagecount | nextpage 
---------------+------------+---------------+----------
- a_star       |        250 |             1 |        0
- abstime_tbl  |        249 |             1 |        0
- aggtest      |        250 |             1 |        0
- altinhoid    |        250 |             1 |        0
- altstartwith |        250 |             1 |        0
- arrtest      |        254 |             1 |        0
- b_star       |        250 |             1 |        0
- box_tbl      |        250 |             1 |        0
- bt_f8_heap   |         92 |             1 |        0
- bt_i4_heap   |         94 |             1 |        0
+             ORDER BY r.storedpages DESC LIMIT 10;
+             relname             | avgrequest | lastpagecount | storedpages
+---------------------------------+------------+---------------+-------------
+ onek                            |        256 |           109 |         109
+ pg_attribute                    |        167 |            93 |          93
+ pg_class                        |        191 |            49 |          49
+ pg_attribute_relid_attnam_index |            |            48 |          48
+ onek2                           |        256 |            37 |          37
+ pg_depend                       |         95 |            26 |          26
+ pg_type                         |        199 |            16 |          16
+ pg_rewrite                      |       1011 |            13 |          13
+ pg_class_relname_nsp_index      |            |            10 |          10
+ pg_proc                         |        302 |             8 |           8
 (10 rows)
-
-regression=# 
 
 
 Sample output - pg_freespacemap_pages
 -------------
 
-regression=# \d pg_freespacemap_pages;
+regression=# \d pg_freespacemap_pages
  View "public.pg_freespacemap_pages"
      Column     |  Type   | Modifiers 
 ----------------+---------+-----------
@@ -153,8 +163,6 @@ regression=# SELECT c.relname, p.relblocknumber, p.bytes
  bt_f8_heap   |             54 |  7728
  bt_i4_heap   |             49 |  8008
 (10 rows)
-
-regression=# 
 
 
 

@@ -3,17 +3,19 @@
  * pg_freespacemap.c
  *	  display some contents of the free space relation and page maps.
  *
- *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.4 2006/04/26 22:46:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.5 2006/05/04 20:39:34 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
 #include "funcapi.h"
+#include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "storage/freespace.h"
-#include "utils/relcache.h"
+
 
 #define		NUM_FREESPACE_PAGES_ELEM 	5
-#define		NUM_FREESPACE_RELATIONS_ELEM 	6
+#define		NUM_FREESPACE_RELATIONS_ELEM 	7
 
 #if defined(WIN32) || defined(__CYGWIN__)
 /* Need DLLIMPORT for some things that are not so marked in main headers */
@@ -27,34 +29,32 @@ Datum		pg_freespacemap_relations(PG_FUNCTION_ARGS);
 
 
 /*
- * Record structure holding the to be exposed free space page data.
+ * Record structure holding the to be exposed per-page data.
  */
 typedef struct
 {
-
-	uint32				reltablespace;
-	uint32				reldatabase;
-	uint32				relfilenode;
-	uint32				relblocknumber;
-	uint32				bytes;
-	bool				isindex;
-
+	Oid				reltablespace;
+	Oid				reldatabase;
+	Oid				relfilenode;
+	BlockNumber		relblocknumber;
+	Size			bytes;
+	bool			isindex;
 }	FreeSpacePagesRec;
 
 
 /*
- * Record structure holding the to be exposed free space relation data.
+ * Record structure holding the to be exposed per-relation data.
  */
 typedef struct
 {
-
-	uint32				reltablespace;
-	uint32				reldatabase;
-	uint32				relfilenode;
-	int64				avgrequest;
-	int					lastpagecount;
-	int					nextpage;
-
+	Oid				reltablespace;
+	Oid				reldatabase;
+	Oid				relfilenode;
+	Size			avgrequest;
+	int				lastpagecount;
+	int				storedpages;
+	int				nextpage;
+	bool			isindex;
 }	FreeSpaceRelationsRec;
 
 
@@ -64,11 +64,8 @@ typedef struct
  */
 typedef struct
 {
-
-	AttInMetadata 		*attinmeta;
+	TupleDesc			tupdesc;
 	FreeSpacePagesRec	*record;
-	char	   			*values[NUM_FREESPACE_PAGES_ELEM];
-
 }	FreeSpacePagesContext;
 
 
@@ -77,11 +74,8 @@ typedef struct
  */
 typedef struct
 {
-
-	AttInMetadata 		*attinmeta;
+	TupleDesc			tupdesc;
 	FreeSpaceRelationsRec	*record;
-	char	   			*values[NUM_FREESPACE_RELATIONS_ELEM];
-
 }	FreeSpaceRelationsContext;
 
 
@@ -89,26 +83,24 @@ typedef struct
  * Function returning page data from the Free Space Map (FSM).
  */
 PG_FUNCTION_INFO_V1(pg_freespacemap_pages);
+
 Datum
 pg_freespacemap_pages(PG_FUNCTION_ARGS)
 {
-
 	FuncCallContext			*funcctx;
 	Datum					result;
 	MemoryContext 			oldcontext;
 	FreeSpacePagesContext	*fctx;				/* User function context. */
 	TupleDesc				tupledesc;
 	HeapTuple				tuple;
-
 	FSMHeader				*FreeSpaceMap; 		/* FSM main structure. */
 	FSMRelation				*fsmrel;			/* Individual relation. */
 
-
 	if (SRF_IS_FIRSTCALL())
 	{
-		uint32				i;
-		uint32				numPages;	/* Max possible no. of pages in map. */
-		int					nPages;		/* Mapped pages for a relation. */
+		int				i;
+		int				numPages;	/* Max possible no. of pages in map. */
+		int				nPages;		/* Mapped pages for a relation. */
 		
 		/*
 		 * Get the free space map data structure.
@@ -122,7 +114,13 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 		/* Switch context when allocating stuff to be used in later calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		/* Construct a tuple to return. */
+		/*
+		 * Create a function context for cross-call persistence.
+		 */
+		fctx = (FreeSpacePagesContext *) palloc(sizeof(FreeSpacePagesContext));
+		funcctx->user_fctx = fctx;
+
+		/* Construct a tuple descriptor for the result rows. */
 		tupledesc = CreateTemplateTupleDesc(NUM_FREESPACE_PAGES_ELEM, false);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "reltablespace",
 						   OIDOID, -1, 0);
@@ -135,59 +133,37 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "bytes",
 						   INT4OID, -1, 0);
 
-		/* Generate attribute metadata needed later to produce tuples */
-		funcctx->attinmeta = TupleDescGetAttInMetadata(tupledesc);
+		fctx->tupdesc = BlessTupleDesc(tupledesc);
 
 		/*
-		 * Create a function context for cross-call persistence and initialize
-		 * the counters.
-		 */
-		fctx = (FreeSpacePagesContext *) palloc(sizeof(FreeSpacePagesContext));
-		funcctx->user_fctx = fctx;
-
-		/* Set an upper bound on the calls */
-		funcctx->max_calls = numPages;	
-
-
-		/* Allocate numPages worth of FreeSpacePagesRec records, this is also
+		 * Allocate numPages worth of FreeSpacePagesRec records, this is
 		 * an upper bound.
 		 */
 		fctx->record = (FreeSpacePagesRec *) palloc(sizeof(FreeSpacePagesRec) * numPages);
 
-		/* allocate the strings for tuple formation */
-		fctx->values[0] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[1] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[2] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[3] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[4] = (char *) palloc(3 * sizeof(uint32) + 1);
-
-
 		/* Return to original context when allocating transient memory */
 		MemoryContextSwitchTo(oldcontext);
 
-
 		/*
-		 * Lock free space map and scan though all the relations, 
-		 * for each relation, gets all its mapped pages.
+		 * Lock free space map and scan though all the relations.
+		 * For each relation, gets all its mapped pages.
 		 */
 		LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
-
 
 		i = 0;
 
 		for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = fsmrel->nextUsage) 
 		{
-
 			if (fsmrel->isIndex)	
-			{	/* Index relation. */
+			{
+				/* Index relation. */
 				IndexFSMPageData *page;
 
 				page = (IndexFSMPageData *)
-						(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
+					(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
 
 				for (nPages = 0; nPages < fsmrel->storedPages; nPages++)
 				{
-
 					fctx->record[i].reltablespace = fsmrel->key.spcNode;
 					fctx->record[i].reldatabase = fsmrel->key.dbNode;
 					fctx->record[i].relfilenode = fsmrel->key.relNode;
@@ -200,11 +176,12 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 				}
 			}
 			else
-			{	/* Heap relation. */
+			{
+				/* Heap relation. */
 				FSMPageData *page;
 
 				page = (FSMPageData *)
-						(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
+					(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
 
 				for (nPages = 0; nPages < fsmrel->storedPages; nPages++)
 				{
@@ -218,16 +195,15 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 					page++;
 					i++;
 				}
-			
 			}
-
 		}
-
-		/* Set the real no. of calls as we know it now! */
-		funcctx->max_calls = i;
 
 		/* Release free space map. */
 		LWLockRelease(FreeSpaceLock);
+
+		/* Set the real no. of calls as we know it now! */
+		Assert(i <= numPages);
+		funcctx->max_calls = i;
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -235,53 +211,43 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 	/* Get the saved state */
 	fctx = funcctx->user_fctx;
 
-
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
-		uint32		i = funcctx->call_cntr;
-		char		*values[NUM_FREESPACE_PAGES_ELEM];
-		int			j;
+		int			i = funcctx->call_cntr;
+		FreeSpacePagesRec	*record = &fctx->record[i];
+		Datum		values[NUM_FREESPACE_PAGES_ELEM];
+		bool		nulls[NUM_FREESPACE_PAGES_ELEM];
 
-		/*
-		 * Use a temporary values array, initially pointing to fctx->values,
-		 * so it can be reassigned w/o losing the storage for subsequent
-		 * calls.
-		 */
-		for (j = 0; j < NUM_FREESPACE_PAGES_ELEM; j++)
-		{
-			values[j] = fctx->values[j];
-		}
-
-
-		sprintf(values[0], "%u", fctx->record[i].reltablespace);
-		sprintf(values[1], "%u", fctx->record[i].reldatabase);
-		sprintf(values[2], "%u", fctx->record[i].relfilenode);
-		sprintf(values[3], "%u", fctx->record[i].relblocknumber);
-
+		values[0] = ObjectIdGetDatum(record->reltablespace);
+		nulls[0] = false;
+		values[1] = ObjectIdGetDatum(record->reldatabase);
+		nulls[1] = false;
+		values[2] = ObjectIdGetDatum(record->relfilenode);
+		nulls[2] = false;
+		values[3] = Int64GetDatum((int64) record->relblocknumber);
+		nulls[3] = false;
 
 		/*
 		 * Set (free) bytes to NULL for an index relation.
 		 */
-		if (fctx->record[i].isindex == true)
+		if (record->isindex)
 		{
-			values[4] = NULL;
+			nulls[4] = true;
 		}
 		else
 		{
-			sprintf(values[4], "%u", fctx->record[i].bytes);
+			values[4] = UInt32GetDatum(record->bytes);
+			nulls[4] = false;
 		}
 
-
 		/* Build and return the tuple. */
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		tuple = heap_form_tuple(fctx->tupdesc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
-
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 	else
 		SRF_RETURN_DONE(funcctx);
-
 }
 
 
@@ -289,25 +255,23 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
  * Function returning relation data from the Free Space Map (FSM).
  */
 PG_FUNCTION_INFO_V1(pg_freespacemap_relations);
+
 Datum
 pg_freespacemap_relations(PG_FUNCTION_ARGS)
 {
-
 	FuncCallContext			*funcctx;
 	Datum					result;
 	MemoryContext 			oldcontext;
-	FreeSpaceRelationsContext	*fctx;				/* User function context. */
+	FreeSpaceRelationsContext	*fctx;			/* User function context. */
 	TupleDesc				tupledesc;
 	HeapTuple				tuple;
-
 	FSMHeader				*FreeSpaceMap; 		/* FSM main structure. */
 	FSMRelation				*fsmrel;			/* Individual relation. */
 
-
 	if (SRF_IS_FIRSTCALL())
 	{
-		uint32				i;
-		uint32				numRelations;	/* Max no. of Relations in map. */
+		int				i;
+		int				numRelations;	/* Max no. of Relations in map. */
 		
 		/*
 		 * Get the free space map data structure.
@@ -321,7 +285,13 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 		/* Switch context when allocating stuff to be used in later calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		/* Construct a tuple to return. */
+		/*
+		 * Create a function context for cross-call persistence.
+		 */
+		fctx = (FreeSpaceRelationsContext *) palloc(sizeof(FreeSpaceRelationsContext));
+		funcctx->user_fctx = fctx;
+
+		/* Construct a tuple descriptor for the result rows. */
 		tupledesc = CreateTemplateTupleDesc(NUM_FREESPACE_RELATIONS_ELEM, false);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "reltablespace",
 						   OIDOID, -1, 0);
@@ -330,72 +300,52 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupledesc, (AttrNumber) 3, "relfilenode",
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 4, "avgrequest",
-						   INT8OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "lastpageCount",
 						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "nextpage",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "lastpagecount",
+						   INT4OID, -1, 0);
+		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "storedpages",
+						   INT4OID, -1, 0);
+		TupleDescInitEntry(tupledesc, (AttrNumber) 7, "nextpage",
 						   INT4OID, -1, 0);
 
-		/* Generate attribute metadata needed later to produce tuples */
-		funcctx->attinmeta = TupleDescGetAttInMetadata(tupledesc);
+		fctx->tupdesc = BlessTupleDesc(tupledesc);
 
 		/*
-		 * Create a function context for cross-call persistence and initialize
-		 * the counters.
-		 */
-		fctx = (FreeSpaceRelationsContext *) palloc(sizeof(FreeSpaceRelationsContext));
-		funcctx->user_fctx = fctx;
-
-		/* Set an upper bound on the calls */
-		funcctx->max_calls = numRelations;	
-
-
-		/* Allocate numRelations worth of FreeSpaceRelationsRec records, 
+		 * Allocate numRelations worth of FreeSpaceRelationsRec records, 
 		 * this is also an upper bound.
 		 */
 		fctx->record = (FreeSpaceRelationsRec *) palloc(sizeof(FreeSpaceRelationsRec) * numRelations);
 
-		/* allocate the strings for tuple formation */
-		fctx->values[0] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[1] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[2] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[3] = (char *) palloc(3 * sizeof(int64) + 1);
-		fctx->values[4] = (char *) palloc(3 * sizeof(int32) + 1);
-		fctx->values[5] = (char *) palloc(3 * sizeof(int32) + 1);
-
-
 		/* Return to original context when allocating transient memory */
 		MemoryContextSwitchTo(oldcontext);
 
-
 		/*
-		 * Lock free space map and scan though all the relations, 
+		 * Lock free space map and scan though all the relations.
 		 */
 		LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
-
 
 		i = 0;
 
 		for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = fsmrel->nextUsage) 
 		{
-
 			fctx->record[i].reltablespace = fsmrel->key.spcNode;
 			fctx->record[i].reldatabase = fsmrel->key.dbNode;
 			fctx->record[i].relfilenode = fsmrel->key.relNode;
 			fctx->record[i].avgrequest = (int64)fsmrel->avgRequest;
 			fctx->record[i].lastpagecount = fsmrel->lastPageCount;
+			fctx->record[i].storedpages = fsmrel->storedPages;
 			fctx->record[i].nextpage = fsmrel->nextPage;
+			fctx->record[i].isindex = fsmrel->isIndex;
 
 			i++;
-
-
 		}
-
-		/* Set the real no. of calls as we know it now! */
-		funcctx->max_calls = i;
 
 		/* Release free space map. */
 		LWLockRelease(FreeSpaceLock);
+
+		/* Set the real no. of calls as we know it now! */
+		Assert(i <= numRelations);
+		funcctx->max_calls = i;
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -403,42 +353,44 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 	/* Get the saved state */
 	fctx = funcctx->user_fctx;
 
-
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
-		uint32		i = funcctx->call_cntr;
-		char		*values[NUM_FREESPACE_RELATIONS_ELEM];
-		int			j;
+		int			i = funcctx->call_cntr;
+		FreeSpaceRelationsRec	*record = &fctx->record[i];
+		Datum		values[NUM_FREESPACE_RELATIONS_ELEM];
+		bool		nulls[NUM_FREESPACE_RELATIONS_ELEM];
 
+		values[0] = ObjectIdGetDatum(record->reltablespace);
+		nulls[0] = false;
+		values[1] = ObjectIdGetDatum(record->reldatabase);
+		nulls[1] = false;
+		values[2] = ObjectIdGetDatum(record->relfilenode);
+		nulls[2] = false;
 		/*
-		 * Use a temporary values array, initially pointing to fctx->values,
-		 * so it can be reassigned w/o losing the storage for subsequent
-		 * calls.
+		 * avgrequest isn't meaningful for an index
 		 */
-		for (j = 0; j < NUM_FREESPACE_RELATIONS_ELEM; j++)
+		if (record->isindex)
 		{
-			values[j] = fctx->values[j];
+			nulls[3] = true;
 		}
-
-
-		sprintf(values[0], "%u", fctx->record[i].reltablespace);
-		sprintf(values[1], "%u", fctx->record[i].reldatabase);
-		sprintf(values[2], "%u", fctx->record[i].relfilenode);
-		sprintf(values[3], INT64_FORMAT, fctx->record[i].avgrequest);
-		sprintf(values[4], "%d", fctx->record[i].lastpagecount);
-		sprintf(values[5], "%d", fctx->record[i].nextpage);
-
-
+		else
+		{
+			values[3] = UInt32GetDatum(record->avgrequest);
+			nulls[3] = false;
+		}
+		values[4] = Int32GetDatum(record->lastpagecount);
+		nulls[4] = false;
+		values[5] = Int32GetDatum(record->storedpages);
+		nulls[5] = false;
+		values[6] = Int32GetDatum(record->nextpage);
+		nulls[6] = false;
 
 		/* Build and return the tuple. */
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		tuple = heap_form_tuple(fctx->tupdesc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
-
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 	else
 		SRF_RETURN_DONE(funcctx);
-
-
 }
