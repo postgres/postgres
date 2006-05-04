@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.66 2006/04/27 15:35:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.67 2006/05/04 22:18:38 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -795,6 +795,7 @@ initialize_SSL(void)
 	}
 	else
 	{
+#ifdef X509_V_FLAG_CRL_CHECK
 		/*
 		 *	Check the Certificate Revocation List (CRL) if file exists.
 		 *	http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
@@ -816,6 +817,7 @@ initialize_SSL(void)
 					 errdetail("Will not check certificates against CRL.")));
 			}
 		}
+#endif /* X509_V_FLAG_CRL_CHECK */
 
 		SSL_CTX_set_verify(SSL_context,
 						   (SSL_VERIFY_PEER |
