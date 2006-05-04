@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.166 2006/05/04 16:07:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.167 2006/05/04 18:51:36 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -357,16 +357,12 @@ InitPostgres(const char *dbname, const char *username)
 		InitXLOGAccess();
 
 	/*
-	 * Initialize the relation descriptor cache.  This must create at least
-	 * the minimum set of "nailed-in" cache entries.  No catalog access
-	 * happens here.
+	 * Initialize the relation cache and the system catalog caches.  Note that
+	 * no catalog access happens here; we only set up the hashtable structure.
+	 * We must do this before starting a transaction because transaction
+	 * abort would try to touch these hashtables.
 	 */
 	RelationCacheInitialize();
-
-	/*
-	 * Initialize all the system catalog caches.  Note that no catalog access
-	 * happens here; we only set up the cache structure.
-	 */
 	InitCatalogCache();
 
 	/* Initialize portal manager */
@@ -458,7 +454,8 @@ InitPostgres(const char *dbname, const char *username)
 	/*
 	 * It's now possible to do real access to the system catalogs.
 	 *
-	 * Replace faked-up relcache entries with correct info.
+	 * Load relcache entries for the system catalogs.  This must create at
+	 * least the minimum set of "nailed-in" cache entries.
 	 */
 	RelationCacheInitializePhase2();
 
@@ -502,12 +499,6 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 	if (!bootstrap)
 		CheckMyDatabase(dbname, am_superuser);
-
-	/*
-	 * Final phase of relation cache startup: write a new cache file if
-	 * necessary.  (XXX this could be folded back into Phase2)
-	 */
-	RelationCacheInitializePhase3();
 
 	/*
 	 * Check a normal user hasn't connected to a superuser reserved slot.

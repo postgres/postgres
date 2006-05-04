@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.53 2006/03/05 15:59:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.54 2006/05/04 18:51:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@ extern void RelationInitIndexAccessInfo(Relation relation);
  */
 extern void RelationCacheInitialize(void);
 extern void RelationCacheInitializePhase2(void);
-extern void RelationCacheInitializePhase3(void);
 
 /*
  * Routine to create a relcache entry for an about-to-be-created relation

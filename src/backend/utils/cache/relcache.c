@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.239 2006/04/25 22:46:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.240 2006/05/04 18:51:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2156,10 +2156,11 @@ RelationBuildLocalRelation(const char *relname,
  *
  *		This initializes the relation descriptor cache.  At the time
  *		that this is invoked, we can't do database access yet (mainly
- *		because the transaction subsystem is not up), so we can't get
- *		"real" info.  However it's okay to read the pg_internal.init
- *		cache file, if one is available.  Otherwise we make phony
- *		entries for the minimum set of nailed-in-cache relations.
+ *		because the transaction subsystem is not up); all we are doing
+ *		is making an empty cache hashtable.  This must be done before
+ *		starting the initialization transaction, because otherwise
+ *		AtEOXact_RelationCache would crash if that transaction aborts
+ *		before we can get the relcache set up.
  */
 
 #define INITRELCACHESIZE		400
@@ -2188,10 +2189,38 @@ RelationCacheInitialize(void)
 	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
 								  &ctl, HASH_ELEM | HASH_FUNCTION);
 
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ *		RelationCacheInitializePhase2
+ *
+ *		This is called as soon as the catcache and transaction system
+ *		are functional.  At this point we can actually read data from
+ *		the system catalogs.  We first try to read pre-computed relcache
+ *		entries from the pg_internal.init file.  If that's missing or
+ *		broken, make phony entries for the minimum set of nailed-in-cache
+ *		relations.  Then (unless bootstrapping) make sure we have entries
+ *		for the critical system indexes.  Once we've done all this, we
+ *		have enough infrastructure to open any system catalog or use any
+ *		catcache.  The last step is to rewrite pg_internal.init if needed.
+ */
+void
+RelationCacheInitializePhase2(void)
+{
+	HASH_SEQ_STATUS status;
+	RelIdCacheEnt *idhentry;
+	MemoryContext oldcxt;
+
 	/*
-	 * Try to load the relcache cache file.  If successful, we're done for
-	 * now.  Otherwise, initialize the cache with pre-made descriptors for the
-	 * critical "nailed-in" system catalogs.
+	 * switch to cache memory context
+	 */
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+
+	/*
+	 * Try to load the relcache cache file.  If unsuccessful, bootstrap the
+	 * cache with pre-made descriptors for the critical "nailed-in" system
+	 * catalogs.
 	 */
 	if (IsBootstrapProcessingMode() ||
 		!load_relcache_init_file())
@@ -2209,23 +2238,8 @@ RelationCacheInitialize(void)
 	}
 
 	MemoryContextSwitchTo(oldcxt);
-}
 
-/*
- *		RelationCacheInitializePhase2
- *
- *		This is called as soon as the catcache and transaction system
- *		are functional.  At this point we can actually read data from
- *		the system catalogs.  Update the relcache entries made during
- *		RelationCacheInitialize, and make sure we have entries for the
- *		critical system indexes.
- */
-void
-RelationCacheInitializePhase2(void)
-{
-	HASH_SEQ_STATUS status;
-	RelIdCacheEnt *idhentry;
-
+	/* In bootstrap mode, the faked-up formrdesc info is all we'll have */
 	if (IsBootstrapProcessingMode())
 		return;
 
@@ -2334,20 +2348,10 @@ RelationCacheInitializePhase2(void)
 		if (relation->rd_rel->reltriggers > 0 && relation->trigdesc == NULL)
 			RelationBuildTriggers(relation);
 	}
-}
 
-/*
- *		RelationCacheInitializePhase3
- *
- *		Final step of relcache initialization: write out a new relcache
- *		cache file if one is needed.
- */
-void
-RelationCacheInitializePhase3(void)
-{
-	if (IsBootstrapProcessingMode())
-		return;
-
+	/*
+	 * Lastly, write out a new relcache cache file if one is needed.
+	 */
 	if (needNewCacheFile)
 	{
 		/*
