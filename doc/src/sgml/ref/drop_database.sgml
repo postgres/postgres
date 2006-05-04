@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.21 2005/11/22 15:24:17 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.22 2006/05/04 16:07:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -86,7 +86,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
   <title>Compatibility</title>
 
   <para>
-   The is no <command>DROP DATABASE</command> statement in the SQL standard.
+   There is no <command>DROP DATABASE</command> statement in the SQL standard.
   </para>
  </refsect1>
 

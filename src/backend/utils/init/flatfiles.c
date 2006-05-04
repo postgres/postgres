@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.17 2006/03/05 15:58:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.18 2006/05/04 16:07:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -768,24 +768,48 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 	CommandCounterIncrement();
 
 	/*
-	 * We use ExclusiveLock to ensure that only one backend writes the flat
-	 * file(s) at a time.  That's sufficient because it's okay to allow plain
-	 * reads of the tables in parallel.  There is some chance of a deadlock
-	 * here (if we were triggered by a user update of one of the tables, which
-	 * likely won't have gotten a strong enough lock), so get the locks we
-	 * need before writing anything.
+	 * Open and lock the needed catalog(s).
 	 *
-	 * For writing the auth file, it's sufficient to ExclusiveLock pg_authid;
-	 * we take just regular AccessShareLock on pg_auth_members.
+	 * Even though we only need AccessShareLock, this could theoretically fail
+	 * due to deadlock.  In practice, however, our transaction already holds
+	 * RowExclusiveLock or better (it couldn't have updated the catalog
+	 * without such a lock).  This implies that dbcommands.c and other places
+	 * that force flat-file updates must not follow the common practice of
+	 * dropping catalog locks before commit.
 	 */
 	if (database_file_update_subid != InvalidSubTransactionId)
-		drel = heap_open(DatabaseRelationId, ExclusiveLock);
+		drel = heap_open(DatabaseRelationId, AccessShareLock);
 
 	if (auth_file_update_subid != InvalidSubTransactionId)
 	{
-		arel = heap_open(AuthIdRelationId, ExclusiveLock);
+		arel = heap_open(AuthIdRelationId, AccessShareLock);
 		mrel = heap_open(AuthMemRelationId, AccessShareLock);
 	}
+
+	/*
+	 * Obtain special locks to ensure that two transactions don't try to write
+	 * the same flat file concurrently.  Quite aside from any direct risks of
+	 * corrupted output, the winning writer probably wouldn't have seen the
+	 * other writer's updates.  By taking a lock and holding it till commit,
+	 * we ensure that whichever updater goes second will see the other
+	 * updater's changes as committed, and thus the final state of the file
+	 * will include all updates.
+	 *
+	 * We use a lock on "database 0" to protect writing the pg_database flat
+	 * file, and a lock on "role 0" to protect the auth file.  This is a bit
+	 * ugly but it's not worth inventing any more-general convention.  (Any
+	 * two locktags that are never used for anything else would do.)
+	 *
+	 * This is safe against deadlock as long as these are the very last locks
+	 * acquired during the transaction.
+	 */
+	if (database_file_update_subid != InvalidSubTransactionId)
+		LockSharedObject(DatabaseRelationId, InvalidOid, 0,
+						 AccessExclusiveLock);
+
+	if (auth_file_update_subid != InvalidSubTransactionId)
+		LockSharedObject(AuthIdRelationId, InvalidOid, 0,
+						 AccessExclusiveLock);
 
 	/* Okay to write the files */
 	if (database_file_update_subid != InvalidSubTransactionId)

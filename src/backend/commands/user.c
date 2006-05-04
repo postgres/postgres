@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.170 2006/03/05 15:58:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.171 2006/05/04 16:07:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,10 +274,9 @@ CreateRole(CreateRoleStmt *stmt)
 
 	/*
 	 * Check the pg_authid relation to be certain the role doesn't already
-	 * exist.  Note we secure exclusive lock because we need to protect our
-	 * eventual update of the flat auth file.
+	 * exist.
 	 */
-	pg_authid_rel = heap_open(AuthIdRelationId, ExclusiveLock);
+	pg_authid_rel = heap_open(AuthIdRelationId, RowExclusiveLock);
 	pg_authid_dsc = RelationGetDescr(pg_authid_rel);
 
 	tuple = SearchSysCache(AUTHNAME,
@@ -377,8 +376,8 @@ CreateRole(CreateRoleStmt *stmt)
 				GetUserId(), false);
 
 	/*
-	 * Now we can clean up; but keep lock until commit (to avoid possible
-	 * deadlock when commit code tries to acquire lock).
+	 * Close pg_authid, but keep lock till commit (this is important
+	 * to prevent any risk of deadlock failure while updating flat file)
 	 */
 	heap_close(pg_authid_rel, NoLock);
 
@@ -538,10 +537,9 @@ AlterRole(AlterRoleStmt *stmt)
 		validUntil = strVal(dvalidUntil->arg);
 
 	/*
-	 * Scan the pg_authid relation to be certain the user exists. Note we
-	 * secure exclusive lock to protect our update of the flat auth file.
+	 * Scan the pg_authid relation to be certain the user exists.
 	 */
-	pg_authid_rel = heap_open(AuthIdRelationId, ExclusiveLock);
+	pg_authid_rel = heap_open(AuthIdRelationId, RowExclusiveLock);
 	pg_authid_dsc = RelationGetDescr(pg_authid_rel);
 
 	tuple = SearchSysCache(AUTHNAME,
@@ -697,8 +695,8 @@ AlterRole(AlterRoleStmt *stmt)
 					false);
 
 	/*
-	 * Now we can clean up; but keep lock until commit (to avoid possible
-	 * deadlock when commit code tries to acquire lock).
+	 * Close pg_authid, but keep lock till commit (this is important
+	 * to prevent any risk of deadlock failure while updating flat file)
 	 */
 	heap_close(pg_authid_rel, NoLock);
 
@@ -726,10 +724,6 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 
 	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
 
-	/*
-	 * RowExclusiveLock is sufficient, because we don't need to update the
-	 * flat auth file.
-	 */
 	rel = heap_open(AuthIdRelationId, RowExclusiveLock);
 	oldtuple = SearchSysCache(AUTHNAME,
 							  PointerGetDatum(stmt->role),
@@ -799,6 +793,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	CatalogUpdateIndexes(rel, newtuple);
 
 	ReleaseSysCache(oldtuple);
+	/* needn't keep lock since we won't be updating the flat file */
 	heap_close(rel, RowExclusiveLock);
 }
 
@@ -820,11 +815,9 @@ DropRole(DropRoleStmt *stmt)
 
 	/*
 	 * Scan the pg_authid relation to find the Oid of the role(s) to be
-	 * deleted.  Note we secure exclusive lock on pg_authid, because we need
-	 * to protect our update of the flat auth file.  A regular writer's lock
-	 * on pg_auth_members is sufficient though.
+	 * deleted.
 	 */
-	pg_authid_rel = heap_open(AuthIdRelationId, ExclusiveLock);
+	pg_authid_rel = heap_open(AuthIdRelationId, RowExclusiveLock);
 	pg_auth_members_rel = heap_open(AuthMemRelationId, RowExclusiveLock);
 
 	foreach(item, stmt->roles)
@@ -960,7 +953,7 @@ DropRole(DropRoleStmt *stmt)
 
 	/*
 	 * Now we can clean up; but keep locks until commit (to avoid possible
-	 * deadlock when commit code tries to acquire lock).
+	 * deadlock failure while updating flat file)
 	 */
 	heap_close(pg_auth_members_rel, NoLock);
 	heap_close(pg_authid_rel, NoLock);
@@ -989,8 +982,7 @@ RenameRole(const char *oldname, const char *newname)
 	int			i;
 	Oid			roleid;
 
-	/* ExclusiveLock because we need to update the flat auth file */
-	rel = heap_open(AuthIdRelationId, ExclusiveLock);
+	rel = heap_open(AuthIdRelationId, RowExclusiveLock);
 	dsc = RelationGetDescr(rel);
 
 	oldtuple = SearchSysCache(AUTHNAME,
@@ -1080,6 +1072,11 @@ RenameRole(const char *oldname, const char *newname)
 	CatalogUpdateIndexes(rel, newtuple);
 
 	ReleaseSysCache(oldtuple);
+
+	/*
+	 * Close pg_authid, but keep lock till commit (this is important
+	 * to prevent any risk of deadlock failure while updating flat file)
+	 */
 	heap_close(rel, NoLock);
 
 	/*
@@ -1108,11 +1105,8 @@ GrantRole(GrantRoleStmt *stmt)
 
 	grantee_ids = roleNamesToIds(stmt->grantee_roles);
 
-	/*
-	 * Even though this operation doesn't change pg_authid, we must secure
-	 * exclusive lock on it to protect our update of the flat auth file.
-	 */
-	pg_authid_rel = heap_open(AuthIdRelationId, ExclusiveLock);
+	/* AccessShareLock is enough since we aren't modifying pg_authid */
+	pg_authid_rel = heap_open(AuthIdRelationId, AccessShareLock);
 
 	/*
 	 * Step through all of the granted roles and add/remove entries for the
@@ -1136,6 +1130,10 @@ GrantRole(GrantRoleStmt *stmt)
 						stmt->admin_opt);
 	}
 
+	/*
+	 * Close pg_authid, but keep lock till commit (this is important
+	 * to prevent any risk of deadlock failure while updating flat file)
+	 */
 	heap_close(pg_authid_rel, NoLock);
 
 	/*
@@ -1237,8 +1235,7 @@ roleNamesToIds(List *memberNames)
  * grantorId: who is granting the membership
  * admin_opt: granting admin option?
  *
- * Note: caller is responsible for holding ExclusiveLock on pg_authid,
- * and for calling auth_file_update_needed().
+ * Note: caller is responsible for calling auth_file_update_needed().
  */
 static void
 AddRoleMems(const char *rolename, Oid roleid,
@@ -1283,7 +1280,6 @@ AddRoleMems(const char *rolename, Oid roleid,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to set grantor")));
 
-	/* We need only regular writer's lock on pg_auth_members */
 	pg_authmem_rel = heap_open(AuthMemRelationId, RowExclusiveLock);
 	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
 
@@ -1363,8 +1359,8 @@ AddRoleMems(const char *rolename, Oid roleid,
 	}
 
 	/*
-	 * Now we can clean up; but keep lock until commit (to avoid possible
-	 * deadlock when commit code tries to acquire lock).
+	 * Close pg_authmem, but keep lock till commit (this is important
+	 * to prevent any risk of deadlock failure while updating flat file)
 	 */
 	heap_close(pg_authmem_rel, NoLock);
 }
@@ -1378,8 +1374,7 @@ AddRoleMems(const char *rolename, Oid roleid,
  * memberIds: OIDs of roles to del
  * admin_opt: remove admin option only?
  *
- * Note: caller is responsible for holding ExclusiveLock on pg_authid,
- * and for calling auth_file_update_needed().
+ * Note: caller is responsible for calling auth_file_update_needed().
  */
 static void
 DelRoleMems(const char *rolename, Oid roleid,
@@ -1418,7 +1413,6 @@ DelRoleMems(const char *rolename, Oid roleid,
 							rolename)));
 	}
 
-	/* We need only regular writer's lock on pg_auth_members */
 	pg_authmem_rel = heap_open(AuthMemRelationId, RowExclusiveLock);
 	pg_authmem_dsc = RelationGetDescr(pg_authmem_rel);
 
@@ -1478,8 +1472,8 @@ DelRoleMems(const char *rolename, Oid roleid,
 	}
 
 	/*
-	 * Now we can clean up; but keep lock until commit (to avoid possible
-	 * deadlock when commit code tries to acquire lock).
+	 * Close pg_authmem, but keep lock till commit (this is important
+	 * to prevent any risk of deadlock failure while updating flat file)
 	 */
 	heap_close(pg_authmem_rel, NoLock);
 }

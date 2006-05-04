@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.44 2005/07/31 17:19:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.45 2006/05/04 16:07:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -45,7 +45,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    Normally, the creator becomes the owner of the new database.
-   Superusers can create databases owned by other users using the
+   Superusers can create databases owned by other users, by using the
    <literal>OWNER</> clause. They can even create databases owned by
    users with no special privileges. Non-superusers with <literal>CREATEDB</>
    privilege can only create databases owned by themselves.
@@ -104,7 +104,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
         Character set encoding to use in the new database.  Specify
         a string constant (e.g., <literal>'SQL_ASCII'</literal>),
         or an integer encoding number, or <literal>DEFAULT</literal>
-        to use the default encoding. The character sets supported by the
+        to use the default encoding (namely, the encoding of the
+        template database). The character sets supported by the
         <productname>PostgreSQL</productname> server are described in
         <xref linkend="multibyte-charset-supported">.
        </para>
@@ -169,7 +170,11 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    Although it is possible to copy a database other than <literal>template1</>
    by specifying its name as the template, this is not (yet) intended as
    a general-purpose <quote><command>COPY DATABASE</command></quote> facility.
-   We recommend that databases used as templates be treated as read-only.
+   The principal limitation is that no other sessions can be connected to
+   the template database while it is being copied.  <command>CREATE
+   DATABASE</> will fail if any other connection exists when it starts;
+   otherwise, new connections to the template database are locked out
+   until <command>CREATE DATABASE</> completes.
    See <xref linkend="manage-ag-templatedbs"> for more information.
   </para>
 
@@ -220,6 +225,16 @@ CREATE DATABASE music ENCODING 'LATIN1';
    implementation-defined.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title"></member>
+   <member><xref linkend="sql-dropdatabase" endterm="sql-dropdatabase-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

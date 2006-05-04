@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.8 2006/03/05 15:58:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.9 2006/05/04 16:07:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
-#include "utils/inval.h"
 #include "utils/syscache.h"
 
 
@@ -910,12 +909,6 @@ shdepLockAndCheckObject(Oid classId, Oid objectId)
 {
 	/* AccessShareLock should be OK, since we are not modifying the object */
 	LockSharedObject(classId, objectId, 0, AccessShareLock);
-
-	/*
-	 * We have to recognize sinval updates here, else our local syscache may
-	 * still contain the object even if it was just dropped.
-	 */
-	AcceptInvalidationMessages();
 
 	switch (classId)
 	{

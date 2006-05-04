@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.45 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.46 2006/05/04 16:07:28 tgl Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -166,6 +166,7 @@ CREATE DATABASE <replaceable>dbname</> OWNER <replaceable>rolename</>;
 <programlisting>
 createdb -O <replaceable>rolename</> <replaceable>dbname</>
 </programlisting>
+   from the shell.
    You must be a superuser to be allowed to create a database for
    someone else (that is, for a role you are not a member of).
   </para>
@@ -220,19 +221,15 @@ createdb -T template0 <replaceable>dbname</>
 
   <para>
    It is possible to create additional template databases, and indeed
-   one might copy any database in a cluster by specifying its name
+   one may copy any database in a cluster by specifying its name
    as the template for <command>CREATE DATABASE</>.  It is important to
    understand, however, that this is not (yet) intended as
-   a general-purpose <quote><command>COPY DATABASE</command></quote> facility.  In particular, it is
-   essential that the source database be idle (no data-altering transactions
-   in progress)
-   for the duration of the copying operation.  <command>CREATE DATABASE</>
-   will check
-   that no session (other than itself) is connected to
-   the source database at the start of the operation, but this does not
-   guarantee that changes cannot be made while the copy proceeds, which
-   would result in an inconsistent copied database.  Therefore,
-   we recommend that databases used as templates be treated as read-only.
+   a general-purpose <quote><command>COPY DATABASE</command></quote> facility.
+   The principal limitation is that no other sessions can be connected to
+   the source database while it is being copied.  <command>CREATE
+   DATABASE</> will fail if any other connection exists when it starts;
+   otherwise, new connections to the source database are locked out
+   until <command>CREATE DATABASE</> completes.
   </para>
 
   <para>
