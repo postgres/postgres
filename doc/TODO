@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 29 22:10:37 EDT 2006
+Last updated:		Fri May  5 05:35:51 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -200,7 +200,7 @@ Data Types
   The positive modulus result returned by NUMERICs might be considered
   inaccurate, in one sense.
 
-* %Disallow changing default expression of a SERIAL column?
+* %Disallow changing DEFAULT expression of a SERIAL column?
 * %Disallow ALTER SEQUENCE changes for SERIAL sequences because pg_dump
   does not dump the changes
 * Fix data types where equality comparison isn't intuitive, e.g. box
@@ -470,6 +470,10 @@ SQL Commands
 * Make CLUSTER preserve recently-dead tuples per MVCC requirements
 * Add SQL99 WITH clause to SELECT
 * Add SQL99 WITH RECURSIVE to SELECT
+* Add DEFAULT .. AS OWNER so permission checks are done as the table
+  owner
+
+  This would be useful for SERIAL nextval() calls and CHECK constraints.
 
 
 * CREATE

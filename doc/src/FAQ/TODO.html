@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Apr 29 22:10:37 EDT 2006
+Last updated:           Fri May  5 05:35:51 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -185,7 +185,7 @@ first.
   inaccurate, in one sense.
 </p>
 <ul>
-  <li>%Disallow changing default expression of a SERIAL column?
+  <li>%Disallow changing DEFAULT expression of a SERIAL column?
   </li><li>%Disallow ALTER SEQUENCE changes for SERIAL sequences because pg_dump
   does not dump the changes
   </li><li>Fix data types where equality comparison isn't intuitive, e.g. box
@@ -433,6 +433,10 @@ first.
   </li><li>Make CLUSTER preserve recently-dead tuples per MVCC requirements
   </li><li>Add SQL99 WITH clause to SELECT
   </li><li>Add SQL99 WITH RECURSIVE to SELECT
+  </li><li>Add DEFAULT .. AS OWNER so permission checks are done as the table
+  owner
+<p>  This would be useful for SERIAL nextval() calls and CHECK constraints.
+</p>
   </li><li>CREATE
   <ul>
     <li>Allow CREATE TABLE AS to determine column lengths for complex
