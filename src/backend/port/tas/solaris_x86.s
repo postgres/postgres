@@ -1,8 +1,8 @@
-/=======================================================================
-/ solaris_i386.s -- compare and swap for solaris_i386
-/=======================================================================
+!=======================================================================
+! solaris_i386.s -- compare and swap for solaris_i386
+!=======================================================================
 
-/ Fortunately the Sun compiler understands cpp conditionals
+! Fortunately the Sun compiler can process cpp conditionals with -P
 
          .file   "tas.s"
 
