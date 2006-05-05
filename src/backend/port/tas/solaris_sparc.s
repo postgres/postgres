@@ -2,6 +2,10 @@
 ! solaris_sparc.s -- compare and swap for solaris_sparc
 !=======================================================================
 
+! Fortunately the Sun compiler can process cpp conditionals with -P
+
+! '/' is the comment for x86, while '!' is the comment for Sparc
+
 #if defined(__sparcv9) || defined(__sparc)
 
          .section        ".text"

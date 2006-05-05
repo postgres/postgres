@@ -1,8 +1,10 @@
-!=======================================================================
-! solaris_i386.s -- compare and swap for solaris_i386
-!=======================================================================
+/=======================================================================
+/ solaris_i386.s -- compare and swap for solaris_i386
+/=======================================================================
 
-! Fortunately the Sun compiler can process cpp conditionals with -P
+/ Fortunately the Sun compiler can process cpp conditionals with -P
+
+/ '/' is the comment for x86, while '!' is the comment for Sparc
 
          .file   "tas.s"
 
