@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.79 2006/04/27 14:02:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.80 2006/05/06 02:24:39 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -125,11 +125,13 @@
 #define USER_CERT_FILE		".postgresql/postgresql.crt"
 #define USER_KEY_FILE		".postgresql/postgresql.key"
 #define ROOT_CERT_FILE		".postgresql/root.crt"
+#define ROOT_CRL_FILE		".postgresql/root.crl"
 #else
 /* On Windows, the "home" directory is already PostgreSQL-specific */
 #define USER_CERT_FILE		"postgresql.crt"
 #define USER_KEY_FILE		"postgresql.key"
 #define ROOT_CERT_FILE		"root.crt"
+#define ROOT_CRL_FILE		"root.crl"
 #endif
 
 #ifdef NOT_USED
@@ -784,6 +786,8 @@ initialize_SSL(PGconn *conn)
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOT_CERT_FILE);
 		if (stat(fnbuf, &buf) == 0)
 		{
+			X509_STORE *cvstore;
+			
 			if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
 			{
 				char	   *err = SSLerrmessage();
@@ -795,6 +799,28 @@ initialize_SSL(PGconn *conn)
 				return -1;
 			}
 
+			if ((cvstore = SSL_CTX_get_cert_store(SSL_context)) != NULL)
+			{
+				/* setting the flags to check against the complete CRL chain */
+				if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) != 0)
+/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
+#ifdef X509_V_FLAG_CRL_CHECK
+				   X509_STORE_set_flags(cvstore,
+								X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL);
+				/* if not found, silently ignore;  we do not require CRL */
+#else
+				{
+					char	   *err = SSLerrmessage();
+	
+					printfPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("Installed SSL library does not support CRL certificates, file \"%s\"\n"),
+									  fnbuf);
+					SSLerrfree(err);
+					return -1;
+				}
+#endif
+			}
+	
 			SSL_CTX_set_verify(SSL_context, SSL_VERIFY_PEER, verify_cb);
 		}
 	}
