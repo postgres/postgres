@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.207 2006/04/23 03:39:51 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.208 2006/05/06 16:25:11 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -4081,6 +4081,9 @@ installs too. The file's location can also be specified by the
    The SSL connection will
    fail if the server does not present a certificate; therefore, to
    use this feature the server must also have a <filename>root.crt</> file.
+   Certificate Revocation List (CRL) entries are also checked if the file
+   <filename>~/.postgresql/root.crl</filename> exists (%APPDATA%\postgresql\root.crl
+   on Microsoft Windows).
   </para>
 
   <para>
