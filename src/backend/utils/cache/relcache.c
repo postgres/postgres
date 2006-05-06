@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.240 2006/05/04 18:51:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.241 2006/05/06 15:51:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
- *		RelationCacheInitialize			- initialize relcache
+ *		RelationCacheInitialize			- initialize relcache (to empty)
  *		RelationCacheInitializePhase2	- finish initializing relcache
  *		RelationIdGetRelation			- get a reldesc by relation id
  *		RelationIdCacheGetRelation		- get a cached reldesc by relid
@@ -101,12 +101,6 @@ static HTAB *RelationIdCache;
  * that are needed to do indexscans on the tables read by relcache building.
  */
 bool		criticalRelcachesBuilt = false;
-
-/*
- * This flag is set if we discover that we need to write a new relcache
- * cache file at the end of startup.
- */
-static bool needNewCacheFile = false;
 
 /*
  * This counter counts relcache inval events received since backend startup
@@ -1162,14 +1156,14 @@ LookupOpclassInfo(Oid operatorClassOid,
  *		formrdesc
  *
  *		This is a special cut-down version of RelationBuildDesc()
- *		used by RelationCacheInitialize() in initializing the relcache.
+ *		used by RelationCacheInitializePhase2() in initializing the relcache.
  *		The relation descriptor is built just from the supplied parameters,
  *		without actually looking at any system table entries.  We cheat
  *		quite a lot since we only need to work for a few basic system
  *		catalogs.
  *
  * formrdesc is currently used for: pg_class, pg_attribute, pg_proc,
- * and pg_type (see RelationCacheInitialize).
+ * and pg_type (see RelationCacheInitializePhase2).
  *
  * Note that these catalogs can't have constraints (except attnotnull),
  * default values, rules, or triggers, since we don't cope with any of that.
@@ -2026,7 +2020,7 @@ RelationBuildLocalRelation(const char *relname,
 	/*
 	 * check for creation of a rel that must be nailed in cache.
 	 *
-	 * XXX this list had better match RelationCacheInitialize's list.
+	 * XXX this list had better match RelationCacheInitializePhase2's list.
 	 */
 	switch (relid)
 	{
@@ -2180,7 +2174,7 @@ RelationCacheInitialize(void)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/*
-	 * create hashtables that index the relcache
+	 * create hashtable that indexes the relcache
 	 */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
@@ -2211,6 +2205,7 @@ RelationCacheInitializePhase2(void)
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
 	MemoryContext oldcxt;
+	bool needNewCacheFile = false;
 
 	/*
 	 * switch to cache memory context
@@ -2225,6 +2220,8 @@ RelationCacheInitializePhase2(void)
 	if (IsBootstrapProcessingMode() ||
 		!load_relcache_init_file())
 	{
+		needNewCacheFile = true;
+
 		formrdesc("pg_class", PG_CLASS_RELTYPE_OID,
 				  true, Natts_pg_class, Desc_pg_class);
 		formrdesc("pg_attribute", PG_ATTRIBUTE_RELTYPE_OID,
@@ -2909,7 +2906,7 @@ RelationGetIndexPredicate(Relation relation)
  * load_relcache_init_file -- attempt to load cache from the init file
  *
  * If successful, return TRUE and set criticalRelcachesBuilt to true.
- * If not successful, return FALSE and set needNewCacheFile to true.
+ * If not successful, return FALSE.
  *
  * NOTE: we assume we are already switched into CacheMemoryContext.
  */
@@ -2932,10 +2929,7 @@ load_relcache_init_file(void)
 
 	fp = AllocateFile(initfilename, PG_BINARY_R);
 	if (fp == NULL)
-	{
-		needNewCacheFile = true;
 		return false;
-	}
 
 	/*
 	 * Read the index relcache entries from the file.  Note we will not enter
@@ -3199,7 +3193,6 @@ read_failed:
 	pfree(rels);
 	FreeFile(fp);
 
-	needNewCacheFile = true;
 	return false;
 }
 
