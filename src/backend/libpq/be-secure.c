@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.67 2006/05/04 22:18:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.68 2006/05/06 01:31:38 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -795,7 +795,6 @@ initialize_SSL(void)
 	}
 	else
 	{
-#ifdef X509_V_FLAG_CRL_CHECK
 		/*
 		 *	Check the Certificate Revocation List (CRL) if file exists.
 		 *	http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
@@ -804,10 +803,18 @@ initialize_SSL(void)
 
 		if (cvstore)
 		{
+		   /* Set the flags to check against the complete CRL chain */
 			if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) != 0)
-			   /* setting the flags to check against the complete CRL chain */
-			   X509_STORE_set_flags(cvstore,
+/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
+#ifdef X509_V_FLAG_CRL_CHECK
+				X509_STORE_set_flags(cvstore,
 							X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL);
+#else
+				ereport(LOG,
+					(errmsg("SSL Certificate Revocation List (CRL) file \"%s\" ignored",
+							ROOT_CRL_FILE),
+					 errdetail("Installed SSL library does not support CRL.")));
+#endif
 			else
 			{
 				/* Not fatal - we do not require CRL */
@@ -817,7 +824,6 @@ initialize_SSL(void)
 					 errdetail("Will not check certificates against CRL.")));
 			}
 		}
-#endif /* X509_V_FLAG_CRL_CHECK */
 
 		SSL_CTX_set_verify(SSL_context,
 						   (SSL_VERIFY_PEER |
