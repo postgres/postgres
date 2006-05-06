@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.83 2006/04/15 18:11:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.84 2006/05/06 23:25:37 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -244,6 +244,19 @@ PostgreSQL documentation
         </varlistentry>
 
         <varlistentry>
+         <term><literal>c</></term>
+         <term><literal>custom</></term>
+         <listitem>
+          <para>
+         Output a custom archive suitable for input into 
+         <application>pg_restore</application>. This is the most flexible 
+         format in that it allows reordering of loading data as well 
+         as object definitions. This format is also compressed by default.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
          <term><literal>t</></term>
          <term><literal>tar</></term>
          <listitem>
@@ -253,19 +266,6 @@ PostgreSQL documentation
          allows reordering and/or exclusion of database objects
          at the time the database is restored. It is also possible to limit 
          which data is reloaded at restore time.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry>
-         <term><literal>c</></term>
-         <term><literal>custom</></term>
-         <listitem>
-          <para>
-         Output a custom archive suitable for input into 
-         <application>pg_restore</application>. This is the most flexible 
-         format in that it allows reordering of loading data as well 
-         as object definitions. This format is also compressed by default.
           </para>
          </listitem>
         </varlistentry>
@@ -665,11 +665,11 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   To dump a database called <literal>mydb</> to a <filename>tar</filename>
+   To dump a database called <literal>mydb</> to a file in custom format:
    file:
 
 <screen>
-<prompt>$</prompt> <userinput>pg_dump -Ft mydb &gt; db.tar</userinput>
+<prompt>$</prompt> <userinput>pg_dump -Fc mydb &gt; db.out</userinput>
 </screen>
   </para>
 
@@ -677,7 +677,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    To reload this dump into an existing database called <literal>newdb</>:
 
 <screen>
-<prompt>$</prompt> <userinput>pg_restore -d newdb db.tar</userinput>
+<prompt>$</prompt> <userinput>pg_restore -d newdb db.out</userinput>
 </screen>
   </para>
 
