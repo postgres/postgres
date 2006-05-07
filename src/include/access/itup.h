@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.45 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/itup.h,v 1.46 2006/05/07 01:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,17 @@ typedef IndexAttributeBitMapData *IndexAttributeBitMap;
 		) \
 	) \
 )
+
+/*
+ * MaxIndexTuplesPerPage is an upper bound on the number of tuples that can
+ * fit on one index page.  An index tuple must have either data or a null
+ * bitmap, so we can safely assume it's at least 1 byte bigger than a bare
+ * IndexTupleData struct.  We arrive at the divisor because each tuple
+ * must be maxaligned, and it must have an associated item pointer.
+ */
+#define MaxIndexTuplesPerPage	\
+	((int) ((BLCKSZ - offsetof(PageHeaderData, pd_linp)) / \
+			(MAXALIGN(sizeof(IndexTupleData) + 1) + sizeof(ItemIdData))))
 
 
 /* routines in indextuple.c */

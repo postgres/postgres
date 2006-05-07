@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.146 2006/05/02 22:25:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.147 2006/05/07 01:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@ typedef struct
 } BTBuildState;
 
 
-static void _bt_restscan(IndexScanDesc scan);
 static void btbuildCallback(Relation index,
 				HeapTuple htup,
 				Datum *values,
@@ -218,8 +217,6 @@ btgettuple(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	Page		page;
-	OffsetNumber offnum;
 	bool		res;
 
 	/*
@@ -227,33 +224,26 @@ btgettuple(PG_FUNCTION_ARGS)
 	 * appropriate direction.  If we haven't done so yet, we call a routine to
 	 * get the first item in the scan.
 	 */
-	if (ItemPointerIsValid(&(scan->currentItemData)))
+	if (BTScanPosIsValid(so->currPos))
 	{
-		/*
-		 * Restore scan position using heap TID returned by previous call to
-		 * btgettuple(). _bt_restscan() re-grabs the read lock on the buffer,
-		 * too.
-		 */
-		_bt_restscan(scan);
-
 		/*
 		 * Check to see if we should kill the previously-fetched tuple.
 		 */
 		if (scan->kill_prior_tuple)
 		{
 			/*
-			 * Yes, so mark it by setting the LP_DELETE bit in the item flags.
+			 * Yes, remember it for later.  (We'll deal with all such tuples
+			 * at once right before leaving the index page.)  The test for
+			 * numKilled overrun is not just paranoia: if the caller reverses
+			 * direction in the indexscan then the same item might get entered
+			 * multiple times.  It's not worth trying to optimize that, so we
+			 * don't detect it, but instead just forget any excess entries.
 			 */
-			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
-			page = BufferGetPage(so->btso_curbuf);
-			PageGetItemId(page, offnum)->lp_flags |= LP_DELETE;
-
-			/*
-			 * Since this can be redone later if needed, it's treated the same
-			 * as a commit-hint-bit status update for heap tuples: we mark the
-			 * buffer dirty but don't make a WAL log entry.
-			 */
-			SetBufferCommitInfoNeedsSave(so->btso_curbuf);
+			if (so->killedItems == NULL)
+				so->killedItems = (int *)
+					palloc(MaxIndexTuplesPerPage * sizeof(int));
+			if (so->numKilled < MaxIndexTuplesPerPage)
+				so->killedItems[so->numKilled++] = so->currPos.itemIndex;
 		}
 
 		/*
@@ -264,29 +254,15 @@ btgettuple(PG_FUNCTION_ARGS)
 	else
 		res = _bt_first(scan, dir);
 
-	/*
-	 * Save heap TID to use it in _bt_restscan.  Then release the read lock on
-	 * the buffer so that we aren't blocking other backends.
-	 *
-	 * NOTE: we do keep the pin on the buffer!	This is essential to ensure
-	 * that someone else doesn't delete the index entry we are stopped on.
-	 */
-	if (res)
-	{
-		((BTScanOpaque) scan->opaque)->curHeapIptr = scan->xs_ctup.t_self;
-		LockBuffer(((BTScanOpaque) scan->opaque)->btso_curbuf,
-				   BUFFER_LOCK_UNLOCK);
-	}
-
 	PG_RETURN_BOOL(res);
 }
 
 /*
  * btgetmulti() -- get multiple tuples at once
  *
- * This is a somewhat generic implementation: it avoids the _bt_restscan
- * overhead, but there's no smarts about picking especially good stopping
- * points such as index page boundaries.
+ * In the current implementation there seems no strong reason to stop at
+ * index page boundaries; we just press on until we fill the caller's buffer
+ * or run out of matches.
  */
 Datum
 btgetmulti(PG_FUNCTION_ARGS)
@@ -299,36 +275,41 @@ btgetmulti(PG_FUNCTION_ARGS)
 	bool		res = true;
 	int32		ntids = 0;
 
-	/*
-	 * Restore prior state if we were already called at least once.
-	 */
-	if (ItemPointerIsValid(&(scan->currentItemData)))
-		_bt_restscan(scan);
+	if (max_tids <= 0)			/* behave correctly in boundary case */
+		PG_RETURN_BOOL(true);
 
-	while (ntids < max_tids)
+	/* If we haven't started the scan yet, fetch the first page & tuple. */
+	if (!BTScanPosIsValid(so->currPos))
 	{
-		/*
-		 * Start scan, or advance to next tuple.
-		 */
-		if (ItemPointerIsValid(&(scan->currentItemData)))
-			res = _bt_next(scan, ForwardScanDirection);
-		else
-			res = _bt_first(scan, ForwardScanDirection);
+		res = _bt_first(scan, ForwardScanDirection);
 		if (!res)
-			break;
+		{
+			/* empty scan */
+			*returned_tids = ntids;
+			PG_RETURN_BOOL(res);
+		}
 		/* Save tuple ID, and continue scanning */
 		tids[ntids] = scan->xs_ctup.t_self;
 		ntids++;
 	}
 
-	/*
-	 * Save heap TID to use it in _bt_restscan.  Then release the read lock on
-	 * the buffer so that we aren't blocking other backends.
-	 */
-	if (res)
+	while (ntids < max_tids)
 	{
-		so->curHeapIptr = scan->xs_ctup.t_self;
-		LockBuffer(so->btso_curbuf, BUFFER_LOCK_UNLOCK);
+		/*
+		 * Advance to next tuple within page.  This is the same as the
+		 * easy case in _bt_next().
+		 */
+		if (++so->currPos.itemIndex > so->currPos.lastItem)
+		{
+			/* let _bt_next do the heavy lifting */
+			res = _bt_next(scan, ForwardScanDirection);
+			if (!res)
+				break;
+		}
+
+		/* Save tuple ID, and continue scanning */
+		tids[ntids] = so->currPos.items[so->currPos.itemIndex].heapTid;
+		ntids++;
 	}
 
 	*returned_tids = ntids;
@@ -360,7 +341,6 @@ btrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
-	ItemPointer iptr;
 	BTScanOpaque so;
 
 	so = (BTScanOpaque) scan->opaque;
@@ -368,31 +348,30 @@ btrescan(PG_FUNCTION_ARGS)
 	if (so == NULL)				/* if called from btbeginscan */
 	{
 		so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
-		so->btso_curbuf = so->btso_mrkbuf = InvalidBuffer;
-		ItemPointerSetInvalid(&(so->curHeapIptr));
-		ItemPointerSetInvalid(&(so->mrkHeapIptr));
+		so->currPos.buf = so->markPos.buf = InvalidBuffer;
 		if (scan->numberOfKeys > 0)
 			so->keyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
 		else
 			so->keyData = NULL;
+		so->killedItems = NULL;					/* until needed */
+		so->numKilled = 0;
 		scan->opaque = so;
 	}
 
 	/* we aren't holding any read locks, but gotta drop the pins */
-	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
+	if (BTScanPosIsValid(so->currPos))
 	{
-		ReleaseBuffer(so->btso_curbuf);
-		so->btso_curbuf = InvalidBuffer;
-		ItemPointerSetInvalid(&(so->curHeapIptr));
-		ItemPointerSetInvalid(iptr);
+		/* Before leaving current page, deal with any killed items */
+		if (so->numKilled > 0)
+			_bt_killitems(scan, false);
+		ReleaseBuffer(so->currPos.buf);
+		so->currPos.buf = InvalidBuffer;
 	}
 
-	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
+	if (BTScanPosIsValid(so->markPos))
 	{
-		ReleaseBuffer(so->btso_mrkbuf);
-		so->btso_mrkbuf = InvalidBuffer;
-		ItemPointerSetInvalid(&(so->mrkHeapIptr));
-		ItemPointerSetInvalid(iptr);
+		ReleaseBuffer(so->markPos.buf);
+		so->markPos.buf = InvalidBuffer;
 	}
 
 	/*
@@ -415,28 +394,26 @@ Datum
 btendscan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer iptr;
-	BTScanOpaque so;
-
-	so = (BTScanOpaque) scan->opaque;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 
 	/* we aren't holding any read locks, but gotta drop the pins */
-	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
+	if (BTScanPosIsValid(so->currPos))
 	{
-		if (BufferIsValid(so->btso_curbuf))
-			ReleaseBuffer(so->btso_curbuf);
-		so->btso_curbuf = InvalidBuffer;
-		ItemPointerSetInvalid(iptr);
+		/* Before leaving current page, deal with any killed items */
+		if (so->numKilled > 0)
+			_bt_killitems(scan, false);
+		ReleaseBuffer(so->currPos.buf);
+		so->currPos.buf = InvalidBuffer;
 	}
 
-	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
+	if (BTScanPosIsValid(so->markPos))
 	{
-		if (BufferIsValid(so->btso_mrkbuf))
-			ReleaseBuffer(so->btso_mrkbuf);
-		so->btso_mrkbuf = InvalidBuffer;
-		ItemPointerSetInvalid(iptr);
+		ReleaseBuffer(so->markPos.buf);
+		so->markPos.buf = InvalidBuffer;
 	}
 
+	if (so->killedItems != NULL)
+		pfree(so->killedItems);
 	if (so->keyData != NULL)
 		pfree(so->keyData);
 	pfree(so);
@@ -451,26 +428,22 @@ Datum
 btmarkpos(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer iptr;
-	BTScanOpaque so;
-
-	so = (BTScanOpaque) scan->opaque;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 
 	/* we aren't holding any read locks, but gotta drop the pin */
-	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
+	if (BTScanPosIsValid(so->markPos))
 	{
-		ReleaseBuffer(so->btso_mrkbuf);
-		so->btso_mrkbuf = InvalidBuffer;
-		ItemPointerSetInvalid(iptr);
+		ReleaseBuffer(so->markPos.buf);
+		so->markPos.buf = InvalidBuffer;
 	}
 
 	/* bump pin on current buffer for assignment to mark buffer */
-	if (ItemPointerIsValid(&(scan->currentItemData)))
+	if (BTScanPosIsValid(so->currPos))
 	{
-		IncrBufferRefCount(so->btso_curbuf);
-		so->btso_mrkbuf = so->btso_curbuf;
-		scan->currentMarkData = scan->currentItemData;
-		so->mrkHeapIptr = so->curHeapIptr;
+		IncrBufferRefCount(so->currPos.buf);
+		memcpy(&so->markPos, &so->currPos,
+			   offsetof(BTScanPosData, items[1]) +
+			   so->currPos.lastItem * sizeof(BTScanPosItem));
 	}
 
 	PG_RETURN_VOID();
@@ -483,26 +456,26 @@ Datum
 btrestrpos(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ItemPointer iptr;
-	BTScanOpaque so;
-
-	so = (BTScanOpaque) scan->opaque;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 
 	/* we aren't holding any read locks, but gotta drop the pin */
-	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
+	if (BTScanPosIsValid(so->currPos))
 	{
-		ReleaseBuffer(so->btso_curbuf);
-		so->btso_curbuf = InvalidBuffer;
-		ItemPointerSetInvalid(iptr);
+		/* Before leaving current page, deal with any killed items */
+		if (so->numKilled > 0 &&
+			so->currPos.buf != so->markPos.buf)
+			_bt_killitems(scan, false);
+		ReleaseBuffer(so->currPos.buf);
+		so->currPos.buf = InvalidBuffer;
 	}
 
 	/* bump pin on marked buffer */
-	if (ItemPointerIsValid(&(scan->currentMarkData)))
+	if (BTScanPosIsValid(so->markPos))
 	{
-		IncrBufferRefCount(so->btso_mrkbuf);
-		so->btso_curbuf = so->btso_mrkbuf;
-		scan->currentItemData = scan->currentMarkData;
-		so->curHeapIptr = so->mrkHeapIptr;
+		IncrBufferRefCount(so->markPos.buf);
+		memcpy(&so->currPos, &so->markPos,
+			   offsetof(BTScanPosData, items[1]) +
+			   so->markPos.lastItem * sizeof(BTScanPosItem));
 	}
 
 	PG_RETURN_VOID();
@@ -537,12 +510,11 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	 * sequence left to right.	It sounds attractive to only exclusive-lock
 	 * those containing items we need to delete, but unfortunately that is not
 	 * safe: we could then pass a stopped indexscan, which could in rare cases
-	 * lead to deleting the item it needs to find when it resumes.	(See
-	 * _bt_restscan --- this could only happen if an indexscan stops on a
-	 * deletable item and then a page split moves that item into a page
-	 * further to its right, which the indexscan will have no pin on.)	We can
-	 * skip obtaining exclusive lock on empty pages though, since no indexscan
-	 * could be stopped on those.
+	 * lead to deleting items that the indexscan will still return later.
+	 * (See discussion in nbtree/README.)  We can skip obtaining exclusive
+	 * lock on empty pages though, since no indexscan could be stopped on
+	 * those.  (Note: this presumes that a split couldn't have left either
+	 * page totally empty.)
 	 */
 	buf = _bt_get_endpoint(rel, 0, false);
 
@@ -822,109 +794,4 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	stats->pages_free = nFreePages;
 
 	PG_RETURN_POINTER(stats);
-}
-
-/*
- * Restore scan position when btgettuple is called to continue a scan.
- *
- * This is nontrivial because concurrent insertions might have moved the
- * index tuple we stopped on.  We assume the tuple can only have moved to
- * the right from our stop point, because we kept a pin on the buffer,
- * and so no deletion can have occurred on that page.
- *
- * On entry, we have a pin but no read lock on the buffer that contained
- * the index tuple we stopped the scan on.	On exit, we have pin and read
- * lock on the buffer that now contains that index tuple, and the scandesc's
- * current position is updated to point at it.
- */
-static void
-_bt_restscan(IndexScanDesc scan)
-{
-	Relation	rel = scan->indexRelation;
-	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	Buffer		buf = so->btso_curbuf;
-	Page		page;
-	ItemPointer current = &(scan->currentItemData);
-	OffsetNumber offnum = ItemPointerGetOffsetNumber(current),
-				maxoff;
-	BTPageOpaque opaque;
-	Buffer		nextbuf;
-	ItemPointer target = &(so->curHeapIptr);
-	IndexTuple	itup;
-	BlockNumber blkno;
-
-	/*
-	 * Reacquire read lock on the buffer.  (We should still have a
-	 * reference-count pin on it, so need not get that.)
-	 */
-	LockBuffer(buf, BT_READ);
-
-	page = BufferGetPage(buf);
-	maxoff = PageGetMaxOffsetNumber(page);
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-
-	/*
-	 * We use this as flag when first index tuple on page is deleted but we do
-	 * not move left (this would slowdown vacuum) - so we set
-	 * current->ip_posid before first index tuple on the current page
-	 * (_bt_step will move it right)...  XXX still needed?
-	 */
-	if (!ItemPointerIsValid(target))
-	{
-		ItemPointerSetOffsetNumber(current,
-								   OffsetNumberPrev(P_FIRSTDATAKEY(opaque)));
-		return;
-	}
-
-	/*
-	 * The item we were on may have moved right due to insertions. Find it
-	 * again.  We use the heap TID to identify the item uniquely.
-	 */
-	for (;;)
-	{
-		/* Check for item on this page */
-		for (;
-			 offnum <= maxoff;
-			 offnum = OffsetNumberNext(offnum))
-		{
-			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-			if (BTTidSame(itup->t_tid, *target))
-			{
-				/* Found it */
-				current->ip_posid = offnum;
-				return;
-			}
-		}
-
-		/*
-		 * The item we're looking for moved right at least one page, so move
-		 * right.  We are careful here to pin and read-lock the next non-dead
-		 * page before releasing the current one.  This ensures that a
-		 * concurrent btbulkdelete scan cannot pass our position --- if it
-		 * did, it might be able to reach and delete our target item before we
-		 * can find it again.
-		 */
-		if (P_RIGHTMOST(opaque))
-			elog(ERROR, "failed to re-find previous key in \"%s\"",
-				 RelationGetRelationName(rel));
-		/* Advance to next non-dead page --- there must be one */
-		nextbuf = InvalidBuffer;
-		for (;;)
-		{
-			blkno = opaque->btpo_next;
-			nextbuf = _bt_relandgetbuf(rel, nextbuf, blkno, BT_READ);
-			page = BufferGetPage(nextbuf);
-			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-			if (!P_IGNORE(opaque))
-				break;
-			if (P_RIGHTMOST(opaque))
-				elog(ERROR, "fell off the end of \"%s\"",
-					 RelationGetRelationName(rel));
-		}
-		_bt_relbuf(rel, buf);
-		so->btso_curbuf = buf = nextbuf;
-		maxoff = PageGetMaxOffsetNumber(page);
-		offnum = P_FIRSTDATAKEY(opaque);
-		ItemPointerSet(current, blkno, offnum);
-	}
 }

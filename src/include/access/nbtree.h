@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.96 2006/04/13 03:53:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.97 2006/05/07 01:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,30 +336,82 @@ typedef struct BTStackData
 typedef BTStackData *BTStack;
 
 /*
- *	BTScanOpaqueData is used to remember which buffers we're currently
- *	examining in an indexscan.  Between calls to btgettuple or btgetmulti,
- *	we keep these buffers pinned (but not locked, see nbtree.c) to avoid
- *	doing a ReadBuffer() for every tuple in the index.
+ * BTScanOpaqueData is the btree-private state needed for an indexscan.
+ * This consists of preprocessed scan keys (see _bt_preprocess_keys() for
+ * details of the preprocessing), information about the current location
+ * of the scan, and information about the marked location, if any.  (We use
+ * BTScanPosData to represent the data needed for each of current and marked
+ * locations.)  In addition we can remember some known-killed index entries
+ * that must be marked before we can move off the current page.
  *
- *	We also store preprocessed versions of the scan keys in this structure.
- *	See _bt_preprocess_keys() for details of the preprocessing.
+ * Index scans work a page at a time: we pin and read-lock the page, identify
+ * all the matching items on the page and save them in BTScanPosData, then
+ * release the read-lock while returning the items to the caller for
+ * processing.  This approach minimizes lock/unlock traffic.  Note that we
+ * keep the pin on the index page until the caller is done with all the items
+ * (this is needed for VACUUM synchronization, see nbtree/README).  When we
+ * are ready to step to the next page, if the caller has told us any of the
+ * items were killed, we re-lock the page to mark them killed, then unlock.
+ * Finally we drop the pin and step to the next page in the appropriate
+ * direction.
  *
- *	curHeapIptr & mrkHeapIptr are heap iptr-s from current/marked
- *	index tuples: we don't adjust scans on insertions - instead we
- *	use these pointers to restore index scan positions...
- *		- vadim 07/29/98
+ * NOTE: in this implementation, btree does not use or set the
+ * currentItemData and currentMarkData fields of IndexScanDesc at all.
  */
+
+typedef struct BTScanPosItem	/* what we remember about each match */
+{
+	ItemPointerData heapTid;	/* TID of referenced heap item */
+	OffsetNumber indexOffset;	/* index item's location within page */
+} BTScanPosItem;
+
+typedef struct BTScanPosData
+{
+	Buffer		buf;			/* if valid, the buffer is pinned */
+
+	BlockNumber nextPage;		/* page's right link when we scanned it */
+
+	/*
+	 * moreLeft and moreRight track whether we think there may be matching
+	 * index entries to the left and right of the current page, respectively.
+	 * We can clear the appropriate one of these flags when _bt_checkkeys()
+	 * returns continuescan = false.
+	 */
+	bool		moreLeft;
+	bool		moreRight;
+
+	/*
+	 * The items array is always ordered in index order (ie, increasing
+	 * indexoffset).  When scanning backwards it is convenient to fill the
+	 * array back-to-front, so we start at the last slot and fill downwards.
+	 * Hence we need both a first-valid-entry and a last-valid-entry counter.
+	 * itemIndex is a cursor showing which entry was last returned to caller.
+	 */
+	int			firstItem;		/* first valid index in items[] */
+	int			lastItem;		/* last valid index in items[] */
+	int			itemIndex;		/* current index in items[] */
+
+	BTScanPosItem items[MaxIndexTuplesPerPage];		/* MUST BE LAST */
+} BTScanPosData;
+
+typedef BTScanPosData *BTScanPos;
+
+#define BTScanPosIsValid(scanpos) BufferIsValid((scanpos).buf)
 
 typedef struct BTScanOpaqueData
 {
-	Buffer		btso_curbuf;
-	Buffer		btso_mrkbuf;
-	ItemPointerData curHeapIptr;
-	ItemPointerData mrkHeapIptr;
 	/* these fields are set by _bt_preprocess_keys(): */
 	bool		qual_ok;		/* false if qual can never be satisfied */
 	int			numberOfKeys;	/* number of preprocessed scan keys */
 	ScanKey		keyData;		/* array of preprocessed scan keys */
+
+	/* info about killed items if any (killedItems is NULL if never used) */
+	int		   *killedItems;	/* currPos.items indexes of killed items */
+	int			numKilled;		/* number of currently stored items */
+
+	/* keep these last in struct for efficiency */
+	BTScanPosData currPos;		/* current position data */
+	BTScanPosData markPos;		/* marked position, if any */
 } BTScanOpaqueData;
 
 typedef BTScanOpaqueData *BTScanOpaque;
@@ -424,9 +476,8 @@ extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,
 			ScanKey scankey, bool nextkey);
 extern int32 _bt_compare(Relation rel, int keysz, ScanKey scankey,
 			Page page, OffsetNumber offnum);
-extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern bool _bt_first(IndexScanDesc scan, ScanDirection dir);
-extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
+extern bool _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost);
 
 /*
@@ -440,6 +491,7 @@ extern void _bt_preprocess_keys(IndexScanDesc scan);
 extern bool _bt_checkkeys(IndexScanDesc scan,
 						  Page page, OffsetNumber offnum,
 						  ScanDirection dir, bool *continuescan);
+extern void _bt_killitems(IndexScanDesc scan, bool haveLock);
 
 /*
  * prototypes for functions in nbtsort.c

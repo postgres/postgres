@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.44 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.45 2006/05/07 01:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,12 +67,9 @@ typedef struct IndexScanDescData
 	bool		kill_prior_tuple;		/* last-returned tuple is dead */
 	bool		ignore_killed_tuples;	/* do not return killed entries */
 
-	/* set by index AM if scan keys satisfy index's uniqueness constraint */
-	bool		keys_are_unique;
-
-	/* scan current state */
-	bool		got_tuple;		/* true after successful index_getnext */
+	/* index access method's private state */
 	void	   *opaque;			/* access-method-specific info */
+	/* these fields are used by some but not all AMs: */
 	ItemPointerData currentItemData;	/* current index pointer */
 	ItemPointerData currentMarkData;	/* marked position, if any */
 
@@ -84,15 +81,6 @@ typedef struct IndexScanDescData
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
 	Buffer		xs_cbuf;		/* current heap buffer in scan, if any */
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
-
-	/*
-	 * If keys_are_unique and got_tuple are both true, we stop calling the
-	 * index AM; it is then necessary for index_getnext to keep track of the
-	 * logical scan position for itself.  It does that using unique_tuple_pos:
-	 * -1 = before row, 0 = on row, +1 = after row.
-	 */
-	int			unique_tuple_pos;		/* logical position */
-	int			unique_tuple_mark;		/* logical marked position */
 
 	PgStat_Info xs_pgstat_info; /* statistics collector hook */
 } IndexScanDescData;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.54 2006/03/05 15:58:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.55 2006/05/07 01:21:30 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -90,8 +90,6 @@ RelationGetIndexScan(Relation indexRelation,
 	scan->have_lock = false;			/* ditto */
 	scan->kill_prior_tuple = false;
 	scan->ignore_killed_tuples = true;	/* default setting */
-	scan->keys_are_unique = false;		/* may be set by index AM */
-	scan->got_tuple = false;
 
 	scan->opaque = NULL;
 
@@ -101,9 +99,6 @@ RelationGetIndexScan(Relation indexRelation,
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;
 	scan->xs_cbuf = InvalidBuffer;
-
-	scan->unique_tuple_pos = 0;
-	scan->unique_tuple_mark = 0;
 
 	pgstat_initstats(&scan->xs_pgstat_info, indexRelation);
 

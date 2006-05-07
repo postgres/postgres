@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.10 2006/04/25 22:46:05 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.11 2006/05/07 01:21:30 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -67,13 +67,22 @@ move right until we find a page whose right-link matches the page we
 came from.  (Actually, it's even harder than that; see deletion discussion
 below.)
 
-Read locks on a page are held for as long as a scan is examining a page.
-But nbtree.c arranges to drop the read lock, but not the buffer pin,
-on the current page of a scan before control leaves nbtree.  When we
-come back to resume the scan, we have to re-grab the read lock and
-then move right if the current item moved (see _bt_restscan()).  Keeping
-the pin ensures that the current item cannot move left or be deleted
-(see btbulkdelete).
+Page read locks are held only for as long as a scan is examining a page.
+To minimize lock/unlock traffic, an index scan always searches a leaf page
+to identify all the matching items at once, copying their heap tuple IDs
+into backend-local storage.  The heap tuple IDs are then processed while
+not holding any page lock within the index.  We do continue to hold a pin
+on the leaf page, to protect against concurrent deletions (see below).
+In this state the scan is effectively stopped "between" pages, either
+before or after the page it has pinned.  This is safe in the presence of
+concurrent insertions and even page splits, because items are never moved
+across pre-existing page boundaries --- so the scan cannot miss any items
+it should have seen, nor accidentally return the same item twice.  The scan
+must remember the page's right-link at the time it was scanned, since that
+is the page to move right to; if we move right to the current right-link
+then we'd re-scan any items moved by a page split.  We don't similarly
+remember the left-link, since it's best to use the most up-to-date
+left-link when trying to move left (see detailed move-left algorithm below).
 
 In most cases we release our lock and pin on a page before attempting
 to acquire pin and lock on the page we are moving to.  In a few places
@@ -119,14 +128,33 @@ item doesn't fit on the split page where it needs to go!
 The deletion algorithm
 ----------------------
 
-Deletions of leaf items are handled by getting a super-exclusive lock on
-the target page, so that no other backend has a pin on the page when the
-deletion starts.  This means no scan is pointing at the page, so no other
-backend can lose its place due to the item deletion.
+Before deleting a leaf item, we get a super-exclusive lock on the target
+page, so that no other backend has a pin on the page when the deletion
+starts.  This is not necessary for correctness in terms of the btree index
+operations themselves; as explained above, index scans logically stop
+"between" pages and so can't lose their place.  The reason we do it is to
+provide an interlock between non-full VACUUM and indexscans.  Since VACUUM
+deletes index entries before deleting tuples, the super-exclusive lock
+guarantees that VACUUM can't delete any heap tuple that an indexscanning
+process might be about to visit.  (This guarantee works only for simple
+indexscans that visit the heap in sync with the index scan, not for bitmap
+scans.  We only need the guarantee when using non-MVCC snapshot rules such
+as SnapshotNow, so in practice this is only important for system catalog
+accesses.)
 
-The above does not work for deletion of items in internal pages, since
-other backends keep no lock nor pin on a page they have descended past.
-Instead, when a backend is ascending the tree using its stack, it must
+Because a page can be split even while someone holds a pin on it, it is
+possible that an indexscan will return items that are no longer stored on
+the page it has a pin on, but rather somewhere to the right of that page.
+To ensure that VACUUM can't prematurely remove such heap tuples, we require
+btbulkdelete to obtain super-exclusive lock on every leaf page in the index
+(even pages that don't contain any deletable tuples).  This guarantees that
+the btbulkdelete call cannot return while any indexscan is still holding
+a copy of a deleted index tuple.  Note that this requirement does not say
+that btbulkdelete must visit the pages in any particular order.
+
+There is no such interlocking for deletion of items in internal pages,
+since backends keep no lock nor pin on a page they have descended past.
+Hence, when a backend is ascending the tree using its stack, it must
 be prepared for the possibility that the item it wants is to the left of
 the recorded position (but it can't have moved left out of the recorded
 page).  Since we hold a lock on the lower page (per L&Y) until we have
@@ -201,7 +229,7 @@ accordingly.  Searches and forward scans simply follow the right-link
 until they find a non-dead page --- this will be where the deleted page's
 key-space moved to.
 
-Stepping left in a backward scan is complicated because we must consider
+Moving left in a backward scan is complicated because we must consider
 the possibility that the left sibling was just split (meaning we must find
 the rightmost page derived from the left sibling), plus the possibility
 that the page we were just on has now been deleted and hence isn't in the

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.104 2006/03/05 15:58:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.105 2006/05/07 01:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,9 @@
 #include "utils/lsyscache.h"
 
 
+static bool _bt_readpage(IndexScanDesc scan, ScanDirection dir,
+						 OffsetNumber offnum);
+static bool _bt_steppage(IndexScanDesc scan, ScanDirection dir);
 static Buffer _bt_walk_left(Relation rel, Buffer buf);
 static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 
@@ -411,69 +414,18 @@ _bt_compare(Relation rel,
 }
 
 /*
- *	_bt_next() -- Get the next item in a scan.
- *
- *		On entry, we have a valid currentItemData in the scan, and a
- *		read lock and pin count on the page that contains that item.
- *		We return the next item in the scan, or false if no more.
- *		On successful exit, the page containing the new item is locked
- *		and pinned; on failure exit, no lock or pin is held.
- */
-bool
-_bt_next(IndexScanDesc scan, ScanDirection dir)
-{
-	Relation	rel;
-	Buffer		buf;
-	Page		page;
-	OffsetNumber offnum;
-	ItemPointer current;
-	BTScanOpaque so;
-	bool		continuescan;
-
-	rel = scan->indexRelation;
-	so = (BTScanOpaque) scan->opaque;
-	current = &(scan->currentItemData);
-
-	/* we still have the buffer pinned and locked */
-	buf = so->btso_curbuf;
-	Assert(BufferIsValid(buf));
-
-	do
-	{
-		/* step one tuple in the appropriate direction */
-		if (!_bt_step(scan, &buf, dir))
-			return false;
-
-		/* current is the next candidate tuple to return */
-		offnum = ItemPointerGetOffsetNumber(current);
-		page = BufferGetPage(buf);
-
-		if (_bt_checkkeys(scan, page, offnum, dir, &continuescan))
-		{
-			/* tuple passes all scan key conditions, so return it */
-			return true;
-		}
-
-		/* This tuple doesn't pass, but there might be more that do */
-	} while (continuescan);
-
-	/* No more items, so close down the current-item info */
-	ItemPointerSetInvalid(current);
-	so->btso_curbuf = InvalidBuffer;
-	_bt_relbuf(rel, buf);
-
-	return false;
-}
-
-/*
  *	_bt_first() -- Find the first item in a scan.
  *
  *		We need to be clever about the direction of scan, the search
  *		conditions, and the tree ordering.  We find the first item (or,
  *		if backwards scan, the last item) in the tree that satisfies the
- *		qualifications in the scan key.  On exit, the page containing
- *		the current index tuple is read locked and pinned, and the scan's
- *		opaque data entry is updated to include the buffer.
+ *		qualifications in the scan key.  On success exit, the page containing
+ *		the current index tuple is pinned but not locked, and data about
+ *		the matching tuple(s) on the page has been loaded into so->currPos,
+ *		and scan->xs_ctup.t_self is set to the heap TID of the current tuple.
+ *
+ * If there are no matching items in the index, we return FALSE, with no
+ * pins or locks held.
  *
  * Note that scan->keyData[], and the so->keyData[] scankey built from it,
  * are both search-type scankeys (see nbtree/README for more about this).
@@ -486,16 +438,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	Relation	rel = scan->indexRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Buffer		buf;
-	Page		page;
 	BTStack		stack;
 	OffsetNumber offnum;
-	ItemPointer current;
-	BlockNumber blkno;
 	StrategyNumber strat;
-	bool		res;
 	bool		nextkey;
 	bool		goback;
-	bool		continuescan;
 	ScanKey		startKeys[INDEX_MAX_KEYS];
 	ScanKeyData scankeys[INDEX_MAX_KEYS];
 	int			keysCount = 0;
@@ -847,25 +794,30 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	/* don't need to keep the stack around... */
 	_bt_freestack(stack);
 
-	current = &(scan->currentItemData);
+	/* remember which buffer we have pinned, if any */
+	so->currPos.buf = buf;
 
 	if (!BufferIsValid(buf))
 	{
 		/* Only get here if index is completely empty */
-		ItemPointerSetInvalid(current);
-		so->btso_curbuf = InvalidBuffer;
 		return false;
 	}
 
-	/* remember which buffer we have pinned */
-	so->btso_curbuf = buf;
+	/* initialize moreLeft/moreRight appropriately for scan direction */
+	if (ScanDirectionIsForward(dir))
+	{
+		so->currPos.moreLeft = false;
+		so->currPos.moreRight = true;
+	}
+	else
+	{
+		so->currPos.moreLeft = true;
+		so->currPos.moreRight = false;
+	}
+	so->numKilled = 0;			/* just paranoia */
 
 	/* position to the precise item on the page */
 	offnum = _bt_binsrch(rel, buf, keysCount, scankeys, nextkey);
-
-	page = BufferGetPage(buf);
-	blkno = BufferGetBlockNumber(buf);
-	ItemPointerSet(current, blkno, offnum);
 
 	/*
 	 * If nextkey = false, we are positioned at the first item >= scan key, or
@@ -880,173 +832,309 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 *
 	 * The actually desired starting point is either this item or the prior
 	 * one, or in the end-of-page case it's the first item on the next page or
-	 * the last item on this page.	We apply _bt_step if needed to get to the
-	 * right place.
-	 *
-	 * If _bt_step fails (meaning we fell off the end of the index in one
-	 * direction or the other), then there are no matches so we just return
-	 * false.
+	 * the last item on this page.	Adjust the starting offset if needed.
+	 * (If this results in an offset before the first item or after the last
+	 * one, _bt_readpage will report no items found, and then we'll step to
+	 * the next page as needed.)
 	 */
 	if (goback)
+		offnum = OffsetNumberPrev(offnum);
+
+	/*
+	 * Now load data from the first page of the scan.
+	 */
+	if (!_bt_readpage(scan, dir, offnum))
 	{
-		/* _bt_step will do the right thing if we are at end-of-page */
-		if (!_bt_step(scan, &buf, BackwardScanDirection))
+		/*
+		 * There's no actually-matching data on this page.  Try to advance to
+		 * the next page.  Return false if there's no matching data at all.
+		 */
+		if (!_bt_steppage(scan, dir))
 			return false;
 	}
-	else
-	{
-		/* If we're at end-of-page, must step forward to next page */
-		if (offnum > PageGetMaxOffsetNumber(page))
-		{
-			if (!_bt_step(scan, &buf, ForwardScanDirection))
-				return false;
-		}
-	}
 
-	/* okay, current item pointer for the scan is right */
-	offnum = ItemPointerGetOffsetNumber(current);
-	page = BufferGetPage(buf);
+	/* Drop the lock, but not pin, on the current page */
+	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
 
-	/* is the first item actually acceptable? */
-	if (_bt_checkkeys(scan, page, offnum, dir, &continuescan))
-	{
-		/* yes, return it */
-		res = true;
-	}
-	else if (continuescan)
-	{
-		/* no, but there might be another one that is */
-		res = _bt_next(scan, dir);
-	}
-	else
-	{
-		/* no tuples in the index match this scan key */
-		ItemPointerSetInvalid(current);
-		so->btso_curbuf = InvalidBuffer;
-		_bt_relbuf(rel, buf);
-		res = false;
-	}
+	/* OK, itemIndex says what to return */
+	scan->xs_ctup.t_self = so->currPos.items[so->currPos.itemIndex].heapTid;
 
-	return res;
+	return true;
 }
 
 /*
- *	_bt_step() -- Step one item in the requested direction in a scan on
- *				  the tree.
+ *	_bt_next() -- Get the next item in a scan.
  *
- *		*bufP is the current buffer (read-locked and pinned).  If we change
- *		pages, it's updated appropriately.
+ *		On entry, so->currPos describes the current page, which is pinned
+ *		but not locked, and so->currPos.itemIndex identifies which item was
+ *		previously returned.
  *
- *		If successful, update scan's currentItemData and return true.
- *		If no adjacent record exists in the requested direction,
- *		release buffer pin/locks and return false.
+ *		On successful exit, scan->xs_ctup.t_self is set to the TID of the
+ *		next heap tuple, and so->currPos is updated as needed.
+ *
+ *		On failure exit (no more tuples), we release pin and set
+ *		so->currPos.buf to InvalidBuffer.
  */
 bool
-_bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
+_bt_next(IndexScanDesc scan, ScanDirection dir)
 {
-	ItemPointer current = &(scan->currentItemData);
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+
+	/*
+	 * Advance to next tuple on current page; or if there's no more,
+	 * try to step to the next page with data.
+	 */
+	if (ScanDirectionIsForward(dir))
+	{
+		if (++so->currPos.itemIndex > so->currPos.lastItem)
+		{
+			/* We must acquire lock before applying _bt_steppage */
+			Assert(BufferIsValid(so->currPos.buf));
+			LockBuffer(so->currPos.buf, BT_READ);
+			if (!_bt_steppage(scan, dir))
+				return false;
+			/* Drop the lock, but not pin, on the new page */
+			LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+		}
+	}
+	else
+	{
+		if (--so->currPos.itemIndex < so->currPos.firstItem)
+		{
+			/* We must acquire lock before applying _bt_steppage */
+			Assert(BufferIsValid(so->currPos.buf));
+			LockBuffer(so->currPos.buf, BT_READ);
+			if (!_bt_steppage(scan, dir))
+				return false;
+			/* Drop the lock, but not pin, on the new page */
+			LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+		}
+	}
+
+	/* OK, itemIndex says what to return */
+	scan->xs_ctup.t_self = so->currPos.items[so->currPos.itemIndex].heapTid;
+
+	return true;
+}
+
+/*
+ *	_bt_readpage() -- Load data from current index page into so->currPos
+ *
+ * Caller must have pinned and read-locked so->currPos.buf; the buffer's state
+ * is not changed here.  Also, currPos.moreLeft and moreRight must be valid;
+ * they are updated as appropriate.  All other fields of so->currPos are
+ * initialized from scratch here.
+ *
+ * We scan the current page starting at offnum and moving in the indicated
+ * direction.  All items matching the scan keys are loaded into currPos.items.
+ * moreLeft or moreRight (as appropriate) is cleared if _bt_checkkeys reports
+ * that there can be no more matching tuples in the current scan direction.
+ *
+ * Returns true if any matching items found on the page, false if none.
+ */
+static bool
+_bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
+{
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	Page		page;
+	BTPageOpaque opaque;
+	OffsetNumber minoff;
+	OffsetNumber maxoff;
+	int			itemIndex;
+	bool		continuescan;
+
+	/* we must have the buffer pinned and locked */
+	Assert(BufferIsValid(so->currPos.buf));
+
+	page = BufferGetPage(so->currPos.buf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	minoff = P_FIRSTDATAKEY(opaque);
+	maxoff = PageGetMaxOffsetNumber(page);
+
+	/*
+	 * we must save the page's right-link while scanning it; this tells us
+	 * where to step right to after we're done with these items.  There is
+	 * no corresponding need for the left-link, since splits always go right.
+	 */
+	so->currPos.nextPage = opaque->btpo_next;
+
+	if (ScanDirectionIsForward(dir))
+	{
+		/* load items[] in ascending order */
+		itemIndex = 0;
+
+		offnum = Max(offnum, minoff);
+
+		while (offnum <= maxoff)
+		{
+			if (_bt_checkkeys(scan, page, offnum, dir, &continuescan))
+			{
+				/* tuple passes all scan key conditions, so remember it */
+				/* _bt_checkkeys put the heap ptr into scan->xs_ctup.t_self */
+				so->currPos.items[itemIndex].heapTid = scan->xs_ctup.t_self;
+				so->currPos.items[itemIndex].indexOffset = offnum;
+				itemIndex++;
+			}
+			if (!continuescan)
+			{
+				/* there can't be any more matches, so stop */
+				so->currPos.moreRight = false;
+				break;
+			}
+
+			offnum = OffsetNumberNext(offnum);
+		}
+
+		Assert(itemIndex <= MaxIndexTuplesPerPage);
+		so->currPos.firstItem = 0;
+		so->currPos.lastItem = itemIndex - 1;
+		so->currPos.itemIndex = 0;
+	}
+	else
+	{
+		/* load items[] in descending order */
+		itemIndex = MaxIndexTuplesPerPage;
+
+		offnum = Min(offnum, maxoff);
+
+		while (offnum >= minoff)
+		{
+			if (_bt_checkkeys(scan, page, offnum, dir, &continuescan))
+			{
+				/* tuple passes all scan key conditions, so remember it */
+				/* _bt_checkkeys put the heap ptr into scan->xs_ctup.t_self */
+				itemIndex--;
+				so->currPos.items[itemIndex].heapTid = scan->xs_ctup.t_self;
+				so->currPos.items[itemIndex].indexOffset = offnum;
+			}
+			if (!continuescan)
+			{
+				/* there can't be any more matches, so stop */
+				so->currPos.moreLeft = false;
+				break;
+			}
+
+			offnum = OffsetNumberPrev(offnum);
+		}
+
+		Assert(itemIndex >= 0);
+		so->currPos.firstItem = itemIndex;
+		so->currPos.lastItem = MaxIndexTuplesPerPage - 1;
+		so->currPos.itemIndex = MaxIndexTuplesPerPage - 1;
+	}
+
+	return (so->currPos.firstItem <= so->currPos.lastItem);
+}
+
+/*
+ *	_bt_steppage() -- Step to next page containing valid data for scan
+ *
+ * On entry, so->currPos.buf must be pinned and read-locked.  We'll drop
+ * the lock and pin before moving to next page.
+ *
+ * On success exit, we hold pin and read-lock on the next interesting page,
+ * and so->currPos is updated to contain data from that page.
+ *
+ * If there are no more matching records in the given direction, we drop all
+ * locks and pins, set so->currPos.buf to InvalidBuffer, and return FALSE.
+ */
+static bool
+_bt_steppage(IndexScanDesc scan, ScanDirection dir)
+{
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Relation	rel;
 	Page		page;
 	BTPageOpaque opaque;
-	OffsetNumber offnum,
-				maxoff;
-	BlockNumber blkno;
 
-	/*
-	 * Don't use ItemPointerGetOffsetNumber or you risk to get assertion due
-	 * to ability of ip_posid to be equal 0.
-	 */
-	offnum = current->ip_posid;
+	/* we must have the buffer pinned and locked */
+	Assert(BufferIsValid(so->currPos.buf));
 
-	page = BufferGetPage(*bufP);
-	maxoff = PageGetMaxOffsetNumber(page);
+	/* Before leaving current page, deal with any killed items */
+	if (so->numKilled > 0)
+		_bt_killitems(scan, true);
+
+	rel = scan->indexRelation;
 
 	if (ScanDirectionIsForward(dir))
 	{
-		if (offnum < maxoff)
-			offnum = OffsetNumberNext(offnum);
-		else
+		/* Walk right to the next page with data */
+		/* We must rely on the previously saved nextPage link! */
+		BlockNumber blkno = so->currPos.nextPage;
+
+		/* Remember we left a page with data */
+		so->currPos.moreLeft = true;
+
+		for (;;)
 		{
-			/* Walk right to the next page with data */
-			rel = scan->indexRelation;
-			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-			for (;;)
+			/* if we're at end of scan, release the buffer and return */
+			if (blkno == P_NONE || !so->currPos.moreRight)
 			{
-				/* if we're at end of scan, release the buffer and return */
-				if (P_RIGHTMOST(opaque))
-				{
-					_bt_relbuf(rel, *bufP);
-					ItemPointerSetInvalid(current);
-					*bufP = so->btso_curbuf = InvalidBuffer;
-					return false;
-				}
-				/* step right one page */
-				blkno = opaque->btpo_next;
-				*bufP = _bt_relandgetbuf(rel, *bufP, blkno, BT_READ);
-				page = BufferGetPage(*bufP);
-				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-				if (!P_IGNORE(opaque))
-				{
-					/* done if it's not empty */
-					maxoff = PageGetMaxOffsetNumber(page);
-					offnum = P_FIRSTDATAKEY(opaque);
-					if (offnum <= maxoff)
-						break;
-				}
+				_bt_relbuf(rel, so->currPos.buf);
+				so->currPos.buf = InvalidBuffer;
+				return false;
 			}
+			/* step right one page */
+			so->currPos.buf = _bt_relandgetbuf(rel, so->currPos.buf,
+											   blkno, BT_READ);
+			/* check for deleted page */
+			page = BufferGetPage(so->currPos.buf);
+			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+			if (!P_IGNORE(opaque))
+			{
+				/* see if there are any matches on this page */
+				/* note that this will clear moreRight if we can stop */
+				if (_bt_readpage(scan, dir, P_FIRSTDATAKEY(opaque)))
+					break;
+			}
+			/* nope, keep going */
+			blkno = opaque->btpo_next;
 		}
 	}
 	else
 	{
-		/* backwards scan */
-		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		if (offnum > P_FIRSTDATAKEY(opaque))
-			offnum = OffsetNumberPrev(offnum);
-		else
+		/* Remember we left a page with data */
+		so->currPos.moreRight = true;
+
+		/*
+		 * Walk left to the next page with data.  This is much more
+		 * complex than the walk-right case because of the possibility
+		 * that the page to our left splits while we are in flight to it,
+		 * plus the possibility that the page we were on gets deleted
+		 * after we leave it.  See nbtree/README for details.
+		 */
+		for (;;)
 		{
-			/*
-			 * Walk left to the next page with data.  This is much more
-			 * complex than the walk-right case because of the possibility
-			 * that the page to our left splits while we are in flight to it,
-			 * plus the possibility that the page we were on gets deleted
-			 * after we leave it.  See nbtree/README for details.
-			 */
-			rel = scan->indexRelation;
-			for (;;)
+			/* Done if we know there are no matching keys to the left */
+			if (!so->currPos.moreLeft)
 			{
-				*bufP = _bt_walk_left(rel, *bufP);
+				_bt_relbuf(rel, so->currPos.buf);
+				so->currPos.buf = InvalidBuffer;
+				return false;
+			}
 
-				/* if we're at end of scan, return failure */
-				if (*bufP == InvalidBuffer)
-				{
-					ItemPointerSetInvalid(current);
-					so->btso_curbuf = InvalidBuffer;
-					return false;
-				}
-				page = BufferGetPage(*bufP);
-				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+			/* Step to next physical page */
+			so->currPos.buf = _bt_walk_left(rel, so->currPos.buf);
 
-				/*
-				 * Okay, we managed to move left to a non-deleted page. Done
-				 * if it's not half-dead and not empty.  Else loop back and do
-				 * it all again.
-				 */
-				if (!P_IGNORE(opaque))
-				{
-					maxoff = PageGetMaxOffsetNumber(page);
-					offnum = maxoff;
-					if (maxoff >= P_FIRSTDATAKEY(opaque))
-						break;
-				}
+			/* if we're physically at end of index, return failure */
+			if (so->currPos.buf == InvalidBuffer)
+				return false;
+
+			/*
+			 * Okay, we managed to move left to a non-deleted page.
+			 * Done if it's not half-dead and contains matching tuples.
+			 * Else loop back and do it all again.
+			 */
+			page = BufferGetPage(so->currPos.buf);
+			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+			if (!P_IGNORE(opaque))
+			{
+				/* see if there are any matches on this page */
+				/* note that this will clear moreLeft if we can stop */
+				if (_bt_readpage(scan, dir, PageGetMaxOffsetNumber(page)))
+					break;
 			}
 		}
 	}
-
-	/* Update scan state */
-	so->btso_curbuf = *bufP;
-	blkno = BufferGetBlockNumber(*bufP);
-	ItemPointerSet(current, blkno, offnum);
 
 	return true;
 }
@@ -1250,31 +1338,23 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 }
 
 /*
- *	_bt_endpoint() -- Find the first or last key in the index, and scan
+ *	_bt_endpoint() -- Find the first or last page in the index, and scan
  * from there to the first key satisfying all the quals.
  *
  * This is used by _bt_first() to set up a scan when we've determined
  * that the scan must start at the beginning or end of the index (for
- * a forward or backward scan respectively).
+ * a forward or backward scan respectively).  Exit conditions are the
+ * same as for _bt_first().
  */
 static bool
 _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation	rel;
+	Relation	rel = scan->indexRelation;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Buffer		buf;
 	Page		page;
 	BTPageOpaque opaque;
-	ItemPointer current;
-	OffsetNumber maxoff;
 	OffsetNumber start;
-	BlockNumber blkno;
-	BTScanOpaque so;
-	bool		res;
-	bool		continuescan;
-
-	rel = scan->indexRelation;
-	current = &(scan->currentItemData);
-	so = (BTScanOpaque) scan->opaque;
 
 	/*
 	 * Scan down to the leftmost or rightmost leaf page.  This is a simplified
@@ -1286,17 +1366,13 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	if (!BufferIsValid(buf))
 	{
 		/* empty index... */
-		ItemPointerSetInvalid(current);
-		so->btso_curbuf = InvalidBuffer;
+		so->currPos.buf = InvalidBuffer;
 		return false;
 	}
 
-	blkno = BufferGetBlockNumber(buf);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	Assert(P_ISLEAF(opaque));
-
-	maxoff = PageGetMaxOffsetNumber(page);
 
 	if (ScanDirectionIsForward(dir))
 	{
@@ -1310,8 +1386,6 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		Assert(P_RIGHTMOST(opaque));
 
 		start = PageGetMaxOffsetNumber(page);
-		if (start < P_FIRSTDATAKEY(opaque))		/* watch out for empty page */
-			start = P_FIRSTDATAKEY(opaque);
 	}
 	else
 	{
@@ -1319,43 +1393,40 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		start = 0;				/* keep compiler quiet */
 	}
 
-	ItemPointerSet(current, blkno, start);
 	/* remember which buffer we have pinned */
-	so->btso_curbuf = buf;
+	so->currPos.buf = buf;
 
-	/*
-	 * Left/rightmost page could be empty due to deletions, if so step till we
-	 * find a nonempty page.
-	 */
-	if (start > maxoff)
+	/* initialize moreLeft/moreRight appropriately for scan direction */
+	if (ScanDirectionIsForward(dir))
 	{
-		if (!_bt_step(scan, &buf, dir))
-			return false;
-		start = ItemPointerGetOffsetNumber(current);
-		page = BufferGetPage(buf);
-	}
-
-	/*
-	 * Okay, we are on the first or last tuple.  Does it pass all the quals?
-	 */
-	if (_bt_checkkeys(scan, page, start, dir, &continuescan))
-	{
-		/* yes, return it */
-		res = true;
-	}
-	else if (continuescan)
-	{
-		/* no, but there might be another one that does */
-		res = _bt_next(scan, dir);
+		so->currPos.moreLeft = false;
+		so->currPos.moreRight = true;
 	}
 	else
 	{
-		/* no tuples in the index match this scan key */
-		ItemPointerSetInvalid(current);
-		so->btso_curbuf = InvalidBuffer;
-		_bt_relbuf(rel, buf);
-		res = false;
+		so->currPos.moreLeft = true;
+		so->currPos.moreRight = false;
+	}
+	so->numKilled = 0;			/* just paranoia */
+
+	/*
+	 * Now load data from the first page of the scan.
+	 */
+	if (!_bt_readpage(scan, dir, start))
+	{
+		/*
+		 * There's no actually-matching data on this page.  Try to advance to
+		 * the next page.  Return false if there's no matching data at all.
+		 */
+		if (!_bt_steppage(scan, dir))
+			return false;
 	}
 
-	return res;
+	/* Drop the lock, but not pin, on the current page */
+	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+
+	/* OK, itemIndex says what to return */
+	scan->xs_ctup.t_self = so->currPos.items[so->currPos.itemIndex].heapTid;
+
+	return true;
 }

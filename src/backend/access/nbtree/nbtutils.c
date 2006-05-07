@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.72 2006/03/05 15:58:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.73 2006/05/07 01:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,11 +196,6 @@ _bt_freestack(BTStack stack)
  * Again though, only keys with RHS datatype equal to the index datatype
  * can be checked for contradictions.
  *
- * Furthermore, we detect the case where the index is unique and we have
- * equality quals for all columns.	In this case there can be at most one
- * (visible) matching tuple.  index_getnext uses this to avoid uselessly
- * continuing the scan after finding one match.
- *
  * Row comparison keys are treated the same as comparisons to nondefault
  * datatypes: we just transfer them into the preprocessed array without any
  * editorialization.  We can treat them the same as an ordinary inequality
@@ -216,7 +211,6 @@ _bt_freestack(BTStack stack)
 void
 _bt_preprocess_keys(IndexScanDesc scan)
 {
-	Relation	relation = scan->indexRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int			numberOfKeys = scan->numberOfKeys;
 	int			new_numberOfKeys;
@@ -234,7 +228,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	/* initialize result variables */
 	so->qual_ok = true;
 	so->numberOfKeys = 0;
-	scan->keys_are_unique = false;
 
 	if (numberOfKeys < 1)
 		return;					/* done if qual-less scan */
@@ -256,13 +249,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		 */
 		if (cur->sk_flags & SK_ISNULL)
 			so->qual_ok = false;
-		else if (relation->rd_index->indisunique &&
-				 relation->rd_rel->relnatts == 1)
-		{
-			/* it's a unique index, do we have an equality qual? */
-			if (cur->sk_strategy == BTEqualStrategyNumber)
-				scan->keys_are_unique = true;
-		}
 		memcpy(outkeys, inkeys, sizeof(ScanKeyData));
 		so->numberOfKeys = 1;
 		/* We can mark the qual as required if it's for first index col */
@@ -464,14 +450,6 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	}
 
 	so->numberOfKeys = new_numberOfKeys;
-
-	/*
-	 * If unique index and we have equality keys for all columns, set
-	 * keys_are_unique flag for higher levels.
-	 */
-	if (relation->rd_index->indisunique &&
-		relation->rd_rel->relnatts == numberOfEqualCols)
-		scan->keys_are_unique = true;
 }
 
 /*
@@ -825,4 +803,90 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 	}
 
 	return result;
+}
+
+/*
+ * _bt_killitems - set LP_DELETE bit for items an indexscan caller has
+ * told us were killed
+ *
+ * scan->so contains information about the current page and killed tuples
+ * thereon (generally, this should only be called if so->numKilled > 0).
+ *
+ * The caller must have pin on so->currPos.buf, but may or may not have
+ * read-lock, as indicated by haveLock.  Note that we assume read-lock
+ * is sufficient for setting LP_DELETE hint bits.
+ *
+ * We match items by heap TID before assuming they are the right ones to
+ * delete.  We cope with cases where items have moved right due to insertions.
+ * If an item has moved off the current page due to a split, we'll fail to
+ * find it and do nothing (this is not an error case --- we assume the item
+ * will eventually get marked in a future indexscan).  Likewise, if the item
+ * has moved left due to deletions or disappeared itself, we'll not find it,
+ * but these cases are not worth optimizing.  (Since deletions are only done
+ * by VACUUM, any deletion makes it highly likely that the dead item has been
+ * removed itself, and therefore searching left is not worthwhile.)
+ */
+void
+_bt_killitems(IndexScanDesc scan, bool haveLock)
+{
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	Page		page;
+	BTPageOpaque opaque;
+	OffsetNumber minoff;
+	OffsetNumber maxoff;
+	int			i;
+	bool		killedsomething = false;
+
+	Assert(BufferIsValid(so->currPos.buf));
+
+	if (!haveLock)
+		LockBuffer(so->currPos.buf, BT_READ);
+
+	page = BufferGetPage(so->currPos.buf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	minoff = P_FIRSTDATAKEY(opaque);
+	maxoff = PageGetMaxOffsetNumber(page);
+
+	for (i = 0; i < so->numKilled; i++)
+	{
+		int				itemIndex = so->killedItems[i];
+		BTScanPosItem  *kitem = &so->currPos.items[itemIndex];
+		OffsetNumber	offnum = kitem->indexOffset;
+
+		Assert(itemIndex >= so->currPos.firstItem &&
+			   itemIndex <= so->currPos.lastItem);
+		if (offnum < minoff)
+			continue;			/* pure paranoia */
+		while (offnum <= maxoff)
+		{
+			ItemId		iid = PageGetItemId(page, offnum);
+			IndexTuple	ituple = (IndexTuple) PageGetItem(page, iid);
+
+			if (ItemPointerEquals(&ituple->t_tid, &kitem->heapTid))
+			{
+				/* found the item */
+				iid->lp_flags |= LP_DELETE;
+				killedsomething = true;
+				break;			/* out of inner search loop */
+			}
+			offnum = OffsetNumberNext(offnum);
+		}
+	}
+
+	/*
+	 * Since this can be redone later if needed, it's treated the same
+	 * as a commit-hint-bit status update for heap tuples: we mark the
+	 * buffer dirty but don't make a WAL log entry.
+	 */
+	if (killedsomething)
+		SetBufferCommitInfoNeedsSave(so->currPos.buf);
+
+	if (!haveLock)
+		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+
+	/*
+	 * Always reset the scan state, so we don't look for same items
+	 * on other pages.
+	 */
+	so->numKilled = 0;
 }
