@@ -15,7 +15,7 @@
 #		for use only by the backend binaries
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.29 2005/09/27 17:39:35 tgl Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.29.2.1 2006/05/08 02:18:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,12 +26,8 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-# Replace object files that use FRONTEND define
-LIBOBJS_SRV := $(LIBOBJS)
-LIBOBJS_SRV := $(patsubst dirmod.o,dirmod_srv.o, $(LIBOBJS_SRV))
-LIBOBJS_SRV := $(patsubst exec.o,exec_srv.o, $(LIBOBJS_SRV))
-LIBOBJS_SRV := $(patsubst getaddrinfo.o,getaddrinfo_srv.o, $(LIBOBJS_SRV))
-LIBOBJS_SRV := $(patsubst thread.o,thread_srv.o, $(LIBOBJS_SRV))
+# Replace all object files so they use FRONTEND define
+LIBOBJS_SRV := $(LIBOBJS:%.o=%_srv.o)
 
 all: libpgport.a libpgport_srv.a
 
@@ -57,13 +53,7 @@ path.o: path.c pg_config_paths.h
 libpgport_srv.a: $(LIBOBJS_SRV)
 	$(AR) $(AROPT) $@ $^
 
-dirmod_srv.o: dirmod.c
-	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
-
-exec_srv.o: exec.c
-	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
-
-getaddrinfo_srv.o: getaddrinfo.c
+%_srv.o: %.c
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
 # No thread flags for server version
