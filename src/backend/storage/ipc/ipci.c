@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.82 2006/03/05 15:58:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.83 2006/05/08 00:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/clog.h"
 #include "access/multixact.h"
+#include "access/nbtree.h"
 #include "access/subtrans.h"
 #include "access/twophase.h"
 #include "access/xlog.h"
@@ -88,6 +89,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, FreeSpaceShmemSize());
 		size = add_size(size, BgWriterShmemSize());
+		size = add_size(size, BTreeShmemSize());
 #ifdef EXEC_BACKEND
 		size = add_size(size, ShmemBackendArraySize());
 #endif
@@ -181,6 +183,11 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	PMSignalInit();
 	BgWriterShmemInit();
+
+	/*
+	 * Set up other modules that need some shared memory space
+	 */
+	BTreeShmemInit();
 
 #ifdef EXEC_BACKEND
 

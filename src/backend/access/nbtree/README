@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.11 2006/05/07 01:21:30 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.12 2006/05/08 00:00:09 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -293,10 +293,32 @@ as part of the atomic update for the delete (either way, the metapage has
 to be the last page locked in the update to avoid deadlock risks).  This
 avoids race conditions if two such operations are executing concurrently.
 
-VACUUM needs to do a linear scan of an index to search for empty leaf
-pages and half-dead parent pages that can be deleted, as well as deleted
-pages that can be reclaimed because they are older than all open
-transactions.
+VACUUM needs to do a linear scan of an index to search for deleted pages
+that can be reclaimed because they are older than all open transactions.
+For efficiency's sake, we'd like to use the same linear scan to search for
+deletable tuples.  Before Postgres 8.2, btbulkdelete scanned the leaf pages
+in index order, but it is possible to visit them in physical order instead.
+The tricky part of this is to avoid missing any deletable tuples in the
+presence of concurrent page splits: a page split could easily move some
+tuples from a page not yet passed over by the sequential scan to a
+lower-numbered page already passed over.  (This wasn't a concern for the
+index-order scan, because splits always split right.)  To implement this,
+we provide a "vacuum cycle ID" mechanism that makes it possible to
+determine whether a page has been split since the current btbulkdelete
+cycle started.  If btbulkdelete finds a page that has been split since
+it started, and has a right-link pointing to a lower page number, then
+it temporarily suspends its sequential scan and visits that page instead.
+It must continue to follow right-links and vacuum dead tuples until
+reaching a page that either hasn't been split since btbulkdelete started,
+or is above the location of the outer sequential scan.  Then it can resume
+the sequential scan.  This ensures that all tuples are visited.  It may be
+that some tuples are visited twice, but that has no worse effect than an
+inaccurate index tuple count (and we can't guarantee an accurate count
+anyway in the face of concurrent activity).  Note that this still works
+if the has-been-recently-split test has a small probability of false
+positives, so long as it never gives a false negative.  This makes it
+possible to implement the test with a small counter value stored on each
+index page.
 
 WAL considerations
 ------------------

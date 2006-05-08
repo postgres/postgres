@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.97 2006/05/07 01:21:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.98 2006/05/08 00:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,10 @@
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/xlogutils.h"
+
+
+/* There's room for a 16-bit vacuum cycle ID in BTPageOpaqueData */
+typedef uint16 BTCycleId;
 
 /*
  *	BTPageOpaqueData -- At the end of every page, we store a pointer
@@ -30,6 +34,16 @@
  *	zero at a leaf page) as well as some flag bits indicating the page type
  *	and status.  If the page is deleted, we replace the level with the
  *	next-transaction-ID value indicating when it is safe to reclaim the page.
+ *
+ *	We also store a "vacuum cycle ID".  When a page is split while VACUUM is
+ *	processing the index, a nonzero value associated with the VACUUM run is
+ *	stored into both halves of the split page.  (If VACUUM is not running,
+ *	both pages receive zero cycleids.)  This allows VACUUM to detect whether
+ *	a page was split since it started, with a small probability of false match
+ *	if the page was last split some exact multiple of 65536 VACUUMs ago.
+ *	Also, during a split, the BTP_SPLIT_END flag is cleared in the left
+ *	(original) page, and set in the right page, but only if the next page
+ *	to its right has a different cycleid.
  *
  *	NOTE: the BTP_LEAF flag bit is redundant since level==0 could be tested
  *	instead.
@@ -45,6 +59,7 @@ typedef struct BTPageOpaqueData
 		TransactionId xact;		/* next transaction ID, if deleted */
 	}			btpo;
 	uint16		btpo_flags;		/* flag bits, see below */
+	BTCycleId	btpo_cycleid;	/* vacuum cycle ID of latest split */
 } BTPageOpaqueData;
 
 typedef BTPageOpaqueData *BTPageOpaque;
@@ -55,6 +70,7 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_DELETED		(1 << 2)	/* page has been deleted from tree */
 #define BTP_META		(1 << 3)	/* meta-page */
 #define BTP_HALF_DEAD	(1 << 4)	/* empty, but still in tree */
+#define BTP_SPLIT_END	(1 << 5)	/* rightmost page of split group */
 
 
 /*
@@ -492,6 +508,11 @@ extern bool _bt_checkkeys(IndexScanDesc scan,
 						  Page page, OffsetNumber offnum,
 						  ScanDirection dir, bool *continuescan);
 extern void _bt_killitems(IndexScanDesc scan, bool haveLock);
+extern BTCycleId _bt_vacuum_cycleid(Relation rel);
+extern BTCycleId _bt_start_vacuum(Relation rel);
+extern void _bt_end_vacuum(Relation rel);
+extern Size BTreeShmemSize(void);
+extern void BTreeShmemInit(void);
 
 /*
  * prototypes for functions in nbtsort.c

@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.100 2006/03/10 20:18:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.101 2006/05/08 00:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,6 +244,7 @@ _bt_blnewpage(uint32 level)
 	opaque->btpo_prev = opaque->btpo_next = P_NONE;
 	opaque->btpo.level = level;
 	opaque->btpo_flags = (level > 0) ? 0 : BTP_LEAF;
+	opaque->btpo_cycleid = 0;
 
 	/* Make the P_HIKEY line pointer appear allocated */
 	((PageHeader) page)->pd_lower += sizeof(ItemIdData);

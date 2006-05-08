@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.136 2006/04/25 22:46:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.137 2006/05/08 00:00:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -700,14 +700,18 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
 
 	/* if we're splitting this page, it won't be the root when we're done */
+	/* also, clear the SPLIT_END flag in both pages */
 	lopaque->btpo_flags = oopaque->btpo_flags;
-	lopaque->btpo_flags &= ~BTP_ROOT;
+	lopaque->btpo_flags &= ~(BTP_ROOT | BTP_SPLIT_END);
 	ropaque->btpo_flags = lopaque->btpo_flags;
 	lopaque->btpo_prev = oopaque->btpo_prev;
 	lopaque->btpo_next = BufferGetBlockNumber(rbuf);
 	ropaque->btpo_prev = BufferGetBlockNumber(buf);
 	ropaque->btpo_next = oopaque->btpo_next;
 	lopaque->btpo.level = ropaque->btpo.level = oopaque->btpo.level;
+	/* Since we already have write-lock on both pages, ok to read cycleid */
+	lopaque->btpo_cycleid = _bt_vacuum_cycleid(rel);
+	ropaque->btpo_cycleid = lopaque->btpo_cycleid;
 
 	/*
 	 * If the page we're splitting is not the rightmost page at its level in
@@ -836,6 +840,21 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
 		if (sopaque->btpo_prev != ropaque->btpo_prev)
 			elog(PANIC, "right sibling's left-link doesn't match");
+		/*
+		 * Check to see if we can set the SPLIT_END flag in the right-hand
+		 * split page; this can save some I/O for vacuum since it need not
+		 * proceed to the right sibling.  We can set the flag if the right
+		 * sibling has a different cycleid: that means it could not be part
+		 * of a group of pages that were all split off from the same ancestor
+		 * page.  If you're confused, imagine that page A splits to A B and
+		 * then again, yielding A C B, while vacuum is in progress.  Tuples
+		 * originally in A could now be in either B or C, hence vacuum must
+		 * examine both pages.  But if D, our right sibling, has a different
+		 * cycleid then it could not contain any tuples that were in A when
+		 * the vacuum started.
+		 */
+		if (sopaque->btpo_cycleid != ropaque->btpo_cycleid)
+			ropaque->btpo_flags |= BTP_SPLIT_END;
 	}
 
 	/*
@@ -1445,6 +1464,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	rootopaque->btpo_flags = BTP_ROOT;
 	rootopaque->btpo.level =
 		((BTPageOpaque) PageGetSpecialPointer(lpage))->btpo.level + 1;
+	rootopaque->btpo_cycleid = 0;
 
 	/* update metapage data */
 	metad->btm_root = rootblknum;
