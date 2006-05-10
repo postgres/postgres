@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.12 2006/03/30 23:03:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.13 2006/05/10 09:19:54 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,6 +138,8 @@ typedef struct SplitedPageLayout
 	gistxlogPage block;
 	IndexTupleData *list;
 	int			lenlist;
+	IndexTuple	itup;  /* union key for page */
+	Page		page;			/* to operate */
 	Buffer		buffer;			/* to write after all proceed */
 
 	struct SplitedPageLayout *next;
@@ -234,8 +236,8 @@ extern void freeGISTstate(GISTSTATE *giststate);
 extern void gistmakedeal(GISTInsertState *state, GISTSTATE *giststate);
 extern void gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer key);
 
-extern IndexTuple *gistSplit(Relation r, Buffer buffer, IndexTuple *itup,
-		  int *len, SplitedPageLayout **dist, GISTSTATE *giststate);
+extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
+		  int len, GISTSTATE *giststate);
 
 extern GISTInsertStack *gistFindPath(Relation r, BlockNumber child);
 
@@ -261,11 +263,16 @@ extern Datum gistgettuple(PG_FUNCTION_ARGS);
 extern Datum gistgetmulti(PG_FUNCTION_ARGS);
 
 /* gistutil.c */
+
+#define GiSTPageSize   \
+    ( BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(GISTPageOpaqueData)) ) 
+
+extern bool gistfitpage(IndexTuple *itvec, int len);
+extern bool gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete);
 extern void gistcheckpage(Relation rel, Buffer buf);
 extern Buffer gistNewBuffer(Relation r);
 extern OffsetNumber gistfillbuffer(Relation r, Page page, IndexTuple *itup,
 			   int len, OffsetNumber off);
-extern bool gistnospace(Page page, IndexTuple *itvec, int len);
 extern IndexTuple *gistextractbuffer(Buffer buffer, int *len /* out */ );
 extern IndexTuple *gistjoinvector(
 			   IndexTuple *itvec, int *len,

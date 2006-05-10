@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.15 2006/04/03 16:45:50 tgl Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.16 2006/05/10 09:19:54 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -625,7 +625,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 					}
 			}
 
-			if (gistnospace(pages[numbuffer - 1], itup, lenitup))
+			if (gistnospace(pages[numbuffer - 1], itup, lenitup, InvalidOffsetNumber))
 			{
 				/* no space left on page, so we must split */
 				buffers[numbuffer] = ReadBuffer(index, P_NEW);

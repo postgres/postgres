@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.19 2006/05/02 22:25:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.20 2006/05/10 09:19:54 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,10 +85,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 	if (GistPageIsLeaf(page))
 	{
 		if (GistTuplesDeleted(page))
-		{
 			needunion = needwrite = true;
-			GistClearTuplesDeleted(page);
-		}
 	}
 	else
 	{
@@ -157,30 +154,54 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 		if (curlenaddon)
 		{
 			/* insert updated tuples */
-			if (gistnospace(page, addon, curlenaddon))
+			if (gistnospace(page, addon, curlenaddon, InvalidOffsetNumber))
 			{
 				/* there is no space on page to insert tuples */
 				IndexTuple *vec;
 				SplitedPageLayout *dist = NULL,
 						   *ptr;
-				int			i;
+				int			i, veclen=0;
 				MemoryContext oldCtx = MemoryContextSwitchTo(gv->opCtx);
 
-				vec = gistextractbuffer(buffer, &(res.ituplen));
-				vec = gistjoinvector(vec, &(res.ituplen), addon, curlenaddon);
-				res.itup = gistSplit(gv->index, buffer, vec, &(res.ituplen), &dist, &(gv->giststate));
+				vec = gistextractbuffer(buffer, &veclen);
+				vec = gistjoinvector(vec, &veclen, addon, curlenaddon);
+				dist = gistSplit(gv->index, page, vec, veclen, &(gv->giststate));
+
 				MemoryContextSwitchTo(oldCtx);
 
-				vec = (IndexTuple *) palloc(sizeof(IndexTuple) * res.ituplen);
-				for (i = 0; i < res.ituplen; i++)
-				{
-					vec[i] = (IndexTuple) palloc(IndexTupleSize(res.itup[i]));
-					memcpy(vec[i], res.itup[i], IndexTupleSize(res.itup[i]));
+				if (blkno != GIST_ROOT_BLKNO) {
+					/* if non-root split then we should not allocate new buffer */
+					dist->buffer = buffer;
+					dist->page = BufferGetPage(dist->buffer);
+					GistPageGetOpaque(dist->page)->flags = 0;
 				}
-				res.itup = vec;
 
-				for (ptr = dist; ptr; ptr = ptr->next)
-				{
+				res.itup = (IndexTuple *) palloc(sizeof(IndexTuple) * veclen);
+				res.ituplen = 0;
+
+				/* make new pages and fills them */
+				for (ptr = dist; ptr; ptr = ptr->next) {
+					char *data;
+
+					if ( ptr->buffer == InvalidBuffer ) {
+						ptr->buffer = gistNewBuffer( gv->index );
+						GISTInitBuffer( ptr->buffer, 0 );
+						ptr->page = BufferGetPage(ptr->buffer);
+					}
+					ptr->block.blkno = BufferGetBlockNumber( ptr->buffer );
+
+					data = (char*)(ptr->list);
+					for(i=0;i<ptr->block.num;i++) {
+						if ( PageAddItem(ptr->page, (Item)data, IndexTupleSize((IndexTuple)data), i+FirstOffsetNumber, LP_USED) == InvalidOffsetNumber )
+							elog(ERROR, "failed to add item to index page in \"%s\"", RelationGetRelationName(gv->index));
+						data += IndexTupleSize((IndexTuple)data);
+					}
+
+					ItemPointerSetBlockNumber(&(ptr->itup->t_tid), ptr->block.blkno);
+					res.itup[ res.ituplen ] = (IndexTuple)palloc(IndexTupleSize(ptr->itup));
+					memcpy( res.itup[ res.ituplen ], ptr->itup, IndexTupleSize(ptr->itup) );
+					res.ituplen++;
+
 					MarkBufferDirty(ptr->buffer);
 				}
 
@@ -218,10 +239,9 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 				for (ptr = dist; ptr; ptr = ptr->next)
 				{
-					/* we must keep the buffer lock on the head page */
+					/* we must keep the buffer pin on the head page */
 					if (BufferGetBlockNumber(ptr->buffer) != blkno)
-						LockBuffer(ptr->buffer, GIST_UNLOCK);
-					ReleaseBuffer(ptr->buffer);
+						UnlockReleaseBuffer( ptr->buffer );
 				}
 
 				if (blkno == GIST_ROOT_BLKNO)
@@ -294,6 +314,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 	if (needwrite)
 	{
 		MarkBufferDirty(buffer);
+		GistClearTuplesDeleted(page);
 
 		if (!gv->index->rd_istemp)
 		{
@@ -570,14 +591,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 			/*
 			 * Remove deletable tuples from page
-			 *
-			 * XXX try to make this critical section shorter.  Could do it
-			 * by separating the callback loop from the actual tuple deletion,
-			 * but that would affect the definition of the todelete[] array
-			 * passed into the WAL record (because the indexes would all be
-			 * pre-deletion).
 			 */
-			START_CRIT_SECTION();
 
 			maxoff = PageGetMaxOffsetNumber(page);
 
@@ -588,13 +602,9 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 				if (callback(&(idxtuple->t_tid), callback_state))
 				{
-					PageIndexTupleDelete(page, i);
-					todelete[ntodelete] = i;
-					i--;
-					maxoff--;
+					todelete[ntodelete] = i-ntodelete;
 					ntodelete++;
 					stats->std.tuples_removed += 1;
-					Assert(maxoff == PageGetMaxOffsetNumber(page));
 				}
 				else
 					stats->std.num_index_tuples += 1;
@@ -602,9 +612,13 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 			if (ntodelete)
 			{
-				GistMarkTuplesDeleted(page);
+				START_CRIT_SECTION();
 
 				MarkBufferDirty(buffer);
+
+				for(i=0;i<ntodelete;i++)
+					PageIndexTupleDelete(page, todelete[i]);
+				GistMarkTuplesDeleted(page);
 
 				if (!rel->rd_istemp)
 				{
@@ -627,9 +641,10 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 				}
 				else
 					PageSetLSN(page, XLogRecPtrForTemp);
+
+				END_CRIT_SECTION();
 			}
 
-			END_CRIT_SECTION();
 		}
 		else
 		{

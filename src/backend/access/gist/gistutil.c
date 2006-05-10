@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.10 2006/03/05 15:58:20 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.11 2006/05/10 09:19:54 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -81,15 +81,31 @@ gistfillbuffer(Relation r, Page page, IndexTuple *itup,
  * Check space for itup vector on page
  */
 bool
-gistnospace(Page page, IndexTuple *itvec, int len)
+gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete)
 {
-	unsigned int size = 0;
+	unsigned int size = 0, deleted = 0;
 	int			i;
 
 	for (i = 0; i < len; i++)
 		size += IndexTupleSize(itvec[i]) + sizeof(ItemIdData);
 
-	return (PageGetFreeSpace(page) < size);
+	if ( todelete != InvalidOffsetNumber ) {
+		IndexTuple itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, todelete));
+		deleted = IndexTupleSize(itup) + sizeof(ItemIdData);
+	}
+
+	return (PageGetFreeSpace(page) + deleted < size);
+}
+
+bool
+gistfitpage(IndexTuple *itvec, int len) {
+	int i;
+	Size size=0;
+
+	for(i=0;i<len;i++)
+		size += IndexTupleSize(itvec[i]) + sizeof(ItemIdData);
+
+	return (size <= GiSTPageSize);
 }
 
 /*
@@ -107,7 +123,7 @@ gistextractbuffer(Buffer buffer, int *len /* out */ )
 	*len = maxoff;
 	itvec = palloc(sizeof(IndexTuple) * maxoff);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
-		itvec[i - 1] = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
+		itvec[i - FirstOffsetNumber] = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
 
 	return itvec;
 }
