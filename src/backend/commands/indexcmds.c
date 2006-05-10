@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.138 2006/03/05 15:58:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.139 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,17 +397,8 @@ DefineIndex(RangeVar *heapRelation,
 
 	index_create(relationId, indexRelationName, indexRelationId,
 				 indexInfo, accessMethodId, tablespaceId, classObjectId,
-				 primary, isconstraint,
+				 primary, false, isconstraint,
 				 allowSystemTableMods, skip_build);
-
-	/*
-	 * We update the relation's pg_class tuple even if it already has
-	 * relhasindex = true.	This is needed to cause a shared-cache-inval
-	 * message to be sent for the pg_class tuple, which will cause other
-	 * backends to flush their relcache entries and in particular their cached
-	 * lists of the indexes for this relation.
-	 */
-	setRelhasindex(relationId, true, primary, InvalidOid);
 }
 
 

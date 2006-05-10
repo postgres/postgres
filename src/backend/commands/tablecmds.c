@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.183 2006/04/30 01:08:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.184 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6046,14 +6046,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
 							   classObjectId,
-							   true, false, true, false);
-
-	/*
-	 * Update toast rel's pg_class entry to show that it has an index. The
-	 * index OID is stored into the reltoastidxid field for easy access by the
-	 * tuple toaster.
-	 */
-	setRelhasindex(toast_relid, true, true, toast_idxid);
+							   true, true, false, true, false);
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row

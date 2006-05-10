@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * index.h
- *	  prototypes for index.c.
+ *	  prototypes for catalog/index.c.
  *
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.65 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.66 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,8 @@ extern Oid index_create(Oid heapRelationId,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
 			 Oid *classObjectId,
-			 bool primary,
+			 bool isprimary,
+			 bool istoast,
 			 bool isconstraint,
 			 bool allow_system_table_mods,
 			 bool skip_build);
@@ -52,16 +53,13 @@ extern void FormIndexDatum(IndexInfo *indexInfo,
 			   Datum *values,
 			   bool *isnull);
 
-extern void IndexCloseAndUpdateStats(Relation heap, double heapTuples,
-						 Relation index, double indexTuples);
-
-extern void setRelhasindex(Oid relid, bool hasindex,
-			   bool isprimary, Oid reltoastidxid);
-
 extern void setNewRelfilenode(Relation relation);
 
-extern void index_build(Relation heapRelation, Relation indexRelation,
-			IndexInfo *indexInfo);
+extern void index_build(Relation heapRelation,
+			Relation indexRelation,
+			IndexInfo *indexInfo,
+			bool isprimary,
+			bool istoast);
 
 extern double IndexBuildHeapScan(Relation heapRelation,
 				   Relation indexRelation,

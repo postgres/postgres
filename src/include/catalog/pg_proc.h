@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.410 2006/05/02 22:25:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.411 2006/05/10 23:18:39 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -672,7 +672,7 @@ DATA(insert OID = 336 (  btmarkpos		   PGNSP PGUID 12 f f t f v 1 2278 "2281" _n
 DESCR("btree(internal)");
 DATA(insert OID = 337 (  btrestrpos		   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	btrestrpos - _null_ ));
 DESCR("btree(internal)");
-DATA(insert OID = 338 (  btbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 2281 2281" _null_ _null_ _null_ btbuild - _null_ ));
+DATA(insert OID = 338 (  btbuild		   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_ btbuild - _null_ ));
 DESCR("btree(internal)");
 DATA(insert OID = 332 (  btbulkdelete	   PGNSP PGUID 12 f f t f v 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ btbulkdelete - _null_ ));
 DESCR("btree(internal)");
@@ -789,7 +789,7 @@ DATA(insert OID = 446 (  hashmarkpos	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _
 DESCR("hash(internal)");
 DATA(insert OID = 447 (  hashrestrpos	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	hashrestrpos - _null_ ));
 DESCR("hash(internal)");
-DATA(insert OID = 448 (  hashbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 2281 2281" _null_ _null_ _null_ hashbuild - _null_ ));
+DATA(insert OID = 448 (  hashbuild		   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_ hashbuild - _null_ ));
 DESCR("hash(internal)");
 DATA(insert OID = 442 (  hashbulkdelete    PGNSP PGUID 12 f f t f v 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ hashbulkdelete - _null_ ));
 DESCR("hash(internal)");
@@ -1055,7 +1055,7 @@ DATA(insert OID = 780 (  gistmarkpos	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _
 DESCR("gist(internal)");
 DATA(insert OID = 781 (  gistrestrpos	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	gistrestrpos - _null_ ));
 DESCR("gist(internal)");
-DATA(insert OID = 782 (  gistbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 2281 2281" _null_ _null_ _null_ gistbuild - _null_ ));
+DATA(insert OID = 782 (  gistbuild		   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_ gistbuild - _null_ ));
 DESCR("gist(internal)");
 DATA(insert OID = 776 (  gistbulkdelete    PGNSP PGUID 12 f f t f v 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ gistbulkdelete - _null_ ));
 DESCR("gist(internal)");
@@ -3833,7 +3833,7 @@ DATA(insert OID = 2736 (  ginmarkpos	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _
 DESCR("gin(internal)");
 DATA(insert OID = 2737 (  ginrestrpos	   PGNSP PGUID 12 f f t f v 1 2278 "2281" _null_ _null_ _null_	ginrestrpos - _null_ ));
 DESCR("gin(internal)");
-DATA(insert OID = 2738 (  ginbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 2281 2281" _null_ _null_ _null_ ginbuild - _null_ ));
+DATA(insert OID = 2738 (  ginbuild		   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" _null_ _null_ _null_ ginbuild - _null_ ));
 DESCR("gin(internal)");
 DATA(insert OID = 2739 (  ginbulkdelete    PGNSP PGUID 12 f f t f v 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ ginbulkdelete - _null_ ));
 DESCR("gin(internal)");

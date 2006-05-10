@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.10 2006/05/02 22:25:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.11 2006/05/10 23:18:38 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -144,7 +144,7 @@
 
   <para>
 <programlisting>
-void
+IndexBuildResult *
 ambuild (Relation heapRelation,
          Relation indexRelation,
          IndexInfo *indexInfo);
@@ -155,6 +155,8 @@ ambuild (Relation heapRelation,
    in the table.  Ordinarily the <function>ambuild</> function will call
    <function>IndexBuildHeapScan()</> to scan the table for existing tuples
    and compute the keys that need to be inserted into the index.
+   The function must return a palloc'd struct containing statistics about
+   the new index.
   </para>
 
   <para>

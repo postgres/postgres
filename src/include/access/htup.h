@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.81 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.82 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,7 +444,7 @@ typedef HeapTupleData *HeapTuple;
 #define XLOG_HEAP_CLEAN		0x40
 #define XLOG_HEAP_NEWPAGE	0x50
 #define XLOG_HEAP_LOCK		0x60
-/* opcode 0x70 still free */
+#define XLOG_HEAP_INPLACE	0x70
 #define XLOG_HEAP_OPMASK	0x70
 /*
  * When we insert 1st item on new page in INSERT/UPDATE
@@ -544,5 +544,14 @@ typedef struct xl_heap_lock
 } xl_heap_lock;
 
 #define SizeOfHeapLock	(offsetof(xl_heap_lock, shared_lock) + sizeof(bool))
+
+/* This is what we need to know about in-place update */
+typedef struct xl_heap_inplace
+{
+	xl_heaptid	target;			/* updated tuple id */
+	/* TUPLE DATA FOLLOWS AT END OF STRUCT */
+} xl_heap_inplace;
+
+#define SizeOfHeapInplace	(offsetof(xl_heap_inplace, target) + SizeOfHeapTid)
 
 #endif   /* HTUP_H */

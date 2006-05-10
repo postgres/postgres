@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.211 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.212 2006/05/10 23:18:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2673,6 +2673,97 @@ l3:
 	return HeapTupleMayBeUpdated;
 }
 
+
+/*
+ * heap_inplace_update - update a tuple "in place" (ie, overwrite it)
+ *
+ * Overwriting violates both MVCC and transactional safety, so the uses
+ * of this function in Postgres are extremely limited.  Nonetheless we
+ * find some places to use it.
+ *
+ * The tuple cannot change size, and therefore it's reasonable to assume
+ * that its null bitmap (if any) doesn't change either.  So we just
+ * overwrite the data portion of the tuple without touching the null
+ * bitmap or any of the header fields.
+ *
+ * tuple is an in-memory tuple structure containing the data to be written
+ * over the target tuple.  Also, tuple->t_self identifies the target tuple.
+ */
+void
+heap_inplace_update(Relation relation, HeapTuple tuple)
+{
+	Buffer		buffer;
+	Page		page;
+	OffsetNumber offnum;
+	ItemId		lp = NULL;
+	HeapTupleHeader htup;
+	uint32		oldlen;
+	uint32		newlen;
+
+	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(&(tuple->t_self)));
+	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+	page = (Page) BufferGetPage(buffer);
+
+	offnum = ItemPointerGetOffsetNumber(&(tuple->t_self));
+	if (PageGetMaxOffsetNumber(page) >= offnum)
+		lp = PageGetItemId(page, offnum);
+
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
+		elog(ERROR, "heap_inplace_update: invalid lp");
+
+	htup = (HeapTupleHeader) PageGetItem(page, lp);
+
+	oldlen = ItemIdGetLength(lp) - htup->t_hoff;
+	newlen = tuple->t_len - tuple->t_data->t_hoff;
+	if (oldlen != newlen || htup->t_hoff != tuple->t_data->t_hoff)
+		elog(ERROR, "heap_inplace_update: wrong tuple length");
+
+	/* NO EREPORT(ERROR) from here till changes are logged */
+	START_CRIT_SECTION();
+
+	memcpy((char *) htup + htup->t_hoff,
+		   (char *) tuple->t_data + tuple->t_data->t_hoff,
+		   newlen);
+
+	MarkBufferDirty(buffer);
+
+	/* XLOG stuff */
+	if (!relation->rd_istemp)
+	{
+		xl_heap_inplace xlrec;
+		XLogRecPtr	recptr;
+		XLogRecData rdata[2];
+
+		xlrec.target.node = relation->rd_node;
+		xlrec.target.tid = tuple->t_self;
+
+		rdata[0].data = (char *) &xlrec;
+		rdata[0].len = SizeOfHeapInplace;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].next = &(rdata[1]);
+
+		rdata[1].data = (char *) htup + htup->t_hoff;
+		rdata[1].len = newlen;
+		rdata[1].buffer = buffer;
+		rdata[1].buffer_std = true;
+		rdata[1].next = NULL;
+
+		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INPLACE, rdata);
+
+		PageSetLSN(page, recptr);
+		PageSetTLI(page, ThisTimeLineID);
+	}
+
+	END_CRIT_SECTION();
+
+	UnlockReleaseBuffer(buffer);
+
+	/* Send out shared cache inval if necessary */
+	if (!IsBootstrapProcessingMode())
+		CacheInvalidateHeapTuple(relation, tuple);
+}
+
+
 /* ----------------
  *		heap_markpos	- mark scan position
  * ----------------
@@ -3329,6 +3420,59 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 	UnlockReleaseBuffer(buffer);
 }
 
+static void
+heap_xlog_inplace(XLogRecPtr lsn, XLogRecord *record)
+{
+	xl_heap_inplace *xlrec = (xl_heap_inplace *) XLogRecGetData(record);
+	Relation	reln = XLogOpenRelation(xlrec->target.node);
+	Buffer		buffer;
+	Page		page;
+	OffsetNumber offnum;
+	ItemId		lp = NULL;
+	HeapTupleHeader htup;
+	uint32		oldlen;
+	uint32		newlen;
+
+	if (record->xl_info & XLR_BKP_BLOCK_1)
+		return;
+
+	buffer = XLogReadBuffer(reln,
+							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							false);
+	if (!BufferIsValid(buffer))
+		return;
+	page = (Page) BufferGetPage(buffer);
+
+	if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
+	{
+		UnlockReleaseBuffer(buffer);
+		return;
+	}
+
+	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
+	if (PageGetMaxOffsetNumber(page) >= offnum)
+		lp = PageGetItemId(page, offnum);
+
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
+		elog(PANIC, "heap_inplace_redo: invalid lp");
+
+	htup = (HeapTupleHeader) PageGetItem(page, lp);
+
+	oldlen = ItemIdGetLength(lp) - htup->t_hoff;
+	newlen = record->xl_len - SizeOfHeapInplace;
+	if (oldlen != newlen)
+		elog(PANIC, "heap_inplace_redo: wrong tuple length");
+
+	memcpy((char *) htup + htup->t_hoff,
+		   (char *) xlrec + SizeOfHeapInplace,
+		   newlen);
+
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
+}
+
 void
 heap_redo(XLogRecPtr lsn, XLogRecord *record)
 {
@@ -3349,6 +3493,8 @@ heap_redo(XLogRecPtr lsn, XLogRecord *record)
 		heap_xlog_newpage(lsn, record);
 	else if (info == XLOG_HEAP_LOCK)
 		heap_xlog_lock(lsn, record);
+	else if (info == XLOG_HEAP_INPLACE)
+		heap_xlog_inplace(lsn, record);
 	else
 		elog(PANIC, "heap_redo: unknown op code %u", info);
 }
@@ -3440,6 +3586,13 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 		else
 			appendStringInfo(buf, "xid ");
 		appendStringInfo(buf, "%u ", xlrec->locking_xid);
+		out_target(buf, &(xlrec->target));
+	}
+	else if (info == XLOG_HEAP_INPLACE)
+	{
+		xl_heap_inplace *xlrec = (xl_heap_inplace *) rec;
+
+		appendStringInfo(buf, "inplace: ");
 		out_target(buf, &(xlrec->target));
 	}
 	else

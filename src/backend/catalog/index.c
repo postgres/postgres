@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.265 2006/03/31 23:32:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.266 2006/05/10 23:18:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -61,8 +61,9 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					IndexInfo *indexInfo,
 					Oid *classOids,
 					bool primary);
+static void index_update_stats(Relation rel, bool hasindex, bool isprimary,
+				   Oid reltoastidxid, double reltuples);
 static Oid	IndexGetRelation(Oid indexId);
-static void UpdateStats(Oid relid, double reltuples);
 
 
 /*
@@ -437,15 +438,26 @@ UpdateIndexRelation(Oid indexoid,
 }
 
 
-/* ----------------------------------------------------------------
- *		index_create
+/*
+ * index_create
  *
- *		indexRelationId is normally InvalidOid to let this routine
- *		generate an OID for the index.	During bootstrap it may be
+ * heapRelationId: OID of table to build index on
+ * indexRelationName: what it say
+ * indexRelationId: normally, pass InvalidOid to let this routine
+ *		generate an OID for the index.	During bootstrap this may be
  *		nonzero to specify a preselected OID.
+ * indexInfo: same info executor uses to insert into the index
+ * accessMethodObjectId: OID of index AM to use
+ * tableSpaceId: OID of tablespace to use
+ * classObjectId: array of index opclass OIDs, one per index column
+ * isprimary: index is a PRIMARY KEY
+ * istoast: index is a toast table's index
+ * isconstraint: index is owned by a PRIMARY KEY or UNIQUE constraint
+ * allow_system_table_mods: allow table to be a system catalog
+ * skip_build: true to skip the index_build() step for the moment; caller
+ * must do it later (typically via reindex_index())
  *
  * Returns OID of the created index.
- * ----------------------------------------------------------------
  */
 Oid
 index_create(Oid heapRelationId,
@@ -455,7 +467,8 @@ index_create(Oid heapRelationId,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
 			 Oid *classObjectId,
-			 bool primary,
+			 bool isprimary,
+			 bool istoast,
 			 bool isconstraint,
 			 bool allow_system_table_mods,
 			 bool skip_build)
@@ -595,7 +608,7 @@ index_create(Oid heapRelationId,
 	 * ----------------
 	 */
 	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
-						classObjectId, primary);
+						classObjectId, isprimary);
 
 	/*
 	 * Register constraint and dependencies for the index.
@@ -625,7 +638,7 @@ index_create(Oid heapRelationId,
 			char		constraintType;
 			Oid			conOid;
 
-			if (primary)
+			if (isprimary)
 				constraintType = CONSTRAINT_PRIMARY;
 			else if (indexInfo->ii_Unique)
 				constraintType = CONSTRAINT_UNIQUE;
@@ -736,27 +749,39 @@ index_create(Oid heapRelationId,
 	 * Similarly, if the caller specified skip_build then filling the index is
 	 * delayed till later (ALTER TABLE can save work in some cases with this).
 	 * Otherwise, we call the AM routine that constructs the index.
-	 *
-	 * In normal processing mode, the heap and index relations are closed, but
-	 * we continue to hold the ShareLock on the heap and the exclusive lock on
-	 * the index that we acquired above, until end of transaction.
 	 */
 	if (IsBootstrapProcessingMode())
 	{
 		index_register(heapRelationId, indexRelationId, indexInfo);
-		/* XXX shouldn't we close the heap and index rels here? */
 	}
 	else if (skip_build)
 	{
-		/* caller is responsible for filling the index later on */
-		relation_close(indexRelation, NoLock);
-		heap_close(heapRelation, NoLock);
+		/*
+		 * Caller is responsible for filling the index later on.  However,
+		 * we'd better make sure that the heap relation is correctly marked
+		 * as having an index.
+		 */
+		index_update_stats(heapRelation,
+						   true,
+						   isprimary,
+						   InvalidOid,
+						   heapRelation->rd_rel->reltuples);
+		/* Make the above update visible */
+		CommandCounterIncrement();
 	}
 	else
 	{
-		index_build(heapRelation, indexRelation, indexInfo);
-		/* index_build closes the passed rels */
+		index_build(heapRelation, indexRelation, indexInfo,
+					isprimary, istoast);
 	}
+
+	/*
+	 * Close the heap and index; but we keep the ShareLock on the heap and
+	 * the exclusive lock on the index that we acquired above, until end of
+	 * transaction.
+	 */
+	index_close(indexRelation);
+	heap_close(heapRelation, NoLock);
 
 	return indexRelationId;
 }
@@ -983,38 +1008,59 @@ FormIndexDatum(IndexInfo *indexInfo,
 }
 
 
-/* ----------------
- *		set relhasindex of relation's pg_class entry
+/*
+ * index_update_stats --- update pg_class entry after CREATE INDEX
  *
- * If isprimary is TRUE, we are defining a primary index, so also set
- * relhaspkey to TRUE.	Otherwise, leave relhaspkey alone.
+ * This routine updates the pg_class row of either an index or its parent
+ * relation after CREATE INDEX.  Its rather bizarre API is designed to
+ * ensure we can do all the necessary work in just one update.
  *
- * If reltoastidxid is not InvalidOid, also set reltoastidxid to that value.
- * This is only used for TOAST relations.
+ * hasindex: set relhasindex to this value
+ * isprimary: if true, set relhaspkey true; else no change
+ * reltoastidxid: if not InvalidOid, set reltoastidxid to this value;
+ *		else no change
+ * reltuples: set reltuples to this value
+ *
+ * relpages is also updated (using RelationGetNumberOfBlocks()).
  *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing relcache
- * entries to be flushed or updated with the new hasindex data.  This must
- * happen even if we find that no change is needed in the pg_class row.
- * ----------------
+ * entries to be flushed or updated with the new data.  This must happen even
+ * if we find that no change is needed in the pg_class row.  When updating
+ * a heap entry, this ensures that other backends find out about the new
+ * index.  When updating an index, it's important because some index AMs
+ * expect a relcache flush to occur after REINDEX.
  */
-void
-setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
+static void
+index_update_stats(Relation rel, bool hasindex, bool isprimary,
+				   Oid reltoastidxid, double reltuples)
 {
+	BlockNumber	relpages = RelationGetNumberOfBlocks(rel);
+	Oid			relid = RelationGetRelid(rel);
 	Relation	pg_class;
 	HeapTuple	tuple;
-	Form_pg_class classtuple;
-	bool		dirty = false;
-	HeapScanDesc pg_class_scan = NULL;
+	Form_pg_class rd_rel;
+	bool		in_place_upd;
+	bool		dirty;
 
 	/*
-	 * Find the tuple to update in pg_class.  In bootstrap mode we can't use
-	 * heap_update, so cheat and overwrite the tuple in-place.	In normal
-	 * processing, make a copy to scribble on.
+	 * Find the tuple to update in pg_class.  Normally we make a copy of the
+	 * tuple using the syscache, modify it, and apply heap_update. But in
+	 * bootstrap mode we can't use heap_update, so we use a nontransactional
+	 * update, ie, overwrite the tuple in-place.
+	 *
+	 * We also must use an in-place update if reindexing pg_class itself,
+	 * because the target index may presently not be part of the set of
+	 * indexes that CatalogUpdateIndexes would update (see reindex_relation).
 	 */
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
-	if (!IsBootstrapProcessingMode())
+	in_place_upd = IsBootstrapProcessingMode() ||
+		ReindexIsProcessingHeap(RelationRelationId);
+
+restart:
+
+	if (!in_place_upd)
 	{
 		tuple = SearchSysCacheCopy(RELOID,
 								   ObjectIdGetDatum(relid),
@@ -1022,6 +1068,8 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	}
 	else
 	{
+		/* don't assume syscache will work */
+		HeapScanDesc pg_class_scan;
 		ScanKeyData key[1];
 
 		ScanKeyInit(&key[0],
@@ -1031,65 +1079,110 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 
 		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
 		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
+		tuple = heap_copytuple(tuple);
+		heap_endscan(pg_class_scan);
 	}
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for relation %u", relid);
-	classtuple = (Form_pg_class) GETSTRUCT(tuple);
+	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
-	/* Apply required updates */
+	/* Apply required updates, if any, to copied tuple */
 
-	if (pg_class_scan)
-		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
-
-	if (classtuple->relhasindex != hasindex)
+	dirty = false;
+	if (rd_rel->relhasindex != hasindex)
 	{
-		classtuple->relhasindex = hasindex;
+		rd_rel->relhasindex = hasindex;
 		dirty = true;
 	}
 	if (isprimary)
 	{
-		if (!classtuple->relhaspkey)
+		if (!rd_rel->relhaspkey)
 		{
-			classtuple->relhaspkey = true;
+			rd_rel->relhaspkey = true;
 			dirty = true;
 		}
 	}
 	if (OidIsValid(reltoastidxid))
 	{
-		Assert(classtuple->relkind == RELKIND_TOASTVALUE);
-		if (classtuple->reltoastidxid != reltoastidxid)
+		Assert(rd_rel->relkind == RELKIND_TOASTVALUE);
+		if (rd_rel->reltoastidxid != reltoastidxid)
 		{
-			classtuple->reltoastidxid = reltoastidxid;
+			rd_rel->reltoastidxid = reltoastidxid;
 			dirty = true;
 		}
 	}
-
-	if (pg_class_scan)
+	if (rd_rel->reltuples != (float4) reltuples)
 	{
-		MarkBufferDirty(pg_class_scan->rs_cbuf);
-		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-		/* Send out shared cache inval if necessary */
-		if (!IsBootstrapProcessingMode())
-			CacheInvalidateHeapTuple(pg_class, tuple);
+		rd_rel->reltuples = (float4) reltuples;
+		dirty = true;
 	}
-	else if (dirty)
+	if (rd_rel->relpages != (int32) relpages)
 	{
-		simple_heap_update(pg_class, &tuple->t_self, tuple);
+		rd_rel->relpages = (int32) relpages;
+		dirty = true;
+	}
 
-		/* Keep the catalog indexes up to date */
-		CatalogUpdateIndexes(pg_class, tuple);
+	/*
+	 * If anything changed, write out the tuple
+	 */
+	if (dirty)
+	{
+		if (in_place_upd)
+		{
+			heap_inplace_update(pg_class, tuple);
+		}
+		else
+		{
+			/*
+			 * Because PG allows concurrent CREATE INDEX commands, it's
+			 * possible that someone else tries to update the pg_class
+			 * row at about the same time we do.  Hence, instead of using
+			 * simple_heap_update(), we must use full heap_update() and
+			 * cope with HeapTupleUpdated result.  If we see that, just
+			 * go back and try the whole update again.
+			 */
+			HTSU_Result result;
+			ItemPointerData update_ctid;
+			TransactionId update_xmax;
+
+			result = heap_update(pg_class, &tuple->t_self, tuple,
+								 &update_ctid, &update_xmax,
+								 GetCurrentCommandId(), InvalidSnapshot,
+								 true /* wait for commit */ );
+			switch (result)
+			{
+				case HeapTupleSelfUpdated:
+					/* Tuple was already updated in current command? */
+					elog(ERROR, "tuple already updated by self");
+					break;
+
+				case HeapTupleMayBeUpdated:
+					/* done successfully */
+					break;
+
+				case HeapTupleUpdated:
+					heap_freetuple(tuple);
+					/* Must do CCI so we can see the updated tuple */
+					CommandCounterIncrement();
+					goto restart;
+
+				default:
+					elog(ERROR, "unrecognized heap_update status: %u", result);
+					break;
+			}
+
+			/* Keep the catalog indexes up to date */
+			CatalogUpdateIndexes(pg_class, tuple);
+		}
 	}
 	else
 	{
-		/* no need to change tuple, but force relcache rebuild anyway */
+		/* no need to change tuple, but force relcache inval anyway */
 		CacheInvalidateRelcacheByTuple(tuple);
 	}
 
-	if (!pg_class_scan)
-		heap_freetuple(tuple);
-	else
-		heap_endscan(pg_class_scan);
+	heap_freetuple(tuple);
 
 	heap_close(pg_class, RowExclusiveLock);
 }
@@ -1164,176 +1257,30 @@ setNewRelfilenode(Relation relation)
 
 
 /*
- * This is invoked by the various index AMs once they have finished
- * constructing an index. Constructing an index involves counting the
- * number of tuples in both the relation and the index, so we take
- * advantage of the opportunity to update pg_class to ensure that the
- * planner takes advantage of the index we just created.  But, only
- * update statistics during normal index definitions, not for indices
- * on system catalogs created during bootstrap processing.	We must
- * close the relations before updating statistics to guarantee that
- * the relcache entries are flushed when we increment the command
- * counter in UpdateStats(). But we do not release any locks on the
- * relations; those will be held until end of transaction.
- */
-void
-IndexCloseAndUpdateStats(Relation heap, double heapTuples,
-						 Relation index, double indexTuples)
-{
-	Oid			hrelid = RelationGetRelid(heap);
-	Oid			irelid = RelationGetRelid(index);
-
-	if (!IsNormalProcessingMode())
-		return;
-
-	heap_close(heap, NoLock);
-	index_close(index);
-	UpdateStats(hrelid, heapTuples);
-	UpdateStats(irelid, indexTuples);
-}
-
-
-/* ----------------
- *		UpdateStats
- *
- * Update pg_class' relpages and reltuples statistics for the given relation
- * (which can be either a table or an index).  Note that this is not used
- * in the context of VACUUM, only CREATE INDEX.
- * ----------------
- */
-static void
-UpdateStats(Oid relid, double reltuples)
-{
-	Relation	whichRel;
-	Relation	pg_class;
-	HeapTuple	tuple;
-	BlockNumber relpages;
-	Form_pg_class rd_rel;
-	HeapScanDesc pg_class_scan = NULL;
-	bool		in_place_upd;
-
-	/*
-	 * This routine handles updates for both the heap and index relation
-	 * statistics.	In order to guarantee that we're able to *see* the index
-	 * relation tuple, we bump the command counter id here.  The index
-	 * relation tuple was created in the current transaction.
-	 */
-	CommandCounterIncrement();
-
-	/*
-	 * CommandCounterIncrement() flushes invalid cache entries, including
-	 * those for the heap and index relations for which we're updating
-	 * statistics.	Now that the cache is flushed, it's safe to open the
-	 * relation again.	We need the relation open in order to figure out how
-	 * many blocks it contains.
-	 */
-
-	/*
-	 * Grabbing lock here is probably redundant ...
-	 */
-	whichRel = relation_open(relid, ShareLock);
-
-	/*
-	 * Find the tuple to update in pg_class.  Normally we make a copy of the
-	 * tuple using the syscache, modify it, and apply heap_update. But in
-	 * bootstrap mode we can't use heap_update, so we cheat and overwrite the
-	 * tuple in-place.	(Note: as of PG 8.0 this isn't called during
-	 * bootstrap, but leave the code here for possible future use.)
-	 *
-	 * We also must cheat if reindexing pg_class itself, because the target
-	 * index may presently not be part of the set of indexes that
-	 * CatalogUpdateIndexes would update (see reindex_relation).  In this case
-	 * the stats updates will not be WAL-logged and so could be lost in a
-	 * crash.  This seems OK considering VACUUM does the same thing.
-	 */
-	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
-
-	in_place_upd = IsBootstrapProcessingMode() ||
-		ReindexIsProcessingHeap(RelationRelationId);
-
-	if (!in_place_upd)
-	{
-		tuple = SearchSysCacheCopy(RELOID,
-								   ObjectIdGetDatum(relid),
-								   0, 0, 0);
-	}
-	else
-	{
-		ScanKeyData key[1];
-
-		ScanKeyInit(&key[0],
-					ObjectIdAttributeNumber,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(relid));
-
-		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
-		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
-	}
-
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "could not find tuple for relation %u", relid);
-	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
-
-	/*
-	 * Update statistics in pg_class, if they changed.	(Avoiding an
-	 * unnecessary update is not just a tiny performance improvement; it also
-	 * reduces the window wherein concurrent CREATE INDEX commands may
-	 * conflict.)
-	 */
-	relpages = RelationGetNumberOfBlocks(whichRel);
-
-	if (rd_rel->relpages != (int32) relpages ||
-		rd_rel->reltuples != (float4) reltuples)
-	{
-		if (in_place_upd)
-		{
-			/* Bootstrap or reindex case: overwrite fields in place. */
-			LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
-			rd_rel->relpages = (int32) relpages;
-			rd_rel->reltuples = (float4) reltuples;
-			MarkBufferDirty(pg_class_scan->rs_cbuf);
-			LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-			if (!IsBootstrapProcessingMode())
-				CacheInvalidateHeapTuple(pg_class, tuple);
-		}
-		else
-		{
-			/* During normal processing, must work harder. */
-			rd_rel->relpages = (int32) relpages;
-			rd_rel->reltuples = (float4) reltuples;
-			simple_heap_update(pg_class, &tuple->t_self, tuple);
-			CatalogUpdateIndexes(pg_class, tuple);
-		}
-	}
-
-	if (in_place_upd)
-		heap_endscan(pg_class_scan);
-	else
-		heap_freetuple(tuple);
-
-	/*
-	 * We shouldn't have to do this, but we do...  Modify the reldesc in place
-	 * with the new values so that the cache contains the latest copy.	(XXX
-	 * is this really still necessary?	The relcache will get fixed at next
-	 * CommandCounterIncrement, so why bother here?)
-	 */
-	whichRel->rd_rel->relpages = (int32) relpages;
-	whichRel->rd_rel->reltuples = (float4) reltuples;
-
-	heap_close(pg_class, RowExclusiveLock);
-	relation_close(whichRel, NoLock);
-}
-
-
-/*
  * index_build - invoke access-method-specific index build procedure
+ *
+ * On entry, the index's catalog entries are valid, and its physical disk
+ * file has been created but is empty.  We call the AM-specific build
+ * procedure to fill in the index contents.  We then update the pg_class
+ * entries of the index and heap relation as needed, using statistics
+ * returned by ambuild as well as data passed by the caller.
+ *
+ * Note: when reindexing an existing index, isprimary and istoast can be
+ * false; the index is already properly marked and need not be re-marked.
+ *
+ * Note: before Postgres 8.2, the passed-in heap and index Relations
+ * were automatically closed by this routine.  This is no longer the case.
+ * The caller opened 'em, and the caller should close 'em.
  */
 void
 index_build(Relation heapRelation,
 			Relation indexRelation,
-			IndexInfo *indexInfo)
+			IndexInfo *indexInfo,
+			bool isprimary,
+			bool istoast)
 {
 	RegProcedure procedure;
+	IndexBuildResult *stats;
 
 	/*
 	 * sanity checks
@@ -1347,10 +1294,30 @@ index_build(Relation heapRelation,
 	/*
 	 * Call the access method's build procedure
 	 */
-	OidFunctionCall3(procedure,
-					 PointerGetDatum(heapRelation),
-					 PointerGetDatum(indexRelation),
-					 PointerGetDatum(indexInfo));
+	stats = (IndexBuildResult *)
+		DatumGetPointer(OidFunctionCall3(procedure,
+										 PointerGetDatum(heapRelation),
+										 PointerGetDatum(indexRelation),
+										 PointerGetDatum(indexInfo)));
+	Assert(PointerIsValid(stats));
+
+	/*
+	 * Update heap and index pg_class rows
+	 */
+	index_update_stats(heapRelation,
+					   true,
+					   isprimary,
+					   istoast ? RelationGetRelid(indexRelation) : InvalidOid,
+					   stats->heap_tuples);
+
+	index_update_stats(indexRelation,
+					   false,
+					   false,
+					   InvalidOid,
+					   stats->index_tuples);
+
+	/* Make the updated versions visible */
+	CommandCounterIncrement();
 }
 
 
@@ -1674,12 +1641,8 @@ reindex_index(Oid indexId)
 		}
 
 		/* Initialize the index and rebuild */
-		index_build(heapRelation, iRel, indexInfo);
-
-		/*
-		 * index_build will close both the heap and index relations (but not
-		 * give up the locks we hold on them).	So we're done.
-		 */
+		/* Note: we do not need to re-establish pkey or toast settings */
+		index_build(heapRelation, iRel, indexInfo, false, false);
 	}
 	PG_CATCH();
 	{
@@ -1689,6 +1652,10 @@ reindex_index(Oid indexId)
 	}
 	PG_END_TRY();
 	ResetReindexProcessing();
+
+	/* Close rels, but keep locks */
+	index_close(iRel);
+	heap_close(heapRelation, NoLock);
 }
 
 /*

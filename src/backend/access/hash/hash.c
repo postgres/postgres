@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.89 2006/05/02 22:25:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.90 2006/05/10 23:18:38 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -51,6 +51,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	Relation	heap = (Relation) PG_GETARG_POINTER(0);
 	Relation	index = (Relation) PG_GETARG_POINTER(1);
 	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	IndexBuildResult *result;
 	double		reltuples;
 	HashBuildState buildstate;
 
@@ -72,10 +73,15 @@ hashbuild(PG_FUNCTION_ARGS)
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo,
 								   hashbuildCallback, (void *) &buildstate);
 
-	/* since we just counted the # of tuples, may as well update stats */
-	IndexCloseAndUpdateStats(heap, reltuples, index, buildstate.indtuples);
+	/*
+	 * Return statistics
+	 */
+	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
 
-	PG_RETURN_VOID();
+	result->heap_tuples = reltuples;
+	result->index_tuples = buildstate.indtuples;
+
+	PG_RETURN_POINTER(result);
 }
 
 /*

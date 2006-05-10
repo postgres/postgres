@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.214 2006/04/04 19:35:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.215 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1173,11 +1173,12 @@ AddStr(char *str, int strlength, int mderef)
  *	index_register() -- record an index that has been set up for building
  *						later.
  *
- *		At bootstrap time, we define a bunch of indices on system catalogs.
- *		We postpone actually building the indices until just before we're
- *		finished with initialization, however.	This is because more classes
- *		and indices may be defined, and we want to be sure that all of them
- *		are present in the index.
+ *		At bootstrap time, we define a bunch of indexes on system catalogs.
+ *		We postpone actually building the indexes until just before we're
+ *		finished with initialization, however.	This is because the indexes
+ *		themselves have catalog entries, and those have to be included in the
+ *		indexes on those catalogs.  Doing it in two phases is the simplest
+ *		way of making sure the indexes have the right contents at the end.
  */
 void
 index_register(Oid heap,
@@ -1189,7 +1190,7 @@ index_register(Oid heap,
 
 	/*
 	 * XXX mao 10/31/92 -- don't gc index reldescs, associated info at
-	 * bootstrap time.	we'll declare the indices now, but want to create them
+	 * bootstrap time.	we'll declare the indexes now, but want to create them
 	 * later.
 	 */
 
@@ -1223,6 +1224,10 @@ index_register(Oid heap,
 	MemoryContextSwitchTo(oldcxt);
 }
 
+
+/*
+ * build_indices -- fill in all the indexes registered earlier
+ */
 void
 build_indices(void)
 {
@@ -1233,13 +1238,10 @@ build_indices(void)
 
 		heap = heap_open(ILHead->il_heap, NoLock);
 		ind = index_open(ILHead->il_ind);
-		index_build(heap, ind, ILHead->il_info);
 
-		/*
-		 * In normal processing mode, index_build would close the heap and
-		 * index, but in bootstrap mode it will not.
-		 */
+		index_build(heap, ind, ILHead->il_info, false, false);
 
-		/* XXX Probably we ought to close the heap and index here? */
+		index_close(ind);
+		heap_close(heap, NoLock);
 	}
 }

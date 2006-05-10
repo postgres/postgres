@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.133 2006/05/10 09:19:54 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.134 2006/05/10 23:18:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,7 @@ gistbuild(PG_FUNCTION_ARGS)
 	Relation	heap = (Relation) PG_GETARG_POINTER(0);
 	Relation	index = (Relation) PG_GETARG_POINTER(1);
 	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	IndexBuildResult *result;
 	double		reltuples;
 	GISTBuildState buildstate;
 	Buffer		buffer;
@@ -154,12 +155,17 @@ gistbuild(PG_FUNCTION_ARGS)
 	/* okay, all heap tuples are indexed */
 	MemoryContextDelete(buildstate.tmpCtx);
 
-	/* since we just counted the # of tuples, may as well update stats */
-	IndexCloseAndUpdateStats(heap, reltuples, index, buildstate.indtuples);
-
 	freeGISTstate(&buildstate.giststate);
 
-	PG_RETURN_VOID();
+	/*
+	 * Return statistics
+	 */
+	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+
+	result->heap_tuples = reltuples;
+	result->index_tuples = buildstate.indtuples;
+
+	PG_RETURN_POINTER(result);
 }
 
 /*

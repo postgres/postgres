@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.1 2006/05/02 11:28:54 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.2 2006/05/10 23:18:38 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -242,6 +242,7 @@ ginbuild(PG_FUNCTION_ARGS) {
 	Relation    heap = (Relation) PG_GETARG_POINTER(0);
 	Relation    index = (Relation) PG_GETARG_POINTER(1);
 	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	IndexBuildResult *result;
 	double      reltuples;
 	GinBuildState	buildstate;
 	Buffer		buffer;
@@ -310,10 +311,15 @@ ginbuild(PG_FUNCTION_ARGS) {
 
 	MemoryContextDelete(buildstate.tmpCtx);
 
-	/* since we just counted the # of tuples, may as well update stats */
-	IndexCloseAndUpdateStats(heap, reltuples, index, buildstate.indtuples);
+	/*
+	 * Return statistics
+	 */
+	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
 
-	PG_RETURN_VOID();
+	result->heap_tuples = reltuples;
+	result->index_tuples = buildstate.indtuples;
+
+	PG_RETURN_POINTER(result);
 }
 
 /*

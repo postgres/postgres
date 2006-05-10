@@ -12,21 +12,18 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.148 2006/05/08 00:00:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.149 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/heapam.h"
 #include "access/nbtree.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
-#include "miscadmin.h"
 #include "storage/freespace.h"
-#include "storage/smgr.h"
-#include "utils/inval.h"
+#include "storage/lmgr.h"
 #include "utils/memutils.h"
 
 
@@ -84,6 +81,7 @@ btbuild(PG_FUNCTION_ARGS)
 	Relation	heap = (Relation) PG_GETARG_POINTER(0);
 	Relation	index = (Relation) PG_GETARG_POINTER(1);
 	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	IndexBuildResult *result;
 	double		reltuples;
 	BTBuildState buildstate;
 
@@ -149,18 +147,20 @@ btbuild(PG_FUNCTION_ARGS)
 	/*
 	 * If we are reindexing a pre-existing index, it is critical to send out
 	 * a relcache invalidation SI message to ensure all backends re-read the
-	 * index metapage.  In most circumstances the update-stats operation will
-	 * cause that to happen, but at the moment there are corner cases where
-	 * no pg_class update will occur, so force an inval here.  XXX FIXME:
-	 * the upper levels of CREATE INDEX should handle the stats update as
-	 * well as guaranteeing relcache inval.
+	 * index metapage.  We expect that the caller will ensure that happens
+	 * (typically as a side effect of updating index stats, but it must
+	 * happen even if the stats don't change!)
 	 */
-	CacheInvalidateRelcache(index);
 
-	/* since we just counted the # of tuples, may as well update stats */
-	IndexCloseAndUpdateStats(heap, reltuples, index, buildstate.indtuples);
+	/*
+	 * Return statistics
+	 */
+	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
 
-	PG_RETURN_VOID();
+	result->heap_tuples = reltuples;
+	result->index_tuples = buildstate.indtuples;
+
+	PG_RETURN_POINTER(result);
 }
 
 /*

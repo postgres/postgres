@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.329 2006/05/03 22:45:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.330 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -673,9 +673,10 @@ vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
  *		doing ANALYZE, but we always update these stats.  This routine works
  *		for both index and heap relation entries in pg_class.
  *
- *		We violate no-overwrite semantics here by storing new values for the
- *		statistics columns directly into the pg_class tuple that's already on
- *		the page.  The reason for this is that if we updated these tuples in
+ *		We violate transaction semantics here by overwriting the rel's
+ *		existing pg_class tuple with the new values.  This is reasonably
+ *		safe since the new values are correct whether or not this transaction
+ *		commits.  The reason for this is that if we updated these tuples in
  *		the usual way, vacuuming pg_class itself wouldn't work very well ---
  *		by the time we got done with a vacuum cycle, most of the tuples in
  *		pg_class would've been obsoleted.  Of course, this only works for
@@ -689,59 +690,57 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 					bool hasindex)
 {
 	Relation	rd;
-	HeapTupleData rtup;
 	HeapTuple	ctup;
 	Form_pg_class pgcform;
-	Buffer		buffer;
+	bool		dirty;
 
-	/*
-	 * update number of tuples and number of pages in pg_class
-	 */
 	rd = heap_open(RelationRelationId, RowExclusiveLock);
 
-	ctup = SearchSysCache(RELOID,
-						  ObjectIdGetDatum(relid),
-						  0, 0, 0);
+	/* Fetch a copy of the tuple to scribble on */
+	ctup = SearchSysCacheCopy(RELOID,
+							  ObjectIdGetDatum(relid),
+							  0, 0, 0);
 	if (!HeapTupleIsValid(ctup))
 		elog(ERROR, "pg_class entry for relid %u vanished during vacuuming",
 			 relid);
+	pgcform = (Form_pg_class) GETSTRUCT(ctup);
 
-	/* get the buffer cache tuple */
-	rtup.t_self = ctup->t_self;
-	ReleaseSysCache(ctup);
-	if (!heap_fetch(rd, SnapshotNow, &rtup, &buffer, false, NULL))
-		elog(ERROR, "pg_class entry for relid %u vanished during vacuuming",
-			 relid);
+	/* Apply required updates, if any, to copied tuple */
 
-	/* ensure no one else does this at the same time */
-	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-
-	/* overwrite the existing statistics in the tuple */
-	pgcform = (Form_pg_class) GETSTRUCT(&rtup);
-	pgcform->relpages = (int32) num_pages;
-	pgcform->reltuples = (float4) num_tuples;
-	pgcform->relhasindex = hasindex;
-
+	dirty = false;
+	if (pgcform->relpages != (int32) num_pages)
+	{
+		pgcform->relpages = (int32) num_pages;
+		dirty = true;
+	}
+	if (pgcform->reltuples != (float4) num_tuples)
+	{
+		pgcform->reltuples = (float4) num_tuples;
+		dirty = true;
+	}
+	if (pgcform->relhasindex != hasindex)
+	{
+		pgcform->relhasindex = hasindex;
+		dirty = true;
+	}
 	/*
 	 * If we have discovered that there are no indexes, then there's no
 	 * primary key either.	This could be done more thoroughly...
 	 */
 	if (!hasindex)
-		pgcform->relhaspkey = false;
-
-	MarkBufferDirty(buffer);
-
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	{
+		if (pgcform->relhaspkey)
+		{
+			pgcform->relhaspkey = false;
+			dirty = true;
+		}
+	}
 
 	/*
-	 * Invalidate the tuple in the catcaches; this also arranges to flush the
-	 * relation's relcache entry.  (If we fail to commit for some reason, no
-	 * flush will occur, but no great harm is done since there are no
-	 * noncritical state updates here.)
+	 * If anything changed, write out the tuple
 	 */
-	CacheInvalidateHeapTuple(rd, &rtup);
-
-	ReleaseBuffer(buffer);
+	if (dirty)
+		heap_inplace_update(rd, ctup);
 
 	heap_close(rd, RowExclusiveLock);
 }
@@ -753,10 +752,11 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
  *		Update the whole-database statistics that are kept in its pg_database
  *		row, and the flat-file copy of pg_database.
  *
- *		We violate no-overwrite semantics here by storing new values for the
- *		statistics columns directly into the tuple that's already on the page.
- *		As with vac_update_relstats, this avoids leaving dead tuples behind
- *		after a VACUUM.
+ *		We violate transaction semantics here by overwriting the database's
+ *		existing pg_database tuple with the new values.  This is reasonably
+ *		safe since the new values are correct whether or not this transaction
+ *		commits.  As with vac_update_relstats, this avoids leaving dead tuples
+ *		behind after a VACUUM.
  *
  *		This routine is shared by full and lazy VACUUM.  Note that it is only
  *		applied after a database-wide VACUUM operation.
@@ -767,49 +767,24 @@ vac_update_dbstats(Oid dbid,
 				   TransactionId frozenXID)
 {
 	Relation	relation;
-	ScanKeyData entry[1];
-	SysScanDesc	scan;
 	HeapTuple	tuple;
-	Buffer		buf;
 	Form_pg_database dbform;
 
 	relation = heap_open(DatabaseRelationId, RowExclusiveLock);
 
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(dbid));
-
-	scan = systable_beginscan(relation, DatabaseOidIndexId, true,
-							  SnapshotNow, 1, entry);
-
-	tuple = systable_getnext(scan);
-
+	/* Fetch a copy of the tuple to scribble on */
+	tuple = SearchSysCacheCopy(DATABASEOID,
+							   ObjectIdGetDatum(dbid),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for database %u", dbid);
-
-	if (scan->irel)
-		buf = scan->iscan->xs_cbuf;
-	else
-		buf = scan->scan->rs_cbuf;
-
-	/* ensure no one else does this at the same time */
-	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-
 	dbform = (Form_pg_database) GETSTRUCT(tuple);
 
 	/* overwrite the existing statistics in the tuple */
 	dbform->datvacuumxid = vacuumXID;
 	dbform->datfrozenxid = frozenXID;
 
-	MarkBufferDirty(buf);
-
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-	/* invalidate the tuple in the cache so we'll see the change in cache */
-	CacheInvalidateHeapTuple(relation, tuple);
-
-	systable_endscan(scan);
+	heap_inplace_update(relation, tuple);
 
 	heap_close(relation, RowExclusiveLock);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.110 2006/04/24 22:24:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.111 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,6 +168,7 @@ extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 				Buffer *buffer, ItemPointer ctid,
 				TransactionId *update_xmax, CommandId cid,
 				LockTupleMode mode, bool nowait);
+extern void heap_inplace_update(Relation relation, HeapTuple tuple);
 
 extern Oid	simple_heap_insert(Relation relation, HeapTuple tup);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);

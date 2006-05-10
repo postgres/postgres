@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.59 2006/05/02 22:25:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.60 2006/05/10 23:18:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,15 @@
 #include "access/sdir.h"
 #include "nodes/primnodes.h"
 
+
+/*
+ * Struct for statistics returned by ambuild
+ */
+typedef struct IndexBuildResult
+{
+	double		heap_tuples;	/* # of tuples seen in parent table */
+	double		index_tuples;	/* # of tuples inserted into index */
+} IndexBuildResult;
 
 /*
  * Struct for input arguments passed to ambulkdelete and amvacuumcleanup
