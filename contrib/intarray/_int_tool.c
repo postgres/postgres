@@ -34,7 +34,7 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 			j++;
 		}
 		else
-			j++;
+			break;
 
 	return (n == nb) ? TRUE : FALSE;
 }
@@ -76,13 +76,6 @@ ArrayType *
 inner_int_union(ArrayType *a, ArrayType *b)
 {
 	ArrayType  *r = NULL;
-	int			na,
-				nb;
-	int		   *da,
-			   *db,
-			   *dr;
-	int			i,
-				j;
 
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
@@ -94,31 +87,35 @@ inner_int_union(ArrayType *a, ArrayType *b)
 	if (ARRISVOID(b))
 		r = copy_intArrayType(a);
 
-	if (r)
-		dr = ARRPTR(r);
-	else
+	if (!r)
 	{
-		na = ARRNELEMS(a);
-		nb = ARRNELEMS(b);
-		da = ARRPTR(a);
-		db = ARRPTR(b);
+		int 	na = ARRNELEMS(a),
+				nb = ARRNELEMS(b);
+		int		*da = ARRPTR(a),
+				*db = ARRPTR(b);
+		int		i,j, *dr;
 
 		r = new_intArrayType(na + nb);
 		dr = ARRPTR(r);
 
 		/* union */
 		i = j = 0;
-		while (i < na && j < nb)
-			if (da[i] < db[j])
+		while (i < na && j < nb) {
+			if (da[i] == db[j]) {
+				*dr++ = da[i++];
+				j++;
+			} else if (da[i] < db[j])
 				*dr++ = da[i++];
 			else
 				*dr++ = db[j++];
+		}
 
 		while (i < na)
 			*dr++ = da[i++];
 		while (j < nb)
 			*dr++ = db[j++];
 
+		r = resize_intArrayType(r, dr-ARRPTR(r));
 	}
 
 	if (ARRNELEMS(r) > 1)

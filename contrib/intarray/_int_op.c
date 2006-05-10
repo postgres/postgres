@@ -83,8 +83,6 @@ _int_same(PG_FUNCTION_ARGS)
 	if (avoid || bvoid)
 		return (avoid && bvoid) ? TRUE : FALSE;
 
-	SORT(a);
-	SORT(b);
 	na = ARRNELEMS(a);
 	nb = ARRNELEMS(b);
 	da = ARRPTR(a);
@@ -94,7 +92,10 @@ _int_same(PG_FUNCTION_ARGS)
 
 	if (na == nb)
 	{
+		SORT(a);
+		SORT(b);
 		result = TRUE;
+
 		for (n = 0; n < na; n++)
 			if (da[n] != db[n])
 			{
