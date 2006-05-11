@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.145 2006/03/06 19:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.146 2006/05/11 19:15:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@ extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char	   *dolqstart;      /* current $foo$ quote start string */
-bool			escape_string_warning;
-bool			standard_conforming_strings;
+static bool		escape_string_warning;
+static bool		standard_conforming_strings;
 static bool 	warn_on_first_escape;
 
 /*
@@ -128,10 +128,10 @@ xnstart			[nN]{quote}
 
 /* Quoted string that allows backslash escapes */
 xestart 		[eE]{quote}
-xeinside                [^\\']+
-xeescape	                [\\][^0-7]
-xeoctesc	                [\\][0-7]{1,3}
-xehexesc	                [\\]x[0-9A-Fa-f]{1,2}
+xeinside		[^\\']+
+xeescape		[\\][^0-7]
+xeoctesc		[\\][0-7]{1,3}
+xehexesc		[\\]x[0-9A-Fa-f]{1,2}
 
 /* C version of hex number */
 xch				0[xX][0-9A-Fa-f]*
@@ -141,8 +141,7 @@ xch				0[xX][0-9A-Fa-f]*
  */
 xqstart			{quote}
 xqdouble		{quote}{quote}
-xqinside		[^\\']+
-xqbackslash	[\\]
+xqinside		[^']+
 
 /* $foo$ style quotes ("dollar quoting")
  * The quoted string starts with $foo$ where "foo" is an optional string
@@ -402,11 +401,23 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				/* National character.
 				 * Transfer it as-is to the backend.
 				 */
+				warn_on_first_escape = true;
 		        token_start = yytext;
-				BEGIN(xq);
+				state_before = YYSTATE;
+				if (standard_conforming_strings)
+					BEGIN(xq);
+				else
+					BEGIN(xe);
 				startlit();
 			}
-<C,SQL>{xqstart}	{
+<C>{xqstart}	{
+				warn_on_first_escape = false;
+				token_start = yytext;
+				state_before = YYSTATE;
+				BEGIN(xe);
+				startlit();
+			}
+<SQL>{xqstart}	{
 				warn_on_first_escape = true;
 				token_start = yytext;
 				state_before = YYSTATE;
@@ -416,7 +427,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 					BEGIN(xe);
 				startlit();
 			}
-<C,SQL>{xestart}	{
+<SQL>{xestart}	{
 				warn_on_first_escape = false;
 				token_start = yytext;
 				state_before = YYSTATE;
@@ -433,10 +444,6 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <xq,xe>{xqdouble}		{ addlitchar('\''); }
 <xq>{xqinside}		{ addlit(yytext, yyleng); }
 <xe>{xeinside}		{ addlit(yytext, yyleng); }
-<xq>{xqbackslash} {
-					check_escape_warning();
-					addlitchar('\\');
-                }
 <xe>{xeescape}  	{ 
 				check_escape_warning();
 				addlit(yytext, yyleng);

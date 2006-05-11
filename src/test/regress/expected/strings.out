@@ -927,30 +927,6 @@ show standard_conforming_strings;
 (1 row)
 
 select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6;
-WARNING:  nonstandard use of escape in a string literal
-LINE 1: select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'a...
-               ^
-HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal
-LINE 1: select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'a...
-                              ^
-HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal
-LINE 1: select 'a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'a...
-                                               ^
-HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal
-LINE 1: ...a\bcd' as f1, 'a\b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   ...
-                                                             ^
-HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal
-LINE 1: ...b''cd' as f2, 'a\b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' ...
-                                                             ^
-HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
-WARNING:  nonstandard use of escape in a string literal
-LINE 1: ...b''''cd' as f3, 'abcd\'   as f4, 'ab\''cd' as f5, '\\' as f6...
-                                                             ^
-HINT:  Use the escape string syntax for escapes, e.g., E'\r\n'.
   f1   |   f2   |   f3    |  f4   |   f5   | f6 
 -------+--------+---------+-------+--------+----
  a\bcd | a\b'cd | a\b''cd | abcd\ | ab\'cd | \\

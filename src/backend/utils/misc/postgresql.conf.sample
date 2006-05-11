@@ -279,7 +279,7 @@
 					#   warning
 					#   error
 					#   panic(off)
-				 
+
 #log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
 					# and their durations, in milliseconds.
 
@@ -415,8 +415,8 @@
 #add_missing_from = off
 #array_nulls = on
 #default_with_oids = off
-escape_string_warning = on		# warn about backslashes in string literals
-#standard_conforming_strings = off	# SQL standard string literal processing
+#escape_string_warning = on
+#standard_conforming_strings = off
 #regex_flavor = advanced		# advanced, extended, or basic
 #sql_inheritance = on
 

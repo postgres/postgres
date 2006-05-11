@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.34 2006/03/14 22:48:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.35 2006/05/11 19:15:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,11 @@
  * therefore sufficient to make YYLTYPE an int.
  */
 #define YYLTYPE  int
+
+/* GUC variables in scan.l (every one of these is a bad idea :-() */
+extern bool escape_string_warning;
+extern bool standard_conforming_strings;
+
 
 /* from scan.l */
 extern void scanner_init(const char *str);

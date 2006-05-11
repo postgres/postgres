@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.57 2006/05/02 18:07:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.58 2006/05/11 19:15:35 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3734,32 +3734,15 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         When on, a warning is issued if a backslash (<literal>\</>)
         appears in an ordinary string literal (<literal>'...'</>
-        syntax). The default is <literal>on</>.
+        syntax) and <varname>standard_conforming_strings</varname> is off.
+        The default is <literal>on</>.
        </para>
        <para>
-        Escape string syntax (<literal>E'...'</>) should be used for
-        backslash escape sequences, because ordinary strings have
-        the standard-conforming behavior of treating backslashes
-        literally when the <literal>standard-conforming-strings</>
-        option is set <literal>on</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-standard-conforming-strings" xreflabel="standard_conforming_strings">
-      <term><varname>standard_conforming_strings</varname> (<type>boolean</type>)</term>
-      <indexterm><primary>strings</><secondary>standard conforming</></>
-      <indexterm>
-       <primary><varname>standard_conforming_strings</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Controls whether ordinary string literals
-        (<literal>'...'</>) treat backslashes literally, as specified in
-        the SQL standard.  Applications may check this
-        parameter to determine how string literals will be processed.
-        The presence of this parameter can also be taken as an indication
-        that the escape string syntax (<literal>E'...'</>) is supported.
+        Applications that wish to use backslash as escape should be
+        modified to use escape string syntax (<literal>E'...'</>),
+        because the default behavior of ordinary strings will change
+        in a future release for SQL compatibility.  This variable can
+        be enabled to help detect applications that will break.
        </para>
       </listitem>
      </varlistentry>
@@ -3795,6 +3778,32 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         an implied <literal>ONLY</literal> key word.  This was added for 
         compatibility with releases prior to 7.1.  See
         <xref linkend="ddl-inherit"> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-standard-conforming-strings" xreflabel="standard_conforming_strings">
+      <term><varname>standard_conforming_strings</varname> (<type>boolean</type>)</term>
+      <indexterm><primary>strings</><secondary>standard conforming</></>
+      <indexterm>
+       <primary><varname>standard_conforming_strings</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This controls whether ordinary string literals
+        (<literal>'...'</>) treat backslashes literally, as specified in
+        the SQL standard.
+        The default is currently <literal>off</>, causing
+        <productname>PostgreSQL</productname> to have its historical
+        behavior of treating backslashes as escape characters.
+        The default will change to <literal>on</> in a future release
+        to improve compatibility with the standard.
+        Applications may check this
+        parameter to determine how string literals will be processed.
+        The presence of this parameter can also be taken as an indication
+        that the escape string syntax (<literal>E'...'</>) is supported.
+        Escape string syntax should be used if an application desires
+        backslashes to be treated as escape characters.
        </para>
       </listitem>
      </varlistentry>

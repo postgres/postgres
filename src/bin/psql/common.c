@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.116 2006/03/14 22:48:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.117 2006/05/11 19:15:35 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1101,8 +1101,8 @@ is_superuser(void)
 /*
  * Test if the current session uses standard string literals.
  *
- * Note: this will correctly detect the setting only with a protocol-3.0
- * or newer backend; otherwise it will always say "false".
+ * Note: With a pre-protocol-3.0 connection this will always say "false",
+ * which should be the right answer.
  */
 bool
 standard_strings(void)

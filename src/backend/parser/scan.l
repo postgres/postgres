@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.133 2006/03/14 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.134 2006/05/11 19:15:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,12 +51,12 @@ static char    *dolqstart;      /* current $foo$ quote start string */
 /*
  * GUC variables.  This is a DIRECT violation of the warning given at the
  * head of gram.y, ie flex/bison code must not depend on any GUC variables;
- * as such, changing its value can induce very unintuitive behavior.
+ * as such, changing their values can induce very unintuitive behavior.
  * But we shall have to live with it as a short-term thing until the switch
  * to SQL-standard string syntax is complete.
  */
-bool			escape_string_warning;
-bool			standard_conforming_strings;
+bool			escape_string_warning = true;
+bool			standard_conforming_strings = false;
 
 static bool		warn_on_first_escape;
 
@@ -211,8 +211,7 @@ xehexesc		[\\]x[0-9A-Fa-f]{1,2}
  */
 xqstart			{quote}
 xqdouble		{quote}{quote}
-xqinside		[^\\']+
-xqbackslash	[\\]
+xqinside		[^']+
 
 /* $foo$ style quotes ("dollar quoting")
  * The quoted string starts with $foo$ where "foo" is an optional string
@@ -443,7 +442,7 @@ other			.
 					yylval.str = litbufdup();
 					return SCONST;
 				}
-<xq,xe>{xqdouble}  {
+<xq,xe>{xqdouble} {
 					addlitchar('\'');
 				}
 <xq>{xqinside}  {
@@ -452,10 +451,6 @@ other			.
 <xe>{xeinside}  {
 					addlit(yytext, yyleng);
 				}
-<xq>{xqbackslash} {
-					check_string_escape_warning(yytext[1]);
-					addlitchar('\\');
-                }
 <xe>{xeescape}  {
 					check_string_escape_warning(yytext[1]);
 					addlitchar(unescape_single_char(yytext[1]));
