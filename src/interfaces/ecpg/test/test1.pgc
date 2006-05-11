@@ -87,7 +87,7 @@ exec sql end declare section;
         exec sql execute immediate :command;
 	printf("New tuple got OID = %ld\n", sqlca.sqlerrd[1]);
  
-        sprintf(command, "insert into \"Test\" (name, amount, letter) values ('db: \\\'mm\\\'', 2, 't')");
+        sprintf(command, "insert into \"Test\" (name, amount, letter) values ('db: ''mm''', 2, 't')");
         exec sql execute immediate :command;
 
         strcpy(msg, "execute insert 2");
