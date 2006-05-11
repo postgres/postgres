@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.35.4.1 2005/08/26 14:48:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.35.4.2 2006/05/11 21:58:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,15 +217,6 @@ static void
 tas_dummy()						/* really means: extern int tas(slock_t
 								 * *lock); */
 {
-
-#ifdef SUNOS4_CC
-	asm(".seg \"data\"");
-	asm(".seg \"text\"");
-#else
-	asm(".section \"data\"");
-	asm(".section \"text\"");
-#endif
-
 	asm("_tas:");
 
 	/*
