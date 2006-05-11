@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.9 2002/09/21 00:14:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.9.2.1 2006/05/11 22:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,8 +237,6 @@ static void
 tas_dummy()						/* really means: extern int tas(slock_t
 								 * *lock); */
 {
-	asm(".seg \"data\"");
-	asm(".seg \"text\"");
 	asm("_tas:");
 
 	/*
