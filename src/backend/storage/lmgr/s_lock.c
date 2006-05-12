@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.44 2006/05/11 21:58:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.45 2006/05/12 16:50:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,25 +282,6 @@ tas_dummy()						/* really means: extern int tas(slock_t
 }
 #endif   /* sun3 */
 
-
-#if defined(__sparc__) || defined(__sparc)
-/*
- * sparc machines not using gcc
- */
-static void
-tas_dummy()						/* really means: extern int tas(slock_t
-								 * *lock); */
-{
-	asm("_tas:");
-
-	/*
-	 * Sparc atomic test and set (sparc calls it "atomic load-store")
-	 */
-	asm("ldstub [%r8], %r8");
-	asm("retl");
-	asm("nop");
-}
-#endif   /* __sparc || __sparc__ */
 #endif   /* not __GNUC__ */
 #endif   /* HAVE_SPINLOCKS */
 
