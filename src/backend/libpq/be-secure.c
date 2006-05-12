@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.56.4.1 2005/06/02 21:03:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.56.4.2 2006/05/12 22:44:50 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -520,7 +520,7 @@ load_dh_file(int keylength)
 	/* make sure the DH parameters are usable */
 	if (dh != NULL)
 	{
-		if (DH_check(dh, &codes))
+		if (DH_check(dh, &codes) == 0)
 		{
 			elog(LOG, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
 			return NULL;
