@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.13 2005/06/02 21:04:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.14 2006/05/12 22:45:06 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -501,7 +501,7 @@ load_dh_file(int keylength)
 	/* make sure the DH parameters are usable */
 	if (dh != NULL)
 	{
-		if (DH_check(dh, &codes))
+		if (DH_check(dh, &codes) == 0)
 		{
 			elog(LOG, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
 			return NULL;
