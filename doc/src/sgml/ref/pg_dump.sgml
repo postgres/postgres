@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.85 2006/05/13 16:19:54 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.86 2006/05/13 17:10:35 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -649,7 +649,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    Because <application>pg_dump</application> is used to tranfer data
    to newer versions of <productname>PostgreSQL</>, the output of
    <application>pg_dump</application> can be loaded into
-   newer versions of <productname>PostgreSQL</>.  It also can read older
+   newer <productname>PostgreSQL</> databases.  It also can read older
    <productname>PostgreSQL</> databases.  However, it usually cannot
    read newer <productname>PostgreSQL</> databases or produce dump output
    that can be loaded into older database versions.  To do this, manual
