@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.152 2006/04/29 11:55:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.153 2006/05/17 23:57:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,6 +311,10 @@ tas(volatile slock_t *lock)
 {
 	register slock_t _res;
 
+	/*
+	 *	See comment in /pg/backend/port/tas/solaris_sparc.s for why this
+	 *	uses "ldstub", and that file uses "cas".
+	 */
 	__asm__ __volatile__(
 		"	ldstub	[%2], %0	\n"
 :		"=r"(_res), "+m"(*lock)
