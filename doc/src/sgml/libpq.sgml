@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.208 2006/05/06 16:25:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.209 2006/05/17 21:50:54 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -4000,9 +4000,9 @@ current connection parameters will be used.  (Therefore, put more-specific
 entries first when you are using wildcards.)
 If an entry needs to contain <literal>:</literal> or
 <literal>\</literal>, escape this character with <literal>\</literal>.
-A hostname of <literal>localhost</> matches both <literal>host</> (TCP)
-and <literal>local</> (Unix domain socket) connections coming from the
-local machine.
+A hostname of <literal>localhost</> matches both TCP <literal>host</> (hostname <literal>localhost</>)
+and Unix domain socket <literal>local</> (<literal>pghost</> empty or the default socket directory)
+connections coming from the local machine.
 </para>
 
 <para>

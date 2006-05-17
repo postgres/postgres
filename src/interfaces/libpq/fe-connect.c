@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.328 2006/03/14 22:48:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.329 2006/05/17 21:50:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3106,9 +3106,24 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (username == NULL || strlen(username) == 0)
 		return NULL;
 
+	/* 'localhost' matches pghost of '' or the default socket directory */
 	if (hostname == NULL)
 		hostname = DefaultHost;
+	else if (is_absolute_path(hostname))
+	{
+		char		canon_host[MAXPGPATH];
+		char		canon_def_socket[MAXPGPATH];
 
+		StrNCpy(canon_host, hostname, MAXPGPATH);
+		StrNCpy(canon_def_socket, DEFAULT_PGSOCKET_DIR, MAXPGPATH);
+
+		canonicalize_path(canon_host);
+		canonicalize_path(canon_def_socket);
+
+		if (strcmp(canon_host, canon_def_socket) == 0)
+			hostname = DefaultHost;
+	}
+	
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
 
