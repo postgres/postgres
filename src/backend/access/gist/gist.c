@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.134 2006/05/10 23:18:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.135 2006/05/17 16:34:59 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 		 * Form index tuples vector to split:
 		 * remove old tuple if t's needed and add new tuples to vector
 		 */
-		itvec = gistextractbuffer(state->stack->buffer, &tlen);
+		itvec = gistextractpage(state->stack->page, &tlen);
 		if ( !is_leaf ) {
 			/* on inner page we should remove old tuple */
 			int pos = state->stack->childoffnum - FirstOffsetNumber;
@@ -501,7 +501,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			}
 
 			rdata = formUpdateRdata(state->r->rd_node, state->stack->buffer,
-									offs, noffs, false,
+									offs, noffs, 
 									state->itup, state->ituplen,
 									&(state->key));
 
@@ -1157,7 +1157,7 @@ gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer ke
 		XLogRecData *rdata;
 
 		rdata = formUpdateRdata(r->rd_node, buffer,
-								NULL, 0, false,
+								NULL, 0,
 								itup, len, key);
 
 		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_NEW_ROOT, rdata);

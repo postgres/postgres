@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.16 2006/05/10 09:19:54 teodor Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.17 2006/05/17 16:34:59 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -209,43 +209,58 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 		return;
 	}
 
-	if (xlrec.data->isemptypage)
+	if (isnewroot)
+		GISTInitBuffer(buffer, 0);
+	else if (xlrec.data->ntodelete)
 	{
-		while (!PageIsEmpty(page))
-			PageIndexTupleDelete(page, FirstOffsetNumber);
+		int			i;
 
-		if (xlrec.data->blkno == GIST_ROOT_BLKNO)
-			GistPageSetLeaf(page);
-		else
-			GistPageSetDeleted(page);
+		for (i = 0; i < xlrec.data->ntodelete; i++)
+			PageIndexTupleDelete(page, xlrec.todelete[i]);
+		if (GistPageIsLeaf(page))
+			GistMarkTuplesDeleted(page);
 	}
-	else
-	{
-		if (isnewroot)
-			GISTInitBuffer(buffer, 0);
-		else if (xlrec.data->ntodelete)
-		{
-			int			i;
 
-			for (i = 0; i < xlrec.data->ntodelete; i++)
-				PageIndexTupleDelete(page, xlrec.todelete[i]);
-			if (GistPageIsLeaf(page))
-				GistMarkTuplesDeleted(page);
-		}
+	/* add tuples */
+	if (xlrec.len > 0)
+		gistfillbuffer(reln, page, xlrec.itup, xlrec.len, InvalidOffsetNumber);
 
-		/* add tuples */
-		if (xlrec.len > 0)
-			gistfillbuffer(reln, page, xlrec.itup, xlrec.len, InvalidOffsetNumber);
+	/*
+	 * special case: leafpage, nothing to insert, nothing to delete, then
+	 * vacuum marks page
+	 */
+	if (GistPageIsLeaf(page) && xlrec.len == 0 && xlrec.data->ntodelete == 0)
+		GistClearTuplesDeleted(page);
 
-		/*
-		 * special case: leafpage, nothing to insert, nothing to delete, then
-		 * vacuum marks page
-		 */
-		if (GistPageIsLeaf(page) && xlrec.len == 0 && xlrec.data->ntodelete == 0)
-			GistClearTuplesDeleted(page);
-	}
+	if ( !GistPageIsLeaf(page) && PageGetMaxOffsetNumber(page) == InvalidOffsetNumber && xldata->blkno == GIST_ROOT_BLKNO )
+		/* all links on non-leaf root page was deleted by vacuum full,
+		   so root page becomes a leaf */
+		GistPageSetLeaf(page);
 
 	GistPageGetOpaque(page)->rightlink = InvalidBlockNumber;
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
+}
+
+static void
+gistRedoPageDeleteRecord(XLogRecPtr lsn, XLogRecord *record)
+{
+	gistxlogPageDelete *xldata = (gistxlogPageDelete *) XLogRecGetData(record);
+	Relation	reln;
+	Buffer		buffer;
+	Page		page;
+
+	reln = XLogOpenRelation(xldata->node);
+	buffer = XLogReadBuffer(reln, xldata->blkno, false);
+	if (!BufferIsValid(buffer))
+		return;
+
+	GISTInitBuffer( buffer, 0 );
+	page = (Page) BufferGetPage(buffer);
+	GistPageSetDeleted(page);
+
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
 	MarkBufferDirty(buffer);
@@ -382,6 +397,9 @@ gist_redo(XLogRecPtr lsn, XLogRecord *record)
 		case XLOG_GIST_PAGE_UPDATE:
 			gistRedoPageUpdateRecord(lsn, record, false);
 			break;
+		case XLOG_GIST_PAGE_DELETE:
+			gistRedoPageDeleteRecord(lsn, record);
+			break;
 		case XLOG_GIST_NEW_ROOT:
 			gistRedoPageUpdateRecord(lsn, record, true);
 			break;
@@ -405,8 +423,10 @@ gist_redo(XLogRecPtr lsn, XLogRecord *record)
 static void
 out_target(StringInfo buf, RelFileNode node, ItemPointerData key)
 {
-	appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
-			node.spcNode, node.dbNode, node.relNode,
+	appendStringInfo(buf, "rel %u/%u/%u",
+			node.spcNode, node.dbNode, node.relNode);
+	if ( ItemPointerIsValid( &key ) )
+		appendStringInfo(buf, "; tid %u/%u",
 			ItemPointerGetBlockNumber(&key),
 			ItemPointerGetOffsetNumber(&key));
 }
@@ -416,6 +436,14 @@ out_gistxlogPageUpdate(StringInfo buf, gistxlogPageUpdate *xlrec)
 {
 	out_target(buf, xlrec->node, xlrec->key);
 	appendStringInfo(buf, "; block number %u", xlrec->blkno);
+}
+
+static void
+out_gistxlogPageDelete(StringInfo buf, gistxlogPageDelete *xlrec)
+{
+	appendStringInfo(buf, "page_delete: rel %u/%u/%u; blkno %u",
+			xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
+			xlrec->blkno);
 }
 
 static void
@@ -437,6 +465,9 @@ gist_desc(StringInfo buf, uint8 xl_info, char *rec)
 		case XLOG_GIST_PAGE_UPDATE:
 			appendStringInfo(buf, "page_update: ");
 			out_gistxlogPageUpdate(buf, (gistxlogPageUpdate *) rec);
+			break;
+		case XLOG_GIST_PAGE_DELETE:
+			out_gistxlogPageDelete(buf, (gistxlogPageDelete *) rec);
 			break;
 		case XLOG_GIST_NEW_ROOT:
 			appendStringInfo(buf, "new_root: ");
@@ -643,7 +674,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 					 * we split root, just copy tuples from old root to new
 					 * page
 					 */
-					parentitup = gistextractbuffer(buffers[numbuffer - 1],
+					parentitup = gistextractpage(pages[numbuffer - 1],
 												   &pituplen);
 
 					/* sanity check */
@@ -796,7 +827,7 @@ formSplitRdata(RelFileNode node, BlockNumber blkno, bool page_is_leaf,
  */
 XLogRecData *
 formUpdateRdata(RelFileNode node, Buffer buffer,
-				OffsetNumber *todelete, int ntodelete, bool emptypage,
+				OffsetNumber *todelete, int ntodelete,
 				IndexTuple *itup, int ituplen, ItemPointer key)
 {
 	XLogRecData *rdata;
@@ -804,35 +835,37 @@ formUpdateRdata(RelFileNode node, Buffer buffer,
 	int			cur,
 				i;
 
-	/* ugly wart in API: emptypage causes us to ignore other inputs */
-	if (emptypage)
-		ntodelete = ituplen = 0;
-
-	rdata = (XLogRecData *) palloc(sizeof(XLogRecData) * (2 + ituplen));
+	rdata = (XLogRecData *) palloc(sizeof(XLogRecData) * (3 + ituplen));
 	xlrec = (gistxlogPageUpdate *) palloc(sizeof(gistxlogPageUpdate));
 
 	xlrec->node = node;
 	xlrec->blkno = BufferGetBlockNumber(buffer);
 	xlrec->ntodelete = ntodelete;
-	xlrec->isemptypage = emptypage;
+
 	if (key)
 		xlrec->key = *key;
 	else
 		ItemPointerSetInvalid(&(xlrec->key));
 
-	rdata[0].data = (char *) xlrec;
-	rdata[0].len = sizeof(gistxlogPageUpdate);
-	rdata[0].buffer = InvalidBuffer;
+	rdata[0].buffer = buffer;
+	rdata[0].buffer_std = true;
+	rdata[0].data = NULL;
+	rdata[0].len = 0;
 	rdata[0].next = &(rdata[1]);
 
-	rdata[1].data = (char *) todelete;
-	rdata[1].len = MAXALIGN(sizeof(OffsetNumber) * ntodelete);
-	rdata[1].buffer = buffer;
-	rdata[1].buffer_std = true;
-	rdata[1].next = NULL;
+	rdata[1].data = (char *) xlrec;
+	rdata[1].len = sizeof(gistxlogPageUpdate);
+	rdata[1].buffer = InvalidBuffer;
+	rdata[1].next = &(rdata[2]);
+
+	rdata[2].data = (char *) todelete;
+	rdata[2].len = MAXALIGN(sizeof(OffsetNumber) * ntodelete);
+	rdata[2].buffer = buffer;
+	rdata[2].buffer_std = true;
+	rdata[2].next = NULL;
 
 	/* new tuples */
-	cur = 2;
+	cur = 3;
 	for (i = 0; i < ituplen; i++)
 	{
 		rdata[cur - 1].next = &(rdata[cur]);

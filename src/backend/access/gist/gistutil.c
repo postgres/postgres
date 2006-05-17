@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.11 2006/05/10 09:19:54 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.12 2006/05/17 16:34:59 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -112,18 +112,17 @@ gistfitpage(IndexTuple *itvec, int len) {
  * Read buffer into itup vector
  */
 IndexTuple *
-gistextractbuffer(Buffer buffer, int *len /* out */ )
+gistextractpage(Page page, int *len /* out */ )
 {
 	OffsetNumber i,
 				maxoff;
 	IndexTuple *itvec;
-	Page		p = (Page) BufferGetPage(buffer);
 
-	maxoff = PageGetMaxOffsetNumber(p);
+	maxoff = PageGetMaxOffsetNumber(page);
 	*len = maxoff;
 	itvec = palloc(sizeof(IndexTuple) * maxoff);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
-		itvec[i - FirstOffsetNumber] = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
+		itvec[i - FirstOffsetNumber] = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
 
 	return itvec;
 }

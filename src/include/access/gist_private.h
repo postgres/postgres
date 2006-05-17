@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.13 2006/05/10 09:19:54 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.14 2006/05/17 16:34:59 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,19 +85,20 @@ extern const XLogRecPtr XLogRecPtrForTemp;
 #define XLOG_GIST_PAGE_SPLIT		0x30
 #define XLOG_GIST_INSERT_COMPLETE	0x40
 #define XLOG_GIST_CREATE_INDEX		0x50
+#define XLOG_GIST_PAGE_DELETE		0x60
 
 typedef struct gistxlogPageUpdate
 {
 	RelFileNode node;
 	BlockNumber blkno;
 
-	uint16		ntodelete;
-	bool		isemptypage;
-
 	/*
 	 * It used to identify completeness of insert. Sets to leaf itup
 	 */
 	ItemPointerData key;
+
+	/* number of deleted offsets */
+	uint16		ntodelete;
 
 	/*
 	 * follow: 1. todelete OffsetNumbers 2. tuples to insert
@@ -131,6 +132,11 @@ typedef struct gistxlogInsertComplete
 	/* follows ItemPointerData key to clean */
 } gistxlogInsertComplete;
 
+typedef struct gistxlogPageDelete
+{
+	RelFileNode node;
+	BlockNumber blkno;
+} gistxlogPageDelete;
 
 /* SplitedPageLayout - gistSplit function result */
 typedef struct SplitedPageLayout
@@ -249,7 +255,7 @@ extern void gist_xlog_cleanup(void);
 extern IndexTuple gist_form_invalid_tuple(BlockNumber blkno);
 
 extern XLogRecData *formUpdateRdata(RelFileNode node, Buffer buffer,
-				OffsetNumber *todelete, int ntodelete, bool emptypage,
+				OffsetNumber *todelete, int ntodelete, 
 				IndexTuple *itup, int ituplen, ItemPointer key);
 
 extern XLogRecData *formSplitRdata(RelFileNode node,
@@ -273,7 +279,7 @@ extern void gistcheckpage(Relation rel, Buffer buf);
 extern Buffer gistNewBuffer(Relation r);
 extern OffsetNumber gistfillbuffer(Relation r, Page page, IndexTuple *itup,
 			   int len, OffsetNumber off);
-extern IndexTuple *gistextractbuffer(Buffer buffer, int *len /* out */ );
+extern IndexTuple *gistextractpage(Page page, int *len /* out */ );
 extern IndexTuple *gistjoinvector(
 			   IndexTuple *itvec, int *len,
 			   IndexTuple *additvec, int addlen);
