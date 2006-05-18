@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.7 2006/04/09 18:18:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.8 2006/05/18 19:56:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -543,10 +543,10 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	 * non-selective.  In any case, we'd surely be drastically misestimating
 	 * the selectivity if we count the same condition twice.
 	 *
-	 * XXX is there any risk of throwing away a useful partial index here
-	 * because we don't explicitly look at indpred?  At least in simple cases,
-	 * the partial index will sort before competing non-partial indexes and so
-	 * it makes the right choice, but perhaps we need to work harder.
+	 * We include index predicate conditions in the redundancy test.  Because
+	 * the test is just for pointer equality and not equal(), the effect is
+	 * that use of the same partial index in two different AND elements is
+	 * considered redundant.  (XXX is this too strong?)
 	 *
 	 * Note: outputting the selected sub-paths in selectivity order is a good
 	 * thing even if we weren't using that as part of the selection method,
@@ -659,14 +659,14 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 /*
  * pull_indexpath_quals
  *
- * Given the Path structure for a plain or bitmap indexscan, extract a
- * list of RestrictInfo nodes for all the indexquals used in the Path.
+ * Given the Path structure for a plain or bitmap indexscan, extract a list
+ * of all the indexquals and index predicate conditions used in the Path.
  *
  * This is sort of a simplified version of make_restrictinfo_from_bitmapqual;
  * here, we are not trying to produce an accurate representation of the AND/OR
  * semantics of the Path, but just find out all the base conditions used.
  *
- * The result list contains pointers to the RestrictInfos used in the Path,
+ * The result list contains pointers to the expressions used in the Path,
  * but all the list cells are freshly built, so it's safe to destructively
  * modify the list (eg, by concat'ing it with other lists).
  */
@@ -704,7 +704,8 @@ pull_indexpath_quals(Path *bitmapqual)
 	{
 		IndexPath  *ipath = (IndexPath *) bitmapqual;
 
-		result = list_copy(ipath->indexclauses);
+		result = get_actual_clauses(ipath->indexclauses);
+		result = list_concat(result, list_copy(ipath->indexinfo->indpred));
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
