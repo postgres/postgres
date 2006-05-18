@@ -19,21 +19,19 @@ pg_atomic_cas:
 	! "cas" only works on sparcv9 chips, and requies a compiler
 	! that is targeting sparcv9.  It will fail on a compiler
 	! targeting sparcv8, and of course will not be understood
-	! by a sparcv8 CPU.  If this fails on existing Solaris
-	! systems, we need to use a !defined(__sparcv9) test
-	! to fall back to the old "ldstub" call for sparcv8 compiles.
-	! gcc continues to use "ldstub" because there is no indication
-	! which sparc version it is targeting.
+	! by a sparcv8 CPU.  gcc continues to use "ldstub" because
+	! there is no indication which sparc version it is targeting.
 	!
 	! There actually is a trick for embedding "cas" for a compiler
 	! that is targeting sparcv8:
 	!
 	!   http://cvs.opensolaris.org/source/xref/on/usr/src/lib/libc/sparc/threads/sparc.il
-	!
-	! This might work for sparc8:
-	! ldstub [%o0],%o1	! moves only a byte
 
+#ifdef __sparcv9
 	cas     [%o0],%o2,%o1
+#else
+	ldstub [%o0],%o1
+#endif
 	mov     %o1,%o0
 	retl
 	nop
