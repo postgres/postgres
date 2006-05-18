@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.329 2006/05/17 21:50:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.330 2006/05/18 16:26:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3110,19 +3110,13 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (hostname == NULL)
 		hostname = DefaultHost;
 	else if (is_absolute_path(hostname))
-	{
-		char		canon_host[MAXPGPATH];
-		char		canon_def_socket[MAXPGPATH];
-
-		StrNCpy(canon_host, hostname, MAXPGPATH);
-		StrNCpy(canon_def_socket, DEFAULT_PGSOCKET_DIR, MAXPGPATH);
-
-		canonicalize_path(canon_host);
-		canonicalize_path(canon_def_socket);
-
-		if (strcmp(canon_host, canon_def_socket) == 0)
+		/*
+		 *	We should probably use canonicalize_path(), but then
+		 *	we have to bring path.c into libpq, and it doesn't
+		 *	seem worth it.
+		 */
+		if (strcmp(hostname, DEFAULT_PGSOCKET_DIR) == 0)
 			hostname = DefaultHost;
-	}
 	
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
