@@ -22,13 +22,13 @@ pg_atomic_cas:
 	! by a sparcv8 CPU.  gcc continues to use "ldstub" because
 	! there is no indication which sparc version it is targeting.
 	!
-	! There actually is a trick for embedding "cas" for a compiler
-	! that is targeting sparcv8:
+	! It is actually possible to use "cas" for sparcv8 binaries if 
+	! -xarch=v8plus is used for compilation.  There is actually a
+	! trick for embedding "cas" in a sparcv8-targeted compiler, but
+	! it can only be run on a sparcv8plus cpus:
 	!
 	!   http://cvs.opensolaris.org/source/xref/on/usr/src/lib/libc/sparc/threads/sparc.il
 	!
-	! It is actually possible to use "cas" for sparcv8 binaries if 
-	! -xarch=v8plus is used for compilation.
 
 #ifdef __sparcv9
 	cas     [%o0],%o2,%o1
