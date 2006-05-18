@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat May  6 19:35:11 EDT 2006
+Last updated:           Wed May 17 22:32:10 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -440,6 +440,8 @@ first.
   owner
 <p>  This would be useful for SERIAL nextval() calls and CHECK constraints.
 </p>
+  </li><li>Add a GUC to control whether BEGIN inside a transcation should abort
+  the transaction.
   </li><li>CREATE
   <ul>
     <li>Allow CREATE TABLE AS to determine column lengths for complex
