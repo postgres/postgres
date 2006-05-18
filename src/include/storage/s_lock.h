@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.153 2006/05/17 23:57:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.154 2006/05/18 16:02:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,7 +313,8 @@ tas(volatile slock_t *lock)
 
 	/*
 	 *	See comment in /pg/backend/port/tas/solaris_sparc.s for why this
-	 *	uses "ldstub", and that file uses "cas".
+	 *	uses "ldstub", and that file uses "cas".  gcc currently generates
+	 *	sparcv7-targeted binaries, so "cas" use isn't possible.
 	 */
 	__asm__ __volatile__(
 		"	ldstub	[%2], %0	\n"
