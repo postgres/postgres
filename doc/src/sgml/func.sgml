@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.317 2006/05/18 00:50:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.318 2006/05/18 03:18:24 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1244,7 +1244,7 @@
 
      <tbody>
       <row>
-       <entry><literal><function>ascii</function>(<type>string</type>)</literal></entry>
+       <entry><literal><function>ascii</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
        <entry><acronym>ASCII</acronym> code of the first byte of the argument</entry>
        <entry><literal>ascii('x')</literal></entry>
@@ -1319,7 +1319,7 @@
       </row>       
 
       <row>
-       <entry><literal><function>initcap</function>(<type>string</type>)</literal></entry>
+       <entry><literal><function>initcap</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
         Convert the first letter of each word to uppercase and the
