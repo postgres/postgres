@@ -26,6 +26,9 @@ pg_atomic_cas:
 	! that is targeting sparcv8:
 	!
 	!   http://cvs.opensolaris.org/source/xref/on/usr/src/lib/libc/sparc/threads/sparc.il
+	!
+	! It is actually possible to use "cas" for sparcv8 binaries if 
+	! -xarch=v8plus is used for compilation.
 
 #ifdef __sparcv9
 	cas     [%o0],%o2,%o1
