@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.202.2.3 2006/04/25 16:54:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.202.2.4 2006/05/18 18:57:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -921,7 +921,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 * by the index.  All the predicates in the indexquals will be checked
 	 * (either by the index itself, or by nodeBitmapHeapscan.c), but if there
 	 * are any "special" or lossy operators involved then they must be added
-	 * to qpqual.  The upshot is that qpquals must contain scan_clauses minus
+	 * to qpqual.  The upshot is that qpqual must contain scan_clauses minus
 	 * whatever appears in indexquals.
 	 *
 	 * In normal cases simple equal() checks will be enough to spot duplicate
@@ -932,15 +932,11 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 * (predicate_implied_by assumes its first input contains only immutable
 	 * functions, so we have to check that.)
 	 *
-	 * We can also discard quals that are implied by a partial index's
-	 * predicate, but only in a plain SELECT; when scanning a target relation
-	 * of UPDATE/DELETE/SELECT FOR UPDATE, we must leave such quals in the
-	 * plan so that they'll be properly rechecked by EvalPlanQual testing.
-	 *
-	 * XXX For the moment, we only consider partial index predicates in the
-	 * simple single-index-scan case.  Is it worth trying to be smart about
-	 * more complex cases?	Perhaps create_bitmap_subplan should be made to
-	 * include predicate info in what it constructs.
+	 * Unlike create_indexscan_plan(), we need take no special thought here
+	 * for partial index predicates; this is because the predicate conditions
+	 * are already listed in bitmapqualorig and indexquals.  Bitmap scans
+	 * have to do it that way because predicate conditions need to be rechecked
+	 * if the scan becomes lossy.
 	 */
 	qpqual = NIL;
 	foreach(l, scan_clauses)
@@ -955,19 +951,6 @@ create_bitmap_scan_plan(PlannerInfo *root,
 
 			if (predicate_implied_by(clausel, indexquals))
 				continue;
-			if (IsA(best_path->bitmapqual, IndexPath))
-			{
-				IndexPath  *ipath = (IndexPath *) best_path->bitmapqual;
-
-				if (ipath->indexinfo->indpred)
-				{
-					if (baserelid != root->parse->resultRelation &&
-						!list_member_int(root->parse->rowMarks, baserelid))
-						if (predicate_implied_by(clausel,
-												 ipath->indexinfo->indpred))
-							continue;
-				}
-			}
 		}
 		qpqual = lappend(qpqual, clause);
 	}
@@ -1009,7 +992,9 @@ create_bitmap_scan_plan(PlannerInfo *root,
  * As byproducts, we also return in *qual and *indexqual the qual lists
  * (in implicit-AND form, without RestrictInfos) describing the original index
  * conditions and the generated indexqual conditions.  The latter is made to
- * exclude lossy index operators.
+ * exclude lossy index operators.  Both lists include partial-index predicates,
+ * because we have to recheck predicates as well as index conditions if the
+ * bitmap scan becomes lossy.
  *
  * Note: if you find yourself changing this, you probably need to change
  * make_restrictinfo_from_bitmapqual too.
@@ -1125,6 +1110,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		IndexPath  *ipath = (IndexPath *) bitmapqual;
 		IndexScan  *iscan;
 		List	   *nonlossy_clauses;
+		ListCell   *l;
 
 		/* Use the regular indexscan plan build machinery... */
 		iscan = create_indexscan_plan(root, ipath, NIL, NIL,
@@ -1143,6 +1129,22 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		plan->plan_width = 0;	/* meaningless */
 		*qual = get_actual_clauses(ipath->indexclauses);
 		*indexqual = get_actual_clauses(nonlossy_clauses);
+		foreach(l, ipath->indexinfo->indpred)
+		{
+			Expr	   *pred = (Expr *) lfirst(l);
+
+			/*
+			 * We know that the index predicate must have been implied by
+			 * the query condition as a whole, but it may or may not be
+			 * implied by the conditions that got pushed into the
+			 * bitmapqual.	Avoid generating redundant conditions.
+			 */
+			if (!predicate_implied_by(list_make1(pred), ipath->indexclauses))
+			{
+				*qual = lappend(*qual, pred);
+				*indexqual = lappend(*indexqual, pred);
+			}
+		}
 	}
 	else
 	{
