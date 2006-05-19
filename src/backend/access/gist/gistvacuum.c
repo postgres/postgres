@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.21 2006/05/17 16:34:59 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.22 2006/05/19 11:10:25 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,19 +104,25 @@ gistDeleteSubtree( GistVacuum *gv, BlockNumber blkno ) {
 
 	if (!gv->index->rd_istemp)
 	{
-		XLogRecData rdata;
+		XLogRecData rdata[2];
 		XLogRecPtr	recptr;
 		gistxlogPageDelete	xlrec;
 
 		xlrec.node = gv->index->rd_node;
 		xlrec.blkno = blkno;
 
-		rdata.buffer = InvalidBuffer;
-		rdata.data = (char *) &xlrec;
-		rdata.len = sizeof(gistxlogPageDelete);
-		rdata.next = NULL;
+		rdata[0].buffer = buffer;
+		rdata[0].buffer_std = true;
+		rdata[0].data = NULL;
+		rdata[0].len = 0;
+		rdata[0].next = &(rdata[1]);
 
-		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_DELETE, &rdata);
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char *) &xlrec;
+		rdata[1].len = sizeof(gistxlogPageDelete);
+		rdata[1].next = NULL;
+
+		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_DELETE, rdata);
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
 	}
