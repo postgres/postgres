@@ -748,7 +748,7 @@ infix(INFIX * in, bool first)
 		{
 			if ( t_iseq(op, '\'') )
 			{
-				*(in->cur) = '\\';
+				*(in->cur) = '\'';
 				in->cur++;
 			}
 			COPYCHAR(in->cur,op);

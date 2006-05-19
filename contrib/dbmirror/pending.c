@@ -1,7 +1,7 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.23 2005/10/15 02:49:04 momjian Exp $
- * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.23 2005/10/15 02:49:04 momjian Exp $
+ * $Id: pending.c,v 1.24 2006/05/19 02:38:47 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.24 2006/05/19 02:38:47 momjian Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -541,7 +541,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc, Oid tableOid,
 			}
 			if (*cpUnFormatedPtr == '\\' || *cpUnFormatedPtr == '\'')
 			{
-				*cpFormatedPtr = '\\';
+				*cpFormatedPtr = *cpUnFormatedPtr;
 				cpFormatedPtr++;
 				iUsedDataBlock++;
 			}
