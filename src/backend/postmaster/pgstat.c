@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.125 2006/05/19 15:15:37 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.126 2006/05/19 19:08:26 alvherre Exp $
  * ----------
  */
 #include "postgres.h"
@@ -739,6 +739,8 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = tableoid;
 	msg.m_analyze = analyze;
+	msg.m_autovacuum = IsAutoVacuumProcess(); /* is this autovacuum? */
+	msg.m_vacuumtime = GetCurrentTimestamp();
 	msg.m_tuples = tuples;
 	pgstat_send(&msg, sizeof(msg));
 }
@@ -762,6 +764,8 @@ pgstat_report_analyze(Oid tableoid, bool shared, PgStat_Counter livetuples,
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
 	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = tableoid;
+	msg.m_autovacuum = IsAutoVacuumProcess(); /* is this autovacuum? */
+	msg.m_analyzetime = GetCurrentTimestamp();
 	msg.m_live_tuples = livetuples;
 	msg.m_dead_tuples = deadtuples;
 	pgstat_send(&msg, sizeof(msg));
@@ -2887,10 +2891,20 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	if (tabentry == NULL)
 		return;
 
+	if (msg->m_autovacuum) 
+		tabentry->autovac_vacuum_timestamp = msg->m_vacuumtime;
+	else 
+		tabentry->vacuum_timestamp = msg->m_vacuumtime; 
 	tabentry->n_live_tuples = msg->m_tuples;
 	tabentry->n_dead_tuples = 0;
 	if (msg->m_analyze)
+	{
 		tabentry->last_anl_tuples = msg->m_tuples;
+		if (msg->m_autovacuum)
+			tabentry->autovac_analyze_timestamp = msg->m_vacuumtime;
+		else
+			tabentry->analyze_timestamp = msg->m_vacuumtime;
+	}
 }
 
 /* ----------
@@ -2919,6 +2933,10 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	if (tabentry == NULL)
 		return;
 
+	if (msg->m_autovacuum) 
+		tabentry->autovac_analyze_timestamp = msg->m_analyzetime;
+	else 
+		tabentry->analyze_timestamp = msg->m_analyzetime;
 	tabentry->n_live_tuples = msg->m_live_tuples;
 	tabentry->n_dead_tuples = msg->m_dead_tuples;
 	tabentry->last_anl_tuples = msg->m_live_tuples + msg->m_dead_tuples;
@@ -3005,6 +3023,10 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->n_dead_tuples = tabmsg[i].t_tuples_updated +
 				tabmsg[i].t_tuples_deleted;
 			tabentry->last_anl_tuples = 0;
+			tabentry->vacuum_timestamp = 0;
+			tabentry->autovac_vacuum_timestamp = 0;
+			tabentry->analyze_timestamp = 0;
+			tabentry->autovac_analyze_timestamp = 0;
 
 			tabentry->blocks_fetched = tabmsg[i].t_blocks_fetched;
 			tabentry->blocks_hit = tabmsg[i].t_blocks_hit;

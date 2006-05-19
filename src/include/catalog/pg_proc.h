@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.411 2006/05/10 23:18:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.412 2006/05/19 19:08:26 alvherre Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2839,6 +2839,14 @@ DATA(insert OID = 1934 (  pg_stat_get_blocks_fetched	PGNSP PGUID 12 f f t f s 1 
 DESCR("Statistics: Number of blocks fetched");
 DATA(insert OID = 1935 (  pg_stat_get_blocks_hit		PGNSP PGUID 12 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_blocks_hit - _null_ ));
 DESCR("Statistics: Number of blocks found in cache");
+DATA(insert OID = 2781 (  pg_stat_get_last_vacuum_time PGNSP PGUID 12 f f t f s 1 1184 "26" _null_ _null_ _null_	pg_stat_get_last_vacuum_time - _null_));
+DESCR("Statistics: Last manual vacuum time for a table");
+DATA(insert OID = 2782 (  pg_stat_get_last_autovacuum_time PGNSP PGUID 12 f f t f s 1 1184 "26" _null_ _null_ _null_	pg_stat_get_last_autovacuum_time - _null_));
+DESCR("Statistics: Last auto vacuum time for a table");
+DATA(insert OID = 2783 (  pg_stat_get_last_analyze_time PGNSP PGUID 12 f f t f s 1 1184 "26" _null_ _null_ _null_	pg_stat_get_last_analyze_time - _null_));
+DESCR("Statistics: Last manual analyze time for a table");
+DATA(insert OID = 2784 (  pg_stat_get_last_autoanalyze_time PGNSP PGUID 12 f f t f s 1 1184 "26" _null_ _null_ _null_	pg_stat_get_last_autoanalyze_time - _null_));
+DESCR("Statistics: Last auto analyze time for a table");
 DATA(insert OID = 1936 (  pg_stat_get_backend_idset		PGNSP PGUID 12 f f t t s 0 23 "" _null_ _null_ _null_ pg_stat_get_backend_idset - _null_ ));
 DESCR("Statistics: Currently active backend IDs");
 DATA(insert OID = 2026 (  pg_backend_pid				PGNSP PGUID 12 f f t f s 0 23 "" _null_ _null_ _null_ pg_backend_pid - _null_ ));

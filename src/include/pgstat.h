@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.44 2006/04/27 00:06:59 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.45 2006/05/19 19:08:26 alvherre Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -161,6 +161,8 @@ typedef struct PgStat_MsgVacuum
 	Oid			m_databaseid;
 	Oid			m_tableoid;
 	bool		m_analyze;
+	bool		m_autovacuum;
+	TimestampTz m_vacuumtime;
 	PgStat_Counter m_tuples;
 } PgStat_MsgVacuum;
 
@@ -174,6 +176,8 @@ typedef struct PgStat_MsgAnalyze
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	Oid			m_tableoid;
+	bool		m_autovacuum; 
+	TimestampTz m_analyzetime; 
 	PgStat_Counter m_live_tuples;
 	PgStat_Counter m_dead_tuples;
 } PgStat_MsgAnalyze;
@@ -344,6 +348,10 @@ typedef struct PgStat_StatBeEntry
 typedef struct PgStat_StatTabEntry
 {
 	Oid			tableid;
+	TimestampTz vacuum_timestamp; /* user initiated vacuum */
+	TimestampTz autovac_vacuum_timestamp; /* autovacuum initiated */
+	TimestampTz analyze_timestamp; /* user initiated */
+	TimestampTz autovac_analyze_timestamp; /* autovacuum initiated */
 
 	PgStat_Counter numscans;
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.31 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.32 2006/05/19 19:08:26 alvherre Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -250,7 +250,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_all_tables</></entry>
       <entry>For each table in the current database (including TOAST tables),
-      the table OID, schema and table name, number of sequential
+      the table OID, schema and table name, the last time the table was
+      vacuumed by the user and the autovacuum daemon, the last time the table
+      was analyzed by the user and the autovacuum daemon, number of sequential
       scans initiated, number of live rows fetched by sequential
       scans, number of index scans initiated (over all indexes
       belonging to the table), number of live rows fetched by index
@@ -540,6 +542,38 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>bigint</type></entry>
       <entry>
        Number of disk block requests found in cache for table or index
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_last_vacuum_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry>
+       Time of the last vacuum initiated by the user
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_last_autovacuum_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry>
+       Time of the last vacuum initiated by the autovacuum daemon
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_last_analyze_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry>
+       Time of the last analyze initiated by the user
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_last_autoanalyze_time</function>(<type>oid</type>)</literal></entry>
+      <entry><type>timestamptz</type></entry>
+      <entry>
+       Time of the last analyze initiated by the autovacuum daemon
       </entry>
      </row>
 

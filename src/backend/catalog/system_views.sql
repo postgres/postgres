@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.26 2006/03/05 15:58:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.27 2006/05/19 19:08:26 alvherre Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -193,6 +193,10 @@ CREATE VIEW pg_stat_all_tables AS
             C.oid AS relid, 
             N.nspname AS schemaname, 
             C.relname AS relname, 
+            pg_stat_get_last_vacuum_time(C.oid) as last_vacuum,
+            pg_stat_get_last_autovacuum_time(C.oid) as last_autovacuum,
+            pg_stat_get_last_analyze_time(C.oid) as last_analyze,
+            pg_stat_get_last_autoanalyze_time(C.oid) as last_autoanalyze,
             pg_stat_get_numscans(C.oid) AS seq_scan, 
             pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, 
             sum(pg_stat_get_numscans(I.indexrelid))::bigint AS idx_scan, 

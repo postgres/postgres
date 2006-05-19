@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.28 2006/05/19 15:15:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.29 2006/05/19 19:08:26 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,10 @@ extern Datum pg_stat_get_tuples_updated(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_deleted(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_blocks_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_blocks_hit(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_last_vacuum_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_last_autovacuum_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_last_analyze_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_backend_idset(PG_FUNCTION_ARGS);
 extern Datum pg_backend_pid(PG_FUNCTION_ARGS);
@@ -197,6 +201,85 @@ pg_stat_get_blocks_hit(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(result);
 }
 
+Datum
+pg_stat_get_last_vacuum_time(PG_FUNCTION_ARGS)
+{
+	PgStat_StatTabEntry *tabentry;
+	Oid			relid;
+	TimestampTz	result;
+
+	relid = PG_GETARG_OID(0);
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = tabentry->vacuum_timestamp;
+
+	if (result == 0)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_TIMESTAMPTZ(result);
+}
+
+Datum
+pg_stat_get_last_autovacuum_time(PG_FUNCTION_ARGS)
+{
+	PgStat_StatTabEntry *tabentry;
+	Oid			relid;
+	TimestampTz	result;
+
+	relid = PG_GETARG_OID(0);
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = tabentry->autovac_vacuum_timestamp;
+
+	if (result == 0)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_TIMESTAMPTZ(result);
+}
+
+Datum
+pg_stat_get_last_analyze_time(PG_FUNCTION_ARGS)
+{
+	PgStat_StatTabEntry *tabentry;
+	Oid			relid;
+	TimestampTz	result;
+
+	relid = PG_GETARG_OID(0);
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = tabentry->analyze_timestamp;
+
+	if (result == 0)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_TIMESTAMPTZ(result);
+}
+
+Datum
+pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS)
+{
+	PgStat_StatTabEntry *tabentry;
+	Oid			relid;
+	TimestampTz	result;
+
+	relid = PG_GETARG_OID(0);
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = tabentry->autovac_analyze_timestamp;
+
+	if (result == 0)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_TIMESTAMPTZ(result);
+}
 
 Datum
 pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
