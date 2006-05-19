@@ -526,7 +526,7 @@ tsvector_out(PG_FUNCTION_ARGS)
 
 				outbuf = (char *) repalloc((void *) outbuf, ++lenbuf);
 				curout = outbuf + pos;
-				*curout++ = '\\';
+				*curout++ = '\'';
 			}
 			*curout++ = *curin++;
 		}

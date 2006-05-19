@@ -723,7 +723,7 @@ infix(INFIX * in, bool first)
 		{
 			if (*op == '\'')
 			{
-				*(in->cur) = '\\';
+				*(in->cur) = '\'';
 				in->cur++;
 			}
 			*(in->cur) = *op;

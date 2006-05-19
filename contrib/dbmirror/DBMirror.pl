@@ -33,7 +33,7 @@
 # 
 #
 ##############################################################################
-# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.10 2004/07/02 00:58:09 joe Exp $ 
+# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.10.6.1 2006/05/19 02:39:04 momjian Exp $ 
 #
 ##############################################################################
 
@@ -437,7 +437,7 @@ sub mirrorInsert($$$$$) {
       if(defined $recordValues{$column}) {
 	my $quotedValue = $recordValues{$column};
 	$quotedValue =~ s/\\/\\\\/g;
-	$quotedValue =~ s/'/\\'/g;
+	$quotedValue =~ s/'/''/g;
 	$valuesQuery .= "'$quotedValue'";
       }
       else {
@@ -617,7 +617,7 @@ sub mirrorUpdate($$$$$) {
       if(defined $currentValue ) {
 	$quotedValue = $currentValue;
 	$quotedValue =~ s/\\/\\\\/g;
-	$quotedValue =~ s/'/\\'/g;
+	$quotedValue =~ s/'/''/g;
 	$updateQuery .= "'$quotedValue'";
 	}
       else {
@@ -639,7 +639,7 @@ sub mirrorUpdate($$$$$) {
       if(defined $currentValue) {
 	$quotedValue = $currentValue;
 	$quotedValue =~ s/\\/\\\\/g;
-        $quotedValue =~ s/'/\\'/g;
+        $quotedValue =~ s/'/''/g;
 	$updateQuery .= "'$quotedValue'";
       }
       else {

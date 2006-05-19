@@ -9,7 +9,7 @@ SET search_path = public;
 
 CREATE OR REPLACE FUNCTION earth() RETURNS float8
 LANGUAGE 'sql' IMMUTABLE
-AS 'SELECT \'6378168\'::float8';
+AS 'SELECT ''6378168''::float8';
 
 -- Astromers may want to change the earth function so that distances will be
 -- returned in degrees. To do this comment out the above definition and
