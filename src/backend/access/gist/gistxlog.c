@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.19 2006/05/19 16:15:17 teodor Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.20 2006/05/19 17:15:41 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -753,14 +753,16 @@ gistContinueInsert(gistIncompleteInsert *insert)
 			 * for following possible replays
 			 */
 
-			/* write pages with XLOG LSN */
+			/* write pages, we should mark it dirty befor XLogInsert() */
+			for (j = 0; j < numbuffer; j++) {
+				GistPageGetOpaque(pages[j])->rightlink = InvalidBlockNumber;
+				MarkBufferDirty(buffers[j]);
+			}
 			recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_UPDATE, rdata);
 			for (j = 0; j < numbuffer; j++)
 			{
 				PageSetLSN(pages[j], recptr);
 				PageSetTLI(pages[j], ThisTimeLineID);
-				GistPageGetOpaque(pages[j])->rightlink = InvalidBlockNumber;
-				MarkBufferDirty(buffers[j]);
 			}
 
 			END_CRIT_SECTION();
