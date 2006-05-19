@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.99 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.99.4.1 2006/05/19 16:30:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ IndexNext(IndexScanState *node)
 
 					entry = (DupHashTabEntry *)
 						hash_search(node->iss_DupHash,
-									&tuple->t_data->t_ctid,
+									&tuple->t_self,
 									HASH_ENTER,
 									&found);
 					if (entry == NULL ||
