@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.330 2006/05/18 16:26:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.331 2006/05/19 14:26:58 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2094,7 +2094,7 @@ PQresetPoll(PGconn *conn)
  * A copy is needed to be able to cancel a running query from a different
  * thread. If the same structure is used all structure members would have
  * to be individually locked (if the entire structure was locked, it would
- * be impossible to cancel a synchronous query becuase the structure would
+ * be impossible to cancel a synchronous query because the structure would
  * have to stay locked for the duration of the query).
  */
 PGcancel *
