@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 12 16:03:39 EDT 2006
+   Last updated: Thu Apr 13 08:20:04 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -270,11 +270,12 @@
    Addison-Wesley. Others like The Complete Reference SQL, Groff et al.,
    McGraw-Hill.
    
-   There is also a nice tutorial at
-   http://www.intermedia.net/support/sql/sqltut.shtm, at
-   http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
-   and at http://sqlcourse.com.
-   
+   There are also many nice tutorials available online:
+     * http://www.intermedia.net/support/sql/sqltut.shtm
+     * http://sqlcourse.com
+     * http://www.w3schools.com/sql/default.asp
+     * http://mysite.verizon.net/Graeme_Birchall/id1.html
+       
   1.12) How do I submit a patch or join the development team?
   
    See the Developer's FAQ.
@@ -568,9 +569,9 @@
    
    Indexes are normally not used for ORDER BY or to perform joins. A
    sequential scan followed by an explicit sort is usually faster than an
-   index scan of a large table.
-   However, LIMIT combined with ORDER BY often will use an index because
-   only a small portion of the table is returned.
+   index scan of a large table. However, LIMIT combined with ORDER BY
+   often will use an index because only a small portion of the table is
+   returned.
    
    If you believe the optimizer is incorrect in choosing a sequential
    scan, use SET enable_seqscan TO 'off' and run query again to see if an
