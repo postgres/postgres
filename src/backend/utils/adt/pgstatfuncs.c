@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.26 2005/10/17 16:24:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.26.2.1 2006/05/19 15:15:38 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -389,6 +389,7 @@ Datum
 pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 {
 	PgStat_StatBeEntry *beentry;
+	SockAddr	zero_clientaddr;
 	int32		beid;
 	char		remote_host[NI_MAXHOST];
 	int			ret;
@@ -403,6 +404,12 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (!superuser() && beentry->userid != GetUserId())
+		PG_RETURN_NULL();
+
+	/* A zeroed client addr means we don't know */
+	memset(&zero_clientaddr, 0, sizeof(zero_clientaddr));
+	if (memcmp(&(beentry->clientaddr), &zero_clientaddr,
+			   sizeof(zero_clientaddr) == 0))
 		PG_RETURN_NULL();
 
 	switch (beentry->clientaddr.addr.ss_family)
@@ -432,6 +439,7 @@ Datum
 pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 {
 	PgStat_StatBeEntry *beentry;
+	SockAddr	zero_clientaddr;
 	int32		beid;
 	char		remote_port[NI_MAXSERV];
 	int			ret;
@@ -446,6 +454,12 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (!superuser() && beentry->userid != GetUserId())
+		PG_RETURN_NULL();
+
+	/* A zeroed client addr means we don't know */
+	memset(&zero_clientaddr, 0, sizeof(zero_clientaddr));
+	if (memcmp(&(beentry->clientaddr), &zero_clientaddr,
+			   sizeof(zero_clientaddr) == 0))
 		PG_RETURN_NULL();
 
 	switch (beentry->clientaddr.addr.ss_family)

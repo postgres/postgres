@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.2 2006/01/18 20:35:16 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.3 2006/05/19 15:15:38 alvherre Exp $
  * ----------
  */
 #include "postgres.h"
@@ -691,17 +691,17 @@ pgstat_bestart(void)
 
 	/*
 	 * We may not have a MyProcPort (eg, if this is the autovacuum process).
-	 * For the moment, punt and don't send BESTART --- would be better to work
-	 * out a clean way of handling "unknown clientaddr".
+	 * Send an all-zeroes client address, which is dealt with specially in
+	 * pg_stat_get_backend_client_addr and pg_stat_get_backend_client_port.
 	 */
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_BESTART);
+	msg.m_databaseid = MyDatabaseId;
+	msg.m_userid = GetSessionUserId();
 	if (MyProcPort)
-	{
-		pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_BESTART);
-		msg.m_databaseid = MyDatabaseId;
-		msg.m_userid = GetSessionUserId();
 		memcpy(&msg.m_clientaddr, &MyProcPort->raddr, sizeof(msg.m_clientaddr));
-		pgstat_send(&msg, sizeof(msg));
-	}
+	else
+		MemSet(&msg.m_clientaddr, 0, sizeof(msg.m_clientaddr));
+	pgstat_send(&msg, sizeof(msg));
 
 	/*
 	 * Set up a process-exit hook to ensure we flush the last batch of
