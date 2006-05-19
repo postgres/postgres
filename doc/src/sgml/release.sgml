@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.425 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.426 2006/05/19 03:49:05 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -19,6 +19,51 @@ For new features, add links to the documentation sections.
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-8-1-4">
+   <title>Release 8.1.4</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-05-22</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.1.3,
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.1.4</title>
+
+    <para>
+     A dump/restore is not required for those running 8.1.X.
+     However, if you are upgrading from a version earlier than 8.1.2,
+     see the release notes for 8.1.2.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Improve sort performance (Tom, Dann Corbit)</para></listitem>
+<listitem><para>Disable <literal>full_page_writes</> because of reliability bug (Tom)</para>
+<para>In certain cases, <literal>full_page_writes</> would cause crash recovery to fail.
+</para></listitem>
+<listitem><para>Various bitmap scan improvements (Tom)</para></listitem>
+<listitem><para>Have <application>pg_dumpall</> dumping pre-8.1 databases with indentical user
+and group names create a single role with <literal>LOGIN</> permission (Tom)</para></listitem>
+<listitem><para>Fix <application>pg_restore</> <literal>-n</> (Tom)</para></listitem>
+<listitem><para>Fix <literal>SIMILAR TO</> for alternative values (Tom)</para></listitem>
+<listitem><para>Fix <command>SELECT INTO</> and <command>CREATE TABLE AS</> to create tables in the default
+tablespace, not the base directory (Kris Jurka)</para></listitem>
+<listitem><para>Fix problem with password prompting on some Win32 systems (Robert
+Kinberg)</para></listitem>
+<listitem><para>Fix for Bonjour on Intel Macs (Ashley Clark)</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-8-1-3">
    <title>Release 8.1.3</title>
 
