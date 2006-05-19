@@ -1,6 +1,5 @@
  
 * Major/minor release version number changes
-	o configure.in, and run autoconf or update configure
 	o doc/bug.template
 	o bump Win32 interface version numbers
 		- src/include/pg_config.h.win32
@@ -10,11 +9,12 @@
 	o bump library versions for _major_ releases
 		- src/interfaces/*/Makefile
 		- src/interfaces/*/*/Makefile
+	o configure.in, and run autoconf or update configure (by packager)
 
 * Beta and Release Candidate (RC) changes
-	o configure.in, and run autoconf or update configure
 	o doc/bug.template
 	o src/include/pg_config.h.win32
+	o configure.in, and run autoconf or update configure (by packager)
 
 * Release notes
 	o scan cvs logs, use pgcvslog and flags in comments
