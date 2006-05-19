@@ -7,7 +7,6 @@
 * Version numbers
 	o configure.in, and run autoconf or update configure
 	o doc/bug.template
-	o src/include/pg_config.h.win32
 	o bump library versions
 		- src/interfaces/*/Makefile (major releases only)
 		- src/interfaces/*/*/Makefile (major releases only)
