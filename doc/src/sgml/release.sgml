@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.426 2006/05/19 03:49:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.427 2006/05/19 03:55:40 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -50,7 +50,7 @@ For new features, add links to the documentation sections.
 <para>In certain cases, <literal>full_page_writes</> would cause crash recovery to fail.
 </para></listitem>
 <listitem><para>Various bitmap scan improvements (Tom)</para></listitem>
-<listitem><para>Have <application>pg_dumpall</> dumping pre-8.1 databases with indentical user
+<listitem><para>Have <application>pg_dumpall</> dumping pre-8.1 databases with identical user
 and group names create a single role with <literal>LOGIN</> permission (Tom)</para></listitem>
 <listitem><para>Fix <application>pg_restore</> <literal>-n</> (Tom)</para></listitem>
 <listitem><para>Fix <literal>SIMILAR TO</> for alternative values (Tom)</para></listitem>
