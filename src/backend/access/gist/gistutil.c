@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.12 2006/05/17 16:34:59 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.13 2006/05/19 16:15:17 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -137,6 +137,30 @@ gistjoinvector(IndexTuple *itvec, int *len, IndexTuple *additvec, int addlen)
 	memmove(&itvec[*len], additvec, sizeof(IndexTuple) * addlen);
 	*len += addlen;
 	return itvec;
+}
+
+/*
+ * make plain IndexTupleVector
+ */
+
+IndexTupleData *
+gistfillitupvec(IndexTuple *vec, int veclen, int *memlen) {
+	char *ptr, *ret;
+	int i;
+
+	*memlen=0;
+					
+	for (i = 0; i < veclen; i++)
+		*memlen += IndexTupleSize(vec[i]);
+
+	ptr = ret = palloc(*memlen);
+
+	for (i = 0; i < veclen; i++) { 
+		memcpy(ptr, vec[i], IndexTupleSize(vec[i]));
+		ptr += IndexTupleSize(vec[i]);
+	}
+
+	return (IndexTupleData*)ret;
 }
 
 /*
@@ -313,98 +337,99 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	return newtup;
 }
 
-void
-gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITVEC *spl, bool isall)
-{
-	int			lr;
+void 
+gistunionsubkeyvec(GISTSTATE *giststate,  IndexTuple *itvec, 
+							GistSplitVec *gsvp, bool isall) {
+	int			i;
+	GistEntryVector *evec;
 
-	for (lr = 0; lr < 2; lr++)
+	evec = palloc(((gsvp->len < 2) ? 2 : gsvp->len) * sizeof(GISTENTRY) + GEVHDRSZ);
+
+	for (i = (isall) ? 0 : 1; i < giststate->tupdesc->natts; i++)
 	{
-		OffsetNumber *entries;
-		int			i;
-		Datum	   *attr;
-		int			len,
-				   *attrsize;
-		bool	   *isnull;
-		GistEntryVector *evec;
+		int			j;
+		Datum		datum;
+		int			datumsize;
+		int			real_len;
 
-		if (lr)
+		real_len = 0;
+		for (j = 0; j < gsvp->len; j++)
 		{
-			attrsize = spl->spl_lattrsize;
-			attr = spl->spl_lattr;
-			len = spl->spl_nleft;
-			entries = spl->spl_left;
-			isnull = spl->spl_lisnull;
+			bool		IsNull;
+
+			if ( gsvp->idgrp && gsvp->idgrp[gsvp->entries[j]])
+				continue;
+
+			datum = index_getattr(itvec[gsvp->entries[j] - 1], i + 1,
+									  giststate->tupdesc, &IsNull);
+			if (IsNull)
+				continue;
+			gistdentryinit(giststate, i,
+						   &(evec->vector[real_len]),
+						   datum,
+						   NULL, NULL, (OffsetNumber) 0,
+						   ATTSIZE(datum, giststate->tupdesc, i + 1, IsNull),
+						   FALSE, IsNull);
+			real_len++;
+
+		}
+
+		if (real_len == 0)
+		{
+			datum = (Datum) 0;
+			datumsize = 0;
+			gsvp->isnull[i] = true;
 		}
 		else
 		{
-			attrsize = spl->spl_rattrsize;
-			attr = spl->spl_rattr;
-			len = spl->spl_nright;
-			entries = spl->spl_right;
-			isnull = spl->spl_risnull;
-		}
-
-		evec = palloc(((len < 2) ? 2 : len) * sizeof(GISTENTRY) + GEVHDRSZ);
-
-		for (i = (isall) ? 0 : 1; i < r->rd_att->natts; i++)
-		{
-			int			j;
-			Datum		datum;
-			int			datumsize;
-			int			real_len;
-
-			real_len = 0;
-			for (j = 0; j < len; j++)
+			/*
+			 * evec->vector[0].bytes may be not defined, so form union
+			 * with itself
+			 */
+			if (real_len == 1)
 			{
-				bool		IsNull;
-
-				if (spl->spl_idgrp[entries[j]])
-					continue;
-				datum = index_getattr(itvec[entries[j] - 1], i + 1,
-									  giststate->tupdesc, &IsNull);
-				if (IsNull)
-					continue;
-				gistdentryinit(giststate, i,
-							   &(evec->vector[real_len]),
-							   datum,
-							   NULL, NULL, (OffsetNumber) 0,
-						   ATTSIZE(datum, giststate->tupdesc, i + 1, IsNull),
-							   FALSE, IsNull);
-				real_len++;
-
-			}
-
-			if (real_len == 0)
-			{
-				datum = (Datum) 0;
-				datumsize = 0;
-				isnull[i] = true;
+				evec->n = 2;
+				memcpy(&(evec->vector[1]), &(evec->vector[0]),
+					   sizeof(GISTENTRY));
 			}
 			else
-			{
-				/*
-				 * evec->vector[0].bytes may be not defined, so form union
-				 * with itself
-				 */
-				if (real_len == 1)
-				{
-					evec->n = 2;
-					memcpy(&(evec->vector[1]), &(evec->vector[0]),
-						   sizeof(GISTENTRY));
-				}
-				else
-					evec->n = real_len;
-				datum = FunctionCall2(&giststate->unionFn[i],
-									  PointerGetDatum(evec),
-									  PointerGetDatum(&datumsize));
-				isnull[i] = false;
-			}
-
-			attr[i] = datum;
-			attrsize[i] = datumsize;
+				evec->n = real_len;
+			datum = FunctionCall2(&giststate->unionFn[i],
+								  PointerGetDatum(evec),
+								  PointerGetDatum(&datumsize));
+			gsvp->isnull[i] = false;
 		}
+
+		gsvp->attr[i] = datum;
+		gsvp->attrsize[i] = datumsize;
 	}
+}
+
+/*
+ * unions subkey for after user picksplit over first column
+ */
+static void
+gistunionsubkey(GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITVEC *spl)
+{
+	GistSplitVec	gsvp;
+
+	gsvp.idgrp = spl->spl_idgrp;
+
+	gsvp.attrsize = spl->spl_lattrsize;
+	gsvp.attr = spl->spl_lattr;
+	gsvp.len = spl->spl_nleft;
+	gsvp.entries = spl->spl_left;
+	gsvp.isnull = spl->spl_lisnull;
+
+	gistunionsubkeyvec(giststate, itvec, &gsvp, false);
+
+	gsvp.attrsize = spl->spl_rattrsize;
+	gsvp.attr = spl->spl_rattr;
+	gsvp.len = spl->spl_nright;
+	gsvp.entries = spl->spl_right;
+	gsvp.isnull = spl->spl_risnull;
+
+	gistunionsubkeyvec(giststate, itvec, &gsvp, false);
 }
 
 /*
@@ -840,7 +865,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	 * if index is multikey, then we must to try get smaller bounding box for
 	 * subkey(s)
 	 */
-	if (r->rd_att->natts > 1)
+	if (giststate->tupdesc->natts > 1)
 	{
 		int			MaxGrpId;
 
@@ -851,7 +876,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
 		MaxGrpId = gistfindgroup(giststate, entryvec->vector, v);
 
 		/* form union of sub keys for each page (l,p) */
-		gistunionsubkey(r, giststate, itup, v, false);
+		gistunionsubkey(giststate, itup, v);
 
 		/*
 		 * if possible, we insert equivalent tuples with control by penalty

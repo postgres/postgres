@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.135 2006/05/17 16:34:59 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.136 2006/05/19 16:15:17 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -936,31 +936,6 @@ gistmakedeal(GISTInsertState *state, GISTSTATE *giststate)
 		gistxlogInsertCompletion(state->r->rd_node, &(state->key), 1);
 }
 
-static void
-gistToRealOffset(OffsetNumber *arr, int len, OffsetNumber *reasloffset)
-{
-	int			i;
-
-	for (i = 0; i < len; i++)
-		arr[i] = reasloffset[arr[i]];
-}
-
-static IndexTupleData *
-gistfillitupvec(IndexTuple *vec, int veclen, int *memlen) {
-	char *ptr, *ret = palloc(BLCKSZ);
-	int i;
-
-	ptr = ret;
-	for (i = 0; i < veclen; i++) {
-		memcpy(ptr, vec[i], IndexTupleSize(vec[i]));
-		ptr += IndexTupleSize(vec[i]);
-	}
-
-	*memlen = ptr - ret;
-	Assert( *memlen < BLCKSZ );
-	return (IndexTupleData*)ret;
-}
-
 /*
  *	gistSplit -- split a page in the tree.
  */
@@ -975,100 +950,70 @@ gistSplit(Relation r,
 			   *rvectup;
 	GIST_SPLITVEC v;
 	GistEntryVector *entryvec;
-	int			i,
-				fakeoffset;
-	OffsetNumber *realoffset;
-	IndexTuple *cleaneditup = itup;
-	int			lencleaneditup = len;
+	int			i;
+	OffsetNumber offInvTuples[ MaxOffsetNumber ];
+	int			 nOffInvTuples = 0;
 	SplitedPageLayout	*res = NULL;
 
 	/* generate the item array */
-	realoffset = palloc((len + 1) * sizeof(OffsetNumber));
 	entryvec = palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY));
 	entryvec->n = len + 1;
 
-	fakeoffset = FirstOffsetNumber;
 	for (i = 1; i <= len; i++)
 	{
 		Datum		datum;
 		bool		IsNull;
 
 		if (!GistPageIsLeaf(page) && GistTupleIsInvalid(itup[i - 1]))
-		{
-			entryvec->n--;
 			/* remember position of invalid tuple */
-			realoffset[entryvec->n] = i;
-			continue;
-		}
+			offInvTuples[ nOffInvTuples++ ] = i;			
+
+		if ( nOffInvTuples > 0 )
+			/* we can safely do not decompress other keys, because 
+			   we will do splecial processing, but
+			   it's needed to find another invalid tuples */
+			continue;	
 
 		datum = index_getattr(itup[i - 1], 1, giststate->tupdesc, &IsNull);
-		gistdentryinit(giststate, 0, &(entryvec->vector[fakeoffset]),
+		gistdentryinit(giststate, 0, &(entryvec->vector[i]),
 					   datum, r, page, i,
 					   ATTSIZE(datum, giststate->tupdesc, 1, IsNull),
 					   FALSE, IsNull);
-		realoffset[fakeoffset] = i;
-		fakeoffset++;
 	}
 
 	/*
-	 * if it was invalid tuple then we need special processing. If it's
-	 * possible, we move all invalid tuples on right page. We should remember,
-	 * that union with invalid tuples is a invalid tuple.
+	 * if it was invalid tuple then we need special processing.
+	 * We move all invalid tuples on right page. 
+	 *
+	 * if there is no place on left page, gistSplit will be called one more 
+	 * time for left page.
+	 *
+	 * Normally, we never exec this code, but after crash replay it's possible
+	 * to get 'invalid' tuples (probability is low enough)
 	 */
-	if (entryvec->n != len + 1)
+	if (nOffInvTuples > 0)
 	{
-		lencleaneditup = entryvec->n - 1;
-		cleaneditup = (IndexTuple *) palloc(lencleaneditup * sizeof(IndexTuple));
-		for (i = 1; i < entryvec->n; i++)
-			cleaneditup[i - 1] = itup[realoffset[i] - 1];
+		GistSplitVec    gsvp;
+				
+		v.spl_right = offInvTuples;
+		v.spl_nright = nOffInvTuples;
+		v.spl_rightvalid = false;
 
-		if (!gistfitpage(cleaneditup, lencleaneditup))
-		{
-			/* no space on left to put all good tuples, so picksplit */
-			gistUserPicksplit(r, entryvec, &v, cleaneditup, lencleaneditup, giststate);
-			v.spl_leftvalid = true;
-			v.spl_rightvalid = false;
-			gistToRealOffset(v.spl_left, v.spl_nleft, realoffset);
-			gistToRealOffset(v.spl_right, v.spl_nright, realoffset);
-		}
-		else
-		{
-			/* we can try to store all valid tuples on one page */
-			v.spl_right = (OffsetNumber *) palloc(entryvec->n * sizeof(OffsetNumber));
-			v.spl_left = (OffsetNumber *) palloc(entryvec->n * sizeof(OffsetNumber));
+		v.spl_left = (OffsetNumber *) palloc(entryvec->n * sizeof(OffsetNumber));
+		v.spl_nleft = 0;
+		for(i = 1; i <= len; i++) 
+			if ( !GistTupleIsInvalid(itup[i - 1]) )
+				v.spl_left[ v.spl_nleft++ ] = i;
+		v.spl_leftvalid = true;
+		
+		gsvp.idgrp = NULL;
+		gsvp.attrsize = v.spl_lattrsize;
+		gsvp.attr = v.spl_lattr;
+		gsvp.len = v.spl_nleft;
+		gsvp.entries = v.spl_left;
+		gsvp.isnull = v.spl_lisnull;
 
-			if (lencleaneditup == 0)
-			{
-				/* all tuples are invalid, so moves half of its to right */
-				v.spl_leftvalid = v.spl_rightvalid = false;
-				v.spl_nright = 0;
-				v.spl_nleft = 0;
-				for (i = 1; i <= len; i++)
-					if (i - 1 < len / 2)
-						v.spl_left[v.spl_nleft++] = i;
-					else
-						v.spl_right[v.spl_nright++] = i;
-			}
-			else
-			{
-				/*
-				 * we will not call gistUserPicksplit, just put good tuples on
-				 * left and invalid on right
-				 */
-				v.spl_nleft = lencleaneditup;
-				v.spl_nright = 0;
-				for (i = 1; i < entryvec->n; i++)
-					v.spl_left[i - 1] = i;
-				gistToRealOffset(v.spl_left, v.spl_nleft, realoffset);
-				v.spl_lattr[0] = v.spl_ldatum = (Datum) 0;
-				v.spl_rattr[0] = v.spl_rdatum = (Datum) 0;
-				v.spl_lisnull[0] = true;
-				v.spl_risnull[0] = true;
-				gistunionsubkey(r, giststate, itup, &v, true);
-				v.spl_leftvalid = true;
-				v.spl_rightvalid = false;
-			}
-		}
+		gistunionsubkeyvec(giststate, itup, &gsvp, true);
 	}
 	else
 	{
@@ -1087,12 +1032,6 @@ gistSplit(Relation r,
 
 	for (i = 0; i < v.spl_nright; i++)
 		rvectup[i] = itup[v.spl_right[i] - 1];
-
-	/* place invalid tuples on right page if itsn't done yet */
-	for (fakeoffset = entryvec->n; fakeoffset < len + 1 && lencleaneditup; fakeoffset++)
-	{
-		rvectup[v.spl_nright++] = itup[realoffset[fakeoffset] - 1];
-	}
 
 	/* finalyze splitting (may need another split) */
 	if (!gistfitpage(rvectup, v.spl_nright))

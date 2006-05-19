@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.18 2006/05/19 11:10:25 teodor Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.19 2006/05/19 16:15:17 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -557,28 +557,16 @@ gistMakePageLayout(Buffer *buffers, int nbuffers) {
 
 	while( nbuffers-- > 0 ) {
 		Page page = BufferGetPage( buffers[ nbuffers ] );
-		IndexTuple	idxtup;
-		OffsetNumber	i;
-		char *ptr;
+		IndexTuple*	vec;
+		int	veclen;
 
 		resptr = (SplitedPageLayout*)palloc0( sizeof(SplitedPageLayout) );
 
 		resptr->block.blkno = BufferGetBlockNumber( buffers[ nbuffers ] );
 		resptr->block.num = PageGetMaxOffsetNumber( page );
 
-		for(i=FirstOffsetNumber; i<= PageGetMaxOffsetNumber( page ); i++) {
-			idxtup = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
-			resptr->lenlist += IndexTupleSize(idxtup);
-		}
-
-		resptr->list = (IndexTupleData*)palloc( resptr->lenlist );
-		ptr = (char*)(resptr->list);
-
-		for(i=FirstOffsetNumber; i<= PageGetMaxOffsetNumber( page ); i++) {
-			idxtup = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
-			memcpy( ptr, idxtup, IndexTupleSize(idxtup) );
-			ptr += IndexTupleSize(idxtup);
-		}
+		vec = gistextractpage( page, &veclen ); 
+		resptr->list = gistfillitupvec( vec, veclen, &(resptr->lenlist) );
 
 		resptr->next = res;
 		res = resptr;
