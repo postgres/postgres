@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.18 2006/05/03 22:45:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.19 2006/05/19 15:15:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,8 @@
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
@@ -109,6 +111,8 @@ static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 List **toast_table_ids);
 static void autovacuum_do_vac_analyze(List *relids, bool dovacuum,
 						  bool doanalyze, bool freeze);
+static void autovac_report_activity(VacuumStmt *vacstmt,
+						List *relids);
 
 
 /*
@@ -911,10 +915,73 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
 	vacstmt->relation = NULL;	/* all tables, or not used if relids != NIL */
 	vacstmt->va_cols = NIL;
 
+	/* Let pgstat know what we're doing */
+	autovac_report_activity(vacstmt, relids);
+
 	vacuum(vacstmt, relids);
 
 	pfree(vacstmt);
 	MemoryContextSwitchTo(old_cxt);
+}
+
+/*
+ * autovac_report_activity
+ * 		Report to pgstat what autovacuum is doing
+ *
+ * We send a SQL string corresponding to what the user would see if the
+ * equivalent command was to be issued manually.
+ *
+ * Note we assume that we are going to report the next command as soon as we're
+ * done with the current one, and exiting right after the last one, so we don't
+ * bother to report "<IDLE>" or some such.
+ */
+#define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 32)
+static void
+autovac_report_activity(VacuumStmt *vacstmt, List *relids)
+{
+	char		activity[MAX_AUTOVAC_ACTIV_LEN];
+
+	/*
+	 * This case is not currently exercised by the autovac code.  Fill it in
+	 * if needed.
+	 */
+	if (list_length(relids) > 1)
+		elog(WARNING, "vacuuming >1 rel unsupported");
+
+	/* Report the command and possible options */
+	if (vacstmt->vacuum)
+		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
+					   "VACUUM%s%s%s",
+					   vacstmt->full ? " FULL" : "",
+					   vacstmt->freeze ? " FREEZE" : "",
+					   vacstmt->analyze ? " ANALYZE" : "");
+	else if (vacstmt->analyze)
+		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
+					   "ANALYZE");
+
+	/* Report the qualified name of the first relation, if any */
+	if (list_length(relids) > 0)
+	{
+		Oid			relid = linitial_oid(relids);
+		Relation	rel;
+
+		rel = RelationIdGetRelation(relid);
+		if (rel == NULL)
+			elog(WARNING, "cache lookup failed for relation %u", relid);
+		else
+		{
+			char   *nspname = get_namespace_name(RelationGetNamespace(rel));
+			int		len = strlen(activity);
+
+			snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
+					 " %s.%s", nspname, RelationGetRelationName(rel));
+
+			pfree(nspname);
+			RelationClose(rel);
+		}
+	}
+
+	pgstat_report_activity(activity);
 }
 
 /*

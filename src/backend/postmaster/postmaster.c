@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.483 2006/03/18 22:09:58 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.484 2006/05/19 15:15:37 alvherre Exp $
  *
  * NOTES
  *
@@ -2182,6 +2182,9 @@ reaper(SIGNAL_ARGS)
 		{
 			AutoVacPID = 0;
 			autovac_stopped();
+			/* Tell the collector about process termination */
+			pgstat_beterm(pid);
+
 			if (exitstatus != 0)
 				HandleChildCrash(pid, exitstatus,
 								 _("autovacuum process"));
