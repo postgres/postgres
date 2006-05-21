@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.128 2005/08/16 00:48:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.128.2.1 2006/05/21 20:11:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,13 +51,14 @@ static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char    *dolqstart;      /* current $foo$ quote start string */
 
 /*
- * GUC variable.  This is a DIRECT violation of the warning given at the
+ * GUC variables.  This is a DIRECT violation of the warning given at the
  * head of gram.y, ie flex/bison code must not depend on any GUC variables;
- * as such, changing its value can induce very unintuitive behavior.
+ * as such, changing their values can induce very unintuitive behavior.
  * But we shall have to live with it as a short-term thing until the switch
  * to SQL-standard string syntax is complete.
  */
-bool			escape_string_warning;
+BackslashQuoteType backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
+bool			escape_string_warning = true;
 
 static bool		warn_on_first_escape;
 
@@ -453,6 +454,14 @@ other			.
 <xq>{xqescape}  {
 					if (yytext[1] == '\'')
 					{
+						if (backslash_quote == BACKSLASH_QUOTE_OFF ||
+							(backslash_quote == BACKSLASH_QUOTE_SAFE_ENCODING &&
+							 PG_ENCODING_IS_CLIENT_ONLY(pg_get_client_encoding())))
+							ereport(ERROR,
+									(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
+									 errmsg("unsafe use of \\' in a string literal"),
+									 errhint("Use '' to write quotes in strings. \\' is insecure in client-only encodings."),
+									 errposition(pg_err_position())));
 						if (warn_on_first_escape && escape_string_warning)
 							ereport(WARNING,
 									(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
