@@ -1,9 +1,101 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.31 2006/02/12 22:36:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.32 2006/05/21 21:50:14 tgl Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-7-3-15">
+   <title>Release 7.3.15</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-05-23</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.14,
+    including patches for extremely serious security issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.15</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+    <para>
+     Full security against the SQL-injection attacks described in
+     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     code.  If you have applications that embed untrustworthy strings
+     into SQL commands, you should examine them as soon as possible to
+     ensure that they are using recommended escaping techniques.  In
+     most cases, applications should be using subroutines provided by
+     libraries or drivers (such as <application>libpq</>'s
+     <function>PQescapeStringConn()</>) to perform string escaping,
+     rather than relying on <foreignphrase>ad hoc</> code to do it.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Change the server to reject invalidly-encoded multibyte
+characters in all cases (Tatsuo, Tom)</para>
+<para>While <productname>PostgreSQL</> has been moving in this direction for
+some time, the checks are now applied uniformly to all encodings and all
+textual input, and are now always errors not merely warnings.  This change
+defends against SQL-injection attacks of the type described in CVE-2006-2313.
+</para></listitem>
+
+<listitem><para>Reject unsafe uses of <literal>\'</> in string literals</para>
+<para>As a server-side defense against SQL-injection attacks of the type
+described in CVE-2006-2314, the server now only accepts <literal>''</> and not
+<literal>\'</> as a representation of ASCII single quote in SQL string
+literals.  By default, <literal>\'</> is rejected only when
+<varname>client_encoding</> is set to a client-only encoding (SJIS, BIG5, GBK,
+GB18030, or UHC), which is the scenario in which SQL injection is possible.
+A new configuration parameter <varname>backslash_quote</> is available to
+adjust this behavior when needed.  Note that full security against
+CVE-2006-2314 may require client-side changes; the purpose of
+<varname>backslash_quote</> is in part to make it obvious that insecure
+clients are insecure.
+</para></listitem>
+
+<listitem><para>Modify <application>libpq</>'s string-escaping routines to be
+aware of encoding considerations</para>
+<para>This fixes <application>libpq</>-using applications for the security
+issues described in CVE-2006-2313 and CVE-2006-2314.
+Applications that use multiple <productname>PostgreSQL</> connections
+concurrently should migrate to <function>PQescapeStringConn()</> and
+<function>PQescapeByteaConn()</> to ensure that escaping is done correctly
+for the settings in use in each database connection.  Applications that
+do string escaping <quote>by hand</> should be modified to rely on library
+routines instead.
+</para></listitem>
+
+<listitem><para>Fix some incorrect encoding conversion functions</para>
+<para><function>win1251_to_iso</>, <function>alt_to_iso</>,
+<function>euc_tw_to_big5</>, <function>euc_tw_to_mic</>,
+<function>mic_to_euc_tw</> were all broken to varying
+extents.
+</para></listitem>
+
+<listitem><para>Clean up stray remaining uses of <literal>\'</> in strings
+(Bruce, Jan)</para></listitem>
+
+<listitem><para>Fix server to use custom DH SSL parameters correctly (Michael
+Fuhr)</para></listitem>
+
+<listitem><para>Fix various minor memory leaks</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-7-3-14">
    <title>Release 7.3.14</title>
