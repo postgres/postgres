@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.35 2006/05/11 19:15:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.36 2006/05/21 20:10:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,15 @@
  */
 #define YYLTYPE  int
 
+typedef enum
+{
+	BACKSLASH_QUOTE_OFF,
+	BACKSLASH_QUOTE_ON,
+	BACKSLASH_QUOTE_SAFE_ENCODING
+} BackslashQuoteType;
+
 /* GUC variables in scan.l (every one of these is a bad idea :-() */
+extern BackslashQuoteType backslash_quote;
 extern bool escape_string_warning;
 extern bool standard_conforming_strings;
 

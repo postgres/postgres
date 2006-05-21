@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.134 2006/05/11 19:15:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.135 2006/05/21 20:10:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@ static char    *dolqstart;      /* current $foo$ quote start string */
  * But we shall have to live with it as a short-term thing until the switch
  * to SQL-standard string syntax is complete.
  */
+BackslashQuoteType backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
 bool			escape_string_warning = true;
 bool			standard_conforming_strings = false;
 
@@ -452,6 +453,17 @@ other			.
 					addlit(yytext, yyleng);
 				}
 <xe>{xeescape}  {
+					if (yytext[1] == '\'')
+					{
+						if (backslash_quote == BACKSLASH_QUOTE_OFF ||
+							(backslash_quote == BACKSLASH_QUOTE_SAFE_ENCODING &&
+							 PG_ENCODING_IS_CLIENT_ONLY(pg_get_client_encoding())))
+							ereport(ERROR,
+									(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
+									 errmsg("unsafe use of \\' in a string literal"),
+									 errhint("Use '' to write quotes in strings. \\' is insecure in client-only encodings."),
+									 lexer_errposition()));
+					}
 					check_string_escape_warning(yytext[1]);
 					addlitchar(unescape_single_char(yytext[1]));
 				}

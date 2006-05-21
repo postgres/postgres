@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.58 2006/05/11 19:15:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.59 2006/05/21 20:10:42 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3691,6 +3691,42 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Note that it is possible to create array values containing NULLs
         even when this variable is <literal>off</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-backslash-quote" xreflabel="backslash_quote">
+      <term><varname>backslash_quote</varname> (<type>string</type>)</term>
+      <indexterm><primary>strings</><secondary>backslash quotes</></>
+      <indexterm>
+       <primary><varname>backslash_quote</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This controls whether a quote mark can be represented by
+        <literal>\'</> in a string literal.  The preferred, SQL-standard way
+        to represent a quote mark is by doubling it (<literal>''</>) but
+        <productname>PostgreSQL</> has historically also accepted
+        <literal>\'</>. However, use of <literal>\'</> creates security risks
+        because in some client character set encodings, there are multibyte
+        characters in which the last byte is numerically equivalent to ASCII
+        <literal>\</>.  If client-side code does escaping incorrectly then a
+        SQL-injection attack is possible.  This risk can be prevented by
+        making the server reject queries in which a quote mark appears to be
+        escaped by a backslash.
+        The allowed values of <varname>backslash_quote</> are
+        <literal>on</> (allow <literal>\'</> always),
+        <literal>off</> (reject always), and
+        <literal>safe_encoding</> (allow only if client encoding does not
+        allow ASCII <literal>\</> within a multibyte character).
+        <literal>safe_encoding</> is the default setting.
+       </para>
+
+       <para>
+        Note that in a standard-conforming string literal, <literal>\</> just
+        means <literal>\</> anyway.  This parameter affects the handling of
+        non-standard-conforming literals, including
+        escape string syntax (<literal>E'...'</>).
        </para>
       </listitem>
      </varlistentry>
