@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263.2.4 2005/07/14 14:07:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263.2.5 2006/05/21 20:20:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1956,6 +1956,7 @@ makeEmptyPGconn(void)
 	conn->xactStatus = PQTRANS_IDLE;
 	conn->setenv_state = SETENV_STATE_IDLE;
 	conn->client_encoding = PG_SQL_ASCII;
+	conn->std_strings = false;	/* unless server says differently */
 	conn->verbosity = PQERRORS_DEFAULT;
 	conn->notifyList = DLNewList();
 	conn->sock = -1;
@@ -2946,8 +2947,14 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 		status = -1;
 	else
 	{
-		/* change libpq internal encoding */
-		conn->client_encoding = pg_char_to_encoding(encoding);
+		/*
+		 * In protocol 2 we have to assume the setting will stick, and
+		 * adjust our state immediately.  In protocol 3 and up we can
+		 * rely on the backend to report the parameter value, and we'll
+		 * change state at that time.
+		 */
+		if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
+			pqSaveParameterStatus(conn, "client_encoding", encoding);
 		status = 0;				/* everything is ok */
 	}
 	PQclear(res);

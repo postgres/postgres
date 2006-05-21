@@ -113,6 +113,8 @@ EXPORTS
     _PQfformat               @ 109
     _PQexecPrepared          @ 110
     _PQsendQueryPrepared     @ 111
+    _PQescapeStringConn      @ 126
+    _PQescapeByteaConn       @ 127
 
 ; Aliases for MS compatible names
     PQconnectdb             = _PQconnectdb            
@@ -226,3 +228,5 @@ EXPORTS
     PQfformat               = _PQfformat
     PQexecPrepared          = _PQexecPrepared
     PQsendQueryPrepared     = _PQsendQueryPrepared
+    PQescapeStringConn      = _PQescapeStringConn
+    PQescapeByteaConn       = _PQescapeByteaConn
