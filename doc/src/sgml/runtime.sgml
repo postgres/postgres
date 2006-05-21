@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.7 2003/04/04 00:32:57 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.8 2006/05/21 20:12:20 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1314,6 +1314,35 @@ env PGOPTIONS='-c geqo=off' psql
         hung clients from occupying a connection indefinitely. This
         option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-backslash-quote" xreflabel="backslash_quote">
+      <term><varname>BACKSLASH_QUOTE</varname> (<type>string</type>)</term>
+      <indexterm><primary>strings</><secondary>backslash quotes</></>
+      <indexterm>
+       <primary><varname>backslash_quote</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This controls whether a quote mark can be represented by
+        <literal>\'</> in a string literal.  The preferred, SQL-standard way
+        to represent a quote mark is by doubling it (<literal>''</>) but
+        <productname>PostgreSQL</> has historically also accepted
+        <literal>\'</>. However, use of <literal>\'</> creates security risks
+        because in some client character set encodings, there are multibyte
+        characters in which the last byte is numerically equivalent to ASCII
+        <literal>\</>.  If client-side code does escaping incorrectly then a
+        SQL-injection attack is possible.  This risk can be prevented by
+        making the server reject queries in which a quote mark appears to be
+        escaped by a backslash.
+        The allowed values of <varname>backslash_quote</> are
+        <literal>on</> (allow <literal>\'</> always),
+        <literal>off</> (reject always), and
+        <literal>safe_encoding</> (allow only if client encoding does not
+        allow ASCII <literal>\</> within a multibyte character).
+        <literal>safe_encoding</> is the default setting.
        </para>
       </listitem>
      </varlistentry>

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.99.2.6 2006/02/12 22:33:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.99.2.7 2006/05/21 20:12:20 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -38,6 +38,7 @@
 #include "optimizer/geqo.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "parser/gramparse.h"
 #include "parser/parse_expr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
@@ -72,6 +73,8 @@ static const char *assign_facility(const char *facility,
 
 static const char *assign_msglvl(int *var, const char *newval,
 			  bool doit, bool interactive);
+static const char *assign_backslash_quote(const char *newval, bool doit,
+										  bool interactive);
 
 /*
  * Debugging options
@@ -124,6 +127,7 @@ const char	client_min_messages_str_default[] = "notice";
  * and is kept in sync by assign_hooks.
  */
 static double phony_random_seed;
+static char *backslash_quote_string;
 static char *client_encoding_string;
 static char *datestyle_string;
 static char *default_iso_level_string;
@@ -736,6 +740,11 @@ static struct config_real
 static struct config_string
 			ConfigureNamesString[] =
 {
+	{
+		{"backslash_quote", PGC_USERSET}, &backslash_quote_string,
+		"safe_encoding", assign_backslash_quote, NULL
+	},
+
 	{
 		{"client_encoding", PGC_USERSET, GUC_IS_NAME}, &client_encoding_string,
 		"SQL_ASCII", assign_client_encoding, NULL
@@ -3058,6 +3067,32 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 	else
 		return NULL;			/* fail */
 	return newval;				/* OK */
+}
+
+static const char *
+assign_backslash_quote(const char *newval, bool doit, bool interactive)
+{
+	BackslashQuoteType bq;
+	bool	bqbool;
+
+	/*
+	 * Although only "on", "off", and "safe_encoding" are documented,
+	 * we use parse_bool so we can accept all the likely variants of
+	 * "on" and "off".
+	 */
+	if (strcasecmp(newval, "safe_encoding") == 0)
+		bq = BACKSLASH_QUOTE_SAFE_ENCODING;
+	else if (parse_bool(newval, &bqbool))
+	{
+		bq = bqbool ? BACKSLASH_QUOTE_ON : BACKSLASH_QUOTE_OFF;
+	}
+	else
+		return NULL;			/* reject */
+
+	if (doit)
+		backslash_quote = bq;
+
+	return newval;
 }
 
 #include "guc-file.c"

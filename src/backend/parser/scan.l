@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.102.2.2 2005/08/16 00:48:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.102.2.3 2006/05/21 20:12:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,15 @@
 extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
+
+/*
+ * GUC variables.  This is a DIRECT violation of the warning given at the
+ * head of gram.y, ie flex/bison code must not depend on any GUC variables;
+ * as such, changing their values can induce very unintuitive behavior.
+ * But we shall have to live with it as a short-term thing until the switch
+ * to SQL-standard string syntax is complete.
+ */
+BackslashQuoteType backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -376,6 +385,13 @@ other			.
 					addlit(yytext, yyleng);
 				}
 <xq>{xqescape}  {
+					if (yytext[1] == '\'')
+					{
+						if (backslash_quote == BACKSLASH_QUOTE_OFF ||
+							(backslash_quote == BACKSLASH_QUOTE_SAFE_ENCODING &&
+							 PG_ENCODING_IS_CLIENT_ONLY(pg_get_client_encoding())))
+							elog(ERROR, "unsafe use of \\' in a string literal");
+					}
 					addlitchar(unescape_single_char(yytext[1]));
 				}
 <xq>{xqoctesc}  {

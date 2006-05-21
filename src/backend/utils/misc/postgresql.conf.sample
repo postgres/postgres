@@ -206,4 +206,5 @@
 #transform_null_equals = false
 #statement_timeout = 0		# 0 is disabled, in milliseconds
 #db_user_namespace = false
- 
+#backslash_quote = safe_encoding	# on, off, or safe_encoding
+
