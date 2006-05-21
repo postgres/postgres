@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.127 2006/04/27 00:53:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.128 2006/05/21 20:19:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,11 +427,18 @@ extern PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
 
 
 /* Quoting strings before inclusion in queries. */
-extern size_t PQescapeString(char *to, const char *from, size_t length);
-extern unsigned char *PQescapeBytea(const unsigned char *bintext, size_t binlen,
-			  size_t *bytealen);
+extern size_t PQescapeStringConn(PGconn *conn,
+								 char *to, const char *from, size_t length,
+								 int *error);
+extern unsigned char *PQescapeByteaConn(PGconn *conn,
+				  const unsigned char *from, size_t from_length,
+				  size_t *to_length);
 extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
 				size_t *retbuflen);
+/* These forms are deprecated! */
+extern size_t PQescapeString(char *to, const char *from, size_t length);
+extern unsigned char *PQescapeBytea(const unsigned char *from, size_t from_length,
+			  size_t *to_length);
 
 
 
