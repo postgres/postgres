@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.4 2005/04/30 08:36:17 neilc Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.5 2006/05/21 19:57:07 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -585,7 +585,7 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 			{
 				/* escape quotes and backslashes */
 				if (*p == '\'' || *p == '\\')
-					appendStringInfoChar(&buf, '\\');
+					appendStringInfoChar(&buf, *p);
 				appendStringInfoChar(&buf, *p++);
 			}
 			p++;
@@ -3542,7 +3542,7 @@ get_const_expr(Const *constval, deparse_context *context)
 
 				if (ch == '\'' || ch == '\\')
 				{
-					appendStringInfoChar(buf, '\\');
+					appendStringInfoChar(buf, ch);
 					appendStringInfoChar(buf, ch);
 				}
 				else if (((unsigned char) ch) < ((unsigned char) ' '))

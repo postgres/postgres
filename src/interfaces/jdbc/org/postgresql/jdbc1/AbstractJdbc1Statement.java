@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.8 2004/10/21 19:13:55 jurka Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.9 2006/05/21 19:57:07 momjian Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1145,7 +1145,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			{
 			    case '\\':
 			    case '\'':
-					p_output.append('\\');
+					p_output.append(c);
 					p_output.append(c);
 					break;
 			    case '\0':

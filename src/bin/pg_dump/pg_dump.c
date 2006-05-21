@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.7 2006/01/09 21:16:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.8 2006/05/21 19:57:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6544,7 +6544,7 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 				for (s = tgargs; s < p;)
 				{
 					if (*s == '\'')
-						appendPQExpBufferChar(query, '\\');
+						appendPQExpBufferChar(query, *s);
 					appendPQExpBufferChar(query, *s++);
 				}
 				appendPQExpBufferChar(query, '\'');

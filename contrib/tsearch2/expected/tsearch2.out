@@ -47,37 +47,37 @@ SELECT '1 2'::tsvector;
  '1' '2'
 (1 row)
 
-SELECT '\'1 2\''::tsvector;
+SELECT '''1 2'''::tsvector;
  tsvector 
 ----------
  '1 2'
 (1 row)
 
-SELECT '\'1 \\\'2\''::tsvector;
+SELECT '''1 \\''2'''::tsvector;
  tsvector 
 ----------
  '1 \'2'
 (1 row)
 
-SELECT '\'1 \\\'2\'3'::tsvector;
+SELECT '''1 \\''2''3'::tsvector;
   tsvector   
 -------------
  '3' '1 \'2'
 (1 row)
 
-SELECT '\'1 \\\'2\' 3'::tsvector;
+SELECT '''1 \\''2'' 3'::tsvector;
   tsvector   
 -------------
  '3' '1 \'2'
 (1 row)
 
-SELECT '\'1 \\\'2\' \' 3\' 4 '::tsvector;
+SELECT '''1 \\''2'' '' 3'' 4 '::tsvector;
      tsvector     
 ------------------
  '4' ' 3' '1 \'2'
 (1 row)
 
-select '\'w\':4A,3B,2C,1D,5 a:8';
+select '''w'':4A,3B,2C,1D,5 a:8';
        ?column?        
 -----------------------
  'w':4A,3B,2C,1D,5 a:8
@@ -126,13 +126,13 @@ SELECT ' 1 '::tsquery;
  '1'
 (1 row)
 
-SELECT '\'1 2\''::tsquery;
+SELECT '''1 2'''::tsquery;
  tsquery 
 ---------
  '1 2'
 (1 row)
 
-SELECT '\'1 \\\'2\''::tsquery;
+SELECT '''1 \\''2'''::tsquery;
  tsquery 
 ---------
  '1 \'2'
@@ -330,13 +330,13 @@ SELECT '1&(2&(4&(5|!6)))'::tsquery;
  '1' & '2' & '4' & ( '5' | !'6' )
 (1 row)
 
-SELECT '1&(\'2\'&(\' 4\'&(\\|5 | \'6 \\\' !|&\')))'::tsquery;
+SELECT '1&(''2''&('' 4''&(\\|5 | ''6 \\'' !|&'')))'::tsquery;
                  tsquery                  
 ------------------------------------------
  '1' & '2' & ' 4' & ( '|5' | '6 \' !|&' )
 (1 row)
 
-SELECT '\'the wether\':dc & \' sKies \':BC & a:d b:a';
+SELECT '''the wether'':dc & '' sKies '':BC & a:d b:a';
                  ?column?                 
 ------------------------------------------
  'the wether':dc & ' sKies ':BC & a:d b:a
@@ -382,7 +382,7 @@ select * from token_type('default');
     23 | entity       | HTML Entity
 (23 rows)
 
-select * from parse('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+select * from parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234 
 <i <b> wow  < jqw <> qwerty');
  tokid |                token                 
@@ -529,7 +529,7 @@ select * from parse('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc
      1 | qwerty
 (138 rows)
 
-SELECT to_tsvector('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+SELECT to_tsvector('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234 
 <i <b> wow  < jqw <> qwerty');
                                                                                                                                                                                                                                                                                                                                                                                                                                                to_tsvector                                                                                                                                                                                                                                                                                                                                                                                                                                                
@@ -543,7 +543,7 @@ SELECT length(to_tsvector('default', '345 qw'));
       2
 (1 row)
 
-SELECT length(to_tsvector('default', '345 qwe@efd.r \' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+SELECT length(to_tsvector('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234 
 <i <b> wow  < jqw <> qwerty'));
  length 
@@ -563,7 +563,7 @@ select to_tsquery('simple', 'qwe & sKies ');
  'qwe' & 'skies'
 (1 row)
 
-select to_tsquery('default', '\'the wether\':dc & \'           sKies \':BC ');
+select to_tsquery('default', '''the wether'':dc & ''           sKies '':BC ');
        to_tsquery       
 ------------------------
  'wether':CD & 'sky':BC
@@ -729,7 +729,7 @@ SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
 (1 row)
 
 drop trigger tsvectorupdate on test_tsvector;
-create function wow(text) returns text as 'select $1 || \' copyright\'; ' language sql;
+create function wow(text) returns text as 'select $1 || '' copyright''; ' language sql;
 create trigger tsvectorupdate before update or insert on test_tsvector
 for each row execute procedure tsearch2(a, wow, t);
 insert into test_tsvector (t) values ('345 qwerty');

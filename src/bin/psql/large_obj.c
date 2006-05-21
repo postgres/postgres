@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.29 2003/08/04 23:59:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.29.4.1 2006/05/21 19:57:07 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -185,7 +185,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		for (i = 0; i < slen; i++)
 		{
 			if (comment_arg[i] == '\'' || comment_arg[i] == '\\')
-				*bufptr++ = '\\';
+				*bufptr++ = comment_arg[i];
 			*bufptr++ = comment_arg[i];
 		}
 		strcpy(bufptr, "')");

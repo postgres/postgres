@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994-5, Regents of the University of California
 --
--- $Id: funcs.source,v 1.6 2003/10/26 04:51:51 momjian Exp $
+-- $Id: funcs.source,v 1.6.2.1 2006/05/21 19:57:07 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -76,10 +76,10 @@ WHERE EMP.cubicle ~= '(2,1)'::point;
 -- columns of EMP.
 
 CREATE FUNCTION new_emp() RETURNS EMP
-   AS 'SELECT \'None\'::text AS name,
+   AS 'SELECT ''None''::text AS name,
 			  1000 AS salary,
 			  25 AS age,
-			  \'(2,2)\'::point AS cubicle'
+			  ''(2,2)''::point AS cubicle'
    LANGUAGE 'sql';
 
 -- you can then project a column out of resulting the tuple by using the
