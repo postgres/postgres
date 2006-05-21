@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.26 2006/05/19 03:57:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.27 2006/05/21 21:49:38 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -24,11 +24,12 @@ For new features, add links to the documentation sections.
 
    <note>
    <title>Release date</title>
-   <simpara>2006-05-22</simpara>
+   <simpara>2006-05-23</simpara>
    </note>
 
    <para>
     This release contains a variety of fixes from 8.1.3,
+    including patches for extremely serious security issues.
    </para>
 
    <sect2>
@@ -39,26 +40,132 @@ For new features, add links to the documentation sections.
      However, if you are upgrading from a version earlier than 8.1.2,
      see the release notes for 8.1.2.
     </para>
+
+    <para>
+     Full security against the SQL-injection attacks described in
+     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     code.  If you have applications that embed untrustworthy strings
+     into SQL commands, you should examine them as soon as possible to
+     ensure that they are using recommended escaping techniques.  In
+     most cases, applications should be using subroutines provided by
+     libraries or drivers (such as <application>libpq</>'s
+     <function>PQescapeStringConn()</>) to perform string escaping,
+     rather than relying on <foreignphrase>ad hoc</> code to do it.
+    </para>
    </sect2>
 
    <sect2>
     <title>Changes</title>
 
 <itemizedlist>
-<listitem><para>Improve sort performance (Tom, Dann Corbit)</para></listitem>
-<listitem><para>Disable <literal>full_page_writes</> because of reliability bug (Tom)</para>
-<para>In certain cases, <literal>full_page_writes</> would cause crash recovery to fail.
+<listitem><para>Change the server to reject invalidly-encoded multibyte
+characters in all cases (Tatsuo, Tom)</para>
+<para>While <productname>PostgreSQL</> has been moving in this direction for
+some time, the checks are now applied uniformly to all encodings and all
+textual input, and are now always errors not merely warnings.  This change
+defends against SQL-injection attacks of the type described in CVE-2006-2313.
 </para></listitem>
-<listitem><para>Various bitmap scan improvements (Tom)</para></listitem>
-<listitem><para>Have <application>pg_dumpall</> dumping pre-8.1 databases with identical user
-and group names create a single role with <literal>LOGIN</> permission (Tom)</para></listitem>
-<listitem><para>Fix <application>pg_restore</> <literal>-n</> (Tom)</para></listitem>
-<listitem><para>Fix <literal>SIMILAR TO</> for alternative values (Tom)</para></listitem>
-<listitem><para>Fix <command>SELECT INTO</> and <command>CREATE TABLE AS</> to create tables in the default
-tablespace, not the base directory (Kris Jurka)</para></listitem>
-<listitem><para>Fix problem with password prompting on some Win32 systems (Robert
-Kinberg)</para></listitem>
+
+<listitem><para>Reject unsafe uses of <literal>\'</> in string literals</para>
+<para>As a server-side defense against SQL-injection attacks of the type
+described in CVE-2006-2314, the server now only accepts <literal>''</> and not
+<literal>\'</> as a representation of ASCII single quote in SQL string
+literals.  By default, <literal>\'</> is rejected only when
+<varname>client_encoding</> is set to a client-only encoding (SJIS, BIG5, GBK,
+GB18030, or UHC), which is the scenario in which SQL injection is possible.
+A new configuration parameter <varname>backslash_quote</> is available to
+adjust this behavior when needed.  Note that full security against
+CVE-2006-2314 may require client-side changes; the purpose of
+<varname>backslash_quote</> is in part to make it obvious that insecure
+clients are insecure.
+</para></listitem>
+
+<listitem><para>Modify <application>libpq</>'s string-escaping routines to be
+aware of encoding considerations and
+<varname>standard_conforming_strings</></para>
+<para>This fixes <application>libpq</>-using applications for the security
+issues described in CVE-2006-2313 and CVE-2006-2314, and also future-proofs
+them against the planned changeover to SQL-standard string literal syntax.
+Applications that use multiple <productname>PostgreSQL</> connections
+concurrently should migrate to <function>PQescapeStringConn()</> and
+<function>PQescapeByteaConn()</> to ensure that escaping is done correctly
+for the settings in use in each database connection.  Applications that
+do string escaping <quote>by hand</> should be modified to rely on library
+routines instead.
+</para></listitem>
+
+<listitem><para>Fix weak key selection in pgcrypto (Marko Kreen)</para>
+<para>Errors in fortuna PRNG reseeding logic could cause a predictable
+session key to be selected by <function>pgp_sym_encrypt()</> in some cases.
+This only affects non-OpenSSL-using builds.
+</para></listitem>
+
+<listitem><para>Fix some incorrect encoding conversion functions</para>
+<para><function>win1251_to_iso</>, <function>win866_to_iso</>,
+<function>euc_tw_to_big5</>, <function>euc_tw_to_mic</>,
+<function>mic_to_euc_tw</> were all broken to varying
+extents.
+</para></listitem>
+
+<listitem><para>Clean up stray remaining uses of <literal>\'</> in strings
+(Bruce, Jan)</para></listitem>
+
+<listitem><para>Make autovacuum visible in <structname>pg_stat_activity</>
+(Alvaro)</para></listitem>
+
+<listitem><para>Disable <literal>full_page_writes</> (Tom)</para>
+<para>In certain cases, having <literal>full_page_writes</> off would cause
+crash recovery to fail.  A proper fix will appear in 8.2; for now it's just
+disabled.
+</para></listitem>
+
+<listitem><para>Various planner fixes, particularly for bitmap index scans and
+MIN/MAX optimization (Tom)</para></listitem>
+
+<listitem><para>Fix incorrect optimization in merge join (Tom)</para>
+<para>Outer joins could sometimes emit multiple copies of unmatched rows.
+</para></listitem>
+
+<listitem><para>Fix crash from using and modifying a plpgsql function in the
+same transaction</para></listitem>
+
+<listitem><para>Fix WAL replay for case where a btree index has been
+truncated</para></listitem>
+
+<listitem><para>Fix <literal>SIMILAR TO</> for patterns involving
+<literal>|</> (Tom)</para></listitem>
+
+<listitem><para>Fix <command>SELECT INTO</> and <command>CREATE TABLE AS</> to
+create tables in the default tablespace, not the base directory (Kris
+Jurka)</para></listitem>
+
+<listitem><para>Fix server to use custom DH SSL parameters correctly (Michael
+Fuhr)</para></listitem>
+
+<listitem><para>Improve qsort performance (Dann Corbit)</para>
+<para>Currently this code is only used on Solaris.
+</para></listitem>
+
 <listitem><para>Fix for Bonjour on Intel Macs (Ashley Clark)</para></listitem>
+
+<listitem><para>Fix various minor memory leaks</para></listitem>
+
+<listitem><para>Fix problem with password prompting on some Win32 systems
+(Robert Kinberg)</para></listitem>
+
+<listitem><para>Improve <application>pg_dump</>'s handling of default values
+for domains</para></listitem>
+
+<listitem><para>Fix <application>pg_dumpall</> to handle identically-named
+users and groups reasonably (only possible when dumping from a pre-8.1 server)
+(Tom)</para>
+<para>The user and group will be merged into a single role with
+<literal>LOGIN</> permission.  Formerly the merged role wouldn't have
+<literal>LOGIN</> permission, making it unusable as a user.
+</para></listitem>
+
+<listitem><para>Fix <application>pg_restore</> <literal>-n</> to work as
+documented (Tom)</para></listitem>
 </itemizedlist>
 
    </sect2>
@@ -2494,6 +2601,118 @@ psql -t -f fixseq.sql db1 | psql -e db1
      </itemizedlist>
     </sect3>
   
+   </sect2>
+  </sect1>
+
+  <sect1 id="release-8-0-8">
+   <title>Release 8.0.8</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-05-23</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.7,
+    including patches for extremely serious security issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.8</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+    <para>
+     Full security against the SQL-injection attacks described in
+     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     code.  If you have applications that embed untrustworthy strings
+     into SQL commands, you should examine them as soon as possible to
+     ensure that they are using recommended escaping techniques.  In
+     most cases, applications should be using subroutines provided by
+     libraries or drivers (such as <application>libpq</>'s
+     <function>PQescapeStringConn()</>) to perform string escaping,
+     rather than relying on <foreignphrase>ad hoc</> code to do it.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Change the server to reject invalidly-encoded multibyte
+characters in all cases (Tatsuo, Tom)</para>
+<para>While <productname>PostgreSQL</> has been moving in this direction for
+some time, the checks are now applied uniformly to all encodings and all
+textual input, and are now always errors not merely warnings.  This change
+defends against SQL-injection attacks of the type described in CVE-2006-2313.
+</para></listitem>
+
+<listitem><para>Reject unsafe uses of <literal>\'</> in string literals</para>
+<para>As a server-side defense against SQL-injection attacks of the type
+described in CVE-2006-2314, the server now only accepts <literal>''</> and not
+<literal>\'</> as a representation of ASCII single quote in SQL string
+literals.  By default, <literal>\'</> is rejected only when
+<varname>client_encoding</> is set to a client-only encoding (SJIS, BIG5, GBK,
+GB18030, or UHC), which is the scenario in which SQL injection is possible.
+A new configuration parameter <varname>backslash_quote</> is available to
+adjust this behavior when needed.  Note that full security against
+CVE-2006-2314 may require client-side changes; the purpose of
+<varname>backslash_quote</> is in part to make it obvious that insecure
+clients are insecure.
+</para></listitem>
+
+<listitem><para>Modify <application>libpq</>'s string-escaping routines to be
+aware of encoding considerations and
+<varname>standard_conforming_strings</></para>
+<para>This fixes <application>libpq</>-using applications for the security
+issues described in CVE-2006-2313 and CVE-2006-2314, and also future-proofs
+them against the planned changeover to SQL-standard string literal syntax.
+Applications that use multiple <productname>PostgreSQL</> connections
+concurrently should migrate to <function>PQescapeStringConn()</> and
+<function>PQescapeByteaConn()</> to ensure that escaping is done correctly
+for the settings in use in each database connection.  Applications that
+do string escaping <quote>by hand</> should be modified to rely on library
+routines instead.
+</para></listitem>
+
+<listitem><para>Fix some incorrect encoding conversion functions</para>
+<para><function>win1251_to_iso</>, <function>alt_to_iso</>,
+<function>euc_tw_to_big5</>, <function>euc_tw_to_mic</>,
+<function>mic_to_euc_tw</> were all broken to varying
+extents.
+</para></listitem>
+
+<listitem><para>Clean up stray remaining uses of <literal>\'</> in strings
+(Bruce, Jan)</para></listitem>
+
+<listitem><para>Fix bug that sometimes caused OR'd index scans to
+miss rows they should have returned</para></listitem>
+
+<listitem><para>Fix WAL replay for case where a btree index has been
+truncated</para></listitem>
+
+<listitem><para>Fix <literal>SIMILAR TO</> for patterns involving
+<literal>|</> (Tom)</para></listitem>
+
+<listitem><para>Fix <command>SELECT INTO</> and <command>CREATE TABLE AS</> to
+create tables in the default tablespace, not the base directory (Kris
+Jurka)</para></listitem>
+
+<listitem><para>Fix server to use custom DH SSL parameters correctly (Michael
+Fuhr)</para></listitem>
+
+<listitem><para>Fix for Bonjour on Intel Macs (Ashley Clark)</para></listitem>
+
+<listitem><para>Fix various minor memory leaks</para></listitem>
+
+<listitem><para>Fix problem with password prompting on some Win32 systems
+(Robert Kinberg)</para></listitem>
+</itemizedlist>
+
    </sect2>
   </sect1>
  
@@ -5537,6 +5756,111 @@ typedefs (Michael)</para></listitem>
   
    </sect2>
   </sect1>
+
+  <sect1 id="release-7-4-13">
+   <title>Release 7.4.13</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-05-23</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.12,
+    including patches for extremely serious security issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.13</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
+    </para>
+
+    <para>
+     Full security against the SQL-injection attacks described in
+     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     code.  If you have applications that embed untrustworthy strings
+     into SQL commands, you should examine them as soon as possible to
+     ensure that they are using recommended escaping techniques.  In
+     most cases, applications should be using subroutines provided by
+     libraries or drivers (such as <application>libpq</>'s
+     <function>PQescapeStringConn()</>) to perform string escaping,
+     rather than relying on <foreignphrase>ad hoc</> code to do it.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Change the server to reject invalidly-encoded multibyte
+characters in all cases (Tatsuo, Tom)</para>
+<para>While <productname>PostgreSQL</> has been moving in this direction for
+some time, the checks are now applied uniformly to all encodings and all
+textual input, and are now always errors not merely warnings.  This change
+defends against SQL-injection attacks of the type described in CVE-2006-2313.
+</para></listitem>
+
+<listitem><para>Reject unsafe uses of <literal>\'</> in string literals</para>
+<para>As a server-side defense against SQL-injection attacks of the type
+described in CVE-2006-2314, the server now only accepts <literal>''</> and not
+<literal>\'</> as a representation of ASCII single quote in SQL string
+literals.  By default, <literal>\'</> is rejected only when
+<varname>client_encoding</> is set to a client-only encoding (SJIS, BIG5, GBK,
+GB18030, or UHC), which is the scenario in which SQL injection is possible.
+A new configuration parameter <varname>backslash_quote</> is available to
+adjust this behavior when needed.  Note that full security against
+CVE-2006-2314 may require client-side changes; the purpose of
+<varname>backslash_quote</> is in part to make it obvious that insecure
+clients are insecure.
+</para></listitem>
+
+<listitem><para>Modify <application>libpq</>'s string-escaping routines to be
+aware of encoding considerations and
+<varname>standard_conforming_strings</></para>
+<para>This fixes <application>libpq</>-using applications for the security
+issues described in CVE-2006-2313 and CVE-2006-2314, and also future-proofs
+them against the planned changeover to SQL-standard string literal syntax.
+Applications that use multiple <productname>PostgreSQL</> connections
+concurrently should migrate to <function>PQescapeStringConn()</> and
+<function>PQescapeByteaConn()</> to ensure that escaping is done correctly
+for the settings in use in each database connection.  Applications that
+do string escaping <quote>by hand</> should be modified to rely on library
+routines instead.
+</para></listitem>
+
+<listitem><para>Fix some incorrect encoding conversion functions</para>
+<para><function>win1251_to_iso</>, <function>alt_to_iso</>,
+<function>euc_tw_to_big5</>, <function>euc_tw_to_mic</>,
+<function>mic_to_euc_tw</> were all broken to varying
+extents.
+</para></listitem>
+
+<listitem><para>Clean up stray remaining uses of <literal>\'</> in strings
+(Bruce, Jan)</para></listitem>
+
+<listitem><para>Fix bug that sometimes caused OR'd index scans to
+miss rows they should have returned</para></listitem>
+
+<listitem><para>Fix WAL replay for case where a btree index has been
+truncated</para></listitem>
+
+<listitem><para>Fix <literal>SIMILAR TO</> for patterns involving
+<literal>|</> (Tom)</para></listitem>
+
+<listitem><para>Fix server to use custom DH SSL parameters correctly (Michael
+Fuhr)</para></listitem>
+
+<listitem><para>Fix for Bonjour on Intel Macs (Ashley Clark)</para></listitem>
+
+<listitem><para>Fix various minor memory leaks</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-7-4-12">
    <title>Release 7.4.12</title>
@@ -8346,6 +8670,98 @@ DROP SCHEMA information_schema CASCADE;
   </sect3>
   </sect2>
  </sect1>
+
+  <sect1 id="release-7-3-15">
+   <title>Release 7.3.15</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-05-23</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.14,
+    including patches for extremely serious security issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.15</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+    <para>
+     Full security against the SQL-injection attacks described in
+     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     code.  If you have applications that embed untrustworthy strings
+     into SQL commands, you should examine them as soon as possible to
+     ensure that they are using recommended escaping techniques.  In
+     most cases, applications should be using subroutines provided by
+     libraries or drivers (such as <application>libpq</>'s
+     <function>PQescapeStringConn()</>) to perform string escaping,
+     rather than relying on <foreignphrase>ad hoc</> code to do it.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Change the server to reject invalidly-encoded multibyte
+characters in all cases (Tatsuo, Tom)</para>
+<para>While <productname>PostgreSQL</> has been moving in this direction for
+some time, the checks are now applied uniformly to all encodings and all
+textual input, and are now always errors not merely warnings.  This change
+defends against SQL-injection attacks of the type described in CVE-2006-2313.
+</para></listitem>
+
+<listitem><para>Reject unsafe uses of <literal>\'</> in string literals</para>
+<para>As a server-side defense against SQL-injection attacks of the type
+described in CVE-2006-2314, the server now only accepts <literal>''</> and not
+<literal>\'</> as a representation of ASCII single quote in SQL string
+literals.  By default, <literal>\'</> is rejected only when
+<varname>client_encoding</> is set to a client-only encoding (SJIS, BIG5, GBK,
+GB18030, or UHC), which is the scenario in which SQL injection is possible.
+A new configuration parameter <varname>backslash_quote</> is available to
+adjust this behavior when needed.  Note that full security against
+CVE-2006-2314 may require client-side changes; the purpose of
+<varname>backslash_quote</> is in part to make it obvious that insecure
+clients are insecure.
+</para></listitem>
+
+<listitem><para>Modify <application>libpq</>'s string-escaping routines to be
+aware of encoding considerations</para>
+<para>This fixes <application>libpq</>-using applications for the security
+issues described in CVE-2006-2313 and CVE-2006-2314.
+Applications that use multiple <productname>PostgreSQL</> connections
+concurrently should migrate to <function>PQescapeStringConn()</> and
+<function>PQescapeByteaConn()</> to ensure that escaping is done correctly
+for the settings in use in each database connection.  Applications that
+do string escaping <quote>by hand</> should be modified to rely on library
+routines instead.
+</para></listitem>
+
+<listitem><para>Fix some incorrect encoding conversion functions</para>
+<para><function>win1251_to_iso</>, <function>alt_to_iso</>,
+<function>euc_tw_to_big5</>, <function>euc_tw_to_mic</>,
+<function>mic_to_euc_tw</> were all broken to varying
+extents.
+</para></listitem>
+
+<listitem><para>Clean up stray remaining uses of <literal>\'</> in strings
+(Bruce, Jan)</para></listitem>
+
+<listitem><para>Fix server to use custom DH SSL parameters correctly (Michael
+Fuhr)</para></listitem>
+
+<listitem><para>Fix various minor memory leaks</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
  
   <sect1 id="release-7-3-14">
    <title>Release 7.3.14</title>
