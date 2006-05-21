@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.39.2.2 2005/02/08 18:22:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.39.2.3 2006/05/21 19:56:41 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -387,7 +387,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						while (*cp1 != '\0')
 						{
 							if (*cp1 == '\\' || *cp1 == '\'')
-								*cp2++ = '\\';
+								*cp2++ = *cp1;
 							*cp2++ = *cp1++;
 						}
 						strcpy(cp2, "'::refcursor");

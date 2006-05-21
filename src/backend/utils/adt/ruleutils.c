@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.124.2.2 2003/10/02 22:25:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.124.2.3 2006/05/21 19:56:40 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2563,7 +2563,7 @@ get_const_expr(Const *constval, deparse_context *context)
 
 				if (ch == '\'' || ch == '\\')
 				{
-					appendStringInfoChar(buf, '\\');
+					appendStringInfoChar(buf, ch);
 					appendStringInfoChar(buf, ch);
 				}
 				else if (((unsigned char) ch) < ((unsigned char) ' '))

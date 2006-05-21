@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.122.2.1 2003/11/30 20:52:37 joe Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.122.2.2 2006/05/21 19:56:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 		}
 		else if (*vp == '\'')
 		{
-			rp[0] = '\\';
+			rp[0] = '\'';
 			rp[1] = '\'';
 			rp += 2;
 		}

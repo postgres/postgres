@@ -33,7 +33,7 @@
 # 
 #
 ##############################################################################
-# $Id: DBMirror.pl,v 1.3.2.2 2002/12/05 21:04:14 momjian Exp $ 
+# $Id: DBMirror.pl,v 1.3.2.3 2006/05/21 19:56:40 momjian Exp $ 
 #
 ##############################################################################
 
@@ -412,7 +412,7 @@ sub mirrorInsert($$$$$) {
       if(defined $recordValues{$column}) {
 	my $quotedValue = $recordValues{$column};
 	$quotedValue =~ s/\\/\\\\/g;
-	$quotedValue =~ s/'/\\'/g;
+	$quotedValue =~ s/'/''/g;
 	$valuesQuery .= "'$quotedValue'";
       }
       else {
@@ -595,7 +595,7 @@ sub mirrorUpdate($$$$$) {
       if(defined $currentValue ) {
 	$quotedValue = $currentValue;
 	$quotedValue =~ s/\\/\\\\/g;
-	$quotedValue =~ s/'/\\'/g;
+	$quotedValue =~ s/'/''/g;
 	$updateQuery .= "'$quotedValue'";
 	}
       else {
@@ -617,7 +617,7 @@ sub mirrorUpdate($$$$$) {
       if(defined $currentValue) {
 	$quotedValue = $currentValue;
 	$quotedValue =~ s/\\/\\\\/g;
-        $quotedValue =~ s/'/\\'/g;
+        $quotedValue =~ s/'/''/g;
 	$updateQuery .= "'$quotedValue'";
       }
       else {

@@ -120,16 +120,16 @@ def comp_func(pgcnx):
 	print "-- same order as the columns of EMP."
 	print
 	print "CREATE FUNCTION new_emp() RETURNS EMP"
-	print "   AS 'SELECT \'None\'::text AS name,"
+	print "   AS 'SELECT ''None''::text AS name,"
 	print "              1000 AS salary,"
 	print "              25 AS age,"
-	print "              \'none\'::varchar(16) AS dept'"
+	print "              ''none''::varchar(16) AS dept'"
 	print "   LANGUAGE 'sql'"
 	pgcnx.query("""CREATE FUNCTION new_emp() RETURNS EMP
-        AS 'SELECT \\\'None\\\'::text AS name,
+        AS 'SELECT ''None''::text AS name,
             1000 AS salary,
             25 AS age,
-            \\\'none\\\'::varchar(16) AS dept'
+            ''none''::varchar(16) AS dept'
         LANGUAGE 'sql'""")
 	wait_key()
 	print

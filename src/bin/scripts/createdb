@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.28 2002/10/18 22:05:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.28.2.1 2006/05/21 19:56:41 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -181,7 +181,7 @@ fi
 
 
 # escape the quotes
-dbpath=`echo "$dbpath" | sed "s/'/\\\\\'/g"`
+dbpath=`echo "$dbpath" | sed "s/'/\'\'/g"`
 dbname=`echo "$dbname" | sed 's/\"/\\\"/g'`
 TEMPLATE=`echo "$TEMPLATE" | sed 's/\"/\"\"/g'`
 
@@ -201,7 +201,7 @@ fi
 # Insert comment as well, if requested
 [ -z "$dbcomment" ] && exit 0
 
-dbcomment=`echo "$dbcomment" | sed "s/'/\\\\\'/g"`
+dbcomment=`echo "$dbcomment" | sed "s/'/\'\'/g"`
 
 ${PATHNAME}psql $PSQLOPT -d "$dbname" -c "SET autocommit TO 'on';COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
 if [ "$?" -ne 0 ]; then

@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12.2.7 2003/08/07 17:56:27 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12.2.8 2006/05/21 19:56:41 momjian Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -936,7 +936,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			{
 			    case '\\':
 			    case '\'':
-					p_output.append('\\');
+					p_output.append(c);
 					p_output.append(c);
 					break;
 			    case '\0':
