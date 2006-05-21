@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.8 2004/02/02 03:07:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.9 2006/05/21 20:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3473,8 +3473,8 @@ make_greater_string(const Const *str_const)
 			if (datatype != BYTEAOID)
 			{
 				/* do not generate invalid encoding sequences */
-				if (pg_verifymbstr((const unsigned char *) workstr,
-								   len) != NULL)
+				if (!pg_verifymbstr((const char *) workstr,
+									len, true))
 					continue;
 				workstr_const = string_to_const(workstr, datatype);
 			}

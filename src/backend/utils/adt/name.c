@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.41 2002/09/04 20:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.41.2.1 2006/05/21 20:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,13 +44,8 @@ namein(PG_FUNCTION_ARGS)
 	char	   *s = PG_GETARG_CSTRING(0);
 	NameData   *result;
 	int			len;
-	char	   *ermsg;
 
-	/* veryfy encoding */
 	len = strlen(s);
-	if ((ermsg = pg_verifymbstr(s, len)))
-		elog(ERROR, "%s", ermsg);
-
 	len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 
 	result = (NameData *) palloc(NAMEDATALEN);

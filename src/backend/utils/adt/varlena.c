@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92.2.4 2005/12/22 22:50:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92.2.5 2006/05/21 20:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,12 +217,7 @@ textin(PG_FUNCTION_ARGS)
 	text	   *result;
 	int			len;
 
-	char	   *ermsg;
-
 	len = strlen(inputText) + VARHDRSZ;
-
-	if ((ermsg = pg_verifymbstr(inputText, len - VARHDRSZ)))
-		elog(ERROR, "%s", ermsg);
 
 	result = (text *) palloc(len);
 	VARATT_SIZEP(result) = len;

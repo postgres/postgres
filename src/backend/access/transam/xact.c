@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135.2.2 2004/08/11 04:08:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.135.2.3 2006/05/21 20:07:11 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1098,9 +1098,14 @@ AbortTransaction(void)
 
 	/*
 	 * check the current transaction state
+	 *
+	 * reduced to DEBUG2 because this is expected when rejecting an
+	 * invalidly-encoded query outside a transaction block.  PG 8.0
+	 * and up fix it better, but it's not worth back-porting those
+	 * changes to 7.3.
 	 */
 	if (s->state != TRANS_INPROGRESS)
-		elog(WARNING, "AbortTransaction and not in in-progress state");
+		elog(DEBUG2, "AbortTransaction and not in in-progress state");
 
 	/*
 	 * set the current transaction state information appropriately during

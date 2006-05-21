@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.95 2002/09/18 21:35:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.95.2.1 2006/05/21 20:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,17 +73,10 @@ bpcharin(PG_FUNCTION_ARGS)
 	size_t		len,
 				maxlen;
 	int			i;
-
 	int			charlen;		/* number of charcters in the input string */
-	char	   *ermsg;
 
 	len = strlen(s);
-
-	if ((ermsg = pg_verifymbstr(s, len)))
-		elog(ERROR, "%s", ermsg);
-
 	charlen = pg_mbstrlen(s);
-
 
 	/* If typmod is -1 (or invalid), use the actual string length */
 	if (atttypmod < (int32) VARHDRSZ)
@@ -349,13 +342,7 @@ varcharin(PG_FUNCTION_ARGS)
 	size_t		len,
 				maxlen;
 
-	char	   *ermsg;
-
 	len = strlen(s);
-
-	if ((ermsg = pg_verifymbstr(s, len)))
-		elog(ERROR, "%s", ermsg);
-
 	maxlen = atttypmod - VARHDRSZ;
 
 	if (atttypmod >= (int32) VARHDRSZ && len > maxlen)

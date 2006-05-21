@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.177.2.2 2003/04/25 22:14:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.177.2.3 2006/05/21 20:07:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,7 @@ static StringInfoData attribute_buf;
 
 static int	client_encoding;
 static int	server_encoding;
+static int	server_max_length;
 
 /*
  * Internal communications functions
@@ -388,6 +389,7 @@ DoCopy(const CopyStmt *stmt)
 
 	client_encoding = pg_get_client_encoding();
 	server_encoding = GetDatabaseEncoding();
+	server_max_length = pg_database_encoding_max_length();
 
 	if (is_from)
 	{							/* copy from file to database */
@@ -1471,7 +1473,8 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 
 copy_eof:
 
-	if (client_encoding != server_encoding)
+	if (client_encoding != server_encoding ||
+		server_max_length > 1)
 	{
 		cvt = (char *) pg_client_to_server((unsigned char *) attribute_buf.data,
 										   attribute_buf.len);
