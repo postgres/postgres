@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.57 2006/03/05 15:58:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.58 2006/05/21 20:05:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,10 +49,7 @@ namein(PG_FUNCTION_ARGS)
 	NameData   *result;
 	int			len;
 
-	/* verify encoding */
 	len = strlen(s);
-	pg_verifymbstr(s, len, false);
-
 	len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 
 	result = (NameData *) palloc0(NAMEDATALEN);

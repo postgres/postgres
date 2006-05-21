@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.14 2006/03/05 15:58:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.15 2006/05/21 20:05:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ utf8_to_koi8r(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmapKOI8R,
-			   sizeof(ULmapKOI8R) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmapKOI8R) / sizeof(pg_utf_to_local), PG_KOI8R, len);
 
 	PG_RETURN_VOID();
 }

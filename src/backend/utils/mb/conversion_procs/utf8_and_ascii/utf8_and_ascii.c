@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_ascii/utf8_and_ascii.c,v 1.12 2006/03/05 15:58:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_ascii/utf8_and_ascii.c,v 1.13 2006/05/21 20:05:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ ascii_to_utf8(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len >= 0);
 
+	/* this looks wrong, but basically we're just rejecting high-bit-set */
 	pg_ascii2mic(src, dest, len);
 
 	PG_RETURN_VOID();
@@ -59,6 +60,7 @@ utf8_to_ascii(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_SQL_ASCII);
 	Assert(len >= 0);
 
+	/* this looks wrong, but basically we're just rejecting high-bit-set */
 	pg_mic2ascii(src, dest, len);
 
 	PG_RETURN_VOID();

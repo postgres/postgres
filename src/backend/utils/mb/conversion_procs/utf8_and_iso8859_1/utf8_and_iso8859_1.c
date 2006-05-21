@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.15 2006/03/05 15:58:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.16 2006/05/21 20:05:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,11 @@ iso8859_1_to_utf8(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len >= 0);
 
-	while (len-- > 0 && (c = *src++))
+	while (len > 0)
 	{
+		c = *src;
+		if (c == 0)
+			report_invalid_encoding(PG_LATIN1, (const char *) src, len);
 		if (!IS_HIGHBIT_SET(c))
 			*dest++ = c;
 		else
@@ -53,6 +56,8 @@ iso8859_1_to_utf8(PG_FUNCTION_ARGS)
 			*dest++ = (c >> 6) | 0xc0;
 			*dest++ = (c & 0x003f) | HIGHBIT;
 		}
+		src++;
+		len--;
 	}
 	*dest = '\0';
 
@@ -66,32 +71,44 @@ utf8_to_iso8859_1(PG_FUNCTION_ARGS)
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
 	unsigned short c,
-				c1,
-				c2;
+				c1;
 
 	Assert(PG_GETARG_INT32(0) == PG_UTF8);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN1);
 	Assert(len >= 0);
 
-	while (len >= 0 && (c = *src++))
+	while (len > 0)
 	{
-		if ((c & 0xe0) == 0xc0)
-		{
-			c1 = c & 0x1f;
-			c2 = *src++ & 0x3f;
-			*dest = c1 << 6;
-			*dest++ |= c2;
-			len -= 2;
-		}
-		else if ((c & 0xe0) == 0xe0)
-			ereport(WARNING,
-					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-					 errmsg("ignoring unconvertible UTF-8 character 0x%04x",
-							c)));
-		else
+		c = *src;
+		if (c == 0)
+			report_invalid_encoding(PG_UTF8, (const char *) src, len);
+		/* fast path for ASCII-subset characters */
+		if (!IS_HIGHBIT_SET(c))
 		{
 			*dest++ = c;
+			src++;
 			len--;
+		}
+		else
+		{
+			int		l = pg_utf_mblen(src);
+
+			if (l > len || !pg_utf8_islegal(src, l))
+				report_invalid_encoding(PG_UTF8, (const char *) src, len);
+			if (l != 2)
+				report_untranslatable_char(PG_UTF8, PG_LATIN1,
+										   (const char *) src, len);
+			c1 = src[1] & 0x3f;
+			c = ((c & 0x1f) << 6) | c1;
+			if (c >= 0x80 && c <= 0xff)
+			{
+				*dest++ = (unsigned char) c;
+				src += 2;
+				len -= 2;
+			}
+			else
+				report_untranslatable_char(PG_UTF8, PG_LATIN1,
+										   (const char *) src, len);
 		}
 	}
 	*dest = '\0';

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.115 2006/03/05 15:58:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.116 2006/05/21 20:05:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,6 @@ bpchar_input(const char *s, size_t len, int32 atttypmod)
 	BpChar	   *result;
 	char	   *r;
 	size_t		maxlen;
-
-	/* verify encoding */
-	pg_verifymbstr(s, len, false);
 
 	/* If typmod is -1 (or invalid), use the actual string length */
 	if (atttypmod < (int32) VARHDRSZ)
@@ -392,9 +389,6 @@ varchar_input(const char *s, size_t len, int32 atttypmod)
 {
 	VarChar    *result;
 	size_t		maxlen;
-
-	/* verify encoding */
-	pg_verifymbstr(s, len, false);
 
 	maxlen = atttypmod - VARHDRSZ;
 

@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.54 2006/02/18 16:15:22 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.55 2006/05/21 20:05:19 tgl Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -19,17 +19,21 @@
 
 /*
  * conversion to pg_wchar is done by "table driven."
- * to add an encoding support, define mb2wchar_with_len(), mblen()
+ * to add an encoding support, define mb2wchar_with_len(), mblen(), dsplen()
  * for the particular encoding. Note that if the encoding is only
  * supported in the client, you don't need to define
  * mb2wchar_with_len() function (SJIS is the case).
  *
+ * These functions generally assume that their input is validly formed.
+ * The "verifier" functions, further down in the file, have to be more
+ * paranoid.  We expect that mblen() does not need to examine more than
+ * the first byte of the character to discover the correct length.
+ *
  * Note: for the display output of psql to work properly, the return values
- * of these functions must conform to the Unicode standard. In particular
+ * of the dsplen functions must conform to the Unicode standard. In particular
  * the NUL character is zero width and control characters are generally
  * width -1. It is recommended that non-ASCII encodings refer their ASCII
- * subset to the ASCII routines to ensure consistancy.
- *
+ * subset to the ASCII routines to ensure consistency.
  */
 
 /*
@@ -109,7 +113,7 @@ static int	pg_euc2wchar_with_len
 	return cnt;
 }
 
-static int
+static inline int
 pg_euc_mblen(const unsigned char *s)
 {
 	int			len;
@@ -125,7 +129,7 @@ pg_euc_mblen(const unsigned char *s)
 	return len;
 }
 
-static int
+static inline int
 pg_euc_dsplen(const unsigned char *s)
 {
 	int			len;
@@ -316,7 +320,7 @@ pg_euctw_mblen(const unsigned char *s)
 	else if (IS_HIGHBIT_SET(*s))
 		len = 2;
 	else
-		len = pg_ascii_dsplen(s);
+		len = 1;
 	return len;
 }
 
@@ -409,7 +413,7 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 }
 
 /*
- * returns the byte length of a UTF8 word pointed to by s
+ * returns the byte length of a UTF8 character pointed to by s
  */
 int
 pg_utf_mblen(const unsigned char *s)
@@ -680,7 +684,20 @@ pg_mule_mblen(const unsigned char *s)
 static int
 pg_mule_dsplen(const unsigned char *s)
 {
-	return pg_ascii_dsplen(s);					/* XXX fix me! */
+	int len;
+
+	if (IS_LC1(*s))
+		len = 1;
+	else if (IS_LCPRV1(*s))
+		len = 1;
+	else if (IS_LC2(*s))
+		len = 2;
+	else if (IS_LCPRV2(*s))
+		len = 2;
+	else
+		len = 1;	/* assume ASCII */
+
+	return len;
 }
 
 /*
@@ -860,47 +877,438 @@ pg_gb18030_dsplen(const unsigned char *s)
 	return len;
 }
 
+/*
+ *-------------------------------------------------------------------
+ * multibyte sequence validators
+ *
+ * These functions accept "s", a pointer to the first byte of a string,
+ * and "len", the remaining length of the string.  If there is a validly
+ * encoded character beginning at *s, return its length in bytes; else
+ * return -1.
+ *
+ * The functions can assume that len > 0 and that *s != '\0', but they must
+ * test for and reject zeroes in any additional bytes of a multibyte character.
+ *
+ * Note that this definition allows the function for a single-byte
+ * encoding to be just "return 1".
+ *-------------------------------------------------------------------
+ */
 
+static int
+pg_ascii_verifier(const unsigned char *s, int len)
+{
+	return 1;
+}
+
+#define IS_EUC_RANGE_VALID(c)	((c) >= 0xa1 && (c) <= 0xfe)
+
+static int
+pg_eucjp_verifier(const unsigned char *s, int len)
+{
+	int			l;
+	unsigned char c1, c2;
+
+	c1 = *s++;
+
+	switch (c1)
+	{
+		case SS2:		/* JIS X 0201 */
+			l = 2;
+			if (l > len)
+				return -1;
+			c2 = *s++;
+			if (c2 < 0xa1 || c2 > 0xdf)
+				return -1;
+			break;
+
+		case SS3:		/* JIS X 0212 */
+			l = 3;
+			if (l > len)
+				return -1;
+			c2 = *s++;
+			if (!IS_EUC_RANGE_VALID(c2))
+				return -1;
+			c2 = *s++;
+			if (!IS_EUC_RANGE_VALID(c2))
+				return -1;
+			break;
+
+		default:
+			if (IS_HIGHBIT_SET(c1))		/* JIS X 0208? */
+			{
+				l = 2;
+				if (l > len)
+					return -1;
+				if (!IS_EUC_RANGE_VALID(c1))
+					return -1;
+				c2 = *s++;
+				if (!IS_EUC_RANGE_VALID(c2))
+					return -1;
+			}
+			else		/* must be ASCII */
+			{
+				l = 1;
+			}
+			break;
+	}
+
+	return l;
+}
+
+static int
+pg_euckr_verifier(const unsigned char *s, int len)
+{
+	int			l;
+	unsigned char c1, c2;
+
+	c1 = *s++;
+
+	if (IS_HIGHBIT_SET(c1))
+	{
+		l = 2;
+		if (l > len)
+			return -1;
+		if (!IS_EUC_RANGE_VALID(c1))
+			return -1;
+		c2 = *s++;
+		if (!IS_EUC_RANGE_VALID(c2))
+			return -1;
+	}
+	else		/* must be ASCII */
+	{
+		l = 1;
+	}
+
+	return l;
+}
+
+/* EUC-CN byte sequences are exactly same as EUC-KR */
+#define pg_euccn_verifier	pg_euckr_verifier
+
+static int
+pg_euctw_verifier(const unsigned char *s, int len)
+{
+	int			l;
+	unsigned char c1, c2;
+
+	c1 = *s++;
+
+	switch (c1)
+	{
+		case SS2:		/* CNS 11643 Plane 1-7 */
+			l = 4;
+			if (l > len)
+				return -1;
+			c2 = *s++;
+			if (c2 < 0xa1 || c2 > 0xa7)
+				return -1;
+			c2 = *s++;
+			if (!IS_EUC_RANGE_VALID(c2))
+				return -1;
+			c2 = *s++;
+			if (!IS_EUC_RANGE_VALID(c2))
+				return -1;
+			break;
+
+		case SS3:		/* unused */
+			return -1;
+
+		default:
+			if (IS_HIGHBIT_SET(c1))		/* CNS 11643 Plane 1 */
+			{
+				l = 2;
+				if (l > len)
+					return -1;
+				/* no further range check on c1? */
+				c2 = *s++;
+				if (!IS_EUC_RANGE_VALID(c2))
+					return -1;
+			}
+			else		/* must be ASCII */
+			{
+				l = 1;
+			}
+			break;
+	}
+	return l;
+}
+
+static int
+pg_johab_verifier(const unsigned char *s, int len)
+{
+	int l, mbl;
+	unsigned char c;
+
+	l = mbl = pg_johab_mblen(s);
+
+	if (len < l)
+		return -1;
+
+	if (!IS_HIGHBIT_SET(*s))
+		return mbl;
+
+	while (--l > 0)
+	{
+		c = *++s;
+		if (!IS_EUC_RANGE_VALID(c))
+			return -1;
+	}
+	return mbl;
+}
+
+static int
+pg_mule_verifier(const unsigned char *s, int len)
+{
+	int l, mbl;
+	unsigned char c;
+
+	l = mbl = pg_mule_mblen(s);
+
+	if (len < l)
+		return -1;
+
+	while (--l > 0)
+	{
+		c = *++s;
+		if (!IS_HIGHBIT_SET(c))
+			return -1;
+	}
+	return mbl;
+}
+
+static int
+pg_latin1_verifier(const unsigned char *s, int len)
+{
+	return 1;
+}
+
+static int
+pg_sjis_verifier(const unsigned char *s, int len)
+{
+	int l, mbl;
+	unsigned char c1, c2;
+
+	l = mbl = pg_sjis_mblen(s);
+
+	if (len < l)
+		return -1;
+
+	if (l == 1)					/* pg_sjis_mblen already verified it */
+		return mbl;
+
+	c1 = *s++;
+	c2 = *s;
+	if (!ISSJISHEAD(c1) || !ISSJISTAIL(c2))
+		return -1;
+	return mbl;
+}
+
+static int
+pg_big5_verifier(const unsigned char *s, int len)
+{
+	int l, mbl;
+
+	l = mbl = pg_big5_mblen(s);
+
+	if (len < l)
+		return -1;
+
+	while (--l > 0)
+	{
+		if (*++s == '\0')
+			return -1;
+	}
+
+	return mbl;
+}
+
+static int
+pg_gbk_verifier(const unsigned char *s, int len)
+{
+	int l, mbl;
+
+	l = mbl = pg_gbk_mblen(s);
+
+	if (len < l)
+		return -1;
+
+	while (--l > 0)
+	{
+		if (*++s == '\0')
+			return -1;
+	}
+
+	return mbl;
+}
+
+static int
+pg_uhc_verifier(const unsigned char *s, int len)
+{
+	int l, mbl;
+
+	l = mbl = pg_uhc_mblen(s);
+
+	if (len < l)
+		return -1;
+
+	while (--l > 0)
+	{
+		if (*++s == '\0')
+			return -1;
+	}
+
+	return mbl;
+}
+
+static int
+pg_gb18030_verifier(const unsigned char *s, int len)
+{
+	int l, mbl;
+
+	l = mbl = pg_gb18030_mblen(s);
+
+	if (len < l)
+		return -1;
+
+	while (--l > 0)
+	{
+		if (*++s == '\0')
+			return -1;
+	}
+
+	return mbl;
+}
+
+static int
+pg_utf8_verifier(const unsigned char *s, int len)
+{
+	int l = pg_utf_mblen(s);
+
+	if (len < l)
+		return -1;
+
+	if (!pg_utf8_islegal(s, l))
+		return -1;
+
+	return l;
+}
+
+/*
+ * Check for validity of a single UTF-8 encoded character
+ *
+ * This directly implements the rules in RFC3629.  The bizarre-looking
+ * restrictions on the second byte are meant to ensure that there isn't
+ * more than one encoding of a given Unicode character point; that is,
+ * you may not use a longer-than-necessary byte sequence with high order
+ * zero bits to represent a character that would fit in fewer bytes.
+ * To do otherwise is to create security hazards (eg, create an apparent
+ * non-ASCII character that decodes to plain ASCII).
+ *
+ * length is assumed to have been obtained by pg_utf_mblen(), and the
+ * caller must have checked that that many bytes are present in the buffer.
+ */
+bool
+pg_utf8_islegal(const unsigned char *source, int length)
+{
+	unsigned char a;
+
+	switch (length)
+	{
+		default:
+			/* reject lengths 5 and 6 for now */
+			return false;
+		case 4:
+			a = source[3];
+			if (a < 0x80 || a > 0xBF)
+				return false;
+			/* FALL THRU */
+		case 3:
+			a = source[2];
+			if (a < 0x80 || a > 0xBF)
+				return false;
+			/* FALL THRU */
+		case 2:
+			a = source[1];
+			switch (*source)
+			{
+				case 0xE0:
+					if (a < 0xA0 || a > 0xBF)
+						return false;
+					break;
+				case 0xED:
+					if (a < 0x80 || a > 0x9F)
+						return false;
+					break;
+				case 0xF0:
+					if (a < 0x90 || a > 0xBF)
+						return false;
+					break;
+				case 0xF4:
+					if (a < 0x80 || a > 0x8F)
+						return false;
+					break;
+				default:
+					if (a < 0x80 || a > 0xBF)
+						return false;
+					break;
+			}
+			/* FALL THRU */
+		case 1:
+			a = *source;
+			if (a >= 0x80 && a < 0xC2)
+				return false;
+			if (a > 0xF4)
+				return false;
+			break;
+	}
+	return true;
+}
+
+/*
+ *-------------------------------------------------------------------
+ * encoding info table
+ *-------------------------------------------------------------------
+ */
 pg_wchar_tbl pg_wchar_table[] = {
-	{pg_ascii2wchar_with_len, pg_ascii_mblen, pg_ascii_dsplen, 1},		/* 0; PG_SQL_ASCII	*/
-	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, 3},		/* 1; PG_EUC_JP */
-	{pg_euccn2wchar_with_len, pg_euccn_mblen, pg_euccn_dsplen, 3},		/* 2; PG_EUC_CN */
-	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, 3},		/* 3; PG_EUC_KR */
-	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, 3},		/* 4; PG_EUC_TW */
-	{pg_johab2wchar_with_len, pg_johab_mblen, pg_johab_dsplen, 3},		/* 5; PG_JOHAB */
-	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, 4},	/* 6; PG_UTF8 */
-	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, 3}, /* 7; PG_MULE_INTERNAL */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 8; PG_LATIN1 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 9; PG_LATIN2 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 10; PG_LATIN3 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 11; PG_LATIN4 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 12; PG_LATIN5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 13; PG_LATIN6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 14; PG_LATIN7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 15; PG_LATIN8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 16; PG_LATIN9 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 17; PG_LATIN10 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 18; PG_WIN1256 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 19; PG_WIN1258 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 20; PG_WIN874 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 21; PG_KOI8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 22; PG_WIN1251 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 22; PG_WIN1252 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 23; PG_WIN866 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 24; ISO-8859-5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 25; ISO-8859-6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 26; ISO-8859-7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 27; ISO-8859-8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 28; PG_WIN1250 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 29; PG_WIN1253 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 30; PG_WIN1254 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 31; PG_WIN1255 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},	/* 32; PG_WIN1257 */
-	{0, pg_sjis_mblen, pg_sjis_dsplen, 2},		/* 33; PG_SJIS */
-	{0, pg_big5_mblen, pg_big5_dsplen, 2},		/* 34; PG_BIG5 */
-	{0, pg_gbk_mblen, pg_gbk_dsplen, 2},		/* 35; PG_GBK */
-	{0, pg_uhc_mblen, pg_uhc_dsplen, 2},		/* 36; PG_UHC */
-	{0, pg_gb18030_mblen, pg_gb18030_dsplen, 2} /* 37; PG_GB18030 */
+	{pg_ascii2wchar_with_len, pg_ascii_mblen, pg_ascii_dsplen, pg_ascii_verifier, 1},		/* 0; PG_SQL_ASCII	*/
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},		/* 1; PG_EUC_JP */
+	{pg_euccn2wchar_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifier, 3},		/* 2; PG_EUC_CN */
+	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, pg_euckr_verifier, 3},		/* 3; PG_EUC_KR */
+	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, pg_euctw_verifier, 3},		/* 4; PG_EUC_TW */
+	{pg_johab2wchar_with_len, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3},		/* 5; PG_JOHAB */
+	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifier, 4},	/* 6; PG_UTF8 */
+	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, pg_mule_verifier, 3}, /* 7; PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 8; PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 9; PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 10; PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 11; PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 12; PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 13; PG_LATIN6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 14; PG_LATIN7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 15; PG_LATIN8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 16; PG_LATIN9 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 17; PG_LATIN10 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 18; PG_WIN1256 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 19; PG_WIN1258 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 20; PG_WIN874 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 21; PG_KOI8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 22; PG_WIN1251 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 22; PG_WIN1252 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 23; PG_WIN866 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 24; ISO-8859-5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 25; ISO-8859-6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 26; ISO-8859-7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 27; ISO-8859-8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 28; PG_WIN1250 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 29; PG_WIN1253 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 30; PG_WIN1254 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 31; PG_WIN1255 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},	/* 32; PG_WIN1257 */
+	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2},		/* 33; PG_SJIS */
+	{0, pg_big5_mblen, pg_big5_dsplen, pg_big5_verifier, 2},		/* 34; PG_BIG5 */
+	{0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},		/* 35; PG_GBK */
+	{0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},		/* 36; PG_UHC */
+	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 2} /* 37; PG_GB18030 */
 };
 
 /* returns the byte length of a word for mule internal code */
@@ -911,7 +1319,7 @@ pg_mic_mblen(const unsigned char *mbstr)
 }
 
 /*
- * Returns the byte length of a multibyte word.
+ * Returns the byte length of a multibyte character.
  */
 int
 pg_encoding_mblen(int encoding, const char *mbstr)
@@ -925,7 +1333,7 @@ pg_encoding_mblen(int encoding, const char *mbstr)
 }
 
 /*
- * Returns the display length of a multibyte word.
+ * Returns the display length of a multibyte character.
  */
 int
 pg_encoding_dsplen(int encoding, const char *mbstr)
@@ -939,7 +1347,23 @@ pg_encoding_dsplen(int encoding, const char *mbstr)
 }
 
 /*
- * fetch maximum length of a char encoding
+ * Verify the first multibyte character of the given string.
+ * Return its byte length if good, -1 if bad.  (See comments above for
+ * full details of the mbverify API.)
+ */
+int
+pg_encoding_verifymb(int encoding, const char *mbstr, int len)
+{
+	Assert(PG_VALID_ENCODING(encoding));
+
+	return ((encoding >= 0 &&
+			 encoding < sizeof(pg_wchar_table) / sizeof(pg_wchar_tbl)) ?
+		((*pg_wchar_table[encoding].mbverify) ((const unsigned char *) mbstr, len)) :
+	((*pg_wchar_table[PG_SQL_ASCII].mbverify) ((const unsigned char *) mbstr, len)));
+}
+
+/*
+ * fetch maximum length of a given encoding
  */
 int
 pg_encoding_max_length(int encoding)
@@ -951,142 +1375,148 @@ pg_encoding_max_length(int encoding)
 
 #ifndef FRONTEND
 
-bool
-pg_utf8_islegal(const unsigned char *source, int length)
+/*
+ * fetch maximum length of the encoding for the current database
+ */
+int
+pg_database_encoding_max_length(void)
 {
-	unsigned char a;
-	const unsigned char *srcptr = source + length;
-
-	switch (length)
-	{
-		default:
-			return false;
-			/* Everything else falls through when "true"... */
-		case 4:
-			if ((a = (*--srcptr)) < 0x80 || a > 0xBF)
-				return false;
-		case 3:
-			if ((a = (*--srcptr)) < 0x80 || a > 0xBF)
-				return false;
-		case 2:
-			if ((a = (*--srcptr)) > 0xBF)
-				return false;
-			switch (*source)
-			{
-					/* no fall-through in this inner switch */
-				case 0xE0:
-					if (a < 0xA0)
-						return false;
-					break;
-				case 0xED:
-					if (a > 0x9F)
-						return false;
-					break;
-				case 0xF0:
-					if (a < 0x90)
-						return false;
-					break;
-				case 0xF4:
-					if (a > 0x8F)
-						return false;
-					break;
-				default:
-					if (a < 0x80)
-						return false;
-			}
-
-		case 1:
-			if (*source >= 0x80 && *source < 0xC2)
-				return false;
-	}
-	if (*source > 0xF4)
-		return false;
-	return true;
+	return pg_wchar_table[GetDatabaseEncoding()].maxmblen;
 }
 
+/*
+ * Verify mbstr to make sure that it is validly encoded in the current
+ * database encoding.  Otherwise same as pg_verify_mbstr().
+ */
+bool
+pg_verifymbstr(const char *mbstr, int len, bool noError)
+{
+	return pg_verify_mbstr(GetDatabaseEncoding(), mbstr, len, noError);
+}
 
 /*
- * Verify mbstr to make sure that it has a valid character sequence.
- * mbstr is not necessarily NULL terminated; length of mbstr is
+ * Verify mbstr to make sure that it is validly encoded in the specified
+ * encoding.
+ *
+ * mbstr is not necessarily zero terminated; length of mbstr is
  * specified by len.
  *
  * If OK, return TRUE.	If a problem is found, return FALSE when noError is
  * true; when noError is false, ereport() a descriptive message.
  */
 bool
-pg_verifymbstr(const char *mbstr, int len, bool noError)
+pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 {
-	int			l;
-	int			i;
-	int			encoding;
+	mbverifier	mbverify;
 
-	/* we do not need any check in single-byte encodings */
-	if (pg_database_encoding_max_length() <= 1)
-		return true;
+	Assert(PG_VALID_ENCODING(encoding));
 
-	encoding = GetDatabaseEncoding();
-
-	while (len > 0 && *mbstr)
+	/*
+	 * In single-byte encodings, we need only reject nulls (\0).
+	 */
+	if (pg_encoding_max_length(encoding) <= 1)
 	{
-		l = pg_mblen(mbstr);
+		const char *nullpos = memchr(mbstr, 0, len);
 
-		/* special UTF-8 check */
-		if (encoding == PG_UTF8)
+		if (nullpos == NULL)
+			return true;
+		if (noError)
+			return false;
+		report_invalid_encoding(encoding, nullpos, 1);
+	}
+
+	/* fetch function pointer just once */
+	mbverify = pg_wchar_table[encoding].mbverify;
+
+	while (len > 0)
+	{
+		int			l;
+
+		/* fast path for ASCII-subset characters */
+		if (!IS_HIGHBIT_SET(*mbstr))
 		{
-			if (!pg_utf8_islegal((const unsigned char *) mbstr, l))
+			if (*mbstr != '\0')
 			{
-				if (noError)
-					return false;
-				ereport(ERROR,
-						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-						 errmsg("invalid UTF-8 byte sequence detected near byte 0x%02x",
-								(unsigned char) *mbstr)));
+				mbstr++;
+				len--;
+				continue;
 			}
+			if (noError)
+				return false;
+			report_invalid_encoding(encoding, mbstr, len);
 		}
-		else
+
+		l = (*mbverify) ((const unsigned char *) mbstr, len);
+
+		if (l < 0)
 		{
-			for (i = 1; i < l; i++)
-			{
-				/*
-				 * we expect that every multibyte char consists of bytes
-				 * having the 8th bit set
-				 */
-				if (i >= len || !IS_HIGHBIT_SET(mbstr[i]))
-				{
-					char		buf[8 * 2 + 1];
-					char	   *p = buf;
-					int			j,
-								jlimit;
-
-					if (noError)
-						return false;
-
-					jlimit = Min(l, len);
-					jlimit = Min(jlimit, 8);	/* prevent buffer overrun */
-
-					for (j = 0; j < jlimit; j++)
-						p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
-
-					ereport(ERROR,
-							(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					errmsg("invalid byte sequence for encoding \"%s\": 0x%s",
-						   GetDatabaseEncodingName(), buf)));
-				}
-			}
+			if (noError)
+				return false;
+			report_invalid_encoding(encoding, mbstr, len);
 		}
-		len -= l;
+
 		mbstr += l;
+		len -= l;
 	}
 	return true;
 }
 
 /*
- * fetch maximum length of a char encoding for the current database
+ * report_invalid_encoding: complain about invalid multibyte character
+ *
+ * note: len is remaining length of string, not length of character;
+ * len must be greater than zero, as we always examine the first byte.
  */
-int
-pg_database_encoding_max_length(void)
+void
+report_invalid_encoding(int encoding, const char *mbstr, int len)
 {
-	return pg_wchar_table[GetDatabaseEncoding()].maxmblen;
+	int			l = pg_encoding_mblen(encoding, mbstr);
+	char		buf[8 * 2 + 1];
+	char	   *p = buf;
+	int			j,
+				jlimit;
+
+	jlimit = Min(l, len);
+	jlimit = Min(jlimit, 8);	/* prevent buffer overrun */
+
+	for (j = 0; j < jlimit; j++)
+		p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+			 errmsg("invalid byte sequence for encoding \"%s\": 0x%s",
+					pg_enc2name_tbl[encoding].name,
+					buf)));
+}
+
+/*
+ * report_untranslatable_char: complain about untranslatable character
+ *
+ * note: len is remaining length of string, not length of character;
+ * len must be greater than zero, as we always examine the first byte.
+ */
+void
+report_untranslatable_char(int src_encoding, int dest_encoding,
+						   const char *mbstr, int len)
+{
+	int			l = pg_encoding_mblen(src_encoding, mbstr);
+	char		buf[8 * 2 + 1];
+	char	   *p = buf;
+	int			j,
+				jlimit;
+
+	jlimit = Min(l, len);
+	jlimit = Min(jlimit, 8);	/* prevent buffer overrun */
+
+	for (j = 0; j < jlimit; j++)
+		p += sprintf(p, "%02x", (unsigned char) mbstr[j]);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
+			 errmsg("character 0x%s of encoding \"%s\" has no equivalent in \"%s\"",
+					buf,
+					pg_enc2name_tbl[src_encoding].name,
+					pg_enc2name_tbl[dest_encoding].name)));
 }
 
 #endif
