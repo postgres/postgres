@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.56 2004/12/04 18:19:33 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.56.4.1 2006/05/21 20:06:18 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -24,10 +24,16 @@ typedef unsigned int pg_wchar;
 #define SS3 0x8f				/* single shift 3 (JIS0212) */
 
 /*
+ * SJIS validation macros
+ */
+#define ISSJISHEAD(c) (((c) >= 0x81 && (c) <= 0x9f) || ((c) >= 0xe0 && (c) <= 0xfc))
+#define ISSJISTAIL(c) (((c) >= 0x40 && (c) <= 0x7e) || ((c) >= 0x80 && (c) <= 0xfc))
+
+/*
  * Leading byte types or leading prefix byte for MULE internal code.
  * See http://www.xemacs.org for more details.	(there is a doc titled
  * "XEmacs Internals Manual", "MULE Character Sets and Encodings"
- * section.
+ * section.)
  */
 /*
  * Is a leading byte for "official" single byte encodings?
@@ -64,7 +70,7 @@ typedef unsigned int pg_wchar;
 #define LC_ISO8859_8	0x88	/* Hebrew (not supported yet) */
 #define LC_JISX0201K	0x89	/* Japanese 1 byte kana */
 #define LC_JISX0201R	0x8a	/* Japanese 1 byte Roman */
-/* Note that 0x8b seems to be unused in as of Emacs 20.7.
+/* Note that 0x8b seems to be unused as of Emacs 20.7.
  * However, there might be a chance that 0x8b could be used
  * in later version of Emacs.
  */
@@ -137,13 +143,13 @@ typedef unsigned int pg_wchar;
 /* #define FREE		0xff	free (unused) */
 
 /*
- * Encoding numeral identificators
+ * PostgreSQL encoding identifiers
  *
  * WARNING: the order of this table must be same as order
  *			in the pg_enc2name[] (mb/encnames.c) array!
  *
- *			If you add some encoding don'y forget check
- *			PG_ENCODING_[BE|FE]_LAST macros.
+ *			If you add some encoding don't forget to check
+ *			PG_ENCODING_BE_LAST macro.
  *
  *		The PG_SQL_ASCII is default encoding and must be = 0.
  */
@@ -199,14 +205,13 @@ typedef enum pg_enc
 #define PG_VALID_BE_ENCODING(_enc) \
 		((_enc) >= 0 && (_enc) <= PG_ENCODING_BE_LAST)
 
-#define PG_ENCODING_IS_CLIEN_ONLY(_enc) \
-		(((_enc) > PG_ENCODING_BE_LAST && (_enc) <= PG_ENCODING_FE_LAST)
+#define PG_ENCODING_IS_CLIENT_ONLY(_enc) \
+		((_enc) > PG_ENCODING_BE_LAST && (_enc) <= PG_ENCODING_FE_LAST)
 
 #define PG_VALID_ENCODING(_enc) \
 		((_enc) >= 0 && (_enc) < _PG_LAST_ENCODING_)
 
-/* On FE are possible all encodings
- */
+/* On FE are possible all encodings */
 #define PG_VALID_FE_ENCODING(_enc)	PG_VALID_ENCODING(_enc)
 
 /*
@@ -246,18 +251,21 @@ extern const char *pg_encoding_to_char(int encoding);
 typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
 														pg_wchar *to,
 														int len);
+
 typedef int (*mblen_converter) (const unsigned char *mbstr);
 
 typedef int (*mbdisplaylen_converter) (const unsigned char *mbstr);
+
+typedef int (*mbverifier) (const unsigned char *mbstr, int len);
 
 typedef struct
 {
 	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
 														 * string to a wchar */
-	mblen_converter mblen;		/* returns the length of a multibyte char */
-	mbdisplaylen_converter dsplen;		/* returns the lenghth of a
-										 * display length */
-	int			maxmblen;		/* max bytes for a char in this charset */
+	mblen_converter mblen;		/* get byte length of a char */
+	mbdisplaylen_converter dsplen;		/* get display width of a char */
+	mbverifier	mbverify;		/* verify multibyte sequence */
+	int			maxmblen;		/* max bytes for a char in this encoding */
 } pg_wchar_tbl;
 
 extern pg_wchar_tbl pg_wchar_table[];
@@ -290,6 +298,7 @@ extern int	pg_mblen(const unsigned char *mbstr);
 extern int	pg_dsplen(const unsigned char *mbstr);
 extern int	pg_encoding_mblen(int encoding, const unsigned char *mbstr);
 extern int	pg_encoding_dsplen(int encoding, const unsigned char *mbstr);
+extern int	pg_encoding_verifymb(int encoding, const char *mbstr, int len);
 extern int	pg_mule_mblen(const unsigned char *mbstr);
 extern int	pg_mic_mblen(const unsigned char *mbstr);
 extern int	pg_mbstrlen(const unsigned char *mbstr);
@@ -323,20 +332,33 @@ extern unsigned char *pg_server_to_client(unsigned char *s, int len);
 extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
-extern void LocalToUtf(unsigned char *iso, unsigned char *utf,
-		   pg_local_to_utf *map, int size, int encoding, int len);
+extern void LocalToUtf(const unsigned char *iso, unsigned char *utf,
+		   const pg_local_to_utf *map, int size, int encoding, int len);
 
-extern void UtfToLocal(unsigned char *utf, unsigned char *iso,
-		   pg_utf_to_local *map, int size, int len);
+extern void UtfToLocal(const unsigned char *utf, unsigned char *iso,
+		   const pg_utf_to_local *map, int size, int encoding, int len);
 
-extern bool pg_verifymbstr(const unsigned char *mbstr, int len, bool noError);
+extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);
+extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,
+							bool noError);
 
-extern void pg_ascii2mic(unsigned char *src, unsigned char *dest, int len);
-extern void pg_mic2ascii(unsigned char *src, unsigned char *dest, int len);
-extern void pg_print_bogus_char(unsigned char **mic, unsigned char **p);
-extern void latin2mic(unsigned char *l, unsigned char *p, int len, int lc);
-extern void mic2latin(unsigned char *mic, unsigned char *p, int len, int lc);
-extern void latin2mic_with_table(unsigned char *l, unsigned char *p, int len, int lc, unsigned char *tab);
-extern void mic2latin_with_table(unsigned char *mic, unsigned char *p, int len, int lc, unsigned char *tab);
+extern void report_invalid_encoding(int encoding, const char *mbstr, int len);
+extern void report_untranslatable_char(int src_encoding, int dest_encoding,
+									   const char *mbstr, int len);
+
+extern void pg_ascii2mic(const unsigned char *l, unsigned char *p, int len);
+extern void pg_mic2ascii(const unsigned char *mic, unsigned char *p, int len);
+extern void latin2mic(const unsigned char *l, unsigned char *p, int len,
+					  int lc, int encoding);
+extern void mic2latin(const unsigned char *mic, unsigned char *p, int len,
+					  int lc, int encoding);
+extern void latin2mic_with_table(const unsigned char *l, unsigned char *p,
+								 int len, int lc, int encoding,
+								 const unsigned char *tab);
+extern void mic2latin_with_table(const unsigned char *mic, unsigned char *p,
+								 int len, int lc, int encoding,
+								 const unsigned char *tab);
+
+extern bool pg_utf8_islegal(const unsigned char *source, int length);
 
 #endif   /* PG_WCHAR_H */

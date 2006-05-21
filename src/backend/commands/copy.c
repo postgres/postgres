@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.236.4.2 2005/10/03 23:43:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.236.4.3 2006/05/21 20:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ static bool fe_eof;				/* true if detected end of copy data */
 static EolType eol_type;		/* EOL type of input */
 static int	client_encoding;	/* remote side's character encoding */
 static int	server_encoding;	/* local encoding */
+static int	server_max_length;	/* local encoding max length */
 static bool embedded_line_warning;
 
 /* these are just for error messages, see copy_in_error_callback */
@@ -988,6 +989,7 @@ DoCopy(const CopyStmt *stmt)
 
 	client_encoding = pg_get_client_encoding();
 	server_encoding = GetDatabaseEncoding();
+	server_max_length = pg_database_encoding_max_length();
 
 	copy_dest = COPY_FILE;		/* default */
 	copy_file = NULL;
@@ -2010,7 +2012,8 @@ static bool
 CopyReadLine(void)
 {
 	bool		result;
-	bool		change_encoding = (client_encoding != server_encoding);
+	bool		change_encoding = (client_encoding != server_encoding ||
+								   server_max_length > 1);
 	int			c;
 	int			mblen;
 	int			j;

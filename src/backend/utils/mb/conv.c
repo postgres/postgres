@@ -6,172 +6,81 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.51 2004/12/31 22:01:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.51.4.1 2006/05/21 20:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 #include "mb/pg_wchar.h"
 
+
 /*
- * convert bogus chars that cannot be represented in the current
- * encoding system.
+ * LATINn ---> MIC when the charset's local codes map directly to MIC
+ *
+ * l points to the source string of length len
+ * p is the output area (must be large enough!)
+ * lc is the mule character set id for the local encoding
+ * encoding is the PG identifier for the local encoding
  */
 void
-pg_print_bogus_char(unsigned char **mic, unsigned char **p)
-{
-	char		strbuf[16];
-	int			l = pg_mic_mblen(*mic);
-
-	*(*p)++ = '(';
-	while (l--)
-	{
-		sprintf(strbuf, "%02x", *(*mic)++);
-		*(*p)++ = strbuf[0];
-		*(*p)++ = strbuf[1];
-	}
-	*(*p)++ = ')';
-}
-
-#ifdef NOT_USED
-
-/*
- * GB18030 ---> MIC
- * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
- */
-static void
-gb180302mic(unsigned char *gb18030, unsigned char *p, int len)
-{
-	int			c1;
-	int			c2;
-
-	while (len > 0 && (c1 = *gb18030++))
-	{
-		if (c1 < 0x80)
-		{						/* should be ASCII */
-			len--;
-			*p++ = c1;
-		}
-		else if (c1 >= 0x81 && c1 <= 0xfe)
-		{
-			c2 = *gb18030++;
-
-			if (c2 >= 0x30 && c2 <= 0x69)
-			{
-				len -= 4;
-				*p++ = c1;
-				*p++ = c2;
-				*p++ = *gb18030++;
-				*p++ = *gb18030++;
-				*p++ = *gb18030++;
-			}
-			else if ((c2 >= 0x40 && c2 <= 0x7e) || (c2 >= 0x80 && c2 <= 0xfe))
-			{
-				len -= 2;
-				*p++ = c1;
-				*p++ = c2;
-				*p++ = *gb18030++;
-			}
-			else
-			{					/* throw the strange code */
-				len--;
-			}
-		}
-	}
-	*p = '\0';
-}
-
-/*
- * MIC ---> GB18030
- * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
- */
-static void
-mic2gb18030(unsigned char *mic, unsigned char *p, int len)
-{
-	int			c1;
-	int			c2;
-
-	while (len > 0 && (c1 = *mic))
-	{
-		len -= pg_mic_mblen(mic++);
-
-		if (c1 <= 0x7f)			/* ASCII */
-			*p++ = c1;
-		else if (c1 >= 0x81 && c1 <= 0xfe)
-		{
-			c2 = *mic++;
-
-			if ((c2 >= 0x40 && c2 <= 0x7e) || (c2 >= 0x80 && c2 <= 0xfe))
-			{
-				*p++ = c1;
-				*p++ = c2;
-			}
-			else if (c2 >= 0x30 && c2 <= 0x39)
-			{
-				*p++ = c1;
-				*p++ = c2;
-				*p++ = *mic++;
-				*p++ = *mic++;
-			}
-			else
-			{
-				mic--;
-				pg_print_bogus_char(&mic, &p);
-				mic--;
-				pg_print_bogus_char(&mic, &p);
-			}
-		}
-		else
-		{
-			mic--;
-			pg_print_bogus_char(&mic, &p);
-		}
-	}
-	*p = '\0';
-}
-#endif
-
-/*
- * LATINn ---> MIC
- */
-void
-latin2mic(unsigned char *l, unsigned char *p, int len, int lc)
+latin2mic(const unsigned char *l, unsigned char *p, int len,
+		  int lc, int encoding)
 {
 	int			c1;
 
-	while (len-- > 0 && (c1 = *l++))
+	while (len > 0)
 	{
-		if (c1 > 0x7f)
-		{						/* Latin? */
+		c1 = *l;
+		if (c1 == 0)
+			report_invalid_encoding(encoding, (const char *) l, len);
+		if (IS_HIGHBIT_SET(c1))
 			*p++ = lc;
-		}
 		*p++ = c1;
+		l++;
+		len--;
 	}
 	*p = '\0';
 }
 
 /*
- * MIC ---> LATINn
+ * MIC ---> LATINn when the charset's local codes map directly to MIC
+ *
+ * mic points to the source string of length len
+ * p is the output area (must be large enough!)
+ * lc is the mule character set id for the local encoding
+ * encoding is the PG identifier for the local encoding
  */
 void
-mic2latin(unsigned char *mic, unsigned char *p, int len, int lc)
+mic2latin(const unsigned char *mic, unsigned char *p, int len,
+		  int lc, int encoding)
 {
 	int			c1;
 
-	while (len > 0 && (c1 = *mic))
+	while (len > 0)
 	{
-		len -= pg_mic_mblen(mic++);
-
-		if (c1 == lc)
-			*p++ = *mic++;
-		else if (c1 > 0x7f)
+		c1 = *mic;
+		if (c1 == 0)
+			report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic, len);
+		if (!IS_HIGHBIT_SET(c1))
 		{
-			mic--;
-			pg_print_bogus_char(&mic, &p);
+			/* easy for ASCII */
+			*p++ = c1;
+			mic++;
+			len--;
 		}
 		else
-		{						/* should be ASCII */
-			*p++ = c1;
+		{
+			int		l = pg_mic_mblen(mic);
+
+			if (len < l)
+				report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic,
+										len);
+			if (l != 2 || c1 != lc || !IS_HIGHBIT_SET(mic[1]))
+				report_untranslatable_char(PG_MULE_INTERNAL, encoding,
+										   (const char *) mic, len);
+			*p++ = mic[1];
+			mic += 2;
+			len -= 2;
 		}
 	}
 	*p = '\0';
@@ -180,14 +89,25 @@ mic2latin(unsigned char *mic, unsigned char *p, int len, int lc)
 
 /*
  * ASCII ---> MIC
+ *
+ * While ordinarily SQL_ASCII encoding is forgiving of high-bit-set
+ * characters, here we must take a hard line because we don't know
+ * the appropriate MIC equivalent.
  */
 void
-pg_ascii2mic(unsigned char *l, unsigned char *p, int len)
+pg_ascii2mic(const unsigned char *l, unsigned char *p, int len)
 {
 	int			c1;
 
-	while (len-- > 0 && (c1 = *l++))
-		*p++ = (c1 & 0x7f);
+	while (len > 0)
+	{
+		c1 = *l;
+		if (c1 == 0 || IS_HIGHBIT_SET(c1))
+			report_invalid_encoding(PG_SQL_ASCII, (const char *) l, len);
+		*p++ = c1;
+		l++;
+		len--;
+	}
 	*p = '\0';
 }
 
@@ -195,19 +115,19 @@ pg_ascii2mic(unsigned char *l, unsigned char *p, int len)
  * MIC ---> ASCII
  */
 void
-pg_mic2ascii(unsigned char *mic, unsigned char *p, int len)
+pg_mic2ascii(const unsigned char *mic, unsigned char *p, int len)
 {
 	int			c1;
 
-	while (len-- > 0 && (c1 = *mic))
+	while (len > 0)
 	{
-		if (c1 > 0x7f)
-			pg_print_bogus_char(&mic, &p);
-		else
-		{						/* should be ASCII */
-			*p++ = c1;
-			mic++;
-		}
+		c1 = *mic;
+		if (c1 == 0 || IS_HIGHBIT_SET(c1))
+			report_untranslatable_char(PG_MULE_INTERNAL, PG_SQL_ASCII,
+									   (const char *) mic, len);
+		*p++ = c1;
+		mic++;
+		len--;
 	}
 	*p = '\0';
 }
@@ -215,87 +135,103 @@ pg_mic2ascii(unsigned char *mic, unsigned char *p, int len)
 /*
  * latin2mic_with_table: a generic single byte charset encoding
  * conversion from a local charset to the mule internal code.
- * with a encoding conversion table.
- * the table is ordered according to the local charset,
+ *
+ * l points to the source string of length len
+ * p is the output area (must be large enough!)
+ * lc is the mule character set id for the local encoding
+ * encoding is the PG identifier for the local encoding
+ * tab holds conversion entries for the local charset
  * starting from 128 (0x80). each entry in the table
  * holds the corresponding code point for the mule internal code.
  */
 void
-latin2mic_with_table(
-					 unsigned char *l,	/* local charset string (source) */
-					 unsigned char *p,	/* pointer to store mule internal
-										 * code (destination) */
-					 int len,	/* length of l */
-					 int lc,	/* leading character of p */
-					 unsigned char *tab /* code conversion table */
-)
+latin2mic_with_table(const unsigned char *l,
+					 unsigned char *p,
+					 int len,
+					 int lc,
+					 int encoding,
+					 const unsigned char *tab)
 {
 	unsigned char c1,
 				c2;
 
-	while (len-- > 0 && (c1 = *l++))
+	while (len > 0)
 	{
-		if (c1 < 128)
+		c1 = *l;
+		if (c1 == 0)
+			report_invalid_encoding(encoding, (const char *) l, len);
+		if (!IS_HIGHBIT_SET(c1))
 			*p++ = c1;
 		else
 		{
-			c2 = tab[c1 - 128];
+			c2 = tab[c1 - HIGHBIT];
 			if (c2)
 			{
 				*p++ = lc;
 				*p++ = c2;
 			}
 			else
-			{
-				*p++ = ' ';		/* cannot convert */
-			}
+				report_untranslatable_char(encoding, PG_MULE_INTERNAL,
+										   (const char *) l, len);
 		}
+		l++;
+		len--;
 	}
 	*p = '\0';
 }
 
 /*
  * mic2latin_with_table: a generic single byte charset encoding
- * conversion from the mule internal code to a local charset
- * with a encoding conversion table.
- * the table is ordered according to the second byte of the mule
- * internal code starting from 128 (0x80).
- * each entry in the table
- * holds the corresponding code point for the local code.
+ * conversion from the mule internal code to a local charset.
+ *
+ * mic points to the source string of length len
+ * p is the output area (must be large enough!)
+ * lc is the mule character set id for the local encoding
+ * encoding is the PG identifier for the local encoding
+ * tab holds conversion entries for the mule internal code's
+ * second byte, starting from 128 (0x80). each entry in the table
+ * holds the corresponding code point for the local charset.
  */
 void
-mic2latin_with_table(
-					 unsigned char *mic,		/* mule internal code
-												 * (source) */
-					 unsigned char *p,	/* local code (destination) */
-					 int len,	/* length of p */
-					 int lc,	/* leading character */
-					 unsigned char *tab /* code conversion table */
-)
+mic2latin_with_table(const unsigned char *mic,
+					 unsigned char *p,
+					 int len,
+					 int lc,
+					 int encoding,
+					 const unsigned char *tab)
 {
-
 	unsigned char c1,
 				c2;
 
-	while (len-- > 0 && (c1 = *mic++))
+	while (len > 0)
 	{
-		if (c1 < 128)
-			*p++ = c1;
-		else if (c1 == lc)
+		c1 = *mic;
+		if (c1 == 0)
+			report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic, len);
+		if (!IS_HIGHBIT_SET(c1))
 		{
-			c1 = *mic++;
+			/* easy for ASCII */
+			*p++ = c1;
+			mic++;
 			len--;
-			c2 = tab[c1 - 128];
-			if (c2)
-				*p++ = c2;
-			else
-			{
-				*p++ = ' ';		/* cannot convert */
-			}
 		}
 		else
 		{
-			*p++ = ' ';			/* bogus character */
+			int		l = pg_mic_mblen(mic);
+
+			if (len < l)
+				report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic,
+										len);
+			if (l != 2 || c1 != lc || !IS_HIGHBIT_SET(mic[1]) ||
+				(c2 = tab[mic[1] - HIGHBIT]) == 0)
+			{
+				report_untranslatable_char(PG_MULE_INTERNAL, encoding,
+										   (const char *) mic, len);
+				break;			/* keep compiler quiet */
+			}
+			*p++ = c2;
+			mic += 2;
+			len -= 2;
 		}
 	}
 	*p = '\0';
@@ -332,27 +268,40 @@ compare2(const void *p1, const void *p2)
 }
 
 /*
- * UTF-8 ---> local code
+ * UTF8 ---> local code
  *
- * utf: input UTF-8 string. Its length is limited by "len" parameter
- *		or a null terminator.
- * iso: pointer to the output.
+ * utf: input UTF8 string (need not be null-terminated).
+ * iso: pointer to the output area (must be large enough!)
  * map: the conversion map.
  * size: the size of the conversion map.
+ * encoding: the PG identifier for the local encoding.
+ * len: length of input string.
  */
 void
-UtfToLocal(unsigned char *utf, unsigned char *iso,
-		   pg_utf_to_local *map, int size, int len)
+UtfToLocal(const unsigned char *utf, unsigned char *iso,
+		   const pg_utf_to_local *map, int size, int encoding, int len)
 {
 	unsigned int iutf;
 	int			l;
 	pg_utf_to_local *p;
 
-	for (; len > 0 && *utf; len -= l)
+	for (; len > 0; len -= l)
 	{
+		/* "break" cases all represent errors */
+		if (*utf == '\0')
+			break;
+
 		l = pg_utf_mblen(utf);
+
+		if (len < l)
+			break;
+
+		if (!pg_utf8_islegal(utf, l))
+			break;
+
 		if (l == 1)
 		{
+			/* ASCII case is easy */
 			*iso++ = *utf++;
 			continue;
 		}
@@ -361,22 +310,27 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
 			iutf = *utf++ << 8;
 			iutf |= *utf++;
 		}
-		else
+		else if (l == 3)
 		{
 			iutf = *utf++ << 16;
 			iutf |= *utf++ << 8;
 			iutf |= *utf++;
 		}
+		else if (l == 4)
+		{
+			iutf = *utf++ << 24;
+			iutf |= *utf++ << 16;
+			iutf |= *utf++ << 8;
+			iutf |= *utf++;
+		}
+
 		p = bsearch(&iutf, map, size,
 					sizeof(pg_utf_to_local), compare1);
+
 		if (p == NULL)
-		{
-			ereport(WARNING,
-					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-				  errmsg("ignoring unconvertible UTF-8 character 0x%04x",
-						 iutf)));
-			continue;
-		}
+			report_untranslatable_char(PG_UTF8, encoding,
+									   (const char *) (utf - l), len);
+
 		if (p->code & 0xff000000)
 			*iso++ = p->code >> 24;
 		if (p->code & 0x00ff0000)
@@ -386,15 +340,26 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
 		if (p->code & 0x000000ff)
 			*iso++ = p->code & 0x000000ff;
 	}
+
+	if (len > 0)
+		report_invalid_encoding(PG_UTF8, (const char *) utf, len);
+
 	*iso = '\0';
 }
 
 /*
- * local code ---> UTF-8
+ * local code ---> UTF8
+ *
+ * iso: input local string (need not be null-terminated).
+ * utf: pointer to the output area (must be large enough!)
+ * map: the conversion map.
+ * size: the size of the conversion map.
+ * encoding: the PG identifier for the local encoding.
+ * len: length of input string.
  */
 void
-LocalToUtf(unsigned char *iso, unsigned char *utf,
-		   pg_local_to_utf *map, int size, int encoding, int len)
+LocalToUtf(const unsigned char *iso, unsigned char *utf,
+		   const pg_local_to_utf *map, int size, int encoding, int len)
 {
 	unsigned int iiso;
 	int			l;
@@ -405,16 +370,23 @@ LocalToUtf(unsigned char *iso, unsigned char *utf,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid encoding number: %d", encoding)));
 
-	for (; len > 0 && *iso; len -= l)
+	for (; len > 0; len -= l)
 	{
-		if (*iso < 0x80)
+		/* "break" cases all represent errors */
+		if (*iso == '\0')
+			break;
+
+		if (!IS_HIGHBIT_SET(*iso))
 		{
+			/* ASCII case is easy */
 			*utf++ = *iso++;
 			l = 1;
 			continue;
 		}
 
-		l = pg_encoding_mblen(encoding, iso);
+		l = pg_encoding_verifymb(encoding, (const char *) iso, len);
+		if (l < 0)
+			break;
 
 		if (l == 1)
 			iiso = *iso++;
@@ -436,16 +408,13 @@ LocalToUtf(unsigned char *iso, unsigned char *utf,
 			iiso |= *iso++ << 8;
 			iiso |= *iso++;
 		}
+
 		p = bsearch(&iiso, map, size,
 					sizeof(pg_local_to_utf), compare2);
 		if (p == NULL)
-		{
-			ereport(WARNING,
-					(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-					 errmsg("ignoring unconvertible %s character 0x%04x",
-							(&pg_enc2name_tbl[encoding])->name, iiso)));
-			continue;
-		}
+			report_untranslatable_char(encoding, PG_UTF8,
+									   (const char *) (iso - l), len);
+
 		if (p->utf & 0xff000000)
 			*utf++ = p->utf >> 24;
 		if (p->utf & 0x00ff0000)
@@ -455,5 +424,9 @@ LocalToUtf(unsigned char *iso, unsigned char *utf,
 		if (p->utf & 0x000000ff)
 			*utf++ = p->utf & 0x000000ff;
 	}
+
+	if (len > 0)
+		report_invalid_encoding(encoding, (const char *) iso, len);
+
 	*utf = '\0';
 }

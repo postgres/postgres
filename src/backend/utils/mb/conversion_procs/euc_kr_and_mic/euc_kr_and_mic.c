@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_kr_and_mic/euc_kr_and_mic.c,v 1.9 2004/12/31 22:01:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_kr_and_mic/euc_kr_and_mic.c,v 1.9.4.1 2006/05/21 20:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,8 @@ extern Datum mic_to_euc_kr(PG_FUNCTION_ARGS);
  * ----------
  */
 
-static void euc_kr2mic(unsigned char *euc, unsigned char *p, int len);
-static void mic2euc_kr(unsigned char *mic, unsigned char *p, int len);
+static void euc_kr2mic(const unsigned char *euc, unsigned char *p, int len);
+static void mic2euc_kr(const unsigned char *mic, unsigned char *p, int len);
 
 Datum
 euc_kr_to_mic(PG_FUNCTION_ARGS)
@@ -71,23 +71,34 @@ mic_to_euc_kr(PG_FUNCTION_ARGS)
  * EUC_KR ---> MIC
  */
 static void
-euc_kr2mic(unsigned char *euc, unsigned char *p, int len)
+euc_kr2mic(const unsigned char *euc, unsigned char *p, int len)
 {
 	int			c1;
+	int			l;
 
-	while (len >= 0 && (c1 = *euc++))
+	while (len > 0)
 	{
-		if (c1 & 0x80)
+		c1 = *euc;
+		if (IS_HIGHBIT_SET(c1))
 		{
-			len -= 2;
+			l = pg_encoding_verifymb(PG_EUC_KR, (const char *) euc, len);
+			if (l != 2)
+				report_invalid_encoding(PG_EUC_KR,
+										(const char *) euc, len);
 			*p++ = LC_KS5601;
 			*p++ = c1;
-			*p++ = *euc++;
+			*p++ = euc[1];
+			euc += 2;
+			len -= 2;
 		}
 		else
 		{						/* should be ASCII */
-			len--;
+			if (c1 == 0)
+				report_invalid_encoding(PG_EUC_KR,
+										(const char *) euc, len);
 			*p++ = c1;
+			euc++;
+			len--;
 		}
 	}
 	*p = '\0';
@@ -97,28 +108,39 @@ euc_kr2mic(unsigned char *euc, unsigned char *p, int len)
  * MIC ---> EUC_KR
  */
 static void
-mic2euc_kr(unsigned char *mic, unsigned char *p, int len)
+mic2euc_kr(const unsigned char *mic, unsigned char *p, int len)
 {
 	int			c1;
+	int			l;
 
-	while (len >= 0 && (c1 = *mic))
+	while (len > 0)
 	{
-		len -= pg_mic_mblen(mic++);
-
+		c1 = *mic;
+		if (!IS_HIGHBIT_SET(c1))
+		{
+			/* ASCII */
+			if (c1 == 0)
+				report_invalid_encoding(PG_MULE_INTERNAL,
+										(const char *) mic, len);
+			*p++ = c1;
+			mic++;
+			len--;
+			continue;
+		}
+		l = pg_encoding_verifymb(PG_MULE_INTERNAL, (const char *) mic, len);
+		if (l < 0)
+			report_invalid_encoding(PG_MULE_INTERNAL,
+									(const char *) mic, len);
 		if (c1 == LC_KS5601)
 		{
-			*p++ = *mic++;
-			*p++ = *mic++;
-		}
-		else if (c1 > 0x7f)
-		{						/* cannot convert to EUC_KR! */
-			mic--;
-			pg_print_bogus_char(&mic, &p);
+			*p++ = mic[1];
+			*p++ = mic[2];
 		}
 		else
-		{						/* should be ASCII */
-			*p++ = c1;
-		}
+			report_untranslatable_char(PG_MULE_INTERNAL, PG_EUC_KR,
+									   (const char *) mic, len);
+		mic += l;
+		len -= l;
 	}
 	*p = '\0';
 }

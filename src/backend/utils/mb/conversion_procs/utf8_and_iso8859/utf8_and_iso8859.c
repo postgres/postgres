@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.11 2004/12/31 22:02:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.11.4.1 2006/05/21 20:06:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ utf8_to_iso8859(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(0) == PG_UTF8);
 	Assert(len >= 0);
 
-	UtfToLocal(src, dest, maps[encoding].map2, maps[encoding].size2, len);
+	UtfToLocal(src, dest, maps[encoding].map2, maps[encoding].size2, encoding, len);
 
 	PG_RETURN_VOID();
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_tcvn/utf8_and_tcvn.c,v 1.9 2004/12/31 22:02:35 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_tcvn/utf8_and_tcvn.c,v 1.9.4.1 2006/05/21 20:06:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ utf8_to_tcvn(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmapTCVN,
-			   sizeof(ULmapTCVN) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmapTCVN) / sizeof(pg_utf_to_local), PG_TCVN, len);
 
 	PG_RETURN_VOID();
 }
