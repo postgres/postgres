@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252.4.3 2006/02/12 22:33:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.252.4.4 2006/05/21 20:11:25 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "optimizer/geqo.h"
 #include "optimizer/paths.h"
 #include "optimizer/prep.h"
+#include "parser/gramparse.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
@@ -113,6 +114,7 @@ static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
 static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
+static const char *assign_backslash_quote(const char *newval, bool doit, GucSource source);
 
 
 /*
@@ -169,6 +171,7 @@ static char *log_destination_string;
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
+static char *backslash_quote_string;
 static char *client_encoding_string;
 static char *datestyle_string;
 static char *default_iso_level_string;
@@ -1421,6 +1424,15 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&XLogArchiveCommand,
 		"", NULL, NULL
+	},
+
+	{
+		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("Sets whether \"\\'\" is allowed in string literals."),
+			gettext_noop("Valid values are ON, OFF, and SAFE_ENCODING.")
+		},
+		&backslash_quote_string,
+		"safe_encoding", assign_backslash_quote, NULL
 	},
 
 	{
@@ -5611,6 +5623,32 @@ assign_log_stats(bool newval, bool doit, GucSource source)
 			return false;
 	}
 	return true;
+}
+
+static const char *
+assign_backslash_quote(const char *newval, bool doit, GucSource source)
+{
+	BackslashQuoteType bq;
+	bool	bqbool;
+
+	/*
+	 * Although only "on", "off", and "safe_encoding" are documented,
+	 * we use parse_bool so we can accept all the likely variants of
+	 * "on" and "off".
+	 */
+	if (pg_strcasecmp(newval, "safe_encoding") == 0)
+		bq = BACKSLASH_QUOTE_SAFE_ENCODING;
+	else if (parse_bool(newval, &bqbool))
+	{
+		bq = bqbool ? BACKSLASH_QUOTE_ON : BACKSLASH_QUOTE_OFF;
+	}
+	else
+		return NULL;			/* reject */
+
+	if (doit)
+		backslash_quote = bq;
+
+	return newval;
 }
 
 static bool

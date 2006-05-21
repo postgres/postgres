@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.120.4.1 2005/05/04 14:25:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.120.4.2 2006/05/21 20:11:25 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -512,6 +512,7 @@ psql_completion(char *text, int start, int end)
 		 */
 		"add_missing_from",
 		"australian_timezones",
+		"backslash_quote",
 		"client_encoding",
 		"client_min_messages",
 		"commit_delay",

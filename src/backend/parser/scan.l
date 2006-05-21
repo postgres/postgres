@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.119.4.1 2005/08/16 00:48:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.119.4.2 2006/05/21 20:11:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,15 @@ static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char    *dolqstart;      /* current $foo$ quote start string */
 
 /*
+ * GUC variables.  This is a DIRECT violation of the warning given at the
+ * head of gram.y, ie flex/bison code must not depend on any GUC variables;
+ * as such, changing their values can induce very unintuitive behavior.
+ * But we shall have to live with it as a short-term thing until the switch
+ * to SQL-standard string syntax is complete.
+ */
+BackslashQuoteType backslash_quote = BACKSLASH_QUOTE_SAFE_ENCODING;
+
+/*
  * literalbuf is used to accumulate literal values when multiple rules
  * are needed to parse a single literal.  Call startlit to reset buffer
  * to empty, addlit to add text.  Note that the buffer is palloc'd and
@@ -49,6 +58,7 @@ static int		literalalloc;	/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar(unsigned char ychar);
 static char *litbufdup(void);
+static int	pg_err_position(void);
 
 /*
  * When we parse a token that requires multiple lexer rules to process,
@@ -391,6 +401,17 @@ other			.
 					addlit(yytext, yyleng);
 				}
 <xq>{xqescape}  {
+					if (yytext[1] == '\'')
+					{
+						if (backslash_quote == BACKSLASH_QUOTE_OFF ||
+							(backslash_quote == BACKSLASH_QUOTE_SAFE_ENCODING &&
+							 PG_ENCODING_IS_CLIENT_ONLY(pg_get_client_encoding())))
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER),
+									 errmsg("unsafe use of \\' in a string literal"),
+									 errhint("Use '' to write quotes in strings. \\' is insecure in client-only encodings."),
+									 errposition(pg_err_position())));
+					}
 					addlitchar(unescape_single_char(yytext[1]));
 				}
 <xq>{xqoctesc}  {
@@ -613,14 +634,20 @@ other			.
 
 %%
 
+static int
+pg_err_position(void)
+{
+	const char *loc = token_start ? token_start : yytext;
+
+	/* in multibyte encodings, return index in characters not bytes */
+	return pg_mbstrlen_with_len(scanbuf, loc - scanbuf) + 1;
+}
+
 void
 yyerror(const char *message)
 {
 	const char *loc = token_start ? token_start : yytext;
-	int			cursorpos;
-
-	/* in multibyte encodings, return index in characters not bytes */
-	cursorpos = pg_mbstrlen_with_len(scanbuf, loc - scanbuf) + 1;
+	int			cursorpos = pg_err_position();
 
 	if (*loc == YY_END_OF_BUFFER_CHAR)
 	{

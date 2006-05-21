@@ -311,9 +311,10 @@
 # - Previous Postgres Versions -
 
 #add_missing_from = true
+#backslash_quote = safe_encoding	# on, off, or safe_encoding
+#default_with_oids = true
 #regex_flavor = advanced	# advanced, extended, or basic
 #sql_inheritance = true
-#default_with_oids = true
 
 # - Other Platforms & Clients -
 
