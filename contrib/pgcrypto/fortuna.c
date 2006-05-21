@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.5 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.6 2006/05/21 20:22:16 tgl Exp $
  */
 
 #include "postgres.h"
@@ -219,7 +219,7 @@ encrypt_counter(FState * st, uint8 *dst)
  * microseconds.
  */
 static int
-too_often(FState * st)
+enough_time_passed(FState * st)
 {
 	int			ok;
 	struct timeval tv;
@@ -227,13 +227,22 @@ too_often(FState * st)
 
 	gettimeofday(&tv, NULL);
 
+	/* check how much time has passed */
 	ok = 0;
-	if (tv.tv_sec != last->tv_sec)
+	if (tv.tv_sec > last->tv_sec + 1)
 		ok = 1;
+	else if (tv.tv_sec == last->tv_sec + 1)
+	{
+		if (1000000 + tv.tv_usec - last->tv_usec >= RESEED_INTERVAL)
+			ok = 1;
+	}
 	else if (tv.tv_usec - last->tv_usec >= RESEED_INTERVAL)
 		ok = 1;
 
-	memcpy(last, &tv, sizeof(tv));
+	/* reseed will happen, update last_reseed_time */
+	if (ok)
+		memcpy(last, &tv, sizeof(tv));
+
 	memset(&tv, 0, sizeof(tv));
 
 	return ok;
@@ -372,7 +381,7 @@ extract_data(FState * st, unsigned count, uint8 *dst)
 	unsigned	block_nr = 0;
 
 	/* Can we reseed? */
-	if (st->pool0_bytes >= POOL0_FILL && !too_often(st))
+	if (st->pool0_bytes >= POOL0_FILL && enough_time_passed(st))
 		reseed(st);
 
 	/* Is counter initialized? */
