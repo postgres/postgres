@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.166 2004/12/31 22:03:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.166.4.1 2006/05/21 19:57:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2433,7 +2433,7 @@ PQescapeBytea(const unsigned char *bintext, size_t binlen, size_t *bytealen)
 		}
 		else if (*vp == '\'')
 		{
-			rp[0] = '\\';
+			rp[0] = '\'';
 			rp[1] = '\'';
 			rp += 2;
 		}

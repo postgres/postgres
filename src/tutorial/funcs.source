@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994-5, Regents of the University of California
 --
--- $PostgreSQL: pgsql/src/tutorial/funcs.source,v 1.7 2003/11/29 22:41:33 pgsql Exp $
+-- $PostgreSQL: pgsql/src/tutorial/funcs.source,v 1.7.4.1 2006/05/21 19:57:40 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -76,10 +76,10 @@ WHERE EMP.cubicle ~= '(2,1)'::point;
 -- columns of EMP.
 
 CREATE FUNCTION new_emp() RETURNS EMP
-   AS 'SELECT \'None\'::text AS name,
+   AS 'SELECT ''None''::text AS name,
 			  1000 AS salary,
 			  25 AS age,
-			  \'(2,2)\'::point AS cubicle'
+			  ''(2,2)''::point AS cubicle'
    LANGUAGE 'sql';
 
 -- you can then project a column out of resulting the tuple by using the
