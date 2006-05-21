@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.10 2005/09/24 17:53:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.10.2.1 2006/05/21 20:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +42,10 @@ extern Datum win1250_to_latin2(PG_FUNCTION_ARGS);
  * ----------
  */
 
-static void latin22mic(unsigned char *l, unsigned char *p, int len);
-static void mic2latin2(unsigned char *mic, unsigned char *p, int len);
-static void win12502mic(unsigned char *l, unsigned char *p, int len);
-static void mic2win1250(unsigned char *mic, unsigned char *p, int len);
+static void latin22mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2latin2(const unsigned char *mic, unsigned char *p, int len);
+static void win12502mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2win1250(const unsigned char *mic, unsigned char *p, int len);
 
 Datum
 latin2_to_mic(PG_FUNCTION_ARGS)
@@ -152,14 +152,15 @@ win1250_to_latin2(PG_FUNCTION_ARGS)
 }
 
 static void
-latin22mic(unsigned char *l, unsigned char *p, int len)
+latin22mic(const unsigned char *l, unsigned char *p, int len)
 {
-	latin2mic(l, p, len, LC_ISO8859_2);
+	latin2mic(l, p, len, LC_ISO8859_2, PG_LATIN2);
 }
+
 static void
-mic2latin2(unsigned char *mic, unsigned char *p, int len)
+mic2latin2(const unsigned char *mic, unsigned char *p, int len)
 {
-	mic2latin(mic, p, len, LC_ISO8859_2);
+	mic2latin(mic, p, len, LC_ISO8859_2, PG_LATIN2);
 }
 
 /*-----------------------------------------------------------------
@@ -167,9 +168,9 @@ mic2latin2(unsigned char *mic, unsigned char *p, int len)
  * Microsoft's CP1250(windows-1250)
  *-----------------------------------------------------------------*/
 static void
-win12502mic(unsigned char *l, unsigned char *p, int len)
+win12502mic(const unsigned char *l, unsigned char *p, int len)
 {
-	static unsigned char win1250_2_iso88592[] = {
+	static const unsigned char win1250_2_iso88592[] = {
 		0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
 		0x88, 0x89, 0xA9, 0x8B, 0xA6, 0xAB, 0xAE, 0xAC,
 		0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
@@ -188,12 +189,14 @@ win12502mic(unsigned char *l, unsigned char *p, int len)
 		0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
 	};
 
-	latin2mic_with_table(l, p, len, LC_ISO8859_2, win1250_2_iso88592);
+	latin2mic_with_table(l, p, len, LC_ISO8859_2, PG_WIN1250,
+						 win1250_2_iso88592);
 }
+
 static void
-mic2win1250(unsigned char *mic, unsigned char *p, int len)
+mic2win1250(const unsigned char *mic, unsigned char *p, int len)
 {
-	static unsigned char iso88592_2_win1250[] = {
+	static const unsigned char iso88592_2_win1250[] = {
 		0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
 		0x88, 0x89, 0x00, 0x8B, 0x00, 0x00, 0x00, 0x00,
 		0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
@@ -212,5 +215,6 @@ mic2win1250(unsigned char *mic, unsigned char *p, int len)
 		0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
 	};
 
-	mic2latin_with_table(mic, p, len, LC_ISO8859_2, iso88592_2_win1250);
+	mic2latin_with_table(mic, p, len, LC_ISO8859_2, PG_WIN1250,
+						 iso88592_2_win1250);
 }

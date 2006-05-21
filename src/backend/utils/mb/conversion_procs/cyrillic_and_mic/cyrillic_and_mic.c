@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.11 2005/09/24 17:53:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.11.2.1 2006/05/21 20:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,14 +70,14 @@ extern Datum win866_to_iso(PG_FUNCTION_ARGS);
  * ----------
  */
 
-static void koi8r2mic(unsigned char *l, unsigned char *p, int len);
-static void mic2koi8r(unsigned char *mic, unsigned char *p, int len);
-static void iso2mic(unsigned char *l, unsigned char *p, int len);
-static void mic2iso(unsigned char *mic, unsigned char *p, int len);
-static void win12512mic(unsigned char *l, unsigned char *p, int len);
-static void mic2win1251(unsigned char *mic, unsigned char *p, int len);
-static void win8662mic(unsigned char *l, unsigned char *p, int len);
-static void mic2win866(unsigned char *mic, unsigned char *p, int len);
+static void koi8r2mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2koi8r(const unsigned char *mic, unsigned char *p, int len);
+static void iso2mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2iso(const unsigned char *mic, unsigned char *p, int len);
+static void win12512mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2win1251(const unsigned char *mic, unsigned char *p, int len);
+static void win8662mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2win866(const unsigned char *mic, unsigned char *p, int len);
 
 Datum
 koi8r_to_mic(PG_FUNCTION_ARGS)
@@ -401,7 +401,7 @@ win1251_to_iso(PG_FUNCTION_ARGS)
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	win12512mic(src, buf, len);
-	mic2win1251(buf, dest, strlen((char *) buf));
+	mic2iso(buf, dest, strlen((char *) buf));
 	pfree(buf);
 
 	PG_RETURN_VOID();
@@ -441,7 +441,7 @@ win866_to_iso(PG_FUNCTION_ARGS)
 
 	buf = palloc(len * ENCODING_GROWTH_RATE);
 	win8662mic(src, buf, len);
-	mic2win866(buf, dest, strlen((char *) buf));
+	mic2iso(buf, dest, strlen((char *) buf));
 	pfree(buf);
 
 	PG_RETURN_VOID();
@@ -460,23 +460,23 @@ win866_to_iso(PG_FUNCTION_ARGS)
 
 /* koi8r2mic: KOI8-R to Mule internal code */
 static void
-koi8r2mic(unsigned char *l, unsigned char *p, int len)
+koi8r2mic(const unsigned char *l, unsigned char *p, int len)
 {
-	latin2mic(l, p, len, LC_KOI8_R);
+	latin2mic(l, p, len, LC_KOI8_R, PG_KOI8R);
 }
 
 /* mic2koi8r: Mule internal code to KOI8-R */
 static void
-mic2koi8r(unsigned char *mic, unsigned char *p, int len)
+mic2koi8r(const unsigned char *mic, unsigned char *p, int len)
 {
-	mic2latin(mic, p, len, LC_KOI8_R);
+	mic2latin(mic, p, len, LC_KOI8_R, PG_KOI8R);
 }
 
 /* iso2mic: ISO-8859-5 to Mule internal code */
 static void
-iso2mic(unsigned char *l, unsigned char *p, int len)
+iso2mic(const unsigned char *l, unsigned char *p, int len)
 {
-	static unsigned char iso2koi[] = {
+	static const unsigned char iso2koi[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -495,14 +495,14 @@ iso2mic(unsigned char *l, unsigned char *p, int len)
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
 
-	latin2mic_with_table(l, p, len, LC_KOI8_R, iso2koi);
+	latin2mic_with_table(l, p, len, LC_KOI8_R, PG_ISO_8859_5, iso2koi);
 }
 
 /* mic2iso: Mule internal code to ISO8859-5 */
 static void
-mic2iso(unsigned char *mic, unsigned char *p, int len)
+mic2iso(const unsigned char *mic, unsigned char *p, int len)
 {
-	static unsigned char koi2iso[] = {
+	static const unsigned char koi2iso[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -521,14 +521,14 @@ mic2iso(unsigned char *mic, unsigned char *p, int len)
 		0xcc, 0xcb, 0xb7, 0xc8, 0xcd, 0xc9, 0xc7, 0xca
 	};
 
-	mic2latin_with_table(mic, p, len, LC_KOI8_R, koi2iso);
+	mic2latin_with_table(mic, p, len, LC_KOI8_R, PG_ISO_8859_5, koi2iso);
 }
 
 /* win2mic: CP1251 to Mule internal code */
 static void
-win12512mic(unsigned char *l, unsigned char *p, int len)
+win12512mic(const unsigned char *l, unsigned char *p, int len)
 {
-	static unsigned char win2koi[] = {
+	static const unsigned char win2koi[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -547,14 +547,14 @@ win12512mic(unsigned char *l, unsigned char *p, int len)
 		0xdb, 0xdd, 0xdf, 0xd9, 0xd8, 0xdc, 0xc0, 0xd1
 	};
 
-	latin2mic_with_table(l, p, len, LC_KOI8_R, win2koi);
+	latin2mic_with_table(l, p, len, LC_KOI8_R, PG_WIN1251, win2koi);
 }
 
 /* mic2win: Mule internal code to CP1251 */
 static void
-mic2win1251(unsigned char *mic, unsigned char *p, int len)
+mic2win1251(const unsigned char *mic, unsigned char *p, int len)
 {
-	static unsigned char koi2win[] = {
+	static const unsigned char koi2win[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -573,14 +573,14 @@ mic2win1251(unsigned char *mic, unsigned char *p, int len)
 		0xdc, 0xdb, 0xc7, 0xd8, 0xdd, 0xd9, 0xd7, 0xda
 	};
 
-	mic2latin_with_table(mic, p, len, LC_KOI8_R, koi2win);
+	mic2latin_with_table(mic, p, len, LC_KOI8_R, PG_WIN1251, koi2win);
 }
 
 /* win8662mic: CP866 to Mule internal code */
 static void
-win8662mic(unsigned char *l, unsigned char *p, int len)
+win8662mic(const unsigned char *l, unsigned char *p, int len)
 {
-	static unsigned char win8662koi[] = {
+	static const unsigned char win8662koi[] = {
 		0xe1, 0xe2, 0xf7, 0xe7, 0xe4, 0xe5, 0xf6, 0xfa,
 		0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0,
 		0xf2, 0xf3, 0xf4, 0xf5, 0xe6, 0xe8, 0xe3, 0xfe,
@@ -599,14 +599,14 @@ win8662mic(unsigned char *l, unsigned char *p, int len)
 		0xb6, 0xa6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
 
-	latin2mic_with_table(l, p, len, LC_KOI8_R, win8662koi);
+	latin2mic_with_table(l, p, len, LC_KOI8_R, PG_WIN866, win8662koi);
 }
 
 /* mic2win866: Mule internal code to CP866 */
 static void
-mic2win866(unsigned char *mic, unsigned char *p, int len)
+mic2win866(const unsigned char *mic, unsigned char *p, int len)
 {
-	static unsigned char koi2win866[] = {
+	static const unsigned char koi2win866[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -625,5 +625,5 @@ mic2win866(unsigned char *mic, unsigned char *p, int len)
 		0x9c, 0x9b, 0x87, 0x98, 0x9d, 0x99, 0x97, 0x9a
 	};
 
-	mic2latin_with_table(mic, p, len, LC_KOI8_R, koi2win866);
+	mic2latin_with_table(mic, p, len, LC_KOI8_R, PG_WIN866, koi2win866);
 }

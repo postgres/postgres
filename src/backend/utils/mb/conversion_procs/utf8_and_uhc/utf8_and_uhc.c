@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.c,v 1.11 2005/09/24 17:53:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.c,v 1.11.2.1 2006/05/21 20:05:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ utf8_to_uhc(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmapUHC,
-			   sizeof(ULmapUHC) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmapUHC) / sizeof(pg_utf_to_local), PG_UHC, len);
 
 	PG_RETURN_VOID();
 }

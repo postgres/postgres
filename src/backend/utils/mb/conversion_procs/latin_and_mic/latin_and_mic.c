@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.10 2005/09/24 17:53:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.10.2.1 2006/05/21 20:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,12 +40,12 @@ extern Datum mic_to_latin4(PG_FUNCTION_ARGS);
  * ----------
  */
 
-static void latin12mic(unsigned char *l, unsigned char *p, int len);
-static void mic2latin1(unsigned char *mic, unsigned char *p, int len);
-static void latin32mic(unsigned char *l, unsigned char *p, int len);
-static void mic2latin3(unsigned char *mic, unsigned char *p, int len);
-static void latin42mic(unsigned char *l, unsigned char *p, int len);
-static void mic2latin4(unsigned char *mic, unsigned char *p, int len);
+static void latin12mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2latin1(const unsigned char *mic, unsigned char *p, int len);
+static void latin32mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2latin3(const unsigned char *mic, unsigned char *p, int len);
+static void latin42mic(const unsigned char *l, unsigned char *p, int len);
+static void mic2latin4(const unsigned char *mic, unsigned char *p, int len);
 
 Datum
 latin1_to_mic(PG_FUNCTION_ARGS)
@@ -144,32 +144,37 @@ mic_to_latin4(PG_FUNCTION_ARGS)
 }
 
 static void
-latin12mic(unsigned char *l, unsigned char *p, int len)
+latin12mic(const unsigned char *l, unsigned char *p, int len)
 {
-	latin2mic(l, p, len, LC_ISO8859_1);
+	latin2mic(l, p, len, LC_ISO8859_1, PG_LATIN1);
 }
+
 static void
-mic2latin1(unsigned char *mic, unsigned char *p, int len)
+mic2latin1(const unsigned char *mic, unsigned char *p, int len)
 {
-	mic2latin(mic, p, len, LC_ISO8859_1);
+	mic2latin(mic, p, len, LC_ISO8859_1, PG_LATIN1);
 }
+
 static void
-latin32mic(unsigned char *l, unsigned char *p, int len)
+latin32mic(const unsigned char *l, unsigned char *p, int len)
 {
-	latin2mic(l, p, len, LC_ISO8859_3);
+	latin2mic(l, p, len, LC_ISO8859_3, PG_LATIN3);
 }
+
 static void
-mic2latin3(unsigned char *mic, unsigned char *p, int len)
+mic2latin3(const unsigned char *mic, unsigned char *p, int len)
 {
-	mic2latin(mic, p, len, LC_ISO8859_3);
+	mic2latin(mic, p, len, LC_ISO8859_3, PG_LATIN3);
 }
+
 static void
-latin42mic(unsigned char *l, unsigned char *p, int len)
+latin42mic(const unsigned char *l, unsigned char *p, int len)
 {
-	latin2mic(l, p, len, LC_ISO8859_4);
+	latin2mic(l, p, len, LC_ISO8859_4, PG_LATIN4);
 }
+
 static void
-mic2latin4(unsigned char *mic, unsigned char *p, int len)
+mic2latin4(const unsigned char *mic, unsigned char *p, int len)
 {
-	mic2latin(mic, p, len, LC_ISO8859_4);
+	mic2latin(mic, p, len, LC_ISO8859_4, PG_LATIN4);
 }

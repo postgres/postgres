@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.139.2.2 2005/12/22 22:50:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.139.2.3 2006/05/21 20:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,10 +256,7 @@ textin(PG_FUNCTION_ARGS)
 	text	   *result;
 	int			len;
 
-	/* verify encoding */
 	len = strlen(inputText);
-	pg_verifymbstr(inputText, len, false);
-
 	result = (text *) palloc(len + VARHDRSZ);
 	VARATT_SIZEP(result) = len + VARHDRSZ;
 
@@ -298,9 +295,6 @@ textrecv(PG_FUNCTION_ARGS)
 	int			nbytes;
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
-
-	/* verify encoding */
-	pg_verifymbstr(str, nbytes, false);
 
 	result = (text *) palloc(nbytes + VARHDRSZ);
 	VARATT_SIZEP(result) = nbytes + VARHDRSZ;

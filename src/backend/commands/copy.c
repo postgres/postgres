@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.254.2.3 2005/12/28 05:38:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.254.2.4 2006/05/21 20:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -937,9 +937,15 @@ DoCopy(const CopyStmt *stmt)
 	cstate->raw_buf = (char *) palloc(RAW_BUF_SIZE + 1);
 	cstate->raw_buf_index = cstate->raw_buf_len = 0;
 
-	/* Set up encoding conversion info */
+	/*
+	 * Set up encoding conversion info.  Even if the client and server
+	 * encodings are the same, we must apply pg_client_to_server() to
+	 * validate data in multibyte encodings.
+	 */
 	cstate->client_encoding = pg_get_client_encoding();
-	cstate->need_transcoding = (cstate->client_encoding != GetDatabaseEncoding());
+	cstate->need_transcoding =
+		(cstate->client_encoding != GetDatabaseEncoding() ||
+		 pg_database_encoding_max_length() > 1);
 	cstate->client_only_encoding = PG_ENCODING_IS_CLIENT_ONLY(cstate->client_encoding);
 
 	cstate->copy_dest = COPY_FILE;		/* default */
