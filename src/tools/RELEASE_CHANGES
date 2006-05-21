@@ -43,8 +43,6 @@
 
 * Update inet/cidr data types with newest Bind patches
 
-* Update pg_upgrade to handle new version, or disable
-
 * Translation updates
 	Translations are kept in the project "pgtranslation" on PgFoundry.
 	1. Check out the messages module (of the right branch).
