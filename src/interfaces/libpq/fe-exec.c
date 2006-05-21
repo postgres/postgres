@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.122.2.2 2006/05/21 19:56:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.122.2.3 2006/05/21 20:20:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
+#include "mb/pg_wchar.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -39,6 +40,12 @@ char	   *const pgresStatus[] = {
 	"PGRES_FATAL_ERROR"
 };
 
+/*
+ * static state needed by PQescapeString and PQescapeBytea; initialize to
+ * values that result in backward-compatible behavior
+ */
+int	PQ_static_client_encoding = PG_SQL_ASCII;
+static bool	static_std_strings = false;
 
 /* Note: DONOTICE macro will work if applied to either PGconn or PGresult */
 #define DONOTICE(conn,message) \
@@ -59,45 +66,80 @@ static int	getNotice(PGconn *conn);
 /* ---------------
  * Escaping arbitrary strings to get valid SQL strings/identifiers.
  *
- * Replaces "\\" with "\\\\" and "'" with "''".
+ * Replaces "'" with "''", and if not std_strings, replaces "\" with "\\".
  * length is the length of the buffer pointed to by
  * from.  The buffer at to must be at least 2*length + 1 characters
  * long.  A terminating NUL character is written.
  * ---------------
  */
-
-size_t
-PQescapeString(char *to, const char *from, size_t length)
+static size_t
+PQescapeStringInternal(PGconn *conn,
+					   char *to, const char *from, size_t length,
+					   int *error,
+					   int encoding, bool std_strings)
 {
 	const char *source = from;
 	char	   *target = to;
-	unsigned int remaining = length;
+	size_t		remaining = length;
 
-	while (remaining > 0)
+	if (error)
+		*error = 0;
+
+	while (remaining > 0 && *source != '\0')
 	{
-		switch (*source)
+		char	c = *source;
+		int		len;
+		int		i;
+
+		/* Fast path for plain ASCII */
+		if (!IS_HIGHBIT_SET(c))
 		{
-			case '\\':
-				*target = '\\';
-				target++;
-				*target = '\\';
-				/* target and remaining are updated below. */
-				break;
-
-			case '\'':
-				*target = '\'';
-				target++;
-				*target = '\'';
-				/* target and remaining are updated below. */
-				break;
-
-			default:
-				*target = *source;
-				/* target and remaining are updated below. */
+			/* Apply quoting if needed */
+			if (c == '\'' ||
+				(c == '\\' && !std_strings))
+				*target++ = c;
+			/* Copy the character */
+			*target++ = c;
+			source++;
+			remaining--;
+			continue;
 		}
-		source++;
-		target++;
-		remaining--;
+
+		/* Slow path for possible multibyte characters */
+		len = pg_encoding_mblen(encoding, source);
+
+		/* Copy the character */
+		for (i = 0; i < len; i++)
+		{
+			if (remaining == 0 || *source == '\0')
+				break;
+			*target++ = *source++;
+			remaining--;
+		}
+
+		/*
+		 * If we hit premature end of string (ie, incomplete multibyte
+		 * character), try to pad out to the correct length with spaces.
+		 * We may not be able to pad completely, but we will always be able
+		 * to insert at least one pad space (since we'd not have quoted a
+		 * multibyte character).  This should be enough to make a string that
+		 * the server will error out on.
+		 */
+		if (i < len)
+		{
+			if (error)
+				*error = 1;
+			if (conn)
+				printfPQExpBuffer(&conn->errorMessage,
+						libpq_gettext("incomplete multibyte character\n"));
+			for (; i < len; i++)
+			{
+				if (((size_t) (target - to)) / 2 >= length)
+					break;
+				*target++ = ' ';
+			}
+			break;
+		}
 	}
 
 	/* Write the terminating NUL character. */
@@ -106,72 +148,109 @@ PQescapeString(char *to, const char *from, size_t length)
 	return target - to;
 }
 
+size_t
+PQescapeStringConn(PGconn *conn,
+				   char *to, const char *from, size_t length,
+				   int *error)
+{
+	if (!conn)
+	{
+		/* force empty-string result */
+		*to = '\0';
+		if (error)
+			*error = 1;
+		return 0;
+	}
+	return PQescapeStringInternal(conn, to, from, length, error,
+								  conn->client_encoding,
+								  static_std_strings);
+}
+
+size_t
+PQescapeString(char *to, const char *from, size_t length)
+{
+	return PQescapeStringInternal(NULL, to, from, length, NULL,
+								  PQ_static_client_encoding,
+								  static_std_strings);
+}
+
 /*
  *		PQescapeBytea	- converts from binary string to the
  *		minimal encoding necessary to include the string in an SQL
  *		INSERT statement with a bytea type column as the target.
  *
  *		The following transformations are applied
- *		'\0' == ASCII  0 == \\000
- *		'\'' == ASCII 39 == \'
- *		'\\' == ASCII 92 == \\\\
- *		anything < 0x20, or > 0x7e ---> \\ooo
- *                                      (where ooo is an octal expression)
+ *		'\0' == ASCII  0 == \000
+ *		'\'' == ASCII 39 == ''
+ *		'\\' == ASCII 92 == \\
+ *		anything < 0x20, or > 0x7e ---> \ooo
+ *										(where ooo is an octal expression)
+ *		If not std_strings, all backslashes sent to the output are doubled.
  */
-unsigned char *
-PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
+static unsigned char *
+PQescapeByteaInternal(PGconn *conn,
+					  const unsigned char *from, size_t from_length,
+					  size_t *to_length, bool std_strings)
 {
-	unsigned char *vp;
+	const unsigned char *vp;
 	unsigned char *rp;
 	unsigned char *result;
 	size_t		i;
 	size_t		len;
+	size_t		bslash_len = (std_strings ? 1 : 2);
 
 	/*
 	 * empty string has 1 char ('\0')
 	 */
 	len = 1;
 
-	vp = bintext;
-	for (i = binlen; i > 0; i--, vp++)
+	vp = from;
+	for (i = from_length; i > 0; i--, vp++)
 	{
 		if (*vp < 0x20 || *vp > 0x7e)
-			len += 5;			/* '5' is for '\\ooo' */
+			len += bslash_len + 3;
 		else if (*vp == '\'')
 			len += 2;
 		else if (*vp == '\\')
-			len += 4;
+			len += bslash_len + bslash_len;
 		else
 			len++;
 	}
 
+	*to_length = len;
 	rp = result = (unsigned char *) malloc(len);
 	if (rp == NULL)
+	{
+		if (conn)
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("out of memory\n"));
 		return NULL;
+	}
 
-	vp = bintext;
-	*bytealen = len;
-
-	for (i = binlen; i > 0; i--, vp++)
+	vp = from;
+	for (i = from_length; i > 0; i--, vp++)
 	{
 		if (*vp < 0x20 || *vp > 0x7e)
 		{
-			(void) sprintf(rp, "\\\\%03o", *vp);
-			rp += 5;
+			if (!std_strings)
+				*rp++ = '\\';
+			(void) sprintf((char *) rp, "\\%03o", *vp);
+			rp += 4;
 		}
 		else if (*vp == '\'')
 		{
-			rp[0] = '\'';
-			rp[1] = '\'';
-			rp += 2;
+			*rp++ = '\'';
+			*rp++ = '\'';
 		}
 		else if (*vp == '\\')
 		{
-			rp[0] = '\\';
-			rp[1] = '\\';
-			rp[2] = '\\';
-			rp[3] = '\\';
-			rp += 4;
+			if (!std_strings)
+			{
+				*rp++ = '\\';
+				*rp++ = '\\';
+			}
+			*rp++ = '\\';
+			*rp++ = '\\';
 		}
 		else
 			*rp++ = *vp;
@@ -181,12 +260,31 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 	return result;
 }
 
+unsigned char *
+PQescapeByteaConn(PGconn *conn,
+				  const unsigned char *from, size_t from_length,
+				  size_t *to_length)
+{
+	if (!conn)
+		return NULL;
+	return PQescapeByteaInternal(conn, from, from_length, to_length,
+								 static_std_strings);
+}
+
+unsigned char *
+PQescapeBytea(unsigned char *from, size_t from_length, size_t *to_length)
+{
+	return PQescapeByteaInternal(NULL, from, from_length, to_length,
+								 static_std_strings);
+}
+
+
 /*
  *		PQunescapeBytea - converts the null terminated string representation
  *		of a bytea, strtext, into binary, filling a buffer. It returns a
  *		pointer to the buffer which is NULL on error, and the size of the
  *		buffer in retbuflen. The pointer may subsequently be used as an
- *		argument to the function free(3). It is the reverse of PQescapeBytea.
+ *		argument to the function PQfreemem.
  *
  *		The following transformations are reversed:
  *		'\0' == ASCII  0 == \000

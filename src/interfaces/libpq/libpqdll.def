@@ -93,3 +93,5 @@ EXPORTS
 	appendPQExpBuffer	@ 91
 	pg_encoding_to_char	@ 92
 	pg_utf_mblen		@ 93
+        PQescapeStringConn      @ 126
+        PQescapeByteaConn       @ 127

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.60 2002/10/16 02:55:30 momjian Exp $
+ * $Id: libpq-int.h,v 1.60.2.1 2006/05/21 20:20:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,6 +300,9 @@ struct pg_conn
  * direct use of this array is deprecated; call PQresStatus() instead.
  */
 extern char *const pgresStatus[];
+
+/* Added for PQescapeString fix */
+extern int	PQ_static_client_encoding;
 
 /* ----------------
  * Internal functions of libpq

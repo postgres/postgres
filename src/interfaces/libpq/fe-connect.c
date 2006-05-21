@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.213.2.5 2005/07/14 14:07:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.213.2.6 2006/05/21 20:20:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1642,6 +1642,7 @@ PQsetenvPoll(PGconn *conn)
 						goto error_return;
 					}
 					conn->client_encoding = encoding;
+					PQ_static_client_encoding = conn->client_encoding;
 
 					/* Move on to setting the environment options */
 					conn->setenv_state = SETENV_STATE_OPTION_SEND;
@@ -1668,6 +1669,7 @@ PQsetenvPoll(PGconn *conn)
 							conn->client_encoding = PG_SQL_ASCII;
 						else
 							conn->client_encoding = pg_char_to_encoding(encoding);
+						PQ_static_client_encoding = conn->client_encoding;
 					}
 					else if (PQresultStatus(res) != PGRES_COMMAND_OK)
 					{
@@ -1857,6 +1859,7 @@ makeEmptyPGconn(void)
 	conn->status = CONNECTION_BAD;
 	conn->asyncStatus = PGASYNC_IDLE;
 	conn->setenv_state = SETENV_STATE_IDLE;
+	conn->client_encoding = PG_SQL_ASCII;
 	conn->notifyList = DLNewList();
 	conn->sock = -1;
 #ifdef USE_SSL
@@ -2763,6 +2766,7 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	{
 		/* change libpq internal encoding */
 		conn->client_encoding = pg_char_to_encoding(encoding);
+		PQ_static_client_encoding = conn->client_encoding;
 		status = 0;				/* everything is ok */
 	}
 	PQclear(res);

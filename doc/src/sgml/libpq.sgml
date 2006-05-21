@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.5 2003/01/30 19:50:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.6 2006/05/21 20:20:48 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -880,114 +880,233 @@ as with a <structname>PGresult</structname> returned by <application>libpq</appl
 </sect2>
 
 <sect2 id="libpq-exec-escape-string">
-  <title>Escaping strings for inclusion in SQL queries</title>
+  <title>Escaping Strings for Inclusion in SQL Commands</title>
 
+   <indexterm zone="libpq-exec-escape-string"><primary>PQescapeStringConn</></>
+   <indexterm zone="libpq-exec-escape-string"><primary>PQescapeString</></>
    <indexterm zone="libpq-exec-escape-string"><primary>escaping strings</></>
 
 <para>
-<function>PQescapeString</function>
-          Escapes a string for use within an SQL query.
+<function>PQescapeStringConn</function> escapes a string for use within an SQL
+command.  This is useful when inserting data values as literal constants
+in SQL commands.  Certain characters (such as quotes and backslashes) must
+be escaped to prevent them from being interpreted specially by the SQL parser.
+<function>PQescapeStringConn</> performs this operation.
+</para>
+
+<tip>
+<para>
+It is especially important to do proper escaping when handling strings that
+were received from an untrustworthy source.  Otherwise there is a security
+risk: you are vulnerable to <quote>SQL injection</> attacks wherein unwanted
+SQL commands are fed to your database.
+</para>
+</tip>
+
+<para>
+<synopsis>
+size_t PQescapeStringConn (PGconn *conn,
+                           char *to, const char *from, size_t length,
+                           int *error);
+</synopsis>
+</para>
+
+<para>
+<function>PQescapeStringConn</> writes an escaped
+version of the <parameter>from</> string to the <parameter>to</>
+buffer, escaping special characters so that they cannot cause any
+harm, and adding a terminating zero byte.  The single quotes that
+must surround <productname>PostgreSQL</> string literals are not
+included in the result string; they should be provided in the SQL
+command that the result is inserted into.
+The parameter <parameter>from</> points to the first character of the string
+that is to be escaped, and the <parameter>length</> parameter gives the
+number of bytes in this string.  A terminating zero byte is not
+required, and should not be counted in <parameter>length</>.  (If
+a terminating zero byte is found before <parameter>length</> bytes are
+processed, <function>PQescapeStringConn</> stops at the zero; the behavior
+is thus rather like <function>strncpy</>.)
+<parameter>to</> shall point to a
+buffer that is able to hold at least one more byte than twice
+the value of <parameter>length</>, otherwise the behavior is
+undefined.
+Behavior is likewise undefined if the <parameter>to</> and <parameter>from</>
+strings overlap.
+</para>
+<para>
+If the <parameter>error</> parameter is not NULL, then <literal>*error</>
+is set to zero on success, nonzero on error.  Presently the only possible
+error conditions involve invalid multibyte encoding in the source string.
+The output string is still generated on error, but it can be expected that
+the server will reject it as malformed.  On error, a suitable message is
+stored in the <parameter>conn</> object, whether or not <parameter>error</>
+is NULL.
+</para>
+<para>
+<function>PQescapeStringConn</> returns the number of bytes written
+to <parameter>to</>, not including the terminating zero byte.
+</para>
+
+<para>
 <synopsis>
 size_t PQescapeString (char *to, const char *from, size_t length);
 </synopsis>
-If you want to include strings that have been received
-from a source that is not trustworthy (for example, because a random user
-entered them), you cannot directly include them in SQL
-queries for security reasons.  Instead, you have to quote special
-characters that are otherwise interpreted by the SQL parser.
+</para>
+
+<para>
+<function>PQescapeString</> is an older, deprecated version of
+<function>PQescapeStringConn</>; the difference is that it does not
+take <parameter>conn</> or <parameter>error</> parameters.  Because of this,
+it cannot adjust its behavior depending on the connection properties (such as
+character encoding) and therefore <emphasis>it may give the wrong results</>.
+Also, it has no way to report error conditions.
 </para>
 <para>
-<function>PQescapeString</> performs this operation.  The
-<parameter>from</> points to the first character of the string that
-is to be escaped, and the <parameter>length</> parameter counts the
-number of characters in this string (a terminating zero byte is
-neither necessary nor counted).  <parameter>to</> shall point to a
-buffer that is able to hold at least one more character than twice
-the value of <parameter>length</>, otherwise the behavior is
-undefined.  A call to <function>PQescapeString</> writes an escaped
-version of the <parameter>from</> string to the <parameter>to</>
-buffer, replacing special characters so that they cannot cause any
-harm, and adding a terminating zero byte.  The single quotes that
-must surround <productname>PostgreSQL</> string literals are not part of the result
-string.
-</para>
-<para>
-<function>PQescapeString</> returns the number of characters written
-to <parameter>to</>, not including the terminating zero byte.
-Behavior is undefined when the <parameter>to</> and <parameter>from</>
-strings overlap.
+<function>PQescapeString</> can be used safely in single-threaded client
+programs that work with only one <productname>PostgreSQL</> connection at
+a time (in this case it can find out what it needs to know <quote>behind the
+scenes</>).  In other contexts it is a security hazard and should be avoided
+in favor of <function>PQescapeStringConn</>.
 </para>
 </sect2>
 
 
  <sect2 id="libpq-exec-escape-bytea">
-  <title>Escaping binary strings for inclusion in SQL queries</title>
-  <indexterm zone="libpq-exec-escape-bytea">
-   <primary>escaping binary strings</primary>
-  </indexterm>
-  <para>
-   <function>PQescapeBytea</function>
-   Escapes a binary string (<type>bytea</type> type) for use within an SQL query.
-   <synopsis>
-    unsigned char *PQescapeBytea(unsigned char *from,
-                                         size_t from_length,
-                                         size_t *to_length);
-   </synopsis>
+  <title>Escaping Binary Strings for Inclusion in SQL Commands</title>
 
-   Certain <acronym>ASCII</acronym> characters <emphasis>must</emphasis>
-   be escaped (but all characters <emphasis>may</emphasis> be escaped)
-   when used as part of a <type>bytea</type>
-   string literal in an <acronym>SQL</acronym> statement. In general, to
-   escape a character, it is converted into the three digit octal number
-   equal to the decimal <acronym>ASCII</acronym> value, and preceded by
-   two backslashes. The single quote (') and backslash (\) characters have
-   special alternate escape sequences. See the <citetitle>User's Guide</citetitle>
-   for more information. <function>PQescapeBytea
-   </function> performs this operation, escaping only the minimally
-   required characters.
+  <indexterm zone="libpq-exec-escape-bytea">
+   <primary>bytea</>
+   <secondary sortas="libpq">in libpq</>
+  </indexterm>
+
+  <variablelist>
+  <varlistentry>
+  <term><function>PQescapeByteaConn</function><indexterm><primary>PQescapeByteaConn</></></term>
+  <listitem>
+  <para>
+   Escapes binary data for use within an SQL command with the type
+   <type>bytea</type>.
+<synopsis>
+unsigned char *PQescapeByteaConn(PGconn *conn,
+                                 const unsigned char *from,
+                                 size_t from_length,
+                                 size_t *to_length);
+</synopsis>
+</para>
+
+<para>
+   Certain byte values <emphasis>must</emphasis> be escaped (but all
+   byte values <emphasis>can</emphasis> be escaped) when used as part
+   of a <type>bytea</type> literal in an <acronym>SQL</acronym>
+   statement. In general, to escape a byte, it is converted into the
+   three digit octal number equal to the octet value, and preceded by
+   one or two backslashes. The single quote (<literal>'</>) and backslash
+   (<literal>\</>) characters have special alternative escape
+   sequences. <function>PQescapeByteaConn</function> performs this
+   operation, escaping only the minimally required bytes.
   </para>
 
   <para>
    The <parameter>from</parameter> parameter points to the first
-   character of the string that is to be escaped, and the
-   <parameter>from_length</parameter> parameter reflects the number of
-   characters in this binary string (a terminating zero byte is
-   neither necessary nor counted).  The <parameter>to_length</parameter>
-   parameter shall point to a buffer suitable to hold the resultant
-   escaped string length. The result string length includes the terminating
+   byte of the string that is to be escaped, and the
+   <parameter>from_length</parameter> parameter gives the number of
+   bytes in this binary string.  (A terminating zero byte is
+   neither necessary nor counted.)  The <parameter>to_length</parameter>
+   parameter points to a variable that will hold the resultant
+   escaped string length. This result string length includes the terminating
    zero byte of the result.
   </para>
 
   <para>
-   <function>PQescapeBytea</> returns an escaped version of the
-   <parameter>from</parameter> parameter binary string, to a caller-provided
-    buffer. The return string has all special characters replaced
-   so that they can be properly processed by the PostgreSQL string literal
-   parser, and the <type>bytea</type> input function. A terminating zero
-   byte is also added.  The single quotes that must surround
-   PostgreSQL string literals are not part of the result string.
+   <function>PQescapeByteaConn</> returns an escaped version of the
+   <parameter>from</parameter> parameter binary string in memory
+   allocated with <function>malloc()</>.  This memory must be freed using
+   <function>free()</> when the result is no longer needed.  The
+   return string has all special characters replaced so that they can
+   be properly processed by the <productname>PostgreSQL</productname>
+   string literal parser, and the <type>bytea</type> input function. A
+   terminating zero byte is also added.  The single quotes that must
+   surround <productname>PostgreSQL</productname> string literals are
+   not part of the result string.
   </para>
 
   <para>
-   <function>PQunescapeBytea</function>
-   Converts an escaped string representation of binary data into binary
-   data - the reverse of <function>PQescapeBytea</function>.
-   <synopsis>
-    unsigned char *PQunescapeBytea(unsigned char *from, size_t *to_length);
-   </synopsis>
-
-   The <parameter>from</parameter> parameter points to an escaped string
-   such as might be returned by <function>PQgetvalue</function> of a
-   <type>BYTEA</type> column. <function>PQunescapeBytea</function> converts
-   this string representation into its binary representation, filling the supplied buffer.
-   It returns a pointer to the buffer which is NULL on error, and the size
-   of the buffer in <parameter>to_length</parameter>. The pointer may
-   subsequently be used as an argument to the function
-   <function>free(3)</function>.
+   On error, a NULL pointer is returned, and a suitable error message
+   is stored in the <parameter>conn</> object.  Currently, the only
+   possible error is insufficient memory for the result string.
   </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><function>PQescapeBytea</function><indexterm><primary>PQescapeBytea</></></term>
+  <listitem>
+  <para>
+   <function>PQescapeBytea</> is an older, deprecated version of
+   <function>PQescapeByteaConn</>.
+<synopsis>
+unsigned char *PQescapeBytea(unsigned char *from,
+                             size_t from_length,
+                             size_t *to_length);
+</synopsis>
+</para>
+
+<para>
+   The only difference from <function>PQescapeByteaConn</> is that
+   <function>PQescapeBytea</> does not
+   take a <structname>PGconn</> parameter.  Because of this, it cannot adjust
+   its behavior depending on the connection properties
+   and therefore <emphasis>it may give the wrong results</>.  Also, it
+   has no way to return an error message on failure.
+  </para>
+
+  <para>
+   <function>PQescapeBytea</> can be used safely in single-threaded client
+   programs that work with only one <productname>PostgreSQL</> connection at
+   a time (in this case it can find out what it needs to know <quote>behind the
+   scenes</>).  In other contexts it is a security hazard and should be
+   avoided in favor of <function>PQescapeByteaConn</>.
+  </para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><function>PQunescapeBytea</function><indexterm><primary>PQunescapeBytea</></></term>
+  <listitem>
+  <para>
+   Converts a string representation of binary data into binary
+   data --- the reverse of <function>PQescapeBytea</function>.
+   This is needed when retrieving <type>bytea</type> data in text format,
+   but not when retrieving it in binary format.
+
+<synopsis>
+unsigned char *PQunescapeBytea(unsigned char *from, size_t *to_length);
+</synopsis>
+</para>
+
+  <para>
+   The <parameter>from</parameter> parameter points to a string
+   such as might be returned by <function>PQgetvalue</function> when applied
+   to a <type>bytea</type> column. <function>PQunescapeBytea</function>
+   converts this string representation into its binary representation.
+   It returns a pointer to a buffer allocated with
+   <function>malloc()</function>, or null on error, and puts the size of
+   the buffer in <parameter>to_length</parameter>. The result must be
+   freed using <function>free()</> when it is no longer needed.
+  </para>
+
+  <para>
+   This conversion is not exactly the inverse of
+   <function>PQescapeBytea</function>, because the string is not expected
+   to be <quote>escaped</> when received from <function>PQgetvalue</function>.
+   In particular this means there is no need for string quoting considerations,
+   and so no need for a <structname>PGconn</> parameter.
+  </para>
+  </listitem>
+  </varlistentry>
+  </variablelist>
    
  </sect2>
-
 
 <sect2 id="libpq-exec-select-info">
   <title>Retrieving SELECT Result Information</title>
