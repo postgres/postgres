@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win874/Attic/utf8_and_win874.c,v 1.6 2003/08/04 02:40:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win874/Attic/utf8_and_win874.c,v 1.6.4.1 2006/05/21 20:06:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ utf_to_win874(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmapWIN874,
-			   sizeof(ULmapWIN874) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmapWIN874) / sizeof(pg_utf_to_local), PG_WIN874, len);
 
 	PG_RETURN_VOID();
 }

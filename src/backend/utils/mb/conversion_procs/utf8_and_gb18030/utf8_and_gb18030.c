@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gb18030/utf8_and_gb18030.c,v 1.6 2003/08/04 02:40:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gb18030/utf8_and_gb18030.c,v 1.6.4.1 2006/05/21 20:06:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ utf8_to_gb18030(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmapGB18030,
-			   sizeof(ULmapGB18030) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmapGB18030) / sizeof(pg_utf_to_local), PG_GB18030, len);
 
 	PG_RETURN_VOID();
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_big5/utf8_and_big5.c,v 1.6 2003/08/04 02:40:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_big5/utf8_and_big5.c,v 1.6.4.1 2006/05/21 20:06:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ utf8_to_big5(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmapBIG5,
-			   sizeof(ULmapBIG5) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmapBIG5) / sizeof(pg_utf_to_local), PG_BIG5, len);
 
 	PG_RETURN_VOID();
 }

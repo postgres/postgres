@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jp/utf8_and_euc_jp.c,v 1.6 2003/08/04 02:40:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jp/utf8_and_euc_jp.c,v 1.6.4.1 2006/05/21 20:06:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ utf8_to_euc_jp(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmapEUC_JP,
-			   sizeof(ULmapEUC_JP) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmapEUC_JP) / sizeof(pg_utf_to_local), PG_EUC_JP, len);
 
 	PG_RETURN_VOID();
 }

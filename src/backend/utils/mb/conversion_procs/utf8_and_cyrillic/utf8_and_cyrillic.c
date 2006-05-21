@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.6 2003/08/04 02:40:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.6.4.1 2006/05/21 20:06:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ utf8_to_koi8r(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmap_KOI8R,
-			   sizeof(ULmap_KOI8R) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmap_KOI8R) / sizeof(pg_utf_to_local), PG_KOI8R, len);
 
 	PG_RETURN_VOID();
 }
@@ -92,7 +92,7 @@ utf8_to_win1251(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmap_WIN1251,
-			   sizeof(ULmap_WIN1251) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmap_WIN1251) / sizeof(pg_utf_to_local), PG_WIN1251, len);
 
 	PG_RETURN_VOID();
 }
@@ -126,7 +126,7 @@ utf8_to_alt(PG_FUNCTION_ARGS)
 	Assert(len >= 0);
 
 	UtfToLocal(src, dest, ULmap_ALT,
-			   sizeof(ULmap_ALT) / sizeof(pg_utf_to_local), len);
+			   sizeof(ULmap_ALT) / sizeof(pg_utf_to_local), PG_ALT, len);
 
 	PG_RETURN_VOID();
 }

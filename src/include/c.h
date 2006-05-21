@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.156.2.1 2005/07/18 15:54:11 tgl Exp $
+ * $Id: c.h,v 1.156.2.2 2006/05/21 20:06:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -683,6 +683,8 @@ typedef NameData *Name;
 
 /* msb for char */
 #define CSIGNBIT (0x80)
+#define HIGHBIT					(0x80)
+#define IS_HIGHBIT_SET(ch)		((unsigned char)(ch) & HIGHBIT)
 
 #define STATUS_OK				(0)
 #define STATUS_ERROR			(-1)
