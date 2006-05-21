@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.28 2003/08/04 02:40:14 momjian Exp $
+ * $Id: gramparse.h,v 1.28.4.1 2006/05/21 20:11:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,17 @@
 #define GRAMPARSE_H
 
 #include "nodes/parsenodes.h"
+
+
+typedef enum
+{
+	BACKSLASH_QUOTE_OFF,
+	BACKSLASH_QUOTE_ON,
+	BACKSLASH_QUOTE_SAFE_ENCODING
+} BackslashQuoteType;
+
+/* GUC variables in scan.l (every one of these is a bad idea :-() */
+extern BackslashQuoteType backslash_quote;
 
 
 /* from parser.c */

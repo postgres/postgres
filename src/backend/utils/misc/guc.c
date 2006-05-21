@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.4 2006/02/12 22:33:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.5 2006/05/21 20:11:58 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "optimizer/geqo.h"
 #include "optimizer/paths.h"
 #include "optimizer/prep.h"
+#include "parser/gramparse.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
@@ -95,6 +96,8 @@ static const char *assign_msglvl(int *var, const char *newval,
 			  bool doit, bool interactive);
 static const char *assign_log_error_verbosity(const char *newval, bool doit,
 						   bool interactive);
+static const char *assign_backslash_quote(const char *newval, bool doit,
+										  bool interactive);
 static bool assign_phony_autocommit(bool newval, bool doit, bool interactive);
 
 
@@ -144,6 +147,7 @@ static char *log_min_error_statement_str;
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
+static char *backslash_quote_string;
 static char *client_encoding_string;
 static char *datestyle_string;
 static char *default_iso_level_string;
@@ -1281,6 +1285,15 @@ static struct config_real ConfigureNamesReal[] =
 
 static struct config_string ConfigureNamesString[] =
 {
+	{
+		{"backslash_quote", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("Sets whether \"\\'\" is allowed in string literals."),
+			gettext_noop("Valid values are ON, OFF, and SAFE_ENCODING.")
+		},
+		&backslash_quote_string,
+		"safe_encoding", assign_backslash_quote, NULL
+	},
+
 	{
 		{"client_encoding", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the client's character set encoding."),
@@ -4372,6 +4385,32 @@ assign_log_error_verbosity(const char *newval, bool doit, bool interactive)
 	else
 		return NULL;			/* fail */
 	return newval;				/* OK */
+}
+
+static const char *
+assign_backslash_quote(const char *newval, bool doit, bool interactive)
+{
+	BackslashQuoteType bq;
+	bool	bqbool;
+
+	/*
+	 * Although only "on", "off", and "safe_encoding" are documented,
+	 * we use parse_bool so we can accept all the likely variants of
+	 * "on" and "off".
+	 */
+	if (strcasecmp(newval, "safe_encoding") == 0)
+		bq = BACKSLASH_QUOTE_SAFE_ENCODING;
+	else if (parse_bool(newval, &bqbool))
+	{
+		bq = bqbool ? BACKSLASH_QUOTE_ON : BACKSLASH_QUOTE_OFF;
+	}
+	else
+		return NULL;			/* reject */
+
+	if (doit)
+		backslash_quote = bq;
+
+	return newval;
 }
 
 static bool
