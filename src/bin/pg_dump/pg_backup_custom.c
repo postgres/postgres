@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.33 2005/10/15 02:49:38 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.34 2006/05/22 11:21:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 			AH->FH = stdout;
 
 		if (!AH->FH)
-			die_horribly(AH, modulename, "could not open archive file \"%s\": %s\n", AH->fSpec, strerror(errno));
+			die_horribly(AH, modulename, "could not open output file \"%s\": %s\n", AH->fSpec, strerror(errno));
 
 		ctx->hasSeek = checkSeek(AH->FH);
 	}
@@ -186,7 +186,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		else
 			AH->FH = stdin;
 		if (!AH->FH)
-			die_horribly(AH, modulename, "could not open archive file \"%s\": %s\n", AH->fSpec, strerror(errno));
+			die_horribly(AH, modulename, "could not open input file \"%s\": %s\n", AH->fSpec, strerror(errno));
 
 		ctx->hasSeek = checkSeek(AH->FH);
 
@@ -438,7 +438,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		{
 			if ((TocIDRequired(AH, id, ropt) & REQ_DATA) != 0)
 				die_horribly(AH, modulename,
-							 "Dumping a specific TOC data block out of order is not supported"
+							 "dumping a specific TOC data block out of order is not supported"
 					  " without ID on this input stream (fseek required)\n");
 
 			switch (blkType)
@@ -540,9 +540,14 @@ _PrintData(ArchiveHandle *AH)
 
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
-			die_horribly(AH, modulename,
-					  "could not read data block -- expected %lu, got %lu\n",
-						 (unsigned long) blkLen, (unsigned long) cnt);
+		{
+			if (feof(AH->FH))
+				die_horribly(AH, modulename,
+							 "could not read from input file: end of file\n");
+			else
+				die_horribly(AH, modulename,
+							 "could not read from input file: %s\n", strerror(errno));
+		}
 
 		ctx->filePos += blkLen;
 
@@ -663,9 +668,14 @@ _skipData(ArchiveHandle *AH)
 		}
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
-			die_horribly(AH, modulename,
-					  "could not read data block -- expected %lu, got %lu\n",
-						 (unsigned long) blkLen, (unsigned long) cnt);
+		{
+			if (feof(AH->FH))
+				die_horribly(AH, modulename,
+							 "could not read from input file: end of file\n");
+			else
+				die_horribly(AH, modulename,
+							 "could not read from input file: %s\n", strerror(errno));
+		}
 
 		ctx->filePos += blkLen;
 
@@ -736,8 +746,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 
 	if (res != len)
 		die_horribly(AH, modulename,
-					 "write error in _WriteBuf (%lu != %lu)\n",
-					 (unsigned long) res, (unsigned long) len);
+					 "could not write to output file: %s\n", strerror(errno));
 
 	ctx->filePos += res;
 	return res;
@@ -929,7 +938,7 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 				 */
 				WriteInt(AH, zlibOutSize - zp->avail_out);
 				if (fwrite(out, 1, zlibOutSize - zp->avail_out, AH->FH) != (zlibOutSize - zp->avail_out))
-					die_horribly(AH, modulename, "could not write compressed chunk\n");
+					die_horribly(AH, modulename, "could not write to output file: %s\n", strerror(errno));
 				ctx->filePos += zlibOutSize - zp->avail_out;
 			}
 			zp->next_out = (void *) out;
@@ -943,7 +952,7 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 		{
 			WriteInt(AH, zp->avail_in);
 			if (fwrite(zp->next_in, 1, zp->avail_in, AH->FH) != zp->avail_in)
-				die_horribly(AH, modulename, "could not write uncompressed chunk\n");
+				die_horribly(AH, modulename, "could not write to output file: %s\n", strerror(errno));
 			ctx->filePos += zp->avail_in;
 			zp->avail_in = 0;
 		}

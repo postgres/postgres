@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.50 2006/02/12 06:11:50 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.51 2006/05/22 11:21:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -546,8 +546,7 @@ tarWrite(const void *buf, size_t len, TAR_MEMBER *th)
 
 	if (res != len)
 		die_horribly(th->AH, modulename,
-				"could not write to tar member (wrote %lu, attempted %lu)\n",
-					 (unsigned long) res, (unsigned long) len);
+					 "could not write to output file: %s\n", strerror(errno));
 
 	th->pos += res;
 	return res;
@@ -1035,13 +1034,12 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 		res = fwrite(&buf[0], 1, cnt, th->tarFH);
 		if (res != cnt)
 			die_horribly(AH, modulename,
-						 "write error appending to tar archive (wrote %lu, attempted %lu)\n",
-						 (unsigned long) res, (unsigned long) cnt);
+						 "could not write to output file: %s\n", strerror(errno));
 		len += res;
 	}
 
 	if (fclose(tmp) != 0)		/* This *should* delete it... */
-		die_horribly(AH, modulename, "could not close tar member: %s\n", strerror(errno));
+		die_horribly(AH, modulename, "could not close temporary file: %s\n", strerror(errno));
 
 	if (len != th->fileLen)
 	{
@@ -1327,6 +1325,6 @@ _tarWriteHeader(TAR_MEMBER *th)
 	}
 
 	if (fwrite(h, 1, 512, th->tarFH) != 512)
-		die_horribly(th->AH, modulename, "could not write tar header\n");
+		die_horribly(th->AH, modulename, "could not write to output file: %s\n", strerror(errno));
 
 }

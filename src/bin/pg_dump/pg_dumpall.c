@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.74 2006/04/07 21:26:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.75 2006/05/22 11:21:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,8 @@ int			optreset;
 #include "pqexpbuffer.h"
 
 
-/* version string we expect back from postgres */
-#define PG_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
+/* version string we expect back from pg_dump */
+#define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
 
 
 static const char *progname;
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if ((ret = find_other_exec(argv[0], "pg_dump", PG_VERSIONSTR,
+	if ((ret = find_other_exec(argv[0], "pg_dump", PGDUMP_VERSIONSTR,
 							   pg_dump_bin)) < 0)
 	{
 		char		full_path[MAXPGPATH];
