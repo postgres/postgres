@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Wed May 17 22:32:10 EDT 2006
+Last updated:           Mon May 22 16:39:01 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -561,6 +561,13 @@ first.
 <p>          This is basically the same as SET search_path.
 </p>
   </li></ul>
+  </li><li>Referential Integrity
+  <ul>
+    <li>Add MATCH PARTIAL referential integrity
+    </li><li>Change foreign key constraint for array -&gt; element to mean element
+          in array?
+    </li><li>Enforce referential integrity for system tables
+  </li></ul>
   </li><li>Server-Side Languages
   <ul>
     <li>Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
@@ -701,17 +708,13 @@ first.
           non-E strings are used
   </li></ul>
 </li></ul>
-<h1><a name="section_10">Referential Integrity</a></h1>
-
+<h1><a name="section_10">Triggers</a></h1>
 <ul>
-  <li>Add MATCH PARTIAL referential integrity
-  </li><li>Add deferred trigger queue file
+  <li>Add deferred trigger queue file
 <p>  Right now all deferred trigger information is stored in backend
   memory.  This could exhaust memory for very large trigger queues.
   This item involves dumping large queues into files.
 </p>
-  </li><li>Change foreign key constraint for array -&gt; element to mean element
-  in array?
   </li><li>Allow DEFERRABLE UNIQUE constraints?
   </li><li>Allow triggers to be disabled in only the current session.
 <p>  This is currently possible by starting a multi-statement transaction,
@@ -725,7 +728,6 @@ first.
 </p>
   </li><li>Allow statement-level triggers to access modified rows
   </li><li>Support triggers on columns (Greg Sabino Mullane)
-  </li><li>Enforce referential integrity for system tables
   </li><li>Allow AFTER triggers on system tables
 <p>  System tables are modified in many places in the backend without going
   through the executor and therefore not causing triggers to fire. To

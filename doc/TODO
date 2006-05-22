@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed May 17 22:32:10 EDT 2006
+Last updated:		Mon May 22 16:39:01 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -616,6 +616,14 @@ SQL Commands
 	  This is basically the same as SET search_path.
 
 
+* Referential Integrity
+
+	o Add MATCH PARTIAL referential integrity
+	o Change foreign key constraint for array -> element to mean element
+	  in array?
+	o Enforce referential integrity for system tables
+
+
 * Server-Side Languages
 
 	o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
@@ -771,18 +779,14 @@ Clients
 	  non-E strings are used
 
 
-Referential Integrity
-=====================
-
-* Add MATCH PARTIAL referential integrity
+Triggers
+========
 * Add deferred trigger queue file
 
   Right now all deferred trigger information is stored in backend
   memory.  This could exhaust memory for very large trigger queues.
   This item involves dumping large queues into files.
 
-* Change foreign key constraint for array -> element to mean element
-  in array?
 * Allow DEFERRABLE UNIQUE constraints?
 * Allow triggers to be disabled in only the current session.
 
@@ -798,7 +802,6 @@ Referential Integrity
 
 * Allow statement-level triggers to access modified rows
 * Support triggers on columns (Greg Sabino Mullane)
-* Enforce referential integrity for system tables
 * Allow AFTER triggers on system tables
 
   System tables are modified in many places in the backend without going
