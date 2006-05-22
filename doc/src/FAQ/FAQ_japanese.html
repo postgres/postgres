@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Sun Apr  2 23:40:12 EDT 2006</p>
+<p>原文最終更新日:		Thu May 18 23:52:32 EDT 2006</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:pgman at candle.pha.pa.us">pgman at candle.pha.pa.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -51,7 +51,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#item1.9">1.9</a>) 既知のバグや未だ無い機能はどうやって見つけますか？<br />
 <a href="#item1.10">1.10</a>) どのような文書がありますか？<br />
 <a href="#item1.11">1.11</a>) <small>SQL</small>はどうすれば学べますか？<br />
-<a href="#item1.12">1.12</a>) 開発チームにはどのように参加しますか？<br />
+<a href="#item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？<br />
 <a href="#item1.13">1.13</a>) 他の<small>DBMS</small>と比べてPostgreSQLはどうなのですか？<br />
 
 
@@ -257,7 +257,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <h4 id="item1.6">1.6</a>) 最新版はどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.1.3 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.1.4 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -442,11 +442,20 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 
     <p>素晴らしい手引書は、<a href=
-    "http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm,</a>
-    <a href=
-    "http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">
-    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,</a>
-    そして、<a href="http://sqlcourse.com/">http://sqlcourse.com</a>
+    <ul>
+    <li> <a href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm</a>
+    </li>
+    <li>
+    <a href="http://sqlcourse.com/">http://sqlcourse.com</a>
+    </li>
+
+    <li>
+    <a href="http://www.w3schools.com/sql/default.asp">http://www.w3schools.com/sql/default.asp</a>
+    </li>
+    <li><a href=
+    "http://mysite.verizon.net/Graeme_Birchall/id1.html">http://mysite.verizon.net/Graeme_Birchall/id1.html</a>
+    </li>
+    </ul>
     にあります。</p>
 
 
@@ -470,7 +479,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     ]
     </pre></small></p>
 
-<h4 id="item1.12">1.12</a>) 開発チームにはどのように参加しますか？</h4>
+<h4 id="item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？</h4>
 
     <p><a href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
     （開発者向けの）Developer's FAQ</a>をごらんください。</p>
@@ -790,7 +799,8 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     </p>
 
     <p> デフォルトのブロックサイズを32kに増加することで、最大テーブルサイズ
-    と行サイズと最大カラム数とを4倍にすることができます。</p> 
+    と行サイズと最大カラム数とを4倍にすることができます。また、最大テーブル
+    サイズはテーブルパーティションを使って増やすこともできます。</p> 
 
     <p>ひとつの制限は、約2,000文字以上の長さのカラムにインデックスを付
     けることができないことです。 幸いにも、そのようなインデックスは実際
@@ -1237,7 +1247,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2006年04月03日
+  最終更新日:	2006年05月22日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1246,7 +1256,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 		石井 達夫(<a href="mailto:t-ishii at sra.co.jp">Tatsuo ISHII &lt;t-ishii at sra.co.jp&gt;</a>)
 		齊藤 知人(<a href="mailto:tomos at elelab.nsc.co.jp">Tomohito SAITOH &lt;tomos at elelab.nsc.co.jp&gt;</a>)
 		馬場  肇(<a href="mailto:baba at kusastro.kyoto-u.ac.jp">Hajime BABA &lt;baba at kusastro.kyoto-u.ac.jp&gt;</a>)
-		岡本 一幸(<a href="mailto:kaz-okamoto at hitachi-system.co.jp">Kazuyuki OKAMOTO &lt;kokamoto at itg.hitachi.co.jp&gt;</a>)
+		岡本 一幸(<a href="mailto:kaz-okamoto at hitachi-system.co.jp">Kazuyuki OKAMOTO &lt;kaz-okamoto at hitachi-system.co.jp&gt;</a>)
 		小菅 昭一(<a href="mailto:s-kosuge at str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge at str.hitachi.co.jp&gt;</a>)
 		山下 義之(<a href="mailto:dica at eurus.dti.ne.jp">Yoshiyuki YAMASHITA &lt;dica at eurus.dti.ne.jp&gt;</a>)
 		境 真太郎(<a href="mailto:s_sakai at mxn.mesh.ne.jp">Sintaro SAKAI &lt;s_sakai at mxn.mesh.ne.jp&gt;</a>)

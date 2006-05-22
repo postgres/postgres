@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Sun Apr 2 23:40:12 EDT 2006
+原文最終更新日: Thu May 18 23:52:32 EDT 2006
 
 現在の維持管理者: Bruce Momjian (pgman at candle.pha.pa.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -35,7 +35,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 1.9) 既知のバグや未だ無い機能はどうやって見つけますか？
 1.10) どのような文書がありますか？
 1.11) SQLはどうすれば学べますか？
-1.12) 開発チームにはどのように参加しますか？
+1.12) パッチを提供したり、開発チーム参加するにはどうすればよいですか？
 1.13) 他のDBMSと比べてPostgreSQLはどうなのですか？
 
                           ユーザ・クライアントの質問
@@ -226,7 +226,7 @@ ftp://ftp.PostgreSQL.org/pub/ を使います。
 
 1.6) 最新版はどれですか？
 
-PostgreSQL の最新版はバージョン 8.1.3 です。
+PostgreSQL の最新版はバージョン 8.1.4 です。
 
 我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを行なうことを計
 画しています。
@@ -359,9 +359,12 @@ The Practical SQL Handbook, Bowman Judith S. et al., Addison-Wesley が多くのユ
 ーザに好評です。ほかでは、The Complete Reference SQL, Groff et al., McGraw-Hill
 も好評です。
 
-素晴らしい手引書は、http://www.intermedia.net/support/sql/sqltut.shtm, http://
-ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM, そして、http://
-sqlcourse.com にあります。
+素晴らしい手引書は、
+ 
+http://www.intermedia.net/support/sql/sqltut.shtm
+http://sqlcourse.com
+http://www.w3schools.com/sql/default.asp
+http://mysite.verizon.net/Graeme_Birchall/id1.html にあります。
 
     [訳注:
          日本PostgreSQLユーザ会の日本語の参考文献の紹介ページ
@@ -382,7 +385,7 @@ http://www.postgresql.jp/PostgreSQL/references.html
     ]
 
 
-1.12) 開発チームにはどのように参加しますか？
+1.12) パッチを提供したり、開発チーム参加するにはどうすればよいですか？
 
 （開発者向けの）Developer's FAQをごらんください。
 
@@ -627,7 +630,8 @@ VACUUM FULL tabをしたほうが良いかもしれません。
 ファイルシステムの制限は重要ではありません。
 
 デフォルトのブロックサイズを32kに増加することで、最大テーブルサイズと行サイズと
-最大カラム数とを4倍にすることができます。
+最大カラム数とを4倍にすることができます。また、最大テーブルサイズはテーブルパー
+ティションを使って増やすこともできます。
 
 ひとつの制限は、約2,000文字以上の長さのカラムにインデックスを付けることができな
 いことです。幸いにも、そのようなインデックスは実際は必要ありません。長いカラム
@@ -998,7 +1002,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2006年04月03日
+  最終更新日:   2006年05月22日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1007,7 +1011,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
                 石井 達夫(Tatsuo ISHII <t-ishii at sra.co.jp>)
                 齊藤 知人(Tomohito SAITOH <tomos at elelab.nsc.co.jp>)
                 馬場  肇(Hajime BABA <baba at kusastro.kyoto-u.ac.jp>)
-                岡本 一幸(Kazuyuki OKAMOTO <kokamoto at itg.hitachi.co.jp>)
+                岡本 一幸(Kazuyuki OKAMOTO <kaz-okamoto at hitachi-system.co.jp>)
                 小菅 昭一(Shoichi Kosuge <s-kosuge at str.hitachi.co.jp>)
                 山下 義之(Yoshiyuki YAMASHITA <dica at eurus.dti.ne.jp>)
                 境 真太郎(Sintaro SAKAI <s_sakai at mxn.mesh.ne.jp>)
