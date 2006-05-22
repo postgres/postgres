@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994-5, Regents of the University of California
 --
--- $PostgreSQL: pgsql/src/tutorial/funcs.source,v 1.9 2006/05/11 19:21:14 momjian Exp $
+-- $PostgreSQL: pgsql/src/tutorial/funcs.source,v 1.10 2006/05/22 14:08:06 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -110,7 +110,7 @@ SELECT name(high_pay()) AS overpaid;
 -- SELECT * FROM EMP;
 --
 -- CREATE FUNCTION clean_EMP () RETURNS integer
---	  AS 'DELETE FROM EMP WHERE EMP.salary <= 0\;
+--	  AS 'DELETE FROM EMP WHERE EMP.salary <= 0;
 --		  SELECT 1 AS ignore_this'
 --	  LANGUAGE SQL;
 --
