@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.19 2005/12/04 03:52:28 momjian Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.20 2006/05/23 19:28:45 momjian Exp $
 
 
 # PGAC_PATH_FLEX
@@ -164,15 +164,7 @@ dnl FIXME: We should probably check for version >=0.10.36.
 
   # Note: share/locale is always the default, independent of $datadir
   localedir='${prefix}/share/locale'
-  if test x"$prefix" = x"NONE"; then
-    exp_localedir="$ac_default_prefix/share/locale"
-  else
-    exp_localedir="$prefix/share/locale"
-  fi
-
   AC_SUBST(localedir)
-  AC_DEFINE_UNQUOTED(LOCALEDIR, ["$exp_localedir"],
-                     [Define to the location of locale files.])
 ])# PGAC_CHECK_GETTEXT
 
 

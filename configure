@@ -22083,17 +22083,6 @@ done
 
   # Note: share/locale is always the default, independent of $datadir
   localedir='${prefix}/share/locale'
-  if test x"$prefix" = x"NONE"; then
-    exp_localedir="$ac_default_prefix/share/locale"
-  else
-    exp_localedir="$prefix/share/locale"
-  fi
-
-
-
-cat >>confdefs.h <<_ACEOF
-#define LOCALEDIR "$exp_localedir"
-_ACEOF
 
 
 fi

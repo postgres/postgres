@@ -531,9 +531,6 @@
 /* Define to build with Kerberos 5 support. (--with-krb5) */
 #undef KRB5
 
-/* Define to the location of locale files. */
-#undef LOCALEDIR
-
 /* Define as the maximum alignment requirement of any C data type. */
 #undef MAXIMUM_ALIGNOF
 
