@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu May 18 23:52:32 EDT 2006
+   Last updated: Tue May 23 11:22:06 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -19,7 +19,7 @@
    1.3) What is the copyright of PostgreSQL?
    1.4) What platforms does PostgreSQL support?
    1.5) Where can I get PostgreSQL?
-   1.6) What is the latest release?
+   1.6) What is the most recent release?
    1.7) Where can I get support?
    1.8) How do I submit a bug report?
    1.9) How do I find out about known bugs or missing features?
@@ -168,7 +168,7 @@
    Via web browser, use http://www.postgresql.org/ftp/, and via ftp, use
    ftp://ftp.PostgreSQL.org/pub/.
    
-  1.6) What is the latest release?
+  1.6) What is the most recent release?
   
    The latest release of PostgreSQL is version 8.1.4.
    
@@ -416,13 +416,20 @@
   3.6) Why do I need to do a dump and restore to upgrade between major
   PostgreSQL releases?
   
-   The PostgreSQL team makes only small changes between minor releases,
-   so upgrading from 7.4.0 to 7.4.1 does not require a dump and restore.
-   However, major releases (e.g. from 7.3 to 7.4) often change the
-   internal format of system tables and data files. These changes are
-   often complex, so we don't maintain backward compatibility for data
-   files. A dump outputs data in a generic format that can then be loaded
-   in using the new internal format.
+   The PostgreSQL team makes only bug fixes in minor releases, so, for
+   example, upgrading from 7.4.8 to 7.4.9 does not require a dump and
+   restore; merely stop the database server, install the updated
+   binaries, and restart the server.
+   
+   All users should upgrade to the most recent minor release as soon as
+   it is available. While every upgrade has some risk, PostgreSQL minor
+   releases are designed to fix only common bugs with the least risk. The
+   community considers not upgrading more risky that upgrading.
+   
+   Major releases (e.g. from 7.3 to 7.4) often change the internal format
+   of system tables and data files. These changes are often complex, so
+   we don't maintain backward compatibility for data files. A dump/reload
+   of the database is required for major upgrades.
    
   3.7) What computer hardware should I use?
   
