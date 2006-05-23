@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.65 2006/03/10 23:19:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.66 2006/05/23 21:37:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2329,23 +2329,53 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 }
 
 /*
- * We don't bother to write the HeapTupleData part of the tuple.
+ * When writing HeapTuples to tape, we strip off all tuple identity and
+ * transaction visibility information, because those fields aren't really
+ * interesting for in-memory tuples (they may or may not be valid in the
+ * incoming tuples, depending on the plan that's feeding the sort).  We
+ * only need to store t_natts, t_infomask, the nulls bitmap if any, and
+ * the user data.
+ *
+ * You might think that we could omit storing t_natts, but you'd be wrong:
+ * the incoming tuple might be a physical disk tuple with fewer columns
+ * than the table's current logical tupdesc.
  */
+typedef struct TapeTupleHeader
+{
+	unsigned int tuplen;		/* required header of a tape item */
+	int16		natts;			/* number of attributes */
+	uint16		infomask;		/* various flag bits */
+	/* nulls bitmap follows if HEAP_HASNULL, then actual tuple data */
+} TapeTupleHeader;
 
 static void
 writetup_heap(Tuplesortstate *state, int tapenum, SortTuple *stup)
 {
 	HeapTuple	tuple = (HeapTuple) stup->tuple;
-	unsigned int tuplen;
+	HeapTupleHeader t_data = tuple->t_data;
+	TapeTupleHeader tapehdr;
+	unsigned int	datalen;
+	unsigned int	nullslen;
 
-	tuplen = tuple->t_len + sizeof(tuplen);
+	Assert(tuple->t_len >= t_data->t_hoff);
+	datalen = tuple->t_len - t_data->t_hoff;
+	if (HeapTupleHasNulls(tuple))
+		nullslen = BITMAPLEN(t_data->t_natts);
+	else
+		nullslen = 0;
+	tapehdr.tuplen = sizeof(TapeTupleHeader) + nullslen + datalen;
+	tapehdr.natts = t_data->t_natts;
+	tapehdr.infomask = t_data->t_infomask;
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void *) &tuplen, sizeof(tuplen));
+					 (void *) &tapehdr, sizeof(tapehdr));
+	if (nullslen)
+		LogicalTapeWrite(state->tapeset, tapenum,
+						 (void *) t_data->t_bits, nullslen);
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void *) tuple->t_data, tuple->t_len);
+					 (char *) t_data + t_data->t_hoff, datalen);
 	if (state->randomAccess)	/* need trailing length word? */
 		LogicalTapeWrite(state->tapeset, tapenum,
-						 (void *) &tuplen, sizeof(tuplen));
+						 (void *) &tapehdr.tuplen, sizeof(tapehdr.tuplen));
 
 	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	heap_freetuple(tuple);
@@ -2355,22 +2385,59 @@ static void
 readtup_heap(Tuplesortstate *state, SortTuple *stup,
 			 int tapenum, unsigned int len)
 {
-	unsigned int tuplen = len - sizeof(unsigned int) + HEAPTUPLESIZE;
-	HeapTuple	tuple = (HeapTuple) palloc(tuplen);
+	TapeTupleHeader tapehdr;
+	unsigned int	datalen;
+	unsigned int	nullslen;
+	unsigned int	hoff;
+	HeapTuple	tuple;
+	HeapTupleHeader t_data;
 
+	/* read in the rest of the header */
+	if (LogicalTapeRead(state->tapeset, tapenum,
+						(char *) &tapehdr + sizeof(unsigned int),
+						sizeof(tapehdr) - sizeof(unsigned int)) !=
+						sizeof(tapehdr) - sizeof(unsigned int))
+		elog(ERROR, "unexpected end of data");
+	/* reconstruct lengths of null bitmap and data part */
+	if (tapehdr.infomask & HEAP_HASNULL)
+		nullslen = BITMAPLEN(tapehdr.natts);
+	else
+		nullslen = 0;
+	datalen = len - sizeof(TapeTupleHeader) - nullslen;
+	/* determine overhead size of tuple (should match heap_form_tuple) */
+	hoff = offsetof(HeapTupleHeaderData, t_bits) + nullslen;
+	if (tapehdr.infomask & HEAP_HASOID)
+		hoff += sizeof(Oid);
+	hoff = MAXALIGN(hoff);
+	/* Allocate the space in one chunk, like heap_form_tuple */
+	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + hoff + datalen);
 	USEMEM(state, GetMemoryChunkSpace(tuple));
-	/* reconstruct the HeapTupleData portion */
-	tuple->t_len = len - sizeof(unsigned int);
+	t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
+	/* make sure unused header fields are zeroed */
+	MemSetAligned(t_data, 0, hoff);
+	/* reconstruct the HeapTupleData fields */
+	tuple->t_len = hoff + datalen;
 	ItemPointerSetInvalid(&(tuple->t_self));
 	tuple->t_tableOid = InvalidOid;
-	tuple->t_data = (HeapTupleHeader) (((char *) tuple) + HEAPTUPLESIZE);
-	/* read in the tuple proper */
-	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple->t_data,
-						tuple->t_len) != tuple->t_len)
+	tuple->t_data = t_data;
+	/* reconstruct the HeapTupleHeaderData fields */
+	ItemPointerSetInvalid(&(t_data->t_ctid));
+	t_data->t_natts = tapehdr.natts;
+	t_data->t_infomask = (tapehdr.infomask & ~HEAP_XACT_MASK)
+		| (HEAP_XMIN_INVALID | HEAP_XMAX_INVALID);
+	t_data->t_hoff = hoff;
+	/* read in the null bitmap if any */
+	if (nullslen)
+		if (LogicalTapeRead(state->tapeset, tapenum,
+							(void *) t_data->t_bits, nullslen) != nullslen)
+			elog(ERROR, "unexpected end of data");
+	/* and the data proper */
+	if (LogicalTapeRead(state->tapeset, tapenum,
+						(char *) t_data + hoff, datalen) != datalen)
 		elog(ERROR, "unexpected end of data");
 	if (state->randomAccess)	/* need trailing length word? */
-		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
-							sizeof(tuplen)) != sizeof(tuplen))
+		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tapehdr.tuplen,
+							sizeof(tapehdr.tuplen)) != sizeof(tapehdr.tuplen))
 			elog(ERROR, "unexpected end of data");
 	stup->tuple = (void *) tuple;
 	/* set up first-column key value */
