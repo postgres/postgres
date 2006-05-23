@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon May 22 16:39:01 EDT 2006
+Last updated:		Tue May 23 16:57:44 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -519,6 +519,11 @@ SQL Commands
 	  is used
 	o %Prevent child tables from altering or dropping constraints
           like CHECK that were inherited from the parent table
+	o Add ALTER TABLE tab ADD/DROP INHERITS parent
+
+	  pg_attribute.attislocal has to be set to 'false' for ADD, and
+	  pg_attribute.attinhcount adjusted appropriately
+
 	o Have ALTER INDEX update the name of a constraint using that index
 	o Add ALTER TABLE RENAME CONSTRAINT, update index name also
 
