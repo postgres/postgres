@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.428 2006/05/21 21:49:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.429 2006/05/23 20:20:52 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -146,7 +146,7 @@ Fuhr)</para></listitem>
 <para>Currently this code is only used on Solaris.
 </para></listitem>
 
-<listitem><para>Fix for Bonjour on Intel Macs (Ashley Clark)</para></listitem>
+<listitem><para>Fix for OS/X Bonjour on x86 systems (Ashley Clark)</para></listitem>
 
 <listitem><para>Fix various minor memory leaks</para></listitem>
 
