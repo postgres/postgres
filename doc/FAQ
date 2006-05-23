@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue May 23 11:47:16 EDT 2006
+   Last updated: Tue May 23 11:50:55 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -42,7 +42,7 @@
    3.3) How do I tune the database engine for better performance?
    3.4) What debugging features are available?
    3.5) Why do I get "Sorry, too many clients" when trying to connect?
-   3.6 What should I do about upgrading PostgreSQL?
+   3.6 What is the upgrade process for PostgreSQL?
    3.7) What computer hardware should I use?
    
                            Operational Questions
@@ -412,7 +412,7 @@
    processes it can start by changing the max_connections value in
    postgresql.conf and restarting the postmaster.
    
-  3.6) What should I do about upgrading PostgreSQL?
+  3.6) What is the upgrade process for PostgreSQL?
   
    The PostgreSQL team makes only bug fixes in minor releases, so, for
    example, upgrading from 7.4.8 to 7.4.9 does not require a dump and
