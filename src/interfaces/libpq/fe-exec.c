@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.183 2006/05/21 20:19:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.184 2006/05/23 22:13:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2342,6 +2342,18 @@ PQisnonblocking(const PGconn *conn)
 {
 	return pqIsnonblocking(conn);
 }
+
+/* libpq is thread-safe? */
+int
+PQisthreadsafe(void)
+{
+#ifdef ENABLE_THREAD_SAFETY
+	return true;
+#else
+	return false;
+#endif
+}
+
 
 /* try to force data out, really only useful for non-blocking users */
 int

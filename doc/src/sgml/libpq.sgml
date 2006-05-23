@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.210 2006/05/21 20:19:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.211 2006/05/23 22:13:19 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -4196,11 +4196,32 @@ options when you compile your application code.  Refer to your
 system's documentation for information about how to build
 thread-enabled applications, or look in 
 <filename>src/Makefile.global</filename> for <literal>PTHREAD_CFLAGS</>
-and <literal>PTHREAD_LIBS</>.
+and <literal>PTHREAD_LIBS</>.  This function allows the querying of
+<application>libpq</application>'s thread-safe status:
+</para>
+
+<variablelist>
+<varlistentry>
+<term><function>PQisthreadsafe</function><indexterm><primary>PQisthreadsafe</></></term>
+<listitem>
+<para>
+       Returns the thread safety status of the <application>libpq</application>
+       library.
+<synopsis>
+int PQisthreadsafe();
+</synopsis>
 </para>
 
 <para>
-One restriction is that no two threads attempt to manipulate the same
+       Returns 1 if the <application>libpq</application> is thead-safe and
+       0 if it is not.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+<para>
+One thread restriction is that no two threads attempt to manipulate the same
 <structname>PGconn</> object at the same time. In particular, you cannot
 issue concurrent commands from different threads through the same
 connection object. (If you need to run concurrent commands, use
