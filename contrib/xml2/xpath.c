@@ -65,21 +65,21 @@ char	   *pgxml_errorMsg = NULL;		/* overall error message */
 static void *
 pgxml_palloc(size_t size)
 {
-/*	elog(DEBUG1,"Alloc %d in CMC %x",size,CurrentMemoryContext); */
+/*	elog(DEBUG1,"Alloc %d in CMC %p",size,CurrentMemoryContext); */
 	return palloc(size);
 }
 
 static void *
 pgxml_repalloc(void *ptr, size_t size)
 {
-/*	elog(DEBUG1,"ReAlloc in CMC %x",CurrentMemoryContext);*/
+/*	elog(DEBUG1,"ReAlloc in CMC %p",CurrentMemoryContext);*/
 	return repalloc(ptr, size);
 }
 
 static void
 pgxml_pfree(void *ptr)
 {
-/*	elog(DEBUG1,"Free in CMC %x",CurrentMemoryContext); */
+/*	elog(DEBUG1,"Free in CMC %p",CurrentMemoryContext); */
 	pfree(ptr);
 }
 

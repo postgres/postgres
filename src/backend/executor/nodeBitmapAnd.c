@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.6 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.7 2006/05/23 15:21:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,6 @@ ExecInitBitmapAnd(BitmapAnd *node, EState *estate, int eflags)
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
-
-	CXT1_printf("ExecInitBitmapAnd: context is %d\n", CurrentMemoryContext);
 
 	/*
 	 * Set up empty vector of subplan states

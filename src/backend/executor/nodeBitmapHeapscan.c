@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.10 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.11 2006/05/23 15:21:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,8 +510,6 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	 */
 	ExecInitResultTupleSlot(estate, &scanstate->ss.ps);
 	ExecInitScanTupleSlot(estate, &scanstate->ss);
-
-	CXT1_printf("ExecInitBitmapHeapScan: context is %d\n", CurrentMemoryContext);
 
 	/*
 	 * open the base relation and acquire appropriate lock on it.

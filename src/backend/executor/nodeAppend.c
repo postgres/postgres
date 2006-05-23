@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.68 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.69 2006/05/23 15:21:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,8 +150,6 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 
 	/* check for unsupported flags */
 	Assert(!(eflags & EXEC_FLAG_MARK));
-
-	CXT1_printf("ExecInitAppend: context is %d\n", CurrentMemoryContext);
 
 	/*
 	 * Set up empty vector of subplan states

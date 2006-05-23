@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.101 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.102 2006/05/23 15:21:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,8 +122,6 @@ ExecInitHash(Hash *node, EState *estate, int eflags)
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
-
-	SO_printf("ExecInitHash: initializing hash node\n");
 
 	/*
 	 * create state structure

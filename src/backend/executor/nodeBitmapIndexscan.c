@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.17 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.18 2006/05/23 15:21:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,8 +265,6 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 * Initialize index-specific scan state
 	 */
 	indexstate->biss_RuntimeKeysReady = false;
-
-	CXT1_printf("ExecInitBitmapIndexScan: context is %d\n", CurrentMemoryContext);
 
 	/*
 	 * build the index scan keys from the index qualification
