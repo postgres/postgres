@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue May 23 16:57:44 EDT 2006
+Last updated:		Tue May 23 16:59:15 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -521,6 +521,8 @@ SQL Commands
           like CHECK that were inherited from the parent table
 	o Add ALTER TABLE tab ADD/DROP INHERITS parent
 
+	  This allows tables to be added/removed from an inheritance
+	  hierarchy.  This is particularly useful for table partitioning.
 	  pg_attribute.attislocal has to be set to 'false' for ADD, and
 	  pg_attribute.attinhcount adjusted appropriately
 
