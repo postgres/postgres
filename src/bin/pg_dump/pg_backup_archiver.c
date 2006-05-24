@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.128 2006/05/22 11:21:54 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.129 2006/05/24 21:20:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,9 +312,10 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 					_printTocEntry(AH, te, ropt, true, false);
 
-					if (strcmp(te->desc, "BLOBS") == 0)
+					if (strcmp(te->desc, "BLOBS") == 0 ||
+						strcmp(te->desc, "BLOB COMMENTS") == 0)
 					{
-						ahlog(AH, 1, "restoring large object data\n");
+						ahlog(AH, 1, "restoring %s\n", te->desc);
 
 						_selectOutputSchema(AH, "pg_catalog");
 
