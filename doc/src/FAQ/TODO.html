@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue May 23 16:59:15 EDT 2006
+Last updated:           Wed May 24 14:12:19 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -479,8 +479,7 @@ first.
     </li><li>Add ALTER TABLE tab ADD/DROP INHERITS parent
 <p>          This allows tables to be added/removed from an inheritance
           hierarchy.  This is particularly useful for table partitioning.
-          pg_attribute.attislocal has to be set to 'false' for ADD, and
-          pg_attribute.attinhcount adjusted appropriately
+          See <a href="http://archives.postgresql.org/pgsql-hackers/2006-05/msg00988.php">http://archives.postgresql.org/pgsql-hackers/2006-05/msg00988.php</a>.
 </p>
     </li><li>Have ALTER INDEX update the name of a constraint using that index
     </li><li>Add ALTER TABLE RENAME CONSTRAINT, update index name also
