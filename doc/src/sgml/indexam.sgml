@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.11 2006/05/10 23:18:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.12 2006/05/24 11:01:39 teodor Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -126,8 +126,7 @@
    used to scan for rows with <literal>a = 4</literal>, which is wrong if the
    index omits rows where <literal>b</> is null.
    It is, however, OK to omit rows where the first indexed column is null.
-   (GiST currently does so.)  Thus,
-   <structfield>amindexnulls</structfield> should be set true only if the
+   Thus, <structfield>amindexnulls</structfield> should be set true only if the
    index access method indexes all rows, including arbitrary combinations of
    null values.
   </para>

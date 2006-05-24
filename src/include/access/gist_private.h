@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.15 2006/05/19 16:15:17 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.16 2006/05/24 11:01:39 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,17 +206,6 @@ typedef struct
 /* root page of a gist index */
 #define GIST_ROOT_BLKNO				0
 
-/*
- * When we update a relation on which we're doing a scan, we need to
- * check the scan and fix it if the update affected any of the pages
- * it touches.	Otherwise, we can miss records that we should see.
- * The only times we need to do this are for deletions and splits. See
- * the code in gistscan.c for how the scan is fixed. These two
- * constants tell us what sort of operation changed the index.
- */
-#define GISTOP_DEL		0
-/* #define GISTOP_SPLIT 1 */
-
 #define ATTSIZE(datum, tupdesc, i, isnull) \
 		( \
 				(isnull) ? 0 : \
@@ -291,12 +280,6 @@ extern IndexTuple gistgetadjusted(Relation r,
 				IndexTuple oldtup,
 				IndexTuple addtup,
 				GISTSTATE *giststate);
-extern int gistfindgroup(GISTSTATE *giststate,
-			  GISTENTRY *valvec, GIST_SPLITVEC *spl);
-extern void gistadjsubkey(Relation r,
-			  IndexTuple *itup, int len,
-			  GIST_SPLITVEC *v,
-			  GISTSTATE *giststate);
 extern IndexTuple gistFormTuple(GISTSTATE *giststate,
 			  Relation r, Datum *attdata, int *datumsize, bool *isnull);
 
@@ -321,13 +304,15 @@ typedef struct {
 } GistSplitVec;
 
 extern void gistunionsubkeyvec(GISTSTATE *giststate, 
-	IndexTuple *itvec, GistSplitVec *gsvp,  bool isall);
+	IndexTuple *itvec, GistSplitVec *gsvp,  int startkey);
+extern void gistunionsubkey(GISTSTATE *giststate, IndexTuple *itvec, 
+		GIST_SPLITVEC *spl, int attno);
 
 extern void GISTInitBuffer(Buffer b, uint32 f);
 extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   Datum k, Relation r, Page pg, OffsetNumber o,
 			   int b, bool l, bool isNull);
-void gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
+void gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GIST_SPLITVEC *v,
 				  IndexTuple *itup, int len, GISTSTATE *giststate);
 
 /* gistvacuum.c */

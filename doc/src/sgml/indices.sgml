@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.56 2006/01/18 21:29:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.57 2006/05/24 11:01:39 teodor Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -290,13 +290,13 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   A multicolumn GiST index can only be used when there is a query condition
-   on its leading column.  Conditions on additional columns restrict the
-   entries returned by the index, but the condition on the first column is the
-   most important one for determining how much of the index needs to be
-   scanned.  A GiST index will be relatively ineffective if its first column
-   has only a few distinct values, even if there are many distinct values in
-   additional columns.
+   A multicolumn GiST index can be used with query conditions that
+   involve any subset of the index's columns. Conditions on additional 
+   columns restrict the entries returned by the index, but the condition on 
+   the first column is the most important one for determining how much of 
+   the index needs to be scanned.  A GiST index will be relatively 
+   ineffective if its first column has only a few distinct values, even if 
+   there are many distinct values in additional columns.
   </para>
 
   <para>
