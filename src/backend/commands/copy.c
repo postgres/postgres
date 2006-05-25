@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.264 2006/05/21 20:05:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.265 2006/05/25 18:42:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,8 +243,8 @@ static Datum CopyReadBinaryAttribute(CopyState cstate,
 						int column_no, FmgrInfo *flinfo,
 						Oid typioparam, int32 typmod,
 						bool *isnull);
-static void CopyAttributeOutText(CopyState cstate, char *server_string);
-static void CopyAttributeOutCSV(CopyState cstate, char *server_string,
+static void CopyAttributeOutText(CopyState cstate, char *string);
+static void CopyAttributeOutCSV(CopyState cstate, char *string,
 					bool use_quote, bool single_attr);
 static List *CopyGetAttnums(Relation rel, List *attnamelist);
 static char *limit_printout_length(const char *str);
@@ -2884,91 +2884,123 @@ CopyReadBinaryAttribute(CopyState cstate,
 /*
  * Send text representation of one attribute, with conversion and escaping
  */
+#define DUMPSOFAR() \
+	do { \
+		if (ptr > start) \
+			CopySendData(cstate, start, ptr - start); \
+	} while (0)
+
 static void
-CopyAttributeOutText(CopyState cstate, char *server_string)
+CopyAttributeOutText(CopyState cstate, char *string)
 {
-	char	   *string;
+	char	   *ptr;
+	char	   *start;
 	char		c;
 	char		delimc = cstate->delim[0];
-	int			mblen;
 
 	if (cstate->need_transcoding)
-		string = pg_server_to_client(server_string, strlen(server_string));
+		ptr = pg_server_to_client(string, strlen(string));
 	else
-		string = server_string;
+		ptr = string;
 
-	for (; (c = *string) != '\0'; string += mblen)
+	/*
+	 * We have to grovel through the string searching for control characters
+	 * and instances of the delimiter character.  In most cases, though, these
+	 * are infrequent.  To avoid overhead from calling CopySendData once per
+	 * character, we dump out all characters between replaceable characters
+	 * in a single call.  The loop invariant is that the data from "start"
+	 * to "ptr" can be sent literally, but hasn't yet been.
+	 */
+	start = ptr;
+	while ((c = *ptr) != '\0')
 	{
-		mblen = 1;
-
 		switch (c)
 		{
 			case '\b':
+				DUMPSOFAR();
 				CopySendString(cstate, "\\b");
+				start = ++ptr;
 				break;
 			case '\f':
+				DUMPSOFAR();
 				CopySendString(cstate, "\\f");
+				start = ++ptr;
 				break;
 			case '\n':
+				DUMPSOFAR();
 				CopySendString(cstate, "\\n");
+				start = ++ptr;
 				break;
 			case '\r':
+				DUMPSOFAR();
 				CopySendString(cstate, "\\r");
+				start = ++ptr;
 				break;
 			case '\t':
+				DUMPSOFAR();
 				CopySendString(cstate, "\\t");
+				start = ++ptr;
 				break;
 			case '\v':
+				DUMPSOFAR();
 				CopySendString(cstate, "\\v");
+				start = ++ptr;
 				break;
 			case '\\':
+				DUMPSOFAR();
 				CopySendString(cstate, "\\\\");
+				start = ++ptr;
 				break;
 			default:
 				if (c == delimc)
+				{
+					DUMPSOFAR();
 					CopySendChar(cstate, '\\');
+					start = ptr; /* we include char in next run */
+				}
 
 				/*
 				 * We can skip pg_encoding_mblen() overhead when encoding is
 				 * safe, because in valid backend encodings, extra bytes of a
 				 * multibyte character never look like ASCII.
 				 */
-				if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
-					mblen = pg_encoding_mblen(cstate->client_encoding, string);
-				CopySendData(cstate, string, mblen);
+				if (IS_HIGHBIT_SET(c) && cstate->encoding_embeds_ascii)
+					ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
+				else
+					ptr++;
 				break;
 		}
 	}
+
+	DUMPSOFAR();
 }
 
 /*
- * Send CSV representation of one attribute, with conversion and
- * CSV type escaping
+ * Send text representation of one attribute, with conversion and
+ * CSV-style escaping
  */
 static void
-CopyAttributeOutCSV(CopyState cstate, char *server_string,
+CopyAttributeOutCSV(CopyState cstate, char *string,
 					bool use_quote, bool single_attr)
 {
-	char	   *string;
+	char	   *ptr;
+	char	   *start;
 	char		c;
 	char		delimc = cstate->delim[0];
 	char		quotec = cstate->quote[0];
 	char		escapec = cstate->escape[0];
-	char	   *tstring;
-	int			mblen;
 
-	/* force quoting if it matches null_print */
-	if (!use_quote && strcmp(server_string, cstate->null_print) == 0)
+	/* force quoting if it matches null_print (before conversion!) */
+	if (!use_quote && strcmp(string, cstate->null_print) == 0)
 		use_quote = true;
 
 	if (cstate->need_transcoding)
-		string = pg_server_to_client(server_string, strlen(server_string));
+		ptr = pg_server_to_client(string, strlen(string));
 	else
-		string = server_string;
+		ptr = string;
 
 	/*
-	 * have to run through the string twice, first time to see if it needs
-	 * quoting, second to actually send it
+	 * Make a preliminary pass to discover if it needs quoting
 	 */
 	if (!use_quote)
 	{
@@ -2977,41 +3009,57 @@ CopyAttributeOutCSV(CopyState cstate, char *server_string,
 		 *	alone on a line so it is not interpreted as the end-of-data
 		 *	marker.
 		 */
-		if (single_attr && strcmp(string, "\\.") == 0)
+		if (single_attr && strcmp(ptr, "\\.") == 0)
  			use_quote = true;
  		else
  		{
-			for (tstring = string; (c = *tstring) != '\0'; tstring += mblen)
+			char	   *tptr = ptr;
+
+			while ((c = *tptr) != '\0')
 			{
 				if (c == delimc || c == quotec || c == '\n' || c == '\r')
 				{
 					use_quote = true;
 					break;
 				}
-				if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
-					mblen = pg_encoding_mblen(cstate->client_encoding, tstring);
+				if (IS_HIGHBIT_SET(c) && cstate->encoding_embeds_ascii)
+					tptr += pg_encoding_mblen(cstate->client_encoding, tptr);
 				else
-					mblen = 1;
+					tptr++;
 			}
 		}
 	}
 
 	if (use_quote)
-		CopySendChar(cstate, quotec);
-
-	for (; (c = *string) != '\0'; string += mblen)
 	{
-		if (use_quote && (c == quotec || c == escapec))
-			CopySendChar(cstate, escapec);
-		if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
-			mblen = pg_encoding_mblen(cstate->client_encoding, string);
-		else
-			mblen = 1;
-		CopySendData(cstate, string, mblen);
-	}
-
-	if (use_quote)
 		CopySendChar(cstate, quotec);
+
+		/*
+		 * We adopt the same optimization strategy as in CopyAttributeOutText
+		 */
+		start = ptr;
+		while ((c = *ptr) != '\0')
+		{
+			if (c == quotec || c == escapec)
+			{
+				DUMPSOFAR();
+				CopySendChar(cstate, escapec);
+				start = ptr;	/* we include char in next run */
+			}
+			if (IS_HIGHBIT_SET(c) && cstate->encoding_embeds_ascii)
+				ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
+			else
+				ptr++;
+		}
+		DUMPSOFAR();
+
+		CopySendChar(cstate, quotec);
+	}
+	else
+	{
+		/* If it doesn't need quoting, we can just dump it as-is */
+		CopySendString(cstate, ptr);
+	}
 }
 
 /*
