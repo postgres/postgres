@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.16 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.17 2006/05/26 23:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 	if (comment)
 	{
 		printfPQExpBuffer(&sql, "COMMENT ON DATABASE %s IS ", fmtId(dbname));
-		appendStringLiteral(&sql, comment, false);
+		appendStringLiteral(&sql, comment, false, true);
 		appendPQExpBuffer(&sql, ";\n");
 
 		conn = connectDatabase(dbname, host, port, username, password, progname);

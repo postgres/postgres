@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.129 2006/05/24 21:20:11 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.130 2006/05/26 23:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1900,8 +1900,10 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 {
 	teReqs		res = REQ_ALL;
 
-	/* ENCODING objects are dumped specially, so always reject here */
+	/* ENCODING and STDSTRINGS objects are dumped specially, so always reject */
 	if (strcmp(te->desc, "ENCODING") == 0)
+		return 0;
+	if (strcmp(te->desc, "STDSTRINGS") == 0)
 		return 0;
 
 	/* If it's an ACL, maybe ignore it */
@@ -2005,15 +2007,14 @@ _doSetFixedOutputState(ArchiveHandle *AH)
 {
 	TocEntry   *te;
 
-	/* If we have an encoding setting, emit that */
+	/* If we have an encoding or std_strings setting, emit that */
 	te = AH->toc->next;
 	while (te != AH->toc)
 	{
 		if (strcmp(te->desc, "ENCODING") == 0)
-		{
 			ahprintf(AH, "%s", te->defn);
-			break;
-		}
+		if (strcmp(te->desc, "STDSTRINGS") == 0)
+			ahprintf(AH, "%s", te->defn);
 		te = te->next;
 	}
 
@@ -2042,7 +2043,7 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 	 * SQL requires a string literal here.	Might as well be correct.
 	 */
 	if (user && *user)
-		appendStringLiteral(cmd, user, false);
+		appendStringLiteral(cmd, user, false, true);
 	else
 		appendPQExpBuffer(cmd, "DEFAULT");
 	appendPQExpBuffer(cmd, ";");

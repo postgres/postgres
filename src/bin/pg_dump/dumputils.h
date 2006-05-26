@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.15 2006/03/05 15:58:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.h,v 1.16 2006/05/26 23:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,10 +17,9 @@
 
 #include "pqexpbuffer.h"
 
-
 extern const char *fmtId(const char *identifier);
 extern void appendStringLiteral(PQExpBuffer buf, const char *str,
-					bool escapeAll);
+					bool escapeAll, bool e_string_for_backslash);
 extern void appendStringLiteralDQ(PQExpBuffer buf, const char *str,
 					  const char *dqprefix);
 extern void appendStringLiteralDQOpt(PQExpBuffer buf, const char *str,

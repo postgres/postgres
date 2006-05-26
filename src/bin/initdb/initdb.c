@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.114 2006/03/21 17:54:28 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.115 2006/05/26 23:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2103,7 +2103,8 @@ check_ok(void)
 }
 
 /*
- * Escape any single quotes or backslashes in given string
+ * Escape any single quotes or backslashes in given string;
+ * postgresql.conf always enables backslash escapes
  */
 static char *
 escape_quotes(const char *src)
@@ -2115,7 +2116,7 @@ escape_quotes(const char *src)
 
 	for (i = 0, j = 0; i < len; i++)
 	{
-		if (SQL_STR_DOUBLE(src[i]))
+		if (SQL_STR_DOUBLE(src[i], true))
 			result[j++] = src[i];
 		result[j++] = src[i];
 	}

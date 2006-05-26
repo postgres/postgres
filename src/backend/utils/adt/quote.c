@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.18 2006/03/05 15:58:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.19 2006/05/26 23:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "utils/builtins.h"
+#include "parser/gramparse.h"
 
 
 /*
@@ -65,19 +66,20 @@ quote_literal(PG_FUNCTION_ARGS)
 	cp1 = VARDATA(t);
 	cp2 = VARDATA(result);
 
-	for (; len-- > 0; cp1++)
-		if (*cp1 == '\\')
-		{
-			*cp2++ = ESCAPE_STRING_SYNTAX;
-			break;
-		}
+	if (!standard_conforming_strings)
+		for (; len-- > 0; cp1++)
+			if (*cp1 == '\\')
+			{
+				*cp2++ = ESCAPE_STRING_SYNTAX;
+				break;
+			}
 
 	len = VARSIZE(t) - VARHDRSZ;
 	cp1 = VARDATA(t);
 	*cp2++ = '\'';
 	while (len-- > 0)
 	{
-		if (SQL_STR_DOUBLE(*cp1))
+		if (SQL_STR_DOUBLE(*cp1, !standard_conforming_strings))
 			*cp2++ = *cp1;
 		*cp2++ = *cp1++;
 	}

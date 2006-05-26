@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.27 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.28 2006/05/26 23:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,11 +258,11 @@ main(int argc, char *argv[])
 				fprintf(stderr, _("Password encryption failed.\n"));
 				exit(1);
 			}
-			appendStringLiteral(&sql, encrypted_password, false);
+			appendStringLiteral(&sql, encrypted_password, false, true);
 			PQfreemem(encrypted_password);
 		}
 		else
-			appendStringLiteral(&sql, newpassword, false);
+			appendStringLiteral(&sql, newpassword, false, true);
 	}
 	if (superuser == TRI_YES)
 		appendPQExpBuffer(&sql, " SUPERUSER");

@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.221 2006/04/30 18:30:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.222 2006/05/26 23:48:54 momjian Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -31,6 +31,7 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
+#include "parser/gramparse.h"
 #include "parser/keywords.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -533,13 +534,13 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 		{
 			if (i > 0)
 				appendStringInfo(&buf, ", ");
-			if (strchr(p, '\\') != NULL)
+			if (!standard_conforming_strings && strchr(p, '\\') != NULL)
 				appendStringInfoChar(&buf, ESCAPE_STRING_SYNTAX);
 			appendStringInfoChar(&buf, '\'');
 
 			while (*p)
 			{
-				if (SQL_STR_DOUBLE(*p))
+				if (SQL_STR_DOUBLE(*p, !standard_conforming_strings))
 					appendStringInfoChar(&buf, *p);
 				appendStringInfoChar(&buf, *p++);
 			}
@@ -3882,7 +3883,8 @@ get_const_expr(Const *constval, deparse_context *context)
 	char	   *valptr;
 	bool		isfloat = false;
 	bool		needlabel;
-
+	bool		is_e_string = false;
+	
 	if (constval->constisnull)
 	{
 		/*
@@ -3948,10 +3950,11 @@ get_const_expr(Const *constval, deparse_context *context)
 			 * representation. XXX Any MULTIBYTE considerations here?
 			 */
 			for (valptr = extval; *valptr; valptr++)
-				if (*valptr == '\\' ||
+				if ((!standard_conforming_strings && *valptr == '\\') ||
 					(unsigned char) *valptr < (unsigned char) ' ')
 				{
 					appendStringInfoChar(buf, ESCAPE_STRING_SYNTAX);
+					is_e_string = true;
 					break;
 				}
 
@@ -3960,7 +3963,7 @@ get_const_expr(Const *constval, deparse_context *context)
 			{
 				char		ch = *valptr;
 
-				if (SQL_STR_DOUBLE(ch))
+				if (SQL_STR_DOUBLE(ch, is_e_string))
 				{
 					appendStringInfoChar(buf, ch);
 					appendStringInfoChar(buf, ch);

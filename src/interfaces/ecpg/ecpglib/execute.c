@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.45 2006/04/24 09:45:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.46 2006/05/26 23:48:54 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -32,8 +32,9 @@
 #include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
 
-/* This function returns a newly malloced string that has the  \
-   in the argument quoted with \ and the ' quoted with ' as SQL92 says.
+/*
+ *	This function returns a newly malloced string that has ' and \
+ *	escaped.
  */
 static char *
 quote_postgres(char *arg, int lineno)
@@ -45,13 +46,17 @@ quote_postgres(char *arg, int lineno)
 	if (!res)
 		return (res);
 
+	/*
+	 *	We don't know if the target database is using
+	 *	standard_conforming_strings, so we always use E'' strings.
+	 */	
 	if (strchr(arg, '\\') != NULL)
 		res[ri++] = ESCAPE_STRING_SYNTAX;
 	res[ri++] = '\'';
 
 	for (i = 0; arg[i]; i++, ri++)
 	{
-		if (SQL_STR_DOUBLE(arg[i]))
+		if (SQL_STR_DOUBLE(arg[i], true))
 			res[ri++] = arg[i];
 		res[ri] = arg[i];
 	}

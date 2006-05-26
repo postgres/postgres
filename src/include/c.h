@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.200 2006/04/14 03:38:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.201 2006/05/26 23:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,7 +472,14 @@ typedef NameData *Name;
 
 #define NameStr(name)	((name).data)
 
-#define SQL_STR_DOUBLE(ch)	((ch) == '\'' || (ch) == '\\')
+/*
+ *	In 8.2, we are warning for \ in a non-E string if std_strings are off.
+ *	For this reason, we use E for \ strings, unless standard_conforming_strings
+ *	is on.
+ */
+#define SQL_STR_DOUBLE(ch, escape_backslash)	\
+					((ch) == '\'' || ((escape_backslash) && (ch) == '\\'))
+	
 #define ESCAPE_STRING_SYNTAX	'E'
 
 /* ----------------------------------------------------------------

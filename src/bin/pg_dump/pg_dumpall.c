@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.75 2006/05/22 11:21:54 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.76 2006/05/26 23:48:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -535,7 +535,7 @@ dumpRoles(PGconn *conn)
 		if (!PQgetisnull(res, i, i_rolpassword))
 		{
 			appendPQExpBuffer(buf, " PASSWORD ");
-			appendStringLiteral(buf, PQgetvalue(res, i, i_rolpassword), true);
+			appendStringLiteral(buf, PQgetvalue(res, i, i_rolpassword), true, true);
 		}
 
 		if (!PQgetisnull(res, i, i_rolvaliduntil))
@@ -546,7 +546,7 @@ dumpRoles(PGconn *conn)
 
 		if (!PQgetisnull(res, i, i_rolcomment)) {
 			appendPQExpBuffer(buf, "COMMENT ON ROLE %s IS ", fmtId(rolename));
-			appendStringLiteral(buf, PQgetvalue(res, i, i_rolcomment), true);
+			appendStringLiteral(buf, PQgetvalue(res, i, i_rolcomment), true, true);
 			appendPQExpBuffer(buf, ";\n");
 		}
 
@@ -730,7 +730,7 @@ dumpTablespaces(PGconn *conn)
 		appendPQExpBuffer(buf, " OWNER %s", fmtId(spcowner));
 
 		appendPQExpBuffer(buf, " LOCATION ");
-		appendStringLiteral(buf, spclocation, true);
+		appendStringLiteral(buf, spclocation, true, true);
 		appendPQExpBuffer(buf, ";\n");
 
 		if (!skip_acls &&
@@ -745,7 +745,7 @@ dumpTablespaces(PGconn *conn)
 
 		if (spccomment && strlen(spccomment)) {
 			appendPQExpBuffer(buf, "COMMENT ON TABLESPACE %s IS ", fspcname);
-			appendStringLiteral(buf, spccomment, true);
+			appendStringLiteral(buf, spccomment, true, true);
 			appendPQExpBuffer(buf, ";\n");
 		}
 
@@ -868,7 +868,7 @@ dumpCreateDB(PGconn *conn)
 				appendPQExpBuffer(buf, " OWNER = %s", fmtId(dbowner));
 
 			appendPQExpBuffer(buf, " ENCODING = ");
-			appendStringLiteral(buf, dbencoding, true);
+			appendStringLiteral(buf, dbencoding, true, true);
 
 			/* Output tablespace if it isn't default */
 			if (strcmp(dbtablespace, "pg_default") != 0)
@@ -884,7 +884,7 @@ dumpCreateDB(PGconn *conn)
 			if (strcmp(dbistemplate, "t") == 0)
 			{
 				appendPQExpBuffer(buf, "UPDATE pg_database SET datistemplate = 't' WHERE datname = ");
-				appendStringLiteral(buf, dbname, true);
+				appendStringLiteral(buf, dbname, true, true);
 				appendPQExpBuffer(buf, ";\n");
 			}
 		}
@@ -929,7 +929,7 @@ dumpDatabaseConfig(PGconn *conn, const char *dbname)
 		PGresult   *res;
 
 		printfPQExpBuffer(buf, "SELECT datconfig[%d] FROM pg_database WHERE datname = ", count);
-		appendStringLiteral(buf, dbname, true);
+		appendStringLiteral(buf, dbname, true, true);
 		appendPQExpBuffer(buf, ";");
 
 		res = executeQuery(conn, buf->data);
@@ -968,7 +968,7 @@ dumpUserConfig(PGconn *conn, const char *username)
 			printfPQExpBuffer(buf, "SELECT rolconfig[%d] FROM pg_authid WHERE rolname = ", count);
 		else
 			printfPQExpBuffer(buf, "SELECT useconfig[%d] FROM pg_shadow WHERE usename = ", count);
-		appendStringLiteral(buf, username, true);
+		appendStringLiteral(buf, username, true, true);
 
 		res = executeQuery(conn, buf->data);
 		if (PQntuples(res) == 1 &&
@@ -1016,7 +1016,7 @@ makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name
 		|| pg_strcasecmp(mine, "search_path") == 0)
 		appendPQExpBuffer(buf, "%s", pos + 1);
 	else
-		appendStringLiteral(buf, pos + 1, false);
+		appendStringLiteral(buf, pos + 1, false, true);
 	appendPQExpBuffer(buf, ";\n");
 
 	printf("%s", buf->data);
