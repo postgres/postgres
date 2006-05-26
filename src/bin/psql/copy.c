@@ -3,12 +3,11 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.60 2006/03/05 15:58:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.61 2006/05/26 19:51:29 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
 
-#include <errno.h>
 #include <signal.h>
 #include <sys/stat.h>
 #ifndef WIN32
@@ -37,11 +36,10 @@
  *
  * The documented preferred syntax is:
  *	\copy tablename [(columnlist)] from|to filename
- *		[ with ] [ oids ] [ delimiter [as] char ] [ null [as] string ]
- * (binary is not here yet)
+ *	  [ with ] [ binary ] [ oids ] [ delimiter [as] char ] [ null [as] string ]
  *
  * The pre-7.3 syntax was:
- *	\copy tablename [(columnlist)] [with oids] from|to filename
+ *	\copy [ binary ] tablename [(columnlist)] [with oids] from|to filename
  *		[ [using] delimiters char ] [ with null as string ]
  *
  * The actual accepted syntax is a rather unholy combination of these,
@@ -131,8 +129,6 @@ parse_slash_copy(const char *args)
 	if (!token)
 		goto error;
 
-#ifdef NOT_USED
-	/* this is not implemented yet */
 	if (pg_strcasecmp(token, "binary") == 0)
 	{
 		result->binary = true;
@@ -141,7 +137,6 @@ parse_slash_copy(const char *args)
 		if (!token)
 			goto error;
 	}
-#endif
 
 	result->table = pg_strdup(token);
 
@@ -284,9 +279,10 @@ parse_slash_copy(const char *args)
 
 			fetch_next = true;
 
-			/* someday allow BINARY here */
 			if (pg_strcasecmp(token, "oids") == 0)
 				result->oids = true;
+			else if (pg_strcasecmp(token, "binary") == 0)
+				result->binary = true;
 			else if (pg_strcasecmp(token, "csv") == 0)
 				result->csv_mode = true;
 			else if (pg_strcasecmp(token, "header") == 0)
@@ -442,6 +438,8 @@ do_copy(const char *args)
 	initPQExpBuffer(&query);
 
 	printfPQExpBuffer(&query, "COPY ");
+
+	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
 	if (options->binary)
 		appendPQExpBuffer(&query, "BINARY ");
 
@@ -523,7 +521,8 @@ do_copy(const char *args)
 	else
 	{
 		if (options->file)
-			copystream = fopen(options->file, "w");
+			copystream = fopen(options->file,
+							   options->binary ? PG_BINARY_W : "w");
 		else if (!options->psql_inout)
 			copystream = pset.queryFout;
 		else
@@ -558,7 +557,8 @@ do_copy(const char *args)
 			success = handleCopyOut(pset.db, copystream);
 			break;
 		case PGRES_COPY_IN:
-			success = handleCopyIn(pset.db, copystream);
+			success = handleCopyIn(pset.db, copystream,
+								   PQbinaryTuples(result));
 			break;
 		case PGRES_NONFATAL_ERROR:
 		case PGRES_FATAL_ERROR:
@@ -622,12 +622,23 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 
 		if (buf)
 		{
-			fputs(buf, copystream);
+			if (fwrite(buf, 1, ret, copystream) != ret)
+			{
+				if (OK)			/* complain only once, keep reading data */
+					psql_error("could not write COPY data: %s\n",
+							   strerror(errno));
+				OK = false;
+			}
 			PQfreemem(buf);
 		}
 	}
 
-	fflush(copystream);
+	if (OK && fflush(copystream))
+	{
+		psql_error("could not write COPY data: %s\n",
+				   strerror(errno));
+		OK = false;
+	}
 
 	if (ret == -2)
 	{
@@ -657,6 +668,7 @@ handleCopyOut(PGconn *conn, FILE *copystream)
  * conn should be a database connection that you just issued COPY FROM on
  * and got back a PGRES_COPY_IN result.
  * copystream is the file stream to read the data from.
+ * isbinary can be set from PQbinaryTuples().
  *
  * result is true if successful, false if not.
  */
@@ -665,13 +677,10 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 #define COPYBUFSIZ 8192
 
 bool
-handleCopyIn(PGconn *conn, FILE *copystream)
+handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 {
 	bool		OK = true;
 	const char *prompt;
-	bool		copydone = false;
-	bool		firstload;
-	bool		linedone;
 	char		buf[COPYBUFSIZ];
 	PGresult *res;
 
@@ -686,58 +695,88 @@ handleCopyIn(PGconn *conn, FILE *copystream)
 	else
 		prompt = NULL;
 
-	while (!copydone)
-	{							/* for each input line ... */
+	if (isbinary)
+	{
+	    int buflen;
+
+		/* interactive input probably silly, but give one prompt anyway */
 		if (prompt)
 		{
 			fputs(prompt, stdout);
 			fflush(stdout);
 		}
-		
-		firstload = true;
-		linedone = false;
 
-		while (!linedone)
-		{						/* for each bufferload in line ... */
-			int		linelen;
-
-			if (!fgets(buf, COPYBUFSIZ, copystream))
+		while ((buflen = fread(buf, 1, COPYBUFSIZ, copystream)) > 0)
+		{
+			if (PQputCopyData(conn, buf, buflen) <= 0)
 			{
-				if (ferror(copystream))
-					OK = false;
-				copydone = true;
+				OK = false;
 				break;
 			}
+		}
+	}
+	else
+	{
+		bool		copydone = false;
 
-			linelen = strlen(buf);
+		while (!copydone)
+		{							/* for each input line ... */
+			bool		firstload;
+			bool		linedone;
 
-			/* current line is done? */
-			if (linelen > 0 && buf[linelen-1] == '\n')
-				linedone = true;
-
-			/* check for EOF marker, but not on a partial line */
-			if (firstload)
+			if (prompt)
 			{
-				if (strcmp(buf, "\\.\n") == 0 ||
-					strcmp(buf, "\\.\r\n") == 0)
+				fputs(prompt, stdout);
+				fflush(stdout);
+			}
+		
+			firstload = true;
+			linedone = false;
+
+			while (!linedone)
+			{						/* for each bufferload in line ... */
+				int		linelen;
+
+				if (!fgets(buf, COPYBUFSIZ, copystream))
 				{
 					copydone = true;
 					break;
 				}
+
+				linelen = strlen(buf);
+
+				/* current line is done? */
+				if (linelen > 0 && buf[linelen-1] == '\n')
+					linedone = true;
+
+				/* check for EOF marker, but not on a partial line */
+				if (firstload)
+				{
+					if (strcmp(buf, "\\.\n") == 0 ||
+						strcmp(buf, "\\.\r\n") == 0)
+					{
+						copydone = true;
+						break;
+					}
 				
-				firstload = false;
-			}
+					firstload = false;
+				}
 			
-			if (PQputCopyData(conn, buf, linelen) <= 0)
-			{
-				OK = false;
-				copydone = true;
-				break;
+				if (PQputCopyData(conn, buf, linelen) <= 0)
+				{
+					OK = false;
+					copydone = true;
+					break;
+				}
 			}
-		}
 		
-		pset.lineno++;
+			pset.lineno++;
+		}
 	}
+
+	/* Check for read error */
+	if (ferror(copystream))
+		OK = false;
 
 	/* Terminate data transfer */
 	if (PQputCopyEnd(conn,

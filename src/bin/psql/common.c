@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.117 2006/05/11 19:15:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.118 2006/05/26 19:51:29 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -652,7 +652,8 @@ ProcessCopyResult(PGresult *results)
 			break;
 
 		case PGRES_COPY_IN:
-			success = handleCopyIn(pset.db, pset.cur_cmd_source);
+			success = handleCopyIn(pset.db, pset.cur_cmd_source,
+								   PQbinaryTuples(results));
 			break;
 
 		default:

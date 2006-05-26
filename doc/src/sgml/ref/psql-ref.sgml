@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.161 2006/04/02 20:08:20 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.162 2006/05/26 19:51:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -744,13 +744,16 @@ testdb=&gt;
         { <literal>from</literal> | <literal>to</literal> }
         { <replaceable class="parameter">filename</replaceable> | stdin | stdout | pstdin | pstdout }
         [ with ]
+            [ binary ]
             [ oids ]
             [ delimiter [ as ] '<replaceable class="parameter">character</replaceable>' ]
             [ null [ as ] '<replaceable class="parameter">string</replaceable>' ]
-            [ csv [ quote [ as ] '<replaceable class="parameter">character</replaceable>' ]
-            [ escape [ as ] '<replaceable class="parameter">character</replaceable>' ]
-            [ force quote <replaceable class="parameter">column_list</replaceable> ]
-            [ force not null <replaceable class="parameter">column_list</replaceable> ] ]</literal>
+            [ csv
+              [ header ]
+              [ quote [ as ] '<replaceable class="parameter">character</replaceable>' ]
+              [ escape [ as ] '<replaceable class="parameter">character</replaceable>' ]
+              [ force quote <replaceable class="parameter">column_list</replaceable> ]
+              [ force not null <replaceable class="parameter">column_list</replaceable> ] ]</literal>
         </term>
 
         <listitem>
