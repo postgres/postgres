@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.265 2006/05/25 18:42:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.266 2006/05/26 22:50:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,8 @@ typedef struct CopyStateData
 	/* low-level state data */
 	CopyDest	copy_dest;		/* type of copy source/destination */
 	FILE	   *copy_file;		/* used if copy_dest == COPY_FILE */
-	StringInfo	fe_msgbuf;		/* used if copy_dest == COPY_NEW_FE */
+	StringInfo	fe_msgbuf;		/* used for all dests during COPY TO, only
+								 * for dest == COPY_NEW_FE in COPY FROM */
 	bool		fe_copy;		/* true for all FE copy dests */
 	bool		fe_eof;			/* true if detected end of copy data */
 	EolType		eol_type;		/* EOL type of input */
@@ -287,7 +288,6 @@ SendCopyBegin(CopyState cstate)
 			pq_sendint(&buf, format, 2);		/* per-column formats */
 		pq_endmessage(&buf);
 		cstate->copy_dest = COPY_NEW_FE;
-		cstate->fe_msgbuf = makeStringInfo();
 	}
 	else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 	{
@@ -364,23 +364,16 @@ SendCopyEnd(CopyState cstate)
 {
 	if (cstate->copy_dest == COPY_NEW_FE)
 	{
-		if (cstate->binary)
-		{
-			/* Need to flush out file trailer word */
-			CopySendEndOfRow(cstate);
-		}
-		else
-		{
-			/* Shouldn't have any unsent data */
-			Assert(cstate->fe_msgbuf->len == 0);
-		}
+		/* Shouldn't have any unsent data */
+		Assert(cstate->fe_msgbuf->len == 0);
 		/* Send Copy Done message */
 		pq_putemptymessage('c');
 	}
 	else
 	{
-		/* The FE/BE protocol uses \n as newline for all platforms */
-		CopySendData(cstate, "\\.\n", 3);
+		CopySendData(cstate, "\\.", 2);
+		/* Need to flush out the trailer (this also appends a newline) */
+		CopySendEndOfRow(cstate);
 		pq_endcopyout(false);
 	}
 }
@@ -390,6 +383,7 @@ SendCopyEnd(CopyState cstate)
  * CopySendString does the same for null-terminated strings
  * CopySendChar does the same for single characters
  * CopySendEndOfRow does the appropriate thing at end of each data row
+ *	(data is not actually flushed except by CopySendEndOfRow)
  *
  * NB: no data conversion is applied by these functions
  *----------
@@ -397,46 +391,26 @@ SendCopyEnd(CopyState cstate)
 static void
 CopySendData(CopyState cstate, void *databuf, int datasize)
 {
-	switch (cstate->copy_dest)
-	{
-		case COPY_FILE:
-			fwrite(databuf, datasize, 1, cstate->copy_file);
-			if (ferror(cstate->copy_file))
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not write to COPY file: %m")));
-			break;
-		case COPY_OLD_FE:
-			if (pq_putbytes((char *) databuf, datasize))
-			{
-				/* no hope of recovering connection sync, so FATAL */
-				ereport(FATAL,
-						(errcode(ERRCODE_CONNECTION_FAILURE),
-						 errmsg("connection lost during COPY to stdout")));
-			}
-			break;
-		case COPY_NEW_FE:
-			appendBinaryStringInfo(cstate->fe_msgbuf,
-								   (char *) databuf, datasize);
-			break;
-	}
+	appendBinaryStringInfo(cstate->fe_msgbuf, (char *) databuf, datasize);
 }
 
 static void
 CopySendString(CopyState cstate, const char *str)
 {
-	CopySendData(cstate, (void *) str, strlen(str));
+	appendBinaryStringInfo(cstate->fe_msgbuf, str, strlen(str));
 }
 
 static void
 CopySendChar(CopyState cstate, char c)
 {
-	CopySendData(cstate, &c, 1);
+	appendStringInfoCharMacro(cstate->fe_msgbuf, c);
 }
 
 static void
 CopySendEndOfRow(CopyState cstate)
 {
+	StringInfo	fe_msgbuf = cstate->fe_msgbuf;
+
 	switch (cstate->copy_dest)
 	{
 		case COPY_FILE:
@@ -449,24 +423,40 @@ CopySendEndOfRow(CopyState cstate)
 				CopySendString(cstate, "\r\n");
 #endif
 			}
+
+			(void) fwrite(fe_msgbuf->data, fe_msgbuf->len,
+						  1, cstate->copy_file);
+			if (ferror(cstate->copy_file))
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not write to COPY file: %m")));
 			break;
 		case COPY_OLD_FE:
 			/* The FE/BE protocol uses \n as newline for all platforms */
 			if (!cstate->binary)
 				CopySendChar(cstate, '\n');
+
+			if (pq_putbytes(fe_msgbuf->data, fe_msgbuf->len))
+			{
+				/* no hope of recovering connection sync, so FATAL */
+				ereport(FATAL,
+						(errcode(ERRCODE_CONNECTION_FAILURE),
+						 errmsg("connection lost during COPY to stdout")));
+			}
 			break;
 		case COPY_NEW_FE:
 			/* The FE/BE protocol uses \n as newline for all platforms */
 			if (!cstate->binary)
 				CopySendChar(cstate, '\n');
+
 			/* Dump the accumulated row as one CopyData message */
-			(void) pq_putmessage('d', cstate->fe_msgbuf->data,
-								 cstate->fe_msgbuf->len);
-			/* Reset fe_msgbuf to empty */
-			cstate->fe_msgbuf->len = 0;
-			cstate->fe_msgbuf->data[0] = '\0';
+			(void) pq_putmessage('d', fe_msgbuf->data, fe_msgbuf->len);
 			break;
 	}
+
+	/* Reset fe_msgbuf to empty */
+	fe_msgbuf->len = 0;
+	fe_msgbuf->data[0] = '\0';
 }
 
 /*
@@ -1237,6 +1227,9 @@ CopyTo(CopyState cstate)
 	attr_count = list_length(cstate->attnumlist);
 	null_print_client = cstate->null_print;		/* default */
 
+	/* We use fe_msgbuf as a per-row buffer regardless of copy_dest */
+	cstate->fe_msgbuf = makeStringInfo();
+
 	/* Get info about the columns we need to process. */
 	out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
 	force_quote = (bool *) palloc(num_phys_attrs * sizeof(bool));
@@ -1423,6 +1416,8 @@ CopyTo(CopyState cstate)
 	{
 		/* Generate trailer for a binary copy */
 		CopySendInt16(cstate, -1);
+		/* Need to flush out the trailer */
+		CopySendEndOfRow(cstate);
 	}
 
 	MemoryContextDelete(mycontext);
