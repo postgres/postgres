@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.1 2006/05/02 11:28:54 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.2 2006/05/26 08:01:17 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -202,7 +202,7 @@ findParents( GinBtree btree, GinBtreeStack *stack,
 	for(;;) {
 		buffer = ReadBuffer(btree->index, blkno);
 		LockBuffer(buffer, GIN_EXCLUSIVE);
-		page = BufferGetPage(root->buffer);
+		page = BufferGetPage(buffer);
 		if ( GinPageIsLeaf(page) )
 			elog(ERROR, "Lost path");
 
@@ -224,6 +224,7 @@ findParents( GinBtree btree, GinBtreeStack *stack,
 			ptr->blkno = blkno;
 			ptr->buffer = buffer;
 			ptr->parent = root; /* it's may be wrong, but in next call we will correct */
+			ptr->off = offset;
 			stack->parent = ptr;
 			return;
 		}
