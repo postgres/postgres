@@ -140,6 +140,37 @@ CREATE TRIGGER users_delete_trig BEFORE DELETE ON users FOR EACH ROW
 	EXECUTE PROCEDURE users_delete ('willem');
 
 
+
+-- dump trigger data
+
+CREATE TABLE trigger_test
+	(i int, v text );
+
+CREATE FUNCTION trigger_data() returns trigger language plpythonu as $$
+
+if TD.has_key('relid'):
+	TD['relid'] = "bogus:12345"
+
+for key in sorted(TD.keys()):
+	val = TD[key]
+	plpy.notice("TD[" + key + "] => " + str(val))
+
+return None  
+
+$$;
+
+CREATE TRIGGER show_trigger_data_trig 
+BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+
+insert into trigger_test values(1,'insert');
+update trigger_test set v = 'update' where i = 1;
+delete from trigger_test;
+      
+DROP TRIGGER show_trigger_data_trig on trigger_test;
+      
+DROP FUNCTION trigger_data();
+
 -- nested calls
 --
 

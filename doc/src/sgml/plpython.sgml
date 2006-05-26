@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.29 2005/05/20 01:52:25 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.30 2006/05/26 19:23:09 adunstan Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -123,6 +123,9 @@ def __plpython_procedure_myfunc_23456():
    <literal>AFTER</>, and <literal>UNKNOWN</>.
    <literal>TD["level"]</> contains one of <literal>ROW</>,
    <literal>STATEMENT</>, and <literal>UNKNOWN</>.
+   <literal>TD["name"]</> contains the trigger name,
+   <literal>TD["table_name"]</> contains the name of the table on which the trigger occurred,
+   <literal>TD["table_schema"]</> contains the schema of the table on which the trigger occurred,
    <literal>TD["name"]</> contains the trigger name, and
    <literal>TD["relid"]</> contains the OID of the table on
    which the trigger occurred.  If the <command>CREATE TRIGGER</> command

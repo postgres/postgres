@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.79 2006/04/27 14:18:07 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.80 2006/05/26 19:23:09 adunstan Exp $
  *
  *********************************************************************
  */
@@ -560,7 +560,9 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *
 			   *pltevent,
 			   *pltwhen,
 			   *pltlevel,
-			   *pltrelid;
+		       *pltrelid,
+		       *plttablename,
+		       *plttableschema;
 	PyObject   *pltargs,
 			   *pytnew,
 			   *pytold;
@@ -583,6 +585,19 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *
 		PyDict_SetItemString(pltdata, "relid", pltrelid);
 		Py_DECREF(pltrelid);
 		pfree(stroid);
+
+		stroid = SPI_getrelname(tdata->tg_relation);
+		plttablename = PyString_FromString(stroid);
+		PyDict_SetItemString(pltdata, "table_name", plttablename);
+		Py_DECREF(plttablename);
+		pfree(stroid);
+		
+		stroid = SPI_getnspname(tdata->tg_relation);
+		plttableschema = PyString_FromString(stroid);
+		PyDict_SetItemString(pltdata, "table_schema", plttableschema);
+		Py_DECREF(plttableschema);
+		pfree(stroid);
+		
 
 		if (TRIGGER_FIRED_BEFORE(tdata->tg_event))
 			pltwhen = PyString_FromString("BEFORE");
