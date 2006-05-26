@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2006/04/13 11:41:02 $
+$Date: 2006/05/26 19:48:32 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -365,3 +365,35 @@ References and resources
   IBM Redbook
   http://www.redbooks.ibm.com/redbooks/pdfs/sg245674.pdf
   http://www.redbooks.ibm.com/abstracts/sg245674.html?Open
+
+
+Statistics Collector Fun on AIX
+--------------------------------
+
+When implementing PostgreSQL version 8.1 on AIX 5.3, we periodically
+ran into problems where the statistics collector would "mysteriously"
+not come up successfully.
+
+This appears to be the result of unexpected behaviour in the IPv6
+implementation.  It looks like PostgreSQL and IPv6 do not play very
+well together at this time on AIX.
+
+Any of the following actions "fix" the problem.
+
+1.  Delete the localhost ipv6 address
+
+(as root)
+# ifconfig lo0 inet6 ::1/0 delete
+
+2.  Remove IPv6 from net services.  The file /etc/netsvc.conf, on AIX,
+is roughly equivalent to /etc/nsswitch.conf on Solaris/Linux.
+
+The default, on AIX, is thus:
+
+  hosts=local,bind
+
+Replace this with:
+
+  hosts=local4,bind4
+
+to deactivate searching for IPv6 addresses.
