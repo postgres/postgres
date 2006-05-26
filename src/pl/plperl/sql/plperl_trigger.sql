@@ -5,6 +5,64 @@ CREATE TABLE trigger_test (
         v varchar
 );
 
+CREATE OR REPLACE FUNCTION trigger_data() RETURNS trigger LANGUAGE plperl AS $$
+
+  # make sure keys are sorted for consistent results - perl no longer
+  # hashes in  repeatable fashion across runs
+
+  foreach my $key (sort keys %$_TD)
+  {
+
+    my $val = $_TD->{$key};
+
+	# relid is variable, so we can not use it repeatably
+	$val = "bogus:12345" if $key eq 'relid';
+
+	if (! defined $val)
+	{
+	  elog(NOTICE, "\$_TD->\{$key\} = NULL");
+	}
+	elsif (not ref $val)
+    {
+	  elog(NOTICE, "\$_TD->\{$key\} = '$val'");
+	}
+	elsif (ref $val eq 'HASH')
+	{
+	  my $str = "";
+	  foreach my $rowkey (sort keys %$val)
+	  {
+	    $str .= ", " if $str;
+	    my $rowval = $val->{$rowkey};
+	    $str .= "'$rowkey' => '$rowval'";
+      }
+	  elog(NOTICE, "\$_TD->\{$key\} = \{$str\}");
+	}
+	elsif (ref $val eq 'ARRAY')
+	{
+	  my $str = "";
+	  foreach my $argval (@$val)
+	  {
+	    $str .= ", " if $str;
+	    $str .= "'$argval'";
+      }
+	  elog(NOTICE, "\$_TD->\{$key\} = \[$str\]");
+	}
+  }
+  return undef; # allow statement to proceed;
+$$;
+
+CREATE TRIGGER show_trigger_data_trig 
+BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+
+insert into trigger_test values(1,'insert');
+update trigger_test set v = 'update' where i = 1;
+delete from trigger_test;
+	  
+DROP TRIGGER show_trigger_data_trig on trigger_test;
+	  
+DROP FUNCTION trigger_data();
+
 CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$
 
     if (($_TD->{new}{i}>=100) || ($_TD->{new}{i}<=0))

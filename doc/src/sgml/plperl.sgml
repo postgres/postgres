@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.52 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.53 2006/05/26 17:34:16 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -728,10 +728,30 @@ $$ LANGUAGE plperl;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>$_TD-&gt;{relname}</literal></term>
+     <term><literal>$_TD-&gt;{table_name}</literal></term>
      <listitem>
       <para>
        Name of the table on which the trigger fired
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD-&gt;{relname}</literal></term>
+     <listitem>
+      <para>
+       Name of the table on which the trigger fired. This has been deprecated,
+	   and could be removed in a future release. 
+	   Please use $_TD-&gt;{table_name} instead.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD-&gt;{table_schema}</literal></term>
+     <listitem>
+      <para>
+       Name of the schema in which the table on which the trigger fired, is
       </para>
      </listitem>
     </varlistentry>
