@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.102 2006/04/04 19:35:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.103 2006/05/27 20:24:16 adunstan Exp $
  *
  **********************************************************************/
 
@@ -657,6 +657,16 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		Tcl_DStringAppendElement(&tcl_cmd, stroid);
 		pfree(stroid);
 
+		/* The name of the table the trigger is acting on: TG_table_name */
+        stroid = SPI_getrelname(trigdata->tg_relation);
+		Tcl_DStringAppendElement(&tcl_cmd, stroid);
+        pfree(stroid);
+		
+		/* The schema of the table the trigger is acting on: TG_table_schema */
+        stroid = SPI_getnspname(trigdata->tg_relation);
+		Tcl_DStringAppendElement(&tcl_cmd, stroid);
+        pfree(stroid);
+		
 		/* A list of attribute names for argument TG_relatts */
 		Tcl_DStringAppendElement(&tcl_trigtup, "");
 		for (i = 0; i < tupdesc->natts; i++)
@@ -1142,7 +1152,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		{
 			/* trigger procedure has fixed args */
 			strcpy(proc_internal_args,
-				   "TG_name TG_relid TG_relatts TG_when TG_level TG_op __PLTcl_Tup_NEW __PLTcl_Tup_OLD args");
+				   "TG_name TG_relid TG_table_name TG_table_schema TG_relatts TG_when TG_level TG_op __PLTcl_Tup_NEW __PLTcl_Tup_OLD args");
 		}
 
 		/************************************************************

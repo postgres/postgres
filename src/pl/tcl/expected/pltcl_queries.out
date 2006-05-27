@@ -183,3 +183,41 @@ select * from T_pkey2 order by key1 using @<, key2;
     2 | KEY2-9               | test key                                
 (4 rows)
 
+-- show dump of trigger data
+insert into trigger_test values(1,'insert');
+NOTICE:  NEW: {i: 1, v: insert}
+NOTICE:  OLD: {}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_trig
+NOTICE:  TG_op: INSERT
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {23 skidoo}
+update trigger_test set v = 'update' where i = 1;
+NOTICE:  NEW: {i: 1, v: update}
+NOTICE:  OLD: {i: 1, v: insert}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_trig
+NOTICE:  TG_op: UPDATE
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {23 skidoo}
+delete from trigger_test;
+NOTICE:  NEW: {}
+NOTICE:  OLD: {i: 1, v: update}
+NOTICE:  TG_level: ROW
+NOTICE:  TG_name: show_trigger_data_trig
+NOTICE:  TG_op: DELETE
+NOTICE:  TG_relatts: {{} i v}
+NOTICE:  TG_relid: bogus:12345
+NOTICE:  TG_table_name: trigger_test
+NOTICE:  TG_table_schema: public
+NOTICE:  TG_when: BEFORE
+NOTICE:  args: {23 skidoo}
+      

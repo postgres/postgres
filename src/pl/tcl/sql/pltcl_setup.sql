@@ -61,6 +61,48 @@ create function check_pkey1_exists(int4, bpchar) returns bool as E'
 ' language pltcl;
 
 
+-- dump trigger data
+
+CREATE TABLE trigger_test
+    (i int, v text );
+
+CREATE FUNCTION trigger_data() returns trigger language pltcl as $_$
+
+	if { [info exists TG_relid] } {
+    	set TG_relid "bogus:12345"
+   	}
+
+	set dnames [info locals {[a-zA-Z]*} ]
+
+	foreach key [lsort $dnames] {
+    
+		if { [array exists $key] } { 
+			set str "{"
+			foreach akey [lsort [ array names $key ] ] {
+				if {[string length $str] > 1} { set str "$str, " }
+				set cmd "($akey)"
+				set cmd "set val \$$key$cmd"
+				eval $cmd
+				set str "$str$akey: $val"
+			}
+			set str "$str}"
+    		elog NOTICE "$key: $str"
+		} else {
+			set val [eval list "\$$key" ]
+    		elog NOTICE "$key: $val"
+		}
+	}
+
+
+	return OK  
+
+$_$;
+
+CREATE TRIGGER show_trigger_data_trig 
+BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+
+
 --
 -- Trigger function on every change to T_pkey1
 --

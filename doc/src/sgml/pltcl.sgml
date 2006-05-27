@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.39 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.40 2006/05/27 20:24:16 adunstan Exp $ -->
 
  <chapter id="pltcl">
   <title>PL/Tcl - Tcl Procedural Language</title>
@@ -522,6 +522,26 @@ SELECT 'doesn''t' AS ret
        <listitem>
         <para>
          The object ID of the table that caused the trigger procedure
+         to be invoked.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><varname>$TG_table_name</varname></term>
+       <listitem>
+        <para>
+         The name of the table that caused the trigger procedure
+         to be invoked.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><varname>$TG_table_schema</varname></term>
+       <listitem>
+        <para>
+         The schema of the table that caused the trigger procedure
          to be invoked.
         </para>
        </listitem>
