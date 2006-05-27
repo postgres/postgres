@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $PostgreSQL: pgsql/src/backend/parser/Makefile,v 1.43 2006/03/07 01:00:17 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/parser/Makefile,v 1.44 2006/05/27 17:38:45 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,7 +57,7 @@ endif
 
 
 # Force these dependencies to be known even without dependency info built:
-gram.o keywords.o: $(srcdir)/parse.h
+gram.o keywords.o parser.o: $(srcdir)/parse.h
 
 
 # gram.c, parse.h, and scan.c are in the distribution tarball, so they

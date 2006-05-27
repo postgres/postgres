@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.544 2006/04/30 18:30:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.545 2006/05/27 17:38:45 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -69,6 +69,12 @@
 		else \
 			(Current) = (Rhs)[0]; \
 	} while (0)
+
+/*
+ * The %name-prefix option below will make bison call base_yylex, but we
+ * really want it to call filtered_base_yylex (see parser.c).
+ */
+#define base_yylex filtered_base_yylex
 
 extern List *parsetree;			/* final parse result is delivered here */
 
@@ -339,6 +345,7 @@ static void doNegateFloat(Value *v);
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
 %type <str>		OptTableSpace OptConsTableSpace OptTableSpaceOwner
+%type <list>	opt_check_option
 
 
 /*
@@ -356,7 +363,7 @@ static void doNegateFloat(Value *v);
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
 	BOOLEAN_P BOTH BY
 
-	CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
+	CACHE CALLED CASCADE CASCADED CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONNECTION CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
@@ -430,6 +437,12 @@ static void doNegateFloat(Value *v);
 	YEAR_P
 
 	ZONE
+
+/* The grammar thinks these are keywords, but they are not in the keywords.c
+ * list and so can never be entered directly.  The filter in parser.c
+ * creates these tokens when required.
+ */
+%token			WITH_CASCADED WITH_LOCAL WITH_CHECK
 
 /* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT FCONST SCONST BCONST XCONST Op
@@ -4618,12 +4631,13 @@ transaction_mode_list_or_empty:
 /*****************************************************************************
  *
  *	QUERY:
- *		CREATE [ OR REPLACE ] [ TEMP ] VIEW <viewname> '('target-list ')' AS <query>
+ *		CREATE [ OR REPLACE ] [ TEMP ] VIEW <viewname> '('target-list ')'
+ *			AS <query> [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
  *
  *****************************************************************************/
 
 ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list
-				AS SelectStmt
+				AS SelectStmt opt_check_option
 				{
 					ViewStmt *n = makeNode(ViewStmt);
 					n->replace = false;
@@ -4634,7 +4648,7 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list
 					$$ = (Node *) n;
 				}
 		| CREATE OR REPLACE OptTemp VIEW qualified_name opt_column_list
-				AS SelectStmt
+				AS SelectStmt opt_check_option
 				{
 					ViewStmt *n = makeNode(ViewStmt);
 					n->replace = true;
@@ -4644,6 +4658,32 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list
 					n->query = (Query *) $9;
 					$$ = (Node *) n;
 				}
+		;
+
+/*
+ * We use merged tokens here to avoid creating shift/reduce conflicts against
+ * a whole lot of other uses of WITH.
+ */
+opt_check_option:
+		WITH_CHECK OPTION
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("WITH CHECK OPTION is not implemented")));
+				}
+		| WITH_CASCADED CHECK OPTION
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("WITH CHECK OPTION is not implemented")));
+				}
+		| WITH_LOCAL CHECK OPTION
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("WITH CHECK OPTION is not implemented")));
+				}
+		| /* EMPTY */							{ $$ = NIL; }
 		;
 
 /*****************************************************************************
@@ -8319,6 +8359,7 @@ unreserved_keyword:
 			| CACHE
 			| CALLED
 			| CASCADE
+			| CASCADED
 			| CHAIN
 			| CHARACTERISTICS
 			| CHECKPOINT
@@ -9138,5 +9179,11 @@ doNegateFloat(Value *v)
 		v->val.str = newval;
 	}
 }
+
+/*
+ * Must undefine base_yylex before including scan.c, since we want it
+ * to create the function base_yylex not filtered_base_yylex.
+ */
+#undef base_yylex
 
 #include "scan.c"
