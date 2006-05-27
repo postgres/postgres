@@ -151,7 +151,9 @@ CREATE FUNCTION trigger_data() returns trigger language plpythonu as $$
 if TD.has_key('relid'):
 	TD['relid'] = "bogus:12345"
 
-for key in sorted(TD.keys()):
+skeys = TD.keys()
+skeys.sort()
+for key in skeys:
 	val = TD[key]
 	plpy.notice("TD[" + key + "] => " + str(val))
 
