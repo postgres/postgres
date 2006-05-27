@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.115 2006/05/26 23:48:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.116 2006/05/27 18:07:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1222,20 +1222,20 @@ setup_config(void)
 	conflines = replace_token(conflines, "#port = 5432", repltok);
 #endif
 
-	lc_messages = escape_quotes(lc_messages);
-	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'", lc_messages);
+	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'",
+			 escape_quotes(lc_messages));
 	conflines = replace_token(conflines, "#lc_messages = 'C'", repltok);
 
-	lc_monetary = escape_quotes(lc_monetary);
-	snprintf(repltok, sizeof(repltok), "lc_monetary = '%s'", lc_monetary);
+	snprintf(repltok, sizeof(repltok), "lc_monetary = '%s'",
+			 escape_quotes(lc_monetary));
 	conflines = replace_token(conflines, "#lc_monetary = 'C'", repltok);
 
-	lc_numeric = escape_quotes(lc_numeric);
-	snprintf(repltok, sizeof(repltok), "lc_numeric = '%s'", lc_numeric);
+	snprintf(repltok, sizeof(repltok), "lc_numeric = '%s'",
+			 escape_quotes(lc_numeric));
 	conflines = replace_token(conflines, "#lc_numeric = 'C'", repltok);
 
-	lc_time = escape_quotes(lc_time);
-	snprintf(repltok, sizeof(repltok), "lc_time = '%s'", lc_time);
+	snprintf(repltok, sizeof(repltok), "lc_time = '%s'",
+			 escape_quotes(lc_time));
 	conflines = replace_token(conflines, "#lc_time = 'C'", repltok);
 
 	switch (locale_date_order(lc_time)) {
@@ -1541,8 +1541,8 @@ get_set_pwd(void)
 
 	PG_CMD_OPEN;
 
-	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD '%s';\n",
-				   username, pwd1);
+	PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD E'%s';\n",
+				   username, escape_quotes(pwd1));
 
 	PG_CMD_CLOSE;
 
@@ -1740,8 +1740,8 @@ setup_description(void)
 				"	objsubid int4, "
 				"	description text) WITHOUT OIDS;\n");
 
-	PG_CMD_PRINTF1("COPY tmp_pg_description FROM '%s';\n",
-				   desc_file);
+	PG_CMD_PRINTF1("COPY tmp_pg_description FROM E'%s';\n",
+				   escape_quotes(desc_file));
 
 	PG_CMD_PUTS("INSERT INTO pg_description "
 				" SELECT t.objoid, c.oid, t.objsubid, t.description "
@@ -1753,8 +1753,8 @@ setup_description(void)
 				" classname name, "
 				" description text) WITHOUT OIDS;\n");
 
-	PG_CMD_PRINTF1("COPY tmp_pg_shdescription FROM '%s';\n",
-				   shdesc_file);
+	PG_CMD_PRINTF1("COPY tmp_pg_shdescription FROM E'%s';\n",
+				   escape_quotes(shdesc_file));
 
 	PG_CMD_PUTS("INSERT INTO pg_shdescription "
 				" SELECT t.objoid, c.oid, t.description "
@@ -1925,8 +1925,8 @@ setup_schema(void)
 	PG_CMD_PRINTF1("COPY information_schema.sql_features "
 				   "  (feature_id, feature_name, sub_feature_id, "
 				   "  sub_feature_name, is_supported, comments) "
-				   " FROM '%s';\n",
-				   features_file);
+				   " FROM E'%s';\n",
+				   escape_quotes(features_file));
 
 	PG_CMD_CLOSE;
 
@@ -2103,8 +2103,15 @@ check_ok(void)
 }
 
 /*
- * Escape any single quotes or backslashes in given string;
- * postgresql.conf always enables backslash escapes
+ * Escape (by doubling) any single quotes or backslashes in given string
+ *
+ * Note: this is used to process both postgresql.conf entries and SQL
+ * string literals.  Since postgresql.conf strings are defined to treat
+ * backslashes as escapes, we have to double backslashes here.  Hence,
+ * when using this for a SQL string literal, use E'' syntax.
+ *
+ * We do not need to worry about encoding considerations because all
+ * valid backend encodings are ASCII-safe.
  */
 static char *
 escape_quotes(const char *src)
