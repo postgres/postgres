@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.89 2006/05/26 23:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.90 2006/05/27 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "plpgsql.h"
 
 #include "parser/parser.h"
-#include "parser/gramparse.h"
+
 
 static PLpgSQL_expr		*read_sql_construct(int until,
 											int until2,
@@ -377,12 +377,16 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						strcpy(buf, "SELECT ");
 						cp1 = new->refname;
 						cp2 = buf + strlen(buf);
-						if (!standard_conforming_strings && strchr(cp1, '\\') != NULL)
+						/*
+						 * Don't trust standard_conforming_strings here;
+						 * it might change before we use the string.
+						 */
+						if (strchr(cp1, '\\') != NULL)
 							*cp2++ = ESCAPE_STRING_SYNTAX;
 						*cp2++ = '\'';
 						while (*cp1)
 						{
-							if (SQL_STR_DOUBLE(*cp1, !standard_conforming_strings))
+							if (SQL_STR_DOUBLE(*cp1, true))
 								*cp2++ = *cp1;
 							*cp2++ = *cp1++;
 						}
