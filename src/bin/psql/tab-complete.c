@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.151 2006/04/30 21:15:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.152 2006/05/28 02:27:08 alvherre Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -370,6 +370,10 @@ static const SchemaQuery Query_for_list_of_views = {
 "  UNION ALL SELECT 'all') ss "\
 " WHERE substring(name,1,%d)='%s'"
 
+/*
+ * Note: As of Pg 8.2, we no longer use relkind 's', but we keep it here
+ * for compatibility with older servers
+ */
 #define Query_for_list_of_system_relations \
 "SELECT pg_catalog.quote_ident(relname) "\
 "  FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.212 2006/05/10 23:18:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.213 2006/05/28 02:27:08 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -794,8 +794,8 @@ relation_close(Relation relation, LOCKMODE lockmode)
  *		heap_open - open a heap relation by relation OID
  *
  *		This is essentially relation_open plus check that the relation
- *		is not an index or special relation.  (The caller should also check
- *		that it's not a view before assuming it has storage.)
+ *		is not an index nor a composite type.  (The caller should also
+ *		check that it's not a view before assuming it has storage.)
  * ----------------
  */
 Relation
@@ -809,11 +809,6 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is an index",
-						RelationGetRelationName(r))));
-	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a special relation",
 						RelationGetRelationName(r))));
 	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,
@@ -844,11 +839,6 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is an index",
-						RelationGetRelationName(r))));
-	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a special relation",
 						RelationGetRelationName(r))));
 	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.53 2006/04/30 01:08:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.54 2006/05/28 02:27:08 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1896,10 +1896,6 @@ getRelationDescription(StringInfo buffer, Oid relid)
 			break;
 		case RELKIND_INDEX:
 			appendStringInfo(buffer, _("index %s"),
-							 relname);
-			break;
-		case RELKIND_SPECIAL:
-			appendStringInfo(buffer, _("special system relation %s"),
 							 relname);
 			break;
 		case RELKIND_SEQUENCE:

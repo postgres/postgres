@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.122 2006/05/02 22:25:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.123 2006/05/28 02:27:08 alvherre Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1386,7 +1386,7 @@
    everything else that has columns or is otherwise similar to a
    table.  This includes indexes (but see also
    <structname>pg_index</structname>), sequences, views, composite types,
-   and some kinds of special relation; see <structfield>relkind</>.
+   and TOAST tables; see <structfield>relkind</>.
    Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
    columns are meaningful for all relation types.
@@ -1540,7 +1540,7 @@
       <entry>
        <literal>r</> = ordinary table, <literal>i</> = index,
        <literal>S</> = sequence, <literal>v</> = view, <literal>c</> =
-       composite type, <literal>s</> = special, <literal>t</> = TOAST
+       composite type, <literal>t</> = TOAST
        table
       </entry>
      </row>
