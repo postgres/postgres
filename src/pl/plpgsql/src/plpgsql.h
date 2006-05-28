@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.69 2006/03/09 21:29:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.70 2006/05/28 03:03:17 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,6 +572,8 @@ typedef struct PLpgSQL_function
 	int			tg_op_varno;
 	int			tg_relid_varno;
 	int			tg_relname_varno;
+	int         tg_table_name_varno;
+	int         tg_table_schema_varno;
 	int			tg_nargs_varno;
 
 	int			ndatums;

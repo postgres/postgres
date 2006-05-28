@@ -386,3 +386,103 @@ select *  from trigtest;
 
 drop table trigtest2;
 drop table trigtest;
+-- dump trigger data
+CREATE TABLE trigger_test (
+        i int,
+        v varchar
+);
+CREATE OR REPLACE FUNCTION trigger_data()  RETURNS trigger 
+LANGUAGE plpgsql AS $$
+
+declare
+
+	argstr text;
+	relid text;
+
+begin
+
+	relid := TG_relid::regclass;
+
+	-- plpgsql can't discover it's trigger data in a hash like perl and python
+	-- can, or by a sort of reflection like tcl can, 
+	-- so we have to hard code the names.
+	raise NOTICE 'TG_NAME: %', TG_name;
+	raise NOTICE 'TG_WHEN: %', TG_when;
+	raise NOTICE 'TG_LEVEL: %', TG_level;
+	raise NOTICE 'TG_OP: %', TG_op;
+	raise NOTICE 'TG_RELID::regclass: %', relid;
+	raise NOTICE 'TG_RELNAME: %', TG_relname;
+	raise NOTICE 'TG_TABLE_NAME: %', TG_table_name;
+	raise NOTICE 'TG_TABLE_SCHEMA: %', TG_table_schema;
+	raise NOTICE 'TG_NARGS: %', TG_nargs;
+
+	argstr := '[';
+	for i in 0 .. TG_nargs - 1 loop
+		if i > 0 then
+			argstr := argstr || ', ';
+		end if;
+		argstr := argstr || TG_argv[i];
+	end loop;
+	argstr := argstr || ']';
+	raise NOTICE 'TG_ARGV: %', argstr;
+
+	if TG_OP != 'INSERT' then
+		raise NOTICE 'OLD: %', OLD;
+	end if;
+
+	if TG_OP != 'DELETE' then
+		raise NOTICE 'NEW: %', NEW;
+	end if;
+	if TG_OP = 'DELETE' then
+		return OLD;
+	else
+		return NEW;
+	end if;
+
+end;
+$$;
+CREATE TRIGGER show_trigger_data_trig 
+BEFORE INSERT OR UPDATE OR DELETE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+insert into trigger_test values(1,'insert');
+NOTICE:  TG_NAME: show_trigger_data_trig
+NOTICE:  TG_WHEN: BEFORE
+NOTICE:  TG_LEVEL: ROW
+NOTICE:  TG_OP: INSERT
+NOTICE:  TG_RELID::regclass: trigger_test
+NOTICE:  TG_RELNAME: trigger_test
+NOTICE:  TG_TABLE_NAME: trigger_test
+NOTICE:  TG_TABLE_SCHEMA: public
+NOTICE:  TG_NARGS: 2
+NOTICE:  TG_ARGV: [23, skidoo]
+NOTICE:  NEW: (1,insert)
+update trigger_test set v = 'update' where i = 1;
+NOTICE:  TG_NAME: show_trigger_data_trig
+NOTICE:  TG_WHEN: BEFORE
+NOTICE:  TG_LEVEL: ROW
+NOTICE:  TG_OP: UPDATE
+NOTICE:  TG_RELID::regclass: trigger_test
+NOTICE:  TG_RELNAME: trigger_test
+NOTICE:  TG_TABLE_NAME: trigger_test
+NOTICE:  TG_TABLE_SCHEMA: public
+NOTICE:  TG_NARGS: 2
+NOTICE:  TG_ARGV: [23, skidoo]
+NOTICE:  OLD: (1,insert)
+NOTICE:  NEW: (1,update)
+delete from trigger_test;
+NOTICE:  TG_NAME: show_trigger_data_trig
+NOTICE:  TG_WHEN: BEFORE
+NOTICE:  TG_LEVEL: ROW
+NOTICE:  TG_OP: DELETE
+NOTICE:  TG_RELID::regclass: trigger_test
+NOTICE:  TG_RELNAME: trigger_test
+NOTICE:  TG_TABLE_NAME: trigger_test
+NOTICE:  TG_TABLE_SCHEMA: public
+NOTICE:  TG_NARGS: 2
+NOTICE:  TG_ARGV: [23, skidoo]
+NOTICE:  OLD: (1,update)
+      
+DROP TRIGGER show_trigger_data_trig on trigger_test;
+      
+DROP FUNCTION trigger_data();
+DROP TABLE trigger_test;

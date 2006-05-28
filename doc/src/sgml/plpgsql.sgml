@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.88 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.89 2006/05/28 03:03:17 adunstan Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -2745,7 +2745,28 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
      <listitem>
       <para>
        Data type <type>name</type>; the name of the table that caused the trigger
-       invocation.
+       invocation. This is now deprecated, and could disappear in a future 
+	   release. Use <literal>TG_TABLE_NAME</> instead.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><varname>TG_TABLE_NAME</varname></term>
+     <listitem>
+      <para>
+       Data type <type>name</type>; the name of the table that 
+	   caused the trigger invocation.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><varname>TG_TABLE_SCHEMA</varname></term>
+     <listitem>
+      <para>
+       Data type <type>name</type>; the name of the schema of the 
+	   table that caused the trigger invocation.
       </para>
      </listitem>
     </varlistentry>

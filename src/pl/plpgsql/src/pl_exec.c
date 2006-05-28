@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.164 2006/04/22 01:26:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.165 2006/05/28 03:03:17 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -536,6 +536,21 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	var = (PLpgSQL_var *) (estate.datums[func->tg_relname_varno]);
 	var->value = DirectFunctionCall1(namein,
 			CStringGetDatum(RelationGetRelationName(trigdata->tg_relation)));
+	var->isnull = false;
+	var->freeval = true;
+
+	var = (PLpgSQL_var *) (estate.datums[func->tg_table_name_varno]);
+	var->value = DirectFunctionCall1(namein,
+			CStringGetDatum(RelationGetRelationName(trigdata->tg_relation)));
+	var->isnull = false;
+	var->freeval = true;
+
+	var = (PLpgSQL_var *) (estate.datums[func->tg_table_schema_varno]);
+	var->value = DirectFunctionCall1(namein,
+									 CStringGetDatum(
+										 get_namespace_name(
+											 RelationGetNamespace(
+												 trigdata->tg_relation))));
 	var->isnull = false;
 	var->freeval = true;
 
