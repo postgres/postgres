@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.435 2006/05/28 17:23:29 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.436 2006/05/28 21:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ int			optreset;
 
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
+#include "mb/pg_wchar.h"
 
 #include "pg_dump.h"
 #include "pg_backup.h"
@@ -82,7 +83,6 @@ bool		g_verbose;			/* User wants verbose narration of our
 								 * activities. */
 Archive    *g_fout;				/* the script file */
 PGconn	   *g_conn;				/* the database connection */
-bool		std_strings = false;		/* GUC variable */
 
 /* various user-settable parameters */
 bool		dumpInserts;		/* dump data using proper insert strings */
@@ -194,6 +194,7 @@ main(int argc, char **argv)
 	const char *pgport = NULL;
 	const char *username = NULL;
 	const char *dumpencoding = NULL;
+	const char *std_strings;
 	bool		oids = false;
 	TableInfo  *tblinfo;
 	int			numTables;
@@ -517,25 +518,35 @@ main(int argc, char **argv)
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport,
 							 username, force_password, ignore_version);
 
+	/* Set the client encoding if requested */
+	if (dumpencoding)
+	{
+		if (PQsetClientEncoding(g_conn, dumpencoding) < 0)
+		{
+			write_msg(NULL, "invalid client encoding \"%s\" specified\n",
+					  dumpencoding);
+			exit(1);
+		}
+	}
+
+	/*
+	 * Get the active encoding and the standard_conforming_strings setting,
+	 * so we know how to escape strings.
+	 */
+	g_fout->encoding = PQclientEncoding(g_conn);
+
+	std_strings = PQparameterStatus(g_conn, "standard_conforming_strings");
+	g_fout->std_strings = (std_strings && strcmp(std_strings, "on") == 0);
+
+	/* Set the datestyle to ISO to ensure the dump's portability */
+	do_sql_command(g_conn, "SET DATESTYLE = ISO");
+
 	/*
 	 * Start serializable transaction to dump consistent data.
 	 */
 	do_sql_command(g_conn, "BEGIN");
 
 	do_sql_command(g_conn, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
-
-	/* Set the datestyle to ISO to ensure the dump's portability */
-	do_sql_command(g_conn, "SET DATESTYLE = ISO");
-
-	/* Set the client encoding */
-	if (dumpencoding)
-	{
-		char	   *cmd = malloc(strlen(dumpencoding) + 32);
-
-		sprintf(cmd, "SET client_encoding='%s'", dumpencoding);
-		do_sql_command(g_conn, cmd);
-		free(cmd);
-	}
 
 	/* Select the appropriate subquery to convert user IDs to names */
 	if (g_fout->remoteVersion >= 80100)
@@ -618,12 +629,11 @@ main(int argc, char **argv)
 	 * order.
 	 */
 
-	/* First the special encoding entry. */
+	/* First the special ENCODING and STDSTRINGS entries. */
 	dumpEncoding(g_fout);
-
 	dumpStdStrings(g_fout);
 
-	/* The database item is always second, unless we don't want it at all */
+	/* The database item is always next, unless we don't want it at all */
 	if (!dataOnly && selectTableName == NULL && selectSchemaName == NULL)
 		dumpDatabase(g_fout);
 
@@ -1088,7 +1098,9 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 					default:
 						/* All other types are printed as string literals. */
 						resetPQExpBuffer(q);
-						appendStringLiteral(q, PQgetvalue(res, tuple, field), false, !std_strings);
+						appendStringLiteralAH(q,
+											  PQgetvalue(res, tuple, field),
+											  fout);
 						archputs(q->data, fout);
 						break;
 				}
@@ -1240,7 +1252,7 @@ dumpDatabase(Archive *AH)
 						  "FROM pg_database "
 						  "WHERE datname = ",
 						  username_subquery);
-		appendStringLiteral(dbQry, datname, true, !std_strings);
+		appendStringLiteralAH(dbQry, datname, AH);
 	}
 	else if (g_fout->remoteVersion >= 80000)
 	{
@@ -1251,7 +1263,7 @@ dumpDatabase(Archive *AH)
 						  "FROM pg_database "
 						  "WHERE datname = ",
 						  username_subquery);
-		appendStringLiteral(dbQry, datname, true, !std_strings);
+		appendStringLiteralAH(dbQry, datname, AH);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
@@ -1262,7 +1274,7 @@ dumpDatabase(Archive *AH)
 						  "FROM pg_database "
 						  "WHERE datname = ",
 						  username_subquery);
-		appendStringLiteral(dbQry, datname, true, !std_strings);
+		appendStringLiteralAH(dbQry, datname, AH);
 	}
 	else
 	{
@@ -1275,7 +1287,7 @@ dumpDatabase(Archive *AH)
 						  "FROM pg_database "
 						  "WHERE datname = ",
 						  username_subquery);
-		appendStringLiteral(dbQry, datname, true, !std_strings);
+		appendStringLiteralAH(dbQry, datname, AH);
 	}
 
 	res = PQexec(g_conn, dbQry->data);
@@ -1314,7 +1326,7 @@ dumpDatabase(Archive *AH)
 	if (strlen(encoding) > 0)
 	{
 		appendPQExpBuffer(creaQry, " ENCODING = ");
-		appendStringLiteral(creaQry, encoding, true, !std_strings);
+		appendStringLiteralAH(creaQry, encoding, AH);
 	}
 	if (strlen(tablespace) > 0 && strcmp(tablespace, "pg_default") != 0)
 		appendPQExpBuffer(creaQry, " TABLESPACE = %s",
@@ -1353,7 +1365,7 @@ dumpDatabase(Archive *AH)
 		if (comment && strlen(comment)) {
 			resetPQExpBuffer(dbQry);
 			appendPQExpBuffer(dbQry, "COMMENT ON DATABASE %s IS ", fmtId(datname));
-			appendStringLiteral(dbQry, comment, false, !std_strings);
+			appendStringLiteralAH(dbQry, comment, AH);
 			appendPQExpBuffer(dbQry, ";\n");
 
 			ArchiveEntry(AH, dbCatId, createDumpId(), datname, NULL, NULL,
@@ -1381,28 +1393,14 @@ dumpDatabase(Archive *AH)
 static void
 dumpEncoding(Archive *AH)
 {
-	PQExpBuffer qry;
-	PGresult   *res;
-
-	/* Can't read the encoding from pre-7.3 servers (SHOW isn't a query) */
-	if (AH->remoteVersion < 70300)
-		return;
+	const char *encname = pg_encoding_to_char(AH->encoding);
+	PQExpBuffer qry = createPQExpBuffer();
 
 	if (g_verbose)
-		write_msg(NULL, "saving encoding\n");
-
-	qry = createPQExpBuffer();
-
-	appendPQExpBuffer(qry, "SHOW client_encoding");
-
-	res = PQexec(g_conn, qry->data);
-
-	check_sql_result(res, g_conn, qry->data, PGRES_TUPLES_OK);
-
-	resetPQExpBuffer(qry);
+		write_msg(NULL, "saving encoding = %s\n", encname);
 
 	appendPQExpBuffer(qry, "SET client_encoding = ");
-	appendStringLiteral(qry, PQgetvalue(res, 0, 0), true, !std_strings);
+	appendStringLiteralAH(qry, encname, AH);
 	appendPQExpBuffer(qry, ";\n");
 
 	ArchiveEntry(AH, nilCatalogId, createDumpId(),
@@ -1410,8 +1408,6 @@ dumpEncoding(Archive *AH)
 				 false, "ENCODING", qry->data, "", NULL,
 				 NULL, 0,
 				 NULL, NULL);
-
-	PQclear(res);
 
 	destroyPQExpBuffer(qry);
 }
@@ -1423,39 +1419,16 @@ dumpEncoding(Archive *AH)
 static void
 dumpStdStrings(Archive *AH)
 {
-	PQExpBuffer qry;
-	PGresult   *res;
+	const char *stdstrings = AH->std_strings ? "on" : "off";
+	PQExpBuffer qry = createPQExpBuffer();
 
 	if (g_verbose)
-		write_msg(NULL, "saving standard_conforming_strings setting\n");
+		write_msg(NULL, "saving standard_conforming_strings = %s\n",
+				  stdstrings);
 
-	qry = createPQExpBuffer();
+	appendPQExpBuffer(qry, "SET standard_conforming_strings = '%s';\n",
+					  stdstrings);
 
-	/* standard_conforming_strings not used in pre-8.2 servers */
-	if (AH->remoteVersion < 80200)
-	{
-		appendPQExpBuffer(qry, "SET standard_conforming_strings = 'off';\n");
-		std_strings = false;
-	}
-	else
-	{
-		appendPQExpBuffer(qry, "SHOW standard_conforming_strings");
-
-		res = PQexec(g_conn, qry->data);
-
-		check_sql_result(res, g_conn, qry->data, PGRES_TUPLES_OK);
-
-		resetPQExpBuffer(qry);
-
-		std_strings = (strcmp(PQgetvalue(res, 0, 0), "on") == 0);
-		appendPQExpBuffer(qry, "SET standard_conforming_strings = ");
-		appendStringLiteral(qry, PQgetvalue(res, 0, 0), true, !std_strings);
-		appendPQExpBuffer(qry, ";\n");
-		puts(PQgetvalue(res, 0, 0));
-
-		PQclear(res);
-	}
-	
 	ArchiveEntry(AH, nilCatalogId, createDumpId(),
 				 "STDSTRINGS", NULL, NULL, "",
 				 false, "STDSTRINGS", qry->data, "", NULL,
@@ -1639,7 +1612,7 @@ dumpBlobComments(Archive *AH, void *arg)
 
 			printfPQExpBuffer(commentcmd, "COMMENT ON LARGE OBJECT %u IS ",
 							  blobOid);
-			appendStringLiteral(commentcmd, comment, false, !std_strings);
+			appendStringLiteralAH(commentcmd, comment, AH);
 			appendPQExpBuffer(commentcmd, ";\n");
 
 			archputs(commentcmd->data, AH);
@@ -4393,7 +4366,7 @@ dumpComment(Archive *fout, const char *target,
 		PQExpBuffer query = createPQExpBuffer();
 
 		appendPQExpBuffer(query, "COMMENT ON %s IS ", target);
-		appendStringLiteral(query, comments->descr, false, !std_strings);
+		appendStringLiteralAH(query, comments->descr, fout);
 		appendPQExpBuffer(query, ";\n");
 
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
@@ -4451,7 +4424,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "COMMENT ON %s IS ", target->data);
-			appendStringLiteral(query, descr, false, !std_strings);
+			appendStringLiteralAH(query, descr, fout);
 			appendPQExpBuffer(query, ";\n");
 
 			ArchiveEntry(fout, nilCatalogId, createDumpId(),
@@ -4473,7 +4446,7 @@ dumpTableComment(Archive *fout, TableInfo *tbinfo,
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "COMMENT ON %s IS ", target->data);
-			appendStringLiteral(query, descr, false, !std_strings);
+			appendStringLiteralAH(query, descr, fout);
 			appendPQExpBuffer(query, ";\n");
 
 			ArchiveEntry(fout, nilCatalogId, createDumpId(),
@@ -5039,7 +5012,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	{
 		appendPQExpBuffer(q, ",\n    DEFAULT = ");
 		if (typdefault_is_literal)
-			appendStringLiteral(q, typdefault, true, !std_strings);
+			appendStringLiteralAH(q, typdefault, fout);
 		else
 			appendPQExpBufferStr(q, typdefault);
 	}
@@ -5058,7 +5031,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	if (typdelim && strcmp(typdelim, ",") != 0)
 	{
 		appendPQExpBuffer(q, ",\n    DELIMITER = ");
-		appendStringLiteral(q, typdelim, true, !std_strings);
+		appendStringLiteralAH(q, typdelim, fout);
 	}
 
 	if (strcmp(typalign, "c") == 0)
@@ -5173,7 +5146,7 @@ dumpDomain(Archive *fout, TypeInfo *tinfo)
 	{
 		appendPQExpBuffer(q, " DEFAULT ");
 		if (typdefault_is_literal)
-			appendStringLiteral(q, typdefault, true, !std_strings);
+			appendStringLiteralAH(q, typdefault, fout);
 		else
 			appendPQExpBufferStr(q, typdefault);
 	}
@@ -5743,7 +5716,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	if (strcmp(probin, "-") != 0)
 	{
 		appendPQExpBuffer(asPart, "AS ");
-		appendStringLiteral(asPart, probin, true, !std_strings);
+		appendStringLiteralAH(asPart, probin, fout);
 		if (strcmp(prosrc, "-") != 0)
 		{
 			appendPQExpBuffer(asPart, ", ");
@@ -5752,10 +5725,11 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			 * where we have bin, use dollar quoting if allowed and src
 			 * contains quote or backslash; else use regular quoting.
 			 */
-			if (disable_dollar_quoting)
-				appendStringLiteral(asPart, prosrc, false, !std_strings);
+			if (disable_dollar_quoting ||
+				(strchr(prosrc, '\'') == NULL && strchr(prosrc, '\\') == NULL))
+				appendStringLiteralAH(asPart, prosrc, fout);
 			else
-				appendStringLiteralDQOpt(asPart, prosrc, false, NULL);
+				appendStringLiteralDQ(asPart, prosrc, NULL);
 		}
 	}
 	else
@@ -5765,7 +5739,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			appendPQExpBuffer(asPart, "AS ");
 			/* with no bin, dollar quote src unconditionally if allowed */
 			if (disable_dollar_quoting)
-				appendStringLiteral(asPart, prosrc, false, !std_strings);
+				appendStringLiteralAH(asPart, prosrc, fout);
 			else
 				appendStringLiteralDQ(asPart, prosrc, NULL);
 		}
@@ -6681,9 +6655,9 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 	appendPQExpBuffer(q, "CREATE %sCONVERSION %s FOR ",
 					  (condefault) ? "DEFAULT " : "",
 					  fmtId(convinfo->dobj.name));
-	appendStringLiteral(q, conforencoding, true, !std_strings);
+	appendStringLiteralAH(q, conforencoding, fout);
 	appendPQExpBuffer(q, " TO ");
-	appendStringLiteral(q, contoencoding, true, !std_strings);
+	appendStringLiteralAH(q, contoencoding, fout);
 	/* regproc is automatically quoted in 7.3 and above */
 	appendPQExpBuffer(q, " FROM %s;\n", conproc);
 
@@ -6924,7 +6898,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	if (!PQgetisnull(res, 0, i_agginitval))
 	{
 		appendPQExpBuffer(details, ",\n    INITCOND = ");
-		appendStringLiteral(details, agginitval, true, !std_strings);
+		appendStringLiteralAH(details, agginitval, fout);
 	}
 
 	if (strcmp(aggfinalfn, "-") != 0)
@@ -7111,7 +7085,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		{
 			appendPQExpBuffer(query, "SELECT definition as viewdef "
 							  " from pg_views where viewname = ");
-			appendStringLiteral(query, tbinfo->dobj.name, true, !std_strings);
+			appendStringLiteralAH(query, tbinfo->dobj.name, fout);
 			appendPQExpBuffer(query, ";");
 		}
 
@@ -7760,7 +7734,7 @@ findLastBuiltinOid_V71(const char *dbname)
 
 	resetPQExpBuffer(query);
 	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = ");
-	appendStringLiteral(query, dbname, true, !std_strings);
+	appendStringLiteralAH(query, dbname, g_fout);
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
@@ -7961,13 +7935,13 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 			(owning_tab = findTableByOid(tbinfo->owning_tab)) != NULL)
 		{
 			appendPQExpBuffer(query, "pg_catalog.pg_get_serial_sequence(");
-			appendStringLiteral(query, fmtId(owning_tab->dobj.name), true, !std_strings);
+			appendStringLiteralAH(query, fmtId(owning_tab->dobj.name), fout);
 			appendPQExpBuffer(query, ", ");
-			appendStringLiteral(query, owning_tab->attnames[tbinfo->owning_col - 1], true, !std_strings);
+			appendStringLiteralAH(query, owning_tab->attnames[tbinfo->owning_col - 1], fout);
 			appendPQExpBuffer(query, ")");
 		}
 		else
-			appendStringLiteral(query, fmtId(tbinfo->dobj.name), true, !std_strings);
+			appendStringLiteralAH(query, fmtId(tbinfo->dobj.name), fout);
 		appendPQExpBuffer(query, ", %s, %s);\n",
 						  last, (called ? "true" : "false"));
 
@@ -8100,8 +8074,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 	p = tginfo->tgargs;
 	for (findx = 0; findx < tginfo->tgnargs; findx++)
 	{
-		const char *s = p,
-				   *s2 = p;
+		const char *s = p;
 
 		/* Set 'p' to end of arg string. marked by '\000' */
 		for (;;)
@@ -8126,13 +8099,6 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		}
 		p--;
 
-		while (s2 < p)
-			if (*s2++ == '\\')
-			{
-				appendPQExpBufferChar(query, ESCAPE_STRING_SYNTAX);
-				break;
-			}
-
 		appendPQExpBufferChar(query, '\'');
 		while (s < p)
 		{
@@ -8142,7 +8108,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			 *	bytea unconditionally doubles backslashes, so we suppress
 			 *	the doubling for standard_conforming_strings.
 			 */
-			if (std_strings && *s == '\\')
+			if (fout->std_strings && *s == '\\' && s[1] == '\\')
 				s++;
 			appendPQExpBufferChar(query, *s++);
 		}

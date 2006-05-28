@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.185 2006/05/28 17:23:29 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.186 2006/05/28 21:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2437,8 +2437,7 @@ PQescapeStringInternal(PGconn *conn,
 		if (!IS_HIGHBIT_SET(c))
 		{
 			/* Apply quoting if needed */
-			if (c == '\'' ||
-				(c == '\\' && !std_strings))
+			if (SQL_STR_DOUBLE(c, !std_strings))
 				*target++ = c;
 			/* Copy the character */
 			*target++ = c;

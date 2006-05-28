@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.28 2006/05/26 23:48:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.29 2006/05/28 21:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,63 +100,102 @@ fmtId(const char *rawid)
 
 /*
  * Convert a string value to an SQL string literal and append it to
- * the given buffer.
+ * the given buffer.  We assume the specified client_encoding and
+ * standard_conforming_strings settings.
  *
- * Special characters are escaped. Quote mark ' goes to '' per SQL
- * standard, other stuff goes to \ sequences.  If escapeAll is false,
- * whitespace characters are not escaped (tabs, newlines, etc.).  This
- * is appropriate for dump file output.  Using E'' strings for
- * backslashes is always safe for standard_conforming_strings on or off.
+ * This is essentially equivalent to libpq's PQescapeStringInternal,
+ * except for the output buffer structure.  We need it in situations
+ * where we do not have a PGconn available.  Where we do,
+ * appendStringLiteralConn is a better choice.
  */
 void
-appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll,
-					bool e_string_for_backslash)
+appendStringLiteral(PQExpBuffer buf, const char *str,
+					int encoding, bool std_strings)
 {
-	char		ch;
-	const char *p;
-	bool		is_e_string = false;
+	size_t		length = strlen(str);
+	const char *source = str;
+	char	   *target;
 
-	for (p = str; *p; p++)
+	if (!enlargePQExpBuffer(buf, 2 * length + 2))
+		return;
+
+	target = buf->data + buf->len;
+	*target++ = '\'';
+
+	while (*source != '\0')
 	{
-		ch = *p;
+		char	c = *source;
+		int		len;
+		int		i;
 
-		if ((e_string_for_backslash && ch == '\\') ||
-			((unsigned char) ch < (unsigned char) ' ' &&
-			 (escapeAll ||
-			  (ch != '\t' && ch != '\n' && ch != '\v' &&
-			   ch != '\f' && ch != '\r'))))
+		/* Fast path for plain ASCII */
+		if (!IS_HIGHBIT_SET(c))
 		{
-			appendPQExpBufferChar(buf, ESCAPE_STRING_SYNTAX);
-			is_e_string = true;
+			/* Apply quoting if needed */
+			if (SQL_STR_DOUBLE(c, !std_strings))
+				*target++ = c;
+			/* Copy the character */
+			*target++ = c;
+			source++;
+			continue;
+		}
+
+		/* Slow path for possible multibyte characters */
+		len = PQmblen(source, encoding);
+
+		/* Copy the character */
+		for (i = 0; i < len; i++)
+		{
+			if (*source == '\0')
+				break;
+			*target++ = *source++;
+		}
+
+		/*
+		 * If we hit premature end of string (ie, incomplete multibyte
+		 * character), try to pad out to the correct length with spaces.
+		 * We may not be able to pad completely, but we will always be able
+		 * to insert at least one pad space (since we'd not have quoted a
+		 * multibyte character).  This should be enough to make a string that
+		 * the server will error out on.
+		 */
+		if (i < len)
+		{
+			char   *stop = buf->data + buf->maxlen - 2;
+
+			for (; i < len; i++)
+			{
+				if (target >= stop)
+					break;
+				*target++ = ' ';
+			}
 			break;
 		}
 	}
 
+	/* Write the terminating quote and NUL character. */
+	*target++ = '\'';
+	*target = '\0';
+
+	buf->len = target - buf->data;
+}
+
+
+/*
+ * Convert a string value to an SQL string literal and append it to
+ * the given buffer.  Encoding and string syntax rules are as indicated
+ * by current settings of the PGconn.
+ */
+void
+appendStringLiteralConn(PQExpBuffer buf, const char *str, PGconn *conn)
+{
+	size_t	length = strlen(str);
+
+	if (!enlargePQExpBuffer(buf, 2 * length + 2))
+		return;
 	appendPQExpBufferChar(buf, '\'');
-	for (p = str; *p; p++)
-	{
-		ch = *p;
-		if (SQL_STR_DOUBLE(ch, is_e_string))
-		{
-			appendPQExpBufferChar(buf, ch);
-			appendPQExpBufferChar(buf, ch);
-		}
-		else if ((unsigned char) ch < (unsigned char) ' ' &&
-				 (escapeAll ||
-				  (ch != '\t' && ch != '\n' && ch != '\v' &&
-				   ch != '\f' && ch != '\r')))
-		{
-			/*
-			 * generate octal escape for control chars other than whitespace
-			 */
-			appendPQExpBufferChar(buf, '\\');
-			appendPQExpBufferChar(buf, ((ch >> 6) & 3) + '0');
-			appendPQExpBufferChar(buf, ((ch >> 3) & 7) + '0');
-			appendPQExpBufferChar(buf, (ch & 7) + '0');
-		}
-		else
-			appendPQExpBufferChar(buf, ch);
-	}
+	buf->len += PQescapeStringConn(conn, buf->data + buf->len,
+								   str, length, NULL);
 	appendPQExpBufferChar(buf, '\'');
 }
 
@@ -167,7 +206,8 @@ appendStringLiteral(PQExpBuffer buf, const char *str, bool escapeAll,
  * dollar quote delimiter will begin with that (after the opening $).
  *
  * No escaping is done at all on str, in compliance with the rules
- * for parsing dollar quoted strings.
+ * for parsing dollar quoted strings.  Also, we need not worry about
+ * encoding issues.
  */
 void
 appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
@@ -201,21 +241,6 @@ appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
 	appendPQExpBufferStr(buf, delimBuf->data);
 
 	destroyPQExpBuffer(delimBuf);
-}
-
-
-/*
- * Use dollar quoting if the string to be quoted contains ' or \,
- * otherwise use standard quoting.
- */
-void
-appendStringLiteralDQOpt(PQExpBuffer buf, const char *str,
-						 bool escapeAll, const char *dqprefix)
-{
-	if (strchr(str, '\'') == NULL && strchr(str, '\\') == NULL)
-		appendStringLiteral(buf, str, escapeAll, true);
-	else
-		appendStringLiteralDQ(buf, str, dqprefix);
 }
 
 

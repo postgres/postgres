@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.19 2006/05/26 23:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/quote.c,v 1.20 2006/05/28 21:13:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "utils/builtins.h"
-#include "parser/gramparse.h"
 
 
 /*
@@ -49,6 +48,12 @@ quote_ident(PG_FUNCTION_ARGS)
 /*
  * quote_literal -
  *	  returns a properly quoted literal
+ *
+ * NOTE: think not to make this function's behavior change with
+ * standard_conforming_strings.  We don't know where the result
+ * literal will be used, and so we must generate a result that
+ * will work with either setting.  Take a look at what dblink
+ * uses this for before thinking you know better.
  */
 Datum
 quote_literal(PG_FUNCTION_ARGS)
@@ -66,20 +71,22 @@ quote_literal(PG_FUNCTION_ARGS)
 	cp1 = VARDATA(t);
 	cp2 = VARDATA(result);
 
-	if (!standard_conforming_strings)
-		for (; len-- > 0; cp1++)
-			if (*cp1 == '\\')
-			{
-				*cp2++ = ESCAPE_STRING_SYNTAX;
-				break;
-			}
+	for (; len-- > 0; cp1++)
+	{
+		if (*cp1 == '\\')
+		{
+			*cp2++ = ESCAPE_STRING_SYNTAX;
+			break;
+		}
+	}
 
 	len = VARSIZE(t) - VARHDRSZ;
 	cp1 = VARDATA(t);
+
 	*cp2++ = '\'';
 	while (len-- > 0)
 	{
-		if (SQL_STR_DOUBLE(*cp1, !standard_conforming_strings))
+		if (SQL_STR_DOUBLE(*cp1, true))
 			*cp2++ = *cp1;
 		*cp2++ = *cp1++;
 	}

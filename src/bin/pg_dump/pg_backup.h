@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.38 2006/02/12 04:04:32 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.39 2006/05/28 21:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,10 @@ typedef struct _Archive
 
 	int			minRemoteVersion;		/* allowable range */
 	int			maxRemoteVersion;
+
+	/* info needed for string escaping */
+	int			encoding;		/* libpq code for client_encoding */
+	bool		std_strings;	/* standard_conforming_strings */
 
 	/* error handling */
 	bool		exit_on_error;	/* whether to exit on SQL errors... */
@@ -181,5 +185,8 @@ extern int
 archprintf(Archive *AH, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
+
+#define appendStringLiteralAH(buf,str,AH) \
+	appendStringLiteral(buf, str, (AH)->encoding, (AH)->std_strings)
 
 #endif   /* PG_BACKUP_H */

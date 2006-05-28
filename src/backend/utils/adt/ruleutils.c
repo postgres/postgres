@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.222 2006/05/26 23:48:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.223 2006/05/28 21:13:53 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -534,18 +534,23 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 		{
 			if (i > 0)
 				appendStringInfo(&buf, ", ");
-			if (!standard_conforming_strings && strchr(p, '\\') != NULL)
-				appendStringInfoChar(&buf, ESCAPE_STRING_SYNTAX);
+			/*
+			 * We form the string literal according to the prevailing setting
+			 * of standard_conforming_strings; we never use E''.
+			 * User is responsible for making sure result is used correctly.
+			 */
 			appendStringInfoChar(&buf, '\'');
-
 			while (*p)
 			{
-				if (SQL_STR_DOUBLE(*p, !standard_conforming_strings))
-					appendStringInfoChar(&buf, *p);
-				appendStringInfoChar(&buf, *p++);
+				char		ch = *p++;
+
+				if (SQL_STR_DOUBLE(ch, !standard_conforming_strings))
+					appendStringInfoChar(&buf, ch);
+				appendStringInfoChar(&buf, ch);
 			}
-			p++;
 			appendStringInfoChar(&buf, '\'');
+			/* advance p to next string embedded in tgargs */
+			p++;
 		}
 	}
 
@@ -3883,8 +3888,7 @@ get_const_expr(Const *constval, deparse_context *context)
 	char	   *valptr;
 	bool		isfloat = false;
 	bool		needlabel;
-	bool		is_e_string = false;
-	
+
 	if (constval->constisnull)
 	{
 		/*
@@ -3946,32 +3950,18 @@ get_const_expr(Const *constval, deparse_context *context)
 		default:
 
 			/*
-			 * We must quote any funny characters in the constant's
-			 * representation. XXX Any MULTIBYTE considerations here?
+			 * We form the string literal according to the prevailing setting
+			 * of standard_conforming_strings; we never use E''.
+			 * User is responsible for making sure result is used correctly.
 			 */
-			for (valptr = extval; *valptr; valptr++)
-				if ((!standard_conforming_strings && *valptr == '\\') ||
-					(unsigned char) *valptr < (unsigned char) ' ')
-				{
-					appendStringInfoChar(buf, ESCAPE_STRING_SYNTAX);
-					is_e_string = true;
-					break;
-				}
-
 			appendStringInfoChar(buf, '\'');
 			for (valptr = extval; *valptr; valptr++)
 			{
 				char		ch = *valptr;
 
-				if (SQL_STR_DOUBLE(ch, is_e_string))
-				{
+				if (SQL_STR_DOUBLE(ch, !standard_conforming_strings))
 					appendStringInfoChar(buf, ch);
-					appendStringInfoChar(buf, ch);
-				}
-				else if ((unsigned char) ch < (unsigned char) ' ')
-					appendStringInfo(buf, "\\%03o", (int) ch);
-				else
-					appendStringInfoChar(buf, ch);
+				appendStringInfoChar(buf, ch);
 			}
 			appendStringInfoChar(buf, '\'');
 			break;

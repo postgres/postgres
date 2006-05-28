@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.42 2006/05/26 23:48:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.43 2006/05/28 21:13:54 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -148,7 +148,6 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	PGresult   *res;
 	Oid			loid;
 	char		oidbuf[32];
-	unsigned int i;
 	bool		own_transaction;
 
 	if (!start_lo_xact("\\lo_import", &own_transaction))
@@ -171,21 +170,9 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		cmdbuf = malloc(slen * 2 + 256);
 		if (!cmdbuf)
 			return fail_lo_xact("\\lo_import", own_transaction);
-		sprintf(cmdbuf,
-				"COMMENT ON LARGE OBJECT %u IS ",
-				loid);
+		sprintf(cmdbuf, "COMMENT ON LARGE OBJECT %u IS '", loid);
 		bufptr = cmdbuf + strlen(cmdbuf);
-
-		if (strchr(comment_arg, '\\') != NULL)
-			*bufptr++ = ESCAPE_STRING_SYNTAX;
-
-		*bufptr++ = '\'';
-		for (i = 0; i < slen; i++)
-		{
-			if (SQL_STR_DOUBLE(comment_arg[i], true))
-				*bufptr++ = comment_arg[i];
-			*bufptr++ = comment_arg[i];
-		}
+		bufptr += PQescapeStringConn(pset.db, bufptr, comment_arg, slen, NULL);
 		strcpy(bufptr, "'");
 
 		if (!(res = PSQLexec(cmdbuf, false)))

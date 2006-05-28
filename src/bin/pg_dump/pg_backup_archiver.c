@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.130 2006/05/26 23:48:54 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.131 2006/05/28 21:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 
 #include "pqexpbuffer.h"
 #include "libpq/libpq-fs.h"
+#include "mb/pg_wchar.h"
 
 
 const char *progname;
@@ -60,7 +61,8 @@ static void _becomeUser(ArchiveHandle *AH, const char *user);
 static void _becomeOwner(ArchiveHandle *AH, TocEntry *te);
 static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 static void _selectTablespace(ArchiveHandle *AH, const char *tablespace);
-
+static void processEncodingEntry(ArchiveHandle *AH, TocEntry *te);
+static void processStdStringsEntry(ArchiveHandle *AH, TocEntry *te);
 static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -1589,6 +1591,14 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->vmin = K_VERS_MINOR;
 	AH->vrev = K_VERS_REV;
 
+	/* initialize for backwards compatible string processing */
+	AH->public.encoding = PG_SQL_ASCII;
+	AH->public.std_strings = false;
+
+	/* sql error handling */
+	AH->public.exit_on_error = true;
+	AH->public.n_errors = 0;
+
 	AH->createDate = time(NULL);
 
 	AH->intSize = sizeof(int);
@@ -1675,10 +1685,6 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		default:
 			die_horribly(AH, modulename, "unrecognized file format \"%d\"\n", fmt);
 	}
-
-	/* sql error handling */
-	AH->public.exit_on_error = true;
-	AH->public.n_errors = 0;
 
 	return AH;
 }
@@ -1888,11 +1894,62 @@ ReadToc(ArchiveHandle *AH)
 		ahlog(AH, 3, "read TOC entry %d (ID %d) for %s %s\n",
 			  i, te->dumpId, te->desc, te->tag);
 
+		/* link completed entry into TOC circular list */
 		te->prev = AH->toc->prev;
 		AH->toc->prev->next = te;
 		AH->toc->prev = te;
 		te->next = AH->toc;
+
+		/* special processing immediately upon read for some items */
+		if (strcmp(te->desc, "ENCODING") == 0)
+			processEncodingEntry(AH, te);
+		else if (strcmp(te->desc, "STDSTRINGS") == 0)
+			processStdStringsEntry(AH, te);
 	}
+}
+
+static void
+processEncodingEntry(ArchiveHandle *AH, TocEntry *te)
+{
+	/* te->defn should have the form SET client_encoding = 'foo'; */
+	char	   *defn = strdup(te->defn);
+	char	   *ptr1;
+	char	   *ptr2 = NULL;
+	int			encoding;
+
+	ptr1 = strchr(defn, '\'');
+	if (ptr1)
+		ptr2 = strchr(++ptr1, '\'');
+	if (ptr2)
+	{
+		*ptr2 = '\0';
+		encoding = pg_char_to_encoding(ptr1);
+		if (encoding < 0)
+			die_horribly(AH, modulename, "unrecognized encoding \"%s\"\n",
+						 ptr1);
+		AH->public.encoding = encoding;
+	}
+	else
+		die_horribly(AH, modulename, "invalid ENCODING item: %s\n",
+					 te->defn);
+
+	free(defn);
+}
+
+static void
+processStdStringsEntry(ArchiveHandle *AH, TocEntry *te)
+{
+	/* te->defn should have the form SET standard_conforming_strings = 'x'; */
+	char	   *ptr1;
+
+	ptr1 = strchr(te->defn, '\'');
+	if (ptr1 && strncmp(ptr1, "'on'", 4) == 0)
+		AH->public.std_strings = true;
+	else if (ptr1 && strncmp(ptr1, "'off'", 5) == 0)
+		AH->public.std_strings = false;
+	else
+		die_horribly(AH, modulename, "invalid STDSTRINGS item: %s\n",
+					 te->defn);
 }
 
 static teReqs
@@ -1900,10 +1957,9 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 {
 	teReqs		res = REQ_ALL;
 
-	/* ENCODING and STDSTRINGS objects are dumped specially, so always reject */
-	if (strcmp(te->desc, "ENCODING") == 0)
-		return 0;
-	if (strcmp(te->desc, "STDSTRINGS") == 0)
+	/* ENCODING and STDSTRINGS items are dumped specially, so always reject */
+	if (strcmp(te->desc, "ENCODING") == 0 ||
+		strcmp(te->desc, "STDSTRINGS") == 0)
 		return 0;
 
 	/* If it's an ACL, maybe ignore it */
@@ -2005,24 +2061,21 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 static void
 _doSetFixedOutputState(ArchiveHandle *AH)
 {
-	TocEntry   *te;
+	/* Select the correct character set encoding */
+	ahprintf(AH, "SET client_encoding = '%s';\n",
+			 pg_encoding_to_char(AH->public.encoding));
 
-	/* If we have an encoding or std_strings setting, emit that */
-	te = AH->toc->next;
-	while (te != AH->toc)
-	{
-		if (strcmp(te->desc, "ENCODING") == 0)
-			ahprintf(AH, "%s", te->defn);
-		if (strcmp(te->desc, "STDSTRINGS") == 0)
-			ahprintf(AH, "%s", te->defn);
-		te = te->next;
-	}
+	/* Select the correct string literal syntax */
+	ahprintf(AH, "SET standard_conforming_strings = %s;\n",
+			 AH->public.std_strings ? "on" : "off");
 
 	/* Make sure function checking is disabled */
 	ahprintf(AH, "SET check_function_bodies = false;\n");
 
 	/* Avoid annoying notices etc */
 	ahprintf(AH, "SET client_min_messages = warning;\n");
+	if (!AH->public.std_strings)
+		ahprintf(AH, "SET escape_string_warning = off;\n");
 
 	ahprintf(AH, "\n");
 }
@@ -2043,7 +2096,7 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 	 * SQL requires a string literal here.	Might as well be correct.
 	 */
 	if (user && *user)
-		appendStringLiteral(cmd, user, false, true);
+		appendStringLiteralAHX(cmd, user, AH);
 	else
 		appendPQExpBuffer(cmd, "DEFAULT");
 	appendPQExpBuffer(cmd, ";");

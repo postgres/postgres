@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.28 2006/05/26 23:48:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.29 2006/05/28 21:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,6 +236,8 @@ main(int argc, char *argv[])
 	if (login == 0)
 		login = TRI_YES;
 
+	conn = connectDatabase("postgres", host, port, username, password, progname);
+
 	initPQExpBuffer(&sql);
 
 	printfPQExpBuffer(&sql, "CREATE ROLE %s", fmtId(newuser));
@@ -252,17 +254,17 @@ main(int argc, char *argv[])
 			char	   *encrypted_password;
 
 			encrypted_password = PQencryptPassword(newpassword,
-															newuser);
+												   newuser);
 			if (!encrypted_password)
 			{
 				fprintf(stderr, _("Password encryption failed.\n"));
 				exit(1);
 			}
-			appendStringLiteral(&sql, encrypted_password, false, true);
+			appendStringLiteralConn(&sql, encrypted_password, conn);
 			PQfreemem(encrypted_password);
 		}
 		else
-			appendStringLiteral(&sql, newpassword, false, true);
+			appendStringLiteralConn(&sql, newpassword, conn);
 	}
 	if (superuser == TRI_YES)
 		appendPQExpBuffer(&sql, " SUPERUSER");
@@ -287,8 +289,6 @@ main(int argc, char *argv[])
 	if (conn_limit != NULL)
 		appendPQExpBuffer(&sql, " CONNECTION LIMIT %s", conn_limit);
 	appendPQExpBuffer(&sql, ";\n");
-
-	conn = connectDatabase("postgres", host, port, username, password, progname);
 
 	if (echo)
 		printf("%s", sql.data);

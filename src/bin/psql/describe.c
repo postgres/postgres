@@ -3,13 +3,12 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.136 2006/05/28 02:27:08 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.137 2006/05/28 21:13:54 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
 
-#include "libpq-fe.h"
-#include "pqexpbuffer.h"
+#include "dumputils.h"
 
 #include "common.h"
 #include "settings.h"
@@ -1815,7 +1814,12 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 	 * Parse the pattern, converting quotes and lower-casing unquoted letters;
 	 * we assume this was NOT done by scan_option.	Also, adjust shell-style
 	 * wildcard characters into regexp notation.
+	 *
+	 * Note: the result of this pass is the actual regexp pattern we want
+	 * to execute.  Quoting/escaping it into a SQL literal will be done below.
 	 */
+	appendPQExpBufferChar(&namebuf, '^');
+
 	inquotes = false;
 	cp = pattern;
 
@@ -1854,6 +1858,7 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 			resetPQExpBuffer(&schemabuf);
 			appendPQExpBufferStr(&schemabuf, namebuf.data);
 			resetPQExpBuffer(&namebuf);
+			appendPQExpBufferChar(&namebuf, '^');
 			cp++;
 		}
 		else
@@ -1869,14 +1874,9 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 			 */
 			if ((inquotes || force_escape) &&
 				strchr("|*+?()[]{}.^$\\", *cp))
-				appendPQExpBuffer(&namebuf, "\\\\");
-
-			/* Ensure chars special to string literals are passed properly */
-			if (SQL_STR_DOUBLE(*cp, true))
-				appendPQExpBufferChar(&namebuf, *cp);
-
+				appendPQExpBufferChar(&namebuf, '\\');
 			i = PQmblen(cp, pset.encoding);
-			while (i--)
+			while (i-- && *cp)
 			{
 				appendPQExpBufferChar(&namebuf, *cp);
 				cp++;
@@ -1885,49 +1885,61 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 	}
 
 	/*
-	 * Now decide what we need to emit.
+	 * Now decide what we need to emit.  Note there will be a leading '^'
+	 * in the patterns in any case.
 	 */
-	if (namebuf.len > 0)
+	if (namebuf.len > 1)
 	{
 		/* We have a name pattern, so constrain the namevar(s) */
 
 		appendPQExpBufferChar(&namebuf, '$');
 		/* Optimize away ".*$", and possibly the whole pattern */
-		if (namebuf.len >= 3 &&
+		if (namebuf.len >= 4 &&
 			strcmp(namebuf.data + (namebuf.len - 3), ".*$") == 0)
-			namebuf.data[namebuf.len - 3] = '\0';
+		{
+			namebuf.len -= 3;
+			namebuf.data[namebuf.len] = '\0';
+		}
 
-		if (namebuf.data[0])
+		if (namebuf.len > 1)
 		{
 			WHEREAND();
 			if (altnamevar)
-				appendPQExpBuffer(buf,
-								  "(%s ~ '^%s'\n"
-								  "        OR %s ~ '^%s')\n",
-								  namevar, namebuf.data,
-								  altnamevar, namebuf.data);
+			{
+				appendPQExpBuffer(buf, "(%s ~ ", namevar);
+				appendStringLiteralConn(buf, namebuf.data, pset.db);
+				appendPQExpBuffer(buf, "\n        OR %s ~ ", altnamevar);
+				appendStringLiteralConn(buf, namebuf.data, pset.db);
+				appendPQExpBuffer(buf, ")\n");
+			}
 			else
-				appendPQExpBuffer(buf,
-								  "%s ~ '^%s'\n",
-								  namevar, namebuf.data);
+			{
+				appendPQExpBuffer(buf, "%s ~ ", namevar);
+				appendStringLiteralConn(buf, namebuf.data, pset.db);
+				appendPQExpBufferChar(buf, '\n');
+			}
 		}
 	}
 
-	if (schemabuf.len > 0)
+	if (schemabuf.len > 1)
 	{
 		/* We have a schema pattern, so constrain the schemavar */
 
 		appendPQExpBufferChar(&schemabuf, '$');
 		/* Optimize away ".*$", and possibly the whole pattern */
-		if (schemabuf.len >= 3 &&
+		if (schemabuf.len >= 4 &&
 			strcmp(schemabuf.data + (schemabuf.len - 3), ".*$") == 0)
-			schemabuf.data[schemabuf.len - 3] = '\0';
+		{
+			schemabuf.len -= 3;
+			schemabuf.data[schemabuf.len] = '\0';
+		}
 
-		if (schemabuf.data[0] && schemavar)
+		if (schemabuf.len > 1 && schemavar)
 		{
 			WHEREAND();
-			appendPQExpBuffer(buf, "%s ~ '^%s'\n",
-							  schemavar, schemabuf.data);
+			appendPQExpBuffer(buf, "%s ~ ", schemavar);
+			appendStringLiteralConn(buf, schemabuf.data, pset.db);
+			appendPQExpBufferChar(buf, '\n');
 		}
 	}
 	else
