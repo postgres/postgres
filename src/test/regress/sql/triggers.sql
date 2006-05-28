@@ -314,7 +314,7 @@ begin
 
 	relid := TG_relid::regclass;
 
-	-- plpgsql can't discover it's trigger data in a hash like perl and python
+	-- plpgsql can't discover its trigger data in a hash like perl and python
 	-- can, or by a sort of reflection like tcl can, 
 	-- so we have to hard code the names.
 	raise NOTICE 'TG_NAME: %', TG_name;
@@ -344,6 +344,7 @@ begin
 	if TG_OP != 'DELETE' then
 		raise NOTICE 'NEW: %', NEW;
 	end if;
+
 	if TG_OP = 'DELETE' then
 		return OLD;
 	else
