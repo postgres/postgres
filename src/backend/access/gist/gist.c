@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.137 2006/05/24 11:01:39 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.138 2006/05/29 12:50:06 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1033,7 +1033,13 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *gist
 		/*
 		 * all keys are not-null
 		 */
-		gistUserPicksplit(r, entryvec, attno, v, itup, len, giststate);
+		if ( gistUserPicksplit(r, entryvec, attno, v, itup, len, giststate) && attno+1 != r->rd_att->natts )
+			/*
+			 * Splitting on attno column is not optimized: unions of left and right
+			 * page are the same, we will try to split page by 
+			 * following columns
+			 */
+			gistSplitByKey(r, page, itup, len, giststate, v, entryvec, attno+1);
 	}
 }
 

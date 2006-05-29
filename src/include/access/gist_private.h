@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.16 2006/05/24 11:01:39 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.17 2006/05/29 12:50:06 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,7 +312,7 @@ extern void GISTInitBuffer(Buffer b, uint32 f);
 extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   Datum k, Relation r, Page pg, OffsetNumber o,
 			   int b, bool l, bool isNull);
-void gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GIST_SPLITVEC *v,
+bool gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GIST_SPLITVEC *v,
 				  IndexTuple *itup, int len, GISTSTATE *giststate);
 
 /* gistvacuum.c */

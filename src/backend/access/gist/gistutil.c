@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.14 2006/05/24 11:01:39 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.15 2006/05/29 12:50:06 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -262,6 +262,16 @@ gistMakeUnionKey( GISTSTATE *giststate, int attno,
 	}
 }
 
+static bool
+gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b) {
+	bool result;
+
+	FunctionCall3(&giststate->equalFn[attno],
+								a, b,
+								PointerGetDatum(&result));
+	return result;
+}
+
 /*
  * Forms union of oldtup and addtup, if union == oldtup then return NULL
  */
@@ -300,19 +310,8 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 			continue;
 
 		if ( !addisnull[i] ) {
-			if ( oldisnull[i] )
+			if ( oldisnull[i] || gistKeyIsEQ(giststate, i, oldentries[i].key, attrS[i])==false )
 				neednew = true;
-			else {
-				bool        result;
-
-				FunctionCall3(&giststate->equalFn[i],
-								oldentries[i].key,
-								attrS[i],
-								PointerGetDatum(&result));
-
-				if (!result)
-					neednew = true;
-			}
 		}
 	}
 
@@ -395,7 +394,6 @@ gistfindgroup(GISTSTATE *giststate, GISTENTRY *valvec, GIST_SPLITVEC *spl, int a
 	{
 		int			j;
 		int			len;
-		bool		result;
 
 		if (spl->spl_idgrp[spl->spl_left[i]])
 			continue;
@@ -405,11 +403,7 @@ gistfindgroup(GISTSTATE *giststate, GISTENTRY *valvec, GIST_SPLITVEC *spl, int a
 		{
 			if (spl->spl_idgrp[spl->spl_right[j]])
 				continue;
-			FunctionCall3(&giststate->equalFn[attno],
-						  valvec[spl->spl_left[i]].key,
-						  valvec[spl->spl_right[j]].key,
-						  PointerGetDatum(&result));
-			if (result)
+			if (gistKeyIsEQ(giststate, attno, valvec[spl->spl_left[i]].key, valvec[spl->spl_right[j]].key))
 			{
 				spl->spl_idgrp[spl->spl_right[j]] = curid;
 				len++;
@@ -425,11 +419,7 @@ gistfindgroup(GISTSTATE *giststate, GISTENTRY *valvec, GIST_SPLITVEC *spl, int a
 			{
 				if (spl->spl_idgrp[spl->spl_left[j]])
 					continue;
-				FunctionCall3(&giststate->equalFn[attno],
-							  valvec[spl->spl_left[i]].key,
-							  valvec[spl->spl_left[j]].key,
-							  PointerGetDatum(&result));
-				if (result)
+				if (gistKeyIsEQ(giststate, attno, valvec[spl->spl_left[i]].key, valvec[spl->spl_left[j]].key))
 				{
 					spl->spl_idgrp[spl->spl_left[j]] = curid;
 					len++;
@@ -758,7 +748,14 @@ gistpenalty(GISTSTATE *giststate, int attno,
 	return penalty;
 }
 
-void
+/*
+ * Calls user picksplit method for attno columns to split vector to
+ * two vectors. May use attno+n columns data to
+ * get better split.
+ * Returns TRUE if left and right unions of attno columns are the same,
+ * so caller may find better split
+ */
+bool
 gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GIST_SPLITVEC *v,
 				  IndexTuple *itup, int len, GISTSTATE *giststate)
 {
@@ -787,24 +784,36 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GIST_SPLITVE
 	 */
 	if (giststate->tupdesc->natts > 1 && attno+1 != giststate->tupdesc->natts)
 	{
-		int			MaxGrpId;
+		if ( gistKeyIsEQ(giststate, attno, v->spl_ldatum, v->spl_rdatum) ) {
+			/*
+			 * Left and right key's unions are equial, so
+			 * we can get better split by following columns. Note,
+			 * uninons for attno columns are already done.
+			 */
 
-		v->spl_idgrp = (int *) palloc0(sizeof(int) * entryvec->n);
-		v->spl_grpflag = (char *) palloc0(sizeof(char) * entryvec->n);
-		v->spl_ngrp = (int *) palloc(sizeof(int) * entryvec->n);
+			return true;
+		} else {
+			int			MaxGrpId;
 
-		MaxGrpId = gistfindgroup(giststate, entryvec->vector, v, attno);
+			v->spl_idgrp = (int *) palloc0(sizeof(int) * entryvec->n);
+			v->spl_grpflag = (char *) palloc0(sizeof(char) * entryvec->n);
+			v->spl_ngrp = (int *) palloc(sizeof(int) * entryvec->n);
 
-		/* form union of sub keys for each page (l,p) */
-		gistunionsubkey(giststate, itup, v, attno + 1);
+			MaxGrpId = gistfindgroup(giststate, entryvec->vector, v, attno);
 
-		/*
-		 * if possible, we insert equivalent tuples with control by penalty
-		 * for a subkey(s)
-		 */
-		if (MaxGrpId > 1)
-			gistadjsubkey(r, itup, len, v, giststate, attno);
+			/* form union of sub keys for each page (l,p) */
+			gistunionsubkey(giststate, itup, v, attno + 1);
+
+			/*
+			 * if possible, we insert equivalent tuples with control by penalty
+		 	* for a subkey(s)
+		 	*/
+			if (MaxGrpId > 1)
+				gistadjsubkey(r, itup, len, v, giststate, attno);
+		}
 	}
+
+	return false;
 }
 
 /*
