@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.109 2006/05/26 17:34:16 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.110 2006/05/29 13:51:23 adunstan Exp $
  *
  **********************************************************************/
 
@@ -771,7 +771,7 @@ plperl_create_sub(char *s, bool trusted)
 	ENTER;
 	SAVETMPS;
 	PUSHMARK(SP);
-	XPUSHs(sv_2mortal(newSVpv("my $_TD=$_[0]; shift;", 0)));
+	XPUSHs(sv_2mortal(newSVpv("our $_TD; local $_TD=$_[0]; shift;", 0)));
 	XPUSHs(sv_2mortal(newSVpv(s, 0)));
 	PUTBACK;
 
