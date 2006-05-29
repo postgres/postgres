@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.29 2006/05/28 21:13:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.30 2006/05/29 19:52:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,6 +302,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	PQclear(result);
 	PQfinish(conn);
 	if (!quiet)
 	{
