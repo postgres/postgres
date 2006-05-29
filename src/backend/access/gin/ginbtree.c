@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.2 2006/05/26 08:01:17 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.3 2006/05/29 08:39:44 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -189,7 +189,7 @@ findParents( GinBtree btree, GinBtreeStack *stack,
 	Assert( !GinPageIsLeaf(page) );
 
 	/* check trivial case */
-	if ( (root->off != btree->findChildPtr(btree, page, stack->blkno, InvalidOffsetNumber)) != InvalidBuffer ) {
+	if ( (root->off = btree->findChildPtr(btree, page, stack->blkno, InvalidOffsetNumber)) != InvalidOffsetNumber ) {
 		stack->parent = root;
 		return;
 	}
