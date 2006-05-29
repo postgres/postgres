@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed May 24 14:12:19 EDT 2006
+Last updated:		Mon May 29 19:29:26 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -230,6 +230,8 @@ Data Types
 	  If the TIMESTAMP value is stored with a time zone name, interval 
 	  computations should adjust based on the time zone rules.
 
+	o Allow timezone names in SQL strings, '2006-05-24 21:11
+	   Americas/New_York'::timestamptz
 	o Fix SELECT '0.01 years'::interval, '0.01 months'::interval
 	o Add a GUC variable to allow output of interval values in ISO8601 
 	  format
