@@ -32,6 +32,9 @@ adminpack -
 	File and log manipulation routines, used by Pgadmin
 	by From: Dave Page <dpage@vale-housing.co.uk>
 
+btree_gist -
+      Support for emulating BTREE indexing in GiST
+      by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
 
 chkpass -
 	An auto-encrypted password datatype
