@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.71 2006/05/30 11:54:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.72 2006/05/30 11:58:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,7 @@ enum
 	PLPGSQL_DTYPE_RECFIELD,
 	PLPGSQL_DTYPE_ARRAYELEM,
 	PLPGSQL_DTYPE_EXPR,
-	PLPGSQL_DTYPE_TRIGARG,
-	PLPGSQL_DTYPE_RECFIELDNAMES
+	PLPGSQL_DTYPE_TRIGARG
 };
 
 /* ----------
@@ -252,24 +251,9 @@ typedef struct
 {								/* Field in record */
 	int			dtype;
 	int			rfno;
-	union {
-		char	*fieldname;
-		int	indexvar_no;		/* dno of variable holding index string */
-	} fieldindex;
-	enum {
-		RECFIELD_USE_FIELDNAME,
-		RECFIELD_USE_INDEX_VAR,
-	}	fieldindex_flag;
+	char	   *fieldname;
 	int			recparentno;	/* dno of parent record */
 } PLpgSQL_recfield;
-
-typedef struct
-{								/* Field in record */
-	int			dtype;
-	int			rfno;
-	int			recparentno;			/* dno of parent record */
-	ArrayType *		save_fieldnames;
-} PLpgSQL_recfieldproperties;
 
 
 typedef struct
@@ -677,8 +661,6 @@ extern int	plpgsql_parse_dblwordtype(char *word);
 extern int	plpgsql_parse_tripwordtype(char *word);
 extern int	plpgsql_parse_wordrowtype(char *word);
 extern int	plpgsql_parse_dblwordrowtype(char *word);
-extern int	plpgsql_parse_recfieldnames(char *word);
-extern int	plpgsql_parse_recindex(char *word);
 extern PLpgSQL_type *plpgsql_parse_datatype(const char *string);
 extern PLpgSQL_type *plpgsql_build_datatype(Oid typeOid, int32 typmod);
 extern PLpgSQL_variable *plpgsql_build_variable(const char *refname, int lineno,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.103 2006/05/30 11:54:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.104 2006/05/30 11:58:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -884,8 +884,7 @@ plpgsql_parse_dblword(char *word)
 
 				new = palloc(sizeof(PLpgSQL_recfield));
 				new->dtype = PLPGSQL_DTYPE_RECFIELD;
-				new->fieldindex.fieldname = pstrdup(cp[1]);
-				new->fieldindex_flag = RECFIELD_USE_FIELDNAME;
+				new->fieldname = pstrdup(cp[1]);
 				new->recparentno = ns->itemno;
 
 				plpgsql_adddatum((PLpgSQL_datum *) new);
@@ -991,8 +990,7 @@ plpgsql_parse_tripword(char *word)
 
 				new = palloc(sizeof(PLpgSQL_recfield));
 				new->dtype = PLPGSQL_DTYPE_RECFIELD;
-				new->fieldindex.fieldname = pstrdup(cp[2]);
-				new->fieldindex_flag = RECFIELD_USE_FIELDNAME;
+				new->fieldname = pstrdup(cp[2]);
 				new->recparentno = ns->itemno;
 
 				plpgsql_adddatum((PLpgSQL_datum *) new);
@@ -1439,132 +1437,6 @@ plpgsql_parse_dblwordrowtype(char *word)
 	MemoryContextSwitchTo(oldCxt);
 	return T_DTYPE;
 }
-
-/* ----------
- * plpgsql_parse_recindex
- * lookup associative index into record
- * ----------
- */
-int
-plpgsql_parse_recindex(char *word)
-{
-	PLpgSQL_nsitem *ns1, *ns2;
-	char		*cp[2];
-	int		ret = T_ERROR;
-	char		*fieldvar;
-	int		fl;
-
-	/* Do case conversion and word separation */
-	plpgsql_convert_ident(word, cp, 2);
-	Assert(cp[1] != NULL);
-
-	/* cleanup the "(identifier)" string to "identifier" */
-	fieldvar = cp[1];
-	Assert(*fieldvar == '(');
-	++fieldvar;	/* get rid of ( */
-
-	fl = strlen(fieldvar);
-	Assert(fieldvar[fl-1] == ')');
-	fieldvar[fl-1] = 0; /* get rid of ) */
-
-	/*
-	 * Lookup the first word
-	 */
-	ns1 = plpgsql_ns_lookup(cp[0], NULL);
-	if ( ns1 == NULL )
-	{
-		pfree(cp[0]);
-		pfree(cp[1]);
-		return T_ERROR;
-	}
-
-	ns2 = plpgsql_ns_lookup(fieldvar, NULL);
-	pfree(cp[0]);
-	pfree(cp[1]);
-	if ( ns2 == NULL )	/* name lookup failed */
-		return T_ERROR;
-
-	switch (ns1->itemtype)
-	{
-		case PLPGSQL_NSTYPE_REC:
-			{
-				/*
-				 * First word is a record name, so second word must be an
-				 * variable holding the field name in this record.
-				 */
-				if ( ns2->itemtype == PLPGSQL_NSTYPE_VAR ) {
-					PLpgSQL_recfield *new;
-
-					new = palloc(sizeof(PLpgSQL_recfield));
-					new->dtype = PLPGSQL_DTYPE_RECFIELD;
-					new->fieldindex.indexvar_no = ns2->itemno;
-					new->fieldindex_flag = RECFIELD_USE_INDEX_VAR;
-					new->recparentno = ns1->itemno;
-
-					plpgsql_adddatum((PLpgSQL_datum *) new);
-
-					plpgsql_yylval.scalar = (PLpgSQL_datum *) new;
-					ret =  T_SCALAR;
-				} 
-				break;
-			}
-		default:
-			break;
-	}
-	return ret;
-} 
-
-
-/* ----------
- * plpgsql_parse_recfieldnames
- * create fieldnames of a record
- * ----------
- */
-int
-plpgsql_parse_recfieldnames(char *word)
-{
-	PLpgSQL_nsitem	*ns1;
-	char		*cp[2];
-	int		ret = T_ERROR;
-
-	/* Do case conversion and word separation */
-	plpgsql_convert_ident(word, cp, 2);
-
-	/*
-	 * Lookup the first word
-	 */
-	ns1 = plpgsql_ns_lookup(cp[0], NULL);
-	if ( ns1 == NULL )
-	{
-		pfree(cp[0]);
-		pfree(cp[1]);
-		return T_ERROR;
-	}
-
-	pfree(cp[0]);
-	pfree(cp[1]);
-
-	switch (ns1->itemtype)
-	{
-		case PLPGSQL_NSTYPE_REC:
-			{
-				PLpgSQL_recfieldproperties *new;
-
-				new = palloc(sizeof(PLpgSQL_recfieldproperties));
-				new->dtype = PLPGSQL_DTYPE_RECFIELDNAMES;
-				new->recparentno = ns1->itemno;
-				new->save_fieldnames = NULL;
-				plpgsql_adddatum((PLpgSQL_datum *) new);
-				plpgsql_yylval.scalar = (PLpgSQL_datum *) new;
-				ret =  T_SCALAR;	/* ??? */
-				break;
-			}
-		default:
-			break;
-	}
-	return ret;
-}
-
 
 /*
  * plpgsql_build_variable - build a datum-array entry of a given

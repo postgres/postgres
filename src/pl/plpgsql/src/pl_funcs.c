@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.49 2006/05/30 11:54:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.50 2006/05/30 11:58:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,13 +1044,9 @@ plpgsql_dumptree(PLpgSQL_function *func)
 				printf("REC %s\n", ((PLpgSQL_rec *) d)->refname);
 				break;
 			case PLPGSQL_DTYPE_RECFIELD:
-				if ( ((PLpgSQL_recfield *) d)->fieldindex_flag == RECFIELD_USE_FIELDNAME )
-					printf("RECFIELD %-16s of REC %d\n",
-						   ((PLpgSQL_recfield *) d)->fieldindex.fieldname,
-						   ((PLpgSQL_recfield *) d)->recparentno);
-				else
-					printf("RECFIELD Variable of REC %d\n",
-						   ((PLpgSQL_recfield *) d)->recparentno);
+				printf("RECFIELD %-16s of REC %d\n",
+					   ((PLpgSQL_recfield *) d)->fieldname,
+					   ((PLpgSQL_recfield *) d)->recparentno);
 				break;
 			case PLPGSQL_DTYPE_ARRAYELEM:
 				printf("ARRAYELEM of VAR %d subscript ",
