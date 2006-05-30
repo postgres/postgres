@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.89 2006/05/28 03:03:17 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.90 2006/05/30 11:40:21 momjian Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -155,21 +155,36 @@ $$ LANGUAGE plpgsql;
 
     <para>
      That means that your client application must send each query to
-     the database server, wait for it to be processed, receive the
-     results, do some computation, then send other queries to the
-     server. All this incurs interprocess communication and may also
-     incur network overhead if your client is on a different machine
-     than the database server.
+     the database server, wait for it to be processed, receive and
+     process the results, do some computation, then send further
+     queries to the server.  All this incurs interprocess
+     communication and will also incur network overhead if your client
+     is on a different machine than the database server.
     </para>
 
     <para>
-     With <application>PL/pgSQL</application> you can group a block of computation and a
-     series of queries <emphasis>inside</emphasis> the
-     database server, thus having the power of a procedural
-     language and the ease of use of SQL, but saving lots of
-     time because you don't have the whole client/server
-     communication overhead. This can make for a
-     considerable performance increase.
+     With <application>PL/pgSQL</application> you can group a block of
+     computation and a series of queries <emphasis>inside</emphasis>
+     the database server, thus having the power of a procedural
+     language and the ease of use of SQL, but with considerable
+     savings because you don't have the whole client/server
+     communication overhead.
+    </para>
+    <itemizedlist>
+
+     <listitem><para> Elimination of additional round trips between
+     client and server </para></listitem>
+
+     <listitem><para> Intermediate results that the client does not
+     need do not need to be marshalled or transferred between server
+     and client </para></listitem>
+
+     <listitem><para> There is no need for additional rounds of query
+     parsing </para></listitem>
+
+    </itemizedlist>
+    <para> This can allow for a considerable performance increase as
+    compared to an application that does not use stored functions.
     </para>
 
     <para>
