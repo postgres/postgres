@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.28.2.1 2006/05/30 13:31:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.28.2.2 2006/05/30 13:36:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_conversion.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/namespace.h"
 #include "utils/builtins.h"
@@ -124,12 +123,6 @@ ConversionCreate(const char *conname, Oid connamespace,
 	/* create dependency on owner */
 	recordDependencyOnOwner(ConversionRelationId, HeapTupleGetOid(tup),
 							conowner);
-
-	/* create dependency on namespace */
-	myself.classId = ConversionRelationId;
-	referenced.classId = NamespaceRelationId;
-	referenced.objectId = connamespace;
-	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	heap_freetuple(tup);
 	heap_close(rel, RowExclusiveLock);
