@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/pg_config.h.win32,v 1.28 2006/03/11 04:38:38 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/pg_config.h.win32,v 1.29 2006/05/30 12:43:28 momjian Exp $ */
 
 #ifndef	pg_config_h_win32__
 #define	pg_config_h_win32__
@@ -25,6 +25,9 @@
 #ifdef __BORLANDC__
 #define HAVE_RANDOM
 #endif
+
+#undef inline
+#define inline __inline
 
 #define INT64_FORMAT "%I64d"
 #define HAVE_DECL_VSNPRINTF 1
