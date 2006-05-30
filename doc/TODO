@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon May 29 19:29:26 EDT 2006
+Last updated:		Tue May 30 06:21:02 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1270,6 +1270,9 @@ Source Code
 
   This involves choosing better pivot points for the quicksort.
 
+* Consider GnuTLS if OpenSSL license becomes a problem
+
+  See http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php.
 
 * Win32
 
