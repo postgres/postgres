@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.20 2006/03/05 15:58:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.21 2006/05/30 13:30:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,7 @@ pgarch_ArchiverCopyLoop(void)
 	 * some backend will add files onto the list of those that need archiving
 	 * while we are still copying earlier archives
 	 */
-	while (pgarch_readyXlog(xlog))
+	while (PostmasterIsAlive(true) && pgarch_readyXlog(xlog))
 	{
 		int			failures = 0;
 
