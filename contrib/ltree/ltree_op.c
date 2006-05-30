@@ -1,7 +1,7 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.11 2006/04/27 18:24:35 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.12 2006/05/30 22:12:13 tgl Exp $
  */
 
 #include "ltree.h"
@@ -12,6 +12,7 @@
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 
+PG_MODULE_MAGIC;
 
 /* compare functions */
 PG_FUNCTION_INFO_V1(ltree_cmp);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.12 2006/05/21 20:05:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.13 2006/05/30 22:12:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 #include "mb/pg_wchar.h"
 
 #define ENCODING_GROWTH_RATE 4
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(latin2_to_mic);
 PG_FUNCTION_INFO_V1(mic_to_latin2);

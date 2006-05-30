@@ -20,6 +20,8 @@
 #include "common.h"
 #include "tsvector.h"
 
+PG_MODULE_MAGIC;
+
 #define IGNORE_LONGLEXEME	1
 
 /*********top interface**********/

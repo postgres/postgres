@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.103 2006/05/27 20:24:16 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.104 2006/05/30 22:12:16 tgl Exp $
  *
  **********************************************************************/
 
@@ -67,6 +67,7 @@ utf_e2u(unsigned char *src)
 #define  UTF_E2U(x)  (x)
 #endif   /* PLTCL_UTF */
 
+PG_MODULE_MAGIC;
 
 /**********************************************************************
  * The information we cache about loaded procedures

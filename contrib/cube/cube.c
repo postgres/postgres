@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.24 2006/03/11 04:38:28 momjian Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.25 2006/05/30 22:12:12 tgl Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -17,6 +17,8 @@
 #include "utils/builtins.h"
 
 #include "cubedata.h"
+
+PG_MODULE_MAGIC;
 
 extern int	cube_yyparse();
 extern void cube_yyerror(const char *message);

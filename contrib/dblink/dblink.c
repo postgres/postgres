@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.54 2006/03/11 04:38:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.55 2006/05/30 22:12:12 tgl Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -60,6 +60,8 @@
 #include "utils/memutils.h"
 
 #include "dblink.h"
+
+PG_MODULE_MAGIC;
 
 typedef struct remoteConn
 {

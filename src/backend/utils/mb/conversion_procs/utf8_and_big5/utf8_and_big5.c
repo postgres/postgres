@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_big5/utf8_and_big5.c,v 1.13 2006/05/21 20:05:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_big5/utf8_and_big5.c,v 1.14 2006/05/30 22:12:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 #include "mb/pg_wchar.h"
 #include "../../Unicode/big5_to_utf8.map"
 #include "../../Unicode/utf8_to_big5.map"
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(big5_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_big5);

@@ -5,7 +5,7 @@
  * DMN Digital Music Network.
  * www.dmn.com
  *
- * $PostgreSQL: pgsql/contrib/intagg/int_aggregate.c,v 1.23 2006/03/11 04:38:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/intagg/int_aggregate.c,v 1.24 2006/05/30 22:12:13 tgl Exp $
  *
  * Copyright (C) Digital Music Network
  * December 20, 2001
@@ -34,6 +34,7 @@
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 
+PG_MODULE_MAGIC;
 
 /*
  * This is actually a postgres version of a one dimensional array.

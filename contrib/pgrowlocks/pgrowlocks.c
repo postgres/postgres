@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.2 2006/04/25 00:40:54 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.3 2006/05/30 22:12:13 tgl Exp $
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -36,6 +36,8 @@
 #include "access/multixact.h"
 #include "storage/procarray.h"
 #endif
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pgrowlocks);
 

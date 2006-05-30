@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.3 2006/05/21 20:05:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.4 2006/05/30 22:12:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,8 @@
 #include "../../Unicode/win1256_to_utf8.map"
 #include "../../Unicode/win1257_to_utf8.map"
 #include "../../Unicode/win1258_to_utf8.map"
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(win_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_win);

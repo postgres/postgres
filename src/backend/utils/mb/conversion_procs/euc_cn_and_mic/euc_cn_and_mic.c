@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_cn_and_mic/euc_cn_and_mic.c,v 1.14 2006/05/21 20:05:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_cn_and_mic/euc_cn_and_mic.c,v 1.15 2006/05/30 22:12:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,8 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(euc_cn_to_mic);
 PG_FUNCTION_INFO_V1(mic_to_euc_cn);

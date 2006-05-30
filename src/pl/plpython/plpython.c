@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.80 2006/05/26 19:23:09 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.81 2006/05/30 22:12:16 tgl Exp $
  *
  *********************************************************************
  */
@@ -31,6 +31,8 @@
 
 #include <compile.h>
 #include <eval.h>
+
+PG_MODULE_MAGIC;
 
 /* convert Postgresql Datum or tuple into a PyObject.
  * input to Python.  Tuples are converted to dictionary

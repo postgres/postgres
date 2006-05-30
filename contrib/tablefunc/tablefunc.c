@@ -42,6 +42,8 @@
 
 #include "tablefunc.h"
 
+PG_MODULE_MAGIC;
+
 static int	load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_crosstab_tuplestore(char *sql,
 						int num_categories,

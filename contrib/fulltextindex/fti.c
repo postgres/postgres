@@ -8,7 +8,7 @@
 /*
  *	Trigger function accepts variable number of arguments:
  *
- * $PostgreSQL: pgsql/contrib/fulltextindex/fti.c,v 1.26 2006/03/11 04:38:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/fulltextindex/fti.c,v 1.27 2006/05/30 22:12:12 tgl Exp $
  *
  *		1. relation in which to store the substrings
  *		2. fields to extract substrings from
@@ -87,6 +87,8 @@
  *	 can we do something with operator overloading or a seperate function
  *	 that can build the final query automagically?
  */
+
+PG_MODULE_MAGIC;
 
 #define MAX_FTI_QUERY_LENGTH 8192
 

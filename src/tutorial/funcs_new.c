@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/tutorial/funcs_new.c,v 1.7 2006/03/11 04:38:42 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/tutorial/funcs_new.c,v 1.8 2006/05/30 22:12:16 tgl Exp $ */
 
 /******************************************************************************
   These are user-defined functions that can be bound to a Postgres backend
@@ -17,6 +17,8 @@
 #include "executor/executor.h"	/* for GetAttributeByName() */
 #include "utils/geo_decls.h"	/* for point type */
 
+
+PG_MODULE_MAGIC;
 
 /* These prototypes just prevent possible warnings from gcc. */
 

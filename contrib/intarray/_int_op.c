@@ -2,6 +2,8 @@
 
 #include "lib/stringinfo.h"
 
+PG_MODULE_MAGIC;
+
 PG_FUNCTION_INFO_V1(_int_different);
 PG_FUNCTION_INFO_V1(_int_same);
 PG_FUNCTION_INFO_V1(_int_contains);

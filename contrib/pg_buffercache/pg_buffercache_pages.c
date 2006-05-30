@@ -3,7 +3,7 @@
  * pg_buffercache_pages.c
  *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.6 2005/10/15 02:49:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.7 2006/05/30 22:12:13 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -20,6 +20,8 @@
 extern DLLIMPORT BufferDesc *BufferDescriptors;
 extern DLLIMPORT volatile uint32 InterruptHoldoffCount;
 #endif
+
+PG_MODULE_MAGIC;
 
 Datum		pg_buffercache_pages(PG_FUNCTION_ARGS);
 

@@ -1,7 +1,7 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.24 2006/05/19 02:38:47 momjian Exp $
- * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.24 2006/05/19 02:38:47 momjian Exp $
+ * $Id: pending.c,v 1.25 2006/05/30 22:12:12 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.25 2006/05/30 22:12:12 tgl Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -37,6 +37,8 @@
 #include "commands/trigger.h"
 #include "utils/lsyscache.h"
 #include "utils/array.h"
+
+PG_MODULE_MAGIC;
 
 enum FieldUsage
 {

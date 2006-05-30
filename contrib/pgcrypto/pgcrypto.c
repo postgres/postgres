@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.20 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.21 2006/05/30 22:12:13 tgl Exp $
  */
 
 #include "postgres.h"
@@ -39,6 +39,8 @@
 #include "px.h"
 #include "px-crypt.h"
 #include "pgcrypto.h"
+
+PG_MODULE_MAGIC;
 
 /* private stuff */
 

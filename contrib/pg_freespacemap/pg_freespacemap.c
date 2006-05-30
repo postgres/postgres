@@ -3,7 +3,7 @@
  * pg_freespacemap.c
  *	  display some contents of the free space relation and page maps.
  *
- *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.5 2006/05/04 20:39:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.6 2006/05/30 22:12:13 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -23,6 +23,8 @@ extern DLLIMPORT int	MaxFSMPages;
 extern DLLIMPORT int	MaxFSMRelations;
 extern DLLIMPORT volatile uint32 InterruptHoldoffCount;
 #endif
+
+PG_MODULE_MAGIC;
 
 Datum		pg_freespacemap_pages(PG_FUNCTION_ARGS);
 Datum		pg_freespacemap_relations(PG_FUNCTION_ARGS);

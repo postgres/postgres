@@ -17,6 +17,7 @@
 
 #include "user_locks.h"
 
+PG_MODULE_MAGIC;
 
 #define SET_LOCKTAG_USERLOCK(locktag,id1,id2) \
 	((locktag).locktag_field1 = MyDatabaseId, \

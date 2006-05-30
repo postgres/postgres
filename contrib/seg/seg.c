@@ -19,6 +19,8 @@
 #define GIST_QUERY_DEBUG
 */
 
+PG_MODULE_MAGIC;
+
 extern int	seg_yyparse();
 extern void seg_yyerror(const char *message);
 extern void seg_scanner_init(const char *str);

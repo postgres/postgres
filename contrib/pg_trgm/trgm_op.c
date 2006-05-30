@@ -3,6 +3,8 @@
 #include "utils/array.h"
 #include "catalog/pg_type.h"
 
+PG_MODULE_MAGIC;
+
 float4		trgm_limit = 0.3;
 
 PG_FUNCTION_INFO_V1(set_limit);

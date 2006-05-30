@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.20 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.21 2006/05/30 22:12:13 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -31,6 +31,8 @@
 #include "catalog/namespace.h"
 #include "utils/builtins.h"
 
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pgstattuple);
 PG_FUNCTION_INFO_V1(pgstattuplebyid);

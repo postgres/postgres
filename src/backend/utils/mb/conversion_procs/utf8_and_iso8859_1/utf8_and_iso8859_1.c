@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.16 2006/05/21 20:05:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.17 2006/05/30 22:12:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,8 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(iso8859_1_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_iso8859_1);

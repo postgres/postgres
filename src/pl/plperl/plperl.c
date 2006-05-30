@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.110 2006/05/29 13:51:23 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.111 2006/05/30 22:12:15 tgl Exp $
  *
  **********************************************************************/
 
@@ -32,6 +32,8 @@ extern DLLIMPORT bool check_function_bodies;
 
 /* perl stuff */
 #include "plperl.h"
+
+PG_MODULE_MAGIC;
 
 /**********************************************************************
  * The information we cache about loaded procedures

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.12 2006/05/21 20:05:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.13 2006/05/30 22:12:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,8 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(latin1_to_mic);
 PG_FUNCTION_INFO_V1(mic_to_latin1);

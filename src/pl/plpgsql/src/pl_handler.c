@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.28 2006/03/09 21:29:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.29 2006/05/30 22:12:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,8 @@
 #include "utils/syscache.h"
 
 extern DLLIMPORT bool check_function_bodies;
+
+PG_MODULE_MAGIC;
 
 static bool plpgsql_firstcall = true;
 

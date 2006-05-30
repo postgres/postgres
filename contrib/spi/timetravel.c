@@ -14,6 +14,8 @@
 
 #define ABSTIMEOID	702			/* it should be in pg_type.h */
 
+PG_MODULE_MAGIC;
+
 /* AbsoluteTime currabstime(void); */
 Datum		timetravel(PG_FUNCTION_ARGS);
 Datum		set_timetravel(PG_FUNCTION_ARGS);

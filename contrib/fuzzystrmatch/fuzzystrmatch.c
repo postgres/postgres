@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.20 2006/03/19 22:22:56 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.21 2006/05/30 22:12:13 tgl Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -44,6 +44,8 @@
  */
 
 #include "fuzzystrmatch.h"
+
+PG_MODULE_MAGIC;
 
 /*
  * Calculates Levenshtein Distance between two strings.

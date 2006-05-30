@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.15 2006/05/21 20:05:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.16 2006/05/30 22:12:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 #include "mb/pg_wchar.h"
 #include "../../Unicode/utf8_to_koi8r.map"
 #include "../../Unicode/koi8r_to_utf8.map"
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(utf8_to_koi8r);
 PG_FUNCTION_INFO_V1(koi8r_to_utf8);

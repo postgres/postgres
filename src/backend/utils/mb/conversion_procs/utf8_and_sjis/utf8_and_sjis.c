@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_sjis/utf8_and_sjis.c,v 1.13 2006/05/21 20:05:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_sjis/utf8_and_sjis.c,v 1.14 2006/05/30 22:12:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 #include "mb/pg_wchar.h"
 #include "../../Unicode/sjis_to_utf8.map"
 #include "../../Unicode/utf8_to_sjis.map"
+
+PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(sjis_to_utf8);
 PG_FUNCTION_INFO_V1(utf8_to_sjis);
