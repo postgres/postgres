@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.38 2005/05/20 01:52:25 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.38.2.1 2006/05/30 12:32:37 momjian Exp $
 -->
 
  <chapter id="pltcl">
@@ -27,22 +27,27 @@ $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.38 2005/05/20 01:52:25 neilc Exp 
    <title>Overview</title>
 
    <para>
-    PL/Tcl offers most of the capabilities a function
-    writer has in the C language, except for some restrictions.
+    PL/Tcl offers most of the capabilities a function writer has in
+    the C language, with a few restrictions, and with the addition of
+    the powerful string processing libraries that are available for
+    Tcl.
    </para>
    <para>
-    The good restriction is that everything is executed in a safe
-    Tcl interpreter. In addition to the limited command set of safe Tcl, only
-    a few commands are available to access the database via SPI and to raise
-    messages via <function>elog()</>. There is no way to access internals of the
-    database server or to gain OS-level access under the permissions of the
-    <productname>PostgreSQL</productname> server process, as a C function can do.
-    Thus, any unprivileged database user may be
-    permitted to use this language.
+    One compelling <emphasis>good</emphasis> restriction is that
+    everything is executed from within the safety of the context of a
+    Tcl interpreter.  In addition to the limited command set of safe
+    Tcl, only a few commands are available to access the database via
+    SPI and to raise messages via <function>elog()</>.  PL/Tcl
+    provides no way to access internals of the database server or to
+    gain OS-level access under the permissions of the
+    <productname>PostgreSQL</productname> server process, as a C
+    function can do.  Thus, unprivileged database users may be trusted
+    to use this language; it does not give them unlimited authority.
    </para>
    <para>
-    The other, implementation restriction is that Tcl functions cannot
-    be used to create input/output functions for new data types.
+    The other notable implementation restriction is that Tcl functions
+    may not be used to create input/output functions for new data
+    types.
    </para>
    <para>
     Sometimes it is desirable to write Tcl functions that are not restricted
@@ -57,12 +62,12 @@ $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.38 2005/05/20 01:52:25 neilc Exp 
     a user logged in as the database administrator.
    </para>
    <para>
-    The shared object for the <application>PL/Tcl</> and <application>PL/TclU</> call handlers is
-    automatically built and installed in the
-    <productname>PostgreSQL</productname> 
-    library directory if Tcl support is specified
-    in the configuration step of the installation procedure.  To install
-    <application>PL/Tcl</> and/or <application>PL/TclU</> in a particular database, use the
+    The shared object code for the <application>PL/Tcl</> and
+    <application>PL/TclU</> call handlers is automatically built and
+    installed in the <productname>PostgreSQL</productname> library
+    directory if Tcl support is specified in the configuration step of
+    the installation procedure.  To install <application>PL/Tcl</>
+    and/or <application>PL/TclU</> in a particular database, use the
     <command>createlang</command> program, for example
     <literal>createlang pltcl <replaceable>dbname</></literal> or
     <literal>createlang pltclu <replaceable>dbname</></literal>.

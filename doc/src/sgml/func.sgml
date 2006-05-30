@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291.2.5 2005/12/21 23:23:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291.2.6 2006/05/30 12:32:37 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1107,7 +1107,9 @@ PostgreSQL documentation
        <entry><literal><function>substring</function>(<parameter>string</parameter> from <replaceable>pattern</replaceable>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
-        Extract substring matching POSIX regular expression
+        Extract substring matching POSIX regular expression. See
+        <xref linkend="functions-matching"> for more information on pattern
+        matching.
        </entry>
        <entry><literal>substring('Thomas' from '...$')</literal></entry>
        <entry><literal>mas</literal></entry>
@@ -1117,8 +1119,9 @@ PostgreSQL documentation
        <entry><literal><function>substring</function>(<parameter>string</parameter> from <replaceable>pattern</replaceable> for <replaceable>escape</replaceable>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
-        Extract substring matching <acronym>SQL</acronym> regular
-        expression
+        Extract substring matching <acronym>SQL</acronym> regular expression.
+        See <xref linkend="functions-matching"> for more information on
+        pattern matching.
        </entry>
        <entry><literal>substring('Thomas' from '%#"o_a#"_' for '#')</literal></entry>
        <entry><literal>oma</literal></entry>
@@ -1414,6 +1417,18 @@ PostgreSQL documentation
        </entry>
        <entry><literal>quote_literal( 'O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>regexp_replace</function>(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type> [,<parameter>flags</parameter> <type>text</type>])</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Replace substring matching POSIX regular expression. See
+        <xref linkend="functions-matching"> for more information on pattern
+        matching.
+       </entry>
+       <entry><literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal></entry>
+       <entry><literal>ThM</literal></entry>
       </row>
 
       <row>

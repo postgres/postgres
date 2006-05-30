@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.49 2005/11/04 23:14:00 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.49.2.1 2006/05/30 12:32:37 momjian Exp $
 -->
 
  <chapter id="plperl">
@@ -19,6 +19,12 @@ $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.49 2005/11/04 23:14:00 petere Ex
    <ulink url="http://www.perl.com">Perl programming language</ulink>.
   </para>
 
+  <para> The usual advantage to using PL/Perl is that this allows use,
+   within stored functions, of the manyfold <quote>string
+    munging</quote> operators and functions available for Perl.  Parsing
+   complex strings may be be easier using Perl than it is with the
+   string functions and control structures provided in PL/pgsql.</para>
+  
   <para>
    To install PL/Perl in a particular database, use
    <literal>createlang plperl <replaceable>dbname</></literal>.
