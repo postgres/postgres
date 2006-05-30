@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha2.h,v 1.2 2005/10/15 02:49:06 momjian Exp $ */
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha2.h,v 1.2.2.1 2006/05/30 12:56:56 momjian Exp $ */
 /*	$OpenBSD: sha2.h,v 1.2 2004/04/28 23:11:57 millert Exp $	*/
 
 /*
@@ -38,6 +38,16 @@
 #ifndef _SHA2_H
 #define _SHA2_H
 
+/* avoid conflict with OpenSSL */
+#define SHA256_Init pg_SHA256_Init
+#define SHA256_Update pg_SHA256_Update
+#define SHA256_Final pg_SHA256_Final
+#define SHA384_Init pg_SHA384_Init
+#define SHA384_Update pg_SHA384_Update
+#define SHA384_Final pg_SHA384_Final
+#define SHA512_Init pg_SHA512_Init
+#define SHA512_Update pg_SHA512_Update
+#define SHA512_Final pg_SHA512_Final
 
 /*** SHA-256/384/512 Various Length Definitions ***********************/
 #define SHA256_BLOCK_LENGTH		64
