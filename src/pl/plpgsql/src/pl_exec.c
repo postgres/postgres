@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.167 2006/05/30 11:58:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.168 2006/05/30 12:03:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -741,7 +741,7 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 		case PLPGSQL_DTYPE_RECFIELD:
 		case PLPGSQL_DTYPE_ARRAYELEM:
 		case PLPGSQL_DTYPE_TRIGARG:
-
+		case PLPGSQL_DTYPE_RECFIELDNAMES:
 			/*
 			 * These datum records are read-only at runtime, so no need to
 			 * copy them
@@ -851,6 +851,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 			case PLPGSQL_DTYPE_RECFIELD:
 			case PLPGSQL_DTYPE_ARRAYELEM:
+			case PLPGSQL_DTYPE_RECFIELDNAMES:
 				break;
 
 			default:
@@ -2179,6 +2180,8 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 static void
 exec_eval_cleanup(PLpgSQL_execstate *estate)
 {
+	int		i;
+	ArrayType	*a;
 	/* Clear result of a full SPI_execute */
 	if (estate->eval_tuptable != NULL)
 		SPI_freetuptable(estate->eval_tuptable);
@@ -2187,6 +2190,14 @@ exec_eval_cleanup(PLpgSQL_execstate *estate)
 	/* Clear result of exec_eval_simple_expr (but keep the econtext) */
 	if (estate->eval_econtext != NULL)
 		ResetExprContext(estate->eval_econtext);
+	for ( i = 0; i < estate->ndatums; ++i ) {
+		if ( estate->datums[i]->dtype == PLPGSQL_DTYPE_RECFIELDNAMES ) {
+			a = ((PLpgSQL_recfieldproperties *)(estate->datums[i]))->save_fieldnames;
+			if ( a )
+				pfree(a);
+			((PLpgSQL_recfieldproperties *)(estate->datums[i]))->save_fieldnames = NULL;
+		}
+	}
 }
 
 
@@ -3156,7 +3167,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 */
 				PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) target;
 				PLpgSQL_rec *rec;
-				int			fno;
+				int			fno = 0;
 				HeapTuple	newtup;
 				int			natts;
 				int			i;
@@ -3185,12 +3196,35 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * Get the number of the records field to change and the
 				 * number of attributes in the tuple.
 				 */
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
+				if ( recfield->fieldindex_flag == RECFIELD_USE_FIELDNAME ) {
+					fno = SPI_fnumber(rec->tupdesc, recfield->fieldindex.fieldname);
+					if (fno == SPI_ERROR_NOATTRIBUTE)
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("record \"%s\" has no field \"%s\"",
+										rec->refname, recfield->fieldindex.fieldname)));
+				}
+				else if ( recfield->fieldindex_flag == RECFIELD_USE_INDEX_VAR ) {
+					PLpgSQL_var * idxvar = (PLpgSQL_var *) (estate->datums[recfield->fieldindex.indexvar_no]);
+					char * fname = convert_value_to_string(idxvar->value, idxvar->datatype->typoid);
+					if ( fname == NULL )
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								errmsg("record \"%s\": cannot evaluate variable to record index string",
+										rec->refname)));
+					fno = SPI_fnumber(rec->tupdesc, fname);
+					pfree(fname);
+					if (fno == SPI_ERROR_NOATTRIBUTE)
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("record \"%s\" has no field \"%s\"",
+										rec->refname, fname)));
+				}
+				else
 					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("record \"%s\" has no field \"%s\"",
-									rec->refname, recfield->fieldname)));
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						errmsg("record \"%s\": internal error",
+									rec->refname)));
 				fno--;
 				natts = rec->tupdesc->natts;
 
@@ -3510,7 +3544,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 			{
 				PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) datum;
 				PLpgSQL_rec *rec;
-				int			fno;
+				int			fno = 0;
 
 				rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
 				if (!HeapTupleIsValid(rec->tup))
@@ -3519,22 +3553,125 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 						   errmsg("record \"%s\" is not assigned yet",
 								  rec->refname),
 						   errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("record \"%s\" has no field \"%s\"",
-									rec->refname, recfield->fieldname)));
-				*typeid = SPI_gettypeid(rec->tupdesc, fno);
-				*value = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
-				if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("type of \"%s.%s\" does not match that when preparing the plan",
-									rec->refname, recfield->fieldname)));
-				break;
-			}
-
+ 				if ( recfield->fieldindex_flag == RECFIELD_USE_FIELDNAME ) {
+ 					fno = SPI_fnumber(rec->tupdesc, recfield->fieldindex.fieldname);
+ 					if (fno == SPI_ERROR_NOATTRIBUTE)
+ 						ereport(ERROR,
+ 								(errcode(ERRCODE_UNDEFINED_COLUMN),
+ 								 errmsg("record \"%s\" has no field \"%s\"",
+ 										rec->refname, recfield->fieldindex.fieldname)));
+ 				}
+ 				else if ( recfield->fieldindex_flag == RECFIELD_USE_INDEX_VAR ) {
+ 					PLpgSQL_var * idxvar = (PLpgSQL_var *) (estate->datums[recfield->fieldindex.indexvar_no]);
+ 					char * fname = convert_value_to_string(idxvar->value, idxvar->datatype->typoid);
+ 					if ( fname == NULL )
+ 						ereport(ERROR,
+ 								(errcode(ERRCODE_UNDEFINED_COLUMN),
+ 								errmsg("record \"%s\": cannot evaluate variable to record index string",
+ 										rec->refname)));
+ 					fno = SPI_fnumber(rec->tupdesc, fname);
+ 					pfree(fname);
+ 					if (fno == SPI_ERROR_NOATTRIBUTE)
+ 						ereport(ERROR,
+ 								(errcode(ERRCODE_UNDEFINED_COLUMN),
+ 								 errmsg("record \"%s\" has no field \"%s\"",
+ 										rec->refname, fname)));
+ 				}
+ 				else
+ 					ereport(ERROR,
+ 						(errcode(ERRCODE_UNDEFINED_COLUMN),
+ 						errmsg("record \"%s\": internal error",
+ 								rec->refname)));
+ 
+ 				/* Do not allow typeids to become "narrowed" by InvalidOids 
+ 				causing specialized typeids from the tuple restricting the destination */
+ 				if ( expectedtypeid != InvalidOid && expectedtypeid != SPI_gettypeid(rec->tupdesc, fno) ) {
+ 					Datum cval = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
+ 					cval =   exec_simple_cast_value(cval,
+ 									SPI_gettypeid(rec->tupdesc, fno),
+ 									expectedtypeid,
+ 									-1,
+ 									*isnull);
+ 
+ 					*value = cval;
+ 					*typeid = expectedtypeid;
+ 					/* ereport(ERROR,
+ 							(errcode(ERRCODE_DATATYPE_MISMATCH),
+ 							 errmsg("type of \"%s\" does not match that when preparing the plan",
+ 									rec->refname)));
+ 					*/
+ 				} 
+ 				else { /* expected typeid matches */
+ 					*value = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
+ 					*typeid = SPI_gettypeid(rec->tupdesc, fno);
+ 				} 
+ 				break;
+ 			}
+ 
+ 		case PLPGSQL_DTYPE_RECFIELDNAMES:
+ 			/* Construct array datum from record field names */
+ 			{
+ 				Oid			arraytypeid,
+ 							arrayelemtypeid = TEXTOID;
+ 				int16			arraytyplen,
+ 							elemtyplen;
+ 				bool			elemtypbyval;
+ 				char			elemtypalign;
+ 				ArrayType		*arrayval;
+ 				PLpgSQL_recfieldproperties * recfp = (PLpgSQL_recfieldproperties *) datum;
+ 				PLpgSQL_rec		*rec = (PLpgSQL_rec *) (estate->datums[recfp->recparentno]);
+ 				int			fc, tfc = 0;
+ 				Datum			*arrayelems;
+ 				char			*fieldname;
+ 
+ 				if (!HeapTupleIsValid(rec->tup))
+ 					ereport(ERROR,
+ 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+ 					   errmsg("record \"%s\" is not assigned yet",
+ 							  rec->refname),
+ 					   errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+ 				arrayelems = palloc(sizeof(Datum) * rec->tupdesc->natts);
+ 				arraytypeid = get_array_type(arrayelemtypeid);
+ 				arraytyplen = get_typlen(arraytypeid);
+ 				get_typlenbyvalalign(arrayelemtypeid,
+ 						     &elemtyplen,
+ 						     &elemtypbyval,
+ 						     &elemtypalign);
+ 
+ 				if ( expectedtypeid != InvalidOid && expectedtypeid != arraytypeid )
+ 					ereport(ERROR,
+ 							(errcode(ERRCODE_DATATYPE_MISMATCH),
+ 							 errmsg("type of \"%s\" does not match array type when preparing the plan",
+ 									rec->refname)));
+ 				for ( fc = 0; fc < rec->tupdesc->natts; ++fc ) {
+ 					fieldname = SPI_fname(rec->tupdesc, fc+1);
+ 					if ( fieldname ) {
+ 						arrayelems[fc] = DirectFunctionCall1(textin, CStringGetDatum(fieldname));
+ 						pfree(fieldname);
+ 						++tfc;
+ 					} 
+ 				} 
+ 				arrayval = construct_array(arrayelems, tfc,
+ 							 arrayelemtypeid,
+ 							 elemtyplen,
+ 							 elemtypbyval,
+ 							 elemtypalign);
+ 
+ 
+ 				/* construct_array copies data; free temp elem array */
+ 				for ( fc = 0; fc < tfc; ++fc )
+ 					pfree(DatumGetPointer(arrayelems[fc]));
+ 				pfree(arrayelems);
+ 				*value = PointerGetDatum(arrayval);
+ 				*typeid = arraytypeid;
+ 				*isnull = false;
+ 				/* need to save the pointer because otherwise it does not get freed */
+ 				if ( recfp->save_fieldnames )
+ 					pfree(recfp->save_fieldnames);
+ 				recfp->save_fieldnames = arrayval;
+ 				break;
+ 			}
+ 
 		case PLPGSQL_DTYPE_TRIGARG:
 			{
 				PLpgSQL_trigarg *trigarg = (PLpgSQL_trigarg *) datum;
@@ -3632,7 +3769,29 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr);
-
+	else {
+		/*
+		 * check for any subexpressions with varying type in the expression 
+		 * currently (July 05), this is a record field of a record indexed by a variable
+		 */
+		int			i;
+		PLpgSQL_datum		*d;
+		PLpgSQL_recfield	*rf;
+		for ( i = 0; i < expr->nparams; ++i ) {
+			d = estate->datums[expr->params[i]];
+			if ( d->dtype == PLPGSQL_DTYPE_RECFIELD ) {
+				rf = (PLpgSQL_recfield *)d;
+				if ( rf->fieldindex_flag == RECFIELD_USE_INDEX_VAR )
+					break;
+			}
+		}
+		if ( i < expr->nparams ) { /* expr may change it's type */
+			/* now discard the plan and get new one */
+			SPI_freeplan(expr->plan);
+			expr->plan = NULL;
+			exec_prepare_plan(estate, expr);
+		}
+	}
 	/*
 	 * If this is a simple expression, bypass SPI and use the executor
 	 * directly

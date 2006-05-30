@@ -2281,6 +2281,38 @@ begin
 end;
 $$ language plpgsql;
 
+-- check introspective records
+create table ritest (i INT4, t TEXT);
+insert into ritest (i, t) VALUES (1, 'sometext');
+create function test_record() returns void as $$
+declare
+  cname text;
+  tval  text;
+  ival  int4;
+  tval2 text;
+  ival2 int4;
+  columns text[];
+  r     RECORD;
+begin
+  SELECT INTO r * FROM ritest WHERE i = 1;
+  ival := r.i;
+  tval := r.t;
+  RAISE NOTICE 'ival=%, tval=%', ival, tval;
+  cname := 'i';
+  ival2 := r.(cname);
+  cname :='t';
+  tval2 := r.(cname);
+  RAISE NOTICE 'ival2=%, tval2=%', ival2, tval2;
+  columns := r.(*);
+  RAISE NOTICE 'fieldnames=%', columns;
+  RETURN;
+end;
+$$ language plpgsql;
+select test_record();
+drop table ritest;
+drop function test_record();
+
+
 -- using list of scalars in fori and fore stmts
 create function for_vect() returns void as $proc$
 <<lbl>>declare a integer; b varchar; c varchar; r record;
