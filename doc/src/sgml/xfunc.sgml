@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.113 2006/05/30 14:09:32 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.114 2006/05/30 21:21:29 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1149,13 +1149,6 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
    </para>
 
    <para>
-    After the module has been found, PostgreSQL looks for its magic block.
-    This block contains information about the environment a module was
-    compiled in. The server uses this to verify the module was compiled
-    under the same assumptions and environment as the backend.
-   </para>
-
-   <para>
     The user ID the <productname>PostgreSQL</productname> server runs
     as must be able to traverse the path to the file you intend to
     load.  Making the file or a higher-level directory not readable
@@ -1960,31 +1953,36 @@ concat_text(PG_FUNCTION_ARGS)
 
       <listitem>
        <para>
-        To ensure your module is not loaded into an incompatible backend, it
-        is recommended to include a magic block. To do this you must include
-        the header <filename>pgmagic.h</filename> and declare the block as
-        follows:
-       </para>
-
-<programlisting>
-#include "pgmagic.h"
-
-PG_MODULE_MAGIC;
-</programlisting>
-
-       <para>
-        If the module consists of multiple source files, this only needs to
-        be done in one of them.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Symbol names defined within object files must not conflict
         with each other or with symbols defined in the
         <productname>PostgreSQL</productname> server executable.  You
         will have to rename your functions or variables if you get
         error messages to this effect.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        To ensure your module is not loaded into an incompatible server, it
+        is recommended to include a <quote>magic block</>.  This allows
+        the server to detect obvious incompatibilities, such as a module
+        compiled for a different major version of
+        <productname>PostgreSQL</productname>.  It is likely that magic
+        blocks will be required in future releases.  To include a magic
+        block, write this in one (and only one) of your module source files,
+        after having included the header <filename>fmgr.h</>:
+       </para>
+
+<programlisting>
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
+</programlisting>
+
+       <para>
+        The <literal>#ifdef</> test can be omitted if your code doesn't
+        need to compile against pre-8.2 <productname>PostgreSQL</productname>
+        releases.
        </para>
       </listitem>
 

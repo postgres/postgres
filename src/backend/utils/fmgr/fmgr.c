@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.100 2006/04/04 19:35:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.101 2006/05/30 21:21:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ typedef struct
 	TransactionId fn_xmin;		/* for checking up-to-dateness */
 	CommandId	fn_cmin;
 	PGFunction	user_fn;		/* the function's address */
-	Pg_finfo_record *inforec;	/* address of its info record */
+	const Pg_finfo_record *inforec;		/* address of its info record */
 } CFuncHashTabEntry;
 
 static HTAB *CFuncHash = NULL;
@@ -78,7 +78,7 @@ static void fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedur
 static void fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
 static CFuncHashTabEntry *lookup_C_func(HeapTuple procedureTuple);
 static void record_C_func(HeapTuple procedureTuple,
-			  PGFunction user_fn, Pg_finfo_record *inforec);
+			  PGFunction user_fn, const Pg_finfo_record *inforec);
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
 static Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 
@@ -276,7 +276,7 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 	CFuncHashTabEntry *hashentry;
 	PGFunction	user_fn;
-	Pg_finfo_record *inforec;
+	const Pg_finfo_record *inforec;
 	Oldstyle_fnextra *fnextra;
 	bool		isnull;
 	int			i;
@@ -405,12 +405,12 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
  * can validate the information record for a function not yet entered into
  * pg_proc.
  */
-Pg_finfo_record *
+const Pg_finfo_record *
 fetch_finfo_record(void *filehandle, char *funcname)
 {
 	char	   *infofuncname;
 	PGFInfoFunction infofunc;
-	Pg_finfo_record *inforec;
+	const Pg_finfo_record *inforec;
 	static Pg_finfo_record default_inforec = {0};
 
 	/* Compute name of info func */
@@ -493,7 +493,7 @@ lookup_C_func(HeapTuple procedureTuple)
  */
 static void
 record_C_func(HeapTuple procedureTuple,
-			  PGFunction user_fn, Pg_finfo_record *inforec)
+			  PGFunction user_fn, const Pg_finfo_record *inforec)
 {
 	Oid			fn_oid = HeapTupleGetOid(procedureTuple);
 	CFuncHashTabEntry *entry;
