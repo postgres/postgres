@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/general.m4,v 1.3 2003/11/29 19:51:17 pgsql Exp $
+# $PostgreSQL: pgsql/config/general.m4,v 1.4 2006/05/30 13:52:25 momjian Exp $
 
 # This file defines new macros to process configure command line
 # arguments, to replace the brain-dead AC_ARG_WITH and AC_ARG_ENABLE.
@@ -16,6 +16,9 @@
 m4_define([pgac_arg_to_variable],
           [$1[]_[]patsubst($2, -, _)])
 
+# This is the divert which we store all declared 'with' and 'enable'
+# arguments for use with PGAC_CHECK_ARGS
+m4_define([_m4_divert(PGAC_ARGS)],     5432)
 
 # PGAC_ARG(TYPE, NAME, HELP-STRING,
 #          [ACTION-IF-YES], [ACTION-IF-NO], [ACTION-IF-ARG],
@@ -28,6 +31,7 @@ m4_define([pgac_arg_to_variable],
 
 AC_DEFUN([PGAC_ARG],
 [
+m4_divert_text([PGAC_ARGS],[pgac_arg_to_variable([$1],[$2])) ;;])
 m4_case([$1],
 
 enable, [
@@ -68,6 +72,25 @@ AC_ARG_WITH([$2], [$3], [
 )
 ])# PGAC_ARG
 
+# PGAC_CHECK_ARGS()
+# -----------------
+# Checks if the user passed any --with/without/enable/disable arguments that
+# we don't recognise. Just prints out a warning message, so this should be
+# called near the end, so the user will see it.
+
+AC_DEFUN([PGAC_CHECK_ARGS],
+[
+  for var in `set |sed -ne '/^\(with_\|enable\_\)/ s/=.*//p'` ; do
+     case $var in
+       m4_undivert([PGAC_ARGS])
+       with_gnu_ld) ;;
+     *)
+       echo -n "*** Option ignored: "
+       echo $var | sed -e 's/\([^=]*\)/--\1/;s/_/-/g'
+       ;;
+     esac
+  done
+])# PGAC_CHECK_ARGS
 
 # PGAC_ARG_BOOL(TYPE, NAME, DEFAULT, HELP-STRING, 
 #               [ACTION-IF-YES], [ACTION-IF-NO])

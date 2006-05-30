@@ -1460,6 +1460,7 @@ echo $ECHO_N "checking which template to use... $ECHO_C" >&6
 
 
 
+
 # Check whether --with-template or --without-template was given.
 if test "${with_template+set}" = set; then
   withval="$with_template"
@@ -1577,6 +1578,7 @@ tas_file=dummy.s
 
 
 
+
 # Check whether --with-docdir or --without-docdir was given.
 if test "${with_docdir+set}" = set; then
   withval="$with_docdir"
@@ -1605,6 +1607,7 @@ fi;
 #
 # Add non-standard directories to the include path
 #
+
 
 
 
@@ -1638,6 +1641,7 @@ fi;
 
 
 
+
 # Check whether --with-libraries or --without-libraries was given.
 if test "${with_libraries+set}" = set; then
   withval="$with_libraries"
@@ -1659,6 +1663,7 @@ echo "$as_me: error: argument required for --with-libraries option" >&2;}
   esac
 
 fi;
+
 
 
 
@@ -1693,6 +1698,7 @@ fi;
 #
 echo "$as_me:$LINENO: checking whether to build with 64-bit integer date/time support" >&5
 echo $ECHO_N "checking whether to build with 64-bit integer date/time support... $ECHO_C" >&6
+
 
 
 # Check whether --enable-integer-datetimes or --disable-integer-datetimes was given.
@@ -1731,6 +1737,7 @@ echo "${ECHO_T}$enable_integer_datetimes" >&6
 #
 echo "$as_me:$LINENO: checking whether NLS is wanted" >&5
 echo $ECHO_N "checking whether NLS is wanted... $ECHO_C" >&6
+
 
 
 # Check whether --enable-nls or --disable-nls was given.
@@ -1773,6 +1780,7 @@ echo "${ECHO_T}$enable_nls" >&6
 #
 echo "$as_me:$LINENO: checking for default port number" >&5
 echo $ECHO_N "checking for default port number... $ECHO_C" >&6
+
 
 
 
@@ -1820,6 +1828,7 @@ _ACEOF
 #
 
 
+
 # Check whether --enable-shared or --disable-shared was given.
 if test "${enable_shared+set}" = set; then
   enableval="$enable_shared"
@@ -1848,6 +1857,7 @@ fi;
 #
 # '-rpath'-like feature can be disabled
 #
+
 
 
 # Check whether --enable-rpath or --disable-rpath was given.
@@ -1880,6 +1890,7 @@ fi;
 #
 
 
+
 # Check whether --enable-spinlocks or --disable-spinlocks was given.
 if test "${enable_spinlocks+set}" = set; then
   enableval="$enable_spinlocks"
@@ -1907,6 +1918,7 @@ fi;
 #
 # --enable-debug adds -g to compiler flags
 #
+
 
 
 # Check whether --enable-debug or --disable-debug was given.
@@ -1941,6 +1953,7 @@ fi;
 # For historical reasons you can also use --with-CC to specify the C compiler
 # to use, although the standard way to do this is to set the CC environment
 # variable.
+
 
 
 
@@ -3438,6 +3451,7 @@ fi
 #
 
 
+
 # Check whether --enable-depend or --disable-depend was given.
 if test "${enable_depend+set}" = set; then
   enableval="$enable_depend"
@@ -3467,6 +3481,7 @@ fi;
 #
 # Enable assert checks
 #
+
 
 
 # Check whether --enable-cassert or --disable-cassert was given.
@@ -3539,6 +3554,7 @@ echo "$as_me:$LINENO: checking allow thread-safe client libraries" >&5
 echo $ECHO_N "checking allow thread-safe client libraries... $ECHO_C" >&6
 
 
+
 # Check whether --enable-thread-safety or --disable-thread-safety was given.
 if test "${enable_thread_safety+set}" = set; then
   enableval="$enable_thread_safety"
@@ -3561,6 +3577,7 @@ else
   enable_thread_safety=no
 
 fi;
+
 
 
 
@@ -3608,6 +3625,7 @@ echo $ECHO_N "checking whether to build with Tcl... $ECHO_C" >&6
 
 
 
+
 # Check whether --with-tcl or --without-tcl was given.
 if test "${with_tcl+set}" = set; then
   withval="$with_tcl"
@@ -3641,6 +3659,7 @@ echo "${ECHO_T}$with_tcl" >&6
 
 
 
+
 # Check whether --with-tclconfig or --without-tclconfig was given.
 if test "${with_tclconfig+set}" = set; then
   withval="$with_tclconfig"
@@ -3669,6 +3688,7 @@ fi;
 #
 echo "$as_me:$LINENO: checking whether to build Perl modules" >&5
 echo $ECHO_N "checking whether to build Perl modules... $ECHO_C" >&6
+
 
 
 
@@ -3707,6 +3727,7 @@ echo $ECHO_N "checking whether to build Python modules... $ECHO_C" >&6
 
 
 
+
 # Check whether --with-python or --without-python was given.
 if test "${with_python+set}" = set; then
   withval="$with_python"
@@ -3739,6 +3760,7 @@ echo "${ECHO_T}$with_python" >&6
 #
 echo "$as_me:$LINENO: checking whether to build with Kerberos 5 support" >&5
 echo $ECHO_N "checking whether to build with Kerberos 5 support... $ECHO_C" >&6
+
 
 
 
@@ -3786,6 +3808,7 @@ echo "${ECHO_T}$with_krb5" >&6
 
 
 
+
 # Check whether --with-krb-srvnam or --without-krb-srvnam was given.
 if test "${with_krb_srvnam+set}" = set; then
   withval="$with_krb_srvnam"
@@ -3822,6 +3845,7 @@ _ACEOF
 #
 echo "$as_me:$LINENO: checking whether to build with PAM support" >&5
 echo $ECHO_N "checking whether to build with PAM support... $ECHO_C" >&6
+
 
 
 
@@ -3865,6 +3889,7 @@ echo $ECHO_N "checking whether to build with LDAP support... $ECHO_C" >&6
 
 
 
+
 # Check whether --with-ldap or --without-ldap was given.
 if test "${with_ldap+set}" = set; then
   withval="$with_ldap"
@@ -3902,6 +3927,7 @@ echo "${ECHO_T}$with_ldap" >&6
 #
 echo "$as_me:$LINENO: checking whether to build with Bonjour support" >&5
 echo $ECHO_N "checking whether to build with Bonjour support... $ECHO_C" >&6
+
 
 
 
@@ -3945,6 +3971,7 @@ echo $ECHO_N "checking whether to build with OpenSSL support... $ECHO_C" >&6
 
 
 
+
 # Check whether --with-openssl or --without-openssl was given.
 if test "${with_openssl+set}" = set; then
   withval="$with_openssl"
@@ -3983,6 +4010,7 @@ echo "${ECHO_T}$with_openssl" >&6
 
 
 
+
 # Check whether --with-libedit-preferred or --without-libedit-preferred was given.
 if test "${with_libedit_preferred+set}" = set; then
   withval="$with_libedit_preferred"
@@ -4011,6 +4039,7 @@ fi;
 #
 # Readline
 #
+
 
 
 
@@ -4052,6 +4081,7 @@ fi
 #
 # Zlib
 #
+
 
 
 
@@ -22757,6 +22787,53 @@ if test "$PORTNAME" = "win32"; then
 fi
 
           ac_config_headers="$ac_config_headers src/include/pg_config.h"
+
+
+#
+# Warn about unknown options
+#
+
+
+  for var in `set |sed -ne '/^\(with_\|enable\_\)/ s/=.*//p'` ; do
+     case $var in
+       with_template) ;;
+with_docdir) ;;
+with_includes) ;;
+with_libraries) ;;
+with_libs) ;;
+enable_integer_datetimes) ;;
+enable_nls) ;;
+with_pgport) ;;
+enable_shared) ;;
+enable_rpath) ;;
+enable_spinlocks) ;;
+enable_debug) ;;
+with_CC) ;;
+enable_depend) ;;
+enable_cassert) ;;
+enable_thread_safety) ;;
+enable_thread_safety_force) ;;
+with_tcl) ;;
+with_tclconfig) ;;
+with_perl) ;;
+with_python) ;;
+with_krb5) ;;
+with_krb_srvnam) ;;
+with_pam) ;;
+with_ldap) ;;
+with_bonjour) ;;
+with_openssl) ;;
+with_libedit_preferred) ;;
+with_readline) ;;
+with_zlib) ;;
+
+       with_gnu_ld) ;;
+     *)
+       echo -n "*** Option ignored: "
+       echo $var | sed -e 's/\(^=*\)/--\1/;s/_/-/g'
+       ;;
+     esac
+  done
 
 
 cat >confcache <<\_ACEOF
