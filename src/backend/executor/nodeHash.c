@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.102 2006/05/23 15:21:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.103 2006/05/30 14:01:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ MultiExecHash(HashState *node)
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
-		InstrStopNodeMulti(node->ps.instrument, hashtable->totalTuples);
+		InstrStopNode(node->ps.instrument, hashtable->totalTuples);
 
 	/*
 	 * We do not return the hash table directly because it's not a subtype of

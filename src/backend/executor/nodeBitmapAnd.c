@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.7 2006/05/23 15:21:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.8 2006/05/30 14:01:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ MultiExecBitmapAnd(BitmapAndState *node)
 
 	/* must provide our own instrumentation support */
 	if (node->ps.instrument)
-		InstrStopNodeMulti(node->ps.instrument, 0 /* XXX */ );
+		InstrStopNode(node->ps.instrument, 0 /* XXX */ );
 
 	return (Node *) result;
 }

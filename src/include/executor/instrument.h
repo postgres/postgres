@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.13 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.14 2006/05/30 14:01:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,17 +61,21 @@ typedef struct Instrumentation
 	instr_time	counter;		/* Accumulated runtime for this node */
 	double		firsttuple;		/* Time for first tuple of this cycle */
 	double		tuplecount;		/* Tuples emitted so far this cycle */
+	double		samplecount;		/* Samples collected this cycle */
 	/* Accumulated statistics across all completed cycles: */
 	double		startup;		/* Total startup time (in seconds) */
 	double		total;			/* Total total time (in seconds) */
 	double		ntuples;		/* Total tuples produced */
 	double		nloops;			/* # of run cycles for this node */
+	double		nsamples;		/* # of samples taken */
+	/* Tracking for sampling */
+	bool		sampling;		/* Are we sampling this iteration */
+	double		nextsample;		/* The next tuplecount we're going to sample */
 } Instrumentation;
 
 extern Instrumentation *InstrAlloc(int n);
 extern void InstrStartNode(Instrumentation *instr);
-extern void InstrStopNode(Instrumentation *instr, bool returnedTuple);
-extern void InstrStopNodeMulti(Instrumentation *instr, double nTuples);
+extern void InstrStopNode(Instrumentation *instr, double nTuples);
 extern void InstrEndLoop(Instrumentation *instr);
 
 #endif   /* INSTRUMENT_H */
