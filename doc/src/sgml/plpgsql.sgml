@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.90 2006/05/30 11:40:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.91 2006/05/30 11:54:51 momjian Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -877,6 +877,55 @@ SELECT merge_fields(t.*) FROM table1 t WHERE ... ;
     A consequence of this is that until a record variable is first assigned
     to, it has no substructure, and any attempt to access a
     field in it will draw a run-time error.
+   </para>
+
+   <para>
+    To obtain the values of the fields the record is made up of,
+    the record variable can be qualified with the column or field
+    name. This can be done either by literally using the column name
+    or the column name for indexing the record can be taken out of a scalar
+    variable. The syntax for this notation is Record_variable.(IndexVariable).
+    To get information about the column field names of the record, 
+    a special expression exists that returns all column names as an array: 
+    RecordVariable.(*) .
+    Thus, the RECORD can be viewed
+    as an associative array that allows for introspection of it's contents.
+    This feature is especially useful for writing generic triggers that
+    operate on records with unknown structure.
+    Here is an example procedure that shows column names and values
+    of the predefined record NEW in a trigger procedure:
+<programlisting>
+
+CREATE OR REPLACE FUNCTION show_associative_records() RETURNS TRIGGER AS $$
+	DECLARE
+		colname		TEXT;
+		colcontent	TEXT;
+		colnames	TEXT[];
+		coln		INT4;
+		coli		INT4;
+	BEGIN
+-- obtain an array with all field names of the record
+		colnames := NEW.(*);
+		RAISE NOTICE 'All column names of test record: %', colnames;
+-- show field names and contents of record
+		coli := 1;
+		coln := array_upper(colnames,1);
+		RAISE NOTICE 'Number of columns in NEW: %', coln;
+		FOR coli IN 1 .. coln LOOP
+			colname := colnames[coli];
+			colcontent := NEW.(colname);
+			RAISE NOTICE 'column % of NEW: %', quote_ident(colname), quote_literal(colcontent);
+		END LOOP;
+-- Do it with a fixed field name:
+-- will have to know the column name
+		RAISE NOTICE 'column someint of NEW: %', quote_literal(NEW.someint);
+		RETURN NULL;
+	END;
+$$ LANGUAGE plpgsql;
+--CREATE TABLE test_records (someint INT8, somestring TEXT);
+--CREATE TRIGGER tr_test_record BEFORE INSERT ON test_records FOR EACH ROW EXECUTE PROCEDURE show_associative_records();
+
+</programlisting>
    </para>
 
    <para>
