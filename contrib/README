@@ -29,7 +29,7 @@ adddepend -
 	by Rod Taylor <rbt@rbt.ca>
 
 adminpack -
-	File and log manipulation routines, used by Pgadmin
+	File and log manipulation routines, used by pgAdmin
 	by From: Dave Page <dpage@vale-housing.co.uk>
 
 btree_gist -
