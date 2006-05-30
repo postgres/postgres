@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.58 2006/05/21 20:05:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.59 2006/05/30 05:22:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,8 +122,8 @@ namesend(PG_FUNCTION_ARGS)
  *
  *		namelt	- returns 1 iff a < b
  *		namele	- returns 1 iff a <= b
- *		namegt	- returns 1 iff a < b
- *		namege	- returns 1 iff a <= b
+ *		namegt	- returns 1 iff a > b
+ *		namege	- returns 1 iff a >= b
  *
  */
 Datum
