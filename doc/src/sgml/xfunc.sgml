@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.112 2006/04/23 03:39:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.113 2006/05/30 14:09:32 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1149,6 +1149,13 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
    </para>
 
    <para>
+    After the module has been found, PostgreSQL looks for its magic block.
+    This block contains information about the environment a module was
+    compiled in. The server uses this to verify the module was compiled
+    under the same assumptions and environment as the backend.
+   </para>
+
+   <para>
     The user ID the <productname>PostgreSQL</productname> server runs
     as must be able to traverse the path to the file you intend to
     load.  Making the file or a higher-level directory not readable
@@ -1948,6 +1955,26 @@ concat_text(PG_FUNCTION_ARGS)
         <filename>postgres.h</filename> will also include
         <filename>elog.h</filename> and <filename>palloc.h</filename>
         for you.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        To ensure your module is not loaded into an incompatible backend, it
+        is recommended to include a magic block. To do this you must include
+        the header <filename>pgmagic.h</filename> and declare the block as
+        follows:
+       </para>
+
+<programlisting>
+#include "pgmagic.h"
+
+PG_MODULE_MAGIC;
+</programlisting>
+
+       <para>
+        If the module consists of multiple source files, this only needs to
+        be done in one of them.
        </para>
       </listitem>
 

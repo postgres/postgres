@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.82 2006/03/05 15:58:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.83 2006/05/30 14:09:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "dynloader.h"
 #include "miscadmin.h"
 #include "utils/dynamic_loader.h"
-
+#include "pgmagic.h"
 
 /*
  * List of dynamically loaded files (kept in malloc'd memory).
@@ -59,6 +59,9 @@ static bool file_exists(const char *name);
 static char *find_in_dynamic_libpath(const char *basename);
 static char *expand_dynamic_library_name(const char *name);
 static char *substitute_libpath_macro(const char *name);
+
+/* Magic structure that module needs to match to be accepted */
+static Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
 
 /*
  * Load the specified dynamic-link library file, and look for a function
@@ -116,6 +119,7 @@ load_external_function(char *filename, char *funcname,
 
 	if (file_scanner == NULL)
 	{
+		PGModuleMagicFunction magic_func;
 		/*
 		 * File not loaded yet.
 		 */
@@ -146,6 +150,45 @@ load_external_function(char *filename, char *funcname,
 							fullname, load_error)));
 		}
 
+		/* Check the magic function to determine compatability */
+		magic_func = pg_dlsym( file_scanner->handle, PG_MAGIC_FUNCTION_NAME_STRING );
+		if( magic_func )
+		{
+			Pg_magic_struct *module_magic_data = magic_func();
+			if( module_magic_data->len != magic_data.len ||
+			    memcmp( module_magic_data, &magic_data, magic_data.len ) != 0 )
+			{
+				pg_dlclose( file_scanner->handle );
+				
+				if( module_magic_data->len != magic_data.len )
+					ereport(ERROR,
+						(errmsg("incompatible library \"%s\": Magic block length mismatch",
+								fullname)));
+				if( module_magic_data->version != magic_data.version )
+					ereport(ERROR,
+						(errmsg("incompatible library \"%s\": Version mismatch",
+								fullname),
+						 errdetail("Expected %d.%d, got %d.%d", 
+						 	magic_data.version/100, magic_data.version % 100,
+						 	module_magic_data->version/100, module_magic_data->version % 100)));
+						 	
+				if( module_magic_data->magic != magic_data.magic )
+					ereport(ERROR,
+						(errmsg("incompatible library \"%s\": Magic constant mismatch",
+								fullname),
+					 errdetail("Expected 0x%08X, got 0x%08X", 
+						magic_data.magic, magic_data.magic)));
+				/* Should never get here */
+				ereport(ERROR,(errmsg("incompatible library \"%s\": Reason unknown",
+								fullname)));
+			}
+		}
+		else
+		/* Currently we do not penalize modules for not having a
+		   magic block, it would break every external module in
+		   existance. At some point though... */
+			ereport(LOG, (errmsg("external library \"%s\" did not have magic block", fullname )));
+		
 		/* OK to link it into list */
 		if (file_list == NULL)
 			file_list = file_scanner;

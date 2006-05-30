@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.65 2006/01/11 20:12:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.66 2006/05/30 14:09:32 momjian Exp $
  */
 
 #include "postgres.h"
@@ -9,6 +9,7 @@
 #include "utils/geo_decls.h"	/* includes <math.h> */
 #include "executor/executor.h"	/* For GetAttributeByName */
 #include "commands/sequence.h"	/* for nextval() */
+#include "pgmagic.h"
 
 #define P_MAXDIG 12
 #define LDELIM			'('
@@ -27,7 +28,7 @@ extern int	oldstyle_length(int n, text *t);
 extern Datum int44in(PG_FUNCTION_ARGS);
 extern Datum int44out(PG_FUNCTION_ARGS);
 
-
+PG_MODULE_MAGIC;
 /*
  * Distance from a point to a path
  */
