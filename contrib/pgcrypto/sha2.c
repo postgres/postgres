@@ -33,7 +33,7 @@
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.5 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.6 2006/05/30 12:56:45 momjian Exp $
  */
 
 #include "postgres.h"
@@ -163,9 +163,9 @@
  * library -- they are intended for private internal visibility/use
  * only.
  */
-void		SHA512_Last(SHA512_CTX *);
-void		SHA256_Transform(SHA256_CTX *, const uint8 *);
-void		SHA512_Transform(SHA512_CTX *, const uint8 *);
+static void SHA512_Last(SHA512_CTX *);
+static void SHA256_Transform(SHA256_CTX *, const uint8 *);
+static void SHA512_Transform(SHA512_CTX *, const uint8 *);
 
 
 /*** SHA-XYZ INITIAL HASH VALUES AND CONSTANTS ************************/
@@ -307,7 +307,7 @@ SHA256_Init(SHA256_CTX * context)
 	j++;									\
 } while(0)
 
-void
+static void
 SHA256_Transform(SHA256_CTX * context, const uint8 *data)
 {
 	uint32		a,
@@ -378,7 +378,7 @@ SHA256_Transform(SHA256_CTX * context, const uint8 *data)
 }
 #else							/* SHA2_UNROLL_TRANSFORM */
 
-void
+static void
 SHA256_Transform(SHA256_CTX * context, const uint8 *data)
 {
 	uint32		a,
@@ -631,7 +631,7 @@ SHA512_Init(SHA512_CTX * context)
 	j++;									\
 } while(0)
 
-void
+static void
 SHA512_Transform(SHA512_CTX * context, const uint8 *data)
 {
 	uint64		a,
@@ -699,7 +699,7 @@ SHA512_Transform(SHA512_CTX * context, const uint8 *data)
 }
 #else							/* SHA2_UNROLL_TRANSFORM */
 
-void
+static void
 SHA512_Transform(SHA512_CTX * context, const uint8 *data)
 {
 	uint64		a,
@@ -842,7 +842,7 @@ SHA512_Update(SHA512_CTX * context, const uint8 *data, size_t len)
 	usedspace = freespace = 0;
 }
 
-void
+static void
 SHA512_Last(SHA512_CTX * context)
 {
 	unsigned int usedspace;
