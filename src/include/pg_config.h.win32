@@ -23,6 +23,9 @@
 #define HAVE_RANDOM
 #endif
 
+#undef inline
+#define inline __inline
+
 /* use _snprintf and _vsnprintf */
 #define HAVE_DECL_SNPRINTF 1
 #define snprintf        _snprintf
