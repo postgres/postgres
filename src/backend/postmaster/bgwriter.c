@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.23 2006/03/05 15:58:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.24 2006/05/30 13:58:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -613,7 +613,7 @@ RequestCheckpoint(bool waitforit, bool warnontime)
 		if (bgs->ckpt_failed != old_failed)
 			ereport(ERROR,
 					(errmsg("checkpoint request failed"),
-					 errhint("Consult the server log for details.")));
+					 errhint("Consult recent messages in the server log for details.")));
 	}
 }
 
