@@ -221,6 +221,7 @@ __DATA__
 /* Replace: 0 */
 #endif
 
+#ifndef PERL_UNUSED_DECL
 #ifdef HASATTRIBUTE
 #if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
 #define PERL_UNUSED_DECL
@@ -229,6 +230,7 @@ __DATA__
 #endif
 #else
 #define PERL_UNUSED_DECL
+#endif
 #endif
 
 #ifndef dNOOP
