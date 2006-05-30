@@ -1,0 +1,47 @@
+PostgreSQL Administration Functions
+===================================
+
+This directory is a PostgreSQL 'contrib' module which implements a number of
+support functions which pgAdmin and other administration and management tools
+can use to provide additional functionality if installed on a server. 
+
+Installation
+============
+
+This module is normally distributed as a PostgreSQL 'contrib' module. To
+install it from a pre-configured source tree run the following commands
+as a user with appropriate privileges from the adminpack source directory:
+
+make
+make install
+
+Alternatively, if you have a PostgreSQL 8.2 or higher installation but no 
+source tree you can install using PGXS. Simply run the following commands the
+adminpack source directory:
+ 
+make USE_PGXS=1 
+make USE_PGXS=1 install 
+
+pgAdmin will look for the functions in the Maintenance Database (usually 
+"postgres" for 8.2 servers) specified in the connection dialogue for the server. 
+To install the functions in the database, either run the adminpack.sql script 
+using the pgAdmin SQL tool (and then close and reopen the connection to the 
+freshly instrumented server), or run the script using psql, eg:
+
+psql -U postgres postgres < adminpack.sql
+
+Other administration tools that use this module may have different requirements,
+please consult the tool's documentation for further details.
+
+Objects implemented (superuser only)
+====================================
+
+int8 pg_catalog.pg_file_write(fname text, data text, append bool)
+int8 pg_catalog.pg_file_read(fname text, data text, append bool)
+bool pg_catalog.pg_file_rename(oldname text, newname text)
+bool pg_catalog.pg_file_rename(oldname text, newname text, archivname text)
+bool pg_catalog.pg_file_unlink(fname text)
+bigint pg_catalog.pg_file_size(text)
+int4 pg_catalog.pg_logfile_rotate()
+setof record pg_catalog.pg_logdir_ls()
+
