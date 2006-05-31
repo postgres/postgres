@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.163 2006/05/31 11:35:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.164 2006/05/31 11:47:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -615,7 +615,7 @@ testdb=&gt;
     <para>
     To include whitespace into an argument you may quote it with a
     single quote. To include a single quote into such an argument,
-    precede it by a backslash. Anything contained in single quotes is
+    use two single quotes. Anything contained in single quotes is
     furthermore subject to C-like substitutions for
     <literal>\n</literal> (new line), <literal>\t</literal> (tab),
     <literal>\</literal><replaceable>digits</replaceable> (octal), and
