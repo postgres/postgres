@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.162 2006/05/26 19:51:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.163 2006/05/31 11:35:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2262,7 +2262,7 @@ testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
     copy the contents of a file into a table column. First load the file into a
     variable and then proceed as above.
 <programlisting>
-testdb=&gt; <userinput>\set content '\'' `cat my_file.txt` '\''</userinput>
+testdb=&gt; <userinput>\set content '''' `cat my_file.txt` ''''</userinput>
 testdb=&gt; <userinput>INSERT INTO my_table VALUES (:content);</userinput>
 </programlisting>
     One possible problem with this approach is that <filename>my_file.txt</filename>
@@ -2270,14 +2270,14 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:content);</userinput>
     they don't cause a syntax error when the second line is processed. This
     could be done with the program <command>sed</command>:
 <programlisting>
-testdb=&gt; <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" &lt; my_file.txt` '\''</userinput>
+testdb=&gt; <userinput>\set content '''' `sed -e "s/'/\\\\''/g" &lt; my_file.txt` ''''</userinput>
 </programlisting>
     Observe the correct number of backslashes (6)! It works
     this way: After <application>psql</application> has parsed this
-    line, it passes <literal>sed -e "s/'/\\\'/g" &lt; my_file.txt</literal>
+    line, it passes <literal>sed -e "s/'/\\''/g" &lt; my_file.txt</literal>
     to the shell. The shell will do its own thing inside the double
     quotes and execute <command>sed</command> with the arguments
-    <literal>-e</literal> and <literal>s/'/\\'/g</literal>. When
+    <literal>-e</literal> and <literal>s/'/''/g</literal>. When
     <command>sed</command> parses this it will replace the two
     backslashes with a single one and then do the substitution. Perhaps
     at one point you thought it was great that all Unix commands use the

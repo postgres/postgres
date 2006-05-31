@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.18 2006/05/11 19:15:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.19 2006/05/31 11:35:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,6 +860,9 @@ other			.
 	/* single-quoted text: copy literally except for backslash sequences */
 
 {quote}			{ return LEXRES_OK; }
+
+    /* We don't need a state here because we are already in a string */
+{xqdouble}		{ emit("'", 1); }
 
 "\\n"			{ appendPQExpBufferChar(output_buf, '\n'); }
 "\\t"			{ appendPQExpBufferChar(output_buf, '\t'); }
