@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.114 2006/05/30 21:21:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.115 2006/05/31 20:58:09 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1912,6 +1912,41 @@ concat_text(PG_FUNCTION_ARGS)
 
       <listitem>
        <para>
+        To ensure your module is not loaded into an incompatible server,
+        it must include a <quote>magic block</>.  This allows
+        the server to detect obvious incompatibilities, such as a module
+        compiled for a different major version of
+        <productname>PostgreSQL</productname>.  A magic block is required
+        as of <productname>PostgreSQL</productname> 8.2.  To include a magic
+        block, write this in one (and only one) of your module source files,
+        after having included the header <filename>fmgr.h</>:
+       </para>
+
+<programlisting>
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
+</programlisting>
+
+       <para>
+        The <literal>#ifdef</> test can be omitted if your code doesn't
+        need to compile against pre-8.2 <productname>PostgreSQL</productname>
+        releases.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Compiling and linking your code so that it can be dynamically
+        loaded into <productname>PostgreSQL</productname> always
+        requires special flags.  See <xref linkend="dfunc"> for a
+        detailed explanation of how to do it for your particular
+        operating system.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         When allocating memory, use the
         <productname>PostgreSQL</productname> functions
         <function>palloc</function><indexterm><primary>palloc</></> and <function>pfree</function><indexterm><primary>pfree</></>
@@ -1958,41 +1993,6 @@ concat_text(PG_FUNCTION_ARGS)
         <productname>PostgreSQL</productname> server executable.  You
         will have to rename your functions or variables if you get
         error messages to this effect.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        To ensure your module is not loaded into an incompatible server, it
-        is recommended to include a <quote>magic block</>.  This allows
-        the server to detect obvious incompatibilities, such as a module
-        compiled for a different major version of
-        <productname>PostgreSQL</productname>.  It is likely that magic
-        blocks will be required in future releases.  To include a magic
-        block, write this in one (and only one) of your module source files,
-        after having included the header <filename>fmgr.h</>:
-       </para>
-
-<programlisting>
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
-#endif
-</programlisting>
-
-       <para>
-        The <literal>#ifdef</> test can be omitted if your code doesn't
-        need to compile against pre-8.2 <productname>PostgreSQL</productname>
-        releases.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Compiling and linking your code so that it can be dynamically
-        loaded into <productname>PostgreSQL</productname> always
-        requires special flags.  See <xref linkend="dfunc"> for a
-        detailed explanation of how to do it for your particular
-        operating system.
        </para>
       </listitem>
      </itemizedlist>

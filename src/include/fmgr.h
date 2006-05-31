@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.44 2006/05/30 21:21:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.45 2006/05/31 20:58:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,14 +314,14 @@ extern int no_such_variable
 /*-------------------------------------------------------------------------
  *		Support for verifying backend compatibility of loaded modules
  *
- * If a loaded module includes the macro call
+ * We require dynamically-loaded modules to include the macro call
  *		PG_MODULE_MAGIC;
- * (put this in only one source file), then we can check for obvious
- * incompatibility, such as being compiled for a different major PostgreSQL
- * version.
+ * so that we can check for obvious incompatibility, such as being compiled
+ * for a different major PostgreSQL version.
  *
  * To compile with versions of PostgreSQL that do not support this,
- * you may put an #ifdef/#endif test around it.
+ * you may put an #ifdef/#endif test around it.  Note that in a multiple-
+ * source-file module, the macro call should only appear once.
  * 
  * The specific items included in the magic block are intended to be ones that
  * are custom-configurable and especially likely to break dynamically loaded

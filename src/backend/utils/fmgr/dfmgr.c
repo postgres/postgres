@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.84 2006/05/30 21:21:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.85 2006/05/31 20:58:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,14 +188,14 @@ load_external_function(char *filename, char *funcname,
 		}
 		else
 		{
-			/*
-			 * Currently we do not reject modules for not having a
-			 * magic block, it would break every external module in
-			 * existence. At some point though, this will become an ERROR.
-			 */
-			ereport(LOG,
-					(errmsg("library \"%s\" does not have a magic block",
-							fullname)));
+			/* try to unlink library */
+			pg_dlclose(file_scanner->handle);
+			free((char *) file_scanner);
+			/* complain */
+			ereport(ERROR,
+					(errmsg("incompatible library \"%s\": missing magic block",
+							fullname),
+					 errhint("Extension libraries are now required to use the PG_MODULE_MAGIC macro.")));
 		}
 		
 		/* OK to link it into list */
