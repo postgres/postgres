@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.164 2006/05/31 11:47:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.165 2006/05/31 22:34:35 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2265,27 +2265,24 @@ testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
 testdb=&gt; <userinput>\set content '''' `cat my_file.txt` ''''</userinput>
 testdb=&gt; <userinput>INSERT INTO my_table VALUES (:content);</userinput>
 </programlisting>
-    One possible problem with this approach is that <filename>my_file.txt</filename>
+    One problem with this approach is that <filename>my_file.txt</filename>
     might contain single quotes. These need to be escaped so that
     they don't cause a syntax error when the second line is processed. This
     could be done with the program <command>sed</command>:
 <programlisting>
-testdb=&gt; <userinput>\set content '''' `sed -e "s/'/\\\\''/g" &lt; my_file.txt` ''''</userinput>
+testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" &lt; my_file.txt` ''''</userinput>
 </programlisting>
-    Observe the correct number of backslashes (6)! It works
-    this way: After <application>psql</application> has parsed this
-    line, it passes <literal>sed -e "s/'/\\''/g" &lt; my_file.txt</literal>
-    to the shell. The shell will do its own thing inside the double
-    quotes and execute <command>sed</command> with the arguments
-    <literal>-e</literal> and <literal>s/'/''/g</literal>. When
-    <command>sed</command> parses this it will replace the two
-    backslashes with a single one and then do the substitution. Perhaps
+    If you are using non-standard-conforming strings then you'll also need
+    to double backslashes.  This is a bit tricky:
+<programlisting>
+testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" -e 's/\\/\\\\/g' &lt; my_file.txt` ''''</userinput>
+</programlisting>
+    Note the use of different shell quoting conventions so that neither
+    the single quote marks nor the backslashes are special to the shell.
+    Backslashes are still special to <command>sed</command>, however, so
+    we need to double them.  (Perhaps
     at one point you thought it was great that all Unix commands use the
-    same escape character. And this is ignoring the fact that you might
-    have to escape all backslashes as well because
-    <acronym>SQL</acronym> text constants are also subject to certain
-    interpretations. In that case you might be better off preparing the
-    file externally.
+    same escape character.)
     </para>
 
     <para>
