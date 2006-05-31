@@ -281,15 +281,15 @@ name2id_cfg(text *name)
 	return id;
 }
 
-
 void
 parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 {
 	int			type,
-				lenlemm,
-				i;
+				lenlemm;
 	char	   *lemm = NULL;
 	WParserInfo *prsobj = findprs(cfg->prs_id);
+	LexizeData	ldata;
+	TSLexeme   *norms;
 
 	prsobj->prs = (void *) DatumGetPointer(
 										   FunctionCall2(
@@ -299,14 +299,16 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 														 )
 		);
 
-	while ((type = DatumGetInt32(FunctionCall3(
+	LexizeInit(&ldata, cfg);
+
+	do {
+		type = DatumGetInt32(FunctionCall3(
 											   &(prsobj->getlexeme_info),
 											   PointerGetDatum(prsobj->prs),
 											   PointerGetDatum(&lemm),
-										   PointerGetDatum(&lenlemm)))) != 0)
-	{
+										   PointerGetDatum(&lenlemm)));
 
-		if (lenlemm >= MAXSTRLEN)
+		if (type>0 && lenlemm >= MAXSTRLEN)
 		{
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
@@ -320,25 +322,11 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 #endif
 		}
 
-		if (type >= cfg->len)	/* skip this type of lexeme */
-			continue;
+		LexizeAddLemm(&ldata, type, lemm, lenlemm);
 
-		for (i = 0; i < cfg->map[type].len; i++)
+		while(  (norms = LexizeExec(&ldata, NULL)) != NULL )
 		{
-			DictInfo   *dict = finddict(DatumGetObjectId(cfg->map[type].dict_id[i]));
-			TSLexeme   *norms,
-					   *ptr;
-
-			norms = ptr = (TSLexeme *) DatumGetPointer(
-													   FunctionCall3(
-														&(dict->lexize_info),
-										   PointerGetDatum(dict->dictionary),
-													   PointerGetDatum(lemm),
-													 PointerGetDatum(lenlemm)
-																	 )
-				);
-			if (!norms)			/* dictionary doesn't know this lexeme */
-				continue;
+			TSLexeme *ptr = norms;
 
 			prs->pos++;			/* set pos */
 
@@ -350,6 +338,8 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 					prs->words = (TSWORD *) repalloc((void *) prs->words, prs->lenwords * sizeof(TSWORD));
 				}
 
+				if ( ptr->flags & TSL_ADDPOS )
+					prs->pos++;
 				prs->words[prs->curwords].len = strlen(ptr->lexeme);
 				prs->words[prs->curwords].word = ptr->lexeme;
 				prs->words[prs->curwords].nvariant = ptr->nvariant;
@@ -359,9 +349,8 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 				prs->curwords++;
 			}
 			pfree(norms);
-			break;				/* lexeme already normalized or is stop word */
-		}
 	}
+	} while(type>0);
 
 	FunctionCall1(
 				  &(prsobj->end_info),
@@ -417,14 +406,47 @@ hlfinditem(HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int buflen)
 	}
 }
 
+static void
+addHLParsedLex(HLPRSTEXT *prs, QUERYTYPE * query, ParsedLex *lexs, TSLexeme *norms) {
+	ParsedLex	*tmplexs;
+	TSLexeme *ptr;
+
+	while( lexs ) {
+		
+		if ( lexs->type > 0 ) 
+			hladdword(prs, lexs->lemm, lexs->lenlemm, lexs->type);
+
+		ptr = norms;
+		while( ptr && ptr->lexeme ) {
+			hlfinditem(prs, query, ptr->lexeme, strlen(ptr->lexeme));
+			ptr++;
+		}
+
+		tmplexs = lexs->next;
+		pfree( lexs );
+		lexs = tmplexs;
+	}
+
+	if ( norms ) {
+		ptr = norms;
+		while( ptr->lexeme ) {
+			pfree( ptr->lexeme );
+			ptr++;
+		}
+		pfree(norms);
+	}
+}
+
 void
 hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4 buflen)
 {
 	int			type,
-				lenlemm,
-				i;
+				lenlemm;
 	char	   *lemm = NULL;
 	WParserInfo *prsobj = findprs(cfg->prs_id);
+	LexizeData	ldata;
+	TSLexeme	*norms;
+	ParsedLex	*lexs;
 
 	prsobj->prs = (void *) DatumGetPointer(
 										   FunctionCall2(
@@ -434,14 +456,16 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 														 )
 		);
 
-	while ((type = DatumGetInt32(FunctionCall3(
+	LexizeInit(&ldata, cfg);
+
+	do {
+		type = DatumGetInt32(FunctionCall3(
 											   &(prsobj->getlexeme_info),
 											   PointerGetDatum(prsobj->prs),
 											   PointerGetDatum(&lemm),
-										   PointerGetDatum(&lenlemm)))) != 0)
-	{
+									PointerGetDatum(&lenlemm)));
 
-		if (lenlemm >= MAXSTRLEN)
+		if (type>0 && lenlemm >= MAXSTRLEN)
 		{
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
@@ -455,38 +479,16 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 #endif
 		}
 
-		hladdword(prs, lemm, lenlemm, type);
+		LexizeAddLemm(&ldata, type, lemm, lenlemm);
 
-		if (type >= cfg->len)
-			continue;
+		do {
+			if ( (norms = LexizeExec(&ldata,&lexs)) != NULL ) 
+				addHLParsedLex(prs, query, lexs, norms);
+			else 
+				addHLParsedLex(prs, query, lexs, NULL);
+		} while( norms );
 
-		for (i = 0; i < cfg->map[type].len; i++)
-		{
-			DictInfo   *dict = finddict(DatumGetObjectId(cfg->map[type].dict_id[i]));
-			TSLexeme   *norms,
-					   *ptr;
-
-			norms = ptr = (TSLexeme *) DatumGetPointer(
-													   FunctionCall3(
-														&(dict->lexize_info),
-										   PointerGetDatum(dict->dictionary),
-													   PointerGetDatum(lemm),
-													 PointerGetDatum(lenlemm)
-																	 )
-				);
-			if (!norms)			/* dictionary doesn't know this lexeme */
-				continue;
-
-			while (ptr->lexeme)
-			{
-				hlfinditem(prs, query, ptr->lexeme, strlen(ptr->lexeme));
-				pfree(ptr->lexeme);
-				ptr++;
-			}
-			pfree(norms);
-			break;				/* lexeme already normalized or is stop word */
-		}
-	}
+	} while( type>0 );
 
 	FunctionCall1(
 				  &(prsobj->end_info),

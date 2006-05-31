@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict.c,v 1.11 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict.c,v 1.12 2006/05/31 14:05:31 teodor Exp $ */
 
 /*
  * interface functions to dictionary
@@ -50,16 +50,19 @@ init_dict(Oid id, DictInfo * dict)
 		Datum		opt;
 		Oid			oid = InvalidOid;
 
+		/* setup dictlexize method */
+		oid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 3, &isnull));
+		if (isnull || oid == InvalidOid)
+			ts_error(ERROR, "Null dict_lexize for dictonary %d", id);
+		fmgr_info_cxt(oid, &(dict->lexize_info), TopMemoryContext);
+
+		/* setup and call dictinit method, optinally */
 		oid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
 		if (!(isnull || oid == InvalidOid))
 		{
 			opt = SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 2, &isnull);
 			dict->dictionary = (void *) DatumGetPointer(OidFunctionCall1(oid, opt));
 		}
-		oid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 3, &isnull));
-		if (isnull || oid == InvalidOid)
-			ts_error(ERROR, "Null dict_lexize for dictonary %d", id);
-		fmgr_info_cxt(oid, &(dict->lexize_info), TopMemoryContext);
 		dict->dict_id = id;
 	}
 	else
@@ -98,6 +101,29 @@ comparedict(const void *a, const void *b)
 	return (((DictInfo *) a)->dict_id < ((DictInfo *) b)->dict_id) ? -1 : 1;
 }
 
+static void
+insertdict(Oid id) {
+	DictInfo	newdict;
+
+	if (DList.len == DList.reallen)
+	{
+		DictInfo   *tmp;
+		int			reallen = (DList.reallen) ? 2 * DList.reallen : 16;
+
+		tmp = (DictInfo *) realloc(DList.list, sizeof(DictInfo) * reallen);
+		if (!tmp)
+			ts_error(ERROR, "No memory");
+		DList.reallen = reallen;
+		DList.list = tmp;
+	}
+	init_dict(id, &newdict);
+
+	DList.list[DList.len] = newdict;
+	DList.len++;
+
+	qsort(DList.list, DList.len, sizeof(DictInfo), comparedict);
+}
+
 DictInfo *
 finddict(Oid id)
 {
@@ -117,23 +143,8 @@ finddict(Oid id)
 			return DList.last_dict;
 	}
 
-	/* last chance */
-	if (DList.len == DList.reallen)
-	{
-		DictInfo   *tmp;
-		int			reallen = (DList.reallen) ? 2 * DList.reallen : 16;
-
-		tmp = (DictInfo *) realloc(DList.list, sizeof(DictInfo) * reallen);
-		if (!tmp)
-			ts_error(ERROR, "No memory");
-		DList.reallen = reallen;
-		DList.list = tmp;
-	}
-	DList.last_dict = &(DList.list[DList.len]);
-	init_dict(id, DList.last_dict);
-
-	DList.len++;
-	qsort(DList.list, DList.len, sizeof(DictInfo), comparedict);
+	/* insert new dictionary */ 
+	insertdict(id);
 	return finddict(id); /* qsort changed order!! */ ;
 }
 
@@ -190,17 +201,32 @@ lexize(PG_FUNCTION_ARGS)
 			   *ptr;
 	Datum	   *da;
 	ArrayType  *a;
+	DictSubState	dstate = { false, false, NULL };
 
 	SET_FUNCOID();
 	dict = finddict(PG_GETARG_OID(0));
 
 	ptr = res = (TSLexeme *) DatumGetPointer(
-										  FunctionCall3(&(dict->lexize_info),
-										   PointerGetDatum(dict->dictionary),
-												PointerGetDatum(VARDATA(in)),
-										Int32GetDatum(VARSIZE(in) - VARHDRSZ)
+										FunctionCall4(&(dict->lexize_info),
+										PointerGetDatum(dict->dictionary),
+										PointerGetDatum(VARDATA(in)),
+										Int32GetDatum(VARSIZE(in) - VARHDRSZ),
+										PointerGetDatum(&dstate)
 														)
 		);
+
+	if (dstate.getnext)  {
+		dstate.isend = true;	
+		ptr = res = (TSLexeme *) DatumGetPointer(
+										FunctionCall4(&(dict->lexize_info),
+										   PointerGetDatum(dict->dictionary),
+												PointerGetDatum(VARDATA(in)),
+										Int32GetDatum(VARSIZE(in) - VARHDRSZ),
+										PointerGetDatum(&dstate)
+														)
+		);
+	}
+
 	PG_FREE_IF_COPY(in, 1);
 	if (!res)
 	{

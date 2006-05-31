@@ -1,9 +1,10 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict.h,v 1.6 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict.h,v 1.7 2006/05/31 14:05:31 teodor Exp $ */
 
 #ifndef __DICT_H__
 #define __DICT_H__
 #include "postgres.h"
 #include "fmgr.h"
+#include "ts_cfg.h"
 
 typedef struct
 {
@@ -29,6 +30,11 @@ DictInfo   *finddict(Oid id);
 Oid			name2id_dict(text *name);
 void		reset_dict(void);
 
+typedef struct {
+	bool isend; /* in: marks for lexize_info about text end is reached */
+	bool getnext; /* out: dict wants next lexeme */
+	void	*private;  /* internal dict state between calls with getnext == true */
+} DictSubState;
 
 /* simple parser of cfg string */
 typedef struct
@@ -45,17 +51,61 @@ typedef struct
 	/*
 	 * number of variant of split word , for example Word 'fotballklubber'
 	 * (norwegian) has two varian to split: ( fotball, klubb ) and ( fot,
-	 * ball, klubb ). So, dictionary should return: nvariant	lexeme 1
-	 * fotball 1	   klubb 2		 fot 2		 ball 2		  klubb
-	 *
+	 * ball, klubb ). So, dictionary should return: 
+	 * nvariant	lexeme 
+	 *   1 		fotball 
+	 *   1	   	klubb 
+	 *	 2		fot 
+	 *	 2		ball 
+	 *   2		klubb
 	 */
 	uint16		nvariant;
 
-	/* currently unused */
 	uint16		flags;
 
 	/* C-string */
 	char	   *lexeme;
 }	TSLexeme;
+
+#define TSL_ADDPOS		0x01
+
+
+/*
+ * Lexize subsystem
+ */
+
+typedef struct ParsedLex {
+    int     	type;
+    char    	*lemm;
+    int     	lenlemm;
+	bool		resfollow;
+    struct ParsedLex *next;
+} ParsedLex;
+
+typedef struct ListParsedLex {
+	ParsedLex	*head;
+	ParsedLex	*tail;
+} ListParsedLex;
+
+typedef struct {
+    TSCfgInfo       *cfg;
+    Oid             curDictId;
+    int             posDict;
+    DictSubState    dictState;
+    ParsedLex       *curSub;
+	ListParsedLex	towork;   /* current list to work */
+	ListParsedLex	waste;    /* list of lexemes that already lexized */
+
+	/* fields to store last variant to lexize (basically, thesaurus 
+	   or similar to, which wants  several lexemes */	
+	   
+	ParsedLex		*lastRes;
+	TSLexeme		*tmpRes;
+} LexizeData;
+
+
+void LexizeInit(LexizeData *ld, TSCfgInfo *cfg);
+void LexizeAddLemm(LexizeData *ld, int type, char *lemm, int lenlemm);
+TSLexeme* LexizeExec(LexizeData *ld, ParsedLex **correspondLexem);
 
 #endif

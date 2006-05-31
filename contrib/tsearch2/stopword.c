@@ -4,8 +4,6 @@
  */
 #include "postgres.h"
 
-#include "miscadmin.h"
-
 #include "common.h"
 #include "dict.h"
 #include "ts_locale.h"
@@ -36,29 +34,10 @@ readstoplist(text *in, StopList * s)
 	s->len = 0;
 	if (in && VARSIZE(in) - VARHDRSZ > 0)
 	{
-		char	   *filename = text2char(in);
+		char	   *filename = to_absfilename(text2char(in));
 		FILE	   *hin;
 		char		buf[STOPBUFLEN];
 		int			reallen = 0;
-
-		/* if path is relative, take it as relative to share dir */
-		if (!is_absolute_path(filename))
-		{
-			char		sharepath[MAXPGPATH];
-			char	   *absfn;
-#ifdef	WIN32
-			char	delim = '\\';
-#else
-			char 	delim = '/';
-#endif
-
-			get_share_path(my_exec_path, sharepath);
-			absfn = palloc(strlen(sharepath) + strlen(filename) + 2);
-			sprintf(absfn, "%s%c%s", sharepath, delim, filename);
-
-			pfree(filename);
-			filename = absfn;
-		}
 
 		if ((hin = fopen(filename, "r")) == NULL)
 			ereport(ERROR,

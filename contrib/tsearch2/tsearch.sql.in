@@ -146,6 +146,25 @@ insert into pg_ts_dict select
 	'Example of synonym dictionary'
 ;
 
+CREATE FUNCTION thesaurus_init(internal)
+	RETURNS internal
+	as 'MODULE_PATHNAME' 
+	LANGUAGE C;
+
+CREATE FUNCTION thesaurus_lexize(internal,internal,int4,internal)
+	RETURNS internal
+	as 'MODULE_PATHNAME'
+	LANGUAGE C
+	RETURNS NULL ON NULL INPUT;
+
+insert into pg_ts_dict select 
+	'thesaurus_template', 
+	'thesaurus_init(internal)',
+	null,
+	'thesaurus_lexize(internal,internal,int4,internal)',
+	'Thesaurus template, must be pointed Dictionary and DictFile'
+;
+
 --dict conf
 CREATE TABLE pg_ts_parser (
 	prs_name	text not null primary key,
@@ -1193,7 +1212,11 @@ AS
 
 --example of ISpell dictionary
 --update pg_ts_dict set dict_initoption='DictFile="/usr/local/share/ispell/russian.dict" ,AffFile ="/usr/local/share/ispell/russian.aff", StopFile="/usr/local/share/ispell/russian.stop"' where dict_name='ispell_template';
---example of synonym dict
---update pg_ts_dict set dict_initoption='/usr/local/share/ispell/english.syn' where dict_id=5;
 
+--example of synonym dict
+--update pg_ts_dict set dict_initoption='/usr/local/share/ispell/english.syn' where dict_name='synonym';
+
+--example of thesaurus dict
+--update pg_ts_dict set dict_initoption='DictFile="contrib/thesaurus", Dictionary="en_stem"' where dict_name='thesaurus_template';
+--update pg_ts_cfgmap set dict_name = '{thesaurus_template,en_stem}' where dict_name = '{en_stem}';
 END;

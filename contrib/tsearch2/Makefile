@@ -1,13 +1,13 @@
-# $PostgreSQL: pgsql/contrib/tsearch2/Makefile,v 1.14 2006/05/02 11:28:54 teodor Exp $
+# $PostgreSQL: pgsql/contrib/tsearch2/Makefile,v 1.15 2006/05/31 14:05:31 teodor Exp $
 
 MODULE_big = tsearch2
 OBJS = dict_ex.o dict.o snmap.o stopword.o common.o prs_dcfg.o \
-       dict_snowball.o dict_ispell.o dict_syn.o \
+       dict_snowball.o dict_ispell.o dict_syn.o dict_thesaurus.o \
        wparser.o wparser_def.o \
        ts_cfg.o tsvector.o query_cleanup.o crc32.o query.o gistidx.o \
        tsvector_op.o rank.o ts_stat.o \
        query_util.o query_support.o query_rewrite.o query_gist.o \
-       ts_locale.o ginidx.o
+       ts_locale.o ts_lexize.o ginidx.o
 
 SUBDIRS     := snowball ispell wordparser
 SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)
@@ -16,7 +16,7 @@ OBJS	+= $(SUBDIROBJS)
 
 PG_CPPFLAGS = -I$(srcdir)/snowball -I$(srcdir)/ispell -I$(srcdir)/wordparser
 
-DATA = stopword/english.stop stopword/russian.stop stopword/russian.stop.utf8
+DATA = stopword/english.stop stopword/russian.stop stopword/russian.stop.utf8 thesaurus
 DATA_built = tsearch2.sql untsearch2.sql
 DOCS = README.tsearch2
 REGRESS = tsearch2

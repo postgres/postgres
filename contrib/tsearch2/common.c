@@ -5,6 +5,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_namespace.h"
 #include "utils/syscache.h"
+#include "miscadmin.h"
 
 #include "ts_cfg.h"
 #include "dict.h"
@@ -162,4 +163,24 @@ get_oidnamespace(Oid funcoid)
 	ReleaseSysCache(tuple);
 
 	return nspoid;
+}
+
+    /* if path is relative, take it as relative to share dir */
+char *
+to_absfilename(char *filename) {
+	if (!is_absolute_path(filename)) {
+		char        sharepath[MAXPGPATH];
+		char       *absfn;
+#ifdef  WIN32
+		char    delim = '\\';
+#else
+		char    delim = '/';
+#endif
+		get_share_path(my_exec_path, sharepath);
+		absfn = palloc(strlen(sharepath) + strlen(filename) + 2);
+		sprintf(absfn, "%s%c%s", sharepath, delim, filename);
+		filename = absfn;
+	}
+
+	return filename;
 }

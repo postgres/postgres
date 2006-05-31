@@ -16,6 +16,8 @@ text	   *mtextdup(text *in);
 
 int			text_cmp(text *a, text *b);
 
+char * to_absfilename(char *filename);
+
 #define NEXTVAL(x) ( (text*)( (char*)(x) + INTALIGN( VARSIZE(x) ) ) )
 #define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
 
