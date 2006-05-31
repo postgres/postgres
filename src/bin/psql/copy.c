@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.61 2006/05/26 19:51:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.62 2006/05/31 11:02:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -216,7 +216,7 @@ parse_slash_copy(const char *args)
 		goto error;
 
 	token = strtokx(NULL, whitespace, NULL, "'",
-					'\\', true, pset.encoding);
+					standard_strings() ? 0 : '\\', true, pset.encoding);
 	if (!token)
 		goto error;
 
@@ -255,7 +255,7 @@ parse_slash_copy(const char *args)
 	if (token && pg_strcasecmp(token, "delimiters") == 0)
 	{
 		token = strtokx(NULL, whitespace, NULL, "'",
-						'\\', false, pset.encoding);
+						standard_strings() ? 0 : '\\', false, pset.encoding);
 		if (!token)
 			goto error;
 		result->delim = pg_strdup(token);
@@ -290,10 +290,10 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "delimiter") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
-								'\\', false, pset.encoding);
+								standard_strings() ? 0 : '\\', false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									'\\', false, pset.encoding);
+									standard_strings() ? 0 : '\\', false, pset.encoding);
 				if (token)
 					result->delim = pg_strdup(token);
 				else
@@ -302,10 +302,10 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "null") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
-								'\\', false, pset.encoding);
+								standard_strings() ? 0 : '\\', false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									'\\', false, pset.encoding);
+									standard_strings() ? 0 : '\\', false, pset.encoding);
 				if (token)
 					result->null = pg_strdup(token);
 				else
@@ -314,10 +314,10 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "quote") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
-								'\\', false, pset.encoding);
+								standard_strings() ? 0 : '\\', false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									'\\', false, pset.encoding);
+									standard_strings() ? 0 : '\\', false, pset.encoding);
 				if (token)
 					result->quote = pg_strdup(token);
 				else
@@ -326,10 +326,10 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "escape") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
-								'\\', false, pset.encoding);
+								standard_strings() ? 0 : '\\', false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									'\\', false, pset.encoding);
+									standard_strings() ? 0 : '\\', false, pset.encoding);
 				if (token)
 					result->escape = pg_strdup(token);
 				else
@@ -462,20 +462,22 @@ do_copy(const char *args)
 	if (options->delim)
 	{
 		if (options->delim[0] == '\'')
-			appendPQExpBuffer(&query, " USING DELIMITERS %s",
-							  options->delim);
+			appendPQExpBuffer(&query, " USING DELIMITERS %c%s",
+							  NEED_E_STR(options->delim), options->delim);
 		else
-			appendPQExpBuffer(&query, " USING DELIMITERS '%s'",
-							  options->delim);
+			appendPQExpBuffer(&query, " USING DELIMITERS %c'%s'",
+							  NEED_E_STR(options->delim), options->delim);
 	}
 
 	/* There is no backward-compatible CSV syntax */
 	if (options->null)
 	{
 		if (options->null[0] == '\'')
-			appendPQExpBuffer(&query, " WITH NULL AS %s", options->null);
+			appendPQExpBuffer(&query, " WITH NULL AS %c%s",
+							  NEED_E_STR(options->null), options->null);
 		else
-			appendPQExpBuffer(&query, " WITH NULL AS '%s'", options->null);
+			appendPQExpBuffer(&query, " WITH NULL AS %c'%s'",
+							  NEED_E_STR(options->null), options->null);
 	}
 
 	if (options->csv_mode)
@@ -487,17 +489,21 @@ do_copy(const char *args)
 	if (options->quote)
 	{
 		if (options->quote[0] == '\'')
-			appendPQExpBuffer(&query, " QUOTE AS %s", options->quote);
+			appendPQExpBuffer(&query, " QUOTE AS %c%s",
+							  NEED_E_STR(options->quote), options->quote);
 		else
-			appendPQExpBuffer(&query, " QUOTE AS '%s'", options->quote);
+			appendPQExpBuffer(&query, " QUOTE AS %c'%s'",
+							  NEED_E_STR(options->quote), options->quote);
 	}
 
 	if (options->escape)
 	{
 		if (options->escape[0] == '\'')
-			appendPQExpBuffer(&query, " ESCAPE AS %s", options->escape);
+			appendPQExpBuffer(&query, " ESCAPE AS %c%s",
+							  NEED_E_STR(options->escape), options->escape);
 		else
-			appendPQExpBuffer(&query, " ESCAPE AS '%s'", options->escape);
+			appendPQExpBuffer(&query, " ESCAPE AS %c'%s'",
+							  NEED_E_STR(options->escape), options->escape);
 	}
 
 	if (options->force_quote_list)

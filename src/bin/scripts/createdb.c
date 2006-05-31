@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.19 2006/05/29 19:52:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.20 2006/05/31 11:02:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,6 +184,8 @@ main(int argc, char *argv[])
 	if (comment)
 	{
 		conn = connectDatabase(dbname, host, port, username, password, progname);
+
+		executeCommand(conn, "SET escape_string_warning TO 'off'", progname, false);
 
 		printfPQExpBuffer(&sql, "COMMENT ON DATABASE %s IS ", fmtId(dbname));
 		appendStringLiteralConn(&sql, comment, conn);

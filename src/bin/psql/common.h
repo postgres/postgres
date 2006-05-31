@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.47 2006/03/06 19:49:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.48 2006/05/31 11:02:42 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -21,6 +21,12 @@
 #endif
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+
+/*
+ *	We use this to prefix strings with E'' that we know are already safe,
+ *	so we don't get an escape_string_warning.
+ */
+#define	NEED_E_STR(str)		((strchr(str, '\\') && !standard_strings()) ? ESCAPE_STRING_SYNTAX : ' ')
 
 /*
  * Safer versions of some standard C library functions. If an
