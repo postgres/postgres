@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.27 2006/03/11 04:38:39 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.28 2006/05/31 08:12:48 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -19,16 +19,16 @@ PGTYPESdate_from_timestamp(timestamp dt)
 
 	dDate = 0;					/* suppress compiler warning */
 
-	if (TIMESTAMP_NOT_FINITE(dt))
-		return
-
+	if (!TIMESTAMP_NOT_FINITE(dt))
+	{
 #ifdef HAVE_INT64_TIMESTAMP
 		/* Microseconds to days */
-			dDate = (dt / USECS_PER_DAY);
+		dDate = (dt / USECS_PER_DAY);
 #else
 		/* Seconds to days */
-			dDate = (dt / (double) SECS_PER_DAY);
+		dDate = (dt / (double) SECS_PER_DAY);
 #endif
+	}
 
 	return dDate;
 }

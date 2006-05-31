@@ -2001,6 +2001,10 @@ Fri, 17 Mar 2006 16:38:19 +0100
 Mo Apr 24 11:40:05 CEST 2006
 
 	- Fixed memory leak bugs found by Martijn Oosterhout.
+
+Mi Mai 31 10:10:36 CEST 2006
+
+	- Fixed PGTYPESdate_from_timestamp because some characters got lost there
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 
