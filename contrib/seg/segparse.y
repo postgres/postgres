@@ -11,15 +11,14 @@
 
   extern int seg_yylex(void);
 
-  extern int significant_digits( char *str );    /* defined in seg.c */
+  extern int significant_digits(char *str);		/* defined in seg.c */
   
   void seg_yyerror(const char *message);
   int seg_yyparse(void *result);
 
-  float seg_atof( char *value );
+  static float seg_atof(char *value);
 
-  long threshold;
-  char strbuf[25] = {
+  static char strbuf[25] = {
     '0', '0', '0', '0', '0',
     '0', '0', '0', '0', '0',
     '0', '0', '0', '0', '0',
@@ -108,30 +107,39 @@ range:
 
 boundary:
           SEGFLOAT {
-             $$.ext = '\0';
-	     $$.sigd = significant_digits($1);
-             $$.val = seg_atof($1);
+			/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
+			float val = seg_atof($1);
+
+			$$.ext = '\0';
+			$$.sigd = significant_digits($1);
+			$$.val = val;
 	  }
       | 
 	  EXTENSION SEGFLOAT {
-             $$.ext = $1[0];
-	     $$.sigd = significant_digits($2);
-             $$.val = seg_atof($2);
+			/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
+			float val = seg_atof($2);
+
+			$$.ext = $1[0];
+			$$.sigd = significant_digits($2);
+			$$.val = val;
 	  }
       ;
 
 deviation:
           SEGFLOAT {
-             $$.ext = '\0';
-	     $$.sigd = significant_digits($1);
-             $$.val = seg_atof($1);
+			/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
+			float val = seg_atof($1);
+
+			$$.ext = '\0';
+			$$.sigd = significant_digits($1);
+			$$.val = val;
 	  }
       ;
 
 %%
 
 
-float
+static float
 seg_atof(char *value)
 {
 	Datum datum;
