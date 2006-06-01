@@ -221,6 +221,7 @@ __DATA__
 /* Replace: 0 */
 #endif
 
+#ifndef PERL_UNUSED_DECL
 #ifdef HASATTRIBUTE
 #if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
 #define PERL_UNUSED_DECL
@@ -229,6 +230,7 @@ __DATA__
 #endif
 #else
 #define PERL_UNUSED_DECL
+#endif
 #endif
 
 #ifndef dNOOP
@@ -351,7 +353,6 @@ newRV_noinc(SV *sv)
 	SvREFCNT_dec(sv);
 	return nsv;
 }
-
 #else
 #define newRV_noinc(sv)    \
 		(PL_Sv=(SV*)newRV(sv), SvREFCNT_dec(sv), (SV*)PL_Sv)
@@ -404,8 +405,8 @@ SV		   *sv;
 #endif
 
 		   newSVOP(OP_CONST, 0, newSVpv(name, 0)),
-		   newSVOP(OP_CONST, 0, &PL_sv_no),		/* SvPV(&PL_sv_no) == ""
-												 * -- GMB */
+		   newSVOP(OP_CONST, 0, &PL_sv_no),		/* SvPV(&PL_sv_no) == "" --
+												 * GMB */
 		   newSTATEOP(0, Nullch, newSVOP(OP_CONST, 0, sv))
 		);
 
@@ -484,7 +485,6 @@ SV		   *sv;
 #define aMY_CXT		my_cxtp
 #define aMY_CXT_	aMY_CXT,
 #define _aMY_CXT	,aMY_CXT
-
 #else							/* single interpreter */
 
 #define START_MY_CXT	static my_cxt_t my_cxt;
