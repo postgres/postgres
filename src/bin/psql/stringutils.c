@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/stringutils.c,v 1.42 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/stringutils.c,v 1.43 2006/06/01 01:28:00 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -32,7 +32,8 @@ static void strip_quotes(char *source, char quote, char escape, int encoding);
  * delim -		set of non-whitespace separator characters (or NULL)
  * quote -		set of characters that can quote a token (NULL if none)
  * escape -		character that can quote quotes (0 if none)
- * del_quotes - if TRUE, strip quotes from the returned token, else return
+ * e_strings -	if TRUE, treat E'...' syntax as a valid token
+ * del_quotes -	if TRUE, strip quotes from the returned token, else return
  *				it exactly as found in the string
  * encoding -	the active character-set encoding
  *
@@ -42,6 +43,9 @@ static void strip_quotes(char *source, char quote, char escape, int encoding);
  * Double occurrences of the quoting character are always taken to represent
  * a single quote character in the data.  If escape isn't 0, then escape
  * followed by anything (except \0) is a data character too.
+ *
+ * The combination of e_strings and del_quotes both TRUE is not currently
+ * handled.  This could be fixed but it's not needed anywhere at the moment.
  *
  * Note that the string s is _not_ overwritten in this implementation.
  *
@@ -55,6 +59,7 @@ strtokx(const char *s,
 		const char *delim,
 		const char *quote,
 		char escape,
+		bool e_strings,
 		bool del_quotes,
 		int encoding)
 {
@@ -126,13 +131,24 @@ strtokx(const char *s,
 		return start;
 	}
 
+	/* check for E string */
+	p = start;
+	if (e_strings &&
+		(*p == 'E' || *p == 'e') &&
+		p[1] == '\'')
+	{
+		quote = "'";
+		escape = '\\';			/* if std strings before, not any more */
+		p++;
+	}
+
 	/* test if quoting character */
-	if (quote && strchr(quote, *start))
+	if (quote && strchr(quote, *p))
 	{
 		/* okay, we have a quoted token, now scan for the closer */
-		char		thisquote = *start;
+		char		thisquote = *p++;
 
-		for (p = start + 1; *p; p += PQmblen(p, encoding))
+		for (; *p; p += PQmblen(p, encoding))
 		{
 			if (*p == escape && p[1] != '\0')
 				p++;			/* process escaped anything */

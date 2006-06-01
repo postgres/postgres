@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.63 2006/06/01 00:15:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.64 2006/06/01 01:28:00 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -127,7 +127,7 @@ parse_slash_copy(const char *args)
 	result = pg_calloc(1, sizeof(struct copy_options));
 
 	token = strtokx(line, whitespace, ".,()", "\"",
-					0, false, pset.encoding);
+					0, false, false, pset.encoding);
 	if (!token)
 		goto error;
 
@@ -135,7 +135,7 @@ parse_slash_copy(const char *args)
 	{
 		result->binary = true;
 		token = strtokx(NULL, whitespace, ".,()", "\"",
-						0, false, pset.encoding);
+						0, false, false, pset.encoding);
 		if (!token)
 			goto error;
 	}
@@ -143,7 +143,7 @@ parse_slash_copy(const char *args)
 	result->table = pg_strdup(token);
 
 	token = strtokx(NULL, whitespace, ".,()", "\"",
-					0, false, pset.encoding);
+					0, false, false, pset.encoding);
 	if (!token)
 		goto error;
 
@@ -156,12 +156,12 @@ parse_slash_copy(const char *args)
 		/* handle schema . table */
 		xstrcat(&result->table, token);
 		token = strtokx(NULL, whitespace, ".,()", "\"",
-						0, false, pset.encoding);
+						0, false, false, pset.encoding);
 		if (!token)
 			goto error;
 		xstrcat(&result->table, token);
 		token = strtokx(NULL, whitespace, ".,()", "\"",
-						0, false, pset.encoding);
+						0, false, false, pset.encoding);
 		if (!token)
 			goto error;
 	}
@@ -173,12 +173,12 @@ parse_slash_copy(const char *args)
 		for (;;)
 		{
 			token = strtokx(NULL, whitespace, ".,()", "\"",
-							0, false, pset.encoding);
+							0, false, false, pset.encoding);
 			if (!token || strchr(".,()", token[0]))
 				goto error;
 			xstrcat(&result->column_list, token);
 			token = strtokx(NULL, whitespace, ".,()", "\"",
-							0, false, pset.encoding);
+							0, false, false, pset.encoding);
 			if (!token)
 				goto error;
 			xstrcat(&result->column_list, token);
@@ -188,7 +188,7 @@ parse_slash_copy(const char *args)
 				goto error;
 		}
 		token = strtokx(NULL, whitespace, ".,()", "\"",
-						0, false, pset.encoding);
+						0, false, false, pset.encoding);
 		if (!token)
 			goto error;
 	}
@@ -199,13 +199,13 @@ parse_slash_copy(const char *args)
 	if (pg_strcasecmp(token, "with") == 0)
 	{
 		token = strtokx(NULL, whitespace, NULL, NULL,
-						0, false, pset.encoding);
+						0, false, false, pset.encoding);
 		if (!token || pg_strcasecmp(token, "oids") != 0)
 			goto error;
 		result->oids = true;
 
 		token = strtokx(NULL, whitespace, NULL, NULL,
-						0, false, pset.encoding);
+						0, false, false, pset.encoding);
 		if (!token)
 			goto error;
 	}
@@ -218,7 +218,7 @@ parse_slash_copy(const char *args)
 		goto error;
 
 	token = strtokx(NULL, whitespace, NULL, "'",
-					nonstd_backslash, true, pset.encoding);
+					0, false, true, pset.encoding);
 	if (!token)
 		goto error;
 
@@ -242,7 +242,7 @@ parse_slash_copy(const char *args)
 	}
 
 	token = strtokx(NULL, whitespace, NULL, NULL,
-					0, false, pset.encoding);
+					0, false, false, pset.encoding);
 
 	/*
 	 * Allows old COPY syntax for backward compatibility 2002-06-19
@@ -250,19 +250,19 @@ parse_slash_copy(const char *args)
 	if (token && pg_strcasecmp(token, "using") == 0)
 	{
 		token = strtokx(NULL, whitespace, NULL, NULL,
-						0, false, pset.encoding);
+						0, false, false, pset.encoding);
 		if (!(token && pg_strcasecmp(token, "delimiters") == 0))
 			goto error;
 	}
 	if (token && pg_strcasecmp(token, "delimiters") == 0)
 	{
 		token = strtokx(NULL, whitespace, NULL, "'",
-						nonstd_backslash, false, pset.encoding);
+						nonstd_backslash, true, false, pset.encoding);
 		if (!token)
 			goto error;
 		result->delim = pg_strdup(token);
 		token = strtokx(NULL, whitespace, NULL, NULL,
-						0, false, pset.encoding);
+						0, false, false, pset.encoding);
 	}
 
 	if (token)
@@ -273,7 +273,7 @@ parse_slash_copy(const char *args)
 		 */
 		if (pg_strcasecmp(token, "with") == 0)
 			token = strtokx(NULL, whitespace, NULL, NULL,
-							0, false, pset.encoding);
+							0, false, false, pset.encoding);
 
 		while (token)
 		{
@@ -292,10 +292,10 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "delimiter") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
-								nonstd_backslash, false, pset.encoding);
+								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									nonstd_backslash, false, pset.encoding);
+									nonstd_backslash, true, false, pset.encoding);
 				if (token)
 					result->delim = pg_strdup(token);
 				else
@@ -304,10 +304,10 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "null") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
-								nonstd_backslash, false, pset.encoding);
+								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									nonstd_backslash, false, pset.encoding);
+									nonstd_backslash, true, false, pset.encoding);
 				if (token)
 					result->null = pg_strdup(token);
 				else
@@ -316,10 +316,10 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "quote") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
-								nonstd_backslash, false, pset.encoding);
+								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									nonstd_backslash, false, pset.encoding);
+									nonstd_backslash, true, false, pset.encoding);
 				if (token)
 					result->quote = pg_strdup(token);
 				else
@@ -328,10 +328,10 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "escape") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
-								nonstd_backslash, false, pset.encoding);
+								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									nonstd_backslash, false, pset.encoding);
+									nonstd_backslash, true, false, pset.encoding);
 				if (token)
 					result->escape = pg_strdup(token);
 				else
@@ -340,7 +340,7 @@ parse_slash_copy(const char *args)
 			else if (pg_strcasecmp(token, "force") == 0)
 			{
 				token = strtokx(NULL, whitespace, ",", "\"",
-								0, false, pset.encoding);
+								0, false, false, pset.encoding);
 				if (pg_strcasecmp(token, "quote") == 0)
 				{
 					/* handle column list */
@@ -348,7 +348,7 @@ parse_slash_copy(const char *args)
 					for (;;)
 					{
 						token = strtokx(NULL, whitespace, ",", "\"",
-										0, false, pset.encoding);
+										0, false, false, pset.encoding);
 						if (!token || strchr(",", token[0]))
 							goto error;
 						if (!result->force_quote_list)
@@ -356,7 +356,7 @@ parse_slash_copy(const char *args)
 						else
 							xstrcat(&result->force_quote_list, token);
 						token = strtokx(NULL, whitespace, ",", "\"",
-										0, false, pset.encoding);
+										0, false, false, pset.encoding);
 						if (!token || token[0] != ',')
 							break;
 						xstrcat(&result->force_quote_list, token);
@@ -365,7 +365,7 @@ parse_slash_copy(const char *args)
 				else if (pg_strcasecmp(token, "not") == 0)
 				{
 					token = strtokx(NULL, whitespace, ",", "\"",
-									0, false, pset.encoding);
+									0, false, false, pset.encoding);
 					if (pg_strcasecmp(token, "null") != 0)
 						goto error;
 					/* handle column list */
@@ -373,7 +373,7 @@ parse_slash_copy(const char *args)
 					for (;;)
 					{
 						token = strtokx(NULL, whitespace, ",", "\"",
-										0, false, pset.encoding);
+										0, false, false, pset.encoding);
 						if (!token || strchr(",", token[0]))
 							goto error;
 						if (!result->force_notnull_list)
@@ -381,7 +381,7 @@ parse_slash_copy(const char *args)
 						else
 							xstrcat(&result->force_notnull_list, token);
 						token = strtokx(NULL, whitespace, ",", "\"",
-										0, false, pset.encoding);
+										0, false, false, pset.encoding);
 						if (!token || token[0] != ',')
 							break;
 						xstrcat(&result->force_notnull_list, token);
@@ -395,7 +395,7 @@ parse_slash_copy(const char *args)
 
 			if (fetch_next)
 				token = strtokx(NULL, whitespace, NULL, NULL,
-								0, false, pset.encoding);
+								0, false, false, pset.encoding);
 		}
 	}
 
@@ -414,6 +414,22 @@ error:
 	return NULL;
 }
 
+
+/*
+ * Handle one of the "string" options of COPY.  If the user gave a quoted
+ * string, pass it to the backend as-is; if it wasn't quoted then quote
+ * and escape it.
+ */
+static void
+emit_copy_option(PQExpBuffer query, const char *keyword, const char *option)
+{
+	appendPQExpBufferStr(query, keyword);
+	if (option[0] == '\'' ||
+		((option[0] == 'E' || option[0] == 'e') && option[1] == '\''))
+		appendPQExpBufferStr(query, option);
+	else
+		appendStringLiteralConn(query, option, pset.db);
+}
 
 
 /*
@@ -462,29 +478,11 @@ do_copy(const char *args)
 
 	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
 	if (options->delim)
-	{
-		/* if user gave a quoted string, use it as-is */
-		if (options->delim[0] == '\'')
-			appendPQExpBuffer(&query, " USING DELIMITERS %s", options->delim);
-		else
-		{
-			appendPQExpBuffer(&query, " USING DELIMITERS ");
-			appendStringLiteralConn(&query, options->delim, pset.db);
-		}
-	}
+		emit_copy_option(&query, " USING DELIMITERS ", options->delim);
 
 	/* There is no backward-compatible CSV syntax */
 	if (options->null)
-	{
-		/* if user gave a quoted string, use it as-is */
-		if (options->null[0] == '\'')
-			appendPQExpBuffer(&query, " WITH NULL AS %s", options->null);
-		else
-		{
-			appendPQExpBuffer(&query, " WITH NULL AS ");
-			appendStringLiteralConn(&query, options->null, pset.db);
-		}
-	}
+		emit_copy_option(&query, " WITH NULL AS ", options->null);
 
 	if (options->csv_mode)
 		appendPQExpBuffer(&query, " CSV");
@@ -493,28 +491,10 @@ do_copy(const char *args)
 		appendPQExpBuffer(&query, " HEADER");
 
 	if (options->quote)
-	{
-		/* if user gave a quoted string, use it as-is */
-		if (options->quote[0] == '\'')
-			appendPQExpBuffer(&query, " QUOTE AS %s", options->quote);
-		else
-		{
-			appendPQExpBuffer(&query, " QUOTE AS ");
-			appendStringLiteralConn(&query, options->quote, pset.db);
-		}
-	}
+		emit_copy_option(&query, " QUOTE AS ", options->quote);
 
 	if (options->escape)
-	{
-		/* if user gave a quoted string, use it as-is */
-		if (options->escape[0] == '\'')
-			appendPQExpBuffer(&query, " ESCAPE AS %s", options->escape);
-		else
-		{
-			appendPQExpBuffer(&query, " ESCAPE AS ");
-			appendStringLiteralConn(&query, options->escape, pset.db);
-		}
-	}
+		emit_copy_option(&query, " ESCAPE AS ", options->escape);
 
 	if (options->force_quote_list)
 		appendPQExpBuffer(&query, " FORCE QUOTE %s", options->force_quote_list);
