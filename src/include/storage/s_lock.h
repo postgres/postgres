@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.101.2.1 2002/11/22 01:13:28 tgl Exp $
+ *	  $Id: s_lock.h,v 1.101.2.2 2006/06/01 23:18:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@
 #if defined(HAS_TEST_AND_SET)
 
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__ICC)
 /*************************************************************************
  * All the gcc inlines
  */
@@ -94,7 +94,7 @@
  */
 
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__) /* AMD Opteron */
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -110,10 +110,11 @@ tas(volatile slock_t *lock)
 	return (int) _res;
 }
 
-#endif	 /* __i386__ */
+#endif	 /* __i386__ || __x86_64__ */
 
 
-#ifdef __ia64__
+/* Intel Itanium */
+#if defined(__ia64__) || defined(__ia64)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -130,10 +131,10 @@ tas(volatile slock_t *lock)
 	return (int) ret;
 }
 
-#endif	 /* __ia64__ */
+#endif	 /* __ia64__ || __ia64 */
 
 
-#if defined(__arm__) || defined(__arm__)
+#if defined(__arm__) || defined(__arm)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -221,6 +222,41 @@ tas(volatile slock_t *lock)
 
 #endif	 /* __sparc__ */
 
+#if defined(__ppc__) || defined(__powerpc__) || defined(__powerpc64__)
+#define TAS(lock) tas(lock)
+/*
+ * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
+ * an isync is a sufficient synchronization barrier after a lwarx/stwcx loop.
+ */
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	slock_t _t;
+	int _res;
+
+	__asm__ __volatile__(
+"	lwarx   %0,0,%2		\n"
+"	cmpwi   %0,0		\n"
+"	bne     1f			\n"
+"	addi    %0,%0,1		\n"
+"	stwcx.  %0,0,%2		\n"
+"	beq     2f         	\n"
+"1:	li      %1,1		\n"
+"	b		3f			\n"
+"2:						\n"
+"	isync				\n"
+"	li      %1,0		\n"
+"3:						\n"
+
+:	"=&r" (_t), "=r" (_res)
+:	"r" (lock)
+:	"cc", "memory"
+	);
+	return _res;
+}
+
+#endif /* powerpc */
+
 
 #if defined(__mc68000__) && defined(__linux__)
 #define TAS(lock) tas(lock)
@@ -244,10 +280,9 @@ tas(volatile slock_t *lock)
 #endif	 /* defined(__mc68000__) && defined(__linux__) */
 
 
-#if defined(__ppc__) || defined(__powerpc__)
+#if defined(__ppc__) || defined(__powerpc__) || defined(__powerpc64__)
 /*
- * We currently use out-of-line assembler for TAS on PowerPC; see s_lock.c.
- * S_UNLOCK is almost standard but requires a "sync" instruction.
+ * PowerPC S_UNLOCK is almost standard but requires a "sync" instruction.
  */
 #define S_UNLOCK(lock)	\
 do \
@@ -256,7 +291,7 @@ do \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
 
-#endif /* defined(__ppc__) || defined(__powerpc__) */
+#endif /* powerpc */
 
 
 #if defined(NEED_VAX_TAS_ASM)
