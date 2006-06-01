@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.138 2006/05/31 11:02:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.139 2006/06/01 00:15:36 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1907,17 +1907,14 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 			if (altnamevar)
 			{
 				appendPQExpBuffer(buf, "(%s ~ ", namevar);
-				appendPQExpBufferChar(buf, NEED_E_STR(namebuf.data));
 				appendStringLiteralConn(buf, namebuf.data, pset.db);
 				appendPQExpBuffer(buf, "\n        OR %s ~ ", altnamevar);
-				appendPQExpBufferChar(buf, NEED_E_STR(namebuf.data));
 				appendStringLiteralConn(buf, namebuf.data, pset.db);
 				appendPQExpBuffer(buf, ")\n");
 			}
 			else
 			{
 				appendPQExpBuffer(buf, "%s ~ ", namevar);
-				appendPQExpBufferChar(buf, NEED_E_STR(namebuf.data));
 				appendStringLiteralConn(buf, namebuf.data, pset.db);
 				appendPQExpBufferChar(buf, '\n');
 			}
@@ -1941,7 +1938,6 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 		{
 			WHEREAND();
 			appendPQExpBuffer(buf, "%s ~ ", schemavar);
-			appendPQExpBufferChar(buf, NEED_E_STR(schemabuf.data));
 			appendStringLiteralConn(buf, schemabuf.data, pset.db);
 			appendPQExpBufferChar(buf, '\n');
 		}

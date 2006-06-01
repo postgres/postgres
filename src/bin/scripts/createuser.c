@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.31 2006/05/31 11:02:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.32 2006/06/01 00:15:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,8 +243,6 @@ main(int argc, char *argv[])
 	printfPQExpBuffer(&sql, "CREATE ROLE %s", fmtId(newuser));
 	if (newpassword)
 	{
-		executeCommand(conn, "SET escape_string_warning TO 'off'", progname, false);
-
 		if (encrypted == TRI_YES)
 			appendPQExpBuffer(&sql, " ENCRYPTED");
 		if (encrypted == TRI_NO)

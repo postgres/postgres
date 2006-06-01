@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.167 2006/05/31 11:02:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.168 2006/06/01 00:15:36 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -681,9 +681,9 @@ exec_command(const char *cmd,
 				PGresult   *res;
 
 				initPQExpBuffer(&buf);
-				printfPQExpBuffer(&buf, "ALTER USER %s PASSWORD %c'%s';",
-								  fmtId(user), NEED_E_STR(encrypted_password),
-								  encrypted_password);
+				printfPQExpBuffer(&buf, "ALTER USER %s PASSWORD ",
+								  fmtId(user));
+				appendStringLiteralConn(&buf, encrypted_password, pset.db);
 				res = PSQLexec(buf.data, false);
 				termPQExpBuffer(&buf);
 				if (!res)

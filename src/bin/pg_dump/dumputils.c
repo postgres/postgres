@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.29 2006/05/28 21:13:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.30 2006/06/01 00:15:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,6 +190,21 @@ void
 appendStringLiteralConn(PQExpBuffer buf, const char *str, PGconn *conn)
 {
 	size_t	length = strlen(str);
+
+	/*
+	 * XXX This is a kluge to silence escape_string_warning in our utility
+	 * programs.  It should go away someday.
+	 */
+	if (strchr(str, '\\') != NULL && PQserverVersion(conn) >= 80100)
+	{
+		/* ensure we are not adjacent to an identifier */
+		if (buf->len > 0 && buf->data[buf->len-1] != ' ')
+			appendPQExpBufferChar(buf, ' ');
+		appendPQExpBufferChar(buf, ESCAPE_STRING_SYNTAX);
+		appendStringLiteral(buf, str, PQclientEncoding(conn), false);
+		return;
+	}
+	/* XXX end kluge */
 
 	if (!enlargePQExpBuffer(buf, 2 * length + 2))
 		return;
