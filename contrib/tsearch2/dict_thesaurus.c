@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_thesaurus.c,v 1.2 2006/06/02 15:35:42 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_thesaurus.c,v 1.3 2006/06/02 17:55:40 teodor Exp $ */
 
 /*
  * thesaurus
@@ -728,10 +728,11 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 
 			info = findVariant( info, stored, curpos, infos, nlex);
 		}
-
-	} else {
+	} else if ( res ) { /* stop-word */
 		LexemeInfo	*infos = findTheLexeme(d, NULL);
 		info = findVariant( NULL, stored, curpos, &infos, 1);
+	} else {
+		info = NULL; /* word isn't recognized */
 	}
 
 	dstate->private = (void*)info;
