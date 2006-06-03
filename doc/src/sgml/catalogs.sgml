@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.123 2006/05/28 02:27:08 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.124 2006/06/03 02:53:04 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1954,7 +1954,9 @@
       <entry><structfield>encoding</structfield></entry>
       <entry><type>int4</type></entry>
       <entry></entry>
-      <entry>Character encoding for this database</entry>
+      <entry>Character encoding for this database
+          (<function>pg_encoding_to_char()</function> can translate
+           this number to the encoding name)</entry>
      </row>
 
      <row>
