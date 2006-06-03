@@ -4,7 +4,7 @@
 # Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/backend/po/ru.po,v 1.30 2005/01/17 20:27:44 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/ru.po,v 1.31 2006/06/03 16:48:59 tgl Exp $
 #
 # ChangeLog:
 #   - December 10, 2004 - January 17, 2005:
@@ -610,7 +610,7 @@ msgstr "Кластер баз данных был инициализирован без HAVE_INT64_TIMESTAMP, но серв
 
 #: access/transam/xlog.c:3298
 msgid "The database cluster was initialized with HAVE_INT64_TIMESTAMP but the server was compiled without HAVE_INT64_TIMESTAMP."
-msgstr "Кластер баз данных был инициализирован с PG_CONTROL_VERSION, но сервер был скомпилирован без PG_CONTROL_VERSION."
+msgstr "Кластер баз данных был инициализирован с HAVE_INT64_TIMESTAMP, но сервер был скомпилирован без HAVE_INT64_TIMESTAMP."
 
 #: access/transam/xlog.c:3306
 #, c-format
