@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Jun  2 22:34:25 EDT 2006
+Last updated:           Fri Jun  2 23:59:37 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1009,6 +1009,9 @@ first.
   </li><li>Allow the pg_xlog directory location to be specified during initdb
   with a symlink back to the /data location
   </li><li>Allow WAL information to recover corrupted pg_controldata
+<p>  See partially completed patch and additional work required at
+  <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php</a>.
+</p>
   </li><li>Find a way to reduce rotational delay when repeatedly writing
   last WAL page
 <p>  Currently fsync of WAL requires the disk platter to perform a full
