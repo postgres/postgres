@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.35 2006/03/05 15:58:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.36 2006/06/03 17:36:10 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -182,6 +182,10 @@ pg_perm_setlocale(int category, const char *locale)
  * This is common code for several locale categories.  This doesn't
  * actually set the locale permanently, it only tests if the locale is
  * valid.  (See explanation at the top of this file.)
+ *
+ * Note: we accept value = "" as selecting the postmaster's environment
+ * value, whatever it was (so long as the environment setting is legal).
+ * This will have been locked down by an earlier call to pg_perm_setlocale.
  */
 static const char *
 locale_xxx_assign(int category, const char *value, bool doit, GucSource source)
@@ -230,10 +234,20 @@ locale_time_assign(const char *value, bool doit, GucSource source)
 
 /*
  * We allow LC_MESSAGES to actually be set globally.
+ *
+ * Note: we normally disallow value = "" because it wouldn't have consistent
+ * semantics (it'd effectively just use the previous value).  However, this
+ * is the value passed for PGC_S_DEFAULT, so don't complain in that case,
+ * not even if the attempted setting fails due to invalid environment value.
+ * The idea there is just to accept the environment setting *if possible*
+ * during startup, until we can read the proper value from postgresql.conf.
  */
 const char *
 locale_messages_assign(const char *value, bool doit, GucSource source)
 {
+	if (*value == '\0' && source != PGC_S_DEFAULT)
+		return NULL;
+
 	/*
 	 * LC_MESSAGES category does not exist everywhere, but accept it anyway
 	 *
@@ -244,7 +258,8 @@ locale_messages_assign(const char *value, bool doit, GucSource source)
 	if (doit)
 	{
 		if (!pg_perm_setlocale(LC_MESSAGES, value))
-			return NULL;
+			if (source != PGC_S_DEFAULT)
+				return NULL;
 	}
 #ifndef WIN32
 	else
