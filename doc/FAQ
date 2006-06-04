@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue May 23 11:50:55 EDT 2006
+   Last updated: Sat Jun 3 20:13:19 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -349,8 +349,9 @@
    
   2.3) Does PostgreSQL have a graphical user interface?
   
-   Yes, see http://techdocs.postgresql.org/guides/GUITools for a detailed
-   list.
+   There are a large number of GUI Tools that are available for
+   PostgreSQL from both commercial and open source developers. A detailed
+   list can be found in the PostgreSQL Community Documentation
      _________________________________________________________________
    
                           Administrative Questions
