@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun  2 23:59:37 EDT 2006
+Last updated:		Sat Jun  3 21:33:24 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -565,9 +565,9 @@ SQL Commands
 	  the table at the same time, which is something that is 
 	  currently allowed.
 
-	o Allow COPY to output from views
+	o Allow COPY to output from SELECT
 
-	  Another idea would be to allow actual SELECT statements in a COPY.
+	  COPY should also be able to output views.
 
 
 * GRANT/REVOKE
