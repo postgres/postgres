@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.76 2006/06/05 03:55:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.77 2006/06/05 14:47:38 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -41,8 +41,8 @@ MainLoop(FILE *source)
 	char	   *line;			/* current line of input */
 	int			added_nl_pos;
 	bool		success;
-	bool		line_saved_in_history;
-	
+
+	volatile bool		line_saved_in_history;
 	volatile int successResult = EXIT_SUCCESS;
 	volatile backslashResult slashCmdStatus = PSQL_CMD_UNKNOWN;
 	volatile promptStatus_t prompt_status = PROMPT_READY;
