@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.75 2006/06/04 04:35:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.76 2006/06/05 03:55:00 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -41,7 +41,7 @@ MainLoop(FILE *source)
 	char	   *line;			/* current line of input */
 	int			added_nl_pos;
 	bool		success;
-	bool		first_query_scan;
+	bool		line_saved_in_history;
 	
 	volatile int successResult = EXIT_SUCCESS;
 	volatile backslashResult slashCmdStatus = PSQL_CMD_UNKNOWN;
@@ -80,6 +80,8 @@ MainLoop(FILE *source)
 	/* main loop to get queries and execute them */
 	while (successResult == EXIT_SUCCESS)
 	{
+		line_saved_in_history = false;
+
 		/*
 		 * Welcome code for Control-C
 		 */
@@ -154,6 +156,8 @@ MainLoop(FILE *source)
 				 */
 				pg_write_history(history_buf->data);
 				pg_clear_history(history_buf);
+				pg_write_history(line);
+				line_saved_in_history = true;
 			}
 		}
 		/* otherwise, get another line */
@@ -226,7 +230,6 @@ MainLoop(FILE *source)
 		 */
 		psql_scan_setup(scan_state, line, strlen(line));
 		success = true;
-		first_query_scan = true;
 		
 		while (success || !die_on_error)
 		{
@@ -303,16 +306,15 @@ MainLoop(FILE *source)
 			 *	down here so we can check for \g and other 'execute'
 			 *	backslash commands, which should be appended.
 			 */
-			if (first_query_scan && pset.cur_cmd_interactive)
+			if (!line_saved_in_history && pset.cur_cmd_interactive)
 			{
 				/* Sending a command (PSQL_CMD_SEND) zeros the length */
 				if (scan_result == PSCAN_BACKSLASH && history_buf->len != 0)
 					pg_write_history(line);
 				else
 					pg_append_history(line, history_buf);
+				line_saved_in_history = true;
 			}
-
-			first_query_scan = false;
 
 			/* fall out of loop on \q or if lexer reached EOL */
 			if (slashCmdStatus == PSQL_CMD_TERMINATE ||
