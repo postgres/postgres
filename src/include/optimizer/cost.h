@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.73 2006/03/05 15:58:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.74 2006/06/05 02:49:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,13 @@
 /* defaults for costsize.c's Cost parameters */
 /* NB: cost-estimation code should use the variables, not these constants! */
 /* If you change these, update backend/utils/misc/postgresql.sample.conf */
-#define DEFAULT_EFFECTIVE_CACHE_SIZE  1000.0	/* measured in pages */
+#define DEFAULT_SEQ_PAGE_COST  1.0
 #define DEFAULT_RANDOM_PAGE_COST  4.0
 #define DEFAULT_CPU_TUPLE_COST	0.01
 #define DEFAULT_CPU_INDEX_TUPLE_COST 0.001
 #define DEFAULT_CPU_OPERATOR_COST  0.0025
+
+#define DEFAULT_EFFECTIVE_CACHE_SIZE  1000.0	/* measured in pages */
 
 
 /*
@@ -34,11 +36,12 @@
  */
 
 /* parameter variables and flags */
-extern double effective_cache_size;
-extern double random_page_cost;
-extern double cpu_tuple_cost;
+extern DLLIMPORT double seq_page_cost;
+extern DLLIMPORT double random_page_cost;
+extern DLLIMPORT double cpu_tuple_cost;
 extern DLLIMPORT double cpu_index_tuple_cost;
-extern double cpu_operator_cost;
+extern DLLIMPORT double cpu_operator_cost;
+extern double effective_cache_size;
 extern Cost disable_cost;
 extern bool enable_seqscan;
 extern bool enable_indexscan;

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.320 2006/05/21 20:10:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.321 2006/06/05 02:49:58 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1595,6 +1595,52 @@ static struct config_int ConfigureNamesInt[] =
 static struct config_real ConfigureNamesReal[] =
 {
 	{
+		{"seq_page_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Sets the planner's estimate of the cost of a "
+						 "sequentially fetched disk page."),
+			NULL
+		},
+		&seq_page_cost,
+		DEFAULT_SEQ_PAGE_COST, 0, DBL_MAX, NULL, NULL
+	},
+	{
+		{"random_page_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Sets the planner's estimate of the cost of a "
+						 "nonsequentially fetched disk page."),
+			NULL
+		},
+		&random_page_cost,
+		DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL
+	},
+	{
+		{"cpu_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Sets the planner's estimate of the cost of "
+						 "processing each tuple (row)."),
+			NULL
+		},
+		&cpu_tuple_cost,
+		DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL
+	},
+	{
+		{"cpu_index_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Sets the planner's estimate of the cost of "
+						 "processing each index entry during an index scan."),
+			NULL
+		},
+		&cpu_index_tuple_cost,
+		DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL
+	},
+	{
+		{"cpu_operator_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Sets the planner's estimate of the cost of "
+						 "processing each operator or function call."),
+			NULL
+		},
+		&cpu_operator_cost,
+		DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL
+	},
+
+	{
 		{"effective_cache_size", PGC_USERSET, QUERY_TUNING_COST,
 			gettext_noop("Sets the planner's assumption about size of the disk cache."),
 			gettext_noop("That is, the portion of the kernel's disk cache that "
@@ -1603,46 +1649,6 @@ static struct config_real ConfigureNamesReal[] =
 		},
 		&effective_cache_size,
 		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, DBL_MAX, NULL, NULL
-	},
-	{
-		{"random_page_cost", PGC_USERSET, QUERY_TUNING_COST,
-			gettext_noop("Sets the planner's estimate of the cost of a nonsequentially "
-						 "fetched disk page."),
-			gettext_noop("This is measured as a multiple of the cost of a "
-			  "sequential page fetch. A higher value makes it more likely a "
-						 "sequential scan will be used, a lower value makes it more likely an "
-						 "index scan will be used.")
-		},
-		&random_page_cost,
-		DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL
-	},
-	{
-		{"cpu_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
-			gettext_noop("Sets the planner's estimate of the cost of processing each tuple (row)."),
-			gettext_noop("This is measured as a fraction of the cost of a "
-						 "sequential page fetch.")
-		},
-		&cpu_tuple_cost,
-		DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL
-	},
-	{
-		{"cpu_index_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
-			gettext_noop("Sets the planner's estimate of processing cost for each "
-						 "index tuple (row) during index scan."),
-			gettext_noop("This is measured as a fraction of the cost of a "
-						 "sequential page fetch.")
-		},
-		&cpu_index_tuple_cost,
-		DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL
-	},
-	{
-		{"cpu_operator_cost", PGC_USERSET, QUERY_TUNING_COST,
-			gettext_noop("Sets the planner's estimate of processing cost of each operator in WHERE."),
-			gettext_noop("This is measured as a fraction of the cost of a sequential "
-						 "page fetch.")
-		},
-		&cpu_operator_cost,
-		DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL
 	},
 
 	{

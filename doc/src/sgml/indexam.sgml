@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.12 2006/05/24 11:01:39 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.13 2006/06/05 02:49:58 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -771,14 +771,14 @@ amcostestimate (PlannerInfo *root,
   </para>
 
   <para>
-   The index access costs should be computed in the units used by
+   The index access costs should be computed using the parameters used by
    <filename>src/backend/optimizer/path/costsize.c</filename>: a sequential
-   disk block fetch has cost 1.0, a nonsequential fetch has cost
-   <varname>random_page_cost</>, and the cost of processing one index row
-   should usually be taken as <varname>cpu_index_tuple_cost</>.  In addition,
-   an appropriate multiple of <varname>cpu_operator_cost</> should be charged
-   for any comparison operators invoked during index processing (especially
-   evaluation of the indexQuals themselves).
+   disk block fetch has cost <varname>seq_page_cost</>, a nonsequential fetch
+   has cost <varname>random_page_cost</>, and the cost of processing one index
+   row should usually be taken as <varname>cpu_index_tuple_cost</>.  In
+   addition, an appropriate multiple of <varname>cpu_operator_cost</> should
+   be charged for any comparison operators invoked during index processing
+   (especially evaluation of the indexQuals themselves).
   </para>
 
   <para>
@@ -788,10 +788,10 @@ amcostestimate (PlannerInfo *root,
   </para>
 
   <para>
-   The <quote>start-up cost</quote> is the part of the total scan cost that must be expended
-   before we can begin to fetch the first row.  For most indexes this can
-   be taken as zero, but an index type with a high start-up cost might want
-   to set it nonzero.
+   The <quote>start-up cost</quote> is the part of the total scan cost that
+   must be expended before we can begin to fetch the first row.  For most
+   indexes this can be taken as zero, but an index type with a high start-up
+   cost might want to set it nonzero.
   </para>
 
   <para>
@@ -850,13 +850,13 @@ amcostestimate (PlannerInfo *root,
 <programlisting>
     /*
      * Our generic assumption is that the index pages will be read
-     * sequentially, so they have cost 1.0 each, not random_page_cost.
+     * sequentially, so they cost seq_page_cost each, not random_page_cost.
      * Also, we charge for evaluation of the indexquals at each index row.
      * All the costs are assumed to be paid incrementally during the scan.
      */
     cost_qual_eval(&amp;index_qual_cost, indexQuals);
     *indexStartupCost = index_qual_cost.startup;
-    *indexTotalCost = numIndexPages +
+    *indexTotalCost = seq_page_cost * numIndexPages +
         (cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
 </programlisting>
     </para>

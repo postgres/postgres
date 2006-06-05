@@ -3,14 +3,19 @@
  * costsize.c
  *	  Routines to compute (and set) relation sizes and path costs
  *
- * Path costs are measured in units of disk accesses: one sequential page
- * fetch has cost 1.  All else is scaled relative to a page fetch, using
- * the scaling parameters
+ * Path costs are measured in arbitrary units established by these basic
+ * parameters:
  *
+ *	seq_page_cost		Cost of a sequential page fetch
  *	random_page_cost	Cost of a non-sequential page fetch
  *	cpu_tuple_cost		Cost of typical CPU time to process a tuple
  *	cpu_index_tuple_cost  Cost of typical CPU time to process an index tuple
- *	cpu_operator_cost	Cost of CPU time to process a typical WHERE operator
+ *	cpu_operator_cost	Cost of CPU time to execute an operator or function
+ *
+ * We expect that the kernel will typically do some amount of read-ahead
+ * optimization; this in conjunction with seek costs means that seq_page_cost
+ * is normally considerably less than random_page_cost.  (However, if the
+ * database is fully cached in RAM, it is reasonable to set them equal.)
  *
  * We also use a rough estimate "effective_cache_size" of the number of
  * disk pages in Postgres + OS-level disk cache.  (We can't simply use
@@ -49,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.155 2006/03/05 15:58:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.156 2006/06/05 02:49:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,11 +90,13 @@
 	 (path)->parent->rows)
 
 
-double		effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
+double		seq_page_cost = DEFAULT_SEQ_PAGE_COST;
 double		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
 double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
 double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
 double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
+
+double		effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
 Cost		disable_cost = 100000000.0;
 
@@ -156,14 +163,8 @@ cost_seqscan(Path *path, PlannerInfo *root,
 
 	/*
 	 * disk costs
-	 *
-	 * The cost of reading a page sequentially is 1.0, by definition. Note
-	 * that the Unix kernel will typically do some amount of read-ahead
-	 * optimization, so that this cost is less than the true cost of reading a
-	 * page from disk.	We ignore that issue here, but must take it into
-	 * account when estimating the cost of non-sequential accesses!
 	 */
-	run_cost += baserel->pages; /* sequential fetches with cost 1.0 */
+	run_cost += seq_page_cost * baserel->pages;
 
 	/* CPU costs */
 	startup_cost += baserel->baserestrictcost.startup;
@@ -194,20 +195,21 @@ cost_seqscan(Path *path, PlannerInfo *root,
  * with the entirely ad-hoc equations (writing relsize for
  * relpages/effective_cache_size):
  *	if relsize >= 1:
- *		random_page_cost - (random_page_cost-1)/2 * (1/relsize)
+ *		random_page_cost - (random_page_cost-seq_page_cost)/2 * (1/relsize)
  *	if relsize < 1:
- *		1 + ((random_page_cost-1)/2) * relsize ** 2
- * These give the right asymptotic behavior (=> 1.0 as relpages becomes
- * small, => random_page_cost as it becomes large) and meet in the middle
- * with the estimate that the cache is about 50% effective for a relation
- * of the same size as effective_cache_size.  (XXX this is probably all
- * wrong, but I haven't been able to find any theory about how effective
+ *		seq_page_cost + ((random_page_cost-seq_page_cost)/2) * relsize ** 2
+ * These give the right asymptotic behavior (=> seq_page_cost as relpages
+ * becomes small, => random_page_cost as it becomes large) and meet in the
+ * middle with the estimate that the cache is about 50% effective for a
+ * relation of the same size as effective_cache_size.  (XXX this is probably
+ * all wrong, but I haven't been able to find any theory about how effective
  * a disk cache should be presumed to be.)
  */
 static Cost
 cost_nonsequential_access(double relpages)
 {
 	double		relsize;
+	double		random_delta;
 
 	/* don't crash on bad input data */
 	if (relpages <= 0.0 || effective_cache_size <= 0.0)
@@ -215,18 +217,16 @@ cost_nonsequential_access(double relpages)
 
 	relsize = relpages / effective_cache_size;
 
+	random_delta = (random_page_cost - seq_page_cost) * 0.5;
 	if (relsize >= 1.0)
-		return random_page_cost - (random_page_cost - 1.0) * 0.5 / relsize;
+		return random_page_cost - random_delta / relsize;
 	else
-		return 1.0 + (random_page_cost - 1.0) * 0.5 * relsize * relsize;
+		return seq_page_cost + random_delta * relsize * relsize;
 }
 
 /*
  * cost_index
  *	  Determines and returns the cost of scanning a relation using an index.
- *
- *	  NOTE: an indexscan plan node can actually represent several passes,
- *	  but here we consider the cost of just one pass.
  *
  * 'index' is the index to be used
  * 'indexQuals' is the list of applicable qual clauses (implicit AND semantics)
@@ -327,9 +327,9 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	 * be just sT.	What's more, these will be sequential fetches, not the
 	 * random fetches that occur in the uncorrelated case.	So, depending on
 	 * the extent of correlation, we should estimate the actual I/O cost
-	 * somewhere between s * T * 1.0 and PF * random_cost.	We currently
-	 * interpolate linearly between these two endpoints based on the
-	 * correlation squared (XXX is that appropriate?).
+	 * somewhere between s * T * seq_page_cost and PF * random_page_cost.
+	 * We currently interpolate linearly between these two endpoints based on
+	 * the correlation squared (XXX is that appropriate?).
 	 *
 	 * In any case the number of tuples fetched is Ns.
 	 *----------
@@ -346,8 +346,10 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	{
 		pages_fetched =
 			(2.0 * T * tuples_fetched) / (2.0 * T + tuples_fetched);
-		if (pages_fetched > T)
+		if (pages_fetched >= T)
 			pages_fetched = T;
+		else
+			pages_fetched = ceil(pages_fetched);
 	}
 	else
 	{
@@ -364,6 +366,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 			pages_fetched =
 				b + (tuples_fetched - lim) * (T - b) / T;
 		}
+		pages_fetched = ceil(pages_fetched);
 	}
 
 	/*
@@ -373,7 +376,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	 * rather than using cost_nonsequential_access, since we've already
 	 * accounted for caching effects by using the Mackert model.
 	 */
-	min_IO_cost = ceil(indexSelectivity * T);
+	min_IO_cost = ceil(indexSelectivity * T) * seq_page_cost;
 	max_IO_cost = pages_fetched * random_page_cost;
 
 	/*
@@ -461,19 +464,21 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 
 	T = (baserel->pages > 1) ? (double) baserel->pages : 1.0;
 	pages_fetched = (2.0 * T * tuples_fetched) / (2.0 * T + tuples_fetched);
-	if (pages_fetched > T)
+	if (pages_fetched >= T)
 		pages_fetched = T;
+	else
+		pages_fetched = ceil(pages_fetched);
 
 	/*
 	 * For small numbers of pages we should charge random_page_cost apiece,
 	 * while if nearly all the table's pages are being read, it's more
-	 * appropriate to charge 1.0 apiece.  The effect is nonlinear, too. For
-	 * lack of a better idea, interpolate like this to determine the cost per
-	 * page.
+	 * appropriate to charge seq_page_cost apiece.  The effect is nonlinear,
+	 * too. For lack of a better idea, interpolate like this to determine the
+	 * cost per page.
 	 */
 	if (pages_fetched >= 2.0)
 		cost_per_page = random_page_cost -
-			(random_page_cost - 1.0) * sqrt(pages_fetched / T);
+			(random_page_cost - seq_page_cost) * sqrt(pages_fetched / T);
 	else
 		cost_per_page = random_page_cost;
 
@@ -833,9 +838,9 @@ cost_sort(Path *path, PlannerInfo *root,
 		else
 			log_runs = 1.0;
 		npageaccesses = 2.0 * npages * log_runs;
-		/* Assume half are sequential (cost 1), half are not */
+		/* Assume half are sequential, half are not */
 		startup_cost += npageaccesses *
-			(1.0 + cost_nonsequential_access(npages)) * 0.5;
+			(seq_page_cost + cost_nonsequential_access(npages)) * 0.5;
 	}
 
 	/*
@@ -871,8 +876,8 @@ cost_material(Path *path,
 		double		npages = ceil(nbytes / BLCKSZ);
 
 		/* We'll write during startup and read during retrieval */
-		startup_cost += npages;
-		run_cost += npages;
+		startup_cost += seq_page_cost * npages;
+		run_cost += seq_page_cost * npages;
 	}
 
 	/*

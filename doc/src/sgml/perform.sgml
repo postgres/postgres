@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.56 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.57 2006/06/05 02:49:58 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -60,7 +60,7 @@
     <footnote>
      <para>
       Examples in this section are drawn from the regression test database
-      after doing a <command>VACUUM ANALYZE</>, using 8.1 development sources.
+      after doing a <command>VACUUM ANALYZE</>, using 8.2 development sources.
       You should be able to get similar results if you try the examples yourself,
       but your estimated costs and row counts will probably vary slightly
       because <command>ANALYZE</>'s statistics are random samples rather
@@ -114,12 +114,13 @@ EXPLAIN SELECT * FROM tenk1;
    </para>
 
    <para>
-    The costs are measured in units of disk page fetches; that is, 1.0
-    equals one sequential disk page read, by definition.  (CPU effort
-    estimates are made too; they are converted into disk-page units using some
-    fairly arbitrary fudge factors. If you want to experiment with these
-    factors, see the list of run-time configuration parameters in
-    <xref linkend="runtime-config-query-constants">.)
+    The costs are measured in arbitrary units determined by the planner's
+    cost parameters (see <xref linkend="runtime-config-query-constants">).
+    Traditional practice is to measure the costs in units of disk page
+    fetches; that is, <xref linkend="guc-seq-page-cost"> is conventionally
+    set to <literal>1.0</> and the other cost parameters are set relative
+    to that.  The examples in this section are run with the default cost
+    parameters.
    </para>
 
    <para>
@@ -164,9 +165,9 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
 
     you will find out that <classname>tenk1</classname> has 358 disk
     pages and 10000 rows.  So the cost is estimated at 358 page
-    reads, defined as costing 1.0 apiece, plus 10000 * <xref
-    linkend="guc-cpu-tuple-cost"> which is
-    typically 0.01 (try <command>SHOW cpu_tuple_cost</command>).
+    reads, costing <xref linkend="guc-seq-page-cost"> apiece (1.0 by
+    default), plus 10000 * <xref linkend="guc-cpu-tuple-cost"> which is
+    0.01 by default.
    </para>
 
    <para>
@@ -400,8 +401,9 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
 
     Note that the <quote>actual time</quote> values are in milliseconds of
     real time, whereas the <quote>cost</quote> estimates are expressed in
-    arbitrary units of disk fetches; so they are unlikely to match up.
-    The thing to pay attention to is the ratios.
+    arbitrary units; so they are unlikely to match up.
+    The thing to pay attention to is whether the ratios of actual time and
+    estimated costs are consistent.
    </para>
 
    <para>
@@ -427,7 +429,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
     may be considerably larger, because it includes the time spent processing
     the result rows.  In these commands, the time for the top plan node
     essentially is the time spent computing the new rows and/or locating the
-    old ones, but it doesn't include the time spent making the changes.
+    old ones, but it doesn't include the time spent applying the changes.
     Time spent firing triggers, if any, is also outside the top plan node,
     and is shown separately for each trigger.
    </para>

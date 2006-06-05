@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.59 2006/05/21 20:10:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.60 2006/06/05 02:49:58 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1739,16 +1739,116 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       Planner Cost Constants
      </title>
 
+    <para>
+     The <firstterm>cost</> variables described in this section are measured
+     on an arbitrary scale.  Only their relative values matter, hence
+     scaling them all up or down by the same factor will result in no change
+     in the planner's choices.  Traditionally, these variables have been
+     referenced to sequential page fetches as the unit of cost; that is,
+     <varname>seq_page_cost</> is conventionally set to <literal>1.0</>
+     and the other cost variables are set with reference to that.  But
+     you can use a different scale if you prefer, such as actual execution
+     times in milliseconds on a particular machine.
+    </para>
+
    <note>
     <para>
-     Unfortunately, there is no well-defined method for determining
-     ideal values for the family of <quote>cost</quote> variables that
-     appear below. You are encouraged to experiment and share
-     your findings.
+     Unfortunately, there is no well-defined method for determining ideal
+     values for the cost variables.  They are best treated as averages over
+     the entire mix of queries that a particular installation will get.  This
+     means that changing them on the basis of just a few experiments is very
+     risky.
     </para>
    </note>
 
      <variablelist>
+
+     <varlistentry id="guc-seq-page-cost" xreflabel="seq_page_cost">
+      <term><varname>seq_page_cost</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>seq_page_cost</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of a disk page fetch
+        that is part of a series of sequential fetches.  The default is 1.0.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-random-page-cost" xreflabel="random_page_cost">
+      <term><varname>random_page_cost</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>random_page_cost</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of a
+        non-sequentially-fetched disk page.  The default is 4.0.
+        Reducing this value relative to <varname>seq_page_cost</>
+        will cause the system to prefer index scans; raising it will
+        make index scans look relatively more expensive.  You can raise
+        or lower both values together to change the importance of disk I/O
+        costs relative to CPU costs, which are described by the following
+        parameters.
+       </para>
+
+       <tip>
+        <para>
+         Although the system will let you set <varname>random_page_cost</> to
+         less than <varname>seq_page_cost</>, it is not physically sensible
+         to do so.  However, setting them equal makes sense if the database
+         is entirely cached in RAM, since in that case there is no penalty
+         for touching pages out of sequence.  Also, in a heavily-cached
+         database you should lower both values relative to the CPU parameters,
+         since the cost of fetching a page already in RAM is much smaller
+         than it would normally be.
+        </para>
+       </tip>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-cpu-tuple-cost" xreflabel="cpu_tuple_cost">
+      <term><varname>cpu_tuple_cost</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>cpu_tuple_cost</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of processing
+        each row during a query.
+        The default is 0.01.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-cpu-index-tuple-cost" xreflabel="cpu_index_tuple_cost">
+      <term><varname>cpu_index_tuple_cost</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>cpu_index_tuple_cost</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of processing
+        each index entry during an index scan.
+        The default is 0.001.
+       </para>
+      </listitem>
+     </varlistentry>
+    
+     <varlistentry id="guc-cpu-operator-cost" xreflabel="cpu_operator_cost">
+      <term><varname>cpu_operator_cost</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>cpu_operator_cost</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the cost of processing each
+        operator or function executed during a query.
+        The default is 0.0025.
+       </para>
+      </listitem>
+     </varlistentry>
      
      <varlistentry id="guc-effective-cache-size" xreflabel="effective_cache_size">
       <term><varname>effective_cache_size</varname> (<type>floating point</type>)</term>
@@ -1773,66 +1873,6 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         does it reserve kernel disk cache; it is used only for
         estimation purposes.  The value is measured in disk pages,
         which are normally 8192 bytes each. The default is 1000.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-random-page-cost" xreflabel="random_page_cost">
-      <term><varname>random_page_cost</varname> (<type>floating point</type>)</term>
-      <indexterm>
-       <primary><varname>random_page_cost</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the planner's estimate of the cost of a
-        nonsequentially fetched disk page. This is measured as a
-        multiple of the cost of a sequential page fetch. A higher
-        value makes it more likely a sequential scan will be used, a
-        lower value makes it more likely an index scan will be
-        used. The default is four.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-cpu-tuple-cost" xreflabel="cpu_tuple_cost">
-      <term><varname>cpu_tuple_cost</varname> (<type>floating point</type>)</term>
-      <indexterm>
-       <primary><varname>cpu_tuple_cost</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the planner's estimate of the cost of processing
-        each row during a query. This is measured as a fraction of
-        the cost of a sequential page fetch. The default is 0.01.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-cpu-index-tuple-cost" xreflabel="cpu_index_tuple_cost">
-      <term><varname>cpu_index_tuple_cost</varname> (<type>floating point</type>)</term>
-      <indexterm>
-       <primary><varname>cpu_index_tuple_cost</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the planner's estimate of the cost of processing
-        each index row during an index scan. This is measured as a
-        fraction of the cost of a sequential page fetch. The default
-        is 0.001.
-       </para>
-      </listitem>
-     </varlistentry>
-    
-     <varlistentry id="guc-cpu-operator-cost" xreflabel="cpu_operator_cost">
-      <term><varname>cpu_operator_cost</varname> (<type>floating point</type>)</term>
-      <indexterm>
-       <primary><varname>cpu_operator_cost</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Sets the planner's estimate of the cost of processing each
-        operator in a <literal>WHERE</> clause. This is measured as a fraction of
-        the cost of a sequential page fetch. The default is 0.0025.
        </para>
       </listitem>
      </varlistentry>
