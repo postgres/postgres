@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.156 2006/06/05 02:49:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.157 2006/06/05 20:56:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,55 +173,6 @@ cost_seqscan(Path *path, PlannerInfo *root,
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
-}
-
-/*
- * cost_nonsequential_access
- *	  Estimate the cost of accessing one page at random from a relation
- *	  (or sort temp file) of the given size in pages.
- *
- * The simplistic model that the cost is random_page_cost is what we want
- * to use for large relations; but for small ones that is a serious
- * overestimate because of the effects of caching.	This routine tries to
- * account for that.
- *
- * Unfortunately we don't have any good way of estimating the effective cache
- * size we are working with --- we know that Postgres itself has NBuffers
- * internal buffers, but the size of the kernel's disk cache is uncertain,
- * and how much of it we get to use is even less certain.  We punt the problem
- * for now by assuming we are given an effective_cache_size parameter.
- *
- * Given a guesstimated cache size, we estimate the actual I/O cost per page
- * with the entirely ad-hoc equations (writing relsize for
- * relpages/effective_cache_size):
- *	if relsize >= 1:
- *		random_page_cost - (random_page_cost-seq_page_cost)/2 * (1/relsize)
- *	if relsize < 1:
- *		seq_page_cost + ((random_page_cost-seq_page_cost)/2) * relsize ** 2
- * These give the right asymptotic behavior (=> seq_page_cost as relpages
- * becomes small, => random_page_cost as it becomes large) and meet in the
- * middle with the estimate that the cache is about 50% effective for a
- * relation of the same size as effective_cache_size.  (XXX this is probably
- * all wrong, but I haven't been able to find any theory about how effective
- * a disk cache should be presumed to be.)
- */
-static Cost
-cost_nonsequential_access(double relpages)
-{
-	double		relsize;
-	double		random_delta;
-
-	/* don't crash on bad input data */
-	if (relpages <= 0.0 || effective_cache_size <= 0.0)
-		return random_page_cost;
-
-	relsize = relpages / effective_cache_size;
-
-	random_delta = (random_page_cost - seq_page_cost) * 0.5;
-	if (relsize >= 1.0)
-		return random_page_cost - random_delta / relsize;
-	else
-		return seq_page_cost + random_delta * relsize * relsize;
 }
 
 /*
@@ -371,10 +322,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 
 	/*
 	 * min_IO_cost corresponds to the perfectly correlated case (csquared=1),
-	 * max_IO_cost to the perfectly uncorrelated case (csquared=0).  Note that
-	 * we just charge random_page_cost per page in the uncorrelated case,
-	 * rather than using cost_nonsequential_access, since we've already
-	 * accounted for caching effects by using the Mackert model.
+	 * max_IO_cost to the perfectly uncorrelated case (csquared=0).
 	 */
 	min_IO_cost = ceil(indexSelectivity * T) * seq_page_cost;
 	max_IO_cost = pages_fetched * random_page_cost;
@@ -778,7 +726,7 @@ cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
  *		disk traffic = 2 * relsize * ceil(logM(p / (2*work_mem)))
  *		cpu = comparison_cost * t * log2(t)
  *
- * The disk traffic is assumed to be half sequential and half random
+ * The disk traffic is assumed to be 3/4ths sequential and 1/4th random
  * accesses (XXX can't we refine that guess?)
  *
  * We charge two operator evals per tuple comparison, which should be in
@@ -838,9 +786,9 @@ cost_sort(Path *path, PlannerInfo *root,
 		else
 			log_runs = 1.0;
 		npageaccesses = 2.0 * npages * log_runs;
-		/* Assume half are sequential, half are not */
+		/* Assume 3/4ths of accesses are sequential, 1/4th are not */
 		startup_cost += npageaccesses *
-			(seq_page_cost + cost_nonsequential_access(npages)) * 0.5;
+			(seq_page_cost * 0.75 + random_page_cost * 0.25);
 	}
 
 	/*
