@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.18 2006/03/05 15:58:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.19 2006/06/06 22:32:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +35,6 @@ static char mypath[MAXPGPATH];
  * on Windows. We need them to use filenames without spaces, for which a
  * short filename is the safest equivalent, eg:
  *		C:/Progra~1/
- *
- * This can fail in 2 ways - if the path doesn't exist, or short names are
- * disabled. In the first case, don't return any path. In the second case,
- * we leave the path in the long form. In this case, it does still seem to
- * fix elements containing spaces which is all we actually need.
  */
 static void
 cleanup_path(char *path)
@@ -47,18 +42,12 @@ cleanup_path(char *path)
 #ifdef WIN32
 	char	   *ptr;
 
-	if (GetShortPathName(path, path, MAXPGPATH - 1) == 0)
-	{
-		/*
-		 * Ignore ERROR_INVALID_PARAMETER as it almost certainly means that
-		 * short names are disabled
-		 */
-		if (GetLastError() != ERROR_INVALID_PARAMETER)
-		{
-			path[0] = '\0';
-			return;
-		}
-	}
+	/*
+	 *	GetShortPathName() will fail if the path does not exist, or short names
+	 *	are disabled on this file system.  In both cases, we just return the
+	 *	original path.
+	 */
+	GetShortPathName(path, path, MAXPGPATH - 1);
 
 	/* Replace '\' with '/' */
 	for (ptr = path; *ptr; ptr++)
