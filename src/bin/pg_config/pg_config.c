@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.19 2006/06/06 22:32:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.20 2006/06/06 22:41:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,8 @@ cleanup_path(char *path)
 	/*
 	 *	GetShortPathName() will fail if the path does not exist, or short names
 	 *	are disabled on this file system.  In both cases, we just return the
-	 *	original path.
+	 *	original path.  This is particularly useful for --sysconfdir, which
+	 *	might not exist.
 	 */
 	GetShortPathName(path, path, MAXPGPATH - 1);
 
