@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.31 2006/03/11 04:38:39 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.32 2006/06/06 11:31:55 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -793,6 +793,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 		return NULL;
 	}
 
+	errno = 0;
 	return result;
 }
 
