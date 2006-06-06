@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_thesaurus.c,v 1.4 2006/06/02 18:03:06 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_thesaurus.c,v 1.5 2006/06/06 16:25:55 teodor Exp $ */
 
 /*
  * thesaurus
@@ -12,6 +12,11 @@
 #include "dict.h"
 #include "common.h"
 #include "ts_locale.h"
+
+/*
+ * Temporay we use TSLexeme.flags for inner use...
+ */
+#define	DT_USEASIS		0x1000
 
 typedef struct LexemeInfo {
 	uint16	idsubst; /* entry's number in DictThesaurus->subst */
@@ -94,7 +99,7 @@ newLexeme( DictThesaurus *d, char *b, char *e, uint16 idsubst, uint16 posinsubst
 }
 
 static void
-addWrd( DictThesaurus *d, char *b, char *e, uint16 idsubst, uint16 nwrd, uint16 posinsubst ) {
+addWrd( DictThesaurus *d, char *b, char *e, uint16 idsubst, uint16 nwrd, uint16 posinsubst, bool useasis ) {
 	static	int nres=0;
 	static  int ntres = 0;
 	TheSubstitute	*ptr;
@@ -138,7 +143,10 @@ addWrd( DictThesaurus *d, char *b, char *e, uint16 idsubst, uint16 nwrd, uint16 
 	ptr->res[ nres ].lexeme[e-b] = '\0';
 
 	ptr->res[ nres ].nvariant = nwrd;
-	ptr->res[ nres ].flags = TSL_ADDPOS;
+	if ( useasis )
+		ptr->res[ nres ].flags = DT_USEASIS;
+	else
+		ptr->res[ nres ].flags = 0;
 
 	ptr->res[ ++nres ].lexeme = NULL;
 }
@@ -154,6 +162,7 @@ thesaurusRead( char *filename, DictThesaurus *d ) {
 	char str[BUFSIZ];
 	int lineno=0;
 	uint16	idsubst = 0;
+	bool	useasis=false;
 
 	fh = fopen(to_absfilename(filename), "r");
 	if (!fh)
@@ -196,13 +205,24 @@ thesaurusRead( char *filename, DictThesaurus *d ) {
 					state = TR_WAITLEX;
 				}
 			} else if ( state == TR_WAITSUBS ) {
-				if ( !t_isspace(ptr) ) { 
+				if ( t_iseq(ptr, '*') ) {
+					useasis = true;
+					state = TR_INSUBS;
+					beginwrd = ptr + pg_mblen(ptr);
+				} else if ( t_iseq(ptr, '\\') ) {
+					useasis = false;
+					state = TR_INSUBS;
+					beginwrd = ptr + pg_mblen(ptr);
+				} else if ( !t_isspace(ptr) ) { 
+					useasis = false;
 					beginwrd = ptr;
 					state = TR_INSUBS;
 				}
 			} else if ( state == TR_INSUBS ) {
 				if ( t_isspace(ptr) ) { 
-					addWrd( d, beginwrd, ptr, idsubst, nwrd++, posinsubst );
+					if ( ptr == beginwrd )
+						elog(ERROR, "Thesaurus: Unexpected end of line or lexeme at %d line", lineno);
+					addWrd( d, beginwrd, ptr, idsubst, nwrd++, posinsubst, useasis );
 					state = TR_WAITSUBS;
 				}
 			} else
@@ -211,8 +231,11 @@ thesaurusRead( char *filename, DictThesaurus *d ) {
 			ptr += pg_mblen(ptr);
 		}
 
-		if ( state == TR_INSUBS )
-			addWrd( d, beginwrd, ptr, idsubst, nwrd++, posinsubst );
+		if ( state == TR_INSUBS ) {
+			if ( ptr == beginwrd )
+				elog(ERROR, "Thesaurus: Unexpected end of line or lexeme at %d line", lineno);
+			addWrd( d, beginwrd, ptr, idsubst, nwrd++, posinsubst, useasis );
+		}
 
 		idsubst++;
 
@@ -319,7 +342,9 @@ compileTheLexeme(DictThesaurus *d) {
 		elog(ERROR,"Out of memory");
 
 	for(i=0;i<d->nwrds;i++) {
-		TSLexeme *ptr = (TSLexeme*) DatumGetPointer( 
+		TSLexeme *ptr;
+
+		ptr = (TSLexeme*) DatumGetPointer( 
 				FunctionCall4(
 					&(d->subdict.lexize_info),
 					PointerGetDatum(d->subdict.dictionary),
@@ -331,9 +356,11 @@ compileTheLexeme(DictThesaurus *d) {
 
 		if ( !(ptr && ptr->lexeme) ) {
 			if ( !ptr )
-				elog(ERROR,"Thesaurus: word '%s' isn't recognized by subdictionary", d->wrds[i].lexeme);
+				elog(ERROR,"Thesaurus: word-sample '%s' isn't recognized by subdictionary (rule %d)", 
+						d->wrds[i].lexeme, d->wrds[i].entries->idsubst+1	);
 			else
-				elog(NOTICE,"Thesaurus: word '%s' is recognized as stop-word, assign any stop-word", d->wrds[i].lexeme);
+				elog(NOTICE,"Thesaurus: word-sample '%s' is recognized as stop-word, assign any stop-word (rule %d)", 
+					d->wrds[i].lexeme,  d->wrds[i].entries->idsubst+1);
 
 			newwrds = addCompiledLexeme( newwrds, &nnw, &tnm, NULL, d->wrds[i].entries, 0);
 		} else {
@@ -413,17 +440,25 @@ compileTheSubstitute(DictThesaurus *d) {
 		inptr = rem;
 
 		while( inptr && inptr->lexeme ) { 
-			TSLexeme	*reml, *lexized = (TSLexeme*) DatumGetPointer( 
-				FunctionCall4(
-					&(d->subdict.lexize_info),
-					PointerGetDatum(d->subdict.dictionary),
-					PointerGetDatum(inptr->lexeme),
-					Int32GetDatum(strlen(inptr->lexeme)),
-					PointerGetDatum(NULL)
-				)
-			);
+			TSLexeme	*lexized, tmplex[2];
 
-			reml = lexized;
+			if ( inptr->flags & DT_USEASIS ) { /* do not lexize */
+				tmplex[0] = *inptr;
+				tmplex[0].flags = 0; 
+				tmplex[1].lexeme = NULL;
+				lexized = tmplex; 
+			} else {
+				lexized = (TSLexeme*) DatumGetPointer( 
+					FunctionCall4(
+						&(d->subdict.lexize_info),
+						PointerGetDatum(d->subdict.dictionary),
+						PointerGetDatum(inptr->lexeme),
+						Int32GetDatum(strlen(inptr->lexeme)),
+						PointerGetDatum(NULL)
+					)
+				);
+			}
+
 			if ( lexized && lexized->lexeme ) {
 				int toset = (lexized->lexeme && outptr != d->subst[i].res ) ? (outptr - d->subst[i].res)  : -1;
 
@@ -447,8 +482,10 @@ compileTheSubstitute(DictThesaurus *d) {
 
 				if ( toset > 0)
 					d->subst[i].res[toset].flags |= TSL_ADDPOS;
+			} else if ( lexized ) {
+				elog(NOTICE,"Thesaurus: word '%s' in substition is a stop-word, ignored (rule %d)", inptr->lexeme, i+1);
 			} else {
-				elog(NOTICE,"Thesaurus: word '%s' isn't recognized by subdictionary or it's a stop-word, ignored", inptr->lexeme);
+				elog(ERROR,"Thesaurus: word '%s' in substition isn't recognized (rule %d)", inptr->lexeme, i+1);
 			}
 
 			if ( inptr->lexeme )
@@ -457,7 +494,7 @@ compileTheSubstitute(DictThesaurus *d) {
 		}
 
 		if ( outptr == d->subst[i].res )
-			elog(ERROR,"Thesaurus: all words in subsitution aren't recognized by subdictionary");
+			elog(ERROR,"Thesaurus: all words in subsitution are stop word (rule %d)", i+1);
 
 		d->subst[i].reslen = outptr - d->subst[i].res;
 
@@ -717,7 +754,7 @@ thesaurus_lexize(PG_FUNCTION_ARGS)
 
 			infos = (LexemeInfo**)palloc(sizeof(LexemeInfo*)*nlex);
 			for(i=0;i<nlex;i++) 
-				if ( (infos[i] = findTheLexeme(d, basevar[i].lexeme)) == NULL )
+				if ( (infos[i] = findTheLexeme(d, basevar[i].lexeme)) == NULL ) 
 					break;
 
 			if ( i<nlex ) { 

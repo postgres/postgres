@@ -1,14 +1,16 @@
 #
 # Theasurus config file. Character ':' splits
-# string to part: 
-#     to be substituted string
-#     substituting string
+# string to part, example: 
+# sample-words : substitute-words
 #
+# Any substitute-word can be marked by preceding '*' character,
+# which means do not lexize this word
+# Docs: http://www.sai.msu.su/~megera/oddmuse/index.cgi/Thesaurus_dictionary
 
-#one two three : 123
-#one two : 12
-#one : 1
-#two : 2
+#one two three : *123
+#one two : *12
+#one : *1
+#two : *2
 
 #foo bar : blah blah
 #f   bar : fbar
