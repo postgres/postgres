@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Tue Jun  6 09:52:15 EDT 2006
+Last updated:           Tue Jun  6 12:27:12 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -418,7 +418,9 @@ first.
   The difficult of this features is allowing RESET ALL to not affect 
   changes made by the interface driver for its internal use.  One idea 
   is for this to be a protocol-only feature.  Another approach is to 
-  notify the protocol when a RESET CONNECTION command is used.
+  notify the protocol when a RESET CONNECTION command is used.  See
+  <a href="http://archives.postgresql.org/pgsql-patches/2006-04/msg00192.php">http://archives.postgresql.org/pgsql-patches/2006-04/msg00192.php</a>
+  for a partial implementation.
 </p>
   </li><li>Add GUC to issue notice about statements that use unjoined tables
   </li><li>Allow EXPLAIN to identify tables that were skipped because of 
