@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.127 2006/03/05 15:58:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.128 2006/06/06 17:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,8 +420,8 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
  * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
  *			for an ordered index, or NoMovementScanDirection for
  *			an unordered index.
- * 'isjoininner' is TRUE if this is a join inner indexscan path.
- *			(pathkeys and indexscandir are ignored if so.)
+ * 'outer_rel' is the outer relation if this is a join inner indexscan path.
+ *			(pathkeys and indexscandir are ignored if so.)  NULL if not.
  *
  * Returns the new path node.
  */
@@ -431,7 +431,7 @@ create_index_path(PlannerInfo *root,
 				  List *clause_groups,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
-				  bool isjoininner)
+				  RelOptInfo *outer_rel)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
 	RelOptInfo *rel = index->rel;
@@ -445,7 +445,7 @@ create_index_path(PlannerInfo *root,
 	 * don't really care what order it's scanned in.  (We could expect the
 	 * caller to supply the correct values, but it's easier to force it here.)
 	 */
-	if (isjoininner)
+	if (outer_rel != NULL)
 	{
 		pathkeys = NIL;
 		indexscandir = NoMovementScanDirection;
@@ -466,10 +466,10 @@ create_index_path(PlannerInfo *root,
 	pathnode->indexclauses = allclauses;
 	pathnode->indexquals = indexquals;
 
-	pathnode->isjoininner = isjoininner;
+	pathnode->isjoininner = (outer_rel != NULL);
 	pathnode->indexscandir = indexscandir;
 
-	if (isjoininner)
+	if (outer_rel != NULL)
 	{
 		/*
 		 * We must compute the estimated number of output rows for the
@@ -505,7 +505,7 @@ create_index_path(PlannerInfo *root,
 		pathnode->rows = rel->rows;
 	}
 
-	cost_index(pathnode, root, index, indexquals, isjoininner);
+	cost_index(pathnode, root, index, indexquals, outer_rel);
 
 	return pathnode;
 }
@@ -515,6 +515,9 @@ create_index_path(PlannerInfo *root,
  *	  Creates a path node for a bitmap scan.
  *
  * 'bitmapqual' is a tree of IndexPath, BitmapAndPath, and BitmapOrPath nodes.
+ *
+ * If this is a join inner indexscan path, the component IndexPaths should
+ * have been costed accordingly, and TRUE should be passed for isjoininner.
  */
 BitmapHeapPath *
 create_bitmap_heap_path(PlannerInfo *root,
@@ -560,7 +563,7 @@ create_bitmap_heap_path(PlannerInfo *root,
 		pathnode->rows = rel->rows;
 	}
 
-	cost_bitmap_heap_scan(&pathnode->path, root, rel, bitmapqual, false);
+	cost_bitmap_heap_scan(&pathnode->path, root, rel, bitmapqual);
 
 	return pathnode;
 }

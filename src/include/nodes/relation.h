@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.124 2006/03/05 15:58:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.125 2006/06/06 17:59:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -407,6 +407,9 @@ typedef struct Path
  *
  * 'isjoininner' is TRUE if the path is a nestloop inner scan (that is,
  * some of the index conditions are join rather than restriction clauses).
+ * Note that the path costs will be calculated differently from a plain
+ * indexscan in this case, and in addition there's a special 'rows' value
+ * different from the parent RelOptInfo's (see below).
  *
  * 'indexscandir' is one of:
  *		ForwardScanDirection: forward scan of an ordered index

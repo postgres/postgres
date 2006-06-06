@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.206 2006/05/18 19:56:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.207 2006/06/06 17:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,13 +47,11 @@
 
 static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 					List *clauses, List *outer_clauses,
-					bool istoplevel, bool isjoininner,
-					Relids outer_relids,
+					bool istoplevel, RelOptInfo *outer_rel,
 					SaOpControl saop_control);
 static List *find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
 				List *clauses, List *outer_clauses,
-				bool istoplevel, bool isjoininner,
-				Relids outer_relids);
+				bool istoplevel, RelOptInfo *outer_rel);
 static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths);
 static int	bitmap_path_comparator(const void *a, const void *b);
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths);
@@ -164,7 +162,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	indexpaths = find_usable_indexes(root, rel,
 									 rel->baserestrictinfo, NIL,
-									 true, false, NULL, SAOP_FORBID);
+									 true, NULL, SAOP_FORBID);
 
 	/*
 	 * We can submit them all to add_path.	(This generates access paths for
@@ -190,7 +188,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	indexpaths = generate_bitmap_or_paths(root, rel,
 										  rel->baserestrictinfo, NIL,
-										  false, NULL);
+										  NULL);
 	bitindexpaths = list_concat(bitindexpaths, indexpaths);
 
 	/*
@@ -199,7 +197,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	indexpaths = find_saop_paths(root, rel,
 								 rel->baserestrictinfo, NIL,
-								 true, false, NULL);
+								 true, NULL);
 	bitindexpaths = list_concat(bitindexpaths, indexpaths);
 
 	/*
@@ -247,10 +245,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
  * 'outer_clauses' is the list of additional upper-level clauses
  * 'istoplevel' is true if clauses are the rel's top-level restriction list
  *		(outer_clauses must be NIL when this is true)
- * 'isjoininner' is true if forming an inner indexscan (so some of the
- *		given clauses are join clauses)
- * 'outer_relids' identifies the outer side of the join (pass NULL
- *		if not isjoininner)
+ * 'outer_rel' is the outer side of the join if forming an inner indexscan
+ *		(so some of the given clauses are join clauses); NULL if not
  * 'saop_control' indicates whether ScalarArrayOpExpr clauses can be used
  *
  * Note: check_partial_indexes() must have been run previously.
@@ -259,10 +255,10 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 static List *
 find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 					List *clauses, List *outer_clauses,
-					bool istoplevel, bool isjoininner,
-					Relids outer_relids,
+					bool istoplevel, RelOptInfo *outer_rel,
 					SaOpControl saop_control)
 {
+	Relids		outer_relids = outer_rel ? outer_rel->relids : NULL;
 	List	   *result = NIL;
 	List	   *all_clauses = NIL;		/* not computed till needed */
 	ListCell   *ilist;
@@ -349,7 +345,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		 * relevant unless we are at top level.
 		 */
 		index_is_ordered = OidIsValid(index->ordering[0]);
-		if (istoplevel && index_is_ordered && !isjoininner)
+		if (index_is_ordered && istoplevel && outer_rel == NULL)
 		{
 			index_pathkeys = build_index_pathkeys(root, index,
 												  ForwardScanDirection,
@@ -374,7 +370,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 									  index_is_ordered ?
 									  ForwardScanDirection :
 									  NoMovementScanDirection,
-									  isjoininner);
+									  outer_rel);
 			result = lappend(result, ipath);
 		}
 
@@ -383,7 +379,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		 * that we failed to match, consider variant ways of achieving the
 		 * ordering.  Again, this is only interesting at top level.
 		 */
-		if (istoplevel && index_is_ordered && !isjoininner &&
+		if (index_is_ordered && istoplevel && outer_rel == NULL &&
 			root->query_pathkeys != NIL &&
 			pathkeys_useful_for_ordering(root, useful_pathkeys) == 0)
 		{
@@ -396,7 +392,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 										  restrictclauses,
 										  root->query_pathkeys,
 										  scandir,
-										  false);
+										  outer_rel);
 				result = lappend(result, ipath);
 			}
 		}
@@ -417,8 +413,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 static List *
 find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
 				List *clauses, List *outer_clauses,
-				bool istoplevel, bool isjoininner,
-				Relids outer_relids)
+				bool istoplevel, RelOptInfo *outer_rel)
 {
 	bool		have_saop = false;
 	ListCell   *l;
@@ -443,8 +438,7 @@ find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
 
 	return find_usable_indexes(root, rel,
 							   clauses, outer_clauses,
-							   istoplevel, isjoininner,
-							   outer_relids,
+							   istoplevel, outer_rel,
 							   SAOP_REQUIRE);
 }
 
@@ -457,13 +451,13 @@ find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
  *
  * outer_clauses is a list of additional clauses that can be assumed true
  * for the purpose of generating indexquals, but are not to be searched for
- * ORs.  (See find_usable_indexes() for motivation.)
+ * ORs.  (See find_usable_indexes() for motivation.)  outer_rel is the outer
+ * side when we are considering a nestloop inner indexpath.
  */
 List *
 generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 						 List *clauses, List *outer_clauses,
-						 bool isjoininner,
-						 Relids outer_relids)
+						 RelOptInfo *outer_rel)
 {
 	List	   *result = NIL;
 	List	   *all_clauses;
@@ -506,16 +500,14 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 											  andargs,
 											  all_clauses,
 											  false,
-											  isjoininner,
-											  outer_relids,
+											  outer_rel,
 											  SAOP_ALLOW);
 				/* Recurse in case there are sub-ORs */
 				indlist = list_concat(indlist,
 									  generate_bitmap_or_paths(root, rel,
 															   andargs,
 															   all_clauses,
-															   isjoininner,
-															   outer_relids));
+															   outer_rel));
 			}
 			else
 			{
@@ -525,8 +517,7 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 											  list_make1(orarg),
 											  all_clauses,
 											  false,
-											  isjoininner,
-											  outer_relids,
+											  outer_rel,
 											  SAOP_ALLOW);
 			}
 
@@ -724,7 +715,7 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	cost_bitmap_and_node(&apath, root);
 
 	/* Now we can do cost_bitmap_heap_scan */
-	cost_bitmap_heap_scan(&bpath, root, rel, (Path *) &apath, false);
+	cost_bitmap_heap_scan(&bpath, root, rel, (Path *) &apath);
 
 	return bpath.total_cost;
 }
@@ -1338,7 +1329,7 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
 /*
  * best_inner_indexscan
  *	  Finds the best available inner indexscan for a nestloop join
- *	  with the given rel on the inside and the given outer_relids outside.
+ *	  with the given rel on the inside and the given outer_rel outside.
  *	  May return NULL if there are no possible inner indexscans.
  *
  * We ignore ordering considerations (since a nestloop's inner scan's order
@@ -1353,8 +1344,9 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
  */
 Path *
 best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
-					 Relids outer_relids, JoinType jointype)
+					 RelOptInfo *outer_rel, JoinType jointype)
 {
+	Relids		outer_relids;
 	Path	   *cheapest;
 	bool		isouterjoin;
 	List	   *clause_list;
@@ -1396,11 +1388,11 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
 
 	/*
-	 * Intersect the given outer_relids with index_outer_relids to find the
+	 * Intersect the given outer relids with index_outer_relids to find the
 	 * set of outer relids actually relevant for this rel. If there are none,
 	 * again we can fail immediately.
 	 */
-	outer_relids = bms_intersect(rel->index_outer_relids, outer_relids);
+	outer_relids = bms_intersect(rel->index_outer_relids, outer_rel->relids);
 	if (bms_is_empty(outer_relids))
 	{
 		bms_free(outer_relids);
@@ -1413,6 +1405,13 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 * outerrels.  (We include the isouterjoin status in the cache lookup key
 	 * for safety.	In practice I suspect this is not necessary because it
 	 * should always be the same for a given innerrel.)
+	 *
+	 * NOTE: because we cache on outer_relids rather than outer_rel->relids,
+	 * we will report the same path and hence path cost for joins with
+	 * different sets of irrelevant rels on the outside.  Now that cost_index
+	 * is sensitive to outer_rel->rows, this is not really right.  However
+	 * the error is probably not large.  Is it worth establishing a separate
+	 * cache entry for each distinct outer_rel->relids set to get this right?
 	 */
 	foreach(l, rel->index_inner_paths)
 	{
@@ -1433,9 +1432,9 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 * that could be plain indexscans, ie, they don't require the join context
 	 * at all.  This may seem redundant, but we need to include those scans in
 	 * the input given to choose_bitmap_and() to be sure we find optimal AND
-	 * combinations of join and non-join scans.  The worst case is that we
-	 * might return a "best inner indexscan" that's really just a plain
-	 * indexscan, causing some redundant effort in joinpath.c.
+	 * combinations of join and non-join scans.  Also, even if the "best
+	 * inner indexscan" is just a plain indexscan, it will have a different
+	 * cost estimate because of cache effects.
 	 */
 	clause_list = find_clauses_for_join(root, rel, outer_relids, isouterjoin);
 
@@ -1445,8 +1444,7 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	indexpaths = find_usable_indexes(root, rel,
 									 clause_list, NIL,
-									 false, true,
-									 outer_relids,
+									 false, outer_rel,
 									 SAOP_FORBID);
 
 	/*
@@ -1455,8 +1453,7 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	bitindexpaths = generate_bitmap_or_paths(root, rel,
 											 clause_list, NIL,
-											 true,
-											 outer_relids);
+											 outer_rel);
 
 	/*
 	 * Likewise, generate paths using ScalarArrayOpExpr clauses; these can't
@@ -1465,8 +1462,7 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	bitindexpaths = list_concat(bitindexpaths,
 								find_saop_paths(root, rel,
 												clause_list, NIL,
-												false, true,
-												outer_relids));
+												false, outer_rel));
 
 	/*
 	 * Include the regular index paths in bitindexpaths.

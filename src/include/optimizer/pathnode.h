@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.67 2006/03/05 15:58:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.68 2006/06/06 17:59:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ extern IndexPath *create_index_path(PlannerInfo *root,
 				  List *clause_groups,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
-				  bool isjoininner);
+				  RelOptInfo *outer_rel);
 extern BitmapHeapPath *create_bitmap_heap_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,

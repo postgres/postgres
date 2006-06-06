@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.13 2006/06/05 02:49:58 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.14 2006/06/06 17:59:57 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -344,6 +344,7 @@ void
 amcostestimate (PlannerInfo *root,
                 IndexOptInfo *index,
                 List *indexQuals,
+                RelOptInfo *outer_rel,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
                 Selectivity *indexSelectivity,
@@ -681,6 +682,7 @@ void
 amcostestimate (PlannerInfo *root,
                 IndexOptInfo *index,
                 List *indexQuals,
+                RelOptInfo *outer_rel,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
                 Selectivity *indexSelectivity,
@@ -715,6 +717,20 @@ amcostestimate (PlannerInfo *root,
        List of index qual clauses (implicitly ANDed);
        a NIL list indicates no qualifiers are available.
        Note that the list contains expression trees, not ScanKeys.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>outer_rel</term>
+     <listitem>
+      <para>
+       If the index is being considered for use in a join inner indexscan,
+       the planner's information about the outer side of the join.  Otherwise
+       NULL.  When non-NULL, some of the qual clauses will be join clauses
+       with this rel rather than being simple restriction clauses.  Also,
+       the cost estimator should expect that the index scan will be repeated
+       for each row of the outer rel.
       </para>
      </listitem>
     </varlistentry>
@@ -808,6 +824,11 @@ amcostestimate (PlannerInfo *root,
    table.
   </para>
 
+  <para>
+   In the join case, the returned numbers should be averages expected for
+   any one scan of the index.
+  </para>
+
   <procedure>
    <title>Cost Estimation</title>
    <para>
@@ -859,6 +880,9 @@ amcostestimate (PlannerInfo *root,
     *indexTotalCost = seq_page_cost * numIndexPages +
         (cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
 </programlisting>
+
+     However, the above does not account for amortization of index reads
+     across repeated index scans in the join case.
     </para>
    </step>
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.75 2006/06/05 03:03:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.76 2006/06/06 17:59:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ extern DLLIMPORT double random_page_cost;
 extern DLLIMPORT double cpu_tuple_cost;
 extern DLLIMPORT double cpu_index_tuple_cost;
 extern DLLIMPORT double cpu_operator_cost;
-extern double effective_cache_size;
+extern DLLIMPORT double effective_cache_size;
 extern Cost disable_cost;
 extern bool enable_seqscan;
 extern bool enable_indexscan;
@@ -55,11 +55,13 @@ extern bool enable_hashjoin;
 extern bool constraint_exclusion;
 
 extern double clamp_row_est(double nrows);
+extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
+								  BlockNumber other_pages);
 extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel);
 extern void cost_index(IndexPath *path, PlannerInfo *root, IndexOptInfo *index,
-		   List *indexQuals, bool is_injoin);
+		   List *indexQuals, RelOptInfo *outer_rel);
 extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  Path *bitmapqual, bool is_injoin);
+					  Path *bitmapqual);
 extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
 extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.103 2006/03/05 15:58:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.104 2006/06/06 17:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, JoinType jointype);
 static Path *best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
-									  Relids outer_relids, JoinType jointype);
+									 RelOptInfo *outer_rel, JoinType jointype);
 static List *select_mergejoin_clauses(RelOptInfo *joinrel,
 						 RelOptInfo *outerrel,
 						 RelOptInfo *innerrel,
@@ -401,12 +401,10 @@ match_unsorted_outer(PlannerInfo *root,
 		{
 			if (IsA(inner_cheapest_total, AppendPath))
 				bestinnerjoin = best_appendrel_indexscan(root, innerrel,
-														 outerrel->relids,
-														 jointype);
+														 outerrel, jointype);
 			else if (innerrel->rtekind == RTE_RELATION)
 				bestinnerjoin = best_inner_indexscan(root, innerrel,
-													 outerrel->relids,
-													 jointype);
+													 outerrel, jointype);
 		}
 	}
 
@@ -791,13 +789,13 @@ hash_inner_and_outer(PlannerInfo *root,
 /*
  * best_appendrel_indexscan
  *	  Finds the best available set of inner indexscans for a nestloop join
- *	  with the given append relation on the inside and the given outer_relids
+ *	  with the given append relation on the inside and the given outer_rel
  *	  outside.  Returns an AppendPath comprising the best inner scans, or
  *	  NULL if there are no possible inner indexscans.
  */
 static Path *
 best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
-						 Relids outer_relids, JoinType jointype)
+						 RelOptInfo *outer_rel, JoinType jointype)
 {
 	int			parentRTindex = rel->relid;
 	List	   *append_paths = NIL;
@@ -832,7 +830,7 @@ best_appendrel_indexscan(PlannerInfo *root, RelOptInfo *rel,
 		 * Get the best innerjoin indexpath (if any) for this child rel.
 		 */
 		bestinnerjoin = best_inner_indexscan(root, childrel,
-											 outer_relids, jointype);
+											 outer_rel, jointype);
 
 		/*
 		 * If no luck on an indexpath for this rel, we'll still consider

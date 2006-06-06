@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.14 2006/04/28 20:57:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.15 2006/06/06 17:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,7 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 									 restrictclauses,
 									 NIL,
 									 indexscandir,
-									 false);
+									 NULL);
 
 		/*
 		 * Estimate actual cost of fetching just one row.

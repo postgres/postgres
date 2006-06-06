@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.206 2006/06/05 02:49:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.207 2006/06/06 17:59:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4465,6 +4465,7 @@ string_to_bytea_const(const char *str, size_t str_len)
 static void
 genericcostestimate(PlannerInfo *root,
 					IndexOptInfo *index, List *indexQuals,
+					RelOptInfo *outer_rel,
 					double numIndexTuples,
 					Cost *indexStartupCost,
 					Cost *indexTotalCost,
@@ -4538,26 +4539,61 @@ genericcostestimate(PlannerInfo *root,
 	/*
 	 * Estimate the number of index pages that will be retrieved.
 	 *
-	 * For all currently-supported index types, the first page of the index is
-	 * a metadata page, and we should figure on fetching that plus a pro-rated
-	 * fraction of the remaining pages.
+	 * We use the simplistic method of taking a pro-rata fraction of the
+	 * total number of index pages.  In effect, this counts only leaf pages
+	 * and not any overhead such as index metapage or upper tree levels.
+	 * In practice this seems a better approximation than charging for
+	 * access to the upper levels, perhaps because those tend to stay in
+	 * cache under load.
 	 */
-	if (index->pages > 1 && index->tuples > 0)
-	{
-		numIndexPages = (numIndexTuples / index->tuples) * (index->pages - 1);
-		numIndexPages += 1;		/* count the metapage too */
-		numIndexPages = ceil(numIndexPages);
-	}
+	if (index->pages > 1 && index->tuples > 1)
+		numIndexPages = ceil(numIndexTuples * index->pages / index->tuples);
 	else
 		numIndexPages = 1.0;
 
 	/*
-	 * Compute the index access cost.
+	 * Now compute the disk access costs.
 	 *
-	 * Disk cost: our generic assumption is that the index pages will be read
-	 * sequentially, so they cost seq_page_cost each, not random_page_cost.
+	 * The above calculations are all per-index-scan.  However, if we are
+	 * in a nestloop inner scan, we can expect the scan to be repeated (with
+	 * different search keys) for each row of the outer relation.  This
+	 * creates the potential for cache effects to reduce the number of
+	 * disk page fetches needed.  We want to estimate the average per-scan
+	 * I/O cost in the presence of caching.
+	 *
+	 * We use the Mackert-Lohman formula (see costsize.c for details) to
+	 * estimate the total number of page fetches that occur.  While this
+	 * wasn't what it was designed for, it seems a reasonable model anyway.
+	 * Note that we are counting pages not tuples anymore, so we take
+	 * N = T = index size, as if there were one "tuple" per page.
 	 */
-	*indexTotalCost = seq_page_cost * numIndexPages;
+	if (outer_rel != NULL && outer_rel->rows > 1)
+	{
+		double		num_scans = outer_rel->rows;
+		double		pages_fetched;
+
+		/* total page fetches ignoring cache effects */
+		pages_fetched = numIndexPages * num_scans;
+
+		/* use Mackert and Lohman formula to adjust for cache effects */
+		pages_fetched = index_pages_fetched(pages_fetched,
+											index->pages,
+											index->rel->pages);
+
+		/*
+		 * Now compute the total disk access cost, and then report a
+		 * pro-rated share for one index scan.
+		 */
+		*indexTotalCost = (pages_fetched * random_page_cost) / num_scans;
+	}
+	else
+	{
+		/*
+		 * For a single index scan, we just charge random_page_cost per page
+		 * touched.
+		 */
+		*indexTotalCost = numIndexPages * random_page_cost;
+	}
 
 	/*
 	 * CPU cost: any complex expressions in the indexquals will need to be
@@ -4594,10 +4630,11 @@ btcostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
 	Oid			relid;
 	AttrNumber	colnum;
 	HeapTuple	tuple;
@@ -4728,7 +4765,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 		numIndexTuples = btreeSelectivity * index->rel->tuples;
 	}
 
-	genericcostestimate(root, index, indexQuals, numIndexTuples,
+	genericcostestimate(root, index, indexQuals, outer_rel, numIndexTuples,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -4800,12 +4837,13 @@ hashcostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
 
-	genericcostestimate(root, index, indexQuals, 0.0,
+	genericcostestimate(root, index, indexQuals, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -4818,12 +4856,13 @@ gistcostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
 
-	genericcostestimate(root, index, indexQuals, 0.0,
+	genericcostestimate(root, index, indexQuals, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -4836,12 +4875,13 @@ gincostestimate(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
 
-	genericcostestimate(root, index, indexQuals, 0.0,
+	genericcostestimate(root, index, indexQuals, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
