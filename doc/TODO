@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jun  3 22:10:54 EDT 2006
+Last updated:		Tue Jun  6 09:52:15 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -20,7 +20,7 @@ first.
 Administration
 ==============
 
-* %Make postmater and postgres options distinct so the postmaster -o
+* -Make postmater and postgres options distinct so the postmaster -o
   option is no longer needed
 * -%Allow pooled connections to list all prepared statements
 
