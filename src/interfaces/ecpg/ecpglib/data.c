@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.27.4.1 2005/08/24 10:35:12 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.27.4.2 2006/06/06 11:36:12 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -442,6 +442,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 						if (garbage_left(isarray, scan_length, compat))
 						{
+							free(nres);
 							ECPGraise(lineno, ECPG_NUMERIC_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
@@ -455,6 +456,8 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					PGTYPESnumeric_copy(nres, (numeric *) (var + offset * act_tuple));
 				else
 					PGTYPESnumeric_to_decimal(nres, (decimal *) (var + offset * act_tuple));
+
+				free(nres);
 				break;
 
 			case ECPGt_interval:
@@ -489,6 +492,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 						if (garbage_left(isarray, scan_length, compat))
 						{
+							free(ires);
 							ECPGraise(lineno, ECPG_INTERVAL_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 							return (false);
 						}
@@ -499,6 +503,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					ires = PGTYPESinterval_from_asc("0 seconds", NULL);
 
 				PGTYPESinterval_copy(ires, (interval *) (var + offset * act_tuple));
+				free(ires);
 				break;
 			case ECPGt_date:
 				if (pval)
