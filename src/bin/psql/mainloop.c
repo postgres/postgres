@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.77 2006/06/05 14:47:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.78 2006/06/07 13:18:37 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -309,7 +309,7 @@ MainLoop(FILE *source)
 			if (!line_saved_in_history && pset.cur_cmd_interactive)
 			{
 				/* Sending a command (PSQL_CMD_SEND) zeros the length */
-				if (scan_result == PSCAN_BACKSLASH && history_buf->len != 0)
+				if (scan_result == PSCAN_BACKSLASH)
 					pg_write_history(line);
 				else
 					pg_append_history(line, history_buf);
