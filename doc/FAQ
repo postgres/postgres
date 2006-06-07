@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jun 3 20:17:01 EDT 2006
+   Last updated: Wed Jun 7 17:22:48 EDT 2006
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -519,7 +519,7 @@
    
    One limitation is that indexes can not be created on columns longer
    than about 2,000 characters. Fortunately, such indexes are rarely
-   needed. Uniqueness is best guaranteed by a funtion index of an MD5
+   needed. Uniqueness is best guaranteed by a function index of an MD5
    hash of the long column, and full text indexing allows for searching
    of words within the column.
    
@@ -620,8 +620,8 @@
     FROM tab
     WHERE lower(col) = 'abc';
 
-   This will not use an standard index. However, if you create a
-   expresssion index, it will be used:
+   This will not use an standard index. However, if you create an
+   expression index, it will be used:
     CREATE INDEX tabindex ON tab (lower(col));
 
    If the above index is created as UNIQUE, though the column can store
@@ -726,7 +726,7 @@
   4.12) What is an OID? What is a CTID?
   
    Every row that is created in PostgreSQL gets a unique OID unless
-   created WITHOUT OIDS. OIDs are autotomatically assigned unique 4-byte
+   created WITHOUT OIDS. OIDs are automatically assigned unique 4-byte
    integers that are unique across the entire installation. However, they
    overflow at 4 billion, and then the OIDs start being duplicated.
    PostgreSQL uses OIDs to link its internal system tables together.

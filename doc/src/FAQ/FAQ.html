@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Jun  3 20:17:01 EDT 2006</P>
+    <P>Last updated: Wed Jun  7 17:22:48 EDT 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -694,7 +694,7 @@ table?</TD><TD>unlimited</TD></TR>
 
     <P>One limitation is that indexes can not be created on columns
     longer than about 2,000 characters. Fortunately, such indexes are
-    rarely needed. Uniqueness is best guaranteed by a funtion index
+    rarely needed. Uniqueness is best guaranteed by a function index
     of an MD5 hash of the long column, and full text indexing
     allows for searching of words within the column.</P>
 
@@ -812,8 +812,8 @@ table?</TD><TD>unlimited</TD></TR>
     FROM tab
     WHERE lower(col) = 'abc';
 </PRE>
-    This will not use an standard index. However, if you create a
-    expresssion index, it will be used: 
+    This will not use an standard index. However, if you create an
+    expression index, it will be used: 
 <PRE>
     CREATE INDEX tabindex ON tab (lower(col));
 </PRE>
@@ -957,7 +957,7 @@ length</TD></TR>
 
     <P>Every row that is created in PostgreSQL gets a unique
     <SMALL>OID</SMALL> unless created <SMALL>WITHOUT OIDS</SMALL>.
-    O<SMALL>ID</SMALL>s are autotomatically assigned unique 4-byte
+    O<SMALL>ID</SMALL>s are automatically assigned unique 4-byte
     integers that are unique across the entire installation.  However,
     they overflow at 4 billion, and then the O<SMALL>ID</SMALL>s start
     being duplicated. PostgreSQL uses <SMALL>OID</SMALL>s to link its
