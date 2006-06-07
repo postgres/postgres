@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.166 2006/03/05 15:58:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.167 2006/06/07 22:32:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 #include "access/xact.h"
 #include "miscadmin.h"
+#include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/guc.h"
 
@@ -36,6 +37,7 @@ static int DecodeTime(char *str, int fmask, int *tmask,
 		   struct pg_tm * tm, fsec_t *fsec);
 static int	DecodeTimezone(char *str, int *tzp);
 static int	DecodePosixTimezone(char *str, int *tzp);
+static int	DecodeZicTimezone(char *str, int *tzp, struct pg_tm * tm);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm);
 static void TrimTrailingZeros(char *str);
@@ -888,8 +890,24 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 			{
 				char		delim = *cp;
 
-				ftype[nf] = DTK_DATE;
-				APPEND_CHAR(bufp, bufend, *cp++);
+				if (*cp == '/')
+				{
+					ftype[nf] = DTK_TZ;
+					/* set the first character of the region to upper case
+					 * again*/
+					field[nf][0] = pg_toupper((unsigned char) field[nf][0]);
+					/* we have seen "Region/" of a POSIX timezone, continue to
+					 * read the City part */
+					do {
+						APPEND_CHAR(bufp, bufend, *cp++);
+						/* there is for example America/New_York */
+					} while (isalpha((unsigned char) *cp) || *cp == '_');
+				}
+				else
+				{
+					ftype[nf] = DTK_DATE;
+					APPEND_CHAR(bufp, bufend, *cp++);
+				}
 				while (isdigit((unsigned char) *cp) || *cp == delim)
 					APPEND_CHAR(bufp, bufend, *cp++);
 			}
@@ -980,6 +998,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	bool		haveTextMonth = FALSE;
 	int			is2digits = FALSE;
 	int			bc = FALSE;
+	int			zicTzFnum = -1;
 
 	/*
 	 * We'll insist on at least all of the date fields, but initialize the
@@ -1127,7 +1146,15 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					if (tzp == NULL)
 						return DTERR_BAD_FORMAT;
 
-					dterr = DecodeTimezone(field[i], &tz);
+					if (strchr(field[i], '/') != NULL)
+					{
+						/* remember to apply the timezone at the end */
+						zicTzFnum = i;
+						tmask = DTK_M(TZ);
+						break;
+					}
+					else
+						dterr = DecodeTimezone(field[i], &tz);
 					if (dterr)
 						return dterr;
 
@@ -1605,6 +1632,19 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 			return DTERR_FIELD_OVERFLOW;
 
+		if (zicTzFnum != -1)
+		{
+			Datum tsTz;
+			Timestamp timestamp;
+			tm2timestamp(tm, *fsec, NULL, &timestamp);
+			tsTz = DirectFunctionCall2(timestamp_zone,
+							DirectFunctionCall1(textin,
+											CStringGetDatum(field[zicTzFnum])),
+							TimestampGetDatum(timestamp));
+			timestamp2tm(DatumGetTimestampTz(tsTz), tzp, tm, fsec, NULL, NULL);
+			fmask &= ~DTK_M(TZ);
+		}
+
 		/* timezone not specified? then find local timezone if possible */
 		if (tzp != NULL && !(fmask & DTK_M(TZ)))
 		{
@@ -1874,7 +1914,15 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					if (tzp == NULL)
 						return DTERR_BAD_FORMAT;
 
-					dterr = DecodeTimezone(field[i], &tz);
+					if (strchr(field[i], '/') != NULL)
+					{
+						/* a date has to be specified */
+						if ((fmask & DTK_DATE_M) != DTK_DATE_M)
+							return DTERR_BAD_FORMAT;
+						dterr = DecodeZicTimezone(field[i], &tz, tm);
+					}
+					else
+						dterr = DecodeTimezone(field[i], &tz);
 					if (dterr)
 						return dterr;
 
@@ -2924,6 +2972,19 @@ DecodePosixTimezone(char *str, int *tzp)
 	return 0;
 }
 
+static int
+DecodeZicTimezone(char *str, int *tzp, struct pg_tm * tm)
+{
+	struct pg_tz *tz;
+
+	tz = pg_tzset(str);
+	if (!tz)
+		return DTERR_BAD_FORMAT;
+
+	*tzp = DetermineTimeZoneOffset(tm, tz);
+
+	return 0;
+}
 
 /* DecodeSpecial()
  * Decode text string using lookup table.
