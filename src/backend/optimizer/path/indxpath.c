@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.207 2006/06/06 17:59:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.208 2006/06/07 17:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,20 +674,18 @@ bitmap_path_comparator(const void *a, const void *b)
 	Cost		bcost;
 	Selectivity aselec;
 	Selectivity bselec;
-	Selectivity diff;
 
 	cost_bitmap_tree_node(pa, &acost, &aselec);
 	cost_bitmap_tree_node(pb, &bcost, &bselec);
 
 	/*
-	 * Since selectivities are often pretty crude, don't put blind faith
-	 * in them; if the selectivities are within 1% of being the same, treat
-	 * them as equal and sort by cost instead.
+	 * If selectivities are the same, sort by cost.  (Note: there used to be
+	 * logic here to do "fuzzy comparison", but that's a bad idea because it
+	 * fails to be transitive, which will confuse qsort terribly.)
 	 */
-	diff = aselec - bselec;
-	if (diff < -0.01)
+	if (aselec < bselec)
 		return -1;
-	if (diff > 0.01)
+	if (aselec > bselec)
 		return 1;
 
 	if (acost < bcost)
