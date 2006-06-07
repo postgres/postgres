@@ -6,16 +6,13 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.91 2006/04/24 04:03:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.92 2006/06/07 22:24:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#ifndef WIN32_CLIENT_ONLY
-/* for thread.c */
 #include <pwd.h>
 #include <netdb.h>
-#endif
 
 #include <ctype.h>
 
@@ -221,7 +218,7 @@ extern int	pgrename(const char *from, const char *to);
 extern int	pgunlink(const char *path);
 
 /* Include this first so later includes don't see these defines */
-#ifdef WIN32_CLIENT_ONLY
+#ifdef WIN32_ONLY_COMPILER
 #include <io.h>
 #endif
 
@@ -249,10 +246,10 @@ extern bool rmtree(char *path, bool rmtopdir);
 
 /* open() replacement to allow delete of held files and passing
  * of special options. */
-#ifndef WIN32_CLIENT_ONLY
 extern int	win32_open(const char *, int,...);
 
-#define		open(a,b,...)	win32_open(a,b,##__VA_ARGS__)
+#ifndef FRONTEND
+#define		open(a,b,c)	win32_open(a,b,c)
 #endif
 
 #define popen(a,b) _popen(a,b)
@@ -304,10 +301,8 @@ extern double rint(double x);
 #endif
 
 #ifndef HAVE_INET_ATON
-#ifndef WIN32_CLIENT_ONLY
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
 extern int	inet_aton(const char *cp, struct in_addr * addr);
 #endif
 

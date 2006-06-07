@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.85 2006/05/31 20:58:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.86 2006/06/07 22:24:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,11 @@
 
 #include <sys/stat.h>
 
+#ifndef WIN32_ONLY_COMPILER
 #include "dynloader.h"
+#else
+#include "port/dynloader/win32.h"
+#endif
 #include "miscadmin.h"
 #include "utils/dynamic_loader.h"
 

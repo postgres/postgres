@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.13 2006/04/09 19:21:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.14 2006/06/07 22:24:46 momjian Exp $
  */
 
 /*
@@ -157,7 +157,7 @@ tzload(const char *name, struct state * sp)
 		}
 		if (doaccess && access(name, R_OK) != 0)
 			return -1;
-		if ((fid = open(name, O_RDONLY | PG_BINARY)) == -1)
+		if ((fid = open(name, O_RDONLY | PG_BINARY, 0)) == -1)
 			return -1;
 	}
 	{

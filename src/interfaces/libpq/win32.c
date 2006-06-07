@@ -26,12 +26,18 @@
 #define NOCRYPT
 
 #include <windows.h>
-#include <winsock.h>
 #include <stdio.h>
 #include "win32.h"
-#include "postgres_fe.h"
-#include "libpq-fe.h"
-#include "libpq-int.h"
+
+/* Declared here to avoid pulling in all includes, which causes name collissions */ 
+#ifdef ENABLE_NLS
+extern char *
+libpq_gettext(const char *msgid)
+__attribute__((format_arg(1)));
+#else
+#define libpq_gettext(x) (x)
+#endif
+
 
 static struct WSErrorEntry
 {

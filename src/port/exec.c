@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.41 2006/03/05 15:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.42 2006/06/07 22:24:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,7 @@
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#ifndef WIN32_CLIENT_ONLY
 #include <unistd.h>
-#endif
 
 #ifndef S_IRUSR					/* XXX [TRH] should be in a header */
 #define S_IRUSR		 S_IREAD
@@ -48,7 +46,7 @@
 #define log_error(str, param)	(fprintf(stderr, str, param), fputc('\n', stderr))
 #endif
 
-#ifdef WIN32_CLIENT_ONLY
+#ifdef WIN32_ONLY_COMPILER
 #define getcwd(cwd,len)  GetCurrentDirectory(len, cwd)
 #endif
 

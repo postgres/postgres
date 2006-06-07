@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.85 2006/03/05 15:58:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.86 2006/06/07 22:24:45 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -11,10 +11,7 @@
 
 #include <math.h>
 #include <signal.h>
-
-#ifndef WIN32_CLIENT_ONLY
 #include <unistd.h>
-#endif
 
 #ifndef WIN32
 #include <sys/ioctl.h>			/* for ioctl() */
@@ -641,10 +638,10 @@ print_aligned_text(const char *title, const char *const * headers,
 		for (ptr = footers; *ptr; ptr++)
 			fprintf(fout, "%s\n", *ptr);
 
-#ifndef __MINGW32__
+#ifndef WIN32
 
 	/*
-	 * for some reason MinGW outputs an extra newline, so this supresses it
+	 * for some reason MinGW (and MSVC) outputs an extra newline, so this supresses it
 	 */
 	fputc('\n', fout);
 #endif

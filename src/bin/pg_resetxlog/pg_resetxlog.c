@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.47 2006/06/03 02:19:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.48 2006/06/07 22:24:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 	 */
 	snprintf(path, MAXPGPATH, "%s/postmaster.pid", DataDir);
 
-	if ((fd = open(path, O_RDONLY)) < 0)
+	if ((fd = open(path, O_RDONLY, 0)) < 0)
 	{
 		if (errno != ENOENT)
 		{
@@ -347,7 +347,7 @@ ReadControlFile(void)
 	char	   *buffer;
 	pg_crc32	crc;
 
-	if ((fd = open(XLOG_CONTROL_FILE, O_RDONLY)) < 0)
+	if ((fd = open(XLOG_CONTROL_FILE, O_RDONLY, 0)) < 0)
 	{
 		/*
 		 * If pg_control is not there at all, or we can't read it, the odds

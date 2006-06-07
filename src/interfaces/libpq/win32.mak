@@ -68,6 +68,7 @@ CLEAN :
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
 	-@erase "$(INTDIR)\pthread-win32.obj"
+	-@erase "$(INTDIR)\snprintf.obj"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(OUTDIR)\libpq.res"
@@ -103,6 +104,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\pqsignal.obj" \
 	"$(INTDIR)\wchar.obj" \
 	"$(INTDIR)\encnames.obj" \
+	"$(INTDIR)\snprintf.obj" \
 	"$(INTDIR)\pthread-win32.obj"
 
 
@@ -117,7 +119,7 @@ pg_config_paths.h: win32.mak
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /W3 /GX $(OPT) /I "..\..\include" /I. /D "FRONTEND" $(DEBUGDEF) /D\
+CPP_PROJ=/nologo /W3 /GX $(OPT) /I "..\..\include" /I "..\..\include\port\win32" /I "..\..\include\port\win32_msvc" /I. /D "FRONTEND" $(DEBUGDEF) /D\
  "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP"
 
@@ -210,6 +212,11 @@ LINK32_OBJS= \
 "$(INTDIR)\encnames.obj" : ..\..\backend\utils\mb\encnames.c
 	$(CPP) @<<
 	$(CPP_PROJ) /I"." ..\..\backend\utils\mb\encnames.c
+<<
+
+"$(INTDIR)\snprintf.obj" : ..\..\port\snprintf.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\snprintf.c
 <<
 
 .c{$(CPP_OBJS)}.obj:

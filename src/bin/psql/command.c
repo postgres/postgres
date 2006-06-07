@@ -3,12 +3,12 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.168 2006/06/01 00:15:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.169 2006/06/07 22:24:45 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
 
-#ifdef WIN32_CLIENT_ONLY		/* needed for BCC */
+#ifdef __BORLANDC__		/* needed for BCC */
 #undef mkdir
 #endif
 
@@ -26,10 +26,8 @@
 #include <io.h>
 #include <fcntl.h>
 #include <direct.h>
-#ifndef WIN32_CLIENT_ONLY
 #include <sys/types.h>			/* for umask() */
 #include <sys/stat.h>			/* for stat() */
-#endif
 #endif
 
 #include "libpq-fe.h"
@@ -1261,10 +1259,8 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 	bool		error = false;
 	int			fd;
 
-#ifndef WIN32_CLIENT_ONLY
 	struct stat before,
 				after;
-#endif
 
 	if (filename_arg)
 		fname = filename_arg;
@@ -1339,19 +1335,16 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		}
 	}
 
-#ifndef WIN32_CLIENT_ONLY
 	if (!error && stat(fname, &before) != 0)
 	{
 		psql_error("%s: %s\n", fname, strerror(errno));
 		error = true;
 	}
-#endif
 
 	/* call editor */
 	if (!error)
 		error = !editFile(fname);
 
-#ifndef WIN32_CLIENT_ONLY
 	if (!error && stat(fname, &after) != 0)
 	{
 		psql_error("%s: %s\n", fname, strerror(errno));
@@ -1360,10 +1353,6 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 
 	if (!error && before.st_mtime != after.st_mtime)
 	{
-#else
-	if (!error)
-	{
-#endif
 		stream = fopen(fname, PG_BINARY_R);
 		if (!stream)
 		{

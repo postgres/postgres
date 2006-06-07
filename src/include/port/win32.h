@@ -1,20 +1,23 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.51 2006/03/03 20:52:36 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.52 2006/06/07 22:24:45 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
 
 #undef ERROR
+#define _WINSOCKAPI_
 #include <windows.h>
-#include <winsock.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#undef small
 #include <process.h>
 #include <signal.h>
 #include <errno.h>
-
+#include <direct.h>
+#include <sys/utime.h> /* for non-unicode version */
 #undef near
 
 /* Must be here to avoid conflicting with prototype in windows.h */
 #define mkdir(a,b)	mkdir(a)
-
 
 #define HAVE_FSYNC_WRITETHROUGH
 #define HAVE_FSYNC_WRITETHROUGH_ONLY
@@ -28,7 +31,7 @@
 #define USES_WINSOCK
 
 /* defines for dynamic linking on Win32 platform */
-#if defined(__MINGW32__) || defined(__CYGWIN__)
+#if defined(WIN32) || defined(__CYGWIN__)
 
 #if __GNUC__ && ! defined (__declspec)
 #error You need egcs 1.1 or newer for compiling!
@@ -40,18 +43,11 @@
 #define DLLIMPORT __declspec (dllimport)
 #endif
 
-#elif defined(WIN32_CLIENT_ONLY)
-
-#if defined(_DLL)
-#define DLLIMPORT __declspec (dllexport)
-#else							/* not _DLL */
-#define DLLIMPORT __declspec (dllimport)
-#endif
-
 #else							/* not CYGWIN, not MSVC, not MingW */
 
 #define DLLIMPORT
 #endif
+
 
 /*
  *	IPC defines
@@ -175,7 +171,7 @@ typedef int gid_t;
 #endif
 typedef long key_t;
 
-#ifdef WIN32_CLIENT_ONLY
+#ifdef WIN32_ONLY_COMPILER
 typedef int pid_t;
 #endif
 
@@ -254,5 +250,37 @@ extern int	pgwin32_is_admin(void);
 extern int	pgwin32_is_service(void);
 #endif
 
-/* in backend/port/win32/error.c */
+/* in port/win32error.c */
 extern void _dosmaperr(unsigned long);
+
+
+/* Things that exist in MingW headers, but need to be added to MSVC */
+#ifdef WIN32_ONLY_COMPILER
+typedef long ssize_t;
+typedef unsigned short mode_t;
+
+#define inline __inline
+#define __inline__ __inline
+
+#define _S_IRWXU	(_S_IREAD | _S_IWRITE | _S_IEXEC)
+#define _S_IXUSR	_S_IEXEC
+#define _S_IWUSR	_S_IWRITE
+#define _S_IRUSR	_S_IREAD
+#define S_IRUSR		_S_IRUSR
+#define S_IWUSR		_S_IWUSR
+#define S_IXUSR		_S_IXUSR
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+
+#define F_OK 0
+#define W_OK 2
+#define R_OK 4
+
+#define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) || (_fpclass(x) == _FPCLASS_NINF))
+#define isnan(x) _isnan(x)
+#define finite(x) _finite(x)
+
+
+/* Pulled from Makefile.port in mingw */
+#define DLSUFFIX ".dll"
+#endif

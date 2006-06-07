@@ -15,17 +15,15 @@
  *
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.19 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.20 2006/06/07 22:24:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef GETADDRINFO_H
 #define GETADDRINFO_H
 
-#ifndef WIN32_CLIENT_ONLY
 #include <sys/socket.h>
 #include <netdb.h>
-#endif
 
 
 /* Various macros that ought to be in <netdb.h>, but might not be */
@@ -42,7 +40,7 @@
 #define EAI_MEMORY		(-10)
 #define EAI_SYSTEM		(-11)
 #else							/* WIN32 */
-#if defined(WIN32_CLIENT_ONLY)
+#ifdef WIN32_ONLY_COMPILER
 #define WSA_NOT_ENOUGH_MEMORY   (WSAENOBUFS)
 #define WSATYPE_NOT_FOUND       (WSABASEERR+109)
 #endif

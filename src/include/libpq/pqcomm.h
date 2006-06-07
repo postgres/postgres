@@ -9,28 +9,19 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/pqcomm.h,v 1.100 2006/05/17 01:44:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/pqcomm.h,v 1.101 2006/06/07 22:24:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PQCOMM_H
 #define PQCOMM_H
 
-#ifdef WIN32
-#include <winsock.h>
-/* workaround for clashing defines of "ERROR" */
-#ifdef ELOG_H
-#undef ERROR
-#define ERROR	PGERROR
-#endif
-#else							/* not WIN32 */
 #include <sys/socket.h>
 #include <netdb.h>
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
 #include <netinet/in.h>
-#endif   /* not WIN32 */
 
 #ifdef HAVE_STRUCT_SOCKADDR_STORAGE
 

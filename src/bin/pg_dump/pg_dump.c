@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.436 2006/05/28 21:13:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.437 2006/06/07 22:24:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,7 @@
  */
 #include "postgres.h"
 
-#ifndef WIN32_CLIENT_ONLY
 #include <unistd.h>
-#endif
 
 #include <ctype.h>
 #ifdef ENABLE_NLS

@@ -16,7 +16,7 @@
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.23 2006/03/05 15:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.24 2006/06/07 22:24:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,23 +24,15 @@
 /* This is intended to be used in both frontend and backend, so use c.h */
 #include "c.h"
 
-#ifndef WIN32_CLIENT_ONLY
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
 
 #include "getaddrinfo.h"
 
 
 #ifdef WIN32
-
-#define WIN32_LEAN_AND_MEAN
-
-#include <windows.h>
-
-#if !defined(WIN32_CLIENT_ONLY)
 /*
  * The native routines may or may not exist on the Windows platform we are on,
  * so we dynamically look up the routines, and call them via function pointers.
@@ -130,7 +122,6 @@ haveNativeWindowsIPv6routines(void)
 	return (getaddrinfo_ptr != NULL);
 }
 #endif
-#endif
 
 
 /*
@@ -151,7 +142,7 @@ getaddrinfo(const char *node, const char *service,
 			   *psin;
 	struct addrinfo hints;
 
-#if defined(WIN32) && !defined(WIN32_CLIENT_ONLY)
+#ifdef WIN32
 
 	/*
 	 * If Windows has native IPv6 support, use the native Windows routine.
@@ -274,7 +265,7 @@ freeaddrinfo(struct addrinfo * res)
 {
 	if (res)
 	{
-#if defined(WIN32) && !defined(WIN32_CLIENT_ONLY)
+#ifdef WIN32
 
 		/*
 		 * If Windows has native IPv6 support, use the native Windows routine.
@@ -337,8 +328,10 @@ gai_strerror(int errcode)
 			return "Not enough memory";
 #endif
 #ifdef EAI_NODATA
+#ifndef WIN32_ONLY_COMPILER	/* MSVC complains because another case has the same value */
 		case EAI_NODATA:
 			return "No host data of that type was found";
+#endif
 #endif
 #ifdef EAI_SERVICE
 		case EAI_SERVICE:
@@ -366,7 +359,7 @@ getnameinfo(const struct sockaddr * sa, int salen,
 			char *node, int nodelen,
 			char *service, int servicelen, int flags)
 {
-#if defined(WIN32) && !defined(WIN32_CLIENT_ONLY)
+#ifdef WIN32
 
 	/*
 	 * If Windows has native IPv6 support, use the native Windows routine.

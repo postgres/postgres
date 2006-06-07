@@ -15064,6 +15064,14 @@ case $LIBOBJS in
   *) LIBOBJS="$LIBOBJS rand.$ac_objext" ;;
 esac
 
+case $LIBOBJS in
+    "win32error.$ac_objext"   | \
+  *" win32error.$ac_objext"   | \
+    "win32error.$ac_objext "* | \
+  *" win32error.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32error.$ac_objext" ;;
+esac
+
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_SYMLINK 1

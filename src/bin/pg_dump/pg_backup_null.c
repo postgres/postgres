@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.17 2006/02/12 06:11:50 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.18 2006/06/07 22:24:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,7 @@
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 
-#ifndef WIN32_CLIENT_ONLY
 #include <unistd.h>				/* for dup */
-#endif
 
 #include "libpq/libpq-fs.h"
 

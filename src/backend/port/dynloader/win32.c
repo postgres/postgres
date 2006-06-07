@@ -1,7 +1,6 @@
-/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.7 2005/10/15 02:49:23 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.8 2006/06/07 22:24:43 momjian Exp $ */
 
-#include <windows.h>
-#include <stdio.h>
+#include "postgres.h"
 
 char	   *dlerror(void);
 int			dlclose(void *handle);

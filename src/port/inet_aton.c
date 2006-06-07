@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/inet_aton.c,v 1.8 2005/10/15 02:49:51 momjian Exp $
+/* $PostgreSQL: pgsql/src/port/inet_aton.c,v 1.9 2006/06/07 22:24:46 momjian Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -44,10 +44,8 @@
 
 #include "c.h"
 
-#ifndef WIN32_CLIENT_ONLY
 #include <netinet/in.h>
 #include <ctype.h>
-#endif
 
 /*
  * Check whether "cp" is a valid ascii representation

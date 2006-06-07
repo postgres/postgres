@@ -7,19 +7,15 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/thread.c,v 1.32 2006/03/05 15:59:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/thread.c,v 1.33 2006/06/07 22:24:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
 
-#ifdef WIN32_CLIENT_ONLY
-#undef ERROR
-#else
 #include <pwd.h>
-#endif
-#if defined(ENABLE_THREAD_SAFETY)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY)
 #include <pthread.h>
 #endif
 

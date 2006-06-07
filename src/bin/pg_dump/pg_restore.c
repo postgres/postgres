@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.77 2006/04/12 22:18:48 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.78 2006/06/07 22:24:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,7 @@
 #include <termios.h>
 #endif
 
-#ifndef WIN32_CLIENT_ONLY
 #include <unistd.h>
-#endif
 
 #include "getopt_long.h"
 

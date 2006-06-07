@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.202 2006/05/28 21:13:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.203 2006/06/07 22:24:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,16 +52,14 @@
 
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32) && !defined(__CYGWIN__) /* win32 will include further down */
 #include "pg_config_os.h"		/* must be before any system header files */
-#else
-#if defined(_MSC_VER) || defined(__BORLANDC__)
-#define WIN32_CLIENT_ONLY
-/* Some use MinGW-generated pg_config.h but MSVC for extensions. */
-#undef HAVE_STRINGS_H
-#endif
 #endif
 #include "postgres_ext.h"
+
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+#define	WIN32_ONLY_COMPILER
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,13 +80,11 @@
 #endif
 
 #if defined(WIN32) || defined(__CYGWIN__)
-#ifndef WIN32_CLIENT_ONLY
-/* We have to redefine some system functions after they are included above */
-#include "pg_config_os.h"
-#else
-#include "port/win32.h"			/* We didn't run configure, but this is our
-								 * port file */
-#endif
+/* We have to redefine some system functions after they are included above.
+ *
+ * use port/win32.h directly to work on both mingw and non-mingw.
+ */
+#include "port/win32.h"
 #endif
 
 /* Must be before gettext() games below */

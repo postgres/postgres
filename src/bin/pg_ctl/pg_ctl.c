@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.67 2006/03/05 15:58:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.68 2006/06/07 22:24:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1159,12 +1159,12 @@ pgwin32_doRunAsService(void)
  * also load the couple of functions that *do* exist in minwg headers but not
  * on NT4. That way, we don't break on NT4.
  */
-typedef WINAPI BOOL (*__CreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-typedef WINAPI BOOL (*__IsProcessInJob)(HANDLE, HANDLE, PBOOL);
-typedef WINAPI HANDLE (*__CreateJobObject)(LPSECURITY_ATTRIBUTES, LPCTSTR);
-typedef WINAPI BOOL (*__SetInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD);
-typedef WINAPI BOOL (*__AssignProcessToJobObject)(HANDLE, HANDLE);
-typedef WINAPI BOOL (*__QueryInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD, LPDWORD);
+typedef BOOL (WINAPI *__CreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+typedef BOOL (WINAPI *__IsProcessInJob)(HANDLE, HANDLE, PBOOL);
+typedef HANDLE (WINAPI *__CreateJobObject)(LPSECURITY_ATTRIBUTES, LPCTSTR);
+typedef BOOL (WINAPI *__SetInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD);
+typedef BOOL (WINAPI *__AssignProcessToJobObject)(HANDLE, HANDLE);
+typedef BOOL (WINAPI *__QueryInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD, LPDWORD);
 
 /* Windows API define missing from MingW headers */
 #define DISABLE_MAX_PRIVILEGE   0x1 
