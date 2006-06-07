@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.16 2006/05/30 19:24:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.17 2006/06/07 18:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
  *
  * The actual sampling interval is randomized with the SampleFunc() value
  * as the mean; this hopefully will reduce any measurement bias due to
- * cyclic variation in the node execution time.
+ * variation in the node execution time.
  */
 #ifdef HAVE_CBRT
 #define SampleFunc(niters) cbrt(niters)
@@ -56,8 +56,7 @@
 /*
  * We sample at every node iteration until we've reached this threshold,
  * so that nodes not called a large number of times are completely accurate.
- * (Perhaps this should be a GUC variable?  But beware of messing up
- * CalculateSampleOverhead if value is too small.)
+ * (Perhaps this should be a GUC variable?)
  */
 #define SAMPLE_THRESHOLD 50
 
@@ -71,7 +70,6 @@ static bool SampleOverheadCalculated = false;
 static void
 CalculateSampleOverhead(void)
 {
-	Instrumentation instr;
 	int i;
 
 	/*
@@ -82,20 +80,20 @@ CalculateSampleOverhead(void)
 
 	for (i = 0; i < 5; i++)
 	{
+		Instrumentation timer;
+		instr_time	tmptime;
 		int j;
 		double overhead;
 
-		memset(&instr, 0, sizeof(instr));
-		/*
-		 * We know that samples will actually be taken up to SAMPLE_THRESHOLD,
-		 * so that's as far as we can test.
-		 */
-		for (j=0; j < SAMPLE_THRESHOLD; j++)
+		memset(&timer, 0, sizeof(timer));
+		InstrStartNode(&timer);
+#define TEST_COUNT 100
+		for (j = 0; j < TEST_COUNT; j++)
 		{
-			InstrStartNode(&instr);
-			InstrStopNode(&instr, 1);
+			INSTR_TIME_SET_CURRENT(tmptime);
 		}
-		overhead = INSTR_TIME_GET_DOUBLE(instr.counter) / instr.samplecount;
+		InstrStopNode(&timer, 1);
+		overhead = INSTR_TIME_GET_DOUBLE(timer.counter) / TEST_COUNT;
 		if (overhead < SampleOverhead)
 			SampleOverhead = overhead;
 	}
@@ -159,13 +157,19 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	{
 		instr_time	endtime;
 
+		/*
+		 * To be sure that SampleOverhead accurately reflects the extra
+		 * overhead, we must do INSTR_TIME_SET_CURRENT() as the *first*
+		 * action that is different between the sampling and non-sampling
+		 * code paths.
+		 */
+		INSTR_TIME_SET_CURRENT(endtime);
+
 		if (INSTR_TIME_IS_ZERO(instr->starttime))
 		{
 			elog(DEBUG2, "InstrStopNode called without start");
 			return;
 		}
-
-		INSTR_TIME_SET_CURRENT(endtime);
 
 #ifndef WIN32
 		instr->counter.tv_sec += endtime.tv_sec - instr->starttime.tv_sec;
