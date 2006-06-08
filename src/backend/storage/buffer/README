@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.9 2006/03/31 23:32:06 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.10 2006/06/08 14:58:33 tgl Exp $
 
 Notes about shared buffer access rules
 --------------------------------------
@@ -78,11 +78,7 @@ it won't be able to actually examine the page until it acquires shared
 or exclusive content lock.
 
 
-VACUUM FULL ignores rule #5, because it instead acquires exclusive lock at
-the relation level, which ensures indirectly that no one else is accessing
-pages of the relation at all.
-
-Plain (concurrent) VACUUM must respect rule #5 fully.  Obtaining the
+Rule #5 only affects VACUUM operations.  Obtaining the
 necessary lock is done by the bufmgr routine LockBufferForCleanup().
 It first gets an exclusive lock and then checks to see if the shared pin
 count is currently 1.  If not, it releases the exclusive lock (but not the
@@ -235,3 +231,9 @@ During a checkpoint, the writer's strategy must be to write every dirty
 buffer (pinned or not!).  We may as well make it start this scan from 
 NextVictimBuffer, however, so that the first-to-be-written pages are the
 ones that backends might otherwise have to write for themselves soon.
+
+The background writer takes shared content lock on a buffer while writing it
+out (and anyone else who flushes buffer contents to disk must do so too).
+This ensures that the page image transferred to disk is reasonably consistent.
+We might miss a hint-bit update or two but that isn't a problem, for the same
+reasons mentioned under buffer access rules.
