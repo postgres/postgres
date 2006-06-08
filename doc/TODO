@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun  8 11:41:16 EDT 2006
+Last updated:		Thu Jun  8 12:07:13 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -154,7 +154,8 @@ Administration
 
 	    Doing this will allow administrators to know more easily when
 	    the archive contains all the files needed for point-in-time
-	    recovery.  See http://archives.postgresql.org/pgsql-patches/2005-04/msg00121.php.
+	    recovery.  
+	    http://archives.postgresql.org/pgsql-patches/2005-04/msg00121.php
 
 	  o %Create dump tool for write-ahead logs for use in determining
 	    transaction id for point-in-time recovery
@@ -354,8 +355,8 @@ Multi-Language Support
 
 * Allow encoding on a per-column basis
 
-  Right now only one encoding is allowed per database.  For a partial
-  patch, see http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php.
+  Right now only one encoding is allowed per database.
+  http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php
 
 * Support multiple simultaneous character sets, per SQL92
 * Improve UTF8 combined character handling?
@@ -456,9 +457,8 @@ SQL Commands
   The difficult of this features is allowing RESET ALL to not affect 
   changes made by the interface driver for its internal use.  One idea 
   is for this to be a protocol-only feature.  Another approach is to 
-  notify the protocol when a RESET CONNECTION command is used.  See
+  notify the protocol when a RESET CONNECTION command is used.
   http://archives.postgresql.org/pgsql-patches/2006-04/msg00192.php
-  for a partial implementation.
 
 * Add GUC to issue notice about statements that use unjoined tables
 * Allow EXPLAIN to identify tables that were skipped because of 
@@ -512,7 +512,7 @@ SQL Commands
 	o Add ALTER DOMAIN to modify the underlying data type
 	o %Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
 
-	  See http://archives.postgresql.org/pgsql-patches/2006-02/msg00168.php.
+	  http://archives.postgresql.org/pgsql-patches/2006-02/msg00168.php
 
 	o %Allow ALTER TABLE to change constraint deferrability and actions
 	o Add missing object types for ALTER ... SET SCHEMA
@@ -532,7 +532,7 @@ SQL Commands
 
 	  This allows tables to be added/removed from an inheritance
 	  hierarchy.  This is particularly useful for table partitioning.
-	  See http://archives.postgresql.org/pgsql-hackers/2006-05/msg00988.php.
+	  http://archives.postgresql.org/pgsql-hackers/2006-05/msg00988.php
 
 	o Have ALTER INDEX update the name of a constraint using that index
 	o Add ALTER TABLE RENAME CONSTRAINT, update index name also
@@ -818,7 +818,7 @@ Triggers
 * Allow statement-level triggers to access modified rows
 * Support triggers on columns
 
-  See http://archives.postgresql.org/pgsql-patches/2005-07/msg00107.php.
+  http://archives.postgresql.org/pgsql-patches/2005-07/msg00107.php
 
 * Allow AFTER triggers on system tables
 
@@ -874,7 +874,7 @@ Exotic Features
 * Consider allowing control of upper/lower case folding of unquoted
   identifiers
 
-  Details at http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php.
+  http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php
 
 Indexes
 =======
@@ -1131,8 +1131,7 @@ Write-Ahead Log
   with a symlink back to the /data location
 * Allow WAL information to recover corrupted pg_controldata
 
-  See partially completed patch and additional work required at
-  http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php.
+  http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php
 
 * Find a way to reduce rotational delay when repeatedly writing
   last WAL page
@@ -1294,7 +1293,7 @@ Source Code
 
 * Consider GnuTLS if OpenSSL license becomes a problem
 
-  See http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php.
+  http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php
 
 * Win32
 
@@ -1308,8 +1307,10 @@ Source Code
 	o Re-enable timezone output on log_line_prefix '%t' when a
 	  shorter timezone string is available
 	o Fix problem with shared memory on the Win32 Terminal Server
-	o Improve signal handling,
+	o Improve signal handling
+
 	  http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php
+
 	o Add long file support for binary pg_dump output
 
 	  While Win32 supports 64-bit files, the MinGW API does not,

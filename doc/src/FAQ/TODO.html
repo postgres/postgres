@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Thu Jun  8 11:41:16 EDT 2006
+Last updated:           Thu Jun  8 12:07:13 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -142,7 +142,8 @@ first.
             pg_stop_backup() is called or the server is stopped
 <p>            Doing this will allow administrators to know more easily when
             the archive contains all the files needed for point-in-time
-            recovery.  See <a href="http://archives.postgresql.org/pgsql-patches/2005-04/msg00121.php">http://archives.postgresql.org/pgsql-patches/2005-04/msg00121.php</a>.
+            recovery.  
+            <a href="http://archives.postgresql.org/pgsql-patches/2005-04/msg00121.php">http://archives.postgresql.org/pgsql-patches/2005-04/msg00121.php</a>
 </p>
     </li><li>%Create dump tool for write-ahead logs for use in determining
             transaction id for point-in-time recovery
@@ -329,8 +330,8 @@ first.
   need to be reindexed to match the new locale.
 </p>
   </li><li>Allow encoding on a per-column basis
-<p>  Right now only one encoding is allowed per database.  For a partial
-  patch, see <a href="http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php">http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php</a>.
+<p>  Right now only one encoding is allowed per database.
+  <a href="http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php">http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php</a>
 </p>
   </li><li>Support multiple simultaneous character sets, per SQL92
   </li><li>Improve UTF8 combined character handling?
@@ -419,9 +420,8 @@ first.
   The difficult of this features is allowing RESET ALL to not affect 
   changes made by the interface driver for its internal use.  One idea 
   is for this to be a protocol-only feature.  Another approach is to 
-  notify the protocol when a RESET CONNECTION command is used.  See
+  notify the protocol when a RESET CONNECTION command is used.
   <a href="http://archives.postgresql.org/pgsql-patches/2006-04/msg00192.php">http://archives.postgresql.org/pgsql-patches/2006-04/msg00192.php</a>
-  for a partial implementation.
 </p>
   </li><li>Add GUC to issue notice about statements that use unjoined tables
   </li><li>Allow EXPLAIN to identify tables that were skipped because of 
@@ -469,7 +469,7 @@ first.
     <li>%Have ALTER TABLE RENAME rename SERIAL sequence names
     </li><li>Add ALTER DOMAIN to modify the underlying data type
     </li><li>%Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
-<p>          See <a href="http://archives.postgresql.org/pgsql-patches/2006-02/msg00168.php">http://archives.postgresql.org/pgsql-patches/2006-02/msg00168.php</a>.
+<p>          <a href="http://archives.postgresql.org/pgsql-patches/2006-02/msg00168.php">http://archives.postgresql.org/pgsql-patches/2006-02/msg00168.php</a>
 </p>
     </li><li>%Allow ALTER TABLE to change constraint deferrability and actions
     </li><li>Add missing object types for ALTER ... SET SCHEMA
@@ -487,7 +487,7 @@ first.
     </li><li>Add ALTER TABLE tab ADD/DROP INHERITS parent
 <p>          This allows tables to be added/removed from an inheritance
           hierarchy.  This is particularly useful for table partitioning.
-          See <a href="http://archives.postgresql.org/pgsql-hackers/2006-05/msg00988.php">http://archives.postgresql.org/pgsql-hackers/2006-05/msg00988.php</a>.
+          <a href="http://archives.postgresql.org/pgsql-hackers/2006-05/msg00988.php">http://archives.postgresql.org/pgsql-hackers/2006-05/msg00988.php</a>
 </p>
     </li><li>Have ALTER INDEX update the name of a constraint using that index
     </li><li>Add ALTER TABLE RENAME CONSTRAINT, update index name also
@@ -741,7 +741,7 @@ first.
 </p>
   </li><li>Allow statement-level triggers to access modified rows
   </li><li>Support triggers on columns
-<p>  See <a href="http://archives.postgresql.org/pgsql-patches/2005-07/msg00107.php">http://archives.postgresql.org/pgsql-patches/2005-07/msg00107.php</a>.
+<p>  <a href="http://archives.postgresql.org/pgsql-patches/2005-07/msg00107.php">http://archives.postgresql.org/pgsql-patches/2005-07/msg00107.php</a>
 </p>
   </li><li>Allow AFTER triggers on system tables
 <p>  System tables are modified in many places in the backend without going
@@ -791,7 +791,7 @@ first.
   </li></ul>
   </li><li>Consider allowing control of upper/lower case folding of unquoted
   identifiers
-<p>  Details at <a href="http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php">http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php</a>.
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php">http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php</a>
 </p>
 </li></ul>
 <h1><a name="section_13">Indexes</a></h1>
@@ -1021,8 +1021,7 @@ first.
   </li><li>Allow the pg_xlog directory location to be specified during initdb
   with a symlink back to the /data location
   </li><li>Allow WAL information to recover corrupted pg_controldata
-<p>  See partially completed patch and additional work required at
-  <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php</a>.
+<p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00025.php</a>
 </p>
   </li><li>Find a way to reduce rotational delay when repeatedly writing
   last WAL page
@@ -1167,7 +1166,7 @@ first.
 <p>  This involves choosing better pivot points for the quicksort.
 </p>
   </li><li>Consider GnuTLS if OpenSSL license becomes a problem
-<p>  See <a href="http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php">http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php</a>.
+<p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php">http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php</a>
 </p>
   </li><li>Win32
   <ul>
@@ -1181,8 +1180,9 @@ first.
     </li><li>Re-enable timezone output on log_line_prefix '%t' when a
           shorter timezone string is available
     </li><li>Fix problem with shared memory on the Win32 Terminal Server
-    </li><li>Improve signal handling,
-          <a href="http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php">http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php</a>
+    </li><li>Improve signal handling
+<p>          <a href="http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php">http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php</a>
+</p>
     </li><li>Add long file support for binary pg_dump output
 <p>          While Win32 supports 64-bit files, the MinGW API does not,
           meaning we have to build an fseeko replacement on top of the
