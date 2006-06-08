@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Jun  7 21:08:40 EDT 2006
+Last updated:		Wed Jun  7 22:42:39 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -354,7 +354,8 @@ Multi-Language Support
 
 * Allow encoding on a per-column basis
 
-  Right now only one encoding is allowed per database.
+  Right now only one encoding is allowed per database.  For a partial
+  patch, see http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php.
 
 * Support multiple simultaneous character sets, per SQL92
 * Improve UTF8 combined character handling?
