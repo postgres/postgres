@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.215 2006/05/10 23:18:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.216 2006/06/08 23:55:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@ extern char *optarg;
 
 static void usage(void);
 static void bootstrap_signals(void);
+static void ShutdownDummyProcess(int code, Datum arg);
 static hashnode *AddStr(char *str, int strlength, int mderef);
 static Form_pg_attribute AllocateAttribute(void);
 static int	CompHash(char *str, int len);
@@ -395,6 +396,9 @@ BootstrapMain(int argc, char *argv[])
 
 		/* finish setting up bufmgr.c */
 		InitBufferPoolBackend();
+
+		/* register a shutdown callback for LWLock cleanup */
+		on_shmem_exit(ShutdownDummyProcess, 0);
 	}
 
 	/*
@@ -417,8 +421,14 @@ BootstrapMain(int argc, char *argv[])
 		case BS_XLOG_STARTUP:
 			bootstrap_signals();
 			StartupXLOG();
+			/*
+			 * These next two functions don't consider themselves critical,
+			 * but we'd best PANIC anyway if they fail.
+			 */
+			START_CRIT_SECTION();
 			LoadFreeSpaceMap();
 			BuildFlatFiles(false);
+			END_CRIT_SECTION();
 			proc_exit(0);		/* startup done */
 
 		case BS_XLOG_BGWRITER:
@@ -550,6 +560,19 @@ bootstrap_signals(void)
 		pqsignal(SIGTERM, die);
 		pqsignal(SIGQUIT, die);
 	}
+}
+
+/*
+ * Begin shutdown of a dummy process.  This is approximately the equivalent
+ * of ShutdownPostgres() in postinit.c.  We can't run transactions in a
+ * dummy process, so most of the work of AbortTransaction() is not needed,
+ * but we do need to make sure we've released any LWLocks we are holding.
+ * (This is only critical during an error exit.)
+ */
+static void
+ShutdownDummyProcess(int code, Datum arg)
+{
+	LWLockReleaseAll();
 }
 
 /* ----------------
