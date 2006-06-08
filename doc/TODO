@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun  8 09:43:38 EDT 2006
+Last updated:		Thu Jun  8 11:41:16 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -816,7 +816,10 @@ Triggers
   without revalidating the data.
 
 * Allow statement-level triggers to access modified rows
-* Support triggers on columns (Greg Sabino Mullane)
+* Support triggers on columns
+
+  See http://archives.postgresql.org/pgsql-patches/2005-07/msg00107.php.
+
 * Allow AFTER triggers on system tables
 
   System tables are modified in many places in the backend without going
