@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.16 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/random.c,v 1.17 2006/06/08 03:29:30 momjian Exp $
  */
 
 #include "postgres.h"
@@ -82,10 +82,10 @@ try_dev_random(uint8 *dst)
 	int			fd;
 	int			res;
 
-	fd = open("/dev/urandom", O_RDONLY);
+	fd = open("/dev/urandom", O_RDONLY, 0);
 	if (fd == -1)
 	{
-		fd = open("/dev/random", O_RDONLY);
+		fd = open("/dev/random", O_RDONLY, 0);
 		if (fd == -1)
 			return dst;
 	}
