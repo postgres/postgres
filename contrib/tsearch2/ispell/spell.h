@@ -121,6 +121,7 @@ typedef struct
 
 TSLexeme   *NINormalizeWord(IspellDict * Conf, char *word);
 int			NIImportAffixes(IspellDict * Conf, const char *filename);
+int			NIImportOOAffixes(IspellDict * Conf, const char *filename);
 int			NIImportDictionary(IspellDict * Conf, const char *filename);
 
 int			NIAddSpell(IspellDict * Conf, const char *word, const char *flag);

@@ -391,6 +391,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 	char		flagflags = 0;
 	FILE	   *affix;
 	int	line=0;
+	int	oldformat = 0;
 
 	if (!(affix = fopen(filename, "r")))
 		return (1);
@@ -412,6 +413,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 				while (*s && t_isspace(s)) s++;
 				if ( *s && pg_mblen(s) == 1 ) 
 					Conf->compoundcontrol = *s;
+				oldformat++;
 				continue;
 			}
 		}
@@ -419,12 +421,14 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 		{
 			suffixes = 1;
 			prefixes = 0;
+			oldformat++;
 			continue;
 		}
 		if (STRNCMP(tmpstr, "prefixes") == 0)
 		{
 			suffixes = 0;
 			prefixes = 1;
+			oldformat++;
 			continue;
 		}
 		if (STRNCMP(tmpstr, "flag") == 0)
@@ -433,10 +437,11 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 			flagflags = 0;
 
 			while (*s && t_isspace(s)) s++;
+			oldformat++;
 
 			/* allow only single-encoded flags */
-			if ( pg_mblen(s) != 1 )
-				continue;			
+			if ( pg_mblen(s) != 1 ) 
+				elog(ERROR,"Multiencoded flag at line %d: %s", line, s);
 
 			if (*s == '*')
 			{
@@ -455,11 +460,21 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 			/* allow only single-encoded flags */
 			if ( pg_mblen(s) != 1 ) {
 				flagflags = 0;
-				continue;
+				elog(ERROR,"Multiencoded flag at line %d: %s", line, s);
 			}
 
 			flag = (unsigned char) *s;
 			continue;
+		}
+		if ( STRNCMP(str, "COMPOUNDFLAG") == 0 || STRNCMP(str, "COMPOUNDMIN") == 0 || 
+					 STRNCMP(str, "PFX")==0 || STRNCMP(str, "SFX")==0 ) {
+
+			if ( oldformat ) 
+				elog(ERROR,"Wrong affix file format");
+
+			fclose(affix);
+			return NIImportOOAffixes(Conf, filename);
+			
 		}
 		if ((!suffixes) && (!prefixes))
 			continue;
@@ -473,6 +488,79 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 	fclose(affix);
 
 	return (0);
+}
+
+int
+NIImportOOAffixes(IspellDict * Conf, const char *filename) {
+	char		str[BUFSIZ];
+	char		type[BUFSIZ];
+	char		sflag[BUFSIZ];
+	char		mask[BUFSIZ];
+	char		find[BUFSIZ];
+	char		repl[BUFSIZ];
+	bool		isSuffix = false;
+	int			flag = 0;
+	char		flagflags = 0;
+	FILE	   *affix;
+	int	line=0;
+	int	scanread = 0;
+	char		scanbuf[BUFSIZ];
+
+	sprintf(scanbuf,"%%6s %%%ds %%%ds %%%ds %%%ds", BUFSIZ/5, BUFSIZ/5, BUFSIZ/5, BUFSIZ/5);
+
+	if (!(affix = fopen(filename, "r")))
+		return (1);
+	Conf->compoundcontrol = '\t';
+
+	while (fgets(str, sizeof(str), affix))
+	{
+		line++;
+		if ( *str == '\0' || t_isspace(str) || t_iseq(str,'#') )
+			continue;
+		pg_verifymbstr( str, strlen(str), false);
+
+		if ( STRNCMP(str, "COMPOUNDFLAG")==0 ) {
+			char *s = str+strlen("COMPOUNDFLAG");
+			while (*s && t_isspace(s)) s++;
+			if ( *s && pg_mblen(s) == 1 ) 
+				Conf->compoundcontrol = *s;
+			continue;
+		}
+
+		scanread = sscanf(str, scanbuf, type, sflag, find, repl, mask);
+
+		lowerstr(type);
+		if ( scanread<4 || (STRNCMP(type,"sfx") && STRNCMP(type,"pfx")) )
+			continue;
+
+		if ( scanread == 4 ) {
+			if ( strlen(sflag) != 1 )
+				continue;
+			flag = *sflag;
+			isSuffix = (STRNCMP(type,"sfx")==0) ? true : false;
+			lowerstr(find);
+			if ( t_iseq(find,'y') )
+				flagflags |= FF_CROSSPRODUCT;
+			else
+				flagflags = 0;
+		} else {
+			if ( strlen(sflag) != 1 || flag != *sflag || flag==0 )
+				continue;
+			lowerstr(repl);
+			lowerstr(find);
+			lowerstr(mask);
+			if ( t_iseq(find,'0') )
+				*find = '\0';
+			if ( t_iseq(repl,'0') )
+				*repl = '\0';
+
+			NIAddAffix(Conf, flag, flagflags, mask, find, repl, isSuffix ? FF_SUFFIX : FF_PREFIX);
+		}
+	}
+
+	fclose(affix);
+
+	return 0;
 }
 
 static int
