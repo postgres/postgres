@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun  9 14:12:22 EDT 2006
+Last updated:		Fri Jun  9 14:41:37 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -109,7 +109,7 @@ Administration
 
 * Tablespaces
 
-	* Allow a database in tablespace t1 with tables created in
+	o Allow a database in tablespace t1 with tables created in
 	  tablespace t2 to be used as a template for a new database created
 	  with default tablespace t2
 
@@ -122,7 +122,7 @@ Administration
 	  To fix this would require modifying pg_class in the newly copied
 	  database, which we don't currently do.
 
-	* Allow reporting of which objects are in which tablespaces
+	o Allow reporting of which objects are in which tablespaces
 
 	  This item is difficult because a tablespace can contain objects
 	  from multiple databases. There is a server-side function that
@@ -590,10 +590,10 @@ SQL Commands
 		GRANT SELECT ON ALL TABLES IN public TO phpuser;
 		GRANT SELECT ON NEW TABLES IN public TO phpuser;
 
-	* Allow GRANT/REVOKE permissions to be inherited by objects based on
+	o Allow GRANT/REVOKE permissions to be inherited by objects based on
 	  schema permissions
 
-	* Allow SERIAL sequences to inherit permissions from the base table?
+	o Allow SERIAL sequences to inherit permissions from the base table?
 
 
 * CURSOR
