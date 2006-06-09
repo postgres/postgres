@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun  8 14:58:57 EDT 2006
+Last updated:		Thu Jun  8 21:00:30 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1249,7 +1249,6 @@ Source Code
 ===========
 
 * Add use of 'const' for variables in source tree
-* Rename some /contrib modules from pg* to pg_*
 * Move some things from /contrib into main tree
 * Move some /contrib modules out to their own project sites
 
