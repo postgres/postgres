@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.422.2.3 2006/02/21 18:01:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.422.2.4 2006/06/09 19:46:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1480,9 +1480,9 @@ dumpBlobComments(Archive *AH, void *arg)
 
 	/* Cursor to get all BLOB comments */
 	if (AH->remoteVersion >= 70200)
-		blobQry = "DECLARE blobcmt CURSOR FOR SELECT DISTINCT loid, obj_description(loid, 'pg_largeobject') FROM pg_largeobject";
+		blobQry = "DECLARE blobcmt CURSOR FOR SELECT loid, obj_description(loid, 'pg_largeobject') FROM (SELECT DISTINCT loid FROM pg_largeobject) ss";
 	else if (AH->remoteVersion >= 70100)
-		blobQry = "DECLARE blobcmt CURSOR FOR SELECT DISTINCT loid, obj_description(loid) FROM pg_largeobject";
+		blobQry = "DECLARE blobcmt CURSOR FOR SELECT loid, obj_description(loid) FROM (SELECT DISTINCT loid FROM pg_largeobject) ss";
 	else
 		blobQry = "DECLARE blobcmt CURSOR FOR SELECT oid, (SELECT description FROM pg_description pd WHERE pd.objoid=pc.oid) FROM pg_class pc WHERE relkind = 'l'";
 
