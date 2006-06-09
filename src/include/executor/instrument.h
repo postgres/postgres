@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.15 2006/05/30 19:24:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.16 2006/06/09 19:30:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,14 +57,10 @@ typedef struct Instrumentation
 {
 	/* Info about current plan cycle: */
 	bool		running;		/* TRUE if we've completed first tuple */
-	bool		sampling;		/* Are we sampling in current iteration? */
 	instr_time	starttime;		/* Start time of current iteration of node */
 	instr_time	counter;		/* Accumulated runtime for this node */
 	double		firsttuple;		/* Time for first tuple of this cycle */
 	double		tuplecount;		/* Tuples emitted so far this cycle */
-	double		itercount;		/* Plan node iterations this cycle */
-	double		samplecount;	/* Iterations in which we sampled runtime */
-	double		nextsample;		/* Next itercount to sample at */
 	/* Accumulated statistics across all completed cycles: */
 	double		startup;		/* Total startup time (in seconds) */
 	double		total;			/* Total total time (in seconds) */

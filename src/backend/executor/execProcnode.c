@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.55 2006/05/30 14:01:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.56 2006/06/09 19:30:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,7 +423,7 @@ ExecProcNode(PlanState *node)
 	}
 
 	if (node->instrument)
-		InstrStopNode(node->instrument, TupIsNull(result) ? 0 : 1 );
+		InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
 
 	return result;
 }
