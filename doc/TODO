@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun  9 14:41:37 EDT 2006
+Last updated:		Sat Jun 10 19:17:11 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -317,7 +317,8 @@ Functions
   the statement start time.
 
 * %Add pg_get_acldef(), pg_get_typedefault(), pg_get_attrdef(),
-  pg_get_tabledef(), pg_get_domaindef(), pg_get_functiondef()
+  pg_get_tabledef(), pg_get_domaindef(), pg_get_functiondef(), and
+  make use of them in pg_dump
 * -Allow to_char() to print localized month names
 * Allow to_date() and to_timestamp() accept localized month names
 * Add missing parameter handling in to_char()
