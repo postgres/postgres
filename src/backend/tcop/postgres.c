@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468.2.4 2006/04/18 00:52:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468.2.5 2006/06/11 15:49:36 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3276,11 +3276,17 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/* start an xact for this function invocation */
 				start_xact_command();
 
+				/*
+				 * Note: we may at this point be inside an aborted
+				 * transaction.  We can't throw error for that until
+				 * we've finished reading the function-call message, so
+				 * HandleFunctionRequest() must check for it after doing so.
+				 * Be careful not to do anything that assumes we're inside a
+				 * valid transaction here.
+				 */
+
 				/* switch back to message context */
 				MemoryContextSwitchTo(MessageContext);
-
-				/* set snapshot in case function needs one */
-				ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 				if (HandleFunctionRequest(&input_message) == EOF)
 				{

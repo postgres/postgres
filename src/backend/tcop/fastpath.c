@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.83.2.1 2005/11/22 18:23:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.83.2.2 2006/06/11 15:49:36 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #include "tcop/fastpath.h"
+#include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -303,12 +304,23 @@ HandleFunctionRequest(StringInfo msgBuf)
 						"commands ignored until end of transaction block")));
 
 	/*
+	 * Now that we know we are in a valid transaction, set snapshot in
+	 * case needed by function itself or one of the datatype I/O routines.
+	 */
+	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+
+	/*
 	 * Begin parsing the buffer contents.
 	 */
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-		(void) pq_getmsgstring(msgBuf); /* dummy string */
+		(void) pq_getmsgstring(msgBuf);			/* dummy string */
 
 	fid = (Oid) pq_getmsgint(msgBuf, 4);		/* function oid */
+
+	if (log_statement == LOGSTMT_ALL)
+		ereport(LOG,
+				(errmsg("fastpath function call: function OID %u",
+						fid)));
 
 	/*
 	 * There used to be a lame attempt at caching lookup info here. Now we
