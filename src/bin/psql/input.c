@@ -3,12 +3,12 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.53 2006/03/21 13:38:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.54 2006/06/11 23:06:00 tgl Exp $
  */
 #include "postgres_fe.h"
 
-#include "pqexpbuffer.h"
 #include "input.h"
+#include "pqexpbuffer.h"
 #include "settings.h"
 #include "tab-complete.h"
 #include "common.h"
@@ -78,9 +78,23 @@ GetHistControlConfig(void)
 #endif
 
 
-static char *
-gets_basic(const char prompt[])
+/*
+ * gets_interactive()
+ *
+ * Gets a line of interactive input, using readline if desired.
+ * The result is malloc'ed.
+ */
+char *
+gets_interactive(const char *prompt)
 {
+#ifdef USE_READLINE
+	if (useReadline)
+	{
+		/* On some platforms, readline is declared as readline(char *) */
+		return readline((char *) prompt);
+	}
+#endif
+
 	fputs(prompt, stdout);
 	fflush(stdout);
 	return gets_fromFile(stdin);
@@ -88,100 +102,65 @@ gets_basic(const char prompt[])
 
 
 /*
- * gets_interactive()
- *
- * Gets a line of interactive input, using readline of desired.
- * The result is malloc'ed.
+ * Append the line to the history buffer, making sure there is a trailing '\n'
  */
-char *
-gets_interactive(const char *prompt)
-{
-#ifdef USE_READLINE
-	char	   *s;
-
-	if (useReadline)
-		/* On some platforms, readline is declared as readline(char *) */
-		s = readline((char *) prompt);
-	else
-		s = gets_basic(prompt);
-
-	return s;
-#else
-	return gets_basic(prompt);
-#endif
-}
-
-
-/* Put the line in the history buffer and also add the trailing \n */
 void
-pg_append_history(char *s, PQExpBuffer history_buf)
+pg_append_history(const char *s, PQExpBuffer history_buf)
 {
 #ifdef USE_READLINE
-
-	int slen;
-	if (useReadline && useHistory && s && s[0])
+	if (useHistory && s && s[0])
 	{
-		slen = strlen(s);
-		if (s[slen-1] == '\n')
-			appendPQExpBufferStr(history_buf, s);
-		else
-		{
-			appendPQExpBufferStr(history_buf, s);
+		appendPQExpBufferStr(history_buf, s);
+		if (s[strlen(s) - 1] != '\n')
 			appendPQExpBufferChar(history_buf, '\n');
-		}
 	}	
 #endif	
 }
 
 
 /*
- *	Feed the string to readline
+ * Emit accumulated history entry to readline's history mechanism,
+ * then reset the buffer to empty.
+ *
+ * Note: we write nothing if history_buf is empty, so extra calls to this
+ * function don't hurt.  There must have been at least one line added by
+ * pg_append_history before we'll do anything.
  */
 void
-pg_write_history(char *s)
+pg_send_history(PQExpBuffer history_buf)
 {
 #ifdef USE_READLINE
-	static char *prev_hist;
-	int slen, i;
-	
-	if (useReadline && useHistory )
+	static char *prev_hist = NULL;
+
+	char   *s = history_buf->data;
+
+	if (useHistory && s[0])
 	{
-		enum histcontrol HC;
-		
-		/* Flushing of empty buffer should do nothing */
-		if  (*s == 0)
-			return;
-		
-		prev_hist = NULL;
-			
-		HC = GetHistControlConfig();
+		enum histcontrol HC = GetHistControlConfig();
 
 		if (((HC & hctl_ignorespace) && s[0] == ' ') ||
-		  ((HC & hctl_ignoredups) && prev_hist && strcmp(s, prev_hist) == 0))
+			((HC & hctl_ignoredups) && prev_hist && strcmp(s, prev_hist) == 0))
 		{
 			/* Ignore this line as far as history is concerned */
 		}
 		else
 		{
-			free(prev_hist);
-			slen = strlen(s);
-			/* Trim the trailing \n's */
-			for (i = slen-1; i >= 0 && s[i] == '\n'; i--)
+			int		i;
+
+			/* Trim any trailing \n's (OK to scribble on history_buf) */
+			for (i = strlen(s)-1; i >= 0 && s[i] == '\n'; i--)
 				;
 			s[i + 1] = '\0';
+			/* Save each previous line for ignoredups processing */
+			if (prev_hist)
+				free(prev_hist);
 			prev_hist = pg_strdup(s);
+			/* And send it to readline */
 			add_history(s);
 		}
 	}
-#endif
-}
 
-void
-pg_clear_history(PQExpBuffer history_buf)
-{
-#ifdef USE_READLINE	
-	if (useReadline && useHistory)
-		resetPQExpBuffer(history_buf);
+	resetPQExpBuffer(history_buf);
 #endif
 }
 
@@ -219,6 +198,9 @@ gets_fromFile(FILE *source)
 
 
 #ifdef USE_READLINE
+/*
+ * Convert newlines to NL_IN_HISTORY for safe saving in readline history file
+ */
 static void
 encode_history(void)
 {
@@ -232,6 +214,9 @@ encode_history(void)
 				*cur_ptr = NL_IN_HISTORY;
 }
 
+/*
+ * Reverse the above encoding
+ */
 static void
 decode_history(void)
 {
@@ -285,9 +270,10 @@ initializeInput(int flags)
 		}
 
 		if (psql_history)
+		{
 			read_history(psql_history);
-			
-		decode_history();
+			decode_history();
+		}
 	}
 #endif
 
@@ -299,11 +285,13 @@ initializeInput(int flags)
 }
 
 
-/* This function is designed for saving the readline history when user 
- * run \s command or when psql finishes. 
- * We have an argument named encodeFlag to handle those cases differently
- * In that case of call via \s we don't really need to encode \n as \x01,
- * but when we save history for Readline we must do that conversion
+/*
+ * This function is for saving the readline history when user 
+ * runs \s command or when psql finishes. 
+ *
+ * We have an argument named encodeFlag to handle the cases differently.
+ * In case of call via \s we don't really need to encode \n as \x01,
+ * but when we save history for Readline we must do that conversion.
  */
 bool
 saveHistory(char *fname, bool encodeFlag)
@@ -316,7 +304,8 @@ saveHistory(char *fname, bool encodeFlag)
 		if (write_history(fname) == 0)
 			return true;
 
-		psql_error("could not save history to file \"%s\": %s\n", fname, strerror(errno));
+		psql_error("could not save history to file \"%s\": %s\n",
+				   fname, strerror(errno));
 	}
 #else
 	psql_error("history is not supported by this installation\n");

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.78 2006/06/07 13:18:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.79 2006/06/11 23:06:00 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -37,12 +37,12 @@ MainLoop(FILE *source)
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
 	PQExpBuffer previous_buf;	/* if there isn't anything in the new buffer
 								 * yet, use this one for \e, etc. */
-	PQExpBuffer history_buf;
+	PQExpBuffer history_buf;	/* earlier lines of a multi-line command,
+								 * not yet saved to readline history */
 	char	   *line;			/* current line of input */
 	int			added_nl_pos;
 	bool		success;
-
-	volatile bool		line_saved_in_history;
+	bool		line_saved_in_history;
 	volatile int successResult = EXIT_SUCCESS;
 	volatile backslashResult slashCmdStatus = PSQL_CMD_UNKNOWN;
 	volatile promptStatus_t prompt_status = PROMPT_READY;
@@ -70,7 +70,6 @@ MainLoop(FILE *source)
 	query_buf = createPQExpBuffer();
 	previous_buf = createPQExpBuffer();
 	history_buf = createPQExpBuffer();
-
 	if (!query_buf || !previous_buf || !history_buf)
 	{
 		psql_error("out of memory\n");
@@ -80,8 +79,6 @@ MainLoop(FILE *source)
 	/* main loop to get queries and execute them */
 	while (successResult == EXIT_SUCCESS)
 	{
-		line_saved_in_history = false;
-
 		/*
 		 * Welcome code for Control-C
 		 */
@@ -97,7 +94,7 @@ MainLoop(FILE *source)
 				successResult = EXIT_USER;
 				break;
 			}
-			pg_clear_history(history_buf);			
+
 			cancel_pressed = false;
 		}
 
@@ -113,8 +110,6 @@ MainLoop(FILE *source)
 			count_eof = 0;
 			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
-			if (pset.cur_cmd_interactive)
-				pg_write_history(history_buf->data);
 
 			if (pset.cur_cmd_interactive)
 				putc('\n', stdout);
@@ -135,33 +130,10 @@ MainLoop(FILE *source)
 
 		fflush(stdout);
 
-		if (slashCmdStatus == PSQL_CMD_NEWEDIT)
-		{
-			/*
-			 * just returned from editing the line? then just copy to the
-			 * input buffer
-			 */
-			line = pg_strdup(query_buf->data);
-			/* reset parsing state since we are rescanning whole line */
-			resetPQExpBuffer(query_buf);
-			psql_scan_reset(scan_state);
-			slashCmdStatus = PSQL_CMD_UNKNOWN;
-			prompt_status = PROMPT_READY;
-			
-			if (pset.cur_cmd_interactive)
-			{
-				/*
-				 *	Pass all the contents of history_buf to readline
-				 *	and free the history buffer.
-				 */
-				pg_write_history(history_buf->data);
-				pg_clear_history(history_buf);
-				pg_write_history(line);
-				line_saved_in_history = true;
-			}
-		}
-		/* otherwise, get another line */
-		else if (pset.cur_cmd_interactive)
+		/*
+		 * get another line
+		 */
+		if (pset.cur_cmd_interactive)
 		{
 			/* May need to reset prompt, eg after \r command */
 			if (query_buf->len == 0)
@@ -230,7 +202,8 @@ MainLoop(FILE *source)
 		 */
 		psql_scan_setup(scan_state, line, strlen(line));
 		success = true;
-		
+		line_saved_in_history = false;
+
 		while (success || !die_on_error)
 		{
 			PsqlScanResult scan_result;
@@ -247,6 +220,17 @@ MainLoop(FILE *source)
 				(scan_result == PSCAN_EOL &&
 				 GetVariableBool(pset.vars, "SINGLELINE")))
 			{
+				/*
+				 * Save query in history.  We use history_buf to accumulate
+				 * multi-line queries into a single history entry.
+				 */
+				if (pset.cur_cmd_interactive && !line_saved_in_history)
+				{
+					pg_append_history(line, history_buf);
+					pg_send_history(history_buf);
+					line_saved_in_history = true;
+				}
+
 				/* execute query */
 				success = SendQuery(query_buf->data);
 				slashCmdStatus = success ? PSQL_CMD_SEND : PSQL_CMD_ERROR;
@@ -265,12 +249,27 @@ MainLoop(FILE *source)
 				 * If we added a newline to query_buf, and nothing else has
 				 * been inserted in query_buf by the lexer, then strip off the
 				 * newline again.  This avoids any change to query_buf when a
-				 * line contains only a backslash command.
+				 * line contains only a backslash command.  Also, in this
+				 * situation we force out any previous lines as a separate
+				 * history entry; we don't want SQL and backslash commands
+				 * intermixed in history if at all possible.
 				 */
 				if (query_buf->len == added_nl_pos)
+				{
 					query_buf->data[--query_buf->len] = '\0';
+					pg_send_history(history_buf);
+				}
 				added_nl_pos = -1;
 
+				/* save backslash command in history */
+				if (pset.cur_cmd_interactive && !line_saved_in_history)
+				{
+					pg_append_history(line, history_buf);
+					pg_send_history(history_buf);
+					line_saved_in_history = true;
+				}
+
+				/* execute backslash command */
 				slashCmdStatus = HandleSlashCmds(scan_state,
 												 query_buf->len > 0 ?
 												 query_buf : previous_buf);
@@ -295,44 +294,32 @@ MainLoop(FILE *source)
 					/* flush any paren nesting info after forced send */
 					psql_scan_reset(scan_state);
 				}
+				else if (slashCmdStatus == PSQL_CMD_NEWEDIT)
+				{
+					/* rescan query_buf as new input */
+					psql_scan_finish(scan_state);
+					free(line);
+					line = pg_strdup(query_buf->data);
+					resetPQExpBuffer(query_buf);
+					/* reset parsing state since we are rescanning whole line */
+					psql_scan_reset(scan_state);
+					psql_scan_setup(scan_state, line, strlen(line));
+					line_saved_in_history = false;
+					prompt_status = PROMPT_READY;
+				}
+				else if (slashCmdStatus == PSQL_CMD_TERMINATE)
+					break;
 			}
 
-			/*
-			 *	If we append to history a backslash command that is inside
-			 *	a multi-line query, then when we recall the history, the
-			 *	backslash command will make the query invalid, so we write
-			 *	backslash commands immediately rather than keeping them
-			 *	as part of the current multi-line query.  We do the test
-			 *	down here so we can check for \g and other 'execute'
-			 *	backslash commands, which should be appended.
-			 */
-			if (!line_saved_in_history && pset.cur_cmd_interactive)
-			{
-				/* Sending a command (PSQL_CMD_SEND) zeros the length */
-				if (scan_result == PSCAN_BACKSLASH)
-					pg_write_history(line);
-				else
-					pg_append_history(line, history_buf);
-				line_saved_in_history = true;
-			}
-
-			/* fall out of loop on \q or if lexer reached EOL */
-			if (slashCmdStatus == PSQL_CMD_TERMINATE ||
-				scan_result == PSCAN_INCOMPLETE ||
+			/* fall out of loop if lexer reached EOL */
+			if (scan_result == PSCAN_INCOMPLETE ||
 				scan_result == PSCAN_EOL)
 				break;
 		}
 
-		if ((pset.cur_cmd_interactive && prompt_status == PROMPT_READY) ||
-			(GetVariableBool(pset.vars, "SINGLELINE") && prompt_status == PROMPT_CONTINUE))
-		{
-			/*
-			 *	Pass all the contents of history_buf to readline
-			 *	and free the history buffer.
-			 */
-			pg_write_history(history_buf->data);
-			pg_clear_history(history_buf);
-		}
+		/* Add line to pending history if we didn't execute anything yet */
+		if (pset.cur_cmd_interactive && !line_saved_in_history)
+			pg_append_history(line, history_buf);
 
 		psql_scan_finish(scan_state);
 		free(line);
@@ -359,6 +346,11 @@ MainLoop(FILE *source)
 	if (query_buf->len > 0 && !pset.cur_cmd_interactive &&
 		successResult == EXIT_SUCCESS)
 	{
+		/* save query in history */
+		if (pset.cur_cmd_interactive)
+			pg_send_history(history_buf);
+
+		/* execute query */
 		success = SendQuery(query_buf->data);
 
 		if (!success && die_on_error)

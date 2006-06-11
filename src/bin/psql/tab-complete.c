@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.152 2006/05/28 02:27:08 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.153 2006/06/11 23:06:00 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -43,7 +43,6 @@
 
 #include "postgres_fe.h"
 #include "tab-complete.h"
-#include "pqexpbuffer.h"
 #include "input.h"
 
 /* If we don't have this, we might as well forget about the whole thing: */
@@ -51,6 +50,7 @@
 
 #include <ctype.h>
 #include "libpq-fe.h"
+#include "pqexpbuffer.h"
 #include "common.h"
 #include "settings.h"
 

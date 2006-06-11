@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.44 2006/04/19 16:02:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.45 2006/06/11 23:06:00 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -12,7 +12,6 @@
 
 #include "settings.h"
 #include "common.h"
-#include "pqexpbuffer.h"
 #include "input.h"
 #include "variables.h"
 
