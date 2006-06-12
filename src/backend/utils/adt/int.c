@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.68.2.2 2006/06/12 16:09:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.68.2.3 2006/06/12 16:29:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -745,7 +745,7 @@ int4mul(PG_FUNCTION_ARGS)
 #ifdef WIN32
 	/*
 	 *	Win32 doesn't throw a catchable exception for
-	 *	SELECT -2147483648 /* INT_MIN */ * (-1);
+	 *	SELECT -2147483648 * (-1); -- INT_MIN
 	 */
 	if (arg2 == -1 && arg1 == INT_MIN)
 		ereport(ERROR,
@@ -791,7 +791,7 @@ int4div(PG_FUNCTION_ARGS)
 #ifdef WIN32
 	/*
 	 *	Win32 doesn't throw a catchable exception for
-	 *	SELECT -2147483648 /* INT_MIN */ / (-1);
+	 *	SELECT -2147483648 / (-1); -- INT_MIN
 	 */
 	if (arg2 == -1 && arg1 == INT_MIN)
 		ereport(ERROR,
