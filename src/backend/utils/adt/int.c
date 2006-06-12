@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.68.2.1 2006/03/02 21:13:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.68.2.2 2006/06/12 16:09:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,6 +742,17 @@ int4mul(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 	int32		result;
 
+#ifdef WIN32
+	/*
+	 *	Win32 doesn't throw a catchable exception for
+	 *	SELECT -2147483648 /* INT_MIN */ * (-1);
+	 */
+	if (arg2 == -1 && arg1 == INT_MIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+#endif
+
 	result = arg1 * arg2;
 
 	/*
@@ -776,6 +787,17 @@ int4div(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+
+#ifdef WIN32
+	/*
+	 *	Win32 doesn't throw a catchable exception for
+	 *	SELECT -2147483648 /* INT_MIN */ / (-1);
+	 */
+	if (arg2 == -1 && arg1 == INT_MIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+#endif
 
 	result = arg1 / arg2;
 
