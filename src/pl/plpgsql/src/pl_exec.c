@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.169 2006/05/30 13:40:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.170 2006/06/12 16:45:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1361,7 +1361,8 @@ exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 
 /* ----------
  * exec_stmt_fori			Iterate an integer variable
- *					from a lower to an upper value.
+ *					from a lower to an upper value
+ *					incrementing or decrementing in BY value
  *					Loop can be left with exit.
  * ----------
  */
@@ -1370,6 +1371,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 {
 	PLpgSQL_var *var;
 	Datum		value;
+	Datum		by_value;
 	Oid			valtype;
 	bool		isnull;
 	bool		found = false;
@@ -1405,6 +1407,21 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("upper bound of FOR loop cannot be NULL")));
+	exec_eval_cleanup(estate);
+
+	/*
+	 * Get the by value 
+	 */
+	by_value = exec_eval_expr(estate, stmt->by, &isnull, &valtype);
+	by_value = exec_cast_value(by_value, valtype, var->datatype->typoid,
+							   &(var->datatype->typinput),
+							   var->datatype->typioparam,
+							   var->datatype->atttypmod, isnull);
+
+	if (isnull)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("by value of FOR loop cannot be NULL")));
 	exec_eval_cleanup(estate);
 
 	/*
@@ -1483,9 +1500,9 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		 * Increase/decrease loop var
 		 */
 		if (stmt->reverse)
-			var->value--;
+			var->value -= by_value;
 		else
-			var->value++;
+			var->value += by_value;
 	}
 
 	/*

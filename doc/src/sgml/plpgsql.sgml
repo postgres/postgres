@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.94 2006/05/30 13:40:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.95 2006/06/12 16:45:30 momjian Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1975,7 +1975,7 @@ END LOOP;
 
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-FOR <replaceable>name</replaceable> IN <optional> REVERSE </optional> <replaceable>expression</replaceable> .. <replaceable>expression</replaceable> LOOP
+FOR <replaceable>name</replaceable> IN <optional> REVERSE </optional> <replaceable>expression</replaceable> .. <replaceable>expression</replaceable> <optional> BY <replaceable>expression</replaceable> </optional> LOOP
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
@@ -1988,8 +1988,10 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
         definition of the variable name is ignored within the loop).
         The two expressions giving
         the lower and upper bound of the range are evaluated once when entering
-        the loop. The iteration step is normally 1, but is -1 when <literal>REVERSE</> is
-        specified.
+        the loop. If the <literal>BY</> clause isn't specified the iteration 
+        step is 1 otherwise it's the value specified in the <literal>BY</> 
+        clause. If <literal>REVERSE</> is specified then the step value is 
+		considered negative.
        </para>
 
        <para>
@@ -2002,6 +2004,11 @@ END LOOP;
 
 FOR i IN REVERSE 10..1 LOOP
     -- some computations here
+END LOOP;
+
+FOR i IN REVERSE 10..1 BY 2 LOOP
+    -- some computations here
+    RAISE NOTICE 'i is %', i;
 END LOOP;
 </programlisting>
        </para>

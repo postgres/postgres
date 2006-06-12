@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.90 2006/05/27 19:45:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.91 2006/06/12 16:45:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_ALIAS
 %token	K_ASSIGN
 %token	K_BEGIN
+%token	K_BY
 %token	K_CLOSE
 %token	K_CONSTANT
 %token	K_CONTINUE
@@ -935,6 +936,7 @@ for_control		:
 							{
 								/* Saw "..", so it must be an integer loop */
 								PLpgSQL_expr		*expr2;
+								PLpgSQL_expr		*expr_by;
 								PLpgSQL_var			*fvar;
 								PLpgSQL_stmt_fori	*new;
 								char				*varname;
@@ -942,7 +944,34 @@ for_control		:
 								/* First expression is well-formed */
 								check_sql_expr(expr1->query);
 
-								expr2 = plpgsql_read_expression(K_LOOP, "LOOP");
+
+								expr2 = read_sql_construct(K_BY,
+														   K_LOOP,
+														   "LOOP",
+														   "SELECT ",
+														   true,
+														   false,
+														   &tok);
+
+								if (tok == K_BY) 
+									expr_by = plpgsql_read_expression(K_LOOP, "LOOP");
+								else
+								{
+									/*
+									 * If there is no BY clause we will assume 1
+									 */
+									char buf[1024];
+									PLpgSQL_dstring		ds;
+
+									plpgsql_dstring_init(&ds);
+
+									expr_by = palloc0(sizeof(PLpgSQL_expr));
+									expr_by->dtype      		= PLPGSQL_DTYPE_EXPR;
+									strcpy(buf, "SELECT 1");
+									plpgsql_dstring_append(&ds, buf);
+									expr_by->query			    = pstrdup(plpgsql_dstring_get(&ds));
+									expr_by->plan				= NULL;
+								}
 
 								/* should have had a single variable name */
 								plpgsql_error_lineno = $2.lineno;
@@ -970,6 +999,7 @@ for_control		:
 								new->reverse  = reverse;
 								new->lower	  = expr1;
 								new->upper	  = expr2;
+								new->by		  = expr_by;
 
 								$$ = (PLpgSQL_stmt *) new;
 							}

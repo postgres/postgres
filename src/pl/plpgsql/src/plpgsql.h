@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.74 2006/05/30 13:40:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.75 2006/06/12 16:45:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,6 +398,7 @@ typedef struct
 	PLpgSQL_var *var;
 	PLpgSQL_expr *lower;
 	PLpgSQL_expr *upper;
+	PLpgSQL_expr *by;
 	int			reverse;
 	List	   *body;			/* List of statements */
 } PLpgSQL_stmt_fori;
