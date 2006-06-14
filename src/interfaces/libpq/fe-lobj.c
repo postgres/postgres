@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.56 2006/03/05 15:59:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.57 2006/06/14 01:28:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,12 @@ lo_open(PGconn *conn, Oid lobjId, int mode)
 	PQArgBlock	argv[2];
 	PGresult   *res;
 
+	if (conn->lobjfuncs == NULL)
+	{
+		if (lo_initialize(conn) < 0)
+			return -1;
+	}
+
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = lobjId;
@@ -65,12 +71,6 @@ lo_open(PGconn *conn, Oid lobjId, int mode)
 	argv[1].isint = 1;
 	argv[1].len = 4;
 	argv[1].u.integer = mode;
-
-	if (conn->lobjfuncs == NULL)
-	{
-		if (lo_initialize(conn) < 0)
-			return -1;
-	}
 
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_open, &fd, &result_len, 1, argv, 2);
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
@@ -438,6 +438,7 @@ lo_import(PGconn *conn, const char *filename)
 	char		buf[LO_BUFSIZE];
 	Oid			lobjOid;
 	int			lobj;
+	char		sebuf[256];
 
 	/*
 	 * open the file to be read in
@@ -445,8 +446,6 @@ lo_import(PGconn *conn, const char *filename)
 	fd = open(filename, O_RDONLY | PG_BINARY, 0666);
 	if (fd < 0)
 	{							/* error */
-		char		sebuf[256];
-
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not open file \"%s\": %s\n"),
 						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
@@ -454,7 +453,7 @@ lo_import(PGconn *conn, const char *filename)
 	}
 
 	/*
-	 * create an inversion "object"
+	 * create an inversion object
 	 */
 	lobjOid = lo_creat(conn, INV_READ | INV_WRITE);
 	if (lobjOid == InvalidOid)
@@ -477,24 +476,46 @@ lo_import(PGconn *conn, const char *filename)
 	}
 
 	/*
-	 * read in from the Unix file and write to the inversion file
+	 * read in from the file and write to the large object
 	 */
 	while ((nbytes = read(fd, buf, LO_BUFSIZE)) > 0)
 	{
 		tmp = lo_write(conn, lobj, buf, nbytes);
-		if (tmp < nbytes)
+		if (tmp != nbytes)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("error while reading file \"%s\"\n"),
-							  filename);
-			(void) close(fd);
+			/*
+			 * If the lo_write failed, we are probably in an aborted
+			 * transaction and so lo_close will fail.  Try it anyway for
+			 * cleanliness, but don't let it determine the returned error
+			 * message.
+			 */
 			(void) lo_close(conn, lobj);
+
+			printfPQExpBuffer(&conn->errorMessage,
+						libpq_gettext("error while writing large object %u\n"),
+							  lobjOid);
+			(void) close(fd);
 			return InvalidOid;
 		}
 	}
 
+	if (nbytes < 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						libpq_gettext("could not read from file \"%s\": %s\n"),
+						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
+		lobjOid = InvalidOid;
+	}
+
 	(void) close(fd);
-	(void) lo_close(conn, lobj);
+
+	if (lo_close(conn, lobj) != 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						libpq_gettext("error while writing large object %u\n"),
+						  lobjOid);
+		return InvalidOid;
+	}
 
 	return lobjOid;
 }
@@ -502,16 +523,18 @@ lo_import(PGconn *conn, const char *filename)
 /*
  * lo_export -
  *	  exports an (inversion) large object.
- * returns -1 upon failure, 1 otherwise
+ * returns -1 upon failure, 1 if OK
  */
 int
 lo_export(PGconn *conn, Oid lobjId, const char *filename)
 {
+	int			result = 1;
 	int			fd;
 	int			nbytes,
 				tmp;
 	char		buf[LO_BUFSIZE];
 	int			lobj;
+	char		sebuf[256];
 
 	/*
 	 * open the large object.
@@ -530,8 +553,6 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
 	if (fd < 0)
 	{							/* error */
-		char		sebuf[256];
-
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not open file \"%s\": %s\n"),
 						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
@@ -540,33 +561,39 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	}
 
 	/*
-	 * read in from the inversion file and write to the Unix file
+	 * read in from the large object and write to the file
 	 */
 	while ((nbytes = lo_read(conn, lobj, buf, LO_BUFSIZE)) > 0)
 	{
 		tmp = write(fd, buf, nbytes);
-		if (tmp < nbytes)
+		if (tmp != nbytes)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("error while writing to file \"%s\"\n"),
-							  filename);
+					   libpq_gettext("error while writing to file \"%s\": %s\n"),
+						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
 			(void) lo_close(conn, lobj);
 			(void) close(fd);
 			return -1;
 		}
 	}
 
-	(void) lo_close(conn, lobj);
+	if (lo_close(conn, lobj) != 0 || nbytes < 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						libpq_gettext("error while reading large object %u\n"),
+						  lobjId);
+		result = -1;
+	}
 
 	if (close(fd))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("error while writing to file \"%s\"\n"),
-						  filename);
-		return -1;
+					   libpq_gettext("error while writing to file \"%s\": %s\n"),
+						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
+		result = -1;
 	}
 
-	return 1;
+	return result;
 }
 
 
