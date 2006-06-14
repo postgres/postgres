@@ -2662,3 +2662,380 @@ TIP 9: In versions below 8.0, the planner will ignore your desire to
        choose an index scan if your joining column's datatypes do not
        match
 
+From pgsql-hackers-owner+M77964=pgman=candle.pha.pa.us@postgresql.org Tue Dec 27 06:30:14 2005
+Return-path: <pgsql-hackers-owner+M77964=pgman=candle.pha.pa.us@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id jBRDUET16504
+	for <pgman@candle.pha.pa.us>; Tue, 27 Dec 2005 08:30:14 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 3BCBA67A57F
+	for <pgman@candle.pha.pa.us>; Tue, 27 Dec 2005 09:30:14 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 1DB3B9DC859
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 27 Dec 2005 09:29:47 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 89101-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 27 Dec 2005 09:29:50 -0400 (AST)
+X-Greylist: from auto-whitelisted by SQLgrey-
+Received: from svana.org (svana.org [203.20.62.76])
+	by postgresql.org (Postfix) with ESMTP id 319839DC8A5
+	for <pgsql-hackers@postgresql.org>; Tue, 27 Dec 2005 09:29:44 -0400 (AST)
+Received: from kleptog by svana.org with local (Exim 3.35 #1 (Debian))
+	id 1ErEte-0001lm-00; Wed, 28 Dec 2005 00:29:46 +1100
+Date: Tue, 27 Dec 2005 14:29:46 +0100
+From: Martijn van Oosterhout <kleptog@svana.org>
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] Proposed COLLATE implementation
+Message-ID: <20051227132941.GA32404@svana.org>
+Reply-To: Martijn van Oosterhout <kleptog@svana.org>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="W/nzBZO5zC0uMSeA"
+Content-Disposition: inline
+User-Agent: Mutt/1.3.28i
+X-PGP-Key-ID: Length=1024; ID=0x0DC67BE6
+X-PGP-Key-Fingerprint: 295F A899 A81A 156D B522  48A7 6394 F08A 0DC6 7BE6
+X-PGP-Key-URL: <http://svana.org/kleptog/0DC67BE6.pgp.asc>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0.08 required=5 tests=[AWL=0.080]
+X-Spam-Score: 0.08
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+--W/nzBZO5zC0uMSeA
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+Greetings all,
+
+If you're not interested in COLLATE, operator classes or related
+things, stop now, this is quite a long email.
+
+Firstly, status. PostgreSQL doesn't really support collations at all.
+The order of strings is defined at initdb time by the locale then and
+cannot be changed later. We allow lists to be sorted in either
+ascending or decending order but that's about it. Whatever order there
+is is deduced from b-tree operator classes.
+
+The purpose of this patch is to raise collations to (reasonably) first
+class object. The idea is that you can define a collation across any
+type and that you will then be able to ORDER BY, GROUP BY and INDEX
+using that collation. A collation defines both order and equality.
+
+The SQL standard does define COLLATE although they only apply that to
+character strings. There are no predefined collations in the standard.
+There are rules about how collations and collation states propegate
+from the leaves of the parse tree all the way to the root. In its
+simplest form, columns and constants have defined collations which
+modify the behaviour of functions using these values. At any point in
+the parse tree the user can override the collation with an explicit
+<collate clause>. If there is ambiguity about what collation applies at
+any point for a function that needs to know, this is a error.
+
+All this is parse-time analysis.
+
+Proposed Implementation:
+
+NODES
+
+To implement the above, two new node types are created: CollateClause
+which represents the <collate clause> in SQL syntax, and CollateState
+which represents the actual state at any node. Currently the only nodes
+expected to require these are OpExpr, FuncExpr, Var and Const. Although
+I guess it may apply to any node that can be used in an expression.
+
+CATALOG CHANGES
+
+To track collations requires a new table in the catalog, which I have
+named pg_collations. It contains the following fields:
+
+Oid oid;           -- OID for this collation
+Name collname;     -- Name of the collation (for collate clause)
+bool collasc;      -- Ascending or descending
+Oid  collopclass;  -- Implementing Operator Class
+int4 colltype;     -- Currently, 0=3Dsimple, 1=3Duses locale
+Oid colllocale;    -- Locale in pg_locales
+
+(Should we be identifying the type here? or is it ok to lookup the type
+via the operator class).
+
+The first few fields name the collation so it can be referred to by the
+user. Then the collasc field determines how to use the operator class
+as given in the collopclass field. If it indicates descending order, it
+will invert the sense of the operator class. For example, asking for
+the GT op for a reverse collation will actually return the LT operator
+for the operator class.
+
+The purpose of the colltype and colllocale fields are described further
+down.
+
+The important thing at this point is that by specifying a collation you
+are also specifying an operator class. At the moment the ascending and
+descending collations for each type are hard-coded for initdb. At the
+moment they have been allocated OIDs starting at 2800, which is the
+first large available block.
+
+Each column of a table has a default collation, which defaults to the
+default collation of the type but can be specified in the table
+declaration. To store this requires an additional column in
+pg_attribute (attcollate) which contains the OID of the collation for
+that column. When it is referenced in a query, this collation is copied
+to the CollateState node of the Var node, from whence it can affect the
+query.
+
+Finally, to allow the parser to complain about ambiguous CollateStates,
+we need to indicate which functions actually need a senseble collate
+state to function. To this end a single boolean field has been added to
+pg_proc (proneedcollate). If this is true, the parser should error out
+when the collation state is COLLATE_NONE.
+
+INDEXES
+
+Another place you will be allowed to use the collate clause is while
+creating indexes. If you declare an index using a particular collation,
+it can be used in queries that order by the same collation. Note, that
+the collate clause indicates the operator class, so you can either
+specify one or the other, but not both.
+
+So each column of an index will also have a collation. However,
+pg_attribute has already got an extra field to store the collation for
+columns so it makes sense to store the collation here. In the process
+the pg_index.indclass field becomes redundant as it can be inferred
+from the pg_attribute rows associated with the index.
+
+To make this work there also needs to be a notion of compatability
+between collations. For example, two collations which are the reverse
+of eachother are compatable in the sense that an index defined with one
+collation would be usable for the other simply by scanning in reverse.
+
+FUNCTIONS
+
+In particular for string comparison but also possibly for user-defined
+types, a function will need to know what collation it is operating
+under. For this purpose an extra field (fn_collate) is added to
+FmgrInfo which is filled in with the collation from the expression tree
+(if any) or wherever relevent (eg. from the pg_attribute column when
+doing statistics or creating indexes).
+
+A PG_GETCOLLATE() macro is added to facilitate user-functions
+retreiving this data. This function throws an error when no collation
+has been defined. This shouldn't happen in practice as issues should
+have been weeded out at parse-time.
+
+This macro returns the OID of the collation but in many cases it will
+not be necessary. In particular, functions should NOT invert their
+result if the collation is inverted. It is considered the
+responsibility of the caller to invert the result if necessary. The
+reasons for this are:
+
+1. In most cases that matter (order comparison) the issue can be dealt
+with at parse time by the NEGATOR or COMMUTATOR options.
+2. For index scans, we would just do a reverse scan instead (or forward
+if the index is inverted)
+3. Requiring every function to check the collation for inversion is
+wasteful, since in many cases the case can be dealt with statically.
+
+DEFAULT COLLATIONS
+
+At this point I'm inclined to define a few collations to be built in or
+specially handled:
+
+COLLATE ASC    - default collation for type, ascending (ie, what we do now)
+COLLATE DESC   - default collation for type, inverted
+COLLATE POSIX  - For strings, define a simple bytewise string comparison.
+
+Indeed, it is expected that by default, all columns involving strings
+in the system catalog will always use COLLATE POSIX. Additionaly, type
+"name" will always use that collation, even if the user changes the
+default (by a method to be specified). This is straightforwardly done
+at initdb time.
+
+The purpose of COLLATE DESC is to simplify index declarations. Saying
+
+CREATE INDEX foo ON bar( a COLLATE ASC, b COLLATE DESC );
+
+would allow it to be used in a query using ORDER BY a, b DESC, without
+the user having to lookup the name of the collation.
+
+When it comes to naming collations, the question arises whether
+ascending/descending collations need to have different names. Or
+should there be two collations with the same name with ASC/DESC as a
+modifier? Do collations have to be unique across different types; for
+example, can varchar and text both have a collation "ignorecase"?
+
+Another issue is that a column could be declared with a descending
+collation by default. Say it was an integer column, then (a < 5) would
+return FALSE for a =3D 1. While technically correct, I'm thinking of
+ruling it out on the basis of being too confusing, and only allow
+descending collations at query time or in index specifications.
+
+Another strange point at the moment is how to determine the default
+collation of a type. At the moment it is done by finding the default
+operator class and looking up the ascending version of that. However,
+we may want to provide the user a way of specifying it directly,
+perhaps by:
+
+ALTER TYPE text SET DEFAULT COLLATION ignorecase;
+
+PATHKEYS
+
+Currently during planning, pathkeys are indicated by an operator of the
+operator class. Here we would simply replace that with the oid of the
+collation, which can be matched directly with the collation defined by
+the index.
+
+USER DEFINED TYPES
+
+None of this is interesting unless it can be applied to user-defined
+types also. Fortunatly this is easy, when the user declares a b-tree
+operator class, we can generate the collations automatically. We may
+even allow the user to specify the name of the collation. However, if
+the user wanted to create multiple collations based on the same
+operator class (by using the PG_GETCOLLATE() macro above, we may want
+to provide them a way of creating them directly.
+
+COLLATIONS USING LOCALES
+
+For strings, collation can be done in many different ways defined by
+what is referred to as a locale. As indicated above in the definition
+of pg_collations, there is a colltype field. For most collations this
+will be 0 (simple collation). However, for strings the intention is to
+use a type 1 (using locales). In this case the last column refers to
+the OID of the locale, so you can many collations using the same
+operator class, but different locale oids. On a system level it changes
+nothing, but inside the functions implementing it, they should use
+PG_GETLOCALE(). This will return an opaque pg_locale_t (see below)
+handle which can then be used to implement the specifics.
+
+In principle, user-defined types need to be able to use this also,
+perhaps by using the clause COLLATE USING LOCALE in the operator class.
+In theory there should a collation for each combination of
+locale-dependant datatype, locale and order ascending/descending.
+How/when these are created has not yet be determined.
+
+MORE TYPES OF COLLATION
+
+Another collation type I've speculated about but not thought about
+implementing is a "mapping collation", in which you map the values
+through a function and then collate that. The obvious example would be
+a case-insensetive mapping where lower is applied before collation.
+
+Implementation could be pretty much done by simply substituting the
+functions into the parse tree. For example, if you defined something
+like:
+
+CREATE COLLATION ignorecase ON text USING lower($1) COLLATE defaulttext;
+
+Then anytime you did a comparison with that collation, you would simply
+insert those function calls into the parse-tree and then collate with
+"defaulttext". When declaring an index you would just make it a
+functional index. The rules for functional indexes should make it work
+out-of-the-box.
+
+OTHER TECHNICAL ISSUES
+
+- Applying a COLLATE clause to an unknown literal causes it to be
+coerced to the type that collation is based on. But what about if we
+have something like COLLATE DESC?
+
+- This requires some changes in the bootstrap procedures given that we
+need to be able to do lookups on the operator class for each type
+fairly early on. Some are predefined but it does require moving the
+opclass setup further up the list. However, if we store a default
+collation in pg_type, we wouldn't need to do that.
+
+- Sorting arrays. Should they get their own collations, or should
+they use the collations of their base types.
+
+LOCALES
+
+I've left this to the end because I don't want people distracted by
+what is essentially a side-issue. While this would be needed to
+implement COLLATE the way the SQL spec intended, it can actually be
+implemented and dealt with as a seperate patch. The main reason a basic
+implementation exists is that it provides a great way of finding places
+that didn't define a collation, since any comparison involving "text"
+requires one.
+
+To deal with locales I created another table in the catalog,
+pg_locales. This provides an OID which can be referenced from
+elsewhere, such as the pg_collations table.
+
+The design is intended to provide some pluggability, so locale
+information can come from multiple sources. Also, each locale will be
+referenced by an identifier which is unrelated to any external
+identifier, so we're not bound by them.
+
+The columns defined currently are:
+
+Name	locname       - Identifier used by postgresql
+Name	locsysname    - String identifying the locale for the locale provider
+int4	locsource     - System providing this locale
+int4	locencoding   - Encoding expected by provider
+
+It is expected that the list of sources for locale data will be short,
+probably hard-coded into the backend (currenty internal/system/icu).
+The only locale defined at startup is POSIX, which is implemented
+internally. The intention is for any other locales to be defined at the
+end of initdb. The expected syntax is something like:
+
+CREATE LOCALE hungarian AS 'hu_HU' USING glibc;
+
+This should use the provider to check the locale exists and has a
+conpatible encoding. If so it is entered into the table ready for use.
+
+In the backend, there will be implementations of functions like
+pg_strcoll_l, pg_localeconv_l, which work like the C system library
+versions only they take an extra pg_locale_t argument. This is used to
+dispatch the call to the right place. There will be a function to
+quickly determine if a locale is C to shortcircuit complexity where it
+is not needed.
+
+STATUS
+
+Implementation so far is available here:
+
+http://svana.org/kleptog/temp/collate-current.patch.gz
+
+This patch isn't "clean" and changes a few things that are not strictly
+necessary. It won't finish initdb right now because it gets an error in
+ANALYSE (the array issue above).
+
+Feedback, help, comments: please reply.
+
+Have a nice day,
+--=20
+Martijn van Oosterhout   <kleptog@svana.org>   http://svana.org/kleptog/
+> Patent. n. Genius is 5% inspiration and 95% perspiration. A patent is a
+> tool for doing 5% of the work and then sitting around waiting for someone
+> else to do the other 95% so you can sue them.
+
+--W/nzBZO5zC0uMSeA
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.6 (GNU/Linux)
+Comment: For info see http://www.gnupg.org
+
+iD8DBQFDsUHDIB7bNG8LQkwRAnh0AJ0YUNLkVaSY3u0jWBPdlaq+9dujZACfTmis
+JR1mF60lKx14Ih850p3lpVk=
+=/Ghs
+-----END PGP SIGNATURE-----
+
+--W/nzBZO5zC0uMSeA--
+
