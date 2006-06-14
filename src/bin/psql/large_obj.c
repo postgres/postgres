@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.43 2006/05/28 21:13:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.44 2006/06/14 16:49:02 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -120,10 +120,13 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 	if (!start_lo_xact("\\lo_export", &own_transaction))
 		return false;
 
+	SetCancelConn();
 	status = lo_export(pset.db, atooid(loid_arg), filename_arg);
+	ResetCancelConn();
+
+	/* of course this status is documented nowhere :( */
 	if (status != 1)
-	{							/* of course this status is documented nowhere
-								 * :( */
+	{
 		fputs(PQerrorMessage(pset.db), stderr);
 		return fail_lo_xact("\\lo_export", own_transaction);
 	}
@@ -153,7 +156,10 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	if (!start_lo_xact("\\lo_import", &own_transaction))
 		return false;
 
+	SetCancelConn();
 	loid = lo_import(pset.db, filename_arg);
+	ResetCancelConn();
+
 	if (loid == InvalidOid)
 	{
 		fputs(PQerrorMessage(pset.db), stderr);
@@ -211,7 +217,10 @@ do_lo_unlink(const char *loid_arg)
 	if (!start_lo_xact("\\lo_unlink", &own_transaction))
 		return false;
 
+	SetCancelConn();
 	status = lo_unlink(pset.db, loid);
+	ResetCancelConn();
+
 	if (status == -1)
 	{
 		fputs(PQerrorMessage(pset.db), stderr);

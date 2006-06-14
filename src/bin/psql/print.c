@@ -3,11 +3,15 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.86 2006/06/07 22:24:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.87 2006/06/14 16:49:02 tgl Exp $
+ *
+ * Note: we include postgres.h not postgres_fe.h so that we can include
+ * catalog/pg_type.h, and thereby have access to INT4OID and similar macros.
  */
-#include "postgres_fe.h"
+#include "postgres.h"
 #include "common.h"
 #include "print.h"
+#include "catalog/pg_type.h"
 
 #include <math.h>
 #include <signal.h>
@@ -27,6 +31,17 @@
 #include "libpq-fe.h"
 
 #include "mbprint.h"
+
+/*
+ * We define the cancel_pressed flag in this file, rather than common.c where
+ * it naturally belongs, because this file is also used by non-psql programs
+ * (see the bin/scripts/ directory).  In those programs cancel_pressed will
+ * never become set and will have no effect.
+ *
+ * Note: print.c's general strategy for when to check cancel_pressed is to do
+ * so at completion of each row of output.
+ */
+volatile bool cancel_pressed = false;
 
 static char *decimal_point;
 static char *grouping;
@@ -171,6 +186,9 @@ print_unaligned_text(const char *title, const char *const * headers,
 	const char *const * ptr;
 	bool		need_recordsep = false;
 
+	if (cancel_pressed)
+		return;
+
 	if (!opt_fieldsep)
 		opt_fieldsep = "";
 	if (!opt_recordsep)
@@ -202,6 +220,8 @@ print_unaligned_text(const char *title, const char *const * headers,
 		{
 			fputs(opt_recordsep, fout);
 			need_recordsep = false;
+			if (cancel_pressed)
+				break;
 		}
 		if (opt_align[i % col_count] == 'r' && opt_numeric_locale)
 		{
@@ -222,7 +242,7 @@ print_unaligned_text(const char *title, const char *const * headers,
 
 	/* print footers */
 
-	if (!opt_tuples_only && footers)
+	if (!opt_tuples_only && footers && !cancel_pressed)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			if (need_recordsep)
@@ -252,6 +272,9 @@ print_unaligned_vertical(const char *title, const char *const * headers,
 	unsigned int i;
 	const char *const * ptr;
 
+	if (cancel_pressed)
+		return;
+
 	if (!opt_fieldsep)
 		opt_fieldsep = "";
 	if (!opt_recordsep)
@@ -273,6 +296,8 @@ print_unaligned_vertical(const char *title, const char *const * headers,
 			fputs(opt_recordsep, fout);
 			if (i % col_count == 0)
 				fputs(opt_recordsep, fout);		/* another one */
+			if (cancel_pressed)
+				break;
 		}
 
 		fputs(headers[i % col_count], fout);
@@ -289,7 +314,7 @@ print_unaligned_vertical(const char *title, const char *const * headers,
 	}
 
 	/* print footers */
-	if (!opt_tuples_only && footers && *footers)
+	if (!opt_tuples_only && footers && *footers && !cancel_pressed)
 	{
 		fputs(opt_recordsep, fout);
 		for (ptr = footers; *ptr; ptr++)
@@ -368,6 +393,9 @@ print_aligned_text(const char *title, const char *const * headers,
 	struct lineptr *lineptr_list;    /* complete list of linepointers */
 	
 	int *complete;			/* Array remembering which columns have completed output */
+
+	if (cancel_pressed)
+		return;
 
 	/* count columns */
 	for (ptr = headers; *ptr; ptr++)
@@ -543,7 +571,6 @@ print_aligned_text(const char *title, const char *const * headers,
 			fputc('\n', fout);
 		}
 
-
 		_print_horizontal_line(col_count, widths, opt_border, fout);
 	}
 
@@ -553,7 +580,10 @@ print_aligned_text(const char *title, const char *const * headers,
 		int j;
 		int cols_todo = col_count;
 		int line_count;			/* Number of lines output so far in row */
-		
+
+		if (cancel_pressed)
+			break;
+
 		for (j = 0; j < col_count; j++)
 			pg_wcsformat((unsigned char*)ptr[j], strlen(ptr[j]), encoding, col_lineptrs[j], heights[j]);
 	
@@ -630,11 +660,11 @@ print_aligned_text(const char *title, const char *const * headers,
 		}
 	}
 
-	if (opt_border == 2)
+	if (opt_border == 2 && !cancel_pressed)
 		_print_horizontal_line(col_count, widths, opt_border, fout);
 
 	/* print footers */
-	if (footers && !opt_tuples_only)
+	if (footers && !opt_tuples_only && !cancel_pressed)
 		for (ptr = footers; *ptr; ptr++)
 			fprintf(fout, "%s\n", *ptr);
 
@@ -681,6 +711,9 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	char	   *divider;
 	unsigned int cell_count = 0;
 	struct lineptr *hlineptr, *dlineptr;
+
+	if (cancel_pressed)
+		return;
 	
 	if (cells[0] == NULL)
 	{
@@ -764,6 +797,8 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		
 		if (i % col_count == 0)
 		{
+			if (cancel_pressed)
+				break;
 			if (!opt_tuples_only)
 			{
 				char	   *record_str = pg_local_malloc(32);
@@ -860,12 +895,12 @@ print_aligned_vertical(const char *title, const char *const * headers,
  		}
 	}
 
-	if (opt_border == 2)
+	if (opt_border == 2 && !cancel_pressed)
 		fprintf(fout, "%s\n", divider);
 
 	/* print footers */
 
-	if (!opt_tuples_only && footers && *footers)
+	if (!opt_tuples_only && footers && *footers && !cancel_pressed)
 	{
 		if (opt_border < 2)
 			fputc('\n', fout);
@@ -943,6 +978,9 @@ print_html_text(const char *title, const char *const * headers,
 	unsigned int i;
 	const char *const * ptr;
 
+	if (cancel_pressed)
+		return;
+
 	fprintf(fout, "<table border=\"%d\"", opt_border);
 	if (opt_table_attr)
 		fprintf(fout, " %s", opt_table_attr);
@@ -976,7 +1014,11 @@ print_html_text(const char *title, const char *const * headers,
 	for (i = 0, ptr = cells; *ptr; i++, ptr++)
 	{
 		if (i % col_count == 0)
+		{
+			if (cancel_pressed)
+				break;
 			fputs("  <tr valign=\"top\">\n", fout);
+		}
 
 		fprintf(fout, "    <td align=\"%s\">", opt_align[(i) % col_count] == 'r' ? "right" : "left");
 		/* is string only whitespace? */
@@ -1002,7 +1044,7 @@ print_html_text(const char *title, const char *const * headers,
 
 	/* print footers */
 
-	if (!opt_tuples_only && footers && *footers)
+	if (!opt_tuples_only && footers && *footers && !cancel_pressed)
 	{
 		fputs("<p>", fout);
 		for (ptr = footers; *ptr; ptr++)
@@ -1029,6 +1071,9 @@ print_html_vertical(const char *title, const char *const * headers,
 	unsigned int record = 1;
 	const char *const * ptr;
 
+	if (cancel_pressed)
+		return;
+
 	fprintf(fout, "<table border=\"%d\"", opt_border);
 	if (opt_table_attr)
 		fprintf(fout, " %s", opt_table_attr);
@@ -1051,6 +1096,8 @@ print_html_vertical(const char *title, const char *const * headers,
 	{
 		if (i % col_count == 0)
 		{
+			if (cancel_pressed)
+				break;
 			if (!opt_tuples_only)
 				fprintf(fout, "\n  <tr><td colspan=\"2\" align=\"center\">Record %d</td></tr>\n", record++);
 			else
@@ -1081,7 +1128,7 @@ print_html_vertical(const char *title, const char *const * headers,
 	fputs("</table>\n", fout);
 
 	/* print footers */
-	if (!opt_tuples_only && footers && *footers)
+	if (!opt_tuples_only && footers && *footers && !cancel_pressed)
 	{
 		fputs("<p>", fout);
 		for (ptr = footers; *ptr; ptr++)
@@ -1151,6 +1198,8 @@ print_latex_text(const char *title, const char *const * headers,
 	unsigned int i;
 	const char *const * ptr;
 
+	if (cancel_pressed)
+		return;
 
 	/* print title */
 	if (!opt_tuples_only && title)
@@ -1216,7 +1265,11 @@ print_latex_text(const char *title, const char *const * headers,
 			latex_escaped_print(*ptr, fout);
 
 		if ((i + 1) % col_count == 0)
+		{
 			fputs(" \\\\\n", fout);
+			if (cancel_pressed)
+				break;
+		}
 		else
 			fputs(" & ", fout);
 	}
@@ -1229,7 +1282,7 @@ print_latex_text(const char *title, const char *const * headers,
 
 	/* print footers */
 
-	if (footers && !opt_tuples_only)
+	if (footers && !opt_tuples_only && !cancel_pressed)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			latex_escaped_print(*ptr, fout);
@@ -1254,6 +1307,9 @@ print_latex_vertical(const char *title, const char *const * headers,
 	unsigned int record = 1;
 
 	(void) opt_align;			/* currently unused parameter */
+
+	if (cancel_pressed)
+		return;
 
 	/* print title */
 	if (!opt_tuples_only && title)
@@ -1285,6 +1341,8 @@ print_latex_vertical(const char *title, const char *const * headers,
 		/* new record */
 		if (i % col_count == 0)
 		{
+			if (cancel_pressed)
+				break;
 			if (!opt_tuples_only)
 			{
 				if (opt_border == 2)
@@ -1313,7 +1371,7 @@ print_latex_vertical(const char *title, const char *const * headers,
 
 	/* print footers */
 
-	if (footers && !opt_tuples_only)
+	if (footers && !opt_tuples_only && !cancel_pressed)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			if (opt_numeric_locale)
@@ -1367,6 +1425,8 @@ print_troff_ms_text(const char *title, const char *const * headers,
 	unsigned int i;
 	const char *const * ptr;
 
+	if (cancel_pressed)
+		return;
 
 	/* print title */
 	if (!opt_tuples_only && title)
@@ -1425,7 +1485,11 @@ print_troff_ms_text(const char *title, const char *const * headers,
 			troff_ms_escaped_print(*ptr, fout);
 
 		if ((i + 1) % col_count == 0)
+		{
 			fputc('\n', fout);
+			if (cancel_pressed)
+				break;
+		}
 		else
 			fputc('\t', fout);
 	}
@@ -1435,7 +1499,7 @@ print_troff_ms_text(const char *title, const char *const * headers,
 
 	/* print footers */
 
-	if (footers && !opt_tuples_only)
+	if (footers && !opt_tuples_only && !cancel_pressed)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			troff_ms_escaped_print(*ptr, fout);
@@ -1461,6 +1525,9 @@ print_troff_ms_vertical(const char *title, const char *const * headers,
 	unsigned short current_format = 0;	/* 0=none, 1=header, 2=body */
 
 	(void) opt_align;			/* currently unused parameter */
+
+	if (cancel_pressed)
+		return;
 
 	/* print title */
 	if (!opt_tuples_only && title)
@@ -1491,6 +1558,8 @@ print_troff_ms_vertical(const char *title, const char *const * headers,
 		/* new record */
 		if (i % col_count == 0)
 		{
+			if (cancel_pressed)
+				break;
 			if (!opt_tuples_only)
 			{
 				if (current_format != 1)
@@ -1542,7 +1611,7 @@ print_troff_ms_vertical(const char *title, const char *const * headers,
 
 	/* print footers */
 
-	if (footers && !opt_tuples_only)
+	if (footers && !opt_tuples_only && !cancel_pressed)
 		for (ptr = footers; *ptr; ptr++)
 		{
 			troff_ms_escaped_print(*ptr, fout);
@@ -1617,6 +1686,9 @@ printTable(const char *title,
 	unsigned short int border = opt->border;
 	FILE	   *output;
 	bool		use_expanded;
+
+	if (cancel_pressed)
+		return;
 
 	if (opt->format == PRINT_NOTHING)
 		return;
@@ -1731,6 +1803,17 @@ printTable(const char *title,
 	/* Only close if we used the pager */
 	if (fout == stdout && output != stdout)
 	{
+		/*
+		 * If printing was canceled midstream, warn about it.
+		 *
+		 * Some pagers like less use Ctrl-C as part of their command
+		 * set. Even so, we abort our processing and warn the user
+		 * what we did.  If the pager quit as a result of the
+		 * SIGINT, this message won't go anywhere ...
+		 */
+		if (cancel_pressed)
+			fprintf(output, _("Interrupted\n"));
+
 		pclose(output);
 #ifndef WIN32
 		pqsignal(SIGPIPE, SIG_DFL);
@@ -1750,6 +1833,9 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 	char	  **footers;
 	char	   *align;
 	int			i;
+
+	if (cancel_pressed)
+		return;
 
 	/* extract headers */
 	nfields = PQnfields(result);
@@ -1798,18 +1884,24 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 	{
 		Oid			ftype = PQftype(result, i);
 
-		if (ftype == 20 ||		/* int8 */
-			ftype == 21 ||		/* int2 */
-			ftype == 23 ||		/* int4 */
-			(ftype >= 26 && ftype <= 30) ||		/* ?id */
-			ftype == 700 ||		/* float4 */
-			ftype == 701 ||		/* float8 */
-			ftype == 790 ||		/* money */
-			ftype == 1700		/* numeric */
-			)
-			align[i] = 'r';
-		else
-			align[i] = 'l';
+		switch (ftype)
+		{
+			case INT2OID:
+			case INT4OID:
+			case INT8OID:
+			case FLOAT4OID:
+			case FLOAT8OID:
+			case NUMERICOID:
+			case OIDOID:
+			case XIDOID:
+			case CIDOID:
+			case CASHOID:
+				align[i] = 'r';
+				break;
+			default:
+				align[i] = 'l';
+				break;
+		}
 	}
 
 	/* call table printer */

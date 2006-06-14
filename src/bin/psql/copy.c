@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.65 2006/06/07 22:24:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.66 2006/06/14 16:49:02 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -550,11 +550,15 @@ do_copy(const char *args)
 	switch (PQresultStatus(result))
 	{
 		case PGRES_COPY_OUT:
+			SetCancelConn();
 			success = handleCopyOut(pset.db, copystream);
+			ResetCancelConn();
 			break;
 		case PGRES_COPY_IN:
+			SetCancelConn();
 			success = handleCopyIn(pset.db, copystream,
 								   PQbinaryTuples(result));
+			ResetCancelConn();
 			break;
 		case PGRES_NONFATAL_ERROR:
 		case PGRES_FATAL_ERROR:
@@ -650,9 +654,6 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 		OK = false;
 	}
 	PQclear(res);
-
-	/* Disable cancel connection (see AcceptResult in common.c) */
-	ResetCancelConn();
 	
 	return OK;
 }
@@ -675,10 +676,30 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 bool
 handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 {
-	bool		OK = true;
+	bool		OK;
 	const char *prompt;
 	char		buf[COPYBUFSIZ];
 	PGresult *res;
+
+	/*
+	 * Establish longjmp destination for exiting from wait-for-input.
+	 * (This is only effective while sigint_interrupt_enabled is TRUE.)
+	 */
+	if (sigsetjmp(sigint_interrupt_jmp, 1) != 0)
+	{
+		/* got here with longjmp */
+
+		/* Terminate data transfer */
+		PQputCopyEnd(conn, _("aborted by user cancel"));
+
+		/* Check command status and return to normal libpq state */
+		res = PQgetResult(conn);
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
+			psql_error("%s", PQerrorMessage(conn));
+		PQclear(res);
+
+		return false;
+	}
 
 	/* Prompt if interactive input */
 	if (isatty(fileno(copystream)))
@@ -691,10 +712,10 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 	else
 		prompt = NULL;
 
+	OK = true;
+
 	if (isbinary)
 	{
-	    int buflen;
-
 		/* interactive input probably silly, but give one prompt anyway */
 		if (prompt)
 		{
@@ -702,8 +723,20 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 			fflush(stdout);
 		}
 
-		while ((buflen = fread(buf, 1, COPYBUFSIZ, copystream)) > 0)
+		for (;;)
 		{
+			int buflen;
+
+			/* enable longjmp while waiting for input */
+			sigint_interrupt_enabled = true;
+
+			buflen = fread(buf, 1, COPYBUFSIZ, copystream);
+
+			sigint_interrupt_enabled = false;
+
+			if (buflen <= 0)
+				break;
+
 			if (PQputCopyData(conn, buf, buflen) <= 0)
 			{
 				OK = false;
@@ -732,8 +765,16 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 			while (!linedone)
 			{						/* for each bufferload in line ... */
 				int		linelen;
+				char   *fgresult;
 
-				if (!fgets(buf, COPYBUFSIZ, copystream))
+				/* enable longjmp while waiting for input */
+				sigint_interrupt_enabled = true;
+
+				fgresult = fgets(buf, COPYBUFSIZ, copystream);
+
+				sigint_interrupt_enabled = false;
+
+				if (!fgresult)
 				{
 					copydone = true;
 					break;

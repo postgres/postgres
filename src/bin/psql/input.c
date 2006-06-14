@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.54 2006/06/11 23:06:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.55 2006/06/14 16:49:02 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -82,7 +82,9 @@ GetHistControlConfig(void)
  * gets_interactive()
  *
  * Gets a line of interactive input, using readline if desired.
- * The result is malloc'ed.
+ * The result is a malloc'd string.
+ *
+ * Caller *must* have set up sigint_interrupt_jmp before calling.
  */
 char *
 gets_interactive(const char *prompt)
@@ -90,8 +92,18 @@ gets_interactive(const char *prompt)
 #ifdef USE_READLINE
 	if (useReadline)
 	{
+		char   *result;
+
+		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
+		sigint_interrupt_enabled = true;
+
 		/* On some platforms, readline is declared as readline(char *) */
-		return readline((char *) prompt);
+		result = readline((char *) prompt);
+
+		/* Disable SIGINT again */
+		sigint_interrupt_enabled = false;
+
+		return result;
 	}
 #endif
 
@@ -169,30 +181,56 @@ pg_send_history(PQExpBuffer history_buf)
  * gets_fromFile
  *
  * Gets a line of noninteractive input from a file (which could be stdin).
+ * The result is a malloc'd string.
+ *
+ * Caller *must* have set up sigint_interrupt_jmp before calling.
+ *
+ * Note: we re-use a static PQExpBuffer for each call.  This is to avoid
+ * leaking memory if interrupted by SIGINT.
  */
 char *
 gets_fromFile(FILE *source)
 {
-	PQExpBufferData buffer;
+	static PQExpBuffer buffer = NULL;
+
 	char		line[1024];
 
-	initPQExpBuffer(&buffer);
+	if (buffer == NULL)			/* first time through? */
+		buffer = createPQExpBuffer();
+	else
+		resetPQExpBuffer(buffer);
 
-	while (fgets(line, sizeof(line), source) != NULL)
+	for (;;)
 	{
-		appendPQExpBufferStr(&buffer, line);
-		if (buffer.data[buffer.len - 1] == '\n')
+		char   *result;
+
+		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
+		sigint_interrupt_enabled = true;
+
+		/* Get some data */
+		result = fgets(line, sizeof(line), source);
+
+		/* Disable SIGINT again */
+		sigint_interrupt_enabled = false;
+
+		/* EOF? */
+		if (result == NULL)
+			break;
+
+		appendPQExpBufferStr(buffer, line);
+
+		/* EOL? */
+		if (buffer->data[buffer->len - 1] == '\n')
 		{
-			buffer.data[buffer.len - 1] = '\0';
-			return buffer.data;
+			buffer->data[buffer->len - 1] = '\0';
+			return pg_strdup(buffer->data);
 		}
 	}
 
-	if (buffer.len > 0)
-		return buffer.data;		/* EOF after reading some bufferload(s) */
+	if (buffer->len > 0)		/* EOF after reading some bufferload(s) */
+		return pg_strdup(buffer->data);
 
 	/* EOF, so return null */
-	termPQExpBuffer(&buffer);
 	return NULL;
 }
 

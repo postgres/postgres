@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/sprompt.c,v 1.16 2006/03/05 15:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/sprompt.c,v 1.17 2006/06/14 16:49:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 #include <termios.h>
 #endif
 
-bool		prompt_state = false;
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 char *
@@ -56,8 +55,6 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	destination = (char *) malloc(maxlen + 1);
 	if (!destination)
 		return NULL;
-
-	prompt_state = true;		/* disable SIGINT */
 
 	/*
 	 * Do not try to collapse these into one "w+" mode file. Doesn't work on
@@ -158,8 +155,6 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		fclose(termin);
 		fclose(termout);
 	}
-
-	prompt_state = false;		/* SIGINT okay again */
 
 	return destination;
 }

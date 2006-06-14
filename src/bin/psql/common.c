@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.118 2006/05/26 19:51:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.119 2006/06/14 16:49:02 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -16,7 +16,6 @@
 #ifndef WIN32
 #include <sys/time.h>
 #include <unistd.h>				/* for write() */
-#include <setjmp.h>
 #else
 #include <io.h>					/* for _write() */
 #include <win32.h>
@@ -57,8 +56,6 @@ typedef struct _timeb TimevalStruct;
 	(((T)->time - (U)->time) * 1000.0 + \
 	 ((T)->millitm - (U)->millitm))
 #endif
-
-extern bool prompt_state;
 
 
 static bool command_no_begin(const char *query);
@@ -219,55 +216,79 @@ NoticeProcessor(void *arg, const char *message)
 /*
  * Code to support query cancellation
  *
- * Before we start a query, we enable a SIGINT signal catcher that sends a
+ * Before we start a query, we enable the SIGINT signal catcher to send a
  * cancel request to the backend. Note that sending the cancel directly from
  * the signal handler is safe because PQcancel() is written to make it
- * so. We use write() to print to stderr because it's better to use simple
+ * so. We use write() to report to stderr because it's better to use simple
  * facilities in a signal handler.
  *
  * On win32, the signal cancelling happens on a separate thread, because
  * that's how SetConsoleCtrlHandler works. The PQcancel function is safe
  * for this (unlike PQrequestCancel). However, a CRITICAL_SECTION is required
- * to protect the PGcancel structure against being changed while the other
+ * to protect the PGcancel structure against being changed while the signal
  * thread is using it.
+ *
+ * SIGINT is supposed to abort all long-running psql operations, not only
+ * database queries.  In most places, this is accomplished by checking
+ * cancel_pressed during long-running loops.  However, that won't work when
+ * blocked on user input (in readline() or fgets()).  In those places, we
+ * set sigint_interrupt_enabled TRUE while blocked, instructing the signal
+ * catcher to longjmp through sigint_interrupt_jmp.  We assume readline and
+ * fgets are coded to handle possible interruption.  (XXX currently this does
+ * not work on win32, so control-C is less useful there)
  */
-static PGcancel *cancelConn = NULL;
+volatile bool sigint_interrupt_enabled = false;
+
+sigjmp_buf	sigint_interrupt_jmp;
+
+static PGcancel * volatile cancelConn = NULL;
 
 #ifdef WIN32
 static CRITICAL_SECTION cancelConnLock;
 #endif
-
-volatile bool cancel_pressed = false;
 
 #define write_stderr(str)	write(fileno(stderr), str, strlen(str))
 
 
 #ifndef WIN32
 
-void
+static void
 handle_sigint(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 	char		errbuf[256];
 
-	/* Don't muck around if prompting for a password. */
-	if (prompt_state)
-		return;
+	/* if we are waiting for input, longjmp out of it */
+	if (sigint_interrupt_enabled)
+	{
+		sigint_interrupt_enabled = false;
+		siglongjmp(sigint_interrupt_jmp, 1);
+	}
 
-	if (cancelConn == NULL)
-		siglongjmp(main_loop_jmp, 1);
-
+	/* else, set cancel flag to stop any long-running loops */
 	cancel_pressed = true;
 
-	if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
-		write_stderr("Cancel request sent\n");
-	else
+	/* and send QueryCancel if we are processing a database query */
+	if (cancelConn != NULL)
 	{
-		write_stderr("Could not send cancel request: ");
-		write_stderr(errbuf);
+		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
+			write_stderr("Cancel request sent\n");
+		else
+		{
+			write_stderr("Could not send cancel request: ");
+			write_stderr(errbuf);
+		}
 	}
+
 	errno = save_errno;			/* just in case the write changed it */
 }
+
+void
+setup_cancel_handler(void)
+{
+	pqsignal(SIGINT, handle_sigint);
+}
+
 #else							/* WIN32 */
 
 static BOOL WINAPI
@@ -278,15 +299,17 @@ consoleHandler(DWORD dwCtrlType)
 	if (dwCtrlType == CTRL_C_EVENT ||
 		dwCtrlType == CTRL_BREAK_EVENT)
 	{
-		if (prompt_state)
-			return TRUE;
+		/*
+		 * Can't longjmp here, because we are in wrong thread :-(
+		 */
 
-		/* Perform query cancel */
+		/* set cancel flag to stop any long-running loops */
+		cancel_pressed = true;
+
+		/* and send QueryCancel if we are processing a database query */
 		EnterCriticalSection(&cancelConnLock);
 		if (cancelConn != NULL)
 		{
-			cancel_pressed = true;
-
 			if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 				write_stderr("Cancel request sent\n");
 			else
@@ -305,23 +328,13 @@ consoleHandler(DWORD dwCtrlType)
 }
 
 void
-setup_win32_locks(void)
-{
-	InitializeCriticalSection(&cancelConnLock);
-}
-
-void
 setup_cancel_handler(void)
 {
-	static bool done = false;
+	InitializeCriticalSection(&cancelConnLock);
 
-	/* only need one handler per process */
-	if (!done)
-	{
-		SetConsoleCtrlHandler(consoleHandler, TRUE);
-		done = true;
-	}
+	SetConsoleCtrlHandler(consoleHandler, TRUE);
 }
+
 #endif   /* WIN32 */
 
 
@@ -386,16 +399,22 @@ CheckConnection(void)
  *
  * Set cancelConn to point to the current database connection.
  */
-static void
+void
 SetCancelConn(void)
 {
+	PGcancel *oldCancelConn;
+
 #ifdef WIN32
 	EnterCriticalSection(&cancelConnLock);
 #endif
 
 	/* Free the old one if we have one */
-	if (cancelConn != NULL)
-		PQfreeCancel(cancelConn);
+	oldCancelConn = cancelConn;
+	/* be sure handle_sigint doesn't use pointer while freeing */
+	cancelConn = NULL;
+
+	if (oldCancelConn != NULL)
+		PQfreeCancel(oldCancelConn);
 
 	cancelConn = PQgetCancel(pset.db);
 
@@ -413,14 +432,18 @@ SetCancelConn(void)
 void
 ResetCancelConn(void)
 {
+	PGcancel *oldCancelConn;
+
 #ifdef WIN32
 	EnterCriticalSection(&cancelConnLock);
 #endif
 
-	if (cancelConn)
-		PQfreeCancel(cancelConn);
-
+	oldCancelConn = cancelConn;
+	/* be sure handle_sigint doesn't use pointer while freeing */
 	cancelConn = NULL;
+
+	if (oldCancelConn != NULL)
+		PQfreeCancel(oldCancelConn);
 
 #ifdef WIN32
 	LeaveCriticalSection(&cancelConnLock);
@@ -453,15 +476,8 @@ AcceptResult(const PGresult *result, const char *query)
 			case PGRES_TUPLES_OK:
 			case PGRES_EMPTY_QUERY:
 			case PGRES_COPY_IN:
-				/* Fine, do nothing */
-				break;
-
 			case PGRES_COPY_OUT:
-				/*
-				 * Keep cancel connection active during copy out state.
-				 * The matching ResetCancelConn() is in handleCopyOut.
-				 */
-				SetCancelConn();
+				/* Fine, do nothing */
 				break;
 
 			default:
@@ -648,12 +664,16 @@ ProcessCopyResult(PGresult *results)
 			break;
 
 		case PGRES_COPY_OUT:
+			SetCancelConn();
 			success = handleCopyOut(pset.db, pset.queryFout);
+			ResetCancelConn();
 			break;
 
 		case PGRES_COPY_IN:
+			SetCancelConn();
 			success = handleCopyIn(pset.db, pset.cur_cmd_source,
 								   PQbinaryTuples(results));
+			ResetCancelConn();
 			break;
 
 		default:
