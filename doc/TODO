@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Jun 14 16:40:11 EDT 2006
+Last updated:		Wed Jun 14 17:10:33 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -350,6 +350,9 @@ Functions
 * -Allow user-defined functions retuning a domain value to enforce domain
   constraints
 * Add SPI_gettypmod() to return the typemod for a TupleDesc
+* Improve the information schema to be more standards-compliant:
+
+  http://archives.postgresql.org/pgsql-bugs/2005-10/msg00028.php
 
 
 Multi-Language Support
@@ -374,6 +377,9 @@ Multi-Language Support
 * Add octet_length_server() and octet_length_client()
 * Make octet_length_client() the same as octet_length()?
 * Fix problems with wrong runtime encoding conversion for NLS message files
+* Add URL to more complete multi-byte regression tests
+
+  http://archives.postgresql.org/pgsql-hackers/2005-07/msg00272.php
 
 
 Views / Rules
@@ -1315,9 +1321,6 @@ Source Code
 
   http://archives.postgresql.org/pgsql-patches/2006-05/msg00040.php
 
-* Add URL to more complete multi-byte regression tests
-
-  http://archives.postgresql.org/pgsql-hackers/2005-07/msg00272.php
 
 * Win32
 
