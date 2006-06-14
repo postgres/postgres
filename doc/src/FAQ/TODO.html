@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Wed Jun 14 17:47:02 EDT 2006
+Last updated:           Wed Jun 14 17:54:38 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -733,6 +733,9 @@ first.
           held on the server waiting for them to be requested by libpq.
           One complexity is that a statement like SELECT 1/col could error
           out mid-way through the result set.
+</p>
+    </li><li>Properly mark all libpq-exported functions with "PQ"
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2005-10/msg00696.php">http://archives.postgresql.org/pgsql-hackers/2005-10/msg00696.php</a>
 </p>
   </li></ul>
 </li></ul>
