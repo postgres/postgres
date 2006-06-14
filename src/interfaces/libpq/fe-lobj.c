@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.57 2006/06/14 01:28:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.58 2006/06/14 17:49:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <errno.h>
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
@@ -458,9 +457,7 @@ lo_import(PGconn *conn, const char *filename)
 	lobjOid = lo_creat(conn, INV_READ | INV_WRITE);
 	if (lobjOid == InvalidOid)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("could not create large object for file \"%s\"\n"),
-						  filename);
+		/* we assume lo_creat() already set a suitable error message */
 		(void) close(fd);
 		return InvalidOid;
 	}
@@ -468,9 +465,7 @@ lo_import(PGconn *conn, const char *filename)
 	lobj = lo_open(conn, lobjOid, INV_WRITE);
 	if (lobj == -1)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("could not open large object %u\n"),
-						  lobjOid);
+		/* we assume lo_open() already set a suitable error message */
 		(void) close(fd);
 		return InvalidOid;
 	}
@@ -484,16 +479,11 @@ lo_import(PGconn *conn, const char *filename)
 		if (tmp != nbytes)
 		{
 			/*
-			 * If the lo_write failed, we are probably in an aborted
-			 * transaction and so lo_close will fail.  Try it anyway for
-			 * cleanliness, but don't let it determine the returned error
-			 * message.
+			 * If lo_write() failed, we are now in an aborted transaction
+			 * so there's no need for lo_close(); furthermore, if we tried
+			 * it we'd overwrite the useful error result with a useless one.
+			 * So just nail the doors shut and get out of town.
 			 */
-			(void) lo_close(conn, lobj);
-
-			printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("error while writing large object %u\n"),
-							  lobjOid);
 			(void) close(fd);
 			return InvalidOid;
 		}
@@ -511,9 +501,7 @@ lo_import(PGconn *conn, const char *filename)
 
 	if (lo_close(conn, lobj) != 0)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("error while writing large object %u\n"),
-						  lobjOid);
+		/* we assume lo_close() already set a suitable error message */
 		return InvalidOid;
 	}
 
@@ -542,8 +530,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	lobj = lo_open(conn, lobjId, INV_READ);
 	if (lobj == -1)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-				  libpq_gettext("could not open large object %u\n"), lobjId);
+		/* we assume lo_open() already set a suitable error message */
 		return -1;
 	}
 
@@ -569,7 +556,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		if (tmp != nbytes)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("error while writing to file \"%s\": %s\n"),
+					   libpq_gettext("could not write to file \"%s\": %s\n"),
 						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
 			(void) lo_close(conn, lobj);
 			(void) close(fd);
@@ -577,18 +564,23 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		}
 	}
 
-	if (lo_close(conn, lobj) != 0 || nbytes < 0)
+	/*
+	 * If lo_read() failed, we are now in an aborted transaction
+	 * so there's no need for lo_close(); furthermore, if we tried
+	 * it we'd overwrite the useful error result with a useless one.
+	 * So skip lo_close() if we got a failure result.
+	 */
+	if (nbytes < 0 ||
+		lo_close(conn, lobj) != 0)
 	{
-		printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("error while reading large object %u\n"),
-						  lobjId);
+		/* assume lo_read() or lo_close() left a suitable error message */
 		result = -1;
 	}
 
 	if (close(fd))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("error while writing to file \"%s\": %s\n"),
+					   libpq_gettext("could not write to file \"%s\": %s\n"),
 						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		result = -1;
 	}
