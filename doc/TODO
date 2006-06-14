@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jun 13 17:08:13 EDT 2006
+Last updated:		Wed Jun 14 13:50:32 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -220,7 +220,10 @@ Data Types
 * -Add 'tid != tid ' operator for use in corruption recovery
 * Allow user-defined types to specify a type modifier at table creation
   time
+* Allow user-defined types to accept 'typmod' parameters
 
+  http://archives.postgresql.org/pgsql-hackers/2005-08/msg01142.php
+  http://archives.postgresql.org/pgsql-hackers/2005-09/msg00012.php
 
 * Dates and Times
 
