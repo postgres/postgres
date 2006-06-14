@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Wed Jun 14 17:38:09 EDT 2006
+Last updated:           Wed Jun 14 17:39:52 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -351,6 +351,10 @@ first.
   </li><li>Fix problems with wrong runtime encoding conversion for NLS message files
   </li><li>Add URL to more complete multi-byte regression tests
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-07/msg00272.php">http://archives.postgresql.org/pgsql-hackers/2005-07/msg00272.php</a>
+</p>
+  </li><li>Fix ILIKE and regular expressions to handle case insensitivity
+  properly in multibyte encodings
+<p>  <a href="http://archives.postgresql.org/pgsql-bugs/2005-10/msg00001.php">http://archives.postgresql.org/pgsql-bugs/2005-10/msg00001.php</a>
 </p>
 </li></ul>
 <h1><a name="section_7">Views / Rules</a></h1>

@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Jun 14 17:38:09 EDT 2006
+Last updated:		Wed Jun 14 17:39:52 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -380,6 +380,11 @@ Multi-Language Support
 * Add URL to more complete multi-byte regression tests
 
   http://archives.postgresql.org/pgsql-hackers/2005-07/msg00272.php
+
+* Fix ILIKE and regular expressions to handle case insensitivity
+  properly in multibyte encodings
+
+  http://archives.postgresql.org/pgsql-bugs/2005-10/msg00001.php
 
 
 Views / Rules
