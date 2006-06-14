@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.87 2006/06/11 15:49:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.88 2006/06/14 01:24:14 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -381,6 +381,9 @@ HandleFunctionRequest(StringInfo msgBuf)
 		fcinfo.isnull = true;
 		retval = (Datum) 0;
 	}
+
+	/* ensure we do at least one CHECK_FOR_INTERRUPTS per function call */
+	CHECK_FOR_INTERRUPTS();
 
 	SendFunctionResult(retval, fcinfo.isnull, fip->rettype, rformat);
 
