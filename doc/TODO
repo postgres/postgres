@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun 15 12:02:27 EDT 2006
+Last updated:		Thu Jun 15 12:53:32 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -668,24 +668,35 @@ SQL Commands
 
 * Server-Side Languages
 
-	o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
-	o Allow function parameters to be passed by name,
-	  get_employee_salary(emp_id => 12345, tax_year => 2001)
-	o Add Oracle-style packages
-	o Add table function support to pltcl, plpython
-	o Add capability to create and call PROCEDURES
-	o Allow PL/pgSQL to handle %TYPE arrays, e.g. tab.col%TYPE[]
-	o Allow function argument names to be statements from PL/PgSQL
-	o Add MOVE to PL/pgSQL
-	o Add support for polymorphic arguments and return types to
-	  languages other than PL/PgSQL
-	o Add support for OUT and INOUT parameters to languages other 
-	  than PL/PgSQL
-	o Add single-step debugging of PL/PgSQL functions
-	o Allow PL/PgSQL to support WITH HOLD cursors
-	o Allow PL/PgSQL RETURN to return row or record functions
+	o PL/pgSQL
+		o Fix RENAME to work on variables other than OLD/NEW
+		o Allow function parameters to be passed by name,
+		  get_employee_salary(emp_id => 12345, tax_year => 2001)
+		o Add Oracle-style packages
+		o Allow handling of %TYPE arrays, e.g. tab.col%TYPE[]
+		o Allow listing of record column names, and access to
+		  record columns via variables, e.g. columns := r.(*),
+		  tval2 := r.(colname)
 
-	  http://archives.postgresql.org/pgsql-patches/2005-11/msg00045.php
+		  http://archives.postgresql.org/pgsql-patches/2005-07/msg00458.php
+		  http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php
+		  http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php
+
+		o Add MOVE
+		o Add single-step debugging of functions
+		o Add support for WITH HOLD cursors
+		o Allow PL/RETURN to return row or record functions
+
+		  http://archives.postgresql.org/pgsql-patches/2005-11/msg00045.php
+
+
+	o Other
+		o Add table function support to pltcl, plpython
+		o Add support for polymorphic arguments and return types to
+		  languages other than PL/PgSQL
+		o Add capability to create and call PROCEDURES
+		o Add support for OUT and INOUT parameters to languages other 
+		  than PL/PgSQL
 
 
 Clients
