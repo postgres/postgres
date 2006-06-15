@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun 15 13:17:27 EDT 2006
+Last updated:		Thu Jun 15 13:41:45 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -671,7 +671,7 @@ SQL Commands
 	o PL/pgSQL
 		o Fix RENAME to work on variables other than OLD/NEW
 		o Allow function parameters to be passed by name,
-		  get_employee_salary(emp_id => 12345, tax_year => 2001)
+		  get_employee_salary(emp_id AS 12345, tax_year AS 2001)
 		o Add Oracle-style packages
 		o Allow handling of %TYPE arrays, e.g. tab.col%TYPE[]
 		o Allow listing of record column names, and access to
