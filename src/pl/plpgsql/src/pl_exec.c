@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.170 2006/06/12 16:45:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.171 2006/06/15 18:02:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1701,23 +1701,41 @@ exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
 
 	/*
 	 * Run the query
+	 * Retrieving two rows can be slower than a single row, e.g. 
+	 * a sequential scan where the scan has to be completed to
+	 * check for a second row.  For this reason, we only do the
+	 * second-line check for STRICT.
 	 */
-	exec_run_select(estate, stmt->query, 1, NULL);
+	exec_run_select(estate, stmt->query, stmt->strict ? 2 : 1, NULL);
 	tuptab = estate->eval_tuptable;
 	n = estate->eval_processed;
 
 	/*
-	 * If the query didn't return any rows, set the target to NULL and return.
+	 * If SELECT ... INTO specified STRICT, and the query didn't
+	 * find exactly one row, throw an error.  If STRICT was not specified,
+	 * then allow the query to find any number of rows.
 	 */
 	if (n == 0)
 	{
-		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
-		exec_eval_cleanup(estate);
-		return PLPGSQL_RC_OK;
+		if (!stmt->strict)
+		{
+			/* null the target */
+			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+			exec_eval_cleanup(estate);
+			return PLPGSQL_RC_OK;
+		}
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_NO_DATA),
+				 errmsg("query returned no rows")));
 	}
+	else if (n > 1 && stmt->strict)
+		ereport(ERROR,
+			(errcode(ERRCODE_CARDINALITY_VIOLATION),
+			 errmsg("query more than one row")));
 
 	/*
-	 * Put the result into the target and set found to true
+	 * Put the first result into the target and set found to true
 	 */
 	exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
 	exec_set_found(estate, true);

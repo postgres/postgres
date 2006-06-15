@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.91 2006/06/12 16:45:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.92 2006/06/15 18:02:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,6 +157,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_ELSE
 %token	K_ELSIF
 %token	K_END
+%token	K_STRICT
 %token	K_EXCEPTION
 %token	K_EXECUTE
 %token	K_EXIT
@@ -2001,6 +2002,7 @@ make_select_stmt(void)
 	PLpgSQL_rec			*rec = NULL;
 	int					tok;
 	bool				have_into = false;
+	bool				have_strict = false;
 
 	plpgsql_dstring_init(&ds);
 	plpgsql_dstring_append(&ds, "SELECT ");
@@ -2028,6 +2030,11 @@ make_select_stmt(void)
 						 errmsg("INTO specified more than once")));
 			}
 			tok = yylex();
+			if (tok == K_STRICT)
+			{
+				have_strict = true;
+				tok = yylex();
+			}
 			switch (tok)
 			{
 				case T_ROW:
@@ -2108,6 +2115,7 @@ make_select_stmt(void)
 		select->rec		 = rec;
 		select->row		 = row;
 		select->query	 = expr;
+		select->strict	 = have_strict;
 
 		return (PLpgSQL_stmt *)select;
 	}
