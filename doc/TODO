@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun 15 12:53:32 EDT 2006
+Last updated:		Thu Jun 15 13:17:27 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -688,6 +688,10 @@ SQL Commands
 		o Allow PL/RETURN to return row or record functions
 
 		  http://archives.postgresql.org/pgsql-patches/2005-11/msg00045.php
+
+		o Fix memory leak from exceptions
+
+		  http://archives.postgresql.org/pgsql-performance/2006-06/msg00305.php
 
 
 	o Other
