@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.320 2006/06/15 17:38:26 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.321 2006/06/15 17:52:48 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1532,9 +1532,7 @@
        <entry>
        Convert <parameter>string</parameter> to <acronym>ASCII</acronym> from another encoding
        (only supports conversion from  <literal>LATIN1</>, <literal>LATIN2</>, <literal>LATIN9</>,
-         and <literal>WIN1250</> encodings)
-        </para>
-       </footnote>
+       and <literal>WIN1250</> encodings)
        </entry>
 
        <entry><literal>to_ascii('Karel')</literal></entry>
