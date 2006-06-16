@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 16 14:31:59 EDT 2006
+Last updated:		Fri Jun 16 14:37:19 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1096,6 +1096,9 @@ Vacuum
 
 * Auto-fill the free space map by scanning the buffer cache or by
   checking pages written by the background writer
+
+  http://archives.postgresql.org/pgsql-hackers/2006-02/msg01125.php
+
 * Create a bitmap of pages that need vacuuming
 
   Instead of sequentially scanning the entire table, have the background
