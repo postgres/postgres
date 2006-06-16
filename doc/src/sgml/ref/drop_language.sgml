@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.21 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.22 2006/06/16 22:27:55 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -38,6 +38,17 @@ DROP [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">name</replaceable> [
   <title>Parameters</title>
 
   <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the function does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>

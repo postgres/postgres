@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.6 2003/11/29 19:51:38 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.7 2006/06/16 22:27:55 adunstan Exp $ -->
 
 <refentry id="SQL-DROPCAST">
  <refmeta>
@@ -17,7 +17,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-DROP CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>) [ CASCADE | RESTRICT ]
+DROP CAST [ IF EXISTS ] (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>) [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
   
@@ -39,6 +39,17 @@ DROP CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</rep
   <title>Parameters</title>
 
    <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the cast does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
     <varlistentry>
      <term><replaceable>sourcetype</replaceable></term>
 

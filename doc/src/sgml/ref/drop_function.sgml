@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.30 2005/05/26 20:05:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.31 2006/06/16 22:27:55 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
@@ -41,7 +41,17 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ [ <replaceab
   <title>Parameters</title>
 
   <variablelist>
-   <varlistentry>
+    <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the function does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  <varlistentry>
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>

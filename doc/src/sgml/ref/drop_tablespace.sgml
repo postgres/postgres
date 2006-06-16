@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.2 2004/06/25 21:55:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.3 2006/06/16 22:27:55 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TABLESPACE <replaceable class="PARAMETER">tablespacename</replaceable>
+DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">tablespacename</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -44,6 +44,17 @@ DROP TABLESPACE <replaceable class="PARAMETER">tablespacename</replaceable>
   <title>Parameters</title>
 
   <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the tablespace does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">tablespacename</replaceable></term>
     <listitem>

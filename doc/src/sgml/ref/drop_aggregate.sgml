@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.27 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.28 2006/06/16 22:27:55 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">type</replaceable> ) [ CASCADE | RESTRICT ]
+DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">type</replaceable> ) [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -38,6 +38,17 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable 
   <title>Parameters</title>
 
   <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the aggregate does not exist. A notice is issued 
+      in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
