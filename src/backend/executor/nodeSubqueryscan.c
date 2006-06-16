@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.29 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.30 2006/06/16 18:42:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,11 +202,13 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	subquerystate->ss.ps.ps_TupFromTlist = false;
 
 	/*
-	 * Initialize scan tuple type (needed by ExecAssignScanProjectionInfo)
+	 * Initialize scan tuple type (needed by ExecAssignScanProjectionInfo).
+	 * Because the subplan is in its own memory context, we need to copy its
+	 * result tuple type not just link to it; else the tupdesc will disappear
+	 * too soon during shutdown.
 	 */
 	ExecAssignScanType(&subquerystate->ss,
-					   ExecGetResultType(subquerystate->subplan),
-					   false);
+			CreateTupleDescCopy(ExecGetResultType(subquerystate->subplan)));
 
 	/*
 	 * Initialize result tuple type and projection info.

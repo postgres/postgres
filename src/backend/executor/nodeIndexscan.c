@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.113 2006/05/23 15:21:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.114 2006/06/16 18:42:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,7 +516,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	/*
 	 * get the scan type from the relation descriptor.
 	 */
-	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation), false);
+	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation));
 
 	/*
 	 * Open the index relation.

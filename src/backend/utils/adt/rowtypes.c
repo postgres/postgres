@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.15 2006/04/04 19:35:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.16 2006/06/16 18:42:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,6 +264,7 @@ record_in(PG_FUNCTION_ARGS)
 	pfree(buf.data);
 	pfree(values);
 	pfree(nulls);
+	ReleaseTupleDesc(tupdesc);
 
 	PG_RETURN_HEAPTUPLEHEADER(result);
 }
@@ -411,6 +412,7 @@ record_out(PG_FUNCTION_ARGS)
 
 	pfree(values);
 	pfree(nulls);
+	ReleaseTupleDesc(tupdesc);
 
 	PG_RETURN_CSTRING(buf.data);
 }
@@ -605,6 +607,7 @@ record_recv(PG_FUNCTION_ARGS)
 	heap_freetuple(tuple);
 	pfree(values);
 	pfree(nulls);
+	ReleaseTupleDesc(tupdesc);
 
 	PG_RETURN_HEAPTUPLEHEADER(result);
 }
@@ -731,6 +734,7 @@ record_send(PG_FUNCTION_ARGS)
 
 	pfree(values);
 	pfree(nulls);
+	ReleaseTupleDesc(tupdesc);
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }

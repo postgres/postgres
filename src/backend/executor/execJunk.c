@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.52 2006/03/05 15:58:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.53 2006/06/16 18:42:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ ExecInitJunkFilter(List *targetList, bool hasoid, TupleTableSlot *slot)
 	 * Use the given slot, or make a new slot if we weren't given one.
 	 */
 	if (slot)
-		ExecSetSlotDescriptor(slot, cleanTupType, false);
+		ExecSetSlotDescriptor(slot, cleanTupType);
 	else
 		slot = MakeSingleTupleTableSlot(cleanTupType);
 
@@ -150,7 +150,7 @@ ExecInitJunkFilterConversion(List *targetList,
 	 * Use the given slot, or make a new slot if we weren't given one.
 	 */
 	if (slot)
-		ExecSetSlotDescriptor(slot, cleanTupType, false);
+		ExecSetSlotDescriptor(slot, cleanTupType);
 	else
 		slot = MakeSingleTupleTableSlot(cleanTupType);
 

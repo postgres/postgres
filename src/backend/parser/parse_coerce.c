@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.138 2006/04/22 01:25:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.139 2006/06/16 18:42:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -771,6 +771,8 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 						format_type_be(RECORDOID),
 						format_type_be(targetTypeId)),
 				 errdetail("Input has too many columns.")));
+
+	ReleaseTupleDesc(tupdesc);
 
 	rowexpr = makeNode(RowExpr);
 	rowexpr->args = newargs;

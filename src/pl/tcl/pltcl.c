@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.104 2006/05/30 22:12:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.105 2006/06/16 18:42:24 tgl Exp $
  *
  **********************************************************************/
 
@@ -511,6 +511,7 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 					pltcl_build_tuple_argument(&tmptup, tupdesc, &list_tmp);
 					Tcl_DStringAppendElement(&tcl_cmd,
 											 Tcl_DStringValue(&list_tmp));
+					ReleaseTupleDesc(tupdesc);
 				}
 			}
 			else

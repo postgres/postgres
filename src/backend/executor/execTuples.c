@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.93 2006/04/04 19:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.94 2006/06/16 18:42:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,6 @@ ExecCreateTupleTable(int tableSize)
 		slot->type = T_TupleTableSlot;
 		slot->tts_isempty = true;
 		slot->tts_shouldFree = false;
-		slot->tts_shouldFreeDesc = false;
 		slot->tts_tuple = NULL;
 		slot->tts_tupleDescriptor = NULL;
 		slot->tts_mcxt = CurrentMemoryContext;
@@ -189,8 +188,8 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
 			TupleTableSlot *slot = &(table->array[i]);
 
 			ExecClearTuple(slot);
-			if (slot->tts_shouldFreeDesc)
-				FreeTupleDesc(slot->tts_tupleDescriptor);
+			if (slot->tts_tupleDescriptor)
+				ReleaseTupleDesc(slot->tts_tupleDescriptor);
 			if (slot->tts_values)
 				pfree(slot->tts_values);
 			if (slot->tts_isnull)
@@ -210,7 +209,7 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
  *		This is a convenience routine for operations that need a
  *		standalone TupleTableSlot not gotten from the main executor
  *		tuple table.  It makes a single slot and initializes it as
- *		though by ExecSetSlotDescriptor(slot, tupdesc, false).
+ *		though by ExecSetSlotDescriptor(slot, tupdesc).
  * --------------------------------
  */
 TupleTableSlot *
@@ -221,7 +220,6 @@ MakeSingleTupleTableSlot(TupleDesc tupdesc)
 	/* This should match ExecCreateTupleTable() */
 	slot->tts_isempty = true;
 	slot->tts_shouldFree = false;
-	slot->tts_shouldFreeDesc = false;
 	slot->tts_tuple = NULL;
 	slot->tts_tupleDescriptor = NULL;
 	slot->tts_mcxt = CurrentMemoryContext;
@@ -230,7 +228,7 @@ MakeSingleTupleTableSlot(TupleDesc tupdesc)
 	slot->tts_values = NULL;
 	slot->tts_isnull = NULL;
 
-	ExecSetSlotDescriptor(slot, tupdesc, false);
+	ExecSetSlotDescriptor(slot, tupdesc);
 
 	return slot;
 }
@@ -250,8 +248,8 @@ ExecDropSingleTupleTableSlot(TupleTableSlot *slot)
 	Assert(slot != NULL);
 
 	ExecClearTuple(slot);
-	if (slot->tts_shouldFreeDesc)
-		FreeTupleDesc(slot->tts_tupleDescriptor);
+	if (slot->tts_tupleDescriptor)
+		ReleaseTupleDesc(slot->tts_tupleDescriptor);
 	if (slot->tts_values)
 		pfree(slot->tts_values);
 	if (slot->tts_isnull)
@@ -309,13 +307,15 @@ ExecAllocTableSlot(TupleTable table)
  *		ExecSetSlotDescriptor
  *
  *		This function is used to set the tuple descriptor associated
- *		with the slot's tuple.
+ *		with the slot's tuple.  The passed descriptor must have lifespan
+ *		at least equal to the slot's.  If it is a reference-counted descriptor
+ *		then the reference count is incremented for as long as the slot holds
+ *		a reference.
  * --------------------------------
  */
 void
 ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
-					  TupleDesc tupdesc,		/* new tuple descriptor */
-					  bool shouldFree)	/* is desc owned by slot? */
+					  TupleDesc tupdesc)		/* new tuple descriptor */
 {
 	/* For safety, make sure slot is empty before changing it */
 	ExecClearTuple(slot);
@@ -324,8 +324,8 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 	 * Release any old descriptor.	Also release old Datum/isnull arrays if
 	 * present (we don't bother to check if they could be re-used).
 	 */
-	if (slot->tts_shouldFreeDesc)
-		FreeTupleDesc(slot->tts_tupleDescriptor);
+	if (slot->tts_tupleDescriptor)
+		ReleaseTupleDesc(slot->tts_tupleDescriptor);
 
 	if (slot->tts_values)
 		pfree(slot->tts_values);
@@ -333,10 +333,10 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 		pfree(slot->tts_isnull);
 
 	/*
-	 * Set up the new descriptor
+	 * Install the new descriptor; if it's refcounted, bump its refcount.
 	 */
 	slot->tts_tupleDescriptor = tupdesc;
-	slot->tts_shouldFreeDesc = shouldFree;
+	PinTupleDesc(tupdesc);
 
 	/*
 	 * Allocate Datum/isnull arrays of the appropriate size.  These must have
@@ -740,7 +740,7 @@ ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
 {
 	TupleTableSlot *slot = ExecInitExtraTupleSlot(estate);
 
-	ExecSetSlotDescriptor(slot, tupType, false);
+	ExecSetSlotDescriptor(slot, tupType);
 
 	return ExecStoreAllNullTuple(slot);
 }

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.81 2006/05/30 22:12:16 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.82 2006/06/16 18:42:23 tgl Exp $
  *
  *********************************************************************
  */
@@ -883,6 +883,7 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 					tmptup.t_data = td;
 
 					arg = PLyDict_FromTuple(&(proc->args[i]), &tmptup, tupdesc);
+					ReleaseTupleDesc(tupdesc);
 				}
 			}
 			else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.58 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.59 2006/06/16 18:42:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ InitScanRelation(SeqScanState *node, EState *estate)
 	node->ss_currentRelation = currentRelation;
 	node->ss_currentScanDesc = currentScanDesc;
 
-	ExecAssignScanType(node, RelationGetDescr(currentRelation), false);
+	ExecAssignScanType(node, RelationGetDescr(currentRelation));
 }
 
 

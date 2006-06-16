@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.190 2006/04/22 01:25:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.191 2006/06/16 18:42:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,10 @@ static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
+static void ShutdownFuncExpr(Datum arg);
+static TupleDesc get_cached_rowtype(Oid type_id, int32 typmod,
+				   TupleDesc *cache_field, ExprContext *econtext);
+static void ShutdownTupleDescRef(Datum arg);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 				 List *argList, ExprContext *econtext);
 static Datum ExecMakeFunctionResultNoSets(FuncExprState *fcache,
@@ -715,6 +719,9 @@ GetAttributeByNum(HeapTupleHeader tuple,
 						  attrno,
 						  tupDesc,
 						  isNull);
+
+	ReleaseTupleDesc(tupDesc);
+
 	return result;
 }
 
@@ -773,6 +780,9 @@ GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
 						  attrno,
 						  tupDesc,
 						  isNull);
+
+	ReleaseTupleDesc(tupDesc);
+
 	return result;
 }
 
@@ -824,6 +834,61 @@ ShutdownFuncExpr(Datum arg)
 
 	/* execUtils will deregister the callback... */
 	fcache->shutdown_reg = false;
+}
+
+/*
+ * get_cached_rowtype: utility function to lookup a rowtype tupdesc
+ *
+ * type_id, typmod: identity of the rowtype
+ * cache_field: where to cache the TupleDesc pointer in expression state node
+ *		(field must be initialized to NULL)
+ * econtext: expression context we are executing in
+ *
+ * NOTE: because the shutdown callback will be called during plan rescan,
+ * must be prepared to re-do this during any node execution; cannot call
+ * just once during expression initialization
+ */
+static TupleDesc
+get_cached_rowtype(Oid type_id, int32 typmod,
+				   TupleDesc *cache_field, ExprContext *econtext)
+{
+	TupleDesc	tupDesc = *cache_field;
+
+	/* Do lookup if no cached value or if requested type changed */
+	if (tupDesc == NULL ||
+		type_id != tupDesc->tdtypeid ||
+		typmod != tupDesc->tdtypmod)
+	{
+		tupDesc = lookup_rowtype_tupdesc(type_id, typmod);
+
+		if (*cache_field)
+		{
+			/* Release old tupdesc; but callback is already registered */
+			ReleaseTupleDesc(*cache_field);
+		}
+		else
+		{
+			/* Need to register shutdown callback to release tupdesc */
+			RegisterExprContextCallback(econtext,
+										ShutdownTupleDescRef,
+										PointerGetDatum(cache_field));
+		}
+		*cache_field = tupDesc;
+	}
+	return tupDesc;
+}
+
+/*
+ * Callback function to release a tupdesc refcount at expression tree shutdown
+ */
+static void
+ShutdownTupleDescRef(Datum arg)
+{
+	TupleDesc *cache_field = (TupleDesc *) DatumGetPointer(arg);
+
+	if (*cache_field)
+		ReleaseTupleDesc(*cache_field);
+	*cache_field = NULL;
 }
 
 /*
@@ -1351,9 +1416,8 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 					HeapTupleHeader td;
 
 					td = DatumGetHeapTupleHeader(result);
-					tupdesc = lookup_rowtype_tupdesc(HeapTupleHeaderGetTypeId(td),
+					tupdesc = lookup_rowtype_tupdesc_copy(HeapTupleHeaderGetTypeId(td),
 											   HeapTupleHeaderGetTypMod(td));
-					tupdesc = CreateTupleDescCopy(tupdesc);
 				}
 				else
 				{
@@ -1919,17 +1983,18 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 					   ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone)
 {
+	ConvertRowtypeExpr *convert = (ConvertRowtypeExpr *) cstate->xprstate.expr;
 	HeapTuple	result;
 	Datum		tupDatum;
 	HeapTupleHeader tuple;
 	HeapTupleData tmptup;
-	AttrNumber *attrMap = cstate->attrMap;
-	Datum	   *invalues = cstate->invalues;
-	bool	   *inisnull = cstate->inisnull;
-	Datum	   *outvalues = cstate->outvalues;
-	bool	   *outisnull = cstate->outisnull;
+	AttrNumber *attrMap;
+	Datum	   *invalues;
+	bool	   *inisnull;
+	Datum	   *outvalues;
+	bool	   *outisnull;
 	int			i;
-	int			outnatts = cstate->outdesc->natts;
+	int			outnatts;
 
 	tupDatum = ExecEvalExpr(cstate->arg, econtext, isNull, isDone);
 
@@ -1939,8 +2004,81 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 
 	tuple = DatumGetHeapTupleHeader(tupDatum);
 
+	/* Lookup tupdescs if first time through or after rescan */
+	if (cstate->indesc == NULL)
+		get_cached_rowtype(exprType((Node *) convert->arg), -1,
+						   &cstate->indesc, econtext);
+	if (cstate->outdesc == NULL)
+		get_cached_rowtype(convert->resulttype, -1,
+						   &cstate->outdesc, econtext);
+
 	Assert(HeapTupleHeaderGetTypeId(tuple) == cstate->indesc->tdtypeid);
 	Assert(HeapTupleHeaderGetTypMod(tuple) == cstate->indesc->tdtypmod);
+
+	/* if first time through, initialize */
+	if (cstate->attrMap == NULL)
+	{
+		MemoryContext	old_cxt;
+		int		n;
+
+		/* allocate state in long-lived memory context */
+		old_cxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+
+		/* prepare map from old to new attribute numbers */
+		n = cstate->outdesc->natts;
+		cstate->attrMap = (AttrNumber *) palloc0(n * sizeof(AttrNumber));
+		for (i = 0; i < n; i++)
+		{
+			Form_pg_attribute att = cstate->outdesc->attrs[i];
+			char	   *attname;
+			Oid			atttypid;
+			int32		atttypmod;
+			int			j;
+
+			if (att->attisdropped)
+				continue;		/* attrMap[i] is already 0 */
+			attname = NameStr(att->attname);
+			atttypid = att->atttypid;
+			atttypmod = att->atttypmod;
+			for (j = 0; j < cstate->indesc->natts; j++)
+			{
+				att = cstate->indesc->attrs[j];
+				if (att->attisdropped)
+					continue;
+				if (strcmp(attname, NameStr(att->attname)) == 0)
+				{
+					/* Found it, check type */
+					if (atttypid != att->atttypid || atttypmod != att->atttypmod)
+						elog(ERROR, "attribute \"%s\" of type %s does not match corresponding attribute of type %s",
+							 attname,
+							 format_type_be(cstate->indesc->tdtypeid),
+							 format_type_be(cstate->outdesc->tdtypeid));
+					cstate->attrMap[i] = (AttrNumber) (j + 1);
+					break;
+				}
+			}
+			if (cstate->attrMap[i] == 0)
+				elog(ERROR, "attribute \"%s\" of type %s does not exist",
+					 attname,
+					 format_type_be(cstate->indesc->tdtypeid));
+		}
+		/* preallocate workspace for Datum arrays */
+		n = cstate->indesc->natts + 1;	/* +1 for NULL */
+		cstate->invalues = (Datum *) palloc(n * sizeof(Datum));
+		cstate->inisnull = (bool *) palloc(n * sizeof(bool));
+		n = cstate->outdesc->natts;
+		cstate->outvalues = (Datum *) palloc(n * sizeof(Datum));
+		cstate->outisnull = (bool *) palloc(n * sizeof(bool));
+
+		MemoryContextSwitchTo(old_cxt);
+	}
+
+	attrMap = cstate->attrMap;
+	invalues = cstate->invalues;
+	inisnull = cstate->inisnull;
+	outvalues = cstate->outvalues;
+	outisnull = cstate->outisnull;
+	outnatts = cstate->outdesc->natts;
 
 	/*
 	 * heap_deform_tuple needs a HeapTuple not a bare HeapTupleHeader.
@@ -2797,22 +2935,8 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 	tupTypmod = HeapTupleHeaderGetTypMod(tuple);
 
 	/* Lookup tupdesc if first time through or if type changes */
-	tupDesc = fstate->argdesc;
-	if (tupDesc == NULL ||
-		tupType != tupDesc->tdtypeid ||
-		tupTypmod != tupDesc->tdtypmod)
-	{
-		MemoryContext oldcontext;
-
-		tupDesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-		/* Copy the tupdesc into query storage for safety */
-		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-		tupDesc = CreateTupleDescCopy(tupDesc);
-		if (fstate->argdesc)
-			FreeTupleDesc(fstate->argdesc);
-		fstate->argdesc = tupDesc;
-		MemoryContextSwitchTo(oldcontext);
-	}
+	tupDesc = get_cached_rowtype(tupType, tupTypmod,
+								 &fstate->argdesc, econtext);
 
 	/*
 	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set all
@@ -2859,22 +2983,9 @@ ExecEvalFieldStore(FieldStoreState *fstate,
 	if (isDone && *isDone == ExprEndResult)
 		return tupDatum;
 
-	/* Lookup tupdesc if first time through or if type changes */
-	tupDesc = fstate->argdesc;
-	if (tupDesc == NULL ||
-		fstore->resulttype != tupDesc->tdtypeid)
-	{
-		MemoryContext oldcontext;
-
-		tupDesc = lookup_rowtype_tupdesc(fstore->resulttype, -1);
-		/* Copy the tupdesc into query storage for safety */
-		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-		tupDesc = CreateTupleDescCopy(tupDesc);
-		if (fstate->argdesc)
-			FreeTupleDesc(fstate->argdesc);
-		fstate->argdesc = tupDesc;
-		MemoryContextSwitchTo(oldcontext);
-	}
+	/* Lookup tupdesc if first time through or after rescan */
+	tupDesc = get_cached_rowtype(fstore->resulttype, -1,
+								 &fstate->argdesc, econtext);
 
 	/* Allocate workspace */
 	values = (Datum *) palloc(tupDesc->natts * sizeof(Datum));
@@ -3247,61 +3358,9 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				ConvertRowtypeExpr *convert = (ConvertRowtypeExpr *) node;
 				ConvertRowtypeExprState *cstate = makeNode(ConvertRowtypeExprState);
-				int			i;
-				int			n;
 
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalConvertRowtype;
 				cstate->arg = ExecInitExpr(convert->arg, parent);
-				/* save copies of needed tuple descriptors */
-				cstate->indesc = lookup_rowtype_tupdesc(exprType((Node *) convert->arg), -1);
-				cstate->indesc = CreateTupleDescCopy(cstate->indesc);
-				cstate->outdesc = lookup_rowtype_tupdesc(convert->resulttype, -1);
-				cstate->outdesc = CreateTupleDescCopy(cstate->outdesc);
-				/* prepare map from old to new attribute numbers */
-				n = cstate->outdesc->natts;
-				cstate->attrMap = (AttrNumber *) palloc0(n * sizeof(AttrNumber));
-				for (i = 0; i < n; i++)
-				{
-					Form_pg_attribute att = cstate->outdesc->attrs[i];
-					char	   *attname;
-					Oid			atttypid;
-					int32		atttypmod;
-					int			j;
-
-					if (att->attisdropped)
-						continue;		/* attrMap[i] is already 0 */
-					attname = NameStr(att->attname);
-					atttypid = att->atttypid;
-					atttypmod = att->atttypmod;
-					for (j = 0; j < cstate->indesc->natts; j++)
-					{
-						att = cstate->indesc->attrs[j];
-						if (att->attisdropped)
-							continue;
-						if (strcmp(attname, NameStr(att->attname)) == 0)
-						{
-							/* Found it, check type */
-							if (atttypid != att->atttypid || atttypmod != att->atttypmod)
-								elog(ERROR, "attribute \"%s\" of type %s does not match corresponding attribute of type %s",
-									 attname,
-									 format_type_be(cstate->indesc->tdtypeid),
-								  format_type_be(cstate->outdesc->tdtypeid));
-							cstate->attrMap[i] = (AttrNumber) (j + 1);
-							break;
-						}
-					}
-					if (cstate->attrMap[i] == 0)
-						elog(ERROR, "attribute \"%s\" of type %s does not exist",
-							 attname,
-							 format_type_be(cstate->indesc->tdtypeid));
-				}
-				/* preallocate workspace for Datum arrays */
-				n = cstate->indesc->natts + 1;	/* +1 for NULL */
-				cstate->invalues = (Datum *) palloc(n * sizeof(Datum));
-				cstate->inisnull = (bool *) palloc(n * sizeof(bool));
-				n = cstate->outdesc->natts;
-				cstate->outvalues = (Datum *) palloc(n * sizeof(Datum));
-				cstate->outisnull = (bool *) palloc(n * sizeof(bool));
 				state = (ExprState *) cstate;
 			}
 			break;
@@ -3372,12 +3431,12 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					/* generic record, use runtime type assignment */
 					rstate->tupdesc = ExecTypeFromExprList(rowexpr->args);
 					BlessTupleDesc(rstate->tupdesc);
+					/* we won't need to redo this at runtime */
 				}
 				else
 				{
 					/* it's been cast to a named type, use that */
-					rstate->tupdesc = lookup_rowtype_tupdesc(rowexpr->row_typeid, -1);
-					rstate->tupdesc = CreateTupleDescCopy(rstate->tupdesc);
+					rstate->tupdesc = lookup_rowtype_tupdesc_copy(rowexpr->row_typeid, -1);
 				}
 				/* Set up evaluation, skipping any deleted columns */
 				Assert(list_length(rowexpr->args) <= rstate->tupdesc->natts);

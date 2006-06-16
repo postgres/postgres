@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.126 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.127 2006/06/16 18:42:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,8 +249,7 @@ extern ExprContext *MakePerTupleExprContext(EState *estate);
 	} while (0)
 
 extern void ExecAssignExprContext(EState *estate, PlanState *planstate);
-extern void ExecAssignResultType(PlanState *planstate,
-					 TupleDesc tupDesc, bool shouldFree);
+extern void ExecAssignResultType(PlanState *planstate, TupleDesc tupDesc);
 extern void ExecAssignResultTypeFromTL(PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
 extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
@@ -259,8 +258,7 @@ extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 extern void ExecAssignProjectionInfo(PlanState *planstate);
 extern void ExecFreeExprContext(PlanState *planstate);
 extern TupleDesc ExecGetScanType(ScanState *scanstate);
-extern void ExecAssignScanType(ScanState *scanstate,
-				   TupleDesc tupDesc, bool shouldFree);
+extern void ExecAssignScanType(ScanState *scanstate, TupleDesc tupDesc);
 extern void ExecAssignScanTypeFromOuterPlan(ScanState *scanstate);
 
 extern bool ExecRelationIsTargetRelation(EState *estate, Index scanrelid);

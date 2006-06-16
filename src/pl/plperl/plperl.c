@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.111 2006/05/30 22:12:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.112 2006/06/16 18:42:23 tgl Exp $
  *
  **********************************************************************/
 
@@ -904,6 +904,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 
 			hashref = plperl_hash_from_tuple(&tmptup, tupdesc);
 			XPUSHs(sv_2mortal(hashref));
+			ReleaseTupleDesc(tupdesc);
 		}
 		else
 		{

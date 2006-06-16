@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.223 2006/05/28 21:13:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.224 2006/06/16 18:42:22 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -2697,7 +2697,8 @@ get_name_for_var_field(Var *var, int fieldno,
 	 * appropriate error message while failing.
 	 */
 	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+		tupleDesc = lookup_rowtype_tupdesc_copy(exprType(expr),
+												exprTypmod(expr));
 
 	/* Got the tupdesc, so we can extract the field name */
 	Assert(fieldno >= 1 && fieldno <= tupleDesc->natts);
@@ -3312,8 +3313,8 @@ get_rule_expr(Node *node, deparse_context *context,
 					TupleDesc	tupdesc;
 
 					if (get_expr_result_type(arg, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-						tupdesc = lookup_rowtype_tupdesc(exprType(arg),
-														 exprTypmod(arg));
+						tupdesc = lookup_rowtype_tupdesc_copy(exprType(arg),
+															  exprTypmod(arg));
 					Assert(tupdesc);
 					/* Got the tupdesc, so we can extract the field name */
 					Assert(fno >= 1 && fno <= tupdesc->natts);
@@ -3514,6 +3515,8 @@ get_rule_expr(Node *node, deparse_context *context,
 						}
 						i++;
 					}
+
+					ReleaseTupleDesc(tupdesc);
 				}
 				appendStringInfo(buf, ")");
 				if (rowexpr->row_format == COERCE_EXPLICIT_CAST)

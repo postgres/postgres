@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.30 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.31 2006/06/16 18:42:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define TUPTABLE_H
 
 #include "access/htup.h"
+#include "access/tupdesc.h"
 
 
 /*----------
@@ -56,12 +57,16 @@
  * TRUE, tts_shouldFree FALSE, tts_tuple NULL, tts_buffer InvalidBuffer,
  * and tts_nvalid zero.
  *
+ * The tupleDescriptor is simply referenced, not copied, by the TupleTableSlot
+ * code.  The caller of ExecSetSlotDescriptor() is responsible for providing
+ * a descriptor that will live as long as the slot does.  (Typically, both
+ * slots and descriptors are in per-query memory and are freed by memory
+ * context deallocation at query end; so it's not worth providing any extra
+ * mechanism to do more.  However, the slot will increment the tupdesc
+ * reference count if a reference-counted tupdesc is supplied.)
+ *
  * When tts_shouldFree is true, the physical tuple is "owned" by the slot
  * and should be freed when the slot's reference to the tuple is dropped.
- *
- * tts_shouldFreeDesc is similar to tts_shouldFree: if it's true, then the
- * tupleDescriptor is "owned" by the TupleTableSlot and should be
- * freed when the slot's reference to the descriptor is dropped.
  *
  * If tts_buffer is not InvalidBuffer, then the slot is holding a pin
  * on the indicated buffer page; drop the pin when we release the
@@ -87,7 +92,6 @@ typedef struct TupleTableSlot
 	NodeTag		type;			/* vestigial ... allows IsA tests */
 	bool		tts_isempty;	/* true = slot is empty */
 	bool		tts_shouldFree; /* should pfree tuple? */
-	bool		tts_shouldFreeDesc;		/* should pfree descriptor? */
 	bool		tts_slow;		/* saved state for slot_deform_tuple */
 	HeapTuple	tts_tuple;		/* physical tuple, or NULL if none */
 	TupleDesc	tts_tupleDescriptor;	/* slot's tuple descriptor */
@@ -124,8 +128,7 @@ extern void ExecDropTupleTable(TupleTable table, bool shouldFree);
 extern TupleTableSlot *MakeSingleTupleTableSlot(TupleDesc tupdesc);
 extern void ExecDropSingleTupleTableSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecAllocTableSlot(TupleTable table);
-extern void ExecSetSlotDescriptor(TupleTableSlot *slot,
-					  TupleDesc tupdesc, bool shouldFree);
+extern void ExecSetSlotDescriptor(TupleTableSlot *slot, TupleDesc tupdesc);
 extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
 			   TupleTableSlot *slot,
 			   Buffer buffer,

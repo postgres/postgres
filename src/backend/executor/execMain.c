@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.270 2006/04/30 18:30:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.271 2006/06/16 18:42:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1445,9 +1445,7 @@ ExecInsert(TupleTableSlot *slot,
 			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
 
 			if (newslot->tts_tupleDescriptor != slot->tts_tupleDescriptor)
-				ExecSetSlotDescriptor(newslot,
-									  slot->tts_tupleDescriptor,
-									  false);
+				ExecSetSlotDescriptor(newslot, slot->tts_tupleDescriptor);
 			ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
 			slot = newslot;
 			tuple = newtuple;
@@ -1654,9 +1652,7 @@ ExecUpdate(TupleTableSlot *slot,
 			TupleTableSlot *newslot = estate->es_trig_tuple_slot;
 
 			if (newslot->tts_tupleDescriptor != slot->tts_tupleDescriptor)
-				ExecSetSlotDescriptor(newslot,
-									  slot->tts_tupleDescriptor,
-									  false);
+				ExecSetSlotDescriptor(newslot, slot->tts_tupleDescriptor);
 			ExecStoreTuple(newtuple, newslot, InvalidBuffer, false);
 			slot = newslot;
 			tuple = newtuple;

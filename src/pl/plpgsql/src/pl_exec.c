@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.171 2006/06/15 18:02:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.172 2006/06/16 18:42:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,6 +233,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 						tmptup.t_tableOid = InvalidOid;
 						tmptup.t_data = td;
 						exec_move_row(&estate, NULL, row, &tmptup, tupdesc);
+						ReleaseTupleDesc(tupdesc);
 					}
 					else
 					{
@@ -1701,10 +1702,11 @@ exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
 
 	/*
 	 * Run the query
+	 *
 	 * Retrieving two rows can be slower than a single row, e.g. 
 	 * a sequential scan where the scan has to be completed to
-	 * check for a second row.  For this reason, we only do the
-	 * second-line check for STRICT.
+	 * check for a second row.  For this reason, we only retrieve
+	 * the second row if checking STRICT.
 	 */
 	exec_run_select(estate, stmt->query, stmt->strict ? 2 : 1, NULL);
 	tuptab = estate->eval_tuptable;
@@ -1717,22 +1719,21 @@ exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
 	 */
 	if (n == 0)
 	{
-		if (!stmt->strict)
-		{
-			/* null the target */
-			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
-			exec_eval_cleanup(estate);
-			return PLPGSQL_RC_OK;
-		}
-		else
+		if (stmt->strict)
 			ereport(ERROR,
-				(errcode(ERRCODE_NO_DATA),
-				 errmsg("query returned no rows")));
+					(errcode(ERRCODE_NO_DATA),
+					 errmsg("query returned no rows")));
+
+		/* set the target to NULL(s) */
+		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+		exec_eval_cleanup(estate);
+		return PLPGSQL_RC_OK;
 	}
-	else if (n > 1 && stmt->strict)
+
+	if (n > 1 && stmt->strict)
 		ereport(ERROR,
-			(errcode(ERRCODE_CARDINALITY_VIOLATION),
-			 errmsg("query more than one row")));
+				(errcode(ERRCODE_CARDINALITY_VIOLATION),
+				 errmsg("query returned more than one row")));
 
 	/*
 	 * Put the first result into the target and set found to true
@@ -3138,6 +3139,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					tmptup.t_tableOid = InvalidOid;
 					tmptup.t_data = td;
 					exec_move_row(estate, NULL, row, &tmptup, tupdesc);
+					ReleaseTupleDesc(tupdesc);
 				}
 				break;
 			}
@@ -3180,6 +3182,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					tmptup.t_tableOid = InvalidOid;
 					tmptup.t_data = td;
 					exec_move_row(estate, rec, NULL, &tmptup, tupdesc);
+					ReleaseTupleDesc(tupdesc);
 				}
 				break;
 			}

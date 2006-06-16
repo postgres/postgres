@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.241 2006/05/06 15:51:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.242 2006/06/16 18:42:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,6 +313,8 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	/* and allocate attribute tuple form storage */
 	relation->rd_att = CreateTemplateTupleDesc(relationForm->relnatts,
 											   relationForm->relhasoids);
+	/* which we mark as a reference-counted tupdesc */
+	relation->rd_att->tdrefcount = 1;
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -1234,6 +1236,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * defined by macros in src/include/catalog/ headers.
 	 */
 	relation->rd_att = CreateTemplateTupleDesc(natts, hasoids);
+	relation->rd_att->tdrefcount = 1;	/* mark as refcounted */
+
 	relation->rd_att->tdtypeid = relationReltype;
 	relation->rd_att->tdtypmod = -1;	/* unnecessary, but... */
 
@@ -1591,7 +1595,10 @@ RelationClearRelation(Relation relation, bool rebuild)
 	{
 		/* ok to zap remaining substructure */
 		flush_rowtype_cache(old_reltype);
-		FreeTupleDesc(relation->rd_att);
+		/* can't use DecrTupleDescRefCount here */
+		Assert(relation->rd_att->tdrefcount > 0);
+		if (--relation->rd_att->tdrefcount == 0)
+			FreeTupleDesc(relation->rd_att);
 		if (relation->rd_rulescxt)
 			MemoryContextDelete(relation->rd_rulescxt);
 		pfree(relation);
@@ -1601,7 +1608,10 @@ RelationClearRelation(Relation relation, bool rebuild)
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count and
 		 * rd_createSubid state.  Also attempt to preserve the tupledesc and
-		 * rewrite-rule substructures in place.
+		 * rewrite-rule substructures in place.  (Note: the refcount mechanism
+		 * for tupledescs may eventually ensure that we don't really need to
+		 * preserve the tupledesc in-place, but for now there are still a lot
+		 * of places that assume an open rel's tupledesc won't move.)
 		 *
 		 * Note that this process does not touch CurrentResourceOwner; which
 		 * is good because whatever ref counts the entry may have do not
@@ -1618,7 +1628,9 @@ RelationClearRelation(Relation relation, bool rebuild)
 		{
 			/* Should only get here if relation was deleted */
 			flush_rowtype_cache(old_reltype);
-			FreeTupleDesc(old_att);
+			Assert(old_att->tdrefcount > 0);
+			if (--old_att->tdrefcount == 0)
+				FreeTupleDesc(old_att);
 			if (old_rulescxt)
 				MemoryContextDelete(old_rulescxt);
 			pfree(relation);
@@ -1629,13 +1641,17 @@ RelationClearRelation(Relation relation, bool rebuild)
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{
 			/* needn't flush typcache here */
-			FreeTupleDesc(relation->rd_att);
+			Assert(relation->rd_att->tdrefcount == 1);
+			if (--relation->rd_att->tdrefcount == 0)
+				FreeTupleDesc(relation->rd_att);
 			relation->rd_att = old_att;
 		}
 		else
 		{
 			flush_rowtype_cache(old_reltype);
-			FreeTupleDesc(old_att);
+			Assert(old_att->tdrefcount > 0);
+			if (--old_att->tdrefcount == 0)
+				FreeTupleDesc(old_att);
 		}
 		if (equalRuleLocks(old_rules, relation->rd_rules))
 		{
@@ -2075,6 +2091,7 @@ RelationBuildLocalRelation(const char *relname,
 	 * catalogs.  We can copy attnotnull constraints here, however.
 	 */
 	rel->rd_att = CreateTupleDescCopy(tupDesc);
+	rel->rd_att->tdrefcount = 1;	/* mark as refcounted */
 	has_not_null = false;
 	for (i = 0; i < natts; i++)
 	{
@@ -2996,6 +3013,8 @@ load_relcache_init_file(void)
 		/* initialize attribute tuple forms */
 		rel->rd_att = CreateTemplateTupleDesc(relform->relnatts,
 											  relform->relhasoids);
+		rel->rd_att->tdrefcount = 1;	/* mark as refcounted */
+
 		rel->rd_att->tdtypeid = relform->reltype;
 		rel->rd_att->tdtypmod = -1;		/* unnecessary, but... */
 

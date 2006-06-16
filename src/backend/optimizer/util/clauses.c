@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.211 2006/04/22 01:25:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.212 2006/06/16 18:42:22 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1418,12 +1418,19 @@ rowtype_field_matches(Oid rowtypeid, int fieldnum,
 		return true;
 	tupdesc = lookup_rowtype_tupdesc(rowtypeid, -1);
 	if (fieldnum <= 0 || fieldnum > tupdesc->natts)
+	{
+		ReleaseTupleDesc(tupdesc);
 		return false;
+	}
 	attr = tupdesc->attrs[fieldnum - 1];
 	if (attr->attisdropped ||
 		attr->atttypid != expectedtype ||
 		attr->atttypmod != expectedtypmod)
+	{
+		ReleaseTupleDesc(tupdesc);
 		return false;
+	}
+	ReleaseTupleDesc(tupdesc);
 	return true;
 }
 

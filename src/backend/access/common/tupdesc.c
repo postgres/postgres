@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.116 2006/03/16 00:31:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.117 2006/06/16 18:42:21 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -23,6 +23,7 @@
 #include "catalog/pg_type.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/resowner.h"
 #include "utils/syscache.h"
 
 
@@ -84,6 +85,7 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	desc->tdtypeid = RECORDOID;
 	desc->tdtypmod = -1;
 	desc->tdhasoid = hasoid;
+	desc->tdrefcount = -1;		/* assume not reference-counted */
 
 	return desc;
 }
@@ -116,6 +118,7 @@ CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
 	desc->tdtypeid = RECORDOID;
 	desc->tdtypmod = -1;
 	desc->tdhasoid = hasoid;
+	desc->tdrefcount = -1;		/* assume not reference-counted */
 
 	return desc;
 }
@@ -214,6 +217,12 @@ FreeTupleDesc(TupleDesc tupdesc)
 {
 	int			i;
 
+	/*
+	 * Possibly this should assert tdrefcount == 0, to disallow explicit
+	 * freeing of un-refcounted tupdescs?
+	 */
+	Assert(tupdesc->tdrefcount <= 0);
+
 	if (tupdesc->constr)
 	{
 		if (tupdesc->constr->num_defval > 0)
@@ -247,11 +256,47 @@ FreeTupleDesc(TupleDesc tupdesc)
 }
 
 /*
+ * Increment the reference count of a tupdesc, and log the reference in
+ * CurrentResourceOwner.
+ *
+ * Do not apply this to tupdescs that are not being refcounted.  (Use the
+ * macro PinTupleDesc for tupdescs of uncertain status.)
+ */
+void
+IncrTupleDescRefCount(TupleDesc tupdesc)
+{
+	Assert(tupdesc->tdrefcount >= 0);
+
+	ResourceOwnerEnlargeTupleDescs(CurrentResourceOwner);
+	tupdesc->tdrefcount++;
+	ResourceOwnerRememberTupleDesc(CurrentResourceOwner, tupdesc);
+}
+
+/*
+ * Decrement the reference count of a tupdesc, remove the corresponding
+ * reference from CurrentResourceOwner, and free the tupdesc if no more
+ * references remain.
+ *
+ * Do not apply this to tupdescs that are not being refcounted.  (Use the
+ * macro ReleaseTupleDesc for tupdescs of uncertain status.)
+ */
+void
+DecrTupleDescRefCount(TupleDesc tupdesc)
+{
+	Assert(tupdesc->tdrefcount > 0);
+
+	ResourceOwnerForgetTupleDesc(CurrentResourceOwner, tupdesc);
+	if (--tupdesc->tdrefcount == 0)
+		FreeTupleDesc(tupdesc);
+}
+
+/*
  * Compare two TupleDesc structures for logical equality
  *
  * Note: we deliberately do not check the attrelid and tdtypmod fields.
  * This allows typcache.c to use this routine to see if a cached record type
  * matches a requested type, and is harmless for relcache.c's uses.
+ * We don't compare tdrefcount, either.
  */
 bool
 equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)

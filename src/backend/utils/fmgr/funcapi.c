@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.29 2006/03/05 15:58:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.30 2006/06/16 18:42:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,8 +185,7 @@ shutdown_MultiFuncCall(Datum arg)
  *		receives the actual datatype OID (this is mainly useful for scalar
  *		result types).	If resultTupleDesc isn't NULL, *resultTupleDesc
  *		receives a pointer to a TupleDesc when the result is of a composite
- *		type, or NULL when it's a scalar result.  NB: the tupledesc should
- *		be copied if it is to be accessed over a long period.
+ *		type, or NULL when it's a scalar result.
  *
  * One hard case that this handles is resolution of actual rowtypes for
  * functions returning RECORD (from either the function's OUT parameter
@@ -246,7 +245,7 @@ get_expr_result_type(Node *expr,
 			*resultTupleDesc = NULL;
 		result = get_type_func_class(typid);
 		if (result == TYPEFUNC_COMPOSITE && resultTupleDesc)
-			*resultTupleDesc = lookup_rowtype_tupdesc(typid, -1);
+			*resultTupleDesc = lookup_rowtype_tupdesc_copy(typid, -1);
 	}
 
 	return result;
@@ -363,7 +362,7 @@ internal_get_result_type(Oid funcid,
 	{
 		case TYPEFUNC_COMPOSITE:
 			if (resultTupleDesc)
-				*resultTupleDesc = lookup_rowtype_tupdesc(rettype, -1);
+				*resultTupleDesc = lookup_rowtype_tupdesc_copy(rettype, -1);
 			/* Named composite types can't have any polymorphic columns */
 			break;
 		case TYPEFUNC_SCALAR:
@@ -1053,7 +1052,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 	if (functypclass == TYPEFUNC_COMPOSITE)
 	{
 		/* Composite data type, e.g. a table's row type */
-		tupdesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(typeoid, -1));
+		tupdesc = lookup_rowtype_tupdesc_copy(typeoid, -1);
 
 		if (colaliases != NIL)
 		{
