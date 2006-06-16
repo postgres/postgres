@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 16 14:48:38 EDT 2006
+Last updated:		Fri Jun 16 14:50:06 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -401,6 +401,7 @@ Views / Rules
 
   We can only auto-create rules for simple views.  For more complex
   cases users will still have to write rules manually.
+  http://archives.postgresql.org/pgsql-hackers/2006-03/msg00586.php
 
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
