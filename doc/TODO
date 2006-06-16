@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 16 14:50:06 EDT 2006
+Last updated:		Fri Jun 16 15:49:44 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -194,6 +194,7 @@ Data Types
 
   Change the MONEY data type to use DECIMAL internally, with special
   locale-aware output formatting.
+  http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php
 
 * Change NUMERIC to enforce the maximum precision
 * Add NUMERIC division operator that doesn't round?
