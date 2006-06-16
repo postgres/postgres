@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.238 2006/06/15 19:15:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.239 2006/06/16 04:11:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2147,7 +2147,7 @@ XLogFileClose(void)
 {
 	Assert(openLogFile >= 0);
 
-#ifdef _POSIX_ADVISORY_INFO
+#ifdef POSIX_FADV_DONTNEED
 	/*
 	 * WAL caches will not be accessed in the future, so we advise OS to
 	 * free them. But we will not do so if WAL archiving is active,
