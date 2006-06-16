@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 16 14:37:19 EDT 2006
+Last updated:		Fri Jun 16 14:38:28 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1098,6 +1098,7 @@ Vacuum
   checking pages written by the background writer
 
   http://archives.postgresql.org/pgsql-hackers/2006-02/msg01125.php
+  http://archives.postgresql.org/pgsql-hackers/2006-03/msg00011.php
 
 * Create a bitmap of pages that need vacuuming
 
@@ -1119,7 +1120,7 @@ Vacuum
 
 * Auto-vacuum
 
-	o Use free-space map information to guide refilling
+	o Use free-space map information to guide rfilling
 	o %Issue log message to suggest VACUUM FULL if a table is nearly
 	  empty?
 	o Improve xid wraparound detection by recording per-table rather

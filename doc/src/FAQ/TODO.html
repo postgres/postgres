@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Jun 16 14:37:19 EDT 2006
+Last updated:           Fri Jun 16 14:38:28 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -990,6 +990,7 @@ first.
   </li><li>Auto-fill the free space map by scanning the buffer cache or by
   checking pages written by the background writer
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-02/msg01125.php">http://archives.postgresql.org/pgsql-hackers/2006-02/msg01125.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2006-03/msg00011.php">http://archives.postgresql.org/pgsql-hackers/2006-03/msg00011.php</a>
 </p>
   </li><li>Create a bitmap of pages that need vacuuming
 <p>  Instead of sequentially scanning the entire table, have the background
@@ -1008,7 +1009,7 @@ first.
   in maintaining clustering?
   </li><li>Auto-vacuum
   <ul>
-    <li>Use free-space map information to guide refilling
+    <li>Use free-space map information to guide rfilling
     </li><li>%Issue log message to suggest VACUUM FULL if a table is nearly
           empty?
     </li><li>Improve xid wraparound detection by recording per-table rather
