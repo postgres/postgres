@@ -3039,3 +3039,852 @@ JR1mF60lKx14Ih850p3lpVk=
 
 --W/nzBZO5zC0uMSeA--
 
+From pgsql-hackers-owner+M78869@postgresql.org Tue Jan 24 10:59:03 2006
+Return-path: <pgsql-hackers-owner+M78869@postgresql.org>
+Received: from ams.hub.org (ams.hub.org [200.46.204.13])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id k0OGx0324883
+	for <pgman@candle.pha.pa.us>; Tue, 24 Jan 2006 11:59:00 -0500 (EST)
+Received: from postgresql.org (postgresql.org [200.46.204.71])
+	by ams.hub.org (Postfix) with ESMTP id 6E4BE67B09D;
+	Tue, 24 Jan 2006 12:58:56 -0400 (AST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (av.hub.org [200.46.204.144])
+	by postgresql.org (Postfix) with ESMTP id 1C9E59DC9BE
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 24 Jan 2006 12:58:31 -0400 (AST)
+Received: from postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 43415-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 24 Jan 2006 12:58:29 -0400 (AST)
+Received: from svr4.postgresql.org (svr4.postgresql.org [66.98.251.159])
+	by postgresql.org (Postfix) with ESMTP id F05519DC86E
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Jan 2006 12:58:27 -0400 (AST)
+Received: from alife.ru (alife.ru [82.146.44.110])
+	by svr4.postgresql.org (Postfix) with ESMTP id 42D155AF193
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Jan 2006 16:58:27 +0000 (GMT)
+Received: from [212.192.243.99] (elizabet.sai.msu.ru [212.192.243.99])
+	(using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
+	(No client certificate requested)
+	by alife.ru (Postfix) with ESMTP id A54D554219D
+	for <pgsql-hackers@postgresql.org>; Tue, 24 Jan 2006 19:58:20 +0300 (MSK)
+Message-ID: <43D65CA3.4000402@tronet.ru>
+Date: Tue, 24 Jan 2006 19:58:11 +0300
+From: Alexey Slynko <slynko@tronet.ru>
+User-Agent: Mozilla Thunderbird 1.0.7 (X11/20051005)
+X-Accept-Language: ru-ru, ru
+MIME-Version: 1.0
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] TODO item: locale per database patch (new iteration)
+Content-Type: multipart/mixed;
+	boundary="------------060707070409000500060805"
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Status: No, score=0 required=5 tests=[none]
+X-Spam-Score: 0
+X-Mailing-List: pgsql-hackers
+List-Archive: <http://archives.postgresql.org/pgsql-hackers>
+List-Help: <mailto:majordomo@postgresql.org?body=help>
+List-Id: <pgsql-hackers.postgresql.org>
+List-Owner: <mailto:pgsql-hackers-owner@postgresql.org>
+List-Post: <mailto:pgsql-hackers@postgresql.org>
+List-Subscribe: <mailto:majordomo@postgresql.org?body=sub%20pgsql-hackers>
+List-Unsubscribe: <mailto:majordomo@postgresql.org?body=unsub%20pgsql-hackers>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+This is a multi-part message in MIME format.
+--------------060707070409000500060805
+Content-Type: text/plain; charset=KOI8-R; format=flowed
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+it's a renewed locale per database patch. Unfortunately, i've not found
+clean way to rebuild database indexes automatically, if locale settings
+of two databases (created and template) are differs. Now it's only
+raises a NOTICE. So, if anyone has a right notion about it - let will
+express. Comment and suggestions are highly appreciated
+
+
+--------------060707070409000500060805
+Content-Type: text/plain;
+ name="locale_per_database.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="locale_per_database.patch"
+
+Index: src/backend/access/transam/xlog.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/backend/access/transam/xlog.c,v
+retrieving revision 1.226
+diff -u -r1.226 xlog.c
+--- src/backend/access/transam/xlog.c	11 Jan 2006 08:43:12 -0000	1.226
++++ src/backend/access/transam/xlog.c	22 Jan 2006 16:41:02 -0000
+@@ -3394,7 +3394,6 @@
+ {
+ 	int			fd;
+ 	char		buffer[BLCKSZ]; /* need not be aligned */
+-	char	   *localeptr;
+ 
+ 	/*
+ 	 * Initialize version and compatibility-check fields
+@@ -3418,18 +3417,6 @@
+ 	ControlFile->enableIntTimes = FALSE;
+ #endif
+ 
+-	ControlFile->localeBuflen = LOCALE_NAME_BUFLEN;
+-	localeptr = setlocale(LC_COLLATE, NULL);
+-	if (!localeptr)
+-		ereport(PANIC,
+-				(errmsg("invalid LC_COLLATE setting")));
+-	StrNCpy(ControlFile->lc_collate, localeptr, LOCALE_NAME_BUFLEN);
+-	localeptr = setlocale(LC_CTYPE, NULL);
+-	if (!localeptr)
+-		ereport(PANIC,
+-				(errmsg("invalid LC_CTYPE setting")));
+-	StrNCpy(ControlFile->lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
+-
+ 	/* Contents are protected with a CRC */
+ 	INIT_CRC32(ControlFile->crc);
+ 	COMP_CRC32(ControlFile->crc,
+@@ -3612,34 +3599,6 @@
+ 			   " but the server was compiled without HAVE_INT64_TIMESTAMP."),
+ 				 errhint("It looks like you need to recompile or initdb.")));
+ #endif
+-
+-	if (ControlFile->localeBuflen != LOCALE_NAME_BUFLEN)
+-		ereport(FATAL,
+-				(errmsg("database files are incompatible with server"),
+-				 errdetail("The database cluster was initialized with LOCALE_NAME_BUFLEN %d,"
+-				  " but the server was compiled with LOCALE_NAME_BUFLEN %d.",
+-						   ControlFile->localeBuflen, LOCALE_NAME_BUFLEN),
+-				 errhint("It looks like you need to recompile or initdb.")));
+-	if (pg_perm_setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
+-		ereport(FATAL,
+-			(errmsg("database files are incompatible with operating system"),
+-			 errdetail("The database cluster was initialized with LC_COLLATE \"%s\","
+-					   " which is not recognized by setlocale().",
+-					   ControlFile->lc_collate),
+-			 errhint("It looks like you need to initdb or install locale support.")));
+-	if (pg_perm_setlocale(LC_CTYPE, ControlFile->lc_ctype) == NULL)
+-		ereport(FATAL,
+-			(errmsg("database files are incompatible with operating system"),
+-		errdetail("The database cluster was initialized with LC_CTYPE \"%s\","
+-				  " which is not recognized by setlocale().",
+-				  ControlFile->lc_ctype),
+-			 errhint("It looks like you need to initdb or install locale support.")));
+-
+-	/* Make the fixed locale settings visible as GUC variables, too */
+-	SetConfigOption("lc_collate", ControlFile->lc_collate,
+-					PGC_INTERNAL, PGC_S_OVERRIDE);
+-	SetConfigOption("lc_ctype", ControlFile->lc_ctype,
+-					PGC_INTERNAL, PGC_S_OVERRIDE);
+ }
+ 
+ void
+Index: src/backend/commands/dbcommands.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/backend/commands/dbcommands.c,v
+retrieving revision 1.175
+diff -u -r1.175 dbcommands.c
+--- src/backend/commands/dbcommands.c	22 Nov 2005 18:17:08 -0000	1.175
++++ src/backend/commands/dbcommands.c	22 Jan 2006 16:41:03 -0000
+@@ -25,6 +25,10 @@
+ #include <unistd.h>
+ #include <sys/stat.h>
+ 
++#ifdef HAVE_LANGINFO_H
++#include <langinfo.h>
++#endif
++
+ #include "access/genam.h"
+ #include "access/heapam.h"
+ #include "catalog/catalog.h"
+@@ -49,6 +53,7 @@
+ #include "utils/fmgroids.h"
+ #include "utils/guc.h"
+ #include "utils/lsyscache.h"
++#include "utils/pg_locale.h"
+ #include "utils/syscache.h"
+ 
+ 
+@@ -57,9 +62,11 @@
+ 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
+ 			Oid *dbLastSysOidP,
+ 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
+-			Oid *dbTablespace);
++			Oid *dbTablespace, char **dbCollate, char **dbCtype);
+ static bool have_createdb_privilege(void);
+ static void remove_dbtablespaces(Oid db_id);
++static char * get_locale_encoding(const char *ctype);
++static int check_locale_encoding(int encid, const char *ctype);
+ 
+ 
+ /*
+@@ -73,6 +80,8 @@
+ 	Oid			src_dboid;
+ 	Oid			src_owner;
+ 	int			src_encoding;
++	char			*src_collate;
++	char			*src_ctype;
+ 	bool		src_istemplate;
+ 	bool		src_allowconn;
+ 	Oid			src_lastsysoid;
+@@ -92,10 +101,14 @@
+ 	DefElem    *downer = NULL;
+ 	DefElem    *dtemplate = NULL;
+ 	DefElem    *dencoding = NULL;
++	DefElem    *dlc_collate = NULL;
++	DefElem    *dlc_ctype = NULL;
+ 	DefElem    *dconnlimit = NULL;
+ 	char	   *dbname = stmt->dbname;
+ 	char	   *dbowner = NULL;
+ 	const char *dbtemplate = NULL;
++	char *lc_collate = NULL;
++	char *lc_ctype = NULL;
+ 	volatile int encoding = -1;
+ 	volatile int dbconnlimit = -1;
+ 
+@@ -139,6 +152,22 @@
+ 						 errmsg("conflicting or redundant options")));
+ 			dencoding = defel;
+ 		}
++		else if (strcmp(defel->defname, "lccollate") == 0)
++		{
++			if (dlc_collate)
++				ereport(ERROR,
++						(errcode(ERRCODE_SYNTAX_ERROR),
++						errmsg("conflicting or redundant options")));
++			dlc_collate = defel;
++		}
++		else if (strcmp(defel->defname, "lcctype") == 0)
++		{
++			if (dlc_ctype)
++				ereport(ERROR,
++						(errcode(ERRCODE_SYNTAX_ERROR),
++						errmsg("conflicting or redundant options")));
++			dlc_ctype = defel;
++		}
+ 		else if (strcmp(defel->defname, "connectionlimit") == 0)
+ 		{
+ 			if (dconnlimit)
+@@ -192,6 +221,22 @@
+ 			elog(ERROR, "unrecognized node type: %d",
+ 				 nodeTag(dencoding->arg));
+ 	}
++	if (dlc_collate && dlc_collate->arg) {
++		lc_collate = strVal(dlc_collate->arg);
++		if ((locale_collate_assign(lc_collate, false, (GucSource)NULL)) == NULL)
++			ereport(ERROR,
++				(errcode(ERRCODE_UNDEFINED_OBJECT),
++				errmsg("%s is not a valid LC_COLLATE name",
++						lc_collate)));
++	}
++	if (dlc_ctype && dlc_ctype->arg) {
++		lc_ctype = strVal(dlc_ctype->arg);
++		if ((locale_collate_assign(lc_ctype, false, (GucSource)NULL)) == NULL)
++			ereport(ERROR,
++				(errcode(ERRCODE_UNDEFINED_OBJECT),
++				errmsg("%s is not a valid LC_CTYPE name",
++						lc_ctype)));
++	}
+ 	if (dconnlimit && dconnlimit->arg)
+ 		dbconnlimit = intVal(dconnlimit->arg);
+ 
+@@ -224,7 +269,7 @@
+ 	 * grab the exclusive lock.
+ 	 */
+ 	if (get_db_info(dbname, NULL, NULL, NULL,
+-					NULL, NULL, NULL, NULL, NULL, NULL))
++					NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+ 		ereport(ERROR,
+ 				(errcode(ERRCODE_DUPLICATE_DATABASE),
+ 				 errmsg("database \"%s\" already exists", dbname)));
+@@ -237,7 +282,8 @@
+ 
+ 	if (!get_db_info(dbtemplate, &src_dboid, &src_owner, &src_encoding,
+ 					 &src_istemplate, &src_allowconn, &src_lastsysoid,
+-					 &src_vacuumxid, &src_frozenxid, &src_deftablespace))
++					 &src_vacuumxid, &src_frozenxid, &src_deftablespace,
++					 &src_collate, &src_ctype))
+ 		ereport(ERROR,
+ 				(errcode(ERRCODE_UNDEFINED_DATABASE),
+ 			 errmsg("template database \"%s\" does not exist", dbtemplate)));
+@@ -277,6 +323,21 @@
+ 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+ 				 errmsg("invalid server encoding %d", encoding)));
+ 
++	/* Set database lc_collate and lc_ctype */
++	if (!lc_collate)
++		lc_collate = src_collate;
++	if (!lc_ctype) 
++		lc_ctype = src_ctype;
++
++#if defined(HAVE_LANGINFO_H) && defined(CODESET)
++	if (encoding > 0 && check_locale_encoding(encoding, lc_ctype) == -1)
++		ereport(ERROR,
++				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
++				 errmsg("encoding %s is not suitable for locale %s", 
++							pg_encoding_to_char(encoding), 
++							lc_ctype)));
++#endif
++
+ 	/* Resolve default tablespace for new database */
+ 	if (dtablespacename && dtablespacename->arg)
+ 	{
+@@ -441,7 +502,7 @@
+ 
+ 		/* Check to see if someone else created same DB name meanwhile. */
+ 		if (get_db_info(dbname, NULL, NULL, NULL,
+-						NULL, NULL, NULL, NULL, NULL, NULL))
++						NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+ 			ereport(ERROR,
+ 					(errcode(ERRCODE_DUPLICATE_DATABASE),
+ 					 errmsg("database \"%s\" already exists", dbname)));
+@@ -459,6 +520,11 @@
+ 			DirectFunctionCall1(namein, CStringGetDatum(dbname));
+ 		new_record[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(datdba);
+ 		new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
++		new_record[Anum_pg_database_datcollate - 1] = 
++			DirectFunctionCall1(namein, CStringGetDatum(lc_collate));
++		new_record[Anum_pg_database_datctype - 1] = 
++			DirectFunctionCall1(namein, CStringGetDatum(lc_ctype));
++
+ 		new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(false);
+ 		new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(true);
+ 		new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
+@@ -527,6 +593,15 @@
+ 		 * Set flag to update flat database file at commit.
+ 		 */
+ 		database_file_update_needed();
++
++		/*
++		 * Message about reindexing new database
++		 */
++		if (lc_collate != src_collate || lc_ctype != src_ctype)
++			ereport(NOTICE,
++					(errmsg("database \"%s\" need to be reindexed manually (REINDEX DATABASE)",
++							dbname)));
++
+ 	}
+ 	PG_CATCH();
+ 	{
+@@ -584,7 +659,7 @@
+ 	pgdbrel = heap_open(DatabaseRelationId, ExclusiveLock);
+ 
+ 	if (!get_db_info(dbname, &db_id, NULL, NULL,
+-					 &db_istemplate, NULL, NULL, NULL, NULL, NULL))
++					 &db_istemplate, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+ 	{
+ 		if (!missing_ok)
+ 		{
+@@ -1100,7 +1175,7 @@
+ 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
+ 			Oid *dbLastSysOidP,
+ 			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
+-			Oid *dbTablespace)
++			Oid *dbTablespace, char **dbCollate, char **dbCtype)
+ {
+ 	Relation	relation;
+ 	ScanKeyData scanKey;
+@@ -1155,6 +1230,11 @@
+ 		/* default tablespace for this database */
+ 		if (dbTablespace)
+ 			*dbTablespace = dbform->dattablespace;
++		/* default locale settings for this database */
++		if (dbCollate)
++			*dbCollate = NameStr(dbform->datcollate);
++		if (dbCtype)
++			*dbCtype = NameStr(dbform->datctype);
+ 	}
+ 
+ 	systable_endscan(scan);
+@@ -1416,3 +1496,45 @@
+ 	else
+ 		strcat(buf, "UNKNOWN");
+ }
++
++#if defined(HAVE_LANGINFO_H) && defined(CODESET)
++   
++static char *
++get_locale_encoding(const char *ctype)
++{
++	char       *save;
++	char       *sys;
++                        
++        save = setlocale(LC_CTYPE, NULL);
++        if (!save)
++                return NULL;
++        save = pstrdup(save);
++                                
++        setlocale(LC_CTYPE, ctype);
++        sys = nl_langinfo(CODESET);
++        sys = pstrdup(sys);
++                        
++        setlocale(LC_CTYPE, save);
++        pfree(save);
++            
++        return sys;
++}
++        
++static int
++check_locale_encoding(int encid, const char *ctype)
++{
++        char       *sys;
++        
++        sys = get_locale_encoding(ctype);
++        if (encid == pg_char_to_encoding(sys))
++        {
++                pfree(sys);
++                return 0;
++        }
++        
++        pfree(sys);
++        return -1;
++}
++
++#endif
++
+Index: src/backend/parser/gram.y
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/backend/parser/gram.y,v
+retrieving revision 2.522
+diff -u -r2.522 gram.y
+--- src/backend/parser/gram.y	21 Jan 2006 02:16:19 -0000	2.522
++++ src/backend/parser/gram.y	22 Jan 2006 16:41:09 -0000
+@@ -372,7 +372,7 @@
+ 
+ 	KEY
+ 
+-	LANCOMPILER LANGUAGE LARGE_P  LAST_P LEADING LEAST LEFT LEVEL
++	LANCOMPILER LANGUAGE LARGE_P  LAST_P LCCOLLATE LCCTYPE LEADING LEAST LEFT LEVEL
+ 	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
+ 	LOCK_P LOGIN_P
+ 
+@@ -4635,6 +4635,22 @@
+ 				{
+ 					$$ = makeDefElem("encoding", NULL);
+ 				}
++			| LCCOLLATE opt_equal name
++				{
++					$$ = makeDefElem("lccollate", (Node *)makeString($3));
++				}
++			| LCCOLLATE opt_equal DEFAULT
++				{
++					$$ = makeDefElem("lccollate", NULL);
++				}
++			| LCCTYPE opt_equal name
++				{
++					$$ = makeDefElem("lcctype", (Node *)makeString($3));
++				}
++			| LCCTYPE opt_equal DEFAULT
++				{
++					$$ = makeDefElem("lcctype", NULL);
++				}
+ 			| CONNECTION LIMIT opt_equal SignedIconst
+ 				{
+ 					$$ = makeDefElem("connectionlimit", (Node *)makeInteger($4));
+@@ -8225,6 +8241,8 @@
+ 			| LANGUAGE
+ 			| LARGE_P
+ 			| LAST_P
++			| LCCOLLATE
++			| LCCTYPE
+ 			| LEVEL
+ 			| LISTEN
+ 			| LOAD
+Index: src/backend/parser/keywords.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/backend/parser/keywords.c,v
+retrieving revision 1.170
+diff -u -r1.170 keywords.c
+--- src/backend/parser/keywords.c	27 Dec 2005 04:00:07 -0000	1.170
++++ src/backend/parser/keywords.c	22 Jan 2006 16:41:09 -0000
+@@ -193,6 +193,8 @@
+ 	{"language", LANGUAGE},
+ 	{"large", LARGE_P},
+ 	{"last", LAST_P},
++	{"lccollate", LCCOLLATE},
++	{"lcctype", LCCTYPE},
+ 	{"leading", LEADING},
+ 	{"least", LEAST},
+ 	{"left", LEFT},
+Index: src/backend/utils/adt/pg_locale.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v
+retrieving revision 1.34
+diff -u -r1.34 pg_locale.c
+--- src/backend/utils/adt/pg_locale.c	2 Jan 2006 20:25:45 -0000	1.34
++++ src/backend/utils/adt/pg_locale.c	22 Jan 2006 16:41:10 -0000
+@@ -10,10 +10,8 @@
+  */
+ 
+ /*----------
+- * Here is how the locale stuff is handled: LC_COLLATE and LC_CTYPE
+- * are fixed by initdb, stored in pg_control, and cannot be changed.
+- * Thus, the effects of strcoll(), strxfrm(), isupper(), toupper(),
+- * etc. are always in the same fixed locale.
++ * Here is how the locale stuff is handled: 
++ * LC_COLLATE and LC_CTYPE are defined by createdb and stored in pg_database.
+  *
+  * LC_MESSAGES is settable at run time and will take effect
+  * immediately.
+@@ -208,6 +206,17 @@
+ 	return value;
+ }
+ 
++const char *
++locale_collate_assign(const char *value, bool doit, GucSource source)
++{
++	return locale_xxx_assign(LC_COLLATE, value, doit, source);
++}
++
++const char *
++locale_ctype_assign(const char *value, bool doit, GucSource source)
++{
++	return locale_xxx_assign(LC_CTYPE, value, doit, source);
++}
+ 
+ const char *
+ locale_monetary_assign(const char *value, bool doit, GucSource source)
+Index: src/backend/utils/init/postinit.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/backend/utils/init/postinit.c,v
+retrieving revision 1.160
+diff -u -r1.160 postinit.c
+--- src/backend/utils/init/postinit.c	4 Jan 2006 21:06:32 -0000	1.160
++++ src/backend/utils/init/postinit.c	22 Jan 2006 16:41:10 -0000
+@@ -138,6 +138,8 @@
+ 	ScanKeyData key;
+ 	HeapTuple	tup;
+ 	Form_pg_database dbform;
++	char		*lc_ctype;
++	char		*lc_collate;
+ 
+ 	/*
+ 	 * Because we grab RowShareLock here, we can be sure that dropdb() is not
+@@ -225,6 +227,32 @@
+ 	SetConfigOption("client_encoding", GetDatabaseEncodingName(),
+ 					PGC_BACKEND, PGC_S_DEFAULT);
+ 
++	/* Set up database locale */
++	lc_collate = NameStr(dbform->datcollate);
++	lc_ctype = NameStr(dbform->datctype);
++
++	if (setlocale(LC_COLLATE, lc_collate) == NULL)
++		ereport(FATAL,
++			(errmsg("database locale is incompatible with operating system"),
++			errdetail("The database was initialized with LC_COLLATE \"%s\","
++					" which is not recognized by setlocale().",
++					lc_collate),
++			errhint("It looks like you need to recreate database or install locale support.")));
++	if (setlocale(LC_CTYPE, lc_ctype) == NULL)
++		ereport(FATAL,
++			(errmsg("database locale are incompatible with operating system"),
++			errdetail("The database was initialized with LC_CTYPE \"%s\","
++					" which is not recognized by setlocale().",
++					lc_ctype),
++			errhint("It looks like you need to recreate database or install locale support.")));
++
++	/* Record it as a GUC internal option, too */
++	SetConfigOption("lc_collate", lc_collate,
++					PGC_INTERNAL, PGC_S_DATABASE);
++	SetConfigOption("lc_ctype", lc_ctype,
++					PGC_INTERNAL, PGC_S_DATABASE);
++
++
+ 	/*
+ 	 * Lastly, set up any database-specific configuration variables.
+ 	 */
+Index: src/bin/initdb/initdb.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/bin/initdb/initdb.c,v
+retrieving revision 1.106
+diff -u -r1.106 initdb.c
+--- src/bin/initdb/initdb.c	5 Jan 2006 10:07:46 -0000	1.106
++++ src/bin/initdb/initdb.c	22 Jan 2006 16:41:13 -0000
+@@ -1377,6 +1377,10 @@
+ 
+ 	bki_lines = replace_token(bki_lines, "ENCODING", encodingid);
+ 
++	bki_lines = replace_token(bki_lines, "LC_COLLATE", lc_collate);
++
++	bki_lines = replace_token(bki_lines, "LC_CTYPE", lc_ctype);
++
+ 	/*
+ 	 * Pass correct LC_xxx environment to bootstrap.
+ 	 *
+@@ -2617,7 +2621,7 @@
+ 		printf(_("The database cluster will be initialized with locale %s.\n"), lc_ctype);
+ 	else
+ 	{
+-		printf(_("The database cluster will be initialized with locales\n"
++		printf(_("The database template1 will be initialized with locales\n"
+ 				 "  COLLATE:  %s\n"
+ 				 "  CTYPE:    %s\n"
+ 				 "  MESSAGES: %s\n"
+Index: src/bin/pg_controldata/pg_controldata.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v
+retrieving revision 1.27
+diff -u -r1.27 pg_controldata.c
+--- src/bin/pg_controldata/pg_controldata.c	15 Oct 2005 02:49:37 -0000	1.27
++++ src/bin/pg_controldata/pg_controldata.c	22 Jan 2006 16:41:13 -0000
+@@ -177,9 +177,5 @@
+ 	printf(_("Maximum columns in an index:          %u\n"), ControlFile.indexMaxKeys);
+ 	printf(_("Date/time type storage:               %s\n"),
+ 		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
+-	printf(_("Maximum length of locale name:        %u\n"), ControlFile.localeBuflen);
+-	printf(_("LC_COLLATE:                           %s\n"), ControlFile.lc_collate);
+-	printf(_("LC_CTYPE:                             %s\n"), ControlFile.lc_ctype);
+-
+ 	return 0;
+ }
+Index: src/bin/pg_resetxlog/pg_resetxlog.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v
+retrieving revision 1.39
+diff -u -r1.39 pg_resetxlog.c
+--- src/bin/pg_resetxlog/pg_resetxlog.c	5 Jan 2006 03:01:37 -0000	1.39
++++ src/bin/pg_resetxlog/pg_resetxlog.c	22 Jan 2006 16:41:13 -0000
+@@ -465,22 +465,6 @@
+ #else
+ 	ControlFile.enableIntTimes = FALSE;
+ #endif
+-	ControlFile.localeBuflen = LOCALE_NAME_BUFLEN;
+-
+-	localeptr = setlocale(LC_COLLATE, "");
+-	if (!localeptr)
+-	{
+-		fprintf(stderr, _("%s: invalid LC_COLLATE setting\n"), progname);
+-		exit(1);
+-	}
+-	StrNCpy(ControlFile.lc_collate, localeptr, LOCALE_NAME_BUFLEN);
+-	localeptr = setlocale(LC_CTYPE, "");
+-	if (!localeptr)
+-	{
+-		fprintf(stderr, _("%s: invalid LC_CTYPE setting\n"), progname);
+-		exit(1);
+-	}
+-	StrNCpy(ControlFile.lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
+ 
+ 	/*
+ 	 * XXX eventually, should try to grovel through old XLOG to develop more
+@@ -530,9 +514,6 @@
+ 	printf(_("Maximum columns in an index:          %u\n"), ControlFile.indexMaxKeys);
+ 	printf(_("Date/time type storage:               %s\n"),
+ 		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
+-	printf(_("Maximum length of locale name:        %u\n"), ControlFile.localeBuflen);
+-	printf(_("LC_COLLATE:                           %s\n"), ControlFile.lc_collate);
+-	printf(_("LC_CTYPE:                             %s\n"), ControlFile.lc_ctype);
+ }
+ 
+ 
+Index: src/bin/psql/describe.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/bin/psql/describe.c,v
+retrieving revision 1.130
+diff -u -r1.130 describe.c
+--- src/bin/psql/describe.c	22 Nov 2005 18:17:29 -0000	1.130
++++ src/bin/psql/describe.c	22 Jan 2006 16:41:15 -0000
+@@ -360,6 +360,12 @@
+ 	appendPQExpBuffer(&buf,
+ 			",\n       pg_catalog.pg_encoding_to_char(d.encoding) as \"%s\"",
+ 					  _("Encoding"));
++	appendPQExpBuffer(&buf,
++		",\n       d.datcollate as \"%s\"",
++					 _("LC_COLLATE"));
++	appendPQExpBuffer(&buf,
++		",\n       d.datctype as \"%s\"",
++					 _("LC_CTYPE"));
+ 	if (verbose)
+ 		appendPQExpBuffer(&buf,
+ 						  ",\n       pg_catalog.obj_description(d.oid, 'pg_database') as \"%s\"",
+Index: src/bin/scripts/createdb.c
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/bin/scripts/createdb.c,v
+retrieving revision 1.15
+diff -u -r1.15 createdb.c
+--- src/bin/scripts/createdb.c	21 Jun 2005 04:02:33 -0000	1.15
++++ src/bin/scripts/createdb.c	22 Jan 2006 16:41:15 -0000
+@@ -34,6 +34,8 @@
+ 		{"tablespace", required_argument, NULL, 'D'},
+ 		{"template", required_argument, NULL, 'T'},
+ 		{"encoding", required_argument, NULL, 'E'},
++		{"lc-collate", required_argument, NULL, 1},
++		{"lc-ctype", required_argument, NULL, 2},
+ 		{NULL, 0, NULL, 0}
+ 	};
+ 
+@@ -53,6 +55,8 @@
+ 	char	   *tablespace = NULL;
+ 	char	   *template = NULL;
+ 	char	   *encoding = NULL;
++	char	   *lc_collate = NULL;
++	char	   *lc_ctype = NULL;
+ 
+ 	PQExpBufferData sql;
+ 
+@@ -98,6 +102,12 @@
+ 			case 'E':
+ 				encoding = optarg;
+ 				break;
++			case 1:
++				lc_collate = optarg;
++				break;
++			case 2:
++				lc_ctype = optarg;
++				break;
+ 			default:
+ 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+ 				exit(1);
+@@ -155,7 +165,12 @@
+ 		appendPQExpBuffer(&sql, " ENCODING '%s'", encoding);
+ 	if (template)
+ 		appendPQExpBuffer(&sql, " TEMPLATE %s", fmtId(template));
++	if (lc_collate)
++		appendPQExpBuffer(&sql, " LCCOLLATE %s", fmtId(lc_collate));
++	if (lc_ctype)
++		appendPQExpBuffer(&sql, " LCCTYPE %s", fmtId(lc_ctype));
+ 	appendPQExpBuffer(&sql, ";\n");
++	
+ 
+ 	conn = connectDatabase(strcmp(dbname, "postgres") == 0 ? "template1" : "postgres",
+ 						   host, port, username, password, progname);
+@@ -219,19 +234,20 @@
+ 	printf(_("Usage:\n"));
+ 	printf(_("  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"), progname);
+ 	printf(_("\nOptions:\n"));
+-	printf(_("  -D, --tablespace=TABLESPACE  default tablespace for the database\n"));
+-	printf(_("  -E, --encoding=ENCODING      encoding for the database\n"));
+-	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));
+-	printf(_("  -T, --template=TEMPLATE      template database to copy\n"));
+-	printf(_("  -e, --echo                   show the commands being sent to the server\n"));
+-	printf(_("  -q, --quiet                  don't write any messages\n"));
+-	printf(_("  --help                       show this help, then exit\n"));
+-	printf(_("  --version                    output version information, then exit\n"));
++	printf(_("  -D, --tablespace=TABLESPACE  	default tablespace for the database\n"));
++	printf(_("  -E, --encoding=ENCODING      	encoding for the database\n"));
++	printf(_("  --lc-collate, --lc-ctype=LOCALE	initialize database with given locale\n"));
++	printf(_("  -O, --owner=OWNER            	database user to own the new database\n"));
++	printf(_("  -T, --template=TEMPLATE      	template database to copy\n"));
++	printf(_("  -e, --echo                   	show the commands being sent to the server\n"));
++	printf(_("  -q, --quiet                  	don't write any messages\n"));
++	printf(_("  --help                       	show this help, then exit\n"));
++	printf(_("  --version                    	output version information, then exit\n"));
+ 	printf(_("\nConnection options:\n"));
+-	printf(_("  -h, --host=HOSTNAME          database server host or socket directory\n"));
+-	printf(_("  -p, --port=PORT              database server port\n"));
+-	printf(_("  -U, --username=USERNAME      user name to connect as\n"));
+-	printf(_("  -W, --password               prompt for password\n"));
++	printf(_("  -h, --host=HOSTNAME          	database server host or socket directory\n"));
++	printf(_("  -p, --port=PORT              	database server port\n"));
++	printf(_("  -U, --username=USERNAME      	user name to connect as\n"));
++	printf(_("  -W, --password               	prompt for password\n"));
+ 	printf(_("\nBy default, a database with the same name as the current user is created.\n"));
+ 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+ }
+Index: src/include/catalog/pg_control.h
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/include/catalog/pg_control.h,v
+retrieving revision 1.26
+diff -u -r1.26 pg_control.h
+--- src/include/catalog/pg_control.h	22 Nov 2005 18:17:30 -0000	1.26
++++ src/include/catalog/pg_control.h	22 Jan 2006 16:41:15 -0000
+@@ -137,11 +137,6 @@
+ 	/* flag indicating internal format of timestamp, interval, time */
+ 	uint32		enableIntTimes; /* int64 storage enabled? */
+ 
+-	/* active locales */
+-	uint32		localeBuflen;
+-	char		lc_collate[LOCALE_NAME_BUFLEN];
+-	char		lc_ctype[LOCALE_NAME_BUFLEN];
+-
+ 	/* CRC of all above ... MUST BE LAST! */
+ 	pg_crc32	crc;
+ } ControlFileData;
+Index: src/include/catalog/pg_database.h
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/include/catalog/pg_database.h,v
+retrieving revision 1.38
+diff -u -r1.38 pg_database.h
+--- src/include/catalog/pg_database.h	15 Oct 2005 02:49:42 -0000	1.38
++++ src/include/catalog/pg_database.h	22 Jan 2006 16:41:16 -0000
+@@ -38,6 +38,8 @@
+ 	NameData	datname;		/* database name */
+ 	Oid			datdba;			/* owner of database */
+ 	int4		encoding;		/* character encoding */
++	NameData	datcollate;		/* locale LC_COLLATE */
++	NameData	datctype;		/* locale LC_CTYPE */
+ 	bool		datistemplate;	/* allowed as CREATE DATABASE template? */
+ 	bool		datallowconn;	/* new connections allowed? */
+ 	int4		datconnlimit;	/* max connections allowed (-1=no limit) */
+@@ -60,21 +62,23 @@
+  *		compiler constants for pg_database
+  * ----------------
+  */
+-#define Natts_pg_database				12
++#define Natts_pg_database				14
+ #define Anum_pg_database_datname		1
+ #define Anum_pg_database_datdba			2
+ #define Anum_pg_database_encoding		3
+-#define Anum_pg_database_datistemplate	4
+-#define Anum_pg_database_datallowconn	5
+-#define Anum_pg_database_datconnlimit	6
+-#define Anum_pg_database_datlastsysoid	7
+-#define Anum_pg_database_datvacuumxid	8
+-#define Anum_pg_database_datfrozenxid	9
+-#define Anum_pg_database_dattablespace	10
+-#define Anum_pg_database_datconfig		11
+-#define Anum_pg_database_datacl			12
++#define Anum_pg_database_datcollate	4
++#define Anum_pg_database_datctype	5	
++#define Anum_pg_database_datistemplate	6
++#define Anum_pg_database_datallowconn	7
++#define Anum_pg_database_datconnlimit	8
++#define Anum_pg_database_datlastsysoid	9
++#define Anum_pg_database_datvacuumxid	10	
++#define Anum_pg_database_datfrozenxid	11	
++#define Anum_pg_database_dattablespace	12	
++#define Anum_pg_database_datconfig		13
++#define Anum_pg_database_datacl			14
+ 
+-DATA(insert OID = 1 (  template1 PGUID ENCODING t t -1 0 0 0 1663 _null_ _null_ ));
++DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_CTYPE" "LC_COLLATE" t t -1 0 0 0 1663 _null_ _null_ ));
+ DESCR("Default template database");
+ #define TemplateDbOid			1
+ 
+Index: src/include/utils/pg_locale.h
+===================================================================
+RCS file: /projects/cvsroot/pgsql/src/include/utils/pg_locale.h,v
+retrieving revision 1.21
+diff -u -r1.21 pg_locale.h
+--- src/include/utils/pg_locale.h	28 Dec 2005 23:22:51 -0000	1.21
++++ src/include/utils/pg_locale.h	22 Jan 2006 16:41:16 -0000
+@@ -22,6 +22,10 @@
+ extern char *locale_numeric;
+ extern char *locale_time;
+ 
++extern const char *locale_collate_assign(const char *value,
++					   bool doit, GucSource source);
++extern const char *locale_ctype_assign(const char *value,
++					   bool doit, GucSource source);
+ extern const char *locale_messages_assign(const char *value,
+ 					   bool doit, GucSource source);
+ extern const char *locale_monetary_assign(const char *value,
+
+
+--------------060707070409000500060805
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: if posting/reading through Usenet, please send an appropriate
+       subscribe-nomail command to majordomo@postgresql.org so that your
+       message can get through to the mailing list cleanly
+
+--------------060707070409000500060805--
+
