@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 16 17:41:11 EDT 2006
+Last updated:		Fri Jun 16 18:04:56 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -231,6 +231,10 @@ Data Types
 * Add support for public SYNONYMs
 
   http://archives.postgresql.org/pgsql-hackers/2006-03/msg00519.php
+
+* Fix CREATE CAST on DOMAINs
+
+  http://archives.postgresql.org/pgsql-hackers/2006-05/msg00072.php
 
 * Dates and Times
 
