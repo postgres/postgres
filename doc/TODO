@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 16 13:25:12 EDT 2006
+Last updated:		Fri Jun 16 13:44:39 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -698,6 +698,10 @@ SQL Commands
 
 		  http://archives.postgresql.org/pgsql-performance/2006-06/msg00305.php
 
+		o Fix problems with RETURN NEXT on tables with
+		  dropped/added columns after function creation
+
+		  http://archives.postgresql.org/pgsql-patches/2006-02/msg00165.php
 
 	o Other
 		o Add table function support to pltcl, plpython
