@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.546 2006/06/16 20:23:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.547 2006/06/16 23:50:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4075,15 +4075,14 @@ DropCastStmt: DROP CAST opt_if_exists '(' Typename AS Typename ')' opt_drop_beha
 					n->sourcetype = $5;
 					n->targettype = $7;
 					n->behavior = $9;
-					n->missing_ok =
+					n->missing_ok = $3;
 					$$ = (Node *)n;
 				}
 		;
 
-opt_if_exists: IF_P EXISTS { $$ = true; }
-               | /* empty */ { $$ = false; }
-        ;
-
+opt_if_exists: IF_P EXISTS						{ $$ = true; }
+		| /*EMPTY*/								{ $$ = false; }
+		;
 
 
 /*****************************************************************************

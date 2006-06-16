@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.35 2006/06/16 20:23:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.36 2006/06/16 23:50:48 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -216,14 +216,9 @@ RemoveAggregate(RemoveFuncStmt *stmt)
 	if (!OidIsValid(procOid))
 	{
 		/* we only get here if stmt->missing_ok is true */
-
-		/* XXX might need better message here */
-
 		ereport(NOTICE,
 				(errmsg("aggregate %s does not exist ... skipping",
-					   stmt->name)));
-		
-
+						NameListToString(stmt->name))));
 		return;
 	}
 
