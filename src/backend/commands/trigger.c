@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.202 2006/05/30 14:01:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.203 2006/06/16 20:23:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,7 +452,8 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
  * DropTrigger - drop an individual trigger by name
  */
 void
-DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
+DropTrigger(Oid relid, const char *trigname, DropBehavior behavior,
+			bool missing_ok)
 {
 	Relation	tgrel;
 	ScanKeyData skey[2];
@@ -481,10 +482,21 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	tup = systable_getnext(tgscan);
 
 	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("trigger \"%s\" for table \"%s\" does not exist",
-						trigname, get_rel_name(relid))));
+	{
+		if (! missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("trigger \"%s\" for table \"%s\" does not exist",
+							trigname, get_rel_name(relid))));
+		else
+			ereport(NOTICE,
+					(errmsg("trigger \"%s\" for table \"%s\" does not exist ...skipping",
+							trigname, get_rel_name(relid))));
+		/* cleanup */
+		systable_endscan(tgscan);
+		heap_close(tgrel, AccessShareLock);
+		return;
+	}
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,

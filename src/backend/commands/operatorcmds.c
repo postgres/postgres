@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.30 2006/04/15 17:45:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.31 2006/06/16 20:23:44 adunstan Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -213,7 +213,15 @@ RemoveOperator(RemoveFuncStmt *stmt)
 	Assert(list_length(stmt->args) == 2);
 	operOid = LookupOperNameTypeNames(NULL, operatorName,
 									  typeName1, typeName2,
-									  false, -1);
+									  stmt->missing_ok, -1);
+ 
+   if (stmt->missing_ok &&!OidIsValid(operOid) )
+   {
+       ereport(NOTICE,
+               (errmsg("operator %s does not exist ... skipping",
+                       NameListToString(operatorName))));
+       return;
+   }
 
 	tup = SearchSysCache(OPEROID,
 						 ObjectIdGetDatum(operOid),

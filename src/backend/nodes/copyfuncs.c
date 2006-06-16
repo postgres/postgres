@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.335 2006/04/30 18:30:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.336 2006/06/16 20:23:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2075,6 +2075,7 @@ _copyRemoveFuncStmt(RemoveFuncStmt *from)
 	COPY_NODE_FIELD(name);
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(behavior);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -2087,6 +2088,7 @@ _copyRemoveOpClassStmt(RemoveOpClassStmt *from)
 	COPY_NODE_FIELD(opclassname);
 	COPY_STRING_FIELD(amname);
 	COPY_SCALAR_FIELD(behavior);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -2414,6 +2416,7 @@ _copyDropTableSpaceStmt(DropTableSpaceStmt *from)
 	DropTableSpaceStmt *newnode = makeNode(DropTableSpaceStmt);
 
 	COPY_STRING_FIELD(tablespacename);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -2447,6 +2450,7 @@ _copyDropPropertyStmt(DropPropertyStmt *from)
 	COPY_STRING_FIELD(property);
 	COPY_SCALAR_FIELD(removeType);
 	COPY_SCALAR_FIELD(behavior);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -2471,6 +2475,7 @@ _copyDropPLangStmt(DropPLangStmt *from)
 
 	COPY_STRING_FIELD(plname);
 	COPY_SCALAR_FIELD(behavior);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -2606,6 +2611,7 @@ _copyDropCastStmt(DropCastStmt *from)
 	COPY_NODE_FIELD(sourcetype);
 	COPY_NODE_FIELD(targettype);
 	COPY_SCALAR_FIELD(behavior);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.45 2006/05/02 22:25:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.46 2006/06/16 20:23:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -700,21 +700,40 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 		/* Unqualified opclass name, so search the search path */
 		opcID = OpclassnameGetOpcid(amID, opcname);
 		if (!OidIsValid(opcID))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-							opcname, stmt->amname)));
+		{
+			if (! stmt -> missing_ok )
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+								opcname, stmt->amname)));
+			else
+				ereport(NOTICE,
+						(errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+								opcname, stmt->amname)));
+			
+			return;
+		}
+ 
 		tuple = SearchSysCache(CLAOID,
 							   ObjectIdGetDatum(opcID),
 							   0, 0, 0);
 	}
 
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
-						NameListToString(stmt->opclassname), stmt->amname)));
-
+	{
+  
+		if (! stmt->missing_ok )
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							NameListToString(stmt->opclassname), stmt->amname)));
+		else
+			ereport(NOTICE,
+					(errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+							NameListToString(stmt->opclassname), stmt->amname)));
+		return;
+	}
+	
 	opcID = HeapTupleGetOid(tuple);
 
 	/* Permission check: must own opclass or its namespace */

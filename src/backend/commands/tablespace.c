@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.34 2006/03/29 21:17:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.35 2006/06/16 20:23:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,10 +403,25 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	tuple = heap_getnext(scandesc, ForwardScanDirection);
 
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace \"%s\" does not exist",
-						tablespacename)));
+	{
+		if ( ! stmt->missing_ok )
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("tablespace \"%s\" does not exist",
+							tablespacename)));
+		}
+		else
+		{
+			ereport(NOTICE,
+					(errmsg("tablespace \"%s\" does not exist ... skipping",
+							tablespacename)));
+			/* XXX I assume I need one or both of these next two calls */
+			heap_endscan(scandesc);
+			heap_close(rel, NoLock);
+		}
+		return;
+	}
 
 	tablespaceoid = HeapTupleGetOid(tuple);
 

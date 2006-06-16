@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.64 2006/03/05 15:58:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.65 2006/06/16 20:23:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,9 +396,18 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 							 CStringGetDatum(languageName),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("language \"%s\" does not exist", languageName)));
+	{
+		if (! stmt->missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("language \"%s\" does not exist", languageName)));
+		else 
+			ereport(NOTICE,
+					(errmsg("language \"%s\" does not exist ... skipping", 
+							languageName)));
+ 
+		return;
+	}
 
 	object.classId = LanguageRelationId;
 	object.objectId = HeapTupleGetOid(langTup);

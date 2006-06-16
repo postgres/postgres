@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.64 2006/03/05 15:58:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.65 2006/06/16 20:23:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,8 @@
  * Delete a rule given its name.
  */
 void
-RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior)
+RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior,
+	              bool missing_ok)
 {
 	HeapTuple	tuple;
 	Oid			eventRelationOid;
@@ -53,10 +54,18 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior)
 	 * complain if no rule with such name exists
 	 */
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
-						ruleName, get_rel_name(owningRel))));
+	{
+		if (! missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("rule \"%s\" for relation \"%s\" does not exist",
+							ruleName, get_rel_name(owningRel))));
+		else
+			ereport(NOTICE,
+					(errmsg("rule \"%s\" for relation \"%s\" does not exist ... skipping",
+							ruleName, get_rel_name(owningRel))));
+		return;
+	}
 
 	/*
 	 * Verify user has appropriate permissions.

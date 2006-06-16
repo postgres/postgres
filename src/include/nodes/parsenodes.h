@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.310 2006/04/30 18:30:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.311 2006/06/16 20:23:45 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1131,6 +1131,7 @@ typedef struct DropTableSpaceStmt
 {
 	NodeTag		type;
 	char	   *tablespacename;
+	bool		missing_ok;		/* skip error if a missing? */
 } DropTableSpaceStmt;
 
 /* ----------------------
@@ -1175,6 +1176,7 @@ typedef struct DropPLangStmt
 	NodeTag		type;
 	char	   *plname;			/* PL name */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+	bool		missing_ok;		/* skip error if missing? */
 } DropPLangStmt;
 
 /* ----------------------
@@ -1329,6 +1331,7 @@ typedef struct DropPropertyStmt
 	char	   *property;		/* name of rule, trigger, etc */
 	ObjectType	removeType;		/* OBJECT_RULE or OBJECT_TRIGGER */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+	bool		missing_ok;		/* skip error if a missing? */
 } DropPropertyStmt;
 
 /* ----------------------
@@ -1477,6 +1480,7 @@ typedef struct RemoveFuncStmt
 	List	   *name;			/* qualified name of object to drop */
 	List	   *args;			/* types of the arguments */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+	bool		missing_ok;		/* skip error if a missing? */
 } RemoveFuncStmt;
 
 /* ----------------------
@@ -1489,6 +1493,7 @@ typedef struct RemoveOpClassStmt
 	List	   *opclassname;	/* qualified name (list of Value strings) */
 	char	   *amname;			/* name of index AM opclass is for */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+	bool		missing_ok;		/* skip error if a missing? */
 } RemoveOpClassStmt;
 
 /* ----------------------
@@ -1846,6 +1851,7 @@ typedef struct DropCastStmt
 	TypeName   *sourcetype;
 	TypeName   *targettype;
 	DropBehavior behavior;
+	bool		missing_ok;		/* skip error if a missing? */
 } DropCastStmt;
 
 

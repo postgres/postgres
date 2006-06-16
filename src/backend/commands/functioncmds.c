@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.74 2006/04/15 17:45:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.75 2006/06/16 20:23:44 adunstan Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -687,7 +687,16 @@ RemoveFunction(RemoveFuncStmt *stmt)
 	/*
 	 * Find the function, do permissions and validity checks
 	 */
-	funcOid = LookupFuncNameTypeNames(functionName, argTypes, false);
+	funcOid = LookupFuncNameTypeNames(functionName, argTypes, stmt->missing_ok);
+	if (stmt->missing_ok &&!OidIsValid(funcOid)) 
+	{
+		ereport(NOTICE,
+				(errmsg("function %s(%s) does not exist ... skipping",
+						NameListToString(functionName),
+						NameListToString(argTypes))));
+		return;
+	}
+
 
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(funcOid),
@@ -1377,6 +1386,7 @@ DropCast(DropCastStmt *stmt)
 	HeapTuple	tuple;
 	ObjectAddress object;
 
+	/* when dropping a cast, the types must exist even if you use IF EXISTS */
 	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
 	targettypeid = typenameTypeId(NULL, stmt->targettype);
 
@@ -1385,11 +1395,23 @@ DropCast(DropCastStmt *stmt)
 						   ObjectIdGetDatum(targettypeid),
 						   0, 0);
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("cast from type %s to type %s does not exist",
-						TypeNameToString(stmt->sourcetype),
-						TypeNameToString(stmt->targettype))));
+	{
+		if (! stmt->missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("cast from type %s to type %s does not exist",
+							TypeNameToString(stmt->sourcetype),
+							TypeNameToString(stmt->targettype))));
+		else
+			ereport(NOTICE,
+					 (errmsg("cast from type %s to type %s does not exist ... skipping",
+							TypeNameToString(stmt->sourcetype),
+							TypeNameToString(stmt->targettype))));
+
+		return;
+	}
+
+			
 
 	/* Permission check */
 	if (!pg_type_ownercheck(sourcetypeid, GetUserId())

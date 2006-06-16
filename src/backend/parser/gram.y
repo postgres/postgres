@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.545 2006/05/27 17:38:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.546 2006/06/16 20:23:44 adunstan Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -191,7 +191,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	opt_lock lock_type cast_context
 %type <boolean>	opt_force opt_or_replace
 				opt_grant_grant_option opt_grant_admin_option
-				opt_nowait 
+				opt_nowait opt_if_exists
 
 %type <boolean>	like_including_defaults
 
@@ -2401,6 +2401,15 @@ DropPLangStmt:
 					DropPLangStmt *n = makeNode(DropPLangStmt);
 					n->plname = $4;
 					n->behavior = $5;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+			| DROP opt_procedural LANGUAGE IF_P EXISTS ColId_or_Sconst opt_drop_behavior
+				{
+					DropPLangStmt *n = makeNode(DropPLangStmt);
+					n->plname = $6;
+					n->behavior = $7;
+					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -2445,6 +2454,14 @@ DropTableSpaceStmt: DROP TABLESPACE name
 				{
 					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
 					n->tablespacename = $3;
+					n->missing_ok = false;
+					$$ = (Node *) n;
+				}
+				|  DROP TABLESPACE IF_P EXISTS name
+                {
+					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
+					n->tablespacename = $5;
+					n->missing_ok = true;
 					$$ = (Node *) n;
 				}
 		;
@@ -2630,6 +2647,17 @@ DropTrigStmt:
 					n->property = $3;
 					n->behavior = $6;
 					n->removeType = OBJECT_TRIGGER;
+					n->missing_ok = false;
+					$$ = (Node *) n;
+				}
+			| DROP TRIGGER IF_P EXISTS name ON qualified_name opt_drop_behavior
+				{
+					DropPropertyStmt *n = makeNode(DropPropertyStmt);
+					n->relation = $7;
+					n->property = $5;
+					n->behavior = $8;
+					n->removeType = OBJECT_TRIGGER;
+					n->missing_ok = true;
 					$$ = (Node *) n;
 				}
 		;
@@ -2903,6 +2931,16 @@ DropOpClassStmt:
 					n->opclassname = $4;
 					n->amname = $6;
 					n->behavior = $7;
+					n->missing_ok = false;
+					$$ = (Node *) n;
+				}
+			| DROP OPERATOR CLASS IF_P EXISTS any_name USING access_method opt_drop_behavior
+				{
+					RemoveOpClassStmt *n = makeNode(RemoveOpClassStmt);
+					n->opclassname = $6;
+					n->amname = $8;
+					n->behavior = $9;
+					n->missing_ok = true;
 					$$ = (Node *) n;
 				}
 		;
@@ -3912,6 +3950,17 @@ RemoveFuncStmt:
 					n->name = $3;
 					n->args = extractArgTypes($4);
 					n->behavior = $5;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+			| DROP FUNCTION IF_P EXISTS func_name func_args opt_drop_behavior
+				{
+					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
+					n->kind = OBJECT_FUNCTION;
+					n->name = $5;
+					n->args = extractArgTypes($6);
+					n->behavior = $7;
+					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -3924,6 +3973,17 @@ RemoveAggrStmt:
 					n->name = $3;
 					n->args = $4;
 					n->behavior = $5;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+			| DROP AGGREGATE IF_P EXISTS func_name aggr_args opt_drop_behavior
+				{
+					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
+					n->kind = OBJECT_AGGREGATE;
+					n->name = $5;
+					n->args = $6;
+					n->behavior = $7;
+					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -3936,6 +3996,17 @@ RemoveOperStmt:
 					n->name = $3;
 					n->args = $5;
 					n->behavior = $7;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+			| DROP OPERATOR IF_P EXISTS any_operator '(' oper_argtypes ')' opt_drop_behavior
+				{
+					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
+					n->kind = OBJECT_OPERATOR;
+					n->name = $5;
+					n->args = $7;
+					n->behavior = $9;
+					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -3998,15 +4069,20 @@ cast_context:  AS IMPLICIT_P					{ $$ = COERCION_IMPLICIT; }
 		;
 
 
-DropCastStmt: DROP CAST '(' Typename AS Typename ')' opt_drop_behavior
+DropCastStmt: DROP CAST opt_if_exists '(' Typename AS Typename ')' opt_drop_behavior
 				{
 					DropCastStmt *n = makeNode(DropCastStmt);
-					n->sourcetype = $4;
-					n->targettype = $6;
-					n->behavior = $8;
+					n->sourcetype = $5;
+					n->targettype = $7;
+					n->behavior = $9;
+					n->missing_ok =
 					$$ = (Node *)n;
 				}
 		;
+
+opt_if_exists: IF_P EXISTS { $$ = true; }
+               | /* empty */ { $$ = false; }
+        ;
 
 
 
@@ -4432,6 +4508,17 @@ DropRuleStmt:
 					n->property = $3;
 					n->behavior = $6;
 					n->removeType = OBJECT_RULE;
+					n->missing_ok = false;
+					$$ = (Node *) n;
+				}
+			| DROP RULE IF_P EXISTS name ON qualified_name opt_drop_behavior
+				{
+					DropPropertyStmt *n = makeNode(DropPropertyStmt);
+					n->relation = $7;
+					n->property = $5;
+					n->behavior = $8;
+					n->removeType = OBJECT_RULE;
+					n->missing_ok = true;
 					$$ = (Node *) n;
 				}
 		;
