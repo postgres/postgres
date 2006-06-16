@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.89 2006/04/30 21:15:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.90 2006/06/16 15:16:16 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -368,6 +368,16 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
           connect as the requested database user by consulting the map
           specified after the <literal>ident</literal> key word.
           See <xref linkend="auth-ident"> for details.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>ldap</></term>
+        <listitem>
+         <para>
+          Authenticate using LDAP to a central server. See <xref
+          linkend="auth-ldap"> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -894,6 +904,56 @@ omicron       bryanh            guest1
 </programlisting>
    </example>
    </sect3>
+  </sect2>
+
+  <sect2 id="auth-ldap">
+   <title>LDAP authentication</title>
+
+   <indexterm zone="auth-ldap">
+    <primary>LDAP</primary>
+   </indexterm>
+
+   <para>
+    This authentication method operates similarly to
+    <literal>password</literal> except that it uses LDAP
+    as the authentication method. LDAP is used only to validate
+    the user name/password pairs. Therefore the user must already
+    exist in the database before LDAP can be used for
+    authentication. The server and parameters used are specified
+    after the <literal>ldap</> key word in the file
+    <filename>pg_hba.conf</filename>. The format of this parameter is:
+    <synopsis>
+ldap[<replaceable>s</>]://<replaceable>servername</>[:<replaceable>port</>]/<replaceable>base dn</replaceable>[;<replaceable>prefix</>[;<replaceable>suffix</>]]
+    </synopsis>
+    for example:
+    <synopsis>
+ldap://ldap.example.net/dc=example,dc=net;EXAMPLE\
+    </synopsis>
+
+   </para>
+   <para>
+    If <literal>ldaps</> is specified instead of <literal>ldap</>,
+    TLS encryption will be enabled for the connection. Note that this
+    will encrypt only the connection between the PostgreSQL server
+    and the LDAP server. The connection between the client and the
+    PostgreSQL server is not affected by this setting. To make use of
+    TLS encryption, you may need to configure the LDAP library prior
+    to configuring PostgreSQL.
+   </para>
+   <para>
+    If no port is specified, the default port as configured in the
+    LDAP library will be used.
+   </para>
+   <para>
+    The server will bind to the distinguished name specified as
+    <replaceable>base dn</> using the username supplied by the client.
+    If <replaceable>prefix</> and <replaceable>suffix</> is 
+    specified, it will be prepended and appended to the username
+    before the bind. Typically, the prefix parameter is used to specify
+    <replaceable>cn=</>, or <replaceable>DOMAIN\</> in an Active
+    Directory environment.
+   </para>
+   
   </sect2>
 
   <sect2 id="auth-pam">

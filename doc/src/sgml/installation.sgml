@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.256 2006/04/25 15:19:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.257 2006/06/16 15:16:16 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -279,7 +279,8 @@ su - postgres
 
     <listitem>
      <para>
-      <application>Kerberos</>, <productname>OpenSSL</>, and/or
+      <application>Kerberos</>, <productname>OpenSSL</>, 
+      <productname>OpenLDAP</>, and/or
       <application>PAM</>, if you want to support authentication or
       encryption using these services.
      </para>
@@ -844,6 +845,21 @@ su - postgres
         <para>
          Build with <acronym>PAM</><indexterm><primary>PAM</></>
          (Pluggable Authentication Modules) support.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-ldap</option></term>
+       <listitem>
+        <para>
+         Build with <acronym>LDAP</><indexterm><primary>LDAP</></>
+         authentication support. On Unix, this requires the
+         <productname>OpenLDAP</> package to be installed.
+         <filename>configure</> will check for the required header files
+         and libraries to make sure that your <productname>OpenLDAP</>
+         installation is sufficient before proceeding. On Windows,
+         the default <productname>WinLDAP</> library is used.
         </para>
        </listitem>
       </varlistentry>
