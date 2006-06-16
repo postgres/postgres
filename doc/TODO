@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 16 18:04:56 EDT 2006
+Last updated:		Fri Jun 16 18:08:41 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -725,6 +725,10 @@ SQL Commands
 
 		  http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php
 
+		o Allow PL/python to composite types and result sets
+		  once buggy assert-enabled versions of python can be detected
+
+		  http://archives.postgresql.org/pgsql-patches/2006-04/msg00087.php
 
 Clients
 =======
