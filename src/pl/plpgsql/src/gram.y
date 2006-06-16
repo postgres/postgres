@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.92 2006/06/15 18:02:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.93 2006/06/16 23:29:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,6 @@ static	void			 check_labels(const char *start_label,
 %token	K_ELSE
 %token	K_ELSIF
 %token	K_END
-%token	K_STRICT
 %token	K_EXCEPTION
 %token	K_EXECUTE
 %token	K_EXIT
@@ -187,6 +186,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_RETURN_NEXT
 %token	K_REVERSE
 %token	K_SELECT
+%token	K_STRICT
 %token	K_THEN
 %token	K_TO
 %token	K_TYPE

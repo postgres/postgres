@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.172 2006/06/16 18:42:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.173 2006/06/16 23:29:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1721,7 +1721,7 @@ exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
 	{
 		if (stmt->strict)
 			ereport(ERROR,
-					(errcode(ERRCODE_NO_DATA),
+					(errcode(ERRCODE_NO_DATA_FOUND),
 					 errmsg("query returned no rows")));
 
 		/* set the target to NULL(s) */
@@ -1732,7 +1732,7 @@ exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
 
 	if (n > 1 && stmt->strict)
 		ereport(ERROR,
-				(errcode(ERRCODE_CARDINALITY_VIOLATION),
+				(errcode(ERRCODE_TOO_MANY_ROWS),
 				 errmsg("query returned more than one row")));
 
 	/*

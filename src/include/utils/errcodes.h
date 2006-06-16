@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.19 2006/03/05 15:59:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.20 2006/06/16 23:29:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,6 +331,8 @@
 /* Class P0 - PL/pgSQL Error (PostgreSQL-specific error class) */
 #define ERRCODE_PLPGSQL_ERROR				MAKE_SQLSTATE('P','0', '0','0','0')
 #define ERRCODE_RAISE_EXCEPTION				MAKE_SQLSTATE('P','0', '0','0','1')
+#define ERRCODE_NO_DATA_FOUND				MAKE_SQLSTATE('P','0', '0','0','2')
+#define ERRCODE_TOO_MANY_ROWS				MAKE_SQLSTATE('P','0', '0','0','3')
 
 /* Class XX - Internal Error (PostgreSQL-specific error class) */
 /* (this is for "can't-happen" conditions and software bugs) */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.19 2006/06/16 22:41:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.20 2006/06/16 23:29:26 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -1342,6 +1342,18 @@
 <entry><literal>P0001</literal></entry>
 <entry>RAISE EXCEPTION</entry>
 <entry>raise_exception</entry>
+</row>
+
+<row>
+<entry><literal>P0002</literal></entry>
+<entry>NO DATA FOUND</entry>
+<entry>no_data_found</entry>
+</row>
+
+<row>
+<entry><literal>P0003</literal></entry>
+<entry>TOO MANY ROWS</entry>
+<entry>too_many_rows</entry>
 </row>
 
 

@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.8 2006/06/15 18:02:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.9 2006/06/16 23:29:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -712,6 +712,14 @@
 },
 
 {
+	"no_data_found", ERRCODE_NO_DATA_FOUND
+},
+
+{
+	"too_many_rows", ERRCODE_TOO_MANY_ROWS
+},
+
+{
 	"internal_error", ERRCODE_INTERNAL_ERROR
 },
 
@@ -722,13 +730,3 @@
 {
 	"index_corrupted", ERRCODE_INDEX_CORRUPTED
 },
-
-{
-	"no_data_found", ERRCODE_NO_DATA
-},
-
-{
-	"too_many_rows", ERRCODE_CARDINALITY_VIOLATION
-},
-
-
