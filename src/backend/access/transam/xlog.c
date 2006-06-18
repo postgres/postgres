@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.239 2006/06/16 04:11:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.240 2006/06/18 18:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2147,11 +2147,13 @@ XLogFileClose(void)
 {
 	Assert(openLogFile >= 0);
 
-#ifdef POSIX_FADV_DONTNEED
+#if defined(HAVE_DECL_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
 	/*
-	 * WAL caches will not be accessed in the future, so we advise OS to
-	 * free them. But we will not do so if WAL archiving is active,
-	 * because archivers might use the caches to read the WAL segment.
+	 * WAL segment files will not be re-read in normal operation, so we advise
+	 * OS to release any cached pages.  But do not do so if WAL archiving is
+	 * active, because archiver process could use the cache to read the WAL
+	 * segment.
+	 *
 	 * While O_DIRECT works for O_SYNC, posix_fadvise() works for fsync()
 	 * and O_SYNC, and some platforms only have posix_fadvise().
 	 */

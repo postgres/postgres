@@ -76,6 +76,10 @@
    don't. */
 #undef HAVE_DECL_F_FULLFSYNC
 
+/* Define to 1 if you have the declaration of `posix_fadvise', and to 0 if you
+   don't. */
+#undef HAVE_DECL_POSIX_FADVISE
+
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_SNPRINTF
