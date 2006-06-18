@@ -1755,7 +1755,7 @@ begin
   begin
     x := x + 1;
     insert into foo values(x);
-    -- we assume this will take longer than 1 second:
+    -- we assume this will take longer than 2 seconds:
     select count(*) into x from tenk1 a, tenk1 b, tenk1 c;
   exception
     when others then
@@ -1769,7 +1769,7 @@ begin
   return x;
 end$$ language plpgsql;
 
-set statement_timeout to 1000;
+set statement_timeout to 2000;
 
 select blockme();
 
