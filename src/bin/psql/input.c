@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.55 2006/06/14 16:49:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.56 2006/06/18 17:30:48 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -245,11 +245,14 @@ encode_history(void)
 	HIST_ENTRY *cur_hist;
 	char *cur_ptr;
 
-	for (history_set_pos(0), cur_hist = current_history();
-		 cur_hist; cur_hist = next_history())
-		for (cur_ptr = cur_hist->line; *cur_ptr; cur_ptr++)
+	history_set_pos(0);
+	for (cur_hist = current_history(); cur_hist; cur_hist = next_history())
+	{
+		/* some platforms declare HIST_ENTRY.line as const char * */
+		for (cur_ptr = (char *) cur_hist->line; *cur_ptr; cur_ptr++)
 			if (*cur_ptr == '\n')
 				*cur_ptr = NL_IN_HISTORY;
+	}
 }
 
 /*
@@ -261,11 +264,14 @@ decode_history(void)
 	HIST_ENTRY *cur_hist;
 	char *cur_ptr;
 
-	for (history_set_pos(0), cur_hist = current_history();
-		 cur_hist; cur_hist = next_history())
-		for (cur_ptr = cur_hist->line; *cur_ptr; cur_ptr++)
+	history_set_pos(0);
+	for (cur_hist = current_history(); cur_hist; cur_hist = next_history())
+	{
+		/* some platforms declare HIST_ENTRY.line as const char * */
+		for (cur_ptr = (char *) cur_hist->line; *cur_ptr; cur_ptr++)
 			if (*cur_ptr == NL_IN_HISTORY)
 				*cur_ptr = '\n';
+	}
 }
 #endif /* USE_READLINE */
 
@@ -339,13 +345,22 @@ saveHistory(char *fname, bool encodeFlag)
 	{
 		if (encodeFlag)
 			encode_history();
-		if (write_history(fname) == 0)
+
+		/*
+		 * return value of write_history is not standardized across GNU
+		 * readline and libedit.  Therefore, check for errno becoming set
+		 * to see if the write failed.
+		 */
+		errno = 0;
+		(void) write_history(fname);
+		if (errno == 0)
 			return true;
 
 		psql_error("could not save history to file \"%s\": %s\n",
 				   fname, strerror(errno));
 	}
 #else
+	/* only get here in \s case, so complain */
 	psql_error("history is not supported by this installation\n");
 #endif
 
