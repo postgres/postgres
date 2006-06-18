@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.257 2006/06/16 15:16:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.258 2006/06/18 15:38:35 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -33,7 +33,7 @@ mkdir /usr/local/pgsql/data
 chown postgres /usr/local/pgsql/data
 su - postgres
 /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
-/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;
+/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;
 /usr/local/pgsql/bin/createdb test
 /usr/local/pgsql/bin/psql test
 </synopsis>
@@ -463,7 +463,7 @@ su - postgres
    (which you already have if you are upgrading).
 <programlisting>
 <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
-<userinput>/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data</>
+<userinput>/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data</>
 </programlisting>
    Finally, restore your data with
 <screen>
@@ -1638,12 +1638,12 @@ postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
      database server. Do so now. The command should look something
      like
 <programlisting>
-/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
+/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
 </programlisting>
      This will start the server in the foreground. To put the server
      in the background use something like
 <programlisting>
-nohup /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data \
+nohup /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data \
     &lt;/dev/null &gt;&gt;server.log 2&gt;&amp;1 &lt;/dev/null &amp;
 </programlisting>
     </para>
@@ -1653,12 +1653,6 @@ nohup /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data \
 <programlisting>
 kill `cat /usr/local/pgsql/data/postmaster.pid`
 </programlisting>
-    </para>
-
-    <para>
-     In order to allow TCP/IP connections (rather than only Unix
-     domain socket ones) you need to pass the <option>-i</> option to
-     <filename>postmaster</>.
     </para>
    </step>
 

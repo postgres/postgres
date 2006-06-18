@@ -4,7 +4,7 @@
  *
  * initdb creates (initializes) a PostgreSQL database cluster (site,
  * instance, installation, whatever).  A database cluster is a
- * collection of PostgreSQL databases all managed by the same postmaster.
+ * collection of PostgreSQL databases all managed by the same server.
  *
  * To create the database cluster, we create the directory that contains
  * all its data, create the files that hold the global tables, create
@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.117 2006/06/07 22:24:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.118 2006/06/18 15:38:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ static char *authwarning = NULL;
  * (no quoting to worry about).
  */
 static const char *boot_options = "-F";
-static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on_error=true";
+static const char *backend_options = "--single -F -O -c search_path=pg_catalog -c exit_on_error=true";
 
 
 /* path to 'initdb' binary directory */
@@ -1138,7 +1138,7 @@ test_config_settings(void)
 		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
-				 "%s\"%s\" -boot -x0 %s "
+				 "%s\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
 				 "-c max_fsm_pages=%d "
@@ -1173,7 +1173,7 @@ test_config_settings(void)
 		test_max_fsm = FSM_FOR_BUFS(test_buffs);
 
 		snprintf(cmd, sizeof(cmd),
-				 "%s\"%s\" -boot -x0 %s "
+				 "%s\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
 				 "-c max_fsm_pages=%d "
@@ -1402,7 +1402,7 @@ bootstrap_template1(char *short_version)
 	unsetenv("PGCLIENTENCODING");
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" -boot -x1 %s %s template1",
+			 "\"%s\" --boot -x1 %s %s template1",
 			 backend_exec, boot_options, talkargs);
 
 	PG_CMD_OPEN;
@@ -2963,7 +2963,7 @@ main(int argc, char *argv[])
 	get_parent_directory(bin_dir);
 
 	printf(_("\nSuccess. You can now start the database server using:\n\n"
-			 "    %s%s%spostmaster%s -D %s%s%s\n"
+			 "    %s%s%spostgres%s -D %s%s%s\n"
 			 "or\n"
 			 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n\n"),
 	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.487 2006/06/11 15:49:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.488 2006/06/18 15:38:37 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2399,41 +2399,6 @@ assign_max_stack_depth(int newval, bool doit, GucSource source)
 }
 
 
-static void
-usage(const char *progname)
-{
-	printf(_("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n"), progname);
-
-	printf(_("Usage:\n  %s [OPTION]... DBNAME\n\n"), progname);
-	printf(_("Options:\n"));
-#ifdef USE_ASSERT_CHECKING
-	printf(_("  -A 1|0          enable/disable run-time assert checking\n"));
-#endif
-	printf(_("  -B NBUFFERS     number of shared buffers\n"));
-	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
-	printf(_("  -d 0-5          debugging level\n"));
-	printf(_("  -D DATADIR      database directory\n"));
-	printf(_("  -e              use European date input format (DMY)\n"));
-	printf(_("  -E              echo statement before execution\n"));
-	printf(_("  -F              turn fsync off\n"));
-	printf(_("  -j              do not use newline as interactive query delimiter\n"));
-	printf(_("  -r FILENAME     send stdout and stderr to given file\n"));
-	printf(_("  -s              show statistics after each query\n"));
-	printf(_("  -S WORK-MEM     set amount of memory for sorts (in kB)\n"));
-	printf(_("  --NAME=VALUE    set run-time parameter\n"));
-	printf(_("  --describe-config  describe configuration parameters, then exit\n"));
-	printf(_("  --help          show this help, then exit\n"));
-	printf(_("  --version       output version information, then exit\n"));
-	printf(_("\nDeveloper options:\n"));
-	printf(_("  -f s|i|n|m|h    forbid use of some plan types\n"));
-	printf(_("  -O              allow system table structure changes\n"));
-	printf(_("  -P              disable system indexes\n"));
-	printf(_("  -t pa|pl|ex     show timings after each query\n"));
-	printf(_("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
-}
-
-
 /*
  * set_debug_options --- apply "-d N" command line option
  *
@@ -2564,24 +2529,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 guc_values = lappend(guc_values, pstrdup(val)))
 
 	/*
-	 * Catch standard options before doing much else.  This even works on
-	 * systems without getopt_long.
-	 */
-	if (!IsUnderPostmaster && argc > 1)
-	{
-		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
-		{
-			usage(argv[0]);
-			exit(0);
-		}
-		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
-		{
-			puts(PG_VERSIONSTR);
-			exit(0);
-		}
-	}
-
-	/*
 	 * initialize globals (already done if under postmaster, but not if
 	 * standalone; cheap enough to do over)
 	 */
@@ -2637,6 +2584,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 *	what these switches can do.
 	 * ----------------
 	 */
+
+	/* Ignore the initial --single argument, if present */
+	if (argc > 1 && strcmp(argv[1], "--single") == 0)
+	{
+		argv++;
+		argc--;
+	}
 
 	/* all options are allowed until '-p' */
 	secure = true;

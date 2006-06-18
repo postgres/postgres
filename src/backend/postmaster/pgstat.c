@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.127 2006/05/30 02:35:39 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.128 2006/06/18 15:38:37 petere Exp $
  * ----------
  */
 #include "postgres.h"
@@ -491,11 +491,11 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	switch (procType)
 	{
 		case STAT_PROC_BUFFER:
-			av[ac++] = "-forkbuf";
+			av[ac++] = "--forkbuf";
 			break;
 
 		case STAT_PROC_COLLECTOR:
-			av[ac++] = "-forkcol";
+			av[ac++] = "--forkcol";
 			break;
 
 		default:

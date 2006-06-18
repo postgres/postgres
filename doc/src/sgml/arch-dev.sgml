@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.26 2006/03/10 19:10:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.27 2006/06/18 15:38:35 petere Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>
@@ -124,13 +124,11 @@
     know ahead of time how many connections will be made, we have to
     use a <firstterm>master process</firstterm> that spawns a new
     server process every time a connection is requested. This master
-    process is called <literal>postmaster</literal> and listens at a
+    process is called <literal>postgres</literal> and listens at a
     specified TCP/IP port for incoming connections. Whenever a request
-    for a connection is detected the <literal>postmaster</literal>
-    process spawns a new server process called
-    <literal>postgres</literal>. The server tasks
-    (<literal>postgres</literal> processes) communicate with each
-    other using <firstterm>semaphores</firstterm> and
+    for a connection is detected the <literal>postgres</literal>
+    process spawns a new server process. The server tasks
+    communicate with each other using <firstterm>semaphores</firstterm> and
     <firstterm>shared memory</firstterm> to ensure data integrity
     throughout concurrent data access.
    </para>

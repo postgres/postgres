@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.485 2006/06/07 22:24:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.486 2006/06/18 15:38:37 petere Exp $
  *
  * NOTES
  *
@@ -266,7 +266,6 @@ static void LogChildExit(int lev, const char *procname,
 static void BackendInitialize(Port *port);
 static int	BackendRun(Port *port);
 static void ExitPostmaster(int status);
-static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
@@ -383,29 +382,6 @@ PostmasterMain(int argc, char *argv[])
 	MyProcPid = PostmasterPid = getpid();
 
 	IsPostmasterEnvironment = true;
-
-	/*
-	 * Catch standard options before doing much else.  This even works on
-	 * systems without getopt_long.
-	 */
-	if (argc > 1)
-	{
-		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
-		{
-			usage(progname);
-			ExitPostmaster(0);
-		}
-		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
-		{
-			puts("postmaster (PostgreSQL) " PG_VERSION);
-			ExitPostmaster(0);
-		}
-	}
-
-#ifdef WIN32
-	/* Start our win32 signal implementation */
-	pgwin32_signal_initialize();
-#endif
 
 	/*
 	 * for security, no dir or file created can be group or other accessible
@@ -1130,55 +1106,6 @@ pmdaemonize(void)
 	/* not supported */
 	elog(FATAL, "SilentMode not supported under WIN32");
 #endif   /* WIN32 */
-}
-
-
-/*
- * Print out help message
- */
-static void
-usage(const char *progname)
-{
-	printf(_("%s is the PostgreSQL server.\n\n"), progname);
-	printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
-	printf(_("Options:\n"));
-#ifdef USE_ASSERT_CHECKING
-	printf(_("  -A 1|0          enable/disable run-time assert checking\n"));
-#endif
-	printf(_("  -B NBUFFERS     number of shared buffers\n"));
-	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
-	printf(_("  -d 1-5          debugging level\n"));
-	printf(_("  -D DATADIR      database directory\n"));
-	printf(_("  -e              use European date input format (DMY)\n"));
-	printf(_("  -F              turn fsync off\n"));
-	printf(_("  -h HOSTNAME     host name or IP address to listen on\n"));
-	printf(_("  -i              enable TCP/IP connections\n"));
-	printf(_("  -k DIRECTORY    Unix-domain socket location\n"));
-#ifdef USE_SSL
-	printf(_("  -l              enable SSL connections\n"));
-#endif
-	printf(_("  -N MAX-CONNECT  maximum number of allowed connections\n"));
-	printf(_("  -o OPTIONS      pass \"OPTIONS\" to each server process (obsolete)\n"));
-	printf(_("  -p PORT         port number to listen on\n"));
-	printf(_("  -s              show statistics after each query\n"));
-	printf(_("  -S WORK-MEM     set amount of memory for sorts (in kB)\n"));
-	printf(_("  --NAME=VALUE    set run-time parameter\n"));
-	printf(_("  --help          show this help, then exit\n"));
-	printf(_("  --version       output version information, then exit\n"));
-
-	printf(_("\nDeveloper options:\n"));
-	printf(_("  -f s|i|n|m|h    forbid use of some plan types\n"));
-	printf(_("  -n              do not reinitialize shared memory after abnormal exit\n"));
-	printf(_("  -O              allow system table structure changes\n"));
-	printf(_("  -P              disable system indexes\n"));
-	printf(_("  -t pa|pl|ex     show timings after each query\n"));
-	printf(_("  -T              send SIGSTOP to all backend servers if one dies\n"));
-	printf(_("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
-
-	printf(_("\nPlease read the documentation for the complete list of run-time\n"
-			 "configuration settings and how to set them on the command line or in\n"
-			 "the configuration file.\n\n"
-			 "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 
@@ -2957,7 +2884,7 @@ backend_forkexec(Port *port)
 	int			ac = 0;
 
 	av[ac++] = "postgres";
-	av[ac++] = "-forkbackend";
+	av[ac++] = "--forkbackend";
 	av[ac++] = NULL;			/* filled in by internal_forkexec */
 
 	av[ac] = NULL;
@@ -3030,10 +2957,10 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	/* Make sure caller set up argv properly */
 	Assert(argc >= 3);
 	Assert(argv[argc] == NULL);
-	Assert(strncmp(argv[1], "-fork", 5) == 0);
+	Assert(strncmp(argv[1], "--fork", 6) == 0);
 	Assert(argv[2] == NULL);
 
-	/* Insert temp file name after -fork argument */
+	/* Insert temp file name after --fork argument */
 	argv[2] = tmpfilename;
 
 	/* Fire off execv in child */
@@ -3081,7 +3008,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 	/* Make sure caller set up argv properly */
 	Assert(argc >= 3);
 	Assert(argv[argc] == NULL);
-	Assert(strncmp(argv[1], "-fork", 5) == 0);
+	Assert(strncmp(argv[1], "--fork", 6) == 0);
 	Assert(argv[2] == NULL);
 
 	/* Verify that there is room in the child list */
@@ -3119,7 +3046,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		return -1;
 	}
 
-	/* Insert temp file name after -fork argument */
+	/* Insert temp file name after --fork argument */
 	sprintf(paramHandleStr, "%lu", (DWORD) paramHandle);
 	argv[2] = paramHandleStr;
 
@@ -3242,7 +3169,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
  *			to what it would be if we'd simply forked on Unix, and then
  *			dispatch to the appropriate place.
  *
- * The first two command line arguments are expected to be "-forkFOO"
+ * The first two command line arguments are expected to be "--forkFOO"
  * (where FOO indicates which postmaster child we are to become), and
  * the name of a variables file that we can read to load data that would
  * have been inherited by fork() on Unix.  Remaining arguments go to the
@@ -3282,9 +3209,9 @@ SubPostmasterMain(int argc, char *argv[])
 	 * to do this before going any further to ensure that we can attach at the
 	 * same address the postmaster used.
 	 */
-	if (strcmp(argv[1], "-forkbackend") == 0 ||
-		strcmp(argv[1], "-forkautovac") == 0 ||
-		strcmp(argv[1], "-forkboot") == 0)
+	if (strcmp(argv[1], "--forkbackend") == 0 ||
+		strcmp(argv[1], "--forkautovac") == 0 ||
+		strcmp(argv[1], "--forkboot") == 0)
 		PGSharedMemoryReAttach();
 
 	/*
@@ -3304,7 +3231,7 @@ SubPostmasterMain(int argc, char *argv[])
 	read_nondefault_variables();
 
 	/* Run backend or appropriate child */
-	if (strcmp(argv[1], "-forkbackend") == 0)
+	if (strcmp(argv[1], "--forkbackend") == 0)
 	{
 		Assert(argc == 3);		/* shouldn't be any more args */
 
@@ -3356,7 +3283,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* And run the backend */
 		proc_exit(BackendRun(&port));
 	}
-	if (strcmp(argv[1], "-forkboot") == 0)
+	if (strcmp(argv[1], "--forkboot") == 0)
 	{
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
@@ -3373,7 +3300,7 @@ SubPostmasterMain(int argc, char *argv[])
 		BootstrapMain(argc - 2, argv + 2);
 		proc_exit(0);
 	}
-	if (strcmp(argv[1], "-forkautovac") == 0)
+	if (strcmp(argv[1], "--forkautovac") == 0)
 	{
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
@@ -3390,7 +3317,7 @@ SubPostmasterMain(int argc, char *argv[])
 		AutoVacMain(argc - 2, argv + 2);
 		proc_exit(0);
 	}
-	if (strcmp(argv[1], "-forkarch") == 0)
+	if (strcmp(argv[1], "--forkarch") == 0)
 	{
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
@@ -3400,7 +3327,7 @@ SubPostmasterMain(int argc, char *argv[])
 		PgArchiverMain(argc, argv);
 		proc_exit(0);
 	}
-	if (strcmp(argv[1], "-forkbuf") == 0)
+	if (strcmp(argv[1], "--forkbuf") == 0)
 	{
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
@@ -3410,7 +3337,7 @@ SubPostmasterMain(int argc, char *argv[])
 		PgstatBufferMain(argc, argv);
 		proc_exit(0);
 	}
-	if (strcmp(argv[1], "-forkcol") == 0)
+	if (strcmp(argv[1], "--forkcol") == 0)
 	{
 		/*
 		 * Do NOT close postmaster sockets here, because we are forking from
@@ -3422,7 +3349,7 @@ SubPostmasterMain(int argc, char *argv[])
 		PgstatCollectorMain(argc, argv);
 		proc_exit(0);
 	}
-	if (strcmp(argv[1], "-forklog") == 0)
+	if (strcmp(argv[1], "--forklog") == 0)
 	{
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(true);
@@ -3635,7 +3562,7 @@ StartChildProcess(int xlop)
 	av[ac++] = "postgres";
 
 #ifdef EXEC_BACKEND
-	av[ac++] = "-forkboot";
+	av[ac++] = "--forkboot";
 	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 #endif
 

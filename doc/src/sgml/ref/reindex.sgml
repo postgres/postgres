@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.29 2005/09/12 16:43:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.30 2006/06/18 15:38:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -148,7 +148,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
   </para>
 
   <para>
-   One way to do this is to shut down the postmaster and start a stand-alone
+   One way to do this is to shut down the server and start a single-user
    <productname>PostgreSQL</productname> server
    with the <option>-P</option> option included on its command line.
    Then, <command>REINDEX DATABASE</>, <command>REINDEX SYSTEM</>,
@@ -156,9 +156,9 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    issued, depending on how much you want to reconstruct.  If in
    doubt, use <command>REINDEX SYSTEM</> to select
    reconstruction of all system indexes in the database.  Then quit
-   the standalone server session and restart the regular server.
+   the single-user server session and restart the regular server.
    See the <xref linkend="app-postgres"> reference page for more
-   information about how to interact with the stand-alone server
+   information about how to interact with the single-user server
    interface.
   </para>
 

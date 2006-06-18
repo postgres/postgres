@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/ipcclean.sgml,v 1.11 2005/01/04 03:58:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/ipcclean.sgml,v 1.12 2006/06/18 15:38:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -32,7 +32,7 @@ PostgreSQL documentation
    semaphore sets owned by the current user.  It is intended to be
    used for cleaning up after a crashed
    <productname>PostgreSQL</productname> server (<xref
-   linkend="app-postmaster">).  Note that immediately restarting the
+   linkend="app-postgres">).  Note that immediately restarting the
    server will also clean up shared memory and semaphores, so this
    command is of little real utility.
   </para>
@@ -53,7 +53,7 @@ PostgreSQL documentation
   <para>
    This script is a hack, but in the many years since it was written,
    no one has come up with an equally effective and portable solution.
-   Since the <command>postmaster</command> can now clean up by
+   Since <command>postgres</command> can now clean up by
    itself, it is unlikely that <command>ipcclean</command> will be
    improved upon in the future.
   </para>

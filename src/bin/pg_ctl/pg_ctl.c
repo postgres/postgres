@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.68 2006/06/07 22:24:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.69 2006/06/18 15:38:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@ typedef long pgpid_t;
 
 #define WHITESPACE "\f\n\r\t\v" /* as defined by isspace() */
 
-/* postmaster version ident string */
-#define PM_VERSIONSTR "postmaster (PostgreSQL) " PG_VERSION "\n"
+/* postgres version ident string */
+#define PM_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
 
 
 typedef enum
@@ -487,8 +487,8 @@ do_start(void)
 	{
 		old_pid = get_pgpid();
 		if (old_pid != 0)
-			write_stderr(_("%s: another postmaster may be running; "
-						   "trying to start postmaster anyway\n"),
+			write_stderr(_("%s: another server may be running; "
+						   "trying to start server anyway\n"),
 						 progname);
 	}
 
@@ -553,7 +553,7 @@ do_start(void)
 
 		postmaster_path = pg_malloc(MAXPGPATH);
 
-		if ((ret = find_other_exec(argv0, "postmaster", PM_VERSIONSTR,
+		if ((ret = find_other_exec(argv0, "postgres", PM_VERSIONSTR,
 								   postmaster_path)) < 0)
 		{
 			char		full_path[MAXPGPATH];
@@ -562,13 +562,13 @@ do_start(void)
 				StrNCpy(full_path, progname, MAXPGPATH);
 
 			if (ret == -1)
-				write_stderr(_("The program \"postmaster\" is needed by %s "
+				write_stderr(_("The program \"postgres\" is needed by %s "
 							   "but was not found in the\n"
 							   "same directory as \"%s\".\n"
 							   "Check your installation.\n"),
 							 progname, full_path);
 			else
-				write_stderr(_("The program \"postmaster\" was found by \"%s\"\n"
+				write_stderr(_("The program \"postgres\" was found by \"%s\"\n"
 							   "but was not the same version as %s.\n"
 							   "Check your installation.\n"),
 							 full_path, progname);
@@ -580,7 +580,7 @@ do_start(void)
 	exitcode = start_postmaster();
 	if (exitcode != 0)
 	{
-		write_stderr(_("%s: could not start postmaster: exit code was %d\n"),
+		write_stderr(_("%s: could not start server: exit code was %d\n"),
 					 progname, exitcode);
 		exit(1);
 	}
@@ -591,7 +591,7 @@ do_start(void)
 		pid = get_pgpid();
 		if (pid == old_pid)
 		{
-			write_stderr(_("%s: could not start postmaster\n"
+			write_stderr(_("%s: could not start server\n"
 						   "Examine the log output.\n"),
 						 progname);
 			exit(1);
@@ -600,21 +600,21 @@ do_start(void)
 
 	if (do_wait)
 	{
-		print_msg(_("waiting for postmaster to start..."));
+		print_msg(_("waiting for server to start..."));
 
 		if (test_postmaster_connection() == false)
 		{
-			printf(_("could not start postmaster\n"));
+			printf(_("could not start server\n"));
 			exit(1);
 		}
 		else
 		{
 			print_msg(_(" done\n"));
-			print_msg(_("postmaster started\n"));
+			print_msg(_("server started\n"));
 		}
 	}
 	else
-		print_msg(_("postmaster starting\n"));
+		print_msg(_("server starting\n"));
 }
 
 
@@ -629,14 +629,14 @@ do_stop(void)
 	if (pid == 0)				/* no pid file */
 	{
 		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
-		write_stderr(_("Is postmaster running?\n"));
+		write_stderr(_("Is server running?\n"));
 		exit(1);
 	}
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		write_stderr(_("%s: cannot stop postmaster; "
-					   "postgres is running (PID: %ld)\n"),
+		write_stderr(_("%s: cannot stop server; "
+					   "single-user server is running (PID: %ld)\n"),
 					 progname, pid);
 		exit(1);
 	}
@@ -650,12 +650,12 @@ do_stop(void)
 
 	if (!do_wait)
 	{
-		print_msg(_("postmaster shutting down\n"));
+		print_msg(_("server shutting down\n"));
 		return;
 	}
 	else
 	{
-		print_msg(_("waiting for postmaster to shut down..."));
+		print_msg(_("waiting for server to shut down..."));
 
 		for (cnt = 0; cnt < wait_seconds; cnt++)
 		{
@@ -672,12 +672,12 @@ do_stop(void)
 		{
 			print_msg(_(" failed\n"));
 
-			write_stderr(_("%s: postmaster does not shut down\n"), progname);
+			write_stderr(_("%s: server does not shut down\n"), progname);
 			exit(1);
 		}
 		print_msg(_(" done\n"));
 
-		printf(_("postmaster stopped\n"));
+		printf(_("server stopped\n"));
 	}
 }
 
@@ -698,8 +698,8 @@ do_restart(void)
 	{
 		write_stderr(_("%s: PID file \"%s\" does not exist\n"),
 					 progname, pid_file);
-		write_stderr(_("Is postmaster running?\n"));
-		write_stderr(_("starting postmaster anyway\n"));
+		write_stderr(_("Is server running?\n"));
+		write_stderr(_("starting server anyway\n"));
 		do_start();
 		return;
 	}
@@ -708,10 +708,10 @@ do_restart(void)
 		pid = -pid;
 		if (postmaster_is_alive((pid_t) pid))
 		{
-			write_stderr(_("%s: cannot restart postmaster; "
-						   "postgres is running (PID: %ld)\n"),
+			write_stderr(_("%s: cannot restart server; "
+						   "single-user server is running (PID: %ld)\n"),
 						 progname, pid);
-			write_stderr(_("Please terminate postgres and try again.\n"));
+			write_stderr(_("Please terminate the single-user server and try again.\n"));
 			exit(1);
 		}
 	}
@@ -725,7 +725,7 @@ do_restart(void)
 			exit(1);
 		}
 
-		print_msg(_("waiting for postmaster to shut down..."));
+		print_msg(_("waiting for server to shut down..."));
 
 		/* always wait for restart */
 
@@ -744,18 +744,18 @@ do_restart(void)
 		{
 			print_msg(_(" failed\n"));
 
-			write_stderr(_("%s: postmaster does not shut down\n"), progname);
+			write_stderr(_("%s: server does not shut down\n"), progname);
 			exit(1);
 		}
 
 		print_msg(_(" done\n"));
-		printf(_("postmaster stopped\n"));
+		printf(_("server stopped\n"));
 	}
 	else
 	{
-		write_stderr(_("%s: old postmaster process (PID: %ld) seems to be gone\n"),
+		write_stderr(_("%s: old server process (PID: %ld) seems to be gone\n"),
 					 progname, pid);
-		write_stderr(_("starting postmaster anyway\n"));
+		write_stderr(_("starting server anyway\n"));
 	}
 
 	do_start();
@@ -771,16 +771,16 @@ do_reload(void)
 	if (pid == 0)				/* no pid file */
 	{
 		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
-		write_stderr(_("Is postmaster running?\n"));
+		write_stderr(_("Is server running?\n"));
 		exit(1);
 	}
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		write_stderr(_("%s: cannot reload postmaster; "
-					   "postgres is running (PID: %ld)\n"),
+		write_stderr(_("%s: cannot reload server; "
+					   "single-user server is running (PID: %ld)\n"),
 					 progname, pid);
-		write_stderr(_("Please terminate postgres and try again.\n"));
+		write_stderr(_("Please terminate the single-user server and try again.\n"));
 		exit(1);
 	}
 
@@ -791,7 +791,7 @@ do_reload(void)
 		exit(1);
 	}
 
-	print_msg(_("postmaster signaled\n"));
+	print_msg(_("server signaled\n"));
 }
 
 /*
@@ -835,7 +835,7 @@ do_status(void)
 			pid = -pid;
 			if (postmaster_is_alive((pid_t) pid))
 			{
-				printf(_("%s: a standalone backend \"postgres\" is running (PID: %ld)\n"),
+				printf(_("%s: single-user server is running (PID: %ld)\n"),
 					   progname, pid);
 				return;
 			}
@@ -847,7 +847,7 @@ do_status(void)
 			{
 				char	  **optlines;
 
-				printf(_("%s: postmaster is running (PID: %ld)\n"),
+				printf(_("%s: server is running (PID: %ld)\n"),
 					   progname, pid);
 
 				optlines = readfile(postopts_file);
@@ -858,7 +858,7 @@ do_status(void)
 			}
 		}
 	}
-	printf(_("%s: neither postmaster nor postgres running\n"), progname);
+	printf(_("%s: no server running\n"), progname);
 	exit(1);
 }
 
@@ -909,10 +909,10 @@ pgwin32_CommandLine(bool registration)
 	}
 	else
 	{
-		ret = find_other_exec(argv0, "postmaster", PM_VERSIONSTR, cmdLine);
+		ret = find_other_exec(argv0, "postgres", PM_VERSIONSTR, cmdLine);
 		if (ret != 0)
 		{
-			write_stderr(_("%s: could not find postmaster program executable\n"), progname);
+			write_stderr(_("%s: could not find postgres program executable\n"), progname);
 			exit(1);
 		}
 	}
@@ -1373,9 +1373,9 @@ do_help(void)
 
 	printf(_("\nOptions for start or restart:\n"));
 	printf(_("  -l, --log FILENAME     write (or append) server log to FILENAME\n"));
-	printf(_("  -o OPTIONS             command line options to pass to the postmaster\n"
+	printf(_("  -o OPTIONS             command line options to pass to postgres\n"
 			 "                         (PostgreSQL server executable)\n"));
-	printf(_("  -p PATH-TO-POSTMASTER  normally not necessary\n"));
+	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
 
 	printf(_("\nOptions for stop or restart:\n"));
 	printf(_("  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"));

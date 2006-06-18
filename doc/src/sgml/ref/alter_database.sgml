@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.17 2005/10/13 22:44:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.18 2006/06/18 15:38:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -55,7 +55,7 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
    database, the specified value becomes the session default value.
    The database-specific default overrides whatever setting is present
    in <filename>postgresql.conf</> or has been received from the
-   <command>postmaster</command> command line.  Only the database
+   <command>postgres</command> command line.  Only the database
    owner or a superuser can change the session defaults for a
    database.  Certain variables cannot be set this way, or can only be
    set by a superuser.

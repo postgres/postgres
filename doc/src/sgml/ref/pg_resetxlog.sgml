@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.15 2006/06/03 02:19:24 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.16 2006/06/18 15:38:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -168,8 +168,7 @@ PostgreSQL documentation
    server crashed then a lock file may have been left
    behind; in that case you can remove the lock file to allow
    <command>pg_resetxlog</command> to run.  But before you do
-   so, make doubly certain that there
-   is no <command>postmaster</command> nor any backend server process still alive.
+   so, make doubly certain that there is no server process still alive.
   </para>
  </refsect1>
 

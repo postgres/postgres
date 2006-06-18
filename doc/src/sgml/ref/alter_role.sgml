@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.5 2006/04/25 14:56:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.6 2006/06/18 15:38:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -81,7 +81,7 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
    a specified configuration variable.  Whenever the role subsequently
    starts a new session, the specified value becomes the session default,
    overriding whatever setting is present in <filename>postgresql.conf</>
-   or has been received from the <command>postmaster</command> command line.
+   or has been received from the <command>postgres</command> command line.
    (For a role without <literal>LOGIN</> privilege, session defaults have
    no effect.)
    Ordinary roles can change their own session defaults.

@@ -4,11 +4,11 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.114 2006/01/05 01:56:29 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.115 2006/06/18 15:38:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-PGFILEDESC = "PostgreSQL Database Backend"
+PGFILEDESC = "PostgreSQL Server"
 subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.55 2006/04/23 03:39:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.56 2006/06/18 15:38:35 petere Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -403,10 +403,10 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     administrator recover without data loss, by manually executing the
     required <command>VACUUM</> commands.  However, since the system will not
     execute commands once it has gone into the safety shutdown mode,
-    the only way to do this is to stop the postmaster and use a standalone
+    the only way to do this is to stop the server and use a single-user
     backend to execute <command>VACUUM</>.  The shutdown mode is not enforced
-    by a standalone backend.  See the <xref linkend="app-postgres"> reference
-    page for details about using a standalone backend.
+    by a single-user backend.  See the <xref linkend="app-postgres"> reference
+    page for details about using a single-user backend.
    </para>
 
    <para>
@@ -628,17 +628,17 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
   </para>
 
   <para>
-   If you simply direct the <systemitem>stderr</> of the
-   <command>postmaster</command> into a
+   If you simply direct the <systemitem>stderr</> of
+   <command>postgres</command> into a
    file, you will have log output, but
    the only way to truncate the log file is to stop and restart
-   the <command>postmaster</command>. This may be OK if you are using
+   the server. This may be OK if you are using
    <productname>PostgreSQL</productname> in a development environment,
    but few production servers would find this behavior acceptable.
   </para>
 
   <para>
-   A better approach is to send the <command>postmaster</>'s
+   A better approach is to send the server's
    <systemitem>stderr</> output to some type of log rotation program.
    There is a built-in log rotation program, which you can use by
    setting the configuration parameter <literal>redirect_stderr</> to
@@ -653,7 +653,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    server software. For example, the <application>rotatelogs</application>
    tool included in the <productname>Apache</productname> distribution
    can be used with <productname>PostgreSQL</productname>.  To do this,
-   just pipe the <command>postmaster</>'s
+   just pipe the server's
    <systemitem>stderr</> output to the desired program.
    If you start the server with
    <command>pg_ctl</>, then <systemitem>stderr</>

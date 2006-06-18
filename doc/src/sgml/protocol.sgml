@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.64 2006/03/03 19:54:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.65 2006/06/18 15:38:36 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1044,7 +1044,7 @@
     this case is effectively synchronous &mdash; but it is also possible
     for parameter status changes to occur because the administrator
     changed a configuration file and then sent the
-    <systemitem>SIGHUP</systemitem> signal to the postmaster.  Also,
+    <systemitem>SIGHUP</systemitem> signal to the server.  Also,
     if a <command>SET</command> command is rolled back, an appropriate
     ParameterStatus message will be generated to report the current
     effective value.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.35 2005/06/21 04:02:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.36 2006/06/18 15:38:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -127,7 +127,7 @@ PostgreSQL documentation
         <command>initdb</command>, but you can avoid writing it by
         setting the <envar>PGDATA</envar> environment variable, which
         can be convenient since the database server
-        (<command>postmaster</command>) can find the database
+        (<command>postgres</command>) can find the database
         directory later by the same variable.
        </para>
       </listitem>
@@ -287,7 +287,6 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="app-postgres"></member>
-   <member><xref linkend="app-postmaster"></member>
   </simplelist>
  </refsect1>
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.216 2006/06/08 23:55:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.217 2006/06/18 15:38:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,6 @@ extern char *optarg;
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
-static void usage(void);
 static void bootstrap_signals(void);
 static void ShutdownDummyProcess(int code, Datum arg);
 static hashnode *AddStr(char *str, int strlength, int mderef);
@@ -247,8 +246,8 @@ BootstrapMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 		InitializeGUCOptions();
 
-	/* Ignore the initial -boot argument, if present */
-	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
+	/* Ignore the initial --boot argument, if present */
+	if (argc > 1 && strcmp(argv[1], "--boot") == 0)
 	{
 		argv++;
 		argc--;
@@ -317,7 +316,9 @@ BootstrapMain(int argc, char *argv[])
 					break;
 				}
 			default:
-				usage();
+				write_stderr("Try \"%s --help\" for more information.\n",
+							 progname);
+				proc_exit(1);
 				break;
 		}
 	}
@@ -328,7 +329,10 @@ BootstrapMain(int argc, char *argv[])
 		optind++;
 	}
 	if (!dbname || argc != optind)
-		usage();
+	{
+		write_stderr("%s: invalid command-line arguments\n", progname);
+		proc_exit(1);
+	}
 
 	/*
 	 * Identify myself via ps
@@ -497,26 +501,6 @@ BootstrapMain(int argc, char *argv[])
  *						misc functions
  * ----------------------------------------------------------------
  */
-
-/* usage:
- *		usage help for the bootstrap backend
- */
-static void
-usage(void)
-{
-	fprintf(stderr, _("This is the PostgreSQL bootstrap process.\n\n"));
-	fprintf(stderr, _("Usage:\n  postgres -boot [OPTION]... DBNAME\n\n"));
-	fprintf(stderr, _("Options:\n"));
-	fprintf(stderr, _("  -B NBUFFERS     number of shared buffers\n"));
-	fprintf(stderr, _("  -c NAME=VALUE   set run-time parameter\n"));
-	fprintf(stderr, _("  -d 1-5          debugging level\n"));
-	fprintf(stderr, _("  -D DATADIR      database directory\n"));
-	fprintf(stderr, _("  -F              turn fsync off\n"));
-	fprintf(stderr, _("  -r FILENAME     send stdout and stderr to given file\n"));
-	fprintf(stderr, _("  -x NUM          internal use\n"));
-
-	proc_exit(1);
-}
 
 /*
  * Set up signal handling for a bootstrap process

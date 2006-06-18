@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.25 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.26 2006/06/18 15:38:36 petere Exp $ -->
 
 <sect1 id="bug-reporting">
  <title>Bug Reporting Guidelines</title>
@@ -223,7 +223,7 @@
       <literal>SELECT version();</literal> to
       find out the version of the server you are connected to.  Most executable
       programs also support a <option>--version</option> option; at least
-      <literal>postmaster --version</literal> and <literal>psql --version</literal>
+      <literal>postgres --version</literal> and <literal>psql --version</literal>
       should work.
       If the function or the options do not exist then your version is
       more than old enough to warrant an upgrade.
@@ -283,7 +283,7 @@
    are specifically talking about the backend server, mention that, do not
    just say <quote>PostgreSQL crashes</quote>.  A crash of a single
    backend server process is quite different from crash of the parent
-   <quote>postmaster</> process; please don't say <quote>the postmaster
+   <quote>postgres</> process; please don't say <quote>the server
    crashed</> when you mean a single backend process went down, nor vice versa.
    Also, client programs such as the interactive frontend <quote><application>psql</application></quote>
    are completely separate from the backend.  Please try to be specific

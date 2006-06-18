@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.10 2006/04/23 03:39:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.11 2006/06/18 15:38:36 petere Exp $ -->
 
 <chapter id="storage">
 
@@ -23,7 +23,7 @@ All the data needed for a database cluster is stored within the cluster's data
 directory, commonly referred to as <varname>PGDATA</> (after the name of the
 environment variable that can be used to define it).  A common location for
 <varname>PGDATA</> is <filename>/var/lib/pgsql/data</>.  Multiple clusters,
-managed by different postmasters, can exist on the same machine.
+managed by different server instances, can exist on the same machine.
 </para>
 
 <para>
@@ -99,14 +99,14 @@ Item
 
 <row>
  <entry><filename>postmaster.opts</></entry>
- <entry>A file recording the command-line options the postmaster was
+ <entry>A file recording the command-line options the server was
 last started with</entry>
 </row>
 
 <row>
  <entry><filename>postmaster.pid</></entry>
- <entry>A lock file recording the current postmaster PID and shared memory
-segment ID (not present after postmaster shutdown)</entry>
+ <entry>A lock file recording the current server PID and shared memory
+segment ID (not present after server shutdown)</entry>
 </row>
 
 </tbody>

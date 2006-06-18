@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.46 2006/05/04 16:07:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.47 2006/06/18 15:38:35 petere Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -81,7 +81,7 @@ SELECT datname FROM pg_database;
   <para>
    In order to create a database, the <productname>PostgreSQL</>
    server must be up and running (see <xref
-   linkend="postmaster-start">).
+   linkend="server-start">).
   </para>
 
   <para>
@@ -491,7 +491,7 @@ SELECT spcname FROM pg_tablespace;
     point to each of the non-built-in tablespaces defined in the cluster.
     Although not recommended, it is possible to adjust the tablespace
     layout by hand by redefining these links.  Two warnings: do not do so
-    while the postmaster is running; and after you restart the postmaster,
+    while the server is running; and after you restart the server,
     update the <structname>pg_tablespace</> catalog to show the new
     locations.  (If you do not, <literal>pg_dump</> will continue to show
     the old tablespace locations.)

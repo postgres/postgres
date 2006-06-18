@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.64 2006/06/16 12:47:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.65 2006/06/18 15:38:35 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -69,10 +69,9 @@ include 'filename'
     <indexterm>
      <primary>SIGHUP</primary>
     </indexterm>
-    The configuration file is reread whenever the
-    <command>postmaster</command> process receives a
+    The configuration file is reread whenever the main server process receives a
     <systemitem>SIGHUP</> signal (which is most easily sent by means
-    of <literal>pg_ctl reload</>). The <command>postmaster</command>
+    of <literal>pg_ctl reload</>). The main server process
     also propagates this signal to all currently running server
     processes so that existing sessions also get the new
     value. Alternatively, you can send the signal to a single server
@@ -83,9 +82,9 @@ include 'filename'
 
    <para>
     A second way to set these configuration parameters is to give them
-    as a command line option to the <command>postmaster</command>, such as:
+    as a command-line option to the <command>postgres</command> command, such as:
 <programlisting>
-postmaster -c log_connections=yes -c log_destination='syslog'
+postgres -c log_connections=yes -c log_destination='syslog'
 </programlisting>
     Command-line options override any conflicting settings in
     <filename>postgresql.conf</filename>.  Note that this means you won't
@@ -116,7 +115,7 @@ env PGOPTIONS='-c geqo=off' psql
     and <xref linkend="sql-alterdatabase" endterm="sql-alterdatabase-title">,
     respectively, are used to configure these settings.  Per-database
     settings override anything received from the
-    <command>postmaster</command> command-line or the configuration
+    <command>postgres</command> command-line or the configuration
     file, and in turn are overridden by per-user settings; both are
     overridden by per-session settings.
    </para>
@@ -192,7 +191,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
          Specifies the main server configuration file
          (customarily called <filename>postgresql.conf</>).
-         This parameter can only be set on the postmaster command line.
+         This parameter can only be set on the postgres command line.
        </para>
       </listitem>
      </varlistentry>
@@ -234,8 +233,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Specifies the name of an additional process-id (PID) file that the
-        <application>postmaster</> should create for use by server
-        administration programs.
+        server should create for use by server administration programs.
         This parameter can only be set at server start.
        </para>
       </listitem>
@@ -252,7 +250,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       If you wish to keep the configuration files elsewhere than the
-      data directory, the postmaster's <option>-D</option>
+      data directory, the postgres <option>-D</option>
       command-line option or <envar>PGDATA</envar> environment variable
       must point to the directory containing the configuration files,
       and the <varname>data_directory</> parameter must be set in
@@ -269,7 +267,7 @@ SET ENABLE_SEQSCAN TO OFF;
       individually using the parameters <varname>config_file</>,
       <varname>hba_file</> and/or <varname>ident_file</>.
       <varname>config_file</> can only be specified on the 
-      <command>postmaster</command> command line, but the others can be
+      <command>postgres</command> command line, but the others can be
       set within the main configuration file.  If all three parameters plus
       <varname>data_directory</> are explicitly set, then it is not necessary
       to specify <option>-D</option> or <envar>PGDATA</envar>.
@@ -277,7 +275,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       When setting any of these parameters, a relative path will be interpreted
-      with respect to the directory in which the <command>postmaster</command>
+      with respect to the directory in which <command>postgres</command>
       is started.
      </para>
    </sect1>
@@ -2679,7 +2677,7 @@ SELECT * FROM parent WHERE key = 2400;
          below - anything else that looks like an escape is ignored. Other
          characters are copied straight to the log line. Some escapes are
          only recognized by session processes, and do not apply to
-         background processes such as the postmaster. <application>Syslog</>
+         background processes such as the main server process. <application>Syslog</>
          produces its own 
          time stamp and process ID information, so you probably do not want to
          use those escapes if you are using <application>syslog</>.
@@ -3467,7 +3465,7 @@ SELECT * FROM parent WHERE key = 2400;
 
        <para>
         Only superusers can change this setting, because it affects the
-        messages sent to the postmaster log as well as to the client.
+        messages sent to the server log as well as to the client.
        </para>
       </listitem>
      </varlistentry>

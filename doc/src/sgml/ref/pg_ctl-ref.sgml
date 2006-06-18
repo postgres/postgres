@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.32 2005/11/04 23:14:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.33 2006/06/18 15:38:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -92,7 +92,7 @@ PostgreSQL documentation
   <para>
    <application>pg_ctl</application> is a utility for starting,
    stopping, or restarting the <productname>PostgreSQL</productname>
-   backend server (<xref linkend="app-postmaster">), or displaying the
+   backend server (<xref linkend="app-postgres">), or displaying the
    status of a running server.  Although the server can be started
    manually, <application>pg_ctl</application> encapsulates tasks such
    as redirecting log output and properly detaching from the terminal
@@ -109,7 +109,7 @@ PostgreSQL documentation
    standard output (not standard error).  If no log file is chosen, the 
    standard output of <application>pg_ctl</application> should be redirected 
    to a file or piped to another process such as a log rotating program
-   like <application>rotatelogs</>; otherwise the <command>postmaster</command> 
+   like <application>rotatelogs</>; otherwise <command>postgres</command> 
    will write its output to the controlling terminal (from the background) 
    and will not leave the shell's process group.
   </para>
@@ -129,13 +129,13 @@ PostgreSQL documentation
 
   <para>
    <option>restart</option> mode effectively executes a stop followed
-   by a start.  This allows changing the <command>postmaster</command>
+   by a start.  This allows changing the <command>postgres</command>
    command-line options.
   </para>
 
   <para>
    <option>reload</option> mode simply sends the
-   <command>postmaster</command> process a <systemitem>SIGHUP</>
+   <command>postgres</command> process a <systemitem>SIGHUP</>
    signal, causing it to reread its configuration files
    (<filename>postgresql.conf</filename>,
    <filename>pg_hba.conf</filename>, etc.).  This allows changing of
@@ -215,7 +215,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies options to be passed directly to the
-        <command>postmaster</command> command.
+        <command>postgres</command> command.
        </para>
        <para>
 	The options are usually surrounded by single or double
@@ -228,12 +228,12 @@ PostgreSQL documentation
       <term><option>-p <replaceable class="parameter">path</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the location of the <filename>postmaster</filename>
-	executable.  By default the <filename>postmaster</filename> executable is taken from the same
+	Specifies the location of the <filename>postgres</filename>
+	executable.  By default the <filename>postgres</filename> executable is taken from the same
 	directory as <command>pg_ctl</command>, or failing that, the hard-wired
 	installation directory.  It is not necessary to use this
 	option unless you are doing something unusual and get errors
-	that the <filename>postmaster</filename> executable was not found.
+	that the <filename>postgres</filename> executable was not found.
        </para>
       </listitem>
      </varlistentry>
@@ -344,7 +344,7 @@ PostgreSQL documentation
   </variablelist>
 
   <para>
-   For others, see <xref linkend="app-postmaster">.
+   For others, see <xref linkend="app-postgres">.
   </para>
  </refsect1>
 
@@ -373,7 +373,7 @@ PostgreSQL documentation
       If this file exists in the data directory,
       <application>pg_ctl</application> (in <option>start</option>
       mode) will pass the contents of the file as options to the
-      <command>postmaster</command> command, unless overridden by the
+      <command>postgres</command> command, unless overridden by the
       <option>-o</option> option.
      </para>
     </listitem>
@@ -385,8 +385,8 @@ PostgreSQL documentation
     <listitem>
      <para>If this file exists in the data directory,
       <application>pg_ctl</application> (in <option>restart</option> mode) 
-      will pass the contents of the file as options to the 
-      <application>postmaster</application>, unless overridden 
+      will pass the contents of the file as options to
+      <application>postgres</application>, unless overridden 
       by the <option>-o</option> option. The contents of this file 
       are also displayed in <option>status</option> mode.
      </para>
@@ -500,9 +500,9 @@ PostgreSQL documentation
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl status</userinput>
 <computeroutput>
-pg_ctl: postmaster is running (pid: 13718)
+pg_ctl: server is running (pid: 13718)
 Command line was:
-/usr/local/pgsql/bin/postmaster '-D' '/usr/local/pgsql/data' '-p' '5433' '-B' '128'
+/usr/local/pgsql/bin/postgres '-D' '/usr/local/pgsql/data' '-p' '5433' '-B' '128'
 </computeroutput>
 </screen>
     This is the command line that would be invoked in restart mode.
@@ -515,7 +515,7 @@ Command line was:
   <title>See Also</title>
 
   <para>
-   <xref linkend="app-postmaster">
+   <xref linkend="app-postgres">
   </para>
  </refsect1>
 

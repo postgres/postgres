@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.22 2006/05/30 17:08:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.23 2006/06/18 15:38:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,7 @@ pgarch_forkexec(void)
 
 	av[ac++] = "postgres";
 
-	av[ac++] = "-forkarch";
+	av[ac++] = "--forkarch";
 
 	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 

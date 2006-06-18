@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.51 2006/04/06 18:54:36 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.52 2006/06/18 15:38:36 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -316,7 +316,7 @@ exclusion of those that don't.
      <![%standalone-ignore;[<xref linkend="guc-max-stack-depth">]]>
      <![%standalone-include;[<literal>max_stack_depth</literal>]]>
      parameter indicates.  This
-     can be fixed by running the postmaster under a higher stack
+     can be fixed by running the server under a higher stack
      size limit (4MB is recommended with the default value of 
      <varname>max_stack_depth</>).  If you are unable to do that, an
      alternative is to reduce the value of <varname>max_stack_depth</>.

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.321 2006/06/15 17:52:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.322 2006/06/18 15:38:35 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8935,7 +8935,7 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
       <row>
        <entry><literal><function>pg_postmaster_start_time</function>()</literal></entry>
        <entry><type>timestamp with time zone</type></entry>
-       <entry><command>postmaster</> start time</entry>
+       <entry>server start time</entry>
       </row>
 
       <row>
@@ -9044,7 +9044,7 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    <para>
      <function>pg_postmaster_start_time</function> returns the
      <type>timestamp with time zone</type> when the
-     <command>postmaster</> started.
+     server started.
    </para>
 
    <indexterm zone="functions-info">
@@ -9850,7 +9850,7 @@ SELECT set_config('log_statement_stats', 'off', false);
 
    <para>
     <function>pg_reload_conf</> sends a <systemitem>SIGHUP</> signal
-    to the <application>postmaster</>, causing the configuration files
+    to the server, causing the configuration files
     to be reloaded by all server processes.
    </para>
 

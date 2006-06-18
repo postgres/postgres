@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.371 2006/04/27 02:29:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.372 2006/06/18 15:38:36 petere Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -161,19 +161,19 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
   </para>
  </sect1>
 
- <sect1 id="postmaster-start">
+ <sect1 id="server-start">
   <title>Starting the Database Server</title>
 
   <para>
    Before anyone can access the database, you must start the database
    server. The database server program is called
-   <command>postmaster</command>.<indexterm><primary>postmaster</></>
-   The <command>postmaster</command> must know where to
+   <command>postgres</command>.<indexterm><primary>postgres</></>
+   The <command>postgres</command> program must know where to
    find the data it is supposed to use. This is done with the
    <option>-D</option> option. Thus, the simplest way to start the
    server is:
 <screen>
-$ <userinput>postmaster -D /usr/local/pgsql/data</userinput>
+$ <userinput>postgres -D /usr/local/pgsql/data</userinput>
 </screen>
    which will leave the server running in the foreground. This must be
    done while logged into the <productname>PostgreSQL</productname> user
@@ -183,10 +183,10 @@ $ <userinput>postmaster -D /usr/local/pgsql/data</userinput>
   </para>
 
   <para>
-   Normally it is better to start the <command>postmaster</command> in the
+   Normally it is better to start <command>postgres</command> in the
    background.  For this, use the usual shell syntax:
 <screen>
-$ <userinput>postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</userinput>
+$ <userinput>postgres -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</userinput>
 </screen>
    It is important to store the server's <systemitem>stdout</> and
    <systemitem>stderr</> output somewhere, as shown above. It will help
@@ -196,9 +196,9 @@ $ <userinput>postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</
   </para>
 
   <para>
-   The <command>postmaster</command> also takes a number of other
-   command line options. For more information, see the
-   <xref linkend="app-postmaster"> reference page
+   The <command>postgres</command> program also takes a number of other
+   command-line options. For more information, see the
+   <xref linkend="app-postgres"> reference page
    and <xref linkend="runtime-config"> below.
   </para>
 
@@ -212,7 +212,7 @@ pg_ctl start -l logfile
 </programlisting>
    will start the server in the background and put the output into the
    named log file. The <option>-D</option> option has the same meaning
-   here as in the <command>postmaster</command>. <command>pg_ctl</command>
+   here as for <command>postgres</command>. <command>pg_ctl</command>
    is also capable of stopping the server.
   </para>
 
@@ -262,7 +262,7 @@ su -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog' postgres
       to the file <filename>/etc/rc.local</filename>:
       <indexterm><primary>OpenBSD</><secondary>start script</secondary></>
 <programlisting>
-if [ -x /usr/local/pgsql/bin/pg_ctl -a -x /usr/local/pgsql/bin/postmaster ]; then
+if [ -x /usr/local/pgsql/bin/pg_ctl -a -x /usr/local/pgsql/bin/postgres ]; then
     su - -c '/usr/local/pgsql/bin/pg_ctl start -l /var/postgresql/log -s' postgres
     echo -n ' postgresql'
 fi
@@ -310,15 +310,15 @@ su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgs
   </para>
 
    <para>
-    While the <command>postmaster</command> is running, its
+    While the server is running, its
     <acronym>PID</acronym> is stored in the file
     <filename>postmaster.pid</filename> in the data directory. This is
-    used to prevent multiple <command>postmaster</command> processes
+    used to prevent multiple server instances from
     running in the same data directory and can also be used for
-    shutting down the <command>postmaster</command> process.
+    shutting down the server.
    </para>
 
-   <sect2 id="postmaster-start-failures">
+   <sect2 id="server-start-failures">
     <title>Server Start-up Failures</title>
 
     <para>
@@ -336,13 +336,13 @@ HINT:  Is another postmaster already running on port 5432? If not, wait a few se
 FATAL:  could not create TCP/IP listen socket
 </screen>
      This usually means just what it suggests: you tried to start
-     another <command>postmaster</command> on the same port where one is already running.
+     another server on the same port where one is already running.
      However, if the kernel error message is not <computeroutput>Address
      already in use</computeroutput> or some variant of that, there may
-     be a different problem. For example, trying to start a <command>postmaster</command>
+     be a different problem. For example, trying to start a server
      on a reserved port number may draw something like:
 <screen>
-$ <userinput>postmaster -p 666</userinput>
+$ <userinput>postgres -p 666</userinput>
 LOG:  could not bind IPv4 socket: Permission denied
 HINT:  Is another postmaster already running on port 666? If not, wait a few seconds and retry.
 FATAL:  could not create TCP/IP listen socket
@@ -495,7 +495,7 @@ psql: could not connect to server: No such file or directory
     <acronym>IPC</> limits, the server will refuse to start and
     should leave an instructive error message describing the problem
     encountered and what to do about it. (See also <xref
-    linkend="postmaster-start-failures">.) The relevant kernel
+    linkend="server-start-failures">.) The relevant kernel
     parameters are named consistently across different systems; <xref
     linkend="sysvipc-parameters"> gives an overview. The methods to set
     them, however, vary. Suggestions for some platforms are given below.
@@ -1181,7 +1181,7 @@ default:\
     optimal for <productname>PostgreSQL</productname>. Because of the
     way that the kernel implements memory overcommit, the kernel may
     terminate the <productname>PostgreSQL</productname> server (the
-    <filename>postmaster</filename> process) if the memory demands of
+    master server process) if the memory demands of
     another process cause the system to run out of virtual memory.
    </para>
 
@@ -1190,9 +1190,9 @@ default:\
     this (consult your system documentation and configuration on where
     to look for such a message):
 <programlisting>
-Out of Memory: Killed process 12345 (postmaster). 
+Out of Memory: Killed process 12345 (postgres). 
 </programlisting>
-    This indicates that the <filename>postmaster</filename> process
+    This indicates that the <filename>postgres</filename> process
     has been terminated due to memory pressure.
     Although existing database connections will continue to function
     normally, no new connections will be accepted.  To recover,
@@ -1237,17 +1237,17 @@ sysctl -w vm.overcommit_memory=2
  </sect1>
 
 
- <sect1 id="postmaster-shutdown">
+ <sect1 id="server-shutdown">
   <title>Shutting Down the Server</title>
 
-  <indexterm zone="postmaster-shutdown">
+  <indexterm zone="server-shutdown">
    <primary>shutdown</>
   </indexterm>
 
   <para>
    There are several ways to shut down the database server. You control
-   the type of shutdown by sending different signals to the
-   <command>postmaster</command> process.
+   the type of shutdown by sending different signals to the master
+   <command>postgres</command> process.
 
    <variablelist>
     <varlistentry>
@@ -1281,7 +1281,7 @@ sysctl -w vm.overcommit_memory=2
      <listitem>
       <para>
       This is the <firstterm>Immediate Shutdown</firstterm>, which
-      will cause the <command>postmaster</command> process to send a
+      will cause the master <command>postgres</command> process to send a
       <systemitem>SIGQUIT</systemitem> to all child processes and exit
       immediately, without properly shutting itself down. The child processes
       likewise exit immediately upon receiving
@@ -1301,7 +1301,7 @@ sysctl -w vm.overcommit_memory=2
 
   <para>
    Alternatively, you can send the signal directly using <command>kill</>.
-   The <acronym>PID</> of the <command>postmaster</command> process can be
+   The <acronym>PID</> of the <command>postgres</command> process can be
    found using the <command>ps</command> program, or from the file
    <filename>postmaster.pid</filename> in the data directory. For
    example, to do a fast shutdown:
@@ -1316,7 +1316,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      the server.  Doing so will prevent the server from releasing
      shared memory and semaphores, which may then have to be done
      manually before a new server can be started.  Furthermore,
-     <systemitem>SIGKILL</systemitem> kills the <command>postmaster</command>
+     <systemitem>SIGKILL</systemitem> kills the <command>postgres</command>
      process without letting it relay the signal to its subprocesses,
      so it will be necessary to kill the individual subprocesses by hand as
      well.

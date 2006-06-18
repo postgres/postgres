@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.102 2006/06/12 16:17:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.103 2006/06/18 15:38:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include <sys/proc.h>
 #undef ASSEMBLER
 #endif
+
 #if defined(__NetBSD__)
 #include <sys/param.h>
 #endif
@@ -45,88 +46,26 @@
 #include "libpq/pqsignal.h"
 #endif
 
+
 const char *progname;
+
+
+static void startup_hacks(const char *progname);
+static void help(const char *progname);
+static void check_root(const char *progname);
+static char *get_current_username(const char *progname);
+
+
 
 int
 main(int argc, char *argv[])
 {
-#ifndef WIN32
-	struct passwd *pw;
-#endif
-	char	   *pw_name_persist;
-
-	/*
-	 * Place platform-specific startup hacks here.	This is the right place to
-	 * put code that must be executed early in launch of either a postmaster,
-	 * a standalone backend, or a standalone bootstrap run. Note that this
-	 * code will NOT be executed when a backend or sub-bootstrap run is forked
-	 * by the postmaster.
-	 *
-	 * XXX The need for code here is proof that the platform in question is
-	 * too brain-dead to provide a standard C execution environment without
-	 * help. Avoid adding more here, if you can.
-	 */
-
-#if defined(__alpha)			/* no __alpha__ ? */
-#ifdef NOFIXADE
-	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS | UAC_NOPRINT};
-#endif
-#endif   /* __alpha */
-
-#ifdef WIN32
-	char	   *env_locale;
-#endif
-
 	progname = get_progname(argv[0]);
 
 	/*
-	 * On some platforms, unaligned memory accesses result in a kernel trap;
-	 * the default kernel behavior is to emulate the memory access, but this
-	 * results in a significant performance penalty. We ought to fix PG not to
-	 * make such unaligned memory accesses, so this code disables the kernel
-	 * emulation: unaligned accesses will result in SIGBUS instead.
+	 * Platform-specific startup hacks
 	 */
-#ifdef NOFIXADE
-
-#if defined(ultrix4)
-	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
-#endif
-
-#if defined(__alpha)			/* no __alpha__ ? */
-	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
-				   (unsigned long) NULL) < 0)
-		write_stderr("%s: setsysinfo failed: %s\n",
-					 argv[0], strerror(errno));
-#endif
-#endif   /* NOFIXADE */
-
-#if defined(WIN32)
-	{
-		WSADATA		wsaData;
-		int			err;
-
-		/* Make output streams unbuffered by default */
-		setvbuf(stdout, NULL, _IONBF, 0);
-		setvbuf(stderr, NULL, _IONBF, 0);
-
-		/* Prepare Winsock */
-		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (err != 0)
-		{
-			write_stderr("%s: WSAStartup failed: %d\n",
-						 argv[0], err);
-			exit(1);
-		}
-
-        /* In case of general protection fault, don't show GUI popup box */
-        SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
-	}
-#endif
-
-	/*
-	 * Not-quite-so-platform-specific startup environment checks. Still best
-	 * to minimize these.
-	 */
+	startup_hacks(progname);
 
 	/*
 	 * Remember the physical location of the initially given argv[] array for
@@ -153,23 +92,25 @@ main(int argc, char *argv[])
 	set_pglocale_pgservice(argv[0], "postgres");
 
 #ifdef WIN32
-
 	/*
 	 * Windows uses codepages rather than the environment, so we work around
 	 * that by querying the environment explicitly first for LC_COLLATE and
 	 * LC_CTYPE. We have to do this because initdb passes those values in the
 	 * environment. If there is nothing there we fall back on the codepage.
 	 */
+	{
+		char	   *env_locale;
 
-	if ((env_locale = getenv("LC_COLLATE")) != NULL)
-		pg_perm_setlocale(LC_COLLATE, env_locale);
-	else
-		pg_perm_setlocale(LC_COLLATE, "");
+		if ((env_locale = getenv("LC_COLLATE")) != NULL)
+			pg_perm_setlocale(LC_COLLATE, env_locale);
+		else
+			pg_perm_setlocale(LC_COLLATE, "");
 
-	if ((env_locale = getenv("LC_CTYPE")) != NULL)
-		pg_perm_setlocale(LC_CTYPE, env_locale);
-	else
-		pg_perm_setlocale(LC_CTYPE, "");
+		if ((env_locale = getenv("LC_CTYPE")) != NULL)
+			pg_perm_setlocale(LC_CTYPE, env_locale);
+		else
+			pg_perm_setlocale(LC_CTYPE, "");
+	}
 #else
 	pg_perm_setlocale(LC_COLLATE, "");
 	pg_perm_setlocale(LC_CTYPE, "");
@@ -195,80 +136,38 @@ main(int argc, char *argv[])
 	unsetenv("LC_ALL");
 
 	/*
-	 * Skip permission checks if we're just trying to do --help or --version;
-	 * otherwise root will get unhelpful failure messages from initdb.
+	 * Catch standard options before doing much else
 	 */
-	if (!(argc > 1
-		  && (strcmp(argv[1], "--help") == 0 ||
-			  strcmp(argv[1], "-?") == 0 ||
-			  strcmp(argv[1], "--version") == 0 ||
-			  strcmp(argv[1], "-V") == 0)))
+	if (argc > 1)
 	{
-#ifndef WIN32
-		/*
-		 * Make sure we are not running as root.
-		 */
-		if (geteuid() == 0)
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
-			write_stderr("\"root\" execution of the PostgreSQL server is not permitted.\n"
-						 "The server must be started under an unprivileged user ID to prevent\n"
-						 "possible system security compromise.  See the documentation for\n"
-				  "more information on how to properly start the server.\n");
-			exit(1);
+			help(progname);
+			exit(0);
 		}
-
-		/*
-		 * Also make sure that real and effective uids are the same. Executing
-		 * Postgres as a setuid program from a root shell is a security hole,
-		 * since on many platforms a nefarious subroutine could setuid back to
-		 * root if real uid is root.  (Since nobody actually uses Postgres as
-		 * a setuid program, trying to actively fix this situation seems more
-		 * trouble than it's worth; we'll just expend the effort to check for
-		 * it.)
-		 */
-		if (getuid() != geteuid())
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			write_stderr("%s: real and effective user IDs must match\n",
-						 argv[0]);
-			exit(1);
+			puts("postgres (PostgreSQL) " PG_VERSION);
+			exit(0);
 		}
-#else							/* WIN32 */
-		if (pgwin32_is_admin())
-		{
-			write_stderr("Execution of PostgreSQL by a user with administrative permissions is not\n"
-						 "permitted.\n"
-						 "The server must be started under an unprivileged user ID to prevent\n"
-						 "possible system security compromises.  See the documentation for\n"
-				  "more information on how to properly start the server.\n");
-			exit(1);
-		}
-#endif   /* !WIN32 */
 	}
 
 	/*
-	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain,
-	 * SubPostmasterMain, or BootstrapMain depending on the program name (and
-	 * possibly first argument) we were called with. The lack of consistency
-	 * here is historical.
+	 * Make sure we are not running as root.
 	 */
-	if (strcmp(progname, "postmaster") == 0)
-	{
-		/* Called as "postmaster" */
-		exit(PostmasterMain(argc, argv));
-	}
+	check_root(progname);
 
 	/*
-	 * If the first argument begins with "-fork", then invoke
-	 * SubPostmasterMain.  This is used for forking postmaster child processes
-	 * on systems where we can't simply fork.
+	 * Dispatch to one of various subprograms depending on first
+	 * argument.
 	 */
+
 #ifdef EXEC_BACKEND
-	if (argc > 1 && strncmp(argv[1], "-fork", 5) == 0)
+	if (argc > 1 && strncmp(argv[1], "--fork", 6) == 0)
 		exit(SubPostmasterMain(argc, argv));
 #endif
 
 #ifdef WIN32
-
 	/*
 	 * Start our win32 signal implementation
 	 *
@@ -278,47 +177,223 @@ main(int argc, char *argv[])
 	pgwin32_signal_initialize();
 #endif
 
-	/*
-	 * If the first argument is "-boot", then invoke bootstrap mode. (This
-	 * path is taken only for a standalone bootstrap process.)
-	 */
-	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
+	if (argc > 1 && strcmp(argv[1], "--boot") == 0)
 		exit(BootstrapMain(argc, argv));
 
-	/*
-	 * If the first argument is "--describe-config", then invoke runtime
-	 * configuration option display mode.
-	 */
 	if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
 		exit(GucInfoMain());
 
+	if (argc > 1 && strcmp(argv[1], "--single") == 0)
+		exit(PostgresMain(argc, argv, get_current_username(progname)));
+
+	exit(PostmasterMain(argc, argv));
+}
+
+
+
+/*
+ * Place platform-specific startup hacks here.  This is the right
+ * place to put code that must be executed early in launch of either a
+ * postmaster, a standalone backend, or a standalone bootstrap run.
+ * Note that this code will NOT be executed when a backend or
+ * sub-bootstrap run is forked by the server.
+ *
+ * XXX The need for code here is proof that the platform in question
+ * is too brain-dead to provide a standard C execution environment
+ * without help.  Avoid adding more here, if you can.
+ */
+static void
+startup_hacks(const char *progname)
+{
+#if defined(__alpha)			/* no __alpha__ ? */
+#ifdef NOFIXADE
+	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS | UAC_NOPRINT};
+#endif
+#endif   /* __alpha */
+
+
 	/*
-	 * Otherwise we're a standalone backend.  Invoke PostgresMain, specifying
-	 * current userid as the "authenticated" Postgres user name.
+	 * On some platforms, unaligned memory accesses result in a kernel
+	 * trap; the default kernel behavior is to emulate the memory
+	 * access, but this results in a significant performance penalty.
+	 * We ought to fix PG not to make such unaligned memory accesses,
+	 * so this code disables the kernel emulation: unaligned accesses
+	 * will result in SIGBUS instead.
 	 */
+#ifdef NOFIXADE
+
+#if defined(ultrix4)
+	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
+#endif
+
+#if defined(__alpha)			/* no __alpha__ ? */
+	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
+				   (unsigned long) NULL) < 0)
+		write_stderr("%s: setsysinfo failed: %s\n",
+					 progname, strerror(errno));
+#endif
+
+#endif /* NOFIXADE */
+
+
+#ifdef WIN32
+	{
+		WSADATA		wsaData;
+		int			err;
+
+		/* Make output streams unbuffered by default */
+		setvbuf(stdout, NULL, _IONBF, 0);
+		setvbuf(stderr, NULL, _IONBF, 0);
+
+		/* Prepare Winsock */
+		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (err != 0)
+		{
+			write_stderr("%s: WSAStartup failed: %d\n",
+						 progname, err);
+			exit(1);
+		}
+
+		/* In case of general protection fault, don't show GUI popup box */
+        SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+	}
+#endif /* WIN32 */
+}
+
+
+
+static void
+help(const char *progname)
+{
+	printf(_("%s is the PostgreSQL server.\n\n"), progname);
+	printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
+	printf(_("Options:\n"));
+#ifdef USE_ASSERT_CHECKING
+	printf(_("  -A 1|0          enable/disable run-time assert checking\n"));
+#endif
+	printf(_("  -B NBUFFERS     number of shared buffers\n"));
+	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
+	printf(_("  -d 1-5          debugging level\n"));
+	printf(_("  -D DATADIR      database directory\n"));
+	printf(_("  -e              use European date input format (DMY)\n"));
+	printf(_("  -F              turn fsync off\n"));
+	printf(_("  -h HOSTNAME     host name or IP address to listen on\n"));
+	printf(_("  -i              enable TCP/IP connections\n"));
+	printf(_("  -k DIRECTORY    Unix-domain socket location\n"));
+#ifdef USE_SSL
+	printf(_("  -l              enable SSL connections\n"));
+#endif
+	printf(_("  -N MAX-CONNECT  maximum number of allowed connections\n"));
+	printf(_("  -o OPTIONS      pass \"OPTIONS\" to each server process (obsolete)\n"));
+	printf(_("  -p PORT         port number to listen on\n"));
+	printf(_("  -s              show statistics after each query\n"));
+	printf(_("  -S WORK-MEM     set amount of memory for sorts (in kB)\n"));
+	printf(_("  --NAME=VALUE    set run-time parameter\n"));
+	printf(_("  --describe-config  describe configuration parameters, then exit\n"));
+	printf(_("  --help          show this help, then exit\n"));
+	printf(_("  --version       output version information, then exit\n"));
+
+	printf(_("\nDeveloper options:\n"));
+	printf(_("  -f s|i|n|m|h    forbid use of some plan types\n"));
+	printf(_("  -n              do not reinitialize shared memory after abnormal exit\n"));
+	printf(_("  -O              allow system table structure changes\n"));
+	printf(_("  -P              disable system indexes\n"));
+	printf(_("  -t pa|pl|ex     show timings after each query\n"));
+	printf(_("  -T              send SIGSTOP to all backend servers if one dies\n"));
+	printf(_("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
+
+	printf(_("\nOptions for single-user mode:\n"));
+	printf(_("  --single        selects single-user mode (must be first argument)\n"));
+	printf(_("  DBNAME          database name (defaults to user name)\n"));
+	printf(_("  -d 0-5          override debugging level\n"));
+	printf(_("  -E              echo statement before execution\n"));
+	printf(_("  -j              do not use newline as interactive query delimiter\n"));
+	printf(_("  -r FILENAME     send stdout and stderr to given file\n"));
+
+	printf(_("\nOptions for bootstrapping mode:\n"));
+	printf(_("  --boot          selects bootstrapping mode (must be first argument)\n"));
+	printf(_("  DBNAME          database name (mandatory argument in bootstrapping mode)\n"));
+	printf(_("  -r FILENAME     send stdout and stderr to given file\n"));
+	printf(_("  -x NUM          internal use\n"));
+
+	printf(_("\nPlease read the documentation for the complete list of run-time\n"
+			 "configuration settings and how to set them on the command line or in\n"
+			 "the configuration file.\n\n"
+			 "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
+}
+
+
+
+static void
+check_root(const char *progname)
+{
 #ifndef WIN32
+	if (geteuid() == 0)
+	{
+		write_stderr("\"root\" execution of the PostgreSQL server is not permitted.\n"
+					 "The server must be started under an unprivileged user ID to prevent\n"
+					 "possible system security compromise.  See the documentation for\n"
+					 "more information on how to properly start the server.\n");
+		exit(1);
+	}
+
+	/*
+	 * Also make sure that real and effective uids are the same.
+	 * Executing as a setuid program from a root shell is a security
+	 * hole, since on many platforms a nefarious subroutine could
+	 * setuid back to root if real uid is root.  (Since nobody
+	 * actually uses postgres as a setuid program, trying to
+	 * actively fix this situation seems more trouble than it's worth;
+	 * we'll just expend the effort to check for it.)
+	 */
+	if (getuid() != geteuid())
+	{
+		write_stderr("%s: real and effective user IDs must match\n",
+					 progname);
+		exit(1);
+	}
+#else /* WIN32 */
+	if (pgwin32_is_admin())
+	{
+		write_stderr("Execution of PostgreSQL by a user with administrative permissions is not\n"
+					 "permitted.\n"
+					 "The server must be started under an unprivileged user ID to prevent\n"
+					 "possible system security compromises.  See the documentation for\n"
+					 "more information on how to properly start the server.\n");
+		exit(1);
+	}
+#endif /* WIN32 */
+}
+
+
+
+static char *
+get_current_username(const char *progname)
+{
+#ifndef WIN32
+	struct passwd *pw;
+
 	pw = getpwuid(geteuid());
 	if (pw == NULL)
 	{
 		write_stderr("%s: invalid effective UID: %d\n",
-					 argv[0], (int) geteuid());
+					 progname, (int) geteuid());
 		exit(1);
 	}
-	/* Allocate new memory because later getpwuid() calls can overwrite it */
-	pw_name_persist = strdup(pw->pw_name);
+	/* Allocate new memory because later getpwuid() calls can overwrite it. */
+	return strdup(pw->pw_name);
 #else
+	long		namesize = 256 /* UNLEN */ + 1;
+	char	   *name;
+
+	name = malloc(namesize);
+	if (!GetUserName(name, &namesize))
 	{
-		long		namesize = 256 /* UNLEN */ + 1;
-
-		pw_name_persist = malloc(namesize);
-		if (!GetUserName(pw_name_persist, &namesize))
-		{
-			write_stderr("%s: could not determine user name (GetUserName failed)\n",
-						 argv[0]);
-			exit(1);
-		}
+		write_stderr("%s: could not determine user name (GetUserName failed)\n",
+					 progname);
+		exit(1);
 	}
-#endif   /* WIN32 */
 
-	exit(PostgresMain(argc, argv, pw_name_persist));
+	return name;
+#endif
 }

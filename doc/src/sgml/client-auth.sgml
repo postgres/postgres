@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.90 2006/06/16 15:16:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.91 2006/06/18 15:38:35 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -436,10 +436,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 
   <para>
    The <filename>pg_hba.conf</filename> file is read on start-up and when
-   the main server process (<command>postmaster</>) receives a
+   the main server process receives a
    <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
    signal. If you edit the file on an
-   active system, you will need to signal the <command>postmaster</>
+   active system, you will need to signal the server
    (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
    re-read the file.
   </para>
@@ -866,10 +866,10 @@ local   db1,db2,@demodbs  all                         md5
 
   <para>
    The <filename>pg_ident.conf</filename> file is read on start-up and
-   when the main server process (<command>postmaster</>) receives a
+   when the main server process receives a
    <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
    signal. If you edit the file on an
-   active system, you will need to signal the <command>postmaster</>
+   active system, you will need to signal the server
    (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
    re-read the file.
   </para>

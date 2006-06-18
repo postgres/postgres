@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.24 2006/06/07 22:24:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.25 2006/06/18 15:38:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -534,7 +534,7 @@ syslogger_forkexec(void)
 	char		numbuf[2][32];
 
 	av[ac++] = "postgres";
-	av[ac++] = "-forklog";
+	av[ac++] = "--forklog";
 	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 
 	/* static variables (those not passed by write_backend_variables) */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.40 2006/03/10 19:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.41 2006/06/18 15:38:36 petere Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>
@@ -76,8 +76,8 @@
        connections to the database from client applications, and
        performs actions on the database on behalf of the clients.  The
        database server program is called
-       <filename>postmaster</filename>.
-       <indexterm><primary>postmaster</primary></indexterm>
+       <filename>postgres</filename>.
+       <indexterm><primary>postgres</primary></indexterm>
       </para>
      </listitem>
 
@@ -112,8 +112,8 @@
     starts (<quote>forks</quote>) a new process for each connection.
     From that point on, the client and the new server process
     communicate without intervention by the original
-    <filename>postmaster</filename> process.  Thus, the
-    <filename>postmaster</filename> is always running, waiting for
+    <filename>postgres</filename> process.  Thus, the
+    master server process is always running, waiting for
     client connections, whereas client and associated server processes
     come and go.  (All of this is of course invisible to the user.  We
     only mention it here for completeness.)
