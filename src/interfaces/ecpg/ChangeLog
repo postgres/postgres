@@ -1996,15 +1996,24 @@ Tu Feb  7 18:48:14 CET 2006
 
 Fri, 17 Mar 2006 16:38:19 +0100
 
-	- Fixed bug 2330: Wrong error code in case of a duplicate key
+	- Fixed bug 2330: Wrong error code in case of a duplicate key.
 
 Mo Apr 24 11:40:05 CEST 2006
 
 	- Fixed memory leak bugs found by Martijn Oosterhout.
 
-Mi Mai 31 10:10:36 CEST 2006
+We Mai 31 10:10:36 CEST 2006
 
-	- Fixed PGTYPESdate_from_timestamp because some characters got lost there
+	- Fixed PGTYPESdate_from_timestamp because some characters got lost there.
+
+Tu Jun  6 12:09:56 CEST 2006
+
+	- Fixed two more memory leaks in ecpglib.
+	- Synced parser.
+
+Mo Jun 19 11:15:50 CEST 2006
+
+	- Do not use already free'ed errmsg, bug found by Joachim Wieland
+	  <joachim.wieland@credativ.de>
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
-
