@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.53.4.2 2005/11/01 15:32:52 adunstan Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.53.4.3 2006/06/19 14:25:01 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -436,7 +436,7 @@ then
     if [ "$unix_sockets" = no ]; then
         postmaster_options="$postmaster_options -c listen_addresses=$hostname"
     else
-        postmaster_options="$postmaster_options -c listen_addresses=''"
+        postmaster_options="$postmaster_options -c listen_addresses="
     fi
     "$bindir/postmaster" -D "$PGDATA" -F $postmaster_options >"$LOGDIR/postmaster.log" 2>&1 &
     postmaster_pid=$!
