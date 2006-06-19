@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.33 2006/06/18 15:38:35 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.34 2006/06/19 01:51:21 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -109,9 +109,14 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    <productname>PostgreSQL</productname>'s <firstterm>statistics collector</>
    is a subsystem that supports collection and reporting of information about
    server activity.  Presently, the collector can count accesses to tables
-   and indexes in both disk-block and individual-row terms.  It also supports
-   determining the exact command currently being executed by other server
-   processes.
+   and indexes in both disk-block and individual-row terms.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname> also supports determining the exact
+   command currently being executed by other server processes.  This is an
+   independent facility that can be enabled or disabled whether or not
+   block-level and row-level statistics are being collected.
   </para>
 
  <sect2 id="monitoring-stats-setup">
@@ -136,15 +141,21 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   The parameters <xref linkend="guc-stats-command-string">,
-   <xref linkend="guc-stats-block-level">, and <xref
+   The parameters <xref linkend="guc-stats-block-level"> and <xref
    linkend="guc-stats-row-level"> control how much information is
    actually sent to the collector and thus determine how much run-time
    overhead occurs.  These respectively determine whether a server
-   process sends its current command string, disk-block-level access
-   statistics, and row-level access statistics to the collector.
+   process tracks disk-block-level access
+   statistics and row-level access statistics and sends these to the collector.
    Additionally, per-database transaction commit and abort statistics
-   are collected if any of these parameters are set.
+   are collected if either of these parameters are set.
+  </para>
+
+  <para>
+   The parameter <xref linkend="guc-stats-command-string"> enables monitoring
+   of the current command being executed by any server process.
+   The statistics collector subprocess need not be running to enable this
+   feature.
   </para>
   
   <para>
@@ -165,7 +176,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      very few statistics are collected in the default
      configuration. Enabling one or more of these configuration
      variables will significantly enhance the amount of useful data
-     produced by the statistics collector, at the expense of
+     produced by the statistics facilities, at the expense of
      additional run-time overhead.
     </para>
    </note>
@@ -190,10 +201,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    progress does not affect the displayed totals.  Also, the collector itself
    emits a new report at most once per <varname>PGSTAT_STAT_INTERVAL</varname>
    milliseconds (500 unless altered while building the server).  So the
-   displayed information lags behind actual activity.  Current-query
-   information is reported to the collector immediately, but is still subject
-   to the <varname>PGSTAT_STAT_INTERVAL</varname> delay before it becomes
-   visible.
+   displayed information lags behind actual activity.  However, current-query
+   information collected by <varname>stats_command_string</varname> is
+   always up-to-date.
   </para>
 
   <para>
@@ -202,7 +212,10 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    the collector process and then continues to use this snapshot for all
    statistical views and functions until the end of its current transaction.
    So the statistics will appear not to change as long as you continue the
-   current transaction.
+   current transaction.  Similarly, information about the current queries of
+   all processes is collected when any such information is first requested
+   within a transaction, and the same information will be displayed throughout
+   the transaction.
    This is a feature, not a bug, because it allows you to perform several
    queries on the statistics and correlate the results without worrying that
    the numbers are changing underneath you.  But if you want to see new
@@ -232,9 +245,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       parameter <varname>stats_command_string</varname> has been
       turned on.  Furthermore, these columns read as null unless the
       user examining the view is a superuser or the same as the user
-      owning the process being reported on.  (Note that because of the
-      collector's reporting delay, the current query will only be
-      up-to-date for long-running queries.)</entry>
+      owning the process being reported on.
+     </entry>
      </row>
 
      <row>
@@ -549,7 +561,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_last_vacuum_time</function>(<type>oid</type>)</literal></entry>
       <entry><type>timestamptz</type></entry>
       <entry>
-       Time of the last vacuum initiated by the user
+       Time of the last vacuum initiated by the user on this table
       </entry>
      </row>
 
@@ -557,7 +569,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_last_autovacuum_time</function>(<type>oid</type>)</literal></entry>
       <entry><type>timestamptz</type></entry>
       <entry>
-       Time of the last vacuum initiated by the autovacuum daemon
+       Time of the last vacuum initiated by the autovacuum daemon on this table
       </entry>
      </row>
 
@@ -565,7 +577,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_last_analyze_time</function>(<type>oid</type>)</literal></entry>
       <entry><type>timestamptz</type></entry>
       <entry>
-       Time of the last analyze initiated by the user
+       Time of the last analyze initiated by the user on this table
       </entry>
      </row>
 
@@ -573,7 +585,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_last_autoanalyze_time</function>(<type>oid</type>)</literal></entry>
       <entry><type>timestamptz</type></entry>
       <entry>
-       Time of the last analyze initiated by the autovacuum daemon
+       Time of the last analyze initiated by the autovacuum daemon on this
+       table
       </entry>
      </row>
 
@@ -677,7 +690,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_reset</function>()</literal></entry>
       <entry><type>boolean</type></entry>
       <entry>
-       Reset all currently collected statistics
+       Reset all block-level and row-level statistics to zero
       </entry>
      </row>
     </tbody>

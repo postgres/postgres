@@ -320,20 +320,20 @@
 # RUNTIME STATISTICS
 #---------------------------------------------------------------------------
 
+# - Query/Index Statistics Collector -
+
+#stats_command_string = off
+#stats_start_collector = on		# needed for block or row stats
+#stats_block_level = off
+#stats_row_level = off
+#stats_reset_on_server_start = off
+
 # - Statistics Monitoring -
 
 #log_parser_stats = off
 #log_planner_stats = off
 #log_executor_stats = off
 #log_statement_stats = off
-
-# - Query/Index Statistics Collector -
-
-#stats_start_collector = on
-#stats_command_string = off
-#stats_block_level = off
-#stats_row_level = off
-#stats_reset_on_server_start = off
 
 
 #---------------------------------------------------------------------------

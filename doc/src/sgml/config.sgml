@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.65 2006/06/18 15:38:35 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.66 2006/06/19 01:51:21 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2845,43 +2845,6 @@ SELECT * FROM parent WHERE key = 2400;
    <sect1 id="runtime-config-statistics">
     <title>Run-Time Statistics</title>
 
-    <sect2 id="runtime-config-statistics-monitor">
-     <title>Statistics Monitoring</title>
-     <variablelist>
-
-     <varlistentry>
-      <term><varname>log_statement_stats</varname> (<type>boolean</type>)</term>
-      <term><varname>log_parser_stats</varname> (<type>boolean</type>)</term>
-      <term><varname>log_planner_stats</varname> (<type>boolean</type>)</term>
-      <term><varname>log_executor_stats</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>log_statement_stats</> configuration parameter</primary>
-      </indexterm>
-      <indexterm>
-       <primary><varname>log_parser_stats</> configuration parameter</primary>
-      </indexterm>
-      <indexterm>
-       <primary><varname>log_planner_stats</> configuration parameter</primary>
-      </indexterm>
-      <indexterm>
-       <primary><varname>log_executor_stats</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        For each query, write performance statistics of the respective
-        module to the server log. This is a crude profiling
-        instrument.  <varname>log_statement_stats</varname> reports total
-        statement statistics, while the others report per-module statistics.
-        <varname>log_statement_stats</varname> cannot be enabled together with
-        any of the per-module options.  All of these options are disabled by
-        default.   Only superusers can change these settings.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     </variablelist>
-
-    </sect2>
     <sect2 id="runtime-config-statistics-collector">
      <title>Query and Index Statistics Collector</title>
 
@@ -2893,7 +2856,37 @@ SELECT * FROM parent WHERE key = 2400;
       Refer to <xref linkend="monitoring"> for more information.
      </para>
 
+     <note>
+     <para>
+      As of <productname>PostgreSQL</productname> 8.2,
+      <varname>stats_command_string</varname> controls a separate data
+      collection mechanism that can be turned on or off independently
+      of whether the statistics-collection subprocess is running.
+      The subprocess is only needed to support collection of
+      block-level or row-level statistics.
+     </para>
+     </note>
+
      <variablelist>
+
+     <varlistentry id="guc-stats-command-string" xreflabel="stats_command_string">
+      <term><varname>stats_command_string</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>stats_command_string</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables the collection of information on the currently
+        executing command of each session, along with the time at
+        which that command began execution. This parameter is off by
+        default. Note that even when enabled, this information is not
+        visible to all users, only to superusers and the user owning
+        the session being reported on; so it should not represent a
+        security risk.
+        Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry id="guc-stats-start-collector" xreflabel="stats_start_collector">
       <term><varname>stats_start_collector</varname> (<type>boolean</type>)</term>
@@ -2910,25 +2903,6 @@ SELECT * FROM parent WHERE key = 2400;
         subprocess cannot be started or stopped on-the-fly.  (However, the
         extent to which statistics are actually gathered can be changed while
         the server is running, so long as the subprocess exists.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-stats-command-string" xreflabel="stats_command_string">
-      <term><varname>stats_command_string</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>stats_command_string</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Enables the collection of statistics on the currently
-        executing command of each session, along with the time at
-        which that command began execution. This parameter is off by
-        default. Note that even when enabled, this information is not
-        visible to all users, only to superusers and the user owning
-        the session being reported on; so it should not represent a
-        security risk.
-        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -2968,15 +2942,53 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        If on, collected statistics are zeroed out whenever the server
-        is restarted. If off, statistics are accumulated across server
-        restarts. The default is <literal>off</>. This parameter can only 
-        be set at server start.
+        If on, collected block-level and row-level statistics are zeroed out
+        whenever the server is restarted. If off, statistics are accumulated
+        across server restarts. This parameter is off by default.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
 
      </variablelist>
+    </sect2>
+
+    <sect2 id="runtime-config-statistics-monitor">
+     <title>Statistics Monitoring</title>
+     <variablelist>
+
+     <varlistentry>
+      <term><varname>log_statement_stats</varname> (<type>boolean</type>)</term>
+      <term><varname>log_parser_stats</varname> (<type>boolean</type>)</term>
+      <term><varname>log_planner_stats</varname> (<type>boolean</type>)</term>
+      <term><varname>log_executor_stats</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>log_statement_stats</> configuration parameter</primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>log_parser_stats</> configuration parameter</primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>log_planner_stats</> configuration parameter</primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>log_executor_stats</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        For each query, write performance statistics of the respective
+        module to the server log. This is a crude profiling
+        instrument.  <varname>log_statement_stats</varname> reports total
+        statement statistics, while the others report per-module statistics.
+        <varname>log_statement_stats</varname> cannot be enabled together with
+        any of the per-module options.  All of these options are disabled by
+        default.   Only superusers can change these settings.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     </variablelist>
+
     </sect2>
    </sect1>
 

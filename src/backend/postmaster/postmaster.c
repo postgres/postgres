@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.486 2006/06/18 15:38:37 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.487 2006/06/19 01:51:21 tgl Exp $
  *
  * NOTES
  *
@@ -2109,9 +2109,6 @@ reaper(SIGNAL_ARGS)
 		{
 			AutoVacPID = 0;
 			autovac_stopped();
-			/* Tell the collector about process termination */
-			pgstat_beterm(pid);
-
 			if (exitstatus != 0)
 				HandleChildCrash(pid, exitstatus,
 								 _("autovacuum process"));
@@ -2252,8 +2249,6 @@ CleanupBackend(int pid,
 #ifdef EXEC_BACKEND
 			ShmemBackendArrayRemove(pid);
 #endif
-			/* Tell the collector about backend termination */
-			pgstat_beterm(pid);
 			break;
 		}
 	}
@@ -2299,8 +2294,6 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 #ifdef EXEC_BACKEND
 			ShmemBackendArrayRemove(pid);
 #endif
-			/* Tell the collector about backend termination */
-			pgstat_beterm(pid);
 			/* Keep looping so we can signal remaining backends */
 		}
 		else

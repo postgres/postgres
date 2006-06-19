@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.321 2006/06/05 02:49:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.322 2006/06/19 01:51:21 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -701,16 +701,6 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"stats_command_string", PGC_SUSET, STATS_COLLECTOR,
-			gettext_noop("Collects statistics about executing commands."),
-			gettext_noop("Enables the collection of statistics on the currently "
-					"executing command of each session, along with the time "
-						 "at which that command began execution.")
-		},
-		&pgstat_collect_querystring,
-		false, NULL, NULL
-	},
-	{
 		{"stats_row_level", PGC_SUSET, STATS_COLLECTOR,
 			gettext_noop("Collects row-level statistics on database activity."),
 			NULL
@@ -724,6 +714,17 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&pgstat_collect_blocklevel,
+		false, NULL, NULL
+	},
+
+	{
+		{"stats_command_string", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Collects information about executing commands."),
+			gettext_noop("Enables the collection of information on the currently "
+					"executing command of each session, along with the time "
+						 "at which that command began execution.")
+		},
+		&pgstat_collect_querystring,
 		false, NULL, NULL
 	},
 
