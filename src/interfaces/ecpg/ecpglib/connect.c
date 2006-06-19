@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.24.4.2 2005/11/30 12:51:06 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.24.4.3 2006/06/19 09:20:22 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -451,10 +451,6 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		const char *errmsg = PQerrorMessage(this->connection);
 		char	   *db = realname ? realname : "<DEFAULT>";
 
-		ecpg_finish(this);
-#ifdef ENABLE_THREAD_SAFETY
-		pthread_mutex_unlock(&connections_mutex);
-#endif
 		ECPGlog("connect: could not open database %s on %s port %s %s%s%s%s in line %d\n\t%s\n",
 				db,
 				host ? host : "<DEFAULT>",
@@ -462,6 +458,11 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				options ? "with options " : "", options ? options : "",
 				user ? "for user " : "", user ? user : "",
 				lineno, errmsg);
+
+		ecpg_finish(this);
+#ifdef ENABLE_THREAD_SAFETY
+		pthread_mutex_unlock(&connections_mutex);
+#endif
 
 		ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, db);
 		if (host)
