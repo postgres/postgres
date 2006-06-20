@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.171 2006/05/04 16:07:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.172 2006/06/20 19:56:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "catalog/pg_authid.h"
 #include "commands/comment.h"
 #include "commands/user.h"
-#include "libpq/crypt.h"
+#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.151 2006/03/06 17:41:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.152 2006/06/20 19:56:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "libpq/crypt.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"

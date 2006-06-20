@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.68 2006/03/05 15:58:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.69 2006/06/20 19:56:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 #include "libpq/crypt.h"
 #include "libpq/libpq.h"
+#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "nodes/pg_list.h"

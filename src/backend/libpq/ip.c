@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.35 2006/06/07 22:24:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.36 2006/06/20 19:56:52 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -20,7 +20,6 @@
 /* This is intended to be used in both frontend and backend, so use c.h */
 #include "c.h"
 
-#include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
