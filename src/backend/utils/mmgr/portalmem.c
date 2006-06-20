@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.87 2006/04/25 14:11:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.88 2006/06/20 22:52:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,7 +202,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	portal->atStart = true;
 	portal->atEnd = true;		/* disallow fetches until query is set */
 	portal->visible = true;
-	portal->creation_time = GetCurrentTimestamp();
+	portal->creation_time = GetCurrentStatementStartTimestamp();
 
 	/* put portal in table (sets portal->name) */
 	PortalHashTableInsert(portal, name);

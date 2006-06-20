@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.55 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.56 2006/06/20 22:52:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 
 #include "libpq/hba.h"
 #include "libpq/pqcomm.h"
+#include "utils/timestamp.h"
 
 
 typedef enum CAC_state
@@ -80,7 +81,8 @@ typedef struct Port
 	 * but since it gets used by elog.c in the same way as database_name and
 	 * other members of this struct, we may as well keep it here.
 	 */
-	struct timeval session_start;		/* for session duration logging */
+	TimestampTz	SessionStartTime;	/* backend start time */
+	time_t		session_start;		/* same, in time_t format */
 
 	/*
 	 * TCP keepalive settings.
@@ -97,7 +99,8 @@ typedef struct Port
 	int			keepalives_count;
 
 	/*
-	 * SSL structures
+	 * SSL structures (keep these last so that USE_SSL doesn't affect
+	 * locations of other fields)
 	 */
 #ifdef USE_SSL
 	SSL		   *ssl;

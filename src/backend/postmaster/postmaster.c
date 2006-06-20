@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.487 2006/06/19 01:51:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.488 2006/06/20 22:52:00 tgl Exp $
  *
  * NOTES
  *
@@ -99,7 +99,6 @@
 #include "commands/async.h"
 #include "lib/dllist.h"
 #include "libpq/auth.h"
-#include "libpq/crypt.h"
 #include "libpq/libpq.h"
 #include "libpq/pqcomm.h"
 #include "libpq/pqsignal.h"
@@ -2609,8 +2608,9 @@ BackendInitialize(Port *port)
 
 	ClientAuthInProgress = true;	/* limit visibility of log messages */
 
-	/* save start time for end of session reporting */
-	gettimeofday(&(port->session_start), NULL);
+	/* save process start time */
+	port->SessionStartTime = GetCurrentTimestamp();
+	port->session_start = timestamptz_to_time_t(port->SessionStartTime);
 
 	/* set these to empty in case they are needed before we set them up */
 	port->remote_host = "";
@@ -2749,6 +2749,8 @@ BackendRun(Port *port)
 	char	  **av;
 	int			maxac;
 	int			ac;
+	long		secs;
+	int			usecs;
 	char		protobuf[32];
 	int			i;
 
@@ -2758,7 +2760,9 @@ BackendRun(Port *port)
 	 * a new random sequence in the random() library function.
 	 */
 	random_seed = 0;
-	srandom((unsigned int) (MyProcPid ^ port->session_start.tv_usec));
+	/* slightly hacky way to get integer microseconds part of timestamptz */
+	TimestampDifference(0, port->SessionStartTime, &secs, &usecs);
+	srandom((unsigned int) (MyProcPid ^ usecs));
 
 	/* ----------------
 	 * Now, build the argv vector that will be given to PostgresMain.

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.220 2006/04/25 00:25:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.221 2006/06/20 22:51:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,9 +167,10 @@ static SubTransactionId currentSubTransactionId;
 static CommandId currentCommandId;
 
 /*
- * This is the value of now(), ie, the transaction start time.
- * This does not change as we enter and exit subtransactions, so we don't
- * keep it inside the TransactionState stack.
+ * xactStartTimestamp is the value of transaction_timestamp().
+ * stmtStartTimestamp is the value of statement_timestamp().
+ * These do not change as we enter and exit subtransactions, so we don't
+ * keep them inside the TransactionState stack.
  */
 static TimestampTz xactStartTimestamp;
 static TimestampTz stmtStartTimestamp;
@@ -1386,7 +1387,9 @@ StartTransaction(void)
 	XactLockTableInsert(s->transactionId);
 
 	/*
-	 * now() and statement_timestamp() should be the same time
+	 * set transaction_timestamp() (a/k/a now()).  We want this to be the
+	 * same as the first command's statement_timestamp(), so don't do a
+	 * fresh GetCurrentTimestamp() call (which'd be expensive anyway).
 	 */
 	xactStartTimestamp = stmtStartTimestamp;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.163 2006/04/25 00:25:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.164 2006/06/20 22:52:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -963,6 +963,39 @@ GetCurrentTimestamp(void)
 	return result;
 }
 
+/*
+ * TimestampDifference -- convert the difference between two timestamps
+ *		into integer seconds and microseconds
+ *
+ * Both inputs must be ordinary finite timestamps (in current usage,
+ * they'll be results from GetCurrentTimestamp()).
+ *
+ * We expect start_time <= stop_time.  If not, we return zeroes; for current
+ * callers there is no need to be tense about which way division rounds on
+ * negative inputs.
+ */
+void
+TimestampDifference(TimestampTz start_time, TimestampTz stop_time,
+					long *secs, int *microsecs)
+{
+	TimestampTz diff = stop_time - start_time;
+
+	if (diff <= 0)
+	{
+		*secs = 0;
+		*microsecs = 0;
+	}
+	else
+	{
+#ifdef HAVE_INT64_TIMESTAMP
+		*secs = (long) (diff / USECS_PER_SEC);
+		*microsecs = (int) (diff % USECS_PER_SEC);
+#else
+		*secs = (long) diff;
+		*microsecs = (int) ((diff - *secs) * 1000000.0);
+#endif
+	}
+}
 
 /*
  * Convert a time_t to TimestampTz.
@@ -980,6 +1013,27 @@ time_t_to_timestamptz(time_t tm)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result *= USECS_PER_SEC;
+#endif
+
+	return result;
+}
+
+/*
+ * Convert a TimestampTz to time_t.
+ *
+ * This too is just marginally useful, but some places need it.
+ */
+time_t
+timestamptz_to_time_t(TimestampTz t)
+{
+	time_t		result;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	result = (time_t) (t / USECS_PER_SEC +
+		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
+#else
+	result = (time_t) (t +
+		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
 #endif
 
 	return result;

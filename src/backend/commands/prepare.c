@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.52 2006/04/25 14:11:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.53 2006/06/20 22:51:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,7 @@ StorePreparedStatement(const char *stmt_name,
 	entry->plan_list = plan_list;
 	entry->argtype_list = argtype_list;
 	entry->context = entrycxt;
-	entry->prepare_time = GetCurrentTimestamp();
+	entry->prepare_time = GetCurrentStatementStartTimestamp();
 	entry->from_sql = from_sql;
 
 	MemoryContextSwitchTo(oldcxt);

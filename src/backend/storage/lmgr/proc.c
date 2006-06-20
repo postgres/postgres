@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.174 2006/04/14 03:38:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.175 2006/06/20 22:52:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/spin.h"
+#include "utils/timestamp.h"
 
 
 /* GUC variables */
@@ -73,7 +74,7 @@ static volatile bool deadlock_timeout_active = false;
 volatile bool cancel_from_timeout = false;
 
 /* statement_fin_time is valid only if statement_timeout_active is true */
-static struct timeval statement_fin_time;
+static TimestampTz statement_fin_time;
 
 
 static void RemoveProcFromArray(int code, Datum arg);
@@ -1105,29 +1106,32 @@ ProcSendSignal(int pid)
 bool
 enable_sig_alarm(int delayms, bool is_statement_timeout)
 {
-	struct timeval fin_time;
+	TimestampTz fin_time;
 	struct itimerval timeval;
-
-	/* Compute target timeout time if we will need it */
-	if (is_statement_timeout || statement_timeout_active)
-	{
-		gettimeofday(&fin_time, NULL);
-		fin_time.tv_sec += delayms / 1000;
-		fin_time.tv_usec += (delayms % 1000) * 1000;
-		if (fin_time.tv_usec >= 1000000)
-		{
-			fin_time.tv_sec++;
-			fin_time.tv_usec -= 1000000;
-		}
-	}
 
 	if (is_statement_timeout)
 	{
-		/* Begin statement-level timeout */
+		/*
+		 * Begin statement-level timeout
+		 *
+		 * Note that we compute statement_fin_time with reference to the
+		 * statement_timestamp, but apply the specified delay without any
+		 * correction; that is, we ignore whatever time has elapsed since
+		 * statement_timestamp was set.  In the normal case only a small
+		 * interval will have elapsed and so this doesn't matter, but there
+		 * are corner cases (involving multi-statement query strings with
+		 * embedded COMMIT or ROLLBACK) where we might re-initialize the
+		 * statement timeout long after initial receipt of the message.
+		 * In such cases the enforcement of the statement timeout will be
+		 * a bit inconsistent.  This annoyance is judged not worth the cost
+		 * of performing an additional gettimeofday() here.
+		 */
 		Assert(!deadlock_timeout_active);
+		fin_time = GetCurrentStatementStartTimestamp();
+		fin_time = TimestampTzPlusMilliseconds(fin_time, delayms);
 		statement_fin_time = fin_time;
-		statement_timeout_active = true;
 		cancel_from_timeout = false;
+		statement_timeout_active = true;
 	}
 	else if (statement_timeout_active)
 	{
@@ -1145,10 +1149,10 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 		 * to the state variables.	The deadlock checker may get run earlier
 		 * than normal, but that does no harm.
 		 */
+		fin_time = GetCurrentTimestamp();
+		fin_time = TimestampTzPlusMilliseconds(fin_time, delayms);
 		deadlock_timeout_active = true;
-		if (fin_time.tv_sec > statement_fin_time.tv_sec ||
-			(fin_time.tv_sec == statement_fin_time.tv_sec &&
-			 fin_time.tv_usec >= statement_fin_time.tv_usec))
+		if (fin_time >= statement_fin_time)
 			return true;
 	}
 	else
@@ -1225,16 +1229,14 @@ disable_sig_alarm(bool is_statement_timeout)
 static bool
 CheckStatementTimeout(void)
 {
-	struct timeval now;
+	TimestampTz now;
 
 	if (!statement_timeout_active)
 		return true;			/* do nothing if not active */
 
-	gettimeofday(&now, NULL);
+	now = GetCurrentTimestamp();
 
-	if (now.tv_sec > statement_fin_time.tv_sec ||
-		(now.tv_sec == statement_fin_time.tv_sec &&
-		 now.tv_usec >= statement_fin_time.tv_usec))
+	if (now >= statement_fin_time)
 	{
 		/* Time to die */
 		statement_timeout_active = false;
@@ -1244,16 +1246,21 @@ CheckStatementTimeout(void)
 	else
 	{
 		/* Not time yet, so (re)schedule the interrupt */
+		long		secs;
+		int			usecs;
 		struct itimerval timeval;
 
+		TimestampDifference(now, statement_fin_time,
+							&secs, &usecs);
+		/*
+		 * It's possible that the difference is less than a microsecond;
+		 * ensure we don't cancel, rather than set, the interrupt.
+		 */
+		if (secs == 0 && usecs == 0)
+			usecs = 1;
 		MemSet(&timeval, 0, sizeof(struct itimerval));
-		timeval.it_value.tv_sec = statement_fin_time.tv_sec - now.tv_sec;
-		timeval.it_value.tv_usec = statement_fin_time.tv_usec - now.tv_usec;
-		if (timeval.it_value.tv_usec < 0)
-		{
-			timeval.it_value.tv_sec--;
-			timeval.it_value.tv_usec += 1000000;
-		}
+		timeval.it_value.tv_sec = secs;
+		timeval.it_value.tv_usec = usecs;
 		if (setitimer(ITIMER_REAL, &timeval, NULL))
 			return false;
 	}
