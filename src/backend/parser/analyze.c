@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.334 2006/04/30 18:30:39 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.335 2006/06/21 18:30:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1613,7 +1613,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	if (pstate->p_hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-		errmsg("rule WHERE condition may not contain aggregate functions")));
+		errmsg("cannot use aggregate function in rule WHERE condition")));
 
 	/* save info about sublinks in where clause */
 	qry->hasSubLinks = pstate->p_hasSubLinks;
@@ -2346,9 +2346,16 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-	qry->hasAggs = pstate->p_hasAggs;
+
+	/*
+	 * Top-level aggregates are simply disallowed in UPDATE, per spec.
+	 * (From an implementation point of view, this is forced because the
+	 * implicit ctid reference would otherwise be an ungrouped variable.)
+	 */
 	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry);
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("cannot use aggregate function in UPDATE")));
 
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
