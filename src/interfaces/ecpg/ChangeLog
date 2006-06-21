@@ -2014,6 +2014,12 @@ Tu Jun  6 12:09:56 CEST 2006
 Mo Jun 19 11:15:50 CEST 2006
 
 	- Do not use already free'ed errmsg, bug found by Joachim Wieland
-	  <joachim.wieland@credativ.de>
+	  <joe@mcknight.de>
+
+We Jun 21 09:24:53 CEST 2006
+
+	- Added fixed from the coverity report send in by Joachim Wieland
+	  <joe@mcknight.de>
+	- Added missing error handling in a few functions in ecpglib.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

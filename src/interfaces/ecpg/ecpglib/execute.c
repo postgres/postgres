@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.46 2006/05/26 23:48:54 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.47 2006/06/21 10:24:40 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -250,16 +250,20 @@ next_insert(char *text)
 	return (*ptr == '\0') ? NULL : ptr;
 }
 
-static void
+static bool
 ECPGtypeinfocache_push(struct ECPGtype_information_cache ** cache, int oid, bool isarray, int lineno)
 {
 	struct ECPGtype_information_cache *new_entry
 	= (struct ECPGtype_information_cache *) ECPGalloc(sizeof(struct ECPGtype_information_cache), lineno);
 
+	if (new_entry == NULL)
+		return (false);
+
 	new_entry->oid = oid;
 	new_entry->isarray = isarray;
 	new_entry->next = *cache;
 	*cache = new_entry;
+	return(true);
 }
 
 static enum ARRAY_TYPE
@@ -279,48 +283,48 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 #define not_an_array_in_ecpg ECPG_ARRAY_NONE
 
 		/* populate cache with well known types to speed things up */
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BOOLOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BYTEAOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CHAROID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), NAMEOID, not_an_array_in_ecpg, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT8OID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT2OID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT2VECTOROID, ECPG_ARRAY_VECTOR, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT4OID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), REGPROCOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TEXTOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), OIDOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIDOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), XIDOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIDOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), OIDVECTOROID, ECPG_ARRAY_VECTOR, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), POINTOID, ECPG_ARRAY_VECTOR, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), LSEGOID, ECPG_ARRAY_VECTOR, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), PATHOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BOXOID, ECPG_ARRAY_VECTOR, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), POLYGONOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), LINEOID, ECPG_ARRAY_VECTOR, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), FLOAT4OID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), FLOAT8OID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), ABSTIMEOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), RELTIMEOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TINTERVALOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), UNKNOWNOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIRCLEOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CASHOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INETOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIDROID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), BPCHAROID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), VARCHAROID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), DATEOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMEOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMESTAMPOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMESTAMPTZOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INTERVALOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMETZOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), ZPBITOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), VARBITOID, ECPG_ARRAY_NONE, stmt->lineno);
-		ECPGtypeinfocache_push(&(stmt->connection->cache_head), NUMERICOID, ECPG_ARRAY_NONE, stmt->lineno);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), BOOLOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), BYTEAOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), CHAROID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), NAMEOID, not_an_array_in_ecpg, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT8OID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT2OID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT2VECTOROID, ECPG_ARRAY_VECTOR, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), INT4OID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), REGPROCOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), TEXTOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), OIDOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIDOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), XIDOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIDOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), OIDVECTOROID, ECPG_ARRAY_VECTOR, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), POINTOID, ECPG_ARRAY_VECTOR, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), LSEGOID, ECPG_ARRAY_VECTOR, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), PATHOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), BOXOID, ECPG_ARRAY_VECTOR, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), POLYGONOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), LINEOID, ECPG_ARRAY_VECTOR, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), FLOAT4OID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), FLOAT8OID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), ABSTIMEOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), RELTIMEOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), TINTERVALOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), UNKNOWNOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIRCLEOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), CASHOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), INETOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), CIDROID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), BPCHAROID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), VARCHAROID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), DATEOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMEOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMESTAMPOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMESTAMPTZOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), INTERVALOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMETZOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), ZPBITOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), VARBITOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
+		if (!ECPGtypeinfocache_push(&(stmt->connection->cache_head), NUMERICOID, ECPG_ARRAY_NONE, stmt->lineno)) return (ECPG_ARRAY_ERROR);
 	}
 
 	for (cache_entry = (stmt->connection->cache_head); cache_entry != NULL; cache_entry = cache_entry->next)
@@ -330,6 +334,9 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 	}
 
 	array_query = (char *) ECPGalloc(strlen("select typlen from pg_type where oid= and typelem<>0") + 11, stmt->lineno);
+	if (array_query == NULL)
+		return (ECPG_ARRAY_ERROR);
+
 	sprintf(array_query, "select typlen from pg_type where oid=%d and typelem<>0", type);
 	query = PQexec(stmt->connection->connection, array_query);
 	ECPGfree(array_query);
@@ -366,7 +373,11 @@ ECPGstore_result(const PGresult *results, int act_field,
 				ntuples = PQntuples(results);
 	bool		status = true;
 
-	isarray = ECPGis_type_an_array(PQftype(results, act_field), stmt, var);
+	if ((isarray = ECPGis_type_an_array(PQftype(results, act_field), stmt, var)) == ECPG_ARRAY_ERROR)
+	{
+		ECPGraise(stmt->lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+		return false;
+	}
 
 	if (isarray == ECPG_ARRAY_NONE)
 	{
@@ -438,6 +449,8 @@ ECPGstore_result(const PGresult *results, int act_field,
 				break;
 		}
 		var->value = (char *) ECPGalloc(len, stmt->lineno);
+		if (!var->value)
+			return false;
 		*((char **) var->pointer) = var->value;
 		ECPGadd_mem(var->value, stmt->lineno);
 	}
@@ -448,6 +461,8 @@ ECPGstore_result(const PGresult *results, int act_field,
 		int			len = var->ind_offset * ntuples;
 
 		var->ind_value = (char *) ECPGalloc(len, stmt->lineno);
+		if (!var->ind_value)
+			return false;
 		*((char **) var->ind_pointer) = var->ind_value;
 		ECPGadd_mem(var->ind_value, stmt->lineno);
 	}
@@ -863,6 +878,9 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					int			slen;
 					numeric    *nval = PGTYPESnumeric_new();
 
+					if (!nval)
+						return false;
+
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++, nval = PGTYPESnumeric_new())
@@ -877,7 +895,11 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [] "), lineno)))
+							{
+								PGTYPESnumeric_free(nval);
+								free(str);
 								return false;
+							}
 
 							if (!element)
 								strcpy(mallocedval, "array [");
@@ -896,11 +918,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 						str = PGTYPESnumeric_to_asc(nval, nval->dscale);
 
-						PGTYPESnumeric_free(nval);
 						slen = strlen(str);
 
 						if (!(mallocedval = ECPGalloc(slen + 1, lineno)))
+						{
+							PGTYPESnumeric_free(nval);
+							free(str);
 							return false;
+						}
 
 						strncpy(mallocedval, str, slen);
 						mallocedval[slen] = '\0';
@@ -908,6 +933,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
+					PGTYPESnumeric_free(nval);
 					free(str);
 				}
 				break;
@@ -922,10 +948,15 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 						for (element = 0; element < var->arrsize; element++)
 						{
 							str = quote_postgres(PGTYPESinterval_to_asc((interval *) ((var + var->offset * element)->value)), lineno);
+							if (!str)
+								return false;
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],interval "), lineno)))
+							{
+								ECPGfree(str);
 								return false;
+							}
 
 							if (!element)
 								strcpy(mallocedval, "array [");
@@ -939,10 +970,15 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					else
 					{
 						str = quote_postgres(PGTYPESinterval_to_asc((interval *) (var->value)), lineno);
+						if (!str)
+							return false;
 						slen = strlen(str);
 
 						if (!(mallocedval = ECPGalloc(slen + sizeof("interval ") + 1, lineno)))
+						{
+							ECPGfree(str);
 							return false;
+						}
 
 						strcpy(mallocedval, "interval ");
 						/* also copy trailing '\0' */
@@ -951,7 +987,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
-					free(str);
+					ECPGfree(str);
 				}
 				break;
 
@@ -965,10 +1001,15 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 						for (element = 0; element < var->arrsize; element++)
 						{
 							str = quote_postgres(PGTYPESdate_to_asc(*(date *) ((var + var->offset * element)->value)), lineno);
+							if (!str)
+								return false;
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],date "), lineno)))
+							{
+								ECPGfree(str);
 								return false;
+							}
 
 							if (!element)
 								strcpy(mallocedval, "array [");
@@ -982,10 +1023,15 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					else
 					{
 						str = quote_postgres(PGTYPESdate_to_asc(*(date *) (var->value)), lineno);
+						if (!str)
+							return false;
 						slen = strlen(str);
 
 						if (!(mallocedval = ECPGalloc(slen + sizeof("date ") + 1, lineno)))
+						{
+							ECPGfree(str);
 							return false;
+						}
 
 						strcpy(mallocedval, "date ");
 						/* also copy trailing '\0' */
@@ -994,7 +1040,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
-					free(str);
+					ECPGfree(str);
 				}
 				break;
 
@@ -1008,10 +1054,15 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 						for (element = 0; element < var->arrsize; element++)
 						{
 							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), lineno);
+							if (!str)
+								return false;
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [], timestamp "), lineno)))
+							{
+								ECPGfree(str);
 								return false;
+							}
 
 							if (!element)
 								strcpy(mallocedval, "array [");
@@ -1025,10 +1076,15 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					else
 					{
 						str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) (var->value)), lineno);
+						if (!str)
+							return false;
 						slen = strlen(str);
 
 						if (!(mallocedval = ECPGalloc(slen + sizeof("timestamp") + 1, lineno)))
+						{
+							ECPGfree(str);
 							return false;
+						}
 
 						strcpy(mallocedval, "timestamp ");
 						/* also copy trailing '\0' */
@@ -1037,7 +1093,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
-					free(str);
+					ECPGfree(str);
 				}
 				break;
 
@@ -1162,8 +1218,13 @@ ECPGexecute(struct statement * stmt)
 			 * Now tobeinserted points to an area that is to be inserted at
 			 * the first %s
 			 */
-			if (!(newcopy = (char *) ECPGalloc(strlen(copiedquery) + strlen(tobeinserted) + 1, stmt->lineno)))
+			if (!(newcopy = (char *) ECPGalloc(strlen(copiedquery)
+											 + strlen(tobeinserted)
+											 + 1, stmt->lineno)))
+			{
+				ECPGfree(copiedquery);
 				return false;
+			}
 
 			strcpy(newcopy, copiedquery);
 			if ((p = next_insert(newcopy + hostvarl)) == NULL)
@@ -1172,7 +1233,11 @@ ECPGexecute(struct statement * stmt)
 				 * We have an argument but we dont have the matched up string
 				 * in the string
 				 */
-				ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
+				ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS,
+						  ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS,
+						  NULL);
+				ECPGfree(copiedquery);
+				ECPGfree(newcopy);
 				return false;
 			}
 			else
@@ -1212,7 +1277,9 @@ ECPGexecute(struct statement * stmt)
 	/* Check if there are unmatched things left. */
 	if (next_insert(copiedquery) != NULL)
 	{
-		ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
+		ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS,
+				  ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
+		ECPGfree(copiedquery);
 		return false;
 	}
 
@@ -1222,7 +1289,9 @@ ECPGexecute(struct statement * stmt)
 	{
 		if ((results = PQexec(stmt->connection->connection, "begin transaction")) == NULL)
 		{
-			ECPGraise(stmt->lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
+			ECPGraise(stmt->lineno, ECPG_TRANS,
+					  ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
+			ECPGfree(copiedquery);
 			return false;
 		}
 		PQclear(results);
@@ -1391,6 +1460,7 @@ ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name,
 	{
 		setlocale(LC_NUMERIC, oldlocale);
 		ECPGfree(oldlocale);
+		free_statement(stmt);
 		return (false);
 	}
 	va_end(args);

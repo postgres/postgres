@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/dt_test.pgc,v 1.9 2006/03/11 04:38:40 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/dt_test.pgc,v 1.10 2006/06/21 10:24:41 meskes Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -40,12 +40,15 @@ main(void)
 	
 	text = PGTYPESdate_to_asc(date1);
 	printf ("Date: %s\n", text);
+	free(text);
 	
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf ("timestamp: %s\n", text);
+	free(text);
 	
 	text = PGTYPESinterval_to_asc(&iv1);
 	printf ("interval: %s\n", text);
+	free(text);
 
 	PGTYPESdate_mdyjul(mdy, &date2);
 	printf("m: %d, d: %d, y: %d\n", mdy[0], mdy[1], mdy[2]);
@@ -61,10 +64,12 @@ main(void)
 	text = PGTYPEStimestamp_to_asc(ts1);
 
 	printf("date_day of %s is %d\n", text, PGTYPESdate_dayofweek(ts1));
+	free(text);
 
 	PGTYPESdate_today(&date1);
 	text = PGTYPESdate_to_asc(date1);
 	printf("today is %s\n", text);
+	free(text);
 
 	fmt = "(ddd), mmm. dd, yyyy, repeat: (ddd), mmm. dd, yyyy. end";
 	out = (char*) malloc(strlen(fmt) + 1);
@@ -84,6 +89,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc1: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "mmmm. dd. yyyy";
@@ -91,6 +97,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc2: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "yy/mm/dd";
@@ -98,6 +105,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc3: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "yy/mm/dd";
@@ -105,6 +113,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc4: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "dd-mm-yy";
@@ -112,6 +121,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc5: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "mmddyy";
@@ -119,6 +129,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc6: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "mmm. dd. yyyy";
@@ -126,6 +137,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc7: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "mmm. dd. yyyy";
@@ -133,6 +145,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc8: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "mm yy   dd.";
@@ -140,6 +153,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc9: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "yyyy fierj mm   dd.";
@@ -147,6 +161,7 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc10: %s\n", text);
+	free(text);
 
 	date1 = 0; text = "";
 	fmt = "mm/dd/yy";
@@ -154,22 +169,27 @@ main(void)
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
 	text = PGTYPESdate_to_asc(date1);
 	printf("date_defmt_asc12: %s\n", text);
+	free(text);
 
 	PGTYPEStimestamp_current(&ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_current: Now: %s\n", text);
+	free(text);
 
 	ts1 = PGTYPEStimestamp_from_asc("96-02-29", NULL);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_to_asc1: %s\n", text);
+	free(text);
 
 	ts1 = PGTYPEStimestamp_from_asc("1994-02-11 3:10:35", NULL);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_to_asc2: %s\n", text);
+	free(text);
 
 	ts1 = PGTYPEStimestamp_from_asc("1994-02-11 26:10:35", NULL);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_to_asc3: %s\n", text);
+	free(text);
 
 /*	abc-03:10:35-def-02/11/94-gh  */
 /*      12345678901234567890123456789 */
@@ -177,138 +197,161 @@ main(void)
 	out = (char*) malloc(32);
 	i = PGTYPEStimestamp_fmt_asc(&ts1, out, 31, "abc-%X-def-%x-ghi%%");
 	printf("timestamp_fmt_asc: %d: %s\n", i, out);
+	free(out);
 
 	fmt = "This is a %m/%d/%y %H-%Ml%Stest";
 	in =  "This is a 4/12/80 3-39l12test";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%a %b %d %H:%M:%S %z %Y";
 	in =  "Tue Jul 22 17:28:44 +0200 2003";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%a %b %d %H:%M:%S %z %Y";
 	in =  "Tue Feb 29 17:28:44 +0200 2000";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%a %b %d %H:%M:%S %z %Y";
 	in =  "Tue Feb 29 17:28:44 +0200 1900";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error (should be error!): %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%a %b %d %H:%M:%S %z %Y";
 	in =  "Tue Feb 29 17:28:44 +0200 1996";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%b %d %H:%M:%S %z %Y";
 	in =  "      Jul 31 17:28:44 +0200 1996";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%b %d %H:%M:%S %z %Y";
 	in =  "      Jul 32 17:28:44 +0200 1996";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error (should be error!): %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%a %b %d %H:%M:%S %z %Y";
 	in =  "Tue Feb 29 17:28:44 +0200 1997";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error (should be error!): %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%";
 	in =  "Tue Jul 22 17:28:44 +0200 2003";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error (should be error!): %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "a %";
 	in =  "Tue Jul 22 17:28:44 +0200 2003";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error (should be error!): %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%b, %d %H_%M`%S %z %Y";
 	in =  "    Jul, 22 17_28 `44 +0200  2003  ";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%a %b %%%d %H:%M:%S %Z %Y";
 	in =  "Tue Jul %22 17:28:44 CEST 2003";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%a %b %%%d %H:%M:%S %Z %Y";
 	in =  "Tue Jul %22 17:28:44 CEST 2003";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "abc%n %C %B %%%d %H:%M:%S %Z %Y";
 	in =  "abc\n   19 October %22 17:28:44 CEST 2003";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "abc%n %C %B %%%d %H:%M:%S %Z %y";
 	in =  "abc\n   18 October %34 17:28:44 CEST 80";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error (should be error!): %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "";
 	in =  "abc\n   18 October %34 17:28:44 CEST 80";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error (should be error!): %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = NULL;
 	in =  "1980-04-12 3:49:44      ";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	fmt = "%B %d, %Y. Time: %I:%M%p";
 	in =  "July 14, 1988. Time: 9:15am";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	in = "September 6 at 01:30 pm in the year 1983";
 	fmt = "%B %d at %I:%M %p in the year %Y";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	in = "  1976, July 14. Time: 9:15am";
 	fmt = "%Y,   %B %d. Time: %I:%M %p";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	in = "  1976, July 14. Time: 9:15 am";
 	fmt = "%Y,   %B %d. Time: %I:%M%p";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 
 	in = "  1976, P.M. July 14. Time: 9:15";
 	fmt = "%Y, %P  %B %d. Time: %I:%M";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	free(text);
 	exec sql rollback;
         exec sql disconnect;
 

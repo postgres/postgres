@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.28 2006/05/31 08:12:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.29 2006/06/21 10:24:41 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -196,7 +196,6 @@ PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf)
 	char	   *start_pattern;
 	struct tm	tm;
 
-	/* XXX error handling ? */
 	/* copy the string over */
 	strcpy(outbuf, fmtstring);
 
@@ -695,8 +694,6 @@ PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
 		errno = PGTYPES_DATE_BAD_DAY;
 		return -1;
 	}
-
-	/* XXX: DBCENTURY ? */
 
 	*d = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - date2j(2000, 1, 1);
 

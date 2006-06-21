@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.14 2006/01/15 22:46:53 neilc Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.15 2006/06/21 10:24:40 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -351,8 +351,9 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				/* allocate storage if needed */
 				if (arrsize == 0 && var != NULL && *(void **) var == NULL)
 				{
-					void	   *mem = (void *) ECPGalloc(offset * ntuples, lineno);
-
+					void *mem = (void *) ECPGalloc(offset * ntuples, lineno);
+					if (!mem)
+						return false;
 					*(void **) var = mem;
 					ECPGadd_mem(mem, lineno);
 					var = mem;
@@ -412,8 +413,9 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		/* allocate storage if needed */
 		if (data_var.ind_arrsize == 0 && data_var.ind_pointer != NULL && data_var.ind_value == NULL)
 		{
-			void	   *mem = (void *) ECPGalloc(data_var.ind_offset * ntuples, lineno);
-
+			void *mem = (void *) ECPGalloc(data_var.ind_offset * ntuples, lineno);
+			if (!mem)
+				return false;
 			*(void **) data_var.ind_pointer = mem;
 			ECPGadd_mem(mem, lineno);
 			data_var.ind_value = mem;
@@ -480,6 +482,8 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 	if (desc_item == NULL)
 	{
 		desc_item = (struct descriptor_item *) ECPGalloc(sizeof(*desc_item), lineno);
+		if (!desc_item)
+			return false;
 		desc_item->num = index;
 		desc_item->next = desc->items;
 		desc->items = desc_item;
