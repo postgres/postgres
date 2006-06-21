@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.139 2006/04/04 19:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.140 2006/06/21 18:39:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -832,31 +832,11 @@ agg_retrieve_direct(AggState *aggstate)
 		}
 
 		/*
-		 * If we have no first tuple (ie, the outerPlan didn't return
-		 * anything), create a dummy all-nulls input tuple for use by
-		 * ExecQual/ExecProject. 99.44% of the time this is a waste of cycles,
-		 * because ordinarily the projected output tuple's targetlist cannot
-		 * contain any direct (non-aggregated) references to input columns, so
-		 * the dummy tuple will not be referenced. However there are special
-		 * cases where this isn't so --- in particular an UPDATE involving an
-		 * aggregate will have a targetlist reference to ctid.	We need to
-		 * return a null for ctid in that situation, not coredump.
-		 *
-		 * The values returned for the aggregates will be the initial values
-		 * of the transition functions.
-		 */
-		if (TupIsNull(firstSlot))
-		{
-			/* Should only happen in non-grouped mode */
-			Assert(node->aggstrategy == AGG_PLAIN);
-			Assert(aggstate->agg_done);
-
-			ExecStoreAllNullTuple(firstSlot);
-		}
-
-		/*
 		 * Use the representative input tuple for any references to
-		 * non-aggregated input columns in the qual and tlist.
+		 * non-aggregated input columns in the qual and tlist.  (If we are
+		 * not grouping, and there are no input rows at all, we will come
+		 * here with an empty firstSlot ... but if not grouping, there can't
+		 * be any references to non-aggregated input columns, so no problem.)
 		 */
 		econtext->ecxt_scantuple = firstSlot;
 
