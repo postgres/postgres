@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.26.2.2 2006/06/19 09:20:07 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.26.2.3 2006/06/21 10:29:50 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -403,6 +403,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 							ECPGfree(realname);
 						if (dbname)
 							ECPGfree(dbname);
+						ecpg_finish(this);
 						return false;
 					}
 				}

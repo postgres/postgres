@@ -209,13 +209,14 @@ deccvasc(char *cp, int len, decimal *np)
 int
 deccvdbl(double dbl, decimal *np)
 {
-	numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres;
 	int			result = 1;
 
 	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CDOUBLETYPE, (char *) &dbl))
 		return 0;
 
+	nres = PGTYPESnumeric_new();
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
@@ -230,13 +231,14 @@ deccvdbl(double dbl, decimal *np)
 int
 deccvint(int in, decimal *np)
 {
-	numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres;
 	int			result = 1;
 
 	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CINTTYPE, (char *) &in))
 		return 0;
 
+	nres = PGTYPESnumeric_new();
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
@@ -251,13 +253,14 @@ deccvint(int in, decimal *np)
 int
 deccvlong(long lng, decimal *np)
 {
-	numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres;
 	int			result = 1;
 
 	rsetnull(CDECIMALTYPE, (char *) np);
 	if (risnull(CLONGTYPE, (char *) &lng))
 		return 0;
 
+	nres = PGTYPESnumeric_new();
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
@@ -340,17 +343,21 @@ int
 dectoasc(decimal *np, char *cp, int len, int right)
 {
 	char	   *str;
-	numeric    *nres = PGTYPESnumeric_new();
-
-	if (nres == NULL)
-		return ECPG_INFORMIX_OUT_OF_MEMORY;
+	numeric    *nres;
 
 	rsetnull(CSTRINGTYPE, (char *) cp);
 	if (risnull(CDECIMALTYPE, (char *) np))
 		return 0;
 
-	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+	nres = PGTYPESnumeric_new();
+	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
+
+	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+	{
+		PGTYPESnumeric_free(nres);
+		return ECPG_INFORMIX_OUT_OF_MEMORY;
+	}
 
 	if (right >= 0)
 		str = PGTYPESnumeric_to_asc(nres, right);
@@ -374,14 +381,17 @@ dectoasc(decimal *np, char *cp, int len, int right)
 int
 dectodbl(decimal *np, double *dblp)
 {
-	numeric    *nres = PGTYPESnumeric_new();
 	int			i;
+	numeric    *nres = PGTYPESnumeric_new();
 
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
 	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+	{
+		PGTYPESnumeric_free(nres);
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
+	}
 
 	i = PGTYPESnumeric_to_double(nres, dblp);
 	PGTYPESnumeric_free(nres);
@@ -399,7 +409,10 @@ dectoint(decimal *np, int *ip)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
 	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+	{
+		PGTYPESnumeric_free(nres);
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
+	}
 
 	ret = PGTYPESnumeric_to_int(nres, ip);
 
@@ -413,15 +426,19 @@ int
 dectolong(decimal *np, long *lngp)
 {
 	int			ret;
-	numeric    *nres = PGTYPESnumeric_new();;
+	numeric    *nres = PGTYPESnumeric_new();
 
 	if (nres == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
 
 	if (PGTYPESnumeric_from_decimal(np, nres) != 0)
+	{
+		PGTYPESnumeric_free(nres);
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
+	}
 
 	ret = PGTYPESnumeric_to_long(nres, lngp);
+	PGTYPESnumeric_free(nres);
 
 	if (ret == PGTYPES_NUM_OVERFLOW)
 		ret = ECPG_INFORMIX_NUM_OVERFLOW;

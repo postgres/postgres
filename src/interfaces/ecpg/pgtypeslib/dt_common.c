@@ -1033,7 +1033,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		*tzp = -tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
 
 		/*
-		 * XXX FreeBSD man pages indicate that this should work - tgl 97/04/23
+		 * FreeBSD man pages indicate that this should work - tgl 97/04/23
 		 */
 		if (tzn != NULL)
 		{
@@ -2737,7 +2737,7 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp * d,
 			}
 			else
 			{
-				/* XXX Error: no match */
+				/* Error: no match */
 				err = 1;
 				return err;
 			}
