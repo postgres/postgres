@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.55 2006/05/30 22:12:12 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.56 2006/06/21 16:43:11 joe Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -361,6 +361,13 @@ dblink_open(PG_FUNCTION_ARGS)
 			DBLINK_RES_INTERNALERROR("begin error");
 		PQclear(res);
 		rconn->newXactForCursor = TRUE;
+		/*
+		 * Since transaction state was IDLE, we force cursor count to
+		 * initially be 0. This is needed as a previous ABORT might
+		 * have wiped out our transaction without maintaining the
+		 * cursor count for us.
+		 */
+		rconn->openCursorCount = 0;
 	}
 
 	/* if we started a transaction, increment cursor count */
