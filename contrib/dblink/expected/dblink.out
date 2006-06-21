@@ -509,7 +509,7 @@ SELECT dblink_close('myconn','rmt_foo_cursor');
 -- this should fail because there is no open transaction
 SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
 ERROR:  sql error
-DETAIL:  ERROR:  cursor "xact_test" already exists
+DETAIL:  ERROR:  DECLARE CURSOR may only be used in transaction blocks
 
 -- reset remote transaction state
 SELECT dblink_exec('myconn','ABORT');

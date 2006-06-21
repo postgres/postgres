@@ -354,6 +354,13 @@ dblink_open(PG_FUNCTION_ARGS)
 			DBLINK_RES_INTERNALERROR("begin error");
 		PQclear(res);
 		rconn->newXactForCursor = TRUE;
+		/*
+		 * Since transaction state was IDLE, we force cursor count to
+		 * initially be 0. This is needed as a previous ABORT might
+		 * have wiped out our transaction without maintaining the
+		 * cursor count for us.
+		 */
+		rconn->openCursorCount = 0;
 	}
 
 	/* if we started a transaction, increment cursor count */
