@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.24 2006/06/14 16:49:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.25 2006/06/21 16:05:11 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -29,15 +29,13 @@ GetVariable(VariableSpace space, const char *name)
 	if (!space)
 		return NULL;
 
-	if (strspn(name, VALID_VARIABLE_CHARS) != strlen(name))
-		return NULL;
-
-	for (current = space; current; current = current->next)
+	for (current = space->next; current; current = current->next)
 	{
-		psql_assert(current->name);
-		psql_assert(current->value);
 		if (strcmp(current->name, name) == 0)
+		{
+			psql_assert(current->value);
 			return current->value;
+		}
 	}
 
 	return NULL;
@@ -126,6 +124,9 @@ PrintVariables(VariableSpace space)
 {
 	struct _variable *ptr;
 
+	if (!space)
+		return;
+
 	for (ptr = space->next; ptr; ptr = ptr->next)
 	{
 		printf("%s = '%s'\n", ptr->name, ptr->value);
@@ -143,18 +144,19 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 	if (!space)
 		return false;
 
-	if (!value)
-		return DeleteVariable(space, name);
-
 	if (strspn(name, VALID_VARIABLE_CHARS) != strlen(name))
 		return false;
 
-	for (current = space, previous = NULL; current; previous = current, current = current->next)
+	if (!value)
+		return DeleteVariable(space, name);
+
+	for (previous = space, current = space->next;
+		 current;
+		 previous = current, current = current->next)
 	{
-		psql_assert(current->name);
-		psql_assert(current->value);
 		if (strcmp(current->name, name) == 0)
 		{
+			psql_assert(current->value);
 			free(current->value);
 			current->value = pg_strdup(value);
 			return true;
@@ -182,19 +184,16 @@ DeleteVariable(VariableSpace space, const char *name)
 	if (!space)
 		return false;
 
-	if (strspn(name, VALID_VARIABLE_CHARS) != strlen(name))
-		return false;
-
-	for (current = space, previous = NULL; current; previous = current, current = current->next)
+	for (previous = space, current = space->next;
+		 current;
+		 previous = current, current = current->next)
 	{
-		psql_assert(current->name);
-		psql_assert(current->value);
 		if (strcmp(current->name, name) == 0)
 		{
+			psql_assert(current->value);
+			previous->next = current->next;
 			free(current->name);
 			free(current->value);
-			if (previous)
-				previous->next = current->next;
 			free(current);
 			return true;
 		}
