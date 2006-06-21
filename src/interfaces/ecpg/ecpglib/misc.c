@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.24.4.1 2005/09/12 11:58:33 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.24.4.2 2006/06/21 11:38:35 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -181,7 +181,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	if (!ECPGinit(con, connection_name, lineno))
 		return (false);
 
-	ECPGlog("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con->name);
+	ECPGlog("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con ? con->name : "(nil)");
 
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
