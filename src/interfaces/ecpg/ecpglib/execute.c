@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.47 2006/06/21 10:24:40 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.48 2006/06/21 11:38:07 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -891,7 +891,6 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 								PGTYPESnumeric_from_decimal((decimal *) ((var + var->offset * element)->value), nval);
 
 							str = PGTYPESnumeric_to_asc(nval, nval->dscale);
-							PGTYPESnumeric_free(nval);
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [] "), lineno)))
@@ -907,6 +906,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 						}
+						PGTYPESnumeric_free(nval);
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else

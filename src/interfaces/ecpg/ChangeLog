@@ -2021,5 +2021,10 @@ We Jun 21 09:24:53 CEST 2006
 	- Added fixes from the coverity report send in by Joachim Wieland
 	  <joe@mcknight.de>.
 	- Added missing error handling in a few functions in ecpglib.
+
+we Jun 21 13:37:00 CEST 2006
+
+	- Added some more coverity report patches send in by Martijn van
+	  Oosterhout <kleptog@svana.org>.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

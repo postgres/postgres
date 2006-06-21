@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.29 2006/06/21 10:24:40 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.30 2006/06/21 11:38:07 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -226,6 +226,9 @@ ECPGnoticeReceiver(void *arg, const PGresult *result)
 
 	if (sqlstate == NULL)
 		sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
+
+	if (message == NULL)  /* Shouldn't happen, but need to be sure */
+		message = "No message received";
 
 	/* these are not warnings */
 	if (strncmp(sqlstate, "00", 2) == 0)
