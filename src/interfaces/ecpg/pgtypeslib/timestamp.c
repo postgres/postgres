@@ -458,8 +458,7 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 						if (*p == '\0')
 							return -1;
 						tmp[2] = *p;
-						/* XXX: fall back to strftime */
-
+						
 						/*
 						 * strftime's month is 0 based, ours is 1 based
 						 */
@@ -477,7 +476,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 						break;
 					}
 				case 'G':
-					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%G", tm);
 					if (i == 0)
@@ -491,7 +489,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'g':
-					/* XXX: fall back to strftime */
 					{
 						char	   *fmt = "%g"; /* Keep compiler quiet
 												 * about 2-digit year */
@@ -600,7 +597,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_UINT;
 					break;
 				case 'U':
-					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%U", tm);
 					if (i == 0)
@@ -614,7 +610,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'V':
-					/* XXX: fall back to strftime */
 					i = strftime(q, *pstr_len, "%V", tm);
 					if (i == 0)
 						return -1;
@@ -630,7 +625,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_UINT;
 					break;
 				case 'W':
-					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%U", tm);
 					if (i == 0)
@@ -644,7 +638,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'x':
-					/* XXX: fall back to strftime */
 					{
 						char	   *fmt = "%x"; /* Keep compiler quiet
 												 * about 2-digit year */
@@ -663,7 +656,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					}
 					break;
 				case 'X':
-					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%X", tm);
 					if (i == 0)
@@ -685,7 +677,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_UINT;
 					break;
 				case 'z':
-					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%z", tm);
 					if (i == 0)
@@ -699,7 +690,6 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
 				case 'Z':
-					/* XXX: fall back to strftime */
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%Z", tm);
 					if (i == 0)

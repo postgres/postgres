@@ -2763,7 +2763,7 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp *d,
 			}
 			else
 			{
-				/* XXX Error: no match */
+				/* Error: no match */
 				err = 1;
 				return err;
 			}
