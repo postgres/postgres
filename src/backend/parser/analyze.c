@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.326.2.1 2005/11/22 18:23:12 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.326.2.2 2006/06/21 18:30:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2333,9 +2333,16 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-	qry->hasAggs = pstate->p_hasAggs;
+
+	/*
+	 * Top-level aggregates are simply disallowed in UPDATE, per spec.
+	 * (From an implementation point of view, this is forced because the
+	 * implicit ctid reference would otherwise be an ungrouped variable.)
+	 */
 	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry);
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("cannot use aggregate function in UPDATE")));
 
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
