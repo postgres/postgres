@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.240 2006/06/18 18:30:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.241 2006/06/22 20:42:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -460,7 +460,7 @@ static bool InRedo = false;
 
 static void XLogArchiveNotify(const char *xlog);
 static void XLogArchiveNotifySeg(uint32 log, uint32 seg);
-static bool XLogArchiveIsDone(const char *xlog);
+static bool XLogArchiveCheckDone(const char *xlog);
 static void XLogArchiveCleanup(const char *xlog);
 static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
@@ -484,7 +484,7 @@ static bool RestoreArchivedFile(char *path, const char *xlogfname,
 static int	PreallocXlogFiles(XLogRecPtr endptr);
 static void MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 				int *nsegsremoved, int *nsegsrecycled);
-static void RemoveOldBackupHistory(void);
+static void CleanupBackupHistory(void);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
@@ -1109,24 +1109,30 @@ XLogArchiveNotifySeg(uint32 log, uint32 seg)
 }
 
 /*
- * XLogArchiveIsDone
+ * XLogArchiveCheckDone
  *
- * Checks for a ".done" archive notification file.	This is called when we
- * are ready to delete or recycle an old XLOG segment file.  If it is okay
- * to delete it then return true.
+ * This is called when we are ready to delete or recycle an old XLOG segment
+ * file or backup history file.  If it is okay to delete it then return true.
+ * If it is not time to delete it, make sure a .ready file exists, and return
+ * false.
  *
  * If <XLOG>.done exists, then return true; else if <XLOG>.ready exists,
- * then return false; else create <XLOG>.ready and return false.  The
- * last case covers the possibility that the original attempt to create
- * <XLOG>.ready failed.
+ * then return false; else create <XLOG>.ready and return false.
+ *
+ * The reason we do things this way is so that if the original attempt to
+ * create <XLOG>.ready fails, we'll retry during subsequent checkpoints.
  */
 static bool
-XLogArchiveIsDone(const char *xlog)
+XLogArchiveCheckDone(const char *xlog)
 {
 	char		archiveStatusPath[MAXPGPATH];
 	struct stat stat_buf;
 
-	/* First check for .done --- this is the expected case */
+	/* Always deletable if archiving is off */
+	if (!XLogArchivingActive())
+		return true;
+
+	/* First check for .done --- this means archiver is done with it */
 	StatusFilePath(archiveStatusPath, xlog, ".done");
 	if (stat(archiveStatusPath, &stat_buf) == 0)
 		return true;
@@ -2438,14 +2444,7 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
 			strcmp(xlde->d_name + 8, lastoff + 8) <= 0)
 		{
-			bool		recycle;
-
-			if (XLogArchivingActive())
-				recycle = XLogArchiveIsDone(xlde->d_name);
-			else
-				recycle = true;
-
-			if (recycle)
+			if (XLogArchiveCheckDone(xlde->d_name))
 			{
 				snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlde->d_name);
 
@@ -2487,10 +2486,12 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 }
 
 /*
- * Remove previous backup history files
+ * Remove previous backup history files.  This also retries creation of
+ * .ready files for any backup history files for which XLogArchiveNotify
+ * failed earlier.
  */
 static void
-RemoveOldBackupHistory(void)
+CleanupBackupHistory(void)
 {
 	DIR		   *xldir;
 	struct dirent *xlde;
@@ -2510,8 +2511,7 @@ RemoveOldBackupHistory(void)
 			strcmp(xlde->d_name + strlen(xlde->d_name) - strlen(".backup"),
 				   ".backup") == 0)
 		{
-			/* Remove any *.backup files that have been archived. */
-			if (!XLogArchivingActive() || XLogArchiveIsDone(xlde->d_name))
+			if (XLogArchiveCheckDone(xlde->d_name))
 			{
 				ereport(DEBUG2,
 				(errmsg("removing transaction log backup history file \"%s\"",
@@ -5968,17 +5968,12 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				 errmsg("could not remove file \"%s\": %m",
 						BACKUP_LABEL_FILE)));
 
-	RemoveOldBackupHistory();
-
 	/*
-	 * Notify archiver that history file may be archived immediately
+	 * Clean out any no-longer-needed history files.  As a side effect,
+	 * this will post a .ready file for the newly created history file,
+	 * notifying the archiver that history file may be archived immediately.
 	 */
-	if (XLogArchivingActive())
-	{
-		BackupHistoryFileName(histfilepath, ThisTimeLineID, _logId, _logSeg,
-							  startpoint.xrecoff % XLogSegSize);
-		XLogArchiveNotify(histfilepath);
-	}
+	CleanupBackupHistory();
 
 	/*
 	 * We're done.  As a convenience, return the ending WAL offset.
