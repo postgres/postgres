@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.8 2006/01/19 20:45:29 momjian Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.9 2006/06/22 23:50:35 tgl Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 ifdef PGXS
@@ -6,7 +6,6 @@ BE_DLLLIBS= -L$(libdir) -lpostgres
 else
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
 endif
-DLLINIT = $(top_builddir)/src/utils/dllinit.o
 
 # linking with -lm or -lc causes program to crash
 # (see http://sources.redhat.com/cygwin/faq/faq.html#SEC110)
@@ -18,7 +17,7 @@ CFLAGS_SL =
 
 %.dll: %.o
 	$(DLLTOOL) --export-all --output-def $*.def $<
-	$(DLLWRAP) -o $@ --def $*.def $< $(DLLINIT) $(SHLIB_LINK)
+	$(DLLWRAP) -o $@ --def $*.def $< $(SHLIB_LINK)
 	rm -f $*.def
 
 ifneq (,$(findstring backend,$(subdir)))

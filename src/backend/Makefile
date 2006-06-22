@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.115 2006/06/18 15:38:36 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.116 2006/06/22 23:50:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ endif
 
 ifeq ($(PORTNAME), cygwin)
 
-postgres: $(OBJS) $(DLLINIT) postgres.def libpostgres.a
+postgres: $(OBJS) postgres.def libpostgres.a
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(LIBS)
 	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
@@ -61,7 +61,7 @@ endif # cygwin
 
 ifeq ($(PORTNAME), win32)
 
-postgres: $(OBJS) $(DLLINIT) postgres.def libpostgres.a $(WIN32RES)
+postgres: $(OBJS) postgres.def libpostgres.a $(WIN32RES)
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(WIN32RES) $(LIBS)
 	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
@@ -104,9 +104,6 @@ $(SUBSYSOBJS): $(DIRS:%=%-recursive) ;
 $(DIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
 	$(MAKE) -C $(subst -recursive,,$@) all
 
-
-$(DLLINIT): $(DLLINIT:%.o=%.c)
-	$(MAKE) -C $(@D) $(@F)
 
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.

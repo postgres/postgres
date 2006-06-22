@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.39 2006/02/04 01:04:20 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.40 2006/06/22 23:50:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,6 @@ all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
 	$(MAKE) -C makefiles $@
-	$(MAKE) -C utils $@
 	$(MAKE) -C test/regress $@
 
 install: install-local
@@ -55,7 +54,6 @@ clean:
 	$(MAKE) -C makefiles $@
 	$(MAKE) -C test $@
 	$(MAKE) -C tutorial NO_PGXS=1 $@
-	$(MAKE) -C utils $@
 	$(MAKE) -C test/thread $@
 
 distclean maintainer-clean:
@@ -69,7 +67,6 @@ distclean maintainer-clean:
 	-$(MAKE) -C makefiles $@
 	-$(MAKE) -C test $@
 	-$(MAKE) -C tutorial NO_PGXS=1 $@
-	-$(MAKE) -C utils $@
 	-$(MAKE) -C test/thread $@
 	rm -f Makefile.port Makefile.global
 
