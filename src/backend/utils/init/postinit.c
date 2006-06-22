@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.167 2006/05/04 18:51:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.168 2006/06/22 14:36:12 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -522,7 +522,7 @@ InitPostgres(const char *dbname, const char *username)
 	InitializeClientEncoding();
 
 	/* initialize statistics collection for this backend */
-	if (IsUnderPostmaster)
+	if (!bootstrap)
 		pgstat_bestart();
 
 	/* close the transaction we started above */
