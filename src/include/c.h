@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.203 2006/06/07 22:24:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.204 2006/06/24 14:52:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,11 +80,8 @@
 #endif
 
 #if defined(WIN32) || defined(__CYGWIN__)
-/* We have to redefine some system functions after they are included above.
- *
- * use port/win32.h directly to work on both mingw and non-mingw.
- */
-#include "port/win32.h"
+/* We have to redefine some system functions after they are included above. */
+#include "pg_config_os.h"
 #endif
 
 /* Must be before gettext() games below */
