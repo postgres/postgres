@@ -1,12 +1,20 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.82 2006/06/16 18:42:23 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.83 2006/06/25 00:18:24 momjian Exp $
  *
  *********************************************************************
  */
 
+#if defined(_MSC_VER) && defined(_DEBUG)
+/* Python uses #pragma to bring in a non-default libpython on VC++ if
+ * _DEBUG is defined */
+#undef _DEBUG
 #include <Python.h>
+#define _DEBUG
+#else
+#include <Python.h>
+#endif
 #include "postgres.h"
 
 /* system stuff */

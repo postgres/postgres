@@ -628,13 +628,16 @@
 /* #undef USE_SSL */
 
 /* Define to select SysV-style semaphores. */
-#define USE_SYSV_SEMAPHORES 1
+/* #undef USE_SYSV_SEMAPHORES */
 
 /* Define to select SysV-style shared memory. */
 #define USE_SYSV_SHARED_MEMORY 1
 
 /* Define to select unnamed POSIX semaphores. */
 /* #undef USE_UNNAMED_POSIX_SEMAPHORES */
+
+/* Define to select Win32-style semaphores. */
+#define USE_WIN32_SEMAPHORES
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
