@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.67 2006/03/05 15:58:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.68 2006/06/25 18:29:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ static bool element_alloc(HTAB *hashp, int nelem);
 static bool dir_realloc(HTAB *hashp);
 static bool expand_table(HTAB *hashp);
 static void hdefault(HTAB *hashp);
+static int	choose_nelem_alloc(Size entrysize);
 static bool init_htab(HTAB *hashp, long nelem);
 static void hash_corrupted(HTAB *hashp);
 
@@ -262,8 +263,13 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	/*
 	 * For a shared hash table, preallocate the requested number of elements.
 	 * This reduces problems with run-time out-of-shared-memory conditions.
+	 *
+	 * For a non-shared hash table, preallocate the requested number of
+	 * elements if it's less than our chosen nelem_alloc.  This avoids
+	 * wasting space if the caller correctly estimates a small table size.
 	 */
-	if (flags & HASH_SHARED_MEM)
+	if ((flags & HASH_SHARED_MEM) ||
+		nelem < hctl->nelem_alloc)
 	{
 		if (!element_alloc(hashp, (int) nelem))
 		{
@@ -305,6 +311,37 @@ hdefault(HTAB *hashp)
 	hctl->freeList = NULL;
 }
 
+/*
+ * Given the user-specified entry size, choose nelem_alloc, ie, how many
+ * elements to add to the hash table when we need more.
+ */
+static int
+choose_nelem_alloc(Size entrysize)
+{
+	int			nelem_alloc;
+	Size		elementSize;
+	Size		allocSize;
+
+	/* Each element has a HASHELEMENT header plus user data. */
+	/* NB: this had better match element_alloc() */
+	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
+
+	/*
+	 * The idea here is to choose nelem_alloc at least 32, but round up
+	 * so that the allocation request will be a power of 2 or just less.
+	 * This makes little difference for hash tables in shared memory,
+	 * but for hash tables managed by palloc, the allocation request
+	 * will be rounded up to a power of 2 anyway.  If we fail to take
+	 * this into account, we'll waste as much as half the allocated space.
+	 */
+	allocSize = 32 * 4;			/* assume elementSize at least 8 */
+	do {
+		allocSize <<= 1;
+		nelem_alloc = allocSize / elementSize;
+	} while (nelem_alloc < 32);
+
+	return nelem_alloc;
+}
 
 static bool
 init_htab(HTAB *hashp, long nelem)
@@ -364,8 +401,7 @@ init_htab(HTAB *hashp, long nelem)
 	}
 
 	/* Choose number of entries to allocate at a time */
-	hctl->nelem_alloc = (int) Min(nelem, HASHELEMENT_ALLOC_MAX);
-	hctl->nelem_alloc = Max(hctl->nelem_alloc, 1);
+	hctl->nelem_alloc = choose_nelem_alloc(hctl->entrysize);
 
 #if HASH_DEBUG
 	fprintf(stderr, "init_htab:\n%s%p\n%s%ld\n%s%ld\n%s%d\n%s%ld\n%s%u\n%s%x\n%s%x\n%s%ld\n%s%ld\n",
@@ -417,11 +453,10 @@ hash_estimate_size(long num_entries, Size entrysize)
 	/* segments */
 	size = add_size(size, mul_size(nSegments,
 								MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET))));
-	/* elements --- allocated in groups of up to HASHELEMENT_ALLOC_MAX */
-	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
-	elementAllocCnt = Min(num_entries, HASHELEMENT_ALLOC_MAX);
-	elementAllocCnt = Max(elementAllocCnt, 1);
+	/* elements --- allocated in groups of choose_nelem_alloc() entries */
+	elementAllocCnt = choose_nelem_alloc(entrysize);
 	nElementAllocs = (num_entries - 1) / elementAllocCnt + 1;
+	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
 	size = add_size(size,
 					mul_size(nElementAllocs,
 							 mul_size(elementAllocCnt, elementSize)));
