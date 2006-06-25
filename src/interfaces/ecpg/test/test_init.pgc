@@ -23,7 +23,7 @@ namespace N
 #endif
 
 int main(void)
-{ struct sa x,*y;
+{ struct sa x,*y=&x;
 exec sql begin declare section;
 int a=(int)2;
 int b=2+2;

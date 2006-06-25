@@ -2026,5 +2026,9 @@ we Jun 21 13:37:00 CEST 2006
 
 	- Added some more coverity report patches send in by Martijn van
 	  Oosterhout <kleptog@svana.org>.
+
+Su Jun 25 11:27:46 CEST 2006
+
+	- Moved some free() calls that coverity correctly complains about.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
