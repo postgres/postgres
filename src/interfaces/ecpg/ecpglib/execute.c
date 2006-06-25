@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.43.2.4 2006/06/21 11:38:26 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.43.2.5 2006/06/25 09:59:18 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -891,7 +891,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [] "), lineno)))
 							{
 								PGTYPESnumeric_free(nval);
-								free(str);
+								ECPGfree(str);
 								return false;
 							}
 
@@ -900,8 +900,9 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
+							ECPGfree(str);
+							PGTYPESnumeric_free(nval);
 						}
-						PGTYPESnumeric_free(nval);
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
@@ -924,12 +925,12 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 						strncpy(mallocedval, str, slen);
 						mallocedval[slen] = '\0';
+						ECPGfree(str);
+						PGTYPESnumeric_free(nval);
 					}
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
-					PGTYPESnumeric_free(nval);
-					free(str);
 				}
 				break;
 
@@ -959,6 +960,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 							strcpy(mallocedval + strlen(mallocedval), "interval ");
 							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
+							ECPGfree(str);
 						}
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
@@ -978,11 +980,11 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 						strcpy(mallocedval, "interval ");
 						/* also copy trailing '\0' */
 						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+						ECPGfree(str);
 					}
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
-					ECPGfree(str);
 				}
 				break;
 
@@ -1158,6 +1160,7 @@ ECPGexecute(struct statement * stmt)
 			if (desc == NULL)
 			{
 				ECPGraise(stmt->lineno, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, var->pointer);
+				ECPGfree(copiedquery);
 				return false;
 			}
 
@@ -1189,7 +1192,10 @@ ECPGexecute(struct statement * stmt)
 							desc_inlist.ind_offset = 0;
 						}
 						if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, &malloced))
+						{
+							ECPGfree(copiedquery);
 							return false;
+						}
 
 						break;
 					}
