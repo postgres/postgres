@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.2 2005/12/02 15:04:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.3 2006/06/26 14:12:42 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -292,6 +292,7 @@ add_additional_variables(char *name, bool insert)
 		mmerror(PARSE_ERROR, ET_ERROR, "trying to access an undeclared cursor %s\n", name);
 		return NULL;
 	}
+
 	if (insert)
 	{
 		/* add all those input variables that were given earlier 
@@ -831,8 +832,10 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 			struct cursor *ptr;
 
 			if ((ptr = add_additional_variables($1, true)) != NULL)
+			{
 				output_statement(mm_strdup(ptr->command), 0, ptr->connection ? mm_strdup(ptr->connection) : NULL);
-			ptr->opened = true;
+				ptr->opened = true;
+			}
 		}
 		| ECPGPrepare
 		{
