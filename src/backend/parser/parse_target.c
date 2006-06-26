@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.143 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.144 2006/06/26 17:24:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,7 @@ static Node *transformAssignmentIndirection(ParseState *pstate,
 							   ListCell *indirection,
 							   Node *rhs,
 							   int location);
-static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref);
 static List *ExpandAllTables(ParseState *pstate);
-static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind);
 static int	FigureColnameInternal(Node *node, char **name);
 
 
@@ -117,7 +115,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			{
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
-									   ExpandColumnRefStar(pstate, cref));
+									   ExpandColumnRefStar(pstate, cref,
+														   true));
 				continue;
 			}
 		}
@@ -131,7 +130,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			{
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
-									   ExpandIndirectionStar(pstate, ind));
+									   ExpandIndirectionStar(pstate, ind,
+															 true));
 				continue;
 			}
 		}
@@ -696,13 +696,16 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 /*
  * ExpandColumnRefStar()
- *		Turns foo.* (in the target list) into a list of targetlist entries.
+ *		Transforms foo.* into a list of expressions or targetlist entries.
  *
  * This handles the case where '*' appears as the last or only name in a
- * ColumnRef.
+ * ColumnRef.  The code is shared between the case of foo.* at the top level
+ * in a SELECT target list (where we want TargetEntry nodes in the result)
+ * and foo.* in a ROW() construct (where we want just bare expressions).
  */
-static List *
-ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
+List *
+ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
+					bool targetlist)
 {
 	List	   *fields = cref->fields;
 	int			numnames = list_length(fields);
@@ -713,7 +716,12 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 		 * Target item is a bare '*', expand all tables
 		 *
 		 * (e.g., SELECT * FROM emp, dept)
+		 *
+		 * Since the grammar only accepts bare '*' at top level of SELECT,
+		 * we need not handle the targetlist==false case here.
 		 */
+		Assert(targetlist);
+
 		return ExpandAllTables(pstate);
 	}
 	else
@@ -775,13 +783,22 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 
 		rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
-		return expandRelAttrs(pstate, rte, rtindex, sublevels_up);
+		if (targetlist)
+			return expandRelAttrs(pstate, rte, rtindex, sublevels_up);
+		else
+		{
+			List	*vars;
+
+			expandRTE(rte, rtindex, sublevels_up, false,
+					  NULL, &vars);
+			return vars;
+		}
 	}
 }
 
 /*
  * ExpandAllTables()
- *		Turns '*' (in the target list) into a list of targetlist entries.
+ *		Transforms '*' (in the target list) into a list of targetlist entries.
  *
  * tlist entries are generated for each relation appearing in the query's
  * varnamespace.  We do not consider relnamespace because that would include
@@ -814,18 +831,22 @@ ExpandAllTables(ParseState *pstate)
 
 /*
  * ExpandIndirectionStar()
- *		Turns foo.* (in the target list) into a list of targetlist entries.
+ *		Transforms foo.* into a list of expressions or targetlist entries.
  *
  * This handles the case where '*' appears as the last item in A_Indirection.
+ * The code is shared between the case of foo.* at the top level in a SELECT
+ * target list (where we want TargetEntry nodes in the result) and foo.* in
+ * a ROW() construct (where we want just bare expressions).
  */
-static List *
-ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
+List *
+ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
+					  bool targetlist)
 {
+	List	   *result = NIL;
 	Node	   *expr;
 	TupleDesc	tupleDesc;
 	int			numAttrs;
 	int			i;
-	List	   *te_list = NIL;
 
 	/* Strip off the '*' to create a reference to the rowtype object */
 	ind = copyObject(ind);
@@ -860,7 +881,6 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 	{
 		Form_pg_attribute att = tupleDesc->attrs[i];
 		Node	   *fieldnode;
-		TargetEntry *te;
 
 		if (att->attisdropped)
 			continue;
@@ -893,14 +913,22 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 			fieldnode = (Node *) fselect;
 		}
 
-		te = makeTargetEntry((Expr *) fieldnode,
-							 (AttrNumber) pstate->p_next_resno++,
-							 pstrdup(NameStr(att->attname)),
-							 false);
-		te_list = lappend(te_list, te);
+		if (targetlist)
+		{
+			/* add TargetEntry decoration */
+			TargetEntry *te;
+
+			te = makeTargetEntry((Expr *) fieldnode,
+								 (AttrNumber) pstate->p_next_resno++,
+								 pstrdup(NameStr(att->attname)),
+								 false);
+			result = lappend(result, te);
+		}
+		else
+			result = lappend(result, fieldnode);
 	}
 
-	return te_list;
+	return result;
 }
 
 /*

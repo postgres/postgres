@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.192 2006/04/22 01:26:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.193 2006/06/26 17:24:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
+#include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -1289,6 +1290,43 @@ transformRowExpr(ParseState *pstate, RowExpr *r)
 		Node	   *e = (Node *) lfirst(arg);
 		Node	   *newe;
 
+		/*
+		 * Check for "something.*".  Depending on the complexity of the
+		 * "something", the star could appear as the last name in ColumnRef,
+		 * or as the last indirection item in A_Indirection.
+		 */
+		if (IsA(e, ColumnRef))
+		{
+			ColumnRef  *cref = (ColumnRef *) e;
+
+			if (strcmp(strVal(llast(cref->fields)), "*") == 0)
+			{
+				/* It is something.*, expand into multiple items */
+				newargs = list_concat(newargs,
+									  ExpandColumnRefStar(pstate, cref,
+														  false));
+				continue;
+			}
+		}
+		else if (IsA(e, A_Indirection))
+		{
+			A_Indirection *ind = (A_Indirection *) e;
+			Node	   *lastitem = llast(ind->indirection);
+
+			if (IsA(lastitem, String) &&
+				strcmp(strVal(lastitem), "*") == 0)
+			{
+				/* It is something.*, expand into multiple items */
+				newargs = list_concat(newargs,
+									  ExpandIndirectionStar(pstate, ind,
+															false));
+				continue;
+			}
+		}
+
+		/*
+		 * Not "something.*", so transform as a single expression
+		 */
 		newe = transformExpr(pstate, e);
 		newargs = lappend(newargs, newe);
 	}

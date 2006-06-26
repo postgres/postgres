@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.106 2006/03/10 19:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.107 2006/06/26 17:24:40 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1571,6 +1571,31 @@ SELECT ROW(1,2.5,'this is a test');
    </para>
 
    <para>
+    A row constructor can include the syntax
+    <replaceable>rowvalue</replaceable><literal>.*</literal>,
+    which will be expanded to a list of the elements of the row value,
+    just as occurs when the <literal>.*</> syntax is used at the top level
+    of a <command>SELECT</> list.  For example, if table <literal>t</> has
+    columns <literal>f1</> and <literal>f2</>, these are the same:
+<programlisting>
+SELECT ROW(t.*, 42) FROM t;
+SELECT ROW(t.f1, t.f2, 42) FROM t;
+</programlisting>
+   </para>
+
+   <note>
+    <para>
+     Before <productname>PostgreSQL</productname> 8.2, the
+     <literal>.*</literal> syntax was not expanded, so that writing
+     <literal>ROW(t.*, 42)</> created a two-field row whose first field
+     was another row value.  The new behavior is usually more useful.
+     If you need the old behavior of nested row values, write the inner
+     row value without <literal>.*</literal>, for instance
+     <literal>ROW(t, 42)</>.
+    </para>
+   </note>
+
+   <para>
     By default, the value created by a <literal>ROW</> expression is of
     an anonymous record type.  If necessary, it can be cast to a named
     composite type &mdash; either the row type of a table, or a composite type
@@ -1619,7 +1644,7 @@ SELECT getf1(CAST(ROW(11,'this is a test',2.5) AS myrowtype));
 <programlisting>
 SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
 
-SELECT ROW(a, b, c) IS NOT NULL FROM table;
+SELECT ROW(table.*) IS NULL FROM table;  -- detect all-null rows
 </programlisting>
    For more detail see <xref linkend="functions-comparisons">.
    Row constructors can also be used in connection with subqueries,

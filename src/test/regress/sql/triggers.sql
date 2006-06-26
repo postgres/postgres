@@ -367,3 +367,51 @@ DROP TRIGGER show_trigger_data_trig on trigger_test;
 DROP FUNCTION trigger_data();
 
 DROP TABLE trigger_test;
+
+--
+-- Test use of row comparisons on OLD/NEW
+--
+
+CREATE TABLE trigger_test (f1 int, f2 text, f3 text);
+
+-- this is the obvious (and wrong...) way to compare rows
+CREATE FUNCTION mytrigger() RETURNS trigger LANGUAGE plpgsql as $$
+begin
+	if row(old.*) = row(new.*) then
+		raise notice 'row % not changed', new.f1;
+	else
+		raise notice 'row % changed', new.f1;
+	end if;
+	return new;
+end$$;
+
+CREATE TRIGGER t
+BEFORE UPDATE ON trigger_test
+FOR EACH ROW EXECUTE PROCEDURE mytrigger();
+
+INSERT INTO trigger_test VALUES(1, 'foo', 'bar');
+INSERT INTO trigger_test VALUES(2, 'baz', 'quux');
+
+UPDATE trigger_test SET f3 = 'bar';
+UPDATE trigger_test SET f3 = NULL;
+-- this demonstrates that the above isn't really working as desired:
+UPDATE trigger_test SET f3 = NULL;
+
+-- the right way when considering nulls is
+CREATE OR REPLACE FUNCTION mytrigger() RETURNS trigger LANGUAGE plpgsql as $$
+begin
+	if row(old.*) is distinct from row(new.*) then
+		raise notice 'row % changed', new.f1;
+	else
+		raise notice 'row % not changed', new.f1;
+	end if;
+	return new;
+end$$;
+
+UPDATE trigger_test SET f3 = 'bar';
+UPDATE trigger_test SET f3 = NULL;
+UPDATE trigger_test SET f3 = NULL;
+
+DROP TABLE trigger_test;
+
+DROP FUNCTION mytrigger();
