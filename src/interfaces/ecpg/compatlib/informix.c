@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.45 2006/06/25 01:45:32 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.46 2006/06/26 09:20:09 meskes Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -417,6 +417,7 @@ dectoint(decimal *np, int *ip)
 	}
 
 	ret = PGTYPESnumeric_to_int(nres, ip);
+	PGTYPESnumeric_free(nres);
 
 	if (ret == PGTYPES_NUM_OVERFLOW)
 		ret = ECPG_INFORMIX_NUM_OVERFLOW;
