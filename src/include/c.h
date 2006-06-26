@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.204 2006/06/24 14:52:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.205 2006/06/26 23:53:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,7 +473,7 @@ typedef NameData *Name;
  */
 #define SQL_STR_DOUBLE(ch, escape_backslash)	\
 	((ch) == '\'' || ((ch) == '\\' && (escape_backslash)))
-	
+
 #define ESCAPE_STRING_SYNTAX	'E'
 
 /* ----------------------------------------------------------------
