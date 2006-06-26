@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.38.4.7 2006/06/25 10:00:11 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.38.4.8 2006/06/26 09:20:30 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -879,16 +879,16 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 			case ECPGt_numeric:
 				{
 					char	   *str = NULL;
-					int			slen;
+					int	    slen;
 					numeric    *nval = PGTYPESnumeric_new();
-
-					if (!nval)
-						return false;
 
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++, nval = PGTYPESnumeric_new())
 						{
+							if (!nval)
+								return false;
+								
 							if (var->type == ECPGt_numeric)
 								PGTYPESnumeric_copy((numeric *) ((var + var->offset * element)->value), nval);
 							else
@@ -896,10 +896,10 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 							str = PGTYPESnumeric_to_asc(nval, nval->dscale);
 							slen = strlen(str);
+							PGTYPESnumeric_free(nval);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [] "), lineno)))
 							{
-								PGTYPESnumeric_free(nval);
 								ECPGfree(str);
 								return false;
 							}
@@ -910,24 +910,25 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
 							ECPGfree(str);
-							PGTYPESnumeric_free(nval);
 						}
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
 					else
 					{
+						if (!nval)
+							return false;
+
 						if (var->type == ECPGt_numeric)
 							PGTYPESnumeric_copy((numeric *) (var->value), nval);
 						else
 							PGTYPESnumeric_from_decimal((decimal *) (var->value), nval);
 
 						str = PGTYPESnumeric_to_asc(nval, nval->dscale);
-
 						slen = strlen(str);
+						PGTYPESnumeric_free(nval);
 
 						if (!(mallocedval = ECPGalloc(slen + 1, lineno)))
 						{
-							PGTYPESnumeric_free(nval);
 							free(str);
 							return false;
 						}
@@ -935,7 +936,6 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 						strncpy(mallocedval, str, slen);
 						mallocedval[slen] = '\0';
 						ECPGfree(str);
-						PGTYPESnumeric_free(nval);
 					}
 
 					*tobeinserted_p = mallocedval;
