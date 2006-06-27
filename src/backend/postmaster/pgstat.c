@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.130 2006/06/20 22:52:00 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.131 2006/06/27 03:45:16 alvherre Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2635,7 +2635,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_updated += tabmsg[i].t_tuples_updated;
 			tabentry->tuples_deleted += tabmsg[i].t_tuples_deleted;
 
-			tabentry->n_live_tuples += tabmsg[i].t_tuples_inserted;
+			tabentry->n_live_tuples += tabmsg[i].t_tuples_inserted -
+				tabmsg[i].t_tuples_deleted;
 			tabentry->n_dead_tuples += tabmsg[i].t_tuples_updated +
 				tabmsg[i].t_tuples_deleted;
 
@@ -2829,6 +2830,12 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 			tabentry->autovac_analyze_timestamp = msg->m_vacuumtime;
 		else
 			tabentry->analyze_timestamp = msg->m_vacuumtime;
+	}
+	else
+	{
+		/* last_anl_tuples must never exceed n_live_tuples */
+		tabentry->last_anl_tuples = Min(tabentry->last_anl_tuples,
+										msg->m_tuples);
 	}
 }
 
