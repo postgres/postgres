@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.4 2006/06/27 03:45:28 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.5 2006/06/27 14:01:42 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2922,7 +2922,7 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	else
 	{
 		/* last_anl_tuples must never exceed n_live_tuples */
-		tabentry->last_anl_tuplse = Min(tabentry->last_anl_tuples,
+		tabentry->last_anl_tuples = Min(tabentry->last_anl_tuples,
 										msg->m_tuples);
 	}
 }
