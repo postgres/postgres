@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.164 2006/04/14 03:38:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.165 2006/06/27 22:16:43 momjian Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -1059,19 +1059,22 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	LOCKMETHODID lockmethodid = LOCALLOCK_LOCKMETHOD(*locallock);
 	LockMethod	lockMethodTable = LockMethods[lockmethodid];
 	const char *old_status;
-	char	   *new_status;
+	char	   *new_status = NULL;
 	int			len;
 
 	LOCK_PRINT("WaitOnLock: sleeping on lock",
 			   locallock->lock, locallock->tag.mode);
 
-	old_status = get_ps_display(&len);
-	new_status = (char *) palloc(len + 8 + 1);
-	memcpy(new_status, old_status, len);
-	strcpy(new_status + len, " waiting");
-	set_ps_display(new_status);
-	new_status[len] = '\0';		/* truncate off " waiting" */
-
+	if (update_process_title)
+	{
+		old_status = get_ps_display(&len);
+		new_status = (char *) palloc(len + 8 + 1);
+		memcpy(new_status, old_status, len);
+		strcpy(new_status + len, " waiting");
+		set_ps_display(new_status, false);
+		new_status[len] = '\0';		/* truncate off " waiting" */
+	}
+	
 	awaitedLock = locallock;
 	awaitedOwner = owner;
 
@@ -1108,8 +1111,11 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 
 	awaitedLock = NULL;
 
-	set_ps_display(new_status);
-	pfree(new_status);
+	if (update_process_title)
+	{
+		set_ps_display(new_status, false);
+		pfree(new_status);
+	}
 
 	LOCK_PRINT("WaitOnLock: wakeup on lock",
 			   locallock->lock, locallock->tag.mode);

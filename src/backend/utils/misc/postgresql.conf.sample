@@ -323,10 +323,13 @@
 # - Query/Index Statistics Collector -
 
 #stats_command_string = on
+#update_process_title = on
+
 #stats_start_collector = on		# needed for block or row stats
 #stats_block_level = off
 #stats_row_level = off
 #stats_reset_on_server_start = off
+
 
 # - Statistics Monitoring -
 

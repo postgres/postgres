@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.489 2006/06/20 22:52:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.490 2006/06/27 22:16:44 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -910,7 +910,7 @@ exec_simple_query(const char *query_string)
 		 */
 		commandTag = CreateCommandTag(parsetree);
 
-		set_ps_display(commandTag);
+		set_ps_display(commandTag, false);
 
 		BeginCommand(commandTag, dest);
 
@@ -1144,7 +1144,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	pgstat_report_activity(query_string);
 
-	set_ps_display("PARSE");
+	set_ps_display("PARSE", false);
 
 	if (save_log_statement_stats)
 		ResetUsage();
@@ -1376,7 +1376,7 @@ exec_bind_message(StringInfo input_message)
 
 	pgstat_report_activity("<BIND>");
 
-	set_ps_display("BIND");
+	set_ps_display("BIND", false);
 
 	/*
 	 * Start up a transaction command so we can call functions etc. (Note that
@@ -1711,7 +1711,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 		pgstat_report_activity("<EXECUTE>");
 	}
 
-	set_ps_display(portal->commandTag);
+	set_ps_display(portal->commandTag, false);
 
 	/*
 	 * We use save_log_statement_stats so ShowUsage doesn't report incorrect
@@ -2486,7 +2486,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 		MemoryContextInit();
 
-	set_ps_display("startup");
+	set_ps_display("startup", false);
 
 	SetProcessingMode(InitProcessing);
 
@@ -3121,14 +3121,14 @@ PostgresMain(int argc, char *argv[], const char *username)
 		{
 			if (IsTransactionOrTransactionBlock())
 			{
-				set_ps_display("idle in transaction");
+				set_ps_display("idle in transaction", false);
 				pgstat_report_activity("<IDLE> in transaction");
 			}
 			else
 			{
 				pgstat_report_tabstat();
 
-				set_ps_display("idle");
+				set_ps_display("idle", false);
 				pgstat_report_activity("<IDLE>");
 			}
 

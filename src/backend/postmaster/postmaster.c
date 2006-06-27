@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.488 2006/06/20 22:52:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.489 2006/06/27 22:16:43 momjian Exp $
  *
  * NOTES
  *
@@ -2713,9 +2713,9 @@ BackendInitialize(Port *port)
 	 * Now that we have the user and database name, we can set the process
 	 * title for ps.  It's good to do this as early as possible in startup.
 	 */
-	init_ps_display(port->user_name, port->database_name, remote_ps_data);
-	set_ps_display("authentication");
-
+	init_ps_display(port->user_name, port->database_name, remote_ps_data,
+		update_process_title ? "authentication" : "");
+	
 	/*
 	 * Now perform authentication exchange.
 	 */

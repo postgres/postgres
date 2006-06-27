@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.20 2006/06/18 15:38:37 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.21 2006/06/27 22:16:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,8 +239,7 @@ AutoVacMain(int argc, char *argv[])
 	MyProcPid = getpid();
 
 	/* Identify myself via ps */
-	init_ps_display("autovacuum process", "", "");
-	set_ps_display("");
+	init_ps_display("autovacuum process", "", "", "");
 
 	SetProcessingMode(InitProcessing);
 
@@ -416,7 +415,7 @@ AutoVacMain(int argc, char *argv[])
 		 */
 		InitPostgres(db->name, NULL);
 		SetProcessingMode(NormalProcessing);
-		set_ps_display(db->name);
+		set_ps_display(db->name, false);
 		ereport(DEBUG1,
 				(errmsg("autovacuum: processing database \"%s\"", db->name)));
 

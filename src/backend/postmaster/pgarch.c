@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.23 2006/06/18 15:38:37 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.24 2006/06/27 22:16:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,8 +244,7 @@ PgArchiverMain(int argc, char *argv[])
 	/*
 	 * Identify myself via ps
 	 */
-	init_ps_display("archiver process", "", "");
-	set_ps_display("");
+	init_ps_display("archiver process", "", "", "");
 
 	pgarch_MainLoop();
 

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.323 2006/06/27 19:07:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.324 2006/06/27 22:16:44 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -64,6 +64,7 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
+#include "utils/ps_status.h"
 #include "pgstat.h"
 #include "access/gin.h"
 
@@ -725,6 +726,16 @@ static struct config_bool ConfigureNamesBool[] =
 						 "at which that command began execution.")
 		},
 		&pgstat_collect_querystring,
+		true, NULL, NULL
+	},
+
+	{
+		{"update_process_title", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Updates the process title to show the active SQL command."),
+			gettext_noop("Enables updating of the process title every time a new
+            SQL command is received by the server.")
+		},
+		&update_process_title,
 		true, NULL, NULL
 	},
 

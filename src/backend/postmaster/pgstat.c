@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.131 2006/06/27 03:45:16 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.132 2006/06/27 22:16:43 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1743,8 +1743,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	/*
 	 * Identify myself via ps
 	 */
-	init_ps_display("stats collector process", "", "");
-	set_ps_display("");
+	init_ps_display("stats collector process", "", "", "");
 
 	/*
 	 * Arrange to write the initial status file right away
@@ -1975,8 +1974,7 @@ pgstat_recvbuffer(void)
 	/*
 	 * Identify myself via ps
 	 */
-	init_ps_display("stats buffer process", "", "");
-	set_ps_display("");
+	init_ps_display("stats buffer process", "", "", "");
 
 	/*
 	 * We want to die if our child collector process does.	There are two ways

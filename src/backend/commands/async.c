@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.131 2006/04/25 14:11:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.132 2006/06/27 22:16:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -908,7 +908,7 @@ ProcessIncomingNotify(void)
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify");
 
-	set_ps_display("notify interrupt");
+	set_ps_display("notify interrupt", false);
 
 	notifyInterruptOccurred = 0;
 
@@ -979,7 +979,7 @@ ProcessIncomingNotify(void)
 	 */
 	pq_flush();
 
-	set_ps_display("idle");
+	set_ps_display("idle", false);
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify: done");
