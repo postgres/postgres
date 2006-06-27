@@ -190,7 +190,10 @@ first.
   inaccurate, in one sense.
 </p>
 <ul>
-  <li>-<em>Disallow changing DEFAULT expression of a SERIAL column</em>
+  <li>%Disallow changing DEFAULT expression of a SERIAL column?
+<p>  This should be done only if the existing SERIAL problems cannot be
+  fixed.
+</p>
   </li><li>%Disallow ALTER SEQUENCE changes for SERIAL sequences because pg_dump
   does not dump the changes
   </li><li>Fix data types where equality comparison isn't intuitive, e.g. box

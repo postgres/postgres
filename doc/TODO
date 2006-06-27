@@ -208,7 +208,11 @@ Data Types
   The positive modulus result returned by NUMERICs might be considered
   inaccurate, in one sense.
 
-* -Disallow changing DEFAULT expression of a SERIAL column
+* %Disallow changing DEFAULT expression of a SERIAL column?
+
+  This should be done only if the existing SERIAL problems cannot be
+  fixed.
+
 * %Disallow ALTER SEQUENCE changes for SERIAL sequences because pg_dump
   does not dump the changes
 * Fix data types where equality comparison isn't intuitive, e.g. box

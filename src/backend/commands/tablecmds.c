@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.187 2006/06/27 03:43:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.188 2006/06/27 18:35:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3404,11 +3404,6 @@ ATExecColumnDefault(Relation rel, const char *colName,
 	 * safety, but at present we do not expect anything to depend on the
 	 * default.
 	 */
-	if (newDefault)
-		RemoveSequenceDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false);
-	else 
-		RemoveSequenceDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, true);		
-
 	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false);
 
 	if (newDefault)
