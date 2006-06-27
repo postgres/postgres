@@ -70,7 +70,7 @@
  * that we can access it randomly.	When the caller does not need random
  * access, we return from tuplesort_performsort() as soon as we are down
  * to one run per logical tape.  The final merge is then performed
- * on-the-fly as the caller repeatedly calls tuplesort_gettuple; this
+ * on-the-fly as the caller repeatedly calls tuplesort_getXXX; this
  * saves one cycle of writing all the data out to disk and reading it in.
  *
  * Before Postgres 8.2, we always used a seven-tape polyphase merge, on the
@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.66 2006/05/23 21:37:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.67 2006/06/27 16:53:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ bool		trace_sort = false;
 
 /*
  * The objects we actually sort are SortTuple structs.  These contain
- * a pointer to the tuple proper (might be a HeapTuple or IndexTuple),
+ * a pointer to the tuple proper (might be a MinimalTuple or IndexTuple),
  * which is a separate palloc chunk --- we assume it is just one chunk and
  * can be freed by a simple pfree().  SortTuples also contain the tuple's
  * first key column in Datum/nullflag format, and an index integer.
@@ -311,8 +311,8 @@ struct Tuplesortstate
 	bool		markpos_eof;	/* saved "eof_reached" */
 
 	/*
-	 * These variables are specific to the HeapTuple case; they are set by
-	 * tuplesort_begin_heap and used only by the HeapTuple routines.
+	 * These variables are specific to the MinimalTuple case; they are set by
+	 * tuplesort_begin_heap and used only by the MinimalTuple routines.
 	 */
 	TupleDesc	tupDesc;
 	ScanKey		scanKeys;			/* array of length nKeys */
@@ -448,12 +448,11 @@ static Tuplesortstate *qsort_tuplesortstate;
  *
  * Initialize for a tuple sort operation.
  *
- * After calling tuplesort_begin, the caller should call tuplesort_puttuple
+ * After calling tuplesort_begin, the caller should call tuplesort_putXXX
  * zero or more times, then call tuplesort_performsort when all the tuples
  * have been supplied.	After performsort, retrieve the tuples in sorted
- * order by calling tuplesort_gettuple until it returns NULL.  (If random
+ * order by calling tuplesort_getXXX until it returns false/NULL.  (If random
  * access was requested, rescan, markpos, and restorepos can also be called.)
- * For Datum sorts, putdatum/getdatum are used instead of puttuple/gettuple.
  * Call tuplesort_end to terminate the operation and release memory/disk space.
  *
  * Each variant of tuplesort_begin has a workMem parameter specifying the
@@ -669,9 +668,9 @@ tuplesort_begin_datum(Oid datumType,
  *
  *	Release resources and clean up.
  *
- * NOTE: after calling this, any tuple pointers returned by tuplesort_gettuple
- * or datum pointers returned by tuplesort_getdatum are pointing to garbage.
- * Be careful not to attempt to use or free such pointers afterwards!
+ * NOTE: after calling this, any pointers returned by tuplesort_getXXX are
+ * pointing to garbage.  Be careful not to attempt to use or free such
+ * pointers afterwards!
  */
 void
 tuplesort_end(Tuplesortstate *state)
@@ -762,19 +761,41 @@ grow_memtuples(Tuplesortstate *state)
 /*
  * Accept one tuple while collecting input data for sort.
  *
- * Note that the input tuple is always copied; the caller need not save it.
+ * Note that the input data is always copied; the caller need not save it.
  */
 void
-tuplesort_puttuple(Tuplesortstate *state, void *tuple)
+tuplesort_puttupleslot(Tuplesortstate *state, TupleTableSlot *slot)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
 
 	/*
 	 * Copy the given tuple into memory we control, and decrease availMem.
-	 * Then call the code shared with the Datum case.
+	 * Then call the common code.
 	 */
-	COPYTUP(state, &stup, tuple);
+	COPYTUP(state, &stup, (void *) slot);
+
+	puttuple_common(state, &stup);
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * Accept one index tuple while collecting input data for sort.
+ *
+ * Note that the input tuple is always copied; the caller need not save it.
+ */
+void
+tuplesort_putindextuple(Tuplesortstate *state, IndexTuple tuple)
+{
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	SortTuple	stup;
+
+	/*
+	 * Copy the given tuple into memory we control, and decrease availMem.
+	 * Then call the common code.
+	 */
+	COPYTUP(state, &stup, (void *) tuple);
 
 	puttuple_common(state, &stup);
 
@@ -794,7 +815,7 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 
 	/*
 	 * If it's a pass-by-reference value, copy it into memory we control,
-	 * and decrease availMem.  Then call the code shared with the tuple case.
+	 * and decrease availMem.  Then call the common code.
 	 */
 	if (isNull || state->datumTypeByVal)
 	{
@@ -1151,12 +1172,42 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 
 /*
  * Fetch the next tuple in either forward or back direction.
+ * If successful, put tuple in slot and return TRUE; else, clear the slot
+ * and return FALSE.
+ */
+bool
+tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
+					   TupleTableSlot *slot)
+{
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	SortTuple	stup;
+	bool		should_free;
+
+	if (!tuplesort_gettuple_common(state, forward, &stup, &should_free))
+		stup.tuple = NULL;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	if (stup.tuple)
+	{
+		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, should_free);
+		return true;
+	}
+	else
+	{
+		ExecClearTuple(slot);
+		return false;
+	}
+}
+
+/*
+ * Fetch the next index tuple in either forward or back direction.
  * Returns NULL if no more tuples.	If *should_free is set, the
  * caller must pfree the returned tuple when done with it.
  */
-void *
-tuplesort_gettuple(Tuplesortstate *state, bool forward,
-				   bool *should_free)
+IndexTuple
+tuplesort_getindextuple(Tuplesortstate *state, bool forward,
+						bool *should_free)
 {
 	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
@@ -1166,7 +1217,7 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 
 	MemoryContextSwitchTo(oldcontext);
 
-	return stup.tuple;
+	return (IndexTuple) stup.tuple;
 }
 
 /*
@@ -2265,15 +2316,15 @@ ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
 
 
 /*
- * Routines specialized for HeapTuple case
+ * Routines specialized for HeapTuple (actually MinimalTuple) case
  */
 
 static int
 comparetup_heap(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
 {
 	ScanKey		scanKey = state->scanKeys;
-	HeapTuple	ltup;
-	HeapTuple	rtup;
+	HeapTupleData ltup;
+	HeapTupleData rtup;
 	TupleDesc	tupDesc;
 	int			nkey;
 	int32		compare;
@@ -2287,8 +2338,10 @@ comparetup_heap(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
 		return compare;
 
 	/* Compare additional sort keys */
-	ltup = (HeapTuple) a->tuple;
-	rtup = (HeapTuple) b->tuple;
+	ltup.t_len = ((MinimalTuple) a->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
+	ltup.t_data = (HeapTupleHeader) ((char *) a->tuple - MINIMAL_TUPLE_OFFSET);
+	rtup.t_len = ((MinimalTuple) b->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
+	rtup.t_data = (HeapTupleHeader) ((char *) b->tuple - MINIMAL_TUPLE_OFFSET);
 	tupDesc = state->tupDesc;
 	scanKey++;
 	for (nkey = 1; nkey < state->nKeys; nkey++, scanKey++)
@@ -2299,8 +2352,8 @@ comparetup_heap(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
 		bool		isnull1,
 					isnull2;
 
-		datum1 = heap_getattr(ltup, attno, tupDesc, &isnull1);
-		datum2 = heap_getattr(rtup, attno, tupDesc, &isnull2);
+		datum1 = heap_getattr(&ltup, attno, tupDesc, &isnull1);
+		datum2 = heap_getattr(&rtup, attno, tupDesc, &isnull2);
 
 		compare = inlineApplySortFunction(&scanKey->sk_func,
 										  state->sortFnKinds[nkey],
@@ -2316,132 +2369,71 @@ comparetup_heap(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
 static void
 copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 {
-	HeapTuple	tuple = (HeapTuple) tup;
+	/*
+	 * We expect the passed "tup" to be a TupleTableSlot, and form a
+	 * MinimalTuple using the exported interface for that.
+	 */
+	TupleTableSlot *slot = (TupleTableSlot *) tup;
+	MinimalTuple tuple;
+	HeapTupleData htup;
 
 	/* copy the tuple into sort storage */
-	stup->tuple = (void *) heap_copytuple(tuple);
-	USEMEM(state, GetMemoryChunkSpace(stup->tuple));
+	tuple = ExecCopySlotMinimalTuple(slot);
+	stup->tuple = (void *) tuple;
+	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* set up first-column key value */
-	stup->datum1 = heap_getattr((HeapTuple) stup->tuple,
+	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
+	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
+	stup->datum1 = heap_getattr(&htup,
 								state->scanKeys[0].sk_attno,
 								state->tupDesc,
 								&stup->isnull1);
 }
 
 /*
- * When writing HeapTuples to tape, we strip off all tuple identity and
- * transaction visibility information, because those fields aren't really
- * interesting for in-memory tuples (they may or may not be valid in the
- * incoming tuples, depending on the plan that's feeding the sort).  We
- * only need to store t_natts, t_infomask, the nulls bitmap if any, and
- * the user data.
- *
- * You might think that we could omit storing t_natts, but you'd be wrong:
- * the incoming tuple might be a physical disk tuple with fewer columns
- * than the table's current logical tupdesc.
+ * Since MinimalTuple already has length in its first word, we don't need
+ * to write that separately.
  */
-typedef struct TapeTupleHeader
-{
-	unsigned int tuplen;		/* required header of a tape item */
-	int16		natts;			/* number of attributes */
-	uint16		infomask;		/* various flag bits */
-	/* nulls bitmap follows if HEAP_HASNULL, then actual tuple data */
-} TapeTupleHeader;
-
 static void
 writetup_heap(Tuplesortstate *state, int tapenum, SortTuple *stup)
 {
-	HeapTuple	tuple = (HeapTuple) stup->tuple;
-	HeapTupleHeader t_data = tuple->t_data;
-	TapeTupleHeader tapehdr;
-	unsigned int	datalen;
-	unsigned int	nullslen;
+	MinimalTuple tuple = (MinimalTuple) stup->tuple;
+	unsigned int tuplen = tuple->t_len;
 
-	Assert(tuple->t_len >= t_data->t_hoff);
-	datalen = tuple->t_len - t_data->t_hoff;
-	if (HeapTupleHasNulls(tuple))
-		nullslen = BITMAPLEN(t_data->t_natts);
-	else
-		nullslen = 0;
-	tapehdr.tuplen = sizeof(TapeTupleHeader) + nullslen + datalen;
-	tapehdr.natts = t_data->t_natts;
-	tapehdr.infomask = t_data->t_infomask;
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void *) &tapehdr, sizeof(tapehdr));
-	if (nullslen)
-		LogicalTapeWrite(state->tapeset, tapenum,
-						 (void *) t_data->t_bits, nullslen);
-	LogicalTapeWrite(state->tapeset, tapenum,
-					 (char *) t_data + t_data->t_hoff, datalen);
+					 (void *) tuple, tuplen);
 	if (state->randomAccess)	/* need trailing length word? */
 		LogicalTapeWrite(state->tapeset, tapenum,
-						 (void *) &tapehdr.tuplen, sizeof(tapehdr.tuplen));
+						 (void *) &tuplen, sizeof(tuplen));
 
 	FREEMEM(state, GetMemoryChunkSpace(tuple));
-	heap_freetuple(tuple);
+	heap_free_minimal_tuple(tuple);
 }
 
 static void
 readtup_heap(Tuplesortstate *state, SortTuple *stup,
 			 int tapenum, unsigned int len)
 {
-	TapeTupleHeader tapehdr;
-	unsigned int	datalen;
-	unsigned int	nullslen;
-	unsigned int	hoff;
-	HeapTuple	tuple;
-	HeapTupleHeader t_data;
+	MinimalTuple tuple = (MinimalTuple) palloc(len);
+	unsigned int tuplen;
+	HeapTupleData htup;
 
-	/* read in the rest of the header */
-	if (LogicalTapeRead(state->tapeset, tapenum,
-						(char *) &tapehdr + sizeof(unsigned int),
-						sizeof(tapehdr) - sizeof(unsigned int)) !=
-						sizeof(tapehdr) - sizeof(unsigned int))
-		elog(ERROR, "unexpected end of data");
-	/* reconstruct lengths of null bitmap and data part */
-	if (tapehdr.infomask & HEAP_HASNULL)
-		nullslen = BITMAPLEN(tapehdr.natts);
-	else
-		nullslen = 0;
-	datalen = len - sizeof(TapeTupleHeader) - nullslen;
-	/* determine overhead size of tuple (should match heap_form_tuple) */
-	hoff = offsetof(HeapTupleHeaderData, t_bits) + nullslen;
-	if (tapehdr.infomask & HEAP_HASOID)
-		hoff += sizeof(Oid);
-	hoff = MAXALIGN(hoff);
-	/* Allocate the space in one chunk, like heap_form_tuple */
-	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + hoff + datalen);
 	USEMEM(state, GetMemoryChunkSpace(tuple));
-	t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
-	/* make sure unused header fields are zeroed */
-	MemSetAligned(t_data, 0, hoff);
-	/* reconstruct the HeapTupleData fields */
-	tuple->t_len = hoff + datalen;
-	ItemPointerSetInvalid(&(tuple->t_self));
-	tuple->t_tableOid = InvalidOid;
-	tuple->t_data = t_data;
-	/* reconstruct the HeapTupleHeaderData fields */
-	ItemPointerSetInvalid(&(t_data->t_ctid));
-	t_data->t_natts = tapehdr.natts;
-	t_data->t_infomask = (tapehdr.infomask & ~HEAP_XACT_MASK)
-		| (HEAP_XMIN_INVALID | HEAP_XMAX_INVALID);
-	t_data->t_hoff = hoff;
-	/* read in the null bitmap if any */
-	if (nullslen)
-		if (LogicalTapeRead(state->tapeset, tapenum,
-							(void *) t_data->t_bits, nullslen) != nullslen)
-			elog(ERROR, "unexpected end of data");
-	/* and the data proper */
+	/* read in the tuple proper */
+	tuple->t_len = len;
 	if (LogicalTapeRead(state->tapeset, tapenum,
-						(char *) t_data + hoff, datalen) != datalen)
+						(void *) ((char *) tuple + sizeof(int)),
+						len - sizeof(int)) != (size_t) (len - sizeof(int)))
 		elog(ERROR, "unexpected end of data");
 	if (state->randomAccess)	/* need trailing length word? */
-		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tapehdr.tuplen,
-							sizeof(tapehdr.tuplen)) != sizeof(tapehdr.tuplen))
+		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
+							sizeof(tuplen)) != sizeof(tuplen))
 			elog(ERROR, "unexpected end of data");
 	stup->tuple = (void *) tuple;
 	/* set up first-column key value */
-	stup->datum1 = heap_getattr(tuple,
+	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
+	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
+	stup->datum1 = heap_getattr(&htup,
 								state->scanKeys[0].sk_attno,
 								state->tupDesc,
 								&stup->isnull1);

@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.101 2006/05/08 00:00:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.102 2006/06/27 16:53:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,7 @@ _bt_spooldestroy(BTSpool *btspool)
 void
 _bt_spool(IndexTuple itup, BTSpool *btspool)
 {
-	tuplesort_puttuple(btspool->sortstate, (void *) itup);
+	tuplesort_putindextuple(btspool->sortstate, itup);
 }
 
 /*

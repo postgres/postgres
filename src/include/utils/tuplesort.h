@@ -13,29 +13,34 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.20 2006/05/23 21:37:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.21 2006/06/27 16:53:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TUPLESORT_H
 #define TUPLESORT_H
 
-#include "access/htup.h"
 #include "access/itup.h"
+#include "executor/tuptable.h"
 #include "fmgr.h"
 
-/* Tuplesortstate is an opaque type whose details are not known outside tuplesort.c. */
 
+/* Tuplesortstate is an opaque type whose details are not known outside
+ * tuplesort.c.
+ */
 typedef struct Tuplesortstate Tuplesortstate;
 
 /*
  * We provide two different interfaces to what is essentially the same
  * code: one for sorting HeapTuples and one for sorting IndexTuples.
  * They differ primarily in the way that the sort key information is
- * supplied.  Also, tuplesort.c guarantees to preserve all the header
- * fields of an IndexTuple, but when sorting HeapTuples only the user data
- * is guaranteed preserved, not the "system columns" (tuple identity and
- * transaction visibility info).
+ * supplied.  Also, the HeapTuple case actually stores MinimalTuples,
+ * which means it doesn't preserve the "system columns" (tuple identity and
+ * transaction visibility info).  The IndexTuple case does preserve all
+ * the header fields of an index entry.  In the HeapTuple case we can
+ * save some cycles by passing and returning the tuples in TupleTableSlots,
+ * rather than forming actual HeapTuples (which'd have to be converted to
+ * MinimalTuples).
  *
  * Yet a third slightly different interface supports sorting bare Datums.
  */
@@ -51,21 +56,18 @@ extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
 					  Oid sortOperator,
 					  int workMem, bool randomAccess);
 
-extern void tuplesort_puttuple(Tuplesortstate *state, void *tuple);
-
+extern void tuplesort_puttupleslot(Tuplesortstate *state,
+								   TupleTableSlot *slot);
+extern void tuplesort_putindextuple(Tuplesortstate *state, IndexTuple tuple);
 extern void tuplesort_putdatum(Tuplesortstate *state, Datum val,
 				   bool isNull);
 
 extern void tuplesort_performsort(Tuplesortstate *state);
 
-extern void *tuplesort_gettuple(Tuplesortstate *state, bool forward,
-				   bool *should_free);
-
-#define tuplesort_getheaptuple(state, forward, should_free) \
-	((HeapTuple) tuplesort_gettuple(state, forward, should_free))
-#define tuplesort_getindextuple(state, forward, should_free) \
-	((IndexTuple) tuplesort_gettuple(state, forward, should_free))
-
+extern bool tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
+								   TupleTableSlot *slot);
+extern IndexTuple tuplesort_getindextuple(Tuplesortstate *state, bool forward,
+										  bool *should_free);
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward,
 				   Datum *val, bool *isNull);
 
