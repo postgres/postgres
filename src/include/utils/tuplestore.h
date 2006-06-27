@@ -14,17 +14,23 @@
  * A temporary file is used to handle the data if it exceeds the
  * space limit specified by the caller.
  *
+ * Beginning in Postgres 8.2, what is stored is just MinimalTuples;
+ * callers cannot expect valid system columns in regurgitated tuples.
+ * Also, we have changed the API to return tuples in TupleTableSlots,
+ * so that there is a check to prevent attempted access to system columns.
+ *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.17 2006/03/05 15:59:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplestore.h,v 1.18 2006/06/27 02:51:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TUPLESTORE_H
 #define TUPLESTORE_H
 
-#include "access/htup.h"
+#include "executor/tuptable.h"
+
 
 /* Tuplestorestate is an opaque type whose details are not known outside
  * tuplestore.c.
@@ -32,7 +38,7 @@
 typedef struct Tuplestorestate Tuplestorestate;
 
 /*
- * Currently we only need to store HeapTuples, but it would be easy
+ * Currently we only need to store MinimalTuples, but it would be easy
  * to support the same behavior for IndexTuples and/or bare Datums.
  */
 
@@ -40,17 +46,17 @@ extern Tuplestorestate *tuplestore_begin_heap(bool randomAccess,
 					  bool interXact,
 					  int maxKBytes);
 
-extern void tuplestore_puttuple(Tuplestorestate *state, void *tuple);
+extern void tuplestore_puttupleslot(Tuplestorestate *state,
+									TupleTableSlot *slot);
+extern void tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple);
 
 /* tuplestore_donestoring() used to be required, but is no longer used */
 #define tuplestore_donestoring(state)	((void) 0)
 
 /* backwards scan is only allowed if randomAccess was specified 'true' */
-extern void *tuplestore_gettuple(Tuplestorestate *state, bool forward,
-					bool *should_free);
-
-#define tuplestore_getheaptuple(state, forward, should_free) \
-	((HeapTuple) tuplestore_gettuple(state, forward, should_free))
+extern bool tuplestore_gettupleslot(Tuplestorestate *state, bool forward,
+									TupleTableSlot *slot);
+extern bool tuplestore_advance(Tuplestorestate *state, bool forward);
 
 extern void tuplestore_end(Tuplestorestate *state);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.101 2006/03/05 15:58:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.102 2006/06/27 02:51:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,20 +911,16 @@ RunFromStore(Portal portal, ScanDirection direction, long count,
 		for (;;)
 		{
 			MemoryContext oldcontext;
-			HeapTuple	tup;
-			bool		should_free;
+			bool		ok;
 
 			oldcontext = MemoryContextSwitchTo(portal->holdContext);
 
-			tup = tuplestore_getheaptuple(portal->holdStore, forward,
-										  &should_free);
+			ok = tuplestore_gettupleslot(portal->holdStore, forward, slot);
 
 			MemoryContextSwitchTo(oldcontext);
 
-			if (tup == NULL)
+			if (!ok)
 				break;
-
-			ExecStoreTuple(tup, slot, InvalidBuffer, should_free);
 
 			(*dest->receiveSlot) (slot, dest);
 

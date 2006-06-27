@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.46 2006/03/05 15:58:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.47 2006/06/27 02:51:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -411,17 +411,8 @@ PersistHoldablePortal(Portal portal)
 
 			for (store_pos = 0; store_pos < portal->portalPos; store_pos++)
 			{
-				HeapTuple	tup;
-				bool		should_free;
-
-				tup = tuplestore_gettuple(portal->holdStore, true,
-										  &should_free);
-
-				if (tup == NULL)
+				if (!tuplestore_advance(portal->holdStore, true))
 					elog(ERROR, "unexpected end of tuple stream");
-
-				if (should_free)
-					pfree(tup);
 			}
 		}
 	}

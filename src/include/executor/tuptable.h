@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.31 2006/06/16 18:42:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.32 2006/06/27 02:51:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,13 +23,19 @@
  * independent TupleTableSlots.  There are several cases we need to handle:
  *		1. physical tuple in a disk buffer page
  *		2. physical tuple constructed in palloc'ed memory
- *		3. "virtual" tuple consisting of Datum/isnull arrays
+ *		3. "minimal" physical tuple constructed in palloc'ed memory
+ *		4. "virtual" tuple consisting of Datum/isnull arrays
  *
  * The first two cases are similar in that they both deal with "materialized"
  * tuples, but resource management is different.  For a tuple in a disk page
  * we need to hold a pin on the buffer until the TupleTableSlot's reference
  * to the tuple is dropped; while for a palloc'd tuple we usually want the
  * tuple pfree'd when the TupleTableSlot's reference is dropped.
+ *
+ * A "minimal" tuple is handled similarly to a palloc'd regular tuple.
+ * At present, minimal tuples never are stored in buffers, so there is no
+ * parallel to case 1.  Note that a minimal tuple has no "system columns".
+ * (Actually, it could have an OID, but we have no need to access the OID.)
  *
  * A "virtual" tuple is an optimization used to minimize physical data
  * copying in a nest of plan nodes.  Any pass-by-reference Datums in the
@@ -83,6 +89,15 @@
  * tts_values/tts_isnull are allocated when a descriptor is assigned to the
  * slot; they are of length equal to the descriptor's natts.
  *
+ * tts_mintuple must always be NULL if the slot does not hold a "minimal"
+ * tuple.  When it does, tts_mintuple points to the actual MinimalTupleData
+ * object (the thing to be pfree'd if tts_shouldFree is true).  In this case
+ * tts_tuple points at tts_minhdr and the fields of that are set correctly
+ * for access to the minimal tuple; in particular, tts_minhdr.t_data points
+ * MINIMAL_TUPLE_OFFSET bytes before tts_mintuple.  (tts_mintuple is therefore
+ * redundant, but for code simplicity we store it explicitly anyway.)  This
+ * case otherwise behaves identically to the regular-physical-tuple case.
+ *
  * tts_slow/tts_off are saved state for slot_deform_tuple, and should not
  * be touched by any other code.
  *----------
@@ -100,6 +115,8 @@ typedef struct TupleTableSlot
 	int			tts_nvalid;		/* # of valid values in tts_values */
 	Datum	   *tts_values;		/* current per-attribute values */
 	bool	   *tts_isnull;		/* current per-attribute isnull flags */
+	MinimalTuple tts_mintuple;	/* set if it's a minimal tuple, else NULL */
+	HeapTupleData tts_minhdr;	/* workspace if it's a minimal tuple */
 	long		tts_off;		/* saved state for slot_deform_tuple */
 } TupleTableSlot;
 
@@ -133,10 +150,14 @@ extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
 			   TupleTableSlot *slot,
 			   Buffer buffer,
 			   bool shouldFree);
+extern TupleTableSlot *ExecStoreMinimalTuple(MinimalTuple mtup,
+			   TupleTableSlot *slot,
+			   bool shouldFree);
 extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);
 extern HeapTuple ExecCopySlotTuple(TupleTableSlot *slot);
+extern MinimalTuple ExecCopySlotMinimalTuple(TupleTableSlot *slot);
 extern HeapTuple ExecFetchSlotTuple(TupleTableSlot *slot);
 extern HeapTuple ExecMaterializeSlot(TupleTableSlot *slot);
 extern TupleTableSlot *ExecCopySlot(TupleTableSlot *dstslot,

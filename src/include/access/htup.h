@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.82 2006/05/10 23:18:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.83 2006/06/27 02:51:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
  */
 #define MaxTupleAttributeNumber 1664	/* 8 * 208 */
 
-/*----------
+/*
  * MaxHeapAttributeNumber limits the number of (user) columns in a table.
  * This should be somewhat less than MaxTupleAttributeNumber.  It must be
  * at least one less, else we will fail to do UPDATEs on a maximal-width
@@ -42,11 +42,10 @@
  * In any case, depending on column data types you will likely be running
  * into the disk-block-based limit on overall tuple size if you have more
  * than a thousand or so columns.  TOAST won't help.
- *----------
  */
 #define MaxHeapAttributeNumber	1600	/* 8 * 200 */
 
-/*----------
+/*
  * Heap tuple header.  To avoid wasting space, the fields should be
  * layed out in such a way to avoid structure padding.
  *
@@ -101,7 +100,6 @@
  * t_infomask), then it is stored just before the user data, which begins at
  * the offset shown by t_hoff.	Note that t_hoff must be a multiple of
  * MAXALIGN.
- *----------
  */
 
 typedef struct HeapTupleFields
@@ -140,6 +138,8 @@ typedef struct HeapTupleHeaderData
 	}			t_choice;
 
 	ItemPointerData t_ctid;		/* current TID of this or newer tuple */
+
+	/* Fields below here must match MinimalTupleData! */
 
 	int16		t_natts;		/* number of attributes */
 
@@ -355,6 +355,62 @@ do { \
 
 
 /*
+ * MinimalTuple is an alternate representation that is used for transient
+ * tuples inside the executor, in places where transaction status information
+ * is not required, the tuple rowtype is known, and shaving off a few bytes
+ * is worthwhile because we need to store many tuples.  The representation
+ * is chosen so that tuple access routines can work with either full or
+ * minimal tuples via a HeapTupleData pointer structure.  The access routines
+ * see no difference, except that they must not access the transaction status
+ * or t_ctid fields because those aren't there.
+ *
+ * For the most part, MinimalTuples should be accessed via TupleTableSlot
+ * routines.  These routines will prevent access to the "system columns"
+ * and thereby prevent accidental use of the nonexistent fields.
+ *
+ * MinimalTupleData contains a length word, some padding, and fields matching
+ * HeapTupleHeaderData beginning with t_natts.  The padding is chosen so that
+ * offsetof(t_natts) is the same modulo MAXIMUM_ALIGNOF in both structs.
+ * This makes data alignment rules equivalent in both cases.
+ *
+ * When a minimal tuple is accessed via a HeapTupleData pointer, t_data is
+ * set to point MINIMAL_TUPLE_OFFSET bytes before the actual start of the
+ * minimal tuple --- that is, where a full tuple matching the minimal tuple's
+ * data would start.  This trick is what makes the structs seem equivalent.
+ *
+ * Note that t_hoff is computed the same as in a full tuple, hence it includes
+ * the MINIMAL_TUPLE_OFFSET distance.  t_len does not include that, however.
+ */
+#define MINIMAL_TUPLE_OFFSET \
+	((offsetof(HeapTupleHeaderData, t_natts) - sizeof(uint32)) / MAXIMUM_ALIGNOF * MAXIMUM_ALIGNOF)
+#define MINIMAL_TUPLE_PADDING \
+	((offsetof(HeapTupleHeaderData, t_natts) - sizeof(uint32)) % MAXIMUM_ALIGNOF)
+
+typedef struct MinimalTupleData
+{
+	uint32		t_len;			/* actual length of minimal tuple */
+
+	char		mt_padding[MINIMAL_TUPLE_PADDING];
+
+	/* Fields below here must match HeapTupleHeaderData! */
+
+	int16		t_natts;		/* number of attributes */
+
+	uint16		t_infomask;		/* various flag bits, see below */
+
+	uint8		t_hoff;			/* sizeof header incl. bitmap, padding */
+
+	/* ^ - 27 bytes - ^ */
+
+	bits8		t_bits[1];		/* bitmap of NULLs -- VARIABLE LENGTH */
+
+	/* MORE DATA FOLLOWS AT END OF STRUCT */
+} MinimalTupleData;
+
+typedef MinimalTupleData *MinimalTuple;
+
+
+/*
  * HeapTupleData is an in-memory data structure that points to a tuple.
  *
  * There are several ways in which this data structure is used:
@@ -375,6 +431,11 @@ do { \
  *	 is not adjacent to the HeapTupleData.	(This case is deprecated since
  *	 it's difficult to tell apart from case #1.  It should be used only in
  *	 limited contexts where the code knows that case #1 will never apply.)
+ *
+ * * Separately allocated minimal tuple: t_data points MINIMAL_TUPLE_OFFSET
+ *	 bytes before the start of a MinimalTuple.  As with the previous case,
+ *	 this can't be told apart from case #1 by inspection; code setting up
+ *	 or destroying this representation has to know what it's doing.
  *
  * t_len should always be valid, except in the pointer-to-nothing case.
  * t_self and t_tableOid should be valid if the HeapTupleData points to

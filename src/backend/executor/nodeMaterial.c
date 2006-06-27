@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.54 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.55 2006/06/27 02:51:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,6 @@ ExecMaterial(MaterialState *node)
 	ScanDirection dir;
 	bool		forward;
 	Tuplestorestate *tuplestorestate;
-	HeapTuple	heapTuple = NULL;
-	bool		should_free = false;
 	bool		eof_tuplestore;
 	TupleTableSlot *slot;
 
@@ -80,27 +78,25 @@ ExecMaterial(MaterialState *node)
 		{
 			/*
 			 * When reversing direction at tuplestore EOF, the first
-			 * getheaptuple call will fetch the last-added tuple; but we want
+			 * gettupleslot call will fetch the last-added tuple; but we want
 			 * to return the one before that, if possible. So do an extra
 			 * fetch.
 			 */
-			heapTuple = tuplestore_getheaptuple(tuplestorestate,
-												forward,
-												&should_free);
-			if (heapTuple == NULL)
+			if (!tuplestore_advance(tuplestorestate, forward))
 				return NULL;	/* the tuplestore must be empty */
-			if (should_free)
-				heap_freetuple(heapTuple);
 		}
 		eof_tuplestore = false;
 	}
 
+	/*
+	 * If we can fetch another tuple from the tuplestore, return it.
+	 */
+	slot = node->ss.ps.ps_ResultTupleSlot;
 	if (!eof_tuplestore)
 	{
-		heapTuple = tuplestore_getheaptuple(tuplestorestate,
-											forward,
-											&should_free);
-		if (heapTuple == NULL && forward)
+		if (tuplestore_gettupleslot(tuplestorestate, forward, slot))
+			return slot;
+		if (forward)
 			eof_tuplestore = true;
 	}
 
@@ -128,26 +124,26 @@ ExecMaterial(MaterialState *node)
 			node->eof_underlying = true;
 			return NULL;
 		}
-		heapTuple = ExecFetchSlotTuple(outerslot);
-		should_free = false;
 
 		/*
-		 * Append returned tuple to tuplestore, too.  NOTE: because the
+		 * Append returned tuple to tuplestore.  NOTE: because the
 		 * tuplestore is certainly in EOF state, its read position will move
 		 * forward over the added tuple.  This is what we want.
 		 */
 		if (tuplestorestate)
-			tuplestore_puttuple(tuplestorestate, (void *) heapTuple);
+			tuplestore_puttupleslot(tuplestorestate, outerslot);
+
+		/*
+		 * And return a copy of the tuple.  (XXX couldn't we just return
+		 * the outerslot?)
+		 */
+		return ExecCopySlot(slot, outerslot);
 	}
 
 	/*
-	 * Return the obtained tuple, if any.
+	 * Nothing left ...
 	 */
-	slot = (TupleTableSlot *) node->ss.ps.ps_ResultTupleSlot;
-	if (heapTuple)
-		return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
-	else
-		return ExecClearTuple(slot);
+	return ExecClearTuple(slot);
 }
 
 /* ----------------------------------------------------------------

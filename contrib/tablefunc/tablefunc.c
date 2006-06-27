@@ -934,19 +934,16 @@ get_crosstab_tuplestore(char *sql,
 				 */
 				if (lastrowid != NULL)
 				{
-					/*
-					 * switch to appropriate context while storing the tuple
-					 */
-					SPIcontext = MemoryContextSwitchTo(per_query_ctx);
-
 					/* rowid changed, flush the previous output row */
 					tuple = BuildTupleFromCStrings(attinmeta, values);
+
+					/* switch to appropriate context while storing the tuple */
+					SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 					tuplestore_puttuple(tupstore, tuple);
+					MemoryContextSwitchTo(SPIcontext);
+
 					for (j = 0; j < result_ncols; j++)
 						xpfree(values[j]);
-
-					/* now reset the context */
-					MemoryContextSwitchTo(SPIcontext);
 				}
 
 				values[0] = rowid;
@@ -970,16 +967,13 @@ get_crosstab_tuplestore(char *sql,
 			lastrowid = pstrdup(rowid);
 		}
 
-		/* switch to appropriate context while storing the tuple */
-		SPIcontext = MemoryContextSwitchTo(per_query_ctx);
-
 		/* flush the last output row */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
+
+		/* switch to appropriate context while storing the tuple */
+		SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 		tuplestore_puttuple(tupstore, tuple);
-
-		/* now reset the context */
 		MemoryContextSwitchTo(SPIcontext);
-
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
