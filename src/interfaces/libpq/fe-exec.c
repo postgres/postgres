@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.186 2006/05/28 21:13:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.187 2006/06/27 00:03:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2513,6 +2513,42 @@ PQescapeString(char *to, const char *from, size_t length)
 	return PQescapeStringInternal(NULL, to, from, length, NULL,
 								  static_client_encoding,
 								  static_std_strings);
+}
+
+/*
+ * Escaping arbitrary strings to get valid SQL identifier strings.
+ *
+ * Replaces " with "".
+ *
+ * length is the length of the source string.  (Note: if a terminating NUL
+ * is encountered sooner, PQescapeIdentifier stops short of "length"; the behavior
+ * is thus rather like strncpy.)
+ *
+ * For safety the buffer at "to" must be at least 2*length + 1 bytes long.
+ * A terminating NUL character is added to the output string, whether the
+ * input is NUL-terminated or not.
+ *
+ * Returns the actual length of the output (not counting the terminating NUL).
+ */
+size_t
+PQescapeIdentifier(char *to, const char *from, size_t length)
+{
+	const char *source = from;
+	char	   *target = to;
+	size_t		remaining = length;
+
+	while (remaining > 0 && *source != '\0')
+	{
+		if (*source  == '"')
+			*target++ = *source;
+		*target++ = *source++;
+		remaining--;
+	}
+
+	/* Write the terminating NUL character. */
+	*target = '\0';
+
+	return target - to;
 }
 
 /*
