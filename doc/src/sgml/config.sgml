@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.66 2006/06/19 01:51:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.67 2006/06/27 19:07:50 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2878,7 +2878,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Enables the collection of information on the currently
         executing command of each session, along with the time at
-        which that command began execution. This parameter is off by
+        which that command began execution. This parameter is on by
         default. Note that even when enabled, this information is not
         visible to all users, only to superusers and the user owning
         the session being reported on; so it should not represent a
