@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.52 2006/06/07 22:24:44 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.53 2006/06/27 01:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,7 +359,35 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	{
 		tm = calloc(1, sizeof(TAR_MEMBER));
 
+#ifndef WIN32
 		tm->tmpFH = tmpfile();
+#else
+		/*
+		 *	On WIN32, tmpfile() generates a filename in the root directory,
+		 *	which requires administrative permissions on certain systems.
+		 *	Loop until we find a unique file name we can create.
+		 */
+		while (1)
+		{
+			char *name;
+			int fd;
+			
+			name = _tempnam(NULL, "pg_temp_");
+			if (name == NULL)
+				break;
+			fd = open(name, O_RDWR | O_CREAT | O_EXCL | O_BINARY |
+					  O_TEMPORARY, S_IREAD | S_IWRITE);
+			free(name);
+
+			if (fd != -1)	/* created a file */
+			{
+				tm->tmpFH = fdopen(fd, "w+b");
+				break;
+			}
+			else if (errno != EEXIST)	/* failure other than file exists */
+				break;
+		}
+#endif
 
 		if (tm->tmpFH == NULL)
 			die_horribly(AH, modulename, "could not generate temporary file name: %s\n", strerror(errno));
