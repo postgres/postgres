@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.324 2006/06/27 22:16:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.325 2006/06/27 23:25:28 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -732,8 +732,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"update_process_title", PGC_SUSET, STATS_COLLECTOR,
 			gettext_noop("Updates the process title to show the active SQL command."),
-			gettext_noop("Enables updating of the process title every time a new
-            SQL command is received by the server.")
+			gettext_noop("Enables updating of the process title every time a new SQL command is received by the server.")
 		},
 		&update_process_title,
 		true, NULL, NULL
