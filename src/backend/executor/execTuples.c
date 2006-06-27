@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.95 2006/06/27 02:51:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.96 2006/06/27 21:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -716,6 +716,55 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
 	 * Otherwise materialize the slot...
 	 */
 	return ExecMaterializeSlot(slot);
+}
+
+/* --------------------------------
+ *		ExecFetchSlotMinimalTuple
+ *			Fetch the slot's minimal physical tuple.
+ *
+ *		If the slot contains a virtual tuple, we convert it to minimal
+ *		physical form.  The slot retains ownership of the physical tuple.
+ *		Likewise, if it contains a regular tuple we convert to minimal form.
+ *
+ * As above, the result must be treated as read-only.
+ * --------------------------------
+ */
+MinimalTuple
+ExecFetchSlotMinimalTuple(TupleTableSlot *slot)
+{
+	MinimalTuple newTuple;
+	MemoryContext oldContext;
+
+	/*
+	 * sanity checks
+	 */
+	Assert(slot != NULL);
+	Assert(!slot->tts_isempty);
+
+	/*
+	 * If we have a minimal physical tuple then just return it.
+	 */
+	if (slot->tts_mintuple)
+		return slot->tts_mintuple;
+
+	/*
+	 * Otherwise, build a minimal tuple, and then store it as the new slot
+	 * value.  (Note: tts_nvalid will be reset to zero here.  There are cases
+	 * in which this could be optimized but it's probably not worth worrying
+	 * about.)
+	 *
+	 * We may be called in a context that is shorter-lived than the tuple
+	 * slot, but we have to ensure that the materialized tuple will survive
+	 * anyway.
+	 */
+	oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+	newTuple = ExecCopySlotMinimalTuple(slot);
+	MemoryContextSwitchTo(oldContext);
+
+	ExecStoreMinimalTuple(newTuple, slot, true);
+
+	Assert(slot->tts_mintuple);
+	return slot->tts_mintuple;
 }
 
 /* --------------------------------

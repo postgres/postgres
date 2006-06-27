@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.103 2006/05/30 14:01:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.104 2006/06/27 21:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ MultiExecHash(HashState *node)
 		/* We have to compute the hash value */
 		econtext->ecxt_innertuple = slot;
 		hashvalue = ExecHashGetHashValue(hashtable, econtext, hashkeys);
-		ExecHashTableInsert(hashtable, ExecFetchSlotTuple(slot), hashvalue);
+		ExecHashTableInsert(hashtable, slot, hashvalue);
 	}
 
 	/* must provide our own instrumentation support */
@@ -358,8 +358,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	 * does not allow for any palloc overhead.	The manipulations of spaceUsed
 	 * don't count palloc overhead either.
 	 */
-	tupsize = MAXALIGN(sizeof(HashJoinTupleData)) +
-		MAXALIGN(sizeof(HeapTupleHeaderData)) +
+	tupsize = HJTUPLE_OVERHEAD +
+		MAXALIGN(sizeof(MinimalTupleData)) +
 		MAXALIGN(tupwidth);
 	inner_rel_bytes = ntuples * tupsize;
 
@@ -548,7 +548,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			{
 				/* dump it out */
 				Assert(batchno > curbatch);
-				ExecHashJoinSaveTuple(&tuple->htup, tuple->hashvalue,
+				ExecHashJoinSaveTuple(HJTUPLE_MINTUPLE(tuple),
+									  tuple->hashvalue,
 									  &hashtable->innerBatchFile[batchno]);
 				/* and remove from hash table */
 				if (prevtuple)
@@ -557,7 +558,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 					hashtable->buckets[i] = nexttuple;
 				/* prevtuple doesn't change */
 				hashtable->spaceUsed -=
-					MAXALIGN(sizeof(HashJoinTupleData)) + tuple->htup.t_len;
+					HJTUPLE_OVERHEAD + HJTUPLE_MINTUPLE(tuple)->t_len;
 				pfree(tuple);
 				nfreed++;
 			}
@@ -592,12 +593,19 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
  * ExecHashTableInsert
  *		insert a tuple into the hash table depending on the hash value
  *		it may just go to a temp file for later batches
+ *
+ * Note: the passed TupleTableSlot may contain a regular, minimal, or virtual
+ * tuple; the minimal case in particular is certain to happen while reloading
+ * tuples from batch files.  We could save some cycles in the regular-tuple
+ * case by not forcing the slot contents into minimal form; not clear if it's
+ * worth the messiness required.
  */
 void
 ExecHashTableInsert(HashJoinTable hashtable,
-					HeapTuple tuple,
+					TupleTableSlot *slot,
 					uint32 hashvalue)
 {
+	MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot);
 	int			bucketno;
 	int			batchno;
 
@@ -615,18 +623,11 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		HashJoinTuple hashTuple;
 		int			hashTupleSize;
 
-		hashTupleSize = MAXALIGN(sizeof(HashJoinTupleData)) + tuple->t_len;
+		hashTupleSize = HJTUPLE_OVERHEAD + tuple->t_len;
 		hashTuple = (HashJoinTuple) MemoryContextAlloc(hashtable->batchCxt,
 													   hashTupleSize);
 		hashTuple->hashvalue = hashvalue;
-		memcpy((char *) &hashTuple->htup,
-			   (char *) tuple,
-			   sizeof(hashTuple->htup));
-		hashTuple->htup.t_data = (HeapTupleHeader)
-			(((char *) hashTuple) + MAXALIGN(sizeof(HashJoinTupleData)));
-		memcpy((char *) hashTuple->htup.t_data,
-			   (char *) tuple->t_data,
-			   tuple->t_len);
+		memcpy(HJTUPLE_MINTUPLE(hashTuple), tuple, tuple->t_len);
 		hashTuple->next = hashtable->buckets[bucketno];
 		hashtable->buckets[bucketno] = hashTuple;
 		hashtable->spaceUsed += hashTupleSize;
@@ -639,7 +640,8 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		 * put the tuple into a temp file for later batches
 		 */
 		Assert(batchno > hashtable->curbatch);
-		ExecHashJoinSaveTuple(tuple, hashvalue,
+		ExecHashJoinSaveTuple(tuple,
+							  hashvalue,
 							  &hashtable->innerBatchFile[batchno]);
 	}
 }
@@ -749,7 +751,7 @@ ExecHashGetBucketAndBatch(HashJoinTable hashtable,
  *
  * The current outer tuple must be stored in econtext->ecxt_outertuple.
  */
-HeapTuple
+HashJoinTuple
 ExecScanHashBucket(HashJoinState *hjstate,
 				   ExprContext *econtext)
 {
@@ -771,14 +773,12 @@ ExecScanHashBucket(HashJoinState *hjstate,
 	{
 		if (hashTuple->hashvalue == hashvalue)
 		{
-			HeapTuple	heapTuple = &hashTuple->htup;
 			TupleTableSlot *inntuple;
 
 			/* insert hashtable's tuple into exec slot so ExecQual sees it */
-			inntuple = ExecStoreTuple(heapTuple,
-									  hjstate->hj_HashTupleSlot,
-									  InvalidBuffer,
-									  false);	/* do not pfree */
+			inntuple = ExecStoreMinimalTuple(HJTUPLE_MINTUPLE(hashTuple),
+											 hjstate->hj_HashTupleSlot,
+											 false);	/* do not pfree */
 			econtext->ecxt_innertuple = inntuple;
 
 			/* reset temp memory each time to avoid leaks from qual expr */
@@ -787,7 +787,7 @@ ExecScanHashBucket(HashJoinState *hjstate,
 			if (ExecQual(hjclauses, econtext, false))
 			{
 				hjstate->hj_CurTuple = hashTuple;
-				return heapTuple;
+				return hashTuple;
 			}
 		}
 

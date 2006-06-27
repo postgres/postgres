@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.82 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.83 2006/06/27 21:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ ExecHashJoin(HashJoinState *node)
 	ExprContext *econtext;
 	ExprDoneCond isDone;
 	HashJoinTable hashtable;
-	HeapTuple	curtuple;
+	HashJoinTuple curtuple;
 	TupleTableSlot *outerTupleSlot;
 	uint32		hashvalue;
 	int			batchno;
@@ -224,7 +224,7 @@ ExecHashJoin(HashJoinState *node)
 				 * in the corresponding outer-batch file.
 				 */
 				Assert(batchno > hashtable->curbatch);
-				ExecHashJoinSaveTuple(ExecFetchSlotTuple(outerTupleSlot),
+				ExecHashJoinSaveTuple(ExecFetchSlotMinimalTuple(outerTupleSlot),
 									  hashvalue,
 									  &hashtable->outerBatchFile[batchno]);
 				node->hj_NeedNewOuter = true;
@@ -244,10 +244,9 @@ ExecHashJoin(HashJoinState *node)
 			/*
 			 * we've got a match, but still need to test non-hashed quals
 			 */
-			inntuple = ExecStoreTuple(curtuple,
-									  node->hj_HashTupleSlot,
-									  InvalidBuffer,
-									  false);	/* don't pfree this tuple */
+			inntuple = ExecStoreMinimalTuple(HJTUPLE_MINTUPLE(curtuple),
+											 node->hj_HashTupleSlot,
+											 false);	/* don't pfree */
 			econtext->ecxt_innertuple = inntuple;
 
 			/* reset temp memory each time to avoid leaks from qual expr */
@@ -706,9 +705,7 @@ start_over:
 			 * NOTE: some tuples may be sent to future batches.  Also, it is
 			 * possible for hashtable->nbatch to be increased here!
 			 */
-			ExecHashTableInsert(hashtable,
-								ExecFetchSlotTuple(slot),
-								hashvalue);
+			ExecHashTableInsert(hashtable, slot, hashvalue);
 		}
 
 		/*
@@ -741,15 +738,14 @@ start_over:
  *		save a tuple to a batch file.
  *
  * The data recorded in the file for each tuple is its hash value,
- * then an image of its HeapTupleData (with meaningless t_data pointer)
- * followed by the HeapTupleHeader and tuple data.
+ * then the tuple in MinimalTuple format.
  *
  * Note: it is important always to call this in the regular executor
  * context, not in a shorter-lived context; else the temp file buffers
  * will get messed up.
  */
 void
-ExecHashJoinSaveTuple(HeapTuple heapTuple, uint32 hashvalue,
+ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
 					  BufFile **fileptr)
 {
 	BufFile    *file = *fileptr;
@@ -768,14 +764,8 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple, uint32 hashvalue,
 				(errcode_for_file_access(),
 				 errmsg("could not write to hash-join temporary file: %m")));
 
-	written = BufFileWrite(file, (void *) heapTuple, sizeof(HeapTupleData));
-	if (written != sizeof(HeapTupleData))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to hash-join temporary file: %m")));
-
-	written = BufFileWrite(file, (void *) heapTuple->t_data, heapTuple->t_len);
-	if (written != (size_t) heapTuple->t_len)
+	written = BufFileWrite(file, (void *) tuple, tuple->t_len);
+	if (written != tuple->t_len)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to hash-join temporary file: %m")));
@@ -794,32 +784,36 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 						  uint32 *hashvalue,
 						  TupleTableSlot *tupleSlot)
 {
-	HeapTupleData htup;
+	uint32		header[2];
 	size_t		nread;
-	HeapTuple	heapTuple;
+	MinimalTuple tuple;
 
-	nread = BufFileRead(file, (void *) hashvalue, sizeof(uint32));
-	if (nread == 0)
-		return NULL;			/* end of file */
-	if (nread != sizeof(uint32))
+	/*
+	 * Since both the hash value and the MinimalTuple length word are
+	 * uint32, we can read them both in one BufFileRead() call without
+	 * any type cheating.
+	 */
+	nread = BufFileRead(file, (void *) header, sizeof(header));
+	if (nread == 0)			/* end of file */
+	{
+		ExecClearTuple(tupleSlot);
+		return NULL;
+	}
+	if (nread != sizeof(header))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read from hash-join temporary file: %m")));
-	nread = BufFileRead(file, (void *) &htup, sizeof(HeapTupleData));
-	if (nread != sizeof(HeapTupleData))
+	*hashvalue = header[0];
+	tuple = (MinimalTuple) palloc(header[1]);
+	tuple->t_len = header[1];
+	nread = BufFileRead(file,
+						(void *) ((char *) tuple + sizeof(uint32)),
+						header[1] - sizeof(uint32));
+	if (nread != header[1] - sizeof(uint32))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read from hash-join temporary file: %m")));
-	heapTuple = palloc(HEAPTUPLESIZE + htup.t_len);
-	memcpy((char *) heapTuple, (char *) &htup, sizeof(HeapTupleData));
-	heapTuple->t_data = (HeapTupleHeader)
-		((char *) heapTuple + HEAPTUPLESIZE);
-	nread = BufFileRead(file, (void *) heapTuple->t_data, htup.t_len);
-	if (nread != (size_t) htup.t_len)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read from hash-join temporary file: %m")));
-	return ExecStoreTuple(heapTuple, tupleSlot, InvalidBuffer, true);
+	return ExecStoreMinimalTuple(tuple, tupleSlot, true);
 }
 
 

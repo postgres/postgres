@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.38 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.39 2006/06/27 21:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,13 @@ typedef struct HashJoinTupleData
 {
 	struct HashJoinTupleData *next;		/* link to next tuple in same bucket */
 	uint32		hashvalue;		/* tuple's hash code */
-	HeapTupleData htup;			/* tuple header */
+	/* Tuple data, in MinimalTuple format, follows on a MAXALIGN boundary */
 } HashJoinTupleData;
+
+#define HJTUPLE_OVERHEAD  MAXALIGN(sizeof(HashJoinTupleData))
+#define HJTUPLE_MINTUPLE(hjtup)  \
+	((MinimalTuple) ((char *) (hjtup) + HJTUPLE_OVERHEAD))
+
 
 typedef struct HashJoinTableData
 {
