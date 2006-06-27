@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.547 2006/06/16 23:50:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.548 2006/06/27 03:43:20 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -193,8 +193,6 @@ static void doNegateFloat(Value *v);
 				opt_grant_grant_option opt_grant_admin_option
 				opt_nowait opt_if_exists
 
-%type <boolean>	like_including_defaults
-
 %type <list>	OptRoleList
 %type <defelt>	OptRoleElem
 
@@ -335,7 +333,9 @@ static void doNegateFloat(Value *v);
 %type <keyword> unreserved_keyword func_name_keyword
 %type <keyword> col_name_keyword reserved_keyword
 
-%type <node>	TableConstraint TableLikeClause
+%type <node>	TableConstraint TableLikeClause 
+%type <list>	TableLikeOptionList
+%type <ival>	TableLikeOption
 %type <list>	ColQualList
 %type <node>	ColConstraint ColConstraintElem ConstraintAttr
 %type <ival>	key_actions key_delete key_match key_update key_action
@@ -385,7 +385,7 @@ static void doNegateFloat(Value *v);
 	HANDLER HAVING HEADER_P HOLD HOUR_P
 
 	IF_P ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
-	INDEX INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
+	INDEX INDEXES INHERIT INHERITS INITIALLY INNER_P INOUT INPUT_P
 	INSENSITIVE INSERT INSTEAD INT_P INTEGER INTERSECT
 	INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
@@ -1994,20 +1994,27 @@ ConstraintAttr:
  * which is a part of SQL 200N
  */
 TableLikeClause:
-			LIKE qualified_name like_including_defaults
+			LIKE qualified_name TableLikeOptionList
 				{
 					InhRelation *n = makeNode(InhRelation);
 					n->relation = $2;
-					n->including_defaults = $3;
-
+					n->options = $3;
 					$$ = (Node *)n;
 				}
 		;
 
-like_including_defaults:
-				INCLUDING DEFAULTS		{ $$ = true; }
-				| EXCLUDING DEFAULTS		{ $$ = false; }
-				| /* EMPTY */				{ $$ = false; }
+TableLikeOptionList:
+				TableLikeOptionList TableLikeOption	{ $$ = lappend_int($1, $2); }
+				| /* EMPTY */						{ $$ = NIL; }
+		;
+
+TableLikeOption:
+				INCLUDING DEFAULTS					{ $$ = 	CREATE_TABLE_LIKE_INCLUDING_DEFAULTS; }
+				| EXCLUDING DEFAULTS				{ $$ = 	CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS; }
+				| INCLUDING CONSTRAINTS				{ $$ = 	CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS; }
+				| EXCLUDING CONSTRAINTS				{ $$ = 	CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS; }
+				| INCLUDING INDEXES					{ $$ = 	CREATE_TABLE_LIKE_INCLUDING_INDEXES; }
+				| EXCLUDING INDEXES					{ $$ = 	CREATE_TABLE_LIKE_EXCLUDING_INDEXES; }
 		;
 
 
@@ -8507,6 +8514,7 @@ unreserved_keyword:
 			| INCLUDING
 			| INCREMENT
 			| INDEX
+			| INDEXES
 			| INHERIT
 			| INHERITS
 			| INPUT_P

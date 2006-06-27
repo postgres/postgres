@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.100 2006/02/19 00:04:26 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.101 2006/06/27 03:43:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,7 @@ PostgreSQL documentation
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> ( [
   { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
-    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } DEFAULTS ] }
+    | LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS } ] ... }
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
@@ -232,7 +232,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } DEFAULTS ]</literal></term>
+    <term><literal>LIKE <replaceable>parent_table</replaceable> [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS } ]</literal></term>
     <listitem>
      <para>
       The <literal>LIKE</literal> clause specifies a table from which
@@ -251,6 +251,20 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       copied if <literal>INCLUDING DEFAULTS</literal> is specified.  The
       default behavior is to exclude default expressions, resulting in
       all columns of the new table having null defaults.
+     </para>
+     <para>
+      Likewise constraints for the copied column definitions will only be
+      copied if <literal>INCLUDING CONSTRAINTS</literal> is specified. Note
+      that currently even when <literal>INCLUDING CONSTRAINTS</literal> is specified
+      only CHECK constraints are copied. Also, no distinction is made between
+      column constraints and table constraints -- when constraints are
+      requested all check constraints are copied.
+     </para>
+     <para>
+      Note also that unlike <literal>INHERITS<literal> copied columns and
+      constraints are not merged with similarly named columns and constraints.
+      If the same name is specified explicitly or in another
+      <literal>LIKE</literal> clause an error is signalled.
      </para>
     </listitem>
    </varlistentry>

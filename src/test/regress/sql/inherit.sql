@@ -140,9 +140,22 @@ SELECT * FROM a; /* Has ee entry */
 
 CREATE TABLE inhf (LIKE inhx, LIKE inhx); /* Throw error */
 
-CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS);
+CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
 INSERT INTO inhf DEFAULT VALUES;
 SELECT * FROM inhf; /* Single entry with value 'text' */
+
+ALTER TABLE inhx add constraint foo CHECK (xx = 'text');
+ALTER TABLE inhx ADD PRIMARY KEY (xx);
+CREATE TABLE inhg (LIKE inhx); /* Doesn't copy constraint */
+INSERT INTO inhg VALUES ('foo');
+DROP TABLE inhg;
+CREATE TABLE inhg (x text, LIKE inhx INCLUDING CONSTRAINTS, y text); /* Copies constraints */
+INSERT INTO inhg VALUES ('x', 'text', 'y'); /* Succeeds */
+INSERT INTO inhg VALUES ('x', 'text', 'y'); /* Succeeds -- Unique constraints not copied */
+INSERT INTO inhg VALUES ('x', 'foo',  'y');  /* fails due to constraint */
+SELECT * FROM inhg; /* Two records with three columns in order x=x, xx=text, y=y */
+DROP TABLE inhg;
+
 
 -- Test changing the type of inherited columns
 insert into d values('test','one','two','three');

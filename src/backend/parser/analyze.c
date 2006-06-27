@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.335 2006/06/21 18:30:11 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.336 2006/06/27 03:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
+#include "commands/tablecmds.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -1075,6 +1076,11 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	TupleConstr *constr;
 	AclResult	aclresult;
 
+	bool including_defaults = false;
+	bool including_constraints = false;
+	bool including_indexes = false;
+	ListCell *elem;
+
 	relation = heap_openrv(inhRelation->relation, AccessShareLock);
 
 	if (relation->rd_rel->relkind != RELKIND_RELATION)
@@ -1095,6 +1101,37 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	tupleDesc = RelationGetDescr(relation);
 	constr = tupleDesc->constr;
 
+	foreach(elem, inhRelation->options)
+		{
+			int option = lfirst_int(elem);
+			switch (option)
+			{
+				case CREATE_TABLE_LIKE_INCLUDING_DEFAULTS:
+					including_defaults = true;
+					break;
+				case CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS:
+					including_defaults = false;
+					break;
+				case CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS:
+					including_constraints = true;
+					break;
+				case CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS:
+					including_constraints = false;
+					break;
+				case CREATE_TABLE_LIKE_INCLUDING_INDEXES:
+					including_indexes = true;
+					break;
+				case CREATE_TABLE_LIKE_EXCLUDING_INDEXES:
+					including_indexes = false;
+					break;
+				default:
+					elog(ERROR, "unrecognized CREATE TABLE LIKE option: %d", option);
+			}
+		}
+
+	if (including_indexes)
+		elog(ERROR, "TODO");
+	
 	/*
 	 * Insert the inherited attributes into the cxt for the new table
 	 * definition.
@@ -1123,7 +1160,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		def->typename = makeTypeNameFromOid(attribute->atttypid,
 											attribute->atttypmod);
 		def->inhcount = 0;
-		def->is_local = false;
+		def->is_local = true;
 		def->is_not_null = attribute->attnotnull;
 		def->raw_default = NULL;
 		def->cooked_default = NULL;
@@ -1138,7 +1175,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		/*
 		 * Copy default if any, and the default has been requested
 		 */
-		if (attribute->atthasdef && inhRelation->including_defaults)
+		if (attribute->atthasdef && including_defaults)
 		{
 			char	   *this_default = NULL;
 			AttrDefault *attrdef;
@@ -1163,6 +1200,27 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			 */
 
 			def->cooked_default = pstrdup(this_default);
+		}
+	}
+	
+	if (including_constraints && tupleDesc->constr) {
+		int ccnum;
+		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
+		
+		for(ccnum = 0; ccnum < tupleDesc->constr->num_check; ccnum++) {
+			char *ccname = tupleDesc->constr->check[ccnum].ccname;
+			char *ccbin = tupleDesc->constr->check[ccnum].ccbin;
+			Node *ccbin_node = stringToNode(ccbin);
+			Constraint *n = makeNode(Constraint);
+
+			change_varattnos_of_a_node(ccbin_node, attmap);
+			
+			n->contype = CONSTR_CHECK;
+			n->name = pstrdup(ccname);
+			n->raw_expr = ccbin_node;
+			n->cooked_expr = NULL;
+			n->indexspace = NULL;
+			cxt->ckconstraints = lappend(cxt->ckconstraints, (Node*)n);
 		}
 	}
 

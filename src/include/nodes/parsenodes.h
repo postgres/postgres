@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.311 2006/06/16 20:23:45 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.312 2006/06/27 03:43:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,7 +403,7 @@ typedef struct InhRelation
 {
 	NodeTag		type;
 	RangeVar   *relation;
-	bool		including_defaults;
+	List       *options;
 } InhRelation;
 
 /*
@@ -1025,6 +1025,15 @@ typedef struct CreateStmt
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
 	char	   *tablespacename; /* table space to use, or NULL */
 } CreateStmt;
+
+typedef enum CreateStmtLikeOption {
+	CREATE_TABLE_LIKE_INCLUDING_DEFAULTS,
+	CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS,
+	CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS,
+	CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS,
+	CREATE_TABLE_LIKE_INCLUDING_INDEXES,
+	CREATE_TABLE_LIKE_EXCLUDING_INDEXES,
+} CreateStmtLikeOption;
 
 /* ----------
  * Definitions for plain (non-FOREIGN KEY) constraints in CreateStmt

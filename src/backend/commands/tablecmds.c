@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.186 2006/06/27 03:21:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.187 2006/06/27 03:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ typedef struct NewColumnValue
 static void truncate_check_rel(Relation rel);
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, int *supOidCount);
-static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
+static bool change_varattnos_walker(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
@@ -1106,14 +1106,59 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 }
 
 /*
- * complementary static functions for MergeAttributes().
- *
  * Varattnos of pg_constraint.conbin must be rewritten when subclasses inherit
  * constraints from parent classes, since the inherited attributes could
  * be given different column numbers in multiple-inheritance cases.
  *
  * Note that the passed node tree is modified in place!
+ *
+ * This function is used elsewhere such as in analyze.c
+ *
  */
+
+void
+change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
+{
+	change_varattnos_walker(node, newattno);
+}
+
+/* Generate a map for change_varattnos_of_a_node from two tupledesc's. */
+
+AttrNumber *
+varattnos_map(TupleDesc old, TupleDesc new)
+{
+	int i,j;
+	AttrNumber *attmap = palloc0(sizeof(AttrNumber)*old->natts);
+	for (i=1; i <= old->natts; i++) {
+		if (old->attrs[i-1]->attisdropped) {
+			attmap[i-1] = 0;
+			continue;
+		}
+		for (j=1; j<= new->natts; j++)
+			if (!strcmp(NameStr(old->attrs[i-1]->attname), NameStr(new->attrs[j-1]->attname)))
+				attmap[i-1] = j;
+	}
+	return attmap;
+}
+
+/* Generate a map for change_varattnos_of_a_node from a tupledesc and a list of
+ * ColumnDefs */
+
+AttrNumber *
+varattnos_map_schema(TupleDesc old, List *schema) 
+{
+	int i;
+	AttrNumber *attmap = palloc0(sizeof(AttrNumber)*old->natts);
+	for (i=1; i <= old->natts; i++) {
+		if (old->attrs[i-1]->attisdropped) {
+			attmap[i-1] = 0;
+			continue;
+		}
+		attmap[i-1] = findAttrByName(NameStr(old->attrs[i-1]->attname), schema);
+	}
+	return attmap;
+}
+
 static bool
 change_varattnos_walker(Node *node, const AttrNumber *newattno)
 {
@@ -1138,12 +1183,6 @@ change_varattnos_walker(Node *node, const AttrNumber *newattno)
 	}
 	return expression_tree_walker(node, change_varattnos_walker,
 								  (void *) newattno);
-}
-
-static bool
-change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
-{
-	return change_varattnos_walker(node, newattno);
 }
 
 /*
