@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.241 2006/06/22 20:42:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.242 2006/06/27 18:59:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2153,7 +2153,16 @@ XLogFileClose(void)
 {
 	Assert(openLogFile >= 0);
 
-#if defined(HAVE_DECL_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
+	/*
+	 * posix_fadvise is problematic on many platforms: on older x86 Linux
+	 * it just dumps core, and there are reports of problems on PPC platforms
+	 * as well.  The following is therefore disabled for the time being.
+	 * We could consider some kind of configure test to see if it's safe to
+	 * use, but since we lack hard evidence that there's any useful performance
+	 * gain to be had, spending time on that seems unprofitable for now.
+	 */
+#ifdef NOT_USED
+
 	/*
 	 * WAL segment files will not be re-read in normal operation, so we advise
 	 * OS to release any cached pages.  But do not do so if WAL archiving is
@@ -2163,9 +2172,12 @@ XLogFileClose(void)
 	 * While O_DIRECT works for O_SYNC, posix_fadvise() works for fsync()
 	 * and O_SYNC, and some platforms only have posix_fadvise().
 	 */
+#if defined(HAVE_DECL_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
 	if (!XLogArchivingActive())
 		posix_fadvise(openLogFile, 0, 0, POSIX_FADV_DONTNEED);
 #endif
+
+#endif /* NOT_USED */
 
 	if (close(openLogFile))
 		ereport(PANIC,
