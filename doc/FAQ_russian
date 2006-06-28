@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Pyatnica 24 fevralya 23:28:40 EDT 2006
+   Data poslednego obnovleniya: Voskresen'e 18 iyunya 15:33:25 EDT 2006
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -22,14 +22,15 @@
    1.3) Kakovy avtorskie prava na PostgreSQL?
    1.4) Na kakih platformah rabotaet PostgreSQL?
    1.5) Gde mozhno vzyat' PostgreSQL?
-   1.6) Kakaya versiya poslednyaya?
+   1.6) Kakaya versiya naibolee svezhaya?
    1.7) Gde poluchit' podderzhku?
    1.8) Kak mne soobschit' ob oshibke?
    1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
    vozmozhnostyah?
    1.10) Kakaya dokumentaciya imeetsya v nalichii?
    1.11) Kak nauchit'sya SQL?
-   1.12) Kak prisoedinitsya k komande razrabotchikov?
+   1.12) Kak mne otpravit' ispravlenie ili prisoedinitsya k komande
+   razrabotchikov?
    1.13) Kak sravnit' PostgreSQL s drugimi SUBD?
    
                  Voprosy pol'zovatelej po klientskoj chasti
@@ -49,8 +50,7 @@
    3.4) Kakie vozmozhnosti dlya otladki est' v nalichii?
    3.5) Pochemu ya poluchayu soobschenie "Sorry, too many clients" kogda
    pytayus' podklyuchit'sya k baze?
-   3.6) Pochemu neobhodimo delat' dump i restore pri obnovlenii vypuskov
-   PostgreSQL?
+   3.6) Kak vypolnit' obnovlenie PostgreSQL?
    3.7) Kakoe komp'yuternoe "zhelezo" ya dolzhen ispol'zovat'?
    
                            Voprosy `ekspluatacii
@@ -189,9 +189,9 @@
    CHerez brauzer, ispol'zuya http://www.postgresql.org/ftp/ i cherez
    ftp, ispol'zuya ftp://ftp.PostgreSQL.org/pub/.
    
-  1.6) Kakaya poslednyaya versiya?
+  1.6) Kakaya versiya naibolee svezhaya?
   
-   Poslednij vypusk PostgreSQL - `eto versiya 8.1.3
+   Poslednij vypusk PostgreSQL - `eto versiya 8.1.4
    
    My planiruem vypuskat' novye starshie versii kazhdyj god, a mladshie
    versii kazhdye neskol'ko mesyacev.
@@ -304,12 +304,16 @@
    iz nashih pol'zovatelej nravitsya kniga The Practical SQL Handbook,
    Bowman, Judith S., et al., Addison-Wesley. Drugim nravitsya The
    Complete Reference SQL, Groff et al., McGraw-Hill.
-   Est' prekrasnyj uchebnik na
-   http://www.intermedia.net/support/sql/sqltut.shtm, na
-   http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
-   i na http://sqlcourse.com.
    
-  1.12) Kak prisoedinitsya k komande razrabotchikov?
+   Suschestvuet takzhe mnozhestvo prekrasnyh uchebnikov dostupnyh v
+   online:
+     * http://www.intermedia.net/support/sql/sqltut.shtm,
+     * http://sqlcourse.com.
+     * http://www.w3school.com/sql/default.asp
+     * http://mysite.verizon.net/Graeme_Birchall/id1.html
+       
+  1.12) Kak mne prislat' ispravlenie ili prisoedinitsya k komande
+  razrabotchikov?
   
    Smotrite FAQ dlya razrabotchikov.
    
@@ -394,8 +398,9 @@
    
   2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
   
-   Da, podrobnosti smotrite v
-   http://techdocs.postgresql.org/guides/GUITools.
+   Dlya PostgreSQL suschestvuet bol'shoe kolichestvo instrumentov s
+   graficheskim interfejsom kak kommercheskih, tak i otkrytyh.
+   Podrobnosti mozhno najti v Dokumentacii soobschestva PostgreSQL
      _________________________________________________________________
    
                          Voprosy administrirovaniya
@@ -466,23 +471,26 @@
    izmeniv znachenie max_connections v fajle postgresql.conf i
    perestartovat' postmaster.
    
-  3.6) Pochemu neobhodimo delat' dump i restore pri obnovlenii vypuskov
-  PostgreSQL?
+  3.6) Kak vypolnit' obnovlenie PostgreSQL?
   
-   Razrabotchiki PostgreSQL delayut tol'ko nebol'shie izmeneniya mezhdu
-   podvypuskami. Takim obrazom obnovlenie s versii 7.4.0 do 7.4.1 ne
-   trebuet vypolneniya dump i restore. Odnako pri vyhode ocherednogo
-   vypuska (t.e. pri obnovlenii naprimer, s 7.3 na 7.4) chasto menyaetsya
-   vnutrennij format sistemnyh tablic i fajlov dannyh. `Eti izmeneniya
-   chasto nosyat kompleksnyj harakter, tak chto net vozmozhnosti
-   obespechit' obratnuyu sovmestimost' fajlov dannyh. Vypolenie dump
-   pozvolyaet poluchit' dannye v obschem formate, kotoryj zatem mozhet
-   byt' zagruzhen pri ispol'zovanii novogo vnutrennego formata.
+   Mezhdu podvypuskami, razrabotchiki PostgreSQL delayut tol'ko
+   ispravleniya oshibok. Takim obrazom obnovlenie s versii 7.4.8 do 7.4.9
+   ne trebuet vypolneniya dump i restore; dostatochno ostanovit' server,
+   ustanovit' obnovlionnye fajly SUBD i zapustit' server.
    
-   V teh vypuskah, gde format dannyh na diske ne menyaetsya, dlya
-   provedeniya obnovleniya mozhet byt' ispol'zovan scenarij pg_upgrade
-   bez ispol'zovaniya dump/restore. Kommentarii k vypusku govorit kogda
-   mozhno ispol'zovat' pg_upgrade dlya `etogo vypuska.
+   Vse pol'zovateli dolzhny by obnovlyat'sya na naibolee svezhuyu
+   podversiyu kak tol'ko ona budet dostupna. V to vremya kak kazhdoe
+   obnovlenie podrazumevaet nekotoryj risk, podversii PostgreSQL
+   razrabytyvayutsya tol'ko dlya ispravleniya obschih oshibok s
+   minimal'nym riskom. Takim obrazom, vash risk svyazan tol'ko s samim
+   obnovleniem.
+   
+   Pri vyhode ocherednogo vypuska (t.e. pri obnovlenii naprimer, s 7.3 na
+   7.4) chasto menyaetsya vnutrennij format sistemnyh tablic i fajlov
+   dannyh. `Eti izmeneniya chasto nosyat slozhnyj harakter, tak chto my
+   ne obsluzhivaem obratnuyu sovmestimost' dlya fajlov dannyh. V `etih
+   sluchayah dlya obnovleniya bazy dannyh trebuetsya vypolnit'
+   dump/restore.
    
   3.7) Kakoe komp'yuternoe "zhelezo" ya dolzhen ispol'zovat'?
   
@@ -556,7 +564,7 @@
    
    Maksimal'nyj razmer bazy? neogranichen (suschestvuyut bazy na 32 TB)
    Maksimal'nyj razmer tablicy? 32 TB
-   Maksimal'nyj razmer stroki? 1.6 TB
+   Maksimal'nyj razmer stroki? 400 Gb
    Maksimal'nyj razmer polya? 1 GB
    Maksimal'noe kolichestvo strok v tablice? neogranicheno
    Maksimal'noe kolichestvo kolonok v tablice? 250-1600 v zavisimosti ot
