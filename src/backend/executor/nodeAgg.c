@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.141 2006/06/28 17:05:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.142 2006/06/28 19:40:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,9 +223,11 @@ static void finalize_aggregate(AggState *aggstate,
 				   AggStatePerAgg peraggstate,
 				   AggStatePerGroup pergroupstate,
 				   Datum *resultVal, bool *resultIsNull);
+static Bitmapset *find_unaggregated_cols(AggState *aggstate);
+static bool find_unaggregated_cols_walker(Node *node, Bitmapset **colnos);
 static void build_hash_table(AggState *aggstate);
 static AggHashEntry lookup_hash_entry(AggState *aggstate,
-				  TupleTableSlot *slot);
+				  TupleTableSlot *inputslot);
 static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_hash_table(AggState *aggstate);
@@ -580,6 +582,46 @@ finalize_aggregate(AggState *aggstate,
 }
 
 /*
+ * find_unaggregated_cols
+ *	  Construct a bitmapset of the column numbers of un-aggregated Vars
+ *	  appearing in our targetlist and qual (HAVING clause)
+ */
+static Bitmapset *
+find_unaggregated_cols(AggState *aggstate)
+{
+	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
+	Bitmapset *colnos;
+
+	colnos = NULL;
+	(void) find_unaggregated_cols_walker((Node *) node->plan.targetlist,
+										 &colnos);
+	(void) find_unaggregated_cols_walker((Node *) node->plan.qual,
+										 &colnos);
+	return colnos;
+}
+
+static bool
+find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		/* setrefs.c should have set the varno to 0 */
+		Assert(var->varno == 0);
+		Assert(var->varlevelsup == 0);
+		*colnos = bms_add_member(*colnos, var->varattno);
+		return false;
+	}
+	if (IsA(node, Aggref))		/* do not descend into aggregate exprs */
+		return false;
+	return expression_tree_walker(node, find_unaggregated_cols_walker,
+								  (void *) colnos);
+}
+
+/*
  * Initialize the hash table to empty.
  *
  * The hash table always lives in the aggcontext memory context.
@@ -590,6 +632,9 @@ build_hash_table(AggState *aggstate)
 	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
 	MemoryContext tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	Size		entrysize;
+	Bitmapset  *colnos;
+	List	   *collist;
+	int			i;
 
 	Assert(node->aggstrategy == AGG_HASHED);
 	Assert(node->numGroups > 0);
@@ -605,13 +650,48 @@ build_hash_table(AggState *aggstate)
 											  entrysize,
 											  aggstate->aggcontext,
 											  tmpmem);
+
+	/*
+	 * Create a list of the tuple columns that actually need to be stored
+	 * in hashtable entries.  The incoming tuples from the child plan node
+	 * will contain grouping columns, other columns referenced in our
+	 * targetlist and qual, columns used to compute the aggregate functions,
+	 * and perhaps just junk columns we don't use at all.  Only columns of the
+	 * first two types need to be stored in the hashtable, and getting rid of
+	 * the others can make the table entries significantly smaller.  To avoid
+	 * messing up Var numbering, we keep the same tuple descriptor for
+	 * hashtable entries as the incoming tuples have, but set unwanted columns
+	 * to NULL in the tuples that go into the table.
+	 *
+	 * To eliminate duplicates, we build a bitmapset of the needed columns,
+	 * then convert it to an integer list (cheaper to scan at runtime).
+	 * The list is in decreasing order so that the first entry is the largest;
+	 * lookup_hash_entry depends on this to use slot_getsomeattrs correctly.
+	 *
+	 * Note: at present, searching the tlist/qual is not really necessary
+	 * since the parser should disallow any unaggregated references to
+	 * ungrouped columns.  However, the search will be needed when we add
+	 * support for SQL99 semantics that allow use of "functionally dependent"
+	 * columns that haven't been explicitly grouped by.
+	 */
+
+	/* Find Vars that will be needed in tlist and qual */
+	colnos = find_unaggregated_cols(aggstate);
+	/* Add in all the grouping columns */
+	for (i = 0; i < node->numCols; i++)
+		colnos = bms_add_member(colnos, node->grpColIdx[i]);
+	/* Convert to list, using lcons so largest element ends up first */
+	collist = NIL;
+	while ((i = bms_first_member(colnos)) >= 0)
+		collist = lcons_int(i, collist);
+	aggstate->hash_needed = collist;
 }
 
 /*
  * Estimate per-hash-table-entry overhead for the planner.
  *
  * Note that the estimate does not include space for pass-by-reference
- * transition data values.
+ * transition data values, nor for the representative tuple of each group.
  */
 Size
 hash_agg_entry_size(int numAggs)
@@ -621,9 +701,9 @@ hash_agg_entry_size(int numAggs)
 	/* This must match build_hash_table */
 	entrysize = sizeof(AggHashEntryData) +
 		(numAggs - 1) *sizeof(AggStatePerGroupData);
-	/* Account for hashtable overhead */
-	entrysize += 2 * sizeof(void *);
 	entrysize = MAXALIGN(entrysize);
+	/* Account for hashtable overhead (assuming fill factor = 1) */
+	entrysize += 3 * sizeof(void *);
 	return entrysize;
 }
 
@@ -634,13 +714,34 @@ hash_agg_entry_size(int numAggs)
  * When called, CurrentMemoryContext should be the per-query context.
  */
 static AggHashEntry
-lookup_hash_entry(AggState *aggstate, TupleTableSlot *slot)
+lookup_hash_entry(AggState *aggstate, TupleTableSlot *inputslot)
 {
+	TupleTableSlot *hashslot = aggstate->hashslot;
+	ListCell   *l;
 	AggHashEntry entry;
 	bool		isnew;
 
+	/* if first time through, initialize hashslot by cloning input slot */
+	if (hashslot->tts_tupleDescriptor == NULL)
+	{
+		ExecSetSlotDescriptor(hashslot, inputslot->tts_tupleDescriptor);
+		/* Make sure all unused columns are NULLs */
+		ExecStoreAllNullTuple(hashslot);
+	}
+
+	/* transfer just the needed columns into hashslot */
+	slot_getsomeattrs(inputslot, linitial_int(aggstate->hash_needed));
+	foreach(l, aggstate->hash_needed)
+	{
+		int		varNumber = lfirst_int(l) - 1;
+
+		hashslot->tts_values[varNumber] = inputslot->tts_values[varNumber];
+		hashslot->tts_isnull[varNumber] = inputslot->tts_isnull[varNumber];
+	}
+
+	/* find or create the hashtable entry using the filtered tuple */
 	entry = (AggHashEntry) LookupTupleHashEntry(aggstate->hashtable,
-												slot,
+												hashslot,
 												&isnew);
 
 	if (isnew)
@@ -1063,13 +1164,14 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-#define AGG_NSLOTS 2
+#define AGG_NSLOTS 3
 
 	/*
 	 * tuple table initialization
 	 */
 	ExecInitScanTupleSlot(estate, &aggstate->ss);
 	ExecInitResultTupleSlot(estate, &aggstate->ss.ps);
+	aggstate->hashslot = ExecInitExtraTupleSlot(estate);
 
 	/*
 	 * initialize child expressions
