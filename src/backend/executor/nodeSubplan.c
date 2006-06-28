@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.75 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.76 2006/06/28 17:05:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,8 +572,7 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot)
 	ResetTupleHashIterator(hashtable, &hashiter);
 	while ((entry = ScanTupleHashTable(&hashiter)) != NULL)
 	{
-		ExecStoreTuple(entry->firstTuple, hashtable->tableslot,
-					   InvalidBuffer, false);
+		ExecStoreMinimalTuple(entry->firstTuple, hashtable->tableslot, false);
 		if (!execTuplesUnequal(hashtable->tableslot, slot,
 							   numCols, keyColIdx,
 							   hashtable->eqfunctions,

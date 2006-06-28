@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.140 2006/06/21 18:39:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.141 2006/06/28 17:05:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -957,10 +957,9 @@ agg_retrieve_hash_table(AggState *aggstate)
 		 * Store the copied first input tuple in the tuple table slot reserved
 		 * for it, so that it can be used in ExecProject.
 		 */
-		ExecStoreTuple(entry->shared.firstTuple,
-					   firstSlot,
-					   InvalidBuffer,
-					   false);
+		ExecStoreMinimalTuple(entry->shared.firstTuple,
+							  firstSlot,
+							  false);
 
 		pergroup = entry->pergroup;
 

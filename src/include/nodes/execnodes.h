@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.150 2006/04/30 18:30:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.151 2006/06/28 17:05:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,7 +367,7 @@ typedef struct TupleHashTableData *TupleHashTable;
 typedef struct TupleHashEntryData
 {
 	/* firstTuple must be the first field in this struct! */
-	HeapTuple	firstTuple;		/* copy of first tuple in this group */
+	MinimalTuple firstTuple;	/* copy of first tuple in this group */
 	/* there may be additional data beyond the end of this struct */
 } TupleHashEntryData;			/* VARIABLE LENGTH STRUCT */
 
