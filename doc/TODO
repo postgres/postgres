@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Jun 28 11:39:25 EDT 2006
+Last updated:		Wed Jun 28 17:05:09 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1143,6 +1143,7 @@ Vacuum
   is possible for same-page updates because a single index row can be
   used to point to both old and new values.
   http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php
+  http://momjian.us/cgi-bin/pgsitc
 
 * Reuse index tuples that point to heap tuples that are not visible to 
   anyone?
