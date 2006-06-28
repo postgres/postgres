@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.101 2006/06/27 03:43:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.102 2006/06/28 22:01:52 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -249,19 +249,19 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       Default expressions for the copied column definitions will only be
       copied if <literal>INCLUDING DEFAULTS</literal> is specified.  The
-      default behavior is to exclude default expressions, resulting in
-      all columns of the new table having null defaults.
+      default behavior is to exclude default expressions, resulting in the
+      copied columns in the new table having null defaults.
      </para>
      <para>
-      Likewise constraints for the copied column definitions will only be
-      copied if <literal>INCLUDING CONSTRAINTS</literal> is specified. Note
-      that currently even when <literal>INCLUDING CONSTRAINTS</literal> is specified
-      only CHECK constraints are copied. Also, no distinction is made between
-      column constraints and table constraints -- when constraints are
-      requested all check constraints are copied.
+      Not-null constraints are always copied to the new table.
+      <literal>CHECK</literal> constraints will only be copied if
+      <literal>INCLUDING CONSTRAINTS</literal> is specified; other types of
+      constraints will never be copied. Also, no distinction is made between
+      column constraints and table constraints &mdash; when constraints are
+      requested, all check constraints are copied.
      </para>
      <para>
-      Note also that unlike <literal>INHERITS<literal> copied columns and
+      Note also that unlike <literal>INHERITS</literal>, copied columns and
       constraints are not merged with similarly named columns and constraints.
       If the same name is specified explicitly or in another
       <literal>LIKE</literal> clause an error is signalled.
