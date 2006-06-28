@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.199 2006/03/05 15:58:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.200 2006/06/28 20:04:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1298,7 +1298,7 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 	}
 
 	/* Estimate per-hash-entry space at tuple width... */
-	hashentrysize = cheapest_path_width;
+	hashentrysize = MAXALIGN(cheapest_path_width) + MAXALIGN(sizeof(MinimalTupleData));
 	/* plus space for pass-by-ref transition values... */
 	hashentrysize += agg_counts->transitionSpace;
 	/* plus the per-hash-entry overhead */
