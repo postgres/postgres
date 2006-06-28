@@ -115,7 +115,7 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 
 		gistentryinit(trim, d,
 					  entry->rel, entry->page,
-					  entry->offset, VARSIZE(DatumGetPointer(d)), TRUE);
+					  entry->offset, TRUE);
 		retval = gbt_var_compress(&trim, &tinfo);
 	}
 	else

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.17 2006/05/29 12:50:06 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.18 2006/06/28 12:00:14 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,6 +180,21 @@ typedef struct GISTInsertStack
 	struct GISTInsertStack *next;
 } GISTInsertStack;
 
+typedef struct GistSplitVector {
+	GIST_SPLITVEC	splitVector;  /* to/from PickSplit method */
+
+	Datum       spl_lattr[INDEX_MAX_KEYS];      /* Union of subkeys in spl_left */
+	bool        spl_lisnull[INDEX_MAX_KEYS];
+	bool        spl_leftvalid;
+
+	Datum       spl_rattr[INDEX_MAX_KEYS];      /* Union of subkeys in spl_right */
+	bool        spl_risnull[INDEX_MAX_KEYS];
+	bool        spl_rightvalid;
+
+	bool        *spl_equiv; /* equivalent tuples which can be freely 
+							 * distributed between left and right pages */ 
+} GistSplitVector;
+
 #define XLogRecPtrIsInvalid( r )	( (r).xlogid == 0 && (r).xrecoff == 0 )
 
 typedef struct
@@ -205,12 +220,6 @@ typedef struct
 
 /* root page of a gist index */
 #define GIST_ROOT_BLKNO				0
-
-#define ATTSIZE(datum, tupdesc, i, isnull) \
-		( \
-				(isnull) ? 0 : \
-				   att_addlength(0, (tupdesc)->attrs[(i)-1]->attlen, (datum)) \
-		)
 
 /*
  * mark tuples on inner pages during recovery
@@ -281,7 +290,7 @@ extern IndexTuple gistgetadjusted(Relation r,
 				IndexTuple addtup,
 				GISTSTATE *giststate);
 extern IndexTuple gistFormTuple(GISTSTATE *giststate,
-			  Relation r, Datum *attdata, int *datumsize, bool *isnull);
+			  Relation r, Datum *attdata, bool *isnull, bool newValues);
 
 extern OffsetNumber gistchoose(Relation r, Page p,
 		   IndexTuple it,
@@ -289,34 +298,34 @@ extern OffsetNumber gistchoose(Relation r, Page p,
 extern void gistcentryinit(GISTSTATE *giststate, int nkey,
 			   GISTENTRY *e, Datum k,
 			   Relation r, Page pg,
-			   OffsetNumber o, int b, bool l, bool isNull);
-extern void gistDeCompressAtt(GISTSTATE *giststate, Relation r,
-				  IndexTuple tuple, Page p, OffsetNumber o,
-				  GISTENTRY *attdata, bool *isnull);
-
-typedef struct {
-	int		*attrsize;
-	Datum	*attr;
-	int		len;
-	OffsetNumber *entries;
-	bool	*isnull;
-	int		*idgrp;
-} GistSplitVec;
-
-extern void gistunionsubkeyvec(GISTSTATE *giststate, 
-	IndexTuple *itvec, GistSplitVec *gsvp,  int startkey);
-extern void gistunionsubkey(GISTSTATE *giststate, IndexTuple *itvec, 
-		GIST_SPLITVEC *spl, int attno);
+			   OffsetNumber o, bool l, bool isNull);
 
 extern void GISTInitBuffer(Buffer b, uint32 f);
 extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   Datum k, Relation r, Page pg, OffsetNumber o,
-			   int b, bool l, bool isNull);
-bool gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GIST_SPLITVEC *v,
-				  IndexTuple *itup, int len, GISTSTATE *giststate);
+			   bool l, bool isNull);
+
+extern float gistpenalty(GISTSTATE *giststate, int attno,
+            			GISTENTRY *key1, bool isNull1,
+						GISTENTRY *key2, bool isNull2);
+extern bool gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey,
+                    Datum *attr, bool *isnull );
+extern bool gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b);
+extern void gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
+				OffsetNumber o, GISTENTRY *attdata, bool *isnull);
+
+extern void gistMakeUnionKey( GISTSTATE *giststate, int attno,
+                    GISTENTRY   *entry1, bool isnull1,
+					GISTENTRY   *entry2, bool isnull2,
+					Datum   *dst, bool *dstisnull );
 
 /* gistvacuum.c */
 extern Datum gistbulkdelete(PG_FUNCTION_ARGS);
 extern Datum gistvacuumcleanup(PG_FUNCTION_ARGS);
 
+/* gistsplit.c */
+extern void gistSplitByKey(Relation r, Page page, IndexTuple *itup, 
+							int len, GISTSTATE *giststate,
+							GistSplitVector *v, GistEntryVector *entryvec, 
+							int attno);
 #endif   /* GIST_PRIVATE_H */

@@ -19,7 +19,7 @@ gbt_var_decompress(PG_FUNCTION_ARGS)
 
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
-					  entry->offset, VARSIZE(key), FALSE);
+					  entry->offset, FALSE);
 
 		PG_RETURN_POINTER(retval);
 	}
@@ -292,7 +292,7 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo * tinfo)
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
-					  entry->offset, VARSIZE(r), TRUE);
+					  entry->offset, TRUE);
 	}
 	else
 		retval = entry;

@@ -159,7 +159,7 @@ gbt_tstz_compress(PG_FUNCTION_ARGS)
 		r->lower = r->upper = gmt;
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
-					  entry->offset, sizeof(tsKEY), FALSE);
+					  entry->offset, FALSE);
 	}
 	else
 		retval = entry;

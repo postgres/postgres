@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.c,v 1.13 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.c,v 1.14 2006/06/28 12:00:06 teodor Exp $ */
 
 #include "postgres.h"
 
@@ -202,7 +202,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
-					  entry->offset, res->len, FALSE);
+					  entry->offset, FALSE);
 	}
 	else if (ISSIGNKEY(DatumGetPointer(entry->key)) &&
 			 !ISALLTRUE(DatumGetPointer(entry->key)))
@@ -225,7 +225,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
-					  entry->offset, res->len, FALSE);
+					  entry->offset, FALSE);
 	}
 	PG_RETURN_POINTER(retval);
 }
@@ -242,7 +242,7 @@ gtsvector_decompress(PG_FUNCTION_ARGS)
 
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
-					  entry->offset, key->len, FALSE);
+					  entry->offset, FALSE);
 
 		PG_RETURN_POINTER(retval);
 	}

@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.14 2006/03/11 04:38:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.15 2006/06/28 11:59:59 teodor Exp $
  */
 
 #include "ltree.h"
@@ -81,7 +81,7 @@ ltree_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
-					  entry->offset, key->len, FALSE);
+					  entry->offset, FALSE);
 	}
 	PG_RETURN_POINTER(retval);
 }
@@ -98,7 +98,7 @@ ltree_decompress(PG_FUNCTION_ARGS)
 
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
-					  entry->offset, key->len, FALSE);
+					  entry->offset, FALSE);
 		PG_RETURN_POINTER(retval);
 	}
 	PG_RETURN_POINTER(entry);

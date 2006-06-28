@@ -129,7 +129,7 @@ gbt_intv_compress(PG_FUNCTION_ARGS)
 		}
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
-					  entry->offset, 2 * INTERVALSIZE, FALSE);
+					  entry->offset, FALSE);
 	}
 
 	PG_RETURN_POINTER(retval);
@@ -153,7 +153,7 @@ gbt_intv_decompress(PG_FUNCTION_ARGS)
 
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
-					  entry->offset, sizeof(intvKEY), FALSE);
+					  entry->offset, FALSE);
 	}
 	PG_RETURN_POINTER(retval);
 }

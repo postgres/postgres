@@ -103,7 +103,7 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
-					  entry->offset, res->len, FALSE);
+					  entry->offset, FALSE);
 	}
 	else if (ISSIGNKEY(DatumGetPointer(entry->key)) &&
 			 !ISALLTRUE(DatumGetPointer(entry->key)))
@@ -126,7 +126,7 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
-					  entry->offset, res->len, FALSE);
+					  entry->offset, FALSE);
 	}
 	PG_RETURN_POINTER(retval);
 }

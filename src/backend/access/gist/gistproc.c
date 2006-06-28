@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.5 2006/03/05 15:58:20 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.6 2006/06/28 12:00:14 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,17 @@ gist_box_consistent(PG_FUNCTION_ARGS)
 												 strategy));
 }
 
+static void
+adjustBox( BOX *b, BOX *addon ) {
+	if (b->high.x < addon->high.x)
+		b->high.x = addon->high.x;
+	if (b->low.x > addon->low.x)
+		b->low.x = addon->low.x;
+	if (b->high.y < addon->high.y)
+		b->high.y = addon->high.y;
+	if (b->low.y > addon->low.y)
+		b->low.y = addon->low.y;
+}
 
 /*
  * The GiST Union method for boxes
@@ -136,14 +147,7 @@ gist_box_union(PG_FUNCTION_ARGS)
 	for (i = 1; i < numranges; i++)
 	{
 		cur = DatumGetBoxP(entryvec->vector[i].key);
-		if (pageunion->high.x < cur->high.x)
-			pageunion->high.x = cur->high.x;
-		if (pageunion->low.x > cur->low.x)
-			pageunion->low.x = cur->low.x;
-		if (pageunion->high.y < cur->high.y)
-			pageunion->high.y = cur->high.y;
-		if (pageunion->low.y > cur->low.y)
-			pageunion->low.y = cur->low.y;
+		adjustBox( pageunion, cur );
 	}
 	*sizep = sizeof(BOX);
 
@@ -206,6 +210,74 @@ compare_KB(const void *a, const void *b)
 	return (sa > sb) ? 1 : -1;
 }
 
+static void
+chooseLR( GIST_SPLITVEC *v, 
+	OffsetNumber *list1, int nlist1, BOX *union1, 
+	OffsetNumber *list2, int nlist2, BOX *union2 )
+{
+	bool	firstToLeft = true;
+
+	if ( v->spl_ldatum_exists || v->spl_rdatum_exists ) {
+		if (  v->spl_ldatum_exists && v->spl_rdatum_exists ) {
+			BOX	LRl = *union1, LRr = *union2; 
+			BOX	RLl = *union2, RLr = *union1;
+			double sizeLR, sizeRL;
+
+			adjustBox( &LRl, DatumGetBoxP( v->spl_ldatum ) );
+			adjustBox( &LRr, DatumGetBoxP( v->spl_rdatum ) );
+			adjustBox( &RLl, DatumGetBoxP( v->spl_ldatum ) );
+			adjustBox( &RLr, DatumGetBoxP( v->spl_rdatum ) );
+
+			sizeLR = size_box( DirectFunctionCall2(rt_box_inter, BoxPGetDatum(&LRl), BoxPGetDatum(&LRr)) );
+			sizeRL = size_box( DirectFunctionCall2(rt_box_inter, BoxPGetDatum(&RLl), BoxPGetDatum(&RLr)) );
+
+			if ( sizeLR > sizeRL ) 
+				firstToLeft = false;
+
+		} else {
+			float p1, p2;
+			GISTENTRY	oldUnion, addon;
+
+			gistentryinit(oldUnion, ( v->spl_ldatum_exists ) ? v->spl_ldatum : v->spl_rdatum,
+						  NULL, NULL, InvalidOffsetNumber, FALSE);
+		
+			gistentryinit(addon, BoxPGetDatum(union1), NULL, NULL, InvalidOffsetNumber, FALSE);
+			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&union1), PointerGetDatum(&p1)); 
+			gistentryinit(addon, BoxPGetDatum(union2), NULL, NULL, InvalidOffsetNumber, FALSE);
+			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&union2), PointerGetDatum(&p2));
+
+			if (  (v->spl_ldatum_exists && p1 > p2) || (v->spl_rdatum_exists && p1 < p2)  ) 
+				firstToLeft = false;	
+		}
+	}
+
+	if ( firstToLeft ) {	
+		v->spl_left = list1;
+		v->spl_right = list2;
+		v->spl_nleft = nlist1;
+		v->spl_nright = nlist2;
+		if ( v->spl_ldatum_exists )
+			adjustBox(union1, DatumGetBoxP( v->spl_ldatum ) );
+		v->spl_ldatum = BoxPGetDatum(union1);
+		if ( v->spl_rdatum_exists )
+			adjustBox(union2, DatumGetBoxP( v->spl_rdatum ) );
+		v->spl_rdatum = BoxPGetDatum(union2);
+	} else {
+		v->spl_left = list2;
+		v->spl_right = list1;
+		v->spl_nleft = nlist2;
+		v->spl_nright = nlist1;
+		if ( v->spl_ldatum_exists )
+			adjustBox(union2, DatumGetBoxP( v->spl_ldatum ) );
+		v->spl_ldatum = BoxPGetDatum(union2);
+		if ( v->spl_rdatum_exists )
+			adjustBox(union1, DatumGetBoxP( v->spl_rdatum ) );
+		v->spl_rdatum = BoxPGetDatum(union1);
+	}
+
+	v->spl_ldatum_exists = v->spl_rdatum_exists = false;
+}
+
 /*
  * The GiST PickSplit method
  *
@@ -255,14 +327,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 								   ))
 			allisequal = false;
 
-		if (pageunion.high.x < cur->high.x)
-			pageunion.high.x = cur->high.x;
-		if (pageunion.low.x > cur->low.x)
-			pageunion.low.x = cur->low.x;
-		if (pageunion.high.y < cur->high.y)
-			pageunion.high.y = cur->high.y;
-		if (pageunion.low.y > cur->low.y)
-			pageunion.low.y = cur->low.y;
+		adjustBox( &pageunion, cur );
 	}
 
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
@@ -294,8 +359,16 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 					v->spl_nright++;
 				}
 			}
+
+			if ( v->spl_ldatum_exists ) 
+				adjustBox( unionL, DatumGetBoxP( v->spl_ldatum ) );
 			v->spl_ldatum = BoxPGetDatum(unionL);
+
+			if ( v->spl_rdatum_exists ) 
+				adjustBox( unionR, DatumGetBoxP( v->spl_rdatum ) );
 			v->spl_rdatum = BoxPGetDatum(unionR);
+
+			v->spl_ldatum_exists = v->spl_rdatum_exists = false;
 
 			PG_RETURN_POINTER(v);
 		}
@@ -399,23 +472,13 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	if (direction == 'x')
-	{
-		v->spl_left = listL;
-		v->spl_right = listR;
-		v->spl_nleft = posL;
-		v->spl_nright = posR;
-		v->spl_ldatum = BoxPGetDatum(unionL);
-		v->spl_rdatum = BoxPGetDatum(unionR);
-	}
-	else
-	{
-		v->spl_left = listB;
-		v->spl_right = listT;
-		v->spl_nleft = posB;
-		v->spl_nright = posT;
-		v->spl_ldatum = BoxPGetDatum(unionB);
-		v->spl_rdatum = BoxPGetDatum(unionT);
-	}
+		chooseLR( v,
+					listL, posL, unionL,
+					listR, posR, unionR );
+	else 
+		chooseLR( v,
+					listB, posB, unionB,
+					listT, posT, unionT );
 
 	PG_RETURN_POINTER(v);
 }
@@ -629,14 +692,14 @@ gist_poly_compress(PG_FUNCTION_ARGS)
 			memcpy((void *) r, (void *) &(in->boundbox), sizeof(BOX));
 			gistentryinit(*retval, PointerGetDatum(r),
 						  entry->rel, entry->page,
-						  entry->offset, sizeof(BOX), FALSE);
+						  entry->offset, FALSE);
 
 		}
 		else
 		{
 			gistentryinit(*retval, (Datum) 0,
 						  entry->rel, entry->page,
-						  entry->offset, 0, FALSE);
+						  entry->offset, FALSE);
 		}
 	}
 	else
@@ -700,14 +763,14 @@ gist_circle_compress(PG_FUNCTION_ARGS)
 			r->low.y = in->center.y - in->radius;
 			gistentryinit(*retval, PointerGetDatum(r),
 						  entry->rel, entry->page,
-						  entry->offset, sizeof(BOX), FALSE);
+						  entry->offset, FALSE);
 
 		}
 		else
 		{
 			gistentryinit(*retval, (Datum) 0,
 						  entry->rel, entry->page,
-						  entry->offset, 0, FALSE);
+						  entry->offset, FALSE);
 		}
 	}
 	else

@@ -172,7 +172,7 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
-					  entry->offset, res->len, FALSE);
+					  entry->offset, FALSE);
 
 		if (in != (ArrayType *) PG_DETOAST_DATUM(entry->key))
 			pfree(in);
@@ -198,7 +198,7 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
-					  entry->offset, res->len, FALSE);
+					  entry->offset, FALSE);
 
 		PG_RETURN_POINTER(retval);
 	}

@@ -164,7 +164,7 @@ gtsq_compress(PG_FUNCTION_ARGS)
 
 		gistentryinit(*retval, PointerGetDatum(sign),
 					  entry->rel, entry->page,
-					  entry->offset, sizeof(TPQTGist), FALSE);
+					  entry->offset, FALSE);
 	}
 
 	PG_RETURN_POINTER(retval);

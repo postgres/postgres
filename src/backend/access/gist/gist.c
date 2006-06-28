@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.138 2006/05/29 12:50:06 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.139 2006/06/28 12:00:14 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,7 @@ gistbuildCallback(Relation index,
 
 	/* form an index tuple and point it at the heap tuple */
 	itup = gistFormTuple(&buildstate->giststate, index,
-		values, NULL /* size is currently bogus */, isnull);
+		values, isnull, true /* size is currently bogus */);
 	itup->t_tid = htup->t_self;
 
 	/*
@@ -233,7 +233,7 @@ gistinsert(PG_FUNCTION_ARGS)
 	initGISTstate(&giststate, r);
 
 	itup = gistFormTuple(&giststate, r,
-		values, NULL /* size is currently bogus */, isnull);
+		values, isnull, true /* size is currently bogus */);
 	itup->t_tid = *ht_ctid;
 
 	gistdoinsert(r, itup, &giststate);
@@ -900,150 +900,6 @@ gistmakedeal(GISTInsertState *state, GISTSTATE *giststate)
 }
 
 /*
- * simple split page 
- */
-static void
-gistSplitHalf(GIST_SPLITVEC *v, int len) {
-	int i;
-
-	v->spl_nright	= v->spl_nleft		= 0;
-	v->spl_left = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
-	v->spl_right= (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
-	for(i = 1; i <= len; i++)
-		if ( i<len/2 )
-			v->spl_right[ v->spl_nright++ ] = i;
-		else
-			v->spl_left[ v->spl_nleft++ ] = i;
-}
-
-/*
- * if it was invalid tuple then we need special processing.
- * We move all invalid tuples on right page. 
- *
- * if there is no place on left page, gistSplit will be called one more 
- * time for left page.
- *
- * Normally, we never exec this code, but after crash replay it's possible
- * to get 'invalid' tuples (probability is low enough)
- */
-static void
-gistSplitByInvalid(GISTSTATE *giststate, GIST_SPLITVEC *v, IndexTuple *itup, int len) {
-	int i;
-	static OffsetNumber offInvTuples[ MaxOffsetNumber ];
-	int			 nOffInvTuples = 0;
-
-	for (i = 1; i <= len; i++)
-		if ( GistTupleIsInvalid(itup[i - 1]) )
-			offInvTuples[ nOffInvTuples++ ] = i;
-
-	if ( nOffInvTuples == len ) {
-		/* corner case, all tuples are invalid */
-		v->spl_rightvalid= v->spl_leftvalid 	= false;
-		gistSplitHalf( v, len );
-	} else {
-		GistSplitVec    gsvp;
-				
-		v->spl_right = offInvTuples;
-		v->spl_nright = nOffInvTuples;
-		v->spl_rightvalid = false;
-
-		v->spl_left = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
-		v->spl_nleft = 0;
-		for(i = 1; i <= len; i++) 
-			if ( !GistTupleIsInvalid(itup[i - 1]) )
-				v->spl_left[ v->spl_nleft++ ] = i;
-		v->spl_leftvalid = true;
-		
-		gsvp.idgrp = NULL;
-		gsvp.attrsize = v->spl_lattrsize;
-		gsvp.attr = v->spl_lattr;
-		gsvp.len = v->spl_nleft;
-		gsvp.entries = v->spl_left;
-		gsvp.isnull = v->spl_lisnull;
-
-		gistunionsubkeyvec(giststate, itup, &gsvp, 0);
-	}
-}
-
-/*
- * trys to split page by attno key, in a case of null
- * values move its to separate page. 
- */
-static void
-gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *giststate, 
-		GIST_SPLITVEC *v, GistEntryVector *entryvec, int attno) {
-	int i;
-	static OffsetNumber offNullTuples[ MaxOffsetNumber ];
-	int			 nOffNullTuples = 0;
-
-
-	for (i = 1; i <= len; i++) {
-		Datum       datum;
-		bool        IsNull;
-
-		if (!GistPageIsLeaf(page) && GistTupleIsInvalid(itup[i - 1])) {
-			gistSplitByInvalid(giststate, v, itup, len);
-			return;
-		}
-
-		datum = index_getattr(itup[i - 1], attno+1, giststate->tupdesc, &IsNull);
-		gistdentryinit(giststate, attno, &(entryvec->vector[i]),
-					   datum, r, page, i,
-					   ATTSIZE(datum, giststate->tupdesc, attno+1, IsNull),
-					   FALSE, IsNull);
-		if ( IsNull )
-			offNullTuples[ nOffNullTuples++ ] = i;
-	}
-
-	v->spl_leftvalid = v->spl_rightvalid = true;
-
-	if ( nOffNullTuples == len ) {
-		/* 
-		 * Corner case: All keys in attno column are null, we should try to
-		 * by keys in next column. It all keys in all columns
-		 * are NULL just split page half by half
-		 */
-		v->spl_risnull[attno] = v->spl_lisnull[attno] = TRUE;
-		if ( attno+1 == r->rd_att->natts ) 
-			gistSplitHalf( v, len );
-		else 
-			gistSplitByKey(r, page, itup, len, giststate, v, entryvec, attno+1);
-	} else if ( nOffNullTuples > 0 ) {
-		int j=0;
-		
-		/* 
-		 * We don't want to mix NULLs and not-NULLs keys
-		 * on one page, so move nulls to right page
-		 */
-		v->spl_right = offNullTuples;
-		v->spl_nright = nOffNullTuples;
-		v->spl_risnull[attno] = TRUE;
-
-		v->spl_left = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
-		v->spl_nleft = 0;
-		for(i = 1; i <= len; i++) 
-			if ( j<v->spl_nright && offNullTuples[j] == i ) 
-				j++;
-			else
-				v->spl_left[ v->spl_nleft++ ] = i;
-
-		v->spl_idgrp = NULL;
-		gistunionsubkey(giststate, itup, v, 0);
-	} else {
-		/*
-		 * all keys are not-null
-		 */
-		if ( gistUserPicksplit(r, entryvec, attno, v, itup, len, giststate) && attno+1 != r->rd_att->natts )
-			/*
-			 * Splitting on attno column is not optimized: unions of left and right
-			 * page are the same, we will try to split page by 
-			 * following columns
-			 */
-			gistSplitByKey(r, page, itup, len, giststate, v, entryvec, attno+1);
-	}
-}
-
-/*
  * gistSplit -- split a page in the tree and fill struct
  * used for XLOG and real writes buffers. Function is recursive, ie
  * it will split page until keys will fit in every page.
@@ -1057,7 +913,7 @@ gistSplit(Relation r,
 {
 	IndexTuple *lvectup,
 			   *rvectup;
-	GIST_SPLITVEC v;
+	GistSplitVector v;
 	GistEntryVector *entryvec;
 	int			i;
 	SplitedPageLayout	*res = NULL;
@@ -1066,6 +922,8 @@ gistSplit(Relation r,
 	entryvec = palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY));
 	entryvec->n = len + 1;
 
+	memset( v.spl_lisnull, TRUE, sizeof(bool) * giststate->tupdesc->natts ); 
+	memset( v.spl_risnull, TRUE, sizeof(bool) * giststate->tupdesc->natts ); 
 	gistSplitByKey(r, page, itup, len, giststate, 
 		&v, entryvec, 0);
 
@@ -1073,31 +931,31 @@ gistSplit(Relation r,
 	lvectup = (IndexTuple *) palloc(sizeof(IndexTuple) * (len + 1));
 	rvectup = (IndexTuple *) palloc(sizeof(IndexTuple) * (len + 1));
 
-	for (i = 0; i < v.spl_nleft; i++)
-		lvectup[i] = itup[v.spl_left[i] - 1];
+	for (i = 0; i < v.splitVector.spl_nleft; i++)
+		lvectup[i] = itup[v.splitVector.spl_left[i] - 1];
 
-	for (i = 0; i < v.spl_nright; i++)
-		rvectup[i] = itup[v.spl_right[i] - 1];
+	for (i = 0; i < v.splitVector.spl_nright; i++)
+		rvectup[i] = itup[v.splitVector.spl_right[i] - 1];
 
 	/* finalyze splitting (may need another split) */
-	if (!gistfitpage(rvectup, v.spl_nright))
+	if (!gistfitpage(rvectup, v.splitVector.spl_nright))
 	{
-		res = gistSplit(r, page, rvectup, v.spl_nright, giststate);
+		res = gistSplit(r, page, rvectup, v.splitVector.spl_nright, giststate);
 	}
 	else
 	{
 		ROTATEDIST(res);
-		res->block.num = v.spl_nright;
-		res->list = gistfillitupvec(rvectup, v.spl_nright, &( res->lenlist ) );
-		res->itup = (v.spl_rightvalid) ? gistFormTuple(giststate, r, v.spl_rattr, v.spl_rattrsize, v.spl_risnull)
+		res->block.num = v.splitVector.spl_nright;
+		res->list = gistfillitupvec(rvectup, v.splitVector.spl_nright, &( res->lenlist ) );
+		res->itup = (v.spl_rightvalid) ? gistFormTuple(giststate, r, v.spl_rattr, v.spl_risnull, false)
 			: gist_form_invalid_tuple(GIST_ROOT_BLKNO);
 	}
 
-	if (!gistfitpage(lvectup, v.spl_nleft))
+	if (!gistfitpage(lvectup, v.splitVector.spl_nleft))
 	{
 		SplitedPageLayout *resptr, *subres;
 
-		resptr = subres = gistSplit(r, page, lvectup, v.spl_nleft, giststate);
+		resptr = subres = gistSplit(r, page, lvectup, v.splitVector.spl_nleft, giststate);
 
 		/* install on list's tail */ 
 		while( resptr->next )
@@ -1109,9 +967,9 @@ gistSplit(Relation r,
 	else
 	{
 		ROTATEDIST(res);
-		res->block.num = v.spl_nleft;
-		res->list = gistfillitupvec(lvectup, v.spl_nleft, &( res->lenlist ) );
-		res->itup = (v.spl_leftvalid) ? gistFormTuple(giststate, r, v.spl_lattr, v.spl_lattrsize, v.spl_lisnull)
+		res->block.num = v.splitVector.spl_nleft;
+		res->list = gistfillitupvec(lvectup, v.splitVector.spl_nleft, &( res->lenlist ) );
+		res->itup = (v.spl_leftvalid) ? gistFormTuple(giststate, r, v.spl_lattr, v.spl_lisnull, false)
 			: gist_form_invalid_tuple(GIST_ROOT_BLKNO);
 	}
 

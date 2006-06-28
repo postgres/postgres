@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.25 2006/05/30 22:12:12 tgl Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.26 2006/06/28 11:59:59 teodor Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -300,8 +300,8 @@ g_cube_picksplit(GistEntryVector *entryvec,
 	double		size_l,
 				size_r;
 	int			nbytes;
-	OffsetNumber seed_1 = 0,
-				seed_2 = 0;
+	OffsetNumber seed_1 = 1,
+				seed_2 = 2;
 	OffsetNumber *left,
 			   *right;
 	OffsetNumber maxoff;

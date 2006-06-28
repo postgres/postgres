@@ -108,7 +108,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
-					  entry->offset, key->len, FALSE);
+					  entry->offset, FALSE);
 	}
 	else if (!LTG_ISALLTRUE(entry->key))
 	{
@@ -130,7 +130,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
-					  entry->offset, key->len, FALSE);
+					  entry->offset, FALSE);
 	}
 	PG_RETURN_POINTER(retval);
 }

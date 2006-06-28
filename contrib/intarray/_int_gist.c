@@ -154,7 +154,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+				  entry->rel, entry->page, entry->offset, FALSE);
 
 		PG_RETURN_POINTER(retval);
 	}
@@ -201,7 +201,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 		r = resize_intArrayType(r, len);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+				  entry->rel, entry->page, entry->offset, FALSE);
 		PG_RETURN_POINTER(retval);
 	}
 	else
@@ -238,7 +238,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		{
 			retval = palloc(sizeof(GISTENTRY));
 			gistentryinit(*retval, PointerGetDatum(in),
-				 entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
+				 entry->rel, entry->page, entry->offset, FALSE);
 
 			PG_RETURN_POINTER(retval);
 		}
@@ -260,7 +260,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		pfree(in);
 	retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, PointerGetDatum(r),
-				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+				  entry->rel, entry->page, entry->offset, FALSE);
 
 	PG_RETURN_POINTER(retval);
 }

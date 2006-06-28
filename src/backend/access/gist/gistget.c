@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.57 2006/05/24 11:01:39 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.58 2006/06/28 12:00:14 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,7 +391,6 @@ gistindex_keytest(IndexTuple tuple,
 
 		gistdentryinit(giststate, key->sk_attno - 1, &de,
 					   datum, r, p, offset,
-					   IndexTupleSize(tuple) - sizeof(IndexTupleData),
 					   FALSE, isNull);
 
 		/*

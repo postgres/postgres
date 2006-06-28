@@ -316,8 +316,8 @@ gseg_picksplit(GistEntryVector *entryvec,
 	float		size_l,
 				size_r;
 	int			nbytes;
-	OffsetNumber seed_1 = 0,
-				seed_2 = 0;
+	OffsetNumber seed_1 = 1,
+				seed_2 = 2;
 	OffsetNumber *left,
 			   *right;
 	OffsetNumber maxoff;
