@@ -43,10 +43,10 @@ INSERT INTO trunc_b VALUES (1);
 INSERT INTO trunc_d VALUES (1);
 INSERT INTO trunc_e VALUES (1,1);
 TRUNCATE TABLE trunc_c;
-TRUNCATE TABLE trunc_c,trunc_d;
-TRUNCATE TABLE trunc_c,trunc_d,trunc_e;
-TRUNCATE TABLE trunc_c,trunc_d,trunc_e,truncate_a;
-TRUNCATE TABLE trunc_c,trunc_d,trunc_e,truncate_a,trunc_b;
+TRUNCATE TABLE trunc_c,truncate_a;
+TRUNCATE TABLE trunc_c,truncate_a,trunc_d;
+TRUNCATE TABLE trunc_c,truncate_a,trunc_d,trunc_e;
+TRUNCATE TABLE trunc_c,truncate_a,trunc_d,trunc_e,trunc_b;
 
 -- Verify that truncating did actually work
 SELECT * FROM truncate_a

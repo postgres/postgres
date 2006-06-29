@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.301 2006/06/27 18:35:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.302 2006/06/29 16:07:29 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -75,6 +75,7 @@ static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
 static void SetRelationNumChecks(Relation rel, int numchecks);
+static List *insert_ordered_unique_oid(List *list, Oid datum);
 
 
 /* ----------------------------------------------------------------
@@ -1990,7 +1991,7 @@ heap_truncate(List *relids)
 /*
  * heap_truncate_check_FKs
  *		Check for foreign keys referencing a list of relations that
- *		are to be truncated
+ *		are to be truncated, and raise error if there are any
  *
  * We disallow such FKs (except self-referential ones) since the whole point
  * of TRUNCATE is to not scan the individual rows to be thrown away.
@@ -2004,10 +2005,8 @@ void
 heap_truncate_check_FKs(List *relations, bool tempTables)
 {
 	List	   *oids = NIL;
+	List	   *dependents;
 	ListCell   *cell;
-	Relation	fkeyRel;
-	SysScanDesc fkeyScan;
-	HeapTuple	tuple;
 
 	/*
 	 * Build a list of OIDs of the interesting relations.
@@ -2030,67 +2029,67 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 		return;
 
 	/*
-	 * Otherwise, must scan pg_constraint.	Right now, it is a seqscan because
-	 * there is no available index on confrelid.
+	 * Otherwise, must scan pg_constraint.  We make one pass with all the
+	 * relations considered; if this finds nothing, then all is well.
 	 */
-	fkeyRel = heap_open(ConstraintRelationId, AccessShareLock);
+	dependents = heap_truncate_find_FKs(oids);
+	if (dependents == NIL)
+		return;
 
-	fkeyScan = systable_beginscan(fkeyRel, InvalidOid, false,
-								  SnapshotNow, 0, NULL);
-
-	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
+	/*
+	 * Otherwise we repeat the scan once per relation to identify a particular
+	 * pair of relations to complain about.  This is pretty slow, but
+	 * performance shouldn't matter much in a failure path.  The reason for
+	 * doing things this way is to ensure that the message produced is not
+	 * dependent on chance row locations within pg_constraint.
+	 */
+	foreach(cell, oids)
 	{
-		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+		Oid		relid = lfirst_oid(cell);
+		ListCell *cell2;
 
-		/* Not a foreign key */
-		if (con->contype != CONSTRAINT_FOREIGN)
-			continue;
+		dependents = heap_truncate_find_FKs(list_make1_oid(relid));
 
-		/* Not referencing one of our list of tables */
-		if (!list_member_oid(oids, con->confrelid))
-			continue;
-
-		/* The referencer should be in our list too */
-		if (!list_member_oid(oids, con->conrelid))
+		foreach(cell2, dependents)
 		{
-			if (tempTables)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("unsupported ON COMMIT and foreign key combination"),
-						 errdetail("Table \"%s\" references \"%s\" via foreign key constraint \"%s\", but they do not have the same ON COMMIT setting.",
-								   get_rel_name(con->conrelid),
-								   get_rel_name(con->confrelid),
-								   NameStr(con->conname))));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot truncate a table referenced in a foreign key constraint"),
-						 errdetail("Table \"%s\" references \"%s\" via foreign key constraint \"%s\".",
-								   get_rel_name(con->conrelid),
-								   get_rel_name(con->confrelid),
-								   NameStr(con->conname)),
-						 errhint("Truncate table \"%s\" at the same time, "
-								 "or use TRUNCATE ... CASCADE.",
-								 get_rel_name(con->conrelid))));
+			Oid		relid2 = lfirst_oid(cell2);
+
+			if (!list_member_oid(oids, relid2))
+			{
+				char   *relname = get_rel_name(relid);
+				char   *relname2 = get_rel_name(relid2);
+
+				if (tempTables)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("unsupported ON COMMIT and foreign key combination"),
+							 errdetail("Table \"%s\" references \"%s\", but they do not have the same ON COMMIT setting.",
+									   relname2, relname)));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot truncate a table referenced in a foreign key constraint"),
+							 errdetail("Table \"%s\" references \"%s\".",
+									   relname2, relname),
+							 errhint("Truncate table \"%s\" at the same time, "
+									 "or use TRUNCATE ... CASCADE.",
+									 relname2)));
+			}
 		}
 	}
-
-	systable_endscan(fkeyScan);
-	heap_close(fkeyRel, AccessShareLock);
 }
 
 /*
  * heap_truncate_find_FKs
- *		Find relations having foreign keys referencing any relations that
- *		are to be truncated
+ *		Find relations having foreign keys referencing any of the given rels
  *
- * This is almost the same code as heap_truncate_check_FKs, but we don't
- * raise an error if we find such relations; instead we return a list of
- * their OIDs.  Also note that the input is a list of OIDs not a list
- * of Relations.  The result list does *not* include any rels that are
- * already in the input list.
+ * Input and result are both lists of relation OIDs.  The result contains
+ * no duplicates, does *not* include any rels that were already in the input
+ * list, and is sorted in OID order.  (The last property is enforced mainly
+ * to guarantee consistent behavior in the regression tests; we don't want
+ * behavior to change depending on chance locations of rows in pg_constraint.)
  *
- * Note: caller should already have exclusive lock on all rels mentioned
+ * Note: caller should already have appropriate lock on all rels mentioned
  * in relationIds.  Since adding or dropping an FK requires exclusive lock
  * on both rels, this ensures that the answer will be stable.
  */
@@ -2125,11 +2124,51 @@ heap_truncate_find_FKs(List *relationIds)
 
 		/* Add referencer unless already in input or result list */
 		if (!list_member_oid(relationIds, con->conrelid))
-			result = list_append_unique_oid(result, con->conrelid);
+			result = insert_ordered_unique_oid(result, con->conrelid);
 	}
 
 	systable_endscan(fkeyScan);
 	heap_close(fkeyRel, AccessShareLock);
 
 	return result;
+}
+
+/*
+ * insert_ordered_unique_oid
+ *		Insert a new Oid into a sorted list of Oids, preserving ordering,
+ *		and eliminating duplicates
+ *
+ * Building the ordered list this way is O(N^2), but with a pretty small
+ * constant, so for the number of entries we expect it will probably be
+ * faster than trying to apply qsort().  It seems unlikely someone would be
+ * trying to truncate a table with thousands of dependent tables ...
+ */
+static List *
+insert_ordered_unique_oid(List *list, Oid datum)
+{
+	ListCell   *prev;
+
+	/* Does the datum belong at the front? */
+	if (list == NIL || datum < linitial_oid(list))
+		return lcons_oid(datum, list);
+	/* Does it match the first entry? */
+	if (datum == linitial_oid(list))
+		return list;			/* duplicate, so don't insert */
+	/* No, so find the entry it belongs after */
+	prev = list_head(list);
+	for (;;)
+	{
+		ListCell   *curr = lnext(prev);
+
+		if (curr == NULL || datum < lfirst_oid(curr))
+			break;				/* it belongs after 'prev', before 'curr' */
+
+		if (datum == lfirst_oid(curr))
+			return list;		/* duplicate, so don't insert */
+
+		prev = curr;
+	}
+	/* Insert datum into list after 'prev' */
+	lappend_cell_oid(list, prev, datum);
+	return list;
 }

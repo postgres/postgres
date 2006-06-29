@@ -136,4 +136,4 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "temptest3_pkey" 
 CREATE TEMP TABLE temptest4(col int REFERENCES temptest3);
 COMMIT;
 ERROR:  unsupported ON COMMIT and foreign key combination
-DETAIL:  Table "temptest4" references "temptest3" via foreign key constraint "temptest4_col_fkey", but they do not have the same ON COMMIT setting.
+DETAIL:  Table "temptest4" references "temptest3", but they do not have the same ON COMMIT setting.
