@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.489 2006/06/27 22:16:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.490 2006/06/29 20:00:08 tgl Exp $
  *
  * NOTES
  *
@@ -331,8 +331,6 @@ typedef struct
 	PROC_HDR   *ProcGlobal;
 	PGPROC	   *DummyProcs;
 	InheritableSocket pgStatSock;
-	InheritableSocket pgStatPipe0;
-	InheritableSocket pgStatPipe1;
 	pid_t		PostmasterPid;
 	TimestampTz PgStartTime;
 #ifdef WIN32
@@ -2352,7 +2350,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 		kill(PgArchPID, SIGQUIT);
 	}
 
-	/* Force a power-cycle of the pgstat processes too */
+	/* Force a power-cycle of the pgstat process too */
 	/* (Shouldn't be necessary, but just for luck) */
 	if (PgStatPID != 0 && !FatalError)
 	{
@@ -3324,22 +3322,10 @@ SubPostmasterMain(int argc, char *argv[])
 		PgArchiverMain(argc, argv);
 		proc_exit(0);
 	}
-	if (strcmp(argv[1], "--forkbuf") == 0)
+	if (strcmp(argv[1], "--forkcol") == 0)
 	{
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(false);
-
-		/* Do not want to attach to shared memory */
-
-		PgstatBufferMain(argc, argv);
-		proc_exit(0);
-	}
-	if (strcmp(argv[1], "--forkcol") == 0)
-	{
-		/*
-		 * Do NOT close postmaster sockets here, because we are forking from
-		 * pgstat buffer process, which already did it.
-		 */
 
 		/* Do not want to attach to shared memory */
 
@@ -3679,7 +3665,6 @@ extern slock_t *ProcStructLock;
 extern PROC_HDR *ProcGlobal;
 extern PGPROC *DummyProcs;
 extern int	pgStatSock;
-extern int	pgStatPipe[2];
 
 #ifndef WIN32
 #define write_inheritable_socket(dest, src, childpid) (*(dest) = (src))
@@ -3723,8 +3708,6 @@ save_backend_variables(BackendParameters * param, Port *port,
 	param->ProcGlobal = ProcGlobal;
 	param->DummyProcs = DummyProcs;
 	write_inheritable_socket(&param->pgStatSock, pgStatSock, childPid);
-	write_inheritable_socket(&param->pgStatPipe0, pgStatPipe[0], childPid);
-	write_inheritable_socket(&param->pgStatPipe1, pgStatPipe[1], childPid);
 
 	param->PostmasterPid = PostmasterPid;
 	param->PgStartTime = PgStartTime;
@@ -3928,8 +3911,6 @@ restore_backend_variables(BackendParameters * param, Port *port)
 	ProcGlobal = param->ProcGlobal;
 	DummyProcs = param->DummyProcs;
 	read_inheritable_socket(&pgStatSock, &param->pgStatSock);
-	read_inheritable_socket(&pgStatPipe[0], &param->pgStatPipe0);
-	read_inheritable_socket(&pgStatPipe[1], &param->pgStatPipe1);
 
 	PostmasterPid = param->PostmasterPid;
 	PgStartTime = param->PgStartTime;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.35 2006/06/27 19:07:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.36 2006/06/29 20:00:08 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -50,7 +50,7 @@
 <screen>
 $ ps auxww | grep ^postgres
 postgres   960  0.0  1.1  6104 1480 pts/1    SN   13:17   0:00 postgres -i
-postgres   963  0.0  1.1  7084 1472 pts/1    SN   13:17   0:00 postgres: stats buffer process   
+postgres   963  0.0  1.1  7084 1472 pts/1    SN   13:17   0:00 postgres: writer process
 postgres   965  0.0  1.1  6152 1512 pts/1    SN   13:17   0:00 postgres: stats collector process   
 postgres   998  0.0  2.3  6532 2992 pts/1    SN   13:18   0:00 postgres: tgl runbug 127.0.0.1 idle
 postgres  1003  0.0  2.4  6532 3128 pts/1    SN   13:19   0:00 postgres: tgl regression [local] SELECT waiting
@@ -60,10 +60,11 @@ postgres  1016  0.1  2.4  6532 3080 pts/1    SN   13:19   0:00 postgres: tgl reg
    (The appropriate invocation of <command>ps</> varies across different
    platforms, as do the details of what is shown.  This example is from a
    recent Linux system.)  The first process listed here is the
-   the master server process.  The command arguments
+   master server process.  The command arguments
    shown for it are the same ones given when it was launched.  The next two
-   processes implement the statistics collector, which will be described in
-   detail in the next section.  (These will not be present if you have set
+   processes are background worker processes automatically launched by the
+   master process.  (The <quote>stats collector</> process will not be present
+   if you have set
    the system not to start the statistics collector.)  Each of the remaining
    processes is a server process handling one client connection.  Each such
    process sets its command line display in the form
@@ -81,6 +82,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   on a lock held by another server process.  In the above example we can infer
   that process 1003 is waiting for process 1016 to complete its transaction and
   thereby release some lock or other.
+  </para>
+
+  <para>
+   If you have turned off <xref linkend="guc-update-process-title"> then the
+   activity indicator is not updated; the process title is set only once
+   when a new process is launched.  On some platforms this saves a useful
+   amount of per-command overhead, on others it's insignificant.
   </para>
 
   <tip>

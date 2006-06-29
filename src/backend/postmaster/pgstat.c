@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.132 2006/06/27 22:16:43 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.133 2006/06/29 20:00:08 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -28,6 +28,12 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <time.h>
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 
 #include "pgstat.h"
 
@@ -73,11 +79,9 @@
 										 * failed statistics collector; in
 										 * seconds. */
 
-/* ----------
- * Amount of space reserved in pgstat_recvbuffer().
- * ----------
- */
-#define PGSTAT_RECVBUFFERSZ		((int) (1024 * sizeof(PgStat_Msg)))
+#define PGSTAT_SELECT_TIMEOUT	2		/* How often to check for postmaster
+										 * death; in seconds. */
+
 
 /* ----------
  * The initial size hints for the hash tables used in the collector.
@@ -102,11 +106,8 @@ bool		pgstat_collect_querystring = false;
  * ----------
  */
 NON_EXEC_STATIC int pgStatSock = -1;
-NON_EXEC_STATIC int pgStatPipe[2] = {-1, -1};
 
 static struct sockaddr_storage pgStatAddr;
-
-static pid_t pgStatCollectorPid = 0;
 
 static time_t last_pgstat_start_time;
 
@@ -138,7 +139,8 @@ static TransactionId pgStatLocalStatusXact = InvalidTransactionId;
 static PgBackendStatus *localBackendStatusTable = NULL;
 static int	localNumBackends = 0;
 
-static volatile bool	need_statwrite;
+static volatile bool	need_exit = false;
+static volatile bool	need_statwrite = false;
 
 
 /* ----------
@@ -146,23 +148,12 @@ static volatile bool	need_statwrite;
  * ----------
  */
 #ifdef EXEC_BACKEND
-
-typedef enum STATS_PROCESS_TYPE
-{
-	STAT_PROC_BUFFER,
-	STAT_PROC_COLLECTOR
-}	STATS_PROCESS_TYPE;
-
-static pid_t pgstat_forkexec(STATS_PROCESS_TYPE procType);
-static void pgstat_parseArgs(int argc, char *argv[]);
+static pid_t pgstat_forkexec(void);
 #endif
 
-NON_EXEC_STATIC void PgstatBufferMain(int argc, char *argv[]);
 NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]);
-static void force_statwrite(SIGNAL_ARGS);
-static void pgstat_recvbuffer(void);
 static void pgstat_exit(SIGNAL_ARGS);
-static void pgstat_die(SIGNAL_ARGS);
+static void force_statwrite(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
@@ -417,9 +408,8 @@ pgstat_init(void)
 
 	/*
 	 * Set the socket to non-blocking IO.  This ensures that if the collector
-	 * falls behind (despite the buffering process), statistics messages will
-	 * be discarded; backends won't block waiting to send messages to the
-	 * collector.
+	 * falls behind, statistics messages will be discarded; backends won't
+	 * block waiting to send messages to the collector.
 	 */
 	if (!pg_set_noblock(pgStatSock))
 	{
@@ -468,43 +458,17 @@ pgstat_reset_all(void)
 /*
  * pgstat_forkexec() -
  *
- * Format up the arglist for, then fork and exec, statistics
- * (buffer and collector) processes
+ * Format up the arglist for, then fork and exec, statistics collector process
  */
 static pid_t
-pgstat_forkexec(STATS_PROCESS_TYPE procType)
+pgstat_forkexec(void)
 {
 	char	   *av[10];
-	int			ac = 0,
-				bufc = 0,
-				i;
-	char		pgstatBuf[2][32];
+	int			ac = 0;
 
 	av[ac++] = "postgres";
-
-	switch (procType)
-	{
-		case STAT_PROC_BUFFER:
-			av[ac++] = "--forkbuf";
-			break;
-
-		case STAT_PROC_COLLECTOR:
-			av[ac++] = "--forkcol";
-			break;
-
-		default:
-			Assert(false);
-	}
-
+	av[ac++] = "--forkcol";
 	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
-
-	/* postgres_exec_path is not passed by write_backend_variables */
-	av[ac++] = postgres_exec_path;
-
-	/* Add to the arg list */
-	Assert(bufc <= lengthof(pgstatBuf));
-	for (i = 0; i < bufc; i++)
-		av[ac++] = pgstatBuf[i];
 
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));
@@ -512,21 +476,6 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	return postmaster_forkexec(ac, av);
 }
 
-
-/*
- * pgstat_parseArgs() -
- *
- * Extract data from the arglist for exec'ed statistics
- * (buffer and collector) processes
- */
-static void
-pgstat_parseArgs(int argc, char *argv[])
-{
-	Assert(argc == 4);
-
-	argc = 3;
-	StrNCpy(postgres_exec_path, argv[argc++], MAXPGPATH);
-}
 #endif   /* EXEC_BACKEND */
 
 
@@ -585,14 +534,14 @@ pgstat_start(void)
 	 * Okay, fork off the collector.
 	 */
 #ifdef EXEC_BACKEND
-	switch ((pgStatPid = pgstat_forkexec(STAT_PROC_BUFFER)))
+	switch ((pgStatPid = pgstat_forkexec()))
 #else
 	switch ((pgStatPid = fork_process()))
 #endif
 	{
 		case -1:
 			ereport(LOG,
-					(errmsg("could not fork statistics buffer: %m")));
+					(errmsg("could not fork statistics collector: %m")));
 			return 0;
 
 #ifndef EXEC_BACKEND
@@ -607,7 +556,7 @@ pgstat_start(void)
 			/* Drop our connection to postmaster's shared memory, as well */
 			PGSharedMemoryDetach();
 
-			PgstatBufferMain(0, NULL);
+			PgstatCollectorMain(0, NULL);
 			break;
 #endif
 
@@ -1603,93 +1552,10 @@ pgstat_send(void *msg, int len)
 
 
 /* ----------
- * PgstatBufferMain() -
- *
- *	Start up the statistics buffer process.  This is the body of the
- *	postmaster child process.
- *
- *	The argc/argv parameters are valid only in EXEC_BACKEND case.
- * ----------
- */
-NON_EXEC_STATIC void
-PgstatBufferMain(int argc, char *argv[])
-{
-	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
-
-	MyProcPid = getpid();		/* reset MyProcPid */
-
-	/*
-	 * Ignore all signals usually bound to some action in the postmaster,
-	 * except for SIGCHLD and SIGQUIT --- see pgstat_recvbuffer.
-	 */
-	pqsignal(SIGHUP, SIG_IGN);
-	pqsignal(SIGINT, SIG_IGN);
-	pqsignal(SIGTERM, SIG_IGN);
-	pqsignal(SIGQUIT, pgstat_exit);
-	pqsignal(SIGALRM, SIG_IGN);
-	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN);
-	pqsignal(SIGUSR2, SIG_IGN);
-	pqsignal(SIGCHLD, pgstat_die);
-	pqsignal(SIGTTIN, SIG_DFL);
-	pqsignal(SIGTTOU, SIG_DFL);
-	pqsignal(SIGCONT, SIG_DFL);
-	pqsignal(SIGWINCH, SIG_DFL);
-	/* unblock will happen in pgstat_recvbuffer */
-
-#ifdef EXEC_BACKEND
-	pgstat_parseArgs(argc, argv);
-#endif
-
-	/*
-	 * Start a buffering process to read from the socket, so we have a little
-	 * more time to process incoming messages.
-	 *
-	 * NOTE: the process structure is: postmaster is parent of buffer process
-	 * is parent of collector process.	This way, the buffer can detect
-	 * collector failure via SIGCHLD, whereas otherwise it wouldn't notice
-	 * collector failure until it tried to write on the pipe.  That would mean
-	 * that after the postmaster started a new collector, we'd have two buffer
-	 * processes competing to read from the UDP socket --- not good.
-	 */
-	if (pgpipe(pgStatPipe) < 0)
-		ereport(ERROR,
-				(errcode_for_socket_access(),
-				 errmsg("could not create pipe for statistics buffer: %m")));
-
-	/* child becomes collector process */
-#ifdef EXEC_BACKEND
-	pgStatCollectorPid = pgstat_forkexec(STAT_PROC_COLLECTOR);
-#else
-	pgStatCollectorPid = fork();
-#endif
-	switch (pgStatCollectorPid)
-	{
-		case -1:
-			ereport(ERROR,
-					(errmsg("could not fork statistics collector: %m")));
-
-#ifndef EXEC_BACKEND
-		case 0:
-			/* child becomes collector process */
-			PgstatCollectorMain(0, NULL);
-			break;
-#endif
-
-		default:
-			/* parent becomes buffer process */
-			closesocket(pgStatPipe[0]);
-			pgstat_recvbuffer();
-	}
-	exit(0);
-}
-
-
-/* ----------
  * PgstatCollectorMain() -
  *
- *	Start up the statistics collector itself.  This is the body of the
- *	postmaster grandchild process.
+ *	Start up the statistics collector process.  This is the body of the
+ *	postmaster child process.
  *
  *	The argc/argv parameters are valid only in EXEC_BACKEND case.
  * ----------
@@ -1697,30 +1563,29 @@ PgstatBufferMain(int argc, char *argv[])
 NON_EXEC_STATIC void
 PgstatCollectorMain(int argc, char *argv[])
 {
-	PgStat_Msg	msg;
-	fd_set		rfds;
-	int			readPipe;
-	int			len = 0;
-	struct itimerval timeout;
+	struct itimerval write_timeout;
 	bool		need_timer = false;
+	int			len;
+	PgStat_Msg	msg;
+#ifdef HAVE_POLL
+	struct pollfd input_fd;
+#else
+	struct timeval sel_timeout;
+	fd_set		rfds;
+#endif
+
+	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/*
-	 * Reset signal handling.  With the exception of restoring default SIGCHLD
-	 * and SIGQUIT handling, this is a no-op in the non-EXEC_BACKEND case
-	 * because we'll have inherited these settings from the buffer process;
-	 * but it's not a no-op for EXEC_BACKEND.
+	 * Ignore all signals usually bound to some action in the postmaster,
+	 * except SIGQUIT and SIGALRM.
 	 */
 	pqsignal(SIGHUP, SIG_IGN);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
-#ifndef WIN32
-	pqsignal(SIGQUIT, SIG_IGN);
-#else
-	/* kluge to allow buffer process to kill collector; FIXME */
 	pqsignal(SIGQUIT, pgstat_exit);
-#endif
 	pqsignal(SIGALRM, force_statwrite);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN);
@@ -1731,14 +1596,6 @@ PgstatCollectorMain(int argc, char *argv[])
 	pqsignal(SIGCONT, SIG_DFL);
 	pqsignal(SIGWINCH, SIG_DFL);
 	PG_SETMASK(&UnBlockSig);
-
-#ifdef EXEC_BACKEND
-	pgstat_parseArgs(argc, argv);
-#endif
-
-	/* Close unwanted files */
-	closesocket(pgStatPipe[1]);
-	closesocket(pgStatSock);
 
 	/*
 	 * Identify myself via ps
@@ -1751,9 +1608,9 @@ PgstatCollectorMain(int argc, char *argv[])
 	need_statwrite = true;
 
 	/* Preset the delay between status file writes */
-	MemSet(&timeout, 0, sizeof(struct itimerval));
-	timeout.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
-	timeout.it_value.tv_usec = PGSTAT_STAT_INTERVAL % 1000;
+	MemSet(&write_timeout, 0, sizeof(struct itimerval));
+	write_timeout.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
+	write_timeout.it_value.tv_usec = PGSTAT_STAT_INTERVAL % 1000;
 
 	/*
 	 * Read in an existing statistics stats file or initialize the stats to
@@ -1762,14 +1619,32 @@ PgstatCollectorMain(int argc, char *argv[])
 	pgStatRunningInCollector = true;
 	pgstat_read_statsfile(&pgStatDBHash, InvalidOid);
 
-	readPipe = pgStatPipe[0];
+	/*
+	 * Setup the descriptor set for select(2).  Since only one bit in the
+	 * set ever changes, we need not repeat FD_ZERO each time.
+	 */
+#ifndef HAVE_POLL
+	FD_ZERO(&rfds);
+#endif
 
 	/*
-	 * Process incoming messages and handle all the reporting stuff until
-	 * there are no more messages.
+	 * Loop to process messages until we get SIGQUIT or detect ungraceful
+	 * death of our parent postmaster.
+	 *
+	 * For performance reasons, we don't want to do a PostmasterIsAlive()
+	 * test after every message; instead, do it at statwrite time and if
+	 * select()/poll() is interrupted by timeout.
 	 */
 	for (;;)
 	{
+		int		got_data;
+
+		/*
+		 * Quit if we get SIGQUIT from the postmaster.
+		 */
+		if (need_exit)
+			break;
+
 		/*
 		 * If time to write the stats file, do so.  Note that the alarm
 		 * interrupt isn't re-enabled immediately, but only after we next
@@ -1778,21 +1653,53 @@ PgstatCollectorMain(int argc, char *argv[])
 		 */
 		if (need_statwrite)
 		{
+			/* Check for postmaster death; if so we'll write file below */
+			if (!PostmasterIsAlive(true))
+				break;
+
 			pgstat_write_statsfile();
 			need_statwrite = false;
 			need_timer = true;
 		}
 
 		/*
-		 * Setup the descriptor set for select(2)
+		 * Wait for a message to arrive; but not for more than
+		 * PGSTAT_SELECT_TIMEOUT seconds. (This determines how quickly we will
+		 * shut down after an ungraceful postmaster termination; so it needn't
+		 * be very fast.  However, on some systems SIGQUIT won't interrupt
+		 * the poll/select call, so this also limits speed of response to
+		 * SIGQUIT, which is more important.)
+		 *
+		 * We use poll(2) if available, otherwise select(2)
 		 */
-		FD_ZERO(&rfds);
-		FD_SET(readPipe, &rfds);
+#ifdef HAVE_POLL
+		input_fd.fd = pgStatSock;
+		input_fd.events = POLLIN | POLLERR;
+		input_fd.revents = 0;
+
+		if (poll(&input_fd, 1, PGSTAT_SELECT_TIMEOUT * 1000) < 0)
+		{
+			if (errno == EINTR)
+				continue;
+			ereport(ERROR,
+					(errcode_for_socket_access(),
+					 errmsg("poll() failed in statistics collector: %m")));
+		}
+
+		got_data = (input_fd.revents != 0);
+
+#else							/* !HAVE_POLL */
+
+		FD_SET(pgStatSock, &rfds);
 
 		/*
-		 * Now wait for something to do.
+		 * timeout struct is modified by select() on some operating systems,
+		 * so re-fill it each time.
 		 */
-		if (select(readPipe + 1, &rfds, NULL, NULL, NULL) < 0)
+		sel_timeout.tv_sec = PGSTAT_SELECT_TIMEOUT;
+		sel_timeout.tv_usec = 0;
+
+		if (select(pgStatSock + 1, &rfds, NULL, NULL, &sel_timeout) < 0)
 		{
 			if (errno == EINTR)
 				continue;
@@ -1801,272 +1708,17 @@ PgstatCollectorMain(int argc, char *argv[])
 					 errmsg("select() failed in statistics collector: %m")));
 		}
 
-		/*
-		 * Check if there is a new statistics message to collect.
-		 */
-		if (FD_ISSET(readPipe, &rfds))
-		{
-			/*
-			 * We may need to issue multiple read calls in case the buffer
-			 * process didn't write the message in a single write, which is
-			 * possible since it dumps its buffer bytewise. In any case, we'd
-			 * need two reads since we don't know the message length
-			 * initially.
-			 */
-			int			nread = 0;
-			int			targetlen = sizeof(PgStat_MsgHdr);		/* initial */
-			bool		pipeEOF = false;
+		got_data = FD_ISSET(pgStatSock, &rfds);
 
-			while (nread < targetlen)
-			{
-				len = piperead(readPipe, ((char *) &msg) + nread,
-							   targetlen - nread);
-				if (len < 0)
-				{
-					if (errno == EINTR)
-						continue;
-					ereport(ERROR,
-							(errcode_for_socket_access(),
-							 errmsg("could not read from statistics collector pipe: %m")));
-				}
-				if (len == 0)	/* EOF on the pipe! */
-				{
-					pipeEOF = true;
-					break;
-				}
-				nread += len;
-				if (nread == sizeof(PgStat_MsgHdr))
-				{
-					/* we have the header, compute actual msg length */
-					targetlen = msg.msg_hdr.m_size;
-					if (targetlen < (int) sizeof(PgStat_MsgHdr) ||
-						targetlen > (int) sizeof(msg))
-					{
-						/*
-						 * Bogus message length implies that we got out of
-						 * sync with the buffer process somehow. Abort so that
-						 * we can restart both processes.
-						 */
-						ereport(ERROR,
-							  (errmsg("invalid statistics message length")));
-					}
-				}
-			}
-
-			/*
-			 * EOF on the pipe implies that the buffer process exited. Fall
-			 * out of outer loop.
-			 */
-			if (pipeEOF)
-				break;
-
-			/*
-			 * Distribute the message to the specific function handling it.
-			 */
-			switch (msg.msg_hdr.m_type)
-			{
-				case PGSTAT_MTYPE_DUMMY:
-					break;
-
-				case PGSTAT_MTYPE_TABSTAT:
-					pgstat_recv_tabstat((PgStat_MsgTabstat *) &msg, nread);
-					break;
-
-				case PGSTAT_MTYPE_TABPURGE:
-					pgstat_recv_tabpurge((PgStat_MsgTabpurge *) &msg, nread);
-					break;
-
-				case PGSTAT_MTYPE_DROPDB:
-					pgstat_recv_dropdb((PgStat_MsgDropdb *) &msg, nread);
-					break;
-
-				case PGSTAT_MTYPE_RESETCOUNTER:
-					pgstat_recv_resetcounter((PgStat_MsgResetcounter *) &msg,
-											 nread);
-					break;
-
-				case PGSTAT_MTYPE_AUTOVAC_START:
-					pgstat_recv_autovac((PgStat_MsgAutovacStart *) &msg, nread);
-					break;
-
-				case PGSTAT_MTYPE_VACUUM:
-					pgstat_recv_vacuum((PgStat_MsgVacuum *) &msg, nread);
-					break;
-
-				case PGSTAT_MTYPE_ANALYZE:
-					pgstat_recv_analyze((PgStat_MsgAnalyze *) &msg, nread);
-					break;
-
-				default:
-					break;
-			}
-
-			/*
-			 * If this is the first message after we wrote the stats file the
-			 * last time, enable the alarm interrupt to make it be written
-			 * again later.
-			 */
-			if (need_timer)
-			{
-				if (setitimer(ITIMER_REAL, &timeout, NULL))
-					ereport(ERROR,
-						  (errmsg("could not set statistics collector timer: %m")));
-				need_timer = false;
-			}
-		}
-
-		/*
-		 * Note that we do NOT check for postmaster exit inside the loop; only
-		 * EOF on the buffer pipe causes us to fall out.  This ensures we
-		 * don't exit prematurely if there are still a few messages in the
-		 * buffer or pipe at postmaster shutdown.
-		 */
-	}
-
-	/*
-	 * Okay, we saw EOF on the buffer pipe, so there are no more messages to
-	 * process.  If the buffer process quit because of postmaster shutdown, we
-	 * want to save the final stats to reuse at next startup. But if the
-	 * buffer process failed, it seems best not to (there may even now be a
-	 * new collector firing up, and we don't want it to read a
-	 * partially-rewritten stats file).
-	 */
-	if (!PostmasterIsAlive(false))
-		pgstat_write_statsfile();
-}
-
-
-/* SIGALRM signal handler for collector process */
-static void
-force_statwrite(SIGNAL_ARGS)
-{
-	need_statwrite = true;
-}
-
-
-/* ----------
- * pgstat_recvbuffer() -
- *
- *	This is the body of the separate buffering process. Its only
- *	purpose is to receive messages from the UDP socket as fast as
- *	possible and forward them over a pipe into the collector itself.
- *	If the collector is slow to absorb messages, they are buffered here.
- * ----------
- */
-static void
-pgstat_recvbuffer(void)
-{
-	fd_set		rfds;
-	fd_set		wfds;
-	struct timeval timeout;
-	int			writePipe = pgStatPipe[1];
-	int			maxfd;
-	int			len;
-	int			xfr;
-	int			frm;
-	PgStat_Msg	input_buffer;
-	char	   *msgbuffer;
-	int			msg_send = 0;	/* next send index in buffer */
-	int			msg_recv = 0;	/* next receive index */
-	int			msg_have = 0;	/* number of bytes stored */
-	bool		overflow = false;
-
-	/*
-	 * Identify myself via ps
-	 */
-	init_ps_display("stats buffer process", "", "", "");
-
-	/*
-	 * We want to die if our child collector process does.	There are two ways
-	 * we might notice that it has died: receive SIGCHLD, or get a write
-	 * failure on the pipe leading to the child.  We can set SIGPIPE to kill
-	 * us here.  Our SIGCHLD handler was already set up before we forked (must
-	 * do it that way, else it's a race condition).
-	 */
-	pqsignal(SIGPIPE, SIG_DFL);
-	PG_SETMASK(&UnBlockSig);
-
-	/*
-	 * Set the write pipe to nonblock mode, so that we cannot block when the
-	 * collector falls behind.
-	 */
-	if (!pg_set_noblock(writePipe))
-		ereport(ERROR,
-				(errcode_for_socket_access(),
-				 errmsg("could not set statistics collector pipe to nonblocking mode: %m")));
-
-	/*
-	 * Allocate the message buffer
-	 */
-	msgbuffer = (char *) palloc(PGSTAT_RECVBUFFERSZ);
-
-	/*
-	 * Loop forever
-	 */
-	for (;;)
-	{
-		FD_ZERO(&rfds);
-		FD_ZERO(&wfds);
-		maxfd = -1;
-
-		/*
-		 * As long as we have buffer space we add the socket to the read
-		 * descriptor set.
-		 */
-		if (msg_have <= (int) (PGSTAT_RECVBUFFERSZ - sizeof(PgStat_Msg)))
-		{
-			FD_SET(pgStatSock, &rfds);
-			maxfd = pgStatSock;
-			overflow = false;
-		}
-		else
-		{
-			if (!overflow)
-			{
-				ereport(LOG,
-						(errmsg("statistics buffer is full")));
-				overflow = true;
-			}
-		}
-
-		/*
-		 * If we have messages to write out, we add the pipe to the write
-		 * descriptor set.
-		 */
-		if (msg_have > 0)
-		{
-			FD_SET(writePipe, &wfds);
-			if (writePipe > maxfd)
-				maxfd = writePipe;
-		}
-
-		/*
-		 * Wait for some work to do; but not for more than 10 seconds. (This
-		 * determines how quickly we will shut down after an ungraceful
-		 * postmaster termination; so it needn't be very fast.)
-		 *
-		 * struct timeout is modified by select() on some operating systems,
-		 * so re-fill it each time.
-		 */
-		timeout.tv_sec = 10;
-		timeout.tv_usec = 0;
-
-		if (select(maxfd + 1, &rfds, &wfds, NULL, &timeout) < 0)
-		{
-			if (errno == EINTR)
-				continue;
-			ereport(ERROR,
-					(errcode_for_socket_access(),
-					 errmsg("select() failed in statistics buffer: %m")));
-		}
+#endif   /* HAVE_POLL */
 
 		/*
 		 * If there is a message on the socket, read it and check for
 		 * validity.
 		 */
-		if (FD_ISSET(pgStatSock, &rfds))
+		if (got_data)
 		{
-			len = recv(pgStatSock, (char *) &input_buffer,
+			len = recv(pgStatSock, (char *) &msg,
 					   sizeof(PgStat_Msg), 0);
 			if (len < 0)
 				ereport(ERROR,
@@ -2082,110 +1734,95 @@ pgstat_recvbuffer(void)
 			/*
 			 * The received length must match the length in the header
 			 */
-			if (input_buffer.msg_hdr.m_size != len)
+			if (msg.msg_hdr.m_size != len)
 				continue;
 
 			/*
-			 * O.K. - we accept this message.  Copy it to the circular
-			 * msgbuffer.
+			 * O.K. - we accept this message.  Process it.
 			 */
-			frm = 0;
-			while (len > 0)
+			switch (msg.msg_hdr.m_type)
 			{
-				xfr = PGSTAT_RECVBUFFERSZ - msg_recv;
-				if (xfr > len)
-					xfr = len;
-				Assert(xfr > 0);
-				memcpy(msgbuffer + msg_recv,
-					   ((char *) &input_buffer) + frm,
-					   xfr);
-				msg_recv += xfr;
-				if (msg_recv == PGSTAT_RECVBUFFERSZ)
-					msg_recv = 0;
-				msg_have += xfr;
-				frm += xfr;
-				len -= xfr;
+				case PGSTAT_MTYPE_DUMMY:
+					break;
+
+				case PGSTAT_MTYPE_TABSTAT:
+					pgstat_recv_tabstat((PgStat_MsgTabstat *) &msg, len);
+					break;
+
+				case PGSTAT_MTYPE_TABPURGE:
+					pgstat_recv_tabpurge((PgStat_MsgTabpurge *) &msg, len);
+					break;
+
+				case PGSTAT_MTYPE_DROPDB:
+					pgstat_recv_dropdb((PgStat_MsgDropdb *) &msg, len);
+					break;
+
+				case PGSTAT_MTYPE_RESETCOUNTER:
+					pgstat_recv_resetcounter((PgStat_MsgResetcounter *) &msg,
+											 len);
+					break;
+
+				case PGSTAT_MTYPE_AUTOVAC_START:
+					pgstat_recv_autovac((PgStat_MsgAutovacStart *) &msg, len);
+					break;
+
+				case PGSTAT_MTYPE_VACUUM:
+					pgstat_recv_vacuum((PgStat_MsgVacuum *) &msg, len);
+					break;
+
+				case PGSTAT_MTYPE_ANALYZE:
+					pgstat_recv_analyze((PgStat_MsgAnalyze *) &msg, len);
+					break;
+
+				default:
+					break;
+			}
+
+			/*
+			 * If this is the first message after we wrote the stats file the
+			 * last time, enable the alarm interrupt to make it be written
+			 * again later.
+			 */
+			if (need_timer)
+			{
+				if (setitimer(ITIMER_REAL, &write_timeout, NULL))
+					ereport(ERROR,
+						  (errmsg("could not set statistics collector timer: %m")));
+				need_timer = false;
 			}
 		}
-
-		/*
-		 * If the collector is ready to receive, write some data into his
-		 * pipe.  We may or may not be able to write all that we have.
-		 *
-		 * NOTE: if what we have is less than PIPE_BUF bytes but more than the
-		 * space available in the pipe buffer, most kernels will refuse to
-		 * write any of it, and will return EAGAIN.  This means we will
-		 * busy-loop until the situation changes (either because the collector
-		 * caught up, or because more data arrives so that we have more than
-		 * PIPE_BUF bytes buffered).  This is not good, but is there any way
-		 * around it?  We have no way to tell when the collector has caught
-		 * up...
-		 */
-		if (FD_ISSET(writePipe, &wfds))
+		else
 		{
-			xfr = PGSTAT_RECVBUFFERSZ - msg_send;
-			if (xfr > msg_have)
-				xfr = msg_have;
-			Assert(xfr > 0);
-			len = pipewrite(writePipe, msgbuffer + msg_send, xfr);
-			if (len < 0)
-			{
-				if (errno == EINTR || errno == EAGAIN)
-					continue;	/* not enough space in pipe */
-				ereport(ERROR,
-						(errcode_for_socket_access(),
-				errmsg("could not write to statistics collector pipe: %m")));
-			}
-			/* NB: len < xfr is okay */
-			msg_send += len;
-			if (msg_send == PGSTAT_RECVBUFFERSZ)
-				msg_send = 0;
-			msg_have -= len;
+			/*
+			 * We can only get here if the select/poll timeout elapsed.
+			 * Check for postmaster death.
+			 */
+			if (!PostmasterIsAlive(true))
+				break;
 		}
-
-		/*
-		 * Make sure we forwarded all messages before we check for postmaster
-		 * termination.
-		 */
-		if (msg_have != 0 || FD_ISSET(pgStatSock, &rfds))
-			continue;
-
-		/*
-		 * If the postmaster has terminated, we die too.  (This is no longer
-		 * the normal exit path, however.)
-		 */
-		if (!PostmasterIsAlive(true))
-			exit(0);
-	}
-}
-
-/* SIGQUIT signal handler for buffer process */
-static void
-pgstat_exit(SIGNAL_ARGS)
-{
-	/*
-	 * For now, we just nail the doors shut and get out of town.  It might be
-	 * cleaner to allow any pending messages to be sent, but that creates a
-	 * tradeoff against speed of exit.
-	 */
+	} /* end of message-processing loop */
 
 	/*
-	 * If running in bufferer, kill our collector as well. On some broken
-	 * win32 systems, it does not shut down automatically because of issues
-	 * with socket inheritance.  XXX so why not fix the socket inheritance...
+	 * Save the final stats to reuse at next startup.
 	 */
-#ifdef WIN32
-	if (pgStatCollectorPid > 0)
-		kill(pgStatCollectorPid, SIGQUIT);
-#endif
+	pgstat_write_statsfile();
+
 	exit(0);
 }
 
-/* SIGCHLD signal handler for buffer process */
+
+/* SIGQUIT signal handler for collector process */
 static void
-pgstat_die(SIGNAL_ARGS)
+pgstat_exit(SIGNAL_ARGS)
 {
-	exit(1);
+	need_exit = true;
+}
+
+/* SIGALRM signal handler for collector process */
+static void
+force_statwrite(SIGNAL_ARGS)
+{
+	need_statwrite = true;
 }
 
 
