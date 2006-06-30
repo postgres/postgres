@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.110.2.2 2006/06/30 15:06:16 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.110.2.3 2006/06/30 16:55:41 alvherre Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1102,6 +1102,8 @@ SendQuery(const char *query)
 			ResetCancelConn();
 			return false;
 		}
+
+		PQclear(svptres);
 	}
 
 	PQclear(results);
