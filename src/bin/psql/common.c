@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.119 2006/06/14 16:49:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.120 2006/06/30 15:06:05 alvherre Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -875,19 +875,19 @@ SendQuery(const char *query)
 	if (OK)
 		OK = PrintQueryResults(results);
 
-	PQclear(results);
-
 	/* If we made a temporary savepoint, possibly release/rollback */
 	if (on_error_rollback_savepoint)
 	{
+		PGresult   *svptres;
+
 		transaction_status = PQtransactionStatus(pset.db);
 
 		/* We always rollback on an error */
 		if (transaction_status == PQTRANS_INERROR)
-			results = PQexec(pset.db, "ROLLBACK TO pg_psql_temporary_savepoint");
+			svptres = PQexec(pset.db, "ROLLBACK TO pg_psql_temporary_savepoint");
 		/* If they are no longer in a transaction, then do nothing */
 		else if (transaction_status != PQTRANS_INTRANS)
-			results = NULL;
+			svptres = NULL;
 		else
 		{
 			/*
@@ -898,19 +898,21 @@ SendQuery(const char *query)
 			if (strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||
 				strcmp(PQcmdStatus(results), "RELEASE") == 0 ||
 				strcmp(PQcmdStatus(results), "ROLLBACK") == 0)
-				results = NULL;
+				svptres = NULL;
 			else
-				results = PQexec(pset.db, "RELEASE pg_psql_temporary_savepoint");
+				svptres = PQexec(pset.db, "RELEASE pg_psql_temporary_savepoint");
 		}
-		if (PQresultStatus(results) != PGRES_COMMAND_OK)
+		if (svptres && PQresultStatus(svptres) != PGRES_COMMAND_OK)
 		{
 			psql_error("%s", PQerrorMessage(pset.db));
 			PQclear(results);
+			PQclear(svptres);
 			ResetCancelConn();
 			return false;
 		}
-		PQclear(results);
 	}
+
+	PQclear(results);
 
 	/* Possible microtiming output */
 	if (OK && pset.timing)
