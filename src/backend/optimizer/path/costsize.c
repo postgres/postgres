@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.159 2006/07/01 18:38:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.160 2006/07/01 22:07:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,6 @@ bool		enable_hashjoin = true;
 
 
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
-static int	estimate_array_length(Node *arrayexpr);
 static Selectivity approx_selectivity(PlannerInfo *root, List *quals,
 				   JoinType jointype);
 static Selectivity join_in_selectivity(JoinPath *path, PlannerInfo *root);
@@ -689,34 +688,6 @@ cost_tidscan(Path *path, PlannerInfo *root,
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
-}
-
-/*
- * Estimate number of elements in the array yielded by an expression.
- */
-static int
-estimate_array_length(Node *arrayexpr)
-{
-	if (arrayexpr && IsA(arrayexpr, Const))
-	{
-		Datum		arraydatum = ((Const *) arrayexpr)->constvalue;
-		bool		arrayisnull = ((Const *) arrayexpr)->constisnull;
-		ArrayType  *arrayval;
-
-		if (arrayisnull)
-			return 0;
-		arrayval = DatumGetArrayTypeP(arraydatum);
-		return ArrayGetNItems(ARR_NDIM(arrayval), ARR_DIMS(arrayval));
-	}
-	else if (arrayexpr && IsA(arrayexpr, ArrayExpr))
-	{
-		return list_length(((ArrayExpr *) arrayexpr)->elements);
-	}
-	else
-	{
-		/* default guess */
-		return 10;
-	}
 }
 
 /*

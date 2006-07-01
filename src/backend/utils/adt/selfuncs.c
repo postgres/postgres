@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.207 2006/06/06 17:59:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.208 2006/07/01 22:07:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1394,7 +1394,6 @@ scalararraysel(PlannerInfo *root,
 	{
 		oprsel = get_oprjoin(operator);
 		selarg4 = Int16GetDatum(jointype);
-
 	}
 	else
 	{
@@ -1519,6 +1518,7 @@ scalararraysel(PlannerInfo *root,
 		s1 = useOr ? 0.0 : 1.0;
 		/*
 		 * Arbitrarily assume 10 elements in the eventual array value
+		 * (see also estimate_array_length)
 		 */
 		for (i = 0; i < 10; i++)
 		{
@@ -1533,6 +1533,37 @@ scalararraysel(PlannerInfo *root,
 	CLAMP_PROBABILITY(s1);
 
 	return s1;
+}
+
+/*
+ * Estimate number of elements in the array yielded by an expression.
+ *
+ * It's important that this agree with scalararraysel.
+ */
+int
+estimate_array_length(Node *arrayexpr)
+{
+	if (arrayexpr && IsA(arrayexpr, Const))
+	{
+		Datum		arraydatum = ((Const *) arrayexpr)->constvalue;
+		bool		arrayisnull = ((Const *) arrayexpr)->constisnull;
+		ArrayType  *arrayval;
+
+		if (arrayisnull)
+			return 0;
+		arrayval = DatumGetArrayTypeP(arraydatum);
+		return ArrayGetNItems(ARR_NDIM(arrayval), ARR_DIMS(arrayval));
+	}
+	else if (arrayexpr && IsA(arrayexpr, ArrayExpr) &&
+			 !((ArrayExpr *) arrayexpr)->multidims)
+	{
+		return list_length(((ArrayExpr *) arrayexpr)->elements);
+	}
+	else
+	{
+		/* default guess --- see also scalararraysel */
+		return 10;
+	}
 }
 
 /*
@@ -4473,10 +4504,14 @@ genericcostestimate(PlannerInfo *root,
 					double *indexCorrelation)
 {
 	double		numIndexPages;
+	double		num_sa_scans;
+	double		num_outer_scans;
+	double		num_scans;
 	QualCost	index_qual_cost;
 	double		qual_op_cost;
 	double		qual_arg_cost;
 	List	   *selectivityQuals;
+	ListCell   *l;
 
 	/*
 	 * If the index is partial, AND the index predicate with the explicitly
@@ -4513,6 +4548,25 @@ genericcostestimate(PlannerInfo *root,
 	else
 		selectivityQuals = indexQuals;
 
+	/*
+	 * Check for ScalarArrayOpExpr index quals, and estimate the number
+	 * of index scans that will be performed.
+	 */
+	num_sa_scans = 1;
+	foreach(l, indexQuals)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+		if (IsA(rinfo->clause, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) rinfo->clause;
+			int		alength = estimate_array_length(lsecond(saop->args));
+
+			if (alength > 1)
+				num_sa_scans *= alength;
+		}
+	}
+
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
 											   index->rel->relid,
@@ -4527,8 +4581,15 @@ genericcostestimate(PlannerInfo *root,
 		numIndexTuples = *indexSelectivity * index->rel->tuples;
 
 	/*
-	 * We can bound the number of tuples by the index size in any case. Also,
-	 * always estimate at least one tuple is touched, even when
+	 * The estimate obtained so far counts all the tuples returned by all
+	 * scans of ScalarArrayOpExpr calls.  We want to consider the per-scan
+	 * number, so adjust.  This is a handy place to round to integer, too.
+	 */
+	numIndexTuples = rint(numIndexTuples / num_sa_scans);
+
+	/*
+	 * We can bound the number of tuples by the index size in any case.
+	 * Also, always estimate at least one tuple is touched, even when
 	 * indexSelectivity estimate is tiny.
 	 */
 	if (numIndexTuples > index->tuples)
@@ -4556,7 +4617,8 @@ genericcostestimate(PlannerInfo *root,
 	 *
 	 * The above calculations are all per-index-scan.  However, if we are
 	 * in a nestloop inner scan, we can expect the scan to be repeated (with
-	 * different search keys) for each row of the outer relation.  This
+	 * different search keys) for each row of the outer relation.  Likewise,
+	 * ScalarArrayOpExpr quals result in multiple index scans.  This
 	 * creates the potential for cache effects to reduce the number of
 	 * disk page fetches needed.  We want to estimate the average per-scan
 	 * I/O cost in the presence of caching.
@@ -4569,7 +4631,17 @@ genericcostestimate(PlannerInfo *root,
 	 */
 	if (outer_rel != NULL && outer_rel->rows > 1)
 	{
-		double		num_scans = outer_rel->rows;
+		num_outer_scans = outer_rel->rows;
+		num_scans = num_sa_scans * num_outer_scans;
+	}
+	else
+	{
+		num_outer_scans = 1;
+		num_scans = num_sa_scans;
+	}
+
+	if (num_scans > 1)
+	{
 		double		pages_fetched;
 
 		/* total page fetches ignoring cache effects */
@@ -4582,9 +4654,10 @@ genericcostestimate(PlannerInfo *root,
 
 		/*
 		 * Now compute the total disk access cost, and then report a
-		 * pro-rated share for one index scan.
+		 * pro-rated share for each outer scan.  (Don't pro-rate for
+		 * ScalarArrayOpExpr, since that's internal to the indexscan.)
 		 */
-		*indexTotalCost = (pages_fetched * random_page_cost) / num_scans;
+		*indexTotalCost = (pages_fetched * random_page_cost) / num_outer_scans;
 	}
 	else
 	{
