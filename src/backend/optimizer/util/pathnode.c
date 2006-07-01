@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.128 2006/06/06 17:59:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.129 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -667,36 +667,29 @@ create_append_path(RelOptInfo *rel, List *subpaths)
 
 /*
  * create_result_path
- *	  Creates a path corresponding to a Result plan, returning the
- *	  pathnode.
+ *	  Creates a path representing a Result-and-nothing-else plan.
+ *	  This is only used for the case of a query with an empty jointree.
  */
 ResultPath *
-create_result_path(RelOptInfo *rel, Path *subpath, List *constantqual)
+create_result_path(List *quals)
 {
 	ResultPath *pathnode = makeNode(ResultPath);
 
 	pathnode->path.pathtype = T_Result;
-	pathnode->path.parent = rel;	/* may be NULL */
-
-	if (subpath)
-		pathnode->path.pathkeys = subpath->pathkeys;
-	else
-		pathnode->path.pathkeys = NIL;
-
-	pathnode->subpath = subpath;
-	pathnode->constantqual = constantqual;
+	pathnode->path.parent = NULL;
+	pathnode->path.pathkeys = NIL;
+	pathnode->quals = quals;
 
 	/* Ideally should define cost_result(), but I'm too lazy */
-	if (subpath)
-	{
-		pathnode->path.startup_cost = subpath->startup_cost;
-		pathnode->path.total_cost = subpath->total_cost;
-	}
-	else
-	{
-		pathnode->path.startup_cost = 0;
-		pathnode->path.total_cost = cpu_tuple_cost;
-	}
+	pathnode->path.startup_cost = 0;
+	pathnode->path.total_cost = cpu_tuple_cost;
+	/*
+	 * In theory we should include the qual eval cost as well, but
+	 * at present that doesn't accomplish much except duplicate work that
+	 * will be done again in make_result; since this is only used for
+	 * degenerate cases, nothing interesting will be done with the path
+	 * cost values...
+	 */
 
 	return pathnode;
 }

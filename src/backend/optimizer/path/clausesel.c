@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.79 2006/03/07 01:00:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.80 2006/07/01 18:38:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,10 +117,18 @@ clauselist_selectivity(PlannerInfo *root,
 
 		/*
 		 * Check for being passed a RestrictInfo.
+		 *
+		 * If it's a pseudoconstant RestrictInfo, then s2 is either 1.0 or
+		 * 0.0; just use that rather than looking for range pairs.
 		 */
 		if (IsA(clause, RestrictInfo))
 		{
 			rinfo = (RestrictInfo *) clause;
+			if (rinfo->pseudoconstant)
+			{
+				s1 = s1 * s2;
+				continue;
+			}
 			clause = (Node *) rinfo->clause;
 		}
 		else
@@ -423,6 +431,20 @@ clause_selectivity(PlannerInfo *root,
 		rinfo = (RestrictInfo *) clause;
 
 		/*
+		 * If the clause is marked pseudoconstant, then it will be used as
+		 * a gating qual and should not affect selectivity estimates; hence
+		 * return 1.0.  The only exception is that a constant FALSE may
+		 * be taken as having selectivity 0.0, since it will surely mean
+		 * no rows out of the plan.  This case is simple enough that we
+		 * need not bother caching the result.
+		 */
+		if (rinfo->pseudoconstant)
+		{
+			if (! IsA(rinfo->clause, Const))
+				return s1;
+		}
+
+		/*
 		 * If possible, cache the result of the selectivity calculation for
 		 * the clause.	We can cache if varRelid is zero or the clause
 		 * contains only vars of that relid --- otherwise varRelid will affect
@@ -509,7 +531,10 @@ clause_selectivity(PlannerInfo *root,
 	else if (IsA(clause, Const))
 	{
 		/* bool constant is pretty easy... */
-		s1 = ((bool) ((Const *) clause)->constvalue) ? 1.0 : 0.0;
+		Const  *con = (Const *) clause;
+
+		s1 = con->constisnull ? 0.0 :
+			DatumGetBool(con->constvalue) ? 1.0 : 0.0;
 	}
 	else if (IsA(clause, Param))
 	{
@@ -519,7 +544,10 @@ clause_selectivity(PlannerInfo *root,
 		if (IsA(subst, Const))
 		{
 			/* bool constant is pretty easy... */
-			s1 = ((bool) ((Const *) subst)->constvalue) ? 1.0 : 0.0;
+			Const  *con = (Const *) subst;
+
+			s1 = con->constisnull ? 0.0 :
+				DatumGetBool(con->constvalue) ? 1.0 : 0.0;
 		}
 		else
 		{

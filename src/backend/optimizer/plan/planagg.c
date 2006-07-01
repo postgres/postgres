@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.15 2006/06/06 17:59:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.16 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,7 @@ static bool build_minmax_path(PlannerInfo *root, RelOptInfo *rel,
 				  MinMaxAggInfo *info);
 static ScanDirection match_agg_to_index_col(MinMaxAggInfo *info,
 					   IndexOptInfo *index, int indexcol);
-static void make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info,
-				 List *constant_quals);
+static void make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info);
 static Node *replace_aggs_with_params_mutator(Node *node, List **context);
 static Oid	fetch_agg_sort_op(Oid aggfnoid);
 
@@ -81,7 +80,6 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	Plan	   *plan;
 	Node	   *hqual;
 	QualCost	tlist_cost;
-	List	   *constant_quals;
 
 	/* Nothing to do if query has no aggregates */
 	if (!parse->hasAggs)
@@ -164,27 +162,13 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 		return NULL;			/* too expensive */
 
 	/*
-	 * OK, we are going to generate an optimized plan.	The first thing we
-	 * need to do is look for any non-variable WHERE clauses that
-	 * query_planner might have removed from the basic plan.  (Normal WHERE
-	 * clauses will be properly incorporated into the sub-plans by
-	 * create_plan.)  If there are any, they will be in a gating Result node
-	 * atop the best_path. They have to be incorporated into a gating Result
-	 * in each sub-plan in order to produce the semantically correct result.
+	 * OK, we are going to generate an optimized plan.
 	 */
-	if (IsA(best_path, ResultPath))
-	{
-		constant_quals = ((ResultPath *) best_path)->constantqual;
-		/* no need to do this more than once: */
-		constant_quals = order_qual_clauses(root, constant_quals);
-	}
-	else
-		constant_quals = NIL;
 
 	/* Pass 3: generate subplans and output Param nodes */
 	foreach(l, aggs_list)
 	{
-		make_agg_subplan(root, (MinMaxAggInfo *) lfirst(l), constant_quals);
+		make_agg_subplan(root, (MinMaxAggInfo *) lfirst(l));
 	}
 
 	/*
@@ -434,11 +418,12 @@ match_agg_to_index_col(MinMaxAggInfo *info, IndexOptInfo *index, int indexcol)
  * Construct a suitable plan for a converted aggregate query
  */
 static void
-make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
+make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 {
 	PlannerInfo subroot;
 	Query	   *subparse;
 	Plan	   *plan;
+	Plan	   *iplan;
 	TargetEntry *tle;
 	SortClause *sortcl;
 	NullTest   *ntest;
@@ -482,8 +467,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
 	/*
 	 * Generate the plan for the subquery.	We already have a Path for the
 	 * basic indexscan, but we have to convert it to a Plan and attach a LIMIT
-	 * node above it.  We might need a gating Result, too, to handle any
-	 * non-variable qual clauses.
+	 * node above it.
 	 *
 	 * Also we must add a "WHERE foo IS NOT NULL" restriction to the
 	 * indexscan, to be sure we don't return a NULL, which'd be contrary to
@@ -491,21 +475,26 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
 	 * earlier, so that the selectivity of the restriction could be included
 	 * in our cost estimates.  But that looks painful, and in most cases the
 	 * fraction of NULLs isn't high enough to change the decision.
+	 *
+	 * The NOT NULL qual has to go on the actual indexscan; create_plan
+	 * might have stuck a gating Result atop that, if there were any
+	 * pseudoconstant quals.
 	 */
 	plan = create_plan(&subroot, (Path *) info->path);
 
 	plan->targetlist = copyObject(subparse->targetList);
 
+	if (IsA(plan, Result))
+		iplan = plan->lefttree;
+	else
+		iplan = plan;
+	Assert(IsA(iplan, IndexScan));
+
 	ntest = makeNode(NullTest);
 	ntest->nulltesttype = IS_NOT_NULL;
 	ntest->arg = copyObject(info->target);
 
-	plan->qual = lcons(ntest, plan->qual);
-
-	if (constant_quals)
-		plan = (Plan *) make_result(copyObject(plan->targetlist),
-									copyObject(constant_quals),
-									plan);
+	iplan->qual = lcons(ntest, iplan->qual);
 
 	plan = (Plan *) make_limit(plan,
 							   subparse->limitOffset,

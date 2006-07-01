@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.158 2006/06/06 17:59:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.159 2006/07/01 18:38:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1604,20 +1604,29 @@ cost_qual_eval(QualCost *cost, List *quals)
 		 * routine's use, so that it's not necessary to evaluate the qual
 		 * clause's cost more than once.  If the clause's cost hasn't been
 		 * computed yet, the field's startup value will contain -1.
+		 *
+		 * If the RestrictInfo is marked pseudoconstant, it will be tested
+		 * only once, so treat its cost as all startup cost.
 		 */
 		if (qual && IsA(qual, RestrictInfo))
 		{
-			RestrictInfo *restrictinfo = (RestrictInfo *) qual;
+			RestrictInfo *rinfo = (RestrictInfo *) qual;
 
-			if (restrictinfo->eval_cost.startup < 0)
+			if (rinfo->eval_cost.startup < 0)
 			{
-				restrictinfo->eval_cost.startup = 0;
-				restrictinfo->eval_cost.per_tuple = 0;
-				cost_qual_eval_walker((Node *) restrictinfo->clause,
-									  &restrictinfo->eval_cost);
+				rinfo->eval_cost.startup = 0;
+				rinfo->eval_cost.per_tuple = 0;
+				cost_qual_eval_walker((Node *) rinfo->clause,
+									  &rinfo->eval_cost);
+				if (rinfo->pseudoconstant)
+				{
+					/* count one execution during startup */
+					rinfo->eval_cost.startup += rinfo->eval_cost.per_tuple;
+					rinfo->eval_cost.per_tuple = 0;
+				}
 			}
-			cost->startup += restrictinfo->eval_cost.startup;
-			cost->per_tuple += restrictinfo->eval_cost.per_tuple;
+			cost->startup += rinfo->eval_cost.startup;
+			cost->per_tuple += rinfo->eval_cost.per_tuple;
 		}
 		else
 		{
@@ -1876,7 +1885,9 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	 *
 	 * If we are doing an outer join, take that into account: the output must
 	 * be at least as large as the non-nullable input.	(Is there any chance
-	 * of being even smarter?)
+	 * of being even smarter?)  (XXX this is not really right, because it
+	 * assumes all the restriction clauses are join clauses; we should figure
+	 * pushed-down clauses separately.)
 	 *
 	 * For JOIN_IN and variants, the Cartesian product is figured with respect
 	 * to a unique-ified input, and then we can clamp to the size of the other

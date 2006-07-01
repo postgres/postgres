@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.274 2006/04/30 18:30:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.275 2006/07/01 18:38:32 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1107,8 +1107,7 @@ _outResultPath(StringInfo str, ResultPath *node)
 
 	_outPathInfo(str, (Path *) node);
 
-	WRITE_NODE_FIELD(subpath);
-	WRITE_NODE_FIELD(constantqual);
+	WRITE_NODE_FIELD(quals);
 }
 
 static void
@@ -1185,6 +1184,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_BOOL_FIELD(hasJoinRTEs);
 	WRITE_BOOL_FIELD(hasOuterJoins);
 	WRITE_BOOL_FIELD(hasHavingQual);
+	WRITE_BOOL_FIELD(hasPseudoConstantQuals);
 }
 
 static void
@@ -1252,6 +1252,7 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	WRITE_BOOL_FIELD(is_pushed_down);
 	WRITE_BOOL_FIELD(outerjoin_delayed);
 	WRITE_BOOL_FIELD(can_join);
+	WRITE_BOOL_FIELD(pseudoconstant);
 	WRITE_BITMAPSET_FIELD(clause_relids);
 	WRITE_BITMAPSET_FIELD(required_relids);
 	WRITE_BITMAPSET_FIELD(left_relids);

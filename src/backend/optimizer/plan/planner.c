@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.200 2006/06/28 20:04:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.201 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,6 +269,9 @@ subquery_planner(Query *parse, double tuple_fraction,
 	 * an empty qual list ... but "HAVING TRUE" is not a semantic no-op.
 	 */
 	root->hasHavingQual = (parse->havingQual != NULL);
+
+	/* Clear this flag; might get set in distribute_qual_to_rels */
+	root->hasPseudoConstantQuals = false;
 
 	/*
 	 * Do expression preprocessing on targetlist and quals.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.68 2006/06/06 17:59:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.69 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,7 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tidquals);
 extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths);
-extern ResultPath *create_result_path(RelOptInfo *rel, Path *subpath,
-				   List *constantqual);
+extern ResultPath *create_result_path(List *quals);
 extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 				   Path *subpath);

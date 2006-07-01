@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.93 2006/03/05 15:58:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.94 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,6 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 			  double *num_groups)
 {
 	Query	   *parse = root->parse;
-	List	   *constant_quals;
 	List	   *joinlist;
 	RelOptInfo *final_rel;
 	Path	   *cheapestpath;
@@ -99,25 +98,11 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	 */
 	if (parse->jointree->fromlist == NIL)
 	{
-		*cheapest_path = (Path *) create_result_path(NULL, NULL,
-											(List *) parse->jointree->quals);
+		*cheapest_path = (Path *)
+			create_result_path((List *) parse->jointree->quals);
 		*sorted_path = NULL;
 		return;
 	}
-
-	/*
-	 * Pull out any non-variable WHERE clauses so these can be put in a
-	 * toplevel "Result" node, where they will gate execution of the whole
-	 * plan (the Result will not invoke its descendant plan unless the quals
-	 * are true).  Note that any *really* non-variable quals will have been
-	 * optimized away by eval_const_expressions().	What we're mostly
-	 * interested in here is quals that depend only on outer-level vars,
-	 * although if the qual reduces to "WHERE FALSE" this path will also be
-	 * taken.
-	 */
-	parse->jointree->quals = (Node *)
-		pull_constant_clauses((List *) parse->jointree->quals,
-							  &constant_quals);
 
 	/*
 	 * Init planner lists to empty, and set up the array to hold RelOptInfos
@@ -322,20 +307,6 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 			/* Presorted path is a loser */
 			sortedpath = NULL;
 		}
-	}
-
-	/*
-	 * If we have constant quals, add a toplevel Result step to process them.
-	 */
-	if (constant_quals)
-	{
-		cheapestpath = (Path *) create_result_path(final_rel,
-												   cheapestpath,
-												   constant_quals);
-		if (sortedpath)
-			sortedpath = (Path *) create_result_path(final_rel,
-													 sortedpath,
-													 constant_quals);
 	}
 
 	*cheapest_path = cheapestpath;

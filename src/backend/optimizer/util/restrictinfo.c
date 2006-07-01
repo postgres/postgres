@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.47 2006/04/07 17:05:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.48 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,12 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   Expr *orclause,
 						   bool is_pushed_down,
 						   bool outerjoin_delayed,
+						   bool pseudoconstant,
 						   Relids required_relids);
 static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool outerjoin_delayed,
+					   bool pseudoconstant,
 					   Relids required_relids);
 static RestrictInfo *join_clause_is_redundant(PlannerInfo *root,
 						 RestrictInfo *rinfo,
@@ -42,9 +44,10 @@ static RestrictInfo *join_clause_is_redundant(PlannerInfo *root,
  *
  * Build a RestrictInfo node containing the given subexpression.
  *
- * The is_pushed_down and outerjoin_delayed flags must be supplied by the
- * caller.	required_relids can be NULL, in which case it defaults to the
- * actual clause contents (i.e., clause_relids).
+ * The is_pushed_down, outerjoin_delayed, and pseudoconstant flags for the
+ * RestrictInfo must be supplied by the caller.  required_relids can be NULL,
+ * in which case it defaults to the actual clause contents (i.e.,
+ * clause_relids).
  *
  * We initialize fields that depend only on the given subexpression, leaving
  * others that depend on context (or may never be needed at all) to be filled
@@ -54,6 +57,7 @@ RestrictInfo *
 make_restrictinfo(Expr *clause,
 				  bool is_pushed_down,
 				  bool outerjoin_delayed,
+				  bool pseudoconstant,
 				  Relids required_relids)
 {
 	/*
@@ -64,13 +68,17 @@ make_restrictinfo(Expr *clause,
 		return (RestrictInfo *) make_sub_restrictinfos(clause,
 													   is_pushed_down,
 													   outerjoin_delayed,
+													   pseudoconstant,
 													   required_relids);
 
 	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
 	Assert(!and_clause((Node *) clause));
 
-	return make_restrictinfo_internal(clause, NULL,
-									  is_pushed_down, outerjoin_delayed,
+	return make_restrictinfo_internal(clause,
+									  NULL,
+									  is_pushed_down,
+									  outerjoin_delayed,
+									  pseudoconstant,
 									  required_relids);
 }
 
@@ -85,7 +93,8 @@ make_restrictinfo(Expr *clause,
  * RestrictInfos.
  *
  * The caller must pass is_pushed_down, but we assume outerjoin_delayed
- * is false (no such qual should ever get into a bitmapqual).
+ * and pseudoconstant are false (no such qual should ever get into a
+ * bitmapqual).
  *
  * If include_predicates is true, we add any partial index predicates to
  * the explicit index quals.  When this is not true, we return a condition
@@ -214,6 +223,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 													  make_orclause(withris),
 													  is_pushed_down,
 													  false,
+													  false,
 													  NULL));
 		}
 	}
@@ -239,6 +249,7 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 									 make_restrictinfo(pred,
 													   is_pushed_down,
 													   false,
+													   false,
 													   NULL));
 			}
 		}
@@ -258,8 +269,11 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
  * Common code for the main entry points and the recursive cases.
  */
 static RestrictInfo *
-make_restrictinfo_internal(Expr *clause, Expr *orclause,
-						   bool is_pushed_down, bool outerjoin_delayed,
+make_restrictinfo_internal(Expr *clause,
+						   Expr *orclause,
+						   bool is_pushed_down,
+						   bool outerjoin_delayed,
+						   bool pseudoconstant,
 						   Relids required_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
@@ -268,6 +282,7 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 	restrictinfo->orclause = orclause;
 	restrictinfo->is_pushed_down = is_pushed_down;
 	restrictinfo->outerjoin_delayed = outerjoin_delayed;
+	restrictinfo->pseudoconstant = pseudoconstant;
 	restrictinfo->can_join = false;		/* may get set below */
 
 	/*
@@ -292,7 +307,11 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 			!bms_is_empty(restrictinfo->right_relids) &&
 			!bms_overlap(restrictinfo->left_relids,
 						 restrictinfo->right_relids))
+		{
 			restrictinfo->can_join = true;
+			/* pseudoconstant should certainly not be true */
+			Assert(!restrictinfo->pseudoconstant);
+		}
 	}
 	else
 	{
@@ -346,13 +365,18 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
  * implicit-AND lists at top level of RestrictInfo lists.  Only ORs and
  * simple clauses are valid RestrictInfos.
  *
+ * The same is_pushed_down, outerjoin_delayed, and pseudoconstant flag
+ * values can be applied to all RestrictInfo nodes in the result.
+ *
  * The given required_relids are attached to our top-level output,
  * but any OR-clause constituents are allowed to default to just the
  * contained rels.
  */
 static Expr *
 make_sub_restrictinfos(Expr *clause,
-					   bool is_pushed_down, bool outerjoin_delayed,
+					   bool is_pushed_down,
+					   bool outerjoin_delayed,
+					   bool pseudoconstant,
 					   Relids required_relids)
 {
 	if (or_clause((Node *) clause))
@@ -365,11 +389,13 @@ make_sub_restrictinfos(Expr *clause,
 							 make_sub_restrictinfos(lfirst(temp),
 													is_pushed_down,
 													outerjoin_delayed,
+													pseudoconstant,
 													NULL));
 		return (Expr *) make_restrictinfo_internal(clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
 												   outerjoin_delayed,
+												   pseudoconstant,
 												   required_relids);
 	}
 	else if (and_clause((Node *) clause))
@@ -382,6 +408,7 @@ make_sub_restrictinfos(Expr *clause,
 							  make_sub_restrictinfos(lfirst(temp),
 													 is_pushed_down,
 													 outerjoin_delayed,
+													 pseudoconstant,
 													 required_relids));
 		return make_andclause(andlist);
 	}
@@ -390,6 +417,7 @@ make_sub_restrictinfos(Expr *clause,
 												   NULL,
 												   is_pushed_down,
 												   outerjoin_delayed,
+												   pseudoconstant,
 												   required_relids);
 }
 
@@ -411,18 +439,23 @@ restriction_is_or_clause(RestrictInfo *restrictinfo)
  * get_actual_clauses
  *
  * Returns a list containing the bare clauses from 'restrictinfo_list'.
+ *
+ * This is only to be used in cases where none of the RestrictInfos can
+ * be pseudoconstant clauses (for instance, it's OK on indexqual lists).
  */
 List *
 get_actual_clauses(List *restrictinfo_list)
 {
 	List	   *result = NIL;
-	ListCell   *temp;
+	ListCell   *l;
 
-	foreach(temp, restrictinfo_list)
+	foreach(l, restrictinfo_list)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(temp);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 		Assert(IsA(rinfo, RestrictInfo));
+
+		Assert(!rinfo->pseudoconstant);
 
 		result = lappend(result, rinfo->clause);
 	}
@@ -430,28 +463,67 @@ get_actual_clauses(List *restrictinfo_list)
 }
 
 /*
- * get_actual_join_clauses
+ * extract_actual_clauses
  *
- * Extract clauses from 'restrictinfo_list', separating those that
+ * Extract bare clauses from 'restrictinfo_list', returning either the
+ * regular ones or the pseudoconstant ones per 'pseudoconstant'.
+ */
+List *
+extract_actual_clauses(List *restrictinfo_list,
+					   bool pseudoconstant)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, restrictinfo_list)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+		Assert(IsA(rinfo, RestrictInfo));
+
+		if (rinfo->pseudoconstant == pseudoconstant)
+			result = lappend(result, rinfo->clause);
+	}
+	return result;
+}
+
+/*
+ * extract_actual_join_clauses
+ *
+ * Extract bare clauses from 'restrictinfo_list', separating those that
  * syntactically match the join level from those that were pushed down.
+ * Pseudoconstant clauses are excluded from the results.
+ *
+ * This is only used at outer joins, since for plain joins we don't care
+ * about pushed-down-ness.
  */
 void
-get_actual_join_clauses(List *restrictinfo_list,
-						List **joinquals, List **otherquals)
+extract_actual_join_clauses(List *restrictinfo_list,
+							List **joinquals,
+							List **otherquals)
 {
-	ListCell   *temp;
+	ListCell   *l;
 
 	*joinquals = NIL;
 	*otherquals = NIL;
 
-	foreach(temp, restrictinfo_list)
+	foreach(l, restrictinfo_list)
 	{
-		RestrictInfo *clause = (RestrictInfo *) lfirst(temp);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-		if (clause->is_pushed_down)
-			*otherquals = lappend(*otherquals, clause->clause);
+		Assert(IsA(rinfo, RestrictInfo));
+
+		if (rinfo->is_pushed_down)
+		{
+			if (!rinfo->pseudoconstant)
+				*otherquals = lappend(*otherquals, rinfo->clause);
+		}
 		else
-			*joinquals = lappend(*joinquals, clause->clause);
+		{
+			/* joinquals shouldn't have been marked pseudoconstant */
+			Assert(!rinfo->pseudoconstant);
+			*joinquals = lappend(*joinquals, rinfo->clause);
+		}
 	}
 }
 

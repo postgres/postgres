@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.211 2006/05/18 18:57:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.212 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +35,12 @@
 #include "utils/syscache.h"
 
 
-static Scan *create_scan_plan(PlannerInfo *root, Path *best_path);
+static Plan *create_scan_plan(PlannerInfo *root, Path *best_path);
 static List *build_relation_tlist(RelOptInfo *rel);
 static bool use_physical_tlist(RelOptInfo *rel);
 static void disuse_physical_tlist(Plan *plan, Path *path);
-static Join *create_join_plan(PlannerInfo *root, JoinPath *best_path);
+static Plan *create_gating_plan(PlannerInfo *root, Plan *plan, List *quals);
+static Plan *create_join_plan(PlannerInfo *root, JoinPath *best_path);
 static Plan *create_append_plan(PlannerInfo *root, AppendPath *best_path);
 static Result *create_result_plan(PlannerInfo *root, ResultPath *best_path);
 static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path);
@@ -74,6 +75,7 @@ static void fix_indexqual_references(List *indexquals, IndexPath *index_path,
 static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index,
 					  Oid *opclass);
 static List *get_switched_clauses(List *clauses, Relids outerrelids);
+static List *order_qual_clauses(PlannerInfo *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
 static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
@@ -146,17 +148,17 @@ create_plan(PlannerInfo *root, Path *best_path)
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
-			plan = (Plan *) create_scan_plan(root, best_path);
+			plan = create_scan_plan(root, best_path);
 			break;
 		case T_HashJoin:
 		case T_MergeJoin:
 		case T_NestLoop:
-			plan = (Plan *) create_join_plan(root,
-											 (JoinPath *) best_path);
+			plan = create_join_plan(root,
+									(JoinPath *) best_path);
 			break;
 		case T_Append:
-			plan = (Plan *) create_append_plan(root,
-											   (AppendPath *) best_path);
+			plan = create_append_plan(root,
+									  (AppendPath *) best_path);
 			break;
 		case T_Result:
 			plan = (Plan *) create_result_plan(root,
@@ -167,8 +169,8 @@ create_plan(PlannerInfo *root, Path *best_path)
 												 (MaterialPath *) best_path);
 			break;
 		case T_Unique:
-			plan = (Plan *) create_unique_plan(root,
-											   (UniquePath *) best_path);
+			plan = create_unique_plan(root,
+									  (UniquePath *) best_path);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
@@ -183,16 +185,14 @@ create_plan(PlannerInfo *root, Path *best_path)
 /*
  * create_scan_plan
  *	 Create a scan plan for the parent relation of 'best_path'.
- *
- *	 Returns a Plan node.
  */
-static Scan *
+static Plan *
 create_scan_plan(PlannerInfo *root, Path *best_path)
 {
 	RelOptInfo *rel = best_path->parent;
 	List	   *tlist;
 	List	   *scan_clauses;
-	Scan	   *plan;
+	Plan	   *plan;
 
 	/*
 	 * For table scans, rather than using the relation targetlist (which is
@@ -213,22 +213,23 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 		tlist = build_relation_tlist(rel);
 
 	/*
-	 * Extract the relevant restriction clauses from the parent relation; the
-	 * executor must apply all these restrictions during the scan.
+	 * Extract the relevant restriction clauses from the parent relation.
+	 * The executor must apply all these restrictions during the scan,
+	 * except for pseudoconstants which we'll take care of below.
 	 */
 	scan_clauses = rel->baserestrictinfo;
 
 	switch (best_path->pathtype)
 	{
 		case T_SeqScan:
-			plan = (Scan *) create_seqscan_plan(root,
+			plan = (Plan *) create_seqscan_plan(root,
 												best_path,
 												tlist,
 												scan_clauses);
 			break;
 
 		case T_IndexScan:
-			plan = (Scan *) create_indexscan_plan(root,
+			plan = (Plan *) create_indexscan_plan(root,
 												  (IndexPath *) best_path,
 												  tlist,
 												  scan_clauses,
@@ -236,28 +237,28 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 			break;
 
 		case T_BitmapHeapScan:
-			plan = (Scan *) create_bitmap_scan_plan(root,
+			plan = (Plan *) create_bitmap_scan_plan(root,
 												(BitmapHeapPath *) best_path,
 													tlist,
 													scan_clauses);
 			break;
 
 		case T_TidScan:
-			plan = (Scan *) create_tidscan_plan(root,
+			plan = (Plan *) create_tidscan_plan(root,
 												(TidPath *) best_path,
 												tlist,
 												scan_clauses);
 			break;
 
 		case T_SubqueryScan:
-			plan = (Scan *) create_subqueryscan_plan(root,
+			plan = (Plan *) create_subqueryscan_plan(root,
 													 best_path,
 													 tlist,
 													 scan_clauses);
 			break;
 
 		case T_FunctionScan:
-			plan = (Scan *) create_functionscan_plan(root,
+			plan = (Plan *) create_functionscan_plan(root,
 													 best_path,
 													 tlist,
 													 scan_clauses);
@@ -269,6 +270,14 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 			plan = NULL;		/* keep compiler quiet */
 			break;
 	}
+
+	/*
+	 * If there are any pseudoconstant clauses attached to this node,
+	 * insert a gating Result node that evaluates the pseudoconstants
+	 * as one-time quals.
+	 */
+	if (root->hasPseudoConstantQuals)
+		plan = create_gating_plan(root, plan, scan_clauses);
 
 	return plan;
 }
@@ -366,18 +375,53 @@ disuse_physical_tlist(Plan *plan, Path *path)
 }
 
 /*
+ * create_gating_plan
+ *	  Deal with pseudoconstant qual clauses
+ *
+ * If the node's quals list includes any pseudoconstant quals, put them
+ * into a gating Result node atop the already-built plan.  Otherwise,
+ * return the plan as-is.
+ *
+ * Note that we don't change cost or size estimates when doing gating.
+ * The costs of qual eval were already folded into the plan's startup cost.
+ * Leaving the size alone amounts to assuming that the gating qual will
+ * succeed, which is the conservative estimate for planning upper queries.
+ * We certainly don't want to assume the output size is zero (unless the
+ * gating qual is actually constant FALSE, and that case is dealt with in
+ * clausesel.c).  Interpolating between the two cases is silly, because
+ * it doesn't reflect what will really happen at runtime, and besides which
+ * in most cases we have only a very bad idea of the probability of the gating
+ * qual being true.
+ */
+static Plan *
+create_gating_plan(PlannerInfo *root, Plan *plan, List *quals)
+{
+	List	   *pseudoconstants;
+
+	/* Pull out any pseudoconstant quals from the RestrictInfo list */
+	pseudoconstants = extract_actual_clauses(quals, true);
+
+	if (!pseudoconstants)
+		return plan;
+
+	pseudoconstants = order_qual_clauses(root, pseudoconstants);
+
+	return (Plan *) make_result((List *) copyObject(plan->targetlist),
+								(Node *) pseudoconstants,
+								plan);
+}
+
+/*
  * create_join_plan
  *	  Create a join plan for 'best_path' and (recursively) plans for its
  *	  inner and outer paths.
- *
- *	  Returns a Plan node.
  */
-static Join *
+static Plan *
 create_join_plan(PlannerInfo *root, JoinPath *best_path)
 {
 	Plan	   *outer_plan;
 	Plan	   *inner_plan;
-	Join	   *plan;
+	Plan	   *plan;
 
 	outer_plan = create_plan(root, best_path->outerjoinpath);
 	inner_plan = create_plan(root, best_path->innerjoinpath);
@@ -385,19 +429,19 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 	switch (best_path->path.pathtype)
 	{
 		case T_MergeJoin:
-			plan = (Join *) create_mergejoin_plan(root,
+			plan = (Plan *) create_mergejoin_plan(root,
 												  (MergePath *) best_path,
 												  outer_plan,
 												  inner_plan);
 			break;
 		case T_HashJoin:
-			plan = (Join *) create_hashjoin_plan(root,
+			plan = (Plan *) create_hashjoin_plan(root,
 												 (HashPath *) best_path,
 												 outer_plan,
 												 inner_plan);
 			break;
 		case T_NestLoop:
-			plan = (Join *) create_nestloop_plan(root,
+			plan = (Plan *) create_nestloop_plan(root,
 												 (NestPath *) best_path,
 												 outer_plan,
 												 inner_plan);
@@ -408,6 +452,14 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 			plan = NULL;		/* keep compiler quiet */
 			break;
 	}
+
+	/*
+	 * If there are any pseudoconstant clauses attached to this node,
+	 * insert a gating Result node that evaluates the pseudoconstants
+	 * as one-time quals.
+	 */
+	if (root->hasPseudoConstantQuals)
+		plan = create_gating_plan(root, plan, best_path->joinrestrictinfo);
 
 #ifdef NOT_USED
 
@@ -473,34 +525,24 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 
 /*
  * create_result_plan
- *	  Create a Result plan for 'best_path' and (recursively) plans
- *	  for its subpaths.
+ *	  Create a Result plan for 'best_path'.
+ *	  This is only used for the case of a query with an empty jointree.
  *
  *	  Returns a Plan node.
  */
 static Result *
 create_result_plan(PlannerInfo *root, ResultPath *best_path)
 {
-	Result	   *plan;
 	List	   *tlist;
-	List	   *constclauses;
-	Plan	   *subplan;
+	List	   *quals;
 
-	if (best_path->path.parent)
-		tlist = build_relation_tlist(best_path->path.parent);
-	else
-		tlist = NIL;			/* will be filled in later */
+	/* The tlist will be installed later, since we have no RelOptInfo */
+	Assert(best_path->path.parent == NULL);
+	tlist = NIL;
 
-	if (best_path->subpath)
-		subplan = create_plan(root, best_path->subpath);
-	else
-		subplan = NULL;
+	quals = order_qual_clauses(root, best_path->quals);
 
-	constclauses = order_qual_clauses(root, best_path->constantqual);
-
-	plan = make_result(tlist, (Node *) constclauses, subplan);
-
-	return plan;
+	return make_result(tlist, (Node *) quals, NULL);
 }
 
 /*
@@ -716,8 +758,8 @@ create_seqscan_plan(PlannerInfo *root, Path *best_path,
 	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_RELATION);
 
-	/* Reduce RestrictInfo list to bare expressions */
-	scan_clauses = get_actual_clauses(scan_clauses);
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -824,7 +866,8 @@ create_indexscan_plan(PlannerInfo *root,
 	 * plan so that they'll be properly rechecked by EvalPlanQual testing.
 	 *
 	 * While at it, we strip off the RestrictInfos to produce a list of plain
-	 * expressions.
+	 * expressions (this loop replaces extract_actual_clauses used in the
+	 * other routines in this file).  We have to ignore pseudoconstants.
 	 */
 	qpqual = NIL;
 	foreach(l, scan_clauses)
@@ -832,6 +875,8 @@ create_indexscan_plan(PlannerInfo *root,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 		Assert(IsA(rinfo, RestrictInfo));
+		if (rinfo->pseudoconstant)
+			continue;
 		if (list_member_ptr(nonlossy_indexquals, rinfo))
 			continue;
 		if (!contain_mutable_functions((Node *) rinfo->clause))
@@ -900,8 +945,8 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	bitmapqualplan = create_bitmap_subplan(root, best_path->bitmapqual,
 										   &bitmapqualorig, &indexquals);
 
-	/* Reduce RestrictInfo list to bare expressions */
-	scan_clauses = get_actual_clauses(scan_clauses);
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/*
 	 * If this is a innerjoin scan, the indexclauses will contain join clauses
@@ -1183,8 +1228,8 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	Assert(scan_relid > 0);
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
 
-	/* Reduce RestrictInfo list to bare expressions */
-	scan_clauses = get_actual_clauses(scan_clauses);
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/*
 	 * Remove any clauses that are TID quals.  This is a bit tricky since
@@ -1224,8 +1269,8 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_SUBQUERY);
 
-	/* Reduce RestrictInfo list to bare expressions */
-	scan_clauses = get_actual_clauses(scan_clauses);
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -1256,8 +1301,8 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_FUNCTION);
 
-	/* Reduce RestrictInfo list to bare expressions */
-	scan_clauses = get_actual_clauses(scan_clauses);
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -1348,15 +1393,16 @@ create_nestloop_plan(PlannerInfo *root,
 	}
 
 	/* Get the join qual clauses (in plain expression form) */
+	/* Any pseudoconstant clauses are ignored here */
 	if (IS_OUTER_JOIN(best_path->jointype))
 	{
-		get_actual_join_clauses(joinrestrictclauses,
-								&joinclauses, &otherclauses);
+		extract_actual_join_clauses(joinrestrictclauses,
+									&joinclauses, &otherclauses);
 	}
 	else
 	{
 		/* We can treat all clauses alike for an inner join */
-		joinclauses = get_actual_clauses(joinrestrictclauses);
+		joinclauses = extract_actual_clauses(joinrestrictclauses, false);
 		otherclauses = NIL;
 	}
 
@@ -1389,15 +1435,17 @@ create_mergejoin_plan(PlannerInfo *root,
 	MergeJoin  *join_plan;
 
 	/* Get the join qual clauses (in plain expression form) */
+	/* Any pseudoconstant clauses are ignored here */
 	if (IS_OUTER_JOIN(best_path->jpath.jointype))
 	{
-		get_actual_join_clauses(best_path->jpath.joinrestrictinfo,
-								&joinclauses, &otherclauses);
+		extract_actual_join_clauses(best_path->jpath.joinrestrictinfo,
+									&joinclauses, &otherclauses);
 	}
 	else
 	{
 		/* We can treat all clauses alike for an inner join */
-		joinclauses = get_actual_clauses(best_path->jpath.joinrestrictinfo);
+		joinclauses = extract_actual_clauses(best_path->jpath.joinrestrictinfo,
+											 false);
 		otherclauses = NIL;
 	}
 
@@ -1473,15 +1521,17 @@ create_hashjoin_plan(PlannerInfo *root,
 	Hash	   *hash_plan;
 
 	/* Get the join qual clauses (in plain expression form) */
+	/* Any pseudoconstant clauses are ignored here */
 	if (IS_OUTER_JOIN(best_path->jpath.jointype))
 	{
-		get_actual_join_clauses(best_path->jpath.joinrestrictinfo,
-								&joinclauses, &otherclauses);
+		extract_actual_join_clauses(best_path->jpath.joinrestrictinfo,
+									&joinclauses, &otherclauses);
 	}
 	else
 	{
 		/* We can treat all clauses alike for an inner join */
-		joinclauses = get_actual_clauses(best_path->jpath.joinrestrictinfo);
+		joinclauses = extract_actual_clauses(best_path->jpath.joinrestrictinfo,
+											 false);
 		otherclauses = NIL;
 	}
 
@@ -1831,7 +1881,7 @@ get_switched_clauses(List *clauses, Relids outerrelids)
  * For now, we just move any quals that contain SubPlan references (but not
  * InitPlan references) to the end of the list.
  */
-List *
+static List *
 order_qual_clauses(PlannerInfo *root, List *clauses)
 {
 	List	   *nosubplans;
@@ -2880,6 +2930,15 @@ make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 	return node;
 }
 
+/*
+ * make_result
+ *	  Build a Result plan node
+ *
+ * If we have a subplan, assume that any evaluation costs for the gating qual
+ * were already factored into the subplan's startup cost, and just copy the
+ * subplan cost.  If there's no subplan, we should include the qual eval
+ * cost.  In either case, tlist eval cost is not to be included here.
+ */
 Result *
 make_result(List *tlist,
 			Node *resconstantqual,
@@ -2895,17 +2954,16 @@ make_result(List *tlist,
 		plan->startup_cost = 0;
 		plan->total_cost = cpu_tuple_cost;
 		plan->plan_rows = 1;	/* wrong if we have a set-valued function? */
-		plan->plan_width = 0;	/* XXX try to be smarter? */
-	}
+		plan->plan_width = 0;	/* XXX is it worth being smarter? */
+		if (resconstantqual)
+		{
+			QualCost	qual_cost;
 
-	if (resconstantqual)
-	{
-		QualCost	qual_cost;
-
-		cost_qual_eval(&qual_cost, (List *) resconstantqual);
-		/* resconstantqual is evaluated once at startup */
-		plan->startup_cost += qual_cost.startup + qual_cost.per_tuple;
-		plan->total_cost += qual_cost.startup + qual_cost.per_tuple;
+			cost_qual_eval(&qual_cost, (List *) resconstantqual);
+			/* resconstantqual is evaluated once at startup */
+			plan->startup_cost += qual_cost.startup + qual_cost.per_tuple;
+			plan->total_cost += qual_cost.startup + qual_cost.per_tuple;
+		}
 	}
 
 	plan->targetlist = tlist;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.208 2006/06/07 17:08:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.209 2006/07/01 18:38:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -997,6 +997,15 @@ match_clause_to_indexcol(IndexOptInfo *index,
 	Relids		right_relids;
 	Oid			expr_op;
 	bool		plain_op;
+
+	/*
+	 * Never match pseudoconstants to indexes.  (Normally this could not
+	 * happen anyway, since a pseudoconstant clause couldn't contain a
+	 * Var, but what if someone builds an expression index on a constant?
+	 * It's not totally unreasonable to do so with a partial index, either.)
+	 */
+	if (rinfo->pseudoconstant)
+		return false;
 
 	/* First check for boolean-index cases. */
 	if (IsBooleanOpclass(opclass))
@@ -2212,6 +2221,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 										  make_restrictinfo(boolqual,
 															true,
 															false,
+															false,
 															NULL));
 					continue;
 				}
@@ -2577,7 +2587,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 								  matching_cols);
 		rc->rargs = list_truncate((List *) copyObject(clause->rargs),
 								  matching_cols);
-		return make_restrictinfo((Expr *) rc, true, false, NULL);
+		return make_restrictinfo((Expr *) rc, true, false, false, NULL);
 	}
 	else
 	{
@@ -2586,7 +2596,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 		opexpr = make_opclause(linitial_oid(new_ops), BOOLOID, false,
 							   copyObject(linitial(clause->largs)),
 							   copyObject(linitial(clause->rargs)));
-		return make_restrictinfo(opexpr, true, false, NULL);
+		return make_restrictinfo(opexpr, true, false, false, NULL);
 	}
 }
 
@@ -2678,7 +2688,7 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no = operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const);
-		result = list_make1(make_restrictinfo(expr, true, false, NULL));
+		result = list_make1(make_restrictinfo(expr, true, false, false, NULL));
 		return result;
 	}
 
@@ -2693,7 +2703,7 @@ prefix_quals(Node *leftop, Oid opclass,
 		elog(ERROR, "no >= operator for opclass %u", opclass);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const);
-	result = list_make1(make_restrictinfo(expr, true, false, NULL));
+	result = list_make1(make_restrictinfo(expr, true, false, false, NULL));
 
 	/*-------
 	 * If we can create a string larger than the prefix, we can say
@@ -2709,7 +2719,8 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no < operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
-		result = lappend(result, make_restrictinfo(expr, true, false, NULL));
+		result = lappend(result,
+						 make_restrictinfo(expr, true, false, false, NULL));
 	}
 
 	return result;
@@ -2772,7 +2783,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr1right,
 											false, false));
-	result = list_make1(make_restrictinfo(expr, true, false, NULL));
+	result = list_make1(make_restrictinfo(expr, true, false, false, NULL));
 
 	/* create clause "key <= network_scan_last( rightop )" */
 
@@ -2787,7 +2798,8 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr2right,
 											false, false));
-	result = lappend(result, make_restrictinfo(expr, true, false, NULL));
+	result = lappend(result,
+					 make_restrictinfo(expr, true, false, false, NULL));
 
 	return result;
 }

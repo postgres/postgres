@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.212 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.213 2006/07/01 18:38:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1052,14 +1052,13 @@ is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK)
 
 /*
  * is_pseudo_constant_clause
- *	  Detect whether a clause is "constant", ie, it contains no variables
- *	  of the current query level and no uses of volatile functions.
- *	  Such a clause is not necessarily a true constant: it can still contain
+ *	  Detect whether an expression is "pseudo constant", ie, it contains no
+ *	  variables of the current query level and no uses of volatile functions.
+ *	  Such an expr is not necessarily a true constant: it can still contain
  *	  Params and outer-level Vars, not to mention functions whose results
- *	  may vary from one statement to the next.	However, the clause's value
+ *	  may vary from one statement to the next.	However, the expr's value
  *	  will be constant over any one scan of the current query, so it can be
- *	  used as an indexscan key or (if a top-level qual) can be pushed up to
- *	  become a gating qual.
+ *	  used as, eg, an indexscan key.
  */
 bool
 is_pseudo_constant_clause(Node *clause)
@@ -1079,7 +1078,7 @@ is_pseudo_constant_clause(Node *clause)
 /*
  * is_pseudo_constant_clause_relids
  *	  Same as above, except caller already has available the var membership
- *	  of the clause; this lets us avoid the contain_var_clause() scan.
+ *	  of the expression; this lets us avoid the contain_var_clause() scan.
  */
 bool
 is_pseudo_constant_clause_relids(Node *clause, Relids relids)
@@ -1088,34 +1087,6 @@ is_pseudo_constant_clause_relids(Node *clause, Relids relids)
 		!contain_volatile_functions(clause))
 		return true;
 	return false;
-}
-
-/*
- * pull_constant_clauses
- *		Scan through a list of qualifications and separate "constant" quals
- *		from those that are not.
- *
- * Returns a list of the pseudo-constant clauses in constantQual and the
- * remaining quals as the return value.
- */
-List *
-pull_constant_clauses(List *quals, List **constantQual)
-{
-	List	   *constqual = NIL,
-			   *restqual = NIL;
-	ListCell   *q;
-
-	foreach(q, quals)
-	{
-		Node	   *qual = (Node *) lfirst(q);
-
-		if (is_pseudo_constant_clause(qual))
-			constqual = lappend(constqual, qual);
-		else
-			restqual = lappend(restqual, qual);
-	}
-	*constantQual = constqual;
-	return restqual;
 }
 
 

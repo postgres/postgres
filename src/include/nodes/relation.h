@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.125 2006/06/06 17:59:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.126 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,8 @@ typedef struct PlannerInfo
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
 	bool		hasOuterJoins;	/* true if any RTEs are outer joins */
 	bool		hasHavingQual;	/* true if havingQual was non-null */
+	bool		hasPseudoConstantQuals;	/* true if any RestrictInfo has
+										 * pseudoconstant = true */
 } PlannerInfo;
 
 
@@ -524,25 +526,16 @@ typedef struct AppendPath
 } AppendPath;
 
 /*
- * ResultPath represents use of a Result plan node.  There are several
- * applications for this:
- *	* To compute a variable-free targetlist (a "SELECT expressions" query).
- *	  In this case subpath and path.parent will both be NULL.  constantqual
- *	  might or might not be empty ("SELECT expressions WHERE something").
- *	* To gate execution of a subplan with a one-time (variable-free) qual
- *	  condition.  path.parent is copied from the subpath.
- *	* To substitute for a scan plan when we have proven that no rows in
- *	  a table will satisfy the query.  subpath is NULL but path.parent
- *	  references the not-to-be-scanned relation, and constantqual is
- *	  a constant FALSE.
+ * ResultPath represents use of a Result plan node to compute a variable-free
+ * targetlist with no underlying tables (a "SELECT expressions" query).
+ * The query could have a WHERE clause, too, represented by "quals".
  *
- * Note that constantqual is a list of bare clauses, not RestrictInfos.
+ * Note that quals is a list of bare clauses, not RestrictInfos.
  */
 typedef struct ResultPath
 {
 	Path		path;
-	Path	   *subpath;
-	List	   *constantqual;
+	List	   *quals;
 } ResultPath;
 
 /*
@@ -732,6 +725,22 @@ typedef struct HashPath
  * OR/AND structure.  This is a convenience for OR indexscan processing:
  * indexquals taken from either the top level or an OR subclause will have
  * associated RestrictInfo nodes.
+ *
+ * The can_join flag is set true if the clause looks potentially useful as
+ * a merge or hash join clause, that is if it is a binary opclause with
+ * nonoverlapping sets of relids referenced in the left and right sides.
+ * (Whether the operator is actually merge or hash joinable isn't checked,
+ * however.)
+ *
+ * The pseudoconstant flag is set true if the clause contains no Vars of
+ * the current query level and no volatile functions.  Such a clause can be
+ * pulled out and used as a one-time qual in a gating Result node.  We keep
+ * pseudoconstant clauses in the same lists as other RestrictInfos so that
+ * the regular clause-pushing machinery can assign them to the correct join
+ * level, but they need to be treated specially for cost and selectivity
+ * estimates.  Note that a pseudoconstant clause can never be an indexqual
+ * or merge or hash join clause, so it's of no interest to large parts of
+ * the planner.
  */
 
 typedef struct RestrictInfo
@@ -744,14 +753,9 @@ typedef struct RestrictInfo
 
 	bool		outerjoin_delayed;		/* TRUE if delayed by outer join */
 
-	/*
-	 * This flag is set true if the clause looks potentially useful as a merge
-	 * or hash join clause, that is if it is a binary opclause with
-	 * nonoverlapping sets of relids referenced in the left and right sides.
-	 * (Whether the operator is actually merge or hash joinable isn't checked,
-	 * however.)
-	 */
-	bool		can_join;
+	bool		can_join;		/* see comment above */
+
+	bool		pseudoconstant;	/* see comment above */
 
 	/* The set of relids (varnos) actually referenced in the clause: */
 	Relids		clause_relids;

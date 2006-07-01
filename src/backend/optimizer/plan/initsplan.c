@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.117 2006/03/14 22:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.118 2006/07/01 18:38:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
@@ -71,6 +72,9 @@ static void check_hashjoinable(RestrictInfo *restrictinfo);
  *	  Scan the query's jointree and create baserel RelOptInfos for all
  *	  the base relations (ie, table, subquery, and function RTEs)
  *	  appearing in the jointree.
+ *
+ * The initial invocation must pass root->parse->jointree as the value of
+ * jtnode.  Internally, the function recurses through the jointree.
  *
  * At the end of this process, there should be one baserel RelOptInfo for
  * every non-join RTE that is used in the query.  Therefore, this routine
@@ -578,6 +582,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 {
 	Relids		relids;
 	bool		outerjoin_delayed;
+	bool		pseudoconstant = false;
 	bool		maybe_equijoin;
 	bool		maybe_outer_join;
 	RestrictInfo *restrictinfo;
@@ -599,16 +604,57 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		elog(ERROR, "JOIN qualification may not refer to other relations");
 
 	/*
-	 * If the clause is variable-free, we force it to be evaluated at its
-	 * original syntactic level.  Note that this should not happen for
-	 * top-level clauses, because query_planner() special-cases them.  But it
-	 * will happen for variable-free JOIN/ON clauses.  We don't have to be
-	 * real smart about such a case, we just have to be correct.  Also note
-	 * that for an outer-join clause, we must force it to the OJ's semantic
-	 * level, not the syntactic scope.
+	 * If the clause is variable-free, our normal heuristic for pushing it
+	 * down to just the mentioned rels doesn't work, because there are none.
+	 *
+	 * If the clause is an outer-join clause, we must force it to the OJ's
+	 * semantic level to preserve semantics.
+	 *
+	 * Otherwise, when the clause contains volatile functions, we force it
+	 * to be evaluated at its original syntactic level.  This preserves the
+	 * expected semantics.
+	 *
+	 * When the clause contains no volatile functions either, it is actually
+	 * a pseudoconstant clause that will not change value during any one
+	 * execution of the plan, and hence can be used as a one-time qual in
+	 * a gating Result plan node.  We put such a clause into the regular
+	 * RestrictInfo lists for the moment, but eventually createplan.c will
+	 * pull it out and make a gating Result node immediately above whatever
+	 * plan node the pseudoconstant clause is assigned to.  It's usually
+	 * best to put a gating node as high in the plan tree as possible.
+	 * If we are not below an outer join, we can actually push the
+	 * pseudoconstant qual all the way to the top of the tree.  If we are
+	 * below an outer join, we leave the qual at its original syntactic level
+	 * (we could push it up to just below the outer join, but that seems more
+	 * complex than it's worth).
 	 */
 	if (bms_is_empty(relids))
-		relids = ojscope ? ojscope : qualscope;
+	{
+		if (ojscope)
+		{
+			/* clause is attached to outer join, eval it there */
+			relids = ojscope;
+			/* mustn't use as gating qual, so don't mark pseudoconstant */
+		}
+		else
+		{
+			/* eval at original syntactic level */
+			relids = qualscope;
+			if (!contain_volatile_functions(clause))
+			{
+				/* mark as gating qual */
+				pseudoconstant = true;
+				/* tell createplan.c to check for gating quals */
+				root->hasPseudoConstantQuals = true;
+				/* if not below outer join, push it to top of tree */
+				if (!below_outer_join)
+				{
+					relids = get_relids_in_jointree((Node *) root->parse->jointree);
+					is_pushed_down = true;
+				}
+			}
+		}
+	}
 
 	/*
 	 * Check to see if clause application must be delayed by outer-join
@@ -624,6 +670,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 */
 		Assert(bms_equal(relids, qualscope));
 		Assert(!ojscope);
+		Assert(!pseudoconstant);
 		/* Needn't feed it back for more deductions */
 		outerjoin_delayed = false;
 		maybe_equijoin = false;
@@ -647,6 +694,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		Assert(ojscope);
 		relids = ojscope;
 		outerjoin_delayed = true;
+		Assert(!pseudoconstant);
 
 		/*
 		 * We can't use such a clause to deduce equijoin (the left and right
@@ -738,6 +786,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	restrictinfo = make_restrictinfo((Expr *) clause,
 									 is_pushed_down,
 									 outerjoin_delayed,
+									 pseudoconstant,
 									 relids);
 
 	/*
@@ -1179,6 +1228,8 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 				leftOp,
 				rightOp;
 
+	if (restrictinfo->pseudoconstant)
+		return;
 	if (!is_opclause(clause))
 		return;
 	if (list_length(((OpExpr *) clause)->args) != 2)
@@ -1212,6 +1263,8 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 	Expr	   *clause = restrictinfo->clause;
 	Oid			opno;
 
+	if (restrictinfo->pseudoconstant)
+		return;
 	if (!is_opclause(clause))
 		return;
 	if (list_length(((OpExpr *) clause)->args) != 2)
