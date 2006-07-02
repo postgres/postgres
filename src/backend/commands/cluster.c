@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.147 2006/05/02 22:25:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.148 2006/07/02 02:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,6 +566,8 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 				tupdesc;
 	Oid			OIDNewHeap;
 	Relation	OldHeap;
+	HeapTuple	tuple;
+	ArrayType  *options;
 
 	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
 	OldHeapDesc = RelationGetDescr(OldHeap);
@@ -575,6 +577,26 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 	 * heap_create_with_catalog modifies it.
 	 */
 	tupdesc = CreateTupleDescCopyConstr(OldHeapDesc);
+
+	/*
+	 * Use options of the old heap for new heap.
+	 */
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(OIDOldHeap),
+						   0, 0, 0);
+	if (tuple)
+	{
+		Datum	datum;
+		bool	isNull;
+		datum = SysCacheGetAttr(RELOID, tuple,
+            Anum_pg_class_reloptions, &isNull);
+		options = isNull ? NULL : DatumGetArrayTypeP(datum);
+	}
+	else
+	{
+		/* should not happen */
+		options = NULL;
+	}
 
 	OIDNewHeap = heap_create_with_catalog(NewName,
 										  RelationGetNamespace(OldHeap),
@@ -587,7 +609,10 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 										  true,
 										  0,
 										  ONCOMMIT_NOOP,
-										  allowSystemTableMods);
+										  allowSystemTableMods,
+										  options);
+
+	ReleaseSysCache(tuple);
 
 	/*
 	 * Advance command counter so that the newly-created relation's catalog

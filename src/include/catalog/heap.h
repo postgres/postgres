@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.82 2006/06/27 18:35:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.83 2006/07/02 02:23:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "catalog/pg_attribute.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_node.h"
+#include "utils/array.h"
 #include "utils/rel.h"
 
 
@@ -54,7 +55,8 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 bool oidislocal,
 						 int oidinhcount,
 						 OnCommitAction oncommit,
-						 bool allow_system_table_mods);
+						 bool allow_system_table_mods,
+						 ArrayType *options);
 
 extern void heap_drop_with_catalog(Oid relid);
 

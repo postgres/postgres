@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.242 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.243 2006/07/02 02:23:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"
+#include "catalog/heap.h"
+#include "catalog/index.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -54,6 +56,7 @@
 #include "optimizer/prep.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
@@ -71,7 +74,7 @@
  */
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
 
-#define RELCACHE_INIT_FILEMAGIC		0x573262	/* version ID value */
+#define RELCACHE_INIT_FILEMAGIC		0x573263	/* version ID value */
 
 /*
  *		hardcoded tuple descriptors.  see include/catalog/pg_attribute.h
@@ -183,6 +186,7 @@ static void RelationClearRelation(Relation relation, bool rebuild);
 static void RelationReloadClassinfo(Relation relation);
 static void RelationFlushRelation(Relation relation);
 static bool load_relcache_init_file(void);
+static void	write_item(const void *data, Size len, FILE *fp);
 static void write_relcache_init_file(void);
 
 static void formrdesc(const char *relationName, Oid relationReltype,
@@ -206,6 +210,7 @@ static void IndexSupportInitialize(oidvector *indclass,
 static OpClassCacheEnt *LookupOpclassInfo(Oid operatorClassOid,
 				  StrategyNumber numStrats,
 				  StrategyNumber numSupport);
+static void RelationParseOptions(Relation relation, HeapTuple tuple);
 
 
 /*
@@ -309,6 +314,7 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 
 	/* initialize relation tuple form */
 	relation->rd_rel = relationForm;
+	relation->rd_options = NULL;
 
 	/* and allocate attribute tuple form storage */
 	relation->rd_att = CreateTemplateTupleDesc(relationForm->relnatts,
@@ -319,6 +325,53 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	MemoryContextSwitchTo(oldcxt);
 
 	return relation;
+}
+
+/*
+ * RelationParseOptions
+ */
+static void
+RelationParseOptions(Relation relation, HeapTuple tuple)
+{
+	ArrayType	   *options;
+
+	Assert(tuple);
+
+	switch (relation->rd_rel->relkind)
+	{
+	case RELKIND_RELATION:
+	case RELKIND_TOASTVALUE:
+	case RELKIND_UNCATALOGED:
+	case RELKIND_INDEX:
+		break;
+	default:
+		/* other relation should not have options. */
+		relation->rd_options = NULL;
+		return;
+	}
+
+	/* SysCacheGetAttr is not available here. */
+	if (heap_attisnull(tuple, Anum_pg_class_reloptions))
+		options = NULL;
+	else
+		options = (ArrayType *) ((Form_pg_class) GETSTRUCT(tuple))->reloptions;
+
+	switch (relation->rd_rel->relkind)
+	{
+	case RELKIND_RELATION:
+	case RELKIND_TOASTVALUE:
+	case RELKIND_UNCATALOGED:
+		relation->rd_options = heap_option(
+			relation->rd_rel->relkind, options);
+		break;
+	case RELKIND_INDEX:
+		relation->rd_options = index_option(
+			relation->rd_am->amoption, options);
+		break;
+	default:
+		/* should not happen */
+		break;
+	}
 }
 
 /*
@@ -726,11 +779,6 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 	relation = AllocateRelationDesc(oldrelation, relp);
 
 	/*
-	 * now we can free the memory allocated for pg_class_tuple
-	 */
-	heap_freetuple(pg_class_tuple);
-
-	/*
 	 * initialize the relation's relation id (relation->rd_id)
 	 */
 	RelationGetRelid(relation) = relid;
@@ -784,6 +832,14 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
+
+	/* Build AM-specific fields. */
+	RelationParseOptions(relation, pg_class_tuple);
+
+	/*
+	 * now we can free the memory allocated for pg_class_tuple
+	 */
+	heap_freetuple(pg_class_tuple);
 
 	/*
 	 * Insert newly created relation into relcache hash tables.
@@ -1210,6 +1266,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * data from pg_class and replace what we've done here.
 	 */
 	relation->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
+	relation->rd_options = NULL;
 
 	namestrcpy(&relation->rd_rel->relname, relationName);
 	relation->rd_rel->relnamespace = PG_CATALOG_NAMESPACE;
@@ -1296,6 +1353,11 @@ formrdesc(const char *relationName, Oid relationReltype,
 		/* Otherwise, all the rels formrdesc is used for have indexes */
 		relation->rd_rel->relhasindex = true;
 	}
+
+	/*
+	 * initialize the rd_options field to default value
+	 */
+	relation->rd_options = heap_option(RELKIND_RELATION, NULL);
 
 	/*
 	 * add new reldesc to relcache
@@ -1475,6 +1537,9 @@ RelationReloadClassinfo(Relation relation)
 			 RelationGetRelid(relation));
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
 	memcpy(relation->rd_rel, relp, CLASS_TUPLE_SIZE);
+	if (relation->rd_options)
+		pfree(relation->rd_options);
+	RelationParseOptions(relation, pg_class_tuple);
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
@@ -1581,6 +1646,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 		pfree(relation->rd_am);
 	if (relation->rd_rel)
 		pfree(relation->rd_rel);
+	if (relation->rd_options)
+		pfree(relation->rd_options);
 	list_free(relation->rd_indexlist);
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
@@ -2111,6 +2178,7 @@ RelationBuildLocalRelation(const char *relname,
 	 * initialize relation tuple form (caller may add/override data later)
 	 */
 	rel->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
+	rel->rd_options = NULL;
 
 	namestrcpy(&rel->rd_rel->relname, relname);
 	rel->rd_rel->relnamespace = relnamespace;
@@ -3032,6 +3100,22 @@ load_relcache_init_file(void)
 			has_not_null |= rel->rd_att->attrs[i]->attnotnull;
 		}
 
+		/* next read the access method specific field */
+		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+			goto read_failed;
+		if (len > 0)
+		{
+			rel->rd_options = palloc(len);
+			if ((nread = fread(rel->rd_options, 1, len, fp)) != len)
+				goto read_failed;
+			if (len != VARATT_SIZE(rel->rd_options))
+				goto read_failed;
+		}
+		else
+		{
+			rel->rd_options = NULL;
+		}
+
 		/* mark not-null status */
 		if (has_not_null)
 		{
@@ -3215,6 +3299,15 @@ read_failed:
 	return false;
 }
 
+static void
+write_item(const void *data, Size len, FILE *fp)
+{
+	if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
+		elog(FATAL, "could not write init file");
+	if (fwrite(data, 1, len, fp) != len)
+		elog(FATAL, "could not write init file");
+}
+
 /*
  * Write out a new initialization file with the current contents
  * of the relcache.
@@ -3277,38 +3370,23 @@ write_relcache_init_file(void)
 	{
 		Relation	rel = idhentry->reldesc;
 		Form_pg_class relform = rel->rd_rel;
-		Size		len;
 
-		/*
-		 * first write the relcache entry proper
-		 */
-		len = sizeof(RelationData);
-
-		/* first, write the relation descriptor length */
-		if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-			elog(FATAL, "could not write init file");
-
-		/* next, write out the Relation structure */
-		if (fwrite(rel, 1, len, fp) != len)
-			elog(FATAL, "could not write init file");
+		/* first write the relcache entry proper */
+		write_item(rel, sizeof(RelationData), fp);
 
 		/* next write the relation tuple form */
-		len = sizeof(FormData_pg_class);
-		if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-			elog(FATAL, "could not write init file");
-
-		if (fwrite(relform, 1, len, fp) != len)
-			elog(FATAL, "could not write init file");
+		write_item(relform, CLASS_TUPLE_SIZE, fp);
 
 		/* next, do all the attribute tuple form data entries */
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			len = ATTRIBUTE_TUPLE_SIZE;
-			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "could not write init file");
-			if (fwrite(rel->rd_att->attrs[i], 1, len, fp) != len)
-				elog(FATAL, "could not write init file");
+			write_item(rel->rd_att->attrs[i],
+				ATTRIBUTE_TUPLE_SIZE, fp);
 		}
+
+		/* next, do the access method specific field */
+		write_item(rel->rd_options,
+            (rel->rd_options ? VARATT_SIZE(rel->rd_options) : 0), fp);
 
 		/* If it's an index, there's more to do */
 		if (rel->rd_rel->relkind == RELKIND_INDEX)
@@ -3317,36 +3395,19 @@ write_relcache_init_file(void)
 
 			/* write the pg_index tuple */
 			/* we assume this was created by heap_copytuple! */
-			len = HEAPTUPLESIZE + rel->rd_indextuple->t_len;
-			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "could not write init file");
-
-			if (fwrite(rel->rd_indextuple, 1, len, fp) != len)
-				elog(FATAL, "could not write init file");
+			write_item(rel->rd_indextuple,
+				HEAPTUPLESIZE + rel->rd_indextuple->t_len, fp);
 
 			/* next, write the access method tuple form */
-			len = sizeof(FormData_pg_am);
-			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "could not write init file");
-
-			if (fwrite(am, 1, len, fp) != len)
-				elog(FATAL, "could not write init file");
+			write_item(am, sizeof(FormData_pg_am), fp);
 
 			/* next, write the vector of operator OIDs */
-			len = relform->relnatts * (am->amstrategies * sizeof(Oid));
-			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "could not write init file");
-
-			if (fwrite(rel->rd_operator, 1, len, fp) != len)
-				elog(FATAL, "could not write init file");
+			write_item(rel->rd_operator, relform->relnatts *
+				(am->amstrategies * sizeof(Oid)), fp);
 
 			/* finally, write the vector of support procedures */
-			len = relform->relnatts * (am->amsupport * sizeof(RegProcedure));
-			if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-				elog(FATAL, "could not write init file");
-
-			if (fwrite(rel->rd_support, 1, len, fp) != len)
-				elog(FATAL, "could not write init file");
+			write_item(rel->rd_support, relform->relnatts *
+				(am->amsupport * sizeof(RegProcedure)), fp);
 		}
 
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */

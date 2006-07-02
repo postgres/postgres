@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.438 2006/06/09 19:46:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.439 2006/07/02 02:23:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2594,6 +2594,7 @@ getTables(int *numTables)
 	int			i_owning_tab;
 	int			i_owning_col;
 	int			i_reltablespace;
+	int			i_reloptions;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -2618,7 +2619,7 @@ getTables(int *numTables)
 	 * we cannot correctly identify inherited columns, serial columns, etc.
 	 */
 
-	if (g_fout->remoteVersion >= 80000)
+	if (g_fout->remoteVersion >= 80200)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
@@ -2632,7 +2633,37 @@ getTables(int *numTables)
 						  "relhasindex, relhasrules, relhasoids, "
 						  "d.refobjid as owning_tab, "
 						  "d.refobjsubid as owning_col, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
+						  "array_to_string(c.reloptions, ', ') as reloptions "
+						  "from pg_class c "
+						  "left join pg_depend d on "
+						  "(c.relkind = '%c' and "
+						  "d.classid = c.tableoid and d.objid = c.oid and "
+						  "d.objsubid = 0 and "
+						  "d.refclassid = c.tableoid and d.deptype = 'i') "
+						  "where relkind in ('%c', '%c', '%c', '%c') "
+						  "order by c.oid",
+						  username_subquery,
+						  RELKIND_SEQUENCE,
+						  RELKIND_RELATION, RELKIND_SEQUENCE,
+						  RELKIND_VIEW, RELKIND_COMPOSITE_TYPE);
+	}
+	else if (g_fout->remoteVersion >= 80000)
+	{
+		/*
+		 * Left join to pick up dependency info linking sequences to their
+		 * serial column, if any
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT c.tableoid, c.oid, relname, "
+						  "relacl, relkind, relnamespace, "
+						  "(%s relowner) as rolname, "
+						  "relchecks, reltriggers, "
+						  "relhasindex, relhasrules, relhasoids, "
+						  "d.refobjid as owning_tab, "
+						  "d.refobjsubid as owning_col, "
+						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = c.reltablespace) AS reltablespace, "
+						  "NULL as reloptions "
 						  "from pg_class c "
 						  "left join pg_depend d on "
 						  "(c.relkind = '%c' and "
@@ -2660,7 +2691,8 @@ getTables(int *numTables)
 						  "relhasindex, relhasrules, relhasoids, "
 						  "d.refobjid as owning_tab, "
 						  "d.refobjsubid as owning_col, "
-						  "NULL as reltablespace "
+						  "NULL as reltablespace, "
+						  "NULL as reloptions "
 						  "from pg_class c "
 						  "left join pg_depend d on "
 						  "(c.relkind = '%c' and "
@@ -2684,7 +2716,8 @@ getTables(int *numTables)
 						  "relhasindex, relhasrules, relhasoids, "
 						  "NULL::oid as owning_tab, "
 						  "NULL::int4 as owning_col, "
-						  "NULL as reltablespace "
+						  "NULL as reltablespace, "
+						  "NULL as reloptions "
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
@@ -2703,7 +2736,8 @@ getTables(int *numTables)
 						  "'t'::bool as relhasoids, "
 						  "NULL::oid as owning_tab, "
 						  "NULL::int4 as owning_col, "
-						  "NULL as reltablespace "
+						  "NULL as reltablespace, "
+						  "NULL as reloptions "
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
@@ -2732,7 +2766,8 @@ getTables(int *numTables)
 						  "'t'::bool as relhasoids, "
 						  "NULL::oid as owning_tab, "
 						  "NULL::int4 as owning_col, "
-						  "NULL as reltablespace "
+						  "NULL as reltablespace, "
+						  "NULL as reloptions "
 						  "from pg_class c "
 						  "where relkind in ('%c', '%c') "
 						  "order by oid",
@@ -2774,6 +2809,7 @@ getTables(int *numTables)
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
 	i_reltablespace = PQfnumber(res, "reltablespace");
+	i_reloptions = PQfnumber(res, "reloptions");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2803,6 +2839,7 @@ getTables(int *numTables)
 			tblinfo[i].owning_col = atoi(PQgetvalue(res, i, i_owning_col));
 		}
 		tblinfo[i].reltablespace = strdup(PQgetvalue(res, i, i_reltablespace));
+		tblinfo[i].reloptions = strdup(PQgetvalue(res, i, i_reloptions));
 
 		/* other fields were zeroed above */
 
@@ -2952,7 +2989,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				i_conname,
 				i_contableoid,
 				i_conoid,
-				i_tablespace;
+				i_tablespace,
+				i_options;
 	int			ntups;
 
 	for (i = 0; i < numTables; i++)
@@ -2981,7 +3019,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		 * assume an index won't have more than one internal dependency.
 		 */
 		resetPQExpBuffer(query);
-		if (g_fout->remoteVersion >= 80000)
+		if (g_fout->remoteVersion >= 80200)
 		{
 			appendPQExpBuffer(query,
 							  "SELECT t.tableoid, t.oid, "
@@ -2992,7 +3030,34 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "c.contype, c.conname, "
 							  "c.tableoid as contableoid, "
 							  "c.oid as conoid, "
-							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) as tablespace "
+							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) as tablespace, "
+							  "array_to_string(t.reloptions, ', ') as options "
+							  "FROM pg_catalog.pg_index i "
+					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
+							  "LEFT JOIN pg_catalog.pg_depend d "
+							  "ON (d.classid = t.tableoid "
+							  "AND d.objid = t.oid "
+							  "AND d.deptype = 'i') "
+							  "LEFT JOIN pg_catalog.pg_constraint c "
+							  "ON (d.refclassid = c.tableoid "
+							  "AND d.refobjid = c.oid) "
+							  "WHERE i.indrelid = '%u'::pg_catalog.oid "
+							  "ORDER BY indexname",
+							  tbinfo->dobj.catId.oid);
+		}
+		else if (g_fout->remoteVersion >= 80000)
+		{
+			appendPQExpBuffer(query,
+							  "SELECT t.tableoid, t.oid, "
+							  "t.relname as indexname, "
+					 "pg_catalog.pg_get_indexdef(i.indexrelid) as indexdef, "
+							  "t.relnatts as indnkeys, "
+							  "i.indkey, i.indisclustered, "
+							  "c.contype, c.conname, "
+							  "c.tableoid as contableoid, "
+							  "c.oid as conoid, "
+							  "(SELECT spcname FROM pg_catalog.pg_tablespace s WHERE s.oid = t.reltablespace) as tablespace, "
+	  						  "null as options "
 							  "FROM pg_catalog.pg_index i "
 					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
 							  "LEFT JOIN pg_catalog.pg_depend d "
@@ -3017,7 +3082,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "c.contype, c.conname, "
 							  "c.tableoid as contableoid, "
 							  "c.oid as conoid, "
-							  "NULL as tablespace "
+							  "NULL as tablespace, "
+	  						  "null as options "
 							  "FROM pg_catalog.pg_index i "
 					  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
 							  "LEFT JOIN pg_catalog.pg_depend d "
@@ -3044,7 +3110,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "t.relname as conname, "
 							  "0::oid as contableoid, "
 							  "t.oid as conoid, "
-							  "NULL as tablespace "
+							  "NULL as tablespace, "
+	  						  "null as options "
 							  "FROM pg_index i, pg_class t "
 							  "WHERE t.oid = i.indexrelid "
 							  "AND i.indrelid = '%u'::oid "
@@ -3066,7 +3133,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 							  "t.relname as conname, "
 							  "0::oid as contableoid, "
 							  "t.oid as conoid, "
-							  "NULL as tablespace "
+							  "NULL as tablespace, "
+	  						  "null as options "
 							  "FROM pg_index i, pg_class t "
 							  "WHERE t.oid = i.indexrelid "
 							  "AND i.indrelid = '%u'::oid "
@@ -3091,6 +3159,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		i_contableoid = PQfnumber(res, "contableoid");
 		i_conoid = PQfnumber(res, "conoid");
 		i_tablespace = PQfnumber(res, "tablespace");
+		i_options = PQfnumber(res, "options");
 
 		indxinfo = (IndxInfo *) malloc(ntups * sizeof(IndxInfo));
 		constrinfo = (ConstraintInfo *) malloc(ntups * sizeof(ConstraintInfo));
@@ -3109,6 +3178,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 			indxinfo[j].indexdef = strdup(PQgetvalue(res, j, i_indexdef));
 			indxinfo[j].indnkeys = atoi(PQgetvalue(res, j, i_indnkeys));
 			indxinfo[j].tablespace = strdup(PQgetvalue(res, j, i_tablespace));
+			indxinfo[j].options = strdup(PQgetvalue(res, j, i_options));
 
 			/*
 			 * In pre-7.4 releases, indkeys may contain more entries than
@@ -7245,6 +7315,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(q, ")");
 		}
 
+		if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
+			appendPQExpBuffer(q, "\nWITH (%s)", tbinfo->reloptions);
+
 		appendPQExpBuffer(q, ";\n");
 
 		/* Loop dumping statistics and storage statements */
@@ -7542,7 +7615,12 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 							  fmtId(attname));
 		}
 
-		appendPQExpBuffer(q, ");\n");
+		appendPQExpBuffer(q, ")");
+
+		if (indxinfo->options && strlen(indxinfo->options) > 0)
+			appendPQExpBuffer(q, " WITH (%s)", indxinfo->options);
+
+		appendPQExpBuffer(q, ";\n");
 
 		/* If the index is clustered, we need to record that. */
 		if (indxinfo->indisclustered)

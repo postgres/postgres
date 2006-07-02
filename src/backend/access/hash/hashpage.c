@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.57 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.58 2006/07/02 02:23:18 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -30,6 +30,7 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
+#include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "utils/lsyscache.h"
@@ -231,7 +232,7 @@ _hash_metapinit(Relation rel)
 								 RelationGetDescr(rel)->attrs[0]->atttypmod);
 	item_width = MAXALIGN(sizeof(IndexTupleData)) + MAXALIGN(data_width) +
 		sizeof(ItemIdData);		/* include the line pointer */
-	ffactor = (BLCKSZ * 3 / 4) / item_width;
+	ffactor = BLCKSZ * IndexGetFillFactor(rel) / 100 / item_width;
 	/* keep to a sane range */
 	if (ffactor < 10)
 		ffactor = 10;

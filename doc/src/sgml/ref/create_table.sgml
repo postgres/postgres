@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.102 2006/06/28 22:01:52 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.103 2006/07/02 02:23:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -28,6 +28,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
 [ WITH OIDS | WITHOUT OIDS ]
+[ WITH (FILLFACTOR = <replaceable>fillfactor</replaceable>) ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
 
@@ -299,6 +300,15 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       To remove OIDs from a table after it has been created, use <xref
       linkend="sql-altertable" endterm="sql-altertable-title">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH (FILLFACTOR = <replaceable>fillfactor</replaceable>)</literal></term>
+    <listitem>
+     <para>
+      This optional clause specifies the table's fillfactor in percentage.
      </para>
     </listitem>
    </varlistentry>

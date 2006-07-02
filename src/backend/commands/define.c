@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.95 2006/03/14 22:48:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.96 2006/07/02 02:23:19 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -110,6 +110,7 @@ defGetNumeric(DefElem *def)
 		case T_Integer:
 			return (double) intVal(def->arg);
 		case T_Float:
+		case T_String:	/* XXX: needs strict check? */
 			return floatVal(def->arg);
 		default:
 			ereport(ERROR,
@@ -127,14 +128,30 @@ bool
 defGetBoolean(DefElem *def)
 {
 	/*
-	 * Presently, boolean flags must simply be present or absent. Later we
-	 * could allow 'flag = t', 'flag = f', etc.
+	 * Presently, boolean flags must simply be present/absent or
+	 * integer 0/1. Later we could allow 'flag = t', 'flag = f', etc.
 	 */
 	if (def->arg == NULL)
 		return true;
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+			switch (intVal(def->arg))
+			{
+			case 0:
+				return false;
+			case 1:
+				return true;
+			}
+			break;
+		default:
+			break;
+	}
+
+	/* on error */
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("%s does not take a parameter",
+			 errmsg("%s requires a boolean value",
 					def->defname)));
 	return false;				/* keep compiler quiet */
 }
@@ -155,7 +172,7 @@ defGetInt64(DefElem *def)
 		case T_Integer:
 			return (int64) intVal(def->arg);
 		case T_Float:
-
+		case T_String:	/* XXX: needs strict check? */
 			/*
 			 * Values too large for int4 will be represented as Float
 			 * constants by the lexer.	Accept these if they are valid int8
@@ -274,4 +291,13 @@ defGetTypeLength(DefElem *def)
 			 errmsg("invalid argument for %s: \"%s\"",
 					def->defname, defGetString(def))));
 	return 0;					/* keep compiler quiet */
+}
+
+DefElem *
+defWithOids(bool value)
+{
+	DefElem *f = makeNode(DefElem);
+	f->defname = "oids";
+	f->arg = (Node *)makeInteger(value);
+	return f;
 }

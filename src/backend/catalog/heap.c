@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.302 2006/06/29 16:07:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.303 2006/07/02 02:23:19 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -44,20 +44,24 @@
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
+#include "commands/defrem.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
+#include "utils/catcache.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
@@ -66,7 +70,8 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid, Oid new_type_oid,
 					Oid relowner,
-					char relkind);
+					char relkind,
+					ArrayType *options);
 static Oid AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
@@ -558,7 +563,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Oid new_rel_oid,
 					Oid new_type_oid,
 					Oid relowner,
-					char relkind)
+					char relkind,
+					ArrayType *options)
 {
 	Form_pg_class new_rel_reltup;
 	HeapTuple	tup;
@@ -596,15 +602,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 
 	new_rel_desc->rd_att->tdtypeid = new_type_oid;
 
-	/* ----------------
-	 *	now form a tuple to add to pg_class
-	 *	XXX Natts_pg_class_fixed is a hack - see pg_class.h
-	 * ----------------
-	 */
-	tup = heap_addheader(Natts_pg_class_fixed,
-						 true,
-						 CLASS_TUPLE_SIZE,
-						 (void *) new_rel_reltup);
+	/* now form a tuple to add to pg_class */
+	tup = build_class_tuple(new_rel_reltup, options);
 
 	/* force tuple to have the desired OID */
 	HeapTupleSetOid(tup, new_rel_oid);
@@ -661,6 +660,8 @@ AddNewRelationType(const char *typeName,
  *		heap_create_with_catalog
  *
  *		creates a new cataloged relation.  see comments above.
+ *
+ *		if opaque is specified, it must be allocated in CacheMemoryContext.
  * --------------------------------
  */
 Oid
@@ -675,10 +676,12 @@ heap_create_with_catalog(const char *relname,
 						 bool oidislocal,
 						 int oidinhcount,
 						 OnCommitAction oncommit,
-						 bool allow_system_table_mods)
+						 bool allow_system_table_mods,
+						 ArrayType *options)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
+	bytea	   *new_rel_options;
 	Oid			new_type_oid;
 
 	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
@@ -694,6 +697,13 @@ heap_create_with_catalog(const char *relname,
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists", relname)));
+
+	/*
+	 * Parse options to check if option is valid.
+	 */
+	new_rel_options = heap_option(relkind, options);
+	Assert(!new_rel_options ||
+		GetMemoryChunkContext(new_rel_options) == CacheMemoryContext);
 
 	/*
 	 * Allocate an OID for the relation, unless we were told what to use.
@@ -718,6 +728,7 @@ heap_create_with_catalog(const char *relname,
 							   relkind,
 							   shared_relation,
 							   allow_system_table_mods);
+	new_rel_desc->rd_options = new_rel_options;
 
 	Assert(relid == RelationGetRelid(new_rel_desc));
 
@@ -745,7 +756,8 @@ heap_create_with_catalog(const char *relname,
 						relid,
 						new_type_oid,
 						ownerid,
-						relkind);
+						relkind,
+						options);
 
 	/*
 	 * now add tuples to pg_attribute for the attributes in our new relation.

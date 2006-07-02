@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.137 2006/05/08 00:00:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.138 2006/07/02 02:23:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "miscadmin.h"
@@ -25,6 +26,7 @@ typedef struct
 {
 	/* context data for _bt_checksplitloc */
 	Size		newitemsz;		/* size of new item to be inserted */
+	int			fillfactor;		/* used when insert at right most */
 	bool		is_leaf;		/* T if splitting a leaf page */
 	bool		is_rightmost;	/* T if splitting a rightmost page */
 
@@ -986,14 +988,11 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
  * it needs to go into!)
  *
  * If the page is the rightmost page on its level, we instead try to arrange
- * for twice as much free space on the right as on the left.  In this way,
+ * for reserving (100-fillfactor)% of free space on left page. In this way,
  * when we are inserting successively increasing keys (consider sequences,
- * timestamps, etc) we will end up with a tree whose pages are about 67% full,
+ * timestamps, etc) we will end up with a tree whose pages are about fillfactor% full,
  * instead of the 50% full result that we'd get without this special case.
- * (We could bias it even further to make the initially-loaded tree more full.
- * But since the steady-state load for a btree is about 70%, we'd likely just
- * be making more page-splitting work for ourselves later on, when we start
- * seeing updates to existing tuples.)
+ * This is the same as initially-loaded tree.
  *
  * We are passed the intended insert position of the new tuple, expressed as
  * the offsetnumber of the tuple it must go in front of.  (This could be
@@ -1027,6 +1026,7 @@ _bt_findsplitloc(Relation rel,
 	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
 	newitemsz += sizeof(ItemIdData);
 	state.newitemsz = newitemsz;
+	state.fillfactor = IndexGetFillFactor(rel);
 	state.is_leaf = P_ISLEAF(opaque);
 	state.is_rightmost = P_RIGHTMOST(opaque);
 	state.have_split = false;
@@ -1157,10 +1157,11 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 		if (state->is_rightmost)
 		{
 			/*
-			 * On a rightmost page, try to equalize right free space with
-			 * twice the left free space.  See comments for _bt_findsplitloc.
+			 * On a rightmost page, try to reserve (100-fillfactor)% of
+			 * free space on left page. See comments for _bt_findsplitloc.
 			 */
-			delta = (2 * leftfree) - rightfree;
+			delta = (state->fillfactor * leftfree)
+				- ((100 - state->fillfactor) * rightfree);
 		}
 		else
 		{

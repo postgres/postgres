@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.339 2006/07/02 01:58:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.340 2006/07/02 02:23:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1640,6 +1640,7 @@ _copyConstraint(Constraint *from)
 	COPY_NODE_FIELD(raw_expr);
 	COPY_STRING_FIELD(cooked_expr);
 	COPY_NODE_FIELD(keys);
+	COPY_NODE_FIELD(options);
 	COPY_STRING_FIELD(indexspace);
 
 	return newnode;
@@ -1680,6 +1681,7 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(resultRelation);
 	COPY_NODE_FIELD(into);
 	COPY_SCALAR_FIELD(intoHasOids);
+	COPY_NODE_FIELD(intoOptions);
 	COPY_SCALAR_FIELD(intoOnCommit);
 	COPY_STRING_FIELD(intoTableSpaceName);
 	COPY_SCALAR_FIELD(hasAggs);
@@ -1746,7 +1748,7 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(distinctClause);
 	COPY_NODE_FIELD(into);
 	COPY_NODE_FIELD(intoColNames);
-	COPY_SCALAR_FIELD(intoHasOids);
+	COPY_NODE_FIELD(intoOptions);
 	COPY_SCALAR_FIELD(intoOnCommit);
 	COPY_STRING_FIELD(intoTableSpaceName);
 	COPY_NODE_FIELD(targetList);
@@ -1929,7 +1931,7 @@ _copyCreateStmt(CreateStmt *from)
 	COPY_NODE_FIELD(tableElts);
 	COPY_NODE_FIELD(inhRelations);
 	COPY_NODE_FIELD(constraints);
-	COPY_SCALAR_FIELD(hasoids);
+	COPY_NODE_FIELD(options);
 	COPY_SCALAR_FIELD(oncommit);
 	COPY_STRING_FIELD(tablespacename);
 
@@ -2021,6 +2023,7 @@ _copyIndexStmt(IndexStmt *from)
 	COPY_STRING_FIELD(accessMethod);
 	COPY_STRING_FIELD(tableSpace);
 	COPY_NODE_FIELD(indexParams);
+	COPY_NODE_FIELD(options);
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(rangetable);
 	COPY_SCALAR_FIELD(unique);
@@ -2638,8 +2641,8 @@ _copyExecuteStmt(ExecuteStmt *from)
 
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(into);
-	COPY_SCALAR_FIELD(into_contains_oids);
 	COPY_SCALAR_FIELD(into_has_oids);
+	COPY_NODE_FIELD(intoOptions);
 	COPY_SCALAR_FIELD(into_on_commit);
 	COPY_STRING_FIELD(into_tbl_space);
 	COPY_NODE_FIELD(params);

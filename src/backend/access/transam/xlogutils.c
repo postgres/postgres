@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.44 2006/04/14 20:27:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.45 2006/07/02 02:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,7 +337,7 @@ _xl_remove_hash_entry(XLogRelDesc *rdesc)
 	RelationCloseSmgr(&(rdesc->reldata));
 
 	memset(rdesc, 0, sizeof(XLogRelDesc));
-	memset(tpgc, 0, sizeof(FormData_pg_class));
+	memset(tpgc, 0, CLASS_TUPLE_SIZE);
 	rdesc->reldata.rd_rel = tpgc;
 }
 

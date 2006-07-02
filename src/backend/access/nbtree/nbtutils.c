@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.74 2006/05/08 00:00:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.75 2006/07/02 02:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1078,4 +1078,17 @@ BTreeShmemInit(void)
 	}
 	else
 		Assert(found);
+}
+
+Datum
+btoption(PG_FUNCTION_ARGS)
+{
+#define BTREE_MIN_FILLFACTOR		50
+#define BTREE_DEFAULT_FILLFACTOR	90
+
+	ArrayType	   *options = (ArrayType *) PG_GETARG_POINTER(0);
+
+	/* Use index common routine. */
+	PG_RETURN_BYTEA_P(genam_option(options,
+		BTREE_MIN_FILLFACTOR, BTREE_DEFAULT_FILLFACTOR));
 }

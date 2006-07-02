@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.139 2006/06/28 12:00:14 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.140 2006/07/02 02:23:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ static void gistbuildCallback(Relation index,
 				  void *state);
 static void gistdoinsert(Relation r,
 			 IndexTuple itup,
+			 Size freespace,
 			 GISTSTATE *GISTstate);
 static void gistfindleaf(GISTInsertState *state,
 			 GISTSTATE *giststate);
@@ -197,7 +198,8 @@ gistbuildCallback(Relation index,
 	 * you're inserting single tups, but not when you're initializing the
 	 * whole index at once.
 	 */
-	gistdoinsert(index, itup, &buildstate->giststate);
+	gistdoinsert(index, itup, IndexGetPageFreeSpace(index),
+		&buildstate->giststate);
 
 	buildstate->indtuples += 1;
 	MemoryContextSwitchTo(oldCtx);
@@ -236,7 +238,7 @@ gistinsert(PG_FUNCTION_ARGS)
 		values, isnull, true /* size is currently bogus */);
 	itup->t_tid = *ht_ctid;
 
-	gistdoinsert(r, itup, &giststate);
+	gistdoinsert(r, itup, 0, &giststate);
 
 	/* cleanup */
 	freeGISTstate(&giststate);
@@ -253,7 +255,7 @@ gistinsert(PG_FUNCTION_ARGS)
  * so it does not bother releasing palloc'd allocations.
  */
 static void
-gistdoinsert(Relation r, IndexTuple itup, GISTSTATE *giststate)
+gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 {
 	GISTInsertState state;
 
@@ -263,6 +265,7 @@ gistdoinsert(Relation r, IndexTuple itup, GISTSTATE *giststate)
 	state.itup[0] = (IndexTuple) palloc(IndexTupleSize(itup));
 	memcpy(state.itup[0], itup, IndexTupleSize(itup));
 	state.ituplen = 1;
+	state.freespace = freespace;
 	state.r = r;
 	state.key = itup->t_tid;
 	state.needInsertComplete = true;
@@ -294,7 +297,11 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 	 */
 
 
-	if (gistnospace(state->stack->page, state->itup, state->ituplen, (is_leaf) ? InvalidOffsetNumber : state->stack->childoffnum))
+	/*
+	 * XXX: If we want to change fillfactors between node and leaf,
+	 * fillfactor = (is_leaf ? state->leaf_fillfactor : state->node_fillfactor)
+	 */
+	if (gistnospace(state->stack->page, state->itup, state->ituplen, (is_leaf) ? InvalidOffsetNumber : state->stack->childoffnum, state->freespace))
 	{
 		/* no space for insertion */
 		IndexTuple *itvec;

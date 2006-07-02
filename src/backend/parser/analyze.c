@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.336 2006/06/27 03:43:20 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.337 2006/07/02 02:23:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,7 +757,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	cxt.blist = NIL;
 	cxt.alist = NIL;
 	cxt.pkey = NULL;
-	cxt.hasoids = interpretOidsOption(stmt->hasoids);
+	cxt.hasoids = interpretOidsOption(stmt->options);
 
 	/*
 	 * Run through each primary element in the table creation clause. Separate
@@ -1282,6 +1282,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 		index->relation = cxt->relation;
 		index->accessMethod = DEFAULT_INDEX_TYPE;
+		index->options = constraint->options;
 		index->tableSpace = constraint->indexspace;
 		index->indexParams = NIL;
 		index->whereClause = NULL;
@@ -1881,7 +1882,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (stmt->intoColNames)
 		applyColumnNames(qry->targetList, stmt->intoColNames);
 
-	qry->intoHasOids = interpretOidsOption(stmt->intoHasOids);
+	qry->intoHasOids = interpretOidsOption(stmt->intoOptions);
+	qry->intoOptions = copyObject(stmt->intoOptions);
 	qry->intoOnCommit = stmt->intoOnCommit;
 	qry->intoTableSpaceName = stmt->intoTableSpaceName;
 
@@ -2752,7 +2754,7 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 
 	paramtypes = FetchPreparedStatementParams(stmt->name);
 
-	stmt->into_has_oids = interpretOidsOption(stmt->into_contains_oids);
+	stmt->into_has_oids = interpretOidsOption(stmt->intoOptions);
 
 	if (stmt->params || paramtypes)
 	{

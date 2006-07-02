@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.98 2006/05/08 00:00:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.99 2006/07/02 02:23:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,6 +453,7 @@ extern Datum btmarkpos(PG_FUNCTION_ARGS);
 extern Datum btrestrpos(PG_FUNCTION_ARGS);
 extern Datum btbulkdelete(PG_FUNCTION_ARGS);
 extern Datum btvacuumcleanup(PG_FUNCTION_ARGS);
+extern Datum btoption(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions in nbtinsert.c

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.549 2006/07/02 01:58:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.550 2006/07/02 02:23:21 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -53,6 +53,7 @@
 
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+#include "commands/defrem.h"
 #include "nodes/makefuncs.h"
 #include "parser/gramparse.h"
 #include "storage/lmgr.h"
@@ -123,7 +124,6 @@ static void doNegateFloat(Value *v);
 	JoinType			jtype;
 	DropBehavior		dbehavior;
 	OnCommitAction		oncommit;
-	ContainsOids		withoids;
 	List				*list;
 	Node				*node;
 	Value				*value;
@@ -228,11 +228,11 @@ static void doNegateFloat(Value *v);
 
 %type <list>	stmtblock stmtmulti
 				OptTableElementList TableElementList OptInherit definition
-				opt_distinct opt_definition func_args func_args_list
+				OptWith opt_distinct opt_definition func_args func_args_list
 				func_as createfunc_opt_list alterfunc_opt_list
 				aggr_args aggr_args_list old_aggr_definition old_aggr_list
 				oper_argtypes RuleActionList RuleActionMulti
-				opt_column_list columnList opt_name_list
+				opt_column_list columnList opt_name_list 
 				sort_clause opt_sort_clause sortby_list index_params
 				name_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list
@@ -255,7 +255,6 @@ static void doNegateFloat(Value *v);
 
 %type <boolean>  TriggerForType OptTemp
 %type <oncommit> OnCommitOption
-%type <withoids> OptWithOids
 
 %type <node>	for_locking_item
 %type <list>	for_locking_clause opt_for_locking_clause for_locking_items
@@ -1559,6 +1558,32 @@ alter_rel_cmd:
 					n->name = $3;
 					$$ = (Node *)n;
 				}
+			/* ALTER [TABLE|INDEX] <name> SET (...) */
+			| SET definition
+				{
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetOptions;
+					n->def = (Node *)$2;
+					$$ = (Node *)n;
+				}
+			| RESET definition
+				{
+					AlterTableCmd *n;
+					ListCell	  *cell;
+					
+					foreach(cell, $2)
+					{
+						if (((DefElem *) lfirst(cell))->arg != NULL)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("parameters for RESET should not take values")));
+					}
+
+					n = makeNode(AlterTableCmd);
+					n->subtype = AT_SetOptions;
+					n->def = (Node *)$2;
+					$$ = (Node *)n;
+				}
 		;
 
 alter_column_default:
@@ -1744,7 +1769,7 @@ opt_using:
  *****************************************************************************/
 
 CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-			OptInherit OptWithOids OnCommitOption OptTableSpace
+			OptInherit OptWith OnCommitOption OptTableSpace
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					$4->istemp = $2;
@@ -1752,13 +1777,13 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tableElts = $6;
 					n->inhRelations = $8;
 					n->constraints = NIL;
-					n->hasoids = $9;
+					n->options = $9;
 					n->oncommit = $10;
 					n->tablespacename = $11;
 					$$ = (Node *)n;
 				}
 		| CREATE OptTemp TABLE qualified_name OF qualified_name
-			'(' OptTableElementList ')' OptWithOids OnCommitOption OptTableSpace
+			'(' OptTableElementList ')' OptWith OnCommitOption OptTableSpace
 				{
 					/* SQL99 CREATE TABLE OF <UDT> (cols) seems to be satisfied
 					 * by our inheritance capabilities. Let's try it...
@@ -1769,7 +1794,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->tableElts = $8;
 					n->inhRelations = list_make1($6);
 					n->constraints = NIL;
-					n->hasoids = $10;
+					n->options = $10;
 					n->oncommit = $11;
 					n->tablespacename = $12;
 					$$ = (Node *)n;
@@ -1905,7 +1930,7 @@ ColConstraintElem:
 					n->indexspace = $2;
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY OptConsTableSpace
+			| PRIMARY KEY opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
@@ -1913,7 +1938,8 @@ ColConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
-					n->indexspace = $3;
+					n->options = $3;
+					n->indexspace = $4;
 					$$ = (Node *)n;
 				}
 			| CHECK '(' a_expr ')'
@@ -2085,7 +2111,7 @@ ConstraintElem:
 					n->indexspace = $5;
 					$$ = (Node *)n;
 				}
-			| PRIMARY KEY '(' columnList ')' OptConsTableSpace
+			| PRIMARY KEY '(' columnList ')' opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
@@ -2093,7 +2119,8 @@ ConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = $4;
-					n->indexspace = $6;
+					n->options = $6;
+					n->indexspace = $7;
 					$$ = (Node *)n;
 				}
 			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name
@@ -2187,10 +2214,13 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-OptWithOids:
-			WITH OIDS								{ $$ = MUST_HAVE_OIDS; }
-			| WITHOUT OIDS							{ $$ = MUST_NOT_HAVE_OIDS; }
-			| /*EMPTY*/								{ $$ = DEFAULT_OIDS; }
+OptWith:
+			WITH OIDS						{ $$ = list_make1(defWithOids(true)); }
+			| WITHOUT OIDS					{ $$ = list_make1(defWithOids(false)); }
+			| WITH definition				{ $$ = $2; }
+			| WITH OIDS WITH definition		{ $$ = lappend($4, defWithOids(true)); }
+			| WITHOUT OIDS WITH definition	{ $$ = lappend($4, defWithOids(false)); }
+			| /*EMPTY*/						{ $$ = NIL; }
 		;
 
 OnCommitOption:  ON COMMIT DROP				{ $$ = ONCOMMIT_DROP; }
@@ -2215,7 +2245,7 @@ OptConsTableSpace:   USING INDEX TABLESPACE name	{ $$ = $4; }
 
 CreateAsStmt:
 		CREATE OptTemp TABLE qualified_name OptCreateAs
-			OptWithOids OnCommitOption OptTableSpace AS SelectStmt
+			OptWith OnCommitOption OptTableSpace AS SelectStmt
 				{
 					/*
 					 * When the SelectStmt is a set-operation tree, we must
@@ -2232,7 +2262,7 @@ CreateAsStmt:
 					$4->istemp = $2;
 					n->into = $4;
 					n->intoColNames = $5;
-					n->intoHasOids = $6;
+					n->intoOptions = $6;
 					n->intoOnCommit = $7;
 					n->intoTableSpaceName = $8;
 					$$ = $10;
@@ -3630,7 +3660,7 @@ opt_granted_by: GRANTED BY RoleId						{ $$ = $3; }
  *****************************************************************************/
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
-			access_method_clause '(' index_params ')' OptTableSpace where_clause
+			access_method_clause '(' index_params ')' opt_definition OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -3638,8 +3668,9 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
 					n->relation = $6;
 					n->accessMethod = $7;
 					n->indexParams = $9;
-					n->tableSpace = $11;
-					n->whereClause = $12;
+					n->options = $11;
+					n->tableSpace = $12;
+					n->whereClause = $13;
 					$$ = (Node *)n;
 				}
 		;
@@ -5264,7 +5295,7 @@ ExecuteStmt: EXECUTE name execute_param_clause
 					$$ = (Node *) n;
 				}
 			| CREATE OptTemp TABLE qualified_name OptCreateAs
-				OptWithOids OnCommitOption OptTableSpace AS
+				OptWith OnCommitOption OptTableSpace AS
 				EXECUTE name execute_param_clause
 				{
 					ExecuteStmt *n = makeNode(ExecuteStmt);
@@ -5272,7 +5303,7 @@ ExecuteStmt: EXECUTE name execute_param_clause
 					n->params = $12;
 					$4->istemp = $2;
 					n->into = $4;
-					n->into_contains_oids = $6;
+					n->intoOptions = $6;
 					n->into_on_commit = $7;
 					n->into_tbl_space = $8;
 					if ($5)
@@ -5606,7 +5637,6 @@ simple_select:
 					n->targetList = $3;
 					n->into = $4;
 					n->intoColNames = NIL;
-					n->intoHasOids = DEFAULT_OIDS;
 					n->fromClause = $5;
 					n->whereClause = $6;
 					n->groupClause = $7;

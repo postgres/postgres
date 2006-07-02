@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.313 2006/07/02 01:58:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.314 2006/07/02 02:23:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,7 @@ typedef struct Query
 
 	RangeVar   *into;			/* target relation for SELECT INTO */
 	bool		intoHasOids;	/* should target relation contain OIDs? */
+	List	   *intoOptions;		/* options passed by WITH */
 	OnCommitAction	intoOnCommit;		/* what do we do at COMMIT? */
 	char	   *intoTableSpaceName;	/* table space to use, or NULL */
 
@@ -693,15 +694,6 @@ typedef enum SetOperation
 	SETOP_EXCEPT
 } SetOperation;
 
-typedef enum ContainsOids
-{
-	MUST_HAVE_OIDS,				/* WITH OIDS explicitly specified */
-	MUST_NOT_HAVE_OIDS,			/* WITHOUT OIDS explicitly specified */
-	DEFAULT_OIDS				/* neither specified; use the default, which
-								 * is the value of the default_with_oids GUC
-								 * var */
-} ContainsOids;
-
 typedef struct SelectStmt
 {
 	NodeTag		type;
@@ -709,14 +701,14 @@ typedef struct SelectStmt
 	/*
 	 * These fields are used only in "leaf" SelectStmts.
 	 *
-	 * into, intoColNames, intoHasOids, intoOnCommit, and
+	 * into, intoColNames, intoOptions, intoOnCommit, and
 	 * intoTableSpaceName are a kluge; they belong somewhere else...
 	 */
 	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
 								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
 	RangeVar   *into;			/* target table (for select into table) */
 	List	   *intoColNames;	/* column names for into table */
-	ContainsOids intoHasOids;	/* should target table have OIDs? */
+	List	   *intoOptions;	/* options passed by WITH */
 	OnCommitAction	intoOnCommit;		/* what do we do at COMMIT? */
 	char	   *intoTableSpaceName;		/* table space to use, or NULL */
 	List	   *targetList;		/* the target list (of ResTarget) */
@@ -869,6 +861,7 @@ typedef enum AlterTableType
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */
 	AT_DropOids,				/* SET WITHOUT OIDS */
 	AT_SetTableSpace,			/* SET TABLESPACE */
+	AT_SetOptions,				/* SET (...) -- AM specific parameters */
 	AT_EnableTrig,				/* ENABLE TRIGGER name */
 	AT_DisableTrig,				/* DISABLE TRIGGER name */
 	AT_EnableTrigAll,			/* ENABLE TRIGGER ALL */
@@ -1024,7 +1017,7 @@ typedef struct CreateStmt
 	List	   *inhRelations;	/* relations to inherit from (list of
 								 * inhRelation) */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
-	ContainsOids hasoids;		/* should it have OIDs? */
+	List	   *options;			/* options passed by WITH */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
 	char	   *tablespacename; /* table space to use, or NULL */
 } CreateStmt;
@@ -1082,6 +1075,7 @@ typedef struct Constraint
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
 	List	   *keys;			/* String nodes naming referenced column(s) */
+	List	   *options;			/* options passed by WITH */
 	char	   *indexspace;		/* index tablespace for PKEY/UNIQUE
 								 * constraints; NULL for default */
 } Constraint;
@@ -1435,6 +1429,7 @@ typedef struct IndexStmt
 	char	   *accessMethod;	/* name of access method (eg. btree) */
 	char	   *tableSpace;		/* tablespace, or NULL to use parent's */
 	List	   *indexParams;	/* a list of IndexElem */
+	List	   *options;			/* options passed by WITH */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	List	   *rangetable;		/* range table for qual and/or expressions,
 								 * filled in by transformStmt() */
@@ -1891,8 +1886,8 @@ typedef struct ExecuteStmt
 	NodeTag			type;
 	char		   *name;				/* The name of the plan to execute */
 	RangeVar	   *into;				/* Optional table to store results in */
-	ContainsOids	into_contains_oids;	/* Should it have OIDs? */
 	bool			into_has_oids;		/* Merge GUC info with user input */
+	List		   *intoOptions;			/* options passed by WITH */
 	OnCommitAction	into_on_commit;		/* What do we do at COMMIT? */
 	char		   *into_tbl_space;		/* Tablespace to use, or NULL */
 	List		   *params;				/* Values to assign to parameters */

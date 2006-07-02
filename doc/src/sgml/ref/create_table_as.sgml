@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.32 2006/02/19 00:04:26 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.33 2006/07/02 02:23:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -23,6 +23,7 @@ PostgreSQL documentation
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replaceable>
     [ (<replaceable>column_name</replaceable> [, ...] ) ]
     [ WITH OIDS | WITHOUT OIDS ]
+    [ WITH (FILLFACTOR = <replaceable>fillfactor</replaceable>) ]
     [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
     [ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
     AS <replaceable>query</replaceable>
@@ -114,6 +115,15 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
        used.
       </para>
      </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH (FILLFACTOR = <replaceable>fillfactor</replaceable>)</literal></term>
+    <listitem>
+     <para>
+      This optional clause specifies the table's fillfactor in percentage.
+     </para>
+    </listitem>
    </varlistentry>
 
    <varlistentry>

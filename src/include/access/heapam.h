@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.112 2006/06/27 02:51:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.113 2006/07/02 02:23:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "nodes/primnodes.h"
 #include "storage/block.h"
 #include "storage/lmgr.h"
+#include "utils/array.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
@@ -226,5 +227,33 @@ extern HeapTuple heap_tuple_from_minimal_tuple(MinimalTuple mtup);
 extern MinimalTuple minimal_tuple_from_heap_tuple(HeapTuple htup);
 extern HeapTuple heap_addheader(int natts, bool withoid,
 			   Size structlen, void *structure);
+
+extern HeapTuple build_class_tuple(Form_pg_class pgclass, ArrayType *options);
+
+/*
+ * HeapOption
+ *	Internal data of heaps.
+ */
+typedef struct HeapOption
+{
+	int32	vl_len;
+	int		fillfactor;
+} HeapOption;
+
+extern bytea *heap_option(char relkind, ArrayType *options);
+
+/*
+ * HeapGetFillFactor
+ *		Returns the heap's fillfactor.
+ */
+#define HeapGetFillFactor(relation) \
+	(((HeapOption*)(relation)->rd_options)->fillfactor)
+
+/*
+ * HeapGetPageFreeSpace
+ *		Returns the heap's freespace per page in bytes.
+ */
+#define HeapGetPageFreeSpace(relation) \
+	(BLCKSZ * (100 - HeapGetFillFactor(relation)) / 100)
 
 #endif   /* HEAPAM_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.18 2006/06/28 12:00:14 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.19 2006/07/02 02:23:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,6 +202,7 @@ typedef struct
 	Relation	r;
 	IndexTuple *itup;			/* in/out, points to compressed entry */
 	int			ituplen;		/* length of itup */
+	Size		freespace;		/* free space to be left */
 	GISTInsertStack *stack;
 	bool		needInsertComplete;
 
@@ -271,8 +272,9 @@ extern Datum gistgetmulti(PG_FUNCTION_ARGS);
 #define GiSTPageSize   \
     ( BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(GISTPageOpaqueData)) ) 
 
+extern Datum gistoption(PG_FUNCTION_ARGS);
 extern bool gistfitpage(IndexTuple *itvec, int len);
-extern bool gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete);
+extern bool gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete, Size freespace);
 extern void gistcheckpage(Relation rel, Buffer buf);
 extern Buffer gistNewBuffer(Relation r);
 extern OffsetNumber gistfillbuffer(Relation r, Page page, IndexTuple *itup,

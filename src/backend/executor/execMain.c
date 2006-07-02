@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.271 2006/06/16 18:42:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.272 2006/07/02 02:23:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
+#include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -729,6 +730,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		AclResult	aclresult;
 		Oid			intoRelationId;
 		TupleDesc	tupdesc;
+		ArrayType  *options;
 
 		/*
 		 * Check consistency of arguments
@@ -786,6 +788,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 */
 		tupdesc = CreateTupleDescCopy(tupType);
 
+		options = OptionBuild(NULL, parseTree->intoOptions);
 		intoRelationId = heap_create_with_catalog(intoName,
 												  namespaceId,
 												  tablespaceId,
@@ -797,7 +800,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 												  true,
 												  0,
 												  parseTree->intoOnCommit,
-												  allowSystemTableMods);
+												  allowSystemTableMods,
+												  options);
+		if (options)
+			pfree(options);
 
 		FreeTupleDesc(tupdesc);
 

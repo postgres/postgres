@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.213 2006/05/28 02:27:08 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.214 2006/07/02 02:23:18 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -46,9 +46,13 @@
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
+#include "commands/defrem.h"
 #include "miscadmin.h"
+#include "nodes/parsenodes.h"
+#include "parser/parse_clause.h"
 #include "pgstat.h"
 #include "storage/procarray.h"
+#include "utils/catcache.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
 
@@ -3587,4 +3591,60 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");
+}
+
+/*
+ * Parse options for heaps.
+ *
+ *	relkind		Kind of relation
+ *	options		Options as text[]
+ */
+bytea *
+heap_option(char relkind, ArrayType *options)
+{
+	/*
+	 * XXX: What fillfactor should be default?
+	 * overriding databases:
+	 *   - Oracle, DB2 = 90%
+	 *   - SQL Server = 100%
+	 * non-overriding database:
+	 *   - Firebird = 70%
+	 */
+#define HEAP_MIN_FILLFACTOR			50
+#define HEAP_DEFAULT_FILLFACTOR		100
+
+	int				fillfactor;
+	HeapOption	   *result;
+
+	DefElem	kwds[] =
+	{
+		{ T_DefElem, "fillfactor" },
+	};
+
+	/*
+	 * parse options
+	 */
+	OptionParse(options, lengthof(kwds), kwds, true);
+
+	/* 0: fillfactor */
+	if (kwds[0].arg)
+		fillfactor = (int) defGetInt64(&kwds[0]);
+	else
+		fillfactor = HEAP_DEFAULT_FILLFACTOR;
+	if (fillfactor < HEAP_MIN_FILLFACTOR || 100 < fillfactor)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("fillfactor=%d should be between %d and 100",
+                 fillfactor, HEAP_MIN_FILLFACTOR)));
+	}
+
+	/*
+	 * build option
+	 */
+	result = (HeapOption *)
+		MemoryContextAlloc(CacheMemoryContext, sizeof(HeapOption));
+	VARATT_SIZEP(result) = sizeof(HeapOption);
+	result->fillfactor = fillfactor;
+	return (bytea *) result;
 }

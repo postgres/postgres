@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.16 2006/06/28 12:00:14 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.17 2006/07/02 02:23:18 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -58,9 +58,9 @@ gistfillbuffer(Relation r, Page page, IndexTuple *itup,
  * Check space for itup vector on page
  */
 bool
-gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete)
+gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete, Size freespace)
 {
-	unsigned int size = 0, deleted = 0;
+	unsigned int size = freespace, deleted = 0;
 	int			i;
 
 	for (i = 0; i < len; i++)
@@ -82,6 +82,7 @@ gistfitpage(IndexTuple *itvec, int len) {
 	for(i=0;i<len;i++)
 		size += IndexTupleSize(itvec[i]) + sizeof(ItemIdData);
 
+	/* TODO: Consider fillfactor */
 	return (size <= GiSTPageSize);
 }
 
@@ -633,4 +634,17 @@ gistNewBuffer(Relation r)
 		UnlockRelationForExtension(r, ExclusiveLock);
 
 	return buffer;
+}
+
+Datum
+gistoption(PG_FUNCTION_ARGS)
+{
+#define GIST_DEFAULT_FILLFACTOR		90
+#define GIST_MIN_FILLFACTOR			50
+
+	ArrayType	   *options = (ArrayType *) PG_GETARG_POINTER(0);
+
+	/* Use index common routine. */
+	PG_RETURN_BYTEA_P(genam_option(options,
+		GIST_MIN_FILLFACTOR, GIST_DEFAULT_FILLFACTOR));
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.266 2006/05/10 23:18:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.267 2006/07/02 02:23:19 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -37,6 +37,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
@@ -53,7 +54,8 @@
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
 						 Oid *classObjectId);
-static void UpdateRelationRelation(Relation pg_class, Relation indexRelation);
+static void UpdateRelationRelation(Relation pg_class, Relation indexRelation,
+								   ArrayType *options);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
@@ -241,15 +243,12 @@ ConstructTupleDescriptor(Relation heapRelation,
  * ----------------------------------------------------------------
  */
 static void
-UpdateRelationRelation(Relation pg_class, Relation indexRelation)
+UpdateRelationRelation(Relation pg_class, Relation indexRelation,
+					   ArrayType *options)
 {
 	HeapTuple	tuple;
 
-	/* XXX Natts_pg_class_fixed is a hack - see pg_class.h */
-	tuple = heap_addheader(Natts_pg_class_fixed,
-						   true,
-						   CLASS_TUPLE_SIZE,
-						   (void *) indexRelation->rd_rel);
+	tuple = build_class_tuple(indexRelation->rd_rel, options);
 
 	/*
 	 * the new tuple must have the oid already chosen for the index. sure
@@ -467,6 +466,7 @@ index_create(Oid heapRelationId,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
 			 Oid *classObjectId,
+			 List *options,
 			 bool isprimary,
 			 bool istoast,
 			 bool isconstraint,
@@ -480,6 +480,9 @@ index_create(Oid heapRelationId,
 	bool		shared_relation;
 	Oid			namespaceId;
 	int			i;
+
+	ArrayType	   *array;
+	RegProcedure	amoption;
 
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -579,11 +582,40 @@ index_create(Oid heapRelationId,
 	indexRelation->rd_rel->relhasoids = false;
 
 	/*
+	 * AM specific options.
+	 */
+	array = OptionBuild(NULL, options);
+	if (indexRelation->rd_am)
+	{
+		amoption = indexRelation->rd_am->amoption;
+	}
+	else
+	{
+		HeapTuple		tuple;
+
+		/*
+		 * We may use the access method before initializing relation,
+		 * so we pick up AM from syscache directly.
+		 */
+		tuple = SearchSysCache(AMOID,
+							   ObjectIdGetDatum(accessMethodObjectId),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for access method %u",
+				accessMethodObjectId);
+		amoption = ((Form_pg_am) GETSTRUCT(tuple))->amoption;
+		ReleaseSysCache(tuple);
+	}
+	indexRelation->rd_options = index_option(amoption, array);
+
+	/*
 	 * store index's pg_class entry
 	 */
-	UpdateRelationRelation(pg_class, indexRelation);
+	UpdateRelationRelation(pg_class, indexRelation, array);
 
 	/* done with pg_class */
+	if (array)
+		pfree(array);
 	heap_close(pg_class, RowExclusiveLock);
 
 	/*
@@ -1750,4 +1782,24 @@ reindex_relation(Oid relid, bool toast_too)
 		result |= reindex_relation(toast_relid, false);
 
 	return result;
+}
+
+/*
+ * Parse options for indexes.
+ *
+ *	amoption	Oid of option parser.
+ *	options		Options as text[]
+ */
+bytea *index_option(RegProcedure amoption, ArrayType *options)
+{
+	Datum		datum;
+
+	Assert(RegProcedureIsValid(amoption));
+
+	datum = OidFunctionCall1(amoption, PointerGetDatum(options));
+
+	if (DatumGetPointer(datum) == NULL)
+		return NULL;
+
+	return DatumGetByteaP(datum);
 }

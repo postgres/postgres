@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.224 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.225 2006/07/02 02:23:21 momjian Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -187,6 +187,7 @@ static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
+static char *flatten_reloptions(Oid relid);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -756,9 +757,20 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	}
 
 	if (!colno)
-	{
 		appendStringInfoChar(&buf, ')');
 
+	/*
+	 * If it has options, append "WITH (options)"
+	 */
+	str = flatten_reloptions(indexrelid);
+	if (str)
+	{
+		appendStringInfo(&buf, " WITH (%s)", str);
+		pfree(str);
+	}
+
+	if (!colno)
+	{
 		/*
 		 * If it's a partial index, decompile and append the predicate
 		 */
@@ -1004,6 +1016,17 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				decompile_column_index_array(val, conForm->conrelid, &buf);
 
 				appendStringInfo(&buf, ")");
+
+				if (fullCommand && OidIsValid(conForm->conrelid))
+				{
+					char   *options = flatten_reloptions(conForm->conrelid);
+					if (options)
+					{
+						appendStringInfo(&buf, " WITH (%s)", options);
+						pfree(options);
+					}
+				}
+
 				break;
 			}
 		case CONSTRAINT_CHECK:
@@ -4910,6 +4933,39 @@ string_to_text(char *str)
 	memcpy(VARDATA(result), str, slen);
 
 	pfree(str);
+
+	return result;
+}
+
+static char *
+flatten_reloptions(Oid relid)
+{
+	HeapTuple	tuple;
+	char	   *result = NULL;
+
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(relid),
+						   0, 0, 0);
+	if (tuple)
+	{
+		bool	isnull;
+		Datum	reloptions;
+		reloptions = SysCacheGetAttr(RELOID, tuple,
+            Anum_pg_class_reloptions, &isnull);
+		if (!isnull)
+		{
+			Datum	sep,
+					txt;
+			sep = DirectFunctionCall1(textin, CStringGetDatum(", "));
+			/*
+			 * OID 395 = array_to_text.
+			 * DirectFunctionCall2(array_to_text) is not available here.
+			 */
+			txt = OidFunctionCall2(395, reloptions, sep);
+			result = DatumGetCString(DirectFunctionCall1(textout, txt));
+		}
+		ReleaseSysCache(tuple);
+	}
 
 	return result;
 }

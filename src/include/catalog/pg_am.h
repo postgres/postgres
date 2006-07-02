@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.43 2006/05/24 11:01:39 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.44 2006/07/02 02:23:22 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -65,6 +65,7 @@ CATALOG(pg_am,2601)
 	regproc		ambulkdelete;	/* bulk-delete function */
 	regproc		amvacuumcleanup;	/* post-VACUUM cleanup function */
 	regproc		amcostestimate; /* estimate cost of an indexscan */
+	regproc		amoption;		/* parse AM-specific parameters */
 } FormData_pg_am;
 
 /* ----------------
@@ -78,7 +79,7 @@ typedef FormData_pg_am *Form_pg_am;
  *		compiler constants for pg_am
  * ----------------
  */
-#define Natts_pg_am						23
+#define Natts_pg_am						24
 #define Anum_pg_am_amname				1
 #define Anum_pg_am_amstrategies			2
 #define Anum_pg_am_amsupport			3
@@ -102,22 +103,23 @@ typedef FormData_pg_am *Form_pg_am;
 #define Anum_pg_am_ambulkdelete			21
 #define Anum_pg_am_amvacuumcleanup		22
 #define Anum_pg_am_amcostestimate		23
+#define Anum_pg_am_amoption				24
 
 /* ----------------
  *		initial contents of pg_am
  * ----------------
  */
 
-DATA(insert OID = 403 (  btree	5 1 1 t t t t f t t btinsert btbeginscan btgettuple btgetmulti btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btvacuumcleanup btcostestimate ));
+DATA(insert OID = 403 (  btree	5 1 1 t t t t f t t btinsert btbeginscan btgettuple btgetmulti btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btvacuumcleanup btcostestimate btoption ));
 DESCR("b-tree index access method");
 #define BTREE_AM_OID 403
-DATA(insert OID = 405 (  hash	1 1 0 f f f f f t f hashinsert hashbeginscan hashgettuple hashgetmulti hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete hashvacuumcleanup hashcostestimate ));
+DATA(insert OID = 405 (  hash	1 1 0 f f f f f t f hashinsert hashbeginscan hashgettuple hashgetmulti hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete hashvacuumcleanup hashcostestimate hashoption ));
 DESCR("hash index access method");
 #define HASH_AM_OID 405
-DATA(insert OID = 783 (  gist	100 7 0 f t t t t t t gistinsert gistbeginscan gistgettuple gistgetmulti gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete gistvacuumcleanup gistcostestimate ));
+DATA(insert OID = 783 (  gist	100 7 0 f t t t t t t gistinsert gistbeginscan gistgettuple gistgetmulti gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete gistvacuumcleanup gistcostestimate gistoption ));
 DESCR("GiST index access method");
 #define GIST_AM_OID 783
-DATA(insert OID = 2742 (  gin	100 4 0 f f f f t t f gininsert ginbeginscan gingettuple gingetmulti ginrescan ginendscan ginmarkpos ginrestrpos ginbuild ginbulkdelete ginvacuumcleanup gincostestimate ));
+DATA(insert OID = 2742 (  gin	100 4 0 f f f f t t f gininsert ginbeginscan gingettuple gingetmulti ginrescan ginendscan ginmarkpos ginrestrpos ginbuild ginbulkdelete ginvacuumcleanup gincostestimate ginoption ));
 DESCR("GIN index access method");
 #define GIN_AM_OID 2742
 

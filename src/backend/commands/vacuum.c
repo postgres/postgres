@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.330 2006/05/10 23:18:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.331 2006/07/02 02:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,6 +242,7 @@ static int	vac_cmp_blk(const void *left, const void *right);
 static int	vac_cmp_offno(const void *left, const void *right);
 static int	vac_cmp_vtlinks(const void *left, const void *right);
 static bool enough_space(VacPage vacpage, Size len);
+static Size	PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
 
 
 /****************************************************************************
@@ -1282,7 +1283,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					   relname, blkno)));
 			PageInit(page, BufferGetPageSize(buf), 0);
 			MarkBufferDirty(buf);
-			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
+			vacpage->free = PageGetFreeSpaceWithFillFactor(onerel, page);
 			free_space += vacpage->free;
 			empty_pages++;
 			empty_end_pages++;
@@ -1297,7 +1298,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		{
 			VacPage		vacpagecopy;
 
-			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
+			vacpage->free = PageGetFreeSpaceWithFillFactor(onerel, page);
 			free_space += vacpage->free;
 			empty_pages++;
 			empty_end_pages++;
@@ -1465,14 +1466,14 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		{
 			/* Some tuples are removable; figure free space after removal */
 			PageRepairFragmentation(tempPage, NULL);
-			vacpage->free = ((PageHeader) tempPage)->pd_upper - ((PageHeader) tempPage)->pd_lower;
+			vacpage->free = PageGetFreeSpaceWithFillFactor(onerel, tempPage);
 			pfree(tempPage);
 			do_reap = true;
 		}
 		else
 		{
 			/* Just use current available space */
-			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
+			vacpage->free = PageGetFreeSpaceWithFillFactor(onerel, page);
 			/* Need to reap the page if it has ~LP_USED line pointers */
 			do_reap = (vacpage->offsets_free > 0);
 		}
@@ -2709,8 +2710,7 @@ move_plain_tuple(Relation rel,
 
 	END_CRIT_SECTION();
 
-	dst_vacpage->free = ((PageHeader) dst_page)->pd_upper -
-		((PageHeader) dst_page)->pd_lower;
+	dst_vacpage->free = PageGetFreeSpaceWithFillFactor(rel, dst_page);
 	LockBuffer(dst_buf, BUFFER_LOCK_UNLOCK);
 	LockBuffer(old_buf, BUFFER_LOCK_UNLOCK);
 
@@ -3119,6 +3119,8 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 	 * vacuumlazy.c does, we'd be skewing that statistic.
 	 */
 	threshold = GetAvgFSMRequestSize(&onerel->rd_node);
+	if (threshold < HeapGetPageFreeSpace(onerel))
+		threshold = HeapGetPageFreeSpace(onerel);
 
 	pageSpaces = (PageFreeSpaceInfo *)
 		palloc(nPages * sizeof(PageFreeSpaceInfo));
@@ -3385,6 +3387,18 @@ enough_space(VacPage vacpage, Size len)
 	return false;
 }
 
+static Size
+PageGetFreeSpaceWithFillFactor(Relation relation, Page page)
+{
+	PageHeader	pd = (PageHeader) page;
+	Size		pagefree = HeapGetPageFreeSpace(relation);
+	Size		freespace = pd->pd_upper - pd->pd_lower;
+
+	if (freespace > pagefree)
+		return freespace - pagefree;
+	else
+		return 0;
+}
 
 /*
  * vacuum_delay_point --- check for interrupts and cost-based delay.

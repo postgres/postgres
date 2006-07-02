@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.189 2006/07/02 01:58:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.190 2006/07/02 02:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,6 @@
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-
 
 /*
  * ON COMMIT action list
@@ -196,6 +195,7 @@ static void ATRewriteTables(List **wqueue);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap);
 static AlteredTableInfo *ATGetQueueEntry(List **wqueue, Relation rel);
 static void ATSimplePermissions(Relation rel, bool allowView);
+static void ATSimplePermissionsRelationOrIndex(Relation rel);
 static void ATSimpleRecursion(List **wqueue, Relation rel,
 				  AlterTableCmd *cmd, bool recurse);
 static void ATOneLevelRecursion(List **wqueue, Relation rel,
@@ -248,6 +248,7 @@ static void ATExecDropCluster(Relation rel);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 					char *tablespacename);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace);
+static void ATExecSetOptions(Relation rel, List *newOptions);
 static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
 						   bool enable, bool skip_system);
 static void ATExecAddInherits(Relation rel, RangeVar *parent);
@@ -285,6 +286,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	ListCell   *listptr;
 	int			i;
 	AttrNumber	attnum;
+	ArrayType  *options;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -366,7 +368,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 */
 	descriptor = BuildDescForRelation(schema);
 
-	localHasOids = interpretOidsOption(stmt->hasoids);
+	localHasOids = interpretOidsOption(stmt->options);
 	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
 
 	if (old_constraints != NIL)
@@ -426,6 +428,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		}
 	}
 
+	options = OptionBuild(NULL, stmt->options);
 	relationId = heap_create_with_catalog(relname,
 										  namespaceId,
 										  tablespaceId,
@@ -437,7 +440,10 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  localHasOids,
 										  parentOidCount,
 										  stmt->oncommit,
-										  allowSystemTableMods);
+										  allowSystemTableMods,
+										  options);
+	if (options)
+		pfree(options);
 
 	StoreCatalogInheritance(relationId, inheritOids);
 
@@ -2092,9 +2098,16 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetTableSpace:	/* SET TABLESPACE */
+			ATSimplePermissionsRelationOrIndex(rel);
 			/* This command never recurses */
 			ATPrepSetTableSpace(tab, rel, cmd->name);
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
+			break;
+		case AT_SetOptions:		/* SET (...) */
+			ATSimplePermissionsRelationOrIndex(rel);
+			/* This command never recurses */
+			/* No command-specific prep needed */
+			pass = AT_PASS_MISC;
 			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER variants */
 		case AT_EnableTrigAll:
@@ -2265,6 +2278,9 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			/*
 			 * Nothing to do here; Phase 3 does the work
 			 */
+			break;
+		case AT_SetOptions:		/* SET (...) */
+			ATExecSetOptions(rel, (List *) cmd->def);
 			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name, true, false);
@@ -2763,6 +2779,35 @@ ATSimplePermissions(Relation rel, bool allowView)
 					 errmsg("\"%s\" is not a table",
 							RelationGetRelationName(rel))));
 	}
+
+	/* Permissions checks */
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods && IsSystemRelation(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied: \"%s\" is a system catalog",
+						RelationGetRelationName(rel))));
+}
+
+/*
+ * ATSimplePermissionsRelationOrIndex
+ *
+ * - Ensure that it is a relation or an index
+ * - Ensure this user is the owner
+ * - Ensure that it is not a system table
+ */
+static void
+ATSimplePermissionsRelationOrIndex(Relation rel)
+{
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_INDEX)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table or index",
+						RelationGetRelationName(rel))));
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
@@ -3804,6 +3849,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 				stmt->indexParams,		/* parameters */
 				(Expr *) stmt->whereClause,
 				stmt->rangetable,
+				stmt->options,
 				stmt->unique,
 				stmt->primary,
 				stmt->isconstraint,
@@ -5690,28 +5736,6 @@ ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel, char *tablespacename)
 	Oid			tablespaceId;
 	AclResult	aclresult;
 
-	/*
-	 * We do our own permission checking because we want to allow this on
-	 * indexes.
-	 */
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table or index",
-						RelationGetRelationName(rel))));
-
-	/* Permissions checks */
-	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   RelationGetRelationName(rel));
-
-	if (!allowSystemTableMods && IsSystemRelation(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(rel))));
-
 	/* Check that the tablespace exists */
 	tablespaceId = get_tablespace_oid(tablespacename);
 	if (!OidIsValid(tablespaceId))
@@ -5730,6 +5754,89 @@ ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel, char *tablespacename)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot have multiple SET TABLESPACE subcommands")));
 	tab->newTableSpace = tablespaceId;
+}
+
+/*
+ * ALTER TABLE/INDEX SET (...)
+ */
+static void
+ATExecSetOptions(Relation rel, List *newOptions)
+{
+	Oid			relid;
+	Relation	pgclass;
+	HeapTuple	tuple;
+	Datum		datum;
+	bool		isnull;
+	ArrayType  *mergedOptions;
+	bytea	   *options;
+
+	if (list_length(newOptions) == 0)
+		return; /* do nothing */
+
+	relid = RelationGetRelid(rel);
+	pgclass = heap_open(RelationRelationId, RowExclusiveLock);
+	tuple = SearchSysCache(RELOID,
+						   ObjectIdGetDatum(relid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+
+	datum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
+
+	mergedOptions = OptionBuild(
+		isnull ? NULL : DatumGetArrayTypeP(datum), newOptions);
+
+	switch (rel->rd_rel->relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_TOASTVALUE:
+			options = heap_option(rel->rd_rel->relkind, mergedOptions);
+			break;
+		case RELKIND_INDEX:
+			options = index_option(rel->rd_am->amoption, mergedOptions);
+			break;
+		default:
+			elog(ERROR, "unexpected RELKIND=%c", rel->rd_rel->relkind);
+			options = NULL;	/* keep compiler quiet */
+			break;
+	}
+
+	if (rel->rd_options != options)
+	{
+		HeapTuple	newtuple;
+		Datum		repl_val[Natts_pg_class];
+		char		repl_null[Natts_pg_class];
+		char		repl_repl[Natts_pg_class];
+
+		/* XXX: This is not necessarily required. */
+		if (rel->rd_options)
+			pfree(rel->rd_options);
+		rel->rd_options = options;
+
+		memset(repl_repl, ' ', sizeof(repl_repl));
+		memset(repl_null, ' ', sizeof(repl_null));
+		repl_repl[Anum_pg_class_reloptions - 1] = 'r';
+
+		if (mergedOptions)
+			repl_val[Anum_pg_class_reloptions - 1] =
+				PointerGetDatum(mergedOptions);
+		else
+			repl_null[Anum_pg_class_reloptions - 1] = 'n';
+
+		newtuple = heap_modifytuple(tuple, RelationGetDescr(pgclass),
+			repl_val, repl_null, repl_repl);
+
+		simple_heap_update(pgclass, &newtuple->t_self, newtuple);
+		CatalogUpdateIndexes(pgclass, newtuple);
+
+		heap_freetuple(newtuple);
+	}
+
+	if (mergedOptions)
+		pfree(mergedOptions);
+
+	ReleaseSysCache(tuple);
+	heap_close(pgclass, RowExclusiveLock);
 }
 
 /*
@@ -6553,7 +6660,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 										   true,
 										   0,
 										   ONCOMMIT_NOOP,
-										   true);
+										   true,
+										   NULL);
 
 	/* make the toast relation visible, else index creation will fail */
 	CommandCounterIncrement();
@@ -6587,7 +6695,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 							   indexInfo,
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
-							   classObjectId,
+							   classObjectId, NIL,
 							   true, true, false, true, false);
 
 	/*

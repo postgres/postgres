@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.149 2006/03/16 00:31:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.150 2006/07/02 02:23:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "access/heapam.h"
 #include "catalog/heap.h"
+#include "commands/defrem.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
@@ -33,6 +34,7 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 
 
 #define ORDER_CLAUSE 0
@@ -64,6 +66,8 @@ static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List **tlist, int clause);
+static bool OptionMatches(text *t, const char* kw, char **str, Size *len);
+static Datum OptionToText(DefElem *def);
 
 
 /*
@@ -212,29 +216,280 @@ interpretInhOption(InhOption inhOpt)
 }
 
 /*
- * Given an enum that indicates whether WITH / WITHOUT OIDS was
+ * Given a List that indicates whether WITH / WITHOUT OIDS was
  * specified by the user, return true iff the specified table/result
  * set should be created with OIDs. This needs to be done after
  * parsing the query string because the return value can depend upon
  * the default_with_oids GUC var.
  */
 bool
-interpretOidsOption(ContainsOids opt)
+interpretOidsOption(List *options)
 {
-	switch (opt)
+	ListCell   *cell;
+
+	foreach(cell, options)
 	{
-		case MUST_HAVE_OIDS:
-			return true;
+		DefElem    *def = (DefElem *) lfirst(cell);
 
-		case MUST_NOT_HAVE_OIDS:
-			return false;
-
-		case DEFAULT_OIDS:
-			return default_with_oids;
+		if (pg_strcasecmp(def->defname, "oids") == 0)
+			return defGetBoolean(def);
 	}
 
-	elog(ERROR, "bogus ContainsOids value: %d", opt);
-	return false;				/* keep compiler quiet */
+	/* oids option is not specified. */
+	return default_with_oids;
+}
+
+/*
+ * Test if t is start with 'kw='.
+ */
+static bool
+OptionMatches(text *t, const char* kw, char **str, Size *len)
+{
+	char   *text_str = (char *) VARATT_DATA(t);
+	int		text_len = VARATT_SIZE(t) - VARHDRSZ;
+	Size	kwlen = strlen(kw);
+
+	if (text_len > kwlen && text_str[kwlen] == '=' && 
+        pg_strncasecmp(text_str, kw, kwlen) == 0)
+	{
+		*str = text_str + kwlen + 1;
+		*len = text_len - kwlen - 1;
+		return true;
+	}
+
+	return false;
+}
+
+/*
+ * Flatten a DefElem to a text like as 'defname=arg'.
+ */
+static Datum
+OptionToText(DefElem *def)
+{
+	text   *t;
+	char   *value = defGetString(def);
+	Size	len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
+
+	t = palloc(len + 1);
+	VARATT_SIZEP(t) = len;
+	sprintf((char *) VARATT_DATA(t), "%s=%s", def->defname, value);
+
+	return PointerGetDatum(t);
+}
+
+/*
+ * Merge option array and option list.
+ *
+ *	array	Existing option, or NULL if new option.
+ *	list	List of DefElems to be added to array.
+ */
+ArrayType *
+OptionBuild(ArrayType *array, List *list)
+{
+	ListCell		   *cell;
+	bool			   *used;
+	int					index;
+	int					o;
+	ArrayType		   *result;
+	ArrayBuildState	   *astate;
+	MemoryContext		myContext;
+	MemoryContext		oldContext;
+
+	if (list_length(list) == 0)
+	{
+		/* no additinal elements, so just clone. */
+		if (array == NULL)
+			return NULL;
+		result = palloc(VARATT_SIZE(array));
+		memcpy(result, array, VARATT_SIZE(array));
+		return result;
+	}
+
+	/* Make a temporary context to hold all the junk */
+	myContext = AllocSetContextCreate(CurrentMemoryContext,
+									  "OptionBuild",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
+	oldContext = MemoryContextSwitchTo(myContext);
+
+	astate = NULL;
+	used = (bool *) palloc0(sizeof(bool) * list_length(list));
+
+	if (array)
+	{
+		Assert(ARR_ELEMTYPE(array) == TEXTOID);
+		Assert(ARR_NDIM(array) == 1);
+		Assert(ARR_LBOUND(array)[0] == 1);
+
+		for (o = 1; o <= ARR_DIMS(array)[0]; o++)
+		{
+			bool		isnull;
+			Datum		datum;
+
+			datum = array_ref(array, 1, &o,
+						-1 /* varlenarray */ ,
+						-1 /* TEXT's typlen */ ,
+						false /* TEXT's typbyval */ ,
+						'i' /* TEXT's typalign */ ,
+						&isnull);
+			if (isnull)
+				continue;
+
+			index = 0;
+			foreach(cell, list)
+			{
+				DefElem	   *def = lfirst(cell);
+
+				/*
+				 * We ignore 'oids' item because it is stored
+				 * in pg_class.relhasoids.
+				 */
+				if (!used[index] &&
+					pg_strcasecmp(def->defname, "oids") != 0)
+				{
+					char   *value_str;
+					Size	value_len;
+					if (OptionMatches(DatumGetTextP(datum),
+						def->defname, &value_str, &value_len))
+					{
+						used[index] = true;
+						if (def->arg)
+						{
+							/* Replace an existing option. */
+							datum = OptionToText(def);
+							goto next;	/* skip remain items in list */
+						}
+						else
+						{
+							/* Remove the option from array. */
+							goto skip;
+						}
+					}
+				}
+
+				index++;
+			}
+
+			/*
+			 * The datum is an existing parameter and is not modified.
+			 * Fall down.
+			 */
+
+next:
+			astate = accumArrayResult(astate, datum, false, TEXTOID, myContext);
+skip:
+			;
+		}
+	}
+
+	/*
+	 * add options not in array
+	 */
+	index = 0;
+	foreach(cell, list)
+	{
+		DefElem	   *def = lfirst(cell);
+
+		if (!used[index] && def->arg &&
+			pg_strcasecmp(def->defname, "oids") != 0)
+		{
+			astate = accumArrayResult(astate, OptionToText(def),
+				false, TEXTOID, myContext);
+		}
+
+		index++;
+	}
+
+	if (astate)
+		result = DatumGetArrayTypeP(makeArrayResult(astate, oldContext));
+	else
+		result = NULL;
+
+	MemoryContextSwitchTo(oldContext);
+	MemoryContextDelete(myContext);
+	return result;
+}
+
+/*
+ * Support routine to parse options.
+ *
+ *	options	List of DefElems
+ *	num		length of kwds
+ *	kwds	supported keywords
+ *	strict	Throw error if unsupported option is found.
+ *
+ * FIXME: memory is leaked in kwds[].arg.
+ */
+void
+OptionParse(ArrayType *options, Size num, DefElem kwds[], bool strict)
+{
+	Size	k;
+	int		o;
+
+	for (k = 0; k < num; k++)
+	{
+		Assert(kwds[k].defname);
+		kwds[k].arg = NULL;
+	}
+
+	if (options == NULL)
+		return;	/* use default for all */
+
+	Assert(ARR_ELEMTYPE(options) == TEXTOID);
+	Assert(ARR_NDIM(options) == 1);
+	Assert(ARR_LBOUND(options)[0] == 1);
+
+	for (o = 1; o <= ARR_DIMS(options)[0]; o++)
+	{
+		bool		isnull;
+		Datum		datum;
+
+		datum = array_ref(options, 1, &o,
+					  -1 /* varlenarray */ ,
+					  -1 /* TEXT's typlen */ ,
+					  false /* TEXT's typbyval */ ,
+					  'i' /* TEXT's typalign */ ,
+					  &isnull);
+		if (isnull)
+			continue;
+
+		for (k = 0; k < num; k++)
+		{
+			char	   *value_str;
+			Size		value_len;
+
+			if (OptionMatches(DatumGetTextP(datum),
+				kwds[k].defname, &value_str, &value_len))
+			{
+				char   *value;
+
+				if (kwds[k].arg != NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("duplicated parameter %s",
+							 kwds[k].defname)));
+
+				/* copy value as Value node */
+				value = (char *) palloc(value_len + 1);
+				strncpy(value, value_str, value_len);
+				value[value_len] = '\0';
+				kwds[k].arg = (Node *) makeString(value);
+				goto next;	/* skip remain keywords */
+			}
+		}
+
+		/* parameter is not in kwds */
+		if (strict)
+		{
+			char *c = DatumGetCString(DirectFunctionCall1(textout, datum));
+
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unsupported parameter %s", c)));
+		}
+next:;
+	}
 }
 
 /*

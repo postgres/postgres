@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.22 2006/05/19 11:10:25 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.23 2006/07/02 02:23:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,7 +376,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 		if (curlenaddon)
 		{
 			/* insert updated tuples */
-			if (gistnospace(tempPage, addon, curlenaddon, InvalidOffsetNumber)) {
+			if (gistnospace(tempPage, addon, curlenaddon, InvalidOffsetNumber, 0)) {
 				/* there is no space on page to insert tuples */
 				res = vacuumSplitPage(gv, tempPage, buffer, addon, curlenaddon);
 				tempPage=NULL; /* vacuumSplitPage() free tempPage */

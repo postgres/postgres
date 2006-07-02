@@ -3,7 +3,7 @@
  *    header file for postgres inverted index access method implementation.
  *
  *  Copyright (c) 2006, PostgreSQL Global Development Group
- *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.1 2006/05/02 11:28:55 teodor Exp $
+ *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.2 2006/07/02 02:23:22 momjian Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -213,6 +213,7 @@ typedef struct ginxlogDeletePage {
 } ginxlogDeletePage;
 
 /* ginutil.c */
+extern Datum ginoption(PG_FUNCTION_ARGS);
 extern void initGinState( GinState *state, Relation index );
 extern Buffer GinNewBuffer(Relation index);
 extern void GinInitBuffer(Buffer b, uint32 f);

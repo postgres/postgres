@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.8 2006/02/12 19:11:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.9 2006/07/02 02:23:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,6 +22,8 @@ PostgreSQL documentation
 <synopsis>
 ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER INDEX <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable>
+ALTER INDEX <replaceable class="PARAMETER">name</replaceable> SET (FILLFACTOR = <replaceable class="PARAMETER">fillfactor</replaceable>)
+ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET (FILLFACTOR)
 </synopsis>
  </refsynopsisdiv>
 
@@ -52,6 +54,26 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <re
       moves the data file(s) associated with the index to the new tablespace.
       See also 
       <xref linkend="SQL-CREATETABLESPACE" endterm="sql-createtablespace-title">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET (FILLFACTOR)</literal></term>
+    <listitem>
+     <para>
+      This form changes the index's fillfactor to the specified percentage.
+      Index structure is not modified immediately; use <literal>REINDEX</literal>
+      to ensure reflection of the change.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESET (FILLFACTOR)</literal></term>
+    <listitem>
+     <para>
+      This form changes the index's fillfactor to the default value.
      </para>
     </listitem>
    </varlistentry>

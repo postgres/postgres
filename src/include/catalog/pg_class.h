@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.92 2006/05/28 02:27:08 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.93 2006/07/02 02:23:22 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -75,9 +75,8 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 	bool		relhasrules;	/* has associated rules */
 	bool		relhassubclass; /* has derived classes */
 
-	/*
-	 * relacl may or may not be present, see note above!
-	 */
+	/* following fields may or may not be present, see note above! */
+	text		reloptions[1];	/* access method specific data */
 	aclitem		relacl[1];		/* we declare this just for the catalog */
 } FormData_pg_class;
 
@@ -104,7 +103,7 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 #define Natts_pg_class_fixed			24
-#define Natts_pg_class					25
+#define Natts_pg_class					26
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_relnamespace		2
 #define Anum_pg_class_reltype			3
@@ -129,7 +128,8 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relhaspkey		22
 #define Anum_pg_class_relhasrules		23
 #define Anum_pg_class_relhassubclass	24
-#define Anum_pg_class_relacl			25
+#define Anum_pg_class_reloptions		25
+#define Anum_pg_class_relacl			26
 
 /* ----------------
  *		initial contents of pg_class
@@ -139,13 +139,13 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r 23 0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r 23 0 0 0 0 0 t f f f _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r 17 0 0 0 0 0 f f f f _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r 17 0 0 0 0 0 f f f f _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r 18 0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r 18 0 0 0 0 0 t f f f _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r 25 0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r 26 0 0 0 0 0 t f f f _null_ _null_ ));
 DESCR("");
 
 #define		  RELKIND_INDEX			  'i'		/* secondary index */

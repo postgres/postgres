@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.273 2006/06/27 03:43:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.274 2006/07/02 02:23:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,6 +659,7 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(resultRelation);
 	COMPARE_NODE_FIELD(into);
 	COMPARE_SCALAR_FIELD(intoHasOids);
+	COMPARE_NODE_FIELD(intoOptions);
 	COMPARE_SCALAR_FIELD(intoOnCommit);
 	COMPARE_STRING_FIELD(intoTableSpaceName);
 	COMPARE_SCALAR_FIELD(hasAggs);
@@ -717,7 +718,7 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 	COMPARE_NODE_FIELD(distinctClause);
 	COMPARE_NODE_FIELD(into);
 	COMPARE_NODE_FIELD(intoColNames);
-	COMPARE_SCALAR_FIELD(intoHasOids);
+	COMPARE_NODE_FIELD(intoOptions);
 	COMPARE_SCALAR_FIELD(intoOnCommit);
 	COMPARE_STRING_FIELD(intoTableSpaceName);
 	COMPARE_NODE_FIELD(targetList);
@@ -873,7 +874,7 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	COMPARE_NODE_FIELD(tableElts);
 	COMPARE_NODE_FIELD(inhRelations);
 	COMPARE_NODE_FIELD(constraints);
-	COMPARE_SCALAR_FIELD(hasoids);
+	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(oncommit);
 	COMPARE_STRING_FIELD(tablespacename);
 
@@ -951,6 +952,7 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 	COMPARE_STRING_FIELD(accessMethod);
 	COMPARE_STRING_FIELD(tableSpace);
 	COMPARE_NODE_FIELD(indexParams);
+	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(whereClause);
 	COMPARE_NODE_FIELD(rangetable);
 	COMPARE_SCALAR_FIELD(unique);
@@ -1471,8 +1473,8 @@ _equalExecuteStmt(ExecuteStmt *a, ExecuteStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(into);
-	COMPARE_SCALAR_FIELD(into_contains_oids);
 	COMPARE_SCALAR_FIELD(into_has_oids);
+	COMPARE_NODE_FIELD(intoOptions);
 	COMPARE_SCALAR_FIELD(into_on_commit);
 	COMPARE_STRING_FIELD(into_tbl_space);
 	COMPARE_NODE_FIELD(params);
@@ -1673,6 +1675,7 @@ _equalConstraint(Constraint *a, Constraint *b)
 	COMPARE_NODE_FIELD(raw_expr);
 	COMPARE_STRING_FIELD(cooked_expr);
 	COMPARE_NODE_FIELD(keys);
+	COMPARE_NODE_FIELD(options);
 	COMPARE_STRING_FIELD(indexspace);
 
 	return true;

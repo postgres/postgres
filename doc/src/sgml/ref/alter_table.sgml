@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.85 2006/07/02 01:58:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.86 2006/07/02 02:23:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -46,6 +46,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
     SET WITHOUT CLUSTER
     SET WITHOUT OIDS
+    SET (FILLFACTOR = <replaceable class="PARAMETER">fillfactor</replaceable>)
+    RESET (FILLFACTOR)
     INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
@@ -317,6 +319,26 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       separately with additional <literal>SET TABLESPACE</literal> commands.
       See also 
       <xref linkend="SQL-CREATETABLESPACE" endterm="sql-createtablespace-title">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET (FILLFACTOR)</literal></term>
+    <listitem>
+     <para>
+      This form changes the table's fillfactor to the specified percentage.
+      Table structure is not modified immediately; use <literal>CLUSTER</literal>
+      to ensure reflection of the change.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESET</literal></term>
+    <listitem>
+     <para>
+      This form changes the table's fillfactor to the default value.
      </para>
     </listitem>
    </varlistentry>

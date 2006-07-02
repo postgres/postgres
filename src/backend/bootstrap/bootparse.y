@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.80 2006/03/07 01:03:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.81 2006/07/02 02:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include "access/attnum.h"
+#include "access/heapam.h"
 #include "access/htup.h"
 #include "access/itup.h"
 #include "access/skey.h"
@@ -192,6 +193,8 @@ Boot_CreateStmt:
 												   RELKIND_RELATION,
 												   $3,
 												   true);
+						boot_reldesc->rd_options =
+							heap_option(RELKIND_RELATION, NULL);
 						elog(DEBUG4, "bootstrap relation created");
 					}
 					else
@@ -209,7 +212,8 @@ Boot_CreateStmt:
 													  true,
 													  0,
 													  ONCOMMIT_NOOP,
-													  true);
+													  true,
+													  NULL);
 						elog(DEBUG4, "relation created with oid %u", id);
 					}
 					do_end();
@@ -252,7 +256,7 @@ Boot_DeclareIndexStmt:
 								LexIDStr($8),
 								NULL,
 								$10,
-								NULL, NIL,
+								NULL, NIL, NIL,
 								false, false, false,
 								false, false, true, false);
 					do_end();
@@ -270,7 +274,7 @@ Boot_DeclareUniqueIndexStmt:
 								LexIDStr($9),
 								NULL,
 								$11,
-								NULL, NIL,
+								NULL, NIL, NIL,
 								true, false, false,
 								false, false, true, false);
 					do_end();
