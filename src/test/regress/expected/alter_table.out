@@ -342,9 +342,11 @@ alter table atacc3 inherit atacc2;
 alter table atacc3 inherit atacc2;
 ERROR:  inherited relation "atacc2" duplicated
 alter table atacc2 inherit atacc3;
-ERROR:  circular inheritance structure found, "atacc3" is already a child of "atacc2"
+ERROR:  circular inheritance structure found
+DETAIL:  "atacc3" is already a child of "atacc2".
 alter table atacc2 inherit atacc2;
-ERROR:  circular inheritance structure found, "atacc2" is already a child of "atacc2"
+ERROR:  circular inheritance structure found
+DETAIL:  "atacc2" is already a child of "atacc2".
 -- test that we really are a child now (should see 4 not 3 and cascade should go through)
 select test2 from atacc2;
  test2 
