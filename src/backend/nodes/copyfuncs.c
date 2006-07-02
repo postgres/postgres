@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.338 2006/07/01 18:38:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.339 2006/07/02 01:58:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1800,6 +1800,7 @@ _copyAlterTableCmd(AlterTableCmd *from)
 	COPY_SCALAR_FIELD(subtype);
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(def);
+	COPY_NODE_FIELD(parent);
 	COPY_NODE_FIELD(transform);
 	COPY_SCALAR_FIELD(behavior);
 

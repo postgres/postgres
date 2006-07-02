@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.57 2006/04/30 21:15:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.58 2006/07/02 01:58:36 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2061,27 +2061,47 @@ VALUES ('New York', NULL, NULL, 'NY');
   </para>
 
   <para>
-   Table inheritance can currently only be defined using the <xref
-   linkend="sql-createtable" endterm="sql-createtable-title">
-   statement.  The related statement <command>CREATE TABLE AS</command> does
-   not allow inheritance to be specified. There
-   is no way to add an inheritance link to make an existing table into
-   a child table. Similarly, there is no way to remove an inheritance
-   link from a child table once it has been defined, other than by dropping
-   the table completely.  A parent table cannot be dropped
-   while any of its children remain. If you wish to remove a table and
-   all of its descendants, one easy way is to drop the parent table with
-   the <literal>CASCADE</literal> option.
+   Table inheritance can be defined using the <xref linkend="sql-createtable"
+   endterm="sql-createtable-title"> statement using the
+   <command>INHERITS</command> keyword. However the related statement
+   <command>CREATE TABLE AS</command> does not allow inheritance to be
+   specified. 
+  </para>
+
+  <para>
+   Alternatively a table which is already defined in a compatible way can have
+   a new parent added with <xref linkend="sql-altertable"
+   endterm="sql-altertable-title"> using the <command>INHERIT</command>
+   subform. To do this the new child table must already include columns with
+   the same name and type as the columns of the parent. It must also include
+   check constraints with the same name and check expression as those of the
+   parent. Similarly an inheritance link can be removed from a child using the
+   <command>ALTER TABLE</command> using the <command>NO INHERIT</command>
+   subform.
+
+  <para>
+   One convenient way to create a compatible table to be a new child is using
+   the <command>LIKE</command> option of <command>CREATE TABLE</command>. This
+   creates a table with the same columns with the same type (however note the
+   caveat below regarding constraints). Alternatively a compatible table can
+   be created by first creating a new child using <command>CREATE
+   TABLE</command> then removing the inheritance link with <command>ALTER
+   TABLE</command>. </para>
+
+  <para>
+   A parent table cannot be dropped while any
+   of its children remain. If you wish to remove a table and all of its
+   descendants, one easy way is to drop the parent table with the
+   <literal>CASCADE</literal> option. Neither can columns of child tables be
+   dropped or altered if they are inherited from any parent tables.
   </para>
 
   <para>
    <xref linkend="sql-altertable" endterm="sql-altertable-title"> will
-   propagate any changes in column data definitions and check
-   constraints down the inheritance hierarchy.  Again, dropping
-   columns or constraints on parent tables is only possible when using
-   the <literal>CASCADE</literal> option. <command>ALTER
-   TABLE</command> follows the same rules for duplicate column merging
-   and rejection that apply during <command>CREATE TABLE</command>.
+   propagate any changes in column data definitions and check constraints down
+   the inheritance hierarchy. <command>ALTER TABLE</command> follows the same
+   rules for duplicate column merging and rejection that apply during
+   <command>CREATE TABLE</command>. 
   </para>
 
  <sect2 id="ddl-inherit-caveats">
@@ -2136,6 +2156,29 @@ VALUES ('New York', NULL, NULL, 'NY');
       not capital names.  There is no good workaround for this case.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      There is no convenient way to define a table compatible with a specific
+      parent including columns and constraints. The <command>LIKE</command>
+      option for <command>CREATE TABLE</command> does not copy constraints
+      which makes the tables it creates ineligible for being added using
+      <command>ALTER TABLE</command>. Matching check constraints must be added 
+      manually or the table must be created as a child immediately, then if
+      needed removed from the inheritance structure temporarily to be added
+      again later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If a table is ever removed from the inheritance structure using
+      <command>ALTER TABLE</command> then all its columns will be marked as
+      being locally defined. This means <command>DROP COLUMN</command> on the
+      parent table will never cascade to drop those columns on the child
+      table. They must be dropped manually.
+     </para>
+    </listitem>
    </itemizedlist>
 
    These deficiencies will probably be fixed in some future release,
@@ -2186,27 +2229,37 @@ VALUES ('New York', NULL, NULL, 'NY');
    <itemizedlist>
     <listitem>
      <para>
-      Query performance can be improved dramatically for certain kinds
-      of queries.
+      Query performance can be improved when partition constraints can be
+      combined with local indexes to reduce the number of records that need to
+      be accessed for a query. Whereas the alternative, adding those columns
+      to every index, increases space usage which can erase any
+      performance gain.
+     <para>
+
+     <para>
+      When most of the heavily accessed area of the table is in a single
+      partition or a small number of partitions. That partition and its
+      indexes are more likely to fit within memory than the index of the
+      entire table.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Update performance can be improved too, since each piece of the table
-      has indexes smaller than an index on the entire data set would be.
-      When an index no longer fits easily
-      in memory, both read and write operations on the index take
-      progressively more disk accesses.
+      When queries or updates access a large percentage of a a single
+      partition performance can be improved dramatically by taking advantage
+      of sequential disk access of a single partition instead of using an
+      index and random access reads across the whole table.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Bulk deletes may be accomplished by simply removing one of the
-      partitions, if that requirement is planned into the partitioning design.
-      <command>DROP TABLE</> is far faster than a bulk <command>DELETE</>,
-      to say nothing of the ensuing <command>VACUUM</> overhead.
+      Bulk loads and deletes may be accomplished by simply removing or adding
+      one of the partitions. <command>ALTER TABLE</> is far faster than a bulk
+      and takes the same amount of time regardless of the amount of data being
+      added or removed. It also entirely avoids the <command>VACUUM</command>
+      overhead caused by a bulk <command>delete</>.
      </para>
     </listitem>
 
@@ -2404,12 +2457,12 @@ CREATE TABLE measurement (
         Next we create one partition for each active month:
 
 <programlisting>
-CREATE TABLE measurement_yy04mm02 ( ) INHERITS (measurement);
-CREATE TABLE measurement_yy04mm03 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2004m02 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2004m03 ( ) INHERITS (measurement);
 ...
-CREATE TABLE measurement_yy05mm11 ( ) INHERITS (measurement);
-CREATE TABLE measurement_yy05mm12 ( ) INHERITS (measurement);
-CREATE TABLE measurement_yy06mm01 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2005m11 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2005m12 ( ) INHERITS (measurement);
+CREATE TABLE measurement_y2006m01 ( ) INHERITS (measurement);
 </programlisting>
 
         Each of the partitions are complete tables in their own right,
@@ -2431,20 +2484,20 @@ CREATE TABLE measurement_yy06mm01 ( ) INHERITS (measurement);
         table creation script becomes:
 
  <programlisting>
-CREATE TABLE measurement_yy04mm02 (
+CREATE TABLE measurement_y2004m02 (
     CHECK ( logdate >= DATE '2004-02-01' AND logdate < DATE '2004-03-01' )
 ) INHERITS (measurement);
-CREATE TABLE measurement_yy04mm03 (
+CREATE TABLE measurement_y2004m03 (
     CHECK ( logdate >= DATE '2004-03-01' AND logdate < DATE '2004-04-01' )
 ) INHERITS (measurement);
 ...
-CREATE TABLE measurement_yy05mm11 (
+CREATE TABLE measurement_y2005m11 (
     CHECK ( logdate >= DATE '2005-11-01' AND logdate < DATE '2005-12-01' )
 ) INHERITS (measurement);
-CREATE TABLE measurement_yy05mm12 (
+CREATE TABLE measurement_y2005m12 (
     CHECK ( logdate >= DATE '2005-12-01' AND logdate < DATE '2006-01-01' )
 ) INHERITS (measurement);
-CREATE TABLE measurement_yy06mm01 (
+CREATE TABLE measurement_y2006m01 (
     CHECK ( logdate >= DATE '2006-01-01' AND logdate < DATE '2006-02-01' )
 ) INHERITS (measurement);
 </programlisting>
@@ -2456,12 +2509,12 @@ CREATE TABLE measurement_yy06mm01 (
         We probably need indexes on the key columns too:
 
  <programlisting>
-CREATE INDEX measurement_yy04mm02_logdate ON measurement_yy04mm02 (logdate);
-CREATE INDEX measurement_yy04mm03_logdate ON measurement_yy04mm03 (logdate);
+CREATE INDEX measurement_y2004m02_logdate ON measurement_y2004m02 (logdate);
+CREATE INDEX measurement_y2004m03_logdate ON measurement_y2004m03 (logdate);
 ...
-CREATE INDEX measurement_yy05mm11_logdate ON measurement_yy05mm11 (logdate);
-CREATE INDEX measurement_yy05mm12_logdate ON measurement_yy05mm12 (logdate);
-CREATE INDEX measurement_yy06mm01_logdate ON measurement_yy06mm01 (logdate);
+CREATE INDEX measurement_y2005m11_logdate ON measurement_y2005m11 (logdate);
+CREATE INDEX measurement_y2005m12_logdate ON measurement_y2005m12 (logdate);
+CREATE INDEX measurement_y2006m01_logdate ON measurement_y2006m01 (logdate);
 </programlisting>
 
         We choose not to add further indexes at this time.
@@ -2479,7 +2532,7 @@ CREATE INDEX measurement_yy06mm01_logdate ON measurement_yy06mm01 (logdate);
 CREATE OR REPLACE RULE measurement_current_partition AS
 ON INSERT TO measurement
 DO INSTEAD
-    INSERT INTO measurement_yy06mm01 VALUES ( NEW.city_id,
+    INSERT INTO measurement_y2006m01 VALUES ( NEW.city_id,
                                               NEW.logdate,
                                               NEW.peaktemp,
                                               NEW.unitsales );
@@ -2490,28 +2543,28 @@ DO INSTEAD
         could do this with a more complex set of rules as shown below.
 
 <programlisting>
-CREATE RULE measurement_insert_yy04mm02 AS
+CREATE RULE measurement_insert_y2004m02 AS
 ON INSERT TO measurement WHERE
     ( logdate >= DATE '2004-02-01' AND logdate < DATE '2004-03-01' )
 DO INSTEAD
-    INSERT INTO measurement_yy04mm02 VALUES ( NEW.city_id,
+    INSERT INTO measurement_y2004m02 VALUES ( NEW.city_id,
                                               NEW.logdate,
                                               NEW.peaktemp,
                                               NEW.unitsales );
 ...
-CREATE RULE measurement_insert_yy05mm12 AS
+CREATE RULE measurement_insert_y2005m12 AS
 ON INSERT TO measurement WHERE
     ( logdate >= DATE '2005-12-01' AND logdate < DATE '2006-01-01' )
 DO INSTEAD
-    INSERT INTO measurement_yy05mm12 VALUES ( NEW.city_id,
+    INSERT INTO measurement_y2005m12 VALUES ( NEW.city_id,
                                               NEW.logdate,
                                               NEW.peaktemp,
                                               NEW.unitsales );
-CREATE RULE measurement_insert_yy06mm01 AS
+CREATE RULE measurement_insert_y2006m01 AS
 ON INSERT TO measurement WHERE
     ( logdate >= DATE '2006-01-01' AND logdate < DATE '2006-02-01' )
 DO INSTEAD
-    INSERT INTO measurement_yy06mm01 VALUES ( NEW.city_id,
+    INSERT INTO measurement_y2006m01 VALUES ( NEW.city_id,
                                               NEW.logdate,
                                               NEW.peaktemp,
                                               NEW.unitsales );
@@ -2522,6 +2575,44 @@ DO INSTEAD
         constraint for its partition.
        </para>
       </listitem>
+
+      <listitem>
+       <para>
+        When the time comes to archive and remove the old data we first remove
+        it from the production table using:
+
+<programlisting>
+ALTER TABLE measurement_y2003mm02 NO INHERIT measurement
+</programlisting>
+
+        Then we can perform any sort of data modification necessary prior to
+        archiving without impacting the data viewed by the production system.
+        This could include, for example, deleting or compressing out redundant
+        data.
+       </para>
+      </listitem>
+      <listitem>
+      <para>
+
+       Similarly we can a new partition to handle new data. We can either
+       create an empty partition as the original partitions were created
+       above, or for some applications it's necessary to bulk load and clean
+       data for the new partition. If that operation involves multiple steps
+       by different processes it can be helpful to work with it in a fresh
+       table outside of the master partitioned table until it's ready to be
+       loaded:
+
+<programlisting>
+CREATE TABLE measurement_y2006m02 (LIKE measurement WITH DEFAULTS);
+\COPY measurement_y2006m02 FROM 'measurement_y2006m02'
+UPDATE ...
+ALTER TABLE measurement_y2006m02 ADD CONSTRAINT y2006m02 CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt DATE '2006-03-01' );
+ALTER TABLE measurement_y2006m02 INHERIT MEASUREMENT;
+</programlisting>
+
+      </para>
+      </listitem>
+
      </orderedlist>
     </para>
 
@@ -2555,6 +2646,16 @@ DO INSTEAD
       using a set of rules as suggested above.)
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      When using the <literal>LIKE</> option above to create new partitions
+      check constraints are not copied from the parent. If there are any check
+      constraints defined for the parent they must be manually created in new
+      partitions before <command>ALTER TABLE</command> will allow them to be
+      added.
+     </para>
+    </listitem>
    </itemizedlist>
    </para>
 
@@ -2564,12 +2665,12 @@ DO INSTEAD
 
 <programlisting>
 CREATE VIEW measurement AS
-          SELECT * FROM measurement_yy04mm02
-UNION ALL SELECT * FROM measurement_yy04mm03
+          SELECT * FROM measurement_y2004m02
+UNION ALL SELECT * FROM measurement_y2004m03
 ...
-UNION ALL SELECT * FROM measurement_yy05mm11
-UNION ALL SELECT * FROM measurement_yy05mm12
-UNION ALL SELECT * FROM measurement_yy06mm01;
+UNION ALL SELECT * FROM measurement_y2005m11
+UNION ALL SELECT * FROM measurement_y2005m12
+UNION ALL SELECT * FROM measurement_y2006m01;
 </programlisting>
 
     However, the need to
@@ -2619,14 +2720,14 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
    ->  Append  (cost=0.00..151.88 rows=2715 width=0)
          ->  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
                Filter: (logdate >= '2006-01-01'::date)
-         ->  Seq Scan on measurement_yy04mm02 measurement  (cost=0.00..30.38 rows=543 width=0)
+         ->  Seq Scan on measurement_y2004m02 measurement  (cost=0.00..30.38 rows=543 width=0)
                Filter: (logdate >= '2006-01-01'::date)
-         ->  Seq Scan on measurement_yy04mm03 measurement  (cost=0.00..30.38 rows=543 width=0)
+         ->  Seq Scan on measurement_y2004m03 measurement  (cost=0.00..30.38 rows=543 width=0)
                Filter: (logdate >= '2006-01-01'::date)
 ...
-         ->  Seq Scan on measurement_yy05mm12 measurement  (cost=0.00..30.38 rows=543 width=0)
+         ->  Seq Scan on measurement_y2005m12 measurement  (cost=0.00..30.38 rows=543 width=0)
                Filter: (logdate >= '2006-01-01'::date)
-         ->  Seq Scan on measurement_yy06mm01 measurement  (cost=0.00..30.38 rows=543 width=0)
+         ->  Seq Scan on measurement_y2006m01 measurement  (cost=0.00..30.38 rows=543 width=0)
                Filter: (logdate >= '2006-01-01'::date)
 </programlisting>
 
@@ -2645,7 +2746,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
    ->  Append  (cost=0.00..60.75 rows=1086 width=0)
          ->  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
                Filter: (logdate >= '2006-01-01'::date)
-         ->  Seq Scan on measurement_yy06mm01 measurement  (cost=0.00..30.38 rows=543 width=0)
+         ->  Seq Scan on measurement_y2006m01 measurement  (cost=0.00..30.38 rows=543 width=0)
                Filter: (logdate >= '2006-01-01'::date)
 </programlisting>
    </para>

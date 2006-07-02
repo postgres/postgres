@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.188 2006/06/27 18:35:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.189 2006/07/02 01:58:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,8 +159,12 @@ typedef struct NewColumnValue
 static void truncate_check_rel(Relation rel);
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, int *supOidCount);
+static void MergeConstraintsIntoExisting(Relation rel, Relation relation);
+static void MergeAttributesIntoExisting(Relation rel, Relation relation);
 static bool change_varattnos_walker(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
+static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
+					int16 seqNumber, Relation catalogRelation);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static bool needs_toast_table(Relation rel);
@@ -246,6 +250,8 @@ static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace);
 static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
 						   bool enable, bool skip_system);
+static void ATExecAddInherits(Relation rel, RangeVar *parent);
+static void ATExecDropInherits(Relation rel, RangeVar *parent);
 static void copy_relation_data(Relation rel, SMgrRelation dst);
 static void update_ri_trigger_args(Oid relid,
 					   const char *oldname,
@@ -1195,10 +1201,8 @@ static void
 StoreCatalogInheritance(Oid relationId, List *supers)
 {
 	Relation	relation;
-	TupleDesc	desc;
 	int16		seqNumber;
 	ListCell   *entry;
-	HeapTuple	tuple;
 
 	/*
 	 * sanity checks
@@ -1218,16 +1222,26 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	 * anymore, there's no need to look for indirect ancestors.)
 	 */
 	relation = heap_open(InheritsRelationId, RowExclusiveLock);
-	desc = RelationGetDescr(relation);
 
 	seqNumber = 1;
 	foreach(entry, supers)
 	{
-		Oid			parentOid = lfirst_oid(entry);
+		StoreCatalogInheritance1(relationId, lfirst_oid(entry), seqNumber, relation);
+		seqNumber += 1;
+	}
+
+	heap_close(relation, RowExclusiveLock);
+}
+
+static void
+StoreCatalogInheritance1(Oid relationId, Oid parentOid, int16 seqNumber, Relation relation) 
+{
 		Datum		datum[Natts_pg_inherits];
 		char		nullarr[Natts_pg_inherits];
 		ObjectAddress childobject,
 					parentobject;
+		HeapTuple	tuple;
+		TupleDesc desc = RelationGetDescr(relation);
 
 		datum[0] = ObjectIdGetDatum(relationId);		/* inhrel */
 		datum[1] = ObjectIdGetDatum(parentOid); /* inhparent */
@@ -1262,10 +1276,6 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		 */
 		setRelhassubclassInRelation(parentOid, true);
 
-		seqNumber += 1;
-	}
-
-	heap_close(relation, RowExclusiveLock);
 }
 
 /*
@@ -2092,6 +2102,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DisableTrig:	/* DISABLE TRIGGER variants */
 		case AT_DisableTrigAll:
 		case AT_DisableTrigUser:
+		case AT_AddInherits:
+		case AT_DropInherits:
 			ATSimplePermissions(rel, false);
 			/* These commands never recurse */
 			/* No command-specific prep needed */
@@ -2271,6 +2283,12 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			break;
 		case AT_DisableTrigUser:		/* DISABLE TRIGGER USER */
 			ATExecEnableDisableTrigger(rel, NULL, false, true);
+			break;
+		case AT_DropInherits:
+			ATExecDropInherits(rel, cmd->parent);
+			break;
+		case AT_AddInherits:
+			ATExecAddInherits(rel, cmd->parent);
 			break;
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
@@ -5921,6 +5939,488 @@ ATExecEnableDisableTrigger(Relation rel, char *trigname,
 {
 	EnableDisableTrigger(rel, trigname, enable, skip_system);
 }
+
+static char *
+decompile_conbin(HeapTuple contuple, TupleDesc tupledesc) 
+{
+	Form_pg_constraint con = (Form_pg_constraint)(GETSTRUCT(contuple));
+	bool isnull;
+	Datum d;
+
+	d = fastgetattr(contuple, Anum_pg_constraint_conbin, tupledesc, &isnull);
+	if (isnull)
+		elog(ERROR, "conbin is null for constraint \"%s\"", NameStr(con->conname));
+	d = DirectFunctionCall2(pg_get_expr, d, ObjectIdGetDatum(con->conrelid));
+	return DatumGetCString(DirectFunctionCall1(textout,d));
+}
+
+
+/* ALTER TABLE INHERIT */
+
+/* Add a parent to the child's parents. This verifies that all the columns and
+ * check constraints of the parent appear in the child and that they have the
+ * same data type and expressions.
+ */
+
+static void
+ATExecAddInherits(Relation rel, RangeVar *parent)
+{
+	Relation	relation,
+				catalogRelation;
+	SysScanDesc scan;
+	ScanKeyData key;
+	HeapTuple	inheritsTuple;
+	int4		inhseqno;
+	List	   *children;
+
+
+	/* XXX is this enough locking? */
+	relation = heap_openrv(parent, AccessShareLock);
+
+	/*
+	 * Must be owner of both parent and child -- child is taken care of by
+	 * ATSimplePermissions call in ATPrepCmd
+	 */
+	ATSimplePermissions(relation, false);
+
+	/* Permanent rels cannot inherit from temporary ones */
+	if (!isTempNamespace(RelationGetNamespace(rel)) &&
+		isTempNamespace(RelationGetNamespace(relation)))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot inherit from temporary relation \"%s\"",
+						parent->relname)));
+
+	/* If parent has OIDs then all children must have OIDs */
+	if (relation->rd_rel->relhasoids && !rel->rd_rel->relhasoids)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs",
+						RelationGetRelationName(rel), parent->relname)));
+
+	/*
+	 * Reject duplications in the list of parents. We scan through the list of
+	 * parents in pg_inherit and keep track of the first open inhseqno slot
+	 * found to use for the new parent.
+	 */
+	catalogRelation = heap_open(InheritsRelationId, RowExclusiveLock);
+	ScanKeyInit(&key,
+				Anum_pg_inherits_inhrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId,
+				true, SnapshotNow, 1, &key);
+	inhseqno = 0;				/* inhseqno sequences are supposed to start at
+								 * 1 */
+	while (HeapTupleIsValid(inheritsTuple = systable_getnext(scan)))
+	{
+		Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inheritsTuple);
+
+		if (inh->inhparent == RelationGetRelid(relation))
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_TABLE),
+					 errmsg("inherited relation \"%s\" duplicated",
+							parent->relname)));
+		if (inh->inhseqno == inhseqno + 1)
+			inhseqno = inh->inhseqno;
+	}
+	systable_endscan(scan);
+	heap_close(catalogRelation, RowExclusiveLock);
+
+	/*
+	 * If the new parent is found in our list of inheritors we have a circular
+	 * structure
+	 */
+
+	/* this routine is actually in the planner */
+	children = find_all_inheritors(RelationGetRelid(rel));
+
+	if (list_member_oid(children, RelationGetRelid(relation)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_TABLE),
+				 errmsg("circular inheritance structure found, \"%s\" is already a child of \"%s\"",
+						parent->relname, RelationGetRelationName(rel))));
+
+
+	/* Match up the columns and bump attinhcount and attislocal */
+	MergeAttributesIntoExisting(rel, relation);
+
+	/* Match up the constraints and make sure they're present in child */
+	MergeConstraintsIntoExisting(rel, relation);
+
+	/*
+	 * Use this refactored part of StoreCatalogInheritance which CREATE TABLE
+	 * uses to add the pg_inherit line
+	 */
+	catalogRelation = heap_open(InheritsRelationId, RowExclusiveLock);
+	StoreCatalogInheritance1(RelationGetRelid(rel), RelationGetRelid(relation),
+			inhseqno + 1, catalogRelation);
+	heap_close(catalogRelation, RowExclusiveLock);
+
+	heap_close(relation, AccessShareLock);
+}
+
+/*
+ * Check columns in child table match up with columns in parent
+ *
+ * Called by ATExecAddInherits
+ *
+ * Currently all columns must be found in child. Missing columns are an error.
+ * One day we might consider creating new columns like CREATE TABLE does.
+ *
+ * The data type must match perfectly, if the parent column is NOT NULL then
+ * the child table must be as well. Defaults are ignored however.
+ *
+ */
+
+static void
+MergeAttributesIntoExisting(Relation rel, Relation relation)
+{
+	Relation	attrdesc;
+	AttrNumber	parent_attno,
+				child_attno;
+	TupleDesc	tupleDesc;
+	TupleConstr *constr;
+	HeapTuple	tuple;
+
+	child_attno = RelationGetNumberOfAttributes(rel);
+
+	tupleDesc = RelationGetDescr(relation);
+	constr = tupleDesc->constr;
+
+	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
+		 parent_attno++)
+	{
+		Form_pg_attribute attribute = tupleDesc->attrs[parent_attno - 1];
+		char	   *attributeName = NameStr(attribute->attname);
+
+		/* Ignore dropped columns in the parent. */
+		if (attribute->attisdropped)
+			continue;
+
+		/* Does it conflict with an existing column? */
+		attrdesc = heap_open(AttributeRelationId, RowExclusiveLock);
+
+		tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), attributeName);
+		if (HeapTupleIsValid(tuple))
+		{
+			/*
+			 * Yes, try to merge the two column definitions. They must have
+			 * the same type and typmod.
+			 */
+			Form_pg_attribute childatt = (Form_pg_attribute) GETSTRUCT(tuple);
+
+			if (attribute->atttypid != childatt->atttypid ||
+				attribute->atttypmod != childatt->atttypmod ||
+				(attribute->attnotnull && !childatt->attnotnull))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("child table \"%s\" has different type for column \"%s\"",
+				RelationGetRelationName(rel), NameStr(attribute->attname))));
+
+			childatt->attinhcount++;
+			simple_heap_update(attrdesc, &tuple->t_self, tuple);
+			/* XXX strength reduce open indexes to outside loop? */
+			CatalogUpdateIndexes(attrdesc, tuple);
+			heap_freetuple(tuple);
+
+			/*
+			 * We don't touch default at all since we're not making any other
+			 * DDL changes to the child
+			 */
+		}
+		else
+		{
+			/*
+			 * No, create a new inherited column
+			 *
+			 * Creating inherited columns in this case seems to be unpopular.
+			 * In the common use case of partitioned tables it's a foot-gun.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("child table missing column \"%s\"",
+							NameStr(attribute->attname))));
+		}
+		heap_close(attrdesc, RowExclusiveLock);
+	}
+
+}
+
+/*
+ * Check constraints in child table match up with constraints in parent
+ *
+ * Called by ATExecAddInherits
+ *
+ * Currently all constraints in parent must be present in the child. One day we
+ * may consider adding new constraints like CREATE TABLE does. We may also want
+ * to allow an optional flag on parent table constraints indicating they are
+ * intended to ONLY apply to the master table, not to the children. That would
+ * make it possible to ensure no records are mistakenly inserted into the
+ * master in partitioned tables rather than the appropriate child.
+ *
+ * XXX this is O(n^2) which may be issue with tables with hundreds of
+ * constraints. As long as tables have more like 10 constraints it shouldn't be
+ * an issue though. Even 100 constraints ought not be the end of the world.
+ */
+
+static void
+MergeConstraintsIntoExisting(Relation rel, Relation relation)
+{
+	Relation	catalogRelation;
+	TupleDesc	tupleDesc;
+	SysScanDesc scan;
+	ScanKeyData key;
+	HeapTuple	constraintTuple;
+	ListCell   *elem;
+	List	   *constraints;
+
+	/* First gather up the child's constraint definitions */
+	catalogRelation = heap_open(ConstraintRelationId, AccessShareLock);
+	tupleDesc = RelationGetDescr(catalogRelation);
+
+	ScanKeyInit(&key,
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber,
+				F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+	scan = systable_beginscan(catalogRelation, ConstraintRelidIndexId,
+				true, SnapshotNow, 1, &key);
+	constraints = NIL;
+
+	while (HeapTupleIsValid(constraintTuple = systable_getnext(scan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) (GETSTRUCT(constraintTuple));
+
+		if (con->contype != CONSTRAINT_CHECK)
+			continue;
+		/* XXX Do I need the copytuple here? */
+		constraints = lappend(constraints, heap_copytuple(constraintTuple));
+	}
+	systable_endscan(scan);
+
+	/* Then loop through the parent's constraints looking for them in the list */
+	ScanKeyInit(&key,
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber,
+				F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
+	scan = systable_beginscan(catalogRelation, ConstraintRelidIndexId, true,
+				SnapshotNow, 1, &key);
+	while (HeapTupleIsValid(constraintTuple = systable_getnext(scan)))
+	{
+		bool		found = false;
+		Form_pg_constraint parent_con = (Form_pg_constraint) (GETSTRUCT(constraintTuple));
+		Form_pg_constraint child_con = NULL;
+		HeapTuple	child_contuple = NULL;
+
+		if (parent_con->contype != CONSTRAINT_CHECK)
+			continue;
+
+		foreach(elem, constraints)
+		{
+			child_contuple = lfirst(elem);
+			child_con = (Form_pg_constraint) (GETSTRUCT(child_contuple));
+			if (!strcmp(NameStr(parent_con->conname),
+						NameStr(child_con->conname)))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("child table missing constraint matching parent table constraint \"%s\"",
+							NameStr(parent_con->conname))));
+
+		if (parent_con->condeferrable != child_con->condeferrable ||
+			parent_con->condeferred != child_con->condeferred ||
+			parent_con->contypid != child_con->contypid ||
+			strcmp(decompile_conbin(constraintTuple, tupleDesc),
+				   decompile_conbin(child_contuple, tupleDesc)))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("constraint definition for CHECK constraint \"%s\" doesn't match",
+							NameStr(parent_con->conname))));
+
+		/*
+		 * TODO: add conislocal,coninhcount to constraints. This is where we
+		 * would have to bump them just like attributes
+		 */
+	}
+	systable_endscan(scan);
+	heap_close(catalogRelation, AccessShareLock);
+}
+
+/* ALTER TABLE NO INHERIT */
+
+/* Drop a parent from the child's parents. This just adjusts the attinhcount
+ * and attislocal of the columns and removes the pg_inherit and pg_depend
+ * entries.
+ *
+ * If attinhcount goes to 0 then attislocal gets set to true. If it goes back up
+ * attislocal stays 0 which means if a child is ever removed from a parent then
+ * its columns will never be automatically dropped which may surprise. But at
+ * least we'll never surprise by dropping columns someone isn't expecting to be
+ * dropped which would actually mean data loss.
+ */
+
+static void
+ATExecDropInherits(Relation rel, RangeVar *parent)
+{
+
+
+	Relation	catalogRelation;
+	SysScanDesc scan;
+	ScanKeyData key[2];
+	HeapTuple	inheritsTuple,
+				attributeTuple,
+				depTuple;
+	Oid			inhparent;
+	Oid			dropparent;
+	int			found = false;
+
+	/*
+	 * Get the OID of parent -- if no schema is specified use the regular
+	 * search path and only drop the one table that's found. We could try to
+	 * be clever and look at each parent and see if it matches but that would
+	 * be inconsistent with other operations I think.
+	 */
+
+	Assert(rel);
+	Assert(parent);
+
+	dropparent = RangeVarGetRelid(parent, false);
+
+	/* Search through the direct parents of rel looking for dropparent oid */
+
+	catalogRelation = heap_open(InheritsRelationId, RowExclusiveLock);
+	ScanKeyInit(key,
+				Anum_pg_inherits_inhrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndexId, true, SnapshotNow, 1, key);
+	while (!found && HeapTupleIsValid(inheritsTuple = systable_getnext(scan)))
+	{
+		inhparent = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhparent;
+		if (inhparent == dropparent)
+		{
+			simple_heap_delete(catalogRelation, &inheritsTuple->t_self);
+			found = true;
+		}
+	}
+	systable_endscan(scan);
+	heap_close(catalogRelation, RowExclusiveLock);
+
+
+	if (!found)
+	{
+		if (parent->schemaname)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+			  errmsg("relation \"%s.%s\" is not a parent of relation \"%s\"",
+					 parent->schemaname, parent->relname, RelationGetRelationName(rel))));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation \"%s\" is not a parent of relation \"%s\"",
+						parent->relname, RelationGetRelationName(rel))));
+	}
+
+	/* Search through columns looking for matching columns from parent table */
+
+	catalogRelation = heap_open(AttributeRelationId, RowExclusiveLock);
+	ScanKeyInit(key,
+				Anum_pg_attribute_attrelid,
+				BTEqualStrategyNumber,
+				F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+	scan = systable_beginscan(catalogRelation, AttributeRelidNumIndexId,
+				true, SnapshotNow, 1, key);
+	while (HeapTupleIsValid(attributeTuple = systable_getnext(scan)))
+	{
+		Form_pg_attribute att = ((Form_pg_attribute) GETSTRUCT(attributeTuple));
+
+		/*
+		 * Not an inherited column at all (do NOT use islocal for this
+		 * test--it can be true for inherited columns)
+		 */
+		if (att->attinhcount == 0)
+			continue;
+		if (att->attisdropped)
+			continue;
+
+		if (SearchSysCacheExistsAttName(dropparent, NameStr(att->attname)))
+		{
+			/* Decrement inhcount and possibly set islocal to 1 */
+			HeapTuple	copyTuple = heap_copytuple(attributeTuple);
+			Form_pg_attribute copy_att = ((Form_pg_attribute) GETSTRUCT(copyTuple));
+
+			copy_att->attinhcount--;
+			if (copy_att->attinhcount == 0)
+				copy_att->attislocal = true;
+
+			simple_heap_update(catalogRelation, &copyTuple->t_self, copyTuple);
+
+			/*
+			 * XXX "Avoid using it for multiple tuples, since opening the
+			 * indexes and building the index info structures is moderately
+			 * expensive." Perhaps this can be moved outside the loop or else
+			 * at least the CatalogOpenIndexes/CatalogCloseIndexes moved
+			 * outside the loop but when I try that it seg faults?!
+			 */
+			CatalogUpdateIndexes(catalogRelation, copyTuple);
+			heap_freetuple(copyTuple);
+		}
+	}
+	systable_endscan(scan);
+	heap_close(catalogRelation, RowExclusiveLock);
+
+
+	/*
+	 * Drop the dependency
+	 *
+	 * There's no convenient way to do this, so go trawling through pg_depend
+	 */
+
+	catalogRelation = heap_open(DependRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				RelationRelationId);
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+
+	scan = systable_beginscan(catalogRelation, DependDependerIndexId, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid(depTuple = systable_getnext(scan)))
+	{
+		Form_pg_depend dep = (Form_pg_depend) GETSTRUCT(depTuple);
+
+		if (dep->refclassid == RelationRelationId &&
+			dep->refobjid == dropparent &&
+			dep->deptype == DEPENDENCY_NORMAL)
+		{
+			/*
+			 * Only delete a single dependency -- there shouldn't be more but
+			 * just in case...
+			 */
+			simple_heap_delete(catalogRelation, &depTuple->t_self);
+
+			break;
+		}
+	}
+	systable_endscan(scan);
+
+	heap_close(catalogRelation, RowExclusiveLock);
+}
+
 
 /*
  * ALTER TABLE CREATE TOAST TABLE

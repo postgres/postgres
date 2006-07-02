@@ -336,6 +336,40 @@ drop table atacc3;
 drop table atacc2;
 drop table atacc1;
 
+-- same things with one created with INHERIT
+create table atacc1 (test int);
+create table atacc2 (test2 int);
+create table atacc3 (test3 int) inherits (atacc1, atacc2);
+alter table atacc3 no inherit atacc2;
+-- fail
+alter table atacc3 no inherit atacc2;
+-- make sure it really isn't a child
+insert into atacc3 (test2) values (3);
+select test2 from atacc2;
+-- fail due to missing constraint
+alter table atacc2 add constraint foo check (test2>0);
+alter table atacc3 inherit atacc2;
+-- fail due to missing column
+alter table atacc3 rename test2 to testx;
+alter table atacc3 inherit atacc2;
+-- fail due to mismatched data type
+alter table atacc3 add test2 bool;
+alter table atacc3 add inherit atacc2;
+alter table atacc3 drop test2;
+-- succeed
+alter table atacc3 add test2 int;
+update atacc3 set test2 = 4 where test2 is null;
+alter table atacc3 add constraint foo check (test2>0);
+alter table atacc3 inherit atacc2;
+-- fail due to duplicates and circular inheritance
+alter table atacc3 inherit atacc2;
+alter table atacc2 inherit atacc3;
+alter table atacc2 inherit atacc2;
+-- test that we really are a child now (should see 4 not 3 and cascade should go through)
+select test2 from atacc2;
+drop table atacc2 cascade;
+drop table atacc1;
+
 -- let's try only to add only to the parent
 
 create table atacc1 (test int);

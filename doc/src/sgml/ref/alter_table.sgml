@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.84 2006/02/12 19:11:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.85 2006/07/02 01:58:36 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -46,6 +46,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
     SET WITHOUT CLUSTER
     SET WITHOUT OIDS
+    INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
+    NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable>
 </synopsis>
@@ -245,6 +247,52 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       Note that there is no variant of <command>ALTER TABLE</command>
       that allows OIDs to be restored to a table once they have been
       removed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
+    <listitem>
+     <para>
+
+      This form adds a new parent table to the table. This won't add new
+      columns to the child table, instead all columns of the parent table must
+      already exist in the child table. They must have matching data types,
+      and if they have <literal>NOT NULL</literal> constraints in the parent
+      then they must also have <literal>NOT NULL</literal> constraints in the
+      child.
+
+	  </para>
+	  <para>
+
+      There must also be matching table constraints for all
+      <literal>CHECK</literal> table constraints of the parent. Currently
+      <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
+      <literal>FOREIGN KEY</literal> constraints are ignored however this may
+      change in the future.
+
+	  </para>
+	  <para>
+
+      The easiest way to create a suitable table is to create a table using
+      <literal>INHERITS</literal> and then remove it via <literal>NO
+      INHERIT</literal>. Alternatively create a table using
+      <literal>LIKE</literal> however note that <literal>LIKE</literal> does
+      not create the necessary constraints.
+
+     </para>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
+    <listitem>
+     <para>
+	 This form removes a parent table from the list of parents of the table.
+	 Queries against the parent table will no longer include records drawn
+	 from the target table.
      </para>
     </listitem>
    </varlistentry>
