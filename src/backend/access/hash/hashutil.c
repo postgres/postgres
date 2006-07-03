@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.48 2006/07/02 02:23:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.49 2006/07/03 22:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
+#include "access/reloptions.h"
 #include "executor/execdebug.h"
 
 
@@ -175,14 +176,16 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 }
 
 Datum
-hashoption(PG_FUNCTION_ARGS)
+hashoptions(PG_FUNCTION_ARGS)
 {
-#define HASH_MIN_FILLFACTOR			50
-#define HASH_DEFAULT_FILLFACTOR		75
+	Datum		reloptions = PG_GETARG_DATUM(0);
+	bool		validate = PG_GETARG_BOOL(1);
+	bytea	   *result;
 
-	ArrayType	   *options = (ArrayType *) PG_GETARG_POINTER(0);
-
-	/* Use index common routine. */
-	PG_RETURN_BYTEA_P(genam_option(options,
-		HASH_MIN_FILLFACTOR, HASH_DEFAULT_FILLFACTOR));
+	result = default_reloptions(reloptions, validate,
+								HASH_MIN_FILLFACTOR,
+								HASH_DEFAULT_FILLFACTOR);
+	if (result)
+		PG_RETURN_BYTEA_P(result);
+	PG_RETURN_NULL();
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.70 2006/07/02 02:23:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.71 2006/07/03 22:45:39 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -167,6 +167,9 @@ typedef HashMetaPageData *HashMetaPage;
 	 MAXALIGN(sizeof(HashPageOpaqueData)) - \
 	 sizeof(ItemIdData))
 
+#define HASH_MIN_FILLFACTOR			50
+#define HASH_DEFAULT_FILLFACTOR		75
+
 /*
  * Constants
  */
@@ -234,7 +237,7 @@ extern Datum hashmarkpos(PG_FUNCTION_ARGS);
 extern Datum hashrestrpos(PG_FUNCTION_ARGS);
 extern Datum hashbulkdelete(PG_FUNCTION_ARGS);
 extern Datum hashvacuumcleanup(PG_FUNCTION_ARGS);
-extern Datum hashoption(PG_FUNCTION_ARGS);
+extern Datum hashoptions(PG_FUNCTION_ARGS);
 
 /*
  * Datatype-specific hash functions in hashfunc.c.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.303 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.304 2006/07/03 22:45:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -44,24 +44,20 @@
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
-#include "commands/defrem.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
-#include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
-#include "utils/catcache.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
-#include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
@@ -71,7 +67,7 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					Oid new_rel_oid, Oid new_type_oid,
 					Oid relowner,
 					char relkind,
-					ArrayType *options);
+					Datum reloptions);
 static Oid AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
@@ -551,6 +547,80 @@ AddNewAttributeTuples(Oid new_rel_oid,
 }
 
 /* --------------------------------
+ *		InsertPgClassTuple
+ *
+ *		Construct and insert a new tuple in pg_class.
+ *
+ * Caller has already opened and locked pg_class.
+ * Tuple data is taken from new_rel_desc->rd_rel, except for the
+ * variable-width fields which are not present in a cached reldesc.
+ * We alway initialize relacl to NULL (i.e., default permissions),
+ * and reloptions is set to the passed-in text array (if any).
+ * --------------------------------
+ */
+void
+InsertPgClassTuple(Relation pg_class_desc,
+				   Relation new_rel_desc,
+				   Oid new_rel_oid,
+				   Datum reloptions)
+{
+	Form_pg_class rd_rel = new_rel_desc->rd_rel;
+	Datum		values[Natts_pg_class];
+	char		nulls[Natts_pg_class];
+	HeapTuple	tup;
+
+	/* This is a tad tedious, but way cleaner than what we used to do... */
+	memset(values, 0, sizeof(values));
+	memset(nulls, ' ', sizeof(nulls));
+
+	values[Anum_pg_class_relname - 1] = NameGetDatum(&rd_rel->relname);
+	values[Anum_pg_class_relnamespace - 1] = ObjectIdGetDatum(rd_rel->relnamespace);
+	values[Anum_pg_class_reltype - 1] = ObjectIdGetDatum(rd_rel->reltype);
+	values[Anum_pg_class_relowner - 1] = ObjectIdGetDatum(rd_rel->relowner);
+	values[Anum_pg_class_relam - 1] = ObjectIdGetDatum(rd_rel->relam);
+	values[Anum_pg_class_relfilenode - 1] = ObjectIdGetDatum(rd_rel->relfilenode);
+	values[Anum_pg_class_reltablespace - 1] = ObjectIdGetDatum(rd_rel->reltablespace);
+	values[Anum_pg_class_relpages - 1] = Int32GetDatum(rd_rel->relpages);
+	values[Anum_pg_class_reltuples - 1] = Float4GetDatum(rd_rel->reltuples);
+	values[Anum_pg_class_reltoastrelid - 1] = ObjectIdGetDatum(rd_rel->reltoastrelid);
+	values[Anum_pg_class_reltoastidxid - 1] = ObjectIdGetDatum(rd_rel->reltoastidxid);
+	values[Anum_pg_class_relhasindex - 1] = BoolGetDatum(rd_rel->relhasindex);
+	values[Anum_pg_class_relisshared - 1] = BoolGetDatum(rd_rel->relisshared);
+	values[Anum_pg_class_relkind - 1] = CharGetDatum(rd_rel->relkind);
+	values[Anum_pg_class_relnatts - 1] = Int16GetDatum(rd_rel->relnatts);
+	values[Anum_pg_class_relchecks - 1] = Int16GetDatum(rd_rel->relchecks);
+	values[Anum_pg_class_reltriggers - 1] = Int16GetDatum(rd_rel->reltriggers);
+	values[Anum_pg_class_relukeys - 1] = Int16GetDatum(rd_rel->relukeys);
+	values[Anum_pg_class_relfkeys - 1] = Int16GetDatum(rd_rel->relfkeys);
+	values[Anum_pg_class_relrefs - 1] = Int16GetDatum(rd_rel->relrefs);
+	values[Anum_pg_class_relhasoids - 1] = BoolGetDatum(rd_rel->relhasoids);
+	values[Anum_pg_class_relhaspkey - 1] = BoolGetDatum(rd_rel->relhaspkey);
+	values[Anum_pg_class_relhasrules - 1] = BoolGetDatum(rd_rel->relhasrules);
+	values[Anum_pg_class_relhassubclass - 1] = BoolGetDatum(rd_rel->relhassubclass);
+	/* start out with empty permissions */
+	nulls[Anum_pg_class_relacl - 1] = 'n';
+	if (reloptions != (Datum) 0)
+		values[Anum_pg_class_reloptions - 1] = reloptions;
+	else
+		nulls[Anum_pg_class_reloptions - 1] = 'n';
+
+	tup = heap_formtuple(RelationGetDescr(pg_class_desc), values, nulls);
+
+	/*
+	 * The new tuple must have the oid already chosen for the rel.  Sure
+	 * would be embarrassing to do this sort of thing in polite company.
+	 */
+	HeapTupleSetOid(tup, new_rel_oid);
+
+	/* finally insert the new tuple, update the indexes, and clean up */
+	simple_heap_insert(pg_class_desc, tup);
+
+	CatalogUpdateIndexes(pg_class_desc, tup);
+
+	heap_freetuple(tup);
+}
+
+/* --------------------------------
  *		AddNewRelationTuple
  *
  *		this registers the new relation in the catalogs by
@@ -564,10 +634,9 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Oid new_type_oid,
 					Oid relowner,
 					char relkind,
-					ArrayType *options)
+					Datum reloptions)
 {
 	Form_pg_class new_rel_reltup;
-	HeapTuple	tup;
 
 	/*
 	 * first we update some of the information in our uncataloged relation's
@@ -602,20 +671,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 
 	new_rel_desc->rd_att->tdtypeid = new_type_oid;
 
-	/* now form a tuple to add to pg_class */
-	tup = build_class_tuple(new_rel_reltup, options);
-
-	/* force tuple to have the desired OID */
-	HeapTupleSetOid(tup, new_rel_oid);
-
-	/*
-	 * finally insert the new tuple, update the indexes, and clean up.
-	 */
-	simple_heap_insert(pg_class_desc, tup);
-
-	CatalogUpdateIndexes(pg_class_desc, tup);
-
-	heap_freetuple(tup);
+	/* Now build and insert the tuple */
+	InsertPgClassTuple(pg_class_desc, new_rel_desc, new_rel_oid, reloptions);
 }
 
 
@@ -660,8 +717,6 @@ AddNewRelationType(const char *typeName,
  *		heap_create_with_catalog
  *
  *		creates a new cataloged relation.  see comments above.
- *
- *		if opaque is specified, it must be allocated in CacheMemoryContext.
  * --------------------------------
  */
 Oid
@@ -676,12 +731,11 @@ heap_create_with_catalog(const char *relname,
 						 bool oidislocal,
 						 int oidinhcount,
 						 OnCommitAction oncommit,
-						 bool allow_system_table_mods,
-						 ArrayType *options)
+						 Datum reloptions,
+						 bool allow_system_table_mods)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
-	bytea	   *new_rel_options;
 	Oid			new_type_oid;
 
 	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
@@ -697,13 +751,6 @@ heap_create_with_catalog(const char *relname,
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists", relname)));
-
-	/*
-	 * Parse options to check if option is valid.
-	 */
-	new_rel_options = heap_option(relkind, options);
-	Assert(!new_rel_options ||
-		GetMemoryChunkContext(new_rel_options) == CacheMemoryContext);
 
 	/*
 	 * Allocate an OID for the relation, unless we were told what to use.
@@ -728,7 +775,6 @@ heap_create_with_catalog(const char *relname,
 							   relkind,
 							   shared_relation,
 							   allow_system_table_mods);
-	new_rel_desc->rd_options = new_rel_options;
 
 	Assert(relid == RelationGetRelid(new_rel_desc));
 
@@ -757,7 +803,7 @@ heap_create_with_catalog(const char *relname,
 						new_type_oid,
 						ownerid,
 						relkind,
-						options);
+						reloptions);
 
 	/*
 	 * now add tuples to pg_attribute for the attributes in our new relation.

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.124 2006/06/03 02:53:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.125 2006/07/03 22:45:36 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -497,6 +497,13 @@
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Function to estimate cost of an index scan</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amoptions</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Function to parse and validate reloptions for an index</entry>
      </row>
 
     </tbody>
@@ -1641,6 +1648,15 @@
        <xref linkend="sql-grant" endterm="sql-grant-title"> and
        <xref linkend="sql-revoke" endterm="sql-revoke-title">
        for details
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>reloptions</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+       Access-method-specific options, as <quote>keyword=value</> strings
       </entry>
      </row>
     </tbody>

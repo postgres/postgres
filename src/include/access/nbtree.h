@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.99 2006/07/02 02:23:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.100 2006/07/03 22:45:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,13 @@ typedef struct BTMetaPageData
 	((PageGetPageSize(page) - \
 	  sizeof(PageHeaderData) - \
 	  MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
+
+/*
+ * Because of above, min fillfactor can't be less than 2/3rds; see notes in
+ * nbtsort.c before you change these!
+ */
+#define BTREE_MIN_FILLFACTOR		70
+#define BTREE_DEFAULT_FILLFACTOR	90
 
 /*
  *	Test whether two btree entries are "the same".
@@ -453,7 +460,7 @@ extern Datum btmarkpos(PG_FUNCTION_ARGS);
 extern Datum btrestrpos(PG_FUNCTION_ARGS);
 extern Datum btbulkdelete(PG_FUNCTION_ARGS);
 extern Datum btvacuumcleanup(PG_FUNCTION_ARGS);
-extern Datum btoption(PG_FUNCTION_ARGS);
+extern Datum btoptions(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions in nbtinsert.c

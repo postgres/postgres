@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.275 2006/07/02 05:17:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.276 2006/07/03 22:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -658,7 +658,6 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_NODE_FIELD(utilityStmt);
 	COMPARE_SCALAR_FIELD(resultRelation);
 	COMPARE_NODE_FIELD(into);
-	COMPARE_SCALAR_FIELD(intoHasOids);
 	COMPARE_NODE_FIELD(intoOptions);
 	COMPARE_SCALAR_FIELD(intoOnCommit);
 	COMPARE_STRING_FIELD(intoTableSpaceName);
@@ -1474,7 +1473,6 @@ _equalExecuteStmt(ExecuteStmt *a, ExecuteStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(into);
-	COMPARE_SCALAR_FIELD(into_has_oids);
 	COMPARE_NODE_FIELD(intoOptions);
 	COMPARE_SCALAR_FIELD(into_on_commit);
 	COMPARE_STRING_FIELD(into_tbl_space);

@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.71 2006/07/02 02:23:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.72 2006/07/03 22:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,8 +149,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/* Set threshold for interesting free space = average request size */
 	/* XXX should we scale it up or down?  Adjust vacuum.c too, if so */
 	vacrelstats->threshold = GetAvgFSMRequestSize(&onerel->rd_node);
-	if (vacrelstats->threshold < HeapGetPageFreeSpace(onerel))
-		vacrelstats->threshold = HeapGetPageFreeSpace(onerel);
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, ShareUpdateExclusiveLock, &nindexes, &Irel);

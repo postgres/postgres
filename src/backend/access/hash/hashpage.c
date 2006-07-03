@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.58 2006/07/02 02:23:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.59 2006/07/03 22:45:36 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -30,7 +30,6 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
-#include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "utils/lsyscache.h"
@@ -223,16 +222,17 @@ _hash_metapinit(Relation rel)
 			 RelationGetRelationName(rel));
 
 	/*
-	 * Determine the target fill factor (tuples per bucket) for this index.
-	 * The idea is to make the fill factor correspond to pages about 3/4ths
-	 * full.  We can compute it exactly if the index datatype is fixed-width,
-	 * but for var-width there's some guessing involved.
+	 * Determine the target fill factor (in tuples per bucket) for this index.
+	 * The idea is to make the fill factor correspond to pages about as full
+	 * as the user-settable fillfactor parameter says.  We can compute it
+	 * exactly if the index datatype is fixed-width, but for var-width there's
+	 * some guessing involved.
 	 */
 	data_width = get_typavgwidth(RelationGetDescr(rel)->attrs[0]->atttypid,
 								 RelationGetDescr(rel)->attrs[0]->atttypmod);
 	item_width = MAXALIGN(sizeof(IndexTupleData)) + MAXALIGN(data_width) +
 		sizeof(ItemIdData);		/* include the line pointer */
-	ffactor = BLCKSZ * IndexGetFillFactor(rel) / 100 / item_width;
+	ffactor = RelationGetTargetPageUsage(rel, HASH_DEFAULT_FILLFACTOR) / item_width;
 	/* keep to a sane range */
 	if (ffactor < 10)
 		ffactor = 10;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.67 2006/07/02 02:23:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.68 2006/07/03 22:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "access/itup.h"
 #include "catalog/pg_index.h"
 #include "nodes/execnodes.h"
-#include "utils/array.h"
 
 
 #define DEFAULT_INDEX_TYPE	"btree"
@@ -38,7 +37,7 @@ extern Oid index_create(Oid heapRelationId,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
 			 Oid *classObjectId,
-			 List *options,
+			 Datum reloptions,
 			 bool isprimary,
 			 bool istoast,
 			 bool isconstraint,
@@ -71,7 +70,5 @@ extern double IndexBuildHeapScan(Relation heapRelation,
 
 extern void reindex_index(Oid indexId);
 extern bool reindex_relation(Oid relid, bool toast_too);
-
-extern bytea *index_option(RegProcedure amoption, ArrayType *options);
 
 #endif   /* INDEX_H */

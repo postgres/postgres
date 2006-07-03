@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.83 2006/07/02 02:23:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.84 2006/07/03 22:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "catalog/pg_attribute.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_node.h"
-#include "utils/array.h"
 #include "utils/rel.h"
 
 
@@ -55,8 +54,8 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 bool oidislocal,
 						 int oidinhcount,
 						 OnCommitAction oncommit,
-						 bool allow_system_table_mods,
-						 ArrayType *options);
+						 Datum reloptions,
+						 bool allow_system_table_mods);
 
 extern void heap_drop_with_catalog(Oid relid);
 
@@ -65,6 +64,11 @@ extern void heap_truncate(List *relids);
 extern void heap_truncate_check_FKs(List *relations, bool tempTables);
 
 extern List *heap_truncate_find_FKs(List *relationIds);
+
+extern void InsertPgClassTuple(Relation pg_class_desc,
+				   Relation new_rel_desc,
+				   Oid new_rel_oid,
+				   Datum reloptions);
 
 extern List *AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.148 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.149 2006/07/03 22:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,7 +567,8 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 	Oid			OIDNewHeap;
 	Relation	OldHeap;
 	HeapTuple	tuple;
-	ArrayType  *options;
+	Datum		reloptions;
+	bool		isNull;
 
 	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
 	OldHeapDesc = RelationGetDescr(OldHeap);
@@ -584,19 +585,12 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(OIDOldHeap),
 						   0, 0, 0);
-	if (tuple)
-	{
-		Datum	datum;
-		bool	isNull;
-		datum = SysCacheGetAttr(RELOID, tuple,
-            Anum_pg_class_reloptions, &isNull);
-		options = isNull ? NULL : DatumGetArrayTypeP(datum);
-	}
-	else
-	{
-		/* should not happen */
-		options = NULL;
-	}
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u", OIDOldHeap);
+	reloptions = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions,
+								 &isNull);
+	if (isNull)
+		reloptions = (Datum) 0;
 
 	OIDNewHeap = heap_create_with_catalog(NewName,
 										  RelationGetNamespace(OldHeap),
@@ -609,8 +603,8 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 										  true,
 										  0,
 										  ONCOMMIT_NOOP,
-										  allowSystemTableMods,
-										  options);
+										  reloptions,
+										  allowSystemTableMods);
 
 	ReleaseSysCache(tuple);
 

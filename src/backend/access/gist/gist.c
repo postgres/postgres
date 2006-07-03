@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.140 2006/07/02 02:23:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.141 2006/07/03 22:45:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,9 +197,13 @@ gistbuildCallback(Relation index,
 	 * which locks the relation for write.	This is the right thing to do if
 	 * you're inserting single tups, but not when you're initializing the
 	 * whole index at once.
+	 *
+	 * In this path we respect the fillfactor setting, whereas insertions
+	 * after initial build do not.
 	 */
-	gistdoinsert(index, itup, IndexGetPageFreeSpace(index),
-		&buildstate->giststate);
+	gistdoinsert(index, itup,
+				 RelationGetTargetPageFreeSpace(index, GIST_DEFAULT_FILLFACTOR),
+				 &buildstate->giststate);
 
 	buildstate->indtuples += 1;
 	MemoryContextSwitchTo(oldCtx);
@@ -283,7 +287,6 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 	bool		is_splitted = false;
 	bool		is_leaf = (GistPageIsLeaf(state->stack->page)) ? true : false;
 
-
 	/*
 	 * if (!is_leaf) remove old key:
 	 * This node's key has been modified, either because a child split
@@ -294,14 +297,13 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 	 * setting up a one-element todelete array; in the split case, it's
 	 * handled implicitly because the tuple vector passed to gistSplit
 	 * won't include this tuple.
-	 */
-
-
-	/*
+	 *
 	 * XXX: If we want to change fillfactors between node and leaf,
 	 * fillfactor = (is_leaf ? state->leaf_fillfactor : state->node_fillfactor)
 	 */
-	if (gistnospace(state->stack->page, state->itup, state->ituplen, (is_leaf) ? InvalidOffsetNumber : state->stack->childoffnum, state->freespace))
+	if (gistnospace(state->stack->page, state->itup, state->ituplen,
+					is_leaf ? InvalidOffsetNumber : state->stack->childoffnum,
+					state->freespace))
 	{
 		/* no space for insertion */
 		IndexTuple *itvec;

@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.191 2006/07/02 05:17:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.192 2006/07/03 22:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/reloptions.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -61,6 +62,7 @@
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+
 
 /*
  * ON COMMIT action list
@@ -248,7 +250,7 @@ static void ATExecDropCluster(Relation rel);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 					char *tablespacename);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace);
-static void ATExecSetOptions(Relation rel, List *newOptions);
+static void ATExecSetRelOptions(Relation rel, List *defList, bool isReset);
 static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
 						   bool enable, bool skip_system);
 static void ATExecAddInherits(Relation rel, RangeVar *parent);
@@ -283,10 +285,10 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	bool		localHasOids;
 	int			parentOidCount;
 	List	   *rawDefaults;
+	Datum		reloptions;
 	ListCell   *listptr;
 	int			i;
 	AttrNumber	attnum;
-	ArrayType  *options;
 
 	/*
 	 * Truncate relname to appropriate length (probably a waste of time, as
@@ -338,6 +340,13 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		tablespaceId = GetDefaultTablespace();
 		/* note InvalidOid is OK in this case */
 	}
+
+	/*
+	 * Parse and validate reloptions, if any.
+	 */
+	reloptions = transformRelOptions((Datum) 0, stmt->options, true, false);
+
+	(void) heap_reloptions(relkind, reloptions, true);
 
 	/* Check permissions except when using database's default */
 	if (OidIsValid(tablespaceId))
@@ -428,7 +437,6 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		}
 	}
 
-	options = OptionBuild(NULL, stmt->options);
 	relationId = heap_create_with_catalog(relname,
 										  namespaceId,
 										  tablespaceId,
@@ -440,10 +448,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 										  localHasOids,
 										  parentOidCount,
 										  stmt->oncommit,
-										  allowSystemTableMods,
-										  options);
-	if (options)
-		pfree(options);
+										  reloptions,
+										  allowSystemTableMods);
 
 	StoreCatalogInheritance(relationId, inheritOids);
 
@@ -2103,7 +2109,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepSetTableSpace(tab, rel, cmd->name);
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
 			break;
-		case AT_SetOptions:		/* SET (...) */
+		case AT_SetRelOptions:		/* SET (...) */
+		case AT_ResetRelOptions:	/* RESET (...) */
 			ATSimplePermissionsRelationOrIndex(rel);
 			/* This command never recurses */
 			/* No command-specific prep needed */
@@ -2279,8 +2286,11 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			 * Nothing to do here; Phase 3 does the work
 			 */
 			break;
-		case AT_SetOptions:		/* SET (...) */
-			ATExecSetOptions(rel, (List *) cmd->def);
+		case AT_SetRelOptions:		/* SET (...) */
+			ATExecSetRelOptions(rel, (List *) cmd->def, false);
+			break;
+		case AT_ResetRelOptions:	/* RESET (...) */
+			ATExecSetRelOptions(rel, (List *) cmd->def, true);
 			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name, true, false);
@@ -5757,24 +5767,29 @@ ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel, char *tablespacename)
 }
 
 /*
- * ALTER TABLE/INDEX SET (...)
+ * ALTER TABLE/INDEX SET (...) or RESET (...)
  */
 static void
-ATExecSetOptions(Relation rel, List *newOptions)
+ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 {
 	Oid			relid;
 	Relation	pgclass;
 	HeapTuple	tuple;
+	HeapTuple	newtuple;
 	Datum		datum;
 	bool		isnull;
-	ArrayType  *mergedOptions;
-	bytea	   *options;
+	Datum		newOptions;
+	Datum		repl_val[Natts_pg_class];
+	char		repl_null[Natts_pg_class];
+	char		repl_repl[Natts_pg_class];
 
-	if (list_length(newOptions) == 0)
-		return; /* do nothing */
+	if (defList == NIL)
+		return;					/* nothing to do */
 
-	relid = RelationGetRelid(rel);
 	pgclass = heap_open(RelationRelationId, RowExclusiveLock);
+
+	/* Get the old reloptions */
+	relid = RelationGetRelid(rel);
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relid),
 						   0, 0, 0);
@@ -5783,59 +5798,54 @@ ATExecSetOptions(Relation rel, List *newOptions)
 
 	datum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_reloptions, &isnull);
 
-	mergedOptions = OptionBuild(
-		isnull ? NULL : DatumGetArrayTypeP(datum), newOptions);
+	/* Generate new proposed reloptions (text array) */
+	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
+									 defList, false, isReset);
 
+	/* Validate */
 	switch (rel->rd_rel->relkind)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
-			options = heap_option(rel->rd_rel->relkind, mergedOptions);
+			(void) heap_reloptions(rel->rd_rel->relkind, newOptions, true);
 			break;
 		case RELKIND_INDEX:
-			options = index_option(rel->rd_am->amoption, mergedOptions);
+			(void) index_reloptions(rel->rd_am->amoptions, newOptions, true);
 			break;
 		default:
-			elog(ERROR, "unexpected RELKIND=%c", rel->rd_rel->relkind);
-			options = NULL;	/* keep compiler quiet */
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a table, index, or TOAST table",
+							RelationGetRelationName(rel))));
 			break;
 	}
 
-	if (rel->rd_options != options)
-	{
-		HeapTuple	newtuple;
-		Datum		repl_val[Natts_pg_class];
-		char		repl_null[Natts_pg_class];
-		char		repl_repl[Natts_pg_class];
+	/*
+	 * All we need do here is update the pg_class row; the new options will be
+	 * propagated into relcaches during post-commit cache inval.
+	 */
+	memset(repl_val, 0, sizeof(repl_val));
+	memset(repl_null, ' ', sizeof(repl_null));
+	memset(repl_repl, ' ', sizeof(repl_repl));
 
-		/* XXX: This is not necessarily required. */
-		if (rel->rd_options)
-			pfree(rel->rd_options);
-		rel->rd_options = options;
+	if (newOptions != (Datum) 0)
+		repl_val[Anum_pg_class_reloptions - 1] = newOptions;
+	else
+		repl_null[Anum_pg_class_reloptions - 1] = 'n';
 
-		memset(repl_repl, ' ', sizeof(repl_repl));
-		memset(repl_null, ' ', sizeof(repl_null));
-		repl_repl[Anum_pg_class_reloptions - 1] = 'r';
+	repl_repl[Anum_pg_class_reloptions - 1] = 'r';
 
-		if (mergedOptions)
-			repl_val[Anum_pg_class_reloptions - 1] =
-				PointerGetDatum(mergedOptions);
-		else
-			repl_null[Anum_pg_class_reloptions - 1] = 'n';
+	newtuple = heap_modifytuple(tuple, RelationGetDescr(pgclass),
+								repl_val, repl_null, repl_repl);
 
-		newtuple = heap_modifytuple(tuple, RelationGetDescr(pgclass),
-			repl_val, repl_null, repl_repl);
+	simple_heap_update(pgclass, &newtuple->t_self, newtuple);
 
-		simple_heap_update(pgclass, &newtuple->t_self, newtuple);
-		CatalogUpdateIndexes(pgclass, newtuple);
+	CatalogUpdateIndexes(pgclass, newtuple);
 
-		heap_freetuple(newtuple);
-	}
-
-	if (mergedOptions)
-		pfree(mergedOptions);
+	heap_freetuple(newtuple);
 
 	ReleaseSysCache(tuple);
+
 	heap_close(pgclass, RowExclusiveLock);
 }
 
@@ -6642,6 +6652,9 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 * even if its master relation is a temp table.  There cannot be any
 	 * naming collision, and the toast rel will be destroyed when its master
 	 * is, so there's no need to handle the toast rel as temp.
+	 *
+	 * XXX would it make sense to apply the master's reloptions to the toast
+	 * table?
 	 */
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   PG_TOAST_NAMESPACE,
@@ -6654,8 +6667,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 										   true,
 										   0,
 										   ONCOMMIT_NOOP,
-										   true,
-										   NULL);
+										   (Datum) 0,
+										   true);
 
 	/* make the toast relation visible, else index creation will fail */
 	CommandCounterIncrement();
@@ -6689,7 +6702,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 							   indexInfo,
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
-							   classObjectId, NIL,
+							   classObjectId, (Datum) 0,
 							   true, true, false, true, false);
 
 	/*

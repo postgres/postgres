@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.243 2006/07/02 02:23:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.244 2006/07/03 22:45:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/reloptions.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -47,8 +48,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"
-#include "catalog/heap.h"
-#include "catalog/index.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -56,7 +55,6 @@
 #include "optimizer/prep.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
@@ -186,17 +184,19 @@ static void RelationClearRelation(Relation relation, bool rebuild);
 static void RelationReloadClassinfo(Relation relation);
 static void RelationFlushRelation(Relation relation);
 static bool load_relcache_init_file(void);
-static void	write_item(const void *data, Size len, FILE *fp);
 static void write_relcache_init_file(void);
+static void	write_item(const void *data, Size len, FILE *fp);
 
 static void formrdesc(const char *relationName, Oid relationReltype,
 		  bool hasoids, int natts, FormData_pg_attribute *att);
 
 static HeapTuple ScanPgRelation(Oid targetRelId, bool indexOK);
 static Relation AllocateRelationDesc(Relation relation, Form_pg_class relp);
+static void RelationParseRelOptions(Relation relation, HeapTuple tuple);
 static void RelationBuildTupleDesc(Relation relation);
 static Relation RelationBuildDesc(Oid targetRelId, Relation oldrelation);
 static void RelationInitPhysicalAddr(Relation relation);
+static TupleDesc GetPgClassDescriptor(void);
 static TupleDesc GetPgIndexDescriptor(void);
 static void AttrDefaultFetch(Relation relation);
 static void CheckConstraintFetch(Relation relation);
@@ -210,7 +210,6 @@ static void IndexSupportInitialize(oidvector *indclass,
 static OpClassCacheEnt *LookupOpclassInfo(Oid operatorClassOid,
 				  StrategyNumber numStrats,
 				  StrategyNumber numSupport);
-static void RelationParseOptions(Relation relation, HeapTuple tuple);
 
 
 /*
@@ -303,10 +302,13 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	 * Copy the relation tuple form
 	 *
 	 * We only allocate space for the fixed fields, ie, CLASS_TUPLE_SIZE.
-	 * relacl is NOT stored in the relcache --- there'd be little point in it,
-	 * since we don't copy the tuple's nullvalues bitmap and hence wouldn't
-	 * know if the value is valid ... bottom line is that relacl *cannot* be
-	 * retrieved from the relcache.  Get it from the syscache if you need it.
+	 * The variable-length fields (relacl, reloptions) are NOT stored in the
+	 * relcache --- there'd be little point in it, since we don't copy the
+	 * tuple's nulls bitmap and hence wouldn't know if the values are valid.
+	 * Bottom line is that relacl *cannot* be retrieved from the relcache.
+	 * Get it from the syscache if you need it.  The same goes for the
+	 * original form of reloptions (however, we do store the parsed form
+	 * of reloptions in rd_options).
 	 */
 	relationForm = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 
@@ -314,7 +316,6 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 
 	/* initialize relation tuple form */
 	relation->rd_rel = relationForm;
-	relation->rd_options = NULL;
 
 	/* and allocate attribute tuple form storage */
 	relation->rd_att = CreateTemplateTupleDesc(relationForm->relnatts,
@@ -328,49 +329,71 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 }
 
 /*
- * RelationParseOptions
+ * RelationParseRelOptions
+ *		Convert pg_class.reloptions into pre-parsed rd_options
+ *
+ * tuple is the real pg_class tuple (not rd_rel!) for relation
+ *
+ * Note: rd_rel and (if an index) rd_am must be valid already
  */
 static void
-RelationParseOptions(Relation relation, HeapTuple tuple)
+RelationParseRelOptions(Relation relation, HeapTuple tuple)
 {
-	ArrayType	   *options;
+	Datum		datum;
+	bool		isnull;
+	bytea	   *options;
 
-	Assert(tuple);
+	relation->rd_options = NULL;
 
+	/* Fall out if relkind should not have options */
 	switch (relation->rd_rel->relkind)
 	{
-	case RELKIND_RELATION:
-	case RELKIND_TOASTVALUE:
-	case RELKIND_UNCATALOGED:
-	case RELKIND_INDEX:
-		break;
-	default:
-		/* other relation should not have options. */
-		relation->rd_options = NULL;
-		return;
+		case RELKIND_RELATION:
+		case RELKIND_TOASTVALUE:
+		case RELKIND_UNCATALOGED:
+		case RELKIND_INDEX:
+			break;
+		default:
+			return;
 	}
 
-	/* SysCacheGetAttr is not available here. */
-	if (heap_attisnull(tuple, Anum_pg_class_reloptions))
-		options = NULL;
-	else
-		options = (ArrayType *) ((Form_pg_class) GETSTRUCT(tuple))->reloptions;
+	/*
+	 * Fetch reloptions from tuple; have to use a hardwired descriptor
+	 * because we might not have any other for pg_class yet (consider
+	 * executing this code for pg_class itself)
+	 */
+	datum = fastgetattr(tuple,
+						Anum_pg_class_reloptions,
+						GetPgClassDescriptor(),
+						&isnull);
+	if (isnull)
+		return;
 
+	/* Parse into appropriate format; don't error out here */
 	switch (relation->rd_rel->relkind)
 	{
-	case RELKIND_RELATION:
-	case RELKIND_TOASTVALUE:
-	case RELKIND_UNCATALOGED:
-		relation->rd_options = heap_option(
-			relation->rd_rel->relkind, options);
-		break;
-	case RELKIND_INDEX:
-		relation->rd_options = index_option(
-			relation->rd_am->amoption, options);
-		break;
-	default:
-		/* should not happen */
-		break;
+		case RELKIND_RELATION:
+		case RELKIND_TOASTVALUE:
+		case RELKIND_UNCATALOGED:
+			options = heap_reloptions(relation->rd_rel->relkind, datum,
+									  false);
+			break;
+		case RELKIND_INDEX:
+			options = index_reloptions(relation->rd_am->amoptions, datum,
+									   false);
+			break;
+		default:
+			Assert(false);		/* can't get here */
+			options = NULL;		/* keep compiler quiet */
+			break;
+	}
+
+	/* Copy parsed data into CacheMemoryContext */
+	if (options)
+	{
+		relation->rd_options = MemoryContextAlloc(CacheMemoryContext,
+												  VARSIZE(options));
+		memcpy(relation->rd_options, options, VARSIZE(options));
 	}
 }
 
@@ -820,6 +843,9 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 	if (OidIsValid(relation->rd_rel->relam))
 		RelationInitIndexAccessInfo(relation);
 
+	/* extract reloptions if any */
+	RelationParseRelOptions(relation, pg_class_tuple);
+
 	/*
 	 * initialize the relation lock manager information
 	 */
@@ -832,9 +858,6 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
-
-	/* Build AM-specific fields. */
-	RelationParseOptions(relation, pg_class_tuple);
 
 	/*
 	 * now we can free the memory allocated for pg_class_tuple
@@ -1266,7 +1289,6 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 * data from pg_class and replace what we've done here.
 	 */
 	relation->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
-	relation->rd_options = NULL;
 
 	namestrcpy(&relation->rd_rel->relname, relationName);
 	relation->rd_rel->relnamespace = PG_CATALOG_NAMESPACE;
@@ -1353,11 +1375,6 @@ formrdesc(const char *relationName, Oid relationReltype,
 		/* Otherwise, all the rels formrdesc is used for have indexes */
 		relation->rd_rel->relhasindex = true;
 	}
-
-	/*
-	 * initialize the rd_options field to default value
-	 */
-	relation->rd_options = heap_option(RELKIND_RELATION, NULL);
 
 	/*
 	 * add new reldesc to relcache
@@ -1537,9 +1554,11 @@ RelationReloadClassinfo(Relation relation)
 			 RelationGetRelid(relation));
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
 	memcpy(relation->rd_rel, relp, CLASS_TUPLE_SIZE);
+	/* Reload reloptions in case they changed */
 	if (relation->rd_options)
 		pfree(relation->rd_options);
-	RelationParseOptions(relation, pg_class_tuple);
+	RelationParseRelOptions(relation, pg_class_tuple);
+	/* done with pg_class tuple */
 	heap_freetuple(pg_class_tuple);
 	/* We must recalculate physical address in case it changed */
 	RelationInitPhysicalAddr(relation);
@@ -2178,7 +2197,6 @@ RelationBuildLocalRelation(const char *relname,
 	 * initialize relation tuple form (caller may add/override data later)
 	 */
 	rel->rd_rel = (Form_pg_class) palloc0(CLASS_TUPLE_SIZE);
-	rel->rd_options = NULL;
 
 	namestrcpy(&rel->rd_rel->relname, relname);
 	rel->rd_rel->relnamespace = relnamespace;
@@ -2412,6 +2430,11 @@ RelationCacheInitializePhase2(void)
 			Assert(relation->rd_rel != NULL);
 			memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
 
+			/* Update rd_options while we have the tuple */
+			if (relation->rd_options)
+				pfree(relation->rd_options);
+			RelationParseRelOptions(relation, htup);
+
 			/*
 			 * Also update the derived fields in rd_att.
 			 */
@@ -2450,48 +2473,71 @@ RelationCacheInitializePhase2(void)
 }
 
 /*
+ * GetPgClassDescriptor -- get a predefined tuple descriptor for pg_class
  * GetPgIndexDescriptor -- get a predefined tuple descriptor for pg_index
  *
  * We need this kluge because we have to be able to access non-fixed-width
- * fields of pg_index before we have the standard catalog caches available.
- * We use predefined data that's set up in just the same way as the
- * bootstrapped reldescs used by formrdesc().  The resulting tupdesc is
- * not 100% kosher: it does not have the correct rowtype OID in tdtypeid,
- * nor does it have a TupleConstr field.  But it's good enough for the
- * purpose of extracting fields.
+ * fields of pg_class and pg_index before we have the standard catalog caches
+ * available.  We use predefined data that's set up in just the same way as
+ * the bootstrapped reldescs used by formrdesc().  The resulting tupdesc is
+ * not 100% kosher: it does not have the correct rowtype OID in tdtypeid, nor
+ * does it have a TupleConstr field.  But it's good enough for the purpose of
+ * extracting fields.
  */
 static TupleDesc
-GetPgIndexDescriptor(void)
+BuildHardcodedDescriptor(int natts, Form_pg_attribute attrs, bool hasoids)
 {
-	static TupleDesc pgindexdesc = NULL;
+	TupleDesc	result;
 	MemoryContext oldcxt;
 	int			i;
 
-	/* Already done? */
-	if (pgindexdesc)
-		return pgindexdesc;
-
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-	pgindexdesc = CreateTemplateTupleDesc(Natts_pg_index, false);
-	pgindexdesc->tdtypeid = RECORDOID;	/* not right, but we don't care */
-	pgindexdesc->tdtypmod = -1;
+	result = CreateTemplateTupleDesc(natts, hasoids);
+	result->tdtypeid = RECORDOID;	/* not right, but we don't care */
+	result->tdtypmod = -1;
 
-	for (i = 0; i < Natts_pg_index; i++)
+	for (i = 0; i < natts; i++)
 	{
-		memcpy(pgindexdesc->attrs[i],
-			   &Desc_pg_index[i],
-			   ATTRIBUTE_TUPLE_SIZE);
+		memcpy(result->attrs[i], &attrs[i], ATTRIBUTE_TUPLE_SIZE);
 		/* make sure attcacheoff is valid */
-		pgindexdesc->attrs[i]->attcacheoff = -1;
+		result->attrs[i]->attcacheoff = -1;
 	}
 
 	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
-	pgindexdesc->attrs[0]->attcacheoff = 0;
+	result->attrs[0]->attcacheoff = 0;
 
 	/* Note: we don't bother to set up a TupleConstr entry */
 
 	MemoryContextSwitchTo(oldcxt);
+
+	return result;
+}
+
+static TupleDesc
+GetPgClassDescriptor(void)
+{
+	static TupleDesc pgclassdesc = NULL;
+
+	/* Already done? */
+	if (pgclassdesc == NULL)
+		pgclassdesc = BuildHardcodedDescriptor(Natts_pg_class,
+											   Desc_pg_class,
+											   true);
+
+	return pgclassdesc;
+}
+
+static TupleDesc
+GetPgIndexDescriptor(void)
+{
+	static TupleDesc pgindexdesc = NULL;
+
+	/* Already done? */
+	if (pgindexdesc == NULL)
+		pgindexdesc = BuildHardcodedDescriptor(Natts_pg_index,
+											   Desc_pg_index,
+											   false);
 
 	return pgindexdesc;
 }
@@ -3109,7 +3155,7 @@ load_relcache_init_file(void)
 			if ((nread = fread(rel->rd_options, 1, len, fp)) != len)
 				goto read_failed;
 			if (len != VARATT_SIZE(rel->rd_options))
-				goto read_failed;
+				goto read_failed;				/* sanity check */
 		}
 		else
 		{
@@ -3299,15 +3345,6 @@ read_failed:
 	return false;
 }
 
-static void
-write_item(const void *data, Size len, FILE *fp)
-{
-	if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
-		elog(FATAL, "could not write init file");
-	if (fwrite(data, 1, len, fp) != len)
-		elog(FATAL, "could not write init file");
-}
-
 /*
  * Write out a new initialization file with the current contents
  * of the relcache.
@@ -3380,13 +3417,13 @@ write_relcache_init_file(void)
 		/* next, do all the attribute tuple form data entries */
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			write_item(rel->rd_att->attrs[i],
-				ATTRIBUTE_TUPLE_SIZE, fp);
+			write_item(rel->rd_att->attrs[i], ATTRIBUTE_TUPLE_SIZE, fp);
 		}
 
 		/* next, do the access method specific field */
 		write_item(rel->rd_options,
-            (rel->rd_options ? VARATT_SIZE(rel->rd_options) : 0), fp);
+				   (rel->rd_options ? VARATT_SIZE(rel->rd_options) : 0),
+				   fp);
 
 		/* If it's an index, there's more to do */
 		if (rel->rd_rel->relkind == RELKIND_INDEX)
@@ -3396,18 +3433,21 @@ write_relcache_init_file(void)
 			/* write the pg_index tuple */
 			/* we assume this was created by heap_copytuple! */
 			write_item(rel->rd_indextuple,
-				HEAPTUPLESIZE + rel->rd_indextuple->t_len, fp);
+					   HEAPTUPLESIZE + rel->rd_indextuple->t_len,
+					   fp);
 
 			/* next, write the access method tuple form */
 			write_item(am, sizeof(FormData_pg_am), fp);
 
 			/* next, write the vector of operator OIDs */
-			write_item(rel->rd_operator, relform->relnatts *
-				(am->amstrategies * sizeof(Oid)), fp);
+			write_item(rel->rd_operator,
+					   relform->relnatts * (am->amstrategies * sizeof(Oid)),
+					   fp);
 
 			/* finally, write the vector of support procedures */
-			write_item(rel->rd_support, relform->relnatts *
-				(am->amsupport * sizeof(RegProcedure)), fp);
+			write_item(rel->rd_support,
+					   relform->relnatts * (am->amsupport * sizeof(RegProcedure)),
+					   fp);
 		}
 
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
@@ -3461,6 +3501,16 @@ write_relcache_init_file(void)
 	}
 
 	LWLockRelease(RelCacheInitLock);
+}
+
+/* write a chunk of data preceded by its length */
+static void
+write_item(const void *data, Size len, FILE *fp)
+{
+	if (fwrite(&len, 1, sizeof(len), fp) != sizeof(len))
+		elog(FATAL, "could not write init file");
+	if (fwrite(data, 1, len, fp) != len)
+		elog(FATAL, "could not write init file");
 }
 
 /*

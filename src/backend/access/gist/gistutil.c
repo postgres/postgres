@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.17 2006/07/02 02:23:18 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.18 2006/07/03 22:45:36 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -17,7 +17,7 @@
 #include "access/gist_private.h"
 #include "access/gistscan.h"
 #include "access/heapam.h"
-#include "catalog/index.h"
+#include "access/reloptions.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"
 
@@ -637,14 +637,16 @@ gistNewBuffer(Relation r)
 }
 
 Datum
-gistoption(PG_FUNCTION_ARGS)
+gistoptions(PG_FUNCTION_ARGS)
 {
-#define GIST_DEFAULT_FILLFACTOR		90
-#define GIST_MIN_FILLFACTOR			50
+	Datum		reloptions = PG_GETARG_DATUM(0);
+	bool		validate = PG_GETARG_BOOL(1);
+	bytea	   *result;
 
-	ArrayType	   *options = (ArrayType *) PG_GETARG_POINTER(0);
-
-	/* Use index common routine. */
-	PG_RETURN_BYTEA_P(genam_option(options,
-		GIST_MIN_FILLFACTOR, GIST_DEFAULT_FILLFACTOR));
+	result = default_reloptions(reloptions, validate,
+								GIST_MIN_FILLFACTOR,
+								GIST_DEFAULT_FILLFACTOR);
+	if (result)
+		PG_RETURN_BYTEA_P(result);
+	PG_RETURN_NULL();
 }

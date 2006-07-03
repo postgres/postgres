@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.75 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.76 2006/07/03 22:45:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 
 #include "access/genam.h"
 #include "access/nbtree.h"
-#include "catalog/catalog.h"
+#include "access/reloptions.h"
 #include "executor/execdebug.h"
 #include "miscadmin.h"
 
@@ -1081,14 +1081,16 @@ BTreeShmemInit(void)
 }
 
 Datum
-btoption(PG_FUNCTION_ARGS)
+btoptions(PG_FUNCTION_ARGS)
 {
-#define BTREE_MIN_FILLFACTOR		50
-#define BTREE_DEFAULT_FILLFACTOR	90
+	Datum		reloptions = PG_GETARG_DATUM(0);
+	bool		validate = PG_GETARG_BOOL(1);
+	bytea	   *result;
 
-	ArrayType	   *options = (ArrayType *) PG_GETARG_POINTER(0);
-
-	/* Use index common routine. */
-	PG_RETURN_BYTEA_P(genam_option(options,
-		BTREE_MIN_FILLFACTOR, BTREE_DEFAULT_FILLFACTOR));
+	result = default_reloptions(reloptions, validate,
+								BTREE_MIN_FILLFACTOR,
+								BTREE_DEFAULT_FILLFACTOR);
+	if (result)
+		PG_RETURN_BYTEA_P(result);
+	PG_RETURN_NULL();
 }

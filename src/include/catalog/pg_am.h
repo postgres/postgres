@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.44 2006/07/02 02:23:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.45 2006/07/03 22:45:40 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -65,7 +65,7 @@ CATALOG(pg_am,2601)
 	regproc		ambulkdelete;	/* bulk-delete function */
 	regproc		amvacuumcleanup;	/* post-VACUUM cleanup function */
 	regproc		amcostestimate; /* estimate cost of an indexscan */
-	regproc		amoption;		/* parse AM-specific parameters */
+	regproc		amoptions;		/* parse AM-specific parameters */
 } FormData_pg_am;
 
 /* ----------------
@@ -103,23 +103,23 @@ typedef FormData_pg_am *Form_pg_am;
 #define Anum_pg_am_ambulkdelete			21
 #define Anum_pg_am_amvacuumcleanup		22
 #define Anum_pg_am_amcostestimate		23
-#define Anum_pg_am_amoption				24
+#define Anum_pg_am_amoptions			24
 
 /* ----------------
  *		initial contents of pg_am
  * ----------------
  */
 
-DATA(insert OID = 403 (  btree	5 1 1 t t t t f t t btinsert btbeginscan btgettuple btgetmulti btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btvacuumcleanup btcostestimate btoption ));
+DATA(insert OID = 403 (  btree	5 1 1 t t t t f t t btinsert btbeginscan btgettuple btgetmulti btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btvacuumcleanup btcostestimate btoptions ));
 DESCR("b-tree index access method");
 #define BTREE_AM_OID 403
-DATA(insert OID = 405 (  hash	1 1 0 f f f f f t f hashinsert hashbeginscan hashgettuple hashgetmulti hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete hashvacuumcleanup hashcostestimate hashoption ));
+DATA(insert OID = 405 (  hash	1 1 0 f f f f f t f hashinsert hashbeginscan hashgettuple hashgetmulti hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete hashvacuumcleanup hashcostestimate hashoptions ));
 DESCR("hash index access method");
 #define HASH_AM_OID 405
-DATA(insert OID = 783 (  gist	100 7 0 f t t t t t t gistinsert gistbeginscan gistgettuple gistgetmulti gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete gistvacuumcleanup gistcostestimate gistoption ));
+DATA(insert OID = 783 (  gist	100 7 0 f t t t t t t gistinsert gistbeginscan gistgettuple gistgetmulti gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete gistvacuumcleanup gistcostestimate gistoptions ));
 DESCR("GiST index access method");
 #define GIST_AM_OID 783
-DATA(insert OID = 2742 (  gin	100 4 0 f f f f t t f gininsert ginbeginscan gingettuple gingetmulti ginrescan ginendscan ginmarkpos ginrestrpos ginbuild ginbulkdelete ginvacuumcleanup gincostestimate ginoption ));
+DATA(insert OID = 2742 (  gin	100 4 0 f f f f t t f gininsert ginbeginscan gingettuple gingetmulti ginrescan ginendscan ginmarkpos ginrestrpos ginbuild ginbulkdelete ginvacuumcleanup gincostestimate ginoptions ));
 DESCR("GIN index access method");
 #define GIN_AM_OID 2742
 

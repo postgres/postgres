@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.142 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.143 2006/07/03 22:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/reloptions.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
@@ -72,12 +73,12 @@ static bool relationHasPrimaryKey(Relation rel);
  *		to index on.
  * 'predicate': the partial-index condition, or NULL if none.
  * 'rangetable': needed to interpret the predicate.
+ * 'options': reloptions from WITH (in list-of-DefElem form).
  * 'unique': make the index enforce uniqueness.
  * 'primary': mark the index as a primary key in the catalogs.
  * 'isconstraint': index is for a PRIMARY KEY or UNIQUE constraint,
  *		so build a pg_constraint entry for it.
  * 'is_alter_table': this is due to an ALTER rather than a CREATE operation.
- * 'options': options passed by WITH.
  * 'check_rights': check for CREATE rights in the namespace.  (This should
  *		be true except when ALTER is deleting/recreating an index.)
  * 'skip_build': make the catalog entries but leave the index file empty;
@@ -110,6 +111,8 @@ DefineIndex(RangeVar *heapRelation,
 	Relation	rel;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
+	RegProcedure amoptions;
+	Datum		reloptions;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
 
@@ -261,6 +264,8 @@ DefineIndex(RangeVar *heapRelation,
 		  errmsg("access method \"%s\" does not support multicolumn indexes",
 				 accessMethodName)));
 
+	amoptions = accessMethodForm->amoptions;
+
 	ReleaseSysCache(tuple);
 
 	/*
@@ -368,6 +373,13 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
+	 * Parse AM-specific options, convert to text array form, validate.
+	 */
+	reloptions = transformRelOptions((Datum) 0, options, false, false);
+
+	(void) index_reloptions(amoptions, reloptions, true);
+
+	/*
 	 * Prepare arguments for index_create, primarily an IndexInfo structure.
 	 * Note that ii_Predicate must be in implicit-AND format.
 	 */
@@ -399,7 +411,7 @@ DefineIndex(RangeVar *heapRelation,
 
 	index_create(relationId, indexRelationName, indexRelationId,
 				 indexInfo, accessMethodId, tablespaceId, classObjectId,
-				 options, primary, false, isconstraint,
+				 reloptions, primary, false, isconstraint,
 				 allowSystemTableMods, skip_build);
 }
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.96 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.97 2006/07/03 22:45:38 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -110,7 +110,6 @@ defGetNumeric(DefElem *def)
 		case T_Integer:
 			return (double) intVal(def->arg);
 		case T_Float:
-		case T_String:	/* XXX: needs strict check? */
 			return floatVal(def->arg);
 		default:
 			ereport(ERROR,
@@ -128,27 +127,39 @@ bool
 defGetBoolean(DefElem *def)
 {
 	/*
-	 * Presently, boolean flags must simply be present/absent or
-	 * integer 0/1. Later we could allow 'flag = t', 'flag = f', etc.
+	 * If no parameter given, assume "true" is meant.
 	 */
 	if (def->arg == NULL)
 		return true;
+	/*
+	 * Allow 0, 1, "true", "false"
+	 */
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
 			switch (intVal(def->arg))
 			{
-			case 0:
-				return false;
-			case 1:
-				return true;
+				case 0:
+					return false;
+				case 1:
+					return true;
+				default:
+					/* otherwise, error out below */
+					break;
 			}
 			break;
 		default:
+			{
+				char   *sval = defGetString(def);
+
+				if (pg_strcasecmp(sval, "true") == 0)
+					return true;
+				if (pg_strcasecmp(sval, "false") == 0)
+					return false;
+
+			}
 			break;
 	}
-
-	/* on error */
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("%s requires a boolean value",
@@ -172,7 +183,7 @@ defGetInt64(DefElem *def)
 		case T_Integer:
 			return (int64) intVal(def->arg);
 		case T_Float:
-		case T_String:	/* XXX: needs strict check? */
+
 			/*
 			 * Values too large for int4 will be represented as Float
 			 * constants by the lexer.	Accept these if they are valid int8
@@ -293,10 +304,14 @@ defGetTypeLength(DefElem *def)
 	return 0;					/* keep compiler quiet */
 }
 
+/*
+ * Create a DefElem setting "oids" to the specified value.
+ */
 DefElem *
 defWithOids(bool value)
 {
 	DefElem *f = makeNode(DefElem);
+
 	f->defname = "oids";
 	f->arg = (Node *)makeInteger(value);
 	return f;

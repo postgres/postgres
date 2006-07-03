@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.2 2006/07/02 02:23:18 momjian Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.3 2006/07/03 22:45:36 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -16,7 +16,7 @@
 #include "access/genam.h"
 #include "access/gin.h"
 #include "access/heapam.h"
-#include "catalog/index.h"
+#include "access/reloptions.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"
 
@@ -203,15 +203,23 @@ GinPageGetCopyPage( Page page ) {
 }
 
 Datum
-ginoption(PG_FUNCTION_ARGS)
+ginoptions(PG_FUNCTION_ARGS)
 {
-	ArrayType	   *options = (ArrayType *) PG_GETARG_POINTER(0);
+	Datum		reloptions = PG_GETARG_DATUM(0);
+	bool		validate = PG_GETARG_BOOL(1);
+	bytea	   *result;
 
-	if (options != NULL)
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("GIN does not support parameters at all")));
+	/*
+	 * It's not clear that fillfactor is useful for GIN, but for the moment
+	 * we'll accept it anyway.  (It won't do anything...)
+	 */
+#define GIN_MIN_FILLFACTOR			50
+#define GIN_DEFAULT_FILLFACTOR		100
 
-	/* Do not use PG_RETURN_NULL. */
-	PG_RETURN_BYTEA_P(NULL);
+	result = default_reloptions(reloptions, validate,
+								GIN_MIN_FILLFACTOR,
+								GIN_DEFAULT_FILLFACTOR);
+	if (result)
+		PG_RETURN_BYTEA_P(result);
+	PG_RETURN_NULL();
 }

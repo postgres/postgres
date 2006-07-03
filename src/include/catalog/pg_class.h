@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.93 2006/07/02 02:23:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.94 2006/07/03 22:45:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -29,15 +29,6 @@
 /* ----------------
  *		pg_class definition.  cpp turns this into
  *		typedef struct FormData_pg_class
- * ----------------
- */
-
-/* ----------------
- *		This structure is actually variable-length (the last attribute is
- *		a POSTGRES array).	Hence, sizeof(FormData_pg_class) does not
- *		necessarily match the actual length of the structure.  Furthermore
- *		relacl may be a NULL field.  Hence, you MUST use heap_getattr()
- *		to get the relacl field ... and don't forget to check isNull.
  * ----------------
  */
 #define RelationRelationId	1259
@@ -75,12 +66,17 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 	bool		relhasrules;	/* has associated rules */
 	bool		relhassubclass; /* has derived classes */
 
-	/* following fields may or may not be present, see note above! */
-	text		reloptions[1];	/* access method specific data */
-	aclitem		relacl[1];		/* we declare this just for the catalog */
+	/*
+	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
+	 *
+	 * NOTE: these fields are not present in a relcache entry's rd_rel field.
+	 */
+
+	aclitem		relacl[1];		/* access permissions */
+	text		reloptions[1];	/* access-method-specific options */
 } FormData_pg_class;
 
-/* Size of fixed part of pg_class tuples, not counting relacl or padding */
+/* Size of fixed part of pg_class tuples, not counting var-length fields */
 #define CLASS_TUPLE_SIZE \
 	 (offsetof(FormData_pg_class,relhassubclass) + sizeof(bool))
 
@@ -96,13 +92,6 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-/* ----------------
- *		Natts_pg_class_fixed is used to tell routines that insert new
- *		pg_class tuples (as opposed to replacing old ones) that there's no
- *		relacl field.  This is a kluge.
- * ----------------
- */
-#define Natts_pg_class_fixed			24
 #define Natts_pg_class					26
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_relnamespace		2
@@ -128,8 +117,8 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relhaspkey		22
 #define Anum_pg_class_relhasrules		23
 #define Anum_pg_class_relhassubclass	24
-#define Anum_pg_class_reloptions		25
-#define Anum_pg_class_relacl			26
+#define Anum_pg_class_relacl			25
+#define Anum_pg_class_reloptions		26
 
 /* ----------------
  *		initial contents of pg_class

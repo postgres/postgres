@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.331 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.332 2006/07/03 22:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3119,8 +3119,6 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 	 * vacuumlazy.c does, we'd be skewing that statistic.
 	 */
 	threshold = GetAvgFSMRequestSize(&onerel->rd_node);
-	if (threshold < HeapGetPageFreeSpace(onerel))
-		threshold = HeapGetPageFreeSpace(onerel);
 
 	pageSpaces = (PageFreeSpaceInfo *)
 		palloc(nPages * sizeof(PageFreeSpaceInfo));
@@ -3391,11 +3389,13 @@ static Size
 PageGetFreeSpaceWithFillFactor(Relation relation, Page page)
 {
 	PageHeader	pd = (PageHeader) page;
-	Size		pagefree = HeapGetPageFreeSpace(relation);
 	Size		freespace = pd->pd_upper - pd->pd_lower;
+	Size		targetfree;
 
-	if (freespace > pagefree)
-		return freespace - pagefree;
+	targetfree = RelationGetTargetPageFreeSpace(relation,
+												HEAP_DEFAULT_FILLFACTOR);
+	if (freespace > targetfree)
+		return freespace - targetfree;
 	else
 		return 0;
 }

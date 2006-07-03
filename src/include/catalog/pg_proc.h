@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.414 2006/07/02 02:23:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.415 2006/07/03 22:45:40 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -680,7 +680,7 @@ DATA(insert OID = 972 (  btvacuumcleanup   PGNSP PGUID 12 f f t f v 2 2281 "2281
 DESCR("btree(internal)");
 DATA(insert OID = 1268 (  btcostestimate   PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_  btcostestimate - _null_ ));
 DESCR("btree(internal)");
-DATA(insert OID = 2785 (  btoption		   PGNSP PGUID 12 f f t f v 1 2281 "2281" _null_ _null_ _null_  btoption - _null_ ));
+DATA(insert OID = 2785 (  btoptions		   PGNSP PGUID 12 f f t f s 2 17 "1009 16" _null_ _null_ _null_  btoptions - _null_ ));
 DESCR("btree(internal)");
 
 DATA(insert OID = 339 (  poly_same		   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_ poly_same - _null_ ));
@@ -799,7 +799,7 @@ DATA(insert OID = 425 (  hashvacuumcleanup PGNSP PGUID 12 f f t f v 2 2281 "2281
 DESCR("hash(internal)");
 DATA(insert OID = 438 (  hashcostestimate  PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_  hashcostestimate - _null_ ));
 DESCR("hash(internal)");
-DATA(insert OID = 2786 (  hashoption	   PGNSP PGUID 12 f f t f v 1 2281 "2281" _null_ _null_ _null_  hashoption - _null_ ));
+DATA(insert OID = 2786 (  hashoptions	   PGNSP PGUID 12 f f t f s 2 17 "1009 16" _null_ _null_ _null_  hashoptions - _null_ ));
 DESCR("hash(internal)");
 
 DATA(insert OID = 449 (  hashint2		   PGNSP PGUID 12 f f t f i 1 23 "21" _null_ _null_ _null_	hashint2 - _null_ ));
@@ -1067,7 +1067,7 @@ DATA(insert OID = 2561 (  gistvacuumcleanup   PGNSP PGUID 12 f f t f v 2 2281 "2
 DESCR("gist(internal)");
 DATA(insert OID = 772 (  gistcostestimate  PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_  gistcostestimate - _null_ ));
 DESCR("gist(internal)");
-DATA(insert OID = 2787 (  gistoption	   PGNSP PGUID 12 f f t f v 1 2281 "2281" _null_ _null_ _null_  gistoption - _null_ ));
+DATA(insert OID = 2787 (  gistoptions	   PGNSP PGUID 12 f f t f s 2 17 "1009 16" _null_ _null_ _null_  gistoptions - _null_ ));
 DESCR("gist(internal)");
 
 DATA(insert OID = 784 (  tintervaleq	   PGNSP PGUID 12 f f t f i 2 16 "704 704" _null_ _null_ _null_ tintervaleq - _null_ ));
@@ -3855,7 +3855,7 @@ DATA(insert OID = 2740 (  ginvacuumcleanup PGNSP PGUID 12 f f t f v 2 2281 "2281
 DESCR("gin(internal)");
 DATA(insert OID = 2741 (  gincostestimate  PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_  gincostestimate - _null_ ));
 DESCR("gin(internal)");
-DATA(insert OID = 2788 (  ginoption		   PGNSP PGUID 12 f f t f v 1 2281 "2281" _null_ _null_ _null_  ginoption - _null_ ));
+DATA(insert OID = 2788 (  ginoptions	   PGNSP PGUID 12 f f t f s 2 17 "1009 16" _null_ _null_ _null_  ginoptions - _null_ ));
 DESCR("gin(internal)");
 
 /* GIN array support */

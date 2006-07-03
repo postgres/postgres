@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.14 2006/06/06 17:59:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.15 2006/07/03 22:45:36 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -234,6 +234,47 @@ amvacuumcleanup (IndexVacuumInfo *info,
   </para>
 
   <para>
+<programlisting>
+void
+amcostestimate (PlannerInfo *root,
+                IndexOptInfo *index,
+                List *indexQuals,
+                RelOptInfo *outer_rel,
+                Cost *indexStartupCost,
+                Cost *indexTotalCost,
+                Selectivity *indexSelectivity,
+                double *indexCorrelation);
+</programlisting>
+   Estimate the costs of an index scan.  This function is described fully
+   in <xref linkend="index-cost-estimation">, below.
+  </para>
+
+  <para>
+<programlisting>
+bytea *
+amoptions (ArrayType *reloptions,
+           bool validate);
+</programlisting>
+   Parse and validate the reloptions array for an index.  This is called only
+   when a non-null reloptions array exists for the index.
+   <parameter>reloptions</> is a <type>text</> array containing entries of the
+   form <replaceable>name</><literal>=</><replaceable>value</>.
+   The function should construct a <type>bytea</> value, which will be copied
+   into the <structfield>rd_options</> field of the index's relcache entry.
+   The data contents of the <type>bytea</> value are open for the access
+   method to define, but the standard access methods currently all use struct
+   <structname>StdRdOptions</>.
+   When <parameter>validate</> is true, the function should report a suitable
+   error message if any of the options are unrecognized or have invalid
+   values; when <parameter>validate</> is false, invalid entries should be
+   silently ignored.  (<parameter>validate</> is false when loading options
+   already stored in <structname>pg_catalog</>; an invalid entry could only
+   be found if the access method has changed its rules for options, and in
+   that case ignoring obsolete entries is appropriate.)
+   It is OK to return NULL if default behavior is wanted.
+  </para>
+
+  <para>
    The purpose of an index, of course, is to support scans for tuples matching
    an indexable <literal>WHERE</> condition, often called a
    <firstterm>qualifier</> or <firstterm>scan key</>.  The semantics of
@@ -339,28 +380,16 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
-<programlisting>
-void
-amcostestimate (PlannerInfo *root,
-                IndexOptInfo *index,
-                List *indexQuals,
-                RelOptInfo *outer_rel,
-                Cost *indexStartupCost,
-                Cost *indexTotalCost,
-                Selectivity *indexSelectivity,
-                double *indexCorrelation);
-</programlisting>
-   Estimate the costs of an index scan.  This function is described fully
-   in <xref linkend="index-cost-estimation">, below.
-  </para>
-
-  <para>
-   By convention, the <literal>pg_proc</literal> entry for any index
+   By convention, the <literal>pg_proc</literal> entry for an index
    access method function should show the correct number of arguments,
    but declare them all as type <type>internal</> (since most of the arguments
    have types that are not known to SQL, and we don't want users calling
    the functions directly anyway).  The return type is declared as
    <type>void</>, <type>internal</>, or <type>boolean</> as appropriate.
+   The only exception is <function>amoptions</>, which should be correctly
+   declared as taking <type>text[]</> and <type>bool</> and returning
+   <type>bytea</>.  This provision allows client code to execute
+   <function>amoptions</> to test validity of options settings.
   </para>
 
  </sect1>

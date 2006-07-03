@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_clause.h,v 1.45 2006/07/02 02:23:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_clause.h,v 1.46 2006/07/03 22:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,17 +15,12 @@
 #define PARSE_CLAUSE_H
 
 #include "parser/parse_node.h"
-#include "utils/array.h"
 
 extern void transformFromClause(ParseState *pstate, List *frmList);
 extern int setTargetTable(ParseState *pstate, RangeVar *relation,
 			   bool inh, bool alsoSource, AclMode requiredPerms);
 extern bool interpretInhOption(InhOption inhOpt);
-extern bool interpretOidsOption(List *options);
-
-extern ArrayType *OptionBuild(ArrayType *array, List *list);
-extern void OptionParse(ArrayType *options, Size num, DefElem kwds[],
-						bool strict);
+extern bool interpretOidsOption(List *defList);
 
 extern Node *transformWhereClause(ParseState *pstate, Node *clause,
 					 const char *constructName);

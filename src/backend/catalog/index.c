@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.267 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.268 2006/07/03 22:45:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -37,7 +37,6 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
-#include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
@@ -54,8 +53,6 @@
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 IndexInfo *indexInfo,
 						 Oid *classObjectId);
-static void UpdateRelationRelation(Relation pg_class, Relation indexRelation,
-								   ArrayType *options);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
@@ -236,32 +233,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 	}
 
 	return indexTupDesc;
-}
-
-/* ----------------------------------------------------------------
- *		UpdateRelationRelation
- * ----------------------------------------------------------------
- */
-static void
-UpdateRelationRelation(Relation pg_class, Relation indexRelation,
-					   ArrayType *options)
-{
-	HeapTuple	tuple;
-
-	tuple = build_class_tuple(indexRelation->rd_rel, options);
-
-	/*
-	 * the new tuple must have the oid already chosen for the index. sure
-	 * would be embarrassing to do this sort of thing in polite company.
-	 */
-	HeapTupleSetOid(tuple, RelationGetRelid(indexRelation));
-
-	simple_heap_insert(pg_class, tuple);
-
-	/* update the system catalog indexes */
-	CatalogUpdateIndexes(pg_class, tuple);
-
-	heap_freetuple(tuple);
 }
 
 /* ----------------------------------------------------------------
@@ -449,6 +420,7 @@ UpdateIndexRelation(Oid indexoid,
  * accessMethodObjectId: OID of index AM to use
  * tableSpaceId: OID of tablespace to use
  * classObjectId: array of index opclass OIDs, one per index column
+ * reloptions: AM-specific options
  * isprimary: index is a PRIMARY KEY
  * istoast: index is a toast table's index
  * isconstraint: index is owned by a PRIMARY KEY or UNIQUE constraint
@@ -466,7 +438,7 @@ index_create(Oid heapRelationId,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
 			 Oid *classObjectId,
-			 List *options,
+			 Datum reloptions,
 			 bool isprimary,
 			 bool istoast,
 			 bool isconstraint,
@@ -480,9 +452,6 @@ index_create(Oid heapRelationId,
 	bool		shared_relation;
 	Oid			namespaceId;
 	int			i;
-
-	ArrayType	   *array;
-	RegProcedure	amoption;
 
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -582,40 +551,13 @@ index_create(Oid heapRelationId,
 	indexRelation->rd_rel->relhasoids = false;
 
 	/*
-	 * AM specific options.
-	 */
-	array = OptionBuild(NULL, options);
-	if (indexRelation->rd_am)
-	{
-		amoption = indexRelation->rd_am->amoption;
-	}
-	else
-	{
-		HeapTuple		tuple;
-
-		/*
-		 * We may use the access method before initializing relation,
-		 * so we pick up AM from syscache directly.
-		 */
-		tuple = SearchSysCache(AMOID,
-							   ObjectIdGetDatum(accessMethodObjectId),
-							   0, 0, 0);
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for access method %u",
-				accessMethodObjectId);
-		amoption = ((Form_pg_am) GETSTRUCT(tuple))->amoption;
-		ReleaseSysCache(tuple);
-	}
-	indexRelation->rd_options = index_option(amoption, array);
-
-	/*
 	 * store index's pg_class entry
 	 */
-	UpdateRelationRelation(pg_class, indexRelation, array);
+	InsertPgClassTuple(pg_class, indexRelation,
+					   RelationGetRelid(indexRelation),
+					   reloptions);
 
 	/* done with pg_class */
-	if (array)
-		pfree(array);
 	heap_close(pg_class, RowExclusiveLock);
 
 	/*
@@ -1782,24 +1724,4 @@ reindex_relation(Oid relid, bool toast_too)
 		result |= reindex_relation(toast_relid, false);
 
 	return result;
-}
-
-/*
- * Parse options for indexes.
- *
- *	amoption	Oid of option parser.
- *	options		Options as text[]
- */
-bytea *index_option(RegProcedure amoption, ArrayType *options)
-{
-	Datum		datum;
-
-	Assert(RegProcedureIsValid(amoption));
-
-	datum = OidFunctionCall1(amoption, PointerGetDatum(options));
-
-	if (DatumGetPointer(datum) == NULL)
-		return NULL;
-
-	return DatumGetByteaP(datum);
 }

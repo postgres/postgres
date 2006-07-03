@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.550 2006/07/02 02:23:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.551 2006/07/03 22:45:39 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -232,7 +232,7 @@ static void doNegateFloat(Value *v);
 				func_as createfunc_opt_list alterfunc_opt_list
 				aggr_args aggr_args_list old_aggr_definition old_aggr_list
 				oper_argtypes RuleActionList RuleActionMulti
-				opt_column_list columnList opt_name_list 
+				opt_column_list columnList opt_name_list
 				sort_clause opt_sort_clause sortby_list index_params
 				name_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list
@@ -1562,25 +1562,15 @@ alter_rel_cmd:
 			| SET definition
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
-					n->subtype = AT_SetOptions;
+					n->subtype = AT_SetRelOptions;
 					n->def = (Node *)$2;
 					$$ = (Node *)n;
 				}
+			/* ALTER [TABLE|INDEX] <name> RESET (...) */
 			| RESET definition
 				{
-					AlterTableCmd *n;
-					ListCell	  *cell;
-					
-					foreach(cell, $2)
-					{
-						if (((DefElem *) lfirst(cell))->arg != NULL)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("parameters for RESET should not take values")));
-					}
-
-					n = makeNode(AlterTableCmd);
-					n->subtype = AT_SetOptions;
+					AlterTableCmd *n = makeNode(AlterTableCmd);
+					n->subtype = AT_ResetRelOptions;
 					n->def = (Node *)$2;
 					$$ = (Node *)n;
 				}
@@ -1919,7 +1909,7 @@ ColConstraintElem:
 					n->indexspace = NULL;
 					$$ = (Node *)n;
 				}
-			| UNIQUE OptConsTableSpace
+			| UNIQUE opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
@@ -1927,7 +1917,8 @@ ColConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = NULL;
-					n->indexspace = $2;
+					n->options = $2;
+					n->indexspace = $3;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY opt_definition OptConsTableSpace
@@ -2100,7 +2091,7 @@ ConstraintElem:
 					n->indexspace = NULL;
 					$$ = (Node *)n;
 				}
-			| UNIQUE '(' columnList ')' OptConsTableSpace
+			| UNIQUE '(' columnList ')' opt_definition OptConsTableSpace
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
@@ -2108,7 +2099,8 @@ ConstraintElem:
 					n->raw_expr = NULL;
 					n->cooked_expr = NULL;
 					n->keys = $3;
-					n->indexspace = $5;
+					n->options = $5;
+					n->indexspace = $6;
 					$$ = (Node *)n;
 				}
 			| PRIMARY KEY '(' columnList ')' opt_definition OptConsTableSpace
@@ -2214,13 +2206,12 @@ OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
+/* WITH (options) is preferred, WITH OIDS and WITHOUT OIDS are legacy forms */
 OptWith:
-			WITH OIDS						{ $$ = list_make1(defWithOids(true)); }
-			| WITHOUT OIDS					{ $$ = list_make1(defWithOids(false)); }
-			| WITH definition				{ $$ = $2; }
-			| WITH OIDS WITH definition		{ $$ = lappend($4, defWithOids(true)); }
-			| WITHOUT OIDS WITH definition	{ $$ = lappend($4, defWithOids(false)); }
-			| /*EMPTY*/						{ $$ = NIL; }
+			WITH definition				{ $$ = $2; }
+			| WITH OIDS					{ $$ = list_make1(defWithOids(true)); }
+			| WITHOUT OIDS				{ $$ = list_make1(defWithOids(false)); }
+			| /*EMPTY*/					{ $$ = NIL; }
 		;
 
 OnCommitOption:  ON COMMIT DROP				{ $$ = ONCOMMIT_DROP; }
@@ -2874,6 +2865,8 @@ def_elem:  ColLabel '=' def_arg
 
 /* Note: any simple identifier will be returned as a type name! */
 def_arg:	func_type						{ $$ = (Node *)$1; }
+			| func_name_keyword				{ $$ = (Node *)makeString(pstrdup($1)); }
+			| reserved_keyword				{ $$ = (Node *)makeString(pstrdup($1)); }
 			| qual_all_Op					{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
 			| Sconst						{ $$ = (Node *)makeString($1); }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.90 2006/07/02 02:23:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.91 2006/07/03 22:45:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ typedef struct RelationAmInfo
 	FmgrInfo	ambulkdelete;
 	FmgrInfo	amvacuumcleanup;
 	FmgrInfo	amcostestimate;
-	FmgrInfo	amoption;
+	FmgrInfo	amoptions;
 } RelationAmInfo;
 
 
@@ -143,14 +143,8 @@ typedef struct RelationData
 	 * survived into; or zero if the rel was not created in the current top
 	 * transaction.  This should be relied on only for optimization purposes;
 	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
-	 *
-	 * rd_options and rd_amcache are alike, but different in terms of
-	 * lifetime. Invalidation of rd_options is at the change of pg_class
-	 * and of rd_amcache is at the change of AM's metapages. Also, rd_options
-	 * is serialized in the relcache init file, but rd_amcache is not.
 	 */
 	Form_pg_class rd_rel;		/* RELATION tuple */
-	bytea	   *rd_options;		/* parsed rd_rel->reloptions */
 	TupleDesc	rd_att;			/* tuple descriptor */
 	Oid			rd_id;			/* relation's object id */
 	List	   *rd_indexlist;	/* list of OIDs of indexes on relation */
@@ -159,6 +153,13 @@ typedef struct RelationData
 	RuleLock   *rd_rules;		/* rewrite rules */
 	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
+
+	/*
+	 * rd_options is set whenever rd_rel is loaded into the relcache entry.
+	 * Note that you can NOT look into rd_rel for this data.  NULL means
+	 * "use defaults".
+	 */
+	bytea	   *rd_options;		/* parsed pg_class.reloptions */
 
 	/* These are non-NULL only for an index relation: */
 	Form_pg_index rd_index;		/* pg_index tuple describing this index */
@@ -206,6 +207,45 @@ typedef RelationData *Relation;
  */
 typedef Relation *RelationPtr;
 
+
+/*
+ * StdRdOptions
+ *		Standard contents of rd_options for heaps and generic indexes.
+ *
+ * RelationGetFillFactor() and RelationGetTargetPageFreeSpace() can only
+ * be applied to relations that use this format or a superset for
+ * private options data.
+ */
+typedef struct StdRdOptions
+{
+	int32	vl_len;				/* required to be a bytea */
+	int		fillfactor;			/* page fill factor in percent (0..100) */
+} StdRdOptions;
+
+#define HEAP_MIN_FILLFACTOR			10
+#define HEAP_DEFAULT_FILLFACTOR		100
+
+/*
+ * RelationGetFillFactor
+ *		Returns the relation's fillfactor.  Note multiple eval of argument!
+ */
+#define RelationGetFillFactor(relation, defaultff) \
+	((relation)->rd_options ? \
+	 ((StdRdOptions *) (relation)->rd_options)->fillfactor : (defaultff))
+
+/*
+ * RelationGetTargetPageUsage
+ *		Returns the relation's desired space usage per page in bytes.
+ */
+#define RelationGetTargetPageUsage(relation, defaultff) \
+	(BLCKSZ * RelationGetFillFactor(relation, defaultff) / 100)
+
+/*
+ * RelationGetTargetPageFreeSpace
+ *		Returns the relation's desired freespace per page in bytes.
+ */
+#define RelationGetTargetPageFreeSpace(relation, defaultff) \
+	(BLCKSZ * (100 - RelationGetFillFactor(relation, defaultff)) / 100)
 
 /*
  * RelationIsValid

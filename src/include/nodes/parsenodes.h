@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.314 2006/07/02 02:23:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.315 2006/07/03 22:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,9 +92,8 @@ typedef struct Query
 	int			resultRelation; /* target relation (index into rtable) */
 
 	RangeVar   *into;			/* target relation for SELECT INTO */
-	bool		intoHasOids;	/* should target relation contain OIDs? */
-	List	   *intoOptions;		/* options passed by WITH */
-	OnCommitAction	intoOnCommit;		/* what do we do at COMMIT? */
+	List	   *intoOptions;		/* options from WITH clause */
+	OnCommitAction intoOnCommit;	/* what do we do at COMMIT? */
 	char	   *intoTableSpaceName;	/* table space to use, or NULL */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
@@ -708,7 +707,7 @@ typedef struct SelectStmt
 								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
 	RangeVar   *into;			/* target table (for select into table) */
 	List	   *intoColNames;	/* column names for into table */
-	List	   *intoOptions;	/* options passed by WITH */
+	List	   *intoOptions;	/* options from WITH clause */
 	OnCommitAction	intoOnCommit;		/* what do we do at COMMIT? */
 	char	   *intoTableSpaceName;		/* table space to use, or NULL */
 	List	   *targetList;		/* the target list (of ResTarget) */
@@ -861,7 +860,8 @@ typedef enum AlterTableType
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */
 	AT_DropOids,				/* SET WITHOUT OIDS */
 	AT_SetTableSpace,			/* SET TABLESPACE */
-	AT_SetOptions,				/* SET (...) -- AM specific parameters */
+	AT_SetRelOptions,			/* SET (...) -- AM specific parameters */
+	AT_ResetRelOptions,			/* RESET (...) -- AM specific parameters */
 	AT_EnableTrig,				/* ENABLE TRIGGER name */
 	AT_DisableTrig,				/* DISABLE TRIGGER name */
 	AT_EnableTrigAll,			/* ENABLE TRIGGER ALL */
@@ -1017,7 +1017,7 @@ typedef struct CreateStmt
 	List	   *inhRelations;	/* relations to inherit from (list of
 								 * inhRelation) */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
-	List	   *options;			/* options passed by WITH */
+	List	   *options;		/* options from WITH clause */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
 	char	   *tablespacename; /* table space to use, or NULL */
 } CreateStmt;
@@ -1075,7 +1075,7 @@ typedef struct Constraint
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
 	List	   *keys;			/* String nodes naming referenced column(s) */
-	List	   *options;			/* options passed by WITH */
+	List	   *options;		/* options from WITH clause */
 	char	   *indexspace;		/* index tablespace for PKEY/UNIQUE
 								 * constraints; NULL for default */
 } Constraint;
@@ -1429,7 +1429,7 @@ typedef struct IndexStmt
 	char	   *accessMethod;	/* name of access method (eg. btree) */
 	char	   *tableSpace;		/* tablespace, or NULL to use parent's */
 	List	   *indexParams;	/* a list of IndexElem */
-	List	   *options;			/* options passed by WITH */
+	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	List	   *rangetable;		/* range table for qual and/or expressions,
 								 * filled in by transformStmt() */
@@ -1886,8 +1886,7 @@ typedef struct ExecuteStmt
 	NodeTag			type;
 	char		   *name;				/* The name of the plan to execute */
 	RangeVar	   *into;				/* Optional table to store results in */
-	bool			into_has_oids;		/* Merge GUC info with user input */
-	List		   *intoOptions;			/* options passed by WITH */
+	List		   *intoOptions;		/* Options from WITH clause */
 	OnCommitAction	into_on_commit;		/* What do we do at COMMIT? */
 	char		   *into_tbl_space;		/* Tablespace to use, or NULL */
 	List		   *params;				/* Values to assign to parameters */

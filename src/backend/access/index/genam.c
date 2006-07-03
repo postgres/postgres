@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.56 2006/07/02 02:23:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.57 2006/07/03 22:45:37 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -21,12 +21,8 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "commands/defrem.h"
 #include "miscadmin.h"
-#include "nodes/parsenodes.h"
-#include "parser/parse_clause.h"
 #include "pgstat.h"
-#include "utils/catcache.h"
 
 
 /* ----------------------------------------------------------------
@@ -263,45 +259,4 @@ systable_endscan(SysScanDesc sysscan)
 		heap_endscan(sysscan->scan);
 
 	pfree(sysscan);
-}
-
-/*
- * Parse options for generic indexes.
- */
-bytea *
-genam_option(ArrayType *options,
-             int minFillfactor, int defaultFillfactor)
-{
-	int				fillfactor;
-	IndexOption	   *result;
-
-	DefElem	kwds[] =
-	{
-		{ T_DefElem, "fillfactor" },
-	};
-
-	/*
-	 * parse options
-	 */
-	OptionParse(options, lengthof(kwds), kwds, true);
-
-	/* 0: fillfactor */
-	if (kwds[0].arg)
-		fillfactor = (int) defGetInt64(&kwds[0]);
-	else
-		fillfactor = defaultFillfactor;
-	if (fillfactor < minFillfactor || 100 < fillfactor)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("fillfactor=%d should be between %d and 100",
-				 fillfactor, minFillfactor)));
-
-	/*
-	 * build options
-	 */
-	result = (IndexOption *)
-		MemoryContextAlloc(CacheMemoryContext, sizeof(IndexOption));
-	VARATT_SIZEP(result) = sizeof(IndexOption);
-	result->fillfactor = fillfactor;
-	return (bytea *) result;
 }

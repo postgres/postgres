@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.225 2006/07/02 02:23:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.226 2006/07/03 22:45:39 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -757,20 +757,23 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	}
 
 	if (!colno)
+	{
 		appendStringInfoChar(&buf, ')');
 
-	/*
-	 * If it has options, append "WITH (options)"
-	 */
-	str = flatten_reloptions(indexrelid);
-	if (str)
-	{
-		appendStringInfo(&buf, " WITH (%s)", str);
-		pfree(str);
-	}
+		/*
+		 * If it has options, append "WITH (options)"
+		 */
+		str = flatten_reloptions(indexrelid);
+		if (str)
+		{
+			appendStringInfo(&buf, " WITH (%s)", str);
+			pfree(str);
+		}
 
-	if (!colno)
-	{
+		/*
+		 * XXX we don't include the tablespace ... this is for pg_dump
+		 */
+
 		/*
 		 * If it's a partial index, decompile and append the predicate
 		 */
@@ -1020,6 +1023,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				if (fullCommand && OidIsValid(conForm->conrelid))
 				{
 					char   *options = flatten_reloptions(conForm->conrelid);
+
 					if (options)
 					{
 						appendStringInfo(&buf, " WITH (%s)", options);
@@ -4937,35 +4941,42 @@ string_to_text(char *str)
 	return result;
 }
 
+/*
+ * Generate a C string representing a relation's reloptions, or NULL if none.
+ */
 static char *
 flatten_reloptions(Oid relid)
 {
-	HeapTuple	tuple;
 	char	   *result = NULL;
+	HeapTuple	tuple;
+	Datum		reloptions;
+	bool		isnull;
 
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relid),
 						   0, 0, 0);
-	if (tuple)
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u", relid);
+
+	reloptions = SysCacheGetAttr(RELOID, tuple,
+								 Anum_pg_class_reloptions, &isnull);
+	if (!isnull)
 	{
-		bool	isnull;
-		Datum	reloptions;
-		reloptions = SysCacheGetAttr(RELOID, tuple,
-            Anum_pg_class_reloptions, &isnull);
-		if (!isnull)
-		{
-			Datum	sep,
-					txt;
-			sep = DirectFunctionCall1(textin, CStringGetDatum(", "));
-			/*
-			 * OID 395 = array_to_text.
-			 * DirectFunctionCall2(array_to_text) is not available here.
-			 */
-			txt = OidFunctionCall2(395, reloptions, sep);
-			result = DatumGetCString(DirectFunctionCall1(textout, txt));
-		}
-		ReleaseSysCache(tuple);
+		Datum	sep,
+				txt;
+
+		/*
+		 * We want to use array_to_text(reloptions, ', ') --- but
+		 * DirectFunctionCall2(array_to_text) does not work, because
+		 * array_to_text() relies on flinfo to be valid.  So use
+		 * OidFunctionCall2.
+		 */
+		sep = DirectFunctionCall1(textin, CStringGetDatum(", "));
+		txt = OidFunctionCall2(F_ARRAY_TO_TEXT, reloptions, sep);
+		result = DatumGetCString(DirectFunctionCall1(textout, txt));
 	}
+
+	ReleaseSysCache(tuple);
 
 	return result;
 }

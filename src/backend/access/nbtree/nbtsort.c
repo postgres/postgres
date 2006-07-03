@@ -27,9 +27,10 @@
  * insertion would cause a split (and not only of the leaf page; the need
  * for a split would cascade right up the tree).  The steady-state load
  * factor for btrees is usually estimated at 70%.  We choose to pack leaf
- * pages to 90% and upper pages to 70%.  This gives us reasonable density
- * (there aren't many upper pages if the keys are reasonable-size) without
- * incurring a lot of cascading splits during early insertions.
+ * pages to the user-controllable fill factor while upper pages are always
+ * packed to 70%.  This gives us reasonable density (there aren't many upper
+ * pages if the keys are reasonable-size) without incurring a lot of cascading
+ * splits during early insertions.
  *
  * Formerly the index pages being built were kept in shared buffers, but
  * that is of no value (since other backends have no interest in them yet)
@@ -56,14 +57,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.103 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.104 2006/07/03 22:45:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/nbtree.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
@@ -121,7 +121,6 @@ typedef struct BTWriteState
 
 
 static Page _bt_blnewpage(uint32 level);
-static Size	_bt_full_threshold(Relation index, Size pagesize, bool leaf);
 static BTPageState *_bt_pagestate(BTWriteState *wstate, uint32 level);
 static void _bt_slideleft(Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
@@ -330,22 +329,6 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 }
 
 /*
- * The steady-state load factor for btrees is usually estimated at 70%.
- * We choose to pack leaf pages to 90% and upper pages to 70% as defaults.
- */
-static Size
-_bt_full_threshold(Relation index, Size pagesize, bool leaf)
-{
-	int fillfactor = IndexGetFillFactor(index);
-	if (!leaf)
-	{
-		/* XXX: Is this reasonable? */
-		fillfactor = Max(70, 3 * fillfactor - 200);
-	}
-	return pagesize * (100 - fillfactor) / 100;
-}
-
-/*
  * allocate and initialize a new BTPageState.  the returned structure
  * is suitable for immediate use by _bt_buildadd.
  */
@@ -365,8 +348,11 @@ _bt_pagestate(BTWriteState *wstate, uint32 level)
 	state->btps_lastoff = P_HIKEY;
 	state->btps_level = level;
 	/* set "full" threshold based on level.  See notes at head of file. */
-	state->btps_full = _bt_full_threshold(wstate->index,
-		PageGetPageSize(state->btps_page), level == 0);
+	if (level > 0)
+		state->btps_full = (BLCKSZ * (100 - BTREE_MIN_FILLFACTOR) / 100);
+	else
+		state->btps_full = RelationGetTargetPageFreeSpace(wstate->index,
+												BTREE_DEFAULT_FILLFACTOR);
 	/* no parent level, yet */
 	state->btps_next = NULL;
 
