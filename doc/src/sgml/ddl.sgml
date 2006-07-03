@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.58 2006/07/02 01:58:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.59 2006/07/03 16:43:14 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2078,6 +2078,7 @@ VALUES ('New York', NULL, NULL, 'NY');
    parent. Similarly an inheritance link can be removed from a child using the
    <command>ALTER TABLE</command> using the <command>NO INHERIT</command>
    subform.
+  </para>
 
   <para>
    One convenient way to create a compatible table to be a new child is using
@@ -2086,7 +2087,8 @@ VALUES ('New York', NULL, NULL, 'NY');
    caveat below regarding constraints). Alternatively a compatible table can
    be created by first creating a new child using <command>CREATE
    TABLE</command> then removing the inheritance link with <command>ALTER
-   TABLE</command>. </para>
+   TABLE</command>.
+  </para>
 
   <para>
    A parent table cannot be dropped while any
@@ -2234,7 +2236,7 @@ VALUES ('New York', NULL, NULL, 'NY');
       be accessed for a query. Whereas the alternative, adding those columns
       to every index, increases space usage which can erase any
       performance gain.
-     <para>
+     </para>
 
      <para>
       When most of the heavily accessed area of the table is in a single
