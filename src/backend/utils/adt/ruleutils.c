@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.226 2006/07/03 22:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.227 2006/07/04 04:35:49 neilc Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -270,7 +270,7 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 	else
 	{
 		/*
-		 * Get the rules definition and put it into executors memory
+		 * Get the rule's definition and put it into executor's memory
 		 */
 		ruletup = SPI_tuptable->vals[0];
 		rulettc = SPI_tuptable->tupdesc;
@@ -403,7 +403,7 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags)
 	else
 	{
 		/*
-		 * Get the rules definition and put it into executors memory
+		 * Get the rule's definition and put it into executor's memory
 		 */
 		ruletup = SPI_tuptable->vals[0];
 		rulettc = SPI_tuptable->tupdesc;
