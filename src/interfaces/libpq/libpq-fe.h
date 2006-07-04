@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.130 2006/06/27 00:03:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.131 2006/07/04 13:22:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,8 +436,6 @@ extern unsigned char *PQescapeByteaConn(PGconn *conn,
 				  size_t *to_length);
 extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
 				size_t *retbuflen);
-extern size_t PQescapeIdentifier(char *to, const char *from, size_t length);
-
 /* These forms are deprecated! */
 extern size_t PQescapeString(char *to, const char *from, size_t length);
 extern unsigned char *PQescapeBytea(const unsigned char *from, size_t from_length,

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.212 2006/06/27 00:03:41 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.213 2006/07/04 13:22:15 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -2279,68 +2279,6 @@ in favor of <function>PQescapeStringConn</>.
 </para>
 </sect2>
 
-<sect2 id="libpq-exec-escape-identifier">
-  <title>Escaping Identifier for Inclusion in SQL Commands</title>
-
-   <indexterm zone="libpq-exec-escape-identifier"><primary>PQescapeIdentifier</></>
-   <indexterm zone="libpq-exec-escape-identifier"><primary>escaping strings</></>
-
-<para>
-<function>PQescapeIdentifier</function> escapes a string for use 
-as an identifier name within an SQL command.  For example; table names,
-column names, view names and user names are all identifiers.
-Double quotes (") must be escaped to prevent them from being interpreted 
-specially by the SQL parser. <function>PQescapeIdentifier</> performs this 
-operation.
-</para>
-
-<tip>
-<para>
-It is especially important to do proper escaping when handling strings that
-were received from an untrustworthy source.  Otherwise there is a security
-risk: you are vulnerable to <quote>SQL injection</> attacks wherein unwanted
-SQL commands are fed to your database.
-</para>
-</tip>
-
-<para>
-Note that it is still necessary to do escaping of identifiers when
-using functions that support parameterized queries such as <function>PQexecParams</> or
-its sibling routines. Only literal values are automatically escaped
-using these functions, not identifiers.
-
-<synopsis>
-size_t PQescapeIdentifier (char *to, const char *from, size_t length);
-</synopsis>
-</para>
-
-<para>
-The parameter <parameter>from</> points to the first character of the
-string that is to be escaped, and the <parameter>length</> parameter
-gives the number of characters in this string. A terminating zero byte
-is not required, and should not be counted in <parameter>length</>. (If
-a terminating zero byte is found before <parameter>length</> bytes are
-processed, <function>PQescapeIdentifier</> stops at the zero; the
-behavior is thus rather like <function>strncpy</>.) <parameter>to</>
-shall point to a buffer that is able to hold at least one more character
-than twice the value of <parameter>length</>, otherwise the behavior is
-undefined. A call to <function>PQescapeIdentifier</> writes an escaped
-version of the <parameter>from</> string to the <parameter>to</> buffer,
-replacing special characters so that they cannot cause any harm, and
-adding a terminating zero byte. The double quotes that may surround
-<productname>PostgreSQL</> identifiers are not included in the result
-string; they should be provided in the SQL command that the result is
-inserted into.
-</para>
-<para>
-<function>PQescapeIdentifier</> returns the number of characters written
-to <parameter>to</>, not including the terminating zero byte.
-</para>
-<para>
-Behavior is undefined if the <parameter>to</> and <parameter>from</>
-strings overlap.
-</para>
-</sect2>
 
  <sect2 id="libpq-exec-escape-bytea">
   <title>Escaping Binary Strings for Inclusion in SQL Commands</title>
