@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.103 2006/07/02 02:23:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.104 2006/07/04 18:07:24 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -27,8 +27,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PAR
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
-[ WITH OIDS | WITHOUT OIDS ]
-[ WITH (FILLFACTOR = <replaceable>fillfactor</replaceable>) ]
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
 
@@ -37,9 +36,9 @@ where <replaceable class="PARAMETER">column_constraint</replaceable> is:
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
 { NOT NULL | 
   NULL | 
-  UNIQUE [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ] |
-  PRIMARY KEY [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ] |
-  CHECK (<replaceable class="PARAMETER">expression</replaceable>) |
+  UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
+  PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
+  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
   REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
     [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
@@ -47,12 +46,17 @@ where <replaceable class="PARAMETER">column_constraint</replaceable> is:
 and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ] |
-  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) [ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ] |
+{ UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
+  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
   CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
   FOREIGN KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+
+<replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</> and <literal>PRIMARY KEY</> constraints are:
+
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
+[ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
 </synopsis>
 
  </refsynopsisdiv>
@@ -271,49 +275,6 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH OIDS</></term>
-    <term><literal>WITHOUT OIDS</></term>
-    <listitem>
-     <para>
-      This optional clause specifies whether rows of the new table
-      should have OIDs (object identifiers) assigned to them.  If
-      neither <literal>WITH OIDS</literal> nor <literal>WITHOUT
-      OIDS</literal> is specified, the default value depends upon the
-      <xref linkend="guc-default-with-oids"> configuration parameter. (If
-      the new table inherits from any tables that have OIDs, then
-      <literal>WITH OIDS</> is forced even if the command says
-      <literal>WITHOUT OIDS</>.)
-     </para>
-
-     <para>
-      If <literal>WITHOUT OIDS</literal> is specified or implied, the new
-      table does not store OIDs and no OID will be assigned for a row inserted
-      into it. This is generally considered worthwhile, since it
-      will reduce OID consumption and thereby postpone the wraparound
-      of the 32-bit OID counter. Once the counter wraps around, OIDs
-      can no longer be assumed to be unique, which makes them
-      considerably less useful. In addition, excluding OIDs from a
-      table reduces the space required to store the table on disk by
-      4 bytes per row (on most machines), slightly improving performance.
-     </para>
-
-     <para>
-      To remove OIDs from a table after it has been created, use <xref
-      linkend="sql-altertable" endterm="sql-altertable-title">.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>WITH (FILLFACTOR = <replaceable>fillfactor</replaceable>)</literal></term>
-    <listitem>
-     <para>
-      This optional clause specifies the table's fillfactor in percentage.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><literal>CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable></literal></term>
     <listitem>
      <para>
@@ -407,7 +368,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CHECK (<replaceable class="PARAMETER">expression</replaceable>)</literal></term>
+    <term><literal>CHECK ( <replaceable class="PARAMETER">expression</replaceable> )</literal></term>
     <listitem>
      <para>
       The <literal>CHECK</> clause specifies an expression producing a
@@ -582,6 +543,57 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
+    <term><literal>WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause specifies optional storage parameters for a table or index;
+      see <xref linkend="sql-createtable-storage-parameters"
+      endterm="sql-createtable-storage-parameters-title"> for more
+      information.  The <literal>WITH</> clause for a
+      table can also include <literal>OIDS=TRUE</> (or just <literal>OIDS</>)
+      to specify that rows of the new table
+      should have OIDs (object identifiers) assigned to them, or
+      <literal>OIDS=FALSE</> to specify that the rows should not have OIDs.
+      If <literal>OIDS</> is not specified, the default setting depends upon
+      the <xref linkend="guc-default-with-oids"> configuration parameter.
+      (If the new table inherits from any tables that have OIDs, then
+      <literal>OIDS=TRUE</> is forced even if the command says
+      <literal>OIDS=FALSE</>.)
+     </para>
+
+     <para>
+      If <literal>OIDS=FALSE</literal> is specified or implied, the new
+      table does not store OIDs and no OID will be assigned for a row inserted
+      into it. This is generally considered worthwhile, since it
+      will reduce OID consumption and thereby postpone the wraparound
+      of the 32-bit OID counter. Once the counter wraps around, OIDs
+      can no longer be assumed to be unique, which makes them
+      considerably less useful. In addition, excluding OIDs from a
+      table reduces the space required to store the table on disk by
+      4 bytes per row (on most machines), slightly improving performance.
+     </para>
+
+     <para>
+      To remove OIDs from a table after it has been created, use <xref
+      linkend="sql-altertable" endterm="sql-altertable-title">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH OIDS</></term>
+    <term><literal>WITHOUT OIDS</></term>
+    <listitem>
+     <para>
+      These are obsolescent syntaxes equivalent to <literal>WITH (OIDS)</>
+      and <literal>WITH (OIDS=FALSE)</>, respectively.  If you wish to give
+      both an <literal>OIDS</> setting and storage parameters, you must use
+      the <literal>WITH ( ... )</> syntax; see above.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>ON COMMIT</literal></term>
     <listitem>
      <para>
@@ -656,6 +668,42 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
   </variablelist>
+
+  <refsect2 id="SQL-CREATETABLE-storage-parameters">
+   <title id="SQL-CREATETABLE-storage-parameters-title">Storage Parameters</title>
+
+   <para>
+    The <literal>WITH</> clause can specify <firstterm>storage parameters</>
+    for tables, and for indexes associated with a <literal>UNIQUE</literal> or
+    <literal>PRIMARY KEY</literal> constraint.  Storage parameters for
+    indexes are documented in <xref linkend="SQL-CREATEINDEX"
+    endterm="sql-createindex-title">.  The only storage parameter currently
+    available for tables is:
+   </para>
+
+   <variablelist>
+
+   <varlistentry>
+    <term><literal>FILLFACTOR</></term>
+    <listitem>
+     <para>
+      The fillfactor for a table is a percentage between 10 and 100.
+      100 (complete packing) is the default.  When a smaller fillfactor
+      is specified, <command>INSERT</> operations pack table pages only
+      to the indicated percentage; the remaining space on each page is
+      reserved for updating rows on that page.  This gives <command>UPDATE</>
+      a chance to place the updated copy of a row on the same page as the
+      original, which is more efficient than placing it on a different page.
+      For a table whose entries are never updated, complete packing is the
+      best choice, but in heavily updated tables smaller fillfactors are
+      appropriate.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   </variablelist>
+
+  </refsect2>
  </refsect1>
 
  <refsect1 id="SQL-CREATETABLE-notes">
@@ -677,7 +725,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
     <tip>
      <para>
-      The use of <literal>WITHOUT OIDS</literal> is not recommended
+      The use of <literal>OIDS=FALSE</literal> is not recommended
       for tables with no primary key, since without either an OID or a
       unique data key, it is difficult to identify specific rows.
      </para>
@@ -697,10 +745,10 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      inheritance and unique constraints rather dysfunctional.
     </para>
 
-  <para>
-   A table cannot have more than 1600 columns.  (In practice, the
-   effective limit is lower because of tuple-length constraints.)
-  </para>
+    <para>
+     A table cannot have more than 1600 columns.  (In practice, the
+     effective limit is usually lower because of tuple-length constraints.)
+    </para>
 
  </refsect1>
 
@@ -784,8 +832,7 @@ CREATE TABLE distributors (
 
   <para>
    Define a primary key table constraint for the table
-   <structname>films</>.  Primary key table constraints can be defined
-   on one or more columns of the table.
+   <structname>films</>:
 
 <programlisting>
 CREATE TABLE films (
@@ -804,7 +851,7 @@ CREATE TABLE films (
    Define a primary key constraint for table
    <structname>distributors</>.  The following two examples are
    equivalent, the first using the table constraint syntax, the second
-   the column constraint syntax.
+   the column constraint syntax:
 
 <programlisting>
 CREATE TABLE distributors (
@@ -823,12 +870,12 @@ CREATE TABLE distributors (
   </para>
 
   <para>
-   This assigns a literal constant default value for the column
-   <literal>name</literal>, arranges for the default value of column
+   Assign a literal constant default value for the column
+   <literal>name</literal>, arrange for the default value of column
    <literal>did</literal> to be generated by selecting the next value
-   of a sequence object, and makes the default value of
+   of a sequence object, and make the default value of
    <literal>modtime</literal> be the time at which the row is
-   inserted.
+   inserted:
 
 <programlisting>
 CREATE TABLE distributors (
@@ -862,7 +909,7 @@ CREATE TABLE distributors (
 );
 </programlisting>
 
-     The above is equivalent to the following specified as a table constraint:
+     The same, specified as a table constraint:
 
 <programlisting>
 CREATE TABLE distributors (
@@ -870,6 +917,20 @@ CREATE TABLE distributors (
     name    varchar(40),
     UNIQUE(name)
 );
+</programlisting>
+  </para>
+
+  <para>
+   Create the same table, specifying 70% fill factor for both the table
+   and its unique index:
+
+<programlisting>
+CREATE TABLE distributors (
+    did     integer,
+    name    varchar(40),
+    UNIQUE(name) WITH (fillfactor=70)
+)
+WITH (fillfactor=70);
 </programlisting>
   </para>
 
@@ -978,15 +1039,6 @@ CREATE TABLE cinemas (
   </refsect2>
 
   <refsect2>
-   <title>Object IDs</title>
-
-   <para>
-    The <productname>PostgreSQL</productname> concept of OIDs is not
-    standard.
-   </para>
-  </refsect2>
-
-  <refsect2>
    <title>Zero-column tables</title>
 
    <para>
@@ -996,6 +1048,15 @@ CREATE TABLE cinemas (
     tables.  Zero-column tables are not in themselves very useful, but
     disallowing them creates odd special cases for <command>ALTER TABLE
     DROP COLUMN</>, so it seems cleaner to ignore this spec restriction.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title><literal>WITH</> clause</title>
+
+   <para>
+    The <literal>WITH</> clause is a <productname>PostgreSQL</productname>
+    extension; neither storage parameters nor OIDs are in the standard.
    </para>
   </refsect2>
 

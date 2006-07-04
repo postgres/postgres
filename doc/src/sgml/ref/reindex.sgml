@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.30 2006/06/18 15:38:36 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.31 2006/07/04 18:07:24 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
   <para>
    <command>REINDEX</command> rebuilds an index using the data
    stored in the index's table, replacing the old copy of the index. There are
-   two main reasons to use <command>REINDEX</command>:
+   three main reasons to use <command>REINDEX</command>:
 
    <itemizedlist>
     <listitem>
@@ -45,13 +45,20 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
 
     <listitem>
      <para>
-      The index in question contains a lot of dead index pages that
-      are not being reclaimed. This can occur with B-tree indexes in
-      <productname>PostgreSQL</productname> under certain access
+      An index has become <quote>bloated</>, that it is contains many
+      empty or nearly-empty pages.  This can occur with B-tree indexes in
+      <productname>PostgreSQL</productname> under certain uncommon access
       patterns. <command>REINDEX</command> provides a way to reduce
       the space consumption of the index by writing a new version of
       the index without the dead pages. See <xref
       linkend="routine-reindex"> for more information.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      You have altered a storage parameter (such as fillfactor)
+      for an index, and wish to ensure that the change has taken full effect.
      </para>
     </listitem>
    </itemizedlist>
@@ -240,18 +247,18 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
   <title>Examples</title>
 
   <para>
-   Recreate the indexes on the table <literal>my_table</literal>:
-
-<programlisting>
-REINDEX TABLE my_table;
-</programlisting>
-  </para>
-
-  <para>
    Rebuild a single index:
 
 <programlisting>
 REINDEX INDEX my_index;
+</programlisting>
+  </para>
+
+  <para>
+   Rebuild all the indexes on the table <literal>my_table</literal>:
+
+<programlisting>
+REINDEX TABLE my_table;
 </programlisting>
   </para>
 

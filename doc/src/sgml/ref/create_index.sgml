@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.53 2006/07/02 02:23:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.54 2006/07/04 18:07:24 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
     ( { <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] )
-    [ WITH (FILLFACTOR = <replaceable>fillfactor</replaceable>) ]
+    [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
     [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ]
     [ WHERE <replaceable class="parameter">predicate</replaceable> ]
 </synopsis>
@@ -56,7 +56,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
 
   <para>
    <productname>PostgreSQL</productname> provides the index methods
-   B-tree, hash, and GiST.  Users can also define their own index
+   B-tree, hash, GiST, and GIN.  Users can also define their own index
    methods, but that is fairly complicated.
   </para>
 
@@ -136,7 +136,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
        <para>
         The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        and <literal>gist</literal>.  The
+        <literal>gist</literal>, and <literal>gin</>.  The
         default method is <literal>btree</literal>.
        </para>
       </listitem>
@@ -173,10 +173,11 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">fillfactor</replaceable></term>
+      <term><replaceable class="parameter">storage_parameter</replaceable></term>
       <listitem>
        <para>
-        The index's fillfactor in percentage.
+        The name of an index-method-specific storage parameter.  See
+        below for details.
        </para>
       </listitem>
      </varlistentry>
@@ -203,6 +204,41 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
      </varlistentry>
 
     </variablelist>
+
+  <refsect2 id="SQL-CREATEINDEX-storage-parameters">
+   <title id="SQL-CREATEINDEX-storage-parameters-title">Index Storage Parameters</title>
+
+   <para>
+    The <literal>WITH</> clause can specify <firstterm>storage parameters</>
+    for indexes.  Each index method can have its own set of allowed storage
+    parameters.  The built-in index methods all accept a single parameter:
+   </para>
+
+   <variablelist>
+
+   <varlistentry>
+    <term><literal>FILLFACTOR</></term>
+    <listitem>
+     <para>
+      The fillfactor for an index is a percentage that determines how full
+      the index method will try to pack index pages.  For B-trees, pages
+      are filled to this percentage during initial index build, and also
+      when extending the index at the right (largest key values).  If pages
+      subsequently become completely full, they will be split, leading to
+      gradual degradation in the index's efficiency.  B-trees use a default
+      fillfactor of 90, but any value from 70 to 100 can be selected.
+      If the table is static then fillfactor 100 is best to minimize the
+      index's physical size, but for heavily updated tables a smaller
+      fillfactor is better to minimize the need for page splits.  The
+      other index methods use fillfactor in different but roughly analogous
+      ways; the default fillfactor and allowed range varies.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   </variablelist>
+
+  </refsect2>
  </refsect1>
 
  <refsect1>
@@ -268,6 +304,21 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
    the table <literal>films</literal>:
 <programlisting>
 CREATE UNIQUE INDEX title_idx ON films (title);
+</programlisting>
+  </para>
+
+  <para>
+   To create an index on the expression <literal>lower(title)</>,
+   allowing efficient case-insensitive searches:
+<programlisting>
+CREATE INDEX lower_title_idx ON films ((lower(title)));
+</programlisting>
+  </para>
+
+  <para>
+   To create an index with non-default fill factor:
+<programlisting>
+CREATE UNIQUE INDEX title_idx ON films (title) WITH (fillfactor = 70);
 </programlisting>
   </para>
 

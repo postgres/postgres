@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.86 2006/07/02 02:23:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.87 2006/07/04 18:07:24 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -46,8 +46,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
     SET WITHOUT CLUSTER
     SET WITHOUT OIDS
-    SET (FILLFACTOR = <replaceable class="PARAMETER">fillfactor</replaceable>)
-    RESET (FILLFACTOR)
+    SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
     INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
@@ -254,37 +254,69 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
+    <term><literal>SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This form changes one or more storage parameters for the table.  See
+      <xref linkend="SQL-CREATETABLE" endterm="sql-createtable-title">
+      for details on the available parameters.  Note that the table contents
+      will not be modified immediately by this command; depending on the
+      parameter you may need to rewrite the table to get the desired effects.
+      That can be done with <xref linkend="SQL-CLUSTER"
+      endterm="sql-cluster-title"> or one of the forms of <command>ALTER
+      TABLE</> that forces a table rewrite.
+     </para>
+
+     <note>
+      <para>
+       While <command>CREATE TABLE</> allows <literal>OIDS</> to be specified
+       in the <literal>WITH (<replaceable
+       class="PARAMETER">storage_parameter</>)</literal> syntax,
+       <command>ALTER TABLE</> does not treat <literal>OIDS</> as a
+       storage parameter.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This form resets one or more storage parameters to their
+      defaults.  As with <literal>SET</>, a table rewrite may be
+      needed to update the table entirely.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
     <listitem>
      <para>
-
       This form adds a new parent table to the table. This won't add new
       columns to the child table, instead all columns of the parent table must
       already exist in the child table. They must have matching data types,
       and if they have <literal>NOT NULL</literal> constraints in the parent
       then they must also have <literal>NOT NULL</literal> constraints in the
       child.
+     </para>
 
-	  </para>
-	  <para>
-
+     <para>
       There must also be matching table constraints for all
       <literal>CHECK</literal> table constraints of the parent. Currently
       <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
       <literal>FOREIGN KEY</literal> constraints are ignored however this may
       change in the future.
+     </para>
 
-	  </para>
-	  <para>
-
+     <para>
       The easiest way to create a suitable table is to create a table using
       <literal>INHERITS</literal> and then remove it via <literal>NO
       INHERIT</literal>. Alternatively create a table using
       <literal>LIKE</literal> however note that <literal>LIKE</literal> does
       not create the necessary constraints.
-
      </para>
-
     </listitem>
    </varlistentry>
 
@@ -292,9 +324,9 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <term><literal>NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
     <listitem>
      <para>
-	 This form removes a parent table from the list of parents of the table.
-	 Queries against the parent table will no longer include records drawn
-	 from the target table.
+      This form removes a parent table from the list of parents of the table.
+      Queries against the parent table will no longer include records drawn
+      from the target table.
      </para>
     </listitem>
    </varlistentry>
@@ -319,26 +351,6 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       separately with additional <literal>SET TABLESPACE</literal> commands.
       See also 
       <xref linkend="SQL-CREATETABLESPACE" endterm="sql-createtablespace-title">.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>SET (FILLFACTOR)</literal></term>
-    <listitem>
-     <para>
-      This form changes the table's fillfactor to the specified percentage.
-      Table structure is not modified immediately; use <literal>CLUSTER</literal>
-      to ensure reflection of the change.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>RESET</literal></term>
-    <listitem>
-     <para>
-      This form changes the table's fillfactor to the default value.
      </para>
     </listitem>
    </varlistentry>
@@ -520,6 +532,34 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <listitem>
        <para>
         The index name on which the table should be marked for clustering.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">storage_parameter</replaceable></term>
+      <listitem>
+       <para>
+        The name of a table storage parameter.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">value</replaceable></term>
+      <listitem>
+       <para>
+        The new value for a table storage parameter.
+        This might be a number or a word depending on the parameter.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">parent_table</replaceable></term>
+      <listitem>
+       <para>
+        A parent table to associate or de-associate with this table.
        </para>
       </listitem>
      </varlistentry>

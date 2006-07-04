@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.9 2006/07/02 02:23:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.10 2006/07/04 18:07:24 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,8 +22,8 @@ PostgreSQL documentation
 <synopsis>
 ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER INDEX <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable>
-ALTER INDEX <replaceable class="PARAMETER">name</replaceable> SET (FILLFACTOR = <replaceable class="PARAMETER">fillfactor</replaceable>)
-ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET (FILLFACTOR)
+ALTER INDEX <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
 </synopsis>
  </refsynopsisdiv>
 
@@ -59,21 +59,28 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET (FILLFACTOR)
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SET (FILLFACTOR)</literal></term>
+    <term><literal>SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
-      This form changes the index's fillfactor to the specified percentage.
-      Index structure is not modified immediately; use <literal>REINDEX</literal>
-      to ensure reflection of the change.
+      This form changes one or more index-method-specific storage parameters
+      for the index.  See
+      <xref linkend="SQL-CREATEINDEX" endterm="sql-createindex-title">
+      for details on the available parameters.  Note that the index contents
+      will not be modified immediately by this command; depending on the
+      parameter you may need to rebuild the index with
+      <xref linkend="SQL-REINDEX" endterm="sql-reindex-title">
+      to get the desired effects.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>RESET (FILLFACTOR)</literal></term>
+    <term><literal>RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
-      This form changes the index's fillfactor to the default value.
+      This form resets one or more index-method-specific storage parameters to
+      their defaults.  As with <literal>SET</>, a <literal>REINDEX</literal>
+      may be needed to update the index entirely.
      </para>
     </listitem>
    </varlistentry>
@@ -112,6 +119,25 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET (FILLFACTOR)
       <listitem>
        <para>
         The tablespace to which the index will be moved.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">storage_parameter</replaceable></term>
+      <listitem>
+       <para>
+        The name of an index-method-specific storage parameter.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">value</replaceable></term>
+      <listitem>
+       <para>
+        The new value for an index-method-specific storage parameter.
+        This might be a number or a word depending on the parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -157,6 +183,15 @@ ALTER INDEX distributors SET TABLESPACE fasttablespace;
 </programlisting>
   </para>
 
+  <para> 
+   To change an index's fill factor (assuming that the index method
+   supports it):
+<programlisting>
+ALTER INDEX distributors SET (fillfactor = 75);
+REINDEX INDEX distributors;
+</programlisting>
+  </para>
+
  </refsect1>
 
  <refsect1>
@@ -166,6 +201,16 @@ ALTER INDEX distributors SET TABLESPACE fasttablespace;
    <command>ALTER INDEX</> is a <productname>PostgreSQL</productname>
    extension.
   </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createindex" endterm="sql-createindex-title"></member>
+   <member><xref linkend="sql-reindex" endterm="sql-reindex-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 
