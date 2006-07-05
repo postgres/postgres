@@ -2040,5 +2040,9 @@ Mo Jun 26 16:08:23 CEST 2006
 
 	- Added missing braces to prevent a segfault after usage of an
 	  undeclared cursor.
+
+We Jul  5 12:17:28 CEST 2006
+
+	- Fixed remaining Coverity bugs.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

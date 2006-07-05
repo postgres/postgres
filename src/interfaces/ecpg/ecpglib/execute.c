@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.50 2006/06/26 09:20:09 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.51 2006/07/05 10:49:56 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -876,12 +876,13 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				{
 					char	   *str = NULL;
 					int	    slen;
-					numeric    *nval = PGTYPESnumeric_new();
+					numeric    *nval;
 
 					if (var->arrsize > 1)
 					{
-						for (element = 0; element < var->arrsize; element++, nval = PGTYPESnumeric_new())
+						for (element = 0; element < var->arrsize; element++)
 						{
+							nval = PGTYPESnumeric_new();
 							if (!nval)
 								return false;
 								
@@ -911,6 +912,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					}
 					else
 					{
+						nval = PGTYPESnumeric_new();
 						if (!nval)
 							return false;
 
@@ -1048,16 +1050,22 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 			case ECPGt_timestamp:
 				{
-					char	   *str = NULL;
+					char	   *str = NULL, *asc = NULL;
 					int			slen;
 
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), lineno);
+							asc = PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value));
+							if (!asc)
+								return false;
+
+							str = quote_postgres(asc, lineno);
+							ECPGfree(asc); /* we don't need this anymore so free it asap. */
 							if (!str)
 								return false;
+
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [], timestamp "), lineno)))
@@ -1077,7 +1085,12 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					}
 					else
 					{
-						str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) (var->value)), lineno);
+						asc = PGTYPEStimestamp_to_asc(*(timestamp *) (var->value));
+						if (!asc)
+							return false;
+
+						str = quote_postgres(asc, lineno);
+						ECPGfree(asc); /* we don't need this anymore so free it asap. */
 						if (!str)
 							return false;
 						slen = strlen(str);

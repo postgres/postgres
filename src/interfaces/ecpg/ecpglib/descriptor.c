@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.16 2006/06/25 09:38:39 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.17 2006/07/05 10:49:56 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -249,7 +249,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				data_var.ind_varcharsize = varcharsize;
 				data_var.ind_arrsize = arrsize;
 				data_var.ind_offset = offset;
-				if (data_var.ind_arrsize == 0 || data_var.ind_varcharsize == 0)
+				if ((data_var.ind_arrsize == 0 || data_var.ind_varcharsize == 0) && data_var.ind_pointer != NULL)
 					data_var.ind_value = *((void **) (data_var.ind_pointer));
 				else
 					data_var.ind_value = data_var.ind_pointer;
@@ -397,7 +397,8 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		setlocale(LC_NUMERIC, oldlocale);
 		ECPGfree(oldlocale);
 	}
-	else if (data_var.ind_type != ECPGt_NO_INDICATOR)
+	else if (data_var.ind_type != ECPGt_NO_INDICATOR && data_var.ind_pointer != NULL)
+	/* ind_type != NO_INDICATOR should always have ind_pointer != NULL but since this might be changed manually in the .c file let's play it safe */
 	{
 		/*
 		 * this is like ECPGstore_result but since we don't have a data
@@ -410,8 +411,9 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 			ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, ECPG_SQLSTATE_CARDINALITY_VIOLATION, NULL);
 			return false;
 		}
+
 		/* allocate storage if needed */
-		if (data_var.ind_arrsize == 0 && data_var.ind_pointer != NULL && data_var.ind_value == NULL)
+		if (data_var.ind_arrsize == 0 && data_var.ind_value == NULL)
 		{
 			void *mem = (void *) ECPGalloc(data_var.ind_offset * ntuples, lineno);
 			if (!mem)
@@ -420,6 +422,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 			ECPGadd_mem(mem, lineno);
 			data_var.ind_value = mem;
 		}
+
 		for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 		{
 			if (!get_int_item(lineno, data_var.ind_value, data_var.ind_type, -PQgetisnull(ECPGresult, act_tuple, index)))
