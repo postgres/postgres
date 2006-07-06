@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.20 2006/06/07 22:24:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.21 2006/07/06 02:12:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,9 @@
 #define EAI_SYSTEM		(-11)
 #else							/* WIN32 */
 #ifdef WIN32_ONLY_COMPILER
+#ifndef WSA_NOT_ENOUGH_MEMORY
 #define WSA_NOT_ENOUGH_MEMORY   (WSAENOBUFS)
+#endif
 #define WSATYPE_NOT_FOUND       (WSABASEERR+109)
 #endif
 #define EAI_AGAIN		WSATRY_AGAIN
@@ -89,6 +91,7 @@
 
 #ifndef HAVE_STRUCT_ADDRINFO
 
+#ifndef WIN32
 struct addrinfo
 {
 	int			ai_flags;
@@ -100,6 +103,24 @@ struct addrinfo
 	char	   *ai_canonname;
 	struct addrinfo *ai_next;
 };
+#else
+/*
+ *	The order of the structure elements on Win32 doesn't match the
+ *	order specified in the standard, but we have to match it for
+ *	IPv6 to work.
+ */
+struct addrinfo
+{
+	int			ai_flags;
+	int			ai_family;
+	int			ai_socktype;
+	int			ai_protocol;
+	size_t		ai_addrlen;
+	char	   *ai_canonname;
+	struct sockaddr *ai_addr;
+	struct addrinfo *ai_next;
+};
+#endif
 #endif   /* HAVE_STRUCT_ADDRINFO */
 
 

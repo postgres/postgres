@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/win32.mak,v 1.12 2006/03/03 23:11:48 momjian Exp $
+# $PostgreSQL: pgsql/src/win32.mak,v 1.13 2006/07/06 02:12:32 momjian Exp $
 
 # Makefile for Microsoft Visual C++ 5.0 (or compat)
 # Top-file makefile for Win32 parts of postgresql.
@@ -13,6 +13,7 @@ NULL=nul
 ALL: 
    cd include
    if not exist pg_config.h copy pg_config.h.win32 pg_config.h
+   if not exist pg_config_os.h copy port\win32.h pg_config_os.h
    cd ..
    cd interfaces\libpq
    nmake /f win32.mak $(MAKEMACRO)

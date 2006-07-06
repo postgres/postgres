@@ -30,7 +30,8 @@ REFDOCDIR= ../../../doc/src/sgml/ref
 
 CPP_PROJ=/nologo $(OPT) /W3 /GX /D "WIN32" $(DEBUGDEF) /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\pg_dump.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
- /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 /I ..\..\backend \
+ /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
+ /I ..\..\include\port\win32_msvc /I ..\..\backend \
  /D "HAVE_STRDUP" /D "FRONTEND"
 
 CPP_OBJS=$(INTDIR)/
@@ -56,6 +57,7 @@ CLEAN :
 	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\pgstrcasecmp.obj"
 	-@erase "$(INTDIR)\sprompt.obj"
+	-@erase "$(INTDIR)\snprintf.obj"
 	-@erase "$(INTDIR)\pg_dump.pch"
 	-@erase "$(OUTDIR)\pg_dump.obj"
 	-@erase "$(OUTDIR)\pg_dump.exe"
@@ -92,7 +94,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\getopt_long.obj" \
 	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
-	"$(INTDIR)\sprompt.obj"
+	"$(INTDIR)\sprompt.obj" \
+	"$(INTDIR)\snprintf.obj"
 
 LINK32_OBJS_DMP= \
 	"$(INTDIR)\common.obj" \
@@ -171,6 +174,11 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\libpqdll.lib"
 "$(INTDIR)\sprompt.obj" : "$(INTDIR)" ..\..\port\sprompt.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\sprompt.c
+<<
+
+"$(INTDIR)\snprintf.obj" : "$(INTDIR)" ..\..\port\snprintf.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\snprintf.c
 <<
 
 ..\..\backend\parser\parse.h : ..\..\backend\parser\gram.y

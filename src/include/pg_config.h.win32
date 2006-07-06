@@ -247,13 +247,17 @@
 
 /* Define to 1 if constants of type 'long long int' should have the suffix LL.
    */
+#if (_MSC_VER > 1200)
 #define HAVE_LL_CONSTANTS 1
+#endif
 
 /* Define to 1 if `long int' works and is 64 bits. */
 /* #undef HAVE_LONG_INT_64 */
 
 /* Define to 1 if `long long int' works and is 64 bits. */
+#if (_MSC_VER > 1200)
 #define HAVE_LONG_LONG_INT_64 
+#endif
 
 /* Define to 1 if you have the `memmove' function. */
 #define HAVE_MEMMOVE 1
@@ -395,7 +399,9 @@
 /* #undef HAVE_STRTOUQ */
 
 /* Define to 1 if the system has the type `struct addrinfo'. */
+#if (_MSC_VER > 1200)
 #define HAVE_STRUCT_ADDRINFO 1
+#endif
 
 /* Define to 1 if the system has the type `struct cmsgcred'. */
 /* #undef HAVE_STRUCT_CMSGCRED */
@@ -410,10 +416,14 @@
 /* #undef HAVE_STRUCT_SOCKADDR_SA_LEN */
 
 /* Define to 1 if the system has the type `struct sockaddr_storage'. */
+#if (_MSC_VER > 1200)
 #define HAVE_STRUCT_SOCKADDR_STORAGE 1
+#endif
 
 /* Define to 1 if `ss_family' is member of `struct sockaddr_storage'. */
+#if (_MSC_VER > 1200)
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY 1
+#endif
 
 /* Define to 1 if `ss_len' is member of `struct sockaddr_storage'. */
 /* #undef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN */

@@ -48,7 +48,7 @@ CLEAN :
 CPP_PROJ=/nologo $(OPT) /W3 /GX /D "WIN32" $(DEBUGDEF) /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\pg_config.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
  /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
- /D "HAVE_STRDUP" /D "FRONTEND"
+ /I ..\..\include\port\win32_msvc /D "HAVE_STRDUP" /D "FRONTEND"
 
 CPP_OBJS=$(INTDIR)/
 CPP_SBRS=.
@@ -63,6 +63,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\pgstrcasecmp.obj" \
 	"$(OUTDIR)\path.obj" \
 	"$(INTDIR)\exec.obj" \
+	"$(INTDIR)\snprintf.obj" \
 !IFDEF DEBUG
 	"..\..\interfaces\libpq\Debug\libpqddll.lib"
 !ELSE
@@ -87,6 +88,11 @@ LINK32_OBJS= \
 "$(INTDIR)\exec.obj" : ..\..\port\exec.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\exec.c
+<<
+
+"$(INTDIR)\snprintf.obj" : ..\..\port\snprintf.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\snprintf.c
 <<
 
 .c{$(CPP_OBJS)}.obj::
