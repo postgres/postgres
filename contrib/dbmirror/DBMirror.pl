@@ -33,7 +33,7 @@
 # 
 #
 ##############################################################################
-# $Id: DBMirror.pl,v 1.6.4.1 2006/05/21 19:57:06 momjian Exp $ 
+# $Id: DBMirror.pl,v 1.6.4.2 2006/07/06 02:02:48 momjian Exp $ 
 #
 ##############################################################################
 
@@ -852,7 +852,7 @@ sub extractData($$) {
 	$matchString = $1;
 	$value .= substr $matchString,0,length($matchString)-1;
 
-	if($matchString =~ m/(\'$)/s) {
+	if($matchString =~ m/(\'$)/s and (substr $dataField,length($matchString),1) ne "'") {
 	  # $1 runs to the end of the field value.
 	    $dataField = substr $dataField,length($matchString)+1;
 	    last;
