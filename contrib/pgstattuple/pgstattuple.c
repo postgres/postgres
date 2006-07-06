@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.21 2006/05/30 22:12:13 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.22 2006/07/06 02:18:07 momjian Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -27,6 +27,9 @@
 #include "fmgr.h"
 #include "funcapi.h"
 #include "access/heapam.h"
+#include "access/nbtree.h"
+#include "access/gist_private.h"
+#include "access/hash.h"
 #include "access/transam.h"
 #include "catalog/namespace.h"
 #include "utils/builtins.h"
@@ -40,82 +43,73 @@ PG_FUNCTION_INFO_V1(pgstattuplebyid);
 extern Datum pgstattuple(PG_FUNCTION_ARGS);
 extern Datum pgstattuplebyid(PG_FUNCTION_ARGS);
 
-static Datum pgstattuple_real(Relation rel, FunctionCallInfo fcinfo);
-
-
-/* ----------
- * pgstattuple:
- * returns live/dead tuples info
+/*
+ * struct pgstattuple_type
  *
- * C FUNCTION definition
- * pgstattuple(text) returns pgstattuple_type
- * see pgstattuple.sql for pgstattuple_type
- * ----------
+ * tuple_percent, dead_tuple_percent and free_percent are computable,
+ * so not defined here.
  */
-
-#define NCOLUMNS 9
-#define NCHARS 32
-
-Datum
-pgstattuple(PG_FUNCTION_ARGS)
+typedef struct pgstattuple_type
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
-	RangeVar   *relrv;
-	Relation	rel;
-	Datum		result;
-
-	/* open relation */
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-	rel = heap_openrv(relrv, AccessShareLock);
-
-	result = pgstattuple_real(rel, fcinfo);
-
-	PG_RETURN_DATUM(result);
-}
-
-Datum
-pgstattuplebyid(PG_FUNCTION_ARGS)
-{
-	Oid			relid = PG_GETARG_OID(0);
-	Relation	rel;
-	Datum		result;
-
-	/* open relation */
-	rel = heap_open(relid, AccessShareLock);
-
-	result = pgstattuple_real(rel, fcinfo);
-
-	PG_RETURN_DATUM(result);
-}
+	uint64	table_len;
+	uint64	tuple_count;
+	uint64	tuple_len;
+	uint64	dead_tuple_count;
+	uint64	dead_tuple_len;
+	uint64	free_space;			/* free/reusable space in bytes */
+} pgstattuple_type;
 
 /*
- * pgstattuple_real
- *
- * The real work occurs here
+ * struct pgstat_btree_type
+ */
+typedef struct pgstat_btree_type
+{
+	pgstattuple_type	base;	/* inherits pgstattuple_type */
+
+	uint64	continuous;
+	uint64	forward;
+	uint64	backward;
+} pgstat_btree_type;
+
+typedef void (*pgstat_page)(pgstattuple_type *, Relation, BlockNumber);
+
+static Datum build_pgstattuple_type(pgstattuple_type *stat,
+	FunctionCallInfo fcinfo);
+static Datum pgstat_relation(Relation rel, FunctionCallInfo fcinfo);
+static Datum pgstat_heap(Relation rel, FunctionCallInfo fcinfo);
+static Datum pgstat_btree(Relation rel, FunctionCallInfo fcinfo);
+static void pgstat_btree_page(pgstattuple_type *stat,
+	Relation rel, BlockNumber blkno);
+static Datum pgstat_hash(Relation rel, FunctionCallInfo fcinfo);
+static void pgstat_hash_page(pgstattuple_type *stat,
+	Relation rel, BlockNumber blkno);
+static Datum pgstat_gist(Relation rel, FunctionCallInfo fcinfo);
+static void pgstat_gist_page(pgstattuple_type *stat,
+	Relation rel, BlockNumber blkno);
+static Datum pgstat_index(pgstattuple_type *stat,
+	Relation rel, BlockNumber start,
+	pgstat_page pagefn, FunctionCallInfo fcinfo);
+static void pgstat_index_page(pgstattuple_type *stat, Page page,
+	OffsetNumber minoff, OffsetNumber maxoff);
+
+/*
+ * build_pgstattuple_type -- build a pgstattuple_type tuple
  */
 static Datum
-pgstattuple_real(Relation rel, FunctionCallInfo fcinfo)
+build_pgstattuple_type(pgstattuple_type *stat, FunctionCallInfo fcinfo)
 {
-	HeapScanDesc scan;
+#define NCOLUMNS	9
+#define NCHARS		32
+
 	HeapTuple	tuple;
-	BlockNumber nblocks;
-	BlockNumber block = 0;		/* next block to count free space in */
-	BlockNumber tupblock;
-	Buffer		buffer;
-	uint64		table_len;
-	uint64		tuple_len = 0;
-	uint64		dead_tuple_len = 0;
-	uint64		tuple_count = 0;
-	uint64		dead_tuple_count = 0;
+	char	   *values[NCOLUMNS];
+	char		values_buf[NCOLUMNS][NCHARS];
+	int			i;
 	double		tuple_percent;
 	double		dead_tuple_percent;
-	uint64		free_space = 0; /* free/reusable space in bytes */
-	double		free_percent;	/* free/reusable space in % */
+	double		free_percent;		/* free/reusable space in % */
 	TupleDesc	tupdesc;
 	AttInMetadata *attinmeta;
-	char	  **values;
-	int			i;
-	Datum		result;
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -130,6 +124,144 @@ pgstattuple_real(Relation rel, FunctionCallInfo fcinfo)
 	 */
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
+	if (stat->table_len == 0)
+	{
+		tuple_percent = 0.0;
+		dead_tuple_percent = 0.0;
+		free_percent = 0.0;
+	}
+	else
+	{
+		tuple_percent = 100.0 * stat->tuple_len / stat->table_len;
+		dead_tuple_percent = 100.0 * stat->dead_tuple_len / stat->table_len;
+		free_percent = 100.0 * stat->free_space / stat->table_len;
+	}
+
+	/*
+	 * Prepare a values array for constructing the tuple. This should be an
+	 * array of C strings which will be processed later by the appropriate
+	 * "in" functions.
+	 */
+	for (i = 0; i < NCOLUMNS; i++)
+		values[i] = values_buf[i];
+	i = 0;
+	snprintf(values[i++], NCHARS, INT64_FORMAT, stat->table_len);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, stat->tuple_count);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, stat->tuple_len);
+	snprintf(values[i++], NCHARS, "%.2f", tuple_percent);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, stat->dead_tuple_count);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, stat->dead_tuple_len);
+	snprintf(values[i++], NCHARS, "%.2f", dead_tuple_percent);
+	snprintf(values[i++], NCHARS, INT64_FORMAT, stat->free_space);
+	snprintf(values[i++], NCHARS, "%.2f", free_percent);
+
+	/* build a tuple */
+	tuple = BuildTupleFromCStrings(attinmeta, values);
+
+	/* make the tuple into a datum */
+	return HeapTupleGetDatum(tuple);
+}
+
+/* ----------
+ * pgstattuple:
+ * returns live/dead tuples info
+ *
+ * C FUNCTION definition
+ * pgstattuple(text) returns pgstattuple_type
+ * see pgstattuple.sql for pgstattuple_type
+ * ----------
+ */
+
+Datum
+pgstattuple(PG_FUNCTION_ARGS)
+{
+	text	   *relname = PG_GETARG_TEXT_P(0);
+	RangeVar   *relrv;
+	Relation	rel;
+
+	/* open relation */
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	rel = relation_openrv(relrv, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstat_relation(rel, fcinfo));
+}
+
+Datum
+pgstattuplebyid(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
+
+	/* open relation */
+	rel = relation_open(relid, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstat_relation(rel, fcinfo));
+}
+
+/*
+ * pgstat_relation
+ */
+static Datum
+pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
+{
+	const char *err;
+
+	switch(rel->rd_rel->relkind)
+	{
+	case RELKIND_RELATION:
+	case RELKIND_TOASTVALUE:
+	case RELKIND_UNCATALOGED:
+	case RELKIND_SEQUENCE:
+		return pgstat_heap(rel, fcinfo);
+	case RELKIND_INDEX:
+		switch(rel->rd_rel->relam)
+		{
+		case BTREE_AM_OID:
+			return pgstat_btree(rel, fcinfo);
+		case HASH_AM_OID:
+			return pgstat_hash(rel, fcinfo);
+		case GIST_AM_OID:
+			return pgstat_gist(rel, fcinfo);
+		case GIN_AM_OID:
+			err = "gin index";
+			break;
+		default:
+			err = "unknown index";
+			break;
+		}
+		break;
+	case RELKIND_VIEW:
+		err = "view";
+		break;
+	case RELKIND_COMPOSITE_TYPE:
+		err = "composite type";
+		break;
+	default:
+		err = "unknown";
+		break;
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("\"%s\" (%s) is not supported",
+				RelationGetRelationName(rel), err)));
+	return 0;	/* should not happen */
+}
+
+/*
+ * pgstat_heap -- returns live/dead tuples info in a heap
+ */
+static Datum
+pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
+{
+	HeapScanDesc	scan;
+	HeapTuple		tuple;
+	BlockNumber		nblocks;
+	BlockNumber		block = 0;	/* next block to count free space in */
+	BlockNumber		tupblock;
+	Buffer			buffer;
+	pgstattuple_type	stat = { 0 };
+
 	scan = heap_beginscan(rel, SnapshotAny, 0, NULL);
 
 	nblocks = scan->rs_nblocks; /* # blocks to be scanned */
@@ -142,13 +274,13 @@ pgstattuple_real(Relation rel, FunctionCallInfo fcinfo)
 
 		if (HeapTupleSatisfiesNow(tuple->t_data, scan->rs_cbuf))
 		{
-			tuple_len += tuple->t_len;
-			tuple_count++;
+			stat.tuple_len += tuple->t_len;
+			stat.tuple_count++;
 		}
 		else
 		{
-			dead_tuple_len += tuple->t_len;
-			dead_tuple_count++;
+			stat.dead_tuple_len += tuple->t_len;
+			stat.dead_tuple_count++;
 		}
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
@@ -165,7 +297,7 @@ pgstattuple_real(Relation rel, FunctionCallInfo fcinfo)
 		{
 			buffer = ReadBuffer(rel, block);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
-			free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
+			stat.free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buffer);
 			block++;
@@ -176,57 +308,240 @@ pgstattuple_real(Relation rel, FunctionCallInfo fcinfo)
 	while (block < nblocks)
 	{
 		buffer = ReadBuffer(rel, block);
-		free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
+		stat.free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
 		ReleaseBuffer(buffer);
 		block++;
 	}
 
-	heap_close(rel, AccessShareLock);
+	relation_close(rel, AccessShareLock);
 
-	table_len = (uint64) nblocks *BLCKSZ;
+	stat.table_len = (uint64) nblocks * BLCKSZ;
 
-	if (nblocks == 0)
+	return build_pgstattuple_type(&stat, fcinfo);
+}
+
+/*
+ * pgstat_btree -- returns live/dead tuples info in a btree index
+ */
+static Datum
+pgstat_btree(Relation rel, FunctionCallInfo fcinfo)
+{
+	pgstat_btree_type	stat = { { 0 } };
+	Datum				datum;
+
+	datum = pgstat_index((pgstattuple_type *) &stat, rel,
+		BTREE_METAPAGE + 1, pgstat_btree_page, fcinfo);
+
+	ereport(NOTICE,
+		(errmsg("%.2f%% fragmented",
+			100.0 * (stat.forward + stat.backward) /
+			(stat.continuous + stat.forward + stat.backward)),
+		errhint("continuous=%llu, forward=%llu, backward=%llu",
+			stat.continuous, stat.forward, stat.backward)));
+
+	return datum;
+}
+
+/*
+ * pgstat_btree_page
+ */
+static void
+pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
+{
+	Buffer				buf;
+	Page				page;
+	pgstat_btree_type  *btstat = (pgstat_btree_type *)stat;
+
+	buf = ReadBuffer(rel, blkno);
+	LockBuffer(buf, BT_READ);
+	page = BufferGetPage(buf);
+
+	/* Page is valid, see what to do with it */
+	if (PageIsNew(page))
 	{
-		tuple_percent = 0.0;
-		dead_tuple_percent = 0.0;
-		free_percent = 0.0;
+		/* fully empty page */
+		stat->free_space += BLCKSZ;
 	}
 	else
 	{
-		tuple_percent = (double) tuple_len *100.0 / table_len;
-		dead_tuple_percent = (double) dead_tuple_len *100.0 / table_len;
-		free_percent = (double) free_space *100.0 / table_len;
+		BTPageOpaque	opaque;
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		if (opaque->btpo_flags & (BTP_DELETED | BTP_HALF_DEAD))
+		{
+			/* recyclable page */
+			stat->free_space += BLCKSZ;
+		}
+		else if (P_ISLEAF(opaque))
+		{
+			/* check fragmentation */
+			if (P_RIGHTMOST(opaque))
+				btstat->continuous++;
+			else if (opaque->btpo_next < blkno)
+				btstat->backward++;
+			else if (opaque->btpo_next > blkno + 1)
+				btstat->forward++;
+			else
+				btstat->continuous++;
+
+			pgstat_index_page(stat, page, P_FIRSTDATAKEY(opaque),
+				PageGetMaxOffsetNumber(page));
+		}
+		else
+		{
+			/* root or node */
+		}
 	}
 
-	/*
-	 * Prepare a values array for constructing the tuple. This should be an
-	 * array of C strings which will be processed later by the appropriate
-	 * "in" functions.
-	 */
-	values = (char **) palloc(NCOLUMNS * sizeof(char *));
-	for (i = 0; i < NCOLUMNS; i++)
-		values[i] = (char *) palloc(NCHARS * sizeof(char));
-	i = 0;
-	snprintf(values[i++], NCHARS, INT64_FORMAT, table_len);
-	snprintf(values[i++], NCHARS, INT64_FORMAT, tuple_count);
-	snprintf(values[i++], NCHARS, INT64_FORMAT, tuple_len);
-	snprintf(values[i++], NCHARS, "%.2f", tuple_percent);
-	snprintf(values[i++], NCHARS, INT64_FORMAT, dead_tuple_count);
-	snprintf(values[i++], NCHARS, INT64_FORMAT, dead_tuple_len);
-	snprintf(values[i++], NCHARS, "%.2f", dead_tuple_percent);
-	snprintf(values[i++], NCHARS, INT64_FORMAT, free_space);
-	snprintf(values[i++], NCHARS, "%.2f", free_percent);
+	_bt_relbuf(rel, buf);
+}
 
-	/* build a tuple */
-	tuple = BuildTupleFromCStrings(attinmeta, values);
+/*
+ * pgstat_hash -- returns live/dead tuples info in a hash index
+ */
+static Datum
+pgstat_hash(Relation rel, FunctionCallInfo fcinfo)
+{
+	pgstattuple_type	stat = { 0 };
+	return pgstat_index(&stat, rel, HASH_METAPAGE + 1, pgstat_hash_page, fcinfo);
+}
 
-	/* make the tuple into a datum */
-	result = HeapTupleGetDatum(tuple);
+/*
+ * pgstat_hash_page
+ */
+static void
+pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
+{
+	Buffer			buf;
+	Page			page;
 
-	/* Clean up */
-	for (i = 0; i < NCOLUMNS; i++)
-		pfree(values[i]);
-	pfree(values);
+	_hash_getlock(rel, blkno, HASH_SHARE);
+	buf = _hash_getbuf(rel, blkno, HASH_READ);
+	page = BufferGetPage(buf);
 
-	return (result);
+	if (PageGetSpecialSize(page) == MAXALIGN(sizeof(HashPageOpaqueData)))
+	{
+		HashPageOpaque	opaque;
+		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		switch (opaque->hasho_flag)
+		{
+		case LH_UNUSED_PAGE:
+			stat->free_space += BLCKSZ;
+			break;
+		case LH_BUCKET_PAGE:
+		case LH_OVERFLOW_PAGE:
+			pgstat_index_page(stat, page, FirstOffsetNumber,
+				PageGetMaxOffsetNumber(page));
+			break;
+		case LH_BITMAP_PAGE:
+		case LH_META_PAGE:
+		default:
+			break;
+		}
+	}
+	else
+	{
+		/* maybe corrupted */
+	}
+
+	_hash_relbuf(rel, buf);
+	_hash_droplock(rel, blkno, HASH_SHARE);
+}
+
+/*
+ * pgstat_gist -- returns live/dead tuples info in a gist index
+ */
+static Datum
+pgstat_gist(Relation rel, FunctionCallInfo fcinfo)
+{
+	pgstattuple_type	stat = { 0 };
+	return pgstat_index(&stat, rel, GIST_ROOT_BLKNO + 1, pgstat_gist_page, fcinfo);
+}
+
+/*
+ * pgstat_gist_page
+ */
+static void
+pgstat_gist_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
+{
+	Buffer			buf;
+	Page			page;
+
+	buf = ReadBuffer(rel, blkno);
+	LockBuffer(buf, GIST_SHARE);
+	gistcheckpage(rel, buf);
+	page = BufferGetPage(buf);
+
+	if (GistPageIsLeaf(page))
+	{
+		pgstat_index_page(stat, page, FirstOffsetNumber,
+			PageGetMaxOffsetNumber(page));
+	}
+	else
+	{
+		/* root or node */
+	}
+
+	UnlockReleaseBuffer(buf);
+}
+
+/*
+ * pgstat_index -- returns live/dead tuples info in a generic index
+ */
+static Datum
+pgstat_index(pgstattuple_type *stat, Relation rel, BlockNumber start,
+	pgstat_page pagefn, FunctionCallInfo fcinfo)
+{
+	BlockNumber nblocks;
+	BlockNumber blkno;
+
+	blkno = start;
+	for (;;)
+	{
+		/* Get the current relation length */
+		LockRelationForExtension(rel, ExclusiveLock);
+		nblocks = RelationGetNumberOfBlocks(rel);
+		UnlockRelationForExtension(rel, ExclusiveLock);
+
+		/* Quit if we've scanned the whole relation */
+		if (blkno >= nblocks)
+		{
+			stat->table_len = (uint64) nblocks * BLCKSZ;
+			break;
+		}
+
+		for (; blkno < nblocks; blkno++)
+			pagefn(stat, rel, blkno);
+	}
+
+	relation_close(rel, AccessShareLock);
+
+	return build_pgstattuple_type(stat, fcinfo);
+}
+
+/*
+ * pgstat_index_page -- for generic index page
+ */
+static void
+pgstat_index_page(pgstattuple_type *stat, Page page,
+	OffsetNumber minoff, OffsetNumber maxoff)
+{
+	OffsetNumber	i;
+
+	stat->free_space += PageGetFreeSpace(page);
+
+	for (i = minoff; i <= maxoff; i = OffsetNumberNext(i))
+	{
+		ItemId	itemid = PageGetItemId(page, i);
+
+		if (ItemIdDeleted(itemid))
+		{
+			stat->dead_tuple_count++;
+			stat->dead_tuple_len += ItemIdGetLength(itemid);
+		}
+		else
+		{
+			stat->tuple_count++;
+			stat->tuple_len += ItemIdGetLength(itemid);
+		}
+	}
 }

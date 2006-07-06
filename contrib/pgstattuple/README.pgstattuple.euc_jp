@@ -1,11 +1,11 @@
-$PostgreSQL: pgsql/contrib/pgstattuple/README.pgstattuple.euc_jp,v 1.6 2006/02/27 16:09:49 petere Exp $
+$PostgreSQL: pgsql/contrib/pgstattuple/README.pgstattuple.euc_jp,v 1.7 2006/07/06 02:18:07 momjian Exp $
 
 pgstattuple README		2002/08/22 石井達夫
 
 1. pgstattupleとは
 
-   pgstattupleは，UPDATEやDELETEで作られたテーブルのゴミ領域の大きさを，
-   テーブル自体の物理的な大きさに対するパーセンテージで返却します．つ
+   pgstattupleは，UPDATEやDELETEで作られたリレーションのゴミ領域の大きさを，
+   リレーション自体の物理的な大きさに対するパーセンテージで返却します．つ
    まり，返却値が大きければ，それだけゴミも多いので，vacuumをかける必
    要があるという判断の助けになるわけです．これ以外にもいろいろな情報
    が返ります．
@@ -26,7 +26,7 @@ free_percent       | 1.95
 
 各項目の説明です．
 
-table_len		-- テーブルの物理的な大きさ(バイト)
+table_len		-- リレーションの物理的な大きさ(バイト)
 tuple_count		-- タプル数
 tuple_len		-- タプル長の合計(バイト)
 tuple_percent		-- タプルの割合．table_lenに対するtuple_lenの比率．
@@ -56,12 +56,12 @@ free_percent		-- 再利用可能な領域．table_lenに対するfree_spaceの比率．
      AS 'MODULE_PATHNAME', 'pgstattuple'
      LANGUAGE C STRICT;
 
-   第一引数: テーブル名
+   第一引数: リレーション名
 
    関数の戻りはpgstattuple_type型です．
 
-   pgstattupleはテーブルにAccessShareLockしかかけないので，
-   pgstattuple を実行中に該当テーブルに更新や削除が発生すると，正しく
+   pgstattupleはリレーションにAccessShareLockしかかけないので，
+   pgstattuple を実行中に該当リレーションに更新や削除が発生すると，正しく
    ない結果を返す可能性があります．
 
    pgstattupleがタプルを「ゴミ」と判断する基準は，
@@ -74,6 +74,10 @@ free_percent		-- 再利用可能な領域．table_lenに対するfree_spaceの比率．
    も責任を負いません．
 
 5. 改訂履歴
+
+   2006/06/28
+
+	インデックスに対しても動作するように拡張。
 
    2002/09/04
 
