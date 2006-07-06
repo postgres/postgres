@@ -12,6 +12,11 @@ INSERT INTO TIMETZ_TBL VALUES ('12:00 PDT');
 INSERT INTO TIMETZ_TBL VALUES ('12:01 PDT');
 INSERT INTO TIMETZ_TBL VALUES ('23:59 PDT');
 INSERT INTO TIMETZ_TBL VALUES ('11:59:59.99 PM PDT');
+INSERT INTO TIMETZ_TBL VALUES ('2003-03-07 15:36:39 America/New_York');
+INSERT INTO TIMETZ_TBL VALUES ('2003-07-07 15:36:39 America/New_York');
+-- this should fail (the timezone offset is not known)
+INSERT INTO TIMETZ_TBL VALUES ('15:36:39 America/New_York');
+ERROR:  invalid input syntax for type time with time zone: "15:36:39 America/New_York"
 SELECT f1 AS "Time TZ" FROM TIMETZ_TBL;
     Time TZ     
 ----------------
@@ -25,7 +30,9 @@ SELECT f1 AS "Time TZ" FROM TIMETZ_TBL;
  12:01:00-07
  23:59:00-07
  23:59:59.99-07
-(10 rows)
+ 15:36:39-05
+ 15:36:39-04
+(12 rows)
 
 SELECT f1 AS "Three" FROM TIMETZ_TBL WHERE f1 < '05:06:07-07';
     Three    
@@ -45,7 +52,9 @@ SELECT f1 AS "Seven" FROM TIMETZ_TBL WHERE f1 > '05:06:07-07';
  12:01:00-07
  23:59:00-07
  23:59:59.99-07
-(7 rows)
+ 15:36:39-05
+ 15:36:39-04
+(9 rows)
 
 SELECT f1 AS "None" FROM TIMETZ_TBL WHERE f1 < '00:00-07';
  None 
@@ -65,7 +74,9 @@ SELECT f1 AS "Ten" FROM TIMETZ_TBL WHERE f1 >= '00:00-07';
  12:01:00-07
  23:59:00-07
  23:59:59.99-07
-(10 rows)
+ 15:36:39-05
+ 15:36:39-04
+(12 rows)
 
 --
 -- TIME simple math

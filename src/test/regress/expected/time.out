@@ -11,6 +11,11 @@ INSERT INTO TIME_TBL VALUES ('12:00');
 INSERT INTO TIME_TBL VALUES ('12:01');
 INSERT INTO TIME_TBL VALUES ('23:59');
 INSERT INTO TIME_TBL VALUES ('11:59:59.99 PM');
+INSERT INTO TIME_TBL VALUES ('2003-03-07 15:36:39 America/New_York');
+INSERT INTO TIME_TBL VALUES ('2003-07-07 15:36:39 America/New_York');
+-- this should fail (the timezone offset is not known)
+INSERT INTO TIME_TBL VALUES ('15:36:39 America/New_York');
+ERROR:  invalid input syntax for type time: "15:36:39 America/New_York"
 SELECT f1 AS "Time" FROM TIME_TBL;
     Time     
 -------------
@@ -22,7 +27,9 @@ SELECT f1 AS "Time" FROM TIME_TBL;
  12:01:00
  23:59:00
  23:59:59.99
-(8 rows)
+ 15:36:39
+ 15:36:39
+(10 rows)
 
 SELECT f1 AS "Three" FROM TIME_TBL WHERE f1 < '05:06:07';
   Three   
@@ -40,7 +47,9 @@ SELECT f1 AS "Five" FROM TIME_TBL WHERE f1 > '05:06:07';
  12:01:00
  23:59:00
  23:59:59.99
-(5 rows)
+ 15:36:39
+ 15:36:39
+(7 rows)
 
 SELECT f1 AS "None" FROM TIME_TBL WHERE f1 < '00:00';
  None 
@@ -58,7 +67,9 @@ SELECT f1 AS "Eight" FROM TIME_TBL WHERE f1 >= '00:00';
  12:01:00
  23:59:00
  23:59:59.99
-(8 rows)
+ 15:36:39
+ 15:36:39
+(10 rows)
 
 --
 -- TIME simple math

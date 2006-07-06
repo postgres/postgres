@@ -102,6 +102,10 @@ INSERT INTO TIMESTAMP_TBL VALUES ('97FEB10 5:32:01PM UTC');
 INSERT INTO TIMESTAMP_TBL VALUES ('97/02/10 17:32:01 UTC');
 reset datestyle;
 INSERT INTO TIMESTAMP_TBL VALUES ('1997.041 17:32:01 UTC');
+INSERT INTO TIMESTAMP_TBL VALUES ('19970210 173201 America/New_York');
+-- this fails
+INSERT INTO TIMESTAMP_TBL VALUES ('19970710 173201 America/Does_not_exist');
+ERROR:  time zone "America/Does_not_exist" not recognized
 -- Check date conversion and date arithmetic
 INSERT INTO TIMESTAMP_TBL VALUES ('1997-06-10 18:32:01 PDT');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997');
@@ -177,6 +181,7 @@ SELECT '' AS "64", d1 FROM TIMESTAMP_TBL;
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
+    | Mon Feb 10 14:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -208,7 +213,7 @@ SELECT '' AS "64", d1 FROM TIMESTAMP_TBL;
     | Sat Jan 01 17:32:01 2000
     | Sun Dec 31 17:32:01 2000
     | Mon Jan 01 17:32:01 2001
-(64 rows)
+(65 rows)
 
 -- Demonstrate functions and operators
 SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
@@ -245,6 +250,7 @@ SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
+    | Mon Feb 10 14:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -263,7 +269,7 @@ SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
     | Sat Jan 01 17:32:01 2000
     | Sun Dec 31 17:32:01 2000
     | Mon Jan 01 17:32:01 2001
-(48 rows)
+(49 rows)
 
 SELECT '' AS "15", d1 FROM TIMESTAMP_TBL
    WHERE d1 < timestamp without time zone '1997-01-02';
@@ -329,6 +335,7 @@ SELECT '' AS "63", d1 FROM TIMESTAMP_TBL
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
+    | Mon Feb 10 14:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -360,7 +367,7 @@ SELECT '' AS "63", d1 FROM TIMESTAMP_TBL
     | Sat Jan 01 17:32:01 2000
     | Sun Dec 31 17:32:01 2000
     | Mon Jan 01 17:32:01 2001
-(63 rows)
+(64 rows)
 
 SELECT '' AS "16", d1 FROM TIMESTAMP_TBL
    WHERE d1 <= timestamp without time zone '1997-01-02';
@@ -419,6 +426,7 @@ SELECT '' AS "49", d1 FROM TIMESTAMP_TBL
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
+    | Mon Feb 10 14:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -437,7 +445,7 @@ SELECT '' AS "49", d1 FROM TIMESTAMP_TBL
     | Sat Jan 01 17:32:01 2000
     | Sun Dec 31 17:32:01 2000
     | Mon Jan 01 17:32:01 2001
-(49 rows)
+(50 rows)
 
 SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
@@ -474,6 +482,7 @@ SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
+    | @ 39 days 14 hours 32 mins 1 sec
     | @ 159 days 18 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 40 days 17 hours 32 mins 1 sec
@@ -497,7 +506,7 @@ SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
     | @ 1094 days 17 hours 32 mins 1 sec
     | @ 1459 days 17 hours 32 mins 1 sec
     | @ 1460 days 17 hours 32 mins 1 sec
-(54 rows)
+(55 rows)
 
 SELECT '' AS date_trunc_week, date_trunc( 'week', timestamp '2004-02-29 15:44:17.71393' ) AS week_trunc;
  date_trunc_week |        week_trunc        
@@ -543,6 +552,7 @@ SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
+    | @ 39 days 14 hours 32 mins 1 sec
     | @ 159 days 18 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 40 days 17 hours 32 mins 1 sec
@@ -566,7 +576,7 @@ SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
     | @ 1094 days 17 hours 32 mins 1 sec
     | @ 1459 days 17 hours 32 mins 1 sec
     | @ 1460 days 17 hours 32 mins 1 sec
-(54 rows)
+(55 rows)
 
 SELECT '' AS "54", d1 as "timestamp",
    date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
@@ -606,6 +616,7 @@ SELECT '' AS "54", d1 as "timestamp",
     | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
     | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
     | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 14:32:01 1997    | 1997 |     2 |  10 |   14 |     32 |      1
     | Tue Jun 10 18:32:01 1997    | 1997 |     6 |  10 |   18 |     32 |      1
     | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
     | Tue Feb 11 17:32:01 1997    | 1997 |     2 |  11 |   17 |     32 |      1
@@ -629,7 +640,7 @@ SELECT '' AS "54", d1 as "timestamp",
     | Sat Jan 01 17:32:01 2000    | 2000 |     1 |   1 |   17 |     32 |      1
     | Sun Dec 31 17:32:01 2000    | 2000 |    12 |  31 |   17 |     32 |      1
     | Mon Jan 01 17:32:01 2001    | 2001 |     1 |   1 |   17 |     32 |      1
-(54 rows)
+(55 rows)
 
 SELECT '' AS "54", d1 as "timestamp",
    date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
@@ -668,6 +679,7 @@ SELECT '' AS "54", d1 as "timestamp",
     | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
     | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
     | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
+    | Mon Feb 10 14:32:01 1997    |       1 |  1000 |  1000000
     | Tue Jun 10 18:32:01 1997    |       2 |  1000 |  1000000
     | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
     | Tue Feb 11 17:32:01 1997    |       1 |  1000 |  1000000
@@ -691,7 +703,7 @@ SELECT '' AS "54", d1 as "timestamp",
     | Sat Jan 01 17:32:01 2000    |       1 |  1000 |  1000000
     | Sun Dec 31 17:32:01 2000    |       4 |  1000 |  1000000
     | Mon Jan 01 17:32:01 2001    |       1 |  1000 |  1000000
-(54 rows)
+(55 rows)
 
 -- TO_CHAR()
 SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon') 
@@ -720,6 +732,7 @@ SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM M
            | WEDNESDAY Wednesday wednesday WED Wed wed MARCH     March     march     III  MAR Mar mar
            | WEDNESDAY Wednesday wednesday WED Wed wed MARCH     March     march     III  MAR Mar mar
            | WEDNESDAY Wednesday wednesday WED Wed wed MARCH     March     march     III  MAR Mar mar
+           | MONDAY    Monday    monday    MON Mon mon FEBRUARY  February  february  II   FEB Feb feb
            | MONDAY    Monday    monday    MON Mon mon FEBRUARY  February  february  II   FEB Feb feb
            | MONDAY    Monday    monday    MON Mon mon FEBRUARY  February  february  II   FEB Feb feb
            | MONDAY    Monday    monday    MON Mon mon FEBRUARY  February  february  II   FEB Feb feb
@@ -762,7 +775,7 @@ SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM M
            | SATURDAY  Saturday  saturday  SAT Sat sat JANUARY   January   january   I    JAN Jan jan
            | SUNDAY    Sunday    sunday    SUN Sun sun DECEMBER  December  december  XII  DEC Dec dec
            | MONDAY    Monday    monday    MON Mon mon JANUARY   January   january   I    JAN Jan jan
-(64 rows)
+(65 rows)
 
 SELECT '' AS to_char_2, to_char(d1, 'FMDAY FMDay FMday FMMONTH FMMonth FMmonth FMRM')
    FROM TIMESTAMP_TBL;
@@ -790,6 +803,7 @@ SELECT '' AS to_char_2, to_char(d1, 'FMDAY FMDay FMday FMMONTH FMMonth FMmonth F
            | WEDNESDAY Wednesday wednesday MARCH March march III
            | WEDNESDAY Wednesday wednesday MARCH March march III
            | WEDNESDAY Wednesday wednesday MARCH March march III
+           | MONDAY Monday monday FEBRUARY February february II
            | MONDAY Monday monday FEBRUARY February february II
            | MONDAY Monday monday FEBRUARY February february II
            | MONDAY Monday monday FEBRUARY February february II
@@ -832,7 +846,7 @@ SELECT '' AS to_char_2, to_char(d1, 'FMDAY FMDay FMday FMMONTH FMMonth FMmonth F
            | SATURDAY Saturday saturday JANUARY January january I
            | SUNDAY Sunday sunday DECEMBER December december XII
            | MONDAY Monday monday JANUARY January january I
-(64 rows)
+(65 rows)
 
 SELECT '' AS to_char_3, to_char(d1, 'Y,YYY YYYY YYY YY Y CC Q MM WW DDD DD D J')
    FROM TIMESTAMP_TBL;
@@ -860,6 +874,7 @@ SELECT '' AS to_char_3, to_char(d1, 'Y,YYY YYYY YYY YY Y CC Q MM WW DDD DD D J')
            | 2,000 2000 000 00 0 21 1 03 11 075 15 4 2451619
            | 2,000 2000 000 00 0 21 1 03 11 075 15 4 2451619
            | 2,000 2000 000 00 0 21 1 03 11 075 15 4 2451619
+           | 1,997 1997 997 97 7 20 1 02 06 041 10 2 2450490
            | 1,997 1997 997 97 7 20 1 02 06 041 10 2 2450490
            | 1,997 1997 997 97 7 20 1 02 06 041 10 2 2450490
            | 1,997 1997 997 97 7 20 1 02 06 041 10 2 2450490
@@ -902,7 +917,7 @@ SELECT '' AS to_char_3, to_char(d1, 'Y,YYY YYYY YYY YY Y CC Q MM WW DDD DD D J')
            | 2,000 2000 000 00 0 21 1 01 01 001 01 7 2451545
            | 2,000 2000 000 00 0 21 4 12 53 366 31 1 2451910
            | 2,001 2001 001 01 1 21 1 01 01 001 01 2 2451911
-(64 rows)
+(65 rows)
 
 SELECT '' AS to_char_4, to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM FMWW FMDDD FMDD FMD FMJ') 
    FROM TIMESTAMP_TBL;
@@ -930,6 +945,7 @@ SELECT '' AS to_char_4, to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM
            | 2,000 2000 000 00 0 21 1 3 11 75 15 4 2451619
            | 2,000 2000 000 00 0 21 1 3 11 75 15 4 2451619
            | 2,000 2000 000 00 0 21 1 3 11 75 15 4 2451619
+           | 1,997 1997 997 97 7 20 1 2 6 41 10 2 2450490
            | 1,997 1997 997 97 7 20 1 2 6 41 10 2 2450490
            | 1,997 1997 997 97 7 20 1 2 6 41 10 2 2450490
            | 1,997 1997 997 97 7 20 1 2 6 41 10 2 2450490
@@ -972,7 +988,7 @@ SELECT '' AS to_char_4, to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM
            | 2,000 2000 000 00 0 21 1 1 1 1 1 7 2451545
            | 2,000 2000 000 00 0 21 4 12 53 366 31 1 2451910
            | 2,001 2001 001 01 1 21 1 1 1 1 1 2 2451911
-(64 rows)
+(65 rows)
 
 SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS') 
    FROM TIMESTAMP_TBL;
@@ -1011,6 +1027,7 @@ SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS')
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
+           | 02 02 14 32 01 52321
            | 06 06 18 32 01 66721
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
@@ -1042,7 +1059,7 @@ SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS')
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
-(64 rows)
+(65 rows)
 
 SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""') 
    FROM TIMESTAMP_TBL;
@@ -1081,6 +1098,7 @@ SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between qu
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
+           | HH:MI:SS is 02:32:01 "text between quote marks"
            | HH:MI:SS is 06:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
@@ -1112,7 +1130,7 @@ SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between qu
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
-(64 rows)
+(65 rows)
 
 SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
    FROM TIMESTAMP_TBL;
@@ -1151,6 +1169,7 @@ SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
            | 17--text--32--text--01
            | 17--text--32--text--01
            | 17--text--32--text--01
+           | 14--text--32--text--01
            | 18--text--32--text--01
            | 17--text--32--text--01
            | 17--text--32--text--01
@@ -1182,7 +1201,7 @@ SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
            | 17--text--32--text--01
            | 17--text--32--text--01
            | 17--text--32--text--01
-(64 rows)
+(65 rows)
 
 SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth') 
    FROM TIMESTAMP_TBL;
@@ -1210,6 +1229,7 @@ SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth')
            | 2000TH 2000th 2451619th
            | 2000TH 2000th 2451619th
            | 2000TH 2000th 2451619th
+           | 1997TH 1997th 2450490th
            | 1997TH 1997th 2450490th
            | 1997TH 1997th 2450490th
            | 1997TH 1997th 2450490th
@@ -1252,7 +1272,7 @@ SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth')
            | 2000TH 2000th 2451545th
            | 2000TH 2000th 2451910th
            | 2001ST 2001st 2451911th
-(64 rows)
+(65 rows)
 
   
 SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm') 
@@ -1292,6 +1312,7 @@ SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. H
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
+           | 1997 A.D. 1997 a.d. 1997 ad 02:32:01 P.M. 02:32:01 p.m. 02:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 06:32:01 P.M. 06:32:01 p.m. 06:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
@@ -1323,7 +1344,7 @@ SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. H
            | 2000 A.D. 2000 a.d. 2000 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 2000 A.D. 2000 a.d. 2000 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 2001 A.D. 2001 a.d. 2001 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
-(64 rows)
+(65 rows)
 
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');

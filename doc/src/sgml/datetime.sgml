@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.49 2006/04/23 03:39:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.50 2006/07/06 01:46:37 momjian Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -46,7 +46,9 @@
        <para>
         If the numeric token contains a dash (<literal>-</>), slash
         (<literal>/</>), or two or more dots (<literal>.</>), this is
-        a date string which may have a text month.
+        a date string which may have a text month. In case of a slash
+        (<literal>/</>) it can also be a full time zone name like
+        <literal>America/New_York</>.
        </para>
       </step>
 
@@ -359,7 +361,8 @@
    </indexterm>
 
    <para>
-    <xref linkend="datetime-timezone-input-table"> shows the time zone
+    <xref linkend="datetime-timezone-input-table"> and
+    <xref linkend="datetime-timezone-full-names-table"> show the time zone
     abbreviations recognized by <productname>PostgreSQL</productname>
     in date/time input values.  Note that these names are <emphasis>not</>
     necessarily used for date/time output &mdash; output is driven by the
@@ -983,13 +986,15 @@
    </indexterm>
 
    <para>
-    <xref linkend="datetime-timezone-set-table"> shows the time zone
+    <xref linkend="datetime-timezone-full-names-table"> shows the time zone
     names recognized by <productname>PostgreSQL</productname> as valid
     settings for the <xref linkend="guc-timezone"> parameter.  Note that
     these names are conceptually as well as practically different from
     the names shown in <xref linkend="datetime-timezone-input-table">:
     most of these names imply a local daylight-savings time rule, whereas
-    the former names each represent just a fixed offset from UTC.
+    the former names each represent just a fixed offset from UTC. That's why
+    you always have to specify a date if you want to use these time zone
+    names in <type>timetz</> values.
    </para>
 
    <para>
@@ -998,8 +1003,8 @@
     by the name of the principal city of the zone.
    </para>
 
-    <table id="datetime-timezone-set-table">
-     <title>Time Zone Names for Setting <varname>timezone</></title>
+    <table id="datetime-timezone-full-names-table">
+     <title>Time Zone Names for date/time input values and for setting <varname>timezone</></title>
      <tgroup cols="1">
       <thead>
        <row>

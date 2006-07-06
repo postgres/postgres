@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.168 2006/06/18 15:38:35 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.169 2006/07/06 01:46:37 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1602,7 +1602,12 @@ SELECT b, char_length(b) FROM test2;
       linkend="datatype-datetime-time-table"> 
       and <xref linkend="datatype-timezone-table">.)  If a time zone is
       specified in the input for <type>time without time zone</type>,
-      it is silently ignored.
+      it is silently ignored. You can also always specify a date but it will
+      be ignored except for when you use a full time zone name like
+      <literal>America/New_York</literal>. In this case specifying the date
+      is compulsory in order to tell which time zone offset should be
+      applied. It will be applied whatever time zone offset was valid at that
+      date and time at the specified place.
      </para>
 
       <table id="datatype-datetime-time-table">
@@ -1659,6 +1664,10 @@ SELECT b, char_length(b) FROM test2;
           <entry><literal>04:05:06 PST</literal></entry>
           <entry>time zone specified by name</entry>
          </row>
+         <row>
+          <entry><literal>2003-04-12 04:05:06 America/New_York</literal></entry>
+          <entry>time zone specified by full name</entry>
+         </row>
         </tbody>
        </tgroup>
       </table>
@@ -1676,6 +1685,10 @@ SELECT b, char_length(b) FROM test2;
          <row>
           <entry><literal>PST</literal></entry>
           <entry>Pacific Standard Time</entry>
+         </row>
+         <row>
+          <entry><literal>America/New_York</literal></entry>
+          <entry>Full time zone name</entry>
          </row>
          <row>
           <entry><literal>-8:00</literal></entry>
@@ -1739,8 +1752,12 @@ SELECT b, char_length(b) FROM test2;
 </programlisting>
 
       are valid values, which follow the <acronym>ISO</acronym> 8601
-      standard.  In addition, the wide-spread format
+      standard. You can also specify the full time zone name as in
+<programlisting>
+1999-01-08 04:05:06 America/New_York
+</programlisting>
 
+      In addition, the wide-spread format
 <programlisting>
 January 8 04:05:06 1999 PST
 </programlisting>

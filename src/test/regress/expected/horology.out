@@ -450,6 +450,7 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
     | Tue Feb 10 17:32:01 1998
     | Tue Feb 10 17:32:01 1998
     | Tue Feb 10 17:32:01 1998
+    | Tue Feb 10 14:32:01 1998
     | Wed Jun 10 18:32:01 1998
     | Tue Feb 10 17:32:01 1998
     | Wed Feb 11 17:32:01 1998
@@ -481,7 +482,7 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
     | Mon Jan 01 17:32:01 2001
     | Mon Dec 31 17:32:01 2001
     | Tue Jan 01 17:32:01 2002
-(64 rows)
+(65 rows)
 
 SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
  64 |          one_year           
@@ -519,6 +520,7 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
     | Sat Feb 10 17:32:01 1996
     | Sat Feb 10 17:32:01 1996
     | Sat Feb 10 17:32:01 1996
+    | Sat Feb 10 14:32:01 1996
     | Mon Jun 10 18:32:01 1996
     | Sat Feb 10 17:32:01 1996
     | Sun Feb 11 17:32:01 1996
@@ -550,7 +552,7 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
     | Fri Jan 01 17:32:01 1999
     | Fri Dec 31 17:32:01 1999
     | Sat Jan 01 17:32:01 2000
-(64 rows)
+(65 rows)
 
 SELECT timestamp with time zone '1996-03-01' - interval '1 second' AS "Feb 29";
             Feb 29            
@@ -693,6 +695,8 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Tue Feb 10 09:32:01 1998 PST
     | Tue Feb 10 09:32:01 1998 PST
     | Tue Feb 10 09:32:01 1998 PST
+    | Tue Feb 10 14:32:01 1998 PST
+    | Fri Jul 10 14:32:01 1998 PDT
     | Wed Jun 10 18:32:01 1998 PDT
     | Tue Feb 10 17:32:01 1998 PST
     | Wed Feb 11 17:32:01 1998 PST
@@ -724,7 +728,7 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Mon Jan 01 17:32:01 2001 PST
     | Mon Dec 31 17:32:01 2001 PST
     | Tue Jan 01 17:32:01 2002 PST
-(64 rows)
+(66 rows)
 
 SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
  64 |            one_year             
@@ -762,6 +766,8 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Sat Feb 10 09:32:01 1996 PST
     | Sat Feb 10 09:32:01 1996 PST
     | Sat Feb 10 09:32:01 1996 PST
+    | Sat Feb 10 14:32:01 1996 PST
+    | Wed Jul 10 14:32:01 1996 PDT
     | Mon Jun 10 18:32:01 1996 PDT
     | Sat Feb 10 17:32:01 1996 PST
     | Sun Feb 11 17:32:01 1996 PST
@@ -793,7 +799,7 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Fri Jan 01 17:32:01 1999 PST
     | Fri Dec 31 17:32:01 1999 PST
     | Sat Jan 01 17:32:01 2000 PST
-(64 rows)
+(66 rows)
 
 --
 -- time, interval arithmetic
@@ -932,6 +938,8 @@ SELECT t.d1 + i.f1 AS "102" FROM TIMESTAMP_TBL t, INTERVAL_TBL i
  Mon Feb 10 22:32:01 1997
  Mon Feb 10 17:33:01 1997
  Mon Feb 10 22:32:01 1997
+ Mon Feb 10 14:33:01 1997
+ Mon Feb 10 19:32:01 1997
  Tue Jun 10 18:33:01 1997
  Tue Jun 10 23:32:01 1997
  Mon Feb 10 17:33:01 1997
@@ -976,7 +984,7 @@ SELECT t.d1 + i.f1 AS "102" FROM TIMESTAMP_TBL t, INTERVAL_TBL i
  Sat Jan 01 22:32:01 2000
  Sun Dec 31 17:33:01 2000
  Sun Dec 31 22:32:01 2000
-(102 rows)
+(104 rows)
 
 SELECT t.d1 - i.f1 AS "102" FROM TIMESTAMP_TBL t, INTERVAL_TBL i
   WHERE t.d1 BETWEEN '1990-01-01' AND '2001-01-01'
@@ -1041,6 +1049,8 @@ SELECT t.d1 - i.f1 AS "102" FROM TIMESTAMP_TBL t, INTERVAL_TBL i
  Mon Feb 10 12:32:01 1997
  Mon Feb 10 17:31:01 1997
  Mon Feb 10 12:32:01 1997
+ Mon Feb 10 14:31:01 1997
+ Mon Feb 10 09:32:01 1997
  Tue Jun 10 18:31:01 1997
  Tue Jun 10 13:32:01 1997
  Mon Feb 10 17:31:01 1997
@@ -1085,7 +1095,7 @@ SELECT t.d1 - i.f1 AS "102" FROM TIMESTAMP_TBL t, INTERVAL_TBL i
  Sat Jan 01 12:32:01 2000
  Sun Dec 31 17:31:01 2000
  Sun Dec 31 12:32:01 2000
-(102 rows)
+(104 rows)
 
 SELECT t.f1 + i.f1 AS "80" FROM TIME_TBL t, INTERVAL_TBL i;
      80      
@@ -1170,7 +1180,27 @@ SELECT t.f1 + i.f1 AS "80" FROM TIME_TBL t, INTERVAL_TBL i;
  23:59:59.99
  23:59:59.99
  11:59:59.99
-(80 rows)
+ 15:37:39
+ 20:36:39
+ 15:36:39
+ 15:36:39
+ 15:36:39
+ 15:36:25
+ 17:39:43
+ 15:36:39
+ 15:36:39
+ 03:36:39
+ 15:37:39
+ 20:36:39
+ 15:36:39
+ 15:36:39
+ 15:36:39
+ 15:36:25
+ 17:39:43
+ 15:36:39
+ 15:36:39
+ 03:36:39
+(100 rows)
 
 SELECT t.f1 - i.f1 AS "80" FROM TIME_TBL t, INTERVAL_TBL i;
      80      
@@ -1255,7 +1285,27 @@ SELECT t.f1 - i.f1 AS "80" FROM TIME_TBL t, INTERVAL_TBL i;
  23:59:59.99
  23:59:59.99
  11:59:59.99
-(80 rows)
+ 15:35:39
+ 10:36:39
+ 15:36:39
+ 15:36:39
+ 15:36:39
+ 15:36:53
+ 13:33:35
+ 15:36:39
+ 15:36:39
+ 03:36:39
+ 15:35:39
+ 10:36:39
+ 15:36:39
+ 15:36:39
+ 15:36:39
+ 15:36:53
+ 13:33:35
+ 15:36:39
+ 15:36:39
+ 03:36:39
+(100 rows)
 
 SELECT t.f1 + i.f1 AS "100" FROM TIMETZ_TBL t, INTERVAL_TBL i;
       100       
@@ -1360,7 +1410,27 @@ SELECT t.f1 + i.f1 AS "100" FROM TIMETZ_TBL t, INTERVAL_TBL i;
  23:59:59.99-07
  23:59:59.99-07
  11:59:59.99-07
-(100 rows)
+ 15:37:39-05
+ 20:36:39-05
+ 15:36:39-05
+ 15:36:39-05
+ 15:36:39-05
+ 15:36:25-05
+ 17:39:43-05
+ 15:36:39-05
+ 15:36:39-05
+ 03:36:39-05
+ 15:37:39-04
+ 20:36:39-04
+ 15:36:39-04
+ 15:36:39-04
+ 15:36:39-04
+ 15:36:25-04
+ 17:39:43-04
+ 15:36:39-04
+ 15:36:39-04
+ 03:36:39-04
+(120 rows)
 
 SELECT t.f1 - i.f1 AS "100" FROM TIMETZ_TBL t, INTERVAL_TBL i;
       100       
@@ -1465,7 +1535,27 @@ SELECT t.f1 - i.f1 AS "100" FROM TIMETZ_TBL t, INTERVAL_TBL i;
  23:59:59.99-07
  23:59:59.99-07
  11:59:59.99-07
-(100 rows)
+ 15:35:39-05
+ 10:36:39-05
+ 15:36:39-05
+ 15:36:39-05
+ 15:36:39-05
+ 15:36:53-05
+ 13:33:35-05
+ 15:36:39-05
+ 15:36:39-05
+ 03:36:39-05
+ 15:35:39-04
+ 10:36:39-04
+ 15:36:39-04
+ 15:36:39-04
+ 15:36:39-04
+ 15:36:53-04
+ 13:33:35-04
+ 15:36:39-04
+ 15:36:39-04
+ 03:36:39-04
+(120 rows)
 
 -- SQL9x OVERLAPS operator
 -- test with time zone
@@ -2450,6 +2540,7 @@ SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
+    | Mon Feb 10 14:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -2481,7 +2572,7 @@ SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
     | Sat Jan 01 17:32:01 2000
     | Sun Dec 31 17:32:01 2000
     | Mon Jan 01 17:32:01 2001
-(64 rows)
+(65 rows)
 
 SELECT '' AS seven, f1 AS us_postgres FROM ABSTIME_TBL;
  seven |         us_postgres          
@@ -2532,6 +2623,7 @@ SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_TBL;
     | 1997-02-10 17:32:01
     | 1997-02-10 17:32:01
     | 1997-02-10 17:32:01
+    | 1997-02-10 14:32:01
     | 1997-06-10 18:32:01
     | 1997-02-10 17:32:01
     | 1997-02-11 17:32:01
@@ -2563,7 +2655,7 @@ SELECT '' AS "64", d1 AS us_iso FROM TIMESTAMP_TBL;
     | 2000-01-01 17:32:01
     | 2000-12-31 17:32:01
     | 2001-01-01 17:32:01
-(64 rows)
+(65 rows)
 
 SELECT '' AS seven, f1 AS us_iso FROM ABSTIME_TBL;
  seven |         us_iso         
@@ -2620,6 +2712,7 @@ SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
     | 02/10/1997 17:32:01
     | 02/10/1997 17:32:01
     | 02/10/1997 17:32:01
+    | 02/10/1997 14:32:01
     | 06/10/1997 18:32:01
     | 02/10/1997 17:32:01
     | 02/11/1997 17:32:01
@@ -2651,7 +2744,7 @@ SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
     | 01/01/2000 17:32:01
     | 12/31/2000 17:32:01
     | 01/01/2001 17:32:01
-(64 rows)
+(65 rows)
 
 SELECT '' AS seven, f1 AS us_sql FROM ABSTIME_TBL;
  seven |         us_sql          
@@ -2715,6 +2808,7 @@ SELECT '' AS "65", d1 AS european_postgres FROM TIMESTAMP_TBL;
     | Mon 10 Feb 17:32:01 1997
     | Mon 10 Feb 17:32:01 1997
     | Mon 10 Feb 17:32:01 1997
+    | Mon 10 Feb 14:32:01 1997
     | Tue 10 Jun 18:32:01 1997
     | Mon 10 Feb 17:32:01 1997
     | Tue 11 Feb 17:32:01 1997
@@ -2747,7 +2841,7 @@ SELECT '' AS "65", d1 AS european_postgres FROM TIMESTAMP_TBL;
     | Sun 31 Dec 17:32:01 2000
     | Mon 01 Jan 17:32:01 2001
     | Thu 13 Jun 00:00:00 1957
-(65 rows)
+(66 rows)
 
 SELECT '' AS seven, f1 AS european_postgres FROM ABSTIME_TBL;
  seven |      european_postgres       
@@ -2804,6 +2898,7 @@ SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
     | 1997-02-10 17:32:01
     | 1997-02-10 17:32:01
     | 1997-02-10 17:32:01
+    | 1997-02-10 14:32:01
     | 1997-06-10 18:32:01
     | 1997-02-10 17:32:01
     | 1997-02-11 17:32:01
@@ -2836,7 +2931,7 @@ SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
     | 2000-12-31 17:32:01
     | 2001-01-01 17:32:01
     | 1957-06-13 00:00:00
-(65 rows)
+(66 rows)
 
 SELECT '' AS seven, f1 AS european_iso FROM ABSTIME_TBL;
  seven |      european_iso      
@@ -2893,6 +2988,7 @@ SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;
     | 10/02/1997 17:32:01
     | 10/02/1997 17:32:01
     | 10/02/1997 17:32:01
+    | 10/02/1997 14:32:01
     | 10/06/1997 18:32:01
     | 10/02/1997 17:32:01
     | 11/02/1997 17:32:01
@@ -2925,7 +3021,7 @@ SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;
     | 31/12/2000 17:32:01
     | 01/01/2001 17:32:01
     | 13/06/1957 00:00:00
-(65 rows)
+(66 rows)
 
 SELECT '' AS seven, f1 AS european_sql FROM ABSTIME_TBL;
  seven |      european_sql       
