@@ -33,7 +33,7 @@
 # 
 #
 ##############################################################################
-# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.10.4.1 2006/05/21 19:57:38 momjian Exp $ 
+# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.10.4.2 2006/07/06 02:03:00 momjian Exp $ 
 #
 ##############################################################################
 
@@ -907,7 +907,7 @@ sub extractData($$) {
 	$matchString = $1;
 	$value .= substr $matchString,0,length($matchString)-1;
 
-	if($matchString =~ m/(\'$)/s) {
+	if($matchString =~ m/(\'$)/s and (substr $dataField,length($matchString),1) ne "'") {
 	  # $1 runs to the end of the field value.
 	    $dataField = substr $dataField,length($matchString)+1;
 	    last;
