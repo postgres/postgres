@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.304 2006/07/03 22:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.305 2006/07/08 20:45:38 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -554,7 +554,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
  * Caller has already opened and locked pg_class.
  * Tuple data is taken from new_rel_desc->rd_rel, except for the
  * variable-width fields which are not present in a cached reldesc.
- * We alway initialize relacl to NULL (i.e., default permissions),
+ * We always initialize relacl to NULL (i.e., default permissions),
  * and reloptions is set to the passed-in text array (if any).
  * --------------------------------
  */
