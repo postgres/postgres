@@ -62,7 +62,7 @@ OUTFILENAME=blibpq
 USERDEFINES=FRONTEND;NDEBUG;WIN32;_WINDOWS;HAVE_VSNPRINTF;HAVE_STRDUP;
 
 CPP=bcc32.exe
-CPP_PROJ = -I$(BCB)\include;..\..\include -n"$(INTDIR)" -WD -c -D$(USERDEFINES) -tWM \
+CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\include\port\win32;..\..\include\port\win32_msvc;..\..\port -n"$(INTDIR)" -WD -c -D$(USERDEFINES) -tWM \
 		-a8 -X -w-use -w-par -w-pia -w-csu -w-aus -w-ccc
 
 !IFDEF DEBUG
