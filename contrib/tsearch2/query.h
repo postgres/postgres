@@ -48,7 +48,7 @@ typedef struct
 #define CLOSE			5
 #define VALSTOP			6		/* for stop words */
 
-bool TS_execute(ITEM * curitem, void *checkval,
-		   bool calcnot, bool (*chkcond) (void *checkval, ITEM * val));
+bool TS_execute(ITEM *curitem, void *checkval,
+		   bool calcnot, bool (*chkcond) (void *checkval, ITEM *val));
 
 #endif

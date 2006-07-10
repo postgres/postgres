@@ -5,6 +5,7 @@
 #include "utils/memutils.h"
 
 #include "query.h"
+#include "executor/spi.h"
 
 typedef struct QTNode
 {

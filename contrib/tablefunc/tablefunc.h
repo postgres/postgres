@@ -31,6 +31,8 @@
 #ifndef TABLEFUNC_H
 #define TABLEFUNC_H
 
+#include "fmgr.h"
+
 /*
  * External declarations
  */

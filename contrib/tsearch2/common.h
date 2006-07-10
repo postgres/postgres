@@ -1,11 +1,9 @@
 #ifndef __TS_COMMON_H__
 #define __TS_COMMON_H__
+
 #include "postgres.h"
 #include "fmgr.h"
-
-#ifndef PG_NARGS
-#define PG_NARGS() (fcinfo->nargs)
-#endif
+#include "utils/array.h"
 
 text	   *char2text(char *in);
 text	   *charl2text(char *in, int len);

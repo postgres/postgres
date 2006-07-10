@@ -1,3 +1,6 @@
+#ifndef ___INT_H__
+#define ___INT_H__
+
 #include "postgres.h"
 
 #include <float.h>
@@ -171,3 +174,5 @@ int			compDESC(const void *a, const void *b);
 if (ARRNELEMS(a) > 1)											\
 		qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),		\
 				(direction) ? compASC : compDESC )
+
+#endif

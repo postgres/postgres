@@ -1,6 +1,8 @@
 #ifndef USER_LOCKS_H
 #define USER_LOCKS_H
 
+#include "storage/lock.h"
+
 extern int	user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode);
 extern int	user_unlock(uint32 id1, uint32 id2, LOCKMODE lockmode);
 extern int	user_write_lock(uint32 id1, uint32 id2);

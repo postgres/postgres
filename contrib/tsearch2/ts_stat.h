@@ -7,6 +7,7 @@
 #include "access/itup.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
+#include "tsvector.h"
 
 typedef struct
 {
