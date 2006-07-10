@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.54 2006/04/30 21:15:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.55 2006/07/10 16:48:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -272,10 +272,9 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
        of privilege that is applicable to procedural languages.
       </para>
       <para>
-       For schemas, allows access to objects contained in the specified
-       schema (assuming that the objects' own privilege requirements are
-       also met).  Essentially this allows the grantee to <quote>look up</>
-       objects within the schema.
+       For schemas, allows the grantee to find objects contained in the
+       specified schema (assuming that the objects' own privilege requirements 
+       are also met).
       </para>
       <para>
        For sequences, this privilege allows the use of the
