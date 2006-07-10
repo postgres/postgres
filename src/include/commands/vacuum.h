@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.63 2006/03/05 15:58:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.64 2006/07/10 16:20:51 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,12 +117,15 @@ extern void vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode);
 extern void vac_update_relstats(Oid relid,
 					BlockNumber num_pages,
 					double num_tuples,
-					bool hasindex);
+					bool hasindex,
+					TransactionId minxid,
+					TransactionId vacuumxid);
 extern void vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
 					  TransactionId *oldestXmin,
 					  TransactionId *freezeLimit);
 extern bool vac_is_partial_index(Relation indrel);
 extern void vacuum_delay_point(void);
+extern TransactionId vactuple_get_minxid(HeapTuple tuple);
 
 /* in commands/vacuumlazy.c */
 extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);

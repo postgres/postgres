@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.70 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.71 2006/07/10 16:20:49 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,11 +168,11 @@ ReadNewTransactionId(void)
 
 /*
  * Determine the last safe XID to allocate given the currently oldest
- * datfrozenxid (ie, the oldest XID that might exist in any database
+ * datminxid (ie, the oldest XID that might exist in any database
  * of our cluster).
  */
 void
-SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
+SetTransactionIdLimit(TransactionId oldest_datminxid,
 					  Name oldest_datname)
 {
 	TransactionId xidWarnLimit;
@@ -180,16 +180,16 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 	TransactionId xidWrapLimit;
 	TransactionId curXid;
 
-	Assert(TransactionIdIsValid(oldest_datfrozenxid));
+	Assert(TransactionIdIsValid(oldest_datminxid));
 
 	/*
 	 * The place where we actually get into deep trouble is halfway around
-	 * from the oldest potentially-existing XID.  (This calculation is
-	 * probably off by one or two counts, because the special XIDs reduce the
-	 * size of the loop a little bit.  But we throw in plenty of slop below,
-	 * so it doesn't matter.)
+	 * from the oldest existing XID.  (This calculation is probably off by one
+	 * or two counts, because the special XIDs reduce the size of the loop a
+	 * little bit.  But we throw in plenty of slop below, so it doesn't
+	 * matter.)
 	 */
-	xidWrapLimit = oldest_datfrozenxid + (MaxTransactionId >> 1);
+	xidWrapLimit = oldest_datminxid + (MaxTransactionId >> 1);
 	if (xidWrapLimit < FirstNormalTransactionId)
 		xidWrapLimit += FirstNormalTransactionId;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.93 2006/03/23 00:19:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.94 2006/07/10 16:20:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -424,8 +424,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	{
 		vac_update_relstats(RelationGetRelid(onerel),
 							RelationGetNumberOfBlocks(onerel),
-							totalrows,
-							hasindex);
+							totalrows, hasindex,
+							InvalidTransactionId, InvalidTransactionId);
+
 		for (ind = 0; ind < nindexes; ind++)
 		{
 			AnlIndexData *thisdata = &indexdata[ind];
@@ -434,8 +435,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			totalindexrows = ceil(thisdata->tupleFract * totalrows);
 			vac_update_relstats(RelationGetRelid(Irel[ind]),
 								RelationGetNumberOfBlocks(Irel[ind]),
-								totalindexrows,
-								false);
+								totalindexrows, false,
+								InvalidTransactionId, InvalidTransactionId);
 		}
 
 		/* report results to the stats collector, too */

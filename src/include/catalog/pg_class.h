@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.94 2006/07/03 22:45:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_class.h,v 1.95 2006/07/10 16:20:51 alvherre Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -65,6 +65,8 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 	bool		relhaspkey;		/* has PRIMARY KEY index */
 	bool		relhasrules;	/* has associated rules */
 	bool		relhassubclass; /* has derived classes */
+	TransactionId relminxid;	/* minimum Xid present in table */
+	TransactionId relvacuumxid;	/* Xid used as last vacuum OldestXmin */
 
 	/*
 	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
@@ -78,7 +80,7 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP
 
 /* Size of fixed part of pg_class tuples, not counting var-length fields */
 #define CLASS_TUPLE_SIZE \
-	 (offsetof(FormData_pg_class,relhassubclass) + sizeof(bool))
+	 (offsetof(FormData_pg_class,relvacuumxid) + sizeof(TransactionId))
 
 /* ----------------
  *		Form_pg_class corresponds to a pointer to a tuple with
@@ -92,7 +94,7 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-#define Natts_pg_class					26
+#define Natts_pg_class					28
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_relnamespace		2
 #define Anum_pg_class_reltype			3
@@ -117,8 +119,10 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relhaspkey		22
 #define Anum_pg_class_relhasrules		23
 #define Anum_pg_class_relhassubclass	24
-#define Anum_pg_class_relacl			25
-#define Anum_pg_class_reloptions		26
+#define Anum_pg_class_relminxid			25
+#define Anum_pg_class_relvacuumxid		26
+#define Anum_pg_class_relacl			27
+#define Anum_pg_class_reloptions		28
 
 /* ----------------
  *		initial contents of pg_class
@@ -128,13 +132,14 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r 23 0 0 0 0 0 t f f f _null_ _null_ ));
+/* Note: the "3" here stands for FirstNormalTransactionId */
+DATA(insert OID = 1247 (  pg_type		PGNSP 71 PGUID 0 1247 0 0 0 0 0 f f r 23 0 0 0 0 0 t f f f 3 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r 17 0 0 0 0 0 f f f f _null_ _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	PGNSP 75 PGUID 0 1249 0 0 0 0 0 f f r 17 0 0 0 0 0 f f f f 3 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r 18 0 0 0 0 0 t f f f _null_ _null_ ));
+DATA(insert OID = 1255 (  pg_proc		PGNSP 81 PGUID 0 1255 0 0 0 0 0 f f r 18 0 0 0 0 0 t f f f 3 3 _null_ _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r 26 0 0 0 0 0 t f f f _null_ _null_ ));
+DATA(insert OID = 1259 (  pg_class		PGNSP 83 PGUID 0 1259 0 0 0 0 0 f f r 28 0 0 0 0 0 t f f f 3 3 _null_ _null_ ));
 DESCR("");
 
 #define		  RELKIND_INDEX			  'i'		/* secondary index */

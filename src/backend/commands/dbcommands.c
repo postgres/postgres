@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.181 2006/05/04 16:07:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.182 2006/07/10 16:20:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static bool get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			Oid *dbLastSysOidP,
-			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
+			TransactionId *dbVacuumXidP, TransactionId *dbMinXidP,
 			Oid *dbTablespace);
 static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
@@ -76,7 +76,7 @@ createdb(const CreatedbStmt *stmt)
 	bool		src_allowconn;
 	Oid			src_lastsysoid;
 	TransactionId src_vacuumxid;
-	TransactionId src_frozenxid;
+	TransactionId src_minxid;
 	Oid			src_deftablespace;
 	volatile Oid dst_deftablespace;
 	Relation	pg_database_rel;
@@ -228,7 +228,7 @@ createdb(const CreatedbStmt *stmt)
 	if (!get_db_info(dbtemplate, ShareLock,
 					 &src_dboid, &src_owner, &src_encoding,
 					 &src_istemplate, &src_allowconn, &src_lastsysoid,
-					 &src_vacuumxid, &src_frozenxid, &src_deftablespace))
+					 &src_vacuumxid, &src_minxid, &src_deftablespace))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("template database \"%s\" does not exist",
@@ -327,16 +327,6 @@ createdb(const CreatedbStmt *stmt)
 	}
 
 	/*
-	 * Normally we mark the new database with the same datvacuumxid and
-	 * datfrozenxid as the source.	However, if the source is not allowing
-	 * connections then we assume it is fully frozen, and we can set the
-	 * current transaction ID as the xid limits.  This avoids immediately
-	 * starting to generate warnings after cloning template0.
-	 */
-	if (!src_allowconn)
-		src_vacuumxid = src_frozenxid = GetCurrentTransactionId();
-
-	/*
 	 * Check for db name conflict.	This is just to give a more friendly
 	 * error message than "unique index violation".  There's a race condition
 	 * but we're willing to accept the less friendly message in that case.
@@ -367,7 +357,7 @@ createdb(const CreatedbStmt *stmt)
 	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
 	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
 	new_record[Anum_pg_database_datvacuumxid - 1] = TransactionIdGetDatum(src_vacuumxid);
-	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
+	new_record[Anum_pg_database_datminxid - 1] = TransactionIdGetDatum(src_minxid);
 	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
 
 	/*
@@ -1066,7 +1056,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
 			Oid *dbLastSysOidP,
-			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
+			TransactionId *dbVacuumXidP, TransactionId *dbMinXidP,
 			Oid *dbTablespace)
 {
 	bool		result = false;
@@ -1155,9 +1145,9 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				/* limit of vacuumed XIDs */
 				if (dbVacuumXidP)
 					*dbVacuumXidP = dbform->datvacuumxid;
-				/* limit of frozen XIDs */
-				if (dbFrozenXidP)
-					*dbFrozenXidP = dbform->datfrozenxid;
+				/* limit of min XIDs */
+				if (dbMinXidP)
+					*dbMinXidP = dbform->datminxid;
 				/* default tablespace for this database */
 				if (dbTablespace)
 					*dbTablespace = dbform->dattablespace;

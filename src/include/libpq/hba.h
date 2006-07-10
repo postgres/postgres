@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.42 2006/03/06 17:41:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/hba.h,v 1.43 2006/07/10 16:20:52 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ extern void load_role(void);
 extern int	hba_getauthmethod(hbaPort *port);
 extern int	authident(hbaPort *port);
 extern bool read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
-					  Oid *dbtablespace, TransactionId *dbfrozenxid,
+					  Oid *dbtablespace, TransactionId *dbminxid,
 					  TransactionId *dbvacuumxid);
 
 #endif   /* HBA_H */

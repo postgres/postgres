@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.490 2006/06/29 20:00:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.491 2006/07/10 16:20:51 alvherre Exp $
  *
  * NOTES
  *
@@ -3415,6 +3415,16 @@ sigusr1_handler(SIGNAL_ARGS)
 	{
 		/* Tell syslogger to rotate logfile */
 		kill(SysLoggerPID, SIGUSR1);
+	}
+
+	if (CheckPostmasterSignal(PMSIGNAL_START_AUTOVAC))
+	{
+		/* start one iteration of the autovacuum daemon */
+		if (Shutdown == NoShutdown)
+		{
+			Assert(!AutoVacuumingActive());
+			AutoVacPID = autovac_start();
+		}
 	}
 
 	PG_SETMASK(&UnBlockSig);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.21 2006/06/27 22:16:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.22 2006/07/10 16:20:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ typedef struct autovac_dbase
 {
 	Oid			oid;
 	char	   *name;
-	TransactionId frozenxid;
+	TransactionId minxid;
 	TransactionId vacuumxid;
 	PgStat_StatDBEntry *entry;
 	int32		age;
@@ -126,10 +126,6 @@ autovac_start(void)
 	time_t		curtime;
 	pid_t		AutoVacPID;
 
-	/* Do nothing if no autovacuum process needed */
-	if (!AutoVacuumingActive())
-		return 0;
-
 	/*
 	 * Do nothing if too soon since last autovacuum exit.  This limits how
 	 * often the daemon runs.  Since the time per iteration can be quite
@@ -144,6 +140,7 @@ autovac_start(void)
 	 *
 	 * XXX todo: implement sleep scale factor that existed in contrib code.
 	 */
+
 	curtime = time(NULL);
 	if ((unsigned int) (curtime - last_autovac_stop_time) <
 		(unsigned int) autovacuum_naptime)
@@ -334,6 +331,14 @@ AutoVacMain(int argc, char *argv[])
 	 * connected to it since the stats were last initialized, it doesn't need
 	 * vacuuming.
 	 *
+	 * Note that if we are called when autovacuum is nominally disabled in
+	 * postgresql.conf, we assume the postmaster has invoked us because a
+	 * database is in danger of Xid wraparound.  In that case, we only
+	 * consider vacuuming whole databases, not individual tables; and we pick
+	 * the oldest one, regardless of it's true age.  So the criteria for
+	 * deciding that a database needs a database-wide vacuum is elsewhere
+	 * (currently in vac_truncate_clog).
+	 *
 	 * XXX This could be improved if we had more info about whether it needs
 	 * vacuuming before connecting to it.  Perhaps look through the pgstats
 	 * data for the database's tables?  One idea is to keep track of the
@@ -344,13 +349,8 @@ AutoVacMain(int argc, char *argv[])
 	db = NULL;
 	whole_db = false;
 
-	foreach(cell, dblist)
+	if (AutoVacuumingActive())
 	{
-		autovac_dbase *tmp = lfirst(cell);
-		bool		this_whole_db;
-		int32		freeze_age,
-					vacuum_age;
-
 		/*
 		 * We look for the database that most urgently needs a database-wide
 		 * vacuum.	We decide that a database-wide vacuum is needed 100000
@@ -361,38 +361,70 @@ AutoVacMain(int argc, char *argv[])
 		 * Unlike vacuum.c, we also look at vacuumxid.	This is so that
 		 * pg_clog can be kept trimmed to a reasonable size.
 		 */
-		freeze_age = (int32) (nextXid - tmp->frozenxid);
-		vacuum_age = (int32) (nextXid - tmp->vacuumxid);
-		tmp->age = Max(freeze_age, vacuum_age);
-
-		this_whole_db = (tmp->age >
-						 (int32) ((MaxTransactionId >> 3) * 3 - 100000));
-		if (whole_db || this_whole_db)
+		foreach(cell, dblist)
 		{
-			if (!this_whole_db)
-				continue;
-			if (db == NULL || tmp->age > db->age)
+			autovac_dbase *tmp = lfirst(cell);
+			bool		this_whole_db;
+			int32		true_age,
+						vacuum_age;
+
+			true_age = (int32) (nextXid - tmp->minxid);
+			vacuum_age = (int32) (nextXid - tmp->vacuumxid);
+			tmp->age = Max(true_age, vacuum_age);
+
+			this_whole_db = (tmp->age >
+							 (int32) ((MaxTransactionId >> 3) * 3 - 100000));
+
+			if (whole_db || this_whole_db)
 			{
-				db = tmp;
-				whole_db = true;
+				if (!this_whole_db)
+					continue;
+				if (db == NULL || tmp->age > db->age)
+				{
+					db = tmp;
+					whole_db = true;
+				}
+				continue;
 			}
-			continue;
+
+			/*
+			 * Otherwise, skip a database with no pgstat entry; it means it hasn't
+			 * seen any activity.
+			 */
+			tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
+			if (!tmp->entry)
+				continue;
+
+			/*
+			 * Remember the db with oldest autovac time.
+			 */
+			if (db == NULL ||
+				tmp->entry->last_autovac_time < db->entry->last_autovac_time)
+				db = tmp;
 		}
-
+	}
+	else
+	{
 		/*
-		 * Otherwise, skip a database with no pgstat entry; it means it hasn't
-		 * seen any activity.
+		 * If autovacuuming is not active, we must have gotten here because a
+		 * backend signalled the postmaster.  Pick up the database with the
+		 * greatest age, and apply a database-wide vacuum on it.
 		 */
-		tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
-		if (!tmp->entry)
-			continue;
+		int32			oldest = 0;
 
-		/*
-		 * Remember the db with oldest autovac time.
-		 */
-		if (db == NULL ||
-			tmp->entry->last_autovac_time < db->entry->last_autovac_time)
-			db = tmp;
+		whole_db = true;
+		foreach(cell, dblist)
+		{
+			autovac_dbase *tmp = lfirst(cell);
+			int32		age = (int32) (nextXid - tmp->minxid);
+
+			if (age > oldest)
+			{
+				oldest = age;
+				db = tmp;
+			}
+		}
+		Assert(db);
 	}
 
 	if (db)
@@ -454,7 +486,7 @@ autovac_get_database_list(void)
 	FILE	   *db_file;
 	Oid			db_id;
 	Oid			db_tablespace;
-	TransactionId db_frozenxid;
+	TransactionId db_minxid;
 	TransactionId db_vacuumxid;
 
 	filename = database_getflatfilename();
@@ -465,7 +497,7 @@ autovac_get_database_list(void)
 				 errmsg("could not open file \"%s\": %m", filename)));
 
 	while (read_pg_database_line(db_file, thisname, &db_id,
-								 &db_tablespace, &db_frozenxid,
+								 &db_tablespace, &db_minxid,
 								 &db_vacuumxid))
 	{
 		autovac_dbase *db;
@@ -474,7 +506,7 @@ autovac_get_database_list(void)
 
 		db->oid = db_id;
 		db->name = pstrdup(thisname);
-		db->frozenxid = db_frozenxid;
+		db->minxid = db_minxid;
 		db->vacuumxid = db_vacuumxid;
 		/* these get set later: */
 		db->entry = NULL;

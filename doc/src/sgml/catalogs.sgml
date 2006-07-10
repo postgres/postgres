@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.125 2006/07/03 22:45:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.126 2006/07/10 16:20:49 alvherre Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1640,6 +1640,30 @@
      </row>
 
      <row>
+      <entry><structfield>relminxid</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       The minimum transaction ID present in all rows in this table.  This
+       value is used to determine the database-global
+       <structname>pg_database</>.<structfield>datminxid</> value.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>relvacuumxid</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       The transaction ID that was used as cleaning point as of the last vacuum
+       operation.  All rows inserted, updated or deleted in this table by
+       transactions whose IDs are below this one have been marked as known good
+       or deleted.  This is used to determine the database-global
+       <structname>pg_database</>.<structfield>datvacuumxid</> value.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>relacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
@@ -2022,21 +2046,27 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       All rows inserted or deleted by transaction IDs before this one
-       have been marked as known committed or known aborted in this database.
-       This is used to determine when commit-log space can be recycled.
+       The transaction ID that was used as cleaning point as of the last vacuum
+       operation.  All rows inserted or deleted by transaction IDs before this one
+       have been marked as known good or deleted.  This
+       is used to determine when commit-log space can be recycled.
+       If InvalidTransactionId, then the minimum is unknown and can be
+       determined by scanning <structname>pg_class</>.<structfield>relvacuumxid</>.
       </entry>
      </row>
 
      <row>
-      <entry><structfield>datfrozenxid</structfield></entry>
+      <entry><structfield>datminxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
+       The minimum transaction ID present in all tables in this database.
        All rows inserted by transaction IDs before this one have been
        relabeled with a permanent (<quote>frozen</>) transaction ID in this
-       database.  This is useful to check whether a database must be vacuumed
-       soon to avoid transaction ID wrap-around problems.
+       database.  This is useful to check whether a database must be
+       vacuumed soon to avoid transaction ID wrap-around problems.
+       If InvalidTransactionId, then the minimum is unknown and can be
+       determined by scanning <structname>pg_class</>.<structfield>relminxid</>.
       </entry>
      </row>
 

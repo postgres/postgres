@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.152 2006/06/20 19:56:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.153 2006/07/10 16:20:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1004,7 +1004,7 @@ load_hba(void)
  *	dbname: gets database name (must be of size NAMEDATALEN bytes)
  *	dboid: gets database OID
  *	dbtablespace: gets database's default tablespace's OID
- *	dbfrozenxid: gets database's frozen XID
+ *	dbminxid: gets database's minimum XID
  *	dbvacuumxid: gets database's vacuum XID
  *
  * This is not much related to the other functions in hba.c, but we put it
@@ -1012,7 +1012,7 @@ load_hba(void)
  */
 bool
 read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
-					  Oid *dbtablespace, TransactionId *dbfrozenxid,
+					  Oid *dbtablespace, TransactionId *dbminxid,
 					  TransactionId *dbvacuumxid)
 {
 	char		buf[MAX_TOKEN];
@@ -1035,7 +1035,7 @@ read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
 	next_token(fp, buf, sizeof(buf));
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");
-	*dbfrozenxid = atoxid(buf);
+	*dbminxid = atoxid(buf);
 	next_token(fp, buf, sizeof(buf));
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");

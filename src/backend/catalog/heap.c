@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.305 2006/07/08 20:45:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.306 2006/07/10 16:20:49 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -597,6 +597,8 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relhaspkey - 1] = BoolGetDatum(rd_rel->relhaspkey);
 	values[Anum_pg_class_relhasrules - 1] = BoolGetDatum(rd_rel->relhasrules);
 	values[Anum_pg_class_relhassubclass - 1] = BoolGetDatum(rd_rel->relhassubclass);
+	values[Anum_pg_class_relminxid - 1] = TransactionIdGetDatum(rd_rel->relminxid);
+	values[Anum_pg_class_relvacuumxid - 1] = TransactionIdGetDatum(rd_rel->relvacuumxid);
 	/* start out with empty permissions */
 	nulls[Anum_pg_class_relacl - 1] = 'n';
 	if (reloptions != (Datum) 0)
@@ -643,6 +645,35 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 * relation descriptor.
 	 */
 	new_rel_reltup = new_rel_desc->rd_rel;
+
+	/* Initialize relminxid and relvacuumxid */
+	if (relkind == RELKIND_RELATION ||
+		relkind == RELKIND_TOASTVALUE)
+	{
+		/*
+		 * Only real tables have Xids stored in them; initialize our known
+		 * value to the minimum Xid that could put tuples in the new table.
+		 */
+		if (!IsBootstrapProcessingMode())
+		{
+			new_rel_reltup->relminxid = RecentXmin;
+			new_rel_reltup->relvacuumxid = RecentXmin;
+		}
+		else
+		{
+			new_rel_reltup->relminxid = FirstNormalTransactionId;
+			new_rel_reltup->relvacuumxid = FirstNormalTransactionId;
+		}
+	}
+	else
+	{
+		/*
+		 * Other relations will not have Xids in them, so set the initial value
+		 * to InvalidTransactionId.
+		 */
+		new_rel_reltup->relminxid = InvalidTransactionId;
+		new_rel_reltup->relvacuumxid = InvalidTransactionId;
+	}
 
 	switch (relkind)
 	{

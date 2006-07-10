@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.72 2006/07/03 22:45:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.73 2006/07/10 16:20:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/xlog.h"
+#include "catalog/catalog.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -72,6 +73,7 @@ typedef struct LVRelStats
 	double		tuples_deleted;
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
 	Size		threshold;		/* minimum interesting free space */
+	TransactionId minxid;		/* minimum Xid present anywhere in table */
 	/* List of TIDs of tuples we intend to delete */
 	/* NB: this list is ordered by TID address */
 	int			num_dead_tuples;	/* current # of entries */
@@ -88,13 +90,11 @@ typedef struct LVRelStats
 
 static int	elevel = -1;
 
-static TransactionId OldestXmin;
-static TransactionId FreezeLimit;
-
 
 /* non-export function prototypes */
 static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
-			   Relation *Irel, int nindexes);
+			   Relation *Irel, int nindexes, TransactionId FreezeLimit,
+			   TransactionId OldestXmin);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
 static void lazy_vacuum_index(Relation indrel,
 							  IndexBulkDeleteResult **stats,
@@ -104,9 +104,10 @@ static void lazy_cleanup_index(Relation indrel,
 							   LVRelStats *vacrelstats);
 static int lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats);
-static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats);
+static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats,
+							   TransactionId OldestXmin);
 static BlockNumber count_nondeletable_pages(Relation onerel,
-						 LVRelStats *vacrelstats);
+						 LVRelStats *vacrelstats, TransactionId OldestXmin);
 static void lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks);
 static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
 					   ItemPointer itemptr);
@@ -122,7 +123,8 @@ static int	vac_cmp_page_spaces(const void *left, const void *right);
  *	lazy_vacuum_rel() -- perform LAZY VACUUM for one heap relation
  *
  *		This routine vacuums a single heap, cleans out its indexes, and
- *		updates its num_pages and num_tuples statistics.
+ *		updates its relpages and reltuples statistics, as well as the
+ *		relminxid and relvacuumxid information.
  *
  *		At entry, we have already established a transaction and opened
  *		and locked the relation.
@@ -135,6 +137,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	int			nindexes;
 	bool		hasindex;
 	BlockNumber possibly_freeable;
+	TransactionId OldestXmin,
+				  FreezeLimit;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -150,12 +154,23 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/* XXX should we scale it up or down?  Adjust vacuum.c too, if so */
 	vacrelstats->threshold = GetAvgFSMRequestSize(&onerel->rd_node);
 
+	/*
+	 * Set initial minimum Xid, which will be updated if a smaller Xid is found
+	 * in the relation by lazy_scan_heap.
+	 *
+	 * We use RecentXmin here (the minimum Xid that belongs to a transaction
+	 * that is still open according to our snapshot), because it is the
+	 * earliest transaction that could concurrently insert new tuples in the
+	 * table.
+	 */
+	vacrelstats->minxid = RecentXmin;
+
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, ShareUpdateExclusiveLock, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
 
 	/* Do the vacuuming */
-	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes);
+	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, FreezeLimit, OldestXmin);
 
 	/* Done with indexes */
 	vac_close_indexes(nindexes, Irel, NoLock);
@@ -169,7 +184,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
 	if (possibly_freeable >= REL_TRUNCATE_MINIMUM ||
 		possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION)
-		lazy_truncate_heap(onerel, vacrelstats);
+		lazy_truncate_heap(onerel, vacrelstats, OldestXmin);
 
 	/* Update shared free space map with final free space info */
 	lazy_update_fsm(onerel, vacrelstats);
@@ -178,7 +193,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vac_update_relstats(RelationGetRelid(onerel),
 						vacrelstats->rel_pages,
 						vacrelstats->rel_tuples,
-						hasindex);
+						hasindex,
+						vacrelstats->minxid, OldestXmin);
 
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
@@ -193,10 +209,14 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
  *		and pages with free space, and calculates statistics on the number
  *		of live tuples in the heap.  When done, or when we run low on space
  *		for dead-tuple TIDs, invoke vacuuming of indexes and heap.
+ *
+ *		It also updates the minimum Xid found anywhere on the table in
+ *		vacrelstats->minxid, for later storing it in pg_class.relminxid.
  */
 static void
 lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
-			   Relation *Irel, int nindexes)
+			   Relation *Irel, int nindexes, TransactionId FreezeLimit,
+			   TransactionId OldestXmin)
 {
 	BlockNumber nblocks,
 				blkno;
@@ -406,8 +426,19 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			}
 			else
 			{
+				TransactionId min;
+
 				num_tuples += 1;
 				hastup = true;
+
+				/* 
+				 * If the tuple is alive, we consider it for the "minxid"
+				 * calculations.
+				 */
+				min = vactuple_get_minxid(&tuple);
+				if (TransactionIdIsValid(min) &&
+					TransactionIdPrecedes(min, vacrelstats->minxid))
+					vacrelstats->minxid = min;
 			}
 		}						/* scan along page */
 
@@ -670,7 +701,7 @@ lazy_cleanup_index(Relation indrel,
 	vac_update_relstats(RelationGetRelid(indrel),
 						stats->num_pages,
 						stats->num_index_tuples,
-						false);
+						false, InvalidTransactionId, InvalidTransactionId);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -691,7 +722,8 @@ lazy_cleanup_index(Relation indrel,
  * lazy_truncate_heap - try to truncate off any empty pages at the end
  */
 static void
-lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
+lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats,
+				   TransactionId OldestXmin)
 {
 	BlockNumber old_rel_pages = vacrelstats->rel_pages;
 	BlockNumber new_rel_pages;
@@ -732,7 +764,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 * because other backends could have added tuples to these pages whilst we
 	 * were vacuuming.
 	 */
-	new_rel_pages = count_nondeletable_pages(onerel, vacrelstats);
+	new_rel_pages = count_nondeletable_pages(onerel, vacrelstats, OldestXmin);
 
 	if (new_rel_pages >= old_rel_pages)
 	{
@@ -787,7 +819,8 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
  * Returns number of nondeletable pages (last nonempty page + 1).
  */
 static BlockNumber
-count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
+count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats,
+						 TransactionId OldestXmin)
 {
 	BlockNumber blkno;
 	HeapTupleData tuple;

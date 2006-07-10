@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.57 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.58 2006/07/10 16:20:51 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
  * always be considered valid.
  *
  * FirstNormalTransactionId is the first "normal" transaction id.
+ * Note: if you need to change it, you must change it in pg_class.h as well.
  * ----------------
  */
 #define InvalidTransactionId		((TransactionId) 0)
@@ -123,7 +124,7 @@ extern bool TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2);
 /* in transam/varsup.c */
 extern TransactionId GetNewTransactionId(bool isSubXact);
 extern TransactionId ReadNewTransactionId(void);
-extern void SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
+extern void SetTransactionIdLimit(TransactionId oldest_datminxid,
 					  Name oldest_datname);
 extern Oid	GetNewObjectId(void);
 

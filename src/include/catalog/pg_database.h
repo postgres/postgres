@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_database.h,v 1.40 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_database.h,v 1.41 2006/07/10 16:20:51 alvherre Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -43,7 +43,7 @@ CATALOG(pg_database,1262) BKI_SHARED_RELATION
 	int4		datconnlimit;	/* max connections allowed (-1=no limit) */
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
 	TransactionId datvacuumxid; /* all XIDs before this are vacuumed */
-	TransactionId datfrozenxid; /* all XIDs before this are frozen */
+	TransactionId datminxid;	/* minimum XID present anywhere in the DB */
 	Oid			dattablespace;	/* default table space for this DB */
 	text		datconfig[1];	/* database-specific GUC (VAR LENGTH) */
 	aclitem		datacl[1];		/* access permissions (VAR LENGTH) */
@@ -69,7 +69,7 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datconnlimit	6
 #define Anum_pg_database_datlastsysoid	7
 #define Anum_pg_database_datvacuumxid	8
-#define Anum_pg_database_datfrozenxid	9
+#define Anum_pg_database_datminxid		9
 #define Anum_pg_database_dattablespace	10
 #define Anum_pg_database_datconfig		11
 #define Anum_pg_database_datacl			12
