@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.h,v 1.13 2006/03/11 04:38:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.h,v 1.14 2006/07/10 18:40:16 momjian Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -81,9 +81,6 @@ static const char *soundex_table = "01230120022455012623010202";
 /*
  * Levenshtein
  */
-#define STRLEN(p) strlen(p)
-#define CHAREQ(p1, p2) (*(p1) == *(p2))
-#define NextChar(p) ((p)++)
 #define MAX_LEVENSHTEIN_STRLEN		255
 
 

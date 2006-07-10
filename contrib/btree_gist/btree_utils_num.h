@@ -1,3 +1,4 @@
+#include "btree_gist.h"
 
 typedef char GBT_NUMKEY;
 

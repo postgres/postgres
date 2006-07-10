@@ -1,5 +1,7 @@
 #include "mb/pg_wchar.h"
 
+#include "btree_gist.h"
+
 /* Variable length key */
 typedef bytea GBT_VARKEY;
 

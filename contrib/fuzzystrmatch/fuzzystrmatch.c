@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.21 2006/05/30 22:12:13 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/fuzzystrmatch.c,v 1.22 2006/07/10 18:40:16 momjian Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -142,7 +142,7 @@ levenshtein(PG_FUNCTION_ARGS)
 			 * position in the source string, matches the character at the
 			 * current row position in the target string; cost is 1 otherwise.
 			 */
-			c = ((CHAREQ(str_s, str_t)) ? 0 : 1);
+			c = (*str_s != *str_t);
 
 			/*
 			 * c1 is upper right cell plus 1
@@ -167,7 +167,7 @@ levenshtein(PG_FUNCTION_ARGS)
 			/*
 			 * Increment the pointer to str_s
 			 */
-			NextChar(str_s);
+			str_s++;
 		}
 
 		/*
@@ -181,7 +181,7 @@ levenshtein(PG_FUNCTION_ARGS)
 		/*
 		 * Increment the pointer to str_t
 		 */
-		NextChar(str_t);
+		str_t++;
 
 		/*
 		 * Rewind the pointer to str_s
