@@ -1,16 +1,16 @@
 :
 # remove extra #include's
 
-# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.4 2006/03/11 04:38:42 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.5 2006/07/10 16:45:44 momjian Exp $
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
-find . \( -name CVS -a -prune \) -o -type f -print | 
+find . \( -name CVS -a -prune \) -o -type f -name '*.[ch]' -print | 
 grep -v '\./postgres.h' |
 grep -v '\./pg_config.h' |
 grep -v '\./c.h' |
 while read FILE
 do
-	if [ "`echo $FILE | sed -n 's/^.*\.\([^\.]*\)$/\1/p'`" = "h" ]
+	if [ `expr $FILE : '.*\.h$'` -ne 0 ]
 	then	IS_INCLUDE="Y"
 	else	IS_INCLUDE="N"
 	fi
