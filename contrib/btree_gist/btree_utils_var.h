@@ -1,3 +1,6 @@
+#ifndef __BTREE_UTILS_VAR_H__
+#define __BTREE_UTILS_VAR_H__
+
 #include "mb/pg_wchar.h"
 
 #include "btree_gist.h"
@@ -70,3 +73,5 @@ extern GIST_SPLITVEC *gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SP
 				  const gbtree_vinfo * tinfo);
 extern void gbt_var_bin_union(Datum *u, GBT_VARKEY * e,
 				  const gbtree_vinfo * tinfo);
+
+#endif

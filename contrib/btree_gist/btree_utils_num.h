@@ -1,3 +1,6 @@
+#ifndef __BTREE_UTILS_NUM_H__
+#define __BTREE_UTILS_NUM_H__
+
 #include "btree_gist.h"
 
 typedef char GBT_NUMKEY;
@@ -101,3 +104,5 @@ extern bool gbt_num_same(const GBT_NUMKEY * a, const GBT_NUMKEY * b,
 
 extern void gbt_num_bin_union(Datum *u, GBT_NUMKEY * e,
 				  const gbtree_ninfo * tinfo);
+
+#endif
