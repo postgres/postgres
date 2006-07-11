@@ -3,7 +3,7 @@
  *    header file for postgres inverted index access method implementation.
  *
  *  Copyright (c) 2006, PostgreSQL Global Development Group
- *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.4 2006/07/11 13:54:24 momjian Exp $
+ *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.5 2006/07/11 16:55:34 teodor Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -414,21 +414,26 @@ extern Datum arraycontains(PG_FUNCTION_ARGS);
 extern Datum arraycontained(PG_FUNCTION_ARGS);
 
 /* ginbulk.c */
-typedef struct {
+typedef struct EntryAccumulator {
     Datum       value;
 	uint32      length;
 	uint32      number;
 	ItemPointerData *list;
 	bool		shouldSort;
+	struct EntryAccumulator	*left;
+	struct EntryAccumulator	*right;
 } EntryAccumulator;
 
 typedef struct {
 	GinState	*ginstate;
     EntryAccumulator    *entries;
-	uint32      length;
-	uint32      number;
-	uint32      curget;
+	uint32		maxdepth;
+	EntryAccumulator	**stack;
+	uint32				stackpos;
 	uint32      allocatedMemory;
+
+	uint32				length;
+	EntryAccumulator	*entryallocator;
 } BuildAccumulator;
 
 extern void ginInitBA(BuildAccumulator *accum);

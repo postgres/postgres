@@ -313,12 +313,12 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("word is too long")));
+					 errmsg("A word you are indexing is too long. It will be ignored.")));
 			continue;
 #else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("word is too long")));
+					 errmsg("A word you are indexing is too long")));
 #endif
 		}
 
@@ -470,12 +470,12 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("word is too long")));
+					 errmsg("A word you are indexing is too long. It will be ignored.")));
 			continue;
 #else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("word is too long")));
+					 errmsg("A word you are indexing is too long")));
 #endif
 		}
 

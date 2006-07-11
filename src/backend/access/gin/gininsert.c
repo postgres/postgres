@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.2 2006/05/10 23:18:38 tgl Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.3 2006/07/11 16:55:34 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -26,6 +26,7 @@ typedef struct {
 	GinState			ginstate;
 	double				indtuples;
 	MemoryContext		tmpCtx;
+	MemoryContext		funcCtx;
 	BuildAccumulator	accum;
 } GinBuildState;
 
@@ -189,19 +190,22 @@ ginEntryInsert( Relation index, GinState *ginstate, Datum value, ItemPointerData
  * Function isnt use during normal insert
  */
 static uint32
-ginHeapTupleBulkInsert(BuildAccumulator *accum, Datum value, ItemPointer heapptr) {
+ginHeapTupleBulkInsert(GinBuildState *buildstate, Datum value, ItemPointer heapptr) {
 	Datum	*entries;
 	uint32 nentries;
+	MemoryContext oldCtx;
 
-	entries = extractEntriesSU( accum->ginstate, value, &nentries);
+	oldCtx = MemoryContextSwitchTo(buildstate->funcCtx);
+	entries = extractEntriesSU( buildstate->accum.ginstate, value, &nentries);
+	MemoryContextSwitchTo(oldCtx);
 
 	if ( nentries==0 )
 		/* nothing to insert */
 		return 0;
 
-	ginInsertRecordBA( accum, heapptr, entries, nentries);
+	ginInsertRecordBA( &buildstate->accum, heapptr, entries, nentries);
 
-	pfree( entries );
+	MemoryContextReset(buildstate->funcCtx);
 
 	return nentries;
 }
@@ -218,7 +222,7 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 
 	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-	buildstate->indtuples += ginHeapTupleBulkInsert(&buildstate->accum, *values, &htup->t_self);
+	buildstate->indtuples += ginHeapTupleBulkInsert(buildstate, *values, &htup->t_self);
 
 	/* we use only half maintenance_work_mem, because there is some leaks 
 		during insertion and extract values */ 
@@ -293,6 +297,12 @@ ginbuild(PG_FUNCTION_ARGS) {
 	 */
 	buildstate.tmpCtx = AllocSetContextCreate(CurrentMemoryContext,
 												"Gin build temporary context",
+												ALLOCSET_DEFAULT_MINSIZE,
+												ALLOCSET_DEFAULT_INITSIZE,
+												ALLOCSET_DEFAULT_MAXSIZE);
+
+	buildstate.funcCtx = AllocSetContextCreate(buildstate.tmpCtx,
+												"Gin build temporary context for user-defined function",
 												ALLOCSET_DEFAULT_MINSIZE,
 												ALLOCSET_DEFAULT_INITSIZE,
 												ALLOCSET_DEFAULT_MAXSIZE);
