@@ -1,7 +1,7 @@
 :
 # remove extra #include's
 
-# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.7 2006/07/11 19:30:05 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.8 2006/07/11 19:31:29 momjian Exp $
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -name '*.[ch]' -print | 
@@ -64,10 +64,10 @@ do
 			then	grep -v '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" >/tmp/$$b
 				mv /tmp/$$b "$FILE"
 			fi
-			if [ "$1" = "-v" ]
-			then	cat /tmp/$$
-				cat /tmp/$$.c
-			fi
+		fi
+		if [ "$1" = "-v" ]
+		then	cat /tmp/$$
+			cat /tmp/$$.c
 		fi
 	done
 done
