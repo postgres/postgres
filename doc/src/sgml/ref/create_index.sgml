@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.54 2006/07/04 18:07:24 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.55 2006/07/11 21:05:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -221,17 +221,17 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
     <listitem>
      <para>
       The fillfactor for an index is a percentage that determines how full
-      the index method will try to pack index pages.  For B-trees, pages
+      the index method will try to pack index pages.  For B-trees, leaf pages
       are filled to this percentage during initial index build, and also
       when extending the index at the right (largest key values).  If pages
       subsequently become completely full, they will be split, leading to
       gradual degradation in the index's efficiency.  B-trees use a default
-      fillfactor of 90, but any value from 70 to 100 can be selected.
+      fillfactor of 90, but any value from 10 to 100 can be selected.
       If the table is static then fillfactor 100 is best to minimize the
       index's physical size, but for heavily updated tables a smaller
       fillfactor is better to minimize the need for page splits.  The
       other index methods use fillfactor in different but roughly analogous
-      ways; the default fillfactor and allowed range varies.
+      ways; the default fillfactor varies between methods.
      </para>
     </listitem>
    </varlistentry>

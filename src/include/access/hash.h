@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.71 2006/07/03 22:45:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.72 2006/07/11 21:05:57 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -167,7 +167,7 @@ typedef HashMetaPageData *HashMetaPage;
 	 MAXALIGN(sizeof(HashPageOpaqueData)) - \
 	 sizeof(ItemIdData))
 
-#define HASH_MIN_FILLFACTOR			50
+#define HASH_MIN_FILLFACTOR			10
 #define HASH_DEFAULT_FILLFACTOR		75
 
 /*

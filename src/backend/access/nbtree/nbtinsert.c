@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.139 2006/07/03 22:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.140 2006/07/11 21:05:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -991,7 +991,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
  * inserting successively increasing keys (consider sequences, timestamps,
  * etc) we will end up with a tree whose pages are about fillfactor% full,
  * instead of the 50% full result that we'd get without this special case.
- * This is the same as nbtsort.c produces for a newly-created tree.
+ * This is the same as nbtsort.c produces for a newly-created tree.  Note
+ * that leaf and nonleaf pages use different fillfactors.
  *
  * We are passed the intended insert position of the new tuple, expressed as
  * the offsetnumber of the tuple it must go in front of.  (This could be
@@ -1025,10 +1026,14 @@ _bt_findsplitloc(Relation rel,
 	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
 	newitemsz += sizeof(ItemIdData);
 	state.newitemsz = newitemsz;
-	state.fillfactor = RelationGetFillFactor(rel, BTREE_DEFAULT_FILLFACTOR);
 	state.is_leaf = P_ISLEAF(opaque);
 	state.is_rightmost = P_RIGHTMOST(opaque);
 	state.have_split = false;
+	if (state.is_leaf)
+		state.fillfactor = RelationGetFillFactor(rel,
+												 BTREE_DEFAULT_FILLFACTOR);
+	else
+		state.fillfactor = BTREE_NONLEAF_FILLFACTOR;
 
 	/* Total free space available on a btree page, after fixed overhead */
 	leftspace = rightspace =

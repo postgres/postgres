@@ -27,10 +27,10 @@
  * insertion would cause a split (and not only of the leaf page; the need
  * for a split would cascade right up the tree).  The steady-state load
  * factor for btrees is usually estimated at 70%.  We choose to pack leaf
- * pages to the user-controllable fill factor while upper pages are always
- * packed to 70%.  This gives us reasonable density (there aren't many upper
- * pages if the keys are reasonable-size) without incurring a lot of cascading
- * splits during early insertions.
+ * pages to the user-controllable fill factor (default 90%) while upper pages
+ * are always packed to 70%.  This gives us reasonable density (there aren't
+ * many upper pages if the keys are reasonable-size) without risking a lot of
+ * cascading splits during early insertions.
  *
  * Formerly the index pages being built were kept in shared buffers, but
  * that is of no value (since other backends have no interest in them yet)
@@ -57,7 +57,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.104 2006/07/03 22:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.105 2006/07/11 21:05:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ _bt_pagestate(BTWriteState *wstate, uint32 level)
 	state->btps_level = level;
 	/* set "full" threshold based on level.  See notes at head of file. */
 	if (level > 0)
-		state->btps_full = (BLCKSZ * (100 - BTREE_MIN_FILLFACTOR) / 100);
+		state->btps_full = (BLCKSZ * (100 - BTREE_NONLEAF_FILLFACTOR) / 100);
 	else
 		state->btps_full = RelationGetTargetPageFreeSpace(wstate->index,
 												BTREE_DEFAULT_FILLFACTOR);
@@ -499,11 +499,16 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 				"Consider a function index of an MD5 hash of the value, "
 				"or use full text indexing.")));
 
-	if (pgspc < itupsz || pgspc < state->btps_full)
+	/*
+	 * Check to see if page is "full".  It's definitely full if the item
+	 * won't fit.  Otherwise, compare to the target freespace derived from
+	 * the fillfactor.  However, we must put at least two items on each
+	 * page, so disregard fillfactor if we don't have that many.
+	 */
+	if (pgspc < itupsz || (pgspc < state->btps_full && last_off > P_FIRSTKEY))
 	{
 		/*
-		 * Item won't fit on this page, or we feel the page is full enough
-		 * already.  Finish off the page and write it out.
+		 * Finish off the page and write it out.
 		 */
 		Page		opage = npage;
 		BlockNumber oblkno = nblkno;
@@ -522,8 +527,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		 * rearrange the old page so that the 'last item' becomes its high key
 		 * rather than a true data item.  There had better be at least two
 		 * items on the page already, else the page would be empty of useful
-		 * data.  (Hence, we must allow pages to be packed at least 2/3rds
-		 * full; the 70% figure used above is close to minimum.)
+		 * data.
 		 */
 		Assert(last_off > P_FIRSTKEY);
 		ii = PageGetItemId(opage, last_off);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.3 2006/07/03 22:45:36 tgl Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.4 2006/07/11 21:05:57 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -213,7 +213,7 @@ ginoptions(PG_FUNCTION_ARGS)
 	 * It's not clear that fillfactor is useful for GIN, but for the moment
 	 * we'll accept it anyway.  (It won't do anything...)
 	 */
-#define GIN_MIN_FILLFACTOR			50
+#define GIN_MIN_FILLFACTOR			10
 #define GIN_DEFAULT_FILLFACTOR		100
 
 	result = default_reloptions(reloptions, validate,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.100 2006/07/03 22:45:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.101 2006/07/11 21:05:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,11 +107,15 @@ typedef struct BTMetaPageData
 	  MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
 
 /*
- * Because of above, min fillfactor can't be less than 2/3rds; see notes in
- * nbtsort.c before you change these!
+ * The leaf-page fillfactor defaults to 90% but is user-adjustable.
+ * For pages above the leaf level, we use a fixed 70% fillfactor.
+ * The fillfactor is applied during index build and when splitting
+ * a rightmost page; when splitting non-rightmost pages we try to
+ * divide the data equally.
  */
-#define BTREE_MIN_FILLFACTOR		70
+#define BTREE_MIN_FILLFACTOR		10
 #define BTREE_DEFAULT_FILLFACTOR	90
+#define BTREE_NONLEAF_FILLFACTOR	70
 
 /*
  *	Test whether two btree entries are "the same".

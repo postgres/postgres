@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.21 2006/07/11 17:04:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.22 2006/07/11 21:05:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,7 +272,7 @@ extern Datum gistgetmulti(PG_FUNCTION_ARGS);
 #define GiSTPageSize   \
     ( BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(GISTPageOpaqueData)) ) 
 
-#define GIST_MIN_FILLFACTOR			50
+#define GIST_MIN_FILLFACTOR			10
 #define GIST_DEFAULT_FILLFACTOR		90
 
 extern Datum gistoptions(PG_FUNCTION_ARGS);
