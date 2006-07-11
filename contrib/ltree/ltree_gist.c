@@ -625,7 +625,7 @@ Datum
 ltree_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	char	   *query = (char *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
+	void	   *query = NULL;
 	ltree_gist *key = (ltree_gist *) DatumGetPointer(entry->key);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		res = false;
@@ -637,15 +637,18 @@ ltree_consistent(PG_FUNCTION_ARGS)
 	switch (strategy)
 	{
 		case BTLessStrategyNumber:
+			query = PG_GETARG_LTREE(1);
 			res = (GIST_LEAF(entry)) ?
 				(ltree_compare((ltree *) query, LTG_NODE(key)) > 0)
 				:
 				(ltree_compare((ltree *) query, LTG_GETLNODE(key)) >= 0);
 			break;
 		case BTLessEqualStrategyNumber:
+			query = PG_GETARG_LTREE(1);
 			res = (ltree_compare((ltree *) query, LTG_GETLNODE(key)) >= 0);
 			break;
 		case BTEqualStrategyNumber:
+			query = PG_GETARG_LTREE(1);
 			if (GIST_LEAF(entry))
 				res = (ltree_compare((ltree *) query, LTG_NODE(key)) == 0);
 			else
@@ -656,21 +659,25 @@ ltree_consistent(PG_FUNCTION_ARGS)
 					);
 			break;
 		case BTGreaterEqualStrategyNumber:
+			query = PG_GETARG_LTREE(1);
 			res = (ltree_compare((ltree *) query, LTG_GETRNODE(key)) <= 0);
 			break;
 		case BTGreaterStrategyNumber:
+			query = PG_GETARG_LTREE(1);
 			res = (GIST_LEAF(entry)) ?
 				(ltree_compare((ltree *) query, LTG_GETRNODE(key)) < 0)
 				:
 				(ltree_compare((ltree *) query, LTG_GETRNODE(key)) <= 0);
 			break;
 		case 10:
+			query = PG_GETARG_LTREE_COPY(1);
 			res = (GIST_LEAF(entry)) ?
 				inner_isparent((ltree *) query, LTG_NODE(key))
 				:
 				gist_isparent(key, (ltree *) query);
 			break;
 		case 11:
+			query = PG_GETARG_LTREE_COPY(1);
 			res = (GIST_LEAF(entry)) ?
 				inner_isparent(LTG_NODE(key), (ltree *) query)
 				:
@@ -678,6 +685,7 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			break;
 		case 12:
 		case 13:
+			query = PG_GETARG_LQUERY(1);
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(ltq_regex,
 										  PointerGetDatum(LTG_NODE(key)),
@@ -688,6 +696,7 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			break;
 		case 14:
 		case 15:
+			query = PG_GETARG_LQUERY(1);
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(ltxtq_exec,
 										  PointerGetDatum(LTG_NODE(key)),
@@ -698,6 +707,7 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			break;
 		case 16:
 		case 17:
+			query = DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(lt_q_regex,
 										  PointerGetDatum(LTG_NODE(key)),
@@ -710,5 +720,7 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			/* internal error */
 			elog(ERROR, "unrecognized StrategyNumber: %d", strategy);
 	}
+
+	PG_FREE_IF_COPY(query,1);
 	PG_RETURN_BOOL(res);
 }
