@@ -833,7 +833,8 @@ ORDER BY 1, 2, 3;
     2742 |            1 | &&
     2742 |            2 | @
     2742 |            3 | ~
-(27 rows)
+    2742 |            4 | =
+(28 rows)
 
 -- Check that all operators linked to by opclass entries have selectivity
 -- estimators.  This is not absolutely required, but it seems a reasonable

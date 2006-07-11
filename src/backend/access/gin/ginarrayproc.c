@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.2 2006/07/11 17:04:12 momjian Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.3 2006/07/11 19:49:13 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -28,6 +28,7 @@
 #define GinOverlapStrategy		1
 #define GinContainsStrategy		2
 #define GinContainedStrategy	3
+#define GinEqualStrategy		4
 
 #define	ARRAYCHECK(x) do { 									\
 	if ( ARR_HASNULL(x) )									\
@@ -86,6 +87,7 @@ ginarrayconsistent(PG_FUNCTION_ARGS) {
 			res = TRUE;
 			break;
 		case GinContainsStrategy:
+		case GinEqualStrategy:
 			res = TRUE;
 			for(i=0;i<nentries;i++)
 				if ( !check[i] ) {
