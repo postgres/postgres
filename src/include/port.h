@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.93 2006/06/25 00:18:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.94 2006/07/11 13:54:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,6 +184,10 @@ extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
  *	pgpipe, but in other cases we define rename to pgrename just on Win32.
  */
 #ifndef WIN32
+/*
+ *	The function prototypes are not supplied because every C file
+ *	includes this file.
+ */
 #define pgpipe(a)			pipe(a)
 #define piperead(a,b,c)		read(a,b,c)
 #define pipewrite(a,b,c)	write(a,b,c)

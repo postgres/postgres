@@ -1,7 +1,7 @@
 /*
  * this is a small part of c.h since we don't want to leak all postgres
  * definitions into ecpg programs
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.66 2006/03/11 04:38:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpglib.h,v 1.67 2006/07/11 13:54:25 momjian Exp $
  */
 
 #ifndef _ECPGLIB_H
@@ -9,6 +9,7 @@
 
 #include "libpq-fe.h"
 #include "ecpgtype.h"
+#include "sqlca.h"
 #include <string.h>
 
 #ifndef __cplusplus
@@ -39,7 +40,7 @@ extern		"C"
 
 struct sqlca_t;
 
-void		ECPGinit_sqlca(struct sqlca_t * sqlca);
+void		ECPGinit_sqlca(struct sqlca_t *sqlca);
 void		ECPGdebug(int, FILE *);
 bool		ECPGstatus(int, const char *);
 bool		ECPGsetcommit(int, const char *, const char *);

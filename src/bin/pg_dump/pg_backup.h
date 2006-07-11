@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.39 2006/05/28 21:13:54 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.40 2006/07/11 13:54:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "postgres_fe.h"
 
 #include "pg_dump.h"
+#include "dumputils.h"
 
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"

@@ -3,7 +3,7 @@
  *    header file for postgres inverted index access method implementation.
  *
  *  Copyright (c) 2006, PostgreSQL Global Development Group
- *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.3 2006/07/03 22:45:39 tgl Exp $
+ *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.4 2006/07/11 13:54:24 momjian Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -11,6 +11,8 @@
 #ifndef GIN_H
 #define GIN_H
 
+#include "access/relscan.h"
+#include "access/skey.h"
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
 #include "storage/bufpage.h"
@@ -385,7 +387,7 @@ extern Datum ginendscan(PG_FUNCTION_ARGS);
 extern Datum ginrescan(PG_FUNCTION_ARGS);
 extern Datum ginmarkpos(PG_FUNCTION_ARGS);
 extern Datum ginrestrpos(PG_FUNCTION_ARGS);
-extern void newScanKey( IndexScanDesc scan );
+extern void newScanKey(IndexScanDesc scan);
 
 /* ginget.c */
 extern DLLIMPORT int	GinFuzzySearchLimit;

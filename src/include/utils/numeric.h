@@ -7,12 +7,14 @@
  *
  * Copyright (c) 1998-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.21 2006/03/05 15:59:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.22 2006/07/11 13:54:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef _PG_NUMERIC_H_
 #define _PG_NUMERIC_H_
+
+#include "fmgr.h"
 
 /*
  * Hardcoded precision limit - arbitrary, but must be small enough that
