@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.92 2006/07/02 02:23:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.93 2006/07/11 18:26:10 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -31,8 +31,8 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/genam.h"
+#include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"

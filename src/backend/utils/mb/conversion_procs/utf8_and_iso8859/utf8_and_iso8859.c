@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.20 2006/05/30 22:12:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.21 2006/07/11 18:26:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,19 +14,10 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
-#include "../../Unicode/utf8_to_iso8859_2.map"
-#include "../../Unicode/utf8_to_iso8859_3.map"
-#include "../../Unicode/utf8_to_iso8859_4.map"
-#include "../../Unicode/utf8_to_iso8859_5.map"
-#include "../../Unicode/utf8_to_iso8859_6.map"
-#include "../../Unicode/utf8_to_iso8859_7.map"
-#include "../../Unicode/utf8_to_iso8859_8.map"
-#include "../../Unicode/utf8_to_iso8859_9.map"
-#include "../../Unicode/utf8_to_iso8859_10.map"
-#include "../../Unicode/utf8_to_iso8859_13.map"
-#include "../../Unicode/utf8_to_iso8859_14.map"
-#include "../../Unicode/utf8_to_iso8859_15.map"
-#include "../../Unicode/utf8_to_iso8859_16.map"
+#include "../../Unicode/iso8859_10_to_utf8.map"
+#include "../../Unicode/iso8859_13_to_utf8.map"
+#include "../../Unicode/iso8859_14_to_utf8.map"
+#include "../../Unicode/iso8859_15_to_utf8.map"
 #include "../../Unicode/iso8859_2_to_utf8.map"
 #include "../../Unicode/iso8859_3_to_utf8.map"
 #include "../../Unicode/iso8859_4_to_utf8.map"
@@ -35,10 +26,19 @@
 #include "../../Unicode/iso8859_7_to_utf8.map"
 #include "../../Unicode/iso8859_8_to_utf8.map"
 #include "../../Unicode/iso8859_9_to_utf8.map"
-#include "../../Unicode/iso8859_10_to_utf8.map"
-#include "../../Unicode/iso8859_13_to_utf8.map"
-#include "../../Unicode/iso8859_14_to_utf8.map"
-#include "../../Unicode/iso8859_15_to_utf8.map"
+#include "../../Unicode/utf8_to_iso8859_10.map"
+#include "../../Unicode/utf8_to_iso8859_13.map"
+#include "../../Unicode/utf8_to_iso8859_14.map"
+#include "../../Unicode/utf8_to_iso8859_15.map"
+#include "../../Unicode/utf8_to_iso8859_16.map"
+#include "../../Unicode/utf8_to_iso8859_2.map"
+#include "../../Unicode/utf8_to_iso8859_3.map"
+#include "../../Unicode/utf8_to_iso8859_4.map"
+#include "../../Unicode/utf8_to_iso8859_5.map"
+#include "../../Unicode/utf8_to_iso8859_6.map"
+#include "../../Unicode/utf8_to_iso8859_7.map"
+#include "../../Unicode/utf8_to_iso8859_8.map"
+#include "../../Unicode/utf8_to_iso8859_9.map"
 #include "../../Unicode/iso8859_16_to_utf8.map"
 
 PG_MODULE_MAGIC;

@@ -6,15 +6,15 @@
  */
 #include "postgres.h"
 
+
 #include "access/gist.h"
 #include "access/itup.h"
-#include "utils/builtins.h"
-#include "storage/bufpage.h"
-#include "executor/spi.h"
-#include "commands/trigger.h"
-#include "nodes/pg_list.h"
 #include "catalog/namespace.h"
-
+#include "commands/trigger.h"
+#include "executor/spi.h"
+#include "nodes/pg_list.h"
+#include "storage/bufpage.h"
+#include "utils/builtins.h"
 #include "utils/pg_locale.h"
 #include "mb/pg_wchar.h"
 

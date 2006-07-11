@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.108 2006/06/28 20:04:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.109 2006/07/11 18:26:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,9 @@
 #include "optimizer/planner.h"
 #include "optimizer/subselect.h"
 #include "optimizer/var.h"
-#include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

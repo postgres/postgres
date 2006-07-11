@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.259 2006/07/02 02:23:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.260 2006/07/11 18:26:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,8 @@
 #include "commands/async.h"
 #include "commands/cluster.h"
 #include "commands/comment.h"
-#include "commands/copy.h"
 #include "commands/conversioncmds.h"
+#include "commands/copy.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"

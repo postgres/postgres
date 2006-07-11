@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.193 2006/07/10 22:10:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.194 2006/07/11 18:26:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,13 +45,13 @@
 #include "optimizer/prep.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
-#include "parser/parser.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
+#include "parser/parser.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
