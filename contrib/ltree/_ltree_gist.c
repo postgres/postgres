@@ -580,5 +580,6 @@ _ltree_consistent(PG_FUNCTION_ARGS)
 			/* internal error */
 			elog(ERROR, "unrecognized StrategyNumber: %d", strategy);
 	}
+	PG_FREE_IF_COPY(query,1);
 	PG_RETURN_BOOL(res);
 }

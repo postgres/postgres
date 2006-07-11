@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/ltree/ltree.h,v 1.15 2006/03/11 04:38:29 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/ltree/ltree.h,v 1.16 2006/07/11 16:00:44 teodor Exp $ */
 
 #ifndef __LTREE_H__
 #define __LTREE_H__
@@ -163,8 +163,11 @@ bool compare_subnode(ltree_level * t, char *q, int len,
 ltree	   *lca_inner(ltree ** a, int len);
 
 #define PG_GETARG_LTREE(x)	((ltree*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
+#define PG_GETARG_LTREE_COPY(x)	((ltree*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
 #define PG_GETARG_LQUERY(x) ((lquery*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
+#define PG_GETARG_LQUERY_COPY(x) ((lquery*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
 #define PG_GETARG_LTXTQUERY(x) ((ltxtquery*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
+#define PG_GETARG_LTXTQUERY_COPY(x) ((ltxtquery*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
 
 /* GiST support for ltree */
 
