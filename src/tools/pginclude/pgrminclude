@@ -1,7 +1,7 @@
 :
 # remove extra #include's
 
-# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.6 2006/07/11 19:25:41 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.7 2006/07/11 19:30:05 momjian Exp $
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -name '*.[ch]' -print | 
@@ -55,7 +55,9 @@ do
 		fi
 		echo "}" >>/tmp/$$.c
 
-		cc -fsyntax-only -Werror -Wall -Wmissing-prototypes -Wmissing-declarations -I/pg/include -I/pg/backend -c /tmp/$$.c -o /tmp/$$.o >/tmp/$$ 2>&1
+		cc -fsyntax-only -Werror -Wall -Wmissing-prototypes \
+			-Wmissing-declarations -I/pg/include -I/pg/backend \
+			-c /tmp/$$.c -o /tmp/$$.o >/tmp/$$ 2>&1
 		if [ "$?" -eq 0 ]
 		then	echo "$FILE $INCLUDE"
 			if [ "$IS_INCLUDE" = "N" ]
