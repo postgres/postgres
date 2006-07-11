@@ -23,7 +23,7 @@ clean:
 install:
 	make clean
 	make CFLAGS=-O
-	install -s -o bin -g bin $(TARGET) $(BINDIR)
+	install -s $(TARGET) $(BINDIR)
 	rm -f $(BINDIR)/detab
-	ln /usr/local/bin/$(TARGET) $(BINDIR)/detab
+	ln $(BINDIR)/$(TARGET) $(BINDIR)/detab
 
