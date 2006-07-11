@@ -1,18 +1,18 @@
 /*
  *	PostgreSQL definitions for managed Large Objects.
  *
- *	$PostgreSQL: pgsql/contrib/lo/lo.c,v 1.16 2006/05/30 22:12:13 tgl Exp $
+ *	$PostgreSQL: pgsql/contrib/lo/lo.c,v 1.17 2006/07/11 17:04:12 momjian Exp $
  *
  */
 
 #include "postgres.h"
 
-/* Required for largeobjects */
-#include "libpq/libpq-fs.h"
-#include "libpq/be-fsstubs.h"
-
 /* Required for SPI */
 #include "executor/spi.h"
+
+/* Required for largeobjects */
+#include "libpq/be-fsstubs.h"
+#include "libpq/libpq-fs.h"
 
 /* Required for triggers */
 #include "commands/trigger.h"

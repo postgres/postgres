@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.23 2006/07/02 02:23:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.24 2006/07/11 17:04:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,8 @@
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
-#include "utils/memutils.h"
 #include "storage/freespace.h"
+#include "utils/memutils.h"
 #include "storage/smgr.h"
 
 

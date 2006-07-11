@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.1 2006/05/02 11:28:54 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.2 2006/07/11 17:04:12 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -19,10 +19,10 @@
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
-#include "utils/builtins.h"
 #include "access/gin.h"
 
 #define GinOverlapStrategy		1

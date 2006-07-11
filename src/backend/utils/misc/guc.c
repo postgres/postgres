@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.325 2006/06/27 23:25:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.326 2006/07/11 17:04:13 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -25,15 +25,13 @@
 #include <syslog.h>
 #endif
 
-#include "utils/guc.h"
-#include "utils/guc_tables.h"
 
 #include "access/twophase.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
-#include "commands/variable.h"
 #include "commands/vacuum.h"
+#include "commands/variable.h"
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "funcapi.h"
@@ -50,10 +48,11 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
+#include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/bgwriter.h"
-#include "postmaster/syslogger.h"
 #include "postmaster/postmaster.h"
+#include "postmaster/syslogger.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
@@ -62,10 +61,11 @@
 #include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
+#include "utils/guc_tables.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
-#include "pgstat.h"
 #include "access/gin.h"
 
 #ifndef PG_KRB_SRVTAB

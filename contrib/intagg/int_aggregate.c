@@ -5,7 +5,7 @@
  * DMN Digital Music Network.
  * www.dmn.com
  *
- * $PostgreSQL: pgsql/contrib/intagg/int_aggregate.c,v 1.24 2006/05/30 22:12:13 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/intagg/int_aggregate.c,v 1.25 2006/07/11 17:04:12 momjian Exp $
  *
  * Copyright (C) Digital Music Network
  * December 20, 2001
@@ -20,18 +20,18 @@
 #include <sys/types.h>
 
 #include "access/heapam.h"
+#include "access/tupmacs.h"
+#include "access/xact.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
-#include "utils/syscache.h"
-#include "access/tupmacs.h"
-#include "access/xact.h"
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/syscache.h"
 #include "utils/lsyscache.h"
 
 PG_MODULE_MAGIC;
