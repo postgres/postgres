@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.439 2006/07/02 02:23:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.440 2006/07/11 17:26:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,15 +44,15 @@
 int			optreset;
 #endif
 
+
+
 #include "access/attnum.h"
 #include "access/htup.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
-
 #include "commands/sequence.h"
-
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
 #include "mb/pg_wchar.h"

@@ -1,7 +1,7 @@
 #include "postgres.h"
 
-#include "storage/bufpage.h"
 #include "access/skey.h"
+#include "storage/bufpage.h"
 #include "access/gist.h"
 
 #include "query.h"

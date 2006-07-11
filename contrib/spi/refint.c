@@ -4,6 +4,7 @@
  */
 
 #include "executor/spi.h"		/* this is what you need to work with SPI */
+
 #include "commands/trigger.h"	/* -"- and triggers */
 #include <ctype.h>
 

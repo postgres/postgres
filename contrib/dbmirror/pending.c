@@ -1,7 +1,7 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.25 2006/05/30 22:12:12 tgl Exp $
- * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.25 2006/05/30 22:12:12 tgl Exp $
+ * $Id: pending.c,v 1.26 2006/07/11 17:26:58 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.26 2006/07/11 17:26:58 momjian Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -33,6 +33,7 @@
 #include "postgres.h"
 
 #include "executor/spi.h"
+
 #include "commands/sequence.h"
 #include "commands/trigger.h"
 #include "utils/lsyscache.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.30 2006/05/30 13:36:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.31 2006/07/11 17:26:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,16 +17,16 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
-#include "catalog/namespace.h"
+#include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/catcache.h"
-#include "mb/pg_wchar.h"
-#include "utils/fmgroids.h"
 #include "utils/acl.h"
 #include "miscadmin.h"
 

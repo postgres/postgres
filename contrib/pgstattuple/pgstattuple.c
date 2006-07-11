@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.22 2006/07/06 02:18:07 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.23 2006/07/11 17:26:58 momjian Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -26,10 +26,10 @@
 
 #include "fmgr.h"
 #include "funcapi.h"
-#include "access/heapam.h"
-#include "access/nbtree.h"
 #include "access/gist_private.h"
 #include "access/hash.h"
+#include "access/heapam.h"
+#include "access/nbtree.h"
 #include "access/transam.h"
 #include "catalog/namespace.h"
 #include "utils/builtins.h"

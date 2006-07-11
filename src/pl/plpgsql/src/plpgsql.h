@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.76 2006/06/15 18:02:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.77 2006/07/11 17:26:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,8 @@
 
 #include "fmgr.h"
 #include "miscadmin.h"
-#include "executor/spi.h"
 #include "commands/trigger.h"
+#include "executor/spi.h"
 #include "utils/tuplestore.h"
 
 /**********************************************************************

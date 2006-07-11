@@ -3,17 +3,17 @@
  *
  * Resource managers definition
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/rmgr.c,v 1.22 2006/05/02 11:28:54 teodor Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/rmgr.c,v 1.23 2006/07/11 17:26:58 momjian Exp $
  */
 #include "postgres.h"
 
 #include "access/clog.h"
+#include "access/gin.h"
 #include "access/gist_private.h"
 #include "access/hash.h"
 #include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/nbtree.h"
-#include "access/gin.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "commands/dbcommands.h"
