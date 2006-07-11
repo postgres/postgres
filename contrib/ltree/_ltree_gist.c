@@ -609,6 +609,7 @@ gist_qe(ltree_gist * key, lquery * query)
 		curq = LQL_NEXT(curq);
 		qlen--;
 	}
+	PG_FREE_IF_COPY(query,1);
 
 	return true;
 }

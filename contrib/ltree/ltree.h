@@ -167,8 +167,11 @@ bool compare_subnode(ltree_level * t, char *q, int len,
 ltree	   *lca_inner(ltree ** a, int len);
 
 #define PG_GETARG_LTREE(x)	((ltree*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
+#define PG_GETARG_LTREE_COPY(x)	((ltree*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
 #define PG_GETARG_LQUERY(x) ((lquery*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
+#define PG_GETARG_LQUERY_COPY(x) ((lquery*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
 #define PG_GETARG_LTXTQUERY(x) ((ltxtquery*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
+#define PG_GETARG_LTXTQUERY_COPY(x) ((ltxtquery*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
 
 /* GiST support for ltree */
 
