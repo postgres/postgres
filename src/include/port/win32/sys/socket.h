@@ -5,8 +5,8 @@
  *
  * Note: Don't include <wingdi.h> directly.  It causes compile errors.
  */
-#include <ws2tcpip.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #undef ERROR
 #undef small
 
