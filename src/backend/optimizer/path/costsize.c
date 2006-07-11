@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.160 2006/07/01 22:07:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.161 2006/07/11 16:35:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,8 @@
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
 #include "utils/array.h"
-#include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
+#include "utils/selfuncs.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 

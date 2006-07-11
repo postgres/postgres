@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.56 2006/06/21 16:43:11 joe Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.57 2006/07/11 16:35:31 momjian Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -37,26 +37,26 @@
 #include "libpq-fe.h"
 #include "fmgr.h"
 #include "funcapi.h"
-#include "access/tupdesc.h"
 #include "access/heapam.h"
+#include "access/tupdesc.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
-#include "nodes/nodes.h"
 #include "nodes/execnodes.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
-#include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
+#include "utils/dynahash.h"
+#include "utils/fmgroids.h"
+#include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/dynahash.h"
-#include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 #include "dblink.h"

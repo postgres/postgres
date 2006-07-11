@@ -2,8 +2,8 @@
 
 #include "postgres.h"
 #include "fmgr.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
 #include "utils/syscache.h"
 #include "miscadmin.h"
 

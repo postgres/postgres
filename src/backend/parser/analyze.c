@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.338 2006/07/03 22:45:39 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.339 2006/07/11 16:35:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,16 +28,16 @@
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
-#include "parser/parsetree.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
-#include "parser/parse_expr.h"
+#include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"

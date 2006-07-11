@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.128 2006/04/04 19:35:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.129 2006/07/11 16:35:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,8 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
-#include "utils/memutils.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 

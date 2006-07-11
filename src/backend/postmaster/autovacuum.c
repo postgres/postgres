@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.22 2006/07/10 16:20:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.23 2006/07/11 16:35:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,9 @@
 #include "tcop/tcopprot.h"
 #include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"

@@ -1,6 +1,6 @@
 #include "btree_gist.h"
-#include "utils/pg_locale.h"
 #include "btree_utils_var.h"
+#include "utils/pg_locale.h"
 #include "utils/builtins.h"
 
 PG_FUNCTION_INFO_V1(gbt_var_decompress);

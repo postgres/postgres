@@ -8,7 +8,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.2 2006/05/30 21:34:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.3 2006/07/11 16:35:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,9 +20,9 @@
 #include <dirent.h>
 
 #include "miscadmin.h"
-#include "storage/fd.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "storage/fd.h"
 #include "utils/datetime.h"
 
 

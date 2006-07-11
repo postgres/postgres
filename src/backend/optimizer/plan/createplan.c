@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.212 2006/07/01 18:38:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.213 2006/07/11 16:35:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,9 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
-#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 

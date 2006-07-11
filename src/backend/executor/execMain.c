@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.273 2006/07/03 22:45:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.274 2006/07/11 16:35:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
-#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
+#include "parser/parsetree.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/guc.h"

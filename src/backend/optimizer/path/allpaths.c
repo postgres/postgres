@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.147 2006/07/01 18:38:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.148 2006/07/11 16:35:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,9 @@
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
-#include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
+#include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 
 

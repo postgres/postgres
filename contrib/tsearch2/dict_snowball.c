@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_snowball.c,v 1.11 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_snowball.c,v 1.12 2006/07/11 16:35:31 momjian Exp $ */
 
 /*
  * example of Snowball dictionary
@@ -9,8 +9,8 @@
 
 #include "dict.h"
 #include "common.h"
-#include "snowball/header.h"
 #include "snowball/english_stem.h"
+#include "snowball/header.h"
 #include "snowball/russian_stem.h"
 #include "snowball/russian_stem_UTF8.h"
 #include "ts_locale.h"

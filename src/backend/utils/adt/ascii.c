@@ -5,14 +5,14 @@
  *	 Portions Copyright (c) 1999-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ascii.c,v 1.27 2006/03/05 15:58:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ascii.c,v 1.28 2006/07/11 16:35:33 momjian Exp $
  *
  *-----------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "utils/builtins.h"
 #include "mb/pg_wchar.h"
+#include "utils/builtins.h"
 #include "utils/ascii.h"
 
 static void pg_to_ascii(unsigned char *src, unsigned char *src_end,
