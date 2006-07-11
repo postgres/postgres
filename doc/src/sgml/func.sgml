@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.324 2006/07/06 01:46:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.325 2006/07/11 19:11:26 neilc Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9496,53 +9496,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get SQL name of a data type</entry>
       </row>
       <row>
-       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_name</parameter>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE VIEW</> command for view (<emphasis>deprecated</emphasis>)</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_name</parameter>, <parameter>pretty_bool</>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE VIEW</> command for view (<emphasis>deprecated</emphasis>)</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_oid</parameter>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE VIEW</> command for view</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_oid</parameter>, <parameter>pretty_bool</>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE VIEW</> command for view</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_get_ruledef</function>(<parameter>rule_oid</parameter>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE RULE</> command for rule</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_get_ruledef</function>(<parameter>rule_oid</parameter>, <parameter>pretty_bool</>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE RULE</> command for rule</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_get_indexdef</function>(<parameter>index_oid</parameter>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE INDEX</> command for index</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_get_indexdef</function>(<parameter>index_oid</parameter>, <parameter>column_no</>, <parameter>pretty_bool</>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE INDEX</> command for index,
-       or definition of just one index column when
-       <parameter>column_no</> is not zero</entry>
-      </row>
-      <row>
-       <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>)</entry>
-       <entry><type>text</type></entry>
-       <entry>get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
-      </row>
-      <row>
        <entry><literal><function>pg_get_constraintdef</function>(<parameter>constraint_oid</parameter>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get definition of a constraint</entry>
@@ -9565,9 +9518,26 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        in it refer to the relation indicated by the second parameter</entry>
       </row>
       <row>
-       <entry><literal><function>pg_get_userbyid</function>(<parameter>roleid</parameter>)</literal></entry>
-       <entry><type>name</type></entry>
-       <entry>get role name with given ID</entry>
+       <entry><literal><function>pg_get_indexdef</function>(<parameter>index_oid</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE INDEX</> command for index</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_indexdef</function>(<parameter>index_oid</parameter>, <parameter>column_no</>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE INDEX</> command for index,
+       or definition of just one index column when
+       <parameter>column_no</> is not zero</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_ruledef</function>(<parameter>rule_oid</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE RULE</> command for rule</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_ruledef</function>(<parameter>rule_oid</parameter>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE RULE</> command for rule</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_serial_sequence</function>(<parameter>table_name</parameter>, <parameter>column_name</parameter>)</literal></entry>
@@ -9580,6 +9550,36 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>setof oid</type></entry>
        <entry>get the set of database OIDs that have objects in the tablespace</entry>
       </row>
+      <row>
+       <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>)</entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_userbyid</function>(<parameter>roleid</parameter>)</literal></entry>
+       <entry><type>name</type></entry>
+       <entry>get role name with given ID</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_name</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get underlying <command>SELECT</command> command for view (<emphasis>deprecated</emphasis>)</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_name</parameter>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get underlying <command>SELECT</command> command for view (<emphasis>deprecated</emphasis>)</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_oid</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get underlying <command>SELECT</command> command for view</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_oid</parameter>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get underlying <command>SELECT</command> command for view</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -9591,30 +9591,22 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
-   <function>pg_get_viewdef</function>,
-   <function>pg_get_ruledef</function>,
-   <function>pg_get_indexdef</function>,
-   <function>pg_get_triggerdef</function>, and
-   <function>pg_get_constraintdef</function> respectively
-   reconstruct the creating command for a view, rule, index, trigger, or
-   constraint.  (Note that this is a decompiled reconstruction, not
-   the original text of the command.)
+   <function>pg_get_constraintdef</function>,
+   <function>pg_get_indexdef</function>, <function>pg_get_ruledef</function>,
+   and <function>pg_get_triggerdef</function>, respectively reconstruct the
+   creating command for a constraint, index, rule, or trigger. (Note that this
+   is a decompiled reconstruction, not the original text of the command.)
    <function>pg_get_expr</function> decompiles the internal form of an
-   individual expression, such as the default value for a column.  It
-   may be useful when examining the contents of system catalogs.
-   Most of these functions come in two
-   variants, one of which can optionally <quote>pretty-print</> the result.
-   The pretty-printed format is more readable, but the default format is more
-   likely to be
-   interpreted the same way by future versions of <productname>PostgreSQL</>;
-   avoid using pretty-printed output for dump purposes.
-   Passing <literal>false</> for the pretty-print parameter yields the
-   same result as the variant that does not have the parameter at all.
-  </para>
-
-  <para>
-   <function>pg_get_userbyid</function> extracts a role's name given
-   its OID.
+   individual expression, such as the default value for a column.  It may be
+   useful when examining the contents of system catalogs.
+   <function>pg_get_viewdef</function> reconstructs the <command>SELECT</>
+   query that defines a view. Most of these functions come in two variants,
+   one of which can optionally <quote>pretty-print</> the result.  The
+   pretty-printed format is more readable, but the default format is more
+   likely to be interpreted the same way by future versions of
+   <productname>PostgreSQL</>; avoid using pretty-printed output for dump
+   purposes.  Passing <literal>false</> for the pretty-print parameter yields
+   the same result as the variant that does not have the parameter at all.
   </para>
 
   <para>
@@ -9626,14 +9618,18 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
-  <function>pg_tablespace_databases</function> allows a tablespace to
-  be examined. It returns the set of OIDs of databases that have objects
-  stored in the tablespace. If this function returns any rows, the
-  tablespace is not empty and cannot be dropped. To
-  display the specific objects populating the tablespace, you will need
-  to connect to the databases identified by 
-  <function>pg_tablespace_databases</function> and query their
-  <structname>pg_class</> catalogs.
+   <function>pg_tablespace_databases</function> allows a tablespace to be
+   examined. It returns the set of OIDs of databases that have objects stored
+   in the tablespace. If this function returns any rows, the tablespace is not
+   empty and cannot be dropped. To display the specific objects populating the
+   tablespace, you will need to connect to the databases identified by
+   <function>pg_tablespace_databases</function> and query their
+   <structname>pg_class</> catalogs.
+  </para>
+
+  <para>
+   <function>pg_get_userbyid</function> extracts a role's name given
+   its OID.
   </para>
 
    <indexterm zone="functions-info">
