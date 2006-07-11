@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jun 18 15:33:56 EDT 2006
+   Last updated: Tue Jul 11 13:01:46 EDT 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -159,7 +159,8 @@ General Questions
   
    Other than documentation in the source tree itself, you can find some
    papers/presentations discussing the code at
-   http://www.postgresql.org/developer.
+   http://www.postgresql.org/developer. An excellent presentation is at
+   http://neilconway.org/talks/hacking/
    
   1.7) How do I download/update the current source tree?
   
