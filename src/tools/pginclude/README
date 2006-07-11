@@ -13,5 +13,12 @@ pgrminclude [-v]
 pgdefine	create macro calls for all defines in the file (used by
 		the above routines)
 
-It is also a good idea to sort the pg-specific include files in alphabetic
-order.  This is best done with a text editor.
+It is also a good idea to sort the pg-specific include files in
+alphabetic order.  This is best done with a text editor. Typical usage
+order would be:
+
+	pgfixinclude  
+	pgcompinclude
+	pgrminclude /src/include
+	pgcompinclude
+	pgrminclude /
