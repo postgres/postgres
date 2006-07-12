@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.115 2006/06/20 19:56:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.116 2006/07/12 02:31:56 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,10 +188,10 @@ pg_krb5_destroy(struct krb5_info *info)
 
 
 /*
- * pg_krb5_authname -- returns a pointer to static space containing whatever
- *					   name the user has authenticated to the system
-  */
-static const char *
+ * pg_krb5_authname -- returns a copy of whatever name the user
+ *					   has authenticated to the system, or NULL
+ */
+static char *
 pg_krb5_authname(char *PQerrormsg)
 {
 	char *tmp_name;
@@ -520,7 +520,7 @@ char *
 pg_fe_getauthname(char *PQerrormsg)
 {
 #ifdef KRB5
-	const char *krb5_name = NULL;
+	char       *krb5_name = NULL;
 #endif
 	const char *name = NULL;
 	char	   *authn;
