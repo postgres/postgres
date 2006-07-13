@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.325 2006/07/11 19:11:26 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.326 2006/07/13 23:59:47 neilc Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -2376,6 +2376,32 @@
       </row>
 
       <row>
+       <entry><function>get_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
+       <entry><type>int</type></entry>
+       <entry>
+        Extract bit from string
+        <indexterm>
+         <primary>get_bit</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>get_bit('Th\\000omas'::bytea, 45)</literal></entry>
+       <entry><literal>1</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>get_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
+       <entry><type>int</type></entry>
+       <entry>
+        Extract byte from string
+        <indexterm>
+         <primary>get_byte</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>get_byte('Th\\000omas'::bytea, 4)</literal></entry>
+       <entry><literal>109</literal></entry>
+      </row>
+
+      <row>
        <entry><literal><function>octet_length</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
        <entry>Number of bytes in binary string</entry>
@@ -2389,6 +2415,34 @@
        <entry>Location of specified substring</entry>
       <entry><literal>position('\\000om'::bytea in 'Th\\000omas'::bytea)</literal></entry>
        <entry><literal>3</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>set_bit</function>(<parameter>string</parameter>,
+       <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Set bit in string
+        <indexterm>
+         <primary>set_bit</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>set_bit('Th\\000omas'::bytea, 45, 0)</literal></entry>
+       <entry><literal>Th\000omAs</literal></entry>
+      </row>
+
+      <row>
+       <entry><function>set_byte</function>(<parameter>string</parameter>,
+       <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Set byte in string
+        <indexterm>
+         <primary>set_byte</primary>
+        </indexterm>
+       </entry>
+       <entry><literal>set_byte('Th\\000omas'::bytea, 4, 64)</literal></entry>
+       <entry><literal>Th\000o@as</literal></entry>
       </row>
 
       <row>
@@ -2418,60 +2472,6 @@
        </entry>
        <entry><literal>trim('\\000'::bytea from '\\000Tom\\000'::bytea)</literal></entry>
        <entry><literal>Tom</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>get_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Extract byte from string
-        <indexterm>
-         <primary>get_byte</primary>
-        </indexterm>
-       </entry>
-       <entry><literal>get_byte('Th\\000omas'::bytea, 4)</literal></entry>
-       <entry><literal>109</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>set_byte</function>(<parameter>string</parameter>,
-       <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Set byte in string
-        <indexterm>
-         <primary>set_byte</primary>
-        </indexterm>
-       </entry>
-       <entry><literal>set_byte('Th\\000omas'::bytea, 4, 64)</literal></entry>
-       <entry><literal>Th\000o@as</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>get_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Extract bit from string
-        <indexterm>
-         <primary>get_bit</primary>
-        </indexterm>
-       </entry>
-       <entry><literal>get_bit('Th\\000omas'::bytea, 45)</literal></entry>
-       <entry><literal>1</literal></entry>
-      </row>
-
-      <row>
-       <entry><function>set_bit</function>(<parameter>string</parameter>,
-       <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Set bit in string
-        <indexterm>
-         <primary>set_bit</primary>
-        </indexterm>
-       </entry>
-       <entry><literal>set_bit('Th\\000omas'::bytea, 45, 0)</literal></entry>
-       <entry><literal>Th\000omAs</literal></entry>
       </row>
      </tbody>
     </tgroup>
@@ -2513,6 +2513,34 @@
      </row>
 
      <row>
+      <entry>
+       <literal><function>decode</function>(<parameter>string</parameter> <type>text</type>,
+              <parameter>type</parameter> <type>text</type>)</literal>
+      </entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Decode binary string from <parameter>string</parameter> previously 
+       encoded with <function>encode</>.  Parameter type is same as in <function>encode</>.
+      </entry>
+      <entry><literal>decode('123\\000456', 'escape')</literal></entry>
+      <entry><literal>123\000456</literal></entry>
+     </row>
+
+     <row>
+      <entry>
+       <literal><function>encode</function>(<parameter>string</parameter> <type>bytea</type>,
+              <parameter>type</parameter> <type>text</type>)</literal>
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Encode binary string to <acronym>ASCII</acronym>-only representation.  Supported
+       types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
+      </entry>
+      <entry><literal>encode('123\\000456'::bytea, 'escape')</literal></entry>
+      <entry><literal>123\000456</literal></entry>
+     </row>
+
+     <row>
       <entry><literal><function>length</function>(<parameter>string</parameter>)</literal></entry>
       <entry><type>int</type></entry>
       <entry>
@@ -2541,35 +2569,6 @@
       <entry><literal>md5('Th\\000omas'::bytea)</literal></entry>
       <entry><literal>8ab2d3c9689aaf18 b4958c334c82d8b1</literal></entry>
      </row>
-
-     <row>
-      <entry>
-       <literal><function>decode</function>(<parameter>string</parameter> <type>text</type>,
-              <parameter>type</parameter> <type>text</type>)</literal>
-      </entry>
-      <entry><type>bytea</type></entry>
-      <entry>
-       Decode binary string from <parameter>string</parameter> previously 
-       encoded with <literal>encode</>.  Parameter type is same as in <literal>encode</>.
-      </entry>
-      <entry><literal>decode('123\\000456', 'escape')</literal></entry>
-      <entry><literal>123\000456</literal></entry>
-     </row>       
-
-     <row>
-      <entry>
-       <literal><function>encode</function>(<parameter>string</parameter> <type>bytea</type>,
-              <parameter>type</parameter> <type>text</type>)</literal>
-      </entry>
-      <entry><type>text</type></entry>
-      <entry>
-       Encode binary string to <acronym>ASCII</acronym>-only representation.  Supported
-       types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
-      </entry>
-      <entry><literal>encode('123\\000456'::bytea, 'escape')</literal></entry>
-      <entry><literal>123\000456</literal></entry>
-     </row>
-
     </tbody>
    </tgroup>
   </table>
@@ -4321,10 +4320,10 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     <primary>to_date</primary>
    </indexterm>
    <indexterm>
-    <primary>to_timestamp</primary>
+    <primary>to_number</primary>
    </indexterm>
    <indexterm>
-    <primary>to_number</primary>
+    <primary>to_timestamp</primary>
    </indexterm>
 
    <para>
@@ -4395,6 +4394,12 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><literal>to_date('05&nbsp;Dec&nbsp;2000', 'DD&nbsp;Mon&nbsp;YYYY')</literal></entry>
        </row>
        <row>
+        <entry><literal><function>to_number</function>(<type>text</type>, <type>text</type>)</literal></entry>
+        <entry><type>numeric</type></entry>
+        <entry>convert string to numeric</entry>
+        <entry><literal>to_number('12,454.8-', '99G999D9S')</literal></entry>
+       </row>
+       <row>
         <entry><literal><function>to_timestamp</function>(<type>text</type>, <type>text</type>)</literal></entry>
         <entry><type>timestamp with time zone</type></entry>
         <entry>convert string to time stamp</entry>
@@ -4405,12 +4410,6 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><type>timestamp with time zone</type></entry>
         <entry>convert UNIX epoch to time stamp</entry>
         <entry><literal>to_timestamp(200120400)</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>to_number</function>(<type>text</type>, <type>text</type>)</literal></entry>
-        <entry><type>numeric</type></entry>
-        <entry>convert string to numeric</entry>
-        <entry><literal>to_number('12,454.8-', '99G999D9S')</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -5272,6 +5271,9 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     <primary>age</primary>
    </indexterm>
    <indexterm>
+    <primary>clock_timestamp</primary>
+   </indexterm>
+   <indexterm>
     <primary>current_date</primary>
    </indexterm>
    <indexterm>
@@ -5311,16 +5313,13 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     <primary>now</primary>
    </indexterm>
    <indexterm>
-    <primary>transaction_timestamp</primary>
-   </indexterm>
-   <indexterm>
     <primary>statement_timestamp</primary>
    </indexterm>
    <indexterm>
-    <primary>clock_timestamp</primary>
+    <primary>timeofday</primary>
    </indexterm>
    <indexterm>
-    <primary>timeofday</primary>
+    <primary>transaction_timestamp</primary>
    </indexterm>
 
     <table id="functions-datetime-table">
@@ -5352,6 +5351,16 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry>Subtract from <function>current_date</function></entry>
         <entry><literal>age(timestamp '1957-06-13')</literal></entry>
         <entry><literal>43 years 8 mons 3 days</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal><function>clock_timestamp</function>()</literal></entry>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>Current date and time (changes during statement execution);
+         see <xref linkend="functions-datetime-current">
+        </entry>
+        <entry></entry>
+        <entry></entry>
        </row>
 
        <row>
@@ -5504,29 +5513,9 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
 
        <row>
-        <entry><literal><function>transaction_timestamp</function>()</literal></entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Current date and time (start of current transaction);
-         see <xref linkend="functions-datetime-current">
-        </entry>
-        <entry></entry>
-        <entry></entry>
-       </row>
-
-       <row>
         <entry><literal><function>statement_timestamp</function>()</literal></entry>
         <entry><type>timestamp with time zone</type></entry>
         <entry>Current date and time (start of current statement);
-         see <xref linkend="functions-datetime-current">
-        </entry>
-        <entry></entry>
-        <entry></entry>
-       </row>
-
-       <row>
-        <entry><literal><function>clock_timestamp</function>()</literal></entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Current date and time (changes during statement execution);
          see <xref linkend="functions-datetime-current">
         </entry>
         <entry></entry>
@@ -5544,6 +5533,15 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry></entry>
        </row>
 
+       <row>
+        <entry><literal><function>transaction_timestamp</function>()</literal></entry>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>Current date and time (start of current transaction);
+         see <xref linkend="functions-datetime-current">
+        </entry>
+        <entry></entry>
+        <entry></entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
@@ -6945,11 +6943,33 @@ SELECT pg_sleep(1.5);
       </thead>
       <tbody>
        <row>
+        <entry><literal><function>abbrev</function>(<type>inet</type>)</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>abbreviated display format as text</entry>
+        <entry><literal>abbrev(inet '10.1.0.0/16')</literal></entry>
+        <entry><literal>10.1.0.0/16</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>abbrev</function>(<type>cidr</type>)</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>abbreviated display format as text</entry>
+        <entry><literal>abbrev(cidr '10.1.0.0/16')</literal></entry>
+        <entry><literal>10.1/16</literal></entry>
+       </row>
+       <row>
         <entry><literal><function>broadcast</function>(<type>inet</type>)</literal></entry>
         <entry><type>inet</type></entry>
         <entry>broadcast address for network</entry>
         <entry><literal>broadcast('192.168.1.5/24')</literal></entry>
         <entry><literal>192.168.1.255/24</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>family</function>(<type>inet</type>)</literal></entry>
+        <entry><type>int</type></entry>
+        <entry>extract family of address; <literal>4</literal> for IPv4,
+         <literal>6</literal> for IPv6</entry>
+        <entry><literal>family('::1')</literal></entry>
+        <entry><literal>6</literal></entry>
        </row>
        <row>
         <entry><literal><function>host</function>(<type>inet</type>)</literal></entry>
@@ -6959,11 +6979,32 @@ SELECT pg_sleep(1.5);
         <entry><literal>192.168.1.5</literal></entry>
        </row>
        <row>
+        <entry><literal><function>hostmask</function>(<type>inet</type>)</literal></entry>
+        <entry><type>inet</type></entry>
+        <entry>construct host mask for network</entry>
+        <entry><literal>hostmask('192.168.23.20/30')</literal></entry>
+        <entry><literal>0.0.0.3</literal></entry>
+       </row>
+       <row>
         <entry><literal><function>masklen</function>(<type>inet</type>)</literal></entry>
         <entry><type>int</type></entry>
         <entry>extract netmask length</entry>
         <entry><literal>masklen('192.168.1.5/24')</literal></entry>
         <entry><literal>24</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>netmask</function>(<type>inet</type>)</literal></entry>
+        <entry><type>inet</type></entry>
+        <entry>construct netmask for network</entry>
+        <entry><literal>netmask('192.168.1.5/24')</literal></entry>
+        <entry><literal>255.255.255.0</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>network</function>(<type>inet</type>)</literal></entry>
+        <entry><type>cidr</type></entry>
+        <entry>extract network part of address</entry>
+        <entry><literal>network('192.168.1.5/24')</literal></entry>
+        <entry><literal>192.168.1.0/24</literal></entry>
        </row>
        <row>
         <entry><literal><function>set_masklen</function>(<type>inet</type>, <type>int</type>)</literal></entry>
@@ -6980,54 +7021,11 @@ SELECT pg_sleep(1.5);
         <entry><literal>192.168.0.0/16</literal></entry>
        </row>
        <row>
-        <entry><literal><function>netmask</function>(<type>inet</type>)</literal></entry>
-        <entry><type>inet</type></entry>
-        <entry>construct netmask for network</entry>
-        <entry><literal>netmask('192.168.1.5/24')</literal></entry>
-        <entry><literal>255.255.255.0</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>hostmask</function>(<type>inet</type>)</literal></entry>
-        <entry><type>inet</type></entry>
-        <entry>construct host mask for network</entry>
-        <entry><literal>hostmask('192.168.23.20/30')</literal></entry>
-        <entry><literal>0.0.0.3</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>network</function>(<type>inet</type>)</literal></entry>
-        <entry><type>cidr</type></entry>
-        <entry>extract network part of address</entry>
-        <entry><literal>network('192.168.1.5/24')</literal></entry>
-        <entry><literal>192.168.1.0/24</literal></entry>
-       </row>
-       <row>
         <entry><literal><function>text</function>(<type>inet</type>)</literal></entry>
         <entry><type>text</type></entry>
         <entry>extract IP address and netmask length as text</entry>
         <entry><literal>text(inet '192.168.1.5')</literal></entry>
         <entry><literal>192.168.1.5/32</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>abbrev</function>(<type>inet</type>)</literal></entry>
-        <entry><type>text</type></entry>
-        <entry>abbreviated display format as text</entry>
-        <entry><literal>abbrev(inet '10.1.0.0/16')</literal></entry>
-        <entry><literal>10.1.0.0/16</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>abbrev</function>(<type>cidr</type>)</literal></entry>
-        <entry><type>text</type></entry>
-        <entry>abbreviated display format as text</entry>
-        <entry><literal>abbrev(cidr '10.1.0.0/16')</literal></entry>
-        <entry><literal>10.1/16</literal></entry>
-       </row>
-       <row>
-    <entry><literal><function>family</function>(<type>inet</type>)</literal></entry>
-    <entry><type>int</type></entry>
-    <entry>extract family of address; <literal>4</literal> for IPv4,
-    <literal>6</literal> for IPv6</entry>
-    <entry><literal>family('::1')</literal></entry>
-    <entry><literal>6</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -7133,20 +7131,15 @@ SELECT pg_sleep(1.5);
 
      <tbody>
       <row>
-        <entry><literal><function>nextval</function>(<type>regclass</type>)</literal></entry>
-        <entry><type>bigint</type></entry>
-        <entry>Advance sequence and return new value</entry>
-      </row>
-      <row>
         <entry><literal><function>currval</function>(<type>regclass</type>)</literal></entry>
         <entry><type>bigint</type></entry>
         <entry>Return value most recently obtained with
         <function>nextval</function> for specified sequence</entry>
       </row>
       <row>
-        <entry><literal><function>lastval</function>()</literal></entry>
+        <entry><literal><function>nextval</function>(<type>regclass</type>)</literal></entry>
         <entry><type>bigint</type></entry>
-        <entry>Return value most recently obtained with <function>nextval</function></entry>
+        <entry>Advance sequence and return new value</entry>
       </row>
       <row>
         <entry><literal><function>setval</function>(<type>regclass</type>, <type>bigint</type>)</literal></entry>
@@ -7692,18 +7685,6 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_cat</function>
-      (<type>anyarray</type>, <type>anyarray</type>)
-     </literal>
-    </entry>
-        <entry><type>anyarray</type></entry>
-        <entry>concatenate two arrays</entry>
-        <entry><literal>array_cat(ARRAY[1,2,3], ARRAY[4,5])</literal></entry>
-        <entry><literal>{1,2,3,4,5}</literal></entry>
-       </row>
-       <row>
-        <entry>
-     <literal>
       <function>array_append</function>
       (<type>anyarray</type>, <type>anyelement</type>)
      </literal>
@@ -7716,14 +7697,14 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_prepend</function>
-      (<type>anyelement</type>, <type>anyarray</type>)
+      <function>array_cat</function>
+      (<type>anyarray</type>, <type>anyarray</type>)
      </literal>
     </entry>
         <entry><type>anyarray</type></entry>
-        <entry>append an element to the beginning of an array</entry>
-        <entry><literal>array_prepend(1, ARRAY[2,3])</literal></entry>
-        <entry><literal>{1,2,3}</literal></entry>
+        <entry>concatenate two arrays</entry>
+        <entry><literal>array_cat(ARRAY[1,2,3], ARRAY[4,5])</literal></entry>
+        <entry><literal>{1,2,3,4,5}</literal></entry>
        </row>
        <row>
         <entry>
@@ -7752,14 +7733,14 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_upper</function>
-      (<type>anyarray</type>, <type>int</type>)
+      <function>array_prepend</function>
+      (<type>anyelement</type>, <type>anyarray</type>)
      </literal>
     </entry>
-        <entry><type>int</type></entry>
-        <entry>returns upper bound of the requested array dimension</entry>
-        <entry><literal>array_upper(ARRAY[1,2,3,4], 1)</literal></entry>
-        <entry><literal>4</literal></entry>
+        <entry><type>anyarray</type></entry>
+        <entry>append an element to the beginning of an array</entry>
+        <entry><literal>array_prepend(1, ARRAY[2,3])</literal></entry>
+        <entry><literal>{1,2,3}</literal></entry>
        </row>
        <row>
         <entry>
@@ -7772,6 +7753,18 @@ SELECT NULLIF(value, '(none)') ...
         <entry>concatenates array elements using provided delimiter</entry>
         <entry><literal>array_to_string(ARRAY[1, 2, 3], '~^~')</literal></entry>
         <entry><literal>1~^~2~^~3</literal></entry>
+       </row>
+       <row>
+        <entry>
+     <literal>
+      <function>array_upper</function>
+      (<type>anyarray</type>, <type>int</type>)
+     </literal>
+    </entry>
+        <entry><type>int</type></entry>
+        <entry>returns upper bound of the requested array dimension</entry>
+        <entry><literal>array_upper(ARRAY[1,2,3,4], 1)</literal></entry>
+        <entry><literal>4</literal></entry>
        </row>
        <row>
         <entry>
@@ -8955,15 +8948,15 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
       </row>
 
       <row>
-       <entry><literal><function>session_user</function></literal></entry>
-       <entry><type>name</type></entry>
-       <entry>session user name</entry>
-      </row>
-
-      <row>
        <entry><literal><function>pg_postmaster_start_time</function>()</literal></entry>
        <entry><type>timestamp with time zone</type></entry>
        <entry>server start time</entry>
+      </row>
+
+      <row>
+       <entry><literal><function>session_user</function></literal></entry>
+       <entry><type>name</type></entry>
+       <entry>session user name</entry>
       </row>
 
       <row>
@@ -9105,21 +9098,6 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 
      <tbody>
       <row>
-       <entry><literal><function>has_table_privilege</function>(<parameter>user</parameter>,
-                                  <parameter>table</parameter>,
-                                  <parameter>privilege</parameter>)</literal>
-       </entry>
-       <entry><type>boolean</type></entry>
-       <entry>does user have privilege for table</entry>
-      </row>
-      <row>
-       <entry><literal><function>has_table_privilege</function>(<parameter>table</parameter>,
-                                  <parameter>privilege</parameter>)</literal>
-       </entry>
-       <entry><type>boolean</type></entry>
-       <entry>does current user have privilege for table</entry>
-      </row>
-      <row>
        <entry><literal><function>has_database_privilege</function>(<parameter>user</parameter>,
                                   <parameter>database</parameter>,
                                   <parameter>privilege</parameter>)</literal>
@@ -9165,21 +9143,6 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        <entry>does current user have privilege for language</entry>
       </row>
       <row>
-       <entry><literal><function>pg_has_role</function>(<parameter>user</parameter>,
-                                  <parameter>role</parameter>,
-                                  <parameter>privilege</parameter>)</literal>
-       </entry>
-       <entry><type>boolean</type></entry>
-       <entry>does user have privilege for role</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_has_role</function>(<parameter>role</parameter>,
-                                  <parameter>privilege</parameter>)</literal>
-       </entry>
-       <entry><type>boolean</type></entry>
-       <entry>does current user have privilege for role</entry>
-      </row>
-      <row>
        <entry><literal><function>has_schema_privilege</function>(<parameter>user</parameter>,
                                   <parameter>schema</parameter>,
                                   <parameter>privilege</parameter>)</literal>
@@ -9193,6 +9156,21 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        </entry>
        <entry><type>boolean</type></entry>
        <entry>does current user have privilege for schema</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_table_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>table</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for table</entry>
+      </row>
+      <row>
+       <entry><literal><function>has_table_privilege</function>(<parameter>table</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for table</entry>
       </row>
       <row>
        <entry><literal><function>has_tablespace_privilege</function>(<parameter>user</parameter>,
@@ -9209,13 +9187,25 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
        <entry><type>boolean</type></entry>
        <entry>does current user have privilege for tablespace</entry>
       </row>
+      <row>
+       <entry><literal><function>pg_has_role</function>(<parameter>user</parameter>,
+                                  <parameter>role</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have privilege for role</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_has_role</function>(<parameter>role</parameter>,
+                                  <parameter>privilege</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have privilege for role</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
 
-   <indexterm zone="functions-info">
-    <primary>has_table_privilege</primary>
-   </indexterm>
    <indexterm zone="functions-info">
     <primary>has_database_privilege</primary>
    </indexterm>
@@ -9226,36 +9216,17 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     <primary>has_language_privilege</primary>
    </indexterm>
    <indexterm zone="functions-info">
-    <primary>pg_has_role</primary>
+    <primary>has_schema_privilege</primary>
    </indexterm>
    <indexterm zone="functions-info">
-    <primary>has_schema_privilege</primary>
+    <primary>has_table_privilege</primary>
    </indexterm>
    <indexterm zone="functions-info">
     <primary>has_tablespace_privilege</primary>
    </indexterm>
-
-   <para>
-    <function>has_table_privilege</function> checks whether a user
-    can access a table in a particular way.  The user can be
-    specified by name or by OID
-    (<literal>pg_authid.oid</literal>), or if the argument is
-    omitted
-    <function>current_user</function> is assumed.  The table can be specified
-    by name or by OID.  (Thus, there are actually six variants of
-    <function>has_table_privilege</function>, which can be distinguished by
-    the number and types of their arguments.)  When specifying by name,
-    the name can be schema-qualified if necessary.
-    The desired access privilege type
-    is specified by a text string, which must evaluate to one of the
-    values <literal>SELECT</literal>, <literal>INSERT</literal>, <literal>UPDATE</literal>,
-    <literal>DELETE</literal>, <literal>RULE</literal>, <literal>REFERENCES</literal>, or
-    <literal>TRIGGER</literal>.  (Case of the string is not significant, however.)
-    An example is:
-<programlisting>
-SELECT has_table_privilege('myschema.mytable', 'select');
-</programlisting>
-   </para>
+   <indexterm zone="functions-info">
+    <primary>pg_has_role</primary>
+   </indexterm>
 
    <para>
     <function>has_database_privilege</function> checks whether a user
@@ -9293,25 +9264,34 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
    </para>
 
    <para>
-    <function>pg_has_role</function> checks whether a user
-    can access a role in a particular way.  The possibilities for its
-    arguments are analogous to <function>has_table_privilege</function>.
-    The desired access privilege type must evaluate to
-    <literal>MEMBER</literal> or
-    <literal>USAGE</literal>.
-    <literal>MEMBER</literal> denotes direct or indirect membership in
-    the role (that is, the right to do <literal>SET ROLE</>), while
-    <literal>USAGE</literal> denotes whether the privileges of the role
-    are immediately available without doing <literal>SET ROLE</>.
-   </para>
-
-   <para>
     <function>has_schema_privilege</function> checks whether a user
     can access a schema in a particular way.  The possibilities for its
     arguments are analogous to <function>has_table_privilege</function>.
     The desired access privilege type must evaluate to
     <literal>CREATE</literal> or
     <literal>USAGE</literal>.
+   </para>
+
+   <para>
+    <function>has_table_privilege</function> checks whether a user
+    can access a table in a particular way.  The user can be
+    specified by name or by OID
+    (<literal>pg_authid.oid</literal>), or if the argument is
+    omitted
+    <function>current_user</function> is assumed.  The table can be specified
+    by name or by OID.  (Thus, there are actually six variants of
+    <function>has_table_privilege</function>, which can be distinguished by
+    the number and types of their arguments.)  When specifying by name,
+    the name can be schema-qualified if necessary.
+    The desired access privilege type
+    is specified by a text string, which must evaluate to one of the
+    values <literal>SELECT</literal>, <literal>INSERT</literal>, <literal>UPDATE</literal>,
+    <literal>DELETE</literal>, <literal>RULE</literal>, <literal>REFERENCES</literal>, or
+    <literal>TRIGGER</literal>.  (Case of the string is not significant, however.)
+    An example is:
+<programlisting>
+SELECT has_table_privilege('myschema.mytable', 'select');
+</programlisting>
    </para>
 
    <para>
@@ -9322,9 +9302,22 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     <literal>CREATE</literal>.
    </para>
 
+   <para>
+    <function>pg_has_role</function> checks whether a user
+    can access a role in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>.
+    The desired access privilege type must evaluate to
+    <literal>MEMBER</literal> or
+    <literal>USAGE</literal>.
+    <literal>MEMBER</literal> denotes direct or indirect membership in
+    the role (that is, the right to do <command>SET ROLE</>), while
+    <literal>USAGE</literal> denotes whether the privileges of the role
+    are immediately available without doing <command>SET ROLE</>.
+   </para>
+
   <para>
    To test whether a user holds a grant option on the privilege,
-   append <literal> WITH GRANT OPTION</literal> to the privilege key
+   append <literal>WITH GRANT OPTION</literal> to the privilege key
    word; for example <literal>'UPDATE WITH GRANT OPTION'</literal>.
   </para>
 
@@ -9351,16 +9344,10 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
 
      <tbody>
       <row>
-       <entry><literal><function>pg_table_is_visible</function>(<parameter>table_oid</parameter>)</literal>
+       <entry><literal><function>pg_conversion_is_visible</function>(<parameter>conversion_oid</parameter>)</literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>is table visible in search path</entry>
-      </row>
-      <row>
-       <entry><literal><function>pg_type_is_visible</function>(<parameter>type_oid</parameter>)</literal>
-       </entry>
-       <entry><type>boolean</type></entry>
-       <entry>is type (or domain) visible in search path</entry>
+       <entry>is conversion visible in search path</entry>
       </row>
       <row>
        <entry><literal><function>pg_function_is_visible</function>(<parameter>function_oid</parameter>)</literal>
@@ -9381,20 +9368,23 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
        <entry>is operator class visible in search path</entry>
       </row>
       <row>
-       <entry><literal><function>pg_conversion_is_visible</function>(<parameter>conversion_oid</parameter>)</literal>
+       <entry><literal><function>pg_table_is_visible</function>(<parameter>table_oid</parameter>)</literal>
        </entry>
        <entry><type>boolean</type></entry>
-       <entry>is conversion visible in search path</entry>
+       <entry>is table visible in search path</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_type_is_visible</function>(<parameter>type_oid</parameter>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is type (or domain) visible in search path</entry>
       </row>
      </tbody>
     </tgroup>
    </table>
 
    <indexterm zone="functions-info">
-    <primary>pg_table_is_visible</primary>
-   </indexterm>
-   <indexterm zone="functions-info">
-    <primary>pg_type_is_visible</primary>
+    <primary>pg_conversion_is_visible</primary>
    </indexterm>
    <indexterm zone="functions-info">
     <primary>pg_function_is_visible</primary>
@@ -9406,23 +9396,26 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
     <primary>pg_opclass_is_visible</primary>
    </indexterm>
    <indexterm zone="functions-info">
-    <primary>pg_conversion_is_visible</primary>
+    <primary>pg_table_is_visible</primary>
+   </indexterm>
+   <indexterm zone="functions-info">
+    <primary>pg_type_is_visible</primary>
    </indexterm>
 
    <para>
-   <function>pg_table_is_visible</function> performs the check for
-   tables (or views, or any other kind of <literal>pg_class</> entry).
-   <function>pg_type_is_visible</function>,
-   <function>pg_function_is_visible</function>,
-   <function>pg_operator_is_visible</function>,
-   <function>pg_opclass_is_visible</function>, and
-   <function>pg_conversion_is_visible</function> perform the same sort of
-   visibility check for types (and domains), functions, operators, operator classes
-   and conversions, respectively.  For functions and operators, an object in
-   the search path is visible if there is no object of the same name
-   <emphasis>and argument data type(s)</> earlier in the path.  For
-   operator classes, both name and associated index access method are
-   considered.
+    <function>pg_conversion_is_visible</function>,
+    <function>pg_function_is_visible</function>,
+    <function>pg_operator_is_visible</function>,
+    <function>pg_opclass_is_visible</function>,
+    <function>pg_table_is_visible</function>, and
+    <function>pg_type_is_visible</function> perform the visibility check for
+    conversions, functions, operators, operator classes, tables, and
+    types. Note that <function>pg_table_is_visible</function> can also be used
+    with views, indexes and sequences; <function>pg_type_is_visible</function>
+    can also be used with domains. For functions and operators, an object in
+    the search path is visible if there is no object of the same name
+    <emphasis>and argument data type(s)</> earlier in the path.  For operator
+    classes, both name and associated index access method are considered.
    </para>
 
    <para>
@@ -9546,11 +9539,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        uses</entry>
       </row>
       <row>
-       <entry><literal><function>pg_tablespace_databases</function>(<parameter>tablespace_oid</parameter>)</literal></entry>
-       <entry><type>setof oid</type></entry>
-       <entry>get the set of database OIDs that have objects in the tablespace</entry>
-      </row>
-      <row>
        <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>)</entry>
        <entry><type>text</type></entry>
        <entry>get <command>CREATE [ CONSTRAINT ] TRIGGER</> command for trigger</entry>
@@ -9579,6 +9567,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>pg_get_viewdef</function>(<parameter>view_oid</parameter>, <parameter>pretty_bool</>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get underlying <command>SELECT</command> command for view</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_tablespace_databases</function>(<parameter>tablespace_oid</parameter>)</literal></entry>
+       <entry><type>setof oid</type></entry>
+       <entry>get the set of database OIDs that have objects in the tablespace</entry>
       </row>
      </tbody>
     </tgroup>
@@ -9618,6 +9611,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
   </para>
 
   <para>
+   <function>pg_get_userbyid</function> extracts a role's name given
+   its OID.
+  </para>
+
+  <para>
    <function>pg_tablespace_databases</function> allows a tablespace to be
    examined. It returns the set of OIDs of databases that have objects stored
    in the tablespace. If this function returns any rows, the tablespace is not
@@ -9627,17 +9625,12 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    <structname>pg_class</> catalogs.
   </para>
 
-  <para>
-   <function>pg_get_userbyid</function> extracts a role's name given
-   its OID.
-  </para>
-
    <indexterm zone="functions-info">
-    <primary>obj_description</primary>
+    <primary>col_description</primary>
    </indexterm>
 
    <indexterm zone="functions-info">
-    <primary>col_description</primary>
+    <primary>obj_description</primary>
    </indexterm>
 
    <indexterm zone="functions-info">
@@ -9650,11 +9643,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <para>
-    The functions shown in <xref
-    linkend="functions-info-comment-table"> extract comments
-    previously stored with the <command>COMMENT</command> command.  A
-    null value is returned if no comment could be found matching the
-    specified parameters.
+    The functions shown in <xref linkend="functions-info-comment-table">
+    extract comments previously stored with the <xref linkend="sql-comment"
+    endterm="sql-comment-title"> command.  A null value is returned if no
+    comment could be found matching the specified parameters.
    </para>
 
    <table id="functions-info-comment-table">
@@ -9666,6 +9658,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
      <tbody>
       <row>
+       <entry><literal><function>col_description</function>(<parameter>table_oid</parameter>, <parameter>column_number</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get comment for a table column</entry>
+      </row>
+      <row>
        <entry><literal><function>obj_description</function>(<parameter>object_oid</parameter>, <parameter>catalog_name</parameter>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get comment for a database object</entry>
@@ -9674,11 +9671,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>obj_description</function>(<parameter>object_oid</parameter>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get comment for a database object (<emphasis>deprecated</emphasis>)</entry>
-      </row>
-      <row>
-       <entry><literal><function>col_description</function>(<parameter>table_oid</parameter>, <parameter>column_number</parameter>)</literal></entry>
-       <entry><type>text</type></entry>
-       <entry>get comment for a table column</entry>
       </row>
       <row>
        <entry><literal><function>shobj_description</function>(<parameter>object_oid</parameter>, <parameter>catalog_name</parameter>)</literal></entry>
@@ -9690,6 +9682,13 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </table>
 
    <para>
+    <function>col_description</function> returns the comment for a table column,
+    which is specified by the OID of its table and its column number.
+    <function>obj_description</function> cannot be used for table columns since
+    columns do not have OIDs of their own.
+   </para>
+
+   <para>
     The two-parameter form of <function>obj_description</function> returns the
     comment for a database object specified by its OID and the name of the
     containing system catalog.  For example,
@@ -9699,13 +9698,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     the object OID.  It is now deprecated since there is no guarantee that
     OIDs are unique across different system catalogs; therefore, the wrong
     comment could be returned.
-   </para>
-
-   <para>
-    <function>col_description</function> returns the comment for a table column,
-    which is specified by the OID of its table and its column number.
-    <function>obj_description</function> cannot be used for table columns since
-    columns do not have OIDs of their own.
    </para>
 
    <para>
@@ -9962,19 +9954,19 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_column_size</primary>
    </indexterm>
    <indexterm zone="functions-admin">
-    <primary>pg_tablespace_size</primary>
-   </indexterm>
-   <indexterm zone="functions-admin">
     <primary>pg_database_size</primary>
    </indexterm>
    <indexterm zone="functions-admin">
     <primary>pg_relation_size</primary>
    </indexterm>
    <indexterm zone="functions-admin">
-    <primary>pg_total_relation_size</primary>
+    <primary>pg_size_pretty</primary>
    </indexterm>
    <indexterm zone="functions-admin">
-    <primary>pg_size_pretty</primary>
+    <primary>pg_tablespace_size</primary>
+   </indexterm>
+   <indexterm zone="functions-admin">
+    <primary>pg_total_relation_size</primary>
    </indexterm>
 
    <table id="functions-admin-dbsize">
@@ -9990,20 +9982,6 @@ SELECT set_config('log_statement_stats', 'off', false);
        <entry><function>pg_column_size</function>(<type>any</type>)</entry>
        <entry><type>int</type></entry>
        <entry>Number of bytes used to store a particular value (possibly compressed)</entry>
-      </row>
-      <row>
-       <entry>
-        <literal><function>pg_tablespace_size</function>(<type>oid</type>)</literal>
-        </entry>
-       <entry><type>bigint</type></entry>
-       <entry>Disk space used by the tablespace with the specified OID</entry>
-      </row>
-      <row>
-       <entry>
-        <literal><function>pg_tablespace_size</function>(<type>name</type>)</literal>
-        </entry>
-       <entry><type>bigint</type></entry>
-       <entry>Disk space used by the tablespace with the specified name</entry>
       </row>
       <row>
        <entry>
@@ -10038,6 +10016,27 @@ SELECT set_config('log_statement_stats', 'off', false);
       </row>
       <row>
        <entry>
+        <literal><function>pg_size_pretty</function>(<type>bigint</type>)</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Converts a size in bytes into a human-readable format with size units</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_tablespace_size</function>(<type>oid</type>)</literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>Disk space used by the tablespace with the specified OID</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_tablespace_size</function>(<type>name</type>)</literal>
+        </entry>
+       <entry><type>bigint</type></entry>
+       <entry>Disk space used by the tablespace with the specified name</entry>
+      </row>
+      <row>
+       <entry>
         <literal><function>pg_total_relation_size</function>(<type>oid</type>)</literal>
         </entry>
        <entry><type>bigint</type></entry>
@@ -10057,13 +10056,6 @@ SELECT set_config('log_statement_stats', 'off', false);
         qualified with a schema name
        </entry>
       </row>
-      <row>
-       <entry>
-        <literal><function>pg_size_pretty</function>(<type>bigint</type>)</literal>
-        </entry>
-       <entry><type>text</type></entry>
-       <entry>Converts a size in bytes into a human-readable format with size units</entry>
-      </row>
      </tbody>
     </tgroup>
    </table>
@@ -10074,9 +10066,9 @@ SELECT set_config('log_statement_stats', 'off', false);
    </para>
 
    <para>
-    <function>pg_tablespace_size</> and <function>pg_database_size</> accept
-    the OID or name of a tablespace or database, and return the total disk
-    space used therein.
+    <function>pg_database_size</function> and <function>pg_tablespace_size</>
+    accept the OID or name of a database or tablespace, and return the total
+    disk space used therein.
    </para>
 
    <para>
@@ -10085,15 +10077,15 @@ SELECT set_config('log_statement_stats', 'off', false);
    </para>
 
    <para>
-    <function>pg_total_relation_size</> accepts the OID or name of a
-    table or toast table, and returns the size in bytes of the data
-    and all associated indexes and toast tables.
-   </para>
-
-   <para>
     <function>pg_size_pretty</> can be used to format the result of one of
     the other functions in a human-readable way, using kB, MB, GB or TB as
     appropriate.
+   </para>
+
+   <para>
+    <function>pg_total_relation_size</> accepts the OID or name of a
+    table or toast table, and returns the size in bytes of the data
+    and all associated indexes and toast tables.
    </para>
 
    <para>
