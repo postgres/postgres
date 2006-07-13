@@ -24,7 +24,7 @@
 
 # Original author:  Ryan Kirkpatrick <pgsql@rkirkpat.net>
 
-# $PostgreSQL: pgsql/contrib/start-scripts/linux,v 1.7 2004/10/01 18:30:21 tgl Exp $
+# $PostgreSQL: pgsql/contrib/start-scripts/linux,v 1.8 2006/07/13 14:44:33 petere Exp $
 
 ## EDIT FROM HERE
 
@@ -41,15 +41,6 @@ PGUSER=postgres
 PGLOG="$PGDATA/serverlog"
 
 ## STOP EDITING HERE
-
-# Check for echo -n vs echo \c
-if echo '\c' | grep -s c >/dev/null 2>&1 ; then
-    ECHO_N="echo -n"
-    ECHO_C=""
-else
-    ECHO_N="echo"
-    ECHO_C='\c'
-fi
 
 # The path that is to be used for the script
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
@@ -70,7 +61,7 @@ test -x $DAEMON || exit 0
 # Parse command line parameters.
 case $1 in
   start)
-	$ECHO_N "Starting PostgreSQL: "$ECHO_C
+	echo -n "Starting PostgreSQL: "
 	su - $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	echo "ok"
 	;;
