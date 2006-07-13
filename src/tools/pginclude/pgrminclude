@@ -1,7 +1,7 @@
 :
 # remove extra #include's
 
-# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.14 2006/07/13 16:39:20 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pginclude/pgrminclude,v 1.15 2006/07/13 18:25:09 momjian Exp $
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a /tmp/$$b" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -type f -name '*.[ch]' -print | 
@@ -26,6 +26,7 @@ do
 
 		[ -s /usr/include/$INCLUDE ] && continue
 		[ "$INCLUDE" = postgres.h ] && continue
+		[ "$INCLUDE" = postgres_fe.h ] && continue
 		[ "$INCLUDE" = config.h ] && continue
 		[ "$INCLUDE" = c.h ] && continue
 
