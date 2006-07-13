@@ -2,6 +2,13 @@
 -- SHA2 family
 --
 
+-- SHA224
+SELECT encode(digest('', 'sha224'), 'hex');
+SELECT encode(digest('a', 'sha224'), 'hex');
+SELECT encode(digest('abc', 'sha224'), 'hex');
+SELECT encode(digest('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq', 'sha224'), 'hex');
+SELECT encode(digest('12345678901234567890123456789012345678901234567890123456789012345678901234567890', 'sha224'), 'hex');
+
 -- SHA256
 SELECT encode(digest('', 'sha256'), 'hex');
 SELECT encode(digest('a', 'sha256'), 'hex');

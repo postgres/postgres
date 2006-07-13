@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.6 2006/05/21 20:22:16 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.7 2006/07/13 04:15:24 neilc Exp $
  */
 
 #include "postgres.h"
@@ -125,7 +125,7 @@ struct fortuna_state
 	struct timeval last_reseed_time;
 	unsigned	pool0_bytes;
 	unsigned	rnd_pos;
-	int			counter_init;
+	int			tricks_done;
 };
 typedef struct fortuna_state FState;
 
@@ -332,7 +332,7 @@ add_entropy(FState * st, const uint8 *data, unsigned len)
 	/*
 	 * Make sure the pool 0 is initialized, then update randomly.
 	 */
-	if (st->reseed_count == 0 && st->pool0_bytes < POOL0_FILL)
+	if (st->reseed_count == 0)
 		pos = 0;
 	else
 		pos = get_rand_pool(st);
@@ -357,21 +357,34 @@ rekey(FState * st)
 }
 
 /*
- * Fortuna relies on AES standing known-plaintext attack.
- * In case it does not, slow down the attacker by initialising
- * the couter to random value.
+ * Hide public constants. (counter, pools > 0)
+ *
+ * This can also be viewed as spreading the startup
+ * entropy over all of the components.
  */
 static void
-init_counter(FState * st)
+startup_tricks(FState * st)
 {
+	int i;
+	uint8 buf[BLOCK];
+
 	/* Use next block as counter. */
 	encrypt_counter(st, st->counter);
+
+	/* Now shuffle pools, excluding #0 */
+	for (i = 1; i < NUM_POOLS; i++)
+	{
+		encrypt_counter(st, buf);
+		encrypt_counter(st, buf + CIPH_BLOCK);
+		md_update(&st->pool[i], buf, BLOCK);
+	}
+	memset(buf, 0, BLOCK);
 
 	/* Hide the key. */
 	rekey(st);
 
-	/* The counter can be shuffled only once. */
-	st->counter_init = 1;
+	/* This can be done only once. */
+	st->tricks_done = 1;
 }
 
 static void
@@ -380,13 +393,14 @@ extract_data(FState * st, unsigned count, uint8 *dst)
 	unsigned	n;
 	unsigned	block_nr = 0;
 
-	/* Can we reseed? */
-	if (st->pool0_bytes >= POOL0_FILL && enough_time_passed(st))
-		reseed(st);
+	/* Should we reseed? */
+	if (st->pool0_bytes >= POOL0_FILL || st->reseed_count == 0)
+		if (enough_time_passed(st))
+			reseed(st);
 
-	/* Is counter initialized? */
-	if (!st->counter_init)
-		init_counter(st);
+	/* Do some randomization on first call */
+	if (!st->tricks_done)
+		startup_tricks(st);
 
 	while (count > 0)
 	{

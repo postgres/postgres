@@ -8,7 +8,7 @@
  *
  * $FreeBSD: src/lib/libcrypt/crypt-md5.c,v 1.5 1999/12/17 20:21:45 peter Exp $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-md5.c,v 1.6 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-md5.c,v 1.7 2006/07/13 04:15:24 neilc Exp $
  */
 
 #include "postgres.h"
@@ -17,6 +17,20 @@
 #include "px-crypt.h"
 
 #define MD5_SIZE 16
+
+static const char _crypt_a64[] =
+"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+static void
+_crypt_to64(char *s, unsigned long v, int n)
+{
+   	while (--n >= 0)
+	{
+		*s++ = _crypt_a64[v & 0x3f];
+		v >>= 6;
+	}
+}
+
 /*
  * UNIX password
  */

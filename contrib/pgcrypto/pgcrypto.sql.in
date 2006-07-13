@@ -71,6 +71,11 @@ RETURNS bool
 AS 'MODULE_PATHNAME', 'pg_cipher_exists'
 LANGUAGE C IMMUTABLE STRICT;
 
+CREATE OR REPLACE FUNCTION gen_random_bytes(int4)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_random_bytes'
+LANGUAGE 'C' VOLATILE STRICT;
+
 --
 -- pgp_sym_encrypt(data, key)
 --

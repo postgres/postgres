@@ -49,14 +49,14 @@ There are some other differences with and without OpenSSL:
 ----------------------------------------------------
  MD5                          yes       yes
  SHA1                         yes       yes
- SHA256/384/512               yes       since 0.9.8
+ SHA224/256/384/512           yes       yes (3)
  Any other digest algo        no        yes (1)
  Blowfish                     yes       yes
  AES                          yes       yes (2)
  DES/3DES/CAST5               no        yes
  Raw encryption               yes       yes
  PGP Symmetric encryption     yes       yes
- PGP Public-Key encryption    no        yes
+ PGP Public-Key encryption    yes       yes
 ----------------------------------------------------
 
 1. Any digest algorithm OpenSSL supports is automatically picked up.
@@ -66,6 +66,9 @@ There are some other differences with and without OpenSSL:
 2. AES is included in OpenSSL since version 0.9.7.  If pgcrypto is
    compiled against older version, it will use built-in AES code,
    so it has AES always available.
+
+3. SHA2 algorithms were added to OpenSSL in version 0.9.8.  For
+   older versions, pgcrypto will use built-in code.
 
 
 2.2.  NULL handling
@@ -621,14 +624,24 @@ is equal to
 	encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
 
 
-7.  Credits
+7.  Random bytes
+-----------------
+
+    gen_random_bytes(count integer)
+
+Returns `count` cryptographically strong random bytes as bytea value.
+There can be maximally 1024 bytes extracted at a time.  This is to avoid
+draining the randomness generator pool.
+
+
+8.  Credits
 ------------
 
 I have used code from following sources:
 
-`--------------------`-------------------------`----------------------
+`--------------------`-------------------------`-------------------------------
   Algorithm            Author                    Source origin
-----------------------------------------------------------------------
+-------------------------------------------------------------------------------
   DES crypt()          David Burren and others   FreeBSD libcrypt
   MD5 crypt()          Poul-Henning Kamp         FreeBSD libcrypt
   Blowfish crypt()     Solar Designer            www.openwall.com
@@ -636,21 +649,22 @@ I have used code from following sources:
   Rijndael cipher      Brian Gladman             OpenBSD sys/crypto
   MD5 and SHA1         WIDE Project              KAME kame/sys/crypto
   SHA256/384/512       Aaron D. Gifford          OpenBSD sys/crypto
-----------------------------------------------------------------------
+  BIGNUM math          Michael J. Fromberger     dartmouth.edu/~sting/sw/imath
+-------------------------------------------------------------------------------
 
 
-8.  Legalese
+9.  Legalese
 -------------
 
 * I owe a beer to Poul-Henning.
 * This product includes software developed by Niels Provos.
 
 
-9.  References/Links
----------------------
+10.  References/Links
+----------------------
 
-9.1.  Useful reading
-~~~~~~~~~~~~~~~~~~~~~
+10.1.  Useful reading
+~~~~~~~~~~~~~~~~~~~~~~
 
 http://www.gnupg.org/gph/en/manual.html[]::
 	The GNU Privacy Handbook
@@ -668,8 +682,8 @@ http://www.interhack.net/people/cmcurtin/snake-oil-faq.html[]::
 	Describes good and bad cryptography.
 
 
-9.2.  Technical references
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+10.2.  Technical references
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 http://www.ietf.org/rfc/rfc2440.txt[]::
 	OpenPGP message format
@@ -699,4 +713,4 @@ http://www.cs.ut.ee/~helger/crypto/[]::
 	Collection of cryptology pointers.
 
 
-// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.14 2005/11/03 02:54:07 tgl Exp $
+// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.15 2006/07/13 04:15:24 neilc Exp $

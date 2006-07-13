@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.27 2006/02/18 20:48:51 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.28 2006/07/13 04:15:25 neilc Exp $
  */
 
 #include "postgres.h"
@@ -147,6 +147,38 @@ static int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *res, unsigned int 
 #endif   /* old OpenSSL */
 
 /*
+ * Provide SHA2 for older OpenSSL < 0.9.8
+ */
+#if OPENSSL_VERSION_NUMBER < 0x00908000L
+
+#include "sha2.c"
+#include "internal-sha2.c"
+
+typedef int (*init_f)(PX_MD *md);
+
+static int compat_find_digest(const char *name, PX_MD **res)
+{
+	init_f init = NULL;
+	if (pg_strcasecmp(name, "sha224") == 0)
+		init = init_sha224;
+	else if (pg_strcasecmp(name, "sha256") == 0)
+		init = init_sha256;
+	else if (pg_strcasecmp(name, "sha384") == 0)
+		init = init_sha384;
+	else if (pg_strcasecmp(name, "sha512") == 0)
+		init = init_sha512;
+	else
+		return PXE_NO_HASH;
+	*res = px_alloc(sizeof(PX_MD));
+	init(*res);
+	return 0;
+}
+
+#else
+#define compat_find_digest(name, res)  (PXE_NO_HASH)
+#endif
+
+/*
  * Hashes
  */
 
@@ -223,7 +255,7 @@ px_find_digest(const char *name, PX_MD ** res)
 
 	md = EVP_get_digestbyname(name);
 	if (md == NULL)
-		return PXE_NO_HASH;
+		return compat_find_digest(name, res);
 
 	digest = px_alloc(sizeof(*digest));
 	digest->algo = md;
@@ -526,7 +558,7 @@ ossl_des3_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
-		DES_ecb3_encrypt(data + i * bs, res + i * bs,
+		DES_ecb3_encrypt((void *)(data + i * bs), (void *)(res + i * bs),
 						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3, 1);
 	return 0;
 }
@@ -540,7 +572,7 @@ ossl_des3_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
-		DES_ecb3_encrypt(data + i * bs, res + i * bs,
+		DES_ecb3_encrypt((void *)(data + i * bs), (void *)(res + i * bs),
 						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3, 0);
 	return 0;
 }

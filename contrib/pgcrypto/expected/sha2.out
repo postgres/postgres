@@ -1,6 +1,37 @@
 --
 -- SHA2 family
 --
+-- SHA224
+SELECT encode(digest('', 'sha224'), 'hex');
+                          encode                          
+----------------------------------------------------------
+ d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f
+(1 row)
+
+SELECT encode(digest('a', 'sha224'), 'hex');
+                          encode                          
+----------------------------------------------------------
+ abd37534c7d9a2efb9465de931cd7055ffdb8879563ae98078d6d6d5
+(1 row)
+
+SELECT encode(digest('abc', 'sha224'), 'hex');
+                          encode                          
+----------------------------------------------------------
+ 23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7
+(1 row)
+
+SELECT encode(digest('abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq', 'sha224'), 'hex');
+                          encode                          
+----------------------------------------------------------
+ 75388b16512776cc5dba5da1fd890150b0c6455cb4f58b1952522525
+(1 row)
+
+SELECT encode(digest('12345678901234567890123456789012345678901234567890123456789012345678901234567890', 'sha224'), 'hex');
+                          encode                          
+----------------------------------------------------------
+ b50aecbe4e9bb0b57bc5f3ae760a8e01db24f203fb3cdcd13148046e
+(1 row)
+
 -- SHA256
 SELECT encode(digest('', 'sha256'), 'hex');
                               encode                              

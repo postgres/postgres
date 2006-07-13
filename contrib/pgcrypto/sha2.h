@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha2.h,v 1.3 2006/05/30 12:56:45 momjian Exp $ */
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha2.h,v 1.4 2006/07/13 04:15:25 neilc Exp $ */
 /*	$OpenBSD: sha2.h,v 1.2 2004/04/28 23:11:57 millert Exp $	*/
 
 /*
@@ -49,7 +49,10 @@
 #define SHA512_Update pg_SHA512_Update
 #define SHA512_Final pg_SHA512_Final
 
-/*** SHA-256/384/512 Various Length Definitions ***********************/
+/*** SHA-224/256/384/512 Various Length Definitions ***********************/
+#define SHA224_BLOCK_LENGTH		64
+#define SHA224_DIGEST_LENGTH		28
+#define SHA224_DIGEST_STRING_LENGTH (SHA224_DIGEST_LENGTH * 2 + 1)
 #define SHA256_BLOCK_LENGTH		64
 #define SHA256_DIGEST_LENGTH		32
 #define SHA256_DIGEST_STRING_LENGTH (SHA256_DIGEST_LENGTH * 2 + 1)
@@ -75,7 +78,12 @@ typedef struct _SHA512_CTX
 	uint8		buffer[SHA512_BLOCK_LENGTH];
 }	SHA512_CTX;
 
+typedef SHA256_CTX SHA224_CTX;
 typedef SHA512_CTX SHA384_CTX;
+
+void		SHA224_Init(SHA224_CTX *);
+void		SHA224_Update(SHA224_CTX *, const uint8 *, size_t);
+void		SHA224_Final(uint8[SHA224_DIGEST_LENGTH], SHA224_CTX *);
 
 void		SHA256_Init(SHA256_CTX *);
 void		SHA256_Update(SHA256_CTX *, const uint8 *, size_t);
