@@ -1,6 +1,7 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "utils/date.h"
+#include "utils/timestamp.h"
 
 typedef struct
 {

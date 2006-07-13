@@ -4,6 +4,7 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
+#include "access/skey.h"
 #include "access/tuptoaster.h"
 #include "storage/bufpage.h"
 #include "utils/array.h"

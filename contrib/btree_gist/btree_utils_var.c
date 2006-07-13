@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "btree_gist.h"
 #include "btree_utils_var.h"
 #include "utils/pg_locale.h"
