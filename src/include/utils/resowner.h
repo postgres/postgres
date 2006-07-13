@@ -12,17 +12,15 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.7 2006/06/16 18:42:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.8 2006/07/13 18:01:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RESOWNER_H
 #define RESOWNER_H
 
-#include "access/tupdesc.h"
 #include "storage/buf.h"
 #include "utils/catcache.h"
-#include "utils/rel.h"
 
 
 /*
