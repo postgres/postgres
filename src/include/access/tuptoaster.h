@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.27 2006/07/13 16:49:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.28 2006/07/13 17:47:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,7 @@
 #define TUPTOASTER_H
 
 #include "access/htup.h"
-
+#include "storage/bufpage.h"
 
 /*
  * This enables de-toasting of index entries.  Needed until VACUUM is

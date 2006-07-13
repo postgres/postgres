@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.59 2006/06/15 02:08:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.60 2006/07/13 17:47:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,9 @@
 
 #include "access/htup.h"
 #include "access/skey.h"
+#include "access/tupdesc.h"
 #include "lib/dllist.h"
+#include "utils/rel.h"
 
 /*
  *		struct catctup:			individual tuple in the cache.

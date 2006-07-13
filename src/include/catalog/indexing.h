@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.94 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.95 2006/07/13 17:47:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #define INDEXING_H
 
 #include "access/htup.h"
-
+#include "utils/rel.h"
 
 /*
  * The state object used by CatalogOpenIndexes and friends is actually the
