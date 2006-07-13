@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.168 2006/06/22 14:36:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.169 2006/07/13 16:49:18 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"

@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.h -
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.11 2005/05/25 21:40:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.12 2006/07/13 16:49:20 momjian Exp $
  *
  *	Definitions for the builtin LZ compressor
  * ----------
@@ -180,7 +180,8 @@ extern PGLZ_Strategy *PGLZ_strategy_never;
  *		Initialize a decomp state from a compressed input.
  * ----------
  */
-#define pglz_decomp_init(_ds,_lz) do {										\
+#define pglz_decomp_init(_ds,_lz) \
+do {																		\
 		(_ds)->cp_in		= ((unsigned char *)(_lz))						\
 											+ sizeof(PGLZ_Header);			\
 		(_ds)->cp_end		= (_ds)->cp_in + (_lz)->varsize					\
@@ -205,7 +206,8 @@ extern PGLZ_Strategy *PGLZ_strategy_never;
  *		Deallocate resources after decompression.
  * ----------
  */
-#define pglz_decomp_end(_ds) do {											\
+#define pglz_decomp_end(_ds) \
+do {																		\
 		if ((_ds)->temp_buf != NULL)										\
 			pfree((void *)((_ds)->temp_buf));								\
 	} while (0)

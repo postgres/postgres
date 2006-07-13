@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.23 2006/07/11 16:35:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.24 2006/07/13 16:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/transam.h"
+#include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"

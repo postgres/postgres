@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.79 2006/03/14 22:48:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.80 2006/07/13 16:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "parser/parse_coerce.h"

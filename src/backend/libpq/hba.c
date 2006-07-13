@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.153 2006/07/10 16:20:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.154 2006/07/13 16:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "storage/fd.h"
 #include "utils/flatfiles.h"
 #include "utils/guc.h"
+
 
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))

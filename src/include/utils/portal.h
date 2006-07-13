@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.61 2006/04/25 14:11:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.62 2006/07/13 16:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,8 @@
 #include "executor/execdesc.h"
 #include "nodes/memnodes.h"
 #include "utils/resowner.h"
+#include "utils/timestamp.h"
 #include "utils/tuplestore.h"
-
 
 /*
  * We have several execution strategies for Portals, depending on what

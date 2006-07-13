@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.307 2006/07/11 17:04:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.308 2006/07/13 16:49:13 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -31,6 +31,8 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/transam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"

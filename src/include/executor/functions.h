@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/functions.h,v 1.27 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/functions.h,v 1.28 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include "fmgr.h"
 #include "nodes/execnodes.h"
 
 

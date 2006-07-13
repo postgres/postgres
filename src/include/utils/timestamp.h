@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.61 2006/06/20 22:52:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.62 2006/07/13 16:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,10 +144,12 @@ typedef struct
 #endif   /* HAVE_INT64_TIMESTAMP */
 
 
-#define TIMESTAMP_NOBEGIN(j)	do {(j) = DT_NOBEGIN;} while (0)
+#define TIMESTAMP_NOBEGIN(j)	\
+	do {(j) = DT_NOBEGIN;} while (0)
 #define TIMESTAMP_IS_NOBEGIN(j) ((j) == DT_NOBEGIN)
 
-#define TIMESTAMP_NOEND(j)		do {(j) = DT_NOEND;} while (0)
+#define TIMESTAMP_NOEND(j)		\
+	do {(j) = DT_NOEND;} while (0)
 #define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))

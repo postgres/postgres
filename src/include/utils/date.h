@@ -7,12 +7,14 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.33 2006/03/05 15:59:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.34 2006/07/13 16:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DATE_H
 #define DATE_H
+
+#include <math.h>
 
 #include "fmgr.h"
 

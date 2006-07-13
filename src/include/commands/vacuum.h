@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.64 2006/07/10 16:20:51 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.65 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,10 @@
 #define VACUUM_H
 
 #include "access/htup.h"
-#include "catalog/pg_attribute.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "nodes/parsenodes.h"
-#include "utils/rel.h"
-
+#include "storage/lock.h"
 
 /*----------
  * ANALYZE builds one of these structs for each attribute (column) that is

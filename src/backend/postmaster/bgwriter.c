@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.24 2006/05/30 13:58:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.25 2006/07/13 16:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,9 @@
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
+#include "storage/lwlock.h"
 #include "storage/pmsignal.h"
+#include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/guc.h"

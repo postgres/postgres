@@ -6,13 +6,12 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.71 2006/03/24 04:32:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.72 2006/07/13 16:49:19 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
 
 #include "access/rmgr.h"
-#include "access/transam.h"
 #include "access/xlogdefs.h"
 #include "lib/stringinfo.h"
 #include "storage/buf.h"

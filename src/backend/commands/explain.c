@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.147 2006/04/08 18:49:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.148 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_type.h"
 #include "commands/explain.h"

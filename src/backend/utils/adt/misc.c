@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.51 2006/03/05 15:58:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.52 2006/07/13 16:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <dirent.h>
 #include <math.h>
 
+#include "access/xact.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"

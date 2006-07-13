@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.113 2006/04/22 01:26:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.114 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 
 #include "access/attnum.h"
 #include "nodes/pg_list.h"
-#include "nodes/value.h"
 
 
 /* ----------------------------------------------------------------

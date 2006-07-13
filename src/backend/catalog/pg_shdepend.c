@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.10 2006/07/11 17:26:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.11 2006/07/13 16:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"

@@ -7,16 +7,16 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/twophase.h,v 1.7 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/twophase.h,v 1.8 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TWOPHASE_H
 #define TWOPHASE_H
 
+#include "access/xlogdefs.h"
 #include "storage/proc.h"
 #include "utils/timestamp.h"
-
 
 /*
  * GlobalTransactionData is defined in twophase.c; other places have no

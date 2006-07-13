@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.491 2006/07/10 16:20:51 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.492 2006/07/13 16:49:16 momjian Exp $
  *
  * NOTES
  *
@@ -99,6 +99,7 @@
 #include "commands/async.h"
 #include "lib/dllist.h"
 #include "libpq/auth.h"
+#include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqcomm.h"
 #include "libpq/pqsignal.h"

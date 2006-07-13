@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.35 2006/06/16 20:23:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.36 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"

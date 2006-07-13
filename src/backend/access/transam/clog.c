@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.38 2006/03/24 04:32:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.39 2006/07/13 16:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,8 @@
 
 #include "access/clog.h"
 #include "access/slru.h"
+#include "access/transam.h"
 #include "postmaster/bgwriter.h"
-
 
 /*
  * Defines for CLOG page sizes.  A page is the same BLCKSZ as is used

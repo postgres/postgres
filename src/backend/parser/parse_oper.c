@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.87 2006/05/01 23:22:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.88 2006/07/13 16:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_operator.h"
+#include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"

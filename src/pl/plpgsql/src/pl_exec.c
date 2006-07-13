@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.173 2006/06/16 23:29:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.174 2006/07/13 16:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <ctype.h>
 
 #include "access/heapam.h"
+#include "access/transam.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/spi_priv.h"

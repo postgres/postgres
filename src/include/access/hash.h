@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.72 2006/07/11 21:05:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.73 2006/07/13 16:49:19 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -22,6 +22,7 @@
 #include "access/sdir.h"
 #include "access/xlog.h"
 #include "fmgr.h"
+#include "storage/lock.h"
 
 /*
  * Mapping from hash bucket number to physical block number of bucket's

@@ -7,15 +7,13 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.68 2006/07/03 22:45:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.69 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef INDEX_H
 #define INDEX_H
 
-#include "access/itup.h"
-#include "catalog/pg_index.h"
 #include "nodes/execnodes.h"
 
 

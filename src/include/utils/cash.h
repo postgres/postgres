@@ -9,6 +9,8 @@
 #ifndef CASH_H
 #define CASH_H
 
+#include "fmgr.h"
+
 /* if we store this as 4 bytes, we better make it int, not long, bjm */
 typedef int32 Cash;
 

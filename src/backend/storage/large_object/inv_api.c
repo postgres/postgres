@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.116 2006/04/26 00:34:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.117 2006/07/13 16:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/tuptoaster.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_largeobject.h"

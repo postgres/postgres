@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.103 2006/07/11 17:26:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.104 2006/07/13 16:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "commands/prepare.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"

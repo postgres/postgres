@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.184 2006/03/05 15:58:27 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.185 2006/07/13 16:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,7 @@
 #include <utime.h>
 #endif
 
+#include "libpq/ip.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"

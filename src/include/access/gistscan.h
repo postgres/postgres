@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gistscan.h,v 1.29 2006/04/03 13:44:33 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gistscan.h,v 1.30 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #define GISTSCAN_H
 
 #include "access/relscan.h"
-#include "access/xlogdefs.h"
 
 extern Datum gistbeginscan(PG_FUNCTION_ARGS);
 extern Datum gistrescan(PG_FUNCTION_ARGS);

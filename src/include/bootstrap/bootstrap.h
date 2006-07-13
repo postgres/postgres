@@ -7,16 +7,14 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.41 2006/03/07 01:03:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.42 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BOOTSTRAP_H
 #define BOOTSTRAP_H
 
-#include "access/itup.h"
 #include "nodes/execnodes.h"
-#include "utils/rel.h"
 
 /*
  * MAXATTR is the maximum number of attributes in a relation supported

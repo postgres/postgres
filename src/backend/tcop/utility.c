@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.260 2006/07/11 18:26:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.261 2006/07/13 16:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "access/heapam.h"
 #include "access/twophase.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "commands/alter.h"

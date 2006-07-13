@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.175 2006/06/20 22:52:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.176 2006/07/13 16:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,10 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include "miscadmin.h"
+#include "access/htup.h"
+#include "access/transam.h"
 #include "access/xact.h"
+#include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"

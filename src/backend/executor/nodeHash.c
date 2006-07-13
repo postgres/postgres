@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.104 2006/06/27 21:31:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.105 2006/07/13 16:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,9 @@
  *		ExecInitHash	- initialize node and subnodes
  *		ExecEndHash		- shutdown node and subnodes
  */
+
+#include <math.h>
+
 #include "postgres.h"
 
 #include "executor/execdebug.h"

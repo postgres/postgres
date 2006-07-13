@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.94 2006/07/10 16:20:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.95 2006/07/13 16:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include "access/heapam.h"
+#include "access/transam.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"

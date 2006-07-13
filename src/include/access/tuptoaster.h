@@ -6,17 +6,14 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.26 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.27 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TUPTOASTER_H
 #define TUPTOASTER_H
 
-#include "access/heapam.h"
 #include "access/htup.h"
-#include "access/tupmacs.h"
-#include "utils/rel.h"
 
 
 /*

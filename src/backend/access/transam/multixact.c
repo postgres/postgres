@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.18 2006/07/11 17:04:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.19 2006/07/13 16:49:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 
 #include "access/multixact.h"
 #include "access/slru.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"

@@ -8,15 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.194 2006/07/11 18:26:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.195 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/heapam.h"
 #include "access/reloptions.h"
 #include "access/tuptoaster.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"

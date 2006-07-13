@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.47 2006/06/27 02:51:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.48 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 
 #include <limits.h>
 
+#include "access/xact.h"
 #include "commands/portalcmds.h"
 #include "executor/executor.h"
 #include "optimizer/planner.h"

@@ -7,12 +7,14 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.22 2006/03/05 15:59:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.23 2006/07/13 16:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef GUC_TABLES_H
 #define GUC_TABLES_H 1
+
+#include "utils/guc.h"
 
 /*
  * GUC supports these types of variables:

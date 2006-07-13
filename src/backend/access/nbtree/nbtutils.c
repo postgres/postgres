@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.76 2006/07/03 22:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.77 2006/07/13 16:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,8 @@
 #include "access/reloptions.h"
 #include "executor/execdebug.h"
 #include "miscadmin.h"
+#include "storage/lwlock.h"
+#include "storage/shmem.h"
 
 
 static void _bt_mark_scankey_required(ScanKey skey);

@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.88 2006/04/14 03:38:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.89 2006/07/13 16:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef _PROC_H_
 #define _PROC_H_
 
-#include "access/xlog.h"
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
 

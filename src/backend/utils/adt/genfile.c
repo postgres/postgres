@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.10 2006/03/05 15:58:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.11 2006/07/13 16:49:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include "storage/fd.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-
+#include "utils/timestamp.h"
 
 typedef struct
 {

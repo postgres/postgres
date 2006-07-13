@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.144 2006/07/11 17:04:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.145 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/reloptions.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"

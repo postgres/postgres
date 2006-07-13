@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.95 2006/07/02 02:23:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.96 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "commands/defrem.h"

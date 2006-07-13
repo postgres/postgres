@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.266 2006/05/26 22:50:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.267 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/printtup.h"
+#include "access/xact.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_index.h"

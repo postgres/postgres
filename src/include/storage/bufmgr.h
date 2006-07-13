@@ -7,17 +7,14 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.100 2006/03/31 23:32:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.101 2006/07/13 16:49:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
-#include "access/xlogdefs.h"
 #include "storage/buf.h"
-#include "storage/lock.h"
-#include "storage/relfilenode.h"
 #include "utils/rel.h"
 
 typedef void *Block;

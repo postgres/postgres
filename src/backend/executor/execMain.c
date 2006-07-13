@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.274 2006/07/11 16:35:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.275 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,8 @@
 
 #include "access/heapam.h"
 #include "access/reloptions.h"
+#include "access/transam.h"
+#include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"

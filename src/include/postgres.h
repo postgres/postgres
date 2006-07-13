@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.74 2006/03/05 15:58:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.75 2006/07/13 16:49:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -486,11 +486,11 @@ extern DLLIMPORT bool assert_enabled;
  *		Generates an exception if the given condition is true.
  */
 #define Trap(condition, errorType) \
-		do { \
-			if ((assert_enabled) && (condition)) \
-				ExceptionalCondition(CppAsString(condition), (errorType), \
-									 __FILE__, __LINE__); \
-		} while (0)
+	do { \
+		if ((assert_enabled) && (condition)) \
+			ExceptionalCondition(CppAsString(condition), (errorType), \
+								 __FILE__, __LINE__); \
+	} while (0)
 
 /*
  *	TrapMacro is the same as Trap but it's intended for use in macros:

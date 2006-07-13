@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.490 2006/06/27 22:16:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.491 2006/07/13 16:49:16 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -31,6 +31,7 @@
 #endif
 
 #include "access/printtup.h"
+#include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"

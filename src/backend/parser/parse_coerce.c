@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.139 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.140 2006/07/13 16:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "catalog/pg_cast.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "optimizer/clauses.h"

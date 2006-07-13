@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.132 2006/06/27 22:16:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.133 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@
 
 #include "access/heapam.h"
 #include "access/twophase_rmgr.h"
+#include "access/xact.h"
 #include "catalog/pg_listener.h"
 #include "commands/async.h"
 #include "libpq/libpq.h"

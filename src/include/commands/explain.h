@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.26 2006/03/05 15:58:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/explain.h,v 1.27 2006/07/13 16:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,8 +14,6 @@
 #define EXPLAIN_H
 
 #include "executor/executor.h"
-#include "nodes/parsenodes.h"
-#include "tcop/dest.h"
 
 
 extern void ExplainQuery(ExplainStmt *stmt, ParamListInfo params,

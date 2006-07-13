@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.102 2006/04/22 01:25:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.103 2006/07/13 16:49:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"

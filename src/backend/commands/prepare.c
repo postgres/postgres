@@ -10,13 +10,14 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.56 2006/07/11 17:26:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.57 2006/07/13 16:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/explain.h"
 #include "commands/prepare.h"
