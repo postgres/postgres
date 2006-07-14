@@ -1,7 +1,7 @@
 :
 # report which #include files can not compile on their own
 # takes -v option to display compile failure message and line numbers
-# $PostgreSQL: pgsql/src/tools/pginclude/pgcompinclude,v 1.7 2006/07/11 20:12:29 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pginclude/pgcompinclude,v 1.8 2006/07/14 01:05:13 momjian Exp $
 
 trap "rm -f /tmp/$$.c /tmp/$$.o /tmp/$$ /tmp/$$a" 0 1 2 3 15
 find . \( -name CVS -a -prune \) -o -name '*.h' -type f -print | while read FILE
@@ -13,9 +13,9 @@ do
 	echo "void include_test() {" >>/tmp/$$.c
 	pgdefine "$FILE" >>/tmp/$$.c
 	echo "}" >>/tmp/$$.c
-	cc $CFLAGS -fsyntax-only -Werror -Wall -Wmissing-prototypes \
+	cc -fsyntax-only -Werror -Wall -Wmissing-prototypes \
 		-Wmissing-declarations -I/pg/include -I/pg/backend \
-		-I/pg/interfaces/libpq -I`dirname $FILE` -c /tmp/$$.c \
+		-I/pg/interfaces/libpq -I`dirname $FILE` $CFLAGS -c /tmp/$$.c \
 		-o /tmp/$$.o >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 ]
 	then	echo "$FILE"
