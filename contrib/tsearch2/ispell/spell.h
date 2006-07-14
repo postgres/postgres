@@ -1,9 +1,11 @@
 #ifndef __SPELL_H__
 #define __SPELL_H__
 
-#include <sys/types.h>
-#include "regex/regex.h"
 #include "c.h"
+
+#include <sys/types.h>
+
+#include "regex/regex.h"
 
 #include "regis.h"
 #include "dict.h"

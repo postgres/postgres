@@ -6,7 +6,6 @@
 
 #include "postgres.h"
 
-#include <errno.h>
 #include "sys/ldr.h"
 #include <a.out.h>
 #include "ldfcn.h"

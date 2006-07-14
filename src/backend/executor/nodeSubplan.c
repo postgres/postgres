@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.77 2006/07/13 16:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.78 2006/07/14 05:28:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,9 @@
  *		ExecInitSubPlan - initialize a subselect
  *		ExecEndSubPlan	- shut down a subselect
  */
-#include <math.h>
-
 #include "postgres.h"
+
+#include <math.h>
 
 #include "access/heapam.h"
 #include "executor/executor.h"

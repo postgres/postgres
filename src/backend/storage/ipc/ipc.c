@@ -13,13 +13,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.93 2006/03/05 15:58:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.94 2006/07/14 05:28:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <signal.h>
 #include <unistd.h>
 

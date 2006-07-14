@@ -1,6 +1,5 @@
 #include "postgres.h"
 
-#include "postgres.h"
 #include "fmgr.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"

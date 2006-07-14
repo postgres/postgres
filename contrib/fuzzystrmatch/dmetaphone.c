@@ -1,7 +1,7 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.7 2006/03/11 04:38:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.8 2006/07/14 05:28:27 tgl Exp $
  *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
@@ -50,8 +50,8 @@
 
 
 /*
- * $Revision: 1.7 $
- * $Id: dmetaphone.c,v 1.7 2006/03/11 04:38:29 momjian Exp $
+ * $Revision: 1.8 $
+ * $Id: dmetaphone.c,v 1.8 2006/07/14 05:28:27 tgl Exp $
  */
 
 
@@ -106,8 +106,8 @@ The remaining code is authored by Andrew Dunstan <amdunstan@ncshp.org> and
 #ifndef DMETAPHONE_MAIN
 
 #include "postgres.h"
+
 #include "fmgr.h"
-#include "utils/elog.h"
 
 /* turn off assertions for embedded function */
 #define NDEBUG

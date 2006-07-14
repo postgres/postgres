@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.146 2006/05/11 19:15:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.147 2006/07/14 05:28:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <limits.h>
-#include <errno.h>
 
 #include "extern.h"
 

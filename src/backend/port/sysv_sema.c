@@ -8,13 +8,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_sema.c,v 1.19 2006/03/05 15:58:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_sema.c,v 1.20 2006/07/14 05:28:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/file.h>

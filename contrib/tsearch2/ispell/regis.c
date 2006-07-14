@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "regis.h"
 #include "ts_locale.h"
 #include "common.h"

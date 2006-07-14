@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.52 2006/03/05 15:58:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.53 2006/07/14 05:28:28 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -17,7 +17,6 @@
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <math.h>
 #include <limits.h>
 

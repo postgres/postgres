@@ -1,13 +1,9 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/gendict/dict_tmpl.c.IN,v 1.5 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/gendict/dict_tmpl.c.IN,v 1.6 2006/07/14 05:28:27 tgl Exp $ */
 
 /* 
  * example of dictionary 
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "postgres.h"
 
 #include "dict.h"

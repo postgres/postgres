@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.167 2006/06/07 22:32:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.168 2006/07/14 05:28:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <ctype.h>
-#include <errno.h>
 #include <float.h>
 #include <limits.h>
 #include <math.h>

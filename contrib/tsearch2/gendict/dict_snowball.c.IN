@@ -1,13 +1,10 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/gendict/dict_snowball.c.IN,v 1.4 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/gendict/dict_snowball.c.IN,v 1.5 2006/07/14 05:28:27 tgl Exp $ */
 
 /* 
  * example of Snowball dictionary
  * http://snowball.tartarus.org/ 
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <stdlib.h>
-#include <string.h>
-
 #include "postgres.h"
 
 #include "dict.h"

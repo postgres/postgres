@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.24 2006/07/14 04:59:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.25 2006/07/14 05:28:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
 
-#include <errno.h>
 #include <ctype.h>
 #include <fcntl.h>
 

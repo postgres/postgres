@@ -21,13 +21,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.20 2006/03/05 15:58:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.21 2006/07/14 05:28:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <unistd.h>
 
 #include "miscadmin.h"

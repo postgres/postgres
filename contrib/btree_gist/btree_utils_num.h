@@ -1,10 +1,10 @@
 #ifndef __BTREE_UTILS_NUM_H__
 #define __BTREE_UTILS_NUM_H__
 
+#include "btree_gist.h"
+
 #include <math.h>
 #include <float.h>
-
-#include "btree_gist.h"
 
 typedef char GBT_NUMKEY;
 

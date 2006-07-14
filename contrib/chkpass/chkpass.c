@@ -4,14 +4,12 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.16 2006/05/30 22:12:12 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.17 2006/07/14 05:28:27 tgl Exp $
  * best viewed with tabs set to 4
  */
 
 #include "postgres.h"
 
-#include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #ifdef HAVE_CRYPT_H

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.23 2006/03/05 15:58:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.24 2006/07/14 05:28:28 tgl Exp $
  *
  * NOTES:
  *
@@ -33,8 +33,6 @@
  */
 
 #include "postgres.h"
-
-#include <errno.h>
 
 #include "storage/fd.h"
 #include "storage/buffile.h"

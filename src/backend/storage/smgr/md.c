@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.120 2006/03/05 15:58:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.121 2006/07/14 05:28:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/file.h>

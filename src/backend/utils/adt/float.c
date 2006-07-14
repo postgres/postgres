@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.125 2006/06/07 22:24:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.126 2006/07/14 05:28:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,6 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <errno.h>
 #include <float.h>
 #include <math.h>
 #include <limits.h>

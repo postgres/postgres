@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.21 2005/11/22 18:17:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.22 2006/07/14 05:28:28 tgl Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -175,7 +175,6 @@
 
 #include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
 
 #include "utils/pg_lzcompress.h"
 

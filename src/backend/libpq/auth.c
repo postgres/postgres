@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.137 2006/07/13 16:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.138 2006/07/14 05:28:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || defined(HAVE_STRUCT_SOCKCRED)
 #include <sys/uio.h>
 #include <sys/ucred.h>
-#include <errno.h>
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
