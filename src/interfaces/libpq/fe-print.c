@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.71 2006/07/14 14:52:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.72 2006/07/14 16:59:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
+#include "pqsignal.h"
 
 
 static void do_field(const PQprintOpt *po, const PGresult *res,

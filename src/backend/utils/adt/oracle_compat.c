@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.66 2006/07/14 14:52:24 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.67 2006/07/14 16:59:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #endif
 
 #include "utils/builtins.h"
+#include "utils/pg_locale.h"
 #include "mb/pg_wchar.h"
 
 
