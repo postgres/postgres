@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.129 2006/07/01 18:38:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.130 2006/07/14 14:52:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,12 +19,9 @@
 #include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "nodes/plannodes.h"
-#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"

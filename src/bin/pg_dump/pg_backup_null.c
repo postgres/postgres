@@ -17,12 +17,11 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.18 2006/06/07 22:24:44 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.19 2006/07/14 14:52:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "pg_backup.h"
 #include "pg_backup_archiver.h"
 
 #include <unistd.h>				/* for dup */

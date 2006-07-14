@@ -3,12 +3,11 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.56 2006/06/18 17:30:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.57 2006/07/14 14:52:26 momjian Exp $
  */
 #include "postgres_fe.h"
 
 #include "input.h"
-#include "pqexpbuffer.h"
 #include "settings.h"
 #include "tab-complete.h"
 #include "common.h"

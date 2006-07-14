@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.21 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSetOp.c,v 1.22 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "executor/executor.h"
 #include "executor/nodeSetOp.h"
 #include "utils/memutils.h"

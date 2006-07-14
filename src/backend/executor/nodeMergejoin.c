@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.80 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.81 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,17 +91,13 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/nbtree.h"
-#include "access/printtup.h"
 #include "catalog/pg_amop.h"
-#include "catalog/pg_operator.h"
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
 #include "executor/nodeMergejoin.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
-#include "utils/catcache.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.104 2006/06/06 17:59:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.105 2006/07/14 14:52:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,9 @@
 
 #include <math.h>
 
-#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
-#include "parser/parsetree.h"
-#include "utils/lsyscache.h"
 
 
 static void sort_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,

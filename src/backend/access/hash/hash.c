@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.90 2006/05/10 23:18:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.91 2006/07/14 14:52:17 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -20,12 +20,8 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
-#include "access/heapam.h"
-#include "access/xlogutils.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
-#include "executor/executor.h"
-#include "miscadmin.h"
 
 
 /* Working state for hashbuild and its callback */

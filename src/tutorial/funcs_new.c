@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/tutorial/funcs_new.c,v 1.10 2006/07/14 04:59:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/tutorial/funcs_new.c,v 1.11 2006/07/14 14:52:27 momjian Exp $ */
 
 /******************************************************************************
   These are user-defined functions that can be bound to a Postgres backend
@@ -13,7 +13,6 @@
 
 #include "postgres.h"			/* general Postgres declarations */
 
-#include "fmgr.h"				/* for argument/result macros */
 #include "executor/executor.h"	/* for GetAttributeByName() */
 #include "utils/geo_decls.h"	/* for point type */
 

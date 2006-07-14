@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.70 2006/05/12 22:44:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.71 2006/07/14 14:52:19 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -95,7 +95,6 @@
 #endif
 
 #include "libpq/libpq.h"
-#include "miscadmin.h"
 #include "tcop/tcopprot.h"
 
 

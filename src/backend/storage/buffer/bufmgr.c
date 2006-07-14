@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.207 2006/04/14 03:38:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.208 2006/07/14 14:52:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,16 +37,13 @@
 #include <sys/file.h>
 #include <unistd.h>
 
-#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
 #include "storage/buf_internals.h"
-#include "storage/bufmgr.h"
 #include "storage/bufpage.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
-#include "utils/relcache.h"
 #include "utils/resowner.h"
 #include "pgstat.h"
 

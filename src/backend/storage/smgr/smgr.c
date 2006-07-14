@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.99 2006/04/14 20:27:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.100 2006/07/14 14:52:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
-#include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 

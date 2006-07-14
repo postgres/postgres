@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.45 2006/05/12 16:50:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.46 2006/07/14 14:52:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include <unistd.h>
 
 #include "storage/s_lock.h"
-#include "miscadmin.h"
 
 
 static int	spins_per_delay = DEFAULT_SPINS_PER_DELAY;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.191 2006/06/16 18:42:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.192 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,6 @@
 #include "catalog/pg_type.h"
 #include "commands/typecmds.h"
 #include "executor/execdebug.h"
-#include "executor/functions.h"
 #include "executor/nodeSubplan.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -49,7 +48,6 @@
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
 #include "utils/acl.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"

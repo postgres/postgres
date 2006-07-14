@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.64 2006/07/11 17:26:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.65 2006/07/14 14:52:24 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -29,7 +29,6 @@
  */
 #include "postgres.h"
 
-#include "mb/pg_wchar.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"

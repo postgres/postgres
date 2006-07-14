@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.121 2006/06/30 16:55:35 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.122 2006/07/14 14:52:26 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -22,16 +22,11 @@
 #include <sys/timeb.h>			/* for _ftime() */
 #endif
 
-#include "libpq-fe.h"
 #include "pqsignal.h"
 
 #include "settings.h"
-#include "variables.h"
 #include "command.h"
 #include "copy.h"
-#include "prompt.h"
-#include "print.h"
-#include "mainloop.h"
 #include "mb/pg_wchar.h"
 
 

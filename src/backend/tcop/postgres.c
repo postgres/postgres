@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.491 2006/07/13 16:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.492 2006/07/14 14:52:23 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -32,33 +32,27 @@
 
 #include "access/printtup.h"
 #include "access/xact.h"
-#include "access/xlog.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
-#include "commands/trigger.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/print.h"
-#include "optimizer/cost.h"
 #include "optimizer/planner.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
-#include "storage/pg_shmem.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "tcop/fastpath.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
-#include "utils/builtins.h"
 #include "utils/flatfiles.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"

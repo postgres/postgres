@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.105 2006/07/11 18:26:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.106 2006/07/14 14:52:25 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -21,7 +21,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/transam.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_amop.h"
@@ -31,7 +30,6 @@
 #include "catalog/pg_cast.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
@@ -41,10 +39,7 @@
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
-#include "utils/builtins.h"
-#include "utils/catcache.h"
 #include "utils/syscache.h"
-#include "miscadmin.h"
 
 
 /*---------------------------------------------------------------------------

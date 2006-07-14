@@ -7,17 +7,15 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.134 2006/04/05 22:11:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.135 2006/07/14 14:52:25 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "miscadmin.h"
 
 #include "access/hash.h"
-#include "access/tupmacs.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_namespace.h"
@@ -29,7 +27,6 @@
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/catcache.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.80 2006/06/16 22:01:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.81 2006/07/14 14:52:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,6 @@ int			optreset;
 #endif
 
 #include "dumputils.h"
-#include "libpq-fe.h"
-#include "pg_backup.h"
-#include "pqexpbuffer.h"
 #include "mb/pg_wchar.h"
 
 

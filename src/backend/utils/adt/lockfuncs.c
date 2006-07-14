@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.22 2006/03/05 15:58:42 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.23 2006/07/14 14:52:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #include "funcapi.h"
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
-#include "storage/lock.h"
 #include "storage/proc.h"
 #include "utils/builtins.h"
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.183 2006/07/13 16:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.184 2006/07/14 14:52:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,11 +38,9 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
-#include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/flatfiles.h"
 #include "utils/fmgroids.h"

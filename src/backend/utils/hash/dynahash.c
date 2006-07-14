@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.68 2006/06/25 18:29:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.69 2006/07/14 14:52:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,6 @@
 
 #include "storage/shmem.h"
 #include "utils/dynahash.h"
-#include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 /*

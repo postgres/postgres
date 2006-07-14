@@ -1,8 +1,7 @@
-/* $PostgreSQL: pgsql/src/bin/psql/mbprint.h,v 1.9 2006/02/10 00:39:04 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/bin/psql/mbprint.h,v 1.10 2006/07/14 14:52:26 momjian Exp $ */
 #ifndef MBPRINT_H
 #define MBPRINT_H
 
-#include "mb/pg_wchar.h"
 
 struct lineptr {
 	unsigned char *ptr;

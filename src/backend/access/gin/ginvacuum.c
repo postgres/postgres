@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.3 2006/07/11 17:04:12 momjian Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.4 2006/07/14 14:52:16 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -16,12 +16,9 @@
 #include "access/genam.h"
 #include "access/gin.h"
 #include "access/heapam.h"
-#include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/freespace.h"
-#include "storage/smgr.h"
-#include "utils/memutils.h"
 #include "commands/vacuum.h"
 
 typedef struct {

@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.71 2006/07/10 16:20:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.72 2006/07/14 14:52:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "miscadmin.h"
-#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "utils/builtins.h"
 

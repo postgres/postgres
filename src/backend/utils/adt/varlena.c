@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.149 2006/07/13 16:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.150 2006/07/14 14:52:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,14 +19,10 @@
 #include "access/tupmacs.h"
 #include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
-#include "lib/stringinfo.h"
 #include "libpq/md5.h"
 #include "libpq/pqformat.h"
-#include "mb/pg_wchar.h"
-#include "miscadmin.h"
 #include "parser/scansup.h"
 #include "regex/regex.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"

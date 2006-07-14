@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.29 2006/03/05 15:58:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.30 2006/07/14 14:52:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include <limits.h>
 #include <math.h>
 
-#include "optimizer/geqo.h"
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_recombination.h"

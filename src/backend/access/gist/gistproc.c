@@ -10,14 +10,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.6 2006/06/28 12:00:14 teodor Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.7 2006/07/14 14:52:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/gist.h"
-#include "access/itup.h"
 #include "access/skey.h"
 #include "utils/geo_decls.h"
 

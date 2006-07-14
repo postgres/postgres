@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.89 2006/07/13 16:49:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.90 2006/07/14 14:52:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,10 @@
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/portalcmds.h"
-#include "executor/executor.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "utils/hsearch.h"
 #include "utils/memutils.h"
-#include "utils/portal.h"
 
 /*
  * Estimate of the maximum number of open portals a user would have,

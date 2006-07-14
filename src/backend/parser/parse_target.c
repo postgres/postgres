@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.145 2006/07/13 16:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.146 2006/07/14 14:52:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "commands/dbcommands.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "nodes/bitmapset.h"
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"

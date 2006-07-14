@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.222 2006/07/13 16:49:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.223 2006/07/14 14:52:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,7 @@
 #include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xact.h"
-#include "catalog/heap.h"
-#include "catalog/index.h"
+#include "access/xlogutils.h"
 #include "catalog/namespace.h"
 #include "commands/async.h"
 #include "commands/tablecmds.h"
@@ -34,18 +33,16 @@
 #include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/fd.h"
-#include "storage/proc.h"
+#include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/flatfiles.h"
-#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
-#include "utils/portal.h"
 #include "utils/relcache.h"
-#include "utils/resowner.h"
-#include "pgstat.h"
+#include "utils/guc.h"
 
 
 /*

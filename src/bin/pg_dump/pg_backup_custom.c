@@ -19,12 +19,11 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.34 2006/05/22 11:21:54 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.35 2006/07/14 14:52:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "pg_backup.h"
 #include "pg_backup_archiver.h"
 
 /*--------

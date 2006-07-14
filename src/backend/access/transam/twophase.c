@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.20 2006/07/13 16:49:13 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.21 2006/07/14 14:52:17 momjian Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -53,7 +53,6 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/fd.h"
-#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"

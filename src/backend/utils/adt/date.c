@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.124 2006/03/05 15:58:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.125 2006/07/14 14:52:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/nabstime.h"
-#include "utils/timestamp.h"
 
 /*
  * gcc's -ffast-math switch breaks routines that expect exact results from

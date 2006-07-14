@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.67 2006/03/19 22:22:56 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.68 2006/07/14 14:52:23 momjian Exp $
  */
 
 #include "postgres.h"
@@ -20,8 +20,6 @@
 #include <locale.h>
 
 #include "libpq/pqformat.h"
-#include "miscadmin.h"
-#include "utils/builtins.h"
 #include "utils/cash.h"
 #include "utils/pg_locale.h"
 

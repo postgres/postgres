@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.134 2006/06/21 19:40:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.135 2006/07/14 14:52:26 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -27,7 +27,6 @@ int			optreset;
 
 #include <locale.h>
 
-#include "libpq-fe.h"
 
 #include "command.h"
 #include "common.h"
@@ -35,11 +34,8 @@ int			optreset;
 #include "help.h"
 #include "input.h"
 #include "mainloop.h"
-#include "print.h"
 #include "settings.h"
-#include "variables.h"
 
-#include "mb/pg_wchar.h"
 
 
 /*

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.24 2006/07/11 17:04:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.25 2006/07/14 14:52:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,14 +16,11 @@
 
 #include "access/genam.h"
 #include "access/gist_private.h"
-#include "access/gistscan.h"
 #include "access/heapam.h"
-#include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "utils/memutils.h"
-#include "storage/smgr.h"
 
 
 typedef struct GistBulkDeleteResult

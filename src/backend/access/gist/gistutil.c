@@ -8,17 +8,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.18 2006/07/03 22:45:36 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.19 2006/07/14 14:52:16 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/gist_private.h"
-#include "access/gistscan.h"
 #include "access/heapam.h"
 #include "access/reloptions.h"
-#include "miscadmin.h"
 #include "storage/freespace.h"
 
 /*

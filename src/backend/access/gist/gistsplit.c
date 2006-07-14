@@ -8,20 +8,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.1 2006/06/28 12:08:35 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistsplit.c,v 1.2 2006/07/14 14:52:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/gist_private.h"
-#include "access/gistscan.h"
-#include "access/heapam.h"
-#include "catalog/index.h"
-#include "commands/vacuum.h"
-#include "miscadmin.h"
-#include "utils/memutils.h"
 
 typedef struct {
     Datum   *attr;

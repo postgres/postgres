@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.84 2006/06/19 01:51:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.85 2006/07/14 14:52:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,20 +19,13 @@
 #include "access/nbtree.h"
 #include "access/subtrans.h"
 #include "access/twophase.h"
-#include "access/xlog.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
-#include "postmaster/postmaster.h"
-#include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
-#include "storage/lock.h"
-#include "storage/lwlock.h"
-#include "storage/pg_sema.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
-#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/sinval.h"
 #include "storage/spin.h"

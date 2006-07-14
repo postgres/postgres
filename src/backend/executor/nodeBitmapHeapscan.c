@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.12 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.13 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@
 #include "access/heapam.h"
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
-#include "parser/parsetree.h"
 #include "pgstat.h"
 #include "utils/memutils.h"
 

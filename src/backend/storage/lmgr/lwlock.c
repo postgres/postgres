@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.39 2006/04/21 16:45:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.40 2006/07/14 14:52:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@
 #include "access/multixact.h"
 #include "access/subtrans.h"
 #include "miscadmin.h"
-#include "storage/ipc.h"
-#include "storage/lwlock.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
 

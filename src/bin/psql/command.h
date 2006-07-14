@@ -3,12 +3,11 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.25 2006/03/05 15:58:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.26 2006/07/14 14:52:26 momjian Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include "settings.h"
 #include "print.h"
 #include "psqlscan.h"
 

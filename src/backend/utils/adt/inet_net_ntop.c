@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.22 2006/04/24 19:51:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.23 2006/07/14 14:52:24 momjian Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -29,7 +29,6 @@ static const char rcsid[] = "Id: inet_net_ntop.c,v 1.1.2.2 2004/03/09 09:17:27 m
 #include <arpa/inet.h>
 
 #include "utils/inet.h"
-#include "utils/builtins.h"
 
 
 #define NS_IN6ADDRSZ 16

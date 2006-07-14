@@ -4,14 +4,14 @@
  *
  *	Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.13 2006/03/05 15:58:52 momjian Exp $
+ *	$PostgreSQL: pgsql/src/bin/scripts/common.h,v 1.14 2006/07/14 14:52:27 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
 
 #include "libpq-fe.h"
-#include "pqexpbuffer.h"
 #include "getopt_long.h"
+#include "pqexpbuffer.h"
 
 #ifndef HAVE_INT_OPTRESET
 extern int	optreset;

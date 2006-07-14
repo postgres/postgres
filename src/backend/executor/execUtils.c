@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.136 2006/07/11 16:35:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.137 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,17 +43,11 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catalog.h"
 #include "catalog/index.h"
-#include "catalog/pg_index.h"
 #include "executor/execdebug.h"
-#include "miscadmin.h"
 #include "parser/parsetree.h"
-#include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
-#include "utils/syscache.h"
 
 
 /* ----------------------------------------------------------------

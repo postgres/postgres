@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.85 2006/03/05 15:58:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.86 2006/07/14 14:52:24 momjian Exp $
  *
  * ----------
  */
@@ -32,15 +32,10 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_operator.h"
 #include "commands/trigger.h"
 #include "executor/spi_priv.h"
-#include "optimizer/planmain.h"
-#include "parser/parse_oper.h"
-#include "rewrite/rewriteHandler.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 #include "miscadmin.h"

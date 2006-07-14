@@ -8,13 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.67 2006/03/05 15:58:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.68 2006/07/14 14:52:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"

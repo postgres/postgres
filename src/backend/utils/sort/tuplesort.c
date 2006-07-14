@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.67 2006/06/27 16:53:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.68 2006/07/14 14:52:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,6 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
 #include "miscadmin.h"
-#include "utils/catcache.h"
 #include "utils/datum.h"
 #include "utils/logtape.h"
 #include "utils/lsyscache.h"

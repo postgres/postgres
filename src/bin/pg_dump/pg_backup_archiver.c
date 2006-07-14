@@ -15,14 +15,11 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.132 2006/06/07 22:24:44 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.133 2006/07/14 14:52:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "pg_backup.h"
-#include "pg_dump.h"
-#include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 #include "dumputils.h"
 
@@ -34,7 +31,6 @@
 #include <io.h>
 #endif
 
-#include "pqexpbuffer.h"
 #include "libpq/libpq-fs.h"
 #include "mb/pg_wchar.h"
 

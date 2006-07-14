@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.172 2006/07/13 16:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.173 2006/07/14 14:52:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,6 @@
 #include "postmaster/syslogger.h"
 #include "storage/ipc.h"
 #include "tcop/tcopprot.h"
-#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 

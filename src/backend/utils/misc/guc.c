@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.327 2006/07/13 16:49:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.328 2006/07/14 14:52:25 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -29,17 +29,12 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/vacuum.h"
 #include "commands/variable.h"
-#include "executor/executor.h"
-#include "fmgr.h"
 #include "funcapi.h"
 #include "libpq/auth.h"
-#include "libpq/pqcomm.h"
 #include "libpq/pqformat.h"
-#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
@@ -54,15 +49,10 @@
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
-#include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
-#include "storage/lock.h"
-#include "storage/proc.h"
 #include "tcop/tcopprot.h"
-#include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
 #include "utils/guc_tables.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"

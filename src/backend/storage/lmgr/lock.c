@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.165 2006/06/27 22:16:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.166 2006/07/14 14:52:23 momjian Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -34,9 +34,7 @@
 
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
-#include "access/xact.h"
 #include "miscadmin.h"
-#include "storage/proc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"

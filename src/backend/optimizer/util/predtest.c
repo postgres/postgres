@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.6 2006/03/05 15:58:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.7 2006/07/14 14:52:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "optimizer/clauses.h"
 #include "optimizer/predtest.h"
 #include "utils/array.h"
-#include "utils/catcache.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 

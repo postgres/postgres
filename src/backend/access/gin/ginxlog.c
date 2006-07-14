@@ -8,17 +8,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.2 2006/05/03 06:56:47 teodor Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.3 2006/07/14 14:52:16 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/gin.h"
 #include "access/heapam.h"
-#include "catalog/index.h"
-#include "commands/vacuum.h"
-#include "miscadmin.h"
 #include "utils/memutils.h"
 
 static MemoryContext opCtx;     /* working memory for operations */

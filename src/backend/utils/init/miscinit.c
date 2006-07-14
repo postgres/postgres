@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.154 2006/03/05 15:58:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.155 2006/07/14 14:52:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 #endif
 
 #include "catalog/pg_authid.h"
-#include "libpq/libpq-be.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
 #include "storage/fd.h"
@@ -40,7 +39,6 @@
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
-#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 

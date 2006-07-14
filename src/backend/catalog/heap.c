@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.308 2006/07/13 16:49:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.309 2006/07/14 14:52:17 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -45,16 +45,12 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
-#include "commands/trigger.h"
 #include "miscadmin.h"
-#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/planmain.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
-#include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"

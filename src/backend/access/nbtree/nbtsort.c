@@ -57,7 +57,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.105 2006/07/11 21:05:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.106 2006/07/14 14:52:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,6 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
-#include "access/xlog.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
 #include "utils/tuplesort.h"

@@ -8,16 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.19 2006/04/15 17:45:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.20 2006/07/14 14:52:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/htup.h"
-#include "catalog/catalog.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_class.h"
 #include "commands/alter.h"
 #include "commands/conversioncmds.h"
 #include "commands/dbcommands.h"
@@ -34,7 +31,6 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
 /*

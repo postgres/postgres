@@ -8,15 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.53 2006/06/16 18:42:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.54 2006/07/14 14:52:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "executor/executor.h"
-#include "nodes/makefuncs.h"
 
 /*-------------------------------------------------------------------------
  *		XXX this stuff should be rewritten to take advantage

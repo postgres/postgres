@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.492 2006/07/13 16:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.493 2006/07/14 14:52:22 momjian Exp $
  *
  * NOTES
  *
@@ -92,35 +92,26 @@
 #include <DNSServiceDiscovery/DNSServiceDiscovery.h>
 #endif
 
-#include "access/xlog.h"
 #include "bootstrap/bootstrap.h"
-#include "catalog/pg_control.h"
-#include "catalog/pg_database.h"
-#include "commands/async.h"
 #include "lib/dllist.h"
 #include "libpq/auth.h"
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
-#include "libpq/pqcomm.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
-#include "nodes/nodes.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
-#include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
-#include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
-#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 

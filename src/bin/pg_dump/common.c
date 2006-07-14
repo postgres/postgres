@@ -11,13 +11,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.90 2006/05/22 11:21:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.91 2006/07/14 14:52:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
-#include "pg_dump.h"
 #include "pg_backup_archiver.h"
 
 #include "postgres.h"
@@ -25,7 +24,6 @@
 
 #include <ctype.h>
 
-#include "libpq-fe.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif

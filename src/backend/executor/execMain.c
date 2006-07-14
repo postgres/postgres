@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.275 2006/07/13 16:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.276 2006/07/14 14:52:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,23 +36,19 @@
 #include "access/reloptions.h"
 #include "access/transam.h"
 #include "access/xact.h"
-#include "access/xlog.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "commands/tablecmds.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
-#include "executor/execdefs.h"
 #include "executor/instrument.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
-#include "optimizer/var.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
-#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 

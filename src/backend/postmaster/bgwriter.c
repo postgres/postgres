@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.25 2006/07/13 16:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.26 2006/07/14 14:52:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,11 +46,9 @@
 #include <signal.h>
 #include <time.h>
 
-#include "access/xlog.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
-#include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"

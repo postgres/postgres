@@ -8,18 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.78 2006/03/05 15:58:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.79 2006/07/14 14:52:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "optimizer/cost.h"
-#include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
-#include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "utils/hsearch.h"
 

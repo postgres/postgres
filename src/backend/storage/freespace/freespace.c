@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.53 2006/07/14 05:28:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.54 2006/07/14 14:52:22 momjian Exp $
  *
  *
  * NOTES:
@@ -62,10 +62,8 @@
 #include <math.h>
 #include <unistd.h>
 
-#include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
-#include "storage/itemptr.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 

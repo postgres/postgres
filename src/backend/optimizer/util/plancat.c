@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.120 2006/07/11 17:26:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.121 2006/07/14 14:52:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,20 +19,16 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/pg_amop.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
 #include "optimizer/predtest.h"
 #include "optimizer/prep.h"
-#include "optimizer/tlist.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
-#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.43 2006/07/11 16:35:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.44 2006/07/14 14:52:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/lsyscache.h"

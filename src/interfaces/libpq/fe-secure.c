@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.83 2006/07/14 04:59:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.84 2006/07/14 14:52:27 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -84,9 +84,7 @@
 #include <ctype.h>
 
 #include "libpq-fe.h"
-#include "libpq-int.h"
 #include "fe-auth.h"
-#include "pqsignal.h"
 
 #ifdef WIN32
 #include "win32.h"

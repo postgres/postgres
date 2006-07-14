@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.154 2006/07/13 16:49:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.155 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,6 @@
 
 #include "libpq/ip.h"
 #include "libpq/libpq.h"
-#include "miscadmin.h"
-#include "nodes/pg_list.h"
 #include "storage/fd.h"
 #include "utils/flatfiles.h"
 #include "utils/guc.h"

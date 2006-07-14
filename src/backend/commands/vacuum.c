@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.334 2006/07/13 16:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.335 2006/07/14 14:52:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,15 +26,10 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/multixact.h"
-#include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"
-#include "access/xlog.h"
-#include "catalog/catalog.h"
-#include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
-#include "catalog/pg_index.h"
 #include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
@@ -43,8 +38,6 @@
 #include "storage/freespace.h"
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
-#include "storage/smgr.h"
-#include "tcop/pquery.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/flatfiles.h"

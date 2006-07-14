@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.78 2006/07/14 05:28:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.79 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,9 +26,7 @@
 #include "executor/nodeSubplan.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
-#include "parser/parse_expr.h"
 #include "utils/array.h"
-#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 

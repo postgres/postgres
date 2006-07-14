@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.208 2006/07/01 22:07:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.209 2006/07/14 14:52:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,13 +76,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "access/heapam.h"
-#include "access/nbtree.h"
-#include "access/tuptoaster.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
@@ -92,18 +86,13 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
-#include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
-#include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_func.h"
-#include "parser/parse_oper.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datum.h"
-#include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/nabstime.h"
 #include "utils/pg_locale.h"

@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.118 2006/07/14 04:59:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.119 2006/07/14 14:52:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@
 #endif
 
 #include "libpq-fe.h"
-#include "libpq-int.h"
 #include "fe-auth.h"
 #include "libpq/md5.h"
 

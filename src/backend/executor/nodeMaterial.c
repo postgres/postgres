@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.55 2006/06/27 02:51:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.56 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,9 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
 #include "miscadmin.h"
-#include "utils/tuplestore.h"
 
 /* ----------------------------------------------------------------
  *		ExecMaterial

@@ -8,19 +8,16 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.3 2006/07/11 16:55:34 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.4 2006/07/14 14:52:16 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 #include "access/genam.h"
 #include "access/gin.h"
-#include "access/heapam.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
-#include "storage/freespace.h"
 #include "utils/memutils.h"
-#include "access/tuptoaster.h"
 
 typedef struct {
 	GinState			ginstate;

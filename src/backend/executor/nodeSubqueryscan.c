@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.30 2006/06/16 18:42:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.31 2006/07/14 14:52:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,13 +27,9 @@
  */
 #include "postgres.h"
 
-#include "catalog/pg_type.h"
 #include "executor/execdebug.h"
-#include "executor/execdefs.h"
-#include "executor/execdesc.h"
 #include "executor/nodeSubqueryscan.h"
 #include "parser/parsetree.h"
-#include "tcop/pquery.h"
 
 static TupleTableSlot *SubqueryNext(SubqueryScanState *node);
 

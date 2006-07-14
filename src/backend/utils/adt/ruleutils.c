@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.227 2006/07/04 04:35:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.228 2006/07/14 14:52:24 momjian Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -12,22 +12,15 @@
 
 #include "access/genam.h"
 #include "catalog/dependency.h"
-#include "catalog/heap.h"
-#include "catalog/index.h"
 #include "catalog/indexing.h"
-#include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
-#include "catalog/pg_cast.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
-#include "lib/stringinfo.h"
-#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
@@ -36,12 +29,10 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
-#include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
-#include "utils/array.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"

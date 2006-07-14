@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.20 2006/07/13 16:49:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.21 2006/07/14 14:52:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,9 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/pmsignal.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/flatfiles.h"
 #include "utils/resowner.h"
-#include "utils/syscache.h"
 
 
 /* Actual names of the flat files (within $PGDATA) */

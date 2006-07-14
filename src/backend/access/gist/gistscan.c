@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.63 2006/04/03 13:44:33 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.64 2006/07/14 14:52:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "access/gist_private.h"
 #include "access/gistscan.h"
 #include "utils/memutils.h"
-#include "utils/resowner.h"
 
 static void gistfreestack(GISTSearchStack *s);
 
