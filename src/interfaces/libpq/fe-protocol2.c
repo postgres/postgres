@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.23 2006/07/14 04:44:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.24 2006/07/14 04:59:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 
+#include "mb/pg_wchar.h"
 
 #ifdef WIN32
 #include "win32.h"

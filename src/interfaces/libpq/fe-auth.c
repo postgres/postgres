@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.117 2006/07/14 04:44:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.118 2006/07/14 04:59:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 #endif
 
 #include "libpq-fe.h"
+#include "libpq-int.h"
 #include "fe-auth.h"
 #include "libpq/md5.h"
 
@@ -57,6 +58,7 @@
  * MIT Kerberos authentication system - protocol version 5
  */
 
+#include <krb5.h>
 /* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
 #if !defined(__COM_ERR_H) && !defined(__COM_ERR_H__)
 #include <com_err.h>
