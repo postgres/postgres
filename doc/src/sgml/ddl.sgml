@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.59 2006/07/03 16:43:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.60 2006/07/14 00:13:05 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -34,7 +34,7 @@
    A table in a relational database is much like a table on paper: It
    consists of rows and columns.  The number and order of the columns
    is fixed, and each column has a name.  The number of rows is
-   variable -- it reflects how much data is stored at a given moment.
+   variable &mdash; it reflects how much data is stored at a given moment.
    SQL does not make any guarantees about the order of the rows in a
    table.  When a table is read, the rows will appear in random order,
    unless sorting is explicitly requested.  This is covered in <xref
