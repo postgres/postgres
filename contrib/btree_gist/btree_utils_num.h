@@ -2,6 +2,7 @@
 #define __BTREE_UTILS_NUM_H__
 
 #include <math.h>
+#include <float.h>
 
 #include "btree_gist.h"
 
