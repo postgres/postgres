@@ -609,7 +609,6 @@ gist_qe(ltree_gist * key, lquery * query)
 		curq = LQL_NEXT(curq);
 		qlen--;
 	}
-	PG_FREE_IF_COPY(query,1);
 
 	return true;
 }
@@ -645,5 +644,6 @@ _ltree_consistent(PG_FUNCTION_ARGS)
 		default:
 			elog(ERROR, "Unknown StrategyNumber: %d", strategy);
 	}
+	PG_FREE_IF_COPY(query,1);
 	PG_RETURN_BOOL(res);
 }
