@@ -12,6 +12,8 @@ subdir = src/bin/pgevent
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+ifeq ($(PORTNAME), win32)
+
 OBJS=pgevent.o pgmsgevent.o
 NAME=pgevent.dll
 
@@ -21,7 +23,7 @@ install: all install-lib
 
 pgevent.dll: $(OBJS) pgevent.def
 	dllwrap --def pgevent.def -o $(NAME) $(OBJS)
-	
+
 pgmsgevent.o: pgmsgevent.rc win32ver.rc
 	windres pgmsgevent.rc -o pgmsgevent.o --include-dir=$(top_builddir)/src/include
 
@@ -38,3 +40,5 @@ clean distclean:
 
 clean-lib:
 	rm -f $(NAME)
+
+endif
