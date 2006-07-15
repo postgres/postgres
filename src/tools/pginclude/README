@@ -10,6 +10,11 @@ pgcompinclude [-v]
 pgrminclude [-v]
 		remove extra #include's
 
+pgcheckdefines
+		check for #ifdef tests on symbols defined in files that
+		weren't included --- this is a necessary sanity check on
+		pgrminclude!
+
 pgdefine	create macro calls for all defines in the file (used by
 		the above routines)
 
@@ -22,3 +27,4 @@ order would be:
 	pgrminclude /src/include
 	pgcompinclude
 	pgrminclude /
+	pgcheckdefines
