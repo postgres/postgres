@@ -2,7 +2,7 @@
   Name:     imath.h
   Purpose:  Arbitrary precision integer arithmetic routines.
   Author:   M. J. Fromberger <http://www.dartmouth.edu/~sting/>
-  Info:     $Id: imath.h,v 1.1 2006/07/13 04:15:24 neilc Exp $
+  Info:     $Id: imath.h,v 1.2 2006/07/15 15:27:14 tgl Exp $
 
   Copyright (C) 2002 Michael J. Fromberger, All Rights Reserved.
 
@@ -39,11 +39,15 @@ typedef unsigned char      mp_sign;
 typedef unsigned int       mp_size;
 typedef int                mp_result;
 #ifdef USE_LONG_LONG
-typedef unsigned int       mp_digit;
-typedef unsigned long long mp_word;
+typedef uint32             mp_digit;
+typedef uint64             mp_word;
+#define MP_DIGIT_MAX       0xFFFFFFFFULL
+#define MP_WORD_MAX        0xFFFFFFFFFFFFFFFFULL
 #else
-typedef unsigned short     mp_digit;
-typedef unsigned int       mp_word;
+typedef uint16             mp_digit;
+typedef uint32             mp_word;
+#define MP_DIGIT_MAX       0xFFFFUL
+#define MP_WORD_MAX        0xFFFFFFFFUL
 #endif
 
 typedef struct mpz {
@@ -69,21 +73,6 @@ extern const mp_result MP_BADARG;
 
 #define MP_DIGIT_BIT    (sizeof(mp_digit) * CHAR_BIT)
 #define MP_WORD_BIT     (sizeof(mp_word) * CHAR_BIT)
-
-#ifdef USE_LONG_LONG
-#  ifndef ULONG_LONG_MAX
-#    ifdef ULLONG_MAX
-#      define ULONG_LONG_MAX   ULLONG_MAX
-#    else
-#      error "Maximum value of unsigned long long not defined!"
-#    endif
-#  endif
-#  define MP_DIGIT_MAX   (ULONG_MAX * 1ULL)
-#  define MP_WORD_MAX    ULONG_LONG_MAX
-#else
-#  define MP_DIGIT_MAX    (USHRT_MAX * 1UL)
-#  define MP_WORD_MAX     (UINT_MAX * 1UL)
-#endif
 
 #define MP_MIN_RADIX    2
 #define MP_MAX_RADIX    36
