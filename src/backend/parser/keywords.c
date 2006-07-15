@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.172 2006/06/27 03:43:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.173 2006/07/15 03:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "nodes/parsenodes.h"
+#include "parser/gramparse.h"	/* required before parser/parse.h! */
 #include "parser/keywords.h"
 #include "parser/parse.h"
 

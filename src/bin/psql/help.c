@@ -3,11 +3,9 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.113 2006/07/14 14:52:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.114 2006/07/15 03:35:21 tgl Exp $
  */
 #include "postgres_fe.h"
-#include "common.h"
-#include "help.h"
 
 #include <signal.h>
 
@@ -23,9 +21,12 @@
 
 #include "pqsignal.h"
 
-#include "settings.h"
 #include "common.h"
+#include "help.h"
+#include "input.h"
+#include "settings.h"
 #include "sql_help.h"
+
 
 /*
  * PLEASE:
