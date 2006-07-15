@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.493 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.494 2006/07/15 15:47:17 tgl Exp $
  *
  * NOTES
  *
@@ -92,7 +92,9 @@
 #include <DNSServiceDiscovery/DNSServiceDiscovery.h>
 #endif
 
+#include "access/transam.h"
 #include "bootstrap/bootstrap.h"
+#include "catalog/pg_control.h"
 #include "lib/dllist.h"
 #include "libpq/auth.h"
 #include "libpq/ip.h"
@@ -107,6 +109,7 @@
 #include "postmaster/syslogger.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
