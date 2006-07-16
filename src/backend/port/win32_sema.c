@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/win32_sema.c,v 1.1 2006/04/29 16:34:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_sema.c,v 1.2 2006/07/16 02:44:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004, 2005.
 #
-# $Id: de.po,v 1.18 2005/11/04 23:31:11 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.19 2006/07/16 02:44:01 tgl Exp $
 #
 # Use these quotes: »%s«
 #

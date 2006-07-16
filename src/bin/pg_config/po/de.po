@@ -1,7 +1,7 @@
 # German message translation file for pg_config
 # Peter Eisentraut <peter_e@gmx.net>, 2004, 2005.
 #
-# $Id: de.po,v 1.5 2005/11/04 23:31:10 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/de.po,v 1.6 2006/07/16 02:44:01 tgl Exp $
 #
 # Use these quotes: »%s«
 #
