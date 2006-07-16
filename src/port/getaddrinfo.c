@@ -8,7 +8,7 @@
  * platform, we'll need to split this file and provide a separate configure
  * test for getnameinfo().
  *
- * Windows may or may not have these routines, so we handle Windows special
+ * Windows may or may not have these routines, so we handle Windows specially
  * by dynamically checking for their existence.  If they already exist, we
  * use the Windows native routines, but if not, we use our own.
  *
@@ -16,7 +16,7 @@
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.24 2006/06/07 22:24:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.25 2006/07/16 20:28:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include <arpa/inet.h>
 
 #include "getaddrinfo.h"
+#include "libpq/pqcomm.h"		/* needed for struct sockaddr_storage */
 
 
 #ifdef WIN32
