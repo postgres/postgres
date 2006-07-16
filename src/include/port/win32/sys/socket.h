@@ -1,4 +1,10 @@
 /*
+ * $PostgreSQL: pgsql/src/include/port/win32/sys/socket.h,v 1.6 2006/07/16 01:35:28 tgl Exp $
+ */
+#ifndef WIN32_SYS_SOCKET_H
+#define WIN32_SYS_SOCKET_H
+
+/*
  * Unfortunately, <wingdi.h> of VC++ also defines ERROR.
  * To avoid the conflict, we include <windows.h> here and undefine ERROR
  * immediately.
@@ -7,12 +13,14 @@
  */
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
 #undef ERROR
 #undef small
 
 /* Restore old ERROR value */
 #ifdef PGERROR
 #define ERROR PGERROR
+#endif
 
 /*
  * we can't use the windows gai_strerror{AW} functions because
@@ -21,4 +29,4 @@
  */
 #undef gai_strerror
 
-#endif
+#endif /* WIN32_SYS_SOCKET_H */
