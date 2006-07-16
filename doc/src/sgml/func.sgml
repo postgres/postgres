@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.326 2006/07/13 23:59:47 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.327 2006/07/16 23:59:58 neilc Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -6145,12 +6145,12 @@ SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
 CURRENT_DATE
 CURRENT_TIME
 CURRENT_TIMESTAMP
-CURRENT_TIME (<replaceable>precision</replaceable>)
-CURRENT_TIMESTAMP (<replaceable>precision</replaceable>)
+CURRENT_TIME(<replaceable>precision</replaceable>)
+CURRENT_TIMESTAMP(<replaceable>precision</replaceable>)
 LOCALTIME
 LOCALTIMESTAMP
-LOCALTIME (<replaceable>precision</replaceable>)
-LOCALTIMESTAMP (<replaceable>precision</replaceable>)
+LOCALTIME(<replaceable>precision</replaceable>)
+LOCALTIMESTAMP(<replaceable>precision</replaceable>)
 </synopsis>
     </para>
 
@@ -7685,8 +7685,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_append</function>
-      (<type>anyarray</type>, <type>anyelement</type>)
+      <function>array_append</function>(<type>anyarray</type>, <type>anyelement</type>)
      </literal>
     </entry>
         <entry><type>anyarray</type></entry>
@@ -7697,8 +7696,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_cat</function>
-      (<type>anyarray</type>, <type>anyarray</type>)
+      <function>array_cat</function>(<type>anyarray</type>, <type>anyarray</type>)
      </literal>
     </entry>
         <entry><type>anyarray</type></entry>
@@ -7709,8 +7707,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_dims</function>
-      (<type>anyarray</type>)
+      <function>array_dims</function>(<type>anyarray</type>)
      </literal>
     </entry>
         <entry><type>text</type></entry>
@@ -7721,8 +7718,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_lower</function>
-      (<type>anyarray</type>, <type>int</type>)
+      <function>array_lower</function>(<type>anyarray</type>, <type>int</type>)
      </literal>
     </entry>
         <entry><type>int</type></entry>
@@ -7733,8 +7729,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_prepend</function>
-      (<type>anyelement</type>, <type>anyarray</type>)
+      <function>array_prepend</function>(<type>anyelement</type>, <type>anyarray</type>)
      </literal>
     </entry>
         <entry><type>anyarray</type></entry>
@@ -7745,8 +7740,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_to_string</function>
-      (<type>anyarray</type>, <type>text</type>)
+      <function>array_to_string</function>(<type>anyarray</type>, <type>text</type>)
      </literal>
     </entry>
         <entry><type>text</type></entry>
@@ -7757,8 +7751,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>array_upper</function>
-      (<type>anyarray</type>, <type>int</type>)
+      <function>array_upper</function>(<type>anyarray</type>, <type>int</type>)
      </literal>
     </entry>
         <entry><type>int</type></entry>
@@ -7769,8 +7762,7 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
      <literal>
-      <function>string_to_array</function>
-      (<type>text</type>, <type>text</type>)
+      <function>string_to_array</function>(<type>text</type>, <type>text</type>)
      </literal>
     </entry>
         <entry><type>text[]</type></entry>
