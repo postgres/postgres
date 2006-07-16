@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.494 2006/07/15 15:47:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.495 2006/07/16 18:17:14 tgl Exp $
  *
  * NOTES
  *
@@ -1374,8 +1374,12 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 #else
 		SSLok = 'N';			/* No support for SSL */
 #endif
+
+retry1:
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
+			if (errno == EINTR)
+				goto retry1;	/* if interrupted, just retry */
 			ereport(COMMERROR,
 					(errcode_for_socket_access(),
 					 errmsg("failed to send SSL negotiation response: %m")));
@@ -2524,6 +2528,7 @@ static void
 report_fork_failure_to_client(Port *port, int errnum)
 {
 	char		buffer[1000];
+	int			rc;
 
 	/* Format the error message packet (always V2 protocol) */
 	snprintf(buffer, sizeof(buffer), "E%s%s\n",
@@ -2534,7 +2539,11 @@ report_fork_failure_to_client(Port *port, int errnum)
 	if (!pg_set_noblock(port->sock))
 		return;
 
-	send(port->sock, buffer, strlen(buffer) + 1, 0);
+	/* We'll retry after EINTR, but ignore all other failures */
+	do
+	{
+		rc = send(port->sock, buffer, strlen(buffer) + 1, 0);
+	} while (rc < 0 && errno == EINTR);
 }
 
 
