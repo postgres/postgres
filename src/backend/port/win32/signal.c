@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.16 2006/03/05 15:58:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.17 2006/07/16 20:17:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,11 +41,19 @@ static pqsigfunc pg_signal_defaults[PG_SIGNAL_COUNT];
 static DWORD WINAPI pg_signal_thread(LPVOID param);
 static BOOL WINAPI pg_console_handler(DWORD dwCtrlType);
 
-/* Sleep function that can be interrupted by signals */
+
+/*
+ * pg_usleep --- delay the specified number of microseconds, but
+ * stop waiting if a signal arrives.
+ *
+ * This replaces the non-signal-aware version provided by src/port/pgsleep.c.
+ */
 void
-pgwin32_backend_usleep(long microsec)
+pg_usleep(long microsec)
 {
-	if (WaitForSingleObject(pgwin32_signal_event, (microsec < 500 ? 1 : (microsec + 500) / 1000)) == WAIT_OBJECT_0)
+	if (WaitForSingleObject(pgwin32_signal_event,
+							(microsec < 500 ? 1 : (microsec + 500) / 1000))
+		== WAIT_OBJECT_0)
 	{
 		pgwin32_dispatch_queued_signals();
 		errno = EINTR;

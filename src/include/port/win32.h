@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.52 2006/06/07 22:24:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.53 2006/07/16 20:17:04 tgl Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -220,11 +220,6 @@ void		pgwin32_signal_initialize(void);
 HANDLE		pgwin32_create_signal_listener(pid_t pid);
 void		pgwin32_dispatch_queued_signals(void);
 void		pg_queue_signal(int signum);
-
-#ifndef FRONTEND
-#define pg_usleep(t) pgwin32_backend_usleep(t)
-void		pgwin32_backend_usleep(long microsec);
-#endif
 
 /* In backend/port/win32/socket.c */
 #ifndef FRONTEND
