@@ -8,12 +8,15 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.3 2006/07/14 14:52:16 momjian Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.4 2006/07/16 00:54:22 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "access/gin.h"
+#include "utils/datum.h"
+
 
 #define DEF_NENTRY	2048
 #define DEF_NPTR	4
@@ -66,37 +69,31 @@ ginInsertData(BuildAccumulator *accum, EntryAccumulator *entry, ItemPointer heap
 	entry->number++;
 }
 
+/*
+ * This is basically the same as datumCopy(), but we duplicate some code
+ * to avoid computing the datum size twice.
+ */
 static Datum
 getDatumCopy(BuildAccumulator *accum, Datum value) {
 	Form_pg_attribute *att = accum->ginstate->tupdesc->attrs;
-	Datum 	newvalue;
-	int data_length = 0;
-	void *ptr;
+	Datum		res;
 
-	if ( att[0]->attbyval ) {
-		store_att_byval(&newvalue, value, att[0]->attlen);
-	} else {
-		/* pass-by-reference */
-		if (att[0]->attlen == -1) {
-			/* varlena */
-			data_length = VARATT_SIZE(DatumGetPointer(value));
-		} else if (att[0]->attlen == -2) {
-			/* c-string */
-			data_length = strlen(DatumGetCString(value)) + 1;
-		} else {
-			/* fixed-length pass-by-reference */
-			Assert(att[0]->attlen > 0);
-			data_length = att[0]->attlen;
-		}
+	if (att[0]->attbyval)
+		res = value;
+	else
+	{
+		Size		realSize;
+		char	   *s;
 
-		ptr = palloc( data_length );
-		memcpy(ptr, DatumGetPointer(value), data_length);
-		newvalue = PointerGetDatum(ptr);
+		realSize = datumGetSize(value, false, att[0]->attlen);
+
+		s = (char *) palloc(realSize);
+		memcpy(s, DatumGetPointer(value), realSize);
+		res = PointerGetDatum(s);
+
+		accum->allocatedMemory += realSize;
 	}
-
-	accum->allocatedMemory+=data_length;
-
-	return newvalue;
+	return res;
 }
 
 /*
