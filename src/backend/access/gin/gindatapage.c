@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.2 2006/07/14 14:52:16 momjian Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.3 2006/07/16 00:52:05 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -546,7 +546,7 @@ insertItemPointer(GinPostingTreeScan *gdi, ItemPointerData *items, uint32 nitem)
 		gdi->stack = ginFindLeafPage( &gdi->btree, gdi->stack );	
 
 		if ( gdi->btree.findItem( &(gdi->btree), gdi->stack ) )
-			elog(ERROR,"Item pointer(%d:%d) is already exists", 
+			elog(ERROR,"item pointer (%u,%d) already exists", 
 				ItemPointerGetBlockNumber(gdi->btree.items + gdi->btree.curitem), 
 				ItemPointerGetOffsetNumber(gdi->btree.items + gdi->btree.curitem));
 
