@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.5 2006/06/27 14:01:42 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.111.2.6 2006/07/16 18:17:23 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -339,8 +339,12 @@ pgstat_init(void)
 		 * rules prevent it).
 		 */
 		test_byte = TESTBYTEVAL;
+
+retry1:
 		if (send(pgStatSock, &test_byte, 1, 0) != 1)
 		{
+			if (errno == EINTR)
+				goto retry1;	/* if interrupted, just retry */
 			ereport(LOG,
 					(errcode_for_socket_access(),
 					 errmsg("could not send test message on socket for statistics collector: %m")));
@@ -391,8 +395,11 @@ pgstat_init(void)
 
 		test_byte++;			/* just make sure variable is changed */
 
+retry2:
 		if (recv(pgStatSock, &test_byte, 1, 0) != 1)
 		{
+			if (errno == EINTR)
+				goto retry2;	/* if interrupted, just retry */
 			ereport(LOG,
 					(errcode_for_socket_access(),
 					 errmsg("could not receive test message on socket for statistics collector: %m")));
@@ -1431,17 +1438,23 @@ pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype)
 static void
 pgstat_send(void *msg, int len)
 {
+	int			rc;
+
 	if (pgStatSock < 0)
 		return;
 
 	((PgStat_MsgHdr *) msg)->m_size = len;
 
+	/* We'll retry after EINTR, but ignore all other failures */
+	do
+	{
+		rc = send(pgStatSock, msg, len, 0);
+	} while (rc < 0 && errno == EINTR);
+
 #ifdef USE_ASSERT_CHECKING
-	if (send(pgStatSock, msg, len, 0) < 0)
+	/* In debug builds, log send failures ... */
+	if (rc < 0)
 		elog(LOG, "could not send to statistics collector: %m");
-#else
-	send(pgStatSock, msg, len, 0);
-	/* We deliberately ignore any error from send() */
 #endif
 }
 
@@ -1972,9 +1985,13 @@ pgstat_recvbuffer(void)
 			len = recv(pgStatSock, (char *) &input_buffer,
 					   sizeof(PgStat_Msg), 0);
 			if (len < 0)
+			{
+				if (errno == EINTR)
+					continue;
 				ereport(ERROR,
 						(errcode_for_socket_access(),
 						 errmsg("could not read statistics message: %m")));
+			}
 
 			/*
 			 * We ignore messages that are smaller than our common header
