@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.140 2006/06/14 16:49:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.141 2006/07/17 00:21:23 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -170,8 +170,35 @@ describeFunctions(const char *pattern, bool verbose)
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  p.proname as \"%s\",\n"
 					  "  CASE WHEN p.proretset THEN 'setof ' ELSE '' END ||\n"
-				  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
-					  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\"",
+					  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
+					  "  CASE WHEN proallargtypes IS NOT NULL THEN\n"
+					  "    pg_catalog.array_to_string(ARRAY(\n"
+					  "      SELECT\n"
+					  "        CASE\n"
+					  "          WHEN p.proargmodes[s.i] = 'i' THEN ''\n"
+					  "          WHEN p.proargmodes[s.i] = 'o' THEN 'OUT '\n"
+					  "          WHEN p.proargmodes[s.i] = 'b' THEN 'INOUT '\n"
+					  "        END ||\n"
+					  "        CASE\n"
+					  "          WHEN COALESCE(p.proargnames[s.i], '') = '' THEN ''\n"
+					  "          ELSE p.proargnames[s.i] || ' ' \n"
+					  "        END ||\n"
+					  "        pg_catalog.format_type(p.proallargtypes[s.i], NULL)\n"
+					  "      FROM\n"
+					  "        pg_catalog.generate_series(1, pg_catalog.array_upper(p.proallargtypes, 1)) AS s(i)\n"
+					  "    ), ', ')\n"
+					  "  ELSE\n"
+					  "    pg_catalog.array_to_string(ARRAY(\n"
+					  "      SELECT\n"
+					  "        CASE\n"
+					  "          WHEN COALESCE(p.proargnames[s.i+1], '') = '' THEN ''\n"
+					  "          ELSE p.proargnames[s.i+1] || ' '\n"
+					  "          END ||\n"
+					  "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
+					  "      FROM\n"
+					  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
+					  "    ), ', ')\n"
+					  "  END AS \"%s\"",
 					  _("Schema"), _("Name"), _("Result data type"),
 					  _("Argument data types"));
 
