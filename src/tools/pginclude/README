@@ -13,7 +13,7 @@ pgrminclude [-v]
 pgcheckdefines
 		check for #ifdef tests on symbols defined in files that
 		weren't included --- this is a necessary sanity check on
-		pgrminclude!
+		pgrminclude
 
 pgdefine	create macro calls for all defines in the file (used by
 		the above routines)
@@ -22,9 +22,19 @@ It is also a good idea to sort the pg-specific include files in
 alphabetic order.  This is best done with a text editor. Typical usage
 order would be:
 
-	pgfixinclude  
-	pgcompinclude
-	pgrminclude /src/include
-	pgcompinclude
+	pgfixinclude
+	sort include references
+	run multiple times:
+		pgcompinclude
+		pgrminclude /src/include
 	pgrminclude /
 	pgcheckdefines
+
+There is a complexity when modifying /src/include.  If include file 1
+includes file 2, and file 2 includes file 3, then when file 1 is
+processed, it needs only file 2, not file 3.  However, if later, include
+file 2 is processed, and file 3 is not needed by file 2 and is removed,
+file 1 might then need to include file 3.  For this reason, the
+pgcompinclude and pgrminclude /src/include steps must be run several
+times until all includes compile cleanly.
+
