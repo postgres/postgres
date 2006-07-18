@@ -1,6 +1,17 @@
 --
 -- Test access privileges
 --
+-- Clean up in case a prior regression run failed
+-- Suppress NOTICE messages when users/groups don't exist
+SET client_min_messages TO 'error';
+DROP ROLE IF EXISTS regressgroup1;
+DROP ROLE IF EXISTS regressgroup2;
+DROP ROLE IF EXISTS regressuser1;
+DROP ROLE IF EXISTS regressuser2;
+DROP ROLE IF EXISTS regressuser3;
+DROP ROLE IF EXISTS regressuser4;
+RESET client_min_messages;
+-- test proper begins here
 CREATE USER regressuser1;
 CREATE USER regressuser2;
 CREATE USER regressuser3;

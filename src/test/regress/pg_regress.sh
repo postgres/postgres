@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.64 2006/01/05 03:01:38 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.65 2006/07/18 00:32:41 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -551,18 +551,6 @@ alter database \"$dbname\" set lc_numeric to 'C';
 alter database \"$dbname\" set lc_time to 'C';" "$dbname"
 if [ $? -ne 0 ]; then
     echo "$me: could not set database default locales"
-    (exit 2); exit
-fi
-
-
-# ----------
-# Remove regressuser* and regressgroup* user accounts.
-# ----------
-
-message "dropping regression test user accounts"
-"$bindir/psql" -q -X $psql_options -c 'DROP GROUP regressgroup1; DROP GROUP regressgroup2; DROP USER regressuser1, regressuser2, regressuser3, regressuser4;' $dbname 2>/dev/null
-if [ $? -eq 2 ]; then
-    echo "$me: could not drop user accounts"
     (exit 2); exit
 fi
 
