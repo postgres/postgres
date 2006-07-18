@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.145 2006/05/07 01:05:11 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.146 2006/07/18 22:18:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -104,21 +104,18 @@ def-files: $(srcdir)/libpqdll.def $(srcdir)/libpqddll.def $(srcdir)/blibpqdll.de
 $(srcdir)/libpqdll.def: exports.txt
 	echo '; DEF file for MS VC++' > $@
 	echo 'LIBRARY LIBPQ' >> $@
-	echo 'DESCRIPTION "PostgreSQL Client Library"' >> $@
 	echo 'EXPORTS' >> $@
 	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' < $< >> $@
 
 $(srcdir)/libpqddll.def: exports.txt
 	echo '; DEF file for MS VC++' > $@
 	echo 'LIBRARY LIBPQD' >> $@
-	echo 'DESCRIPTION "PostgreSQL Client Library"' >> $@
 	echo 'EXPORTS' >> $@
 	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    \1@ \2/' < $< >> $@
 
 $(srcdir)/blibpqdll.def: exports.txt
 	echo '; DEF file for Borland C++ Builder' > $@
 	echo 'LIBRARY BLIBPQ' >> $@
-	echo 'DESCRIPTION "PostgreSQL Client Library"' >> $@
 	echo 'EXPORTS' >> $@
 	sed -e '/^#/d' -e 's/^\(.* \)\([0-9][0-9]*\)/    _\1@ \2/' < $< >> $@
 	echo '' >> $@
