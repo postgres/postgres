@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.42 2006/03/05 15:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.43 2006/07/18 22:36:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,7 +434,7 @@ rmtree(char *path, bool rmtopdir)
 	{
 		snprintf(filepath, MAXPGPATH, "%s/%s", path, *filename);
 
-		if (stat(filepath, &statbuf) != 0)
+		if (lstat(filepath, &statbuf) != 0)
 			goto report_and_fail;
 
 		if (S_ISDIR(statbuf.st_mode))

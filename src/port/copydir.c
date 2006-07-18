@@ -11,7 +11,7 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.17 2006/03/05 15:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.18 2006/07/18 22:36:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ copydir(char *fromdir, char *todir, bool recurse)
 		snprintf(fromfile, MAXPGPATH, "%s/%s", fromdir, xlde->d_name);
 		snprintf(tofile, MAXPGPATH, "%s/%s", todir, xlde->d_name);
 
-		if (stat(fromfile, &fst) < 0)
+		if (lstat(fromfile, &fst) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not stat file \"%s\": %m", fromfile)));
