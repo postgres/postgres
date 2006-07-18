@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.26 2006/07/14 14:52:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.27 2006/07/18 17:42:01 momjian Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -37,7 +37,5 @@ extern bool do_pset(const char *param,
 extern void SyncVariables(void);
 
 extern void UnsyncVariables(void);
-
-extern void SyncVerbosityVariable(void);
 
 #endif   /* COMMAND_H */

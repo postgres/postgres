@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.133 2006/07/14 14:52:26 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.134 2006/07/18 17:42:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,8 @@ static void _write_msg(const char *modulename, const char *fmt, va_list ap);
 static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap);
 
 static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
+static OutputContext SetOutput(ArchiveHandle *AH, char *filename, int compression);
+static void ResetOutput(ArchiveHandle *AH, OutputContext savedContext);
 
 
 /*
@@ -860,7 +862,7 @@ archprintf(Archive *AH, const char *fmt,...)
  * Stuff below here should be 'private' to the archiver routines
  *******************************/
 
-OutputContext
+static OutputContext
 SetOutput(ArchiveHandle *AH, char *filename, int compression)
 {
 	OutputContext sav;
@@ -912,7 +914,7 @@ SetOutput(ArchiveHandle *AH, char *filename, int compression)
 	return sav;
 }
 
-void
+static void
 ResetOutput(ArchiveHandle *AH, OutputContext sav)
 {
 	int			res;
@@ -985,7 +987,7 @@ ahlog(ArchiveHandle *AH, int level, const char *fmt,...)
 /*
  * Single place for logic which says 'We are restoring to a direct DB connection'.
  */
-int
+static int
 RestoringToDB(ArchiveHandle *AH)
 {
 	return (AH->ropt && AH->ropt->useDB && AH->connection);

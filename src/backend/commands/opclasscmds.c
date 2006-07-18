@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.47 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.48 2006/07/18 17:42:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -924,6 +924,7 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 /*
  * Change opclass owner by oid
  */
+#ifdef NOT_USED
 void
 AlterOpClassOwner_oid(Oid opcOid, Oid newOwnerId)
 {
@@ -943,6 +944,7 @@ AlterOpClassOwner_oid(Oid opcOid, Oid newOwnerId)
 	heap_freetuple(tup);
 	heap_close(rel, NoLock);
 }
+#endif
 
 /*
  * Change opclass owner by name

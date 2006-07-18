@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.71 2006/07/11 13:54:24 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.72 2006/07/18 17:42:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,9 +353,6 @@ extern void InitArchiveFmt_Tar(ArchiveHandle *AH);
 
 extern bool isValidTarHeader(char *header);
 
-extern OutputContext SetOutput(ArchiveHandle *AH, char *filename, int compression);
-extern void ResetOutput(ArchiveHandle *AH, OutputContext savedContext);
-extern int	RestoringToDB(ArchiveHandle *AH);
 extern int	ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *newUser);
 
 int			ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);

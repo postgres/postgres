@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.170 2006/06/11 23:06:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.171 2006/07/18 17:42:01 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -55,6 +55,8 @@ static backslashResult exec_command(const char *cmd,
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
+static void SyncVerbosityVariable(void);
+
 
 
 /*----------
@@ -1175,7 +1177,7 @@ UnsyncVariables(void)
 /*
  * Update connection state from VERBOSITY variable
  */
-void
+static void
 SyncVerbosityVariable(void)
 {
 	switch (SwitchVariable(pset.vars, "VERBOSITY",

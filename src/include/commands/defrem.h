@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.74 2006/07/03 22:45:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.75 2006/07/18 17:42:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,6 @@ extern void RemoveOpClass(RemoveOpClassStmt *stmt);
 extern void RemoveOpClassById(Oid opclassOid);
 extern void RenameOpClass(List *name, const char *access_method, const char *newname);
 extern void AlterOpClassOwner(List *name, const char *access_method, Oid newOwnerId);
-extern void AlterOpClassOwner_oid(Oid opcOid, Oid newOwnerId);
 
 /* support routines in commands/define.c */
 

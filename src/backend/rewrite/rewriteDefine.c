@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.110 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.111 2006/07/18 17:42:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -552,6 +552,7 @@ setRuleCheckAsUser_walker(Node *node, Oid *context)
  *
  * This is unused code at the moment.
  */
+#ifdef NOT_USED
 void
 RenameRewriteRule(Oid owningRel, const char *oldName,
 				  const char *newName)
@@ -588,3 +589,4 @@ RenameRewriteRule(Oid owningRel, const char *oldName,
 	heap_freetuple(ruletup);
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
 }
+#endif

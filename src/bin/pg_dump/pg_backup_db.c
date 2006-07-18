@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.72 2006/07/14 14:52:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.73 2006/07/18 17:42:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ notice_processor(void *arg, const char *message)
 
 /* Public interface */
 /* Convenience function to send a query. Monitors result to handle COPY statements */
-int
+static int
 ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc)
 {
 	PGconn	   *conn = AH->connection;
