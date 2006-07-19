@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.48 2005/12/09 21:19:36 petere Exp $
+# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.49 2006/07/19 02:37:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -90,11 +90,11 @@ uninstall:
 	$(MAKE) -C modules $@
 
 installcheck: submake
-	$(SHELL) $(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)
+	$(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:
-	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress
+	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
 else # TCL_SHARED_BUILD = 0
 

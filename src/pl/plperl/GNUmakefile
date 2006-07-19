@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.26 2005/12/09 21:19:36 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.27 2006/07/19 02:37:00 tgl Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -84,11 +84,11 @@ uninstall:
 	rm -f '$(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)'
 
 installcheck: submake
-	$(SHELL) $(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)
+	$(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:
-	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress
+	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
 clean distclean maintainer-clean: clean-lib
 	rm -f SPI.c $(OBJS)

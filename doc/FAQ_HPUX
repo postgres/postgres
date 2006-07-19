@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.3
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2004/09/02 17:46:24 $
+last updated:           $Date: 2006/07/19 02:37:00 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -84,19 +84,3 @@ low-order-digit differences in the geometry tests, which vary depending
 on which compiler and math library versions you use.
 
 Any other error is cause for suspicion.
-
-The parallel regression test script (gmake check) is known to lock up
-on PA-RISC when run under HP's Bourne shells: /usr/bin/sh and
-/sbin/sh. To fix this problem, you will need PHCO_30269 with its
-dependent patch or successor patches:
-
-    PHCO_30269  s700_800 cumulative sh-posix(1) patch
-    PHCO_29816  s700_800 rc(1M) scripts cumulative patch 
-
-To work around this problem, use ksh to run the regression script:
-
-	gmake SHELL=/bin/ksh check
-
-If you see that the tests have stopped making progress and only a shell
-process is consuming CPU, kill the shell process and start over with the
-above command.

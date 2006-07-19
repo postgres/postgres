@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.57 2006/03/05 15:59:11 momjian Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.58 2006/07/19 02:37:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,32 +34,33 @@ ifdef NO_LOCALE
 NOLOCALE += --no-locale
 endif
 
+# stuff to pass into build of pg_regress
+EXTRADEFS = '-DPGBINDIR="$(bindir)"' \
+	'-DLIBDIR="$(libdir)"' \
+	'-DPGSHAREDIR="$(datadir)"' \
+	'-DHOST_TUPLE="$(host_tuple)"' \
+	'-DMAKEPROG="$(MAKE)"'
+
 ##
 ## Prepare for tests
 ##
 
 # Build regression test driver
 
-all: pg_regress
+all: submake-libpgport pg_regress$(X)
 
-pg_regress: pg_regress.sh GNUmakefile $(top_builddir)/src/Makefile.global
-	sed -e 's,@bindir@,$(bindir),g' \
-	    -e 's,@libdir@,$(libdir),g' \
-	    -e 's,@pkglibdir@,$(pkglibdir),g' \
-	    -e 's,@datadir@,$(datadir),g' \
-	    -e 's/@VERSION@/$(VERSION)/g' \
-	    -e 's/@host_tuple@/$(host_tuple)/g' \
-	    -e 's,@GMAKE@,$(MAKE),g' \
-	    -e 's/@enable_shared@/$(enable_shared)/g' \
-	    -e 's/@GCC@/$(GCC)/g' \
-	  $< >$@
-	chmod a+x $@
+pg_regress$(X): pg_regress.o
+	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LIBS) -o $@
 
-install: pg_regress
-	$(INSTALL_SCRIPT) pg_regress '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress'
+# depend on Makefile.global to ensure that symbol changes propagate
+pg_regress.o: pg_regress.c $(top_builddir)/src/Makefile.global
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(EXTRADEFS) -c -o $@ $<
+
+install: pg_regress$(X)
+	$(INSTALL_PROGRAM) pg_regress$(X) '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress$(X)'
 
 uninstall:
-	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress'
+	rm -f '$(DESTDIR)$(pgxsdir)/$(subdir)/pg_regress$(X)'
 
 
 # Build dynamically-loaded object file for CREATE FUNCTION ... LANGUAGE C.
@@ -143,17 +144,17 @@ all-spi:
 check: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
+	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
 
 installcheck: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
+	./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
 
 installcheck-parallel: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	$(SHELL) ./pg_regress --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
+	./pg_regress --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
 
 
 # old interfaces follow...
@@ -163,10 +164,10 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest:
-	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) numeric_big 
+	./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) numeric_big 
 
 bigcheck:
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) numeric_big
+	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) numeric_big
 
 
 ##
@@ -177,7 +178,7 @@ clean distclean maintainer-clean: clean-lib
 # things built by `all' target
 	rm -f $(NAME)$(DLSUFFIX) $(OBJS)
 	$(MAKE) -C $(contribdir)/spi clean
-	rm -f $(output_files) $(input_files) pg_regress
+	rm -f $(output_files) $(input_files) pg_regress.o pg_regress$(X)
 # things created by various check targets
 	rm -rf testtablespace
 	rm -rf results tmp_check log
