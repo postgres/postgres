@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.1 2006/07/19 02:37:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.2 2006/07/19 04:50:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,7 @@ stop_postmaster(void)
 		char buf[MAXPGPATH * 2];
 
 		snprintf(buf, sizeof(buf),
-				 "\"%s/pg_ctl\" stop -D \"%s/data\" -s -m fast",
+				 SYSTEMQUOTE "\"%s/pg_ctl\" stop -D \"%s/data\" -s -m fast" SYSTEMQUOTE,
 				 bindir, temp_install);
 		system(buf);			/* ignore exit status */
 		postmaster_running = false;
@@ -589,7 +589,7 @@ psql_command(const char *database, const char *query, ...)
 
 	/* And now we can build and execute the shell command */
 	snprintf(psql_cmd, sizeof(psql_cmd),
-			 "\"%s/psql\" -X -c \"%s\" \"%s\"",
+			 SYSTEMQUOTE "\"%s/psql\" -X -c \"%s\" \"%s\"" SYSTEMQUOTE,
 			 bindir, query_escaped, database);
 
 	if (system(psql_cmd) != 0)
@@ -676,7 +676,7 @@ psql_start_test(const char *testname)
 			 outputdir, testname);
 
 	snprintf(psql_cmd, sizeof(psql_cmd),
-			 "\"%s/psql\" -X -a -q -d \"%s\" <\"%s\" >\"%s\" 2>&1",
+			 SYSTEMQUOTE "\"%s/psql\" -X -a -q -d \"%s\" <\"%s\" >\"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir, dbname, infile, outfile);
 
 	pid = spawn_process(psql_cmd);
@@ -819,7 +819,7 @@ results_differ(const char *testname)
 
 	/* OK, run the diff */
 	snprintf(cmd, sizeof(cmd),
-			 "diff %s \"%s\" \"%s\" >\"%s\"",
+			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >\"%s\"" SYSTEMQUOTE,
 			 basic_diff_opts, expectfile, resultsfile, diff);
 	r = system(cmd);
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
@@ -848,7 +848,7 @@ results_differ(const char *testname)
 			continue;
 
 		snprintf(cmd, sizeof(cmd),
-				 "diff %s \"%s\" \"%s\" >\"%s\"",
+				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >\"%s\"" SYSTEMQUOTE,
 				 basic_diff_opts, expectfile, resultsfile, diff);
 		r = system(cmd);
 		if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
@@ -878,7 +878,7 @@ results_differ(const char *testname)
 	 * we append to the diffs summary file.
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 "diff %s \"%s\" \"%s\" >>\"%s\"",
+			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >>\"%s\"" SYSTEMQUOTE,
 			 pretty_diff_opts, best_expect_file, resultsfile, difffilename);
 	r = system(cmd);
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
@@ -1391,8 +1391,8 @@ main(int argc, char *argv[])
 
 		/* "make install" */
 		snprintf(buf, sizeof(buf),
-				 "\"%s\" -C \"%s\" DESTDIR=\"%s/install\" install with_perl=no with_python=no >\"%s/log/install.log\" 2>&1",
-				makeprog, top_builddir, temp_install, outputdir);
+				 SYSTEMQUOTE "\"%s\" -C \"%s\" DESTDIR=\"%s/install\" install with_perl=no with_python=no >\"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
+				 makeprog, top_builddir, temp_install, outputdir);
 		if (system(buf))
 		{
 			fprintf(stderr, _("\n%s: installation failed\nExamine %s/log/install.log for the reason.\n"), progname, outputdir);
@@ -1402,7 +1402,7 @@ main(int argc, char *argv[])
 		/* initdb */
 		header(_("initializing database system"));
 		snprintf(buf, sizeof(buf),
-				 "\"%s/initdb\" -D \"%s/data\" -L \"%s\" --noclean %s %s >\"%s/log/initdb.log\" 2>&1",
+				 SYSTEMQUOTE "\"%s/initdb\" -D \"%s/data\" -L \"%s\" --noclean %s %s >\"%s/log/initdb.log\" 2>&1" SYSTEMQUOTE,
 				 bindir, temp_install, datadir,
 				 debug ? "--debug" : "",
 				 nolocale ? "--no-locale" : "",
@@ -1418,7 +1418,7 @@ main(int argc, char *argv[])
 		 */
 		header(_("starting postmaster"));
 		snprintf(buf, sizeof(buf),
-				 "\"%s/postmaster\" -D \"%s/data\" -F %s -c \"listen_addresses=%s\" >\"%s/log/postmaster.log\" 2>&1",
+				 SYSTEMQUOTE "\"%s/postmaster\" -D \"%s/data\" -F %s -c \"listen_addresses=%s\" >\"%s/log/postmaster.log\" 2>&1" SYSTEMQUOTE,
 				 bindir, temp_install,
 				 debug ? "-d 5" : "",
 				 hostname ? hostname : "",
@@ -1445,7 +1445,7 @@ main(int argc, char *argv[])
 		 * wait forever, however.
 		 */
 		snprintf(buf, sizeof(buf),
-				 "\"%s/psql\" -X postgres <%s 2>%s",
+				 SYSTEMQUOTE "\"%s/psql\" -X postgres <%s 2>%s" SYSTEMQUOTE,
 				 bindir, DEVNULL, DEVNULL);
 		for (i = 0; i < 60; i++)
 		{
