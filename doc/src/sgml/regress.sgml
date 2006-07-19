@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.53 2006/07/19 02:37:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.54 2006/07/19 17:02:59 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -96,11 +96,10 @@ gmake check
    <para>
     The parallel regression test starts quite a few processes under your
     user ID.  Presently, the maximum concurrency is twenty parallel test
-    scripts, which means sixty processes: there's a server process, a
-    <application>psql</>, and usually a shell parent process for the
-    <application>psql</> for each test script.
+    scripts, which means forty processes: there's a server process and a
+    <application>psql</> process for each test script.
     So if your system enforces a per-user limit on the number of processes,
-    make sure this limit is at least seventy-five or so, else you may get
+    make sure this limit is at least fifty or so, else you may get
     random-seeming failures in the parallel test.  If you are not in
     a position to raise the limit, you can cut down the degree of parallelism
     by setting the <literal>MAX_CONNECTIONS</> parameter.  For example,

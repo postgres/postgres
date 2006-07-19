@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.4 2006/07/19 16:23:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.5 2006/07/19 17:02:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ static char *libdir = LIBDIR;
 static char *datadir = PGSHAREDIR;
 static char *host_platform = HOST_TUPLE;
 static char *makeprog = MAKEPROG;
+static char *shellprog = SHELLPROG;
 
 /* currently we can use the same diff switches on all platforms */
 static const char *basic_diff_opts = "-w";
@@ -630,8 +631,20 @@ spawn_process(const char *cmdline)
 	}
 	if (pid == 0)
 	{
-		/* In child */
-		exit(system(cmdline) ? 1 : 0);
+		/*
+		 * In child
+		 *
+		 * Instead of using system(), exec the shell directly, and tell it
+		 * to "exec" the command too.  This saves two useless processes
+		 * per parallel test case.
+		 */
+		char *cmdline2 = malloc(strlen(cmdline) + 6);
+
+		sprintf(cmdline2, "exec %s", cmdline);
+		execl(shellprog, shellprog, "-c", cmdline2, NULL);
+		fprintf(stderr, _("%s: could not exec \"%s\": %s\n"),
+				progname, shellprog, strerror(errno));
+		exit(1);				/* not exit_nicely here... */
 	}
 	/* in parent */
 	return pid;
@@ -648,7 +661,7 @@ spawn_process(const char *cmdline)
 
 	if (!CreateProcess(NULL, cmdline2, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 	{
-		fprintf(stderr, _("failed to start process for \"%s\": %lu\n"),
+		fprintf(stderr, _("could not start process for \"%s\": %lu\n"),
 				cmdline2, GetLastError());
 		exit_nicely(2);
 	}
@@ -684,7 +697,7 @@ psql_start_test(const char *testname)
 
 	if (pid == INVALID_PID)
 	{
-		fprintf(stderr, _("failed to start process for test %s\n"),
+		fprintf(stderr, _("could not start process for test %s\n"),
 				testname);
 		exit_nicely(2);
 	}
@@ -918,7 +931,7 @@ wait_for_tests(PID_TYPE *pids, int num_tests)
 
 		if (p == -1)
 		{
-			fprintf(stderr, _("failed to wait(): %s\n"), strerror(errno));
+			fprintf(stderr, _("could not wait(): %s\n"), strerror(errno));
 			exit_nicely(2);
 		}
 		for (i=0; i < num_tests; i++)
@@ -938,7 +951,7 @@ wait_for_tests(PID_TYPE *pids, int num_tests)
 	r = WaitForMultipleObjects(num_tests, pids, TRUE, INFINITE);
 	if (r != WAIT_OBJECT_0)
 	{
-		fprintf(stderr, _("failed to wait for commands to finish: %lu\n"),
+		fprintf(stderr, _("could not wait for commands to finish: %lu\n"),
 				GetLastError());
 		exit_nicely(2);
 	}
@@ -1228,7 +1241,7 @@ main(int argc, char *argv[])
 	int c;
 	int i;
 	int option_index;
-	char buf[MAXPGPATH];
+	char buf[MAXPGPATH * 4];
 
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -1430,14 +1443,6 @@ main(int argc, char *argv[])
 					progname, strerror(errno));
 			exit_nicely(2);
 		}
-
-		/*
-		 * XXX Note that because we use system() to launch the subprocess,
-		 * the returned postmaster_pid is not really the PID of the
-		 * postmaster itself; on most systems it'll be the PID of a parent
-		 * shell process.  This is OK for the limited purposes we currently
-		 * use postmaster_pid for, but beware!
-		 */
 
 		/*
 		 * Wait till postmaster is able to accept connections (normally only
