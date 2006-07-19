@@ -39,5 +39,4 @@ pgcompinclude and pgrminclude /src/include steps must be run several
 times until all includes compile cleanly.
 
 Also, tests should be done with configure settings of --enable-cassert
-and EXEC_BACKEND on and off.
-
+and EXEC_BACKEND on and off.  It is also wise to test a WIN32 compile.
