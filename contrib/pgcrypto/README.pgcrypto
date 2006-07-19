@@ -36,13 +36,14 @@ pgcrypto configures itself according to the findings of main PostgreSQL
 `configure` script.  The options that affect it are `--with-zlib` and
 `--with-openssl`.
 
-Without zlib, the PGP functions will not support compressed data inside
-PGP encrypted packets.
+When compiled with zlib, PGP encryption functions are able to
+compress data before encrypting.
 
-Without OpenSSL, public-key encryption does not work, as pgcrypto does
-not yet contain math functions for large integers.
+When compiled with OpenSSL there will be more algorithms available.
+Also public-key encryption functions will be faster as OpenSSL
+has more optimized BIGNUM functions.
 
-There are some other differences with and without OpenSSL:
+Summary of functionality with and without OpenSSL:
 
 `----------------------------`---------`------------
  Functionality                built-in   OpenSSL
@@ -421,7 +422,7 @@ with CRC and additional formatting.
 Options are named to be similar to GnuPG.  Values should be given after
 an equal sign; separate options from each other with commas.  Example:
 
-  pgp_sym_encrypt(data, psw, 'compress-also=1, cipher-algo=aes256')
+  pgp_sym_encrypt(data, psw, 'compress-algo=1, cipher-algo=aes256')
 
 All of the options except `convert-crlf` apply only to encrypt
 functions.  Decrypt functions get the parameters from PGP data.
@@ -571,7 +572,7 @@ The GNU Privacy Handbook] and other docs on http://www.gnupg.org[] site.
 -------------------
 
 Those functions only run a cipher over data, they don't have any advanced
-features of PGP encryption.  In addition, they have some major problems:
+features of PGP encryption.  Therefore they have some major problems:
 
 1. They use user key directly as cipher key.
 2. They don't provide any integrity checking, to see
@@ -713,4 +714,4 @@ http://www.cs.ut.ee/~helger/crypto/[]::
 	Collection of cryptology pointers.
 
 
-// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.15 2006/07/13 04:15:24 neilc Exp $
+// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.16 2006/07/19 17:05:50 neilc Exp $

@@ -2,7 +2,7 @@
   Name:     imath.h
   Purpose:  Arbitrary precision integer arithmetic routines.
   Author:   M. J. Fromberger <http://www.dartmouth.edu/~sting/>
-  Info:     $PostgreSQL: pgsql/contrib/pgcrypto/imath.h,v 1.3 2006/07/16 02:44:01 tgl Exp $
+  Info:     Id: imath.h 21 2006-04-02 18:58:36Z sting
 
   Copyright (C) 2002 Michael J. Fromberger, All Rights Reserved.
 
@@ -26,6 +26,7 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
  */
+/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.h,v 1.4 2006/07/19 17:05:50 neilc Exp $ */
 
 #ifndef IMATH_H_
 #define IMATH_H_
