@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.3 2006/07/19 05:21:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.4 2006/07/19 16:23:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,8 +320,8 @@ load_resultmap(void)
 				progname, buf, strerror(errno));
 		exit_nicely(2);
 	}
-	memset(buf, 0, sizeof(buf));
-	while (fgets(buf, sizeof(buf)-1, f))
+
+	while (fgets(buf, sizeof(buf), f))
 	{
 		char *platform;
 		char *expected;
@@ -969,8 +969,7 @@ run_schedule(const char *schedule)
 		exit_nicely(2);
 	}
 
-	memset(scbuf, 0, sizeof(scbuf));
-	while (fgets(scbuf, sizeof(scbuf)-1, scf))
+	while (fgets(scbuf, sizeof(scbuf), scf))
 	{
 		char *test = NULL;
 		char *c;
@@ -1396,7 +1395,7 @@ main(int argc, char *argv[])
 				 makeprog, top_builddir, temp_install, outputdir);
 		if (system(buf))
 		{
-			fprintf(stderr, _("\n%s: installation failed\nExamine %s/log/install.log for the reason.\n"), progname, outputdir);
+			fprintf(stderr, _("\n%s: installation failed\nExamine %s/log/install.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
 			exit_nicely(2);
 		}
 
@@ -1410,7 +1409,7 @@ main(int argc, char *argv[])
 				 outputdir);
 		if (system(buf))
 		{
-			fprintf(stderr, _("\n%s: initdb failed\nExamine %s/log/initdb.log for the reason.\n"), progname, outputdir);
+			fprintf(stderr, _("\n%s: initdb failed\nExamine %s/log/initdb.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
 			exit_nicely(2);
 		}
 
