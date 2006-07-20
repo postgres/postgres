@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.222 2006/04/19 16:32:08 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.223 2006/07/20 09:30:18 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -118,16 +118,18 @@ localedir := @localedir@
 
 else # PGXS case
 
-bindir := $(shell pg_config --bindir)
-datadir := $(shell pg_config --sharedir)
-sysconfdir := $(shell pg_config --sysconfdir)
-libdir := $(shell pg_config --libdir)
-pkglibdir := $(shell pg_config --pkglibdir)
-includedir := $(shell pg_config --includedir)
-pkgincludedir := $(shell pg_config --pkgincludedir)
-mandir := $(shell pg_config --mandir)
-docdir := $(shell pg_config --docdir)
-localedir := $(shell pg_config --localedir)
+PG_CONFIG = pg_config
+
+bindir := $(shell $(PG_CONFIG) --bindir)
+datadir := $(shell $(PG_CONFIG) --sharedir)
+sysconfdir := $(shell $(PG_CONFIG) --sysconfdir)
+libdir := $(shell $(PG_CONFIG) --libdir)
+pkglibdir := $(shell $(PG_CONFIG) --pkglibdir)
+includedir := $(shell $(PG_CONFIG) --includedir)
+pkgincludedir := $(shell $(PG_CONFIG) --pkgincludedir)
+mandir := $(shell $(PG_CONFIG) --mandir)
+docdir := $(shell $(PG_CONFIG) --docdir)
+localedir := $(shell $(PG_CONFIG) --localedir)
 
 endif # PGXS
 
