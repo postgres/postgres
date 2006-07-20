@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.8 2006/07/20 02:15:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.9 2006/07/20 03:30:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,6 +202,10 @@ stop_postmaster(void)
 	{
 		/* We use pg_ctl to issue the kill and wait for stop */
 		char buf[MAXPGPATH * 2];
+
+		/* On Windows, system() seems not to force fflush, so... */
+		fflush(stdout);
+		fflush(stderr);
 
 		snprintf(buf, sizeof(buf),
 				 SYSTEMQUOTE "\"%s/pg_ctl\" stop -D \"%s/data\" -s -m fast" SYSTEMQUOTE,
@@ -843,7 +847,7 @@ results_differ(const char *testname)
 	r = system(cmd);
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
 	{
-		fprintf(stderr, _("diff command failed: %s\n"), cmd);
+		fprintf(stderr, _("diff command failed with status %d: %s\n"), r, cmd);
 		exit_nicely(2);
 	}
 
@@ -872,7 +876,8 @@ results_differ(const char *testname)
 		r = system(cmd);
 		if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
 		{
-			fprintf(stderr, _("diff command failed: %s\n"), cmd);
+			fprintf(stderr, _("diff command failed with status %d: %s\n"),
+					r, cmd);
 			exit_nicely(2);
 		}
 
@@ -902,7 +907,7 @@ results_differ(const char *testname)
 	r = system(cmd);
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
 	{
-		fprintf(stderr, _("diff command failed: %s\n"), cmd);
+		fprintf(stderr, _("diff command failed with status %d: %s\n"), r, cmd);
 		exit_nicely(2);
 	}
 
