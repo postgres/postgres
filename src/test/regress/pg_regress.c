@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.6 2006/07/20 01:16:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.7 2006/07/20 02:10:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -919,47 +919,70 @@ results_differ(const char *testname)
 
 /*
  * Wait for specified subprocesses to finish
+ *
+ * If names isn't NULL, report each subprocess as it finishes
+ *
+ * Note: it's OK to scribble on the pids array, but not on the names array
  */
 static void
-wait_for_tests(PID_TYPE *pids, int num_tests)
+wait_for_tests(PID_TYPE *pids, char **names, int num_tests)
 {
-#ifndef WIN32
 	int tests_left;
 	int i;
+
+#ifdef WIN32
+	PID_TYPE *active_pids = malloc(num_tests * sizeof(PID_TYPE));
+
+	memcpy(active_pids, pids, num_tests * sizeof(PID_TYPE));
+#endif
 
 	tests_left = num_tests;
 	while (tests_left > 0)
 	{
-		pid_t p = wait(NULL);
+		PID_TYPE p;
 
-		if (p == -1)
+#ifndef WIN32
+		p = wait(NULL);
+
+		if (p == INVALID_PID)
 		{
-			fprintf(stderr, _("could not wait(): %s\n"), strerror(errno));
+			fprintf(stderr, _("failed to wait for subprocesses: %s\n"),
+					strerror(errno));
 			exit_nicely(2);
 		}
+#else
+		int r;
+
+		r = WaitForMultipleObjects(tests_left, active_pids, FALSE, INFINITE);
+		if (r < WAIT_OBJECT_0 || r >= WAIT_OBJECT_0 + tests_left)
+		{
+			fprintf(stderr, _("failed to wait for subprocesses: %lu\n"),
+					GetLastError());
+			exit_nicely(2);
+		}
+		p = active_pids[r - WAIT_OBJECT_0];
+		/* compact the active_pids array */
+		active_pids[r - WAIT_OBJECT_0] = active_pids[tests_left - 1];
+#endif /* WIN32 */
+
 		for (i=0; i < num_tests; i++)
 		{
-			/* Make sure we only count the processes we explicitly started */
 			if (p == pids[i])
 			{
-				pids[i] = -1;
+#ifdef WIN32
+				CloseHandle(pids[i]);
+#endif
+				pids[i] = INVALID_PID;
+				if (names)
+					status(" %s", names[i]);
 				tests_left--;
+				break;
 			}
 		}
 	}
-#else
-	int r;
-	int i;
 
-	r = WaitForMultipleObjects(num_tests, pids, TRUE, INFINITE);
-	if (r != WAIT_OBJECT_0)
-	{
-		fprintf(stderr, _("could not wait for commands to finish: %lu\n"),
-				GetLastError());
-		exit_nicely(2);
-	}
-	for (i = 0; i < num_tests; i++)
-		CloseHandle(pids[i]);
+#ifdef WIN32
+	free(active_pids);
 #endif
 }
 
@@ -1059,7 +1082,7 @@ run_schedule(const char *schedule)
 		{
 			status(_("test %-20s ... "), tests[0]);
 			pids[0] = psql_start_test(tests[0]);
-			wait_for_tests(pids, 1);
+			wait_for_tests(pids, NULL, 1);
 			/* status line is finished below */
 		}
 		else if (max_connections > 0 && max_connections < num_tests)
@@ -1072,13 +1095,12 @@ run_schedule(const char *schedule)
 			{
 				if (i - oldest >= max_connections)
 				{
-					wait_for_tests(pids + oldest, i - oldest);
+					wait_for_tests(pids + oldest, tests + oldest, i - oldest);
 					oldest = i;
 				}
-				status(" %s", tests[i]);
 				pids[i] = psql_start_test(tests[i]);
 			}
-			wait_for_tests(pids + oldest, i - oldest);
+			wait_for_tests(pids + oldest, tests + oldest, i - oldest);
 			status_end();
 		}
 		else
@@ -1086,10 +1108,9 @@ run_schedule(const char *schedule)
 			status(_("parallel group (%d tests): "), num_tests);
 			for (i = 0; i < num_tests; i++)
 			{
-				status(" %s", tests[i]);
 				pids[i] = psql_start_test(tests[i]);
 			}
-			wait_for_tests(pids, num_tests);
+			wait_for_tests(pids, tests, num_tests);
 			status_end();
 		}
 
@@ -1146,7 +1167,7 @@ run_single_test(const char *test)
 
 	status(_("test %-20s ... "), test);
 	pid = psql_start_test(test);
-	wait_for_tests(&pid, 1);
+	wait_for_tests(&pid, NULL, 1);
 
 	if (results_differ(test))
 	{
