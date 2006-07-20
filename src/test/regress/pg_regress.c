@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.9 2006/07/20 03:30:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.10 2006/07/20 16:25:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,7 @@ psql_start_test(const char *testname)
 			 outputdir, testname);
 
 	snprintf(psql_cmd, sizeof(psql_cmd),
-			 SYSTEMQUOTE "\"%s/psql\" -X -a -q -d \"%s\" <\"%s\" >\"%s\" 2>&1" SYSTEMQUOTE,
+			 SYSTEMQUOTE "\"%s/psql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
 			 bindir, dbname, infile, outfile);
 
 	pid = spawn_process(psql_cmd);
@@ -796,6 +796,32 @@ make_directory(const char *dir)
 }
 
 /*
+ * Run a "diff" command and check that it didn't crash
+ */
+static void
+run_diff(const char *cmd)
+{
+	int r;
+
+	r = system(cmd);
+	/*
+	 * XXX FIXME: it appears that include/port/win32.h's definitions of
+	 * WIFEXITED and related macros may be wrong.  They certainly don't
+	 * work for inspecting the results of system().  For the moment,
+	 * hard-wire the check on Windows.
+	 */
+#ifndef WIN32
+	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
+#else
+	if (r != 0 && r != 1)
+#endif
+	{
+		fprintf(stderr, _("diff command failed with status %d: %s\n"), r, cmd);
+		exit_nicely(2);
+	}
+}
+
+/*
  * Check the actual result file for the given test against expected results
  *
  * Returns true if different (failure), false if correct match found.
@@ -815,7 +841,6 @@ results_differ(const char *testname)
 	int best_line_count;
 	int i;
 	int l;
-	int r;
 
 	/* Check in resultmap if we should be looking at a different file */
 	expectname = testname;
@@ -842,14 +867,9 @@ results_differ(const char *testname)
 
 	/* OK, run the diff */
 	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >\"%s\"" SYSTEMQUOTE,
+			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
 			 basic_diff_opts, expectfile, resultsfile, diff);
-	r = system(cmd);
-	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
-	{
-		fprintf(stderr, _("diff command failed with status %d: %s\n"), r, cmd);
-		exit_nicely(2);
-	}
+	run_diff(cmd);
 
 	/* Is the diff file empty? */
 	if (file_size(diff) == 0)
@@ -871,15 +891,9 @@ results_differ(const char *testname)
 			continue;
 
 		snprintf(cmd, sizeof(cmd),
-				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >\"%s\"" SYSTEMQUOTE,
+				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
 				 basic_diff_opts, expectfile, resultsfile, diff);
-		r = system(cmd);
-		if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
-		{
-			fprintf(stderr, _("diff command failed with status %d: %s\n"),
-					r, cmd);
-			exit_nicely(2);
-		}
+		run_diff(cmd);
 
 		if (file_size(diff) == 0)
 		{
@@ -902,14 +916,9 @@ results_differ(const char *testname)
 	 * we append to the diffs summary file.
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >>\"%s\"" SYSTEMQUOTE,
+			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >> \"%s\"" SYSTEMQUOTE,
 			 pretty_diff_opts, best_expect_file, resultsfile, difffilename);
-	r = system(cmd);
-	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
-	{
-		fprintf(stderr, _("diff command failed with status %d: %s\n"), r, cmd);
-		exit_nicely(2);
-	}
+	run_diff(cmd);
 
 	/* And append a separator */
 	difffile = fopen(difffilename, "a");
@@ -1435,7 +1444,7 @@ main(int argc, char *argv[])
 
 		/* "make install" */
 		snprintf(buf, sizeof(buf),
-				 SYSTEMQUOTE "\"%s\" -C \"%s\" DESTDIR=\"%s/install\" install with_perl=no with_python=no >\"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
+				 SYSTEMQUOTE "\"%s\" -C \"%s\" DESTDIR=\"%s/install\" install with_perl=no with_python=no > \"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
 				 makeprog, top_builddir, temp_install, outputdir);
 		if (system(buf))
 		{
@@ -1446,10 +1455,10 @@ main(int argc, char *argv[])
 		/* initdb */
 		header(_("initializing database system"));
 		snprintf(buf, sizeof(buf),
-				 SYSTEMQUOTE "\"%s/initdb\" -D \"%s/data\" -L \"%s\" --noclean %s %s >\"%s/log/initdb.log\" 2>&1" SYSTEMQUOTE,
+				 SYSTEMQUOTE "\"%s/initdb\" -D \"%s/data\" -L \"%s\" --noclean%s%s > \"%s/log/initdb.log\" 2>&1" SYSTEMQUOTE,
 				 bindir, temp_install, datadir,
-				 debug ? "--debug" : "",
-				 nolocale ? "--no-locale" : "",
+				 debug ? " --debug" : "",
+				 nolocale ? " --no-locale" : "",
 				 outputdir);
 		if (system(buf))
 		{
@@ -1462,9 +1471,9 @@ main(int argc, char *argv[])
 		 */
 		header(_("starting postmaster"));
 		snprintf(buf, sizeof(buf),
-				 SYSTEMQUOTE "\"%s/postmaster\" -D \"%s/data\" -F %s -c \"listen_addresses=%s\" >\"%s/log/postmaster.log\" 2>&1" SYSTEMQUOTE,
+				 SYSTEMQUOTE "\"%s/postmaster\" -D \"%s/data\" -F%s -c \"listen_addresses=%s\" > \"%s/log/postmaster.log\" 2>&1" SYSTEMQUOTE,
 				 bindir, temp_install,
-				 debug ? "-d 5" : "",
+				 debug ? " -d 5" : "",
 				 hostname ? hostname : "",
 				 outputdir);
 		postmaster_pid = spawn_process(buf);
