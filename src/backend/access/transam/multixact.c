@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.11.2.1 2005/11/22 18:23:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.11.2.2 2006/07/20 00:46:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1490,9 +1490,14 @@ CheckPointMultiXact(void)
 
 	/*
 	 * Truncate the SLRU files.  This could be done at any time, but
-	 * checkpoint seems a reasonable place for it.
+	 * checkpoint seems a reasonable place for it.  There is one exception:
+	 * if we are called during xlog recovery, then shared->latest_page_number
+	 * isn't valid (because StartupMultiXact hasn't been called yet) and
+	 * so SimpleLruTruncate would get confused.  It seems best not to risk
+	 * removing any data during recovery anyway, so don't truncate.
 	 */
-	TruncateMultiXact();
+	if (!InRecovery)
+		TruncateMultiXact();
 }
 
 /*
