@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.5 2006/07/19 17:02:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.6 2006/07/20 01:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "getopt_long.h"
+#include "pg_config_paths.h"
 
 #ifndef WIN32
 #define PID_TYPE pid_t
@@ -51,9 +52,11 @@ typedef struct _resultmap
 } _resultmap;
 
 /*
- * Values inserted from Makefile.  (It might seem tempting to get the paths
- * via get_share_path() and friends, but that's not going to work because
- * pg_regress is typically not executed from an installed bin directory.)
+ * Values obtained from pg_config_paths.h and Makefile.  (It might seem
+ * tempting to get the paths via get_share_path() and friends, but that's
+ * not going to work because pg_regress is typically not executed from an
+ * installed bin directory.  In any case, for our purposes the configured
+ * paths are what we want anyway.)
  */
 static char *bindir = PGBINDIR;
 static char *libdir = LIBDIR;
