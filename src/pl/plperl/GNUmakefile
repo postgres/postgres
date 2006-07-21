@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.27 2006/07/19 02:37:00 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.28 2006/07/21 00:24:04 tgl Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -38,6 +38,8 @@ SHLIB_LINK = $(perl_embed_ldflags) $(BE_DLLLIBS)
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plperl
 REGRESS = plperl plperl_trigger plperl_shared plperl_elog
+# where to find psql for running the tests
+PSQLDIR = $(bindir)
 
 include $(top_srcdir)/src/Makefile.shlib
 
@@ -84,7 +86,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)'
 
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)
+	$(top_builddir)/src/test/regress/pg_regress --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:

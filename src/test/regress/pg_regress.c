@@ -3,7 +3,7 @@
  * pg_regress --- regression test driver
  *
  * This is a C implementation of the previous shell script for running
- * the regression tests, and should be highly compatible with it.
+ * the regression tests, and should be mostly compatible with it.
  * Initial author of C translation: Magnus Hagander
  *
  * This code is released under the terms of the PostgreSQL License.
@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.10 2006/07/20 16:25:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.11 2006/07/21 00:24:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,11 +52,11 @@ typedef struct _resultmap
 } _resultmap;
 
 /*
- * Values obtained from pg_config_paths.h and Makefile.  (It might seem
- * tempting to get the paths via get_share_path() and friends, but that's
- * not going to work because pg_regress is typically not executed from an
- * installed bin directory.  In any case, for our purposes the configured
- * paths are what we want anyway.)
+ * Values obtained from pg_config_paths.h and Makefile.  The PG installation
+ * paths are only used in temp_install mode: we use these strings to find
+ * out where "make install" will put stuff under the temp_install directory.
+ * In non-temp_install mode, the only thing we need is the location of psql,
+ * which we expect to find in psqldir, or in the PATH if psqldir isn't given.
  */
 static char *bindir = PGBINDIR;
 static char *libdir = LIBDIR;
@@ -85,6 +85,7 @@ static char *temp_install = NULL;
 static char *top_builddir = NULL;
 static int temp_port = 65432;
 static bool nolocale = false;
+static char *psqldir = NULL;
 static char *hostname = NULL;
 static int port = -1;
 static char *user = NULL;
@@ -499,6 +500,9 @@ initialize_environment(void)
 		sprintf(tmp, "%s/install/%s", temp_install, datadir);
 		datadir = tmp;
 
+		/* psql will be installed into temp-install bindir */
+		psqldir = bindir;
+
 		/*
 		 * Set up shared library paths to include the temp install.
 		 *
@@ -539,7 +543,8 @@ initialize_environment(void)
 
 		/*
 		 * On Windows, it seems to be necessary to adjust PATH even in
-		 * this case.
+		 * this case.  (XXX really?  If so, what if installation has
+		 * been relocated?)
 		 */
 #ifdef WIN32
 		add_to_path("PATH", ';', libdir);
@@ -600,8 +605,11 @@ psql_command(const char *database, const char *query, ...)
 
 	/* And now we can build and execute the shell command */
 	snprintf(psql_cmd, sizeof(psql_cmd),
-			 SYSTEMQUOTE "\"%s/psql\" -X -c \"%s\" \"%s\"" SYSTEMQUOTE,
-			 bindir, query_escaped, database);
+			 SYSTEMQUOTE "\"%s%spsql\" -X -c \"%s\" \"%s\"" SYSTEMQUOTE,
+			 psqldir ? psqldir : "",
+			 psqldir ? "/" : "",
+			 query_escaped,
+			 database);
 
 	if (system(psql_cmd) != 0)
 	{
@@ -699,8 +707,12 @@ psql_start_test(const char *testname)
 			 outputdir, testname);
 
 	snprintf(psql_cmd, sizeof(psql_cmd),
-			 SYSTEMQUOTE "\"%s/psql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
-			 bindir, dbname, infile, outfile);
+			 SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
+			 psqldir ? psqldir : "",
+			 psqldir ? "/" : "",
+			 dbname,
+			 infile,
+			 outfile);
 
 	pid = spawn_process(psql_cmd);
 
@@ -1267,6 +1279,7 @@ help(void)
 	printf(_("  --host=HOST               use postmaster running on HOST\n"));
 	printf(_("  --port=PORT               use postmaster running at PORT\n"));
 	printf(_("  --user=USER               connect as USER\n"));
+	printf(_("  --psqldir=DIR             use psql in DIR (default: find in PATH)\n"));
 	printf(_("\n"));
 	printf(_("The exit status is 0 if all tests passed, 1 if some tests failed, and 2\n"));
 	printf(_("if the tests could not be run for some reason.\n"));
@@ -1301,6 +1314,7 @@ main(int argc, char *argv[])
 		{"host", required_argument, NULL, 13},
 		{"port", required_argument, NULL, 14},
 		{"user", required_argument, NULL, 15},
+		{"psqldir", required_argument, NULL, 16},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -1387,6 +1401,11 @@ main(int argc, char *argv[])
 				break;
 			case 15:
 				user = strdup(optarg);
+				break;
+			case 16:
+				/* "--psqldir=" should mean to use PATH */
+				if (strlen(optarg))
+					psqldir = strdup(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
