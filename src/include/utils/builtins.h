@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.279 2006/04/08 18:49:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.280 2006/07/21 20:51:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,6 +538,13 @@ extern Datum tidrecv(PG_FUNCTION_ARGS);
 extern Datum tidsend(PG_FUNCTION_ARGS);
 extern Datum tideq(PG_FUNCTION_ARGS);
 extern Datum tidne(PG_FUNCTION_ARGS);
+extern Datum tidlt(PG_FUNCTION_ARGS);
+extern Datum tidle(PG_FUNCTION_ARGS);
+extern Datum tidgt(PG_FUNCTION_ARGS);
+extern Datum tidge(PG_FUNCTION_ARGS);
+extern Datum bttidcmp(PG_FUNCTION_ARGS);
+extern Datum tidlarger(PG_FUNCTION_ARGS);
+extern Datum tidsmaller(PG_FUNCTION_ARGS);
 extern Datum currtid_byreloid(PG_FUNCTION_ARGS);
 extern Datum currtid_byrelname(PG_FUNCTION_ARGS);
 

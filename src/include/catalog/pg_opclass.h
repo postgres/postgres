@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.70 2006/05/02 15:23:16 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.71 2006/07/21 20:51:33 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -162,6 +162,7 @@ DATA(insert OID = 2222 (	405		bool_ops		PGNSP PGUID   16 t 0 ));
 #define BOOL_HASH_OPS_OID 2222
 DATA(insert OID = 2223 (	405		bytea_ops		PGNSP PGUID   17 t 0 ));
 DATA(insert OID = 2224 (	405		int2vector_ops	PGNSP PGUID   22 t 0 ));
+DATA(insert OID = 2789 (	403		tid_ops			PGNSP PGUID   27 t 0 ));
 DATA(insert OID = 2225 (	405		xid_ops			PGNSP PGUID   28 t 0 ));
 DATA(insert OID = 2226 (	405		cid_ops			PGNSP PGUID   29 t 0 ));
 DATA(insert OID = 2227 (	405		abstime_ops		PGNSP PGUID  702 t 0 ));

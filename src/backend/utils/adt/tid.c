@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.53 2006/07/14 05:28:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.54 2006/07/21 20:51:32 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -98,16 +98,11 @@ Datum
 tidout(PG_FUNCTION_ARGS)
 {
 	ItemPointer itemPtr = PG_GETARG_ITEMPOINTER(0);
-	BlockId		blockId;
 	BlockNumber blockNumber;
 	OffsetNumber offsetNumber;
 	char		buf[32];
 
-	if (!ItemPointerIsValid(itemPtr))
-		PG_RETURN_CSTRING(pstrdup("()"));
-
-	blockId = &(itemPtr->ip_blkid);
-	blockNumber = BlockIdGetBlockNumber(blockId);
+	blockNumber = BlockIdGetBlockNumber(&(itemPtr->ip_blkid));
 	offsetNumber = itemPtr->ip_posid;
 
 	/* Perhaps someday we should output this as a record. */
@@ -163,15 +158,36 @@ tidsend(PG_FUNCTION_ARGS)
  *	 PUBLIC ROUTINES														 *
  *****************************************************************************/
 
+static int32
+tid_cmp_internal(ItemPointer arg1, ItemPointer arg2)
+{
+	/*
+	 * Don't use ItemPointerGetBlockNumber or ItemPointerGetOffsetNumber here,
+	 * because they assert ip_posid != 0 which might not be true for a
+	 * user-supplied TID.
+	 */
+	BlockNumber b1 = BlockIdGetBlockNumber(&(arg1->ip_blkid));
+	BlockNumber b2 = BlockIdGetBlockNumber(&(arg2->ip_blkid));
+	
+	if (b1 < b2)
+		return -1;
+	else if (b1 > b2)
+		return 1;
+	else if (arg1->ip_posid < arg2->ip_posid)
+		return -1;
+	else if (arg1->ip_posid > arg2->ip_posid)
+		return 1;
+	else
+		return 0;
+}
+
 Datum
 tideq(PG_FUNCTION_ARGS)
 {
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(BlockIdGetBlockNumber(&(arg1->ip_blkid)) ==
-				   BlockIdGetBlockNumber(&(arg2->ip_blkid)) &&
-				   arg1->ip_posid == arg2->ip_posid);
+	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) == 0);
 }
 
 Datum
@@ -180,10 +196,72 @@ tidne(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(BlockIdGetBlockNumber(&(arg1->ip_blkid)) !=
-				   BlockIdGetBlockNumber(&(arg2->ip_blkid)) ||
-				   arg1->ip_posid != arg2->ip_posid);
+	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) != 0);
 }
+
+Datum
+tidlt(PG_FUNCTION_ARGS)
+{
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
+
+	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) < 0);
+}
+
+Datum
+tidle(PG_FUNCTION_ARGS)
+{
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
+
+	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) <= 0);
+}
+
+Datum
+tidgt(PG_FUNCTION_ARGS)
+{
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
+
+	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) > 0);
+}
+
+Datum
+tidge(PG_FUNCTION_ARGS)
+{
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
+
+	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) >= 0);
+}
+
+Datum
+bttidcmp(PG_FUNCTION_ARGS)
+{
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
+
+	PG_RETURN_INT32(tid_cmp_internal(arg1, arg2));
+}
+
+Datum
+tidlarger(PG_FUNCTION_ARGS)
+{
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
+
+	PG_RETURN_ITEMPOINTER(tid_cmp_internal(arg1,arg2) >= 0 ? arg1 : arg2);
+}
+
+Datum
+tidsmaller(PG_FUNCTION_ARGS)
+{
+	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
+	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
+
+	PG_RETURN_ITEMPOINTER(tid_cmp_internal(arg1,arg2) <= 0 ? arg1 : arg2);
+}
+
 
 /*
  *	Functions to get latest tid of a specified tuple.

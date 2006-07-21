@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.143 2006/05/02 11:28:55 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.144 2006/07/21 20:51:33 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -128,9 +128,15 @@ DATA(insert OID = 388 (  "!"	   PGNSP PGUID r f	20	 0	1700   0   0   0   0  0   
 DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f	 0	20	1700   0   0   0   0  0   0 numeric_fac - - ));
 DATA(insert OID = 385 (  "="	   PGNSP PGUID b t	29	29	16 385	 0	 0	 0	 0	 0 cideq eqsel eqjoinsel ));
 DATA(insert OID = 386 (  "="	   PGNSP PGUID b t	22	22	16 386	 0	 0	 0	 0	 0 int2vectoreq eqsel eqjoinsel ));
-DATA(insert OID = 387 (  "="	   PGNSP PGUID b f	27	27	16 387 402	 0	 0	 0	 0 tideq eqsel eqjoinsel ));
+
+DATA(insert OID = 387 (  "="	   PGNSP PGUID b f	27	27	16 387 402 2799 2799 2799 2800 tideq eqsel eqjoinsel ));
 #define TIDEqualOperator   387
-DATA(insert OID = 402 (  "<>"	   PGNSP PGUID b f	27	27	16 402 387	 0	 0	 0	 0 tidne neqsel neqjoinsel ));
+DATA(insert OID = 402 (  "<>"	   PGNSP PGUID b f	27	27	16 402 387 0 0 0 0 tidne neqsel neqjoinsel ));
+DATA(insert OID = 2799 (  "<"      PGNSP PGUID b f  27  27  16 2800 2802 0 0 0 0 tidlt scalarltsel scalarltjoinsel ));
+#define TIDLessOperator    2799
+DATA(insert OID = 2800 (  ">"      PGNSP PGUID b f  27  27  16 2799 2801 0 0 0 0 tidgt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2801 (  "<="     PGNSP PGUID b f  27  27  16 2802 2800 0 0 0 0 tidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2802 (  ">="     PGNSP PGUID b f  27  27  16 2801 2799 0 0 0 0 tidge scalargtsel scalargtjoinsel ));
 
 DATA(insert OID = 410 ( "="		   PGNSP PGUID b t	20	20	16 410 411 412 412 412 413 int8eq eqsel eqjoinsel ));
 DATA(insert OID = 411 ( "<>"	   PGNSP PGUID b f	20	20	16 411 410 0 0 0 0 int8ne neqsel neqjoinsel ));
@@ -262,6 +268,7 @@ DATA(insert OID = 596 (  "|/"	   PGNSP PGUID l f	 0 701 701	 0	 0	 0	 0	 0	 0 ds
 DATA(insert OID = 597 (  "||/"	   PGNSP PGUID l f	 0 701 701	 0	 0	 0	 0	 0	 0 dcbrt - - ));
 DATA(insert OID = 1284 (  "|"	   PGNSP PGUID l f	 0 704 702	0  0   0   0   0   0 tintervalstart - - ));
 DATA(insert OID = 606 (  "<#>"	   PGNSP PGUID b f 702 702 704	0  0   0   0   0   0 mktinterval - - ));
+
 DATA(insert OID = 607 (  "="	   PGNSP PGUID b t	26	26	16 607 608 609 609 609 610 oideq eqsel eqjoinsel ));
 #define MIN_OIDCMP 607			/* used by cache code */
 DATA(insert OID = 608 (  "<>"	   PGNSP PGUID b f	26	26	16 608 607	0  0   0   0 oidne neqsel neqjoinsel ));
