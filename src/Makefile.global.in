@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.223 2006/07/20 09:30:18 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.224 2006/07/21 22:37:37 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -511,17 +511,6 @@ install-strip:
 # Next time we invoke make we will have top-notch information about
 # whether this file needs to be updated. The dependency files are kept
 # in the .deps subdirectory of each directory.
-#
-# The sed command is necessary to post-process the dependency file:
-# Each dependency file becomes a target of its own, without
-# dependencies or commands. This is because if you happen to remove a
-# file that is a dependency (say, you rename a header file) the
-# dependency would point to a non-existing file and make would fail.
-# But if the file is listed as a target of its own, without
-# prerequisites and commands, and doesn't exist then make will
-# consider it updated. (That in turn also has the nice side effect
-# that make will update all files that depended on the now removed
-# file.)
 
 autodepend = @autodepend@
 
@@ -532,38 +521,27 @@ COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) -c
 endif
 
 DEPDIR = .deps
-df = $(DEPDIR)/$(*F)
-
-# This converts a .d file in the current directory to a .P file in the .deps
-# subdirectory, with the dummy targets as explained above.
-define postprocess-depend
-@if test ! -d $(DEPDIR); then mkdir -p $(DEPDIR); fi
-@cp $*.d $(df).P
-@sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-     -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $(df).P
-@rm -f $*.d
-endef
 
 ifeq ($(GCC), yes)
 
 # GCC allows us to create object and dependency file in one invocation.
 %.o : %.c
-	$(COMPILE.c) -o $@ $< -MMD
-	$(postprocess-depend)
+	@if test ! -d $(DEPDIR); then mkdir -p $(DEPDIR); fi
+	$(COMPILE.c) -o $@ $< -MMD -MP -MF $(DEPDIR)/$(*F).Po
 
 endif # GCC
 
 # Include all the dependency files generated for the current
 # directory. List /dev/null as dummy because if the wildcard expands
 # to nothing then make would complain.
--include $(wildcard $(DEPDIR)/*.P) /dev/null
+-include $(wildcard $(DEPDIR)/*.Po) /dev/null
 
 # hook for clean-up
 clean distclean maintainer-clean: clean-deps
 
 .PHONY: clean-deps
 clean-deps:
-	@rm -rf $(DEPDIR) *.d
+	@rm -rf $(DEPDIR)
 
 endif # autodepend
 
