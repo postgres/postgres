@@ -16,12 +16,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/spin.c,v 1.20 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/spin.c,v 1.21 2006/07/22 21:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "miscadmin.h"
+#include "storage/lwlock.h"
 #include "storage/spin.h"
 
 
@@ -53,9 +55,9 @@ SpinlockSemas(void)
 	 * similar to the way shmem space estimation is handled.
 	 *
 	 * For now, though, we just need a few spinlocks (10 should be plenty)
-	 * plus one for each LWLock.
+	 * plus one for each LWLock and one for each buffer header.
 	 */
-	return NumLWLocks() + 10;
+	return NumLWLocks() + NBuffers + 10;
 }
 
 /*
