@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.166 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.167 2006/07/22 23:04:39 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -1958,7 +1958,7 @@ GetLockStatusData(void)
 	{
 		LWLockAcquire(FirstLockMgrLock + i, LW_SHARED);
 		proclockTable = LockMethodProcLockHash[i];
-		els += proclockTable->hctl->nentries;
+		els += hash_get_num_entries(proclockTable);
 	}
 
 	data->nelements = els;

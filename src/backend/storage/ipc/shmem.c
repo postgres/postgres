@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.93 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.94 2006/07/22 23:04:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,9 +211,6 @@ InitShmemIndex(void)
 {
 	HASHCTL		info;
 	int			hash_flags;
-	ShmemIndexEnt *result,
-				item;
-	bool		found;
 
 	/*
 	 * Since ShmemInitHash calls ShmemInitStruct, which expects the ShmemIndex
@@ -227,32 +224,11 @@ InitShmemIndex(void)
 	info.entrysize = sizeof(ShmemIndexEnt);
 	hash_flags = HASH_ELEM;
 
-	/* This will acquire the shmem index lock, but not release it. */
 	ShmemIndex = ShmemInitHash("ShmemIndex",
 							   SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
 							   &info, hash_flags);
 	if (!ShmemIndex)
 		elog(FATAL, "could not initialize Shmem Index");
-
-	/*
-	 * Now, create an entry in the hashtable for the index itself.
-	 */
-	if (!IsUnderPostmaster)
-	{
-		MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
-		strncpy(item.key, "ShmemIndex", SHMEM_INDEX_KEYSIZE);
-
-		result = (ShmemIndexEnt *)
-			hash_search(ShmemIndex, (void *) &item, HASH_ENTER, &found);
-
-		Assert(!found);
-
-		result->location = MAKE_OFFSET(ShmemIndex->hctl);
-		result->size = SHMEM_INDEX_SIZE;
-	}
-
-	/* now release the lock acquired in ShmemInitStruct */
-	LWLockRelease(ShmemIndexLock);
 }
 
 /*
@@ -295,7 +271,7 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
-						sizeof(HASHHDR) + infoP->dsize * sizeof(HASHSEGMENT),
+							   hash_get_shared_size(infoP, hash_flags),
 							   &found);
 
 	/*
@@ -312,9 +288,8 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
 	if (found)
 		hash_flags |= HASH_ATTACH;
 
-	/* Now provide the header and directory pointers */
+	/* Pass location of hashtable header to hash_create */
 	infoP->hctl = (HASHHDR *) location;
-	infoP->dir = (HASHSEGMENT *) (((char *) location) + sizeof(HASHHDR));
 
 	return hash_create(name, init_size, infoP, hash_flags);
 }
@@ -363,14 +338,16 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			 * If the shmem index doesn't exist, we are bootstrapping: we must
 			 * be trying to init the shmem index itself.
 			 *
-			 * Notice that the ShmemIndexLock is held until the shmem index
-			 * has been completely initialized.
+			 * Notice that the ShmemIndexLock is released before the shmem
+			 * index has been initialized.  This should be OK because no
+			 * other process can be accessing shared memory yet.
 			 */
 			Assert(shmemseghdr->indexoffset == 0);
 			structPtr = ShmemAlloc(size);
 			shmemseghdr->indexoffset = MAKE_OFFSET(structPtr);
 			*foundPtr = FALSE;
 		}
+		LWLockRelease(ShmemIndexLock);
 		return structPtr;
 	}
 
