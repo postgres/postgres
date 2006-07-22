@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.11 2006/07/21 00:24:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.12 2006/07/22 14:05:20 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,7 +513,7 @@ initialize_environment(void)
 		 */
 		add_to_path("LD_LIBRARY_PATH", ':', libdir);
 		add_to_path("DYLD_LIBRARY_PATH", ':', libdir);
-#ifdef WIN32
+#if defined(WIN32) || defined(CYGWIN)
 		add_to_path("PATH", ';', libdir);
 #endif
 	}
@@ -546,7 +546,7 @@ initialize_environment(void)
 		 * this case.  (XXX really?  If so, what if installation has
 		 * been relocated?)
 		 */
-#ifdef WIN32
+#if defined(WIN32) || defined(CYGWIN)
 		add_to_path("PATH", ';', libdir);
 #endif
 
