@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.162 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.163 2006/07/22 15:41:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,13 +437,17 @@ index_pages_fetched(double tuples_fetched, BlockNumber pages,
  *
  * 'baserel' is the relation to be scanned
  * 'bitmapqual' is a tree of IndexPaths, BitmapAndPaths, and BitmapOrPaths
+ * 'outer_rel' is the outer relation when we are considering using the bitmap
+ *		scan as the inside of a nestloop join (hence, some of the indexQuals
+ *		are join clauses, and we should expect repeated scans of the table);
+ *		NULL for a plain bitmap scan
  *
- * Note: we take no explicit notice here of whether this is a join inner path.
- * If it is, the component IndexPaths should have been costed accordingly.
+ * Note: if this is a join inner path, the component IndexPaths in bitmapqual
+ * should have been costed accordingly.
  */
 void
 cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  Path *bitmapqual)
+					  Path *bitmapqual, RelOptInfo *outer_rel)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -472,14 +476,36 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	startup_cost += indexTotalCost;
 
 	/*
-	 * The number of heap pages that need to be fetched is the same as the
-	 * Mackert and Lohman formula for the case T <= b (ie, no re-reads
-	 * needed).
+	 * Estimate number of main-table pages fetched.
 	 */
 	tuples_fetched = clamp_row_est(indexSelectivity * baserel->tuples);
 
 	T = (baserel->pages > 1) ? (double) baserel->pages : 1.0;
-	pages_fetched = (2.0 * T * tuples_fetched) / (2.0 * T + tuples_fetched);
+
+	if (outer_rel != NULL && outer_rel->rows > 1)
+	{
+		/*
+		 * For repeated bitmap scans, scale up the number of tuples fetched
+		 * in the Mackert and Lohman formula by the number of scans, so
+		 * that we estimate the number of pages fetched by all the scans.
+		 * Then pro-rate for one scan.
+		 */
+		double		num_scans = outer_rel->rows;
+
+		pages_fetched = index_pages_fetched(tuples_fetched * num_scans,
+											baserel->pages,
+											0 /* XXX total index size? */);
+		pages_fetched /= num_scans;
+	}
+	else
+	{
+		/*
+		 * For a single scan, the number of heap pages that need to be fetched
+		 * is the same as the Mackert and Lohman formula for the case T <= b
+		 * (ie, no re-reads needed).
+		 */
+		pages_fetched = (2.0 * T * tuples_fetched) / (2.0 * T + tuples_fetched);
+	}
 	if (pages_fetched >= T)
 		pages_fetched = T;
 	else

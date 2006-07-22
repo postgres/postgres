@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.210 2006/07/13 17:47:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.211 2006/07/22 15:41:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,11 @@ static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 static List *find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
 				List *clauses, List *outer_clauses,
 				bool istoplevel, RelOptInfo *outer_rel);
-static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths);
+static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
+							   List *paths, RelOptInfo *outer_rel);
 static int	bitmap_path_comparator(const void *a, const void *b);
-static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths);
+static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
+								List *paths, RelOptInfo *outer_rel);
 static List *pull_indexpath_quals(Path *bitmapqual);
 static bool lists_intersect_ptr(List *list1, List *list2);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
@@ -210,8 +212,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		Path	   *bitmapqual;
 		BitmapHeapPath *bpath;
 
-		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-		bpath = create_bitmap_heap_path(root, rel, bitmapqual, false);
+		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths, NULL);
+		bpath = create_bitmap_heap_path(root, rel, bitmapqual, NULL);
 		add_path(rel, (Path *) bpath);
 	}
 }
@@ -536,7 +538,7 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 			 * OK, pick the most promising AND combination, and add it to
 			 * pathlist.
 			 */
-			bitmapqual = choose_bitmap_and(root, rel, indlist);
+			bitmapqual = choose_bitmap_and(root, rel, indlist, outer_rel);
 			pathlist = lappend(pathlist, bitmapqual);
 		}
 
@@ -567,7 +569,8 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
  * combining multiple inputs.
  */
 static Path *
-choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
+choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
+				  List *paths, RelOptInfo *outer_rel)
 {
 	int			npaths = list_length(paths);
 	Path	  **patharray;
@@ -629,7 +632,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	qsort(patharray, npaths, sizeof(Path *), bitmap_path_comparator);
 
 	paths = list_make1(patharray[0]);
-	costsofar = bitmap_and_cost_est(root, rel, paths);
+	costsofar = bitmap_and_cost_est(root, rel, paths, outer_rel);
 	qualsofar = pull_indexpath_quals(patharray[0]);
 	lastcell = list_head(paths);	/* for quick deletions */
 
@@ -644,7 +647,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 			continue;			/* consider it redundant */
 		/* tentatively add newpath to paths, so we can estimate cost */
 		paths = lappend(paths, newpath);
-		newcost = bitmap_and_cost_est(root, rel, paths);
+		newcost = bitmap_and_cost_est(root, rel, paths, outer_rel);
 		if (newcost < costsofar)
 		{
 			/* keep newpath in paths, update subsidiary variables */
@@ -702,7 +705,8 @@ bitmap_path_comparator(const void *a, const void *b)
  * inputs.
  */
 static Cost
-bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
+bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
+					List *paths, RelOptInfo *outer_rel)
 {
 	BitmapAndPath apath;
 	Path		bpath;
@@ -714,7 +718,7 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	cost_bitmap_and_node(&apath, root);
 
 	/* Now we can do cost_bitmap_heap_scan */
-	cost_bitmap_heap_scan(&bpath, root, rel, (Path *) &apath);
+	cost_bitmap_heap_scan(&bpath, root, rel, (Path *) &apath, outer_rel);
 
 	return bpath.total_cost;
 }
@@ -1486,8 +1490,8 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 		Path	   *bitmapqual;
 		BitmapHeapPath *bpath;
 
-		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-		bpath = create_bitmap_heap_path(root, rel, bitmapqual, true);
+		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths, outer_rel);
+		bpath = create_bitmap_heap_path(root, rel, bitmapqual, outer_rel);
 		indexpaths = lappend(indexpaths, bpath);
 	}
 

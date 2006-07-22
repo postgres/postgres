@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.130 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.131 2006/07/22 15:41:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,14 +513,14 @@ create_index_path(PlannerInfo *root,
  *
  * 'bitmapqual' is a tree of IndexPath, BitmapAndPath, and BitmapOrPath nodes.
  *
- * If this is a join inner indexscan path, the component IndexPaths should
- * have been costed accordingly, and TRUE should be passed for isjoininner.
+ * If this is a join inner indexscan path, 'outer_rel' is the outer relation,
+ * and all the component IndexPaths should have been costed accordingly.
  */
 BitmapHeapPath *
 create_bitmap_heap_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,
-						bool isjoininner)
+						RelOptInfo *outer_rel)
 {
 	BitmapHeapPath *pathnode = makeNode(BitmapHeapPath);
 
@@ -529,9 +529,9 @@ create_bitmap_heap_path(PlannerInfo *root,
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	pathnode->bitmapqual = bitmapqual;
-	pathnode->isjoininner = isjoininner;
+	pathnode->isjoininner = (outer_rel != NULL);
 
-	if (isjoininner)
+	if (pathnode->isjoininner)
 	{
 		/*
 		 * We must compute the estimated number of output rows for the
@@ -560,7 +560,7 @@ create_bitmap_heap_path(PlannerInfo *root,
 		pathnode->rows = rel->rows;
 	}
 
-	cost_bitmap_heap_scan(&pathnode->path, root, rel, bitmapqual);
+	cost_bitmap_heap_scan(&pathnode->path, root, rel, bitmapqual, outer_rel);
 
 	return pathnode;
 }
