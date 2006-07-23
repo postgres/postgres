@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.208 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.209 2006/07/23 03:07:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,11 @@ BufferAlloc(Relation reln,
 			bool *foundPtr)
 {
 	BufferTag	newTag;			/* identity of requested block */
-	BufferTag	oldTag;
+	uint32		newHash;		/* hash value for newTag */
+	LWLockId	newPartitionLock;	/* buffer partition lock for it */
+	BufferTag	oldTag;			/* previous identity of selected buffer */
+	uint32		oldHash;		/* hash value for oldTag */
+	LWLockId	oldPartitionLock;	/* buffer partition lock for it */
 	BufFlags	oldFlags;
 	int			buf_id;
 	volatile BufferDesc *buf;
@@ -302,9 +306,13 @@ BufferAlloc(Relation reln,
 	/* create a tag so we can lookup the buffer */
 	INIT_BUFFERTAG(newTag, reln, blockNum);
 
+	/* determine its hash code and partition lock ID */
+	newHash = BufTableHashCode(&newTag);
+	newPartitionLock = BufMappingPartitionLock(newHash);
+
 	/* see if the block is in the buffer pool already */
-	LWLockAcquire(BufMappingLock, LW_SHARED);
-	buf_id = BufTableLookup(&newTag);
+	LWLockAcquire(newPartitionLock, LW_SHARED);
+	buf_id = BufTableLookup(&newTag, newHash);
 	if (buf_id >= 0)
 	{
 		/*
@@ -317,7 +325,7 @@ BufferAlloc(Relation reln,
 		valid = PinBuffer(buf);
 
 		/* Can release the mapping lock as soon as we've pinned it */
-		LWLockRelease(BufMappingLock);
+		LWLockRelease(newPartitionLock);
 
 		*foundPtr = TRUE;
 
@@ -345,9 +353,9 @@ BufferAlloc(Relation reln,
 
 	/*
 	 * Didn't find it in the buffer pool.  We'll have to initialize a new
-	 * buffer.	Remember to unlock BufMappingLock while doing the work.
+	 * buffer.	Remember to unlock the mapping lock while doing the work.
 	 */
-	LWLockRelease(BufMappingLock);
+	LWLockRelease(newPartitionLock);
 
 	/* Loop here in case we have to try another victim buffer */
 	for (;;)
@@ -412,10 +420,48 @@ BufferAlloc(Relation reln,
 		}
 
 		/*
-		 * Acquire exclusive mapping lock in preparation for changing the
-		 * buffer's association.
+		 * To change the association of a valid buffer, we'll need to have
+		 * exclusive lock on both the old and new mapping partitions.
 		 */
-		LWLockAcquire(BufMappingLock, LW_EXCLUSIVE);
+		if (oldFlags & BM_TAG_VALID)
+		{
+			/*
+			 * Need to compute the old tag's hashcode and partition lock ID.
+			 * XXX is it worth storing the hashcode in BufferDesc so we need
+			 * not recompute it here?  Probably not.
+			 */
+			oldTag = buf->tag;
+			oldHash = BufTableHashCode(&oldTag);
+			oldPartitionLock = BufMappingPartitionLock(oldHash);
+
+			/*
+			 * Must lock the lower-numbered partition first to avoid
+			 * deadlocks.
+			 */
+			if (oldPartitionLock < newPartitionLock)
+			{
+				LWLockAcquire(oldPartitionLock, LW_EXCLUSIVE);
+				LWLockAcquire(newPartitionLock, LW_EXCLUSIVE);
+			}
+			else if (oldPartitionLock > newPartitionLock)
+			{
+				LWLockAcquire(newPartitionLock, LW_EXCLUSIVE);
+				LWLockAcquire(oldPartitionLock, LW_EXCLUSIVE);
+			}
+			else
+			{
+				/* only one partition, only one lock */
+				LWLockAcquire(newPartitionLock, LW_EXCLUSIVE);
+			}
+		}
+		else
+		{
+			/* if it wasn't valid, we need only the new partition */
+			LWLockAcquire(newPartitionLock, LW_EXCLUSIVE);
+			/* these just keep the compiler quiet about uninit variables */
+			oldHash = 0;
+			oldPartitionLock = 0;
+		}
 
 		/*
 		 * Try to make a hashtable entry for the buffer under its new tag.
@@ -424,7 +470,7 @@ BufferAlloc(Relation reln,
 		 * Note that we have not yet removed the hashtable entry for the old
 		 * tag.
 		 */
-		buf_id = BufTableInsert(&newTag, buf->buf_id);
+		buf_id = BufTableInsert(&newTag, newHash, buf->buf_id);
 
 		if (buf_id >= 0)
 		{
@@ -433,9 +479,14 @@ BufferAlloc(Relation reln,
 			 * do. We'll just handle this as if it were found in the buffer
 			 * pool in the first place.  First, give up the buffer we were
 			 * planning to use.  Don't allow it to be thrown in the free list
-			 * (we don't want to hold both global locks at once).
+			 * (we don't want to hold freelist and mapping locks at once).
 			 */
 			UnpinBuffer(buf, true, false);
+
+			/* Can give up that buffer's mapping partition lock now */
+			if ((oldFlags & BM_TAG_VALID) &&
+				oldPartitionLock != newPartitionLock)
+				LWLockRelease(oldPartitionLock);
 
 			/* remaining code should match code at top of routine */
 
@@ -444,7 +495,7 @@ BufferAlloc(Relation reln,
 			valid = PinBuffer(buf);
 
 			/* Can release the mapping lock as soon as we've pinned it */
-			LWLockRelease(BufMappingLock);
+			LWLockRelease(newPartitionLock);
 
 			*foundPtr = TRUE;
 
@@ -481,12 +532,16 @@ BufferAlloc(Relation reln,
 		 * recycle this buffer; we must undo everything we've done and start
 		 * over with a new victim buffer.
 		 */
-		if (buf->refcount == 1 && !(buf->flags & BM_DIRTY))
+		oldFlags = buf->flags;
+		if (buf->refcount == 1 && !(oldFlags & BM_DIRTY))
 			break;
 
 		UnlockBufHdr(buf);
-		BufTableDelete(&newTag);
-		LWLockRelease(BufMappingLock);
+		BufTableDelete(&newTag, newHash);
+		if ((oldFlags & BM_TAG_VALID) &&
+			oldPartitionLock != newPartitionLock)
+			LWLockRelease(oldPartitionLock);
+		LWLockRelease(newPartitionLock);
 		UnpinBuffer(buf, true, false /* evidently recently used */ );
 	}
 
@@ -497,8 +552,6 @@ BufferAlloc(Relation reln,
 	 * paranoia.  We also clear the usage_count since any recency of use of
 	 * the old content is no longer relevant.
 	 */
-	oldTag = buf->tag;
-	oldFlags = buf->flags;
 	buf->tag = newTag;
 	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_IO_ERROR);
 	buf->flags |= BM_TAG_VALID;
@@ -507,9 +560,13 @@ BufferAlloc(Relation reln,
 	UnlockBufHdr(buf);
 
 	if (oldFlags & BM_TAG_VALID)
-		BufTableDelete(&oldTag);
+	{
+		BufTableDelete(&oldTag, oldHash);
+		if (oldPartitionLock != newPartitionLock)
+			LWLockRelease(oldPartitionLock);
+	}
 
-	LWLockRelease(BufMappingLock);
+	LWLockRelease(newPartitionLock);
 
 	/*
 	 * Buffer contents are currently invalid.  Try to get the io_in_progress
@@ -545,6 +602,8 @@ static void
 InvalidateBuffer(volatile BufferDesc *buf)
 {
 	BufferTag	oldTag;
+	uint32		oldHash;		/* hash value for oldTag */
+	LWLockId	oldPartitionLock;	/* buffer partition lock for it */
 	BufFlags	oldFlags;
 
 	/* Save the original buffer tag before dropping the spinlock */
@@ -552,13 +611,21 @@ InvalidateBuffer(volatile BufferDesc *buf)
 
 	UnlockBufHdr(buf);
 
+	/*
+	 * Need to compute the old tag's hashcode and partition lock ID.
+	 * XXX is it worth storing the hashcode in BufferDesc so we need
+	 * not recompute it here?  Probably not.
+	 */
+	oldHash = BufTableHashCode(&oldTag);
+	oldPartitionLock = BufMappingPartitionLock(oldHash);
+
 retry:
 
 	/*
 	 * Acquire exclusive mapping lock in preparation for changing the buffer's
 	 * association.
 	 */
-	LWLockAcquire(BufMappingLock, LW_EXCLUSIVE);
+	LWLockAcquire(oldPartitionLock, LW_EXCLUSIVE);
 
 	/* Re-lock the buffer header */
 	LockBufHdr(buf);
@@ -567,7 +634,7 @@ retry:
 	if (!BUFFERTAGS_EQUAL(buf->tag, oldTag))
 	{
 		UnlockBufHdr(buf);
-		LWLockRelease(BufMappingLock);
+		LWLockRelease(oldPartitionLock);
 		return;
 	}
 
@@ -583,7 +650,7 @@ retry:
 	if (buf->refcount != 0)
 	{
 		UnlockBufHdr(buf);
-		LWLockRelease(BufMappingLock);
+		LWLockRelease(oldPartitionLock);
 		/* safety check: should definitely not be our *own* pin */
 		if (PrivateRefCount[buf->buf_id] != 0)
 			elog(ERROR, "buffer is pinned in InvalidateBuffer");
@@ -606,7 +673,7 @@ retry:
 	 * Remove the buffer from the lookup hashtable, if it was in there.
 	 */
 	if (oldFlags & BM_TAG_VALID)
-		BufTableDelete(&oldTag);
+		BufTableDelete(&oldTag, oldHash);
 
 	/*
 	 * Avoid accepting a cancel interrupt when we release the mapping lock;
@@ -616,7 +683,7 @@ retry:
 	 */
 	HOLD_INTERRUPTS();
 
-	LWLockRelease(BufMappingLock);
+	LWLockRelease(oldPartitionLock);
 
 	/*
 	 * Insert the buffer at the head of the list of free buffers.

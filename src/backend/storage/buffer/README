@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.10 2006/06/08 14:58:33 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.11 2006/07/23 03:07:58 tgl Exp $
 
 Notes about shared buffer access rules
 --------------------------------------
@@ -113,6 +113,14 @@ header fields and changing the buf_table hash table.  The only common
 operation that needs exclusive lock is reading in a page that was not
 in shared buffers already, which will require at least a kernel call
 and usually a wait for I/O, so it will be slow anyway.
+
+* As of PG 8.2, the BufMappingLock has been split into NUM_BUFFER_PARTITIONS
+separate locks, each guarding a portion of the buffer tag space.  This allows
+further reduction of contention in the normal code paths.  The partition
+that a particular buffer tag belongs to is determined from the low-order
+bits of the tag's hash value.  The rules stated above apply to each partition
+independently.  If it is necessary to lock more than one partition at a time,
+they must be locked in partition-number order to avoid risk of deadlock.
 
 * A separate system-wide LWLock, the BufFreelistLock, provides mutual
 exclusion for operations that access the buffer free list or select

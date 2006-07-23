@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.86 2006/03/31 23:32:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.87 2006/07/23 03:07:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,17 @@ typedef struct buftag
 	RelFileNodeEquals((a).rnode, (b).rnode) && \
 	(a).blockNum == (b).blockNum \
 )
+
+/*
+ * The shared buffer mapping table is partitioned to reduce contention.
+ * To determine which partition lock a given tag requires, compute the tag's
+ * hash code with BufTableHashCode(), then apply BufMappingPartitionLock().
+ * NB: NUM_BUFFER_PARTITIONS must be a power of 2!
+ */
+#define BufTableHashPartition(hashcode) \
+	((hashcode) % NUM_BUFFER_PARTITIONS)
+#define BufMappingPartitionLock(hashcode) \
+	((LWLockId) (FirstBufMappingLock + BufTableHashPartition(hashcode)))
 
 /*
  *	BufferDesc -- shared descriptor/state data for a single shared buffer.
@@ -182,9 +193,10 @@ extern void StrategyInitialize(bool init);
 /* buf_table.c */
 extern Size BufTableShmemSize(int size);
 extern void InitBufTable(int size);
-extern int	BufTableLookup(BufferTag *tagPtr);
-extern int	BufTableInsert(BufferTag *tagPtr, int buf_id);
-extern void BufTableDelete(BufferTag *tagPtr);
+extern uint32 BufTableHashCode(BufferTag *tagPtr);
+extern int	BufTableLookup(BufferTag *tagPtr, uint32 hashcode);
+extern int	BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id);
+extern void BufTableDelete(BufferTag *tagPtr, uint32 hashcode);
 
 /* localbuf.c */
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,

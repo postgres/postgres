@@ -7,12 +7,24 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.28 2006/05/08 00:00:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.29 2006/07/23 03:07:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LWLOCK_H
 #define LWLOCK_H
+
+/*
+ * It's a bit odd to declare NUM_BUFFER_PARTITIONS and NUM_LOCK_PARTITIONS
+ * here, but we need them to set up enum LWLockId correctly, and having
+ * this file include lock.h or bufmgr.h would be backwards.
+ */
+
+/* Number of partitions of the shared buffer mapping hashtable */
+#define NUM_BUFFER_PARTITIONS  16
+
+/* Number of partitions the shared lock tables are divided into */
+#define NUM_LOCK_PARTITIONS  16
 
 /*
  * We have a number of predefined LWLocks, plus a bunch of LWLocks that are
@@ -25,7 +37,6 @@
  */
 typedef enum LWLockId
 {
-	BufMappingLock,
 	BufFreelistLock,
 	ShmemIndexLock,
 	OidGenLock,
@@ -48,7 +59,11 @@ typedef enum LWLockId
 	TwoPhaseStateLock,
 	TablespaceCreateLock,
 	BtreeVacuumLock,
-	FirstLockMgrLock,			/* must be last except for MaxDynamicLWLock */
+	FirstBufMappingLock,
+	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
+
+	/* must be last except for MaxDynamicLWLock: */
+	NumFixedLWLocks = FirstLockMgrLock + NUM_LOCK_PARTITIONS,
 
 	MaxDynamicLWLock = 1000000000
 } LWLockId;

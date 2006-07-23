@@ -3,7 +3,7 @@
  * pg_buffercache_pages.c
  *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.7 2006/05/30 22:12:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.8 2006/07/23 03:07:57 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -74,7 +74,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		uint32		i;
+		int		i;
 		volatile BufferDesc *bufHdr;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -108,7 +108,6 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		funcctx->max_calls = NBuffers;
 		funcctx->user_fctx = fctx;
 
-
 		/* Allocate NBuffers worth of BufferCachePagesRec records. */
 		fctx->record = (BufferCachePagesRec *) palloc(sizeof(BufferCachePagesRec) * NBuffers);
 
@@ -120,17 +119,21 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		fctx->values[4] = (char *) palloc(3 * sizeof(uint32) + 1);
 		fctx->values[5] = (char *) palloc(2);
 
-
 		/* Return to original context when allocating transient memory */
 		MemoryContextSwitchTo(oldcontext);
 
+		/*
+		 * To get a consistent picture of the buffer state, we must lock
+		 * all partitions of the buffer map.  Needless to say, this is
+		 * horrible for concurrency...
+		 */
+		for (i = 0; i < NUM_BUFFER_PARTITIONS; i++)
+			LWLockAcquire(FirstBufMappingLock + i, LW_SHARED);
 
 		/*
-		 * Lock Buffer map and scan though all the buffers, saving the
-		 * relevant fields in the fctx->record structure.
+		 * Scan though all the buffers, saving the relevant fields in the
+		 * fctx->record structure.
 		 */
-		LWLockAcquire(BufMappingLock, LW_SHARED);
-
 		for (i = 0, bufHdr = BufferDescriptors; i < NBuffers; i++, bufHdr++)
 		{
 			/* Lock each buffer header before inspecting. */
@@ -157,14 +160,14 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		}
 
 		/* Release Buffer map. */
-		LWLockRelease(BufMappingLock);
+		for (i = 0; i < NUM_BUFFER_PARTITIONS; i++)
+			LWLockRelease(FirstBufMappingLock + i);
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
 
 	/* Get the saved state */
 	fctx = funcctx->user_fctx;
-
 
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
