@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.54 2005/10/15 02:49:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.54.2.1 2006/07/23 18:34:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,8 +213,8 @@ StrategyShmemSize(void)
 {
 	Size		size = 0;
 
-	/* size of lookup hash table */
-	size = add_size(size, BufTableShmemSize(NBuffers));
+	/* size of lookup hash table ... see comment in StrategyInitialize */
+	size = add_size(size, BufTableShmemSize(NBuffers + 1));
 
 	/* size of the shared replacement strategy control block */
 	size = add_size(size, MAXALIGN(sizeof(BufferStrategyControl)));
@@ -236,8 +236,13 @@ StrategyInitialize(bool init)
 
 	/*
 	 * Initialize the shared buffer lookup hashtable.
+	 *
+	 * Since we can't tolerate running out of lookup table entries, we
+	 * must be sure to specify an adequate table size here.  The maximum
+	 * steady-state usage is of course NBuffers entries, but BufferAlloc()
+	 * tries to insert a new entry before deleting the old.
 	 */
-	InitBufTable(NBuffers);
+	InitBufTable(NBuffers + 1);
 
 	/*
 	 * Get or create the shared strategy control block
