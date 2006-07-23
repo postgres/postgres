@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.40 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.41 2006/07/23 23:08:46 tgl Exp $
  *
  *	Interface:
  *
@@ -480,7 +480,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 
 	while (proclock)
 	{
-		proc = (PGPROC *) MAKE_PTR(proclock->tag.proc);
+		proc = proclock->tag.myProc;
 
 		/* A proc never blocks itself */
 		if (proc != checkProc)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.29 2006/07/23 03:07:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.30 2006/07/23 23:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,8 @@
 #define NUM_BUFFER_PARTITIONS  16
 
 /* Number of partitions the shared lock tables are divided into */
-#define NUM_LOCK_PARTITIONS  16
+#define LOG2_NUM_LOCK_PARTITIONS  4
+#define NUM_LOCK_PARTITIONS  (1 << LOG2_NUM_LOCK_PARTITIONS)
 
 /*
  * We have a number of predefined LWLocks, plus a bunch of LWLocks that are

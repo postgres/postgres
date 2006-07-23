@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.95 2006/07/23 03:07:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.96 2006/07/23 23:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,9 @@ typedef struct LOCK
  *
  * PROCLOCKTAG is the key information needed to look up a PROCLOCK item in the
  * proclock hashtable.	A PROCLOCKTAG value uniquely identifies the combination
- * of a lockable object and a holder/waiter for that object.
+ * of a lockable object and a holder/waiter for that object.  (We can use
+ * pointers here because the PROCLOCKTAG need only be unique for the lifespan
+ * of the PROCLOCK, and it will never outlive the lock or the proc.)
  *
  * Internally to a backend, it is possible for the same lock to be held
  * for different purposes: the backend tracks transaction locks separately
@@ -292,8 +294,9 @@ typedef struct LOCK
  */
 typedef struct PROCLOCKTAG
 {
-	SHMEM_OFFSET lock;			/* link to per-lockable-object information */
-	SHMEM_OFFSET proc;			/* link to PGPROC of owning backend */
+	/* NB: we assume this struct contains no padding! */
+	LOCK	   *myLock;			/* link to per-lockable-object information */
+	PGPROC	   *myProc;			/* link to PGPROC of owning backend */
 } PROCLOCKTAG;
 
 typedef struct PROCLOCK
@@ -309,7 +312,7 @@ typedef struct PROCLOCK
 } PROCLOCK;
 
 #define PROCLOCK_LOCKMETHOD(proclock) \
-	LOCK_LOCKMETHOD(*((LOCK *) MAKE_PTR((proclock).tag.lock)))
+	LOCK_LOCKMETHOD(*((proclock).tag.myLock))
 
 /*
  * Each backend also maintains a local hash table with information about each
@@ -347,7 +350,7 @@ typedef struct LOCALLOCK
 	LOCK	   *lock;			/* associated LOCK object in shared mem */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object in shmem */
 	bool		isTempObject;	/* true if lock is on a temporary object */
-	int			partition;		/* ID of partition containing this lock */
+	uint32		hashcode;		/* copy of LOCKTAG's hash value */
 	int			nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
@@ -360,15 +363,14 @@ typedef struct LOCALLOCK
 /*
  * This struct holds information passed from lmgr internals to the lock
  * listing user-level functions (lockfuncs.c).	For each PROCLOCK in the
- * system, the SHMEM_OFFSET, PROCLOCK itself, and associated PGPROC and
- * LOCK objects are stored.  (Note there will often be multiple copies
- * of the same PGPROC or LOCK.)  We do not store the SHMEM_OFFSET of the
- * PGPROC or LOCK separately, since they're in the PROCLOCK's tag fields.
+ * system, copies of the PROCLOCK object and associated PGPROC and
+ * LOCK objects are stored.  Note there will often be multiple copies
+ * of the same PGPROC or LOCK --- to detect whether two are the same,
+ * compare the PROCLOCK tag fields.
  */
-typedef struct
+typedef struct LockData
 {
 	int			nelements;		/* The length of each of the arrays */
-	SHMEM_OFFSET *proclockaddrs;
 	PROCLOCK   *proclocks;
 	PGPROC	   *procs;
 	LOCK	   *locks;
@@ -385,11 +387,23 @@ typedef enum
 
 
 /*
+ * The lockmgr's shared hash tables are partitioned to reduce contention.
+ * To determine which partition a given locktag belongs to, compute the tag's
+ * hash code with LockTagHashCode(), then apply one of these macros.
+ * NB: NUM_LOCK_PARTITIONS must be a power of 2!
+ */
+#define LockHashPartition(hashcode) \
+	((hashcode) % NUM_LOCK_PARTITIONS)
+#define LockHashPartitionLock(hashcode) \
+	((LWLockId) (FirstLockMgrLock + LockHashPartition(hashcode)))
+
+
+/*
  * function prototypes
  */
 extern void InitLocks(void);
 extern LockMethod GetLocksMethodTable(const LOCK *lock);
-extern int	LockTagToPartition(const LOCKTAG *locktag);
+extern uint32 LockTagHashCode(const LOCKTAG *locktag);
 extern LockAcquireResult LockAcquire(const LOCKTAG *locktag,
 			bool isTempObject,
 			LOCKMODE lockmode,
@@ -407,7 +421,7 @@ extern int LockCheckConflicts(LockMethod lockMethodTable,
 				   LOCK *lock, PROCLOCK *proclock, PGPROC *proc);
 extern void GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode);
 extern void GrantAwaitedLock(void);
-extern void RemoveFromWaitQueue(PGPROC *proc, int partition);
+extern void RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode);
 extern Size LockShmemSize(void);
 extern bool DeadLockCheck(PGPROC *proc);
 extern void DeadLockReport(void);

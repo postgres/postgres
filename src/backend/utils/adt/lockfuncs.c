@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.23 2006/07/14 14:52:24 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.24 2006/07/23 23:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		 */
 		if (!granted)
 		{
-			if (proc->waitLock == (LOCK *) MAKE_PTR(proclock->tag.lock))
+			if (proc->waitLock == proclock->tag.myLock)
 			{
 				/* Yes, so report it with proper mode */
 				mode = proc->waitLockMode;

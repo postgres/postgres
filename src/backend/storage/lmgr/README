@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.19 2005/12/11 21:02:18 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.20 2006/07/23 23:08:46 tgl Exp $
 
 
 LOCKING OVERVIEW
@@ -148,13 +148,21 @@ The lock manager's PROCLOCK objects contain:
 tag -
     The key fields that are used for hashing entries in the shared memory
     PROCLOCK hash table.  This is declared as a separate struct to ensure that
-    we always zero out the correct number of bytes.
+    we always zero out the correct number of bytes.  It is critical that any
+    alignment-padding bytes the compiler might insert in the struct be zeroed
+    out, else the hash computation will be random.  (Currently, we are careful
+    to define struct PROCLOCKTAG so that there are no padding bytes.)
 
-    tag.lock
-        SHMEM offset of the LOCK object this PROCLOCK is for.
+    tag.myLock
+        Pointer to the shared LOCK object this PROCLOCK is for.
 
-    tag.proc
-        SHMEM offset of PGPROC of backend process that owns this PROCLOCK.
+    tag.myProc
+        Pointer to the PGPROC of backend process that owns this PROCLOCK.
+
+    Note: it's OK to use pointers here because a PROCLOCK never outlives
+    either its lock or its proc.  The tag is therefore unique for as long
+    as it needs to be, even though the same tag values might mean something
+    else at other times.
 
 holdMask -
     A bitmask for the lock modes successfully acquired by this PROCLOCK.
@@ -191,12 +199,18 @@ Most operations only need to lock the single partition they are working in.
 Here are the details:
 
 * Each possible lock is assigned to one partition according to a hash of
-its LOCKTAG value (see LockTagToPartition()).  The partition's LWLock is
-considered to protect all the LOCK objects of that partition as well as
-their subsidiary PROCLOCKs.  The shared-memory hash tables for LOCKs and
-PROCLOCKs are divided into separate hash tables for each partition, and
-operations on each hash table are likewise protected by the partition
-lock.
+its LOCKTAG value.  The partition's LWLock is considered to protect all the
+LOCK objects of that partition as well as their subsidiary PROCLOCKs.
+
+* The shared-memory hash tables for LOCKs and PROCLOCKs are organized
+so that different partitions use different hash chains, and thus there
+is no conflict in working with objects in different partitions.  This
+is supported directly by dynahash.c's "partitioned table" mechanism
+for the LOCK table: we need only ensure that the partition number is
+taken from the low-order bits of the dynahash hash value for the LOCKTAG.
+To make it work for PROCLOCKs, we have to ensure that a PROCLOCK's hash
+value has the same low-order bits as its associated LOCK.  This requires
+a specialized hash function (see proclock_hash).
 
 * Formerly, each PGPROC had a single list of PROCLOCKs belonging to it.
 This has now been split into per-partition lists, so that access to a
@@ -226,9 +240,10 @@ deadlock checking should not occur often enough to be performance-critical,
 trying to make this work does not seem a productive use of effort.
 
 A backend's internal LOCALLOCK hash table is not partitioned.  We do store
-the partition number in LOCALLOCK table entries, but this is a straight
-speed-for-space tradeoff: we could instead recalculate the partition
-number from the LOCKTAG when needed.
+a copy of the locktag hash code in LOCALLOCK table entries, from which the
+partition number can be computed, but this is a straight speed-for-space
+tradeoff: we could instead recalculate the partition number from the LOCKTAG
+when needed.
 
 
 THE DEADLOCK DETECTION ALGORITHM

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.177 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.178 2006/07/23 23:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,13 +461,13 @@ LockWaitCancel(void)
 	disable_sig_alarm(false);
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
-	partitionLock = FirstLockMgrLock + lockAwaited->partition;
+	partitionLock = LockHashPartitionLock(lockAwaited->hashcode);
 	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
 	if (MyProc->links.next != INVALID_OFFSET)
 	{
 		/* We could not have been granted the lock yet */
-		RemoveFromWaitQueue(MyProc, lockAwaited->partition);
+		RemoveFromWaitQueue(MyProc, lockAwaited->hashcode);
 	}
 	else
 	{
@@ -673,8 +673,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	LOCKMODE	lockmode = locallock->tag.mode;
 	LOCK	   *lock = locallock->lock;
 	PROCLOCK   *proclock = locallock->proclock;
-	int			partition = locallock->partition;
-	LWLockId	partitionLock = FirstLockMgrLock + partition;
+	uint32		hashcode = locallock->hashcode;
+	LWLockId	partitionLock = LockHashPartitionLock(hashcode);
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	LOCKMASK	myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
@@ -776,7 +776,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 */
 	if (early_deadlock)
 	{
-		RemoveFromWaitQueue(MyProc, partition);
+		RemoveFromWaitQueue(MyProc, hashcode);
 		return STATUS_ERROR;
 	}
 
@@ -1025,7 +1025,7 @@ CheckDeadLock(void)
 	 * ProcSleep will report an error after we return from the signal handler.
 	 */
 	Assert(MyProc->waitLock != NULL);
-	RemoveFromWaitQueue(MyProc, LockTagToPartition(&(MyProc->waitLock->tag)));
+	RemoveFromWaitQueue(MyProc, LockTagHashCode(&(MyProc->waitLock->tag)));
 
 	/*
 	 * Unlock my semaphore so that the interrupted ProcSleep() call can
