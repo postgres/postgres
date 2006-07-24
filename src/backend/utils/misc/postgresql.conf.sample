@@ -6,23 +6,23 @@
 #
 #   name = value
 #
-# (The '=' is optional.) White space may be used. Comments are introduced
-# with '#' anywhere on a line. The complete list of option names and
-# allowed values can be found in the PostgreSQL documentation. The
+# (The '=' is optional.)  White space may be used.  Comments are introduced
+# with '#' anywhere on a line.  The complete list of option names and
+# allowed values can be found in the PostgreSQL documentation.  The
 # commented-out settings shown in this file represent the default values.
 #
 # Please note that re-commenting a setting is NOT sufficient to revert it
-# to the default value, unless you restart the postmaster.
+# to the default value, unless you restart the server.
 #
-# Any option can also be given as a command line switch to the
-# postmaster, e.g. 'postmaster -c log_connections=on'. Some options
-# can be changed at run-time with the 'SET' SQL command.
+# Any option can also be given as a command line switch to the server,
+# e.g., 'postgres -c log_connections=on'.  Some options can be changed at
+# run-time with the 'SET' SQL command.
 #
-# This file is read on postmaster startup and when the postmaster
-# receives a SIGHUP. If you edit the file on a running system, you have 
-# to SIGHUP the postmaster for the changes to take effect, or use 
-# "pg_ctl reload". Some settings, such as listen_addresses, require
-# a postmaster shutdown and restart to take effect.
+# This file is read on server startup and when the server receives a
+# SIGHUP.  If you edit the file on a running system, you have to SIGHUP the
+# server for the changes to take effect, or use "pg_ctl reload". Some
+# settings, which are marked below, require a server shutdown and restart
+# to take effect.
 
 
 #---------------------------------------------------------------------------
@@ -33,11 +33,15 @@
 # switch or PGDATA environment variable, represented here as ConfigDir.
 
 #data_directory = 'ConfigDir'		# use data in another directory
+					# (change requires restart)
 #hba_file = 'ConfigDir/pg_hba.conf'	# host-based authentication file
-#ident_file = 'ConfigDir/pg_ident.conf'	# IDENT configuration file
+					# (change requires restart)
+#ident_file = 'ConfigDir/pg_ident.conf'	# ident configuration file
+					# (change requires restart)
 
-# If external_pid_file is not explicitly set, no extra pid file is written.
-#external_pid_file = '(none)'		# write an extra pid file
+# If external_pid_file is not explicitly set, no extra PID file is written.
+#external_pid_file = '(none)'		# write an extra PID file
+					# (change requires restart)
 
 
 #---------------------------------------------------------------------------
@@ -49,29 +53,33 @@
 #listen_addresses = 'localhost'		# what IP address(es) to listen on; 
 					# comma-separated list of addresses;
 					# defaults to 'localhost', '*' = all
-#port = 5432
-#max_connections = 100
-# note: increasing max_connections costs ~400 bytes of shared memory per 
+					# (change requires restart)
+#port = 5432				# (change requires restart)
+#max_connections = 100			# (change requires restart)
+# Note: increasing max_connections costs ~400 bytes of shared memory per 
 # connection slot, plus lock space (see max_locks_per_transaction).  You
 # might also need to raise shared_buffers to support more connections.
-#superuser_reserved_connections = 2
-#unix_socket_directory = ''
-#unix_socket_group = ''
+#superuser_reserved_connections = 2	# (change requires restart)
+#unix_socket_directory = ''		# (change requires restart)
+#unix_socket_group = ''			# (change requires restart)
 #unix_socket_permissions = 0777		# octal
+					# (change requires restart)
 #bonjour_name = ''			# defaults to the computer name
+					# (change requires restart)
 
 # - Security & Authentication -
 
 #authentication_timeout = 60		# 1-600, in seconds
-#ssl = off
+#ssl = off				# (change requires restart)
 #password_encryption = on
 #db_user_namespace = off
 
 # Kerberos
-#krb_server_keyfile = ''
-#krb_srvname = 'postgres'
+#krb_server_keyfile = ''		# (change requires restart)
+#krb_srvname = 'postgres'		# (change requires restart)
 #krb_server_hostname = ''		# empty string matches any keytab entry
-#krb_caseins_users = off
+					# (change requires restart)
+#krb_caseins_users = off		# (change requires restart)
 
 # - TCP Keepalives -
 # see 'man 7 tcp' for details
@@ -90,24 +98,29 @@
 
 # - Memory -
 
-#shared_buffers = 1000			# min 16 or max_connections*2, 8KB each
-#temp_buffers = 1000			# min 100, 8KB each
+#shared_buffers = 1000			# min 16 or max_connections*2, 8kB each
+					# (change requires restart)
+#temp_buffers = 1000			# min 100, 8kB each
 #max_prepared_transactions = 5		# can be 0 or more
-# note: increasing max_prepared_transactions costs ~600 bytes of shared memory
+					# (change requires restart)
+# Note: increasing max_prepared_transactions costs ~600 bytes of shared memory
 # per transaction slot, plus lock space (see max_locks_per_transaction).
-#work_mem = 1024			# min 64, size in KB
-#maintenance_work_mem = 16384		# min 1024, size in KB
-#max_stack_depth = 2048			# min 100, size in KB
+#work_mem = 1024			# min 64, size in kB
+#maintenance_work_mem = 16384		# min 1024, size in kB
+#max_stack_depth = 2048			# min 100, size in kB
 
 # - Free Space Map -
 
 #max_fsm_pages = 20000			# min max_fsm_relations*16, 6 bytes each
+					# (change requires restart)
 #max_fsm_relations = 1000		# min 100, ~70 bytes each
+					# (change requires restart)
 
 # - Kernel Resource Usage -
 
 #max_files_per_process = 1000		# min 25
-#preload_libraries = ''
+					# (change requires restart)
+#preload_libraries = ''			# (change requires restart)
 
 # - Cost-Based Vacuum Delay -
 
@@ -141,7 +154,8 @@
 					#   fsync_writethrough
 					#   open_sync
 #full_page_writes = on			# recover from partial page writes
-#wal_buffers = 8			# min 4, 8KB each
+#wal_buffers = 8			# min 4, 8kB each
+					# (change requires restart)
 #commit_delay = 0			# range 0-100000, in microseconds
 #commit_siblings = 5			# range 1-1000
 
@@ -180,7 +194,7 @@
 #cpu_tuple_cost = 0.01			# same scale as above
 #cpu_index_tuple_cost = 0.005		# same scale as above
 #cpu_operator_cost = 0.0025		# same scale as above
-#effective_cache_size = 1000		# typically 8KB each
+#effective_cache_size = 1000		# typically 8kB each
 
 # - Genetic Query Optimizer -
 
@@ -213,6 +227,7 @@
 # This is used when logging to stderr:
 #redirect_stderr = off			# Enable capturing of stderr into log 
 					# files
+					# (change requires restart)
 
 # These are only used if redirect_stderr is on:
 #log_directory = 'pg_log'		# Directory where log files are written
@@ -285,6 +300,7 @@
 
 #silent_mode = off			# DO NOT USE without syslog or 
 					# redirect_stderr
+					# (change requires restart)
 
 # - What to Log -
 
@@ -326,9 +342,10 @@
 #update_process_title = on
 
 #stats_start_collector = on		# needed for block or row stats
+					# (change requires restart)
 #stats_block_level = off
 #stats_row_level = off
-#stats_reset_on_server_start = off
+#stats_reset_on_server_start = off	# (change requires restart)
 
 
 # - Statistics Monitoring -
@@ -404,7 +421,8 @@
 
 #deadlock_timeout = 1000		# in milliseconds
 #max_locks_per_transaction = 64		# min 10
-# note: each lock table slot uses ~270 bytes of shared memory, and there are
+					# (change requires restart)
+# Note: each lock table slot uses ~270 bytes of shared memory, and there are
 # max_locks_per_transaction * (max_connections + max_prepared_transactions)
 # lock table slots.
 
