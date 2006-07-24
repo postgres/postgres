@@ -26,13 +26,12 @@ parties.
 PostgreSQL also has a great number of procedural languages available,
 a short but not complete list is below:
 
-pl/c - Included in PostgreSQL core 
-plPgsql - Included in PostgreSQL core - Similar to Oracle PL/sql
-plPerl - Included in PostgreSQL core
-plPHP - http://projects.commandprompt.com/projects/public/plphp
-plPython - Included in PostgreSQL core
-plJava - http://gborg.postgresql.org/project/pljava/projdisplay.php
-plTcl - Included in PostgreSQL core
+PL/pgSQL - included in PostgreSQL source distribution
+PL/Perl - included in PostgreSQL source distribution
+PL/PHP - http://projects.commandprompt.com/projects/public/plphp
+PL/Python - included in PostgreSQL source distribution
+PL/Java - http://gborg.postgresql.org/project/pljava/projdisplay.php
+PL/Tcl - included in PostgreSQL source distribution
 
 See the file INSTALL for instructions on how to build and install
 PostgreSQL.  That file also lists supported operating systems and
