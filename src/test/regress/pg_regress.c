@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.12 2006/07/22 14:05:20 adunstan Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.13 2006/07/24 01:50:22 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,15 +540,6 @@ initialize_environment(void)
 		}
 		if (user != NULL)
 			doputenv("PGUSER", user);
-
-		/*
-		 * On Windows, it seems to be necessary to adjust PATH even in
-		 * this case.  (XXX really?  If so, what if installation has
-		 * been relocated?)
-		 */
-#if defined(WIN32) || defined(CYGWIN)
-		add_to_path("PATH", ';', libdir);
-#endif
 
 		/*
 		 * Report what we're connecting to
