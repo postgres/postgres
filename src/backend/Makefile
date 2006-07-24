@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.116 2006/06/22 23:50:35 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.117 2006/07/24 16:32:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,11 @@ DIRS := access bootstrap catalog parser commands executor lib libpq \
 
 SUBSYSOBJS := $(DIRS:%=%/SUBSYS.o)
 
-OBJS := $(SUBSYSOBJS) $(top_builddir)/src/port/libpgport_srv.a
+ifeq ($(enable_dtrace), yes)
+LOCALOBJS += utils/probes.o
+endif
+
+OBJS = $(SUBSYSOBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a
 
 # We put libpgport into OBJS, so remove it from LIBS
 LIBS := $(filter-out -lpgport, $(LIBS))
@@ -135,6 +139,10 @@ $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 	    $(LN_S) ../../../$(subdir)/utils/fmgroids.h .
 
 
+utils/probes.o: utils/probes.d $(SUBSYSOBJS)
+	$(DTRACE) $(DTRACEFLAGS) -G -s $^
+
+
 ##########################################################################
 
 distprep:
@@ -220,7 +228,7 @@ endif
 ##########################################################################
 
 clean:
-	rm -f postgres$(X) $(POSTGRES_IMP) \
+	rm -f $(LOCALOBJS) postgres$(X) $(POSTGRES_IMP) \
 		$(top_srcdir)/src/include/parser/parse.h \
 		$(top_builddir)/src/include/utils/fmgroids.h
 ifeq ($(PORTNAME), cygwin)

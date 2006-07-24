@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.258 2006/06/18 15:38:35 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.259 2006/07/24 16:32:44 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1003,6 +1003,17 @@ su - postgres
          if you are doing development work, but is just wasted overhead
          if you intend only to compile once and install.  At present,
          this option will work only if you use GCC.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--enable-dtrace</option></term>
+       <listitem>
+        <para>
+         Compiles with support for the dynamic tracing tool DTrace.
+         Operating system support for DTrace is currently only
+         available in Solaris.
         </para>
        </listitem>
       </varlistentry>

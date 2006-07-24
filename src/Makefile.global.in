@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.224 2006/07/21 22:37:37 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.225 2006/07/24 16:32:44 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -157,6 +157,7 @@ enable_shared	= @enable_shared@
 enable_rpath	= @enable_rpath@
 enable_nls	= @enable_nls@
 enable_debug	= @enable_debug@
+enable_dtrace	= @enable_dtrace@
 enable_thread_safety	= @enable_thread_safety@
 
 python_includespec	= @python_includespec@
@@ -212,6 +213,8 @@ YACC = @YACC@
 YFLAGS = @YFLAGS@
 FLEX = @FLEX@
 FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
+DTRACE = @DTRACE@
+DTRACEFLAGS = @DTRACEFLAGS@
 
 # Linking
 

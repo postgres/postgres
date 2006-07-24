@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.468 2006/07/11 16:14:50 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.469 2006/07/24 16:32:44 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -204,6 +204,17 @@ PGAC_ARG_BOOL(enable, spinlocks, yes,
 PGAC_ARG_BOOL(enable, debug, no,
               [  --enable-debug          build with debugging symbols (-g)])
 AC_SUBST(enable_debug)
+
+#
+# DTrace
+#
+PGAC_ARG_BOOL(enable, dtrace, no,
+              [  --enable-dtrace         build with DTrace support],
+[AC_DEFINE([ENABLE_DTRACE], 1, 
+           [Define to 1 to enable DTrace support. (--enable-dtrace)])
+AC_CHECK_PROGS(DTRACE, dtrace)
+AC_SUBST(DTRACEFLAGS)])
+AC_SUBST(enable_dtrace)
 
 #
 # C compiler

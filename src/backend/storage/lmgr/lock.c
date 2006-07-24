@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.168 2006/07/23 23:08:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.169 2006/07/24 16:32:45 petere Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -796,7 +796,12 @@ LockAcquire(const LOCKTAG *locktag,
 		/*
 		 * Sleep till someone wakes me up.
 		 */
+
+		PG_TRACE2(lock__startwait, locktag->locktag_field2, lockmode);
+
 		WaitOnLock(locallock, owner);
+
+		PG_TRACE2(lock__endwait, locktag->locktag_field2, lockmode);
 
 		/*
 		 * NOTE: do not do any material change of state between here and

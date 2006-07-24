@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.223 2006/07/14 14:52:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.224 2006/07/24 16:32:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1384,6 +1384,8 @@ StartTransaction(void)
 
 	XactLockTableInsert(s->transactionId);
 
+	PG_TRACE1 (transaction__start, s->transactionId);
+
 	/*
 	 * set transaction_timestamp() (a/k/a now()).  We want this to be the
 	 * same as the first command's statement_timestamp(), so don't do a
@@ -1534,6 +1536,8 @@ CommitTransaction(void)
 
 		LWLockRelease(ProcArrayLock);
 	}
+
+	PG_TRACE1 (transaction__commit, s->transactionId);
 
 	/*
 	 * This is all post-commit cleanup.  Note that if an error is raised here,
@@ -1930,6 +1934,8 @@ AbortTransaction(void)
 
 		LWLockRelease(ProcArrayLock);
 	}
+
+	PG_TRACE1 (transaction__abort, s->transactionId);
 
 	/*
 	 * Post-abort cleanup.	See notes in CommitTransaction() concerning
