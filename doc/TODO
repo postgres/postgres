@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Jul 25 11:27:16 EDT 2006
+Last updated:		Tue Jul 25 12:23:06 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -170,6 +170,9 @@ Administration
 	  o Allow the PITR process to be debugged and data examined
 	  o Add reporting of the current WAL file and offset, perhaps as
 	    part of partial log file archiving
+
+	    The offset allows parts of a WAL file to be archived using
+	    an external program.
 
 
 Monitoring
