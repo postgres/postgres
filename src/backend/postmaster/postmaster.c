@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.495 2006/07/16 18:17:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.496 2006/07/25 01:23:34 tgl Exp $
  *
  * NOTES
  *
@@ -814,6 +814,12 @@ PostmasterMain(int argc, char *argv[])
 	set_max_safe_fds();
 
 	/*
+	 * Load configuration files for client authentication.
+	 */
+	load_hba();
+	load_ident();
+
+	/*
 	 * Initialize the list of active backends.
 	 */
 	BackendList = DLNewList();
@@ -920,20 +926,15 @@ PostmasterMain(int argc, char *argv[])
 	whereToSendOutput = DestNone;
 
 	/*
-	 * Initialize the statistics collector stuff
+	 * Initialize stats collection subsystem (this does NOT start the
+	 * collector process!)
 	 */
 	pgstat_init();
 
 	/*
-	 * Load configuration files for client authentication.
+	 * Initialize the autovacuum subsystem (again, no process start yet)
 	 */
-	load_hba();
-	load_ident();
-
-	/*
-	 * We're ready to rock and roll...
-	 */
-	StartupPID = StartupDataBase();
+	autovac_init();
 
 	/*
 	 * Remember postmaster startup time
@@ -941,9 +942,9 @@ PostmasterMain(int argc, char *argv[])
 	PgStartTime = GetCurrentTimestamp();
 
 	/*
-	 * Initialize the autovacuum daemon
+	 * We're ready to rock and roll...
 	 */
-	autovac_init();
+	StartupPID = StartupDataBase();
 
 	status = ServerLoop();
 
