@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.77 2006/07/13 16:49:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.78 2006/07/25 19:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -884,9 +884,15 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 	 * Since this can be redone later if needed, it's treated the same
 	 * as a commit-hint-bit status update for heap tuples: we mark the
 	 * buffer dirty but don't make a WAL log entry.
+	 *
+	 * Whenever we mark anything LP_DELETEd, we also set the page's
+	 * BTP_HAS_GARBAGE flag, which is likewise just a hint.
 	 */
 	if (killedsomething)
+	{
+		opaque->btpo_flags |= BTP_HAS_GARBAGE;
 		SetBufferCommitInfoNeedsSave(so->currPos.buf);
+	}
 
 	if (!haveLock)
 		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);

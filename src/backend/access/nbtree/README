@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.12 2006/05/08 00:00:09 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.13 2006/07/25 19:13:00 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -146,11 +146,12 @@ Because a page can be split even while someone holds a pin on it, it is
 possible that an indexscan will return items that are no longer stored on
 the page it has a pin on, but rather somewhere to the right of that page.
 To ensure that VACUUM can't prematurely remove such heap tuples, we require
-btbulkdelete to obtain super-exclusive lock on every leaf page in the index
-(even pages that don't contain any deletable tuples).  This guarantees that
+btbulkdelete to obtain super-exclusive lock on every leaf page in the index,
+even pages that don't contain any deletable tuples.  This guarantees that
 the btbulkdelete call cannot return while any indexscan is still holding
 a copy of a deleted index tuple.  Note that this requirement does not say
-that btbulkdelete must visit the pages in any particular order.
+that btbulkdelete must visit the pages in any particular order.  (See also
+on-the-fly deletion, below.) 
 
 There is no such interlocking for deletion of items in internal pages,
 since backends keep no lock nor pin on a page they have descended past.
@@ -319,6 +320,43 @@ if the has-been-recently-split test has a small probability of false
 positives, so long as it never gives a false negative.  This makes it
 possible to implement the test with a small counter value stored on each
 index page.
+
+On-the-fly deletion of index tuples
+-----------------------------------
+
+If a process visits a heap tuple and finds that it's dead and removable
+(ie, dead to all open transactions, not only that process), then we can
+return to the index and mark the corresponding index entry "known dead",
+allowing subsequent index scans to skip visiting the heap tuple.  The
+"known dead" marking uses the LP_DELETE bit in ItemIds.  This is currently
+only done in plain indexscans, not bitmap scans, because only plain scans
+visit the heap and index "in sync" and so there's not a convenient way
+to do it for bitmap scans.
+
+Once an index tuple has been marked LP_DELETE it can actually be removed
+from the index immediately; since index scans only stop "between" pages,
+no scan can lose its place from such a deletion.  We separate the steps
+because we allow LP_DELETE to be set with only a share lock (it's exactly
+like a hint bit for a heap tuple), but physically removing tuples requires
+exclusive lock.  In the current code we try to remove LP_DELETE tuples when
+we are otherwise faced with having to split a page to do an insertion (and
+hence have exclusive lock on it already).
+
+This leaves the index in a state where it has no entry for a dead tuple
+that still exists in the heap.  This is not a problem for the current
+implementation of VACUUM, but it could be a problem for anything that
+explicitly tries to find index entries for dead tuples.  (However, the
+same situation is created by REINDEX, since it doesn't enter dead
+tuples into the index.)
+
+It's sufficient to have an exclusive lock on the index page, not a
+super-exclusive lock, to do deletion of LP_DELETE items.  It might seem
+that this breaks the interlock between VACUUM and indexscans, but that is
+not so: as long as an indexscanning process has a pin on the page where
+the index item used to be, VACUUM cannot complete its btbulkdelete scan
+and so cannot remove the heap tuple.  This is another reason why
+btbulkdelete has to get super-exclusive lock on every leaf page, not only
+the ones where it actually sees items to delete.
 
 WAL considerations
 ------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.141 2006/07/13 16:49:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.142 2006/07/25 19:13:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@ static void _bt_pgaddtup(Relation rel, Page page,
 			 OffsetNumber itup_off, const char *where);
 static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 			int keysz, ScanKey scankey);
+static void _bt_vacuum_one_page(Relation rel, Buffer buffer);
 
 
 /*
@@ -262,6 +263,8 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 												 hbuffer) == HEAPTUPLE_DEAD)
 					{
 						curitemid->lp_flags |= LP_DELETE;
+						opaque->btpo_flags |= BTP_HAS_GARBAGE;
+						/* be sure to mark the proper buffer dirty... */
 						if (nbuf != InvalidBuffer)
 							SetBufferCommitInfoNeedsSave(nbuf);
 						else
@@ -424,11 +427,29 @@ _bt_insertonpg(Relation rel,
 		 */
 		bool		movedright = false;
 
-		while (PageGetFreeSpace(page) < itemsz &&
-			   !P_RIGHTMOST(lpageop) &&
-			   _bt_compare(rel, keysz, scankey, page, P_HIKEY) == 0 &&
-			   random() > (MAX_RANDOM_VALUE / 100))
+		while (PageGetFreeSpace(page) < itemsz)
 		{
+			Buffer		rbuf;
+
+			/*
+			 * before considering moving right, see if we can obtain enough
+			 * space by erasing LP_DELETE items
+			 */
+			if (P_ISLEAF(lpageop) && P_HAS_GARBAGE(lpageop))
+			{
+				_bt_vacuum_one_page(rel, buf);
+				if (PageGetFreeSpace(page) >= itemsz)
+					break;		/* OK, now we have enough space */
+			}
+
+			/*
+			 * nope, so check conditions (b) and (c) enumerated above
+			 */
+			if (P_RIGHTMOST(lpageop) ||
+				_bt_compare(rel, keysz, scankey, page, P_HIKEY) != 0 ||
+				random() <= (MAX_RANDOM_VALUE / 100))
+				break;
+
 			/*
 			 * step right to next non-dead page
 			 *
@@ -438,7 +459,7 @@ _bt_insertonpg(Relation rel,
 			 * pages won't do because we don't know when they will get
 			 * de-linked from the tree.
 			 */
-			Buffer		rbuf = InvalidBuffer;
+			rbuf = InvalidBuffer;
 
 			for (;;)
 			{
@@ -702,9 +723,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
 
 	/* if we're splitting this page, it won't be the root when we're done */
-	/* also, clear the SPLIT_END flag in both pages */
+	/* also, clear the SPLIT_END and HAS_GARBAGE flags in both pages */
 	lopaque->btpo_flags = oopaque->btpo_flags;
-	lopaque->btpo_flags &= ~(BTP_ROOT | BTP_SPLIT_END);
+	lopaque->btpo_flags &= ~(BTP_ROOT | BTP_SPLIT_END | BTP_HAS_GARBAGE);
 	ropaque->btpo_flags = lopaque->btpo_flags;
 	lopaque->btpo_prev = oopaque->btpo_prev;
 	lopaque->btpo_next = BufferGetBlockNumber(rbuf);
@@ -1650,4 +1671,48 @@ _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 
 	/* if we get here, the keys are equal */
 	return true;
+}
+
+/*
+ * _bt_vacuum_one_page - vacuum just one index page.
+ *
+ * Try to remove LP_DELETE items from the given page.  The passed buffer
+ * must be exclusive-locked, but unlike a real VACUUM, we don't need a
+ * super-exclusive "cleanup" lock (see nbtree/README).
+ */
+static void
+_bt_vacuum_one_page(Relation rel, Buffer buffer)
+{
+	OffsetNumber	deletable[MaxOffsetNumber];
+	int				ndeletable = 0;
+	OffsetNumber	offnum,
+					minoff,
+					maxoff;
+	Page			page = BufferGetPage(buffer);
+	BTPageOpaque	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	/*
+	 * Scan over all items to see which ones need deleted
+	 * according to LP_DELETE flags.
+	 */
+	minoff = P_FIRSTDATAKEY(opaque);
+	maxoff = PageGetMaxOffsetNumber(page);
+	for (offnum = minoff;
+		 offnum <= maxoff;
+		 offnum = OffsetNumberNext(offnum))
+	{
+		ItemId itemId = PageGetItemId(page, offnum);
+
+		if (ItemIdDeleted(itemId))
+			deletable[ndeletable++] = offnum;
+	}
+
+	if (ndeletable > 0)
+		_bt_delitems(rel, buffer, deletable, ndeletable);
+	/*
+	 * Note: if we didn't find any LP_DELETE items, then the page's
+	 * BTP_HAS_GARBAGE hint bit is falsely set.  We do not bother
+	 * expending a separate write to clear it, however.  We will clear
+	 * it when we split the page.
+	 */
 }
