@@ -244,6 +244,16 @@ cube(float8, float8) returns cube
   This makes a one dimensional cube.
   cube(1,2) == '(1),(2)'
 
+cube(float8[]) returns cube
+  This makes a zero-volume cube using the coordinates defined by the
+  array.
+  cube(ARRAY[1,2]) == '(1,2)'
+
+cube(float8[], float8[]) returns cube
+  This makes a cube, with upper right and lower left coordinates as
+  defined by the 2 float arrays. Arrays must be of the same length.
+  cube('{1,2}'::float[], '{3,4}'::float[]) == '(1,2),(3,4)'
+
 cube(cube, float8) returns cube
   This builds a new cube by adding a dimension on to an existing cube with
   the same values for both parts of the new coordinate. This is useful for
@@ -266,6 +276,13 @@ cube_ll_coord(cube, int) returns double
 cube_ur_coord(cube, int) returns double
   cube_ur_coord returns the nth coordinate value for the upper right corner
   of a cube. This is useful for doing coordinate transformations.
+
+cube_subset(cube, int[]) returns cube
+  Builds a new cube from an existing cube, using a list of dimension indexes
+  from an array. Can be used to find both the ll and ur coordinate of single
+  dimenion, e.g.: cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[2]) = '(3),(7)'
+  Or can be used to drop dimensions, or reorder them as desired, e.g.:
+  cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[3,2,1,1]) = '(5, 3, 1, 1),(8, 7, 6, 6)'
 
 cube_is_point(cube) returns bool
   cube_is_point returns true if a cube is also a point. This is true when the
@@ -327,3 +344,10 @@ in August/September of 2002.
 
 These include changing the precision from single precision to double
 precision and adding some new functions.
+
+------------------------------------------------------------------------
+
+Additional updates were made by Joshua Reich <josh@root.net> in July 2006.
+
+These include cube(float8[], float8[]) and cleaning up the code to use 
+the V1 call protocol instead of the deprecated V0 form.

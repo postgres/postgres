@@ -46,6 +46,12 @@ DROP FUNCTION cube(cube, float8);
 
 DROP FUNCTION cube(float8, float8);
 
+DROP FUNCTION cube(float8[], float8[]);
+
+DROP FUNCTION cube(float8[]);
+
+DROP FUNCTION cube_subset(cube, int4[]);
+
 DROP FUNCTION cube(float8);
 
 DROP FUNCTION cube_ur_coord(cube, int4);
