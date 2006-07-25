@@ -1,0 +1,33 @@
+#
+# NOTE:
+#   This file is NOT loaded by the PostgreSQL database.  It just serves as
+#   a template for timezones you could need.  See the `Date/Time Support'
+#   appendix in the PostgreSQL documentation for more information.
+#
+
+GMT         0    # Greenwich Mean Time
+                 #     (Africa/Abidjan)
+                 #     (Africa/Bamako)
+                 #     (Africa/Banjul)
+                 #     (Africa/Bissau)
+                 #     (Africa/Conakry)
+                 #     (Africa/Dakar)
+                 #     (Africa/Lome)
+                 #     (Africa/Monrovia)
+                 #     (Africa/Nouakchott)
+                 #     (Africa/Ouagadougou)
+                 #     (Africa/Sao_Tome)
+                 #     (America/Danmarkshavn)
+                 #     (Atlantic/Reykjavik)
+                 #     (Atlantic/St_Helena)
+                 #     (Etc/GMT)
+                 #     (Europe/Dublin)
+                 #     (Europe/London)
+UCT         0    # Universal Coordinated Time
+                 #     (Etc/UCT)
+UT          0    # Universal Time (not in zic)
+UTC         0    # Coordinated Universal Time
+                 #     (Etc/UTC)
+Z           0    # Zulu
+ZULU        0    # Zulu
+

@@ -1,0 +1,18 @@
+This directory contains files with timezone sets for PostgreSQL.  The problem
+is that time zone abbreviations are not unique throughout the world and you
+might find out that a time zone abbreviation in the `Default' set collides
+with the one you wanted to use.  All other files except for `Default' are
+intended to override values from the `Default' set.  So you might already have
+a file here that serves your needs.  If not, you can create your own.
+
+In order to use one of these files, you need to set
+
+   timezone_abbreviations = 'xyz'
+
+in any of the usual ways for setting a parameter, where xyz is the filename
+that contains the desired time zone names.
+
+If you do not find an appropriate set of time zone names for your geographic
+location supplied here, please report this to <pgsql-hackers@postgresql.org>.
+Your set of time zone names can then be included in future releases.
+For the time being you can always add your own set.

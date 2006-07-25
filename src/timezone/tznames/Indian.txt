@@ -1,0 +1,35 @@
+#
+# NOTE:
+#   This file is NOT loaded by the PostgreSQL database.  It just serves as
+#   a template for timezones you could need.  See the `Date/Time Support'
+#   appendix in the PostgreSQL documentation for more information.
+#
+
+CCT     23400    # Cocos Islands Time (Indian Ocean)
+                 #     (Indian/Cocos)
+CXT     25200    # Christmas Island Time (Indian Ocean)
+                 #     (Indian/Christmas)
+EAT     10800    # East Africa Time
+                 #     (Africa/Addis_Ababa)
+                 #     (Africa/Asmera)
+                 #     (Africa/Dar_es_Salaam)
+                 #     (Africa/Djibouti)
+                 #     (Africa/Kampala)
+                 #     (Africa/Khartoum)
+                 #     (Africa/Mogadishu)
+                 #     (Africa/Nairobi)
+                 #     (Indian/Antananarivo)
+                 #     (Indian/Comoro)
+                 #     (Indian/Mayotte)
+IOT     21600    # British Indian Ocean Territory (Chagos) (there was a timezone change recently in 1996)
+                 #     (Indian/Chagos)
+MUT     14400    # Mauritius Island Time
+                 #     (Indian/Mauritius)
+MVT     18000    # Maldives Island Time
+                 #     (Indian/Maldives)
+RET     14400    # Reunion Time
+                 #     (Indian/Reunion)
+SCT     14400    # Seychelles Time
+                 #     (Indian/Mahe)
+TFT     18000    # Kerguelen Time
+                 #     (Indian/Kerguelen)

@@ -1,8 +1,6 @@
 --
 -- TIMESTAMP
 --
--- needed so tests pass even in Australia
-SET australian_timezones = 'off';
 
 CREATE TABLE TIMESTAMP_TBL ( d1 timestamp(2) without time zone);
 

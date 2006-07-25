@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.68 2006/06/27 22:16:43 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.69 2006/07/25 03:51:21 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3410,19 +3410,20 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-australian-timezones" xreflabel="australian_timezones">
-      <term><varname>australian_timezones</varname> (<type>boolean</type>)</term>
+     <varlistentry id="guc-timezone-abbreviations" xreflabel="timezone_abbreviations">
+      <term><varname>timezone_abbreviations</varname> (<type>string</type>)</term>
       <indexterm>
-       <primary><varname>australian_timezones</> configuration parameter</primary>
+       <primary><varname>timezone_abbreviations</> configuration parameter</primary>
       </indexterm>
-      <indexterm><primary>time zone</><secondary>Australian</></>
+      <indexterm><primary>time zone names</></>
       <listitem>
        <para>
-        If set to on, <literal>ACST</literal>,
-        <literal>CST</literal>, <literal>EST</literal>, and
-        <literal>SAT</literal> are interpreted as Australian time
-        zones rather than as North/South American time zones and
-        Saturday. The default is <literal>off</>.
+        Sets the collection of time zone abbreviations that will be accepted
+        by the server for datetime input.  The default is 'Default',
+        which is a collection that works in most of the world; there are
+        also 'Australia' and 'India', and other collections can be defined
+        for a particular installation.  See <xref
+        linkend="datetime-appendix"> for more information.
        </para>
       </listitem>
      </varlistentry>

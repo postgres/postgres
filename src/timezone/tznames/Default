@@ -1,0 +1,702 @@
+# Time zone configuration file for set "Default"
+
+# In order to use this file, you need to set the run-time parameter
+# timezone_abbreviations to 'Default'.  See the `Date/Time Support'
+# appendix in the PostgreSQL documentation for more information.
+
+
+#################### AFRICA ####################
+
+EAT     10800    # East Africa Time
+                 #     (Africa/Addis_Ababa)
+                 #     (Africa/Asmera)
+                 #     (Africa/Dar_es_Salaam)
+                 #     (Africa/Djibouti)
+                 #     (Africa/Kampala)
+                 #     (Africa/Khartoum)
+                 #     (Africa/Mogadishu)
+                 #     (Africa/Nairobi)
+                 #     (Indian/Antananarivo)
+                 #     (Indian/Comoro)
+                 #     (Indian/Mayotte)
+WAT      3600    # West Africa Time
+                 #     (Africa/Bangui)
+                 #     (Africa/Brazzaville)
+                 #     (Africa/Douala)
+                 #     (Africa/Kinshasa)
+                 #     (Africa/Lagos)
+                 #     (Africa/Libreville)
+                 #     (Africa/Luanda)
+                 #     (Africa/Malabo)
+                 #     (Africa/Ndjamena)
+                 #     (Africa/Niamey)
+                 #     (Africa/Porto-Novo)
+                 #     (Africa/Windhoek)
+
+#################### AMERICA ####################
+
+# Acre time is sometimes called Acre Standard Time (AST) which leads to a
+# conflict with AST (see below at AST)
+ACT    -18000    # Acre Time
+                 #     (America/Eirunepe)
+                 #     (America/Rio_Branco)
+ACST   -14400 D  # Acre Summer Time
+                 #     (America/Eirunepe)
+                 #     (America/Rio_Branco)
+AKDT   -28800 D  # Alaska Daylight Time
+                 #     (America/Anchorage)
+                 #     (America/Juneau)
+                 #     (America/Nome)
+                 #     (America/Yakutat)
+AKST   -32400    # Alaska Standard Time
+                 #     (America/Anchorage)
+                 #     (America/Juneau)
+                 #     (America/Nome)
+                 #     (America/Yakutat)
+ART    -10800    # Argentina Time (not in zic)
+BOT    -14400    # Bolivia Time
+                 #     (America/La_Paz)
+BRA    -10800    # Brazil Time (not in zic)
+BRST    -7200 D  # Brasil Summer Time
+                 #     (America/Sao_Paulo)
+BRT    -10800    # Brasil Time
+                 #     (America/Araguaina)
+                 #     (America/Bahia)
+                 #     (America/Belem)
+                 #     (America/Fortaleza)
+                 #     (America/Maceio)
+                 #     (America/Recife)
+                 #     (America/Sao_Paulo)
+COT    -18000    # Columbia Time (not in zic)
+# CONFLICT! CDT is not unique
+# Other timezones:
+#  - CDT: Mexico Central Daylight Time (America)
+#  - CDT: Cuba Central Daylight Time (America)
+#  - CDT: Canada Central Daylight Time (America)
+CDT    -18000 D  # Central Daylight Time
+                 #     (America/Cancun)
+                 #     (America/Chicago)
+                 #     (America/Menominee)
+                 #     (America/Merida)
+                 #     (America/Mexico_City)
+                 #     (America/Monterrey)
+                 #     (America/North_Dakota/Center)
+                 #     (America/Rainy_River)
+                 #     (America/Rankin_Inlet)
+                 #     (America/Winnipeg)
+CLST   -10800 D  # Chile Summer Time
+                 #     (America/Santiago)
+                 #     (Antarctica/Palmer)
+CLT    -14400    # Chile Time
+                 #     (America/Santiago)
+                 #     (Antarctica/Palmer)
+# CONFLICT! CST is not unique
+# Other timezones:
+#  - CST: Central Standard Time (Australia)
+#  - CST: Cuba Central Standard Time (America)
+CST    -21600    # Central Standard Time (America)
+                 #     (America/Cancun)
+                 #     (America/Chicago)
+                 #     (America/Menominee)
+                 #     (America/Merida)
+                 #     (America/Mexico_City)
+                 #     (America/Monterrey)
+                 #     (America/North_Dakota/Center)
+                 #     (America/Rainy_River)
+                 #     (America/Rankin_Inlet)
+                 #     (America/Regina)
+                 #     (America/Swift_Current)
+                 #     (America/Winnipeg)
+EDT    -14400 D  # Eastern Daylight Saving Time
+                 #     (America/Detroit)
+                 #     (America/Grand_Turk)
+                 #     (America/Indiana/Indianapolis)
+                 #     (America/Indiana/Knox)
+                 #     (America/Indiana/Marengo)
+                 #     (America/Indiana/Vevay)
+                 #     (America/Iqaluit)
+                 #     (America/Kentucky/Louisville)
+                 #     (America/Kentucky/Monticello)
+                 #     (America/Montreal)
+                 #     (America/Nassau)
+                 #     (America/New_York)
+                 #     (America/Nipigon)
+                 #     (America/Pangnirtung)
+                 #     (America/Thunder_Bay)
+                 #     (America/Toronto)
+EGST        0 D  # East Greenland Summer Time
+                 #     (America/Scoresbysund)
+EGT     -3600    # East Greenland Time (Svalbard & Jan Mayen)
+                 #     (America/Scoresbysund)
+# CONFLICT! EST is not unique
+# Other timezones:
+#  - EST: Eastern Standard Time (Australia)
+EST    -18000    # Eastern Standard Time (America)
+                 #     (America/Cayman)
+                 #     (America/Coral_Harbour)
+                 #     (America/Detroit)
+                 #     (America/Grand_Turk)
+                 #     (America/Indiana/Indianapolis)
+                 #     (America/Indiana/Knox)
+                 #     (America/Indiana/Marengo)
+                 #     (America/Indiana/Vevay)
+                 #     (America/Iqaluit)
+                 #     (America/Jamaica)
+                 #     (America/Kentucky/Louisville)
+                 #     (America/Kentucky/Monticello)
+                 #     (America/Montreal)
+                 #     (America/Nassau)
+                 #     (America/New_York)
+                 #     (America/Nipigon)
+                 #     (America/Panama)
+                 #     (America/Pangnirtung)
+                 #     (America/Thunder_Bay)
+                 #     (America/Toronto)
+FNT     -7200    # Fernando de Noronha Time
+                 #     (America/Noronha)
+FNST    -3600 D  # Fernando de Noronha Summer Time (not in zic)
+                 #     (America/Noronha)
+GFT    -10800    # French Guiana Time
+                 #     (America/Cayenne)
+GYT    -14400    # Guyana Time
+                 #     (America/Guyana)
+MDT    -21600 D  # Mexico Mountain Daylight Time
+                 # Mountain Daylight Time
+                 #     (America/Boise)
+                 #     (America/Cambridge_Bay)
+                 #     (America/Chihuahua)
+                 #     (America/Denver)
+                 #     (America/Edmonton)
+                 #     (America/Inuvik)
+                 #     (America/Mazatlan)
+                 #     (America/Yellowknife)
+MST    -25200    # Mexico Mountain Standard Time
+                 # Mountain Standard Time
+                 #     (America/Boise)
+                 #     (America/Cambridge_Bay)
+                 #     (America/Chihuahua)
+                 #     (America/Dawson_Creek)
+                 #     (America/Denver)
+                 #     (America/Edmonton)
+                 #     (America/Hermosillo)
+                 #     (America/Inuvik)
+                 #     (America/Mazatlan)
+                 #     (America/Phoenix)
+                 #     (America/Yellowknife)
+NDT     -9000 D  # Newfoundland Daylight Time
+                 #     (America/St_Johns)
+NST    -12600    # Newfoundland Standard Time
+                 #     (America/St_Johns)
+PET    -18000    # Peru Time (not in zic)
+PDT    -25200 D  # Pacific Daylight Time
+                 #     (America/Dawson)
+                 #     (America/Los_Angeles)
+                 #     (America/Tijuana)
+                 #     (America/Vancouver)
+                 #     (America/Whitehorse)
+PMDT    -7200 D  # Pierre & Miquelon Daylight Time
+                 #     (America/Miquelon)
+PMST   -10800    # Pierre & Miquelon Standard Time
+                 #     (America/Miquelon)
+PST    -28800    # Pacific Standard Time
+                 #     (America/Dawson)
+                 #     (America/Los_Angeles)
+                 #     (America/Tijuana)
+                 #     (America/Vancouver)
+                 #     (America/Whitehorse)
+                 #     (Pacific/Pitcairn)
+PYST   -10800 D  # Paraguay Summer Time
+                 #     (America/Asuncion)
+PYT    -14400    # Paraguay Time
+                 #     (America/Asuncion)
+UYST    -7200 D  # Uruguay Summer Time (not in zic)
+UYT    -10800    # Uruguay Time (not in zic)
+VET    -14400    # Venezuela Time
+                 #     (America/Caracas)
+WGST    -7200 D  # Western Greenland Summer Time
+                 #     (America/Godthab)
+WGT    -10800    # West Greenland Time
+                 #     (America/Godthab)
+
+#################### ANTARCTICA ####################
+
+DAVT    25200    # Davis Time (Antarctica)
+                 #     (Antarctica/Davis)
+DDUT    36000    # Dumont-d'Urville Time (Antarctica)
+                 #     (Antarctica/DumontDUrville)
+                 #     (Antarctica/Palmer)
+                 #     (America/Santiago)
+MAWT    21600    # Mawson Time (Antarctica)
+                 #     (Antarctica/Mawson)
+
+#################### ASIA ####################
+
+AFT     16200    # Afghanistan Time
+                 #     (Asia/Kabul)
+ALMT    21600    # Alma-Ata Time
+                 #     (Asia/Almaty)
+ALMST   25200 D  # Alma-Ata Summer Time
+                 #     (Asia/Almaty)
+AMST    18000 D  # Armenia Summer Time
+                 #     (Asia/Yerevan)
+# CONFLICT! AMT is not unique
+# Other timezones:
+#  - AMT: Amazon Time (America)
+AMT     14400    # Armenia Time
+                 #     (Asia/Yerevan)
+ANAST   46800 D  # Anadyr Summer Time
+                 #     (Asia/Anadyr)
+ANAT    43200    # Anadyr Time
+                 #     (Asia/Anadyr)
+AZST    18000 D  # Azerbaijan Summer Time
+                 #     (Asia/Baku)
+AZT     14400    # Azerbaijan Time
+                 #     (Asia/Baku)
+BDT     21600    # Bangladesh Time
+                 #     (Asia/Dhaka)
+BNT     28800    # Brunei Darussalam Time
+                 #     (Asia/Brunei)
+BORT    28800    # Borneo Time (Indonesia) (not in zic)
+BTT     21600    # Bhutan Time
+                 #     (Asia/Thimphu)
+CCT     28800    # China Coastal Time (not in zic)
+GEST    14400 D  # Georgia Summer Time (there was a timezone change in 2004)
+                 #     (Asia/Tbilisi)
+GET     10800    # Georgia Time (there was a timezone change in 2004)
+                 #     (Asia/Tbilisi)
+HKT     28800    # Hong Kong Time (not in zic)
+ICT     25200    # Indochina Time
+                 #     (Asia/Bangkok)
+                 #     (Asia/Phnom_Penh)
+                 #     (Asia/Saigon)
+                 #     (Asia/Vientiane)
+IRKST   32400 D  # Irkutsk Summer Time
+                 #     (Asia/Irkutsk)
+IRKT    28800    # Irkutsk Time
+                 #     (Asia/Irkutsk)
+IRT     12600    # Iran Time (not in zic)
+# CONFLICT! IST is not unique
+# Other timezones:
+# - IST: Irish Summer Time (Europe)
+# - IST: Indian Standard Time (Asia)
+IST      7200    # Israel Standard Time (not in zic)
+JAYT    32400    # Jayapura Time (Indonesia) (not in zic)
+KDT     36000 D  # Korean Daylight Time (not in zic)
+KGST    21600 D  # Kyrgyzstan Summer Time
+                 #     (Asia/Bishkek)
+KGT     18000    # Kyrgyzstan Time
+                 #     (Asia/Bishkek)
+KRAST   28800 D  # Krasnoyarsk Summer Time
+                 #     (Asia/Krasnoyarsk)
+KRAT    25200    # Krasnoyarsk Time
+                 #     (Asia/Krasnoyarsk)
+KST     32400    # Korean Standard Time
+                 #     (Asia/Pyongyang)
+LKT     21600    # Lanka Time
+                 #     (Asia/Colombo)
+MAGST   43200 D  # Magadan Summer Time
+                 #     (Asia/Magadan)
+MAGT    39600    # Magadan Time
+                 #     (Asia/Magadan)
+MMT     23400    # Myanmar Time
+                 #     (Asia/Rangoon)
+MYT     28800    # Malaysia Time
+                 #     (Asia/Kuala_Lumpur)
+                 #     (Asia/Kuching)
+NOVST   25200 D  # Novosibirsk Summer Time
+                 #     (Asia/Novosibirsk)
+NOVT    21600    # Novosibirsk Time
+                 #     (Asia/Novosibirsk)
+NPT     20700    # Nepal Time
+                 #     (Asia/Katmandu)
+OMSST   25200 D  # Omsk Summer Time
+                 #     (Asia/Omsk)
+OMST    21600    # Omsk Time
+                 #     (Asia/Omsk)
+PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time
+                 #     (Asia/Kamchatka)
+PETT    43200    # Petropavlovsk-Kamchatski Time
+                 #     (Asia/Kamchatka)
+PHT     28800    # Phillipine Time (not in zic)
+PKT     18000    # Pakistan Time (not in zic)
+TJT     18000    # Tajikistan Time
+                 #     (Asia/Dushanbe)
+TMT     18000    # Turkmenistan Time
+                 #     (Asia/Ashgabat)
+ULAST   32400 D  # Ulan Bator Summer Time
+                 #     (Asia/Ulaanbaatar)
+ULAT    28800    # Ulan Bator Time
+                 #     (Asia/Ulaanbaatar)
+UZST    21600 D  # Uzbekistan Summer Time
+                 #     (Asia/Samarkand)
+                 #     (Asia/Tashkent)
+UZT     18000    # Uzbekistan Time
+                 #     (Asia/Samarkand)
+                 #     (Asia/Tashkent)
+VLAST   39600 D  # Vladivostok Summer Time
+                 #     (Asia/Vladivostok)
+VLAT    36000    # Vladivostok Time
+                 #     (Asia/Vladivostok)
+YAKST   36000 D  # Yakutsk Summer Time
+                 #     (Asia/Yakutsk)
+YAKT    32400    # Yakutsk Time
+                 #     (Asia/Yakutsk)
+YEKST   21600 D  # Yekaterinburg Summer Time
+                 #     (Asia/Yekaterinburg)
+YEKT    18000    # Yekaterinburg Time
+                 #     (Asia/Yekaterinburg)
+
+#################### ATLANTIC ####################
+
+# CONFLICT! ADT is not unique
+# Other timezones:
+#  - ADT: Arabic Daylight Time (Asia)
+ADT    -10800 D  # Atlantic Daylight Time
+                 #     (America/Glace_Bay)
+                 #     (America/Goose_Bay)
+                 #     (America/Halifax)
+                 #     (America/Thule)
+                 #     (Atlantic/Bermuda)
+# CONFLICT! AST is not unique
+# Other timezones:
+#  - AST: Arabic Standard Time (Asia)
+#  - AST: Al Manamah Standard Time (Asia) same offset as Arabia Standard Time
+#  - AST/ACT: Acre Standard Time (America) listed as ACT
+#  - AST: Anguilla Standard Time (America) same offset
+#  - AST: Antigua Standard Time (America) same offset
+#  - AST: Antilles Standard Time (America) same offset
+AST    -14400    # Atlantic Standard Time
+                 #     (America/Anguilla)
+                 #     (America/Antigua)
+                 #     (America/Aruba)
+                 #     (America/Curacao)
+                 #     (America/Dominica)
+                 #     (America/Glace_Bay)
+                 #     (America/Goose_Bay)
+                 #     (America/Grenada)
+                 #     (America/Guadeloupe)
+                 #     (America/Halifax)
+                 #     (America/Martinique)
+                 #     (America/Montserrat)
+                 #     (America/Port_of_Spain)
+                 #     (America/Puerto_Rico)
+                 #     (America/Santo_Domingo)
+                 #     (America/St_Kitts)
+                 #     (America/St_Lucia)
+                 #     (America/St_Thomas)
+                 #     (America/St_Vincent)
+                 #     (America/Thule)
+                 #     (America/Tortola)
+                 #     (Atlantic/Bermuda)
+AZOST       0 D  # Azores Summer Time
+                 #     (Atlantic/Azores)
+AZOT    -3600    # Azores Time
+                 #     (Atlantic/Azores)
+FKST   -10800 D  # Falkland Islands Summer Time
+                 #     (Atlantic/Stanley)
+FKT    -14400    # Falkland Islands Time
+                 #     (Atlantic/Stanley)
+
+#################### AUSTRALIA ####################
+
+ACSST   37800 D  # Central Australia (not in zic)
+AESST   39600 D  # Australia Eastern Summer Standard Time (not in zic)
+AEST    36000    # Australia Eastern Standard Time (not in zic)
+AWSST   32400 D  # Australia Western Summer Standard Time (not in zic)
+AWST    28800    # Australia Western Standard Time (not in zic)
+CADT    37800 D  # Central Australia Daylight-Saving Time (not in zic)
+CAST    34200    # Central Australia Standard Time (not in zic)
+LHDT    39600 D  # Lord Howe Daylight Time, Australia (not in zic)
+LHST    37800    # Lord Howe Standard Time (Australia)
+                 #     (Australia/Lord_Howe)
+LIGT    36000    # Melbourne, Australia (not in zic)
+NZT     43200    # New Zealand Time (not in zic)
+SADT    37800 D  # South Australian Daylight-Saving Time (not in zic)
+SAST    34200    # South Australian Standard Time (not in zic)
+WADT    28800 D  # West Australian Daylight-Saving Time (not in zic)
+WAST    25200    # West Australian Standard Time (not in zic)
+WDT     32400 D  # West Australian Daylight-Saving Time (not in zic)
+
+#################### ETC ####################
+
+GMT         0    # Greenwich Mean Time
+                 #     (Africa/Abidjan)
+                 #     (Africa/Bamako)
+                 #     (Africa/Banjul)
+                 #     (Africa/Bissau)
+                 #     (Africa/Conakry)
+                 #     (Africa/Dakar)
+                 #     (Africa/Lome)
+                 #     (Africa/Monrovia)
+                 #     (Africa/Nouakchott)
+                 #     (Africa/Ouagadougou)
+                 #     (Africa/Sao_Tome)
+                 #     (America/Danmarkshavn)
+                 #     (Atlantic/Reykjavik)
+                 #     (Atlantic/St_Helena)
+                 #     (Etc/GMT)
+                 #     (Europe/Dublin)
+                 #     (Europe/London)
+UCT         0    # Universal Coordinated Time
+                 #     (Etc/UCT)
+UT          0    # Universal Time (not in zic)
+UTC         0    # Coordinated Universal Time
+Z           0    # Zulu
+ZULU        0    # Zulu
+
+#################### EUROPE ####################
+
+BST      3600 D  # British Summer Time
+                 # Brazil Standard Time
+                 # Bering Summer Time
+                 #     (Europe/London)
+BDST     7200 D  # British Double Summer Time
+CEST     7200 D  # Central Europe Summer Time
+                 #     (Africa/Ceuta)
+                 #     (Europe/Amsterdam)
+                 #     (Europe/Andorra)
+                 #     (Europe/Belgrade)
+                 #     (Europe/Berlin)
+                 #     (Europe/Brussels)
+                 #     (Europe/Budapest)
+                 #     (Europe/Copenhagen)
+                 #     (Europe/Gibraltar)
+                 #     (Europe/Luxembourg)
+                 #     (Europe/Madrid)
+                 #     (Europe/Malta)
+                 #     (Europe/Monaco)
+                 #     (Europe/Oslo)
+                 #     (Europe/Paris)
+                 #     (Europe/Prague)
+                 #     (Europe/Rome)
+                 #     (Europe/Stockholm)
+                 #     (Europe/Tirane)
+                 #     (Europe/Vaduz)
+                 #     (Europe/Vienna)
+                 #     (Europe/Warsaw)
+                 #     (Europe/Zurich)
+CET      3600    # Central Europe Time
+                 #     (Africa/Algiers)
+                 #     (Africa/Ceuta)
+                 #     (Europe/Amsterdam)
+                 #     (Europe/Andorra)
+                 #     (Europe/Belgrade)
+                 #     (Europe/Berlin)
+                 #     (Europe/Brussels)
+                 #     (Europe/Budapest)
+                 #     (Europe/Copenhagen)
+                 #     (Europe/Gibraltar)
+                 #     (Europe/Luxembourg)
+                 #     (Europe/Madrid)
+                 #     (Europe/Malta)
+                 #     (Europe/Monaco)
+                 #     (Europe/Oslo)
+                 #     (Europe/Paris)
+                 #     (Europe/Prague)
+                 #     (Europe/Rome)
+                 #     (Europe/Stockholm)
+                 #     (Europe/Tirane)
+                 #     (Europe/Vaduz)
+                 #     (Europe/Vienna)
+                 #     (Europe/Warsaw)
+                 #     (Europe/Zurich)
+CETDST   7200 D  # Central Europe Summer Time
+                 #     (Africa/Ceuta)
+                 #     (Europe/Amsterdam)
+                 #     (Europe/Andorra)
+                 #     (Europe/Belgrade)
+                 #     (Europe/Berlin)
+                 #     (Europe/Brussels)
+                 #     (Europe/Budapest)
+                 #     (Europe/Copenhagen)
+                 #     (Europe/Gibraltar)
+                 #     (Europe/Luxembourg)
+                 #     (Europe/Madrid)
+                 #     (Europe/Malta)
+                 #     (Europe/Monaco)
+                 #     (Europe/Oslo)
+                 #     (Europe/Paris)
+                 #     (Europe/Prague)
+                 #     (Europe/Rome)
+                 #     (Europe/Stockholm)
+                 #     (Europe/Tirane)
+                 #     (Europe/Vaduz)
+                 #     (Europe/Vienna)
+                 #     (Europe/Warsaw)
+                 #     (Europe/Zurich)
+EEST    10800 D  # East-Egypt Summertime
+                 # Eastern Europe Summer Time
+                 #     (Africa/Cairo)
+                 #     (Asia/Amman)
+                 #     (Asia/Beirut)
+                 #     (Asia/Damascus)
+                 #     (Asia/Gaza)
+                 #     (Asia/Nicosia)
+                 #     (Europe/Athens)
+                 #     (Europe/Bucharest)
+                 #     (Europe/Chisinau)
+                 #     (Europe/Helsinki)
+                 #     (Europe/Istanbul)
+                 #     (Europe/Kaliningrad)
+                 #     (Europe/Kiev)
+                 #     (Europe/Minsk)
+                 #     (Europe/Riga)
+                 #     (Europe/Simferopol)
+                 #     (Europe/Sofia)
+                 #     (Europe/Tallinn)
+                 #     (Europe/Uzhgorod)
+                 #     (Europe/Vilnius)
+                 #     (Europe/Zaporozhye)
+EET      7200    # East-Egypt Time
+                 # Eastern Europe Time
+                 #     (Africa/Cairo)
+                 #     (Africa/Tripoli)
+                 #     (Asia/Amman)
+                 #     (Asia/Beirut)
+                 #     (Asia/Damascus)
+                 #     (Asia/Gaza)
+                 #     (Asia/Nicosia)
+                 #     (Europe/Athens)
+                 #     (Europe/Bucharest)
+                 #     (Europe/Chisinau)
+                 #     (Europe/Helsinki)
+                 #     (Europe/Istanbul)
+                 #     (Europe/Kaliningrad)
+                 #     (Europe/Kiev)
+                 #     (Europe/Minsk)
+                 #     (Europe/Riga)
+                 #     (Europe/Simferopol)
+                 #     (Europe/Sofia)
+                 #     (Europe/Tallinn)
+                 #     (Europe/Uzhgorod)
+                 #     (Europe/Vilnius)
+                 #     (Europe/Zaporozhye)
+EETDST  10800 D  # East-Egypt Summertime
+                 # Eastern Europe Summer Time
+                 #     (Africa/Cairo)
+                 #     (Asia/Amman)
+                 #     (Asia/Beirut)
+                 #     (Asia/Damascus)
+                 #     (Asia/Gaza)
+                 #     (Asia/Nicosia)
+                 #     (Europe/Athens)
+                 #     (Europe/Bucharest)
+                 #     (Europe/Chisinau)
+                 #     (Europe/Helsinki)
+                 #     (Europe/Istanbul)
+                 #     (Europe/Kaliningrad)
+                 #     (Europe/Kiev)
+                 #     (Europe/Minsk)
+                 #     (Europe/Riga)
+                 #     (Europe/Simferopol)
+                 #     (Europe/Sofia)
+                 #     (Europe/Tallinn)
+                 #     (Europe/Uzhgorod)
+                 #     (Europe/Vilnius)
+                 #     (Europe/Zaporozhye)
+MEST     7200 D  # Middle Europe Summer Time (not in zic)
+MET      3600    # Middle Europe Time (not in zic)
+METDST   7200 D  # Middle Europe Summer Time (not in zic)
+MEZ      3600    # Mitteleuropaeische Zeit (German) (not in zic)
+MSD     14400 D  # Moscow Daylight Time
+                 #     (Europe/Moscow)
+MSK     10800    # Moscow Time
+                 #     (Europe/Moscow)
+WET         0    # Western Europe Time
+                 #     (Africa/Casablanca)
+                 #     (Africa/El_Aaiun)
+                 #     (Atlantic/Canary)
+                 #     (Atlantic/Faeroe)
+                 #     (Atlantic/Madeira)
+                 #     (Europe/Lisbon)
+WETDST   3600 D  # Western Europe Summer Time
+                 #     (Atlantic/Canary)
+                 #     (Atlantic/Faeroe)
+                 #     (Atlantic/Madeira)
+                 #     (Europe/Lisbon)
+
+#################### INDIAN ####################
+
+CXT     25200    # Christmas Island Time (Indian Ocean)
+                 #     (Indian/Christmas)
+IOT     21600    # British Indian Ocean Territory (Chagos) (there was a timezone change recently in 1996)
+                 #     (Indian/Chagos)
+MUT     14400    # Mauritius Island Time
+                 #     (Indian/Mauritius)
+MVT     18000    # Maldives Island Time
+                 #     (Indian/Maldives)
+RET     14400    # Reunion Time
+                 #     (Indian/Reunion)
+SCT     14400    # Seychelles Time
+                 #     (Indian/Mahe)
+TFT     18000    # Kerguelen Time
+                 #     (Indian/Kerguelen)
+
+#################### PACIFIC ####################
+
+CHADT   49500 D  # Chatham Daylight Time (New Zealand)
+                 #     (Pacific/Chatham)
+CHAST   45900    # Chatham Standard Time (New Zealand)
+                 #     (Pacific/Chatham)
+CKT     43200    # Cook Islands Time (not in zic)
+EASST  -18000 D  # Easter Island Summer Time (Chile)
+                 #     (Pacific/Easter)
+EAST   -21600    # Easter Island Time (Chile)
+                 #     (Pacific/Easter)
+FJST   -46800 D  # Fiji Summer Time (not in zic)
+FJT    -43200    # Fiji Time (not in zic)
+GALT   -21600    # Galapagos Time
+                 #     (Pacific/Galapagos)
+GAMT   -32400    # Gambier Time
+                 #     (Pacific/Gambier)
+GILT    43200    # Gilbert Islands Time
+                 #     (Pacific/Tarawa)
+HST    -36000    # Hawaiian Standard Time
+                 #     (Pacific/Honolulu)
+                 #     (Pacific/Johnston)
+KOST    39600    # Kosrae Time
+                 #     (Pacific/Kosrae)
+LINT    50400    # Line Islands Time (Kiribati)
+                 #     (Pacific/Kiritimati)
+MART   -34200    # Marquesas Time
+                 #     (Pacific/Marquesas)
+MHT     43200    # Kwajalein Time
+                 #     (Pacific/Kwajalein)
+                 #     (Pacific/Majuro)
+MPT     36000    # North Mariana Islands Time (not in zic)
+# CONFLICT! NFT is not unique
+# Other timezones:
+#  - NFT: Norfolk Time (Pacific)
+NFT    -12600    # Newfoundland Time (not in zic)
+NUT    -39600    # Niue Time
+                 #     (Pacific/Niue)
+NZDT    46800 D  # New Zealand Daylight Time
+                 #     (Antarctica/McMurdo)
+                 #     (Pacific/Auckland)
+NZST    43200    # New Zealand Standard Time
+                 #     (Antarctica/McMurdo)
+                 #     (Pacific/Auckland)
+PGT     36000    # Papua New Guinea Time
+                 #     (Pacific/Port_Moresby)
+PHOT    46800    # Phoenix Islands Time (Kiribati)
+                 #     (Pacific/Enderbury)
+PONT    39600    # Ponape Time (Micronesia)
+                 #     (Pacific/Ponape)
+PWT     32400    # Palau Time
+                 #     (Pacific/Palau)
+TAHT   -36000    # Tahiti Time (zic says "TAHT", other sources "THAT")
+                 #     (Pacific/Tahiti)
+TKT    -36000    # Tokelau Time
+                 #     (Pacific/Fakaofo)
+TOT     46800    # Tonga Time (not in zic)
+TRUT    36000    # Truk Time (zic says "TRUT", other souces say "TRUK")
+                 #     (Pacific/Truk)
+TVT     43200    # Tuvalu Time
+                 #     (Pacific/Funafuti)
+VUT     39600    # Vanuata Time (not in zic)
+WAKT    43200    # Wake Time
+                 #     (Pacific/Wake)
+WFT     43200    # Wallis and Futuna Time
+                 #     (Pacific/Wallis)
+YAPT    36000    # Yap Time (Micronesia) (not in zic)
+

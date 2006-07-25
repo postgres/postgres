@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.14 2006/07/25 01:37:42 adunstan Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.15 2006/07/25 03:51:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1564,8 +1564,9 @@ main(int argc, char *argv[])
 				 "ALTER DATABASE \"%s\" SET lc_messages TO 'C';"
 				 "ALTER DATABASE \"%s\" SET lc_monetary TO 'C';"
 				 "ALTER DATABASE \"%s\" SET lc_numeric TO 'C';"
-				 "ALTER DATABASE \"%s\" SET lc_time TO 'C';",
-				 dbname, dbname, dbname, dbname);
+				 "ALTER DATABASE \"%s\" SET lc_time TO 'C';"
+				 "ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
+				 dbname, dbname, dbname, dbname, dbname);
 
 	/*
 	 * Install any requested PL languages

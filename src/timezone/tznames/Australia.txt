@@ -1,0 +1,59 @@
+#
+# NOTE:
+#   This file is NOT loaded by the PostgreSQL database.  It just serves as
+#   a template for timezones you could need.  See the `Date/Time Support'
+#   appendix in the PostgreSQL documentation for more information.
+#
+
+ACSST   37800 D  # Central Australia (not in zic)
+# CONFLICT! ACST is not unique
+# Other timezones:
+#  - ACST: Acre Summer Time (America)
+ACST    34200    # Central Australia Standard Time (not in zic)
+AESST   39600 D  # Australia Eastern Summer Standard Time (not in zic)
+AEST    36000    # Australia Eastern Standard Time (not in zic)
+AWSST   32400 D  # Australia Western Summer Standard Time (not in zic)
+AWST    28800    # Australia Western Standard Time (not in zic)
+CADT    37800 D  # Central Australia Daylight-Saving Time (not in zic)
+CAST    34200    # Central Australia Standard Time (not in zic)
+# CONFLICT! CST is not unique
+# Other timezones:
+#  - CST: Central Standard Time (America)
+#  - CST: Cuba Central Standard Time (America)
+CST     34200    # Central Standard Time (Australia)
+                 #     (Australia/Adelaide)
+                 #     (Australia/Broken_Hill)
+# CONFLICT! EAST is not unique
+# Other timezones:
+#  - EAST: Easter Island Time (Chile) (Pacific)
+EAST    36000    # East Australian Standard Time (not in zic)
+# CONFLICT! EST is not unique
+# Other timezones:
+#  - EST: Eastern Standard Time (America)
+EST     36000    # Eastern Standard Time (Australia)
+                 #     (Australia/Currie)
+                 #     (Australia/Hobart)
+                 #     (Australia/Melbourne)
+                 #     (Australia/Sydney)
+                 #     (Australia/Currie)
+                 #     (Australia/Hobart)
+                 #     (Australia/Melbourne)
+                 #     (Australia/Sydney)
+LHDT    39600 D  # Lord Howe Daylight Time, Australia (not in zic)
+LHST    37800    # Lord Howe Standard Time (Australia)
+                 #     (Australia/Lord_Howe)
+LIGT    36000    # Melbourne, Australia (not in zic)
+NZT     43200    # New Zealand Time (not in zic)
+SADT    37800 D  # South Australian Daylight-Saving Time (not in zic)
+SAST    34200    # South Australian Standard Time (not in zic)
+SAT     34200    # South Australian Standard Time (not in zic)
+WADT    28800 D  # West Australian Daylight-Saving Time (not in zic)
+WAST    25200    # West Australian Standard Time (not in zic)
+WDT     32400 D  # West Australian Daylight-Saving Time (not in zic)
+# CONFLICT! WST is not unique
+# Other timezones:
+#  - WST: West Samoa Time
+WST     28800    # Western Standard Time (Australia)
+                 #     (Antarctica/Casey)
+                 #     (Australia/Perth)
+

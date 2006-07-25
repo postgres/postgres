@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.69 2006/07/13 18:01:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.70 2006/07/25 03:51:22 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -116,7 +116,6 @@ extern bool log_statement_stats;
 extern bool log_btree_build_stats;
 
 extern bool SQL_inheritance;
-extern bool Australian_timezones;
 
 extern bool default_with_oids;
 
@@ -219,9 +218,6 @@ extern void read_nondefault_variables(void);
  * having to include guc.h in some widely used headers that it really doesn't
  * belong in.
  */
-
-/* in utils/adt/datetime.c */
-extern bool ClearDateCache(bool newval, bool doit, GucSource source);
 
 /* in commands/tablespace.c */
 extern const char *assign_default_tablespace(const char *newval,

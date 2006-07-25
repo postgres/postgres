@@ -1,8 +1,6 @@
 --
 -- HOROLOGY
 --
--- needed so tests pass even in Australia
-SET australian_timezones = 'off';
 SET DateStyle = 'Postgres, MDY';
 
 --

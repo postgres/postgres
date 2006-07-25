@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.40 2006/06/18 15:38:36 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.41 2006/07/25 03:51:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -168,7 +168,6 @@ SHOW ALL;
 --------------------------------+--------------------------------+----------------------------------------------------------------------------------------------
  add_missing_from               | off                            | Automatically adds missing table references to FROM clauses.
  archive_command                | unset                          | WAL archiving command.
- australian_timezones           | off                            | Interprets ACST, CST, EST, and SAT as Australian time zones.
     .
     .
     .

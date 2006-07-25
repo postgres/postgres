@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.168 2006/07/14 05:28:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.169 2006/07/25 03:51:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,15 @@
 #include <limits.h>
 #include <math.h>
 
+#include "access/heapam.h"
 #include "access/xact.h"
+#include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
-#include "utils/guc.h"
+#include "utils/memutils.h"
+#include "utils/tzparser.h"
 
 
 static int DecodeNumber(int flen, char *field, bool haveTextMonth,
@@ -37,7 +41,7 @@ static int DecodeTime(char *str, int fmask, int *tmask,
 static int	DecodeTimezone(char *str, int *tzp);
 static int	DecodePosixTimezone(char *str, int *tzp);
 static int	DecodeZicTimezone(char *str, int *tzp, struct pg_tm * tm);
-static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
+static const datetkn *datebsearch(const char *key, const datetkn *base, int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm);
 static void TrimTrailingZeros(char *str);
 
@@ -87,426 +91,92 @@ char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
  * which are 30 or 45 minutes away from an even hour, most are on an hour
  * boundary, and none on other boundaries.
  *
- * Let's include all strings from my current zic time zone database.
- * Not all of them are unique, or even very understandable, so we will
- * leave some commented out for now.
+ * The static table contains no TZ or DTZ entries, rather those are loaded
+ * from configuration files and stored in timezonetktbl, which has the same
+ * format as the static datetktbl.
  */
-static datetkn datetktbl[] = {
+static datetkn *timezonetktbl = NULL;
+
+static int sztimezonetktbl = 0;
+
+static const datetkn datetktbl[] = {
 /*	text, token, lexval */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
 	{"abstime", IGNORE_DTF, 0}, /* for pre-v6.1 "Invalid Abstime" */
-	{"acsst", DTZ, POS(42)},	/* Cent. Australia */
-	{"acst", DTZ, NEG(16)},		/* Atlantic/Porto Acre Summer Time */
-	{"act", TZ, NEG(20)},		/* Atlantic/Porto Acre Time */
 	{DA_D, ADBC, AD},			/* "ad" for years > 0 */
-	{"adt", DTZ, NEG(12)},		/* Atlantic Daylight Time */
-	{"aesst", DTZ, POS(44)},	/* E. Australia */
-	{"aest", TZ, POS(40)},		/* Australia Eastern Std Time */
-	{"aft", TZ, POS(18)},		/* Kabul */
-	{"ahst", TZ, NEG(40)},		/* Alaska-Hawaii Std Time */
-	{"akdt", DTZ, NEG(32)},		/* Alaska Daylight Time */
-	{"akst", DTZ, NEG(36)},		/* Alaska Standard Time */
 	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
-	{"almst", TZ, POS(28)},		/* Almaty Savings Time */
-	{"almt", TZ, POS(24)},		/* Almaty Time */
 	{"am", AMPM, AM},
-	{"amst", DTZ, POS(20)},		/* Armenia Summer Time (Yerevan) */
-#if 0
-	{"amst", DTZ, NEG(12)},		/* Amazon Summer Time (Porto Velho) */
-#endif
-	{"amt", TZ, POS(16)},		/* Armenia Time (Yerevan) */
-#if 0
-	{"amt", TZ, NEG(16)},		/* Amazon Time (Porto Velho) */
-#endif
-	{"anast", DTZ, POS(52)},	/* Anadyr Summer Time (Russia) */
-	{"anat", TZ, POS(48)},		/* Anadyr Time (Russia) */
 	{"apr", MONTH, 4},
 	{"april", MONTH, 4},
-#if 0
-	aqtst
-	aqtt
-	arst
-#endif
-	{"art", TZ, NEG(12)},		/* Argentina Time */
-#if 0
-	ashst
-	ast							/* Atlantic Standard Time, Arabia Standard
-								 * Time, Acre Standard Time */
-#endif
-	{"ast", TZ, NEG(16)},		/* Atlantic Std Time (Canada) */
 	{"at", IGNORE_DTF, 0},		/* "at" (throwaway) */
 	{"aug", MONTH, 8},
 	{"august", MONTH, 8},
-	{"awsst", DTZ, POS(36)},	/* W. Australia */
-	{"awst", TZ, POS(32)},		/* W. Australia */
-	{"awt", DTZ, NEG(12)},
-	{"azost", DTZ, POS(0)},		/* Azores Summer Time */
-	{"azot", TZ, NEG(4)},		/* Azores Time */
-	{"azst", DTZ, POS(20)},		/* Azerbaijan Summer Time */
-	{"azt", TZ, POS(16)},		/* Azerbaijan Time */
 	{DB_C, ADBC, BC},			/* "bc" for years <= 0 */
-	{"bdst", TZ, POS(8)},		/* British Double Summer Time */
-	{"bdt", TZ, POS(24)},		/* Dacca */
-	{"bnt", TZ, POS(32)},		/* Brunei Darussalam Time */
-	{"bort", TZ, POS(32)},		/* Borneo Time (Indonesia) */
-#if 0
-	bortst
-	bost
-#endif
-	{"bot", TZ, NEG(16)},		/* Bolivia Time */
-	{"bra", TZ, NEG(12)},		/* Brazil Time */
-	{"brst", DTZ, NEG(8)},		/* Brasilia Summer Time */
-	{"brt", TZ, NEG(12)},		/* Brasilia Time */
-	{"bst", DTZ, POS(4)},		/* British Summer Time */
-#if 0
-	{"bst", TZ, NEG(12)},		/* Brazil Standard Time */
-	{"bst", DTZ, NEG(44)},		/* Bering Summer Time */
-#endif
-	{"bt", TZ, POS(12)},		/* Baghdad Time */
-	{"btt", TZ, POS(24)},		/* Bhutan Time */
-	{"cadt", DTZ, POS(42)},		/* Central Australian DST */
-	{"cast", TZ, POS(38)},		/* Central Australian ST */
-	{"cat", TZ, NEG(40)},		/* Central Alaska Time */
-	{"cct", TZ, POS(32)},		/* China Coast Time */
-#if 0
-	{"cct", TZ, POS(26)},		/* Indian Cocos (Island) Time */
-#endif
-	{"cdt", DTZ, NEG(20)},		/* Central Daylight Time */
-	{"cest", DTZ, POS(8)},		/* Central European Dayl.Time */
-	{"cet", TZ, POS(4)},		/* Central European Time */
-	{"cetdst", DTZ, POS(8)},	/* Central European Dayl.Time */
-	{"chadt", DTZ, POS(55)},	/* Chatham Island Daylight Time (13:45) */
-	{"chast", TZ, POS(51)},		/* Chatham Island Time (12:45) */
-#if 0
-	ckhst
-#endif
-	{"ckt", TZ, POS(48)},		/* Cook Islands Time */
-	{"clst", DTZ, NEG(12)},		/* Chile Summer Time */
-	{"clt", TZ, NEG(16)},		/* Chile Time */
-#if 0
-	cost
-#endif
-	{"cot", TZ, NEG(20)},		/* Columbia Time */
-	{"cst", TZ, NEG(24)},		/* Central Standard Time */
 	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
-#if 0
-	cvst
-#endif
-	{"cvt", TZ, POS(28)},		/* Christmas Island Time (Indian Ocean) */
-	{"cxt", TZ, POS(28)},		/* Christmas Island Time (Indian Ocean) */
 	{"d", UNITS, DTK_DAY},		/* "day of month" for ISO input */
-	{"davt", TZ, POS(28)},		/* Davis Time (Antarctica) */
-	{"ddut", TZ, POS(40)},		/* Dumont-d'Urville Time (Antarctica) */
 	{"dec", MONTH, 12},
 	{"december", MONTH, 12},
-	{"dnt", TZ, POS(4)},		/* Dansk Normal Tid */
 	{"dow", RESERV, DTK_DOW},	/* day of week */
 	{"doy", RESERV, DTK_DOY},	/* day of year */
 	{"dst", DTZMOD, 6},
-#if 0
-	{"dusst", DTZ, POS(24)},	/* Dushanbe Summer Time */
-#endif
-	{"easst", DTZ, NEG(20)},	/* Easter Island Summer Time */
-	{"east", TZ, NEG(24)},		/* Easter Island Time */
-	{"eat", TZ, POS(12)},		/* East Africa Time */
-#if 0
-	{"east", DTZ, POS(16)},		/* Indian Antananarivo Savings Time */
-	{"eat", TZ, POS(12)},		/* Indian Antananarivo Time */
-	{"ect", TZ, NEG(16)},		/* Eastern Caribbean Time */
-	{"ect", TZ, NEG(20)},		/* Ecuador Time */
-#endif
-	{"edt", DTZ, NEG(16)},		/* Eastern Daylight Time */
-	{"eest", DTZ, POS(12)},		/* Eastern Europe Summer Time */
-	{"eet", TZ, POS(8)},		/* East. Europe, USSR Zone 1 */
-	{"eetdst", DTZ, POS(12)},	/* Eastern Europe Daylight Time */
-	{"egst", DTZ, POS(0)},		/* East Greenland Summer Time */
-	{"egt", TZ, NEG(4)},		/* East Greenland Time */
-#if 0
-	ehdt
-#endif
 	{EPOCH, RESERV, DTK_EPOCH}, /* "epoch" reserved for system epoch time */
-	{"est", TZ, NEG(20)},		/* Eastern Standard Time */
 	{"feb", MONTH, 2},
 	{"february", MONTH, 2},
-	{"fjst", DTZ, NEG(52)},		/* Fiji Summer Time (13 hour offset!) */
-	{"fjt", TZ, NEG(48)},		/* Fiji Time */
-	{"fkst", DTZ, NEG(12)},		/* Falkland Islands Summer Time */
-	{"fkt", TZ, NEG(8)},		/* Falkland Islands Time */
-	{"fnst", DTZ, NEG(4)},		/* Fernando de Noronha Summer Time */
-	{"fnt", TZ, NEG(8)},		/* Fernando de Noronha Time */
 	{"fri", DOW, 5},
 	{"friday", DOW, 5},
-	{"fst", TZ, POS(4)},		/* French Summer Time */
-	{"fwt", DTZ, POS(8)},		/* French Winter Time  */
-	{"galt", TZ, NEG(24)},		/* Galapagos Time */
-	{"gamt", TZ, NEG(36)},		/* Gambier Time */
-	{"gest", DTZ, POS(20)},		/* Georgia Summer Time */
-	{"get", TZ, POS(16)},		/* Georgia Time */
-	{"gft", TZ, NEG(12)},		/* French Guiana Time */
-#if 0
-	ghst
-#endif
-	{"gilt", TZ, POS(48)},		/* Gilbert Islands Time */
-	{"gmt", TZ, POS(0)},		/* Greenwich Mean Time */
-	{"gst", TZ, POS(40)},		/* Guam Std Time, USSR Zone 9 */
-	{"gyt", TZ, NEG(16)},		/* Guyana Time */
 	{"h", UNITS, DTK_HOUR},		/* "hour" */
-#if 0
-	hadt
-	hast
-#endif
-	{"hdt", DTZ, NEG(36)},		/* Hawaii/Alaska Daylight Time */
-#if 0
-	hkst
-#endif
-	{"hkt", TZ, POS(32)},		/* Hong Kong Time */
-#if 0
-	{"hmt", TZ, POS(12)},		/* Hellas ? ? */
-	hovst
-	hovt
-#endif
-	{"hst", TZ, NEG(40)},		/* Hawaii Std Time */
-#if 0
-	hwt
-#endif
-	{"ict", TZ, POS(28)},		/* Indochina Time */
-	{"idle", TZ, POS(48)},		/* Intl. Date Line, East */
-	{"idlw", TZ, NEG(48)},		/* Intl. Date Line, West */
-#if 0
-	idt							/* Israeli, Iran, Indian Daylight Time */
-#endif
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
 	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for bad time */
-	{"iot", TZ, POS(20)},		/* Indian Chagos Time */
-	{"irkst", DTZ, POS(36)},	/* Irkutsk Summer Time */
-	{"irkt", TZ, POS(32)},		/* Irkutsk Time */
-	{"irt", TZ, POS(14)},		/* Iran Time */
-#if 0
-	isst
-#endif
-	{"ist", TZ, POS(8)},		/* Israel */
-	{"it", TZ, POS(14)},		/* Iran Time */
 	{"j", UNITS, DTK_JULIAN},
 	{"jan", MONTH, 1},
 	{"january", MONTH, 1},
-	{"javt", TZ, POS(28)},		/* Java Time (07:00? see JT) */
-	{"jayt", TZ, POS(36)},		/* Jayapura Time (Indonesia) */
 	{"jd", UNITS, DTK_JULIAN},
-	{"jst", TZ, POS(36)},		/* Japan Std Time,USSR Zone 8 */
-	{"jt", TZ, POS(30)},		/* Java Time (07:30? see JAVT) */
 	{"jul", MONTH, 7},
 	{"julian", UNITS, DTK_JULIAN},
 	{"july", MONTH, 7},
 	{"jun", MONTH, 6},
 	{"june", MONTH, 6},
-	{"kdt", DTZ, POS(40)},		/* Korea Daylight Time */
-	{"kgst", DTZ, POS(24)},		/* Kyrgyzstan Summer Time */
-	{"kgt", TZ, POS(20)},		/* Kyrgyzstan Time */
-	{"kost", TZ, POS(48)},		/* Kosrae Time */
-	{"krast", DTZ, POS(28)},	/* Krasnoyarsk Summer Time */
-	{"krat", TZ, POS(32)},		/* Krasnoyarsk Standard Time */
-	{"kst", TZ, POS(36)},		/* Korea Standard Time */
-	{"lhdt", DTZ, POS(44)},		/* Lord Howe Daylight Time, Australia */
-	{"lhst", TZ, POS(42)},		/* Lord Howe Standard Time, Australia */
-	{"ligt", TZ, POS(40)},		/* From Melbourne, Australia */
-	{"lint", TZ, POS(56)},		/* Line Islands Time (Kiribati; +14 hours!) */
-	{"lkt", TZ, POS(24)},		/* Lanka Time */
 	{"m", UNITS, DTK_MONTH},	/* "month" for ISO input */
-	{"magst", DTZ, POS(48)},	/* Magadan Summer Time */
-	{"magt", TZ, POS(44)},		/* Magadan Time */
 	{"mar", MONTH, 3},
 	{"march", MONTH, 3},
-	{"mart", TZ, NEG(38)},		/* Marquesas Time */
-	{"mawt", TZ, POS(24)},		/* Mawson, Antarctica */
 	{"may", MONTH, 5},
-	{"mdt", DTZ, NEG(24)},		/* Mountain Daylight Time */
-	{"mest", DTZ, POS(8)},		/* Middle Europe Summer Time */
-	{"met", TZ, POS(4)},		/* Middle Europe Time */
-	{"metdst", DTZ, POS(8)},	/* Middle Europe Daylight Time */
-	{"mewt", TZ, POS(4)},		/* Middle Europe Winter Time */
-	{"mez", TZ, POS(4)},		/* Middle Europe Zone */
-	{"mht", TZ, POS(48)},		/* Kwajalein */
 	{"mm", UNITS, DTK_MINUTE},	/* "minute" for ISO input */
-	{"mmt", TZ, POS(26)},		/* Myanmar Time */
 	{"mon", DOW, 1},
 	{"monday", DOW, 1},
-#if 0
-	most
-#endif
-	{"mpt", TZ, POS(40)},		/* North Mariana Islands Time */
-	{"msd", DTZ, POS(16)},		/* Moscow Summer Time */
-	{"msk", TZ, POS(12)},		/* Moscow Time */
-	{"mst", TZ, NEG(28)},		/* Mountain Standard Time */
-	{"mt", TZ, POS(34)},		/* Moluccas Time */
-	{"mut", TZ, POS(16)},		/* Mauritius Island Time */
-	{"mvt", TZ, POS(20)},		/* Maldives Island Time */
-	{"myt", TZ, POS(32)},		/* Malaysia Time */
-#if 0
-	ncst
-#endif
-	{"nct", TZ, POS(44)},		/* New Caledonia Time */
-	{"ndt", DTZ, NEG(10)},		/* Nfld. Daylight Time */
-	{"nft", TZ, NEG(14)},		/* Newfoundland Standard Time */
-	{"nor", TZ, POS(4)},		/* Norway Standard Time */
 	{"nov", MONTH, 11},
 	{"november", MONTH, 11},
-	{"novst", DTZ, POS(28)},	/* Novosibirsk Summer Time */
-	{"novt", TZ, POS(24)},		/* Novosibirsk Standard Time */
 	{NOW, RESERV, DTK_NOW},		/* current transaction time */
-	{"npt", TZ, POS(23)},		/* Nepal Standard Time (GMT-5:45) */
-	{"nst", TZ, NEG(14)},		/* Nfld. Standard Time */
-	{"nt", TZ, NEG(44)},		/* Nome Time */
-	{"nut", TZ, NEG(44)},		/* Niue Time */
-	{"nzdt", DTZ, POS(52)},		/* New Zealand Daylight Time */
-	{"nzst", TZ, POS(48)},		/* New Zealand Standard Time */
-	{"nzt", TZ, POS(48)},		/* New Zealand Time */
 	{"oct", MONTH, 10},
 	{"october", MONTH, 10},
-	{"omsst", DTZ, POS(28)},	/* Omsk Summer Time */
-	{"omst", TZ, POS(24)},		/* Omsk Time */
 	{"on", IGNORE_DTF, 0},		/* "on" (throwaway) */
-	{"pdt", DTZ, NEG(28)},		/* Pacific Daylight Time */
-#if 0
-	pest
-#endif
-	{"pet", TZ, NEG(20)},		/* Peru Time */
-	{"petst", DTZ, POS(52)},	/* Petropavlovsk-Kamchatski Summer Time */
-	{"pett", TZ, POS(48)},		/* Petropavlovsk-Kamchatski Time */
-	{"pgt", TZ, POS(40)},		/* Papua New Guinea Time */
-	{"phot", TZ, POS(52)},		/* Phoenix Islands (Kiribati) Time */
-#if 0
-	phst
-#endif
-	{"pht", TZ, POS(32)},		/* Phillipine Time */
-	{"pkt", TZ, POS(20)},		/* Pakistan Time */
 	{"pm", AMPM, PM},
-	{"pmdt", DTZ, NEG(8)},		/* Pierre & Miquelon Daylight Time */
-#if 0
-	pmst
-#endif
-	{"pont", TZ, POS(44)},		/* Ponape Time (Micronesia) */
-	{"pst", TZ, NEG(32)},		/* Pacific Standard Time */
-	{"pwt", TZ, POS(36)},		/* Palau Time */
-	{"pyst", DTZ, NEG(12)},		/* Paraguay Summer Time */
-	{"pyt", TZ, NEG(16)},		/* Paraguay Time */
-	{"ret", DTZ, POS(16)},		/* Reunion Island Time */
 	{"s", UNITS, DTK_SECOND},	/* "seconds" for ISO input */
-	{"sadt", DTZ, POS(42)},		/* S. Australian Dayl. Time */
-#if 0
-	samst
-	samt
-#endif
-	{"sast", TZ, POS(38)},		/* South Australian Std Time */
 	{"sat", DOW, 6},
 	{"saturday", DOW, 6},
-#if 0
-	sbt
-#endif
-	{"sct", DTZ, POS(16)},		/* Mahe Island Time */
 	{"sep", MONTH, 9},
 	{"sept", MONTH, 9},
 	{"september", MONTH, 9},
-	{"set", TZ, NEG(4)},		/* Seychelles Time ?? */
-#if 0
-	sgt
-#endif
-	{"sst", DTZ, POS(8)},		/* Swedish Summer Time */
 	{"sun", DOW, 0},
 	{"sunday", DOW, 0},
-	{"swt", TZ, POS(4)},		/* Swedish Winter Time */
-#if 0
-	syot
-#endif
 	{"t", ISOTIME, DTK_TIME},	/* Filler for ISO time fields */
-	{"tft", TZ, POS(20)},		/* Kerguelen Time */
-	{"that", TZ, NEG(40)},		/* Tahiti Time */
 	{"thu", DOW, 4},
 	{"thur", DOW, 4},
 	{"thurs", DOW, 4},
 	{"thursday", DOW, 4},
-	{"tjt", TZ, POS(20)},		/* Tajikistan Time */
-	{"tkt", TZ, NEG(40)},		/* Tokelau Time */
-	{"tmt", TZ, POS(20)},		/* Turkmenistan Time */
 	{TODAY, RESERV, DTK_TODAY}, /* midnight */
 	{TOMORROW, RESERV, DTK_TOMORROW},	/* tomorrow midnight */
-#if 0
-	tost
-#endif
-	{"tot", TZ, POS(52)},		/* Tonga Time */
-#if 0
-	tpt
-#endif
-	{"truk", TZ, POS(40)},		/* Truk Time */
 	{"tue", DOW, 2},
 	{"tues", DOW, 2},
 	{"tuesday", DOW, 2},
-	{"tvt", TZ, POS(48)},		/* Tuvalu Time */
-#if 0
-	uct
-#endif
-	{"ulast", DTZ, POS(36)},	/* Ulan Bator Summer Time */
-	{"ulat", TZ, POS(32)},		/* Ulan Bator Time */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
-	{"ut", TZ, POS(0)},
-	{"utc", TZ, POS(0)},
-	{"uyst", DTZ, NEG(8)},		/* Uruguay Summer Time */
-	{"uyt", TZ, NEG(12)},		/* Uruguay Time */
-	{"uzst", DTZ, POS(24)},		/* Uzbekistan Summer Time */
-	{"uzt", TZ, POS(20)},		/* Uzbekistan Time */
-	{"vet", TZ, NEG(16)},		/* Venezuela Time */
-	{"vlast", DTZ, POS(44)},	/* Vladivostok Summer Time */
-	{"vlat", TZ, POS(40)},		/* Vladivostok Time */
-#if 0
-	vust
-#endif
-	{"vut", TZ, POS(44)},		/* Vanuata Time */
-	{"wadt", DTZ, POS(32)},		/* West Australian DST */
-	{"wakt", TZ, POS(48)},		/* Wake Time */
-#if 0
-	warst
-#endif
-	{"wast", TZ, POS(28)},		/* West Australian Std Time */
-	{"wat", TZ, NEG(4)},		/* West Africa Time */
-	{"wdt", DTZ, POS(36)},		/* West Australian DST */
 	{"wed", DOW, 3},
 	{"wednesday", DOW, 3},
 	{"weds", DOW, 3},
-	{"west", DTZ, POS(4)},		/* Western Europe Summer Time */
-	{"wet", TZ, POS(0)},		/* Western Europe */
-	{"wetdst", DTZ, POS(4)},	/* Western Europe Daylight Savings Time */
-	{"wft", TZ, POS(48)},		/* Wallis and Futuna Time */
-	{"wgst", DTZ, NEG(8)},		/* West Greenland Summer Time */
-	{"wgt", TZ, NEG(12)},		/* West Greenland Time */
-	{"wst", TZ, POS(32)},		/* West Australian Standard Time */
 	{"y", UNITS, DTK_YEAR},		/* "year" for ISO input */
-	{"yakst", DTZ, POS(40)},	/* Yakutsk Summer Time */
-	{"yakt", TZ, POS(36)},		/* Yakutsk Time */
-	{"yapt", TZ, POS(40)},		/* Yap Time (Micronesia) */
-	{"ydt", DTZ, NEG(32)},		/* Yukon Daylight Time */
-	{"yekst", DTZ, POS(24)},	/* Yekaterinburg Summer Time */
-	{"yekt", TZ, POS(20)},		/* Yekaterinburg Time */
 	{YESTERDAY, RESERV, DTK_YESTERDAY}, /* yesterday midnight */
-	{"yst", TZ, NEG(36)},		/* Yukon Standard Time */
-	{"z", TZ, POS(0)},			/* time zone tag per ISO-8601 */
-	{"zp4", TZ, NEG(16)},		/* UTC +4  hours. */
-	{"zp5", TZ, NEG(20)},		/* UTC +5  hours. */
-	{"zp6", TZ, NEG(24)},		/* UTC +6  hours. */
-	{ZULU, TZ, POS(0)},			/* UTC */
 };
 
-static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
-
-/* Used for SET australian_timezones to override North American ones */
-static datetkn australian_datetktbl[] = {
-	{"acst", TZ, POS(38)},		/* Cent. Australia */
-	{"cst", TZ, POS(42)},		/* Australia Central Std Time */
-	{"east", TZ, POS(40)},		/* East Australian Std Time */
-	{"est", TZ, POS(40)},		/* Australia Eastern Std Time */
-	{"sat", TZ, POS(38)},
-};
-
-static unsigned int australian_szdatetktbl = sizeof australian_datetktbl /
-sizeof australian_datetktbl[0];
+static int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
 static datetkn deltatktbl[] = {
 	/* text, token, lexval */
@@ -576,11 +246,11 @@ static datetkn deltatktbl[] = {
 	{"yrs", UNITS, DTK_YEAR},	/* "years" relative */
 };
 
-static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
+static int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
-static datetkn *datecache[MAXDATEFIELDS] = {NULL};
+static const datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
-static datetkn *deltacache[MAXDATEFIELDS] = {NULL};
+static const datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 
 
 /*
@@ -2998,21 +2668,15 @@ int
 DecodeSpecial(int field, char *lowtoken, int *val)
 {
 	int			type;
-	datetkn    *tp;
+	const datetkn *tp;
 
-	if (datecache[field] != NULL &&
-		strncmp(lowtoken, datecache[field]->token, TOKMAXLEN) == 0)
-		tp = datecache[field];
-	else
+	tp = datecache[field];
+	if (tp == NULL || strncmp(lowtoken, tp->token, TOKMAXLEN) != 0)
 	{
-		tp = NULL;
-		if (Australian_timezones)
-			tp = datebsearch(lowtoken, australian_datetktbl,
-							 australian_szdatetktbl);
-		if (!tp)
+		tp = datebsearch(lowtoken, timezonetktbl, sztimezonetktbl);
+		if (tp == NULL)
 			tp = datebsearch(lowtoken, datetktbl, szdatetktbl);
 	}
-	datecache[field] = tp;
 	if (tp == NULL)
 	{
 		type = UNKNOWN_FIELD;
@@ -3020,6 +2684,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	}
 	else
 	{
+		datecache[field] = tp;
 		type = tp->type;
 		switch (type)
 		{
@@ -3391,20 +3056,20 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 
 /* DecodeUnits()
  * Decode text string using lookup table.
- * This routine supports time interval decoding.
+ * This routine supports time interval decoding
+ * (hence, it need not recognize timezone names).
  */
 int
 DecodeUnits(int field, char *lowtoken, int *val)
 {
 	int			type;
-	datetkn    *tp;
+	const datetkn *tp;
 
-	if (deltacache[field] != NULL &&
-		strncmp(lowtoken, deltacache[field]->token, TOKMAXLEN) == 0)
-		tp = deltacache[field];
-	else
+	tp = deltacache[field];
+	if (tp == NULL || strncmp(lowtoken, tp->token, TOKMAXLEN) != 0)
+	{
 		tp = datebsearch(lowtoken, deltatktbl, szdeltatktbl);
-	deltacache[field] = tp;
+	}
 	if (tp == NULL)
 	{
 		type = UNKNOWN_FIELD;
@@ -3412,6 +3077,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	}
 	else
 	{
+		deltacache[field] = tp;
 		type = tp->type;
 		if (type == TZ || type == DTZ)
 			*val = FROMVAL(tp);
@@ -3477,10 +3143,10 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
  * Binary search -- from Knuth (6.2.1) Algorithm B.  Special case like this
  * is WAY faster than the generic bsearch().
  */
-static datetkn *
-datebsearch(char *key, datetkn *base, unsigned int nel)
+static const datetkn *
+datebsearch(const char *key, const datetkn *base, int nel)
 {
-	datetkn    *last = base + nel - 1,
+	const datetkn *last = base + nel - 1,
 			   *position;
 	int			result;
 
@@ -4082,30 +3748,15 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 }	/* EncodeInterval() */
 
 
-/* GUC assign_hook for australian_timezones */
-bool
-ClearDateCache(bool newval, bool doit, GucSource source)
-{
-	int			i;
-
-	if (doit)
-	{
-		for (i = 0; i < MAXDATEFIELDS; i++)
-			datecache[i] = NULL;
-	}
-
-	return true;
-}
-
 /*
  * We've been burnt by stupid errors in the ordering of the datetkn tables
  * once too often.	Arrange to check them during postmaster start.
  */
 static bool
-CheckDateTokenTable(const char *tablename, datetkn *base, unsigned int nel)
+CheckDateTokenTable(const char *tablename, const datetkn *base, int nel)
 {
 	bool		ok = true;
-	unsigned int i;
+	int			i;
 
 	for (i = 1; i < nel; i++)
 	{
@@ -4131,8 +3782,135 @@ CheckDateTokenTables(void)
 
 	ok &= CheckDateTokenTable("datetktbl", datetktbl, szdatetktbl);
 	ok &= CheckDateTokenTable("deltatktbl", deltatktbl, szdeltatktbl);
-	ok &= CheckDateTokenTable("australian_datetktbl",
-							  australian_datetktbl,
-							  australian_szdatetktbl);
 	return ok;
+}
+
+/*
+ * This function gets called during timezone config file load or reload
+ * to create the final array of timezone tokens.  The argument array
+ * is already sorted in name order.  This data is in a temporary memory
+ * context and must be copied to somewhere permanent.
+ */
+void
+InstallTimeZoneAbbrevs(tzEntry *abbrevs, int n)
+{
+	datetkn	   *newtbl;
+	int			i;
+
+	/*
+	 * Copy the data into TopMemoryContext and convert to datetkn format.
+	 */
+	newtbl = (datetkn *) MemoryContextAlloc(TopMemoryContext,
+											n * sizeof(datetkn));
+	for (i = 0; i < n; i++)
+	{
+		strncpy(newtbl[i].token, abbrevs[i].abbrev, TOKMAXLEN);
+		newtbl[i].type = abbrevs[i].is_dst ? DTZ : TZ;
+		TOVAL(&newtbl[i], abbrevs[i].offset / 60);
+	}
+
+	/* Check the ordering, if testing */
+	Assert(CheckDateTokenTable("timezone offset", newtbl, n));
+
+	/* Now safe to replace existing table (if any) */
+	if (timezonetktbl)
+		pfree(timezonetktbl);
+	timezonetktbl = newtbl;
+	sztimezonetktbl = n;
+
+	/* clear date cache in case it contains any stale timezone names */
+	for (i = 0; i < MAXDATEFIELDS; i++)
+		datecache[i] = NULL;
+}
+
+/*
+ * This set-returning function reads all the available time zone abbreviations
+ * and returns a set of (name, utc_offset, is_dst).
+ */
+Datum
+pg_timezonenames(PG_FUNCTION_ARGS)
+{
+	FuncCallContext	   *funcctx;
+	int				   *pindex;
+	Datum				result;
+	Interval		   *resInterval;
+	HeapTuple			tuple;
+	Datum				values[3];
+	bool				nulls[3];
+	char				buffer[TOKMAXLEN + 1];
+	unsigned char	   *p;
+	struct pg_tm		tm;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		TupleDesc		tupdesc;
+		MemoryContext	oldcontext;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function
+		 * calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* allocate memory for user context */
+		pindex = (int *) palloc(sizeof(int));
+		*pindex = 0;
+		funcctx->user_fctx = (void *) pindex;
+
+		/*
+		 * build tupdesc for result tuples. This must match the
+		 * definition of the pg_timezonenames view in system_views.sql
+		 */
+		tupdesc = CreateTemplateTupleDesc(3, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "utc_offset",
+						   INTERVALOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "is_dst",
+						   BOOLOID, -1, 0);
+
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+	pindex = (int *) funcctx->user_fctx;
+
+	if (*pindex >= sztimezonetktbl)
+		SRF_RETURN_DONE(funcctx);
+
+	MemSet(nulls, 0, sizeof(nulls));
+
+	/*
+	 * Convert name to text, using upcasing conversion that is the inverse
+	 * of what ParseDateTime() uses.
+	 */
+	strncpy(buffer, timezonetktbl[*pindex].token, TOKMAXLEN);
+	buffer[TOKMAXLEN] = '\0';	/* may not be null-terminated */
+	for (p = (unsigned char *) buffer; *p; p++)
+		*p = pg_toupper(*p);
+
+	values[0] = DirectFunctionCall1(textin, CStringGetDatum(buffer));
+
+	MemSet(&tm, 0, sizeof(struct pg_tm));
+	tm.tm_min = (-1) * FROMVAL(&timezonetktbl[*pindex]);
+	resInterval = (Interval *) palloc(sizeof(Interval));
+	tm2interval(&tm, 0, resInterval);
+	values[1] = IntervalPGetDatum(resInterval);
+
+	Assert(timezonetktbl[*pindex].type == DTZ ||
+		   timezonetktbl[*pindex].type == TZ);
+	values[2] = BoolGetDatum(timezonetktbl[*pindex].type == DTZ);
+
+	(*pindex)++;
+
+	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
+
+	SRF_RETURN_NEXT(funcctx, result);
 }

@@ -397,7 +397,13 @@
 #datestyle = 'iso, mdy'
 #timezone = unknown			# actually, defaults to TZ 
 					# environment setting
-#australian_timezones = off
+#timezone_abbreviations = 'Default'     # select the set of available timezone
+					# abbreviations. Currently, there are
+					#   Default
+					#   Australia
+					#   India
+					# However you can also create your own
+					# file in share/timezonesets/.
 #extra_float_digits = 0			# min -15, max 2
 #client_encoding = sql_ascii		# actually, defaults to database
 					# encoding

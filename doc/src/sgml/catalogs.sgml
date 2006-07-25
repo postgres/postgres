@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.126 2006/07/10 16:20:49 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.127 2006/07/25 03:51:21 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4560,6 +4560,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-timezonenames"><structname>pg_timezonenames</structname></link></entry>
+      <entry>time zone abbreviations</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-user"><structname>pg_user</structname></link></entry>
       <entry>database users</entry>
      </row>
@@ -5862,6 +5867,53 @@
       <entry><type>boolean</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.reltriggers</literal></entry>
       <entry>true if table has triggers</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-timezonenames">
+  <title><structname>pg_timezonenames</structname></title>
+
+  <indexterm zone="view-pg-timezonenames">
+   <primary>pg_timezonenames</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_timezonenames</structname> provides a list
+   of time zone abbreviations that are currently recognized by the datetime
+   input routines.  The contents of this view change when the
+   <xref linkend="guc-timezone-abbreviations"> run-time parameter is modified.
+  </para>
+
+  <table>
+   <title><structname>pg_timezonenames</> Columns</title>
+
+   <tgroup cols=3>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>time zone abbreviation</entry>
+     </row>
+     <row>
+      <entry><structfield>utc_offset</structfield></entry>
+      <entry><type>interval</type></entry>
+      <entry>offset from UTC (positive means east of Greenwich)</entry>
+     </row>
+     <row>
+      <entry><structfield>is_dst</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry>true if this is a daylight-savings zone</entry>
      </row>
     </tbody>
    </tgroup>

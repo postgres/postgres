@@ -1,0 +1,92 @@
+#
+# NOTE:
+#   This file is NOT loaded by the PostgreSQL database.  It just serves as
+#   a template for timezones you could need.  See the `Date/Time Support'
+#   appendix in the PostgreSQL documentation for more information.
+#
+
+# CONFLICT! ADT is not unique
+# Other timezones:
+#  - ADT: Arabic Daylight Time (Asia)
+ADT    -10800 D  # Atlantic Daylight Time
+                 #     (America/Glace_Bay)
+                 #     (America/Goose_Bay)
+                 #     (America/Halifax)
+                 #     (America/Thule)
+                 #     (Atlantic/Bermuda)
+# CONFLICT! AST is not unique
+# Other timezones:
+#  - AST: Arabic Standard Time (Asia)
+#  - AST: Al Manamah Standard Time (Asia) same offset as Arabia Standard Time
+#  - AST/ACT: Acre Standard Time (America) listed as ACT
+#  - AST: Anguilla Standard Time (America) same offset
+#  - AST: Antigua Standard Time (America) same offset
+#  - AST: Antilles Standard Time (America) same offset
+AST    -14400    # Atlantic Standard Time
+                 #     (America/Anguilla)
+                 #     (America/Antigua)
+                 #     (America/Aruba)
+                 #     (America/Curacao)
+                 #     (America/Dominica)
+                 #     (America/Glace_Bay)
+                 #     (America/Goose_Bay)
+                 #     (America/Grenada)
+                 #     (America/Guadeloupe)
+                 #     (America/Halifax)
+                 #     (America/Martinique)
+                 #     (America/Montserrat)
+                 #     (America/Port_of_Spain)
+                 #     (America/Puerto_Rico)
+                 #     (America/Santo_Domingo)
+                 #     (America/St_Kitts)
+                 #     (America/St_Lucia)
+                 #     (America/St_Thomas)
+                 #     (America/St_Vincent)
+                 #     (America/Thule)
+                 #     (America/Tortola)
+                 #     (Atlantic/Bermuda)
+AZOST       0 D  # Azores Summer Time
+                 #     (Atlantic/Azores)
+AZOT    -3600    # Azores Time
+                 #     (Atlantic/Azores)
+CVT     -3600    # Cape Verde Time
+                 #     (Atlantic/Cape_Verde)
+FKST   -10800 D  # Falkland Islands Summer Time
+                 #     (Atlantic/Stanley)
+FKT    -14400    # Falkland Islands Time
+                 #     (Atlantic/Stanley)
+GMT         0    # Greenwich Mean Time
+                 #     (Africa/Abidjan)
+                 #     (Africa/Bamako)
+                 #     (Africa/Banjul)
+                 #     (Africa/Bissau)
+                 #     (Africa/Conakry)
+                 #     (Africa/Dakar)
+                 #     (Africa/Lome)
+                 #     (Africa/Monrovia)
+                 #     (Africa/Nouakchott)
+                 #     (Africa/Ouagadougou)
+                 #     (Africa/Sao_Tome)
+                 #     (America/Danmarkshavn)
+                 #     (Atlantic/Reykjavik)
+                 #     (Atlantic/St_Helena)
+                 #     (Etc/GMT)
+                 #     (Europe/Dublin)
+                 #     (Europe/London)
+# CONFLICT! GST is not unique
+# Other timezones:
+# - GST: Gulf Standard Time (Asia)
+GST     -7200    # South Georgia Time (Atlantic)
+                 #     (Atlantic/South_Georgia)
+WEST     3600 D  # Western Europe Summer Time
+                 #     (Atlantic/Canary)
+                 #     (Atlantic/Faeroe)
+                 #     (Atlantic/Madeira)
+                 #     (Europe/Lisbon)
+WET         0    # Western Europe Time
+                 #     (Africa/Casablanca)
+                 #     (Africa/El_Aaiun)
+                 #     (Atlantic/Canary)
+                 #     (Atlantic/Faeroe)
+                 #     (Atlantic/Madeira)
+                 #     (Europe/Lisbon)

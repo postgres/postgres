@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.328 2006/07/14 14:52:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.329 2006/07/25 03:51:21 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #endif
 
 
+#include "access/gin.h"
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
@@ -57,7 +58,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
-#include "access/gin.h"
+#include "utils/tzparser.h"
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
@@ -131,6 +132,7 @@ static bool assign_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
 static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
 static const char *assign_backslash_quote(const char *newval, bool doit, GucSource source);
+static const char *assign_timezone_abbreviations(const char *newval, bool doit, GucSource source);
 
 static bool assign_tcp_keepalives_idle(int newval, bool doit, GucSource source);
 static bool assign_tcp_keepalives_interval(int newval, bool doit, GucSource source);
@@ -162,8 +164,6 @@ bool		log_statement_stats = false;		/* this is sort of all three
 bool		log_btree_build_stats = false;
 
 bool		SQL_inheritance = true;
-
-bool		Australian_timezones = false;
 
 bool		Password_encryption = true;
 
@@ -216,6 +216,7 @@ static char *timezone_string;
 static char *XactIsoLevel_string;
 static char *data_directory;
 static char *custom_variable_classes;
+static char *timezone_abbreviations;
 static int	max_function_args;
 static int	max_index_keys;
 static int	max_identifier_length;
@@ -805,15 +806,6 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&SQL_inheritance,
 		true, NULL, NULL
-	},
-	{
-		{"australian_timezones", PGC_USERSET, CLIENT_CONN_LOCALE,
-			gettext_noop("Interprets ACST, CST, EST, and SAT as Australian time zones."),
-			gettext_noop("Otherwise they are interpreted as North/South American "
-						 "time zones and Saturday.")
-		},
-		&Australian_timezones,
-		false, ClearDateCache, NULL
 	},
 	{
 		{"password_encryption", PGC_USERSET, CONN_AUTH_SECURITY,
@@ -2076,6 +2068,14 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&timezone_string,
 		"UNKNOWN", assign_timezone, show_timezone
+	},
+	{
+		{"timezone_abbreviations", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Selects a file of timezone abbreviations"),
+			NULL,
+		},
+		&timezone_abbreviations,
+		"Default", assign_timezone_abbreviations, NULL
 	},
 
 	{
@@ -6098,6 +6098,30 @@ assign_backslash_quote(const char *newval, bool doit, GucSource source)
 	if (doit)
 		backslash_quote = bq;
 
+	return newval;
+}
+
+static const char *
+assign_timezone_abbreviations(const char *newval, bool doit, GucSource source)
+{
+	/* Loading abbrev file is expensive, so only do it when value changes */
+	if (timezone_abbreviations == NULL ||
+		strcmp(timezone_abbreviations, newval) != 0)
+	{
+		int		elevel;
+
+		/*
+		 * If reading config file, only the postmaster should bleat loudly
+		 * about problems.  Otherwise, it's just this one process doing it,
+		 * and we use WARNING message level.
+		 */
+		if (source == PGC_S_FILE)
+			elevel = IsUnderPostmaster ? DEBUG2 : LOG;
+		else
+			elevel = WARNING;
+		if (!load_tzoffsets(newval, doit, elevel))
+			return NULL;
+	}
 	return newval;
 }
 

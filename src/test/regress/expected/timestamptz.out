@@ -1,8 +1,6 @@
 --
 -- TIMESTAMPTZ
 --
--- needed so tests pass even in Australia
-SET australian_timezones = 'off';
 CREATE TABLE TIMESTAMPTZ_TBL ( d1 timestamp(2) with time zone);
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('current');

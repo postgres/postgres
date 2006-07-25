@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.50 2006/07/06 01:46:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.51 2006/07/25 03:51:21 tgl Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -361,15 +361,25 @@
    </indexterm>
 
    <para>
-    <xref linkend="datetime-timezone-input-table"> and
-    <xref linkend="datetime-timezone-full-names-table"> show the time zone
+    <xref linkend="datetime-timezone-input-table"> shows the time zone
     abbreviations recognized by <productname>PostgreSQL</productname>
-    in date/time input values.  Note that these names are <emphasis>not</>
-    necessarily used for date/time output &mdash; output is driven by the
-    official timezone abbreviation(s) associated with the currently selected
-    <xref linkend="guc-timezone"> parameter setting.  (It is
-    likely that future releases will make some use of <varname>timezone</>
-    for input as well.)
+    in date/time input values.  These abbreviations are not
+    hard-wired into the server, but are obtained from a configuration
+    file (see <xref linkend="datetime-config-files">).  Note that these
+    names are <emphasis>not</> used for date/time output &mdash; all supported
+    output formats use numeric timezone displays to avoid ambiguity.
+   </para>
+
+   <para>
+    In addition to these abbreviations, the full timezone names shown in
+    <xref linkend="datetime-timezone-full-names-table"> can be used
+    in date/time input values.  There is a conceptual and
+    practical difference between the abbreviations and the full names:
+    abbreviations always represent a fixed offset from UTC, whereas most
+    of the full names imply a local daylight-savings time rule and so
+    have two possible UTC offsets. That's why
+    you always have to specify a date if you want to use full time zone
+    names in <type>timetz</> values.
    </para>
 
    <para>
@@ -925,61 +935,6 @@
      </tgroup>
     </table>
 
-  <formalpara>
-   <title>Australian Time Zones</title>
-
-   <para>
-    There are three naming conflicts between Australian time zone
-    names and time zone names commonly used in North and South America:
-    <literal>ACST</literal>, <literal>CST</literal>, and
-    <literal>EST</literal>.  If the run-time option
-    <varname>australian_timezones</varname> is set to true then
-    <literal>ACST</literal>, <literal>CST</literal>,
-    <literal>EST</literal>, and <literal>SAT</literal> are interpreted
-    as Australian time zone names, as shown in <xref
-    linkend="datetime-oztz-table">. If it is false (which is the
-    default), then <literal>ACST</literal>, <literal>CST</literal>,
-    and <literal>EST</literal> are taken as American time zone names,
-    and <literal>SAT</literal> is interpreted as a noise word
-    indicating Saturday.
-   </para>
-  </formalpara>
-
-    <table id="datetime-oztz-table">
-     <title>Australian Time Zone Abbreviations for Input</title>
-     <tgroup cols="3">
-      <thead>
-       <row>
-        <entry>Time Zone</entry>
-        <entry>Offset from UTC</entry>
-        <entry>Description</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>ACST</entry>
-        <entry>+09:30</entry>
-        <entry>Central Australia Standard Time</entry>
-       </row>
-       <row>
-        <entry>CST</entry>
-        <entry>+10:30</entry>
-        <entry>Australian Central Standard Time</entry>
-       </row>
-       <row>
-        <entry>EST</entry>
-        <entry>+10:00</entry>
-        <entry>Australian Eastern Standard Time</entry>
-       </row>
-       <row>
-        <entry>SAT</entry>
-        <entry>+09:30</entry>
-        <entry>South Australian Standard Time</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
-
    <indexterm>
     <primary>time zone</primary>
     <secondary>configuration names</secondary>
@@ -988,13 +943,10 @@
    <para>
     <xref linkend="datetime-timezone-full-names-table"> shows the time zone
     names recognized by <productname>PostgreSQL</productname> as valid
-    settings for the <xref linkend="guc-timezone"> parameter.  Note that
-    these names are conceptually as well as practically different from
-    the names shown in <xref linkend="datetime-timezone-input-table">:
-    most of these names imply a local daylight-savings time rule, whereas
-    the former names each represent just a fixed offset from UTC. That's why
-    you always have to specify a date if you want to use these time zone
-    names in <type>timetz</> values.
+    settings for the <xref linkend="guc-timezone"> parameter.  These names
+    are not hard-wired into the server, but are in fact names of configuration
+    files stored under <filename>.../share/timezone/</> of the installation
+    directory.
    </para>
 
    <para>
@@ -1004,7 +956,7 @@
    </para>
 
     <table id="datetime-timezone-full-names-table">
-     <title>Time Zone Names for date/time input values and for setting <varname>timezone</></title>
+     <title>Time Zone Names for setting <varname>timezone</></title>
      <tgroup cols="1">
       <thead>
        <row>
@@ -2230,7 +2182,8 @@
 
    <para>
     In addition to the names listed in the table,
-    <productname>PostgreSQL</productname> will accept time zone names of the
+    <productname>PostgreSQL</productname> will accept
+    <xref linkend="guc-timezone"> values of the
     form <replaceable>STD</><replaceable>offset</> or
     <replaceable>STD</><replaceable>offset</><replaceable>DST</>, where
     <replaceable>STD</> is a zone abbreviation, <replaceable>offset</> is a
@@ -2247,6 +2200,108 @@
     <literal>SET TIMEZONE TO FOOBAR0</> will work, leaving the system
     effectively using a rather peculiar abbreviation for GMT.
    </para>
+
+  </sect1>
+
+  <sect1 id="datetime-config-files">
+  <title>Date/Time Configuration Files</title>
+
+   <para>
+    Since timezone abbreviations are not well standardized,
+    <productname>PostgreSQL</productname> provides a means to customize
+    the set of abbreviations accepted by the server.  The
+    <xref linkend="guc-timezone-abbreviations"> run-time parameter
+    determines the active set of abbreviations.  While this parameter
+    can be altered by any database user, the possible values for it
+    are under the control of the database administrator &mdash; they
+    are in fact names of configuration files stored in
+    <filename>.../share/timezonesets/</> of the installation directory.
+    By adding or altering files in that directory, the administrator
+    can set local policy for timezone abbreviations.
+   </para>
+
+   <para>
+    <literal>timezone_abbreviations</> can be set to any file name
+    found in <filename>.../share/timezonesets/</>, if the file's name
+    is entirely alphabetic.  (The prohibition against non-alphabetic
+    characters in <literal>timezone_abbreviations</> prevents reading
+    files outside the intended directory, as well as reading editor
+    backup files and other extraneous files.)
+   </para>
+
+   <para>
+    A timezone abbreviation file may contain blank lines and comments
+    beginning with <literal>#</>.  Non-comment lines must have one of
+    these formats:
+
+<synopsis>
+<replaceable>time_zone_name</replaceable> <replaceable>offset</replaceable>
+<replaceable>time_zone_name</replaceable> <replaceable>offset</replaceable> D
+@INCLUDE <replaceable>file_name</replaceable>
+@OVERRIDE
+</synopsis>
+   </para>
+
+   <para>
+    A <replaceable>time_zone_name</replaceable> is just the abbreviation
+    being defined.  The <replaceable>offset</replaceable> is the zone's
+    offset in seconds from UTC, positive being east from Greenwich and
+    negative being west.  For example, -18000 would be five hours west
+    of Greenwich, or North American east coast standard time.  <literal>D</>
+    indicates that the zone name represents local daylight-savings time
+    rather than standard time.
+   </para>
+
+   <para>
+    The <literal>@INCLUDE</> syntax allows inclusion of another file in the
+    <filename>.../share/timezonesets/</> directory.  Inclusion can be nested,
+    to a limited depth.
+   </para>
+
+   <para>
+    The <literal>@OVERRIDE</> syntax indicates that subsequent entries in the
+    file may override previous entries (i.e., entries obtained from included
+    files).  Without this, conflicting definitions of the same timezone
+    abbreviation are considered an error.
+   </para>
+
+   <para>
+    In an unmodified installation, the file <filename>Default</> contains
+    all the non-conflicting time zone abbreviations for most of the world.
+    Additional files <filename>Australia</> and <filename>India</> are
+    provided for those regions: these files first include the
+    <literal>Default</> file and then add or modify timezones as needed.
+   </para>
+
+   <para>
+    For reference purposes, a standard installation also contains files
+    <filename>Africa.txt</>, <filename>America.txt</>, etc, containing
+    information about every time zone abbreviation known to be in use
+    according to the <literal>zic</> timezone database.  The zone name
+    definitions found in these files can be copied and pasted into a custom
+    configuration file as needed.  Note that these files cannot be directly
+    referenced as <literal>timezone_abbreviations</> settings, because of
+    the dot embedded in their names.
+   </para>
+
+   <caution>
+    <para>
+     Time zone abbreviations defined in the configuration file override
+     non-timezone meanings built into <productname>PostgreSQL</productname>.
+     For example, the <filename>Australia</> configuration file defines
+     <literal>SAT</> (for South Australian Standard Time).  When this
+     file is active, <literal>SAT</> will not be recognized as an abbreviation
+     for Saturday.
+    </para>
+   </caution>
+
+   <caution>
+    <para>
+     If you modify files in <filename>.../share/timezonesets/</>,
+     it is up to you to make backups &mdash; a normal database dump
+     will not include this directory.
+    </para>
+   </caution>
 
   </sect1>
 

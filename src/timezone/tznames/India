@@ -1,0 +1,12 @@
+# Time zone configuration file for set "India"
+
+# In order to use this file, you need to set the run-time parameter
+# timezone_abbreviations to 'India'.  See the `Date/Time Support'
+# appendix in the PostgreSQL documentation for more information.
+
+
+# include the default set
+@INCLUDE Default
+
+IST     19800    # Indian Standard Time
+                 #     (Asia/Calcutta)

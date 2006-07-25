@@ -1,0 +1,236 @@
+#
+# NOTE:
+#   This file is NOT loaded by the PostgreSQL database.  It just serves as
+#   a template for timezones you could need.  See the `Date/Time Support'
+#   appendix in the PostgreSQL documentation for more information.
+#
+
+# CONFLICT! ADT is not unique
+# Other timezones:
+# - ADT: Atlantic Daylight Time (America)
+ADT     14400 D  # Arabia Daylight Time
+                 #     (Asia/Baghdad)
+AFT     16200    # Afghanistan Time
+                 #     (Asia/Kabul)
+ALMST   25200 D  # Alma-Ata Summer Time
+                 #     (Asia/Almaty)
+ALMT    21600    # Alma-Ata Time
+                 #     (Asia/Almaty)
+# CONFLICT! AMST is not unique
+# Other timezones:
+#  - AMST: Amazon Summer Time (America)
+AMST    18000 D  # Armenia Summer Time
+                 #     (Asia/Yerevan)
+# CONFLICT! AMT is not unique
+# Other timezones:
+#  - AMT: Amazon Time (America)
+AMT     14400    # Armenia Time
+                 #     (Asia/Yerevan)
+ANAST   46800 D  # Anadyr Summer Time
+                 #     (Asia/Anadyr)
+ANAT    43200    # Anadyr Time
+                 #     (Asia/Anadyr)
+AQTT    18000    # Aqtau Time
+                 # Aqtobe Time
+                 #     (Asia/Aqtau)
+                 #     (Asia/Aqtobe)
+# CONFLICT! AST is not unique
+# Other timezones:
+#  - AST: Atlantic Standard Time (America)
+#  - AST/ACT: Acre Standard Time (America) listed as ACT
+#  - AST: Anguilla Standard Time (America) same offset as Atlantic Standard Time
+#  - AST: Antigua Standard Time (America) same offset as Atlantic Standard Time
+#  - AST: Antilles Standard Time (America) same offset as Atlantic Standard Time
+#  - AST: Al Manamah Standard Time (Asia) same offset as Arabia Standard Time
+AST     10800    # Arabia Standard Time
+                 #     (Asia/Aden)
+                 #     (Asia/Baghdad)
+                 #     (Asia/Bahrain)
+                 #     (Asia/Kuwait)
+                 #     (Asia/Qatar)
+                 #     (Asia/Riyadh)
+AZST    18000 D  # Azerbaijan Summer Time
+                 #     (Asia/Baku)
+AZT     14400    # Azerbaijan Time
+                 #     (Asia/Baku)
+BDT     21600    # Bangladesh Time
+                 #     (Asia/Dhaka)
+BNT     28800    # Brunei Darussalam Time
+                 #     (Asia/Brunei)
+BORT    28800    # Borneo Time (Indonesia) (not in zic)
+BTT     21600    # Bhutan Time
+                 #     (Asia/Thimphu)
+CCT     28800    # China Coastal Time (not in zic)
+CHOST   36000 D  # Choibalsan Summer Time
+                 #     (Asia/Choibalsan)
+CHOT    32400    # Choibalsan Time
+                 #     (Asia/Choibalsan)
+CIT     28800    # Central Indonesia Time
+                 #     (Asia/Makassar)
+EEST    10800 D  # East-Egypt Summer Time
+                 # Eastern Europe Summer Time
+                 #     (Africa/Cairo)
+                 #     (Asia/Amman)
+                 #     (Asia/Beirut)
+                 #     (Asia/Damascus)
+                 #     (Asia/Gaza)
+                 #     (Asia/Nicosia)
+                 #     (Europe/Athens)
+                 #     (Europe/Bucharest)
+                 #     (Europe/Chisinau)
+                 #     (Europe/Helsinki)
+                 #     (Europe/Istanbul)
+                 #     (Europe/Kaliningrad)
+                 #     (Europe/Kiev)
+                 #     (Europe/Minsk)
+                 #     (Europe/Riga)
+                 #     (Europe/Simferopol)
+                 #     (Europe/Sofia)
+                 #     (Europe/Tallinn)
+                 #     (Europe/Uzhgorod)
+                 #     (Europe/Vilnius)
+                 #     (Europe/Zaporozhye)
+EET      7200    # East-Egypt Time
+                 # Eastern Europe Time
+                 #     (Africa/Cairo)
+                 #     (Africa/Tripoli)
+                 #     (Asia/Amman)
+                 #     (Asia/Beirut)
+                 #     (Asia/Damascus)
+                 #     (Asia/Gaza)
+                 #     (Asia/Nicosia)
+                 #     (Europe/Athens)
+                 #     (Europe/Bucharest)
+                 #     (Europe/Chisinau)
+                 #     (Europe/Helsinki)
+                 #     (Europe/Istanbul)
+                 #     (Europe/Kaliningrad)
+                 #     (Europe/Kiev)
+                 #     (Europe/Minsk)
+                 #     (Europe/Riga)
+                 #     (Europe/Simferopol)
+                 #     (Europe/Sofia)
+                 #     (Europe/Tallinn)
+                 #     (Europe/Uzhgorod)
+                 #     (Europe/Vilnius)
+                 #     (Europe/Zaporozhye)
+EIT     32400    # East Indonesia Time
+                 #     (Asia/Jayapura)
+GEST    14400 D  # Georgia Summer Time (there was a timezone change in 2004)
+                 #     (Asia/Tbilisi)
+GET     10800    # Georgia Time (there was a timezone change in 2004)
+                 #     (Asia/Tbilisi)
+# CONFLICT! GST is not unique
+# Other timezones:
+# - GST: South Georgia Time (Atlantic)
+GST     14400    # Gulf Standard Time
+                 #     (Asia/Dubai)
+                 #     (Asia/Muscat)
+HKT     28800    # Hong Kong Time (not in zic)
+HOVST   28800 D  # Hovd Summer Time
+                 #     (Asia/Hovd)
+HOVT    25200    # Hovd Time
+                 #     (Asia/Hovd)
+ICT     25200    # Indochina Time
+                 #     (Asia/Bangkok)
+                 #     (Asia/Phnom_Penh)
+                 #     (Asia/Saigon)
+                 #     (Asia/Vientiane)
+IRKST   32400 D  # Irkutsk Summer Time
+                 #     (Asia/Irkutsk)
+IRKT    28800    # Irkutsk Time
+                 #     (Asia/Irkutsk)
+IRT     12600    # Iran Time (not in zic)
+# CONFLICT! IST is not unique
+# Other timezones:
+# - IST: Irish Summer Time (Europe)
+# - IST: Israel Standard Time (Asia)
+IST     19800    # Indian Standard Time
+                 #     (Asia/Calcutta)
+# CONFLICT! IST is not unique
+# Other timezones:
+# - IST: Irish Summer Time (Europe)
+# - IST: Indian Standard Time (Asia)
+IST      7200    # Israel Standard Time
+                 #     (this time zone is not contained in the ZIC database)
+JAYT    32400    # Jayapura Time (Indonesia) (not in zic)
+KDT     36000 D  # Korean Daylight Time (not in zic)
+KGST    21600 D  # Kyrgyzstan Summer Time
+                 #     (Asia/Bishkek)
+KGT     18000    # Kyrgyzstan Time
+                 #     (Asia/Bishkek)
+KRAST   28800 D  # Krasnoyarsk Summer Time
+                 #     (Asia/Krasnoyarsk)
+KRAT    25200    # Krasnoyarsk Time
+                 #     (Asia/Krasnoyarsk)
+KST     32400    # Korean Standard Time
+                 #     (Asia/Pyongyang)
+LKT     21600    # Lanka Time
+                 #     (Asia/Colombo)
+MAGST   43200 D  # Magadan Summer Time
+                 #     (Asia/Magadan)
+MAGT    39600    # Magadan Time
+                 #     (Asia/Magadan)
+MMT     23400    # Myanmar Time
+                 #     (Asia/Rangoon)
+MYT     28800    # Malaysia Time
+                 #     (Asia/Kuala_Lumpur)
+                 #     (Asia/Kuching)
+NOVST   25200 D  # Novosibirsk Summer Time
+                 #     (Asia/Novosibirsk)
+NOVT    21600    # Novosibirsk Time
+                 #     (Asia/Novosibirsk)
+NPT     20700    # Nepal Time
+                 #     (Asia/Katmandu)
+OMSST   25200 D  # Omsk Summer Time
+                 #     (Asia/Omsk)
+OMST    21600    # Omsk Time
+                 #     (Asia/Omsk)
+ORAT    18000    # Oral Time
+                 #     (Asia/Oral)
+PETST   46800 D  # Petropavlovsk-Kamchatski Summer Time
+                 #     (Asia/Kamchatka)
+PETT    43200    # Petropavlovsk-Kamchatski Time
+                 #     (Asia/Kamchatka)
+PHT     28800    # Phillipine Time (not in zic)
+PKT     18000    # Pakistan Time (not in zic)
+QYZT    21600    # Kizilorda Time
+                 #     (Asia/Qyzylorda)
+SAKST   39600 D  # Sakhalin Summer Time
+                 #     (Asia/Sakhalin)
+SAKT    36000    # Sakhalin Time
+                 #     (Asia/Sakhalin)
+SGT     28800    # Singapore Time
+                 #     (Asia/Singapore)
+TJT     18000    # Tajikistan Time
+                 #     (Asia/Dushanbe)
+TLT     32400    # East Timor Time
+                 #     (Asia/Dili)
+TMT     18000    # Turkmenistan Time
+                 #     (Asia/Ashgabat)
+ULAST   32400 D  # Ulan Bator Summer Time
+                 #     (Asia/Ulaanbaatar)
+ULAT    28800    # Ulan Bator Time
+                 #     (Asia/Ulaanbaatar)
+UZST    21600 D  # Uzbekistan Summer Time
+                 #     (Asia/Samarkand)
+                 #     (Asia/Tashkent)
+UZT     18000    # Uzbekistan Time
+                 #     (Asia/Samarkand)
+                 #     (Asia/Tashkent)
+VLAST   39600 D  # Vladivostok Summer Time
+                 #     (Asia/Vladivostok)
+VLAT    36000    # Vladivostok Time
+                 #     (Asia/Vladivostok)
+WIT     25200    # Waktu Indonesia Timur
+                 # West Indonesia Time
+                 #     (Asia/Jakarta)
+                 #     (Asia/Pontianak)
+YAKST   36000 D  # Yakutsk Summer Time
+                 #     (Asia/Yakutsk)
+YAKT    32400    # Yakutsk Time
+                 #     (Asia/Yakutsk)
+YEKST   21600 D  # Yekaterinburg Summer Time
+                 #     (Asia/Yekaterinburg)
+YEKT    18000    # Yekaterinburg Time
+                 #     (Asia/Yekaterinburg)

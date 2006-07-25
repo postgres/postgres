@@ -1,0 +1,291 @@
+#
+# NOTE:
+#   This file is NOT loaded by the PostgreSQL database.  It just serves as
+#   a template for timezones you could need.  See the `Date/Time Support'
+#   appendix in the PostgreSQL documentation for more information.
+#
+
+# Acre time is sometimes called Acre Standard Time (AST) which leads to a
+# conflict with AST (see below at AST)
+ACT    -18000    # Acre Time
+                 #     (America/Eirunepe)
+                 #     (America/Rio_Branco)
+# CONFLICT! ACST is not unique
+# Other timezones:
+#  - ACST: Central Australia Standard Time (Australia)
+ACST   -14400 D  # Acre Summer Time (not in zic)
+                 #     (America/Eirunepe)
+                 #     (America/Rio_Branco)
+# CONFLICT! ADT is not unique
+# Other timezones:
+#  - ADT: Arabic Daylight Time (Asia)
+ADT    -10800 D  # Atlantic Daylight Time
+                 #     (America/Glace_Bay)
+                 #     (America/Goose_Bay)
+                 #     (America/Halifax)
+                 #     (America/Thule)
+                 #     (Atlantic/Bermuda)
+AKDT   -28800 D  # Alaska Daylight Time
+                 #     (America/Anchorage)
+                 #     (America/Juneau)
+                 #     (America/Nome)
+                 #     (America/Yakutat)
+AKST   -32400    # Alaska Standard Time
+                 #     (America/Anchorage)
+                 #     (America/Juneau)
+                 #     (America/Nome)
+                 #     (America/Yakutat)
+# CONFLICT! AMST is not unique
+# Other timezones:
+#  - AMST: Armenia Summer Time (Asia)
+AMST   -10800 D  # Amazon Summer Time
+                 #     (America/Campo_Grande)
+                 #     (America/Cuiaba)
+# CONFLICT! AMT is not unique
+# Other timezones:
+#  - AMT: Armenia Time (Asia)
+AMT    -14400    # Amazon Time
+                 #     (America/Boa_Vista)
+                 #     (America/Campo_Grande)
+                 #     (America/Cuiaba)
+                 #     (America/Manaus)
+                 #     (America/Porto_Velho)
+ART    -10800    # Argentina Time (not in zic)
+# CONFLICT! AST is not unique
+# Other timezones:
+#  - AST: Arabic Standard Time (Asia)
+#  - AST: Al Manamah Standard Time (Asia) same offset as Arabia Standard Time
+#  - AST/ACT: Acre Standard Time (America) listed as ACT
+#  - AST: Anguilla Standard Time (America) same offset
+#  - AST: Antigua Standard Time (America) same offset
+#  - AST: Antilles Standard Time (America) same offset
+AST    -14400    # Atlantic Standard Time
+                 #     (America/Anguilla)
+                 #     (America/Antigua)
+                 #     (America/Aruba)
+                 #     (America/Curacao)
+                 #     (America/Dominica)
+                 #     (America/Glace_Bay)
+                 #     (America/Goose_Bay)
+                 #     (America/Grenada)
+                 #     (America/Guadeloupe)
+                 #     (America/Halifax)
+                 #     (America/Martinique)
+                 #     (America/Montserrat)
+                 #     (America/Port_of_Spain)
+                 #     (America/Puerto_Rico)
+                 #     (America/Santo_Domingo)
+                 #     (America/St_Kitts)
+                 #     (America/St_Lucia)
+                 #     (America/St_Thomas)
+                 #     (America/St_Vincent)
+                 #     (America/Thule)
+                 #     (America/Tortola)
+                 #     (Atlantic/Bermuda)
+BOT    -14400    # Bolivia Time
+                 #     (America/La_Paz)
+BRA    -10800    # Brazil Time (not in zic)
+BRST    -7200 D  # Brasil Summer Time
+                 #     (America/Sao_Paulo)
+BRT    -10800    # Brasil Time
+                 #     (America/Araguaina)
+                 #     (America/Bahia)
+                 #     (America/Belem)
+                 #     (America/Fortaleza)
+                 #     (America/Maceio)
+                 #     (America/Recife)
+                 #     (America/Sao_Paulo)
+# CONFLICT! CDT is not unique
+# Other timezones:
+#  - CDT: Central Daylight Time (America)
+#  - CDT: Mexico Central Daylight Time (America)
+#  - CDT: Canada Central Daylight Time (America)
+CDT    -14400 D  # Cuba Central Daylight Time
+                 #     (America/Havana)
+# CONFLICT! CDT is not unique
+# Other timezones:
+#  - CDT: Mexico Central Daylight Time (America)
+#  - CDT: Cuba Central Daylight Time (America)
+#  - CDT: Canada Central Daylight Time (America)
+CDT    -18000 D  # Central Daylight Time
+                 #     (America/Cancun)
+                 #     (America/Chicago)
+                 #     (America/Menominee)
+                 #     (America/Merida)
+                 #     (America/Mexico_City)
+                 #     (America/Monterrey)
+                 #     (America/North_Dakota/Center)
+                 #     (America/Rainy_River)
+                 #     (America/Rankin_Inlet)
+                 #     (America/Winnipeg)
+CLST   -10800 D  # Chile Summer Time
+                 #     (America/Santiago)
+                 #     (Antarctica/Palmer)
+CLT    -14400    # Chile Time
+                 #     (America/Santiago)
+                 #     (Antarctica/Palmer)
+COT    -18000    # Columbia Time (not in zic)
+# CONFLICT! CST is not unique
+# Other timezones:
+#  - CST: Central Standard Time (Australia)
+#  - CST: Central Standard Time (America)
+CST    -18000    # Cuba Central Standard Time (America)
+                 #     (America/Havana)
+# CONFLICT! CST is not unique
+# Other timezones:
+#  - CST: Central Standard Time (Australia)
+#  - CST: Cuba Central Standard Time (America)
+CST    -21600    # Central Standard Time (America)
+                 #     (America/Cancun)
+                 #     (America/Chicago)
+                 #     (America/Menominee)
+                 #     (America/Merida)
+                 #     (America/Mexico_City)
+                 #     (America/Monterrey)
+                 #     (America/North_Dakota/Center)
+                 #     (America/Rainy_River)
+                 #     (America/Rankin_Inlet)
+                 #     (America/Regina)
+                 #     (America/Swift_Current)
+                 #     (America/Winnipeg)
+ECT    -18000    # Ecuador Time
+                 # Eastern Caribbean Time
+                 #     (America/Guayaquil)
+EDT    -14400 D  # Eastern Daylight Saving Time
+                 #     (America/Detroit)
+                 #     (America/Grand_Turk)
+                 #     (America/Indiana/Indianapolis)
+                 #     (America/Indiana/Knox)
+                 #     (America/Indiana/Marengo)
+                 #     (America/Indiana/Vevay)
+                 #     (America/Iqaluit)
+                 #     (America/Kentucky/Louisville)
+                 #     (America/Kentucky/Monticello)
+                 #     (America/Montreal)
+                 #     (America/Nassau)
+                 #     (America/New_York)
+                 #     (America/Nipigon)
+                 #     (America/Pangnirtung)
+                 #     (America/Thunder_Bay)
+                 #     (America/Toronto)
+EGST        0 D  # East Greenland Summer Time
+                 #     (America/Scoresbysund)
+EGT     -3600    # East Greenland Time (Svalbard & Jan Mayen)
+                 #     (America/Scoresbysund)
+# CONFLICT! EST is not unique
+# Other timezones:
+#  - EST: Eastern Standard Time (Australia)
+EST    -18000    # Eastern Standard Time (America)
+                 #     (America/Cayman)
+                 #     (America/Coral_Harbour)
+                 #     (America/Detroit)
+                 #     (America/Grand_Turk)
+                 #     (America/Indiana/Indianapolis)
+                 #     (America/Indiana/Knox)
+                 #     (America/Indiana/Marengo)
+                 #     (America/Indiana/Vevay)
+                 #     (America/Iqaluit)
+                 #     (America/Jamaica)
+                 #     (America/Kentucky/Louisville)
+                 #     (America/Kentucky/Monticello)
+                 #     (America/Montreal)
+                 #     (America/Nassau)
+                 #     (America/New_York)
+                 #     (America/Nipigon)
+                 #     (America/Panama)
+                 #     (America/Pangnirtung)
+                 #     (America/Thunder_Bay)
+                 #     (America/Toronto)
+FNT     -7200    # Fernando de Noronha Time
+                 #     (America/Noronha)
+FNST    -3600 D  # Fernando de Noronha Summer Time (not in zic)
+                 #     (America/Noronha)
+GFT    -10800    # French Guiana Time
+                 #     (America/Cayenne)
+GMT         0    # Greenwich Mean Time
+                 #     (Africa/Abidjan)
+                 #     (Africa/Bamako)
+                 #     (Africa/Banjul)
+                 #     (Africa/Bissau)
+                 #     (Africa/Conakry)
+                 #     (Africa/Dakar)
+                 #     (Africa/Lome)
+                 #     (Africa/Monrovia)
+                 #     (Africa/Nouakchott)
+                 #     (Africa/Ouagadougou)
+                 #     (Africa/Sao_Tome)
+                 #     (America/Danmarkshavn)
+                 #     (Atlantic/Reykjavik)
+                 #     (Atlantic/St_Helena)
+                 #     (Etc/GMT)
+                 #     (Europe/Dublin)
+                 #     (Europe/London)
+GYT    -14400    # Guyana Time
+                 #     (America/Guyana)
+HADT   -32400 D  # Hawaii-Aleutain Daylight Time
+                 #     (America/Adak)
+HAST   -36000    # Hawaii-Aleutain Standard Time
+                 #     (America/Adak)
+MDT    -21600 D  # Mexico Mountain Daylight Time
+                 # Mountain Daylight Time
+                 #     (America/Boise)
+                 #     (America/Cambridge_Bay)
+                 #     (America/Chihuahua)
+                 #     (America/Denver)
+                 #     (America/Edmonton)
+                 #     (America/Inuvik)
+                 #     (America/Mazatlan)
+                 #     (America/Yellowknife)
+MST    -25200    # Mexico Mountain Standard Time
+                 # Mountain Standard Time
+                 #     (America/Boise)
+                 #     (America/Cambridge_Bay)
+                 #     (America/Chihuahua)
+                 #     (America/Dawson_Creek)
+                 #     (America/Denver)
+                 #     (America/Edmonton)
+                 #     (America/Hermosillo)
+                 #     (America/Inuvik)
+                 #     (America/Mazatlan)
+                 #     (America/Phoenix)
+                 #     (America/Yellowknife)
+NDT     -9000 D  # Newfoundland Daylight Time
+                 #     (America/St_Johns)
+# CONFLICT! NFT is not unique
+# Other timezones:
+#  - NFT: Norfolk Time (Pacific)
+NFT    -12600    # Newfoundland Time (not in zic)
+NST    -12600    # Newfoundland Standard Time
+                 #     (America/St_Johns)
+PDT    -25200 D  # Pacific Daylight Time
+                 #     (America/Dawson)
+                 #     (America/Los_Angeles)
+                 #     (America/Tijuana)
+                 #     (America/Vancouver)
+                 #     (America/Whitehorse)
+PET    -18000    # Peru Time (not in zic)
+PMDT    -7200 D  # Pierre & Miquelon Daylight Time
+                 #     (America/Miquelon)
+PMST   -10800    # Pierre & Miquelon Standard Time
+                 #     (America/Miquelon)
+PST    -28800    # Pacific Standard Time
+                 #     (America/Dawson)
+                 #     (America/Los_Angeles)
+                 #     (America/Tijuana)
+                 #     (America/Vancouver)
+                 #     (America/Whitehorse)
+                 #     (Pacific/Pitcairn)
+PYST   -10800 D  # Paraguay Summer Time
+                 #     (America/Asuncion)
+PYT    -14400    # Paraguay Time
+                 #     (America/Asuncion)
+SRT    -10800    # Suriname Time
+                 #     (America/Paramaribo)
+UYST    -7200 D  # Uruguay Summer Time (not in zic)
+UYT    -10800    # Uruguay Time (not in zic)
+VET    -14400    # Venezuela Time
+                 #     (America/Caracas)
+WGST    -7200 D  # Western Greenland Summer Time
+                 #     (America/Godthab)
+WGT    -10800    # West Greenland Time
+                 #     (America/Godthab)
