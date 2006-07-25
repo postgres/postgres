@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Jul 18 14:20:41 EDT 2006
+Last updated:		Tue Jul 25 00:11:20 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -242,7 +242,7 @@ Data Types
 	o Allow infinite dates and intervals just like infinite timestamps
 	o Merge hardwired timezone names with the TZ database; allow either 
 	  kind everywhere a TZ name is currently taken
-	o Allow customization of the known set of TZ names (generalize the
+	o -Allow customization of the known set of TZ names (generalize the
 	  present australian_timezones hack)
 	o Allow TIMESTAMP WITH TIME ZONE to store the original timezone
 	  information, either zone name or offset from UTC [timezone]
