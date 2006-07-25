@@ -3,10 +3,17 @@
 # In order to use this file, you need to set the run-time parameter
 # timezone_abbreviations to 'India'.  See the `Date/Time Support'
 # appendix in the PostgreSQL documentation for more information.
+#
+# $PostgreSQL: pgsql/src/timezone/tznames/India,v 1.2 2006/07/25 13:49:21 tgl Exp $
 
 
 # include the default set
 @INCLUDE Default
+
+# most timezones are already defined in the default set. With the OVERRIDE
+# option, PostgreSQL will use the new definitions instead of throwing an error
+# in case of a conflict.
+@OVERRIDE
 
 IST     19800    # Indian Standard Time
                  #     (Asia/Calcutta)
