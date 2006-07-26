@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.203 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.204 2006/07/26 00:34:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ static Plan *inheritance_planner(PlannerInfo *root);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
-				 int *offset_est, int *count_est);
+				 int64 *offset_est, int64 *count_est);
 static bool choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 					   Path *cheapest_path, Path *sorted_path,
 					   double dNumGroups, AggClauseCounts *agg_counts);
@@ -631,8 +631,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 {
 	Query	   *parse = root->parse;
 	List	   *tlist = parse->targetList;
-	int			offset_est = 0;
-	int			count_est = 0;
+	int64		offset_est = 0;
+	int64		count_est = 0;
 	Plan	   *result_plan;
 	List	   *current_pathkeys;
 	List	   *sort_pathkeys;
@@ -1080,7 +1080,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
  */
 static double
 preprocess_limit(PlannerInfo *root, double tuple_fraction,
-				 int *offset_est, int *count_est)
+				 int64 *offset_est, int64 *count_est)
 {
 	Query	   *parse = root->parse;
 	Node	   *est;
@@ -1105,7 +1105,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 			}
 			else
 			{
-				*count_est = DatumGetInt32(((Const *) est)->constvalue);
+				*count_est = DatumGetInt64(((Const *) est)->constvalue);
 				if (*count_est <= 0)
 					*count_est = 1;		/* force to at least 1 */
 			}
@@ -1128,7 +1128,8 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 			}
 			else
 			{
-				*offset_est = DatumGetInt32(((Const *) est)->constvalue);
+				*offset_est = DatumGetInt64(((Const *) est)->constvalue);
+
 				if (*offset_est < 0)
 					*offset_est = 0;	/* less than 0 is same as 0 */
 			}

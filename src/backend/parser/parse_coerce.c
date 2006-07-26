@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.141 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.142 2006/07/26 00:34:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -821,7 +821,7 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 
 /* coerce_to_integer()
  *		Coerce an argument of a construct that requires integer input
- *		(LIMIT, OFFSET, etc).  Also check that input is not a set.
+ *		Also check that input is not a set.
  *
  * Returns the possibly-transformed node tree.
  *
@@ -857,7 +857,45 @@ coerce_to_integer(ParseState *pstate, Node *node,
 
 	return node;
 }
+ 
+/* coerce_to_integer64()
+ *              Coerce an argument of a construct that requires integer input
+ *              (LIMIT, OFFSET).  Also check that input is not a set.
+ *
+ * Returns the possibly-transformed node tree.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
+ */
+Node *
+coerce_to_integer64(ParseState *pstate, Node *node,
+					const char *constructName)
+{
+	Oid	inputTypeId = exprType(node);
 
+	if (inputTypeId != INT8OID)
+	{
+		node = coerce_to_target_type(pstate, node, inputTypeId,
+									 INT8OID, -1, COERCION_ASSIGNMENT,
+									 COERCE_IMPLICIT_CAST);
+		if (node == NULL)
+				ereport(ERROR,
+						  (errcode(ERRCODE_DATATYPE_MISMATCH),
+					  /* translator: first %s is name of a SQL construct, eg LIMIT */
+							 errmsg("argument of %s must be type integer, not type %s",
+									constructName, format_type_be(inputTypeId))));
+	}
+
+	if (expression_returns_set(node))
+		ereport(ERROR,
+				  (errcode(ERRCODE_DATATYPE_MISMATCH),
+		  /* translator: %s is name of a SQL construct, eg LIMIT */
+					   errmsg("argument of %s must not return a set",
+							  constructName)));
+
+	return node;
+}
+  
 
 /* select_common_type()
  *		Determine the common supertype of a list of input expression types.
