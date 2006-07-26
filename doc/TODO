@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Jul 25 20:34:56 EDT 2006
+Last updated:		Wed Jul 26 13:22:49 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -144,21 +144,25 @@ Administration
 
 * Point-In-Time Recovery (PITR)
 
-	  o Allow point-in-time recovery to archive partially filled
-	    write-ahead logs? [pitr]
+	  o Add command to archive partially filled write-ahead logs? [pitr]
 
 	    Currently only full WAL files are archived. This means that the
 	    most recent transactions aren't available for recovery in case
-	    of a disk failure. This could be triggered by a user command or
-	    a timer.
+	    of a disk failure.
 
 	  o Automatically force archiving of partially-filled WAL files when
 	    pg_stop_backup() is called or the server is stopped
 
 	    Doing this will allow administrators to know more easily when
 	    the archive contains all the files needed for point-in-time
-	    recovery.  A function call to do this would also be useful.
+	    recovery.
 	    http://archives.postgresql.org/pgsql-patches/2005-04/msg00121.php
+
+	  o Add reporting of the current WAL file and offset, perhaps as
+	    part of partial log file archiving
+
+	    The offset allows parts of a WAL file to be archived using
+	    an external program.
 
 	  o %Create dump tool for write-ahead logs for use in determining
 	    transaction id for point-in-time recovery
@@ -168,11 +172,6 @@ Administration
 	    This is useful for checking PITR recovery.
 
 	  o Allow the PITR process to be debugged and data examined
-	  o Add reporting of the current WAL file and offset, perhaps as
-	    part of partial log file archiving
-
-	    The offset allows parts of a WAL file to be archived using
-	    an external program.
 
 
 Monitoring
