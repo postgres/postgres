@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.26 2006/07/26 00:34:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.27 2006/07/26 19:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 
 #include "executor/executor.h"
 #include "executor/nodeLimit.h"
-#include "catalog/pg_type.h"
 
 static void recompute_limits(LimitState *node);
 
@@ -227,24 +226,14 @@ recompute_limits(LimitState *node)
 {
 	ExprContext *econtext = node->ps.ps_ExprContext;
 	bool		isNull;
-  	Oid type;
-  
+
 	if (node->limitOffset)
 	{
-		type = ((Const *) node->limitOffset->expr)->consttype;
-  
-		if (type == INT8OID)
-			node->offset =
+		node->offset =
 			DatumGetInt64(ExecEvalExprSwitchContext(node->limitOffset,
 													econtext,
 													&isNull,
 													NULL));
-		else
-			node->offset = DatumGetInt32(ExecEvalExprSwitchContext(node->limitOffset,
-																   econtext,
-																   &isNull,
-																   NULL));
-
 		/* Interpret NULL offset as no offset */
 		if (isNull)
 			node->offset = 0;
@@ -260,21 +249,11 @@ recompute_limits(LimitState *node)
 	if (node->limitCount)
 	{
 		node->noCount = false;
-		type = ((Const *) node->limitCount->expr)->consttype;
- 
-		if (type == INT8OID)
-			node->count =
+		node->count =
 			DatumGetInt64(ExecEvalExprSwitchContext(node->limitCount,
 													econtext,
 													&isNull,
 													NULL));
-		else
-			node->count = DatumGetInt32(ExecEvalExprSwitchContext(node->limitCount,
-																  econtext,
-																  &isNull,
-																  NULL));
- 
-
 		/* Interpret NULL count as no count (LIMIT ALL) */
 		if (isNull)
 			node->noCount = true;

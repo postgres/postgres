@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.142 2006/07/26 00:34:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.143 2006/07/26 19:31:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -780,7 +780,8 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	return (Node *) rowexpr;
 }
 
-/* coerce_to_boolean()
+/*
+ * coerce_to_boolean()
  *		Coerce an argument of a construct that requires boolean input
  *		(AND, OR, NOT, etc).  Also check that input is not a set.
  *
@@ -819,8 +820,9 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 	return node;
 }
 
-/* coerce_to_integer()
- *		Coerce an argument of a construct that requires integer input
+/*
+ * coerce_to_integer()
+ *		Coerce an argument of a construct that requires integer input.
  *		Also check that input is not a set.
  *
  * Returns the possibly-transformed node tree.
@@ -857,10 +859,11 @@ coerce_to_integer(ParseState *pstate, Node *node,
 
 	return node;
 }
- 
-/* coerce_to_integer64()
- *              Coerce an argument of a construct that requires integer input
- *              (LIMIT, OFFSET).  Also check that input is not a set.
+
+/*
+ * coerce_to_bigint()
+ *		Coerce an argument of a construct that requires int8 input.
+ *		Also check that input is not a set.
  *
  * Returns the possibly-transformed node tree.
  *
@@ -868,34 +871,35 @@ coerce_to_integer(ParseState *pstate, Node *node,
  * processing is wanted.
  */
 Node *
-coerce_to_integer64(ParseState *pstate, Node *node,
-					const char *constructName)
+coerce_to_bigint(ParseState *pstate, Node *node,
+				 const char *constructName)
 {
-	Oid	inputTypeId = exprType(node);
+	Oid			inputTypeId = exprType(node);
 
 	if (inputTypeId != INT8OID)
 	{
 		node = coerce_to_target_type(pstate, node, inputTypeId,
-									 INT8OID, -1, COERCION_ASSIGNMENT,
+									 INT8OID, -1,
+									 COERCION_ASSIGNMENT,
 									 COERCE_IMPLICIT_CAST);
 		if (node == NULL)
-				ereport(ERROR,
-						  (errcode(ERRCODE_DATATYPE_MISMATCH),
-					  /* translator: first %s is name of a SQL construct, eg LIMIT */
-							 errmsg("argument of %s must be type integer, not type %s",
-									constructName, format_type_be(inputTypeId))));
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+			/* translator: first %s is name of a SQL construct, eg LIMIT */
+				   errmsg("argument of %s must be type bigint, not type %s",
+						  constructName, format_type_be(inputTypeId))));
 	}
 
 	if (expression_returns_set(node))
 		ereport(ERROR,
-				  (errcode(ERRCODE_DATATYPE_MISMATCH),
-		  /* translator: %s is name of a SQL construct, eg LIMIT */
-					   errmsg("argument of %s must not return a set",
-							  constructName)));
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+		/* translator: %s is name of a SQL construct, eg LIMIT */
+				 errmsg("argument of %s must not return a set",
+						constructName)));
 
 	return node;
 }
-  
+
 
 /* select_common_type()
  *		Determine the common supertype of a list of input expression types.

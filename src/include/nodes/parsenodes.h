@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.317 2006/07/13 16:49:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.318 2006/07/26 19:31:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,8 +112,8 @@ typedef struct Query
 
 	List	   *sortClause;		/* a list of SortClause's */
 
-	Node	   *limitOffset;	/* # of result tuples to skip */
-	Node	   *limitCount;		/* # of result tuples to return */
+	Node	   *limitOffset;	/* # of result tuples to skip (int8 expr) */
+	Node	   *limitCount;		/* # of result tuples to return (int8 expr) */
 
 	List	   *rowMarks;		/* a list of RowMarkClause's */
 

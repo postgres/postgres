@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.204 2006/07/26 00:34:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.205 2006/07/26 19:31:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1129,7 +1129,6 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 			else
 			{
 				*offset_est = DatumGetInt64(((Const *) est)->constvalue);
-
 				if (*offset_est < 0)
 					*offset_est = 0;	/* less than 0 is same as 0 */
 			}

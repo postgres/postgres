@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.154 2006/07/26 00:34:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.155 2006/07/26 19:31:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1074,8 +1074,11 @@ transformWhereClause(ParseState *pstate, Node *clause,
 
 /*
  * transformLimitClause -
- *	  Transform the expression and make sure it is of type integer.
+ *	  Transform the expression and make sure it is of type bigint.
  *	  Used for LIMIT and allied clauses.
+ *
+ * Note: as of Postgres 8.2, LIMIT expressions are expected to yield int8,
+ * rather than int4 as before.
  *
  * constructName does not affect the semantics, but is used in error messages
  */
@@ -1090,7 +1093,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 
 	qual = transformExpr(pstate, clause);
 
-	qual = coerce_to_integer64(pstate, qual, constructName);
+	qual = coerce_to_bigint(pstate, qual, constructName);
 
 	/*
 	 * LIMIT can't refer to any vars or aggregates of the current query; we
