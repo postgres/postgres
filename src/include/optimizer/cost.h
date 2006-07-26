@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.77 2006/07/22 15:41:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.78 2006/07/26 11:35:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #define DEFAULT_CPU_INDEX_TUPLE_COST 0.005
 #define DEFAULT_CPU_OPERATOR_COST  0.0025
 
-#define DEFAULT_EFFECTIVE_CACHE_SIZE  1000.0	/* measured in pages */
+#define DEFAULT_EFFECTIVE_CACHE_SIZE  1000	/* measured in pages */
 
 
 /*
@@ -41,7 +41,7 @@ extern DLLIMPORT double random_page_cost;
 extern DLLIMPORT double cpu_tuple_cost;
 extern DLLIMPORT double cpu_index_tuple_cost;
 extern DLLIMPORT double cpu_operator_cost;
-extern DLLIMPORT double effective_cache_size;
+extern DLLIMPORT int effective_cache_size;
 extern Cost disable_cost;
 extern bool enable_seqscan;
 extern bool enable_indexscan;

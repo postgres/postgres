@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.163 2006/07/22 15:41:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.164 2006/07/26 11:35:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
 double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
 double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 
-double		effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
+int		effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
 Cost		disable_cost = 100000000.0;
 
@@ -393,7 +393,7 @@ index_pages_fetched(double tuples_fetched, BlockNumber pages,
 	T = (pages > 1) ? (double) pages : 1.0;
 
 	/* b is pro-rated share of effective_cache_size */
-	b = effective_cache_size * T / (T + (double) other_pages);
+	b = (double) effective_cache_size * T / (T + (double) other_pages);
 	/* force it positive and integral */
 	if (b <= 1.0)
 		b = 1.0;

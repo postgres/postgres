@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.329 2006/07/25 03:51:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.330 2006/07/26 11:35:56 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1579,6 +1579,17 @@ static struct config_int ConfigureNamesInt[] =
 		0, 0, INT_MAX, NULL, NULL
 	},
 
+	{
+		{"effective_cache_size", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Sets the planner's assumption about size of the disk cache."),
+			gettext_noop("That is, the portion of the kernel's disk cache that "
+						 "will be used for PostgreSQL data files. This is measured in disk "
+						 "pages, which are normally 8 kB each.")
+		},
+		&effective_cache_size,
+		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, INT_MAX, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, 0, 0, 0, NULL, NULL
@@ -1632,17 +1643,6 @@ static struct config_real ConfigureNamesReal[] =
 		},
 		&cpu_operator_cost,
 		DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL
-	},
-
-	{
-		{"effective_cache_size", PGC_USERSET, QUERY_TUNING_COST,
-			gettext_noop("Sets the planner's assumption about size of the disk cache."),
-			gettext_noop("That is, the portion of the kernel's disk cache that "
-						 "will be used for PostgreSQL data files. This is measured in disk "
-						 "pages, which are normally 8 kB each.")
-		},
-		&effective_cache_size,
-		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, DBL_MAX, NULL, NULL
 	},
 
 	{

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.69 2006/07/25 03:51:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.70 2006/07/26 11:35:55 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1856,7 +1856,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
      </varlistentry>
      
      <varlistentry id="guc-effective-cache-size" xreflabel="effective_cache_size">
-      <term><varname>effective_cache_size</varname> (<type>floating point</type>)</term>
+      <term><varname>effective_cache_size</varname> (<type>integer</type>)</term>
       <indexterm>
        <primary><varname>effective_cache_size</> configuration parameter</primary>
       </indexterm>
