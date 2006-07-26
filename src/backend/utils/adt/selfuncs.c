@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.210 2006/07/24 01:19:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.211 2006/07/26 17:17:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2956,7 +2956,15 @@ convert_string_datum(Datum value, Oid typid)
 		 * == as you'd expect.  Can't any of these people program their way
 		 * out of a paper bag?
 		 */
-		xfrmlen = strxfrm(NULL, val, 0);
+#if _MSC_VER == 1400	/* VS.Net 2005 */
+		/* http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99694 */
+		{
+			char x[1];
+			xfrmlen = strxfrm(x, val, 0);
+		}
+#else
+	    xfrmlen = strxfrm(NULL, val, 0);
+#endif
 		xfrmstr = (char *) palloc(xfrmlen + 1);
 		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
 		Assert(xfrmlen2 <= xfrmlen);
