@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.330 2006/07/26 11:35:56 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.331 2006/07/26 11:39:47 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5113,7 +5113,7 @@ _ShowOption(struct config_generic * record)
 				else if (*conf->variable && **conf->variable)
 					val = *conf->variable;
 				else
-					val = "unset";
+					val = "";
 			}
 			break;
 
