@@ -1,11 +1,10 @@
-pgbench README		2005/09/29 Tatsuo Ishii
+pgbench README		2006/07/26 Tatsuo Ishii
 
 $B"#(Bpgbench $B$H$O!)(B
 
-pgbench $B$O%Y%s%A%^!<%/%F%9%H$r9T$J$&%W%m%0%i%`$G$9!%:#$N$H$3$m(B 
-PostgreSQL $B@lMQ$G$9!%(B
+pgbench $B$O(BPostgreSQL$B$N%Y%s%A%^!<%/%F%9%H$r9T$J$&%W%m%0%i%`$G$9!%(B
 
-pgbench $B$O(B select/update/insert $B$r4^$`%H%i%s%6%/%7%g%s$r<B9T$7!$A4BN$N(B
+pgbench $B$O(B SELECT/UPDATE/INSERT $B$r4^$`%H%i%s%6%/%7%g%s$r<B9T$7!$A4BN$N(B
 $B<B9T;~4V$H<B:]$K40N;$7$?%H%i%s%6%/%7%g%s$N?t$+$i(B 1 $BIC4V$K<B9T$G$-$?%H(B
 $B%i%s%6%/%7%g%s?t(B (tps) $B$rI=<($7$^$9!%=hM}$NBP>]$H$J$k%F!<%V%k$O%G%U%)(B
 $B%k%H$G$O(B 10$BK|%?%W%k$N%G!<%?$r4^$_$^$9!%(B
@@ -44,7 +43,8 @@ $ pgbench [$B%G!<%?%Y!<%9L>(B]
 
 $B$G$9!%%G!<%?%Y!<%9L>$r>JN,$9$k$H!$%f!<%6L>$HF1$8%G!<%?%Y!<%9$r;XDj$7$?(B
 $B$b$N$H$_$J$7$^$9!%%G!<%?%Y!<%9$O8e=R$N(B -i $B%*%W%7%g%s$r;H$C$F$"$i$+$8$a(B
-$B=i4|2=$7$F$*$/I,MW$,$"$j$^$9!%(B
+$B=i4|2=$7$F$*$/$3$H$,$G$-$^$9!%(B-f$B%*%W%7%g%s$r;H$C$FFH<+$N%H%i%s%6%/%7%g(B
+$B%s$rDj5A$9$k>l9g$O!$<+J,$G%G!<%?%Y!<%9$N=i4|2=$r$7$F$*$/I,MW$,$"$j$^$9!%(B
 
 pgbench $B$K$O$$$m$$$m$J%*%W%7%g%s$,$"$j$^$9!%(B
 
@@ -72,6 +72,14 @@ pgbench $B$K$O$$$m$$$m$J%*%W%7%g%s$,$"$j$^$9!%(B
 		$B%/%?!<$rJQ$($k$3$H$K$h$j!$%F%9%H$NBP>]$H$J$k%F!<%V%k$N(B
 		$BBg$-$5$,(B 10$BK|(B x [$B%9%1!<%j%s%0%U%!%/%?!<(B]$B$K$J$j$^$9!%(B
 		$B%G%U%)%k%H$N%9%1!<%j%s%0%U%!%/%?!<$O(B 1 $B$G$9!%(B
+		-f $B%*%W%7%g%s$G;XDj$7$?%U%!%$%k$+$i%9%1!<%j%s%0%U%!%/(B
+		$B%?!<$r;2>H$9$k$K$O(B tps $B$H$$$&JQ?tL>$r;HMQ$7$^$9!%(B
+
+-D varname=value
+
+		$BJQ?t$rDj5A$7$^$9!%Dj5A$7$?JQ?t$O(B -f $B%*%W%7%g%s$G;XDj$7$?%U%!%$(B
+		$B%k$+$i;2>H$G$-$^$9!%(B-D $B%*%W%7%g%s$G$OJQ?tL>$HCM$r(B = ($B%$%3!<%k(B)
+		$B$G6h@Z$C$F;XDj$7$^$9!%(B-D $B%*%W%7%g%s$OJ#?t;XDj$G$-$^$9!%(B
 
 -U login	DB$B%f!<%6$N%m%0%$%sL>$r;XDj$7$^$9!%(B
 
@@ -129,7 +137,9 @@ pgbench $B$K$O$$$m$$$m$J%*%W%7%g%s$,$"$j$^$9!%(B
 $B"#%G!<%?%Y!<%9$N=i4|2=(B
 
 pgbench $B$G%Y%s%A%^!<%/%F%9%H$r<B;\$9$k$?$a$K$O!$$"$i$+$8$a%G!<%?%Y!<%9(B
-$B$r=i4|2=$7!$%F%9%H%G!<%?$r:n$kI,MW$,$"$j$^$9!%(B
+$B$r=i4|2=$7!$%F%9%H%G!<%?$r:n$kI,MW$,$"$j$^$9!%(B-f$B%*%W%7%g%s$r;H$C$FFH<+(B
+$B$N%H%i%s%6%/%7%g%s$rDj5A$9$k>l9g$O!$<+J,$G%G!<%?%Y!<%9$N=i4|2=$r$7$F$*(B
+$B$/I,MW$,$"$j$^$9!%(B
 
 $ pgbench -i [$B%G!<%?%Y!<%9L>(B]
 
@@ -146,8 +156,11 @@ accounts	100000
 history		0
 
 $B%9%1!<%j%s%0%U%!%/%?!<$r(B 10,100,1000 $B$J$I$KJQ99$9$k$H!$>e5-%?%W%k?t$O(B
-$B$=$l$K1~$8$F(B10$BG\!$(B100$BG\!$(B1000$BG\$K$J$j$^$9!%$?$H$($P!$%9%1!<%j%s%0%U%!(B
-$B%/%?!<$r(B 10 $B$H$9$k$H!$(B
+$B$=$l$K1~$8$F(B10$BG\!$(B100$BG\!$(B1000$BG\$K$J$j$^$9!%%F!<%V%k$H%$%s%G%C%/%9$N%5(B
+$B%$%:$O%G!<%?%Y!<%9%5%$%:$O35$M$=$l$>$l!$(B130MB$B!$(B1.3GB$B!$(B13GB$B$[$I$K$J$j$^(B
+$B$9!%(B
+
+$B$?$H$($P!$%9%1!<%j%s%0%U%!%/%?!<$r(B 10 $B$H$9$k$H!$(B
 
 $B%F!<%V%kL>(B	$B%?%W%k?t(B
 -------------------------
@@ -201,36 +214,68 @@ pgbench $B$G$O!$0J2<$N%7!<%1%s%9$rA4It40N;$7$F(B1$B%H%i%s%6%/%7%g%s$H?t$($F(
 
 $B8=:_$N$H$3$m!$0J2<$N%a%?%3%^%s%I$,Dj5A$5$l$F$$$^$9!%(B
 
+\set name operand1 [ operator operand2 ]
+	$BHo1i;;?t(B operand1 $B$H(B operand2 $B$r1i;;;R(B operator $B$K$h$C$F1i;;$7(B
+	$B$?7k2L$rJQ?t(B name $B$K@_Dj$7$^$9!%8=>u$G$O@0?t$N;MB'1i;;$N$_$KBP(B
+	$B1~$7$F$$$^$9!%$J$*!$1i;;;R$H(B 2 $B$DL\$NHo1i;;?t$r>JN,$9$k$HC1=c(B
+	$B$K(B 1 $B$DL\$NHo1i;;?t$rJQ?t$K@_Dj$7$^$9!%(B
+
+	$BJQ?t$K1i;;$N7k2L$r@_Dj$9$k$K$O!$(B\set $B%a%?%3%^%s%I$r;HMQ$7$F0J(B
+	$B2<$N$h$&$K5-=R$7$^$9!%(B
+
+	\set ntellers 10 * :tps
+
+	$B$3$l$O!$JQ?t(B ntellers $B$K%9%1!<%j%s%0%U%!%/%?!<(B (-s $B%*%W%7%g%s(B
+	$B$G;XDj$7$?(B) $B$r(B 10 $BG\$7$?7k2L$r@_Dj$7$^$9!%(B
+
 \setrandom name min max
+
 	$B:G>.CM(B min $B$H:GBgCM(B max $B$N4V$NCM$r<h$kMp?t$r!$(Bname $BJQ?t$K@_Dj(B
 	$B$7$^$9!%(B
 
-$BJQ?t$KMp?t$r@_Dj$9$k$K$O!$(B\setrandom $B%a%?%3%^%s%I$r;HMQ$7$F0J2<$N$h$&(B
-$B$K5-=R$7$^$9!%(B
+	$BJQ?t$KMp?t$r@_Dj$9$k$K$O!$(B\setrandom $B%a%?%3%^%s%I$r;HMQ$7$F0J2<$N$h$&(B
+	$B$K5-=R$7$^$9!%(B
 
-\setrandom aid 1 100000
+	\setrandom aid 1 100000
 
-$B$3$l$O!$JQ?t(B aid $B$K(B 1 $B$+$i(B 100000 $B$N4V$NMp?t$r@_Dj$7$^$9!%$^$?!$JQ?t$N(B
-$BCM$r(B SQL $B%3%^%s%I$KKd$a9~$`$K$O!$0J2<$N$h$&$K$=$NL>A0$NA0$K%3%m%s$rIU(B
-$B$1$^$9!%(B
+	$B$3$l$O!$JQ?t(B aid $B$K(B 1 $B$+$i(B 100000 $B$N4V$NMp?t$r@_Dj$7$^$9!%(B
+
+$BJQ?t$O(B SQL $B%3%^%s%I$*$h$S%a%?%3%^%s%I$+$i;2>H$G$-$^$9!%$=$l$K$O0J2<$N(B
+$B$h$&$KJQ?tL>$NA0$K%3%m%s$rIU$1$^$9!%(B
 
 SELECT abalance FROM accounts WHERE aid = :aid
+
+$BJQ?t$rDj5A$9$k$K$O%a%?%3%^%s%I0J30$K(B -D $B%*%W%7%g%s$r;HMQ$9$k$3$H$b$G$-(B
+$B$^$9!%(B -D $B%*%W%7%g%s$GDj5A$7$?JQ?t$bJQ?tL>$NA0$K%3%m%s$rIU$1$F;2>H$7$^(B
+$B$9!%(B
 
 $BNc$($P!$(BTCP-B $B$KN`;w$7$?%Y%s%A%^!<%/$r7WB,$9$k$K$O!$0J2<$N$h$&$K%H%i%s(B
 $B%6%/%7%g%s$NFbMF$r%U%!%$%k$K5-=R$7!$(B-f $B%*%W%7%g%s$K$h$C$F$=$N%U%!%$%k(B
 $B$r;XDj$7$F(B pgbench $B$r<B9T$7$^$9!%(B
 
-\setrandom aid 1 100000
-\setrandom bid 1 1
-\setrandom tid 1 10
+\set nbranches :tps
+\set ntellers 10 * :tps
+\set naccounts 100000 * :tps
+\setrandom aid 1 :naccounts
+\setrandom bid 1 :nbranches
+\setrandom tid 1 :ntellers
 \setrandom delta 1 10000
 BEGIN
 UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid
 SELECT abalance FROM accounts WHERE aid = :aid
 UPDATE tellers SET tbalance = tbalance + :delta WHERE tid = :tid
 UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid
-INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, 'now')
+INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, current_timestamp)
 END
+
+$B%9%1!<%j%s%0%U%!%/%?!<$r(B branches $B%F!<%V%k$N%?%W%k?t$+$i<+F0E*$K@_Dj$7(B
+$B$?$$>l9g!$0J2<$N$h$&$K(B -s $B%*%W%7%g%s$H%7%'%k$N%3%^%s%ICV49$J$I$rAH$_9g(B
+$B$o$;$^$9!%(B
+
+pgbench -s $(psql -At -c "SELECT count(*) FROM branches") -f tpc_b.sql
+
+$B$J$*!$(B-f $B%*%W%7%g%s$r;XDj$7$?>l9g!$%Y%s%A%^!<%/3+;OA0$K(B vacuum $B$H(B
+history $B$N%/%j%"$O<+F0E*$K9T$o$l$^$;$s!%(B
 
 $B"#:n<T$H%i%$%;%s%9>r7o(B
 
@@ -239,6 +284,18 @@ pgbench $B$O@P0f(B $BC#IW$K$h$C$F=q$+$l$^$7$?!%%i%$%;%s%9>r7o$O(B pgbench.c 
 $B$G$-$^$9!%(B
 
 $B"#2~DjMzNr(B
+
+2006/07/26
+	* $B:4F#$5$s$N%Q%C%A$rE,MQ!%0J2<$N5!G=DI2C!%(BPostgreSQL 8.2$B$K<h$j(B
+	$B9~$^$l$^$9!%(B
+
+	$BJQ?t(B tps
+	    -s $B%*%W%7%g%s$G;XDj$7$?%9%1!<%j%s%0%U%!%/%?!<$r%U%!%$%kFb$GJQ?t$H$7(B
+	   $B$F;2>H$9$k5!G=(B
+        -D $B%*%W%7%g%s(B
+	   $B%3%^%s%I$N%*%W%7%g%s$H$7$FDj5A$7$?JQ?t$r%U%!%$%kFb$+$i;2>H$9$k5!G=(B
+	\set $B%3%^%s%I(B
+	   $B%U%!%$%kFb$G;MB'1i;;$r9T$$!"$=$N7k2L$rJQ?t$KBeF~$9$k5!G=(B
 
 2005/09/29
 	* $B:4F#$5$s$N%Q%C%A$rE,MQ!%(B-f $B%*%W%7%g%s$NDI2C!%(B

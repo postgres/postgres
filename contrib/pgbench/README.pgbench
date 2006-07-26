@@ -1,14 +1,14 @@
-pgbench README		2005/10/04 Tatsuo Ishii
+pgbench README		2006/07/26 Tatsuo Ishii
 
 o What is pgbench?
 
-  pgbench is a simple program to run a benchmark test sort of
-  "TPC-B". pgbench is a client application of PostgreSQL and runs
-  with PostgreSQL only. It performs lots of small and simple
-  transactions including select/update/insert operations then
-  calculates number of transactions successfully completed within a
-  second (transactions per second, tps). Targeting data includes a
-  table with at least 100k tuples.
+  pgbench is a simple program to run a benchmark test. pgbench is a
+  client application of PostgreSQL and runs with PostgreSQL only. It
+  performs lots of small and simple transactions including
+  SELECT/UPDATE/INSERT operations then calculates number of
+  transactions successfully completed within a second (transactions
+  per second, tps). Targeting data includes a table with at least 100k
+  tuples.
 
   Example outputs from pgbench look like:
 
@@ -39,7 +39,7 @@ o How to install pgbench
 
 o How to use pgbench?
 
-  (1) Initialize database by:
+  (1) (optional)Initialize database by:
 
 	pgbench -i <dbname>
 
@@ -94,6 +94,10 @@ o options
 		default is 1.  NOTE: scaling factor should be at least
 		as large as the largest number of clients you intend
 		to test; else you'll mostly be measuring update contention.
+
+	-D varname=value
+		Define a variable. It can be refereed to by a script
+		provided by using -f option. Multile -D options are allowed.
 
 	-U login
 		Specify db user's login name if it is different from
@@ -173,6 +177,15 @@ o -f option
   slash). A meta command takes some arguments separted by white
   spaces. Currently following meta command is supported:
 
+  \set name operand1 [ operator operand2 ]
+        set the calculated value using "operand1" "operator"
+        "operand2" to variable "name". If "operator" and "operand2"
+        are omitted, the value of operand1 is set to variable "name".
+
+  example:
+
+  \set ntellers 10 * :tps
+
   \setrandom name min max
 
 	assign random integer to name between min and max
@@ -188,12 +201,17 @@ o -f option
 
   SELECT abalance FROM accounts WHERE aid = :aid
 
-  For example, TPC-B like benchmark can be defined as follows(scaling
+  Variables can also be defined by using -D option.
+
+  Example, TPC-B like benchmark can be defined as follows(scaling
   factor = 1):
 
-\setrandom aid 1 100000
-\setrandom bid 1 1
-\setrandom tid 1 10
+\set nbranches :tps
+\set ntellers 10 * :tps
+\set naccounts 100000 * :tps
+\setrandom aid 1 :naccounts
+\setrandom bid 1 :nbranches
+\setrandom tid 1 :ntellers
 \setrandom delta 1 10000
 BEGIN
 UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid
@@ -203,11 +221,29 @@ UPDATE branches SET bbalance = bbalance + :delta WHERE bid = :bid
 INSERT INTO history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, 'now')
 END
 
+If you want to automatically set the scaling factor from the number of
+tuples in branches table, use -s option and shell command like this:
+
+pgbench -s $(psql -At -c "SELECT count(*) FROM branches") -f tpc_b.sql
+
+Notice that -f option does not execute vacuum and clearing history
+table before starting benchmark.
+
 o License?
 
 Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
+
+2006/07/26
+	* New features contributed by Tomoaki Sato.
+
+	* predefined variable "tps"
+	    The value of variable tps is taken from the scaling factor
+	    specified by -s option.
+        * -D option
+	   Variable values can be defined by -D option.
+	* \set command now allows arithmetic calculations.
 
 2005/09/29
 	* add -f option. contributed by Tomoaki Sato.

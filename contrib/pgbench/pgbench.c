@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.49 2005/12/10 01:09:07 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.50 2006/07/26 07:24:50 ishii Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -169,7 +169,7 @@ static char *select_only = {
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-n][-C][-v][-S][-N][-f filename][-l][-U login][-P password][-d][dbname]\n");
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-f filename][-l][-U login][-P password][-d][dbname]\n");
 	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor][-U login][-P password][-d][dbname]\n");
 }
 
@@ -552,26 +552,130 @@ top:
 
 		if (strcasecmp(argv[0], "setrandom") == 0)
 		{
-			char	   *val;
+			char	   *var;
+			int			min,
+						max;
+			char		res[64];
 
-			if ((val = malloc(strlen(argv[3]) + 1)) == NULL)
+			if (*argv[2] == ':')
+			{
+				if ((var = getVariable(st, argv[2] + 1)) == NULL)
+				{
+					fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[2]);
+					st->ecnt++;
+					return;
+				}
+				min = atoi(var);
+			}
+			else
+				min = atoi(argv[2]);
+
+			if (min < 0)
+			{
+				fprintf(stderr, "%s: invalid minimum number %d\n", argv[0], min);
+				st->ecnt++;
+				return;
+			}
+
+			if (*argv[3] == ':')
+			{
+				if ((var = getVariable(st, argv[3] + 1)) == NULL)
+				{
+					fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[3]);
+					st->ecnt++;
+					return;
+				}
+				max = atoi(var);
+			}
+			else
+				max = atoi(argv[3]);
+
+			if (max < min || max > MAX_RANDOM_VALUE)
+			{
+				fprintf(stderr, "%s: invalid maximum number %d\n", argv[0], max);
+				st->ecnt++;
+				return;
+			}
+
+			snprintf(res, sizeof(res), "%d", getrand(min, max));
+
+			if (putVariable(st, argv[1], res) == false)
 			{
 				fprintf(stderr, "%s: out of memory\n", argv[0]);
 				st->ecnt++;
 				return;
 			}
 
-			sprintf(val, "%d", getrand(atoi(argv[2]), atoi(argv[3])));
+			st->listen = 1;
+		}
+		else if (strcasecmp(argv[0], "set") == 0)
+		{
+			char	   *var;
+			int			ope1,
+						ope2;
+			char		res[64];
 
-			if (putVariable(st, argv[1], val) == false)
+			if (*argv[2] == ':')
+			{
+				if ((var = getVariable(st, argv[2] + 1)) == NULL)
+				{
+					fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[2]);
+					st->ecnt++;
+					return;
+				}
+				ope1 = atoi(var);
+			}
+			else
+				ope1 = atoi(argv[2]);
+
+			if (argc < 5)
+				snprintf(res, sizeof(res), "%d", ope1);
+			else
+			{
+				if (*argv[4] == ':')
+				{
+					if ((var = getVariable(st, argv[4] + 1)) == NULL)
+					{
+						fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[4]);
+						st->ecnt++;
+						return;
+					}
+					ope2 = atoi(var);
+				}
+				else
+					ope2 = atoi(argv[4]);
+
+				if (strcmp(argv[3], "+") == 0)
+					snprintf(res, sizeof(res), "%d", ope1 + ope2);
+				else if (strcmp(argv[3], "-") == 0)
+					snprintf(res, sizeof(res), "%d", ope1 - ope2);
+				else if (strcmp(argv[3], "*") == 0)
+					snprintf(res, sizeof(res), "%d", ope1 * ope2);
+				else if (strcmp(argv[3], "/") == 0)
+				{
+					if (ope2 == 0)
+					{
+						fprintf(stderr, "%s: division by zero\n", argv[0]);
+						st->ecnt++;
+						return;
+					}
+					snprintf(res, sizeof(res), "%d", ope1 / ope2);
+				}
+				else
+				{
+					fprintf(stderr, "%s: unsupported operator %s\n", argv[0], argv[3]);
+					st->ecnt++;
+					return;
+				}
+			}
+
+			if (putVariable(st, argv[1], res) == false)
 			{
 				fprintf(stderr, "%s: out of memory\n", argv[0]);
-				free(val);
 				st->ecnt++;
 				return;
 			}
 
-			free(val);
 			st->listen = 1;
 		}
 
@@ -808,9 +912,6 @@ process_commands(char *buf)
 
 		if (strcasecmp(my_commands->argv[0], "setrandom") == 0)
 		{
-			int			min,
-						max;
-
 			if (my_commands->argc < 4)
 			{
 				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
@@ -820,20 +921,18 @@ process_commands(char *buf)
 			for (j = 4; j < my_commands->argc; j++)
 				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
 						my_commands->argv[0], my_commands->argv[j]);
-
-			if ((min = atoi(my_commands->argv[2])) < 0)
+		}
+		else if (strcasecmp(my_commands->argv[0], "set") == 0)
+		{
+			if (my_commands->argc < 3)
 			{
-				fprintf(stderr, "%s: invalid minimum number %s\n",
-						my_commands->argv[0], my_commands->argv[2]);
+				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
 				return NULL;
 			}
 
-			if ((max = atoi(my_commands->argv[3])) < min || max > MAX_RANDOM_VALUE)
-			{
-				fprintf(stderr, "%s: invalid maximum number %s\n",
-						my_commands->argv[0], my_commands->argv[3]);
-				return NULL;
-			}
+			for (j = my_commands->argc < 5 ? 3 : 5; j < my_commands->argc; j++)
+				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
+						my_commands->argv[0], my_commands->argv[j]);
 		}
 		else
 		{
@@ -889,10 +988,14 @@ process_file(char *filename)
 	while (fgets(buf, sizeof(buf), fd) != NULL)
 	{
 		Command    *commands;
+		int			i;
 
+		i = 0;
+		while (isspace((unsigned char) buf[i]))
+			i++;
 
-		if (strncmp(buf, "\n", 1) != 0) {
-			commands = process_commands(buf);
+		if (strncmp(&buf[i], "\n", 1) != 0 && strncmp(&buf[i], "--", 2) != 0) {
+			commands = process_commands(&buf[i]);
 			if (commands == NULL)
 			{
 				fclose(fd);
@@ -1067,7 +1170,16 @@ main(int argc, char **argv)
 	else if ((env = getenv("PGUSER")) != NULL && *env != '\0')
 		login = env;
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNSlf:")) != -1)
+	state = (CState *) malloc(sizeof(CState));
+	if (state == NULL)
+	{
+		fprintf(stderr, "Couldn't allocate memory for state\n");
+		exit(1);
+	}
+
+	memset(state, 0, sizeof(*state));
+
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNSlf:D:")) != -1)
 	{
 		switch (c)
 		{
@@ -1151,8 +1263,26 @@ main(int argc, char **argv)
 			case 'f':
 				ttype = 3;
 				filename = optarg;
-				if (process_file(filename) == false)
+				if (process_file(filename) == false || *sql_files[num_files - 1] == NULL)
 					exit(1);
+				break;
+			case 'D':
+				{
+					char	   *p;
+
+					if ((p = strchr(optarg, '=')) == NULL || p == optarg || *(p + 1) == '\0')
+					{
+						fprintf(stderr, "invalid variable definition: %s\n", optarg);
+						exit(1);
+					}
+
+					*p++ = '\0';
+					if (putVariable(&state[0], optarg, p) == false)
+					{
+						fprintf(stderr, "Couldn't allocate memory for variable\n");
+						exit(1);
+					}
+				}
 				break;
 			default:
 				usage();
@@ -1181,14 +1311,43 @@ main(int argc, char **argv)
 
 	remains = nclients;
 
-	state = (CState *) malloc(sizeof(CState) * nclients);
-	if (state == NULL)
+	if (getVariable(&state[0], "tps") == NULL)
 	{
-		fprintf(stderr, "Couldn't allocate memory for state\n");
-		exit(1);
+		char		val[64];
+
+		snprintf(val, sizeof(val), "%d", tps);
+		if (putVariable(&state[0], "tps", val) == false)
+		{
+			fprintf(stderr, "Couldn't allocate memory for variable\n");
+			exit(1);
+		}
 	}
 
-	memset(state, 0, sizeof(*state) * nclients);
+	if (nclients > 1)
+	{
+		state = (CState *) realloc(state, sizeof(CState) * nclients);
+		if (state == NULL)
+		{
+			fprintf(stderr, "Couldn't allocate memory for state\n");
+			exit(1);
+		}
+
+		memset(state + sizeof(*state), 0, sizeof(*state) * (nclients - 1));
+
+		for (i = 1; i < nclients; i++)
+		{
+			int			j;
+
+			for (j = 0; j < state[0].nvariables; j++)
+			{
+				if (putVariable(&state[i], state[0].variables[j].name, state[0].variables[j].value) == false)
+				{
+					fprintf(stderr, "Couldn't allocate memory for variable\n");
+					exit(1);
+				}
+			}
+		}
+	}
 
 	if (use_log)
 	{
@@ -1357,8 +1516,19 @@ main(int argc, char **argv)
 	/* send start up queries in async manner */
 	for (i = 0; i < nclients; i++)
 	{
+		Command   **commands = sql_files[state[i].use_file];
+		int			prev_ecnt = state[i].ecnt;
+
 		state[i].use_file = getrand(0, num_files - 1);
 		doCustom(state, i, debug);
+
+		if (state[i].ecnt > prev_ecnt && commands[state[i].state]->type == META_COMMAND)
+		{
+			fprintf(stderr, "Client %d aborted in state %d. Execution meta-command failed.\n", i, state[i].state);
+			remains--;				/* I've aborted */
+			PQfinish(state[i].con);
+			state[i].con = NULL;
+		}
 	}
 
 	for (;;)
@@ -1424,11 +1594,20 @@ main(int argc, char **argv)
 		for (i = 0; i < nclients; i++)
 		{
 			Command   **commands = sql_files[state[i].use_file];
+			int			prev_ecnt = state[i].ecnt;
 
 			if (state[i].con && (FD_ISSET(PQsocket(state[i].con), &input_mask)
 						  || commands[state[i].state]->type == META_COMMAND))
 			{
 				doCustom(state, i, debug);
+			}
+
+			if (state[i].ecnt > prev_ecnt && commands[state[i].state]->type == META_COMMAND)
+			{
+				fprintf(stderr, "Client %d aborted in state %d. Execution meta-command failed.\n", i, state[i].state);
+				remains--;				/* I've aborted */
+				PQfinish(state[i].con);
+				state[i].con = NULL;
 			}
 		}
 	}
