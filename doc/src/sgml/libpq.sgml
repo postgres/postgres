@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.213 2006/07/04 13:22:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.214 2006/07/27 13:20:24 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -4122,6 +4122,72 @@ To use this feature, copy
 service names and parameters. This file can be used for client-only
 installs too. The file's location can also be specified by the
 <envar>PGSYSCONFDIR</envar> environment variable.
+</para>
+</sect1>
+
+
+<sect1 id="libpq-ldap">
+ <title>LDAP Lookup of Connection Parameters</title>
+
+<indexterm zone="libpq-ldap">
+ <primary>LDAP connection parameter lookup</primary>
+</indexterm>
+
+<para>
+If <application>libpq</application> has been compiled with LDAP support (option
+<literal><option>--with-ldap</option></literal> for <command>configure</command>)
+it is possible to retrieve connection options like <literal>host</literal>
+or <literal>dbname</literal> via LDAP from a central server.
+The advantage is that if the connection parameters for a database change,
+the connection information doesn't have to be updated on all client machines.
+</para>
+
+<para>
+LDAP connection parameter lookup uses the connection service file
+<filename>pg_service.conf</filename> (see <xref linkend="libpq-pgservice">).
+A line in a <filename>pg_service.conf</filename> stanza that starts with
+<literal>ldap://</literal> will be recognized as an LDAP URL and an LDAP
+query will be performed. The result must be a list of <literal>keyword =
+value</literal> pairs which will be used to set connection options.
+The URL must conform to RFC 1959 and be of the form
+<synopsis>
+ldap://[<replaceable>hostname</replaceable>[:<replaceable>port</replaceable>]]/<replaceable>search_base</replaceable>?<replaceable>attribute</replaceable>?<replaceable>search_scope</replaceable>?<replaceable>filter</replaceable>
+</synopsis>
+where <replaceable>hostname</replaceable>
+defaults to <literal>localhost</literal> and
+<replaceable>port</replaceable> defaults to 389.
+</para>
+
+<para>
+Processing of <filename>pg_service.conf</filename> is terminated after
+a successful LDAP lookup, but is continued if the LDAP server cannot be
+contacted.  This is to provide a fallback with
+further LDAP URL lines that point to different LDAP
+servers, classical <literal>keyword = value</literal> pairs, or
+default connection options.
+If you would rather get an error message in this case, add a
+syntactically incorrect line after the LDAP URL.
+</para>
+
+<para>
+A sample LDAP entry that has been created with the LDIF file
+<synopsis>
+version:1
+dn:cn=mydatabase,dc=mycompany,dc=com
+changetype:add
+objectclass:top
+objectclass:groupOfUniqueNames
+cn:mydatabase
+uniqueMember:host=dbserver.mycompany.com
+uniqueMember:port=5439
+uniqueMember:dbname=mydb
+uniqueMember:user=mydb_user
+uniqueMember:sslmode=require
+</synopsis>
+might be queried with the following LDAP URL:
+<synopsis>
+ldap://ldap.mycompany.com/dc=mycompany,dc=com?uniqueMember?one?(cn=mydatabase)
+</synopsis>
 </para>
 </sect1>
 
