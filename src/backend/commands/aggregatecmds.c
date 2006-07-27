@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.37 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.38 2006/07/27 19:52:04 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -57,7 +57,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	TypeName   *baseType = NULL;
 	TypeName   *transType = NULL;
 	char	   *initval = NULL;
-	Oid			baseTypeId;
+	Oid		   *aggArgTypes;
+	int 		numArgs;
 	Oid			transTypeId;
 	ListCell   *pl;
 
@@ -116,12 +117,13 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 				 errmsg("aggregate sfunc must be specified")));
 
 	/*
-	 * look up the aggregate's input datatype.
+	 * look up the aggregate's input datatype(s).
 	 */
 	if (oldstyle)
 	{
 		/*
-		 * Old style: use basetype parameter.  This supports only one input.
+		 * Old style: use basetype parameter.  This supports aggregates
+		 * of zero or one input, with input type ANY meaning zero inputs.
 		 *
 		 * Historically we allowed the command to look like basetype = 'ANY'
 		 * so we must do a case-insensitive comparison for the name ANY. Ugh.
@@ -132,37 +134,37 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 					 errmsg("aggregate input type must be specified")));
 
 		if (pg_strcasecmp(TypeNameToString(baseType), "ANY") == 0)
-			baseTypeId = ANYOID;
+		{
+			numArgs = 0;
+			aggArgTypes = NULL;
+		}
 		else
-			baseTypeId = typenameTypeId(NULL, baseType);
+		{
+			numArgs = 1;
+			aggArgTypes = (Oid *) palloc(sizeof(Oid));
+			aggArgTypes[0] = typenameTypeId(NULL, baseType);
+		}
 	}
 	else
 	{
 		/*
-		 * New style: args is a list of TypeNames.  For the moment, though,
-		 * we allow at most one.
+		 * New style: args is a list of TypeNames (possibly zero of 'em).
 		 */
+		ListCell *lc;
+		int i = 0;
+
 		if (baseType != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("basetype is redundant with aggregate input type specification")));
 
-		if (args == NIL)
+		numArgs = list_length(args);
+		aggArgTypes = (Oid *) palloc(sizeof(Oid) * numArgs);
+		foreach(lc, args)
 		{
-			/* special case for agg(*) */
-			baseTypeId = ANYOID;
-		}
-		else if (list_length(args) != 1)
-		{
-			/* temporarily reject > 1 arg */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("aggregates can have only one input")));
-			baseTypeId = InvalidOid;	/* keep compiler quiet */
-		}
-		else
-		{
-			baseTypeId = typenameTypeId(NULL, (TypeName *) linitial(args));
+			TypeName *curTypeName = (TypeName *) lfirst(lc);
+
+			aggArgTypes[i++] = typenameTypeId(NULL, curTypeName);
 		}
 	}
 
@@ -187,7 +189,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	 */
 	AggregateCreate(aggName,	/* aggregate name */
 					aggNamespace,		/* namespace */
-					baseTypeId, /* type of data being aggregated */
+					aggArgTypes,		/* input data type(s) */
+					numArgs,
 					transfuncName,		/* step function name */
 					finalfuncName,		/* final function name */
 					sortoperatorName,	/* sort operator name */
@@ -211,7 +214,7 @@ RemoveAggregate(RemoveFuncStmt *stmt)
 
 	/* Look up function and make sure it's an aggregate */
 	procOid = LookupAggNameTypeNames(aggName, aggArgs, stmt->missing_ok);
-	
+
 	if (!OidIsValid(procOid))
 	{
 		/* we only get here if stmt->missing_ok is true */

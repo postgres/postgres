@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.40 2006/04/30 18:30:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.41 2006/07/27 19:52:04 tgl Exp $ -->
 
  <chapter id="sql-intro">
   <title>SQL</title>
@@ -1247,13 +1247,13 @@ select sname, pname from supplier
     </sect3>
 
     <sect3>
-     <title id="aggregates-tutorial">Aggregate Operators</title>
+     <title id="aggregates-tutorial">Aggregate Functions</title>
 
      <para>
-      <acronym>SQL</acronym> provides aggregate operators (e.g. AVG,
-      COUNT, SUM, MIN, MAX) that take an expression as argument.  The
-      expression is evaluated at each row that satisfies the WHERE
-      clause, and the aggregate operator is calculated over this set
+      <acronym>SQL</acronym> provides aggregate functions such as AVG,
+      COUNT, SUM, MIN, and MAX.  The argument(s) of an aggregate function
+      are evaluated at each row that satisfies the WHERE
+      clause, and the aggregate function is calculated over this set
       of input values.  Normally, an aggregate delivers a single
       result for a whole <command>SELECT</command> statement.  But if
       grouping is specified in the query, then a separate calculation
@@ -1311,10 +1311,10 @@ SELECT COUNT(PNO)
      <para>
       <acronym>SQL</acronym> allows one to partition the tuples of a table
       into groups. Then the
-      aggregate operators described above can be applied to the groups &mdash;
-      i.e. the value of the aggregate operator is no longer calculated over
+      aggregate functions described above can be applied to the groups &mdash;
+      i.e. the value of the aggregate function is no longer calculated over
       all the values of the specified column but over all values of a
-      group. Thus the aggregate operator is evaluated separately for every
+      group. Thus the aggregate function is evaluated separately for every
       group.
      </para>
 
@@ -1396,7 +1396,7 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
 
        <para>
 	In our example we got four groups and now we can apply the aggregate
-	operator COUNT to every group leading to the final result of the query
+	function COUNT to every group leading to the final result of the query
 	given above.
        </para>
       </example>
@@ -1404,9 +1404,9 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
 
      <para>
       Note that for a query using GROUP BY and aggregate
-      operators to make sense the target list can only refer directly to
+      functions to make sense, the target list can only refer directly to
       the attributes being grouped by.  Other attributes may only be used
-      inside the argument of an aggregate function.  Otherwise there would
+      inside the arguments of aggregate functions.  Otherwise there would
       not be a unique value to associate with the other attributes.
      </para>
 

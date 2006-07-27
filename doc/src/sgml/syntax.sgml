@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.107 2006/06/26 17:24:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.108 2006/07/27 19:52:04 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -673,8 +673,9 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      <para>
       The asterisk (<literal>*</literal>) is used in some contexts to denote
       all the fields of a table row or composite value.  It also
-      has a special meaning when used as the argument of the
-      <function>COUNT</function> aggregate function.
+      has a special meaning when used as the argument of an
+      aggregate function, namely that the aggregate does not require
+      any explicit parameter.
      </para>
     </listitem>
 
@@ -1269,9 +1270,9 @@ sqrt(2)
     syntax of an aggregate expression is one of the following:
 
 <synopsis>
-<replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable>)
-<replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable>)
-<replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable>)
+<replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable> [ , ... ] )
+<replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable> [ , ... ] )
+<replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable> [ , ... ] )
 <replaceable>aggregate_name</replaceable> ( * )
 </synopsis>
 
@@ -1284,16 +1285,16 @@ sqrt(2)
 
    <para>
     The first form of aggregate expression invokes the aggregate
-    across all input rows for which the given expression yields a
-    non-null value.  (Actually, it is up to the aggregate function
+    across all input rows for which the given expression(s) yield
+    non-null values.  (Actually, it is up to the aggregate function
     whether to ignore null values or not &mdash; but all the standard ones do.)
     The second form is the same as the first, since
     <literal>ALL</literal> is the default.  The third form invokes the
-    aggregate for all distinct non-null values of the expression found
+    aggregate for all distinct non-null values of the expressions found
     in the input rows.  The last form invokes the aggregate once for
     each input row regardless of null or non-null values; since no
     particular input value is specified, it is generally only useful
-    for the <function>count()</function> aggregate function.
+    for the <function>count(*)</function> aggregate function.
    </para>
 
    <para>
@@ -1323,7 +1324,7 @@ sqrt(2)
     <xref linkend="sql-syntax-scalar-subqueries"> and
     <xref linkend="functions-subquery">), the aggregate is normally
     evaluated over the rows of the subquery.  But an exception occurs
-    if the aggregate's argument contains only outer-level variables:
+    if the aggregate's arguments contain only outer-level variables:
     the aggregate then belongs to the nearest such outer level, and is
     evaluated over the rows of that query.  The aggregate expression
     as a whole is then an outer reference for the subquery it appears in,
@@ -1332,6 +1333,13 @@ sqrt(2)
     appearing only in the result list or <literal>HAVING</> clause
     applies with respect to the query level that the aggregate belongs to.
    </para>
+
+   <note>
+    <para>
+     <productname>PostgreSQL</productname> currently does not support
+     <literal>DISTINCT</> with more than one input expression.
+    </para>
+   </note>
   </sect2>
 
   <sect2 id="sql-syntax-type-casts">

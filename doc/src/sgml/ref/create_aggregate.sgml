@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.34 2006/04/15 17:45:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.35 2006/07/27 19:52:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">input_data_type</replaceable> ) (
+CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">input_data_type</replaceable> [ , ... ] ) (
     SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
@@ -60,16 +60,16 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   </para>
 
   <para>
-   An  aggregate  function is identified by its name and input data type.
+   An aggregate function is identified by its name and input data type(s).
    Two aggregates in the same schema can have the same name if they operate on
    different input types.  The
-   name and input data type of an aggregate must also be distinct from
+   name and input data type(s) of an aggregate must also be distinct from
    the name and input data type(s) of every ordinary function in the same
    schema.
   </para>
 
   <para>
-   An  aggregate function is made from one or two ordinary
+   An aggregate function is made from one or two ordinary
    functions:
    a state transition function
    <replaceable class="PARAMETER">sfunc</replaceable>,
@@ -77,7 +77,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    <replaceable class="PARAMETER">ffunc</replaceable>.
    These are used as follows:
 <programlisting>
-<replaceable class="PARAMETER">sfunc</replaceable>( internal-state, next-data-item ) ---> next-internal-state
+<replaceable class="PARAMETER">sfunc</replaceable>( internal-state, next-data-values ) ---> next-internal-state
 <replaceable class="PARAMETER">ffunc</replaceable>( internal-state ) ---> aggregate-value
 </programlisting>
   </para>
@@ -85,10 +85,11 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   <para>
    <productname>PostgreSQL</productname> creates a temporary variable
    of data type <replaceable class="PARAMETER">stype</replaceable>
-   to hold the current internal state of the aggregate.  At each input
-   data item,
-   the state transition function is invoked to calculate a new
-   internal state value.  After all the data has been processed,
+   to hold the current internal state of the aggregate.  At each input row,
+   the aggregate argument value(s) are calculated and
+   the state transition function is invoked with the current state value
+   and the new argument value(s) to calculate a new
+   internal state value.  After all the rows have been processed,
    the final function is invoked once to calculate the aggregate's return
    value.  If there is no final function then the ending state value
    is returned as-is.
@@ -106,15 +107,16 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   <para>
    If the state transition function is declared <quote>strict</quote>,
    then it cannot be called with null inputs.  With such a transition
-   function, aggregate execution behaves as follows.  Null input values
-   are ignored (the function is not called and the previous state value
-   is retained).  If the initial state value is null, then the first
-   nonnull input value replaces the state value, and the transition
-   function is invoked beginning with the second nonnull input value.
+   function, aggregate execution behaves as follows.  Rows with any null input
+   values are ignored (the function is not called and the previous state value
+   is retained).  If the initial state value is null, then at the first row
+   with all-nonnull input values, the first argument value replaces the state
+   value, and the transition function is invoked at subsequent rows with
+   all-nonnull input values.
    This is handy for implementing aggregates like <function>max</function>.
    Note that this behavior is only available when
    <replaceable class="PARAMETER">state_data_type</replaceable>
-   is the same as
+   is the same as the first
    <replaceable class="PARAMETER">input_data_type</replaceable>.
    When these types are different, you must supply a nonnull initial
    condition or use a nonstrict transition function.
@@ -122,7 +124,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   
   <para>
    If the state transition function is not strict, then it will be called
-   unconditionally at each input value, and must deal with null inputs
+   unconditionally at each input row, and must deal with null inputs
    and null transition values for itself.  This allows the aggregate
    author to have full control over the aggregate's handling of null values.
   </para>
@@ -180,10 +182,10 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <term><replaceable class="PARAMETER">input_data_type</replaceable></term>
     <listitem>
      <para>
-      The input data type on which this aggregate function operates.
-      This can be specified as <literal>*</> for an aggregate that
-      does not examine its input values (an example is
-      <function>count(*)</function>).
+      An input data type on which this aggregate function operates.
+      To create a zero-argument aggregate function, write <literal>*</>
+      in place of the list of input data types.  (An example of such an
+      aggregate is <function>count(*)</function>.)
      </para>
     </listitem>
    </varlistentry>
@@ -195,8 +197,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       In the old syntax for <command>CREATE AGGREGATE</>, the input data type
       is specified by a <literal>basetype</> parameter rather than being
       written next to the aggregate name.  Note that this syntax allows
-      only one input parameter.  To define an aggregate that does not examine
-      its input values, specify the <literal>basetype</> as
+      only one input parameter.  To define a zero-argument aggregate function,
+      specify the <literal>basetype</> as
       <literal>"ANY"</> (not <literal>*</>).
      </para>
     </listitem>
@@ -207,17 +209,15 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The name of the state transition function to be called for each
-      input data value.  This is normally a function of two arguments,
+      input row.  For an <replaceable class="PARAMETER">N</>-argument
+      aggregate function, the <replaceable class="PARAMETER">sfunc</>
+      must take <replaceable class="PARAMETER">N</>+1 arguments,
       the first being of type <replaceable
-      class="PARAMETER">state_data_type</replaceable> and the second
-      of type <replaceable
-      class="PARAMETER">input_data_type</replaceable>.  Alternatively,
-      for an aggregate that does not examine its input values, the
-      function takes just one argument of type <replaceable
-      class="PARAMETER">state_data_type</replaceable>.  In either case
-      the function must return a value of type <replaceable
+      class="PARAMETER">state_data_type</replaceable> and the rest
+      matching the declared input data type(s) of the aggregate.
+      The function must return a value of type <replaceable
       class="PARAMETER">state_data_type</replaceable>.  This function
-      takes the current state value and the current input data item,
+      takes the current state value and the current input data value(s),
       and returns the next state value.
      </para>
     </listitem>
@@ -237,7 +237,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The name of the final function called to compute the aggregate's
-      result after all input data has been traversed.  The function
+      result after all input rows have been traversed.  The function
       must take a single argument of type <replaceable
       class="PARAMETER">state_data_type</replaceable>.  The return
       data type of the aggregate is defined as the return type of this
@@ -269,7 +269,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       <function>MAX</>-like aggregate.
       This is just an operator name (possibly schema-qualified).
       The operator is assumed to have the same input data types as
-      the aggregate.
+      the aggregate (which must be a single-argument aggregate).
      </para>
     </listitem>
    </varlistentry>

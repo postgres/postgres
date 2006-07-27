@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.30 2006/02/12 03:22:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.31 2006/07/27 19:52:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ COMMENT ON
 {
   TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
-  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable>) |
+  AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable> [, ...] ) |
   CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>) |
   CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
@@ -101,8 +101,9 @@ COMMENT ON
     <term><replaceable class="parameter">agg_type</replaceable></term>
     <listitem>
      <para>
-      The argument data type of the aggregate function, or
-      <literal>*</literal> if the function accepts any data type.
+      An input data type on which the aggregate function operates.
+      To reference a zero-argument aggregate function, write <literal>*</>
+      in place of the list of input data types.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.7 2005/10/13 22:44:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.8 2006/07/27 19:52:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,9 +20,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) RENAME TO <replaceable>new_name</replaceable>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) OWNER TO <replaceable>new_owner</replaceable>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) SET SCHEMA <replaceable>new_schema</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> [ , ... ] ) RENAME TO <replaceable>new_name</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> [ , ... ] ) OWNER TO <replaceable>new_owner</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> [ , ... ] ) SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -64,8 +64,9 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
     <term><replaceable class="parameter">type</replaceable></term>
     <listitem>
      <para>
-      The argument data type of the aggregate function, or
-      <literal>*</literal> if the function accepts any data type.
+      An input data type on which the aggregate function operates.
+      To reference a zero-argument aggregate function, write <literal>*</>
+      in place of the list of input data types.
      </para>
     </listitem>
    </varlistentry>

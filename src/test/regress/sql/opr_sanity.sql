@@ -55,7 +55,7 @@ WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
 
 -- Look for conflicting proc definitions (same names and input datatypes).
 -- (This test should be dead code now that we have the unique index
--- pg_proc_proname_narg_type_index, but I'll leave it in anyway.)
+-- pg_proc_proname_args_nsp_index, but I'll leave it in anyway.)
 
 SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
@@ -69,12 +69,16 @@ WHERE p1.oid != p2.oid AND
 -- have several entries with different pronames for the same internal function,
 -- but conflicts in the number of arguments and other critical items should
 -- be complained of.
+-- Ignore aggregates, since they all use "aggregate_dummy".
+
+-- As of 8.2, this finds int8inc and int8inc_any, which are OK.
 
 SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
-WHERE p1.oid != p2.oid AND
+WHERE p1.oid < p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
+    p1.proisagg = false AND p2.proisagg = false AND
     (p1.prolang != p2.prolang OR
      p1.proisagg != p2.proisagg OR
      p1.prosecdef != p2.prosecdef OR
@@ -515,7 +519,7 @@ WHERE aggfnoid = 0 OR aggtransfn = 0 OR aggtranstype = 0;
 SELECT a.aggfnoid::oid, p.proname
 FROM pg_aggregate as a, pg_proc as p
 WHERE a.aggfnoid = p.oid AND
-    (NOT p.proisagg OR p.pronargs != 1 OR p.proretset);
+    (NOT p.proisagg OR p.proretset);
 
 -- Make sure there are no proisagg pg_proc entries without matches.
 
@@ -539,13 +543,17 @@ FROM pg_aggregate AS a, pg_proc AS p, pg_proc AS ptr
 WHERE a.aggfnoid = p.oid AND
     a.aggtransfn = ptr.oid AND
     (ptr.proretset
+     OR NOT (ptr.pronargs = p.pronargs + 1)
      OR NOT physically_coercible(ptr.prorettype, a.aggtranstype)
      OR NOT physically_coercible(a.aggtranstype, ptr.proargtypes[0])
-     OR NOT ((ptr.pronargs = 2 AND
-              physically_coercible(p.proargtypes[0], ptr.proargtypes[1]))
-             OR
-             (ptr.pronargs = 1 AND
-              p.proargtypes[0] = '"any"'::regtype)));
+     OR (p.pronargs > 0 AND
+         NOT physically_coercible(p.proargtypes[0], ptr.proargtypes[1]))
+     OR (p.pronargs > 1 AND
+         NOT physically_coercible(p.proargtypes[1], ptr.proargtypes[2]))
+     OR (p.pronargs > 2 AND
+         NOT physically_coercible(p.proargtypes[2], ptr.proargtypes[3]))
+     -- we could carry the check further, but that's enough for now
+    );
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.
 

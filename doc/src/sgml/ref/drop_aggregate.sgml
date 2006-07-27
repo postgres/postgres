@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.28 2006/06/16 22:27:55 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.29 2006/07/27 19:52:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">type</replaceable> ) [ CASCADE | RESTRICT ]
+DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">type</replaceable> [ , ... ] ) [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -43,7 +43,7 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> (
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the aggregate does not exist. A notice is issued 
+      Do not throw an error if the aggregate does not exist. A notice is issued
       in this case.
      </para>
     </listitem>
@@ -62,8 +62,9 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> (
     <term><replaceable class="parameter">type</replaceable></term>
     <listitem>
      <para>
-      The argument data type of the aggregate function, or
-      <literal>*</literal> if the function accepts any data type.
+      An input data type on which the aggregate function operates.
+      To reference a zero-argument aggregate function, write <literal>*</>
+      in place of the list of input data types.
      </para>
     </listitem>
    </varlistentry>

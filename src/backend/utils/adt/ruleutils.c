@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.228 2006/07/14 14:52:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.229 2006/07/27 19:52:06 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -3880,15 +3880,29 @@ static void
 get_agg_expr(Aggref *aggref, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	Oid			argtype = exprType((Node *) aggref->target);
+	Oid			argtypes[FUNC_MAX_ARGS];
+	int			nargs;
+	ListCell   *l;
+
+	nargs = 0;
+	foreach(l, aggref->args)
+	{
+		if (nargs >= FUNC_MAX_ARGS)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg("too many arguments")));
+		argtypes[nargs] = exprType((Node *) lfirst(l));
+		nargs++;
+	}
 
 	appendStringInfo(buf, "%s(%s",
-					 generate_function_name(aggref->aggfnoid, 1, &argtype),
+					 generate_function_name(aggref->aggfnoid, nargs, argtypes),
 					 aggref->aggdistinct ? "DISTINCT " : "");
+	/* aggstar can be set only in zero-argument aggregates */
 	if (aggref->aggstar)
-		appendStringInfo(buf, "*");
+		appendStringInfoChar(buf, '*');
 	else
-		get_rule_expr((Node *) aggref->target, context, true);
+		get_rule_expr((Node *) aggref->args, context, true);
 	appendStringInfoChar(buf, ')');
 }
 

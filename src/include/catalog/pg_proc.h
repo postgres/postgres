@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.417 2006/07/25 03:51:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.418 2006/07/27 19:52:06 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1534,6 +1534,8 @@ DESCR("truncate interval to specified units");
 
 DATA(insert OID = 1219 (  int8inc		   PGNSP PGUID 12 f f t f i 1 20 "20" _null_ _null_ _null_	int8inc - _null_ ));
 DESCR("increment");
+DATA(insert OID = 2804 (  int8inc_any	   PGNSP PGUID 12 f f t f i 2 20 "20 2276" _null_ _null_ _null_	int8inc - _null_ ));
+DESCR("increment, ignores second argument");
 DATA(insert OID = 1230 (  int8abs		   PGNSP PGUID 12 f f t f i 1 20 "20" _null_ _null_ _null_	int8abs - _null_ ));
 DESCR("absolute value");
 
@@ -3148,7 +3150,9 @@ DATA(insert OID = 2051 (  min				PGNSP PGUID 12 t f f f i 1 2277 "2277" _null_ _
 DATA(insert OID = 2245 (  min				PGNSP PGUID 12 t f f f i 1 1042 "1042" _null_ _null_ _null_ aggregate_dummy - _null_ ));
 DATA(insert OID = 2798 (  min				PGNSP PGUID 12 t f f f i 1 27 "27" _null_ _null_ _null_ aggregate_dummy - _null_ ));
 
+/* count has two forms: count(any) and count(*) */
 DATA(insert OID = 2147 (  count				PGNSP PGUID 12 t f f f i 1 20 "2276" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2803 (  count				PGNSP PGUID 12 t f f f i 0 20 "" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 
 DATA(insert OID = 2718 (  var_pop			PGNSP PGUID 12 t f f f i 1 1700 "20" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2719 (  var_pop			PGNSP PGUID 12 t f f f i 1 1700 "23" _null_ _null_ _null_  aggregate_dummy - _null_ ));

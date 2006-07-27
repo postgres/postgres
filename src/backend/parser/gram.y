@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.551 2006/07/03 22:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.552 2006/07/27 19:52:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -7346,10 +7346,8 @@ func_expr:	func_name '(' ')'
 			| func_name '(' '*' ')'
 				{
 					/*
-					 * For now, we transform AGGREGATE(*) into AGGREGATE(1).
-					 *
-					 * This does the right thing for COUNT(*) (in fact,
-					 * any certainly-non-null expression would do for COUNT),
+					 * We consider AGGREGATE(*) to invoke a parameterless
+					 * aggregate.  This does the right thing for COUNT(*),
 					 * and there are no other aggregates in SQL92 that accept
 					 * '*' as parameter.
 					 *
@@ -7358,12 +7356,8 @@ func_expr:	func_name '(' ')'
 					 * really was.
 					 */
 					FuncCall *n = makeNode(FuncCall);
-					A_Const *star = makeNode(A_Const);
-
-					star->val.type = T_Integer;
-					star->val.val.ival = 1;
 					n->funcname = $1;
-					n->args = list_make1(star);
+					n->args = NIL;
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
 					n->location = @1;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.214 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.215 2006/07/27 19:52:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -397,17 +397,27 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 	if (IsA(node, Aggref))
 	{
 		Aggref	   *aggref = (Aggref *) node;
-		Oid			inputType;
+		Oid		   *inputTypes;
+		int			numArguments;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		Oid			aggtranstype;
+		int			i;
+		ListCell	*l;
 
 		Assert(aggref->agglevelsup == 0);
 		counts->numAggs++;
 		if (aggref->aggdistinct)
 			counts->numDistinctAggs++;
 
-		inputType = exprType((Node *) aggref->target);
+		/* extract argument types */
+		numArguments = list_length(aggref->args);
+		inputTypes = (Oid *) palloc(sizeof(Oid) * numArguments);
+		i = 0;
+		foreach(l, aggref->args)
+		{
+			inputTypes[i++] = exprType((Node *) lfirst(l));
+		}
 
 		/* fetch aggregate transition datatype from pg_aggregate */
 		aggTuple = SearchSysCache(AGGFNOID,
@@ -423,17 +433,18 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 		/* resolve actual type of transition state, if polymorphic */
 		if (aggtranstype == ANYARRAYOID || aggtranstype == ANYELEMENTOID)
 		{
-			/* have to fetch the agg's declared input type... */
-			Oid		   *agg_arg_types;
+			/* have to fetch the agg's declared input types... */
+			Oid		   *declaredArgTypes;
 			int			agg_nargs;
 
 			(void) get_func_signature(aggref->aggfnoid,
-									  &agg_arg_types, &agg_nargs);
-			Assert(agg_nargs == 1);
-			aggtranstype = resolve_generic_type(aggtranstype,
-												inputType,
-												agg_arg_types[0]);
-			pfree(agg_arg_types);
+									  &declaredArgTypes, &agg_nargs);
+			Assert(agg_nargs == numArguments);
+			aggtranstype = enforce_generic_type_consistency(inputTypes,
+															declaredArgTypes,
+															agg_nargs,
+															aggtranstype);
+			pfree(declaredArgTypes);
 		}
 
 		/*
@@ -448,12 +459,12 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 			int32		avgwidth;
 
 			/*
-			 * If transition state is of same type as input, assume it's the
-			 * same typmod (same width) as well.  This works for cases like
-			 * MAX/MIN and is probably somewhat reasonable otherwise.
+			 * If transition state is of same type as first input, assume it's
+			 * the same typmod (same width) as well.  This works for cases
+			 * like MAX/MIN and is probably somewhat reasonable otherwise.
 			 */
-			if (aggtranstype == inputType)
-				aggtranstypmod = exprTypmod((Node *) aggref->target);
+			if (numArguments > 0 && aggtranstype == inputTypes[0])
+				aggtranstypmod = exprTypmod((Node *) linitial(aggref->args));
 			else
 				aggtranstypmod = -1;
 
@@ -464,10 +475,10 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 		}
 
 		/*
-		 * Complain if the aggregate's argument contains any aggregates;
+		 * Complain if the aggregate's arguments contain any aggregates;
 		 * nested agg functions are semantically nonsensical.
 		 */
-		if (contain_agg_clause((Node *) aggref->target))
+		if (contain_agg_clause((Node *) aggref->args))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("aggregate function calls may not be nested")));
@@ -3026,7 +3037,14 @@ expression_tree_walker(Node *node,
 			/* primitive node types with no expression subnodes */
 			break;
 		case T_Aggref:
-			return walker(((Aggref *) node)->target, context);
+			{
+				Aggref   *expr = (Aggref *) node;
+
+				if (expression_tree_walker((Node *) expr->args,
+										   walker, context))
+					return true;
+			}
+			break;
 		case T_ArrayRef:
 			{
 				ArrayRef   *aref = (ArrayRef *) node;
@@ -3448,7 +3466,7 @@ expression_tree_mutator(Node *node,
 				Aggref	   *newnode;
 
 				FLATCOPY(newnode, aggref, Aggref);
-				MUTATE(newnode->target, aggref->target, Expr *);
+				MUTATE(newnode->args, aggref->args, List *);
 				return (Node *) newnode;
 			}
 			break;

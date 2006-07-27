@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.72 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.73 2006/07/27 19:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,10 +55,10 @@ transformAggregateCall(ParseState *pstate, Aggref *agg)
 
 	/*
 	 * The aggregate's level is the same as the level of the lowest-level
-	 * variable or aggregate in its argument; or if it contains no variables
+	 * variable or aggregate in its arguments; or if it contains no variables
 	 * at all, we presume it to be local.
 	 */
-	min_varlevel = find_minimum_var_level((Node *) agg->target);
+	min_varlevel = find_minimum_var_level((Node *) agg->args);
 
 	/*
 	 * An aggregate can't directly contain another aggregate call of the same
@@ -67,7 +67,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg)
 	 */
 	if (min_varlevel == 0)
 	{
-		if (checkExprHasAggs((Node *) agg->target))
+		if (checkExprHasAggs((Node *) agg->args))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("aggregate function calls may not be nested")));
@@ -360,7 +360,7 @@ check_ungrouped_columns_walker(Node *node,
  * (The trees will never actually be executed, however, so we can skimp
  * a bit on correctness.)
  *
- * agg_input_type, agg_state_type, agg_result_type identify the input,
+ * agg_input_types, agg_state_type, agg_result_type identify the input,
  * transition, and result types of the aggregate.  These should all be
  * resolved to actual types (ie, none should ever be ANYARRAY or ANYELEMENT).
  *
@@ -371,7 +371,8 @@ check_ungrouped_columns_walker(Node *node,
  * *finalfnexpr.  The latter is set to NULL if there's no finalfn.
  */
 void
-build_aggregate_fnexprs(Oid agg_input_type,
+build_aggregate_fnexprs(Oid *agg_input_types,
+						int agg_num_inputs,
 						Oid agg_state_type,
 						Oid agg_result_type,
 						Oid transfn_oid,
@@ -379,13 +380,9 @@ build_aggregate_fnexprs(Oid agg_input_type,
 						Expr **transfnexpr,
 						Expr **finalfnexpr)
 {
-	int			transfn_nargs;
-	Param	   *arg0;
-	Param	   *arg1;
+	Param	   *argp;
 	List	   *args;
-
-	/* get the transition function arg count */
-	transfn_nargs = get_func_nargs(transfn_oid);
+	int			i;
 
 	/*
 	 * Build arg list to use in the transfn FuncExpr node. We really only care
@@ -393,22 +390,21 @@ build_aggregate_fnexprs(Oid agg_input_type,
 	 * get_fn_expr_argtype(), so it's okay to use Param nodes that don't
 	 * correspond to any real Param.
 	 */
-	arg0 = makeNode(Param);
-	arg0->paramkind = PARAM_EXEC;
-	arg0->paramid = -1;
-	arg0->paramtype = agg_state_type;
+	argp = makeNode(Param);
+	argp->paramkind = PARAM_EXEC;
+	argp->paramid = -1;
+	argp->paramtype = agg_state_type;
 
-	if (transfn_nargs == 2)
+	args = list_make1(argp);
+
+	for (i = 0; i < agg_num_inputs; i++)
 	{
-		arg1 = makeNode(Param);
-		arg1->paramkind = PARAM_EXEC;
-		arg1->paramid = -1;
-		arg1->paramtype = agg_input_type;
-
-		args = list_make2(arg0, arg1);
+		argp = makeNode(Param);
+		argp->paramkind = PARAM_EXEC;
+		argp->paramid = -1;
+		argp->paramtype = agg_input_types[i];
+		args = lappend(args, argp);
 	}
-	else
-		args = list_make1(arg0);
 
 	*transfnexpr = (Expr *) makeFuncExpr(transfn_oid,
 										 agg_state_type,
@@ -425,11 +421,11 @@ build_aggregate_fnexprs(Oid agg_input_type,
 	/*
 	 * Build expr tree for final function
 	 */
-	arg0 = makeNode(Param);
-	arg0->paramkind = PARAM_EXEC;
-	arg0->paramid = -1;
-	arg0->paramtype = agg_state_type;
-	args = list_make1(arg0);
+	argp = makeNode(Param);
+	argp->paramkind = PARAM_EXEC;
+	argp->paramid = -1;
+	argp->paramtype = agg_state_type;
+	args = list_make1(argp);
 
 	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
 										 agg_result_type,

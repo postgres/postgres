@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.31 2006/04/15 17:45:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.32 2006/07/27 19:52:04 tgl Exp $ -->
 
  <sect1 id="xaggr">
   <title>User-Defined Aggregates</title>
@@ -10,11 +10,11 @@
 
   <para>
    Aggregate functions  in <productname>PostgreSQL</productname> 
-   are expressed as <firstterm>state values</firstterm>
+   are expressed in terms of <firstterm>state values</firstterm>
    and <firstterm>state transition functions</firstterm>.
-   That is,  an  aggregate  can  be
-   defined  in terms of state that is modified whenever an
-   input item is processed.  To define a new aggregate
+   That is, an aggregate operates using a state value that is updated
+   as each successive input row is processed.
+   To define a new aggregate
    function, one selects a data type for the state value,
    an initial value for the state, and a state transition
    function.  The state transition function is just an
@@ -85,13 +85,14 @@ SELECT sum(a) FROM test_complex;
    Another bit of default behavior for a <quote>strict</> transition function
    is that the previous state value is retained unchanged whenever a
    null input value is encountered.  Thus, null values are ignored.  If you
-   need some other behavior for null inputs, just do not define your transition
-   function as strict, and code it to test for null inputs and do
-   whatever is needed.
+   need some other behavior for null inputs, do not declare your
+   transition function as strict; instead code it to test for null inputs and
+   do whatever is needed.
   </para>
   
   <para>
-   <function>avg</> (average) is a more complex example of an aggregate.  It requires
+   <function>avg</> (average) is a more complex example of an aggregate.
+   It requires
    two pieces of running state: the sum of the inputs and the count
    of the number of inputs.  The final result is obtained by dividing
    these quantities.  Average is typically implemented by using a
@@ -117,7 +118,7 @@ CREATE AGGREGATE avg (float8)
    See <xref linkend="extend-types-polymorphic">
    for an explanation of polymorphic functions.
    Going a step further, the aggregate function itself may be specified
-   with a polymorphic input type and state type, allowing a single
+   with polymorphic input type(s) and state type, allowing a single
    aggregate definition to serve for multiple input data types.
    Here is an example of a polymorphic aggregate:
 

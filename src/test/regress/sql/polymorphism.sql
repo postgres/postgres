@@ -57,6 +57,10 @@ CREATE FUNCTION tf1p(anyarray,int) RETURNS anyarray AS
 CREATE FUNCTION tf2p(int[],anyelement) RETURNS int[] AS
 'select $1' LANGUAGE SQL;
 
+-- multi-arg polymorphic
+CREATE FUNCTION sum3(anyelement,anyelement,anyelement) returns anyelement AS
+'select $1+$2+$3' language sql strict;
+
 -- finalfn polymorphic
 CREATE FUNCTION ffp(anyarray) RETURNS anyarray AS
 'select $1' LANGUAGE SQL;
@@ -78,26 +82,26 @@ CREATE FUNCTION ffnp(int[]) returns int[] as
 --     -------
 --     N    N
 -- should CREATE
-CREATE AGGREGATE myaggp01a(BASETYPE = "ANY", SFUNC = stfnp, STYPE = int4[],
+CREATE AGGREGATE myaggp01a(*) (SFUNC = stfnp, STYPE = int4[],
   FINALFUNC = ffp, INITCOND = '{}');
 
 --     P    N
 -- should ERROR: stfnp(anyarray) not matched by stfnp(int[])
-CREATE AGGREGATE myaggp02a(BASETYPE = "ANY", SFUNC = stfnp, STYPE = anyarray,
+CREATE AGGREGATE myaggp02a(*) (SFUNC = stfnp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 
 --     N    P
 -- should CREATE
-CREATE AGGREGATE myaggp03a(BASETYPE = "ANY", SFUNC = stfp, STYPE = int4[],
+CREATE AGGREGATE myaggp03a(*) (SFUNC = stfp, STYPE = int4[],
   FINALFUNC = ffp, INITCOND = '{}');
-CREATE AGGREGATE myaggp03b(BASETYPE = "ANY", SFUNC = stfp, STYPE = int4[],
+CREATE AGGREGATE myaggp03b(*) (SFUNC = stfp, STYPE = int4[],
   INITCOND = '{}');
 
 --     P    P
 -- should ERROR: we have no way to resolve S
-CREATE AGGREGATE myaggp04a(BASETYPE = "ANY", SFUNC = stfp, STYPE = anyarray,
+CREATE AGGREGATE myaggp04a(*) (SFUNC = stfp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
-CREATE AGGREGATE myaggp04b(BASETYPE = "ANY", SFUNC = stfp, STYPE = anyarray,
+CREATE AGGREGATE myaggp04b(*) (SFUNC = stfp, STYPE = anyarray,
   INITCOND = '{}');
 
 
@@ -207,26 +211,26 @@ CREATE AGGREGATE myaggp20b(BASETYPE = anyelement, SFUNC = tfp,
 --     -------
 --     N    N
 -- should CREATE
-CREATE AGGREGATE myaggn01a(BASETYPE = "ANY", SFUNC = stfnp, STYPE = int4[],
+CREATE AGGREGATE myaggn01a(*) (SFUNC = stfnp, STYPE = int4[],
   FINALFUNC = ffnp, INITCOND = '{}');
-CREATE AGGREGATE myaggn01b(BASETYPE = "ANY", SFUNC = stfnp, STYPE = int4[],
+CREATE AGGREGATE myaggn01b(*) (SFUNC = stfnp, STYPE = int4[],
   INITCOND = '{}');
 
 --     P    N
 -- should ERROR: stfnp(anyarray) not matched by stfnp(int[])
-CREATE AGGREGATE myaggn02a(BASETYPE = "ANY", SFUNC = stfnp, STYPE = anyarray,
+CREATE AGGREGATE myaggn02a(*) (SFUNC = stfnp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
-CREATE AGGREGATE myaggn02b(BASETYPE = "ANY", SFUNC = stfnp, STYPE = anyarray,
+CREATE AGGREGATE myaggn02b(*) (SFUNC = stfnp, STYPE = anyarray,
   INITCOND = '{}');
 
 --     N    P
 -- should CREATE
-CREATE AGGREGATE myaggn03a(BASETYPE = "ANY", SFUNC = stfp, STYPE = int4[],
+CREATE AGGREGATE myaggn03a(*) (SFUNC = stfp, STYPE = int4[],
   FINALFUNC = ffnp, INITCOND = '{}');
 
 --     P    P
 -- should ERROR: ffnp(anyarray) not matched by ffnp(int[])
-CREATE AGGREGATE myaggn04a(BASETYPE = "ANY", SFUNC = stfp, STYPE = anyarray,
+CREATE AGGREGATE myaggn04a(*) (SFUNC = stfp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 
 
@@ -330,6 +334,10 @@ CREATE AGGREGATE myaggn19a(BASETYPE = anyelement, SFUNC = tf1p,
 CREATE AGGREGATE myaggn20a(BASETYPE = anyelement, SFUNC = tfp,
   STYPE = anyarray, FINALFUNC = ffnp, INITCOND = '{}');
 
+-- multi-arg polymorphic
+CREATE AGGREGATE mysum2(anyelement,anyelement) (SFUNC = sum3,
+  STYPE = anyelement, INITCOND = '0');
+
 -- create test data for polymorphic aggregates
 create temp table t(f1 int, f2 int[], f3 text);
 insert into t values(1,array[1],'a');
@@ -365,3 +373,4 @@ select f3, myaggn08a(f1) from t group by f3;
 select f3, myaggn08b(f1) from t group by f3;
 select f3, myaggn09a(f1) from t group by f3;
 select f3, myaggn10a(f1) from t group by f3;
+select mysum2(f1, f1 + 1) from t;

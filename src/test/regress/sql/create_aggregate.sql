@@ -20,12 +20,33 @@ CREATE AGGREGATE newsum (
    initcond1 = '0'
 );
 
--- value-independent transition function
-CREATE AGGREGATE newcnt (
-   sfunc = int4inc, basetype = 'any', stype = int4,
+-- zero-argument aggregate
+CREATE AGGREGATE newcnt (*) (
+   sfunc = int8inc, stype = int8,
+   initcond = '0'
+);
+
+-- old-style spelling of same
+CREATE AGGREGATE oldcnt (
+   sfunc = int8inc, basetype = 'ANY', stype = int8,
+   initcond = '0'
+);
+
+-- aggregate that only cares about null/nonnull input
+CREATE AGGREGATE newcnt ("any") (
+   sfunc = int8inc_any, stype = int8,
+   initcond = '0'
+);
+
+-- multi-argument aggregate
+create function sum3(int8,int8,int8) returns int8 as
+'select $1 + $2 + $3' language sql strict immutable;
+
+create aggregate sum2(int8,int8) (
+   sfunc = sum3, stype = int8,
    initcond = '0'
 );
 
 COMMENT ON AGGREGATE nosuchagg (*) IS 'should fail';
-COMMENT ON AGGREGATE newcnt (*) IS 'an any agg comment';
-COMMENT ON AGGREGATE newcnt (*) IS NULL;
+COMMENT ON AGGREGATE newcnt (*) IS 'an agg(*) comment';
+COMMENT ON AGGREGATE newcnt ("any") IS 'an agg(any) comment';

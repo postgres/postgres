@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.441 2006/07/14 14:52:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.442 2006/07/27 19:52:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2325,7 +2325,8 @@ getAggregates(int *numAggs)
 	int			i_oid;
 	int			i_aggname;
 	int			i_aggnamespace;
-	int			i_aggbasetype;
+	int			i_pronargs;
+	int			i_proargtypes;
 	int			i_rolname;
 	int			i_aggacl;
 
@@ -2334,11 +2335,25 @@ getAggregates(int *numAggs)
 
 	/* find all user-defined aggregates */
 
-	if (g_fout->remoteVersion >= 70300)
+	if (g_fout->remoteVersion >= 80200)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, proname as aggname, "
 						  "pronamespace as aggnamespace, "
-						  "proargtypes[0] as aggbasetype, "
+						  "pronargs, proargtypes, "
+						  "(%s proowner) as rolname, "
+						  "proacl as aggacl "
+						  "FROM pg_proc "
+						  "WHERE proisagg "
+						  "AND pronamespace != "
+			   "(select oid from pg_namespace where nspname = 'pg_catalog')",
+						  username_subquery);
+	}
+	else if (g_fout->remoteVersion >= 70300)
+	{
+		appendPQExpBuffer(query, "SELECT tableoid, oid, proname as aggname, "
+						  "pronamespace as aggnamespace, "
+						  "CASE WHEN proargtypes[0] = 'pg_catalog.\"any\"'::pg_catalog.regtype THEN 0 ELSE 1 END as pronargs, "
+						  "proargtypes, "
 						  "(%s proowner) as rolname, "
 						  "proacl as aggacl "
 						  "FROM pg_proc "
@@ -2351,7 +2366,8 @@ getAggregates(int *numAggs)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, aggname, "
 						  "0::oid as aggnamespace, "
-						  "aggbasetype, "
+						  "CASE WHEN aggbasetype = 0 THEN 0 ELSE 1 END as pronargs, "
+						  "aggbasetype as proargtypes, "
 						  "(%s aggowner) as rolname, "
 						  "'{=X}' as aggacl "
 						  "FROM pg_aggregate "
@@ -2365,7 +2381,8 @@ getAggregates(int *numAggs)
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_aggregate') AS tableoid, "
 						  "oid, aggname, "
 						  "0::oid as aggnamespace, "
-						  "aggbasetype, "
+						  "CASE WHEN aggbasetype = 0 THEN 0 ELSE 1 END as pronargs, "
+						  "aggbasetype as proargtypes, "
 						  "(%s aggowner) as rolname, "
 						  "'{=X}' as aggacl "
 						  "FROM pg_aggregate "
@@ -2386,7 +2403,8 @@ getAggregates(int *numAggs)
 	i_oid = PQfnumber(res, "oid");
 	i_aggname = PQfnumber(res, "aggname");
 	i_aggnamespace = PQfnumber(res, "aggnamespace");
-	i_aggbasetype = PQfnumber(res, "aggbasetype");
+	i_pronargs = PQfnumber(res, "pronargs");
+	i_proargtypes = PQfnumber(res, "proargtypes");
 	i_rolname = PQfnumber(res, "rolname");
 	i_aggacl = PQfnumber(res, "aggacl");
 
@@ -2404,13 +2422,21 @@ getAggregates(int *numAggs)
 			write_msg(NULL, "WARNING: owner of aggregate function \"%s\" appears to be invalid\n",
 					  agginfo[i].aggfn.dobj.name);
 		agginfo[i].aggfn.lang = InvalidOid;		/* not currently interesting */
-		agginfo[i].aggfn.nargs = 1;
-		agginfo[i].aggfn.argtypes = (Oid *) malloc(sizeof(Oid));
-		agginfo[i].aggfn.argtypes[0] = atooid(PQgetvalue(res, i, i_aggbasetype));
 		agginfo[i].aggfn.prorettype = InvalidOid;		/* not saved */
 		agginfo[i].aggfn.proacl = strdup(PQgetvalue(res, i, i_aggacl));
-		agginfo[i].anybasetype = false; /* computed when it's dumped */
-		agginfo[i].fmtbasetype = NULL;	/* computed when it's dumped */
+		agginfo[i].aggfn.nargs = atoi(PQgetvalue(res, i, i_pronargs));
+		if (agginfo[i].aggfn.nargs == 0)
+			agginfo[i].aggfn.argtypes = NULL;
+		else
+		{
+			agginfo[i].aggfn.argtypes = (Oid *) malloc(agginfo[i].aggfn.nargs * sizeof(Oid));
+			if (g_fout->remoteVersion >= 70300)
+				parseOidArray(PQgetvalue(res, i, i_proargtypes),
+							  agginfo[i].aggfn.argtypes,
+							  agginfo[i].aggfn.nargs);
+			else				/* it's just aggbasetype */
+				agginfo[i].aggfn.argtypes[0] = atooid(PQgetvalue(res, i, i_proargtypes));
+		}
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(agginfo[i].aggfn.dobj));
@@ -6759,6 +6785,7 @@ static char *
 format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 {
 	PQExpBufferData buf;
+	int			j;
 
 	initPQExpBuffer(&buf);
 	if (honor_quotes)
@@ -6767,23 +6794,24 @@ format_aggregate_signature(AggInfo *agginfo, Archive *fout, bool honor_quotes)
 	else
 		appendPQExpBuffer(&buf, "%s", agginfo->aggfn.dobj.name);
 
-	/* If using regtype or format_type, fmtbasetype is already quoted */
-	if (fout->remoteVersion >= 70100)
-	{
-		if (agginfo->anybasetype)
-			appendPQExpBuffer(&buf, "(*)");
-		else
-			appendPQExpBuffer(&buf, "(%s)", agginfo->fmtbasetype);
-	}
+	if (agginfo->aggfn.nargs == 0)
+		appendPQExpBuffer(&buf, "(*)");
 	else
 	{
-		if (agginfo->anybasetype)
-			appendPQExpBuffer(&buf, "(*)");
-		else
-			appendPQExpBuffer(&buf, "(%s)",
-							  fmtId(agginfo->fmtbasetype));
-	}
+		appendPQExpBuffer(&buf, "(");
+		for (j = 0; j < agginfo->aggfn.nargs; j++)
+		{
+			char	   *typname;
 
+			typname = getFormattedTypeName(agginfo->aggfn.argtypes[j], zeroAsOpaque);
+
+			appendPQExpBuffer(&buf, "%s%s",
+							  (j > 0) ? ", " : "",
+							  typname);
+			free(typname);
+		}
+		appendPQExpBuffer(&buf, ")");
+	}
 	return buf.data;
 }
 
@@ -6807,8 +6835,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	int			i_aggsortop;
 	int			i_aggtranstype;
 	int			i_agginitval;
-	int			i_anybasetype;
-	int			i_fmtbasetype;
 	int			i_convertok;
 	const char *aggtransfn;
 	const char *aggfinalfn;
@@ -6836,8 +6862,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "aggsortop::pg_catalog.regoperator, "
 						  "agginitval, "
-						  "proargtypes[0] = 'pg_catalog.\"any\"'::pg_catalog.regtype as anybasetype, "
-						"proargtypes[0]::pg_catalog.regtype as fmtbasetype, "
 						  "'t'::boolean as convertok "
 					  "from pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "where a.aggfnoid = p.oid "
@@ -6850,8 +6874,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
 						  "0 as aggsortop, "
 						  "agginitval, "
-						  "proargtypes[0] = 'pg_catalog.\"any\"'::pg_catalog.regtype as anybasetype, "
-						"proargtypes[0]::pg_catalog.regtype as fmtbasetype, "
 						  "'t'::boolean as convertok "
 					  "from pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "where a.aggfnoid = p.oid "
@@ -6864,9 +6886,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "format_type(aggtranstype, NULL) as aggtranstype, "
 						  "0 as aggsortop, "
 						  "agginitval, "
-						  "aggbasetype = 0 as anybasetype, "
-						  "CASE WHEN aggbasetype = 0 THEN '-' "
-				   "ELSE format_type(aggbasetype, NULL) END as fmtbasetype, "
 						  "'t'::boolean as convertok "
 						  "from pg_aggregate "
 						  "where oid = '%u'::oid",
@@ -6879,8 +6898,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "(select typname from pg_type where oid = aggtranstype1) as aggtranstype, "
 						  "0 as aggsortop, "
 						  "agginitval1 as agginitval, "
-						  "aggbasetype = 0 as anybasetype, "
-						  "(select typname from pg_type where oid = aggbasetype) as fmtbasetype, "
 						  "(aggtransfn2 = 0 and aggtranstype2 = 0 and agginitval2 is null) as convertok "
 						  "from pg_aggregate "
 						  "where oid = '%u'::oid",
@@ -6904,8 +6921,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	i_aggsortop = PQfnumber(res, "aggsortop");
 	i_aggtranstype = PQfnumber(res, "aggtranstype");
 	i_agginitval = PQfnumber(res, "agginitval");
-	i_anybasetype = PQfnumber(res, "anybasetype");
-	i_fmtbasetype = PQfnumber(res, "fmtbasetype");
 	i_convertok = PQfnumber(res, "convertok");
 
 	aggtransfn = PQgetvalue(res, 0, i_aggtransfn);
@@ -6913,10 +6928,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	aggsortop = PQgetvalue(res, 0, i_aggsortop);
 	aggtranstype = PQgetvalue(res, 0, i_aggtranstype);
 	agginitval = PQgetvalue(res, 0, i_agginitval);
-	/* we save anybasetype for format_aggregate_signature */
-	agginfo->anybasetype = (PQgetvalue(res, 0, i_anybasetype)[0] == 't');
-	/* we save fmtbasetype for format_aggregate_signature */
-	agginfo->fmtbasetype = strdup(PQgetvalue(res, 0, i_fmtbasetype));
 	convertok = (PQgetvalue(res, 0, i_convertok)[0] == 't');
 
 	aggsig = format_aggregate_signature(agginfo, fout, true);
@@ -6932,27 +6943,20 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	if (g_fout->remoteVersion >= 70300)
 	{
 		/* If using 7.3's regproc or regtype, data is already quoted */
-		appendPQExpBuffer(details, "    BASETYPE = %s,\n    SFUNC = %s,\n    STYPE = %s",
-						  agginfo->anybasetype ? "'any'" :
-						  agginfo->fmtbasetype,
+		appendPQExpBuffer(details, "    SFUNC = %s,\n    STYPE = %s",
 						  aggtransfn,
 						  aggtranstype);
 	}
 	else if (g_fout->remoteVersion >= 70100)
 	{
 		/* format_type quotes, regproc does not */
-		appendPQExpBuffer(details, "    BASETYPE = %s,\n    SFUNC = %s,\n    STYPE = %s",
-						  agginfo->anybasetype ? "'any'" :
-						  agginfo->fmtbasetype,
+		appendPQExpBuffer(details, "    SFUNC = %s,\n    STYPE = %s",
 						  fmtId(aggtransfn),
 						  aggtranstype);
 	}
 	else
 	{
 		/* need quotes all around */
-		appendPQExpBuffer(details, "    BASETYPE = %s,\n",
-						  agginfo->anybasetype ? "'any'" :
-						  fmtId(agginfo->fmtbasetype));
 		appendPQExpBuffer(details, "    SFUNC = %s,\n",
 						  fmtId(aggtransfn));
 		appendPQExpBuffer(details, "    STYPE = %s",
@@ -6986,8 +6990,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 					  aggsig);
 
 	appendPQExpBuffer(q, "CREATE AGGREGATE %s (\n%s\n);\n",
-					  fmtId(agginfo->aggfn.dobj.name),
-					  details->data);
+					  aggsig, details->data);
 
 	ArchiveEntry(fout, agginfo->aggfn.dobj.catId, agginfo->aggfn.dobj.dumpId,
 				 aggsig_tag,
@@ -7008,7 +7011,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	/*
 	 * Since there is no GRANT ON AGGREGATE syntax, we have to make the ACL
 	 * command look like a function's GRANT; in particular this affects the
-	 * syntax for aggregates on ANY.
+	 * syntax for zero-argument aggregates.
 	 */
 	free(aggsig);
 	free(aggsig_tag);

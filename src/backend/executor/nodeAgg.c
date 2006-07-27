@@ -6,8 +6,8 @@
  *	  ExecAgg evaluates each aggregate in the following steps:
  *
  *		 transvalue = initcond
- *		 foreach input_value do
- *			transvalue = transfunc(transvalue, input_value)
+ *		 foreach input_tuple do
+ *			transvalue = transfunc(transvalue, input_value(s))
  *		 result = finalfunc(transvalue)
  *
  *	  If a finalfunc is not supplied then the result is just the ending
@@ -16,12 +16,12 @@
  *	  If transfunc is marked "strict" in pg_proc and initcond is NULL,
  *	  then the first non-NULL input_value is assigned directly to transvalue,
  *	  and transfunc isn't applied until the second non-NULL input_value.
- *	  The agg's input type and transtype must be the same in this case!
+ *	  The agg's first input type and transtype must be the same in this case!
  *
  *	  If transfunc is marked "strict" then NULL input_values are skipped,
  *	  keeping the previous transvalue.	If transfunc is not strict then it
  *	  is called for every input tuple and must deal with NULL initcond
- *	  or NULL input_value for itself.
+ *	  or NULL input_values for itself.
  *
  *	  If finalfunc is marked "strict" then it is not called when the
  *	  ending transvalue is NULL, instead a NULL result is created
@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.144 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.145 2006/07/27 19:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,9 @@ typedef struct AggStatePerAggData
 	/* Links to Aggref expr and state nodes this working state is for */
 	AggrefExprState *aggrefstate;
 	Aggref	   *aggref;
+
+	/* number of input arguments for aggregate */
+	int			numArguments;
 
 	/* Oids of transfer functions */
 	Oid			transfn_oid;
@@ -214,7 +217,7 @@ static void initialize_aggregates(AggState *aggstate,
 static void advance_transition_function(AggState *aggstate,
 							AggStatePerAgg peraggstate,
 							AggStatePerGroup pergroupstate,
-							Datum newVal, bool isNull);
+							FunctionCallInfoData *fcinfo);
 static void advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup);
 static void process_sorted_aggregate(AggState *aggstate,
 						 AggStatePerAgg peraggstate,
@@ -314,7 +317,11 @@ initialize_aggregates(AggState *aggstate,
 }
 
 /*
- * Given a new input value, advance the transition function of an aggregate.
+ * Given new input value(s), advance the transition function of an aggregate.
+ *
+ * The new values (and null flags) have been preloaded into argument positions
+ * 1 and up in fcinfo, so that we needn't copy them again to pass to the
+ * transition function.  No other fields of fcinfo are assumed valid.
  *
  * It doesn't matter which memory context this is called in.
  */
@@ -322,19 +329,24 @@ static void
 advance_transition_function(AggState *aggstate,
 							AggStatePerAgg peraggstate,
 							AggStatePerGroup pergroupstate,
-							Datum newVal, bool isNull)
+							FunctionCallInfoData *fcinfo)
 {
-	FunctionCallInfoData fcinfo;
+	int		numArguments = peraggstate->numArguments;
 	MemoryContext oldContext;
+	Datum newVal;
+	int i;
 
 	if (peraggstate->transfn.fn_strict)
 	{
 		/*
-		 * For a strict transfn, nothing happens at a NULL input tuple; we
-		 * just keep the prior transValue.
+		 * For a strict transfn, nothing happens when there's a NULL input;
+		 * we just keep the prior transValue.
 		 */
-		if (isNull)
-			return;
+		for (i = 1; i <= numArguments; i++)
+		{
+			if (fcinfo->argnull[i])
+				return;
+		}
 		if (pergroupstate->noTransValue)
 		{
 			/*
@@ -347,7 +359,7 @@ advance_transition_function(AggState *aggstate,
 			 * do not need to pfree the old transValue, since it's NULL.
 			 */
 			oldContext = MemoryContextSwitchTo(aggstate->aggcontext);
-			pergroupstate->transValue = datumCopy(newVal,
+			pergroupstate->transValue = datumCopy(fcinfo->arg[1],
 												  peraggstate->transtypeByVal,
 												  peraggstate->transtypeLen);
 			pergroupstate->transValueIsNull = false;
@@ -373,14 +385,13 @@ advance_transition_function(AggState *aggstate,
 	/*
 	 * OK to call the transition function
 	 */
-	InitFunctionCallInfoData(fcinfo, &(peraggstate->transfn), 2,
+	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
+							 numArguments + 1,
 							 (void *) aggstate, NULL);
-	fcinfo.arg[0] = pergroupstate->transValue;
-	fcinfo.argnull[0] = pergroupstate->transValueIsNull;
-	fcinfo.arg[1] = newVal;
-	fcinfo.argnull[1] = isNull;
+	fcinfo->arg[0] = pergroupstate->transValue;
+	fcinfo->argnull[0] = pergroupstate->transValueIsNull;
 
-	newVal = FunctionCallInvoke(&fcinfo);
+	newVal = FunctionCallInvoke(fcinfo);
 
 	/*
 	 * If pass-by-ref datatype, must copy the new value into aggcontext and
@@ -390,7 +401,7 @@ advance_transition_function(AggState *aggstate,
 	if (!peraggstate->transtypeByVal &&
 		DatumGetPointer(newVal) != DatumGetPointer(pergroupstate->transValue))
 	{
-		if (!fcinfo.isnull)
+		if (!fcinfo->isnull)
 		{
 			MemoryContextSwitchTo(aggstate->aggcontext);
 			newVal = datumCopy(newVal,
@@ -402,7 +413,7 @@ advance_transition_function(AggState *aggstate,
 	}
 
 	pergroupstate->transValue = newVal;
-	pergroupstate->transValueIsNull = fcinfo.isnull;
+	pergroupstate->transValueIsNull = fcinfo->isnull;
 
 	MemoryContextSwitchTo(oldContext);
 }
@@ -423,27 +434,46 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 
 	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 	{
-		AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
-		AggStatePerGroup pergroupstate = &pergroup[aggno];
-		AggrefExprState *aggrefstate = peraggstate->aggrefstate;
-		Aggref	   *aggref = peraggstate->aggref;
-		Datum		newVal;
-		bool		isNull;
+		AggStatePerAgg		peraggstate = &aggstate->peragg[aggno];
+		AggStatePerGroup	pergroupstate = &pergroup[aggno];
+		AggrefExprState		*aggrefstate = peraggstate->aggrefstate;
+		Aggref				*aggref = peraggstate->aggref;
+		FunctionCallInfoData fcinfo;
+		int					i;
+		ListCell			*arg;
+		MemoryContext		oldContext;
 
-		newVal = ExecEvalExprSwitchContext(aggrefstate->target, econtext,
-										   &isNull, NULL);
+		/* Switch memory context just once for all args */
+		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
+		/* Evaluate inputs and save in fcinfo */
+		/* We start from 1, since the 0th arg will be the transition value */
+		i = 1;
+		foreach(arg, aggrefstate->args)
+		{
+			ExprState  *argstate = (ExprState *) lfirst(arg);
+
+			fcinfo.arg[i] = ExecEvalExpr(argstate, econtext,
+										 fcinfo.argnull + i, NULL);
+			i++;
+		}
+
+		/* Switch back */
+		MemoryContextSwitchTo(oldContext);
 
 		if (aggref->aggdistinct)
 		{
 			/* in DISTINCT mode, we may ignore nulls */
-			if (isNull)
+			/* XXX we assume there is only one input column */
+			if (fcinfo.argnull[1])
 				continue;
-			tuplesort_putdatum(peraggstate->sortstate, newVal, isNull);
+			tuplesort_putdatum(peraggstate->sortstate, fcinfo.arg[1],
+							   fcinfo.argnull[1]);
 		}
 		else
 		{
 			advance_transition_function(aggstate, peraggstate, pergroupstate,
-										newVal, isNull);
+										&fcinfo);
 		}
 	}
 }
@@ -465,10 +495,14 @@ process_sorted_aggregate(AggState *aggstate,
 	bool		haveOldVal = false;
 	MemoryContext workcontext = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	MemoryContext oldContext;
-	Datum		newVal;
-	bool		isNull;
+	Datum		*newVal;
+	bool		*isNull;
+	FunctionCallInfoData fcinfo;
 
 	tuplesort_performsort(peraggstate->sortstate);
+
+	newVal = fcinfo.arg + 1;
+	isNull = fcinfo.argnull + 1;
 
 	/*
 	 * Note: if input type is pass-by-ref, the datums returned by the sort are
@@ -477,13 +511,13 @@ process_sorted_aggregate(AggState *aggstate,
 	 */
 
 	while (tuplesort_getdatum(peraggstate->sortstate, true,
-							  &newVal, &isNull))
+							  newVal, isNull))
 	{
 		/*
 		 * DISTINCT always suppresses nulls, per SQL spec, regardless of the
 		 * transition function's strictness.
 		 */
-		if (isNull)
+		if (*isNull)
 			continue;
 
 		/*
@@ -495,21 +529,21 @@ process_sorted_aggregate(AggState *aggstate,
 
 		if (haveOldVal &&
 			DatumGetBool(FunctionCall2(&peraggstate->equalfn,
-									   oldVal, newVal)))
+									   oldVal, *newVal)))
 		{
 			/* equal to prior, so forget this one */
 			if (!peraggstate->inputtypeByVal)
-				pfree(DatumGetPointer(newVal));
+				pfree(DatumGetPointer(*newVal));
 		}
 		else
 		{
 			advance_transition_function(aggstate, peraggstate, pergroupstate,
-										newVal, false);
+										&fcinfo);
 			/* forget the old value, if any */
 			if (haveOldVal && !peraggstate->inputtypeByVal)
 				pfree(DatumGetPointer(oldVal));
 			/* and remember the new one for subsequent equality checks */
-			oldVal = newVal;
+			oldVal = *newVal;
 			haveOldVal = true;
 		}
 
@@ -1286,7 +1320,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		AggrefExprState *aggrefstate = (AggrefExprState *) lfirst(l);
 		Aggref	   *aggref = (Aggref *) aggrefstate->xprstate.expr;
 		AggStatePerAgg peraggstate;
-		Oid			inputType;
+		Oid			inputTypes[FUNC_MAX_ARGS];
+		int         numArguments;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		Oid			aggtranstype;
@@ -1297,6 +1332,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				   *finalfnexpr;
 		Datum		textInitVal;
 		int			i;
+		ListCell    *lc;
 
 		/* Planner should have assigned aggregate to correct level */
 		Assert(aggref->agglevelsup == 0);
@@ -1324,13 +1360,19 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		/* Fill in the peraggstate data */
 		peraggstate->aggrefstate = aggrefstate;
 		peraggstate->aggref = aggref;
+		numArguments = list_length(aggref->args);
+		peraggstate->numArguments = numArguments;
 
 		/*
-		 * Get actual datatype of the input.  We need this because it may be
-		 * different from the agg's declared input type, when the agg accepts
-		 * ANY (eg, COUNT(*)) or ANYARRAY or ANYELEMENT.
+		 * Get actual datatypes of the inputs.  These could be different
+		 * from the agg's declared input types, when the agg accepts ANY,
+		 * ANYARRAY or ANYELEMENT.
 		 */
-		inputType = exprType((Node *) aggref->target);
+		i = 0;
+		foreach(lc, aggref->args)
+		{
+			inputTypes[i++] = exprType((Node *) lfirst(lc));
+		}
 
 		aggTuple = SearchSysCache(AGGFNOID,
 								  ObjectIdGetDatum(aggref->aggfnoid),
@@ -1383,21 +1425,23 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		aggtranstype = aggform->aggtranstype;
 		if (aggtranstype == ANYARRAYOID || aggtranstype == ANYELEMENTOID)
 		{
-			/* have to fetch the agg's declared input type... */
-			Oid		   *agg_arg_types;
+			/* have to fetch the agg's declared input types... */
+			Oid		   *declaredArgTypes;
 			int			agg_nargs;
 
 			(void) get_func_signature(aggref->aggfnoid,
-									  &agg_arg_types, &agg_nargs);
-			Assert(agg_nargs == 1);
-			aggtranstype = resolve_generic_type(aggtranstype,
-												inputType,
-												agg_arg_types[0]);
-			pfree(agg_arg_types);
+									  &declaredArgTypes, &agg_nargs);
+			Assert(agg_nargs == numArguments);
+			aggtranstype = enforce_generic_type_consistency(inputTypes,
+															declaredArgTypes,
+															agg_nargs,
+															aggtranstype);
+			pfree(declaredArgTypes);
 		}
 
 		/* build expression trees using actual argument & result types */
-		build_aggregate_fnexprs(inputType,
+		build_aggregate_fnexprs(inputTypes,
+								numArguments,
 								aggtranstype,
 								aggref->aggtype,
 								transfn_oid,
@@ -1437,14 +1481,15 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		/*
 		 * If the transfn is strict and the initval is NULL, make sure input
-		 * type and transtype are the same (or at least binary- compatible),
+		 * type and transtype are the same (or at least binary-compatible),
 		 * so that it's OK to use the first input value as the initial
 		 * transValue.	This should have been checked at agg definition time,
 		 * but just in case...
 		 */
 		if (peraggstate->transfn.fn_strict && peraggstate->initValueIsNull)
 		{
-			if (!IsBinaryCoercible(inputType, aggtranstype))
+			if (numArguments < 1 ||
+				!IsBinaryCoercible(inputTypes[0], aggtranstype))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("aggregate %u needs to have compatible input type and transition type",
@@ -1458,14 +1503,25 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			/* We don't implement DISTINCT aggs in the HASHED case */
 			Assert(node->aggstrategy != AGG_HASHED);
 
-			peraggstate->inputType = inputType;
-			get_typlenbyval(inputType,
+			/*
+			 * We don't currently implement DISTINCT aggs for aggs having
+			 * more than one argument.  This isn't required for anything
+			 * in the SQL spec, but really it ought to be implemented for
+			 * feature-completeness.  FIXME someday.
+			 */
+			if (numArguments != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("DISTINCT is supported only for single-argument aggregates")));
+
+			peraggstate->inputType = inputTypes[0];
+			get_typlenbyval(inputTypes[0],
 							&peraggstate->inputtypeLen,
 							&peraggstate->inputtypeByVal);
 
-			eq_function = equality_oper_funcid(inputType);
+			eq_function = equality_oper_funcid(inputTypes[0]);
 			fmgr_info(eq_function, &(peraggstate->equalfn));
-			peraggstate->sortOperator = ordering_oper_opid(inputType);
+			peraggstate->sortOperator = ordering_oper_opid(inputTypes[0]);
 			peraggstate->sortstate = NULL;
 		}
 

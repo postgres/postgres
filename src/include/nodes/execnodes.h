@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.154 2006/07/26 00:34:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.155 2006/07/27 19:52:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ typedef struct GenericExprState
 typedef struct AggrefExprState
 {
 	ExprState	xprstate;
-	ExprState  *target;			/* state of my child node */
+	List	   *args;			/* states of argument expressions */
 	int			aggno;			/* ID number for agg within its plan node */
 } AggrefExprState;
 

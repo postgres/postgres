@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.188 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.189 2006/07/27 19:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,9 +259,20 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
-		aggref->target = linitial(fargs);
+		aggref->args = fargs;
 		aggref->aggstar = agg_star;
 		aggref->aggdistinct = agg_distinct;
+
+		/*
+		 * Reject attempt to call a parameterless aggregate without (*)
+		 * syntax.  This is mere pedantry but some folks insisted ...
+		 */
+		if (fargs == NIL && !agg_star)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+			   errmsg("%s(*) must be used to call a parameterless aggregate function",
+					  NameListToString(funcname)),
+					 parser_errposition(pstate, location)));
 
 		/* parse_agg.c does additional aggregate-specific processing */
 		transformAggregateCall(pstate, aggref);
@@ -1194,9 +1205,7 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
  *
  * This is almost like LookupFuncNameTypeNames, but the error messages refer
  * to aggregates rather than plain functions, and we verify that the found
- * function really is an aggregate, and we recognize the convention used by
- * the grammar that agg(*) translates to a NIL list, which we have to treat
- * as one ANY argument.  (XXX this ought to be changed)
+ * function really is an aggregate.
  */
 Oid
 LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
@@ -1204,7 +1213,7 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 	Oid			argoids[FUNC_MAX_ARGS];
 	int			argcount;
 	int			i;
-	ListCell   *args_item;
+	ListCell   *lc;
 	Oid			oid;
 	HeapTuple	ftup;
 	Form_pg_proc pform;
@@ -1216,29 +1225,18 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 				 errmsg("functions cannot have more than %d arguments",
 						FUNC_MAX_ARGS)));
 
-	if (argcount == 0)
+	i = 0;
+	foreach(lc, argtypes)
 	{
-		/* special case for agg(*) */
-		argoids[0] = ANYOID;
-		argcount = 1;
-	}
-	else
-	{
-		args_item = list_head(argtypes);
-		for (i = 0; i < argcount; i++)
-		{
-			TypeName   *t = (TypeName *) lfirst(args_item);
+		TypeName   *t = (TypeName *) lfirst(lc);
 
-			argoids[i] = LookupTypeName(NULL, t);
-
-			if (!OidIsValid(argoids[i]))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("type \"%s\" does not exist",
-								TypeNameToString(t))));
-
-			args_item = lnext(args_item);
-		}
+		argoids[i] = LookupTypeName(NULL, t);
+		if (!OidIsValid(argoids[i]))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type \"%s\" does not exist",
+							TypeNameToString(t))));
+		i++;
 	}
 
 	oid = LookupFuncName(aggname, argcount, argoids, true);
@@ -1247,7 +1245,7 @@ LookupAggNameTypeNames(List *aggname, List *argtypes, bool noError)
 	{
 		if (noError)
 			return InvalidOid;
-		if (argcount == 1 && argoids[0] == ANYOID)
+		if (argcount == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("aggregate %s(*) does not exist",

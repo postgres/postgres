@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.126 2006/07/02 02:23:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.127 2006/07/27 19:52:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,8 +147,7 @@ typedef struct _funcInfo
 typedef struct _aggInfo
 {
 	FuncInfo	aggfn;
-	bool		anybasetype;	/* is the basetype "any"? */
-	char	   *fmtbasetype;	/* formatted type name */
+	/* we don't require any other fields at the moment */
 } AggInfo;
 
 typedef struct _oprInfo

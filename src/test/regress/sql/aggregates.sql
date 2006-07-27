@@ -48,11 +48,13 @@ group by ten order by ten;
 select ten, count(four), sum(DISTINCT four) from onek
 group by ten order by ten;
 
-
+-- user-defined aggregates
 SELECT newavg(four) AS avg_1 FROM onek;
 SELECT newsum(four) AS sum_1500 FROM onek;
 SELECT newcnt(four) AS cnt_1000 FROM onek;
-
+SELECT newcnt(*) AS cnt_1000 FROM onek;
+SELECT oldcnt(*) AS cnt_1000 FROM onek;
+SELECT sum2(q1,q2) FROM int8_tbl;
 
 -- test for outer-level aggregates
 

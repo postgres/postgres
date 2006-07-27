@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.55 2006/07/21 20:51:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.56 2006/07/27 19:52:06 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -140,11 +140,9 @@ DATA(insert ( 2051	array_smaller	-				1072	2277	_null_ ));
 DATA(insert ( 2245	bpchar_smaller	-				1058	1042	_null_ ));
 DATA(insert ( 2798	tidsmaller		-				2799	27		_null_ ));
 
-/*
- * Using int8inc for count() is cheating a little, since it really only
- * takes 1 parameter not 2, but nodeAgg.c won't complain ...
- */
-DATA(insert ( 2147	int8inc		-					0	20		0 ));
+/* count */
+DATA(insert ( 2147	int8inc_any		-				0		20		"0" ));
+DATA(insert ( 2803	int8inc			-				0		20		"0" ));
 
 /* var_pop */
 DATA(insert ( 2718	int8_accum	numeric_var_pop	0	1231	"{0,0,0}" ));
@@ -214,7 +212,8 @@ DATA(insert ( 2243 bitor		  -					0	1560	_null_ ));
  */
 extern void AggregateCreate(const char *aggName,
 				Oid aggNamespace,
-				Oid aggBaseType,
+				Oid *aggArgTypes,
+				int numArgs,
 				List *aggtransfnName,
 				List *aggfinalfnName,
 				List *aggsortopName,

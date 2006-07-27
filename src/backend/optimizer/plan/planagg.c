@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.19 2006/07/26 19:31:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.20 2006/07/27 19:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,12 +217,13 @@ find_minmax_aggs_walker(Node *node, List **context)
 	{
 		Aggref	   *aggref = (Aggref *) node;
 		Oid			aggsortop;
+		Expr		*curTarget;
 		MinMaxAggInfo *info;
 		ListCell   *l;
 
 		Assert(aggref->agglevelsup == 0);
-		if (aggref->aggstar)
-			return true;		/* foo(*) is surely not optimizable */
+		if (list_length(aggref->args) != 1)
+			return true;		/* it couldn't be MIN/MAX */
 		/* note: we do not care if DISTINCT is mentioned ... */
 
 		aggsortop = fetch_agg_sort_op(aggref->aggfnoid);
@@ -232,18 +233,19 @@ find_minmax_aggs_walker(Node *node, List **context)
 		/*
 		 * Check whether it's already in the list, and add it if not.
 		 */
+		curTarget = linitial(aggref->args);
 		foreach(l, *context)
 		{
 			info = (MinMaxAggInfo *) lfirst(l);
 			if (info->aggfnoid == aggref->aggfnoid &&
-				equal(info->target, aggref->target))
+				equal(info->target, curTarget))
 				return false;
 		}
 
 		info = (MinMaxAggInfo *) palloc0(sizeof(MinMaxAggInfo));
 		info->aggfnoid = aggref->aggfnoid;
 		info->aggsortop = aggsortop;
-		info->target = aggref->target;
+		info->target = curTarget;
 
 		*context = lappend(*context, info);
 
@@ -520,13 +522,14 @@ replace_aggs_with_params_mutator(Node *node, List **context)
 	{
 		Aggref	   *aggref = (Aggref *) node;
 		ListCell   *l;
+		Expr	   *curTarget = linitial(aggref->args);
 
 		foreach(l, *context)
 		{
 			MinMaxAggInfo *info = (MinMaxAggInfo *) lfirst(l);
 
 			if (info->aggfnoid == aggref->aggfnoid &&
-				equal(info->target, aggref->target))
+				equal(info->target, curTarget))
 				return (Node *) info->param;
 		}
 		elog(ERROR, "failed to re-find aggregate info record");

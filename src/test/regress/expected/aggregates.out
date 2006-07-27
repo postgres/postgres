@@ -181,6 +181,7 @@ group by ten order by ten;
    9 |   100 |   4
 (10 rows)
 
+-- user-defined aggregates
 SELECT newavg(four) AS avg_1 FROM onek;
        avg_1        
 --------------------
@@ -197,6 +198,24 @@ SELECT newcnt(four) AS cnt_1000 FROM onek;
  cnt_1000 
 ----------
      1000
+(1 row)
+
+SELECT newcnt(*) AS cnt_1000 FROM onek;
+ cnt_1000 
+----------
+     1000
+(1 row)
+
+SELECT oldcnt(*) AS cnt_1000 FROM onek;
+ cnt_1000 
+----------
+     1000
+(1 row)
+
+SELECT sum2(q1,q2) FROM int8_tbl;
+       sum2        
+-------------------
+ 18271560493827981
 (1 row)
 
 -- test for outer-level aggregates
