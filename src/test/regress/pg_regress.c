@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.15 2006/07/25 03:51:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.16 2006/07/27 15:37:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -790,7 +790,7 @@ directory_exists(const char *dir)
 static void
 make_directory(const char *dir)
 {
-	if (mkdir(dir, S_IRWXU) < 0)
+	if (mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO) < 0)
 	{
 		fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
 				progname, dir, strerror(errno));
