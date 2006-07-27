@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.127 2006/07/25 03:51:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.128 2006/07/27 08:30:41 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -5481,6 +5481,12 @@
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>current value of the parameter</entry>
+     </row>
+     <row>
+      <entry><structfield>unit</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>implicit unit of the parameter</entry>
      </row>
      <row>
       <entry><structfield>category</structfield></entry>

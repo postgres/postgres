@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.37 2006/03/07 01:03:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.38 2006/07/27 08:30:41 petere Exp $
  */
 
 %{
@@ -68,7 +68,9 @@ SIGN            ("-"|"+")
 DIGIT           [0-9]
 HEXDIGIT        [0-9a-fA-F]
 
-INTEGER         {SIGN}?({DIGIT}+|0x{HEXDIGIT}+)
+UNIT_LETTER     [a-zA-Z]
+
+INTEGER         {SIGN}?({DIGIT}+|0x{HEXDIGIT}+){UNIT_LETTER}*
 
 EXPONENT        [Ee]{SIGN}?{DIGIT}+
 REAL            {SIGN}?{DIGIT}*"."{DIGIT}*{EXPONENT}?

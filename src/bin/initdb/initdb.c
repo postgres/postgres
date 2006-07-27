@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.118 2006/06/18 15:38:37 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.119 2006/07/27 08:30:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1105,16 +1105,16 @@ test_config_settings(void)
 	 *
 	 */
 
-#define MIN_BUFS_FOR_CONNS(nconns)  ((nconns) * 10)
+#define MIN_BUFS_FOR_CONNS(nconns)  ((nconns) * 10 * (BLCKSZ/1024))
 #define FSM_FOR_BUFS(nbuffers)  ((nbuffers) > 1000 ? 50 * (nbuffers) : 20000)
 
 	static const int trial_conns[] = {
 		100, 50, 40, 30, 20, 10
 	};
 	static const int trial_bufs[] = {
-		4000, 3500, 3000, 2500, 2000, 1500,
-		1000, 900, 800, 700, 600, 500,
-		400, 300, 200, 100, 50
+		32000, 28000, 24000, 20000, 16000, 12000,
+		8000, 7200, 6400, 5600, 4800, 4000,
+		3200, 2400, 1600, 800, 400
 	};
 
 	char		cmd[MAXPGPATH];
@@ -1140,7 +1140,7 @@ test_config_settings(void)
 		snprintf(cmd, sizeof(cmd),
 				 "%s\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
-				 "-c shared_buffers=%d "
+				 "-c shared_buffers=%dkB "
 				 "-c max_fsm_pages=%d "
 				 "template1 < \"%s\" > \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, backend_exec, boot_options,
@@ -1175,7 +1175,7 @@ test_config_settings(void)
 		snprintf(cmd, sizeof(cmd),
 				 "%s\"%s\" --boot -x0 %s "
 				 "-c max_connections=%d "
-				 "-c shared_buffers=%d "
+				 "-c shared_buffers=%dkB "
 				 "-c max_fsm_pages=%d "
 				 "template1 < \"%s\" > \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, backend_exec, boot_options,
@@ -1188,7 +1188,7 @@ test_config_settings(void)
 	n_buffers = test_buffs;
 	n_fsm_pages = FSM_FOR_BUFS(n_buffers);
 
-	printf("%d/%d\n", n_buffers, n_fsm_pages);
+	printf("%dkB/%d\n", n_buffers, n_fsm_pages);
 }
 
 /*
@@ -1211,7 +1211,7 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "max_connections = %d", n_connections);
 	conflines = replace_token(conflines, "#max_connections = 100", repltok);
 
-	snprintf(repltok, sizeof(repltok), "shared_buffers = %d", n_buffers);
+	snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB", n_buffers);
 	conflines = replace_token(conflines, "#shared_buffers = 1000", repltok);
 
 	snprintf(repltok, sizeof(repltok), "max_fsm_pages = %d", n_fsm_pages);

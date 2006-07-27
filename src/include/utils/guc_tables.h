@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.23 2006/07/13 16:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.24 2006/07/27 08:30:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +129,15 @@ struct config_generic
 #define GUC_CUSTOM_PLACEHOLDER	0x0080	/* placeholder for custom variable */
 #define GUC_SUPERUSER_ONLY		0x0100	/* show only to superusers */
 #define GUC_IS_NAME				0x0200	/* limit string to NAMEDATALEN-1 */
+
+#define GUC_UNIT_KB				0x0400	/* value is in 1 kB */
+#define GUC_UNIT_BLOCKS			0x0800	/* value is in blocks */
+#define GUC_UNIT_MEMORY			(GUC_UNIT_KB|GUC_UNIT_BLOCKS)
+
+#define GUC_UNIT_MS				0x1000	/* value is in milliseconds */
+#define GUC_UNIT_S				0x2000	/* value is in seconds */
+#define GUC_UNIT_MIN			0x4000	/* value is in minutes */
+#define GUC_UNIT_TIME			(GUC_UNIT_MS|GUC_UNIT_S|GUC_UNIT_MIN)
 
 /* bit values in status field */
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */

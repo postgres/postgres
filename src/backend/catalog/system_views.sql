@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.28 2006/07/25 03:51:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.29 2006/07/27 08:30:41 petere Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -172,7 +172,7 @@ CREATE VIEW pg_prepared_statements AS
 CREATE VIEW pg_settings AS 
     SELECT * 
     FROM pg_show_all_settings() AS A 
-    (name text, setting text, category text, short_desc text, extra_desc text,
+    (name text, setting text, unit text, category text, short_desc text, extra_desc text,
      context text, vartype text, source text, min_val text, max_val text);
 
 CREATE RULE pg_settings_u AS 
