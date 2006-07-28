@@ -2044,5 +2044,11 @@ Mo Jun 26 16:08:23 CEST 2006
 We Jul  5 12:17:28 CEST 2006
 
 	- Fixed remaining Coverity bugs.
+
+Fr Jul 28 11:00:51 CEST 2006
+
+	- Added more SoC changes by Joachim Wieland <joe@mcknight.de>:
+		- SHOW statement puts result into a variable
+		- COPY TO STDOUT works
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
