@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.54 2006/07/28 10:12:56 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.55 2006/07/28 11:49:36 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1049,19 +1049,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 
 			case ECPGt_timestamp:
 				{
-					char	   *str = NULL, *asc = NULL;
+					char	   *str = NULL;
 					int			slen;
 
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							asc = PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value));
-							if (!asc)
-								return false;
-
-							str = quote_postgres(asc, lineno);
-							ECPGfree(asc); /* we don't need this anymore so free it asap. */
+							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), lineno);
 							if (!str)
 								return false;
 
@@ -1084,12 +1079,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					}
 					else
 					{
-						asc = PGTYPEStimestamp_to_asc(*(timestamp *) (var->value));
-						if (!asc)
-							return false;
-
-						str = quote_postgres(asc, lineno);
-						ECPGfree(asc); /* we don't need this anymore so free it asap. */
+						str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) (var->value)), lineno);
 						if (!str)
 							return false;
 						slen = strlen(str);

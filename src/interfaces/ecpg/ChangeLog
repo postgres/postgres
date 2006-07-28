@@ -2043,7 +2043,7 @@ Mo Jun 26 16:08:23 CEST 2006
 
 We Jul  5 12:17:28 CEST 2006
 
-	- Fixed remaining Coverity bugs.
+	- Fixed most of the remaining Coverity bugs.
 
 Fr Jul 28 11:00:51 CEST 2006
 
@@ -2051,5 +2051,6 @@ Fr Jul 28 11:00:51 CEST 2006
 		- SHOW statement puts result into a variable
 		- COPY TO STDOUT works
 		- Connection identifier has to be unique
+	- Variables should be free'ed only once.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
