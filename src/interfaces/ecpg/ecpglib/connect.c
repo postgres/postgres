@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.30 2006/06/21 11:38:07 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.31 2006/07/28 10:10:42 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -295,11 +295,20 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 	}
 
-	if ((this = (struct connection *) ECPGalloc(sizeof(struct connection), lineno)) == NULL)
-		return false;
-
 	if (dbname == NULL && connection_name == NULL)
 		connection_name = "DEFAULT";
+
+	/* check if the identifier is unique */
+	if (ECPGget_connection(connection_name))
+	{
+		ECPGfree(dbname);
+		ECPGlog("connect: connection identifier %s is already in use\n",
+				connection_name);
+		return false;
+	}
+
+	if ((this = (struct connection *) ECPGalloc(sizeof(struct connection), lineno)) == NULL)
+		return false;
 
 	if (dbname != NULL)
 	{
