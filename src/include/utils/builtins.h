@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.280 2006/07/21 20:51:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.281 2006/07/28 18:33:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,6 +348,18 @@ extern Datum float8_var_pop(PG_FUNCTION_ARGS);
 extern Datum float8_var_samp(PG_FUNCTION_ARGS);
 extern Datum float8_stddev_pop(PG_FUNCTION_ARGS);
 extern Datum float8_stddev_samp(PG_FUNCTION_ARGS);
+extern Datum float8_regr_accum(PG_FUNCTION_ARGS);
+extern Datum float8_regr_sxx(PG_FUNCTION_ARGS);
+extern Datum float8_regr_syy(PG_FUNCTION_ARGS);
+extern Datum float8_regr_sxy(PG_FUNCTION_ARGS);
+extern Datum float8_regr_avgx(PG_FUNCTION_ARGS);
+extern Datum float8_regr_avgy(PG_FUNCTION_ARGS);
+extern Datum float8_covar_pop(PG_FUNCTION_ARGS);
+extern Datum float8_covar_samp(PG_FUNCTION_ARGS);
+extern Datum float8_corr(PG_FUNCTION_ARGS);
+extern Datum float8_regr_r2(PG_FUNCTION_ARGS);
+extern Datum float8_regr_slope(PG_FUNCTION_ARGS);
+extern Datum float8_regr_intercept(PG_FUNCTION_ARGS);
 extern Datum float48pl(PG_FUNCTION_ARGS);
 extern Datum float48mi(PG_FUNCTION_ARGS);
 extern Datum float48mul(PG_FUNCTION_ARGS);

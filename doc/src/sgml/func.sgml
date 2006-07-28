@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.327 2006/07/16 23:59:58 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.328 2006/07/28 18:33:03 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7785,16 +7785,18 @@ SELECT NULLIF(value, '(none)') ...
 
   <para>
    <firstterm>Aggregate functions</firstterm> compute a single result
-   value from a set of input values.  <xref
-   linkend="functions-aggregate-table"> shows the built-in aggregate
-   functions.  The special syntax considerations for aggregate
+   value from a set of input values.  The built-in aggregate functions
+   are listed in
+   <xref linkend="functions-aggregate-table"> and
+   <xref linkend="functions-aggregate-statistics-table">.
+   The special syntax considerations for aggregate
    functions are explained in <xref linkend="syntax-aggregates">.
    Consult <xref linkend="tutorial-agg"> for additional introductory
    information.
   </para>
 
   <table id="functions-aggregate-table">
-   <title>Aggregate Functions</title>
+   <title>General-Purpose Aggregate Functions</title>
 
    <tgroup cols="4">
     <thead>
@@ -7897,7 +7899,7 @@ SELECT NULLIF(value, '(none)') ...
       <entry><function>count(*)</function></entry>
       <entry></entry>
       <entry><type>bigint</type></entry>
-      <entry>number of input values</entry>
+      <entry>number of input rows</entry>
      </row>
 
      <row>
@@ -7905,7 +7907,7 @@ SELECT NULLIF(value, '(none)') ...
       <entry>any</entry>
       <entry><type>bigint</type></entry>
       <entry>
-       number of input values for which the value of <replaceable
+       number of input rows for which the value of <replaceable
        class="parameter">expression</replaceable> is not null
       </entry>
      </row>
@@ -7946,6 +7948,333 @@ SELECT NULLIF(value, '(none)') ...
        class="parameter">expression</replaceable> across all input
        values
       </entry>
+     </row>
+
+     <row>
+      <entry><function>sum(<replaceable class="parameter">expression</replaceable>)</function></entry>
+      <entry>
+       <type>smallint</type>, <type>int</type>,
+       <type>bigint</type>, <type>real</type>, <type>double
+       precision</type>, <type>numeric</type>, or
+       <type>interval</type>
+      </entry>
+      <entry>
+       <type>bigint</type> for <type>smallint</type> or
+       <type>int</type> arguments, <type>numeric</type> for
+       <type>bigint</type> arguments, <type>double precision</type>
+       for floating-point arguments, otherwise the same as the
+       argument data type
+      </entry>
+      <entry>sum of <replaceable class="parameter">expression</replaceable> across all input values</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   It should be noted that except for <function>count</function>,
+   these functions return a null value when no rows are selected.  In
+   particular, <function>sum</function> of no rows returns null, not
+   zero as one might expect.  The <function>coalesce</function> function may be
+   used to substitute zero for null when necessary.
+  </para>
+
+  <note>
+    <indexterm>
+      <primary>ANY</primary>
+    </indexterm>
+    <indexterm>
+      <primary>SOME</primary>
+    </indexterm>
+    <para>
+      Boolean aggregates <function>bool_and</function> and 
+      <function>bool_or</function> correspond to standard SQL aggregates
+      <function>every</function> and <function>any</function> or
+      <function>some</function>. 
+      As for <function>any</function> and <function>some</function>, 
+      it seems that there is an ambiguity built into the standard syntax:
+<programlisting>
+SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
+</programlisting>
+      Here <function>ANY</function> can be considered both as leading
+      to a subquery or as an aggregate if the select expression returns 1 row.
+      Thus the standard name cannot be given to these aggregates.
+    </para>
+  </note>
+
+  <note>
+   <para>
+    Users accustomed to working with other SQL database management
+    systems may be surprised by the performance of the
+    <function>count</function> aggregate when it is applied to the
+    entire table. A query like:
+<programlisting>
+SELECT count(*) FROM sometable;
+</programlisting>
+    will be executed by <productname>PostgreSQL</productname> using a
+    sequential scan of the entire table.
+   </para>
+  </note>
+
+
+  <para>
+   <xref linkend="functions-aggregate-statistics-table"> shows
+   aggregate functions typically used in statistical analysis.
+   (These are separated out merely to avoid cluttering the listing
+   of more-commonly-used aggregates.)  Where the description mentions
+   <replaceable class="parameter">N</replaceable>, it means the
+   number of input rows for which all the input expressions are non-null.
+   In all cases, null is returned if the computation is meaningless,
+   for example when <replaceable class="parameter">N</replaceable> is zero.
+  </para>
+
+  <indexterm>
+   <primary>statistics</primary>
+  </indexterm>
+  <indexterm>
+   <primary>linear regression</primary>
+  </indexterm>
+
+  <table id="functions-aggregate-statistics-table">
+   <title>Aggregate Functions for Statistics</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Argument Type</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>correlation</primary>
+       </indexterm>
+       <function>corr(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>sqrt((<replaceable class="parameter">N</replaceable> *
+      sum(<replaceable class="parameter">X</replaceable>*<replaceable
+      class="parameter">Y</replaceable>) - sum(<replaceable
+      class="parameter">X</replaceable>) * sum(<replaceable
+      class="parameter">Y</replaceable>))^2 / ((<replaceable
+      class="parameter">N</replaceable> * sum(<replaceable
+      class="parameter">X</replaceable>^2) - sum(<replaceable
+      class="parameter">X</replaceable>)^2) * (<replaceable
+      class="parameter">N</replaceable> * sum(<replaceable
+      class="parameter">Y</replaceable>^2) - sum(<replaceable
+      class="parameter">Y</replaceable>)^2)))</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>covariance</primary>
+        <secondary>population</secondary>
+       </indexterm>
+       <function>covar_pop(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>(sum(<replaceable class="parameter">X</replaceable>*<replaceable
+      class="parameter">Y</replaceable>) - sum(<replaceable
+      class="parameter">X</replaceable>) * sum(<replaceable
+      class="parameter">Y</replaceable>) / <replaceable
+      class="parameter">N</replaceable>) / <replaceable
+      class="parameter">N</replaceable></entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>covariance</primary>
+        <secondary>sample</secondary>
+       </indexterm>
+       <function>covar_samp(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>(sum(<replaceable class="parameter">X</replaceable>*<replaceable
+      class="parameter">Y</replaceable>) - sum(<replaceable
+      class="parameter">X</replaceable>) * sum(<replaceable
+      class="parameter">Y</replaceable>) / <replaceable
+      class="parameter">N</replaceable>) / (<replaceable
+      class="parameter">N</replaceable> - 1)</entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>regr_avgx(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>sum(<replaceable class="parameter">X</replaceable>) /
+      <replaceable class="parameter">N</replaceable></entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>regr_avgy(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>sum(<replaceable class="parameter">Y</replaceable>) /
+      <replaceable class="parameter">N</replaceable></entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>regr_count(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>bigint</type>
+      </entry>
+      <entry>number of input rows in which both expressions are non-null</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>regression intercept</primary>
+       </indexterm>
+       <function>regr_intercept(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>(sum(<replaceable class="parameter">Y</replaceable>) *
+      sum(<replaceable class="parameter">X</replaceable>^2) - sum(<replaceable
+      class="parameter">X</replaceable>) * sum(<replaceable
+      class="parameter">X</replaceable>*<replaceable
+      class="parameter">Y</replaceable>)) / (<replaceable
+      class="parameter">N</replaceable> * sum(<replaceable
+      class="parameter">X</replaceable>^2) - sum(<replaceable
+      class="parameter">X</replaceable>)^2)</entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>regr_r2(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>(<replaceable class="parameter">N</replaceable> *
+      sum(<replaceable class="parameter">X</replaceable>*<replaceable
+      class="parameter">Y</replaceable>) - sum(<replaceable
+      class="parameter">X</replaceable>) * sum(<replaceable
+      class="parameter">Y</replaceable>))^2 / ((<replaceable
+      class="parameter">N</replaceable> * sum(<replaceable
+      class="parameter">X</replaceable>^2) - sum(<replaceable
+      class="parameter">X</replaceable>)^2) * (<replaceable
+      class="parameter">N</replaceable> * sum(<replaceable
+      class="parameter">Y</replaceable>^2) - sum(<replaceable
+      class="parameter">Y</replaceable>)^2))</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>regression slope</primary>
+       </indexterm>
+       <function>regr_slope(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>(<replaceable class="parameter">N</replaceable> *
+      sum(<replaceable class="parameter">X</replaceable>*<replaceable
+      class="parameter">Y</replaceable>) - sum(<replaceable
+      class="parameter">X</replaceable>) * sum(<replaceable
+      class="parameter">Y</replaceable>)) / (<replaceable
+      class="parameter">N</replaceable> * sum(<replaceable
+      class="parameter">X</replaceable>^2) - sum(<replaceable
+      class="parameter">X</replaceable>)^2)</entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>regr_sxx(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>sum(<replaceable class="parameter">X</replaceable>^2) -
+      sum(<replaceable class="parameter">X</replaceable>)^2 / <replaceable
+      class="parameter">N</replaceable></entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>regr_sxy(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>sum(<replaceable class="parameter">X</replaceable>*<replaceable
+      class="parameter">Y</replaceable>) - sum(<replaceable
+      class="parameter">X</replaceable>) * sum(<replaceable
+      class="parameter">Y</replaceable>) / <replaceable
+      class="parameter">N</replaceable></entry>
+     </row>
+
+     <row>
+      <entry>
+       <function>regr_syy(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>
+       <type>double precision</type>
+      </entry>
+      <entry>sum(<replaceable class="parameter">Y</replaceable>^2) -
+      sum(<replaceable class="parameter">Y</replaceable>)^2 / <replaceable
+      class="parameter">N</replaceable></entry>
      </row>
 
      <row>
@@ -8005,24 +8334,6 @@ SELECT NULLIF(value, '(none)') ...
        otherwise <type>numeric</type>
       </entry>
       <entry>sample standard deviation of the input values</entry>
-     </row>
-
-     <row>
-      <entry><function>sum(<replaceable class="parameter">expression</replaceable>)</function></entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, <type>numeric</type>, or
-       <type>interval</type>
-      </entry>
-      <entry>
-       <type>bigint</type> for <type>smallint</type> or
-       <type>int</type> arguments, <type>numeric</type> for
-       <type>bigint</type> arguments, <type>double precision</type>
-       for floating-point arguments, otherwise the same as the
-       argument data type
-      </entry>
-      <entry>sum of <replaceable class="parameter">expression</replaceable> across all input values</entry>
      </row>
 
      <row>
@@ -8087,50 +8398,6 @@ SELECT NULLIF(value, '(none)') ...
    </tgroup>
   </table>
 
-  <para>
-   It should be noted that except for <function>count</function>,
-   these functions return a null value when no rows are selected.  In
-   particular, <function>sum</function> of no rows returns null, not
-   zero as one might expect.  The <function>coalesce</function> function may be
-   used to substitute zero for null when necessary.
-  </para>
-
-  <note>
-    <indexterm>
-      <primary>ANY</primary>
-    </indexterm>
-    <indexterm>
-      <primary>SOME</primary>
-    </indexterm>
-    <para>
-      Boolean aggregates <function>bool_and</function> and 
-      <function>bool_or</function> correspond to standard SQL aggregates
-      <function>every</function> and <function>any</function> or
-      <function>some</function>. 
-      As for <function>any</function> and <function>some</function>, 
-      it seems that there is an ambiguity built into the standard syntax:
-<programlisting>
-SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
-</programlisting>
-      Here <function>ANY</function> can be considered both as leading
-      to a subquery or as an aggregate if the select expression returns 1 row.
-      Thus the standard name cannot be given to these aggregates.
-    </para>
-  </note>
-
-  <note>
-   <para>
-    Users accustomed to working with other SQL database management
-    systems may be surprised by the performance of the
-    <function>count</function> aggregate when it is applied to the
-    entire table. A query like:
-<programlisting>
-SELECT count(*) FROM sometable;
-</programlisting>
-    will be executed by <productname>PostgreSQL</productname> using a
-    sequential scan of the entire table.
-   </para>
-  </note>
  </sect1>
 
 

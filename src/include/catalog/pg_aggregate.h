@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.56 2006/07/27 19:52:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.57 2006/07/28 18:33:04 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -191,6 +191,20 @@ DATA(insert ( 2156	int2_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
 DATA(insert ( 2157	float4_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
 DATA(insert ( 2158	float8_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
 DATA(insert ( 2159	numeric_accum	numeric_stddev_samp	0	1231	"{0,0,0}" ));
+
+/* SQL2003 binary regression aggregates */
+DATA(insert ( 2818	int8inc_float8_float8		-				0	20		"0" ));
+DATA(insert ( 2819	float8_regr_accum	float8_regr_sxx			0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2820	float8_regr_accum	float8_regr_syy			0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2821	float8_regr_accum	float8_regr_sxy			0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2822	float8_regr_accum	float8_regr_avgx		0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2823	float8_regr_accum	float8_regr_avgy		0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2824	float8_regr_accum	float8_regr_r2			0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2825	float8_regr_accum	float8_regr_slope		0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2826	float8_regr_accum	float8_regr_intercept	0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2827	float8_regr_accum	float8_covar_pop		0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2828	float8_regr_accum	float8_covar_samp		0	1022	"{0,0,0,0,0,0}" ));
+DATA(insert ( 2829	float8_regr_accum	float8_corr				0	1022	"{0,0,0,0,0,0}" ));
 
 /* boolean-and and boolean-or */
 DATA(insert ( 2517	booland_statefunc	-			0	16		_null_ ));

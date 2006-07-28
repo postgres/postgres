@@ -39,6 +39,17 @@ SELECT var_samp(b::numeric) FROM aggtest;
 SELECT var_pop(1.0), var_samp(2.0);
 SELECT stddev_pop(3.0::numeric), stddev_samp(4.0::numeric);
 
+-- SQL2003 binary aggregates
+SELECT regr_count(b, a) FROM aggtest;
+SELECT regr_sxx(b, a) FROM aggtest;
+SELECT regr_syy(b, a) FROM aggtest;
+SELECT regr_sxy(b, a) FROM aggtest;
+SELECT regr_avgx(b, a), regr_avgy(b, a) FROM aggtest;
+SELECT regr_r2(b, a) FROM aggtest;
+SELECT regr_slope(b, a), regr_intercept(b, a) FROM aggtest;
+SELECT covar_pop(b, a), covar_samp(b, a) FROM aggtest;
+SELECT corr(b, a) FROM aggtest;
+
 SELECT count(four) AS cnt_1000 FROM onek;
 SELECT count(DISTINCT four) AS cnt_4 FROM onek;
 

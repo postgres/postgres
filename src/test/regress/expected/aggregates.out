@@ -137,6 +137,61 @@ SELECT stddev_pop(3.0::numeric), stddev_samp(4.0::numeric);
           0 |            
 (1 row)
 
+-- SQL2003 binary aggregates
+SELECT regr_count(b, a) FROM aggtest;
+ regr_count 
+------------
+          4
+(1 row)
+
+SELECT regr_sxx(b, a) FROM aggtest;
+ regr_sxx 
+----------
+     5099
+(1 row)
+
+SELECT regr_syy(b, a) FROM aggtest;
+     regr_syy     
+------------------
+ 68756.2156939293
+(1 row)
+
+SELECT regr_sxy(b, a) FROM aggtest;
+     regr_sxy     
+------------------
+ 2614.51582155004
+(1 row)
+
+SELECT regr_avgx(b, a), regr_avgy(b, a) FROM aggtest;
+ regr_avgx |    regr_avgy     
+-----------+------------------
+      49.5 | 107.943152273074
+(1 row)
+
+SELECT regr_r2(b, a) FROM aggtest;
+      regr_r2       
+--------------------
+ 0.0194977982031803
+(1 row)
+
+SELECT regr_slope(b, a), regr_intercept(b, a) FROM aggtest;
+    regr_slope     |  regr_intercept  
+-------------------+------------------
+ 0.512750700441271 | 82.5619926012309
+(1 row)
+
+SELECT covar_pop(b, a), covar_samp(b, a) FROM aggtest;
+    covar_pop    |    covar_samp    
+-----------------+------------------
+ 653.62895538751 | 871.505273850014
+(1 row)
+
+SELECT corr(b, a) FROM aggtest;
+       corr        
+-------------------
+ 0.139634516517873
+(1 row)
+
 SELECT count(four) AS cnt_1000 FROM onek;
  cnt_1000 
 ----------

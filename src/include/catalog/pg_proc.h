@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.418 2006/07/27 19:52:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.419 2006/07/28 18:33:04 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1534,7 +1534,7 @@ DESCR("truncate interval to specified units");
 
 DATA(insert OID = 1219 (  int8inc		   PGNSP PGUID 12 f f t f i 1 20 "20" _null_ _null_ _null_	int8inc - _null_ ));
 DESCR("increment");
-DATA(insert OID = 2804 (  int8inc_any	   PGNSP PGUID 12 f f t f i 2 20 "20 2276" _null_ _null_ _null_	int8inc - _null_ ));
+DATA(insert OID = 2804 (  int8inc_any	   PGNSP PGUID 12 f f t f i 2 20 "20 2276" _null_ _null_ _null_	int8inc_any - _null_ ));
 DESCR("increment, ignores second argument");
 DATA(insert OID = 1230 (  int8abs		   PGNSP PGUID 12 f f t f i 1 20 "20" _null_ _null_ _null_	int8abs - _null_ ));
 DESCR("absolute value");
@@ -2730,6 +2730,32 @@ DATA(insert OID = 1963 (  int4_avg_accum   PGNSP PGUID 12 f f t f i 2 1016 "1016
 DESCR("AVG(int4) transition function");
 DATA(insert OID = 1964 (  int8_avg		   PGNSP PGUID 12 f f t f i 1 1700 "1016" _null_ _null_ _null_	int8_avg - _null_ ));
 DESCR("AVG(int) aggregate final function");
+DATA(insert OID = 2805 (  int8inc_float8_float8		PGNSP PGUID 12 f f t f i 3 20 "20 701 701" _null_ _null_ _null_ int8inc_float8_float8 - _null_ ));
+DESCR("REGR_COUNT(double, double) transition function");
+DATA(insert OID = 2806 (  float8_regr_accum			PGNSP PGUID 12 f f t f i 3 1022 "1022 701 701" _null_ _null_ _null_ float8_regr_accum - _null_ ));
+DESCR("REGR_...(double, double) transition function");
+DATA(insert OID = 2807 (  float8_regr_sxx			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_regr_sxx - _null_ ));
+DESCR("REGR_SXX(double, double) aggregate final function");
+DATA(insert OID = 2808 (  float8_regr_syy			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_regr_syy - _null_ ));
+DESCR("REGR_SYY(double, double) aggregate final function");
+DATA(insert OID = 2809 (  float8_regr_sxy			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_regr_sxy - _null_ ));
+DESCR("REGR_SXY(double, double) aggregate final function");
+DATA(insert OID = 2810 (  float8_regr_avgx			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_regr_avgx - _null_ ));
+DESCR("REGR_AVGX(double, double) aggregate final function");
+DATA(insert OID = 2811 (  float8_regr_avgy			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_regr_avgy - _null_ ));
+DESCR("REGR_AVGY(double, double) aggregate final function");
+DATA(insert OID = 2812 (  float8_regr_r2			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_regr_r2 - _null_ ));
+DESCR("REGR_R2(double, double) aggregate final function");
+DATA(insert OID = 2813 (  float8_regr_slope			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_regr_slope - _null_ ));
+DESCR("REGR_SLOPE(double, double) aggregate final function");
+DATA(insert OID = 2814 (  float8_regr_intercept		PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_regr_intercept - _null_ ));
+DESCR("REGR_INTERCEPT(double, double) aggregate final function");
+DATA(insert OID = 2815 (  float8_covar_pop			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_covar_pop - _null_ ));
+DESCR("COVAR_POP(double, double) aggregate final function");
+DATA(insert OID = 2816 (  float8_covar_samp			PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_covar_samp - _null_ ));
+DESCR("COVAR_SAMP(double, double) aggregate final function");
+DATA(insert OID = 2817 (  float8_corr				PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_corr - _null_ ));
+DESCR("CORR(double, double) aggregate final function");
 
 /* To ASCII conversion */
 DATA(insert OID = 1845 ( to_ascii	PGNSP PGUID 12 f f t f i 1	25 "25" _null_ _null_ _null_	to_ascii_default - _null_ ));
@@ -3195,6 +3221,20 @@ DATA(insert OID = 2156 (  stddev			PGNSP PGUID 12 t f f f i 1 1700 "21" _null_ _
 DATA(insert OID = 2157 (  stddev			PGNSP PGUID 12 t f f f i 1 701 "700" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2158 (  stddev			PGNSP PGUID 12 t f f f i 1 701 "701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 DATA(insert OID = 2159 (  stddev			PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_ _null_ _null_ aggregate_dummy - _null_ ));
+
+DATA(insert OID = 2818 (  regr_count		PGNSP PGUID 12 t f f f i 2 20 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2819 (  regr_sxx			PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2820 (  regr_syy			PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2821 (  regr_sxy			PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2822 (  regr_avgx			PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2823 (  regr_avgy			PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2824 (  regr_r2			PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2825 (  regr_slope		PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2826 (  regr_intercept	PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+
+DATA(insert OID = 2827 (  covar_pop			PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2828 (  covar_samp		PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
+DATA(insert OID = 2829 (  corr				PGNSP PGUID 12 t f f f i 2 701 "701 701" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 
 DATA(insert OID = 2160 ( text_pattern_lt	 PGNSP PGUID 12 f f t f i 2 16 "25 25" _null_ _null_ _null_ text_pattern_lt - _null_ ));
 DATA(insert OID = 2161 ( text_pattern_le	 PGNSP PGUID 12 f f t f i 2 16 "25 25" _null_ _null_ _null_ text_pattern_le - _null_ ));

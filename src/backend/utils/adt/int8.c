@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.60 2006/03/05 15:58:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.61 2006/07/28 18:33:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -693,6 +693,28 @@ int8inc(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(result);
 	}
 }
+
+/*
+ * These functions are exactly like int8inc but are used for aggregates that
+ * count only non-null values.  Since the functions are declared strict,
+ * the null checks happen before we ever get here, and all we need do is
+ * increment the state value.  We could actually make these pg_proc entries
+ * point right at int8inc, but then the opr_sanity regression test would
+ * complain about mismatched entries for a built-in function.
+ */
+
+Datum
+int8inc_any(PG_FUNCTION_ARGS)
+{
+	return int8inc(fcinfo);
+}
+
+Datum
+int8inc_float8_float8(PG_FUNCTION_ARGS)
+{
+	return int8inc(fcinfo);
+}
+
 
 Datum
 int8larger(PG_FUNCTION_ARGS)
