@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.77 2006/07/28 15:33:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.78 2006/07/28 16:21:57 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -323,7 +323,7 @@ initdb --locale=sv_SE
     </para>
 
      <table id="charset-table">
-      <title>Server Character Sets</title>
+      <title><productname>PostgreSQL</productname> Character Sets</title>
       <tgroup cols="6">
        <thead>
         <row>
