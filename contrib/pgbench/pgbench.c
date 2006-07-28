@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.50 2006/07/26 07:24:50 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.51 2006/07/28 22:58:26 ishii Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -134,10 +134,13 @@ int			num_files;			/* its number */
 
 /* default scenario */
 static char *tpc_b = {
-	"\\setrandom aid 1 100000\n"
-	"\\setrandom bid 1 1\n"
-	"\\setrandom tid 1 10\n"
-	"\\setrandom delta 1 10000\n"
+	"\\set nbranches :tps\n"
+	"\\set ntellers 10 * :tps\n"
+    "\\set naccounts 100000 * :tps\n"
+	"\\setrandom aid 1 :naccounts\n"
+	"\\setrandom bid 1 :nbranches\n"
+	"\\setrandom tid 1 :ntellers\n"
+	"\\setrandom delta -5000 5000\n"
 	"BEGIN;\n"
 	"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
 	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
@@ -149,10 +152,13 @@ static char *tpc_b = {
 
 /* -N case */
 static char *simple_update = {
-	"\\setrandom aid 1 100000\n"
-	"\\setrandom bid 1 1\n"
-	"\\setrandom tid 1 10\n"
-	"\\setrandom delta 1 10000\n"
+	"\\set nbranches :tps\n"
+	"\\set ntellers 10 * :tps\n"
+    "\\set naccounts 100000 * :tps\n"
+	"\\setrandom aid 1 :naccounts\n"
+	"\\setrandom bid 1 :nbranches\n"
+	"\\setrandom tid 1 :ntellers\n"
+	"\\setrandom delta -5000 5000\n"
 	"BEGIN;\n"
 	"UPDATE accounts SET abalance = abalance + :delta WHERE aid = :aid;\n"
 	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
@@ -162,7 +168,8 @@ static char *simple_update = {
 
 /* -S case */
 static char *select_only = {
-	"\\setrandom aid 1 100000\n"
+    "\\set naccounts 100000 * :tps\n"
+	"\\setrandom aid 1 :naccounts\n"
 	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
 };
 
@@ -570,12 +577,14 @@ top:
 			else
 				min = atoi(argv[2]);
 
+#ifdef NOT_USED
 			if (min < 0)
 			{
 				fprintf(stderr, "%s: invalid minimum number %d\n", argv[0], min);
 				st->ecnt++;
 				return;
 			}
+#endif
 
 			if (*argv[3] == ':')
 			{
@@ -597,6 +606,9 @@ top:
 				return;
 			}
 
+#ifdef DEBUG
+			printf("min: %d max: %d random: %d\n", min, max, getrand(min, max));
+#endif
 			snprintf(res, sizeof(res), "%d", getrand(min, max));
 
 			if (putVariable(st, argv[1], res) == false)
@@ -1477,38 +1489,21 @@ main(int argc, char **argv)
 	/* process bultin SQL scripts */
 	switch (ttype)
 	{
-			char		buf[128];
-
 		case 0:
 			sql_files[0] = process_builtin(tpc_b);
-			snprintf(buf, sizeof(buf), "%d", 100000 * tps);
-			sql_files[0][0]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 1 * tps);
-			sql_files[0][1]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 10 * tps);
-			sql_files[0][2]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 10000 * tps);
-			sql_files[0][3]->argv[3] = strdup(buf);
 			num_files = 1;
 			break;
+
 		case 1:
 			sql_files[0] = process_builtin(select_only);
-			snprintf(buf, sizeof(buf), "%d", 100000 * tps);
-			sql_files[0][0]->argv[3] = strdup(buf);
 			num_files = 1;
 			break;
+
 		case 2:
 			sql_files[0] = process_builtin(simple_update);
-			snprintf(buf, sizeof(buf), "%d", 100000 * tps);
-			sql_files[0][0]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 1 * tps);
-			sql_files[0][1]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 10 * tps);
-			sql_files[0][2]->argv[3] = strdup(buf);
-			snprintf(buf, sizeof(buf), "%d", 10000 * tps);
-			sql_files[0][3]->argv[3] = strdup(buf);
 			num_files = 1;
 			break;
+
 		default:
 			break;
 	}
