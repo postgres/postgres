@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.53 2006/07/28 09:08:01 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.54 2006/07/28 10:12:56 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1441,7 +1441,6 @@ ECPGexecute(struct statement * stmt)
 						else
 							ECPGlog("ECPGexecute line %d: Got error after PGRES_COPY_OUT: %s", PQresultErrorMessage(results));
 					}
-					//PQendcopy(stmt->connection->connection);
 					break;
 				}
 			case PGRES_COPY_IN:
