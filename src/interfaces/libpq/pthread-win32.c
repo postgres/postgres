@@ -5,11 +5,12 @@
 *
 * Copyright (c) 2004-2006, PostgreSQL Global Development Group
 * IDENTIFICATION
-*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.11 2006/03/05 15:59:10 momjian Exp $
+*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.12 2006/07/29 15:22:27 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
 
+#include "postgres_fe.h"
 
 #include <windows.h>
 #include "pthread-win32.h"

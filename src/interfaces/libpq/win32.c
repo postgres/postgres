@@ -25,8 +25,8 @@
 #endif
 #define NOCRYPT
 
-#include <windows.h>
-#include <stdio.h>
+#include "postgres_fe.h"
+
 #include "win32.h"
 
 /* Declared here to avoid pulling in all includes, which causes name collissions */ 
