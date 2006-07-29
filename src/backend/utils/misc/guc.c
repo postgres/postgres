@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.332 2006/07/27 08:30:41 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.333 2006/07/29 03:02:56 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -221,10 +221,10 @@ static char *regex_flavor_string;
 static char *server_encoding_string;
 static char *server_version_string;
 static char *timezone_string;
+static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
 static char *data_directory;
 static char *custom_variable_classes;
-static char *timezone_abbreviations;
 static int	max_function_args;
 static int	max_index_keys;
 static int	max_identifier_length;
@@ -2101,8 +2101,8 @@ static struct config_string ConfigureNamesString[] =
 			gettext_noop("Selects a file of timezone abbreviations"),
 			NULL,
 		},
-		&timezone_abbreviations,
-		"Default", assign_timezone_abbreviations, NULL
+		&timezone_abbreviations_string,
+		"UNKNOWN", assign_timezone_abbreviations, NULL
 	},
 
 	{
@@ -6288,9 +6288,27 @@ assign_backslash_quote(const char *newval, bool doit, GucSource source)
 static const char *
 assign_timezone_abbreviations(const char *newval, bool doit, GucSource source)
 {
+	/*
+	 * The powerup value shown above for timezone_abbreviations is "UNKNOWN".
+	 * When we see this we just do nothing.  If this value isn't overridden
+	 * from the config file then pg_timezone_abbrev_initialize() will
+	 * eventually replace it with "Default".  This hack has two purposes:
+	 * to avoid wasting cycles loading values that might soon be overridden
+	 * from the config file, and to avoid trying to read the timezone abbrev
+	 * files during InitializeGUCOptions().  The latter doesn't work in an
+	 * EXEC_BACKEND subprocess because my_exec_path hasn't been set yet and
+	 * so we can't locate PGSHAREDIR.  (Essentially the same hack is used
+	 * to delay initializing TimeZone ... if we have any more, we should
+	 * try to clean up and centralize this mechanism ...)
+	 */
+	if (strcmp(newval, "UNKNOWN") == 0)
+	{
+		return newval;
+	}
+
 	/* Loading abbrev file is expensive, so only do it when value changes */
-	if (timezone_abbreviations == NULL ||
-		strcmp(timezone_abbreviations, newval) != 0)
+	if (timezone_abbreviations_string == NULL ||
+		strcmp(timezone_abbreviations_string, newval) != 0)
 	{
 		int		elevel;
 
@@ -6307,6 +6325,22 @@ assign_timezone_abbreviations(const char *newval, bool doit, GucSource source)
 			return NULL;
 	}
 	return newval;
+}
+
+/*
+ * pg_timezone_abbrev_initialize --- set default value if not done already
+ *
+ * This is called after initial loading of postgresql.conf.  If no
+ * timezone_abbreviations setting was found therein, select default.
+ */
+void
+pg_timezone_abbrev_initialize(void)
+{
+	if (strcmp(timezone_abbreviations_string, "UNKNOWN") == 0)
+	{
+		SetConfigOption("timezone_abbreviations", "Default",
+						PGC_POSTMASTER, PGC_S_ARGV);
+	}
 }
 
 static bool

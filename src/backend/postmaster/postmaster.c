@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.496 2006/07/25 01:23:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.497 2006/07/29 03:02:55 tgl Exp $
  *
  * NOTES
  *
@@ -691,9 +691,15 @@ PostmasterMain(int argc, char *argv[])
 	 * should be done during GUC initialization, but because it can take as
 	 * much as several seconds, we delay it until after we've created the
 	 * postmaster.pid file.  This prevents problems with boot scripts that
-	 * expect the pidfile to appear quickly.)
+	 * expect the pidfile to appear quickly.  Also, we avoid problems with
+	 * trying to locate the timezone files too early in initialization.)
 	 */
 	pg_timezone_initialize();
+
+	/*
+	 * Likewise, init timezone_abbreviations if not already set.
+	 */
+	pg_timezone_abbrev_initialize();
 
 	/*
 	 * Initialize SSL library, if specified.

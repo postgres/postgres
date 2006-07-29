@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.492 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.493 2006/07/29 03:02:56 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2758,6 +2758,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 			proc_exit(1);
 		/* If timezone is not set, determine what the OS uses */
 		pg_timezone_initialize();
+		/* If timezone_abbreviations is not set, select default */
+		pg_timezone_abbrev_initialize();
 	}
 
 	if (PostAuthDelay)
