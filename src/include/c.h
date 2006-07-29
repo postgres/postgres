@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.207 2006/07/24 16:32:45 petere Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.208 2006/07/29 17:35:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,9 @@
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define	WIN32_ONLY_COMPILER
 #define errcode __vc_errcode
+#if defined(__BORLANDC__) || (_MSC_VER > 1400)
 #include <crtdefs.h>
+#endif
 #undef errcode
 #endif
 
