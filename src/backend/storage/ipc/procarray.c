@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.15 2006/07/30 02:07:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.16 2006/07/30 20:17:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -446,10 +446,8 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 				/*
 				 * Also consider the transaction's Xmin, if set.
 				 *
-				 * Note that this Xmin may seem to be guaranteed to be always
-				 * lower than the transaction's Xid, but this is not so because
-				 * there is a time window on which the Xid is already assigned
-				 * but the Xmin has not being calculated yet.
+				 * We must check both Xid and Xmin because there is a window
+				 * where an xact's Xid is set but Xmin isn't yet.
 				 */
 				xid = proc->xmin;
 				if (TransactionIdIsNormal(xid))
@@ -489,7 +487,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
  *			older than this are known not running any more.
  *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all
  *			running transactions, except those running LAZY VACUUM).  This is
- *			the same computation done by GetOldestXmin(true, false).
+ *			the same computation done by GetOldestXmin(true, true).
  *----------
  */
 Snapshot
