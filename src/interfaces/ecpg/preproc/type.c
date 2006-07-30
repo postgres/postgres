@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/type.c,v 1.68 2006/07/30 10:24:10 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.69 2006/07/30 16:28:58 meskes Exp $ */
 
 #include "postgres_fe.h"
 
