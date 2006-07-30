@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.16 2006/07/27 15:37:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.17 2006/07/30 01:45:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -799,29 +799,32 @@ make_directory(const char *dir)
 }
 
 /*
- * Run a "diff" command and check that it didn't crash
+ * Run a "diff" command and also check that it didn't crash
  */
-static void
-run_diff(const char *cmd)
+static int
+run_diff(const char *cmd, const char *filename)
 {
 	int r;
 
 	r = system(cmd);
-	/*
-	 * XXX FIXME: it appears that include/port/win32.h's definitions of
-	 * WIFEXITED and related macros may be wrong.  They certainly don't
-	 * work for inspecting the results of system().  For the moment,
-	 * hard-wire the check on Windows.
-	 */
-#ifndef WIN32
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
-#else
-	if (r != 0 && r != 1)
-#endif
 	{
 		fprintf(stderr, _("diff command failed with status %d: %s\n"), r, cmd);
 		exit_nicely(2);
 	}
+#ifdef WIN32
+	/*
+	 *	On WIN32, if the 'diff' command cannot be found, system() returns
+	 *	1, but produces nothing to stdout, so we check for that here.
+	 */
+	if (WEXITSTATUS(r) == 1 && file_size(filename) <= 0)
+	{
+		fprintf(stderr, _("diff command not found: %s\n"), cmd);
+		exit_nicely(2);
+	}
+#endif
+	
+	return WEXITSTATUS(r);
 }
 
 /*
@@ -844,7 +847,7 @@ results_differ(const char *testname)
 	int best_line_count;
 	int i;
 	int l;
-
+	
 	/* Check in resultmap if we should be looking at a different file */
 	expectname = testname;
 	for (rm = resultmap; rm != NULL; rm = rm->next)
@@ -872,12 +875,10 @@ results_differ(const char *testname)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
 			 basic_diff_opts, expectfile, resultsfile, diff);
-	run_diff(cmd);
 
 	/* Is the diff file empty? */
-	if (file_size(diff) == 0)
+	if (run_diff(cmd, diff) == 0)
 	{
-		/* No diff = no changes = good */
 		unlink(diff);
 		return false;
 	}
@@ -896,11 +897,9 @@ results_differ(const char *testname)
 		snprintf(cmd, sizeof(cmd),
 				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
 				 basic_diff_opts, expectfile, resultsfile, diff);
-		run_diff(cmd);
 
-		if (file_size(diff) == 0)
+		if (run_diff(cmd, diff) == 0)
 		{
-			/* No diff = no changes = good */
 			unlink(diff);
 			return false;
 		}
@@ -921,7 +920,7 @@ results_differ(const char *testname)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >> \"%s\"" SYSTEMQUOTE,
 			 pretty_diff_opts, best_expect_file, resultsfile, difffilename);
-	run_diff(cmd);
+	run_diff(cmd, difffilename);
 
 	/* And append a separator */
 	difffile = fopen(difffilename, "a");
