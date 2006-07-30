@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.244 2006/07/14 14:52:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.245 2006/07/30 02:07:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5413,7 +5413,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	 * StartupSUBTRANS hasn't been called yet.
 	 */
 	if (!InRecovery)
-		TruncateSUBTRANS(GetOldestXmin(true));
+		TruncateSUBTRANS(GetOldestXmin(true, false));
 
 	if (!shutdown)
 		ereport(DEBUG2,

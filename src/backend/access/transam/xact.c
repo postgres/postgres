@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.224 2006/07/24 16:32:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.225 2006/07/30 02:07:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1529,6 +1529,7 @@ CommitTransaction(void)
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
+		MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
 		MyProc->subxids.nxids = 0;
@@ -1764,6 +1765,7 @@ PrepareTransaction(void)
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
+	MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
 
 	/* Clear the subtransaction-XID cache too while holding the lock */
 	MyProc->subxids.nxids = 0;
@@ -1927,6 +1929,7 @@ AbortTransaction(void)
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
+		MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
 		MyProc->subxids.nxids = 0;

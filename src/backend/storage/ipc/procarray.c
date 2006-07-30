@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.14 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.15 2006/07/30 02:07:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,20 +388,24 @@ TransactionIdIsActive(TransactionId xid)
  * If allDbs is TRUE then all backends are considered; if allDbs is FALSE
  * then only backends running in my own database are considered.
  *
+ * If ignoreVacuum is TRUE then backends with inVacuum set are ignored.
+ *
  * This is used by VACUUM to decide which deleted tuples must be preserved
  * in a table.	allDbs = TRUE is needed for shared relations, but allDbs =
  * FALSE is sufficient for non-shared relations, since only backends in my
- * own database could ever see the tuples in them.
+ * own database could ever see the tuples in them.  Also, we can ignore
+ * concurrently running lazy VACUUMs because (a) they must be working on other
+ * tables, and (b) they don't need to do snapshot-based lookups.
  *
  * This is also used to determine where to truncate pg_subtrans.  allDbs
- * must be TRUE for that case.
+ * must be TRUE for that case, and ignoreVacuum FALSE.
  *
  * Note: we include the currently running xids in the set of considered xids.
  * This ensures that if a just-started xact has not yet set its snapshot,
  * when it does set the snapshot it cannot set xmin less than what we compute.
  */
 TransactionId
-GetOldestXmin(bool allDbs)
+GetOldestXmin(bool allDbs, bool ignoreVacuum)
 {
 	ProcArrayStruct *arrayP = procArray;
 	TransactionId result;
@@ -425,6 +429,9 @@ GetOldestXmin(bool allDbs)
 	{
 		PGPROC	   *proc = arrayP->procs[index];
 
+		if (ignoreVacuum && proc->inVacuum)
+			continue;
+
 		if (allDbs || proc->databaseId == MyDatabaseId)
 		{
 			/* Fetch xid just once - see GetNewTransactionId */
@@ -432,8 +439,18 @@ GetOldestXmin(bool allDbs)
 
 			if (TransactionIdIsNormal(xid))
 			{
+				/* First consider the transaction own's Xid */
 				if (TransactionIdPrecedes(xid, result))
 					result = xid;
+
+				/*
+				 * Also consider the transaction's Xmin, if set.
+				 *
+				 * Note that this Xmin may seem to be guaranteed to be always
+				 * lower than the transaction's Xid, but this is not so because
+				 * there is a time window on which the Xid is already assigned
+				 * but the Xmin has not being calculated yet.
+				 */
 				xid = proc->xmin;
 				if (TransactionIdIsNormal(xid))
 					if (TransactionIdPrecedes(xid, result))
@@ -471,8 +488,8 @@ GetOldestXmin(bool allDbs)
  *		RecentXmin: the xmin computed for the most recent snapshot.  XIDs
  *			older than this are known not running any more.
  *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all
- *			running transactions).	This is the same computation done by
- *			GetOldestXmin(TRUE).
+ *			running transactions, except those running LAZY VACUUM).  This is
+ *			the same computation done by GetOldestXmin(true, false).
  *----------
  */
 Snapshot
@@ -561,15 +578,17 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 
 		/*
 		 * Ignore my own proc (dealt with my xid above), procs not running a
-		 * transaction, and xacts started since we read the next transaction
-		 * ID.	There's no need to store XIDs above what we got from
-		 * ReadNewTransactionId, since we'll treat them as running anyway.  We
-		 * also assume that such xacts can't compute an xmin older than ours,
-		 * so they needn't be considered in computing globalxmin.
+		 * transaction, xacts started since we read the next transaction
+		 * ID, and xacts executing LAZY VACUUM.	There's no need to store XIDs
+		 * above what we got from ReadNewTransactionId, since we'll treat them
+		 * as running anyway.  We also assume that such xacts can't compute an
+		 * xmin older than ours, so they needn't be considered in computing
+		 * globalxmin.
 		 */
 		if (proc == MyProc ||
 			!TransactionIdIsNormal(xid) ||
-			TransactionIdFollowsOrEquals(xid, xmax))
+			TransactionIdFollowsOrEquals(xid, xmax) ||
+			proc->inVacuum)
 			continue;
 
 		if (TransactionIdPrecedes(xid, xmin))

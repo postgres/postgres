@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.89 2006/07/13 16:49:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.90 2006/07/30 02:07:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,13 +66,16 @@ struct PGPROC
 								 * this proc */
 
 	TransactionId xmin;			/* minimal running XID as it was when we were
-								 * starting our xact: vacuum must not remove
-								 * tuples deleted by xid >= xmin ! */
+								 * starting our xact, excluding LAZY VACUUM:
+								 * vacuum must not remove tuples deleted by
+								 * xid >= xmin ! */
 
 	int			pid;			/* This backend's process id, or 0 */
 	Oid			databaseId;		/* OID of database this backend is using */
 	Oid			roleId;			/* OID of role using this backend */
 
+	bool		inVacuum;		/* true if current xact is a LAZY VACUUM */
+	
 	/* Info about LWLock the process is currently waiting for, if any. */
 	bool		lwWaiting;		/* true if waiting for an LW lock */
 	bool		lwExclusive;	/* true if waiting for exclusive access */

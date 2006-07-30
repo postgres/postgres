@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.335 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.336 2006/07/30 02:07:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "postmaster/autovacuum.h"
 #include "storage/freespace.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -589,7 +590,16 @@ vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
 {
 	TransactionId limit;
 
-	*oldestXmin = GetOldestXmin(sharedRel);
+	/*
+	 * We can always ignore processes running lazy vacuum.  This is because we
+	 * use these values only for deciding which tuples we must keep in the
+	 * tables.  Since lazy vacuum doesn't write its xid to the table, it's
+	 * safe to ignore it.  In theory it could be problematic to ignore lazy
+	 * vacuums on a full vacuum, but keep in mind that only one vacuum process
+	 * can be working on a particular table at any time, and that each vacuum
+	 * is always an independent transaction.
+	 */
+	*oldestXmin = GetOldestXmin(sharedRel, true);
 
 	Assert(TransactionIdIsNormal(*oldestXmin));
 
@@ -644,6 +654,11 @@ vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
  *		by the time we got done with a vacuum cycle, most of the tuples in
  *		pg_class would've been obsoleted.  Of course, this only works for
  *		fixed-size never-null columns, but these are.
+ *
+ *		Another reason for doing it this way is that when we are in a lazy
+ *		VACUUM and have inVacuum set, we mustn't do any updates --- somebody
+ *		vacuuming pg_class might think they could delete a tuple marked with
+ *		xmin = our xid.
  *
  *		This routine is shared by full VACUUM, lazy VACUUM, and stand-alone
  *		ANALYZE.
@@ -996,8 +1011,35 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
-	/* functions in indexes may want a snapshot set */
-	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+
+	if (vacstmt->full)
+	{
+		/* functions in indexes may want a snapshot set */
+		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+	}
+	else
+	{
+		/*
+		 * During a lazy VACUUM we do not run any user-supplied functions,
+		 * and so it should be safe to not create a transaction snapshot.
+		 *
+		 * We can furthermore set the inVacuum flag, which lets other
+		 * concurrent VACUUMs know that they can ignore this one while
+		 * determining their OldestXmin.  (The reason we don't set inVacuum
+		 * during a full VACUUM is exactly that we may have to run user-
+		 * defined functions for functional indexes, and we want to make
+		 * sure that if they use the snapshot set above, any tuples it
+		 * requires can't get removed from other tables.  An index function
+		 * that depends on the contents of other tables is arguably broken,
+		 * but we won't break it here by violating transaction semantics.)
+		 *
+		 * Note: the inVacuum flag remains set until CommitTransaction or
+		 * AbortTransaction.  We don't want to clear it until we reset
+		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
+		 * which is probably Not Good.
+		 */
+		MyProc->inVacuum = true;
+	}
 
 	/*
 	 * Tell the cache replacement strategy that vacuum is causing all
