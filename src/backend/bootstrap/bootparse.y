@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.82 2006/07/03 22:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.83 2006/07/31 01:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/toasting.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -99,7 +100,7 @@ int num_columns_read = 0;
 
 %token <ival> CONST_P ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
-%token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE
+%token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE XTOAST
 %token COMMA EQUALS LPAREN RPAREN
 %token OBJ_ID XBOOTSTRAP XSHARED_RELATION XWITHOUT_OIDS NULLVAL
 %start TopLevel
@@ -126,6 +127,7 @@ Boot_Query :
 		| Boot_InsertStmt
 		| Boot_DeclareIndexStmt
 		| Boot_DeclareUniqueIndexStmt
+		| Boot_DeclareToastStmt
 		| Boot_BuildIndsStmt
 		;
 
@@ -274,6 +276,16 @@ Boot_DeclareUniqueIndexStmt:
 								NULL, NIL, NIL,
 								true, false, false,
 								false, false, true, false);
+					do_end();
+				}
+		;
+
+Boot_DeclareToastStmt:
+		  XDECLARE XTOAST oidspec oidspec ON boot_ident
+				{
+					do_start();
+
+					BootstrapToastTable(LexIDStr($6), $3, $4);
 					do_end();
 				}
 		;

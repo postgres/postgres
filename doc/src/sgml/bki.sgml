@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.17 2006/03/10 19:10:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.18 2006/07/31 01:16:36 tgl Exp $ -->
 
 <chapter id="bki">
  <title><acronym>BKI</acronym> Backend Interface</title>
@@ -210,6 +210,28 @@
    </varlistentry>
 
    <varlistentry>
+    <term>
+     <literal>declare toast</>
+     <replaceable class="parameter">toasttableoid</replaceable>
+     <replaceable class="parameter">toastindexoid</replaceable>
+     <literal>on</> <replaceable class="parameter">tablename</replaceable>
+    </term>
+
+    <listitem>
+     <para>
+      Create a TOAST table for the table named
+      <replaceable class="parameter">tablename</replaceable>.
+      The TOAST table is assigned OID
+      <replaceable class="parameter">toasttableoid</replaceable>
+      and its index is assigned OID
+      <replaceable class="parameter">toastindexoid</replaceable>.
+      As with <literal>declare index</>, filling of the index
+      is postponed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>build indices</></term>
 
     <listitem>
@@ -233,6 +255,12 @@
    <structname>pg_type</>.)   To allow those tables themselves to be filled,
    <literal>create</> with the <literal>bootstrap</> option implicitly opens
    the created table for data insertion.
+  </para>
+
+  <para>
+   Also, the <literal>declare index</> and <literal>declare toast</>
+   commands cannot be used until the system catalogs they need have been
+   created and filled in.
   </para>
 
   <para>
@@ -286,7 +314,7 @@
     </listitem>
     <listitem>
      <para>
-      Define indexes.
+      Define indexes and toast tables.
      </para>
     </listitem>
     <listitem>

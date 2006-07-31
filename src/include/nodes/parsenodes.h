@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.318 2006/07/26 19:31:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.319 2006/07/31 01:16:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -854,7 +854,6 @@ typedef enum AlterTableType
 	AT_DropConstraintQuietly,	/* drop constraint, no error/warning (local in
 								 * commands/tablecmds.c) */
 	AT_AlterColumnType,			/* alter column type */
-	AT_ToastTable,				/* create toast table */
 	AT_ChangeOwner,				/* change owner */
 	AT_ClusterOn,				/* CLUSTER ON */
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.270 2006/07/30 02:07:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.271 2006/07/31 01:16:36 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -424,7 +424,6 @@ UpdateIndexRelation(Oid indexoid,
  * classObjectId: array of index opclass OIDs, one per index column
  * reloptions: AM-specific options
  * isprimary: index is a PRIMARY KEY
- * istoast: index is a toast table's index
  * isconstraint: index is owned by a PRIMARY KEY or UNIQUE constraint
  * allow_system_table_mods: allow table to be a system catalog
  * skip_build: true to skip the index_build() step for the moment; caller
@@ -442,7 +441,6 @@ index_create(Oid heapRelationId,
 			 Oid *classObjectId,
 			 Datum reloptions,
 			 bool isprimary,
-			 bool istoast,
 			 bool isconstraint,
 			 bool allow_system_table_mods,
 			 bool skip_build)
@@ -747,8 +745,7 @@ index_create(Oid heapRelationId,
 	}
 	else
 	{
-		index_build(heapRelation, indexRelation, indexInfo,
-					isprimary, istoast);
+		index_build(heapRelation, indexRelation, indexInfo, isprimary);
 	}
 
 	/*
@@ -1241,8 +1238,8 @@ setNewRelfilenode(Relation relation)
  * entries of the index and heap relation as needed, using statistics
  * returned by ambuild as well as data passed by the caller.
  *
- * Note: when reindexing an existing index, isprimary and istoast can be
- * false; the index is already properly marked and need not be re-marked.
+ * Note: when reindexing an existing index, isprimary can be false;
+ * the index is already properly marked and need not be re-marked.
  *
  * Note: before Postgres 8.2, the passed-in heap and index Relations
  * were automatically closed by this routine.  This is no longer the case.
@@ -1252,8 +1249,7 @@ void
 index_build(Relation heapRelation,
 			Relation indexRelation,
 			IndexInfo *indexInfo,
-			bool isprimary,
-			bool istoast)
+			bool isprimary)
 {
 	RegProcedure procedure;
 	IndexBuildResult *stats;
@@ -1283,7 +1279,8 @@ index_build(Relation heapRelation,
 	index_update_stats(heapRelation,
 					   true,
 					   isprimary,
-					   istoast ? RelationGetRelid(indexRelation) : InvalidOid,
+					   (heapRelation->rd_rel->relkind == RELKIND_TOASTVALUE) ?
+					   RelationGetRelid(indexRelation) : InvalidOid,
 					   stats->heap_tuples);
 
 	index_update_stats(indexRelation,
@@ -1618,8 +1615,8 @@ reindex_index(Oid indexId)
 		}
 
 		/* Initialize the index and rebuild */
-		/* Note: we do not need to re-establish pkey or toast settings */
-		index_build(heapRelation, iRel, indexInfo, false, false);
+		/* Note: we do not need to re-establish pkey setting */
+		index_build(heapRelation, iRel, indexInfo, false);
 	}
 	PG_CATCH();
 	{

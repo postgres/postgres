@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.309 2006/07/14 14:52:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.310 2006/07/31 01:16:36 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2009,8 +2009,8 @@ RelationTruncateIndexes(Oid heapId)
 		RelationTruncate(currentIndex, 0);
 
 		/* Initialize the index and rebuild */
-		/* Note: we do not need to re-establish pkey or toast settings */
-		index_build(heapRelation, currentIndex, indexInfo, false, false);
+		/* Note: we do not need to re-establish pkey setting */
+		index_build(heapRelation, currentIndex, indexInfo, false);
 
 		/* We're done with this index */
 		index_close(currentIndex);

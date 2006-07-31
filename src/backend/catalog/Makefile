@@ -2,7 +2,7 @@
 #
 # Makefile for backend/catalog
 #
-# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.59 2006/02/12 03:22:17 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/catalog/Makefile,v 1.60 2006/07/31 01:16:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = catalog.o dependency.o heap.o index.o indexing.o namespace.o aclchk.o \
        pg_aggregate.o pg_constraint.o pg_conversion.o pg_depend.o \
        pg_largeobject.o pg_namespace.o pg_operator.o pg_proc.o pg_shdepend.o \
-       pg_type.o
+       pg_type.o toasting.o
 
 BKIFILES = postgres.bki postgres.description postgres.shdescription
 
@@ -24,7 +24,7 @@ SUBSYS.o: $(OBJS)
 
 # Note: there are some undocumented dependencies on the ordering in which
 # the catalog header files are assembled into postgres.bki.  In particular,
-# indexing.h had better be last.
+# indexing.h had better be last, and toasting.h just before it.
 
 POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h pg_autovacuum.h \
@@ -35,7 +35,7 @@ POSTGRES_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_namespace.h pg_conversion.h pg_depend.h \
 	pg_database.h pg_tablespace.h pg_pltemplate.h \
 	pg_authid.h pg_auth_members.h pg_shdepend.h pg_shdescription.h \
-	indexing.h \
+	toasting.h indexing.h \
     )
 
 pg_includes := $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/include)

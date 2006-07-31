@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.39 2006/03/05 15:58:22 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.40 2006/07/31 01:16:36 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -274,6 +274,28 @@ comment_level > 0 { next; }
 	data = substr(data, pos+1, length(data)-pos);
 
 	print "declare unique index " iname " " oid " " data
+}
+
+/^DECLARE_TOAST\(/ {
+# ----
+#  end any prior catalog data insertions before starting a define toast
+# ----
+	if (reln_open == 1) {
+		print "close " catalog;
+		reln_open = 0;
+	}
+
+	data = substr($0, 15, length($0) - 15);
+	pos = index(data, ",");
+	tname = substr(data, 1, pos-1);
+	data = substr(data, pos+1, length(data)-pos);
+	pos = index(data, ",");
+	toastoid = substr(data, 1, pos-1);
+	data = substr(data, pos+1, length(data)-pos);
+	# previous commands already removed the trailing );
+	indexoid = data;
+
+	print "declare toast " toastoid " " indexoid " on " tname
 }
 
 /^BUILD_INDICES/	{ print "build indices"; }

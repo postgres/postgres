@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.276 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.277 2006/07/31 01:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 #include "access/xact.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
-#include "commands/tablecmds.h"
+#include "catalog/toasting.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
@@ -821,7 +821,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so
 		 * that the TOAST table will be visible for insertion.
 		 */
-		AlterTableCreateToastTable(intoRelationId, true);
+		AlterTableCreateToastTable(intoRelationId);
 
 		/*
 		 * And open the constructed table for writing.

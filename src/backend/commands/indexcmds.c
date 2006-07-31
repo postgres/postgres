@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.145 2006/07/13 16:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.146 2006/07/31 01:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,7 +412,7 @@ DefineIndex(RangeVar *heapRelation,
 
 	index_create(relationId, indexRelationName, indexRelationId,
 				 indexInfo, accessMethodId, tablespaceId, classObjectId,
-				 reloptions, primary, false, isconstraint,
+				 reloptions, primary, isconstraint,
 				 allowSystemTableMods, skip_build);
 }
 

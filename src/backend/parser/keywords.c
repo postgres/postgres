@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.173 2006/07/15 03:35:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.174 2006/07/31 01:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,6 @@ static const ScanKeyword ScanKeywords[] = {
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},
 	{"to", TO},
-	{"toast", TOAST},
 	{"trailing", TRAILING},
 	{"transaction", TRANSACTION},
 	{"treat", TREAT},

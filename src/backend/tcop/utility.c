@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.262 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.263 2006/07/31 01:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
+#include "catalog/toasting.h"
 #include "commands/alter.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
@@ -526,7 +527,7 @@ ProcessUtility(Node *parsetree,
 				 * secondary relation too.
 				 */
 				CommandCounterIncrement();
-				AlterTableCreateToastTable(relOid, true);
+				AlterTableCreateToastTable(relOid);
 			}
 			break;
 

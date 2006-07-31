@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.42 2006/03/07 01:03:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.43 2006/07/31 01:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,7 @@ insert			{ return(INSERT_TUPLE); }
 "index"			{ return(INDEX); }
 "on"			{ return(ON); }
 "using"			{ return(USING); }
+"toast"			{ return(XTOAST); }
 
 {arrayid}		{
 					yylval.ival = EnterString(MapArrayTypeName((char*)yytext));

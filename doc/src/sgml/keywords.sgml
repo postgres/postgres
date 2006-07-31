@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.16 2005/10/12 09:45:29 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.17 2006/07/31 01:16:36 tgl Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -4012,13 +4012,6 @@
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
-   </row>
-   <row>
-    <entry><token>TOAST</token></entry>
-    <entry>non-reserved</entry>
-    <entry></entry>
-    <entry></entry>
-    <entry></entry>
    </row>
    <row>
     <entry><token>TOP_LEVEL_COUNT</token></entry>

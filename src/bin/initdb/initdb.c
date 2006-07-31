@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.119 2006/07/27 08:30:41 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.120 2006/07/31 01:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,6 @@ static void setup_config(void);
 static void bootstrap_template1(char *short_version);
 static void setup_auth(void);
 static void get_set_pwd(void);
-static void unlimit_systables(void);
 static void setup_depend(void);
 static void setup_sysviews(void);
 static void setup_description(void);
@@ -1560,45 +1559,6 @@ get_set_pwd(void)
 }
 
 /*
- * toast sys tables
- */
-static void
-unlimit_systables(void)
-{
-	PG_CMD_DECL;
-	char	  **line;
-	static char *systables_setup[] = {
-		"ALTER TABLE pg_attrdef CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_authid CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_constraint CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_database CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_description CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_proc CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_rewrite CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_shdescription CREATE TOAST TABLE;\n",
-		"ALTER TABLE pg_statistic CREATE TOAST TABLE;\n",
-		NULL
-	};
-
-	fputs(_("enabling unlimited row size for system tables ... "), stdout);
-	fflush(stdout);
-
-	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" %s template1 >%s",
-			 backend_exec, backend_options,
-			 DEVNULL);
-
-	PG_CMD_OPEN;
-
-	for (line = systables_setup; *line != NULL; line++)
-		PG_CMD_PUTS(*line);
-
-	PG_CMD_CLOSE;
-
-	check_ok();
-}
-
-/*
  * set up pg_depend
  */
 static void
@@ -2934,8 +2894,6 @@ main(int argc, char *argv[])
 	setup_auth();
 	if (pwprompt || pwfilename)
 		get_set_pwd();
-
-	unlimit_systables();
 
 	setup_depend();
 

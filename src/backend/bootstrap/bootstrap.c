@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.221 2006/07/29 03:02:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.222 2006/07/31 01:16:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1242,7 +1242,7 @@ build_indices(void)
 		heap = heap_open(ILHead->il_heap, NoLock);
 		ind = index_open(ILHead->il_ind);
 
-		index_build(heap, ind, ILHead->il_info, false, false);
+		index_build(heap, ind, ILHead->il_info, false);
 
 		index_close(ind);
 		heap_close(heap, NoLock);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.29 2006/07/13 16:49:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.30 2006/07/31 01:16:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,6 @@ extern void AlterTable(AlterTableStmt *stmt);
 extern void ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing);
 
 extern void AlterTableInternal(Oid relid, List *cmds, bool recurse);
-
-extern void AlterTableCreateToastTable(Oid relOid, bool silent);
 
 extern void AlterTableNamespace(RangeVar *relation, const char *newschema);
 

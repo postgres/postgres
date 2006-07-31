@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/catalog/README,v 1.9 2005/04/14 01:38:15 tgl Exp $
+$PostgreSQL: pgsql/src/backend/catalog/README,v 1.10 2006/07/31 01:16:36 tgl Exp $
 
 This directory contains .c files that manipulate the system catalogs;
 src/include/catalog contains the .h files that define the structure
@@ -73,8 +73,9 @@ heap_create_with_catalog process, because it needs these tables to exist
 already.  The list of files this currently includes is:
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h
 Also, indexing.h must be last, since the indexes can't be created until all
-the tables are in place.  There are reputedly some other order dependencies
-in the .bki list, too.
+the tables are in place, and toasting.h should probably be next-to-last
+(or at least after all the tables that need toast tables).  There are
+reputedly some other order dependencies in the .bki list, too.
 
 -----------------------------------------------------------------
 

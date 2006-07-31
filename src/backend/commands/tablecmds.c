@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.196 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.197 2006/07/31 01:16:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/reloptions.h"
-#include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -29,9 +28,9 @@
 #include "catalog/pg_depend.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
-#include "catalog/pg_opclass.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
+#include "catalog/toasting.h"
 #include "commands/cluster.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
@@ -170,7 +169,6 @@ static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 					int16 seqNumber, Relation catalogRelation);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
-static bool needs_toast_table(Relation rel);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
 					 Oid oldNspOid, Oid newNspOid);
 static void AlterSeqNamespaces(Relation classRel, Relation rel,
@@ -2073,12 +2071,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepAlterColumnType(wqueue, tab, rel, recurse, recursing, cmd);
 			pass = AT_PASS_ALTER_TYPE;
 			break;
-		case AT_ToastTable:		/* CREATE TOAST TABLE */
-			ATSimplePermissions(rel, false);
-			/* This command never recurses */
-			/* No command-specific prep needed */
-			pass = AT_PASS_MISC;
-			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
 			/* This command never recurses */
 			/* No command-specific prep needed */
@@ -2196,8 +2188,8 @@ ATRewriteCatalogs(List **wqueue)
 	}
 
 	/*
-	 * Do an implicit CREATE TOAST TABLE if we executed any subcommands that
-	 * might have added a column or changed column storage.
+	 * Check to see if a toast table must be added, if we executed any
+	 * subcommands that might have added a column or changed column storage.
 	 */
 	foreach(ltab, *wqueue)
 	{
@@ -2207,7 +2199,7 @@ ATRewriteCatalogs(List **wqueue)
 			(tab->subcmds[AT_PASS_ADD_COL] ||
 			 tab->subcmds[AT_PASS_ALTER_TYPE] ||
 			 tab->subcmds[AT_PASS_COL_ATTRS]))
-			AlterTableCreateToastTable(tab->relid, true);
+			AlterTableCreateToastTable(tab->relid);
 	}
 }
 
@@ -2260,9 +2252,6 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			break;
 		case AT_AlterColumnType:		/* ALTER COLUMN TYPE */
 			ATExecAlterColumnType(tab, rel, cmd->name, (TypeName *) cmd->def);
-			break;
-		case AT_ToastTable:		/* CREATE TOAST TABLE */
-			AlterTableCreateToastTable(RelationGetRelid(rel), false);
 			break;
 		case AT_ChangeOwner:	/* ALTER OWNER */
 			ATExecChangeOwner(RelationGetRelid(rel),
@@ -6538,275 +6527,6 @@ ATExecDropInherits(Relation rel, RangeVar *parent)
 
 	systable_endscan(scan);
 	heap_close(catalogRelation, RowExclusiveLock);
-}
-
-
-/*
- * ALTER TABLE CREATE TOAST TABLE
- *
- * Note: this is also invoked from outside this module; in such cases we
- * expect the caller to have verified that the relation is a table and we
- * have all the right permissions.	Callers expect this function
- * to end with CommandCounterIncrement if it makes any changes.
- */
-void
-AlterTableCreateToastTable(Oid relOid, bool silent)
-{
-	Relation	rel;
-	HeapTuple	reltup;
-	TupleDesc	tupdesc;
-	bool		shared_relation;
-	Relation	class_rel;
-	Oid			toast_relid;
-	Oid			toast_idxid;
-	char		toast_relname[NAMEDATALEN];
-	char		toast_idxname[NAMEDATALEN];
-	IndexInfo  *indexInfo;
-	Oid			classObjectId[2];
-	ObjectAddress baseobject,
-				toastobject;
-
-	/*
-	 * Grab an exclusive lock on the target table, which we will NOT release
-	 * until end of transaction.  (This is probably redundant in all present
-	 * uses...)
-	 */
-	rel = heap_open(relOid, AccessExclusiveLock);
-
-	/*
-	 * Toast table is shared if and only if its parent is.
-	 *
-	 * We cannot allow toasting a shared relation after initdb (because
-	 * there's no way to mark it toasted in other databases' pg_class).
-	 * Unfortunately we can't distinguish initdb from a manually started
-	 * standalone backend (toasting happens after the bootstrap phase, so
-	 * checking IsBootstrapProcessingMode() won't work).  However, we can at
-	 * least prevent this mistake under normal multi-user operation.
-	 */
-	shared_relation = rel->rd_rel->relisshared;
-	if (shared_relation && IsUnderPostmaster)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("shared tables cannot be toasted after initdb")));
-
-	/*
-	 * Is it already toasted?
-	 */
-	if (rel->rd_rel->reltoastrelid != InvalidOid)
-	{
-		if (silent)
-		{
-			heap_close(rel, NoLock);
-			return;
-		}
-
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("table \"%s\" already has a TOAST table",
-						RelationGetRelationName(rel))));
-	}
-
-	/*
-	 * Check to see whether the table actually needs a TOAST table.
-	 */
-	if (!needs_toast_table(rel))
-	{
-		if (silent)
-		{
-			heap_close(rel, NoLock);
-			return;
-		}
-
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("table \"%s\" does not need a TOAST table",
-						RelationGetRelationName(rel))));
-	}
-
-	/*
-	 * Create the toast table and its index
-	 */
-	snprintf(toast_relname, sizeof(toast_relname),
-			 "pg_toast_%u", relOid);
-	snprintf(toast_idxname, sizeof(toast_idxname),
-			 "pg_toast_%u_index", relOid);
-
-	/* this is pretty painful...  need a tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(3, false);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
-					   "chunk_id",
-					   OIDOID,
-					   -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
-					   "chunk_seq",
-					   INT4OID,
-					   -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3,
-					   "chunk_data",
-					   BYTEAOID,
-					   -1, 0);
-
-	/*
-	 * Ensure that the toast table doesn't itself get toasted, or we'll be
-	 * toast :-(.  This is essential for chunk_data because type bytea is
-	 * toastable; hit the other two just to be sure.
-	 */
-	tupdesc->attrs[0]->attstorage = 'p';
-	tupdesc->attrs[1]->attstorage = 'p';
-	tupdesc->attrs[2]->attstorage = 'p';
-
-	/*
-	 * Note: the toast relation is placed in the regular pg_toast namespace
-	 * even if its master relation is a temp table.  There cannot be any
-	 * naming collision, and the toast rel will be destroyed when its master
-	 * is, so there's no need to handle the toast rel as temp.
-	 *
-	 * XXX would it make sense to apply the master's reloptions to the toast
-	 * table?
-	 */
-	toast_relid = heap_create_with_catalog(toast_relname,
-										   PG_TOAST_NAMESPACE,
-										   rel->rd_rel->reltablespace,
-										   InvalidOid,
-										   rel->rd_rel->relowner,
-										   tupdesc,
-										   RELKIND_TOASTVALUE,
-										   shared_relation,
-										   true,
-										   0,
-										   ONCOMMIT_NOOP,
-										   (Datum) 0,
-										   true);
-
-	/* make the toast relation visible, else index creation will fail */
-	CommandCounterIncrement();
-
-	/*
-	 * Create unique index on chunk_id, chunk_seq.
-	 *
-	 * NOTE: the normal TOAST access routines could actually function with a
-	 * single-column index on chunk_id only. However, the slice access
-	 * routines use both columns for faster access to an individual chunk. In
-	 * addition, we want it to be unique as a check against the possibility of
-	 * duplicate TOAST chunk OIDs. The index might also be a little more
-	 * efficient this way, since btree isn't all that happy with large numbers
-	 * of equal keys.
-	 */
-
-	indexInfo = makeNode(IndexInfo);
-	indexInfo->ii_NumIndexAttrs = 2;
-	indexInfo->ii_KeyAttrNumbers[0] = 1;
-	indexInfo->ii_KeyAttrNumbers[1] = 2;
-	indexInfo->ii_Expressions = NIL;
-	indexInfo->ii_ExpressionsState = NIL;
-	indexInfo->ii_Predicate = NIL;
-	indexInfo->ii_PredicateState = NIL;
-	indexInfo->ii_Unique = true;
-
-	classObjectId[0] = OID_BTREE_OPS_OID;
-	classObjectId[1] = INT4_BTREE_OPS_OID;
-
-	toast_idxid = index_create(toast_relid, toast_idxname, InvalidOid,
-							   indexInfo,
-							   BTREE_AM_OID,
-							   rel->rd_rel->reltablespace,
-							   classObjectId, (Datum) 0,
-							   true, true, false, true, false);
-
-	/*
-	 * Store the toast table's OID in the parent relation's pg_class row
-	 */
-	class_rel = heap_open(RelationRelationId, RowExclusiveLock);
-
-	reltup = SearchSysCacheCopy(RELOID,
-								ObjectIdGetDatum(relOid),
-								0, 0, 0);
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "cache lookup failed for relation %u", relOid);
-
-	((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid = toast_relid;
-
-	simple_heap_update(class_rel, &reltup->t_self, reltup);
-
-	/* Keep catalog indexes current */
-	CatalogUpdateIndexes(class_rel, reltup);
-
-	heap_freetuple(reltup);
-
-	heap_close(class_rel, RowExclusiveLock);
-
-	/*
-	 * Register dependency from the toast table to the master, so that the
-	 * toast table will be deleted if the master is.
-	 */
-	baseobject.classId = RelationRelationId;
-	baseobject.objectId = relOid;
-	baseobject.objectSubId = 0;
-	toastobject.classId = RelationRelationId;
-	toastobject.objectId = toast_relid;
-	toastobject.objectSubId = 0;
-
-	recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
-
-	/*
-	 * Clean up and make changes visible
-	 */
-	heap_close(rel, NoLock);
-
-	CommandCounterIncrement();
-}
-
-/*
- * Check to see whether the table needs a TOAST table.	It does only if
- * (1) there are any toastable attributes, and (2) the maximum length
- * of a tuple could exceed TOAST_TUPLE_THRESHOLD.  (We don't want to
- * create a toast table for something like "f1 varchar(20)".)
- */
-static bool
-needs_toast_table(Relation rel)
-{
-	int32		data_length = 0;
-	bool		maxlength_unknown = false;
-	bool		has_toastable_attrs = false;
-	TupleDesc	tupdesc;
-	Form_pg_attribute *att;
-	int32		tuple_length;
-	int			i;
-
-	tupdesc = rel->rd_att;
-	att = tupdesc->attrs;
-
-	for (i = 0; i < tupdesc->natts; i++)
-	{
-		if (att[i]->attisdropped)
-			continue;
-		data_length = att_align(data_length, att[i]->attalign);
-		if (att[i]->attlen > 0)
-		{
-			/* Fixed-length types are never toastable */
-			data_length += att[i]->attlen;
-		}
-		else
-		{
-			int32		maxlen = type_maximum_size(att[i]->atttypid,
-												   att[i]->atttypmod);
-
-			if (maxlen < 0)
-				maxlength_unknown = true;
-			else
-				data_length += maxlen;
-			if (att[i]->attstorage != 'p')
-				has_toastable_attrs = true;
-		}
-	}
-	if (!has_toastable_attrs)
-		return false;			/* nothing to toast? */
-	if (maxlength_unknown)
-		return true;			/* any unlimited-length attrs? */
-	tuple_length = MAXALIGN(offsetof(HeapTupleHeaderData, t_bits) +
-							BITMAPLEN(tupdesc->natts)) +
-		MAXALIGN(data_length);
-	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
 
 
