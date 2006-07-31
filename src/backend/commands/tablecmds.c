@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.197 2006/07/31 01:16:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.198 2006/07/31 20:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5863,7 +5863,10 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
 
-	rel = relation_open(tableOid, NoLock);
+	/*
+	 * Need lock here in case we are recursing to toast table or index
+	 */
+	rel = relation_open(tableOid, AccessExclusiveLock);
 
 	/*
 	 * We can never allow moving of shared or nailed-in-cache relations,

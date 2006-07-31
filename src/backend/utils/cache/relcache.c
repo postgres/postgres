@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.246 2006/07/14 14:52:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.247 2006/07/31 20:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
  *		RelationCacheInitialize			- initialize relcache (to empty)
  *		RelationCacheInitializePhase2	- finish initializing relcache
  *		RelationIdGetRelation			- get a reldesc by relation id
- *		RelationIdCacheGetRelation		- get a cached reldesc by relid
  *		RelationClose					- close an open relation
  *
  * NOTES
@@ -34,6 +33,7 @@
 #include "access/heapam.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_amop.h"
@@ -763,6 +763,10 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
  *		recycling the given old relation object.  The latter case
  *		supports rebuilding a relcache entry without invalidating
  *		pointers to it.
+ *
+ *		Returns NULL if no pg_class row could be found for the given relid
+ *		(suggesting we are trying to access a just-deleted relation).
+ *		Any other error is reported via elog.
  * --------------------------------
  */
 static Relation
@@ -1388,39 +1392,16 @@ formrdesc(const char *relationName, Oid relationReltype,
  */
 
 /*
- *		RelationIdCacheGetRelation
- *
- *		Lookup an existing reldesc by OID.
- *
- *		Only try to get the reldesc by looking in the cache,
- *		do not go to the disk if it's not present.
- *
- *		NB: relation ref count is incremented if successful.
- *		Caller should eventually decrement count.  (Usually,
- *		that happens by calling RelationClose().)
- */
-Relation
-RelationIdCacheGetRelation(Oid relationId)
-{
-	Relation	rd;
-
-	RelationIdCacheLookup(relationId, rd);
-
-	if (RelationIsValid(rd))
-	{
-		RelationIncrementReferenceCount(rd);
-		/* revalidate nailed index if necessary */
-		if (!rd->rd_isvalid)
-			RelationReloadClassinfo(rd);
-	}
-
-	return rd;
-}
-
-/*
  *		RelationIdGetRelation
  *
  *		Lookup a reldesc by OID; make one if not already in cache.
+ *
+ *		Returns NULL if no pg_class row could be found for the given relid
+ *		(suggesting we are trying to access a just-deleted relation).
+ *		Any other error is reported via elog.
+ *
+ *		NB: caller should already have at least AccessShareLock on the
+ *		relation ID, else there are nasty race conditions.
  *
  *		NB: relation ref count is incremented, or set to 1 if new entry.
  *		Caller should eventually decrement count.  (Usually,
@@ -1432,11 +1413,18 @@ RelationIdGetRelation(Oid relationId)
 	Relation	rd;
 
 	/*
-	 * first try and get a reldesc from the cache
+	 * first try to find reldesc in the cache
 	 */
-	rd = RelationIdCacheGetRelation(relationId);
+	RelationIdCacheLookup(relationId, rd);
+
 	if (RelationIsValid(rd))
+	{
+		RelationIncrementReferenceCount(rd);
+		/* revalidate nailed index if necessary */
+		if (!rd->rd_isvalid)
+			RelationReloadClassinfo(rd);
 		return rd;
+	}
 
 	/*
 	 * no reldesc in the cache, so have RelationBuildDesc() build one and add
@@ -2132,6 +2120,16 @@ RelationBuildLocalRelation(const char *relname,
 			nailit = false;
 			break;
 	}
+
+	/*
+	 * check that hardwired list of shared rels matches what's in the
+	 * bootstrap .bki file.  If you get a failure here during initdb,
+	 * you probably need to fix IsSharedRelation() to match whatever
+	 * you've done to the set of shared relations.
+	 */
+	if (shared_relation != IsSharedRelation(relid))
+		elog(ERROR, "shared_relation flag for \"%s\" does not match IsSharedRelation(%u)",
+			 relname, relid);
 
 	/*
 	 * switch to the cache context to create the relcache entry.

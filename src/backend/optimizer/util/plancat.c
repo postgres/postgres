@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.121 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.122 2006/07/31 20:09:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static List *get_relation_constraints(Oid relationObjectId, RelOptInfo *rel);
  * widths here, and we may as well cache the results for costsize.c.
  */
 void
-get_relation_info(Oid relationObjectId, RelOptInfo *rel)
+get_relation_info(PlannerInfo *root, Oid relationObjectId, RelOptInfo *rel)
 {
 	Index		varno = rel->relid;
 	Relation	relation;
@@ -105,8 +105,22 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 	{
 		List	   *indexoidlist;
 		ListCell   *l;
+		LOCKMODE	lmode;
 
 		indexoidlist = RelationGetIndexList(relation);
+
+		/*
+		 * For each index, we get the same type of lock that the executor will
+		 * need, and do not release it.  This saves a couple of trips to the
+		 * shared lock manager while not creating any real loss of
+		 * concurrency, because no schema changes could be happening on the
+		 * index while we hold lock on the parent rel, and neither lock type
+		 * blocks any other kind of index operation.
+		 */
+		if (rel->relid == root->parse->resultRelation)
+			lmode = RowExclusiveLock;
+		else
+			lmode = AccessShareLock;
 
 		foreach(l, indexoidlist)
 		{
@@ -120,13 +134,8 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 			/*
 			 * Extract info from the relation descriptor for the index.
-			 *
-			 * Note that we take no lock on the index; we assume our lock on
-			 * the parent table will protect the index's schema information.
-			 * When and if the executor actually uses the index, it will take
-			 * a lock as needed to protect the access to the index contents.
 			 */
-			indexRelation = index_open(indexoid);
+			indexRelation = index_open(indexoid, lmode);
 			index = indexRelation->rd_index;
 
 			info = makeNode(IndexOptInfo);
@@ -203,7 +212,7 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 					info->tuples = rel->tuples;
 			}
 
-			index_close(indexRelation);
+			index_close(indexRelation, NoLock);
 
 			indexinfos = lcons(info, indexinfos);
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.95 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.96 2006/07/31 20:09:00 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1624,6 +1624,8 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 	ScanKeyData key[2];
 	SysScanDesc depScan;
 	HeapTuple	depTup;
+
+	Assert(lockmode != NoLock);
 
 	/*
 	 * We scan pg_depend to find those things that depend on the domain. (We

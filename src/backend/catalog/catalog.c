@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * catalog.c
- *		routines concerned with catalog naming conventions
+ *		routines concerned with catalog naming conventions and other
+ *		bits of hard-wired knowledge
  *
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
@@ -9,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.66 2006/03/05 15:58:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.67 2006/07/31 20:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +23,16 @@
 #include "access/genam.h"
 #include "access/transam.h"
 #include "catalog/catalog.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_auth_members.h"
+#include "catalog/pg_authid.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_pltemplate.h"
+#include "catalog/pg_shdepend.h"
+#include "catalog/pg_shdescription.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/toasting.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/fmgroids.h"
@@ -218,6 +227,64 @@ IsReservedName(const char *name)
 
 
 /*
+ * IsSharedRelation
+ *		Given the OID of a relation, determine whether it's supposed to be
+ *		shared across an entire database cluster.
+ *
+ * Hard-wiring this list is pretty grotty, but we really need it so that
+ * we can compute the locktag for a relation (and then lock it) without
+ * having already read its pg_class entry.  If we try to retrieve relisshared
+ * from pg_class with no pre-existing lock, there is a race condition against
+ * anyone who is concurrently committing a change to the pg_class entry:
+ * since we read system catalog entries under SnapshotNow, it's possible
+ * that both the old and new versions of the row are invalid at the instants
+ * we scan them.  We fix this by insisting that updaters of a pg_class
+ * row must hold exclusive lock on the corresponding rel, and that users
+ * of a relation must hold at least AccessShareLock on the rel *before*
+ * trying to open its relcache entry.  But to lock a rel, you have to
+ * know if it's shared.  Fortunately, the set of shared relations is
+ * fairly static, so a hand-maintained list of their OIDs isn't completely
+ * impractical.
+ */
+bool
+IsSharedRelation(Oid relationId)
+{
+	/* These are the shared catalogs (look for BKI_SHARED_RELATION) */
+	if (relationId == AuthIdRelationId ||
+		relationId == AuthMemRelationId ||
+		relationId == DatabaseRelationId ||
+		relationId == PLTemplateRelationId ||
+		relationId == SharedDescriptionRelationId ||
+		relationId == SharedDependRelationId ||
+		relationId == TableSpaceRelationId)
+		return true;
+	/* These are their indexes (see indexing.h) */
+	if (relationId == AuthIdRolnameIndexId ||
+		relationId == AuthIdOidIndexId ||
+		relationId == AuthMemRoleMemIndexId ||
+		relationId == AuthMemMemRoleIndexId ||
+		relationId == DatabaseNameIndexId ||
+		relationId == DatabaseOidIndexId ||
+		relationId == PLTemplateNameIndexId ||
+		relationId == SharedDescriptionObjIndexId ||
+		relationId == SharedDependDependerIndexId ||
+		relationId == SharedDependReferenceIndexId ||
+		relationId == TablespaceOidIndexId ||
+		relationId == TablespaceNameIndexId)
+		return true;
+	/* These are their toast tables and toast indexes (see toasting.h) */
+	if (relationId == PgAuthidToastTable ||
+		relationId == PgAuthidToastIndex ||
+		relationId == PgDatabaseToastTable ||
+		relationId == PgDatabaseToastIndex ||
+		relationId == PgShdescriptionToastTable ||
+		relationId == PgShdescriptionToastIndex)
+		return true;
+	return false;
+}
+
+
+/*
  * GetNewOid
  *		Generate a new OID that is unique within the given relation.
  *
@@ -271,9 +338,9 @@ GetNewOid(Relation relation)
 	}
 
 	/* Otherwise, use the index to find a nonconflicting OID */
-	indexrel = index_open(oidIndex);
+	indexrel = index_open(oidIndex, AccessShareLock);
 	newOid = GetNewOidWithIndex(relation, indexrel);
-	index_close(indexrel);
+	index_close(indexrel, AccessShareLock);
 
 	return newOid;
 }
@@ -309,7 +376,7 @@ GetNewOidWithIndex(Relation relation, Relation indexrel)
 					ObjectIdGetDatum(newOid));
 
 		/* see notes above about using SnapshotDirty */
-		scan = index_beginscan(relation, indexrel, true,
+		scan = index_beginscan(relation, indexrel,
 							   SnapshotDirty, 1, &key);
 
 		collides = HeapTupleIsValid(index_getnext(scan, ForwardScanDirection));

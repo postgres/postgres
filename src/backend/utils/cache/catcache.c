@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.131 2006/07/14 14:52:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.132 2006/07/31 20:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -904,12 +904,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 	CatalogCacheInitializeCache_DEBUG1;
 
-	/*
-	 * Open the relation without locking --- we only need the tupdesc, which
-	 * we assume will never change ...
-	 */
-	relation = heap_open(cache->cc_reloid, NoLock);
-	Assert(RelationIsValid(relation));
+	relation = heap_open(cache->cc_reloid, AccessShareLock);
 
 	/*
 	 * switch to the cache context so our allocations do not vanish at the end
@@ -936,7 +931,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
-	heap_close(relation, NoLock);
+	heap_close(relation, AccessShareLock);
 
 	CACHE3_elog(DEBUG2, "CatalogCacheInitializeCache: %s, %d keys",
 				cache->cc_relname, cache->cc_nkeys);
@@ -1012,8 +1007,8 @@ InitCatCachePhase2(CatCache *cache)
 	{
 		Relation	idesc;
 
-		idesc = index_open(cache->cc_indexoid);
-		index_close(idesc);
+		idesc = index_open(cache->cc_indexoid, AccessShareLock);
+		index_close(idesc, AccessShareLock);
 	}
 }
 

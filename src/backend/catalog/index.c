@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.271 2006/07/31 01:16:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.272 2006/07/31 20:09:00 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -483,12 +483,8 @@ index_create(Oid heapRelationId,
 	/*
 	 * We cannot allow indexing a shared relation after initdb (because
 	 * there's no way to make the entry in other databases' pg_class).
-	 * Unfortunately we can't distinguish initdb from a manually started
-	 * standalone backend (toasting of shared rels happens after the bootstrap
-	 * phase, so checking IsBootstrapProcessingMode() won't work).  However,
-	 * we can at least prevent this mistake under normal multi-user operation.
 	 */
-	if (shared_relation && IsUnderPostmaster)
+	if (shared_relation && !IsBootstrapProcessingMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("shared indexes cannot be created after initdb")));
@@ -753,7 +749,7 @@ index_create(Oid heapRelationId,
 	 * the exclusive lock on the index that we acquired above, until end of
 	 * transaction.
 	 */
-	index_close(indexRelation);
+	index_close(indexRelation, NoLock);
 	heap_close(heapRelation, NoLock);
 
 	return indexRelationId;
@@ -789,8 +785,7 @@ index_drop(Oid indexId)
 	heapId = IndexGetRelation(indexId);
 	userHeapRelation = heap_open(heapId, AccessExclusiveLock);
 
-	userIndexRelation = index_open(indexId);
-	LockRelation(userIndexRelation, AccessExclusiveLock);
+	userIndexRelation = index_open(indexId, AccessExclusiveLock);
 
 	/*
 	 * Schedule physical removal of the file
@@ -804,7 +799,7 @@ index_drop(Oid indexId)
 	 * try to rebuild it while we're deleting catalog entries. We keep the
 	 * lock though.
 	 */
-	index_close(userIndexRelation);
+	index_close(userIndexRelation, NoLock);
 
 	RelationForgetRelation(indexId);
 
@@ -982,11 +977,11 @@ FormIndexDatum(IndexInfo *indexInfo,
 
 
 /*
- * index_update_stats --- update pg_class entry after CREATE INDEX
+ * index_update_stats --- update pg_class entry after CREATE INDEX or REINDEX
  *
  * This routine updates the pg_class row of either an index or its parent
- * relation after CREATE INDEX.  Its rather bizarre API is designed to
- * ensure we can do all the necessary work in just one update.
+ * relation after CREATE INDEX or REINDEX.  Its rather bizarre API is designed
+ * to ensure we can do all the necessary work in just one update.
  *
  * hasindex: set relhasindex to this value
  * isprimary: if true, set relhaspkey true; else no change
@@ -1013,33 +1008,50 @@ index_update_stats(Relation rel, bool hasindex, bool isprimary,
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
-	bool		in_place_upd;
 	bool		dirty;
 
 	/*
-	 * Find the tuple to update in pg_class.  Normally we make a copy of the
-	 * tuple using the syscache, modify it, and apply heap_update. But in
-	 * bootstrap mode we can't use heap_update, so we use a nontransactional
-	 * update, ie, overwrite the tuple in-place.
+	 * We always update the pg_class row using a non-transactional,
+	 * overwrite-in-place update.  There are several reasons for this:
 	 *
-	 * We also must use an in-place update if reindexing pg_class itself,
-	 * because the target index may presently not be part of the set of
-	 * indexes that CatalogUpdateIndexes would update (see reindex_relation).
+	 * 1. In bootstrap mode, we have no choice --- UPDATE wouldn't work.
+	 *
+	 * 2. We could be reindexing pg_class itself, in which case we can't
+	 * move its pg_class row because CatalogUpdateIndexes might not know
+	 * about all the indexes yet (see reindex_relation).
+	 *
+	 * 3. Because we execute CREATE INDEX with just share lock on the parent
+	 * rel (to allow concurrent index creations), an ordinary update could
+	 * suffer a tuple-concurrently-updated failure against another CREATE
+	 * INDEX committing at about the same time.  We can avoid that by having
+	 * them both do nontransactional updates (we assume they will both be
+	 * trying to change the pg_class row to the same thing, so it doesn't
+	 * matter which goes first).
+	 *
+	 * 4. Even with just a single CREATE INDEX, there's a risk factor because
+	 * someone else might be trying to open the rel while we commit, and this
+	 * creates a race condition as to whether he will see both or neither of
+	 * the pg_class row versions as valid.  Again, a non-transactional update
+	 * avoids the risk.  It is indeterminate which state of the row the other
+	 * process will see, but it doesn't matter (if he's only taking
+	 * AccessShareLock, then it's not critical that he see relhasindex true).
+	 *
+	 * It is safe to use a non-transactional update even though our
+	 * transaction could still fail before committing.  Setting relhasindex
+	 * true is safe even if there are no indexes (VACUUM will eventually fix
+	 * it), and of course the relpages and reltuples counts are correct (or
+	 * at least more so than the old values) regardless.
 	 */
+
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
-	in_place_upd = IsBootstrapProcessingMode() ||
-		ReindexIsProcessingHeap(RelationRelationId);
-
-restart:
-
-	if (!in_place_upd)
-	{
-		tuple = SearchSysCacheCopy(RELOID,
-								   ObjectIdGetDatum(relid),
-								   0, 0, 0);
-	}
-	else
+	/*
+	 * Make a copy of the tuple to update.  Normally we use the syscache,
+	 * but we can't rely on that during bootstrap or while reindexing
+	 * pg_class itself.
+	 */
+	if (IsBootstrapProcessingMode() ||
+		ReindexIsProcessingHeap(RelationRelationId))
 	{
 		/* don't assume syscache will work */
 		HeapScanDesc pg_class_scan;
@@ -1054,6 +1066,13 @@ restart:
 		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
 		tuple = heap_copytuple(tuple);
 		heap_endscan(pg_class_scan);
+	}
+	else
+	{
+		/* normal case, use syscache */
+		tuple = SearchSysCacheCopy(RELOID,
+								   ObjectIdGetDatum(relid),
+								   0, 0, 0);
 	}
 
 	if (!HeapTupleIsValid(tuple))
@@ -1101,53 +1120,8 @@ restart:
 	 */
 	if (dirty)
 	{
-		if (in_place_upd)
-		{
-			heap_inplace_update(pg_class, tuple);
-		}
-		else
-		{
-			/*
-			 * Because PG allows concurrent CREATE INDEX commands, it's
-			 * possible that someone else tries to update the pg_class
-			 * row at about the same time we do.  Hence, instead of using
-			 * simple_heap_update(), we must use full heap_update() and
-			 * cope with HeapTupleUpdated result.  If we see that, just
-			 * go back and try the whole update again.
-			 */
-			HTSU_Result result;
-			ItemPointerData update_ctid;
-			TransactionId update_xmax;
-
-			result = heap_update(pg_class, &tuple->t_self, tuple,
-								 &update_ctid, &update_xmax,
-								 GetCurrentCommandId(), InvalidSnapshot,
-								 true /* wait for commit */ );
-			switch (result)
-			{
-				case HeapTupleSelfUpdated:
-					/* Tuple was already updated in current command? */
-					elog(ERROR, "tuple already updated by self");
-					break;
-
-				case HeapTupleMayBeUpdated:
-					/* done successfully */
-					break;
-
-				case HeapTupleUpdated:
-					heap_freetuple(tuple);
-					/* Must do CCI so we can see the updated tuple */
-					CommandCounterIncrement();
-					goto restart;
-
-				default:
-					elog(ERROR, "unrecognized heap_update status: %u", result);
-					break;
-			}
-
-			/* Keep the catalog indexes up to date */
-			CatalogUpdateIndexes(pg_class, tuple);
-		}
+		heap_inplace_update(pg_class, tuple);
+		/* the above sends a cache inval message */
 	}
 	else
 	{
@@ -1571,8 +1545,7 @@ reindex_index(Oid indexId)
 	 * Open the target index relation and get an exclusive lock on it, to
 	 * ensure that no one else is touching this particular index.
 	 */
-	iRel = index_open(indexId);
-	LockRelation(iRel, AccessExclusiveLock);
+	iRel = index_open(indexId, AccessExclusiveLock);
 
 	/*
 	 * If it's a shared index, we must do inplace processing (because we have
@@ -1628,7 +1601,7 @@ reindex_index(Oid indexId)
 	ResetReindexProcessing();
 
 	/* Close rels, but keep locks */
-	index_close(iRel);
+	index_close(iRel, NoLock);
 	heap_close(heapRelation, NoLock);
 }
 

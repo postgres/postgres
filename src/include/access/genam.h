@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.64 2006/07/13 17:47:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.65 2006/07/31 20:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "nodes/primnodes.h"
+#include "storage/lock.h"
 
 /*
  * Struct for statistics returned by ambuild
@@ -84,9 +85,9 @@ typedef SysScanDescData *SysScanDesc;
 /*
  * generalized index_ interface routines (in indexam.c)
  */
-extern Relation index_open(Oid relationId);
-extern Relation index_openrv(const RangeVar *relation);
-extern void index_close(Relation relation);
+extern Relation index_open(Oid relationId, LOCKMODE lockmode);
+extern void index_close(Relation relation, LOCKMODE lockmode);
+
 extern bool index_insert(Relation indexRelation,
 			 Datum *values, bool *isnull,
 			 ItemPointer heap_t_ctid,
@@ -95,11 +96,9 @@ extern bool index_insert(Relation indexRelation,
 
 extern IndexScanDesc index_beginscan(Relation heapRelation,
 				Relation indexRelation,
-				bool need_index_lock,
 				Snapshot snapshot,
 				int nkeys, ScanKey key);
 extern IndexScanDesc index_beginscan_multi(Relation indexRelation,
-					  bool need_index_lock,
 					  Snapshot snapshot,
 					  int nkeys, ScanKey key);
 extern void index_rescan(IndexScanDesc scan, ScanKey key);

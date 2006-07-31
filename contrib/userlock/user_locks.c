@@ -35,8 +35,7 @@ user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 
 	SET_LOCKTAG_USERLOCK(tag, id1, id2);
 
-	return (LockAcquire(&tag, false,
-						lockmode, true, true) != LOCKACQUIRE_NOT_AVAIL);
+	return (LockAcquire(&tag, lockmode, true, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
 int

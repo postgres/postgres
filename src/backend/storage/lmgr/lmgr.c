@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.85 2006/07/14 16:59:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.86 2006/07/31 20:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,10 +18,13 @@
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
+#include "catalog/namespace.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 
 
 /*
@@ -45,7 +48,105 @@ RelationInitLockInfo(Relation relation)
 }
 
 /*
+ * SetLocktagRelationOid
+ *		Set up a locktag for a relation, given only relation OID
+ */
+static inline void
+SetLocktagRelationOid(LOCKTAG *tag, Oid relid)
+{
+	Oid		dbid;
+
+	if (IsSharedRelation(relid))
+		dbid = InvalidOid;
+	else
+		dbid = MyDatabaseId;
+
+	SET_LOCKTAG_RELATION(*tag, dbid, relid);
+}
+
+/*
+ *		LockRelationOid
+ *
+ * Lock a relation given only its OID.  This should generally be used
+ * before attempting to open the relation's relcache entry.
+ */
+void
+LockRelationOid(Oid relid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+	LockAcquireResult res;
+
+	SetLocktagRelationOid(&tag, relid);
+
+	res = LockAcquire(&tag, lockmode, false, false);
+
+	/*
+	 * Now that we have the lock, check for invalidation messages, so that
+	 * we will update or flush any stale relcache entry before we try to use
+	 * it.  We can skip this in the not-uncommon case that we already had
+	 * the same type of lock being requested, since then no one else could
+	 * have modified the relcache entry in an undesirable way.  (In the
+	 * case where our own xact modifies the rel, the relcache update happens
+	 * via CommandCounterIncrement, not here.)
+	 */
+	if (res != LOCKACQUIRE_ALREADY_HELD)
+		AcceptInvalidationMessages();
+}
+
+/*
+ *		ConditionalLockRelationOid
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns TRUE iff the lock was acquired.
+ *
+ * NOTE: we do not currently need conditional versions of all the
+ * LockXXX routines in this file, but they could easily be added if needed.
+ */
+bool
+ConditionalLockRelationOid(Oid relid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+	LockAcquireResult res;
+
+	SetLocktagRelationOid(&tag, relid);
+
+	res = LockAcquire(&tag, lockmode, false, true);
+
+	if (res == LOCKACQUIRE_NOT_AVAIL)
+		return false;
+
+	/*
+	 * Now that we have the lock, check for invalidation messages; see
+	 * notes in LockRelationOid.
+	 */
+	if (res != LOCKACQUIRE_ALREADY_HELD)
+		AcceptInvalidationMessages();
+
+	return true;
+}
+
+/*
+ *		UnlockRelationId
+ *
+ * Note: we don't supply UnlockRelationOid since it's normally easy for
+ * callers to provide the LockRelId info from a relcache entry.
+ */
+void
+UnlockRelationId(LockRelId *relid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
+
+	LockRelease(&tag, lockmode, false);
+}
+
+/*
  *		LockRelation
+ *
+ * This is a convenience routine for acquiring an additional lock on an
+ * already-open relation.  Never try to do "relation_open(foo, NoLock)"
+ * and then lock with this.
  */
 void
 LockRelation(Relation relation, LOCKMODE lockmode)
@@ -57,31 +158,22 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	res = LockAcquire(&tag, relation->rd_istemp, lockmode, false, false);
+	res = LockAcquire(&tag, lockmode, false, false);
 
 	/*
-	 * Check to see if the relcache entry has been invalidated while we were
-	 * waiting to lock it.	If so, rebuild it, or ereport() trying. Increment
-	 * the refcount to ensure that RelationFlushRelation will rebuild it and
-	 * not just delete it.	We can skip this if the lock was already held,
-	 * however.
+	 * Now that we have the lock, check for invalidation messages; see
+	 * notes in LockRelationOid.
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
-	{
-		RelationIncrementReferenceCount(relation);
 		AcceptInvalidationMessages();
-		RelationDecrementReferenceCount(relation);
-	}
 }
 
 /*
  *		ConditionalLockRelation
  *
- * As above, but only lock if we can get the lock without blocking.
- * Returns TRUE iff the lock was acquired.
- *
- * NOTE: we do not currently need conditional versions of all the
- * LockXXX routines in this file, but they could easily be added if needed.
+ * This is a convenience routine for acquiring an additional lock on an
+ * already-open relation.  Never try to do "relation_open(foo, NoLock)"
+ * and then lock with this.
  */
 bool
 ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
@@ -93,30 +185,26 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	res = LockAcquire(&tag, relation->rd_istemp, lockmode, false, true);
+	res = LockAcquire(&tag, lockmode, false, true);
 
 	if (res == LOCKACQUIRE_NOT_AVAIL)
 		return false;
 
 	/*
-	 * Check to see if the relcache entry has been invalidated while we were
-	 * waiting to lock it.	If so, rebuild it, or ereport() trying. Increment
-	 * the refcount to ensure that RelationFlushRelation will rebuild it and
-	 * not just delete it.	We can skip this if the lock was already held,
-	 * however.
+	 * Now that we have the lock, check for invalidation messages; see
+	 * notes in LockRelationOid.
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
-	{
-		RelationIncrementReferenceCount(relation);
 		AcceptInvalidationMessages();
-		RelationDecrementReferenceCount(relation);
-	}
 
 	return true;
 }
 
 /*
  *		UnlockRelation
+ *
+ * This is a convenience routine for unlocking a relation without also
+ * closing it.
  */
 void
 UnlockRelation(Relation relation, LOCKMODE lockmode)
@@ -131,11 +219,11 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 }
 
 /*
- *		LockRelationForSession
+ *		LockRelationIdForSession
  *
  * This routine grabs a session-level lock on the target relation.	The
  * session lock persists across transaction boundaries.  It will be removed
- * when UnlockRelationForSession() is called, or if an ereport(ERROR) occurs,
+ * when UnlockRelationIdForSession() is called, or if an ereport(ERROR) occurs,
  * or if the backend exits.
  *
  * Note that one should also grab a transaction-level lock on the rel
@@ -143,20 +231,20 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
  * relcache entry is up to date.
  */
 void
-LockRelationForSession(LockRelId *relid, bool istemprel, LOCKMODE lockmode)
+LockRelationIdForSession(LockRelId *relid, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
 	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
 
-	(void) LockAcquire(&tag, istemprel, lockmode, true, false);
+	(void) LockAcquire(&tag, lockmode, true, false);
 }
 
 /*
- *		UnlockRelationForSession
+ *		UnlockRelationIdForSession
  */
 void
-UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
+UnlockRelationIdForSession(LockRelId *relid, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -184,7 +272,7 @@ LockRelationForExtension(Relation relation, LOCKMODE lockmode)
 								relation->rd_lockInfo.lockRelId.dbId,
 								relation->rd_lockInfo.lockRelId.relId);
 
-	(void) LockAcquire(&tag, relation->rd_istemp, lockmode, false, false);
+	(void) LockAcquire(&tag, lockmode, false, false);
 }
 
 /*
@@ -218,7 +306,7 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	(void) LockAcquire(&tag, relation->rd_istemp, lockmode, false, false);
+	(void) LockAcquire(&tag, lockmode, false, false);
 }
 
 /*
@@ -237,8 +325,7 @@ ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	return (LockAcquire(&tag, relation->rd_istemp,
-						lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
+	return (LockAcquire(&tag, lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
 /*
@@ -275,7 +362,7 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-	(void) LockAcquire(&tag, relation->rd_istemp, lockmode, false, false);
+	(void) LockAcquire(&tag, lockmode, false, false);
 }
 
 /*
@@ -295,8 +382,7 @@ ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-	return (LockAcquire(&tag, relation->rd_istemp,
-						lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
+	return (LockAcquire(&tag, lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
 /*
@@ -330,7 +416,7 @@ XactLockTableInsert(TransactionId xid)
 
 	SET_LOCKTAG_TRANSACTION(tag, xid);
 
-	(void) LockAcquire(&tag, false, ExclusiveLock, false, false);
+	(void) LockAcquire(&tag, ExclusiveLock, false, false);
 }
 
 /*
@@ -375,7 +461,7 @@ XactLockTableWait(TransactionId xid)
 
 		SET_LOCKTAG_TRANSACTION(tag, xid);
 
-		(void) LockAcquire(&tag, false, ShareLock, false, false);
+		(void) LockAcquire(&tag, ShareLock, false, false);
 
 		LockRelease(&tag, ShareLock, false);
 
@@ -403,8 +489,7 @@ ConditionalXactLockTableWait(TransactionId xid)
 
 		SET_LOCKTAG_TRANSACTION(tag, xid);
 
-		if (LockAcquire(&tag, false,
-						ShareLock, false, true) == LOCKACQUIRE_NOT_AVAIL)
+		if (LockAcquire(&tag, ShareLock, false, true) == LOCKACQUIRE_NOT_AVAIL)
 			return false;
 
 		LockRelease(&tag, ShareLock, false);
@@ -423,9 +508,7 @@ ConditionalXactLockTableWait(TransactionId xid)
  * Obtain a lock on a general object of the current database.  Don't use
  * this for shared objects (such as tablespaces).  It's unwise to apply it
  * to relations, also, since a lock taken this way will NOT conflict with
- * LockRelation, and also may be wrongly marked if the relation is temp.
- * (If we ever invent temp objects that aren't tables, we'll want to extend
- * the API of this routine to include an isTempObject flag.)
+ * locks taken via LockRelation and friends.
  */
 void
 LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
@@ -439,7 +522,7 @@ LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	(void) LockAcquire(&tag, false, lockmode, false, false);
+	(void) LockAcquire(&tag, lockmode, false, false);
 }
 
 /*
@@ -477,7 +560,7 @@ LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	(void) LockAcquire(&tag, false, lockmode, false, false);
+	(void) LockAcquire(&tag, lockmode, false, false);
 
 	/* Make sure syscaches are up-to-date with any changes we waited for */
 	AcceptInvalidationMessages();
@@ -499,4 +582,40 @@ UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objsubid);
 
 	LockRelease(&tag, lockmode, false);
+}
+
+
+/*
+ * LockTagIsTemp
+ *		Determine whether a locktag is for a lock on a temporary object
+ *
+ * We need this because 2PC cannot deal with temp objects
+ */
+bool
+LockTagIsTemp(const LOCKTAG *tag)
+{
+	switch (tag->locktag_type)
+	{
+		case LOCKTAG_RELATION:
+		case LOCKTAG_RELATION_EXTEND:
+		case LOCKTAG_PAGE:
+		case LOCKTAG_TUPLE:
+			/* check for lock on a temp relation */
+			/* field1 is dboid, field2 is reloid for all of these */
+			if ((Oid) tag->locktag_field1 == InvalidOid)
+				return false;	/* shared, so not temp */
+			if (isTempNamespace(get_rel_namespace((Oid) tag->locktag_field2)))
+				return true;
+			break;
+		case LOCKTAG_TRANSACTION:
+			/* there are no temp transactions */
+			break;
+		case LOCKTAG_OBJECT:
+			/* there are currently no non-table temp objects */
+			break;
+		case LOCKTAG_USERLOCK:
+			/* assume these aren't temp */
+			break;
+	}
+	return false;				/* default case */
 }

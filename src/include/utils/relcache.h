@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.54 2006/05/04 18:51:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.55 2006/07/31 20:09:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,9 @@
 #include "utils/rel.h"
 
 /*
- * relation lookup routines
+ * Routines to open (lookup) and close a relcache entry
  */
 extern Relation RelationIdGetRelation(Oid relationId);
-
-/* finds an existing cache entry, but won't make a new one */
-extern Relation RelationIdCacheGetRelation(Oid relationId);
-
 extern void RelationClose(Relation relation);
 
 /*

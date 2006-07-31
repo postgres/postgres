@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.169 2006/07/24 16:32:45 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.170 2006/07/31 20:09:05 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -36,6 +36,7 @@
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
 #include "miscadmin.h"
+#include "storage/lmgr.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
@@ -449,8 +450,6 @@ ProcLockHashCode(const PROCLOCKTAG *proclocktag, uint32 hashcode)
  *
  * Inputs:
  *	locktag: unique identifier for the lockable object
- *	isTempObject: is the lockable object a temporary object?  (Under 2PC,
- *		such locks cannot be persisted)
  *	lockmode: lock mode to acquire
  *	sessionLock: if true, acquire lock for session not current transaction
  *	dontWait: if true, don't wait to acquire lock
@@ -471,7 +470,6 @@ ProcLockHashCode(const PROCLOCKTAG *proclocktag, uint32 hashcode)
  */
 LockAcquireResult
 LockAcquire(const LOCKTAG *locktag,
-			bool isTempObject,
 			LOCKMODE lockmode,
 			bool sessionLock,
 			bool dontWait)
@@ -528,7 +526,6 @@ LockAcquire(const LOCKTAG *locktag,
 	{
 		locallock->lock = NULL;
 		locallock->proclock = NULL;
-		locallock->isTempObject = isTempObject;
 		locallock->hashcode = LockTagHashCode(&(localtag.lock));
 		locallock->nLocks = 0;
 		locallock->numLockOwners = 0;
@@ -540,8 +537,6 @@ LockAcquire(const LOCKTAG *locktag,
 	}
 	else
 	{
-		Assert(locallock->isTempObject == isTempObject);
-
 		/* Make sure there will be room to remember the lock */
 		if (locallock->numLockOwners >= locallock->maxLockOwners)
 		{
@@ -1733,7 +1728,7 @@ AtPrepare_Locks(void)
 		}
 
 		/* Can't handle it if the lock is on a temporary object */
-		if (locallock->isTempObject)
+		if (LockTagIsTemp(&locallock->tag.lock))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot PREPARE a transaction that has operated on temporary tables")));

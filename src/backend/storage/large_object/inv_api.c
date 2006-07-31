@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.118 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.119 2006/07/31 20:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ open_lo_relation(void)
 		if (lo_heap_r == NULL)
 			lo_heap_r = heap_open(LargeObjectRelationId, RowExclusiveLock);
 		if (lo_index_r == NULL)
-			lo_index_r = index_open(LargeObjectLOidPNIndexId);
+			lo_index_r = index_open(LargeObjectLOidPNIndexId, RowExclusiveLock);
 	}
 	PG_CATCH();
 	{
@@ -103,7 +103,7 @@ close_lo_relation(bool isCommit)
 				CurrentResourceOwner = TopTransactionResourceOwner;
 
 				if (lo_index_r)
-					index_close(lo_index_r);
+					index_close(lo_index_r, NoLock);
 				if (lo_heap_r)
 					heap_close(lo_heap_r, NoLock);
 			}
@@ -314,7 +314,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(obj_desc->id));
 
-	sd = index_beginscan(lo_heap_r, lo_index_r, true,
+	sd = index_beginscan(lo_heap_r, lo_index_r,
 						 obj_desc->snapshot, 1, skey);
 
 	/*
@@ -425,7 +425,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = index_beginscan(lo_heap_r, lo_index_r, true,
+	sd = index_beginscan(lo_heap_r, lo_index_r,
 						 obj_desc->snapshot, 2, skey);
 
 	while ((tuple = index_getnext(sd, ForwardScanDirection)) != NULL)
@@ -541,7 +541,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = index_beginscan(lo_heap_r, lo_index_r, false /* got lock */,
+	sd = index_beginscan(lo_heap_r, lo_index_r,
 						 obj_desc->snapshot, 2, skey);
 
 	oldtuple = NULL;

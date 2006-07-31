@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.4 2006/07/14 14:52:16 momjian Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.5 2006/07/31 20:08:59 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -572,7 +572,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS) {
 	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
 	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 	Relation    index = info->index;
-	bool	 needLock = !RELATION_IS_LOCAL(index);
+	bool	 needLock;
     BlockNumber npages,
 				blkno;
 	BlockNumber nFreePages,
@@ -591,10 +591,14 @@ ginvacuumcleanup(PG_FUNCTION_ARGS) {
 	 */
 	stats->num_index_tuples = info->num_heap_tuples;
 
-	if (info->vacuum_full) {
-		LockRelation(index, AccessExclusiveLock);
+	/*
+	 * If vacuum full, we already have exclusive lock on the index.
+	 * Otherwise, need lock unless it's local to this backend.
+	 */
+	if (info->vacuum_full)
 		needLock = false;
-	}
+	else
+		needLock = !RELATION_IS_LOCAL(index);
 
 	if (needLock)
 		LockRelationForExtension(index, ExclusiveLock);
@@ -652,9 +656,6 @@ ginvacuumcleanup(PG_FUNCTION_ARGS) {
 	stats->num_pages = RelationGetNumberOfBlocks(index);
 	if (needLock)
 		UnlockRelationForExtension(index, ExclusiveLock);
-
-	if (info->vacuum_full)
-		UnlockRelation(index, AccessExclusiveLock);
 
 	PG_RETURN_POINTER(stats);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.96 2006/07/23 23:08:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.97 2006/07/31 20:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,6 @@ typedef struct LOCALLOCK
 	/* data */
 	LOCK	   *lock;			/* associated LOCK object in shared mem */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object in shmem */
-	bool		isTempObject;	/* true if lock is on a temporary object */
 	uint32		hashcode;		/* copy of LOCKTAG's hash value */
 	int			nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
@@ -405,7 +404,6 @@ extern void InitLocks(void);
 extern LockMethod GetLocksMethodTable(const LOCK *lock);
 extern uint32 LockTagHashCode(const LOCKTAG *locktag);
 extern LockAcquireResult LockAcquire(const LOCKTAG *locktag,
-			bool isTempObject,
 			LOCKMODE lockmode,
 			bool sessionLock,
 			bool dontWait);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.310 2006/07/31 01:16:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.311 2006/07/31 20:09:00 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1971,23 +1971,16 @@ RemoveStatistics(Oid relid, AttrNumber attnum)
 
 
 /*
- * RelationTruncateIndexes - truncate all
- * indexes associated with the heap relation to zero tuples.
+ * RelationTruncateIndexes - truncate all indexes associated
+ * with the heap relation to zero tuples.
  *
  * The routine will truncate and then reconstruct the indexes on
- * the relation specified by the heapId parameter.
+ * the specified relation.  Caller must hold exclusive lock on rel.
  */
 static void
-RelationTruncateIndexes(Oid heapId)
+RelationTruncateIndexes(Relation heapRelation)
 {
-	Relation	heapRelation;
 	ListCell   *indlist;
-
-	/*
-	 * Open the heap rel.  We need grab no lock because we assume
-	 * heap_truncate is holding an exclusive lock on the heap rel.
-	 */
-	heapRelation = heap_open(heapId, NoLock);
 
 	/* Ask the relcache to produce a list of the indexes of the rel */
 	foreach(indlist, RelationGetIndexList(heapRelation))
@@ -1996,11 +1989,8 @@ RelationTruncateIndexes(Oid heapId)
 		Relation	currentIndex;
 		IndexInfo  *indexInfo;
 
-		/* Open the index relation */
-		currentIndex = index_open(indexId);
-
-		/* Obtain exclusive lock on it, just to be sure */
-		LockRelation(currentIndex, AccessExclusiveLock);
+		/* Open the index relation; use exclusive lock, just to be sure */
+		currentIndex = index_open(indexId, AccessExclusiveLock);
 
 		/* Fetch info needed for index_build */
 		indexInfo = BuildIndexInfo(currentIndex);
@@ -2013,11 +2003,8 @@ RelationTruncateIndexes(Oid heapId)
 		index_build(heapRelation, currentIndex, indexInfo, false);
 
 		/* We're done with this index */
-		index_close(currentIndex);
+		index_close(currentIndex, NoLock);
 	}
-
-	/* And now done with the heap; but keep lock until commit */
-	heap_close(heapRelation, NoLock);
 }
 
 /*
@@ -2066,7 +2053,7 @@ heap_truncate(List *relids)
 		RelationTruncate(rel, 0);
 
 		/* If this relation has indexes, truncate the indexes too */
-		RelationTruncateIndexes(RelationGetRelid(rel));
+		RelationTruncateIndexes(rel);
 
 		/*
 		 * Close the relation, but keep exclusive lock on it until commit.

@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.93 2006/05/07 01:21:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.94 2006/07/31 20:08:59 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
- *		index_openrv	- open an index relation specified by a RangeVar
  *		index_close		- close an index relation
  *		index_beginscan - start a scan of an index with amgettuple
  *		index_beginscan_multi - start a scan of an index with amgetmulti
@@ -111,7 +110,6 @@ do { \
 } while(0)
 
 static IndexScanDesc index_beginscan_internal(Relation indexRelation,
-						 bool need_index_lock,
 						 int nkeys, ScanKey key);
 
 
@@ -123,26 +121,23 @@ static IndexScanDesc index_beginscan_internal(Relation indexRelation,
 /* ----------------
  *		index_open - open an index relation by relation OID
  *
- *		Note: we acquire no lock on the index.	A lock is not needed when
- *		simply examining the index reldesc; the index's schema information
- *		is considered to be protected by the lock that the caller had better
- *		be holding on the parent relation.	Some type of lock should be
- *		obtained on the index before physically accessing it, however.
- *		This is handled automatically for most uses by index_beginscan
- *		and index_endscan for scan cases, or by ExecOpenIndices and
- *		ExecCloseIndices for update cases.	Other callers will need to
- *		obtain their own locks.
+ *		If lockmode is not "NoLock", the specified kind of lock is
+ *		obtained on the index.  (Generally, NoLock should only be
+ *		used if the caller knows it has some appropriate lock on the
+ *		index already.)
+ *
+ *		An error is raised if the index does not exist.
  *
  *		This is a convenience routine adapted for indexscan use.
  *		Some callers may prefer to use relation_open directly.
  * ----------------
  */
 Relation
-index_open(Oid relationId)
+index_open(Oid relationId, LOCKMODE lockmode)
 {
 	Relation	r;
 
-	r = relation_open(relationId, NoLock);
+	r = relation_open(relationId, lockmode);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
 		ereport(ERROR,
@@ -156,41 +151,26 @@ index_open(Oid relationId)
 }
 
 /* ----------------
- *		index_openrv - open an index relation specified
- *		by a RangeVar node
+ *		index_close - close an index relation
  *
- *		As above, but relation is specified by a RangeVar.
- * ----------------
- */
-Relation
-index_openrv(const RangeVar *relation)
-{
-	Relation	r;
-
-	r = relation_openrv(relation, NoLock);
-
-	if (r->rd_rel->relkind != RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index",
-						RelationGetRelationName(r))));
-
-	pgstat_initstats(&r->pgstat_info, r);
-
-	return r;
-}
-
-/* ----------------
- *		index_close - close a index relation
+ *		If lockmode is not "NoLock", we then release the specified lock.
  *
- *		presently the relcache routines do all the work we need
- *		to open/close index relations.
+ *		Note that it is often sensible to hold a lock beyond index_close;
+ *		in that case, the lock is released automatically at xact end.
  * ----------------
  */
 void
-index_close(Relation relation)
+index_close(Relation relation, LOCKMODE lockmode)
 {
+	LockRelId	relid = relation->rd_lockInfo.lockRelId;
+
+	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
+
+	/* The relcache does the real work... */
 	RelationClose(relation);
+
+	if (lockmode != NoLock)
+		UnlockRelationId(&relid, lockmode);
 }
 
 /* ----------------
@@ -229,24 +209,18 @@ index_insert(Relation indexRelation,
  * index_getnext on this scan; index_getnext_indexitem will not use the
  * heapRelation link (nor the snapshot).  However, the caller had better
  * be holding some kind of lock on the heap relation in any case, to ensure
- * no one deletes it (or the index) out from under us.
- *
- * Most callers should pass need_index_lock = true to cause the index code
- * to take AccessShareLock on the index for the duration of the scan.  But
- * if it is known that a lock is already held on the index, pass false to
- * skip taking an unnecessary lock.
+ * no one deletes it (or the index) out from under us.  Caller must also
+ * be holding a lock on the index.
  */
 IndexScanDesc
 index_beginscan(Relation heapRelation,
 				Relation indexRelation,
-				bool need_index_lock,
 				Snapshot snapshot,
 				int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, need_index_lock,
-									nkeys, key);
+	scan = index_beginscan_internal(indexRelation, nkeys, key);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -267,14 +241,12 @@ index_beginscan(Relation heapRelation,
  */
 IndexScanDesc
 index_beginscan_multi(Relation indexRelation,
-					  bool need_index_lock,
 					  Snapshot snapshot,
 					  int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, need_index_lock,
-									nkeys, key);
+	scan = index_beginscan_internal(indexRelation, nkeys, key);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -291,33 +263,18 @@ index_beginscan_multi(Relation indexRelation,
  */
 static IndexScanDesc
 index_beginscan_internal(Relation indexRelation,
-						 bool need_index_lock,
 						 int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
 	FmgrInfo   *procedure;
 
 	RELATION_CHECKS;
-
-	RelationIncrementReferenceCount(indexRelation);
-
-	/*
-	 * Acquire AccessShareLock for the duration of the scan, unless caller
-	 * says it already has lock on the index.
-	 *
-	 * Note: we could get an SI inval message here and consequently have to
-	 * rebuild the relcache entry.	The refcount increment above ensures that
-	 * we will rebuild it and not just flush it...
-	 */
-	if (need_index_lock)
-		LockRelation(indexRelation, AccessShareLock);
-
-	/*
-	 * LockRelation can clean rd_aminfo structure, so fill procedure after
-	 * LockRelation
-	 */
-
 	GET_REL_PROCEDURE(ambeginscan);
+
+	/*
+	 * We hold a reference count to the relcache entry throughout the scan.
+	 */
+	RelationIncrementReferenceCount(indexRelation);
 
 	/*
 	 * Tell the AM to open a scan.
@@ -327,9 +284,6 @@ index_beginscan_internal(Relation indexRelation,
 									  PointerGetDatum(indexRelation),
 									  Int32GetDatum(nkeys),
 									  PointerGetDatum(key)));
-
-	/* Save flag to tell index_endscan whether to release lock */
-	scan->have_lock = need_index_lock;
 
 	return scan;
 }
@@ -390,11 +344,7 @@ index_endscan(IndexScanDesc scan)
 	/* End the AM's scan */
 	FunctionCall1(procedure, PointerGetDatum(scan));
 
-	/* Release index lock and refcount acquired by index_beginscan */
-
-	if (scan->have_lock)
-		UnlockRelation(scan->indexRelation, AccessShareLock);
-
+	/* Release index refcount acquired by index_beginscan */
 	RelationDecrementReferenceCount(scan->indexRelation);
 
 	/* Release the scan data structure itself */

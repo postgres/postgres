@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.19 2006/05/30 14:01:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.20 2006/07/31 20:09:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	 * close the index relation
 	 */
 	index_endscan(indexScanDesc);
-	index_close(indexRelationDesc);
+	index_close(indexRelationDesc, NoLock);
 }
 
 /* ----------------------------------------------------------------
@@ -258,8 +258,14 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 
 	/*
 	 * Open the index relation.
+	 *
+	 * If the parent table is one of the target relations of the query, then
+	 * InitPlan already opened and write-locked the index, so we can avoid
+	 * taking another lock here.  Otherwise we need a normal reader's lock.
 	 */
-	indexstate->biss_RelationDesc = index_open(node->indexid);
+	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
+	indexstate->biss_RelationDesc = index_open(node->indexid,
+									relistarget ? NoLock : AccessShareLock);
 
 	/*
 	 * Initialize index-specific scan state
@@ -303,18 +309,9 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 
 	/*
 	 * Initialize scan descriptor.
-	 *
-	 * Note we acquire no locks here; the index machinery does its own locks
-	 * and unlocks.  (We rely on having a lock on the parent table to
-	 * ensure the index won't go away!)  Furthermore, if the parent table
-	 * is one of the target relations of the query, then InitPlan already
-	 * opened and write-locked the index, so we can tell the index machinery
-	 * not to bother getting an extra lock.
 	 */
-	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
 	indexstate->biss_ScanDesc =
 		index_beginscan_multi(indexstate->biss_RelationDesc,
-							  !relistarget,
 							  estate->es_snapshot,
 							  indexstate->biss_NumScanKeys,
 							  indexstate->biss_ScanKeys);

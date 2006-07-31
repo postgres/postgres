@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.217 2006/07/14 14:52:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.218 2006/07/31 20:08:59 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -51,6 +51,7 @@
 #include "pgstat.h"
 #include "storage/procarray.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/relcache.h"
 
 
@@ -687,14 +688,15 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
+	/* Get the lock before trying to open the relcache entry */
+	if (lockmode != NoLock)
+		LockRelationOid(relationId, lockmode);
+
 	/* The relcache does all the real work... */
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
 		elog(ERROR, "could not open relation with OID %u", relationId);
-
-	if (lockmode != NoLock)
-		LockRelation(r, lockmode);
 
 	return r;
 }
@@ -713,25 +715,37 @@ conditional_relation_open(Oid relationId, LOCKMODE lockmode, bool nowait)
 
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
+	/* Get the lock before trying to open the relcache entry */
+	if (lockmode != NoLock)
+	{
+		if (nowait)
+		{
+			if (!ConditionalLockRelationOid(relationId, lockmode))
+			{
+				/* try to throw error by name; relation could be deleted... */
+				char   *relname = get_rel_name(relationId);
+
+				if (relname)
+					ereport(ERROR,
+							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+							 errmsg("could not obtain lock on relation \"%s\"",
+									relname)));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+							 errmsg("could not obtain lock on relation with OID %u",
+									relationId)));
+			}
+		}
+		else
+			LockRelationOid(relationId, lockmode);
+	}
+
 	/* The relcache does all the real work... */
 	r = RelationIdGetRelation(relationId);
 
 	if (!RelationIsValid(r))
 		elog(ERROR, "could not open relation with OID %u", relationId);
-
-	if (lockmode != NoLock)
-	{
-		if (nowait)
-		{
-			if (!ConditionalLockRelation(r, lockmode))
-				ereport(ERROR,
-						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-						 errmsg("could not obtain lock on relation \"%s\"",
-								RelationGetRelationName(r))));
-		}
-		else
-			LockRelation(r, lockmode);
-	}
 
 	return r;
 }
@@ -749,12 +763,12 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 
 	/*
 	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  This is needed to cover the case where the name identifies a
-	 * rel that has been dropped and recreated since the start of our
+	 * relation.  This is needed to cover the case where the name identifies
+	 * a rel that has been dropped and recreated since the start of our
 	 * transaction: if we don't flush the old syscache entry then we'll latch
-	 * onto that entry and suffer an error when we do LockRelation. Note that
-	 * relation_open does not need to do this, since a relation's OID never
-	 * changes.
+	 * onto that entry and suffer an error when we do RelationIdGetRelation.
+	 * Note that relation_open does not need to do this, since a relation's
+	 * OID never changes.
 	 *
 	 * We skip this if asked for NoLock, on the assumption that the caller has
 	 * already ensured some appropriate lock is held.
@@ -772,7 +786,7 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 /* ----------------
  *		relation_close - close any relation
  *
- *		If lockmode is not "NoLock", we first release the specified lock.
+ *		If lockmode is not "NoLock", we then release the specified lock.
  *
  *		Note that it is often sensible to hold a lock beyond relation_close;
  *		in that case, the lock is released automatically at xact end.
@@ -781,13 +795,15 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 void
 relation_close(Relation relation, LOCKMODE lockmode)
 {
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
+	LockRelId	relid = relation->rd_lockInfo.lockRelId;
 
-	if (lockmode != NoLock)
-		UnlockRelation(relation, lockmode);
+	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
 	/* The relcache does the real work... */
 	RelationClose(relation);
+
+	if (lockmode != NoLock)
+		UnlockRelationId(&relid, lockmode);
 }
 
 

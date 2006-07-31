@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.57 2006/07/03 22:45:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/genam.c,v 1.58 2006/07/31 20:08:59 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -87,7 +87,6 @@ RelationGetIndexScan(Relation indexRelation,
 		scan->keyData = NULL;
 
 	scan->is_multiscan = false;			/* caller may change this */
-	scan->have_lock = false;			/* ditto */
 	scan->kill_prior_tuple = false;
 	scan->ignore_killed_tuples = true;	/* default setting */
 
@@ -182,7 +181,7 @@ systable_beginscan(Relation heapRelation,
 	if (indexOK &&
 		!IgnoreSystemIndexes &&
 		!ReindexIsProcessingIndex(indexId))
-		irel = index_open(indexId);
+		irel = index_open(indexId, AccessShareLock);
 	else
 		irel = NULL;
 
@@ -207,7 +206,7 @@ systable_beginscan(Relation heapRelation,
 			key[i].sk_attno = i + 1;
 		}
 
-		sysscan->iscan = index_beginscan(heapRelation, irel, true,
+		sysscan->iscan = index_beginscan(heapRelation, irel,
 										 snapshot, nkeys, key);
 		sysscan->scan = NULL;
 	}
@@ -253,7 +252,7 @@ systable_endscan(SysScanDesc sysscan)
 	if (sysscan->irel)
 	{
 		index_endscan(sysscan->iscan);
-		index_close(sysscan->irel);
+		index_close(sysscan->irel, AccessShareLock);
 	}
 	else
 		heap_endscan(sysscan->scan);

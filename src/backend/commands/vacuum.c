@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.336 2006/07/30 02:07:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.337 2006/07/31 20:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1138,7 +1138,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	 * same process.
 	 */
 	onerelid = onerel->rd_lockInfo.lockRelId;
-	LockRelationForSession(&onerelid, onerel->rd_istemp, lmode);
+	LockRelationIdForSession(&onerelid, lmode);
 
 	/*
 	 * Remember the relation's TOAST relation for later
@@ -1175,7 +1175,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	/*
 	 * Now release the session-level lock on the master table.
 	 */
-	UnlockRelationForSession(&onerelid, lmode);
+	UnlockRelationIdForSession(&onerelid, lmode);
 
 	return;
 }
@@ -3476,6 +3476,8 @@ vac_open_indexes(Relation relation, LOCKMODE lockmode,
 	ListCell   *indexoidscan;
 	int			i;
 
+	Assert(lockmode != NoLock);
+
 	indexoidlist = RelationGetIndexList(relation);
 
 	*nindexes = list_length(indexoidlist);
@@ -3489,11 +3491,8 @@ vac_open_indexes(Relation relation, LOCKMODE lockmode,
 	foreach(indexoidscan, indexoidlist)
 	{
 		Oid			indexoid = lfirst_oid(indexoidscan);
-		Relation	ind;
 
-		ind = index_open(indexoid);
-		(*Irel)[i++] = ind;
-		LockRelation(ind, lockmode);
+		(*Irel)[i++] = index_open(indexoid, lockmode);
 	}
 
 	list_free(indexoidlist);
@@ -3513,9 +3512,7 @@ vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode)
 	{
 		Relation	ind = Irel[nindexes];
 
-		if (lockmode != NoLock)
-			UnlockRelation(ind, lockmode);
-		index_close(ind);
+		index_close(ind, lockmode);
 	}
 	pfree(Irel);
 }

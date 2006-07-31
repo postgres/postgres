@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.54 2006/03/05 15:58:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.55 2006/07/31 20:09:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,16 @@
 extern void RelationInitLockInfo(Relation relation);
 
 /* Lock a relation */
+extern void LockRelationOid(Oid relid, LOCKMODE lockmode);
+extern bool ConditionalLockRelationOid(Oid relid, LOCKMODE lockmode);
+extern void UnlockRelationId(LockRelId *relid, LOCKMODE lockmode);
+
 extern void LockRelation(Relation relation, LOCKMODE lockmode);
 extern bool ConditionalLockRelation(Relation relation, LOCKMODE lockmode);
 extern void UnlockRelation(Relation relation, LOCKMODE lockmode);
 
-extern void LockRelationForSession(LockRelId *relid, bool istemprel,
-					   LOCKMODE lockmode);
-extern void UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode);
+extern void LockRelationIdForSession(LockRelId *relid, LOCKMODE lockmode);
+extern void UnlockRelationIdForSession(LockRelId *relid, LOCKMODE lockmode);
 
 /* Lock a relation for extension */
 extern void LockRelationForExtension(Relation relation, LOCKMODE lockmode);
@@ -61,5 +64,8 @@ extern void LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 				 LOCKMODE lockmode);
 extern void UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 				   LOCKMODE lockmode);
+
+/* Knowledge about which locktags describe temp objects */
+extern bool LockTagIsTemp(const LOCKTAG *tag);
 
 #endif   /* LMGR_H */

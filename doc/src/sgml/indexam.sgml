@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.15 2006/07/03 22:45:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.16 2006/07/31 20:08:59 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -94,8 +94,7 @@
   <para>
    Some of the flag columns of <structname>pg_am</structname> have nonobvious
    implications.  The requirements of <structfield>amcanunique</structfield>
-   are discussed in <xref linkend="index-unique-checks">, and those of
-   <structfield>amconcurrent</structfield> in <xref linkend="index-locking">.
+   are discussed in <xref linkend="index-unique-checks">.
    The <structfield>amcanmulticol</structfield> flag asserts that the
    access method supports multicolumn indexes, while
    <structfield>amoptionalkey</structfield> asserts that it allows scans
@@ -474,11 +473,7 @@ amrestrpos (IndexScanDesc scan);
    a concurrent delete may or may not be reflected in the results of a scan.
    What is important is that insertions or deletions not cause the scan to
    miss or multiply return entries that were not themselves being inserted or
-   deleted.  (For an index type that does not set
-   <structname>pg_am</>.<structfield>amconcurrent</>, it is sufficient to
-   handle these cases for insertions or deletions performed by the same
-   backend that's doing the scan.  But when <structfield>amconcurrent</> is
-   true, insertions or deletions from other backends must be handled as well.)
+   deleted.
   </para>
 
   <para>
@@ -506,31 +501,16 @@ amrestrpos (IndexScanDesc scan);
   <title>Index Locking Considerations</title>
 
   <para>
-   An index access method can choose whether it supports concurrent updates
-   of the index by multiple processes.  If the method's
-   <structname>pg_am</>.<structfield>amconcurrent</> flag is true, then
-   the core <productname>PostgreSQL</productname> system obtains
+   Index access methods must handle concurrent updates
+   of the index by multiple processes.
+   The core <productname>PostgreSQL</productname> system obtains
    <literal>AccessShareLock</> on the index during an index scan, and
-   <literal>RowExclusiveLock</> when updating the index.  Since these lock
+   <literal>RowExclusiveLock</> when updating the index (including plain
+   <command>VACUUM</>).  Since these lock
    types do not conflict, the access method is responsible for handling any
    fine-grained locking it may need.  An exclusive lock on the index as a whole
-   will be taken only during index creation, destruction, or
-   <literal>REINDEX</>.  When <structfield>amconcurrent</> is false,
-   <productname>PostgreSQL</productname> still obtains
-   <literal>AccessShareLock</> during index scans, but it obtains
-   <literal>AccessExclusiveLock</> during any update.  This ensures that
-   updaters have sole use of the index.  Note that this implicitly assumes
-   that index scans are read-only; an access method that might modify the
-   index during a scan will still have to do its own locking to handle the
-   case of concurrent scans.
-  </para>
-
-  <para>
-   Recall that a backend's own locks never conflict; therefore, even a
-   non-concurrent index type must be prepared to handle the case where
-   a backend is inserting or deleting entries in an index that it is itself
-   scanning.  (This is of course necessary to support an <command>UPDATE</>
-   that uses the index to find the rows to be updated.)
+   will be taken only during index creation, destruction,
+   <command>REINDEX</>, or <command>VACUUM FULL</>.
   </para>
 
   <para>
@@ -567,7 +547,7 @@ amrestrpos (IndexScanDesc scan);
      </listitem>
      <listitem>
       <para>
-       For concurrent index types, an index scan must maintain a pin
+       An index scan must maintain a pin
        on the index page holding the item last returned by
        <function>amgettuple</>, and <function>ambulkdelete</> cannot delete
        entries from pages that are pinned by other backends.  The need
@@ -576,11 +556,10 @@ amrestrpos (IndexScanDesc scan);
      </listitem>
     </itemizedlist>
 
-   If an index is concurrent then it is possible for an index reader to
+   Without the third rule, it is possible for an index reader to
    see an index entry just before it is removed by <command>VACUUM</>, and
    then to arrive at the corresponding heap entry after that was removed by
-   <command>VACUUM</>.  (With a nonconcurrent index, this is not possible
-   because of the conflicting index-level locks that will be taken out.)
+   <command>VACUUM</>.
    This creates no serious problems if that item
    number is still unused when the reader reaches it, since an empty
    item slot will be ignored by <function>heap_fetch()</>.  But what if a

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.79 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.80 2006/07/31 20:09:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	{
 		case RTE_RELATION:
 			/* Table --- retrieve statistics from the system catalogs */
-			get_relation_info(rte->relid, rel);
+			get_relation_info(root, rte->relid, rel);
 			break;
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:

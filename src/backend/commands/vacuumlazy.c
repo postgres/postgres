@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.75 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.76 2006/07/31 20:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vacrelstats->minxid = RecentXmin;
 
 	/* Open all indexes of the relation */
-	vac_open_indexes(onerel, ShareUpdateExclusiveLock, &nindexes, &Irel);
+	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
 
 	/* Do the vacuuming */
@@ -621,15 +621,6 @@ lazy_vacuum_index(Relation indrel,
 
 	pg_rusage_init(&ru0);
 
-	/*
-	 * Acquire appropriate type of lock on index: must be exclusive if index
-	 * AM isn't concurrent-safe.
-	 */
-	if (indrel->rd_am->amconcurrent)
-		LockRelation(indrel, RowExclusiveLock);
-	else
-		LockRelation(indrel, AccessExclusiveLock);
-
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = false;
 	ivinfo.message_level = elevel;
@@ -639,14 +630,6 @@ lazy_vacuum_index(Relation indrel,
 	/* Do bulk deletion */
 	*stats = index_bulk_delete(&ivinfo, *stats,
 							   lazy_tid_reaped, (void *) vacrelstats);
-
-	/*
-	 * Release lock acquired above.
-	 */
-	if (indrel->rd_am->amconcurrent)
-		UnlockRelation(indrel, RowExclusiveLock);
-	else
-		UnlockRelation(indrel, AccessExclusiveLock);
 
 	ereport(elevel,
 			(errmsg("scanned index \"%s\" to remove %d row versions",
@@ -668,29 +651,12 @@ lazy_cleanup_index(Relation indrel,
 
 	pg_rusage_init(&ru0);
 
-	/*
-	 * Acquire appropriate type of lock on index: must be exclusive if index
-	 * AM isn't concurrent-safe.
-	 */
-	if (indrel->rd_am->amconcurrent)
-		LockRelation(indrel, RowExclusiveLock);
-	else
-		LockRelation(indrel, AccessExclusiveLock);
-
 	ivinfo.index = indrel;
 	ivinfo.vacuum_full = false;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = vacrelstats->rel_tuples;
 
 	stats = index_vacuum_cleanup(&ivinfo, stats);
-
-	/*
-	 * Release lock acquired above.
-	 */
-	if (indrel->rd_am->amconcurrent)
-		UnlockRelation(indrel, RowExclusiveLock);
-	else
-		UnlockRelation(indrel, AccessExclusiveLock);
 
 	if (!stats)
 		return;

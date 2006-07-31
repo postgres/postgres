@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.128 2006/07/27 08:30:41 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.129 2006/07/31 20:08:55 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -399,13 +399,6 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Can index storage data type differ from column data type?</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amconcurrent</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Does the access method support concurrent updates?</entry>
      </row>
 
      <row>

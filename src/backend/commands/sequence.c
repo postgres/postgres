@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.137 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.138 2006/07/31 20:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ static SeqTable seqtab = NULL;	/* Head of list of SeqTable items */
 static SeqTableData *last_used_seq = NULL;
 
 static int64 nextval_internal(Oid relid);
-static void acquire_share_lock(Relation seqrel, SeqTable seq);
+static Relation open_share_lock(SeqTable seq);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
 static void init_params(List *options, Form_pg_sequence new, bool isInit);
@@ -650,8 +650,7 @@ lastval(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("lastval is not yet defined in this session")));
 
-	seqrel = relation_open(last_used_seq->relid, NoLock);
-	acquire_share_lock(seqrel, last_used_seq);
+	seqrel = open_share_lock(last_used_seq);
 
 	/* nextval() must have already been called for this sequence */
 	Assert(last_used_seq->increment != 0);
@@ -802,16 +801,19 @@ setval3_oid(PG_FUNCTION_ARGS)
 
 
 /*
+ * Open the sequence and acquire AccessShareLock if needed
+ *
  * If we haven't touched the sequence already in this transaction,
  * we need to acquire AccessShareLock.	We arrange for the lock to
  * be owned by the top transaction, so that we don't need to do it
  * more than once per xact.
  */
-static void
-acquire_share_lock(Relation seqrel, SeqTable seq)
+static Relation
+open_share_lock(SeqTable seq)
 {
 	TransactionId thisxid = GetTopTransactionId();
 
+	/* Get the lock if not already held in this xact */
 	if (seq->xid != thisxid)
 	{
 		ResourceOwner currentOwner;
@@ -820,7 +822,7 @@ acquire_share_lock(Relation seqrel, SeqTable seq)
 		PG_TRY();
 		{
 			CurrentResourceOwner = TopTransactionResourceOwner;
-			LockRelation(seqrel, AccessShareLock);
+			LockRelationOid(seq->relid, AccessShareLock);
 		}
 		PG_CATCH();
 		{
@@ -831,9 +833,12 @@ acquire_share_lock(Relation seqrel, SeqTable seq)
 		PG_END_TRY();
 		CurrentResourceOwner = currentOwner;
 
-		/* Flag that we have a lock in the current xact. */
+		/* Flag that we have a lock in the current xact */
 		seq->xid = thisxid;
 	}
+
+	/* We now know we have AccessShareLock, and can safely open the rel */
+	return relation_open(seq->relid, NoLock);
 }
 
 /*
@@ -843,19 +848,8 @@ acquire_share_lock(Relation seqrel, SeqTable seq)
 static void
 init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 {
+	SeqTable elm;
 	Relation	seqrel;
-	volatile SeqTable elm;
-
-	/*
-	 * Open the sequence relation.
-	 */
-	seqrel = relation_open(relid, NoLock);
-
-	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a sequence",
-						RelationGetRelationName(seqrel))));
 
 	/* Look to see if we already have a seqtable entry for relation */
 	for (elm = seqtab; elm != NULL; elm = elm->next)
@@ -890,7 +884,16 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 		seqtab = elm;
 	}
 
-	acquire_share_lock(seqrel, elm);
+	/*
+	 * Open the sequence relation.
+	 */
+	seqrel = open_share_lock(elm);
+
+	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a sequence",
+						RelationGetRelationName(seqrel))));
 
 	*p_elm = elm;
 	*p_rel = seqrel;

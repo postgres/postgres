@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.151 2006/07/31 01:16:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.152 2006/07/31 20:09:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,8 +314,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 {
 	Relation	OldIndex;
 
-	OldIndex = index_open(indexOid);
-	LockRelation(OldIndex, AccessExclusiveLock);
+	OldIndex = index_open(indexOid, AccessExclusiveLock);
 
 	/*
 	 * Check that index is in fact an index on the given relation
@@ -406,7 +405,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 			   errmsg("cannot cluster temporary tables of other sessions")));
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
-	index_close(OldIndex);
+	index_close(OldIndex, NoLock);
 }
 
 /*
@@ -649,7 +648,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 */
 	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
 	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
-	OldIndex = index_open(OIDOldIndex);
+	OldIndex = index_open(OIDOldIndex, AccessExclusiveLock);
 
 	/*
 	 * Their tuple descriptors should be exactly alike, but here we only need
@@ -669,7 +668,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 * Scan through the OldHeap on the OldIndex and copy each tuple into the
 	 * NewHeap.
 	 */
-	scan = index_beginscan(OldHeap, OldIndex, true,
+	scan = index_beginscan(OldHeap, OldIndex,
 						   SnapshotNow, 0, (ScanKey) NULL);
 
 	while ((tuple = index_getnext(scan, ForwardScanDirection)) != NULL)
@@ -724,7 +723,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	pfree(values);
 	pfree(nulls);
 
-	index_close(OldIndex);
+	index_close(OldIndex, NoLock);
 	heap_close(OldHeap, NoLock);
 	heap_close(NewHeap, NoLock);
 }

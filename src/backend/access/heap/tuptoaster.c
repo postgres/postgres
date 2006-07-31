@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.62 2006/07/14 14:52:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.63 2006/07/31 20:08:59 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1004,7 +1004,7 @@ toast_save_datum(Relation rel, Datum value)
 	 */
 	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
 	toasttupDesc = toastrel->rd_att;
-	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid, RowExclusiveLock);
 
 	/*
 	 * Create the varattrib reference
@@ -1042,12 +1042,6 @@ toast_save_datum(Relation rel, Datum value)
 	 */
 	data_p = VARATT_DATA(value);
 	data_todo = VARATT_SIZE(value) - VARHDRSZ;
-
-	/*
-	 * We must explicitly lock the toast index because we aren't using an
-	 * index scan here.
-	 */
-	LockRelation(toastidx, RowExclusiveLock);
 
 	/*
 	 * Split up the item into chunks
@@ -1098,8 +1092,7 @@ toast_save_datum(Relation rel, Datum value)
 	/*
 	 * Done - close toast relation and return the reference
 	 */
-	UnlockRelation(toastidx, RowExclusiveLock);
-	index_close(toastidx);
+	index_close(toastidx, RowExclusiveLock);
 	heap_close(toastrel, RowExclusiveLock);
 
 	return PointerGetDatum(result);
@@ -1130,7 +1123,7 @@ toast_delete_datum(Relation rel, Datum value)
 	 */
 	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
 						 RowExclusiveLock);
-	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid, RowExclusiveLock);
 
 	/*
 	 * Setup a scan key to fetch from the index by va_valueid (we don't
@@ -1144,7 +1137,7 @@ toast_delete_datum(Relation rel, Datum value)
 	/*
 	 * Find the chunks by index
 	 */
-	toastscan = index_beginscan(toastrel, toastidx, true,
+	toastscan = index_beginscan(toastrel, toastidx,
 								SnapshotToast, 1, &toastkey);
 	while ((toasttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
@@ -1158,7 +1151,7 @@ toast_delete_datum(Relation rel, Datum value)
 	 * End scan and close relations
 	 */
 	index_endscan(toastscan);
-	index_close(toastidx);
+	index_close(toastidx, RowExclusiveLock);
 	heap_close(toastrel, RowExclusiveLock);
 }
 
@@ -1202,7 +1195,7 @@ toast_fetch_datum(varattrib *attr)
 	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
 						 AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
-	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid, AccessShareLock);
 
 	/*
 	 * Setup a scan key to fetch from the index by va_valueid
@@ -1221,7 +1214,7 @@ toast_fetch_datum(varattrib *attr)
 	 */
 	nextidx = 0;
 
-	toastscan = index_beginscan(toastrel, toastidx, true,
+	toastscan = index_beginscan(toastrel, toastidx,
 								SnapshotToast, 1, &toastkey);
 	while ((ttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
@@ -1282,7 +1275,7 @@ toast_fetch_datum(varattrib *attr)
 	 * End scan and close relations
 	 */
 	index_endscan(toastscan);
-	index_close(toastidx);
+	index_close(toastidx, AccessShareLock);
 	heap_close(toastrel, AccessShareLock);
 
 	return result;
@@ -1355,7 +1348,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
 						 AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
-	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid, AccessShareLock);
 
 	/*
 	 * Setup a scan key to fetch from the index. This is either two keys or
@@ -1396,7 +1389,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	 * The index is on (valueid, chunkidx) so they will come in order
 	 */
 	nextidx = startchunk;
-	toastscan = index_beginscan(toastrel, toastidx, true,
+	toastscan = index_beginscan(toastrel, toastidx,
 								SnapshotToast, nscankeys, toastkey);
 	while ((ttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
@@ -1461,7 +1454,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	 * End scan and close relations
 	 */
 	index_endscan(toastscan);
-	index_close(toastidx);
+	index_close(toastidx, AccessShareLock);
 	heap_close(toastrel, AccessShareLock);
 
 	return result;

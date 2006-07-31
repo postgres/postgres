@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.25 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.26 2006/07/31 20:09:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 
@@ -764,7 +763,6 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 List **vacuum_tables,
 					 List **toast_table_ids)
 {
-	Relation	rel;
 	float4		reltuples;		/* pg_class.reltuples */
 
 	/* constants from pg_autovacuum or GUC variables */
@@ -799,12 +797,7 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	if (!PointerIsValid(tabentry))
 		return;
 
-	rel = RelationIdGetRelation(relid);
-	/* The table was recently dropped? */
-	if (!PointerIsValid(rel))
-		return;
-
-	reltuples = rel->rd_rel->reltuples;
+	reltuples = classForm->reltuples;
 	vactuples = tabentry->n_dead_tuples;
 	anltuples = tabentry->n_live_tuples + tabentry->n_dead_tuples -
 		tabentry->last_anl_tuples;
@@ -861,7 +854,7 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	 */
 
 	elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
-		 RelationGetRelationName(rel),
+		 NameStr(classForm->relname),
 		 vactuples, vacthresh, anltuples, anlthresh);
 
 	/* Determine if this table needs vacuum or analyze. */
@@ -880,7 +873,7 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			elog(DEBUG2, "autovac: will%s%s %s",
 				 (dovacuum ? " VACUUM" : ""),
 				 (doanalyze ? " ANALYZE" : ""),
-				 RelationGetRelationName(rel));
+				 NameStr(classForm->relname));
 
 		/*
 		 * we must record tables that have a toast table, even if we currently
@@ -907,8 +900,6 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		if (dovacuum)
 			*toast_table_ids = lappend_oid(*toast_table_ids, relid);
 	}
-
-	RelationClose(rel);
 }
 
 /*
@@ -966,10 +957,10 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
  * done with the current one, and exiting right after the last one, so we don't
  * bother to report "<IDLE>" or some such.
  */
-#define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 32)
 static void
 autovac_report_activity(VacuumStmt *vacstmt, List *relids)
 {
+#define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 32)
 	char		activity[MAX_AUTOVAC_ACTIV_LEN];
 
 	/*
@@ -982,33 +973,32 @@ autovac_report_activity(VacuumStmt *vacstmt, List *relids)
 	/* Report the command and possible options */
 	if (vacstmt->vacuum)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
-					   "VACUUM%s%s%s",
-					   vacstmt->full ? " FULL" : "",
-					   vacstmt->freeze ? " FREEZE" : "",
-					   vacstmt->analyze ? " ANALYZE" : "");
+				 "VACUUM%s%s%s",
+				 vacstmt->full ? " FULL" : "",
+				 vacstmt->freeze ? " FREEZE" : "",
+				 vacstmt->analyze ? " ANALYZE" : "");
 	else if (vacstmt->analyze)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
-					   "ANALYZE");
+				 "ANALYZE");
 
 	/* Report the qualified name of the first relation, if any */
-	if (list_length(relids) > 0)
+	if (relids)
 	{
 		Oid			relid = linitial_oid(relids);
-		Relation	rel;
+		char	   *relname = get_rel_name(relid);
+		char	   *nspname = get_namespace_name(get_rel_namespace(relid));
 
-		rel = RelationIdGetRelation(relid);
-		if (rel == NULL)
-			elog(WARNING, "cache lookup failed for relation %u", relid);
-		else
+		/*
+		 * Paranoia is appropriate here in case relation was recently
+		 * dropped --- the lsyscache routines we just invoked will return
+		 * NULL rather than failing.
+		 */
+		if (relname && nspname)
 		{
-			char   *nspname = get_namespace_name(RelationGetNamespace(rel));
 			int		len = strlen(activity);
 
 			snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
-					 " %s.%s", nspname, RelationGetRelationName(rel));
-
-			pfree(nspname);
-			RelationClose(rel);
+					 " %s.%s", nspname, relname);
 		}
 	}
 
