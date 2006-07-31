@@ -9,7 +9,7 @@
 #endif   /* __CYGWIN__ */
 #endif   /* DLLIMPORT */
 
-#define SQLERRMC_LEN	70
+#define SQLERRMC_LEN	150
 
 #ifdef __cplusplus
 extern		"C"
