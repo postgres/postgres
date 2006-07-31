@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.23 2004/09/26 23:48:07 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.24 2006/07/31 01:10:56 alvherre Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
   <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>
@@ -95,7 +95,7 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
    read/write or read-only.  Read/write is the default.  When a
    transaction is read-only, the following SQL commands are
    disallowed: <literal>INSERT</literal>, <literal>UPDATE</literal>,
-   <literal>DELETE</literal>, and <literal>COPY TO</literal> if the
+   <literal>DELETE</literal>, and <literal>COPY FROM</literal> if the
    table they would write to is not a temporary table; all
    <literal>CREATE</literal>, <literal>ALTER</literal>, and
    <literal>DROP</literal> commands; <literal>COMMENT</literal>,
