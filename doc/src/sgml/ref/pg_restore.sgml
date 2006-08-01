@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.59 2006/03/17 16:02:47 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.60 2006/08/01 18:21:44 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -361,20 +361,6 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X use-set-session-authorization</option></term>
-      <term><option>--use-set-session-authorization</option></term>
-      <listitem>
-       <para>
-        Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
-        instead of <command>ALTER OWNER</> commands to determine object
-        ownership.  This makes the dump more standards compatible, but
-        depending on the history of the objects in the dump, may not restore
-        properly.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-X disable-triggers</></term>
       <term><option>--disable-triggers</></term>
       <listitem>
@@ -393,6 +379,34 @@
         should also specify a superuser name with <option>-S</>, or
         preferably run <application>pg_restore</application> as a
         <productname>PostgreSQL</> superuser.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-X use-set-session-authorization</option></term>
+      <term><option>--use-set-session-authorization</option></term>
+      <listitem>
+       <para>
+        Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
+        instead of <command>ALTER OWNER</> commands to determine object
+        ownership.  This makes the dump more standards compatible, but
+        depending on the history of the objects in the dump, may not restore
+        properly.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-X no-data-for-failed-tables</></term>
+      <listitem>
+       <para>
+       By default, table data objects are restored even if the
+       associated table could not be successfully created (e. g.
+       because it already exists). With this option, such table
+       data is silently ignored. This is useful for dumping and
+       restoring databases with tables which contain auxiliary data
+       for PostgreSQL extensions (e. g. PostGIS).
        </para>
       </listitem>
      </varlistentry>

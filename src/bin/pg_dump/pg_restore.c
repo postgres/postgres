@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.79 2006/07/14 14:52:26 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.80 2006/08/01 18:21:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,6 +252,8 @@ main(int argc, char **argv)
 					use_setsessauth = 1;
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
+				else if (strcmp(optarg, "no-data-for-failed-tables") == 0)
+					opts->noDataForFailedTables = 1;
 				else
 				{
 					fprintf(stderr,
@@ -397,6 +399,9 @@ usage(const char *progname)
 	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
 			 "                           use SESSION AUTHORIZATION commands instead of\n"
 			 "                           OWNER TO commands\n"));
+	printf(_("  -X no-data-for-failed-tables\n"
+			 "                           do not restore data of tables which could not be\n"
+			 "                           created\n"));
 	printf(_("  -1, --single-transaction restore as a single transaction\n"));
 
 	printf(_("\nConnection options:\n"));
