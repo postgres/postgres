@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.17 2006/07/30 01:45:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.18 2006/08/01 14:56:29 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -900,6 +900,36 @@ results_differ(const char *testname)
 
 		if (run_diff(cmd, diff) == 0)
 		{
+			unlink(diff);
+			return false;
+		}
+
+		l = file_line_count(diff);
+		if (l < best_line_count)
+		{
+			/* This diff was a better match than the last one */
+			best_line_count = l;
+			strcpy(best_expect_file, expectfile);
+		}
+	}
+
+	/* 
+	 * fall back on the canonical results file if we haven't tried it yet
+	 * and haven't found a complete match yet.
+	 */
+
+	if (strcmp(expectname, testname) != 0)
+	{
+		snprintf(expectfile, sizeof(expectfile), "%s/expected/%s.out",
+				 inputdir, testname, i);
+
+		snprintf(cmd, sizeof(cmd),
+				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
+				 basic_diff_opts, expectfile, resultsfile, diff);
+
+		if (run_diff(cmd, diff) == 0)
+		{
+			/* No diff = no changes = good */
 			unlink(diff);
 			return false;
 		}
