@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Jul 31 19:02:06 EDT 2006
+Last updated:		Tue Aug  1 14:07:32 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -803,10 +803,8 @@ Clients
 
 * pg_dump
 
-	o %Allow pg_dump to use multiple -t and -n switches  [pg_dump]
-
-	  http://archives.postgresql.org/pgsql-patches/2006-01/msg00190.php
-
+	o -Allow pg_dump to use multiple -t and -n switches, exclusion
+	   ability, and regular expression object matching
 	o %Add dumping of comments on index columns and composite type columns
 	o %Add full object name to the tag field.  eg. for operators we need
 	  '=(integer, integer)', instead of just '='.
