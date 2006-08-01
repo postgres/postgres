@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.57 2006/08/01 00:09:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.58 2006/08/01 19:17:17 alvherre Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -8,39 +8,48 @@
  </indexterm>
 
  <indexterm zone="maintenance">
-  <primary>Routine maintenance</primary>
+  <primary>routine maintenance</primary>
  </indexterm>
 
   <para>
-   PostgreSQL, like any database software, requires that certain tasks
-   be performed regularly to achieve optimum performance. The tasks 
+   <productname>PostgreSQL</>, like any database software, requires that certain tasks
+   be performed regularly to achieve optimum performance. The tasks
    discussed here are <emphasis>required</emphasis>, but they
-   are repetitive in nature and can easily be automated using standard 
-   Unix tools such as <application>cron</application> scripts.  
-  </para>
-  
-  <para>
-   <productname>PostgreSQL</productname> is low-maintenance compared
-   to other database management systems. It is also fairly easy, provided
-   you read the documentation.
+   are repetitive in nature and can easily be automated using standard
+   Unix tools such as <application>cron</application> scripts or
+   Windows' <application>Task Scheduler</>.  But it is the database
+   administrator's responsibility to set up appropriate scripts, and to
+   check that they execute successfully.
   </para>
 
   <para>
-   There are three tasks that <emphasis>must</emphasis> be performed on 
-   a periodic basis. The first is backups. If you do not have a current backup
-   and your system experiences a catastrophic failure, you will lose your data.
-   You can read further about backups procedures in <xref linkend="backup">. 
-   The second is vacuum which is discussed in <xref linkend="routine-vacuuming">. 
-   The third is to update the planner statistics using the analyze command as 
-   discussed in <xref linkend="vacuum-for-statistics">.
+   One obvious maintenance task is creation of backup copies of the data on a
+   regular schedule.  Without a recent backup, you have no chance of recovery
+   after a catastrophe (disk failure, fire, mistakenly dropping a critical
+   table, etc.).  The backup and recovery mechanisms available in
+   <productname>PostgreSQL</productname> are discussed at length in
+   <xref linkend="backup">.
   </para>
 
   <para>
-   Another task that may need periodic attention is log file management.
+   The other main category of maintenance task is periodic <quote>vacuuming</>
+   of the database.  This activity is discussed in
+   <xref linkend="routine-vacuuming">.  Closely related to this is to update
+   the statistics that will be used by the query planner, as discussed in
+   <xref linkend="vacuum-for-statistics">.
+  </para>
+
+  <para>
+   Another task that might need periodic attention is log file management.
    This is discussed in <xref linkend="logfile-maintenance">.
   </para>
 
-  
+  <para>
+   <productname>PostgreSQL</productname> is low-maintenance compared
+   to some other database management systems.  Nonetheless,
+   appropriate attention to these tasks will go far towards ensuring a
+   pleasant and productive experience with the system.
+  </para>
 
  <sect1 id="routine-vacuuming">
   <title>Routine Vacuuming</title>
@@ -80,12 +89,13 @@
   </para>
 
   <para>
-   The standard form of <command>VACUUM</> does not intefere with production
-   database operations. Items such as SELECTS, INSERTS, UPDATES and DELETES
+   The standard form of <command>VACUUM</> can run in parallel with production
+   database operations. Commands such as SELECTs, INSERTs, UPDATEs and DELETEs
    will continue to function as normal, though you will not be able to modify the
-   definition (Such as ALTER TABLE ADD COLUMN) of a table while it is being vacuumed.
-   The release of <productname>PostgreSQL</productname> 8.0, introduced new
-   configuration parameters to further reduce the potentially negative 
+   definition of a table with commands such as ALTER TABLE ADD COLUMN
+   while it is being vacuumed.
+   Beginning in <productname>PostgreSQL</productname> 8.0, there are
+   configuration parameters that can be adjusted to further reduce the
    performance impact of background vacuuming.  See
    <xref linkend="runtime-config-resource-vacuum-cost">.
   </para>
@@ -187,8 +197,8 @@
 
    <para>
     If you have a table whose entire contents are deleted on a periodic
-    basis, consider doing it with the <command>TRUNCATE</command> rather
-    than using the <command>DELETE</command> followed by
+    basis, consider doing it with <command>TRUNCATE</command> rather
+    than using <command>DELETE</command> followed by
     <command>VACUUM</command>. <command>TRUNCATE</command> removes the
     entire content of the table immediately, without requiring a
     subsequent <command>VACUUM</command> or <command>VACUUM

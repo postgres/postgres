@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.11 2006/08/01 00:09:06 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.12 2006/08/01 19:17:18 alvherre Exp $ -->
 
  <appendix id="external-projects">
   <title>PgFoundry and External Projects</title>
@@ -22,13 +22,13 @@
 
   <para>
    Secondly, many <productname>PostgreSQL</productname>-related projects are
-   still hosted at <ulink url="http://gborg.postgresql.org"><productname>GBorg</></ulink>. 
+   still hosted at <ulink url="http://gborg.postgresql.org/"><productname>GBorg</></ulink>. 
    GBorg is the original external community developer site, and while it is 
    currently closed to new projects in favor of PgFoundry, it still contains 
    many active and relevant projects. There are other popular <productname>PostgreSQL</productname> 
    related projects that are hosted independently as well at other community 
-   sites such as <ulink url="http://www.sf.net">SourceForge</ulink>. You should 
-   google if you don't find the project you are looking for.
+   sites such as <ulink url="http://www.sf.net/">SourceForge</ulink>. You should 
+   search the web if you don't find the project you are looking for.
   </para>
 
  <sect1 id="external-interfaces">
@@ -41,10 +41,11 @@
   <para>
    <productname>PostgreSQL</productname> includes very few interfaces
    with the base distribution. <application>libpq</> is packaged because
-   it is the primary dependecy of most interfaces available to PostgreSQL.
-   We also package <application>ecpg</> because it is tied to the 
-   server-side grammar. All other interfaces, such as PHP, Perl, Python,
-   and Ruby, are external projects.
+   it is the primary <application>C</> interface and many other interfaces
+   are build on top of it.  <application>ecpg</> is also packaged because it is
+   tied to the server-side grammar so is very dependent on the database
+   version. All the other interfaces, such as ODBC, Java, Perl, Python, and
+   others, are external projects and must be installed separately.
   </para>
 
   <para>
@@ -72,7 +73,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>pgjdbc</term>
+     <term>PostgreSQL JDBC Driver</term>
      <listitem>
       <para>
        A <application>JDBC</> interface.
@@ -85,7 +86,7 @@
      <term>Npgsql</term>
      <listitem>
       <para>
-       <application>.Net</> interface for more recent <application>mono/C#</> applications.
+       <application>.Net</> data provider for <application>C#</> applications.
        <ulink url="http://pgfoundry.org/projects/npgsql/">Website.</ulink>
       </para>
      </listitem>
@@ -95,7 +96,7 @@
      <term>libpqxx</term>
      <listitem>
       <para>
-       A newer <application>C++</> interface.
+       A <application>C++</> interface.
        <ulink url="http://thaiopensource.org/development/libpqxx/">Website.</ulink>
       </para>
      </listitem>
@@ -115,14 +116,14 @@
      <term>pgtclng</term>
      <listitem>
       <para>
-       A newer version of the <application>Tcl</> interface.
+       A <application>Tcl</> interface.
        <ulink url="http://gborg.postgresql.org/project/pgtclng/projdisplay.php">Website.</ulink>
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>Pyscopg</term>
+     <term>pyscopg</term>
      <listitem>
       <para>
        A <application>Python</> interface library that is DB API 2.0 compliant.
