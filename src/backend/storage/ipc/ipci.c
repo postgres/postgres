@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.86 2006/07/15 15:47:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.87 2006/08/01 19:03:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	{
 		PGShmemHeader *seghdr;
 		Size		size;
+		Size		size_b4addins;
 		int			numSemas;
 
 		/*
@@ -93,6 +94,15 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		/* might as well round it off to a multiple of a typical page size */
 		size = add_size(size, 8192 - (size % 8192));
 
+		/*
+		 * The shared memory for add-ins is treated as a separate
+		 * segment, but in reality it is not.
+		 */
+		size_b4addins = size;
+		size = add_size(size, AddinShmemSize());
+		/* round it off again */
+		size = add_size(size, 8192 - (size % 8192));
+
 		elog(DEBUG3, "invoking IpcMemoryCreate(size=%lu)",
 			 (unsigned long) size);
 
@@ -100,6 +110,16 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		 * Create the shmem segment
 		 */
 		seghdr = PGSharedMemoryCreate(size, makePrivate, port);
+
+		/*
+		 * Modify hdr to show segment size before add-ins
+		 */
+		seghdr->totalsize = size_b4addins;
+		
+		/* 
+		 * Set up segment header sections in each Addin context
+		 */
+		InitAddinContexts((void *) ((char *) seghdr + size_b4addins));
 
 		InitShmemAccess(seghdr);
 
