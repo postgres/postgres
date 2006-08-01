@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.442 2006/07/27 19:52:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.443 2006/08/01 18:05:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,19 @@ static const char *username_subquery;
 /* obsolete as of 7.3: */
 static Oid	g_last_builtin_oid; /* value of the last builtin oid */
 
-static char *selectTableName = NULL;	/* name of a single table to dump */
-static char *selectSchemaName = NULL;	/* name of a single schema to dump */
+/* select and exclude tables and schemas */
+typedef struct objnameArg
+{
+	struct objnameArg *next;
+	char *name;			/* name of the relation */
+	bool is_include;	/* include/exclude? */
+} objnameArg;
+
+objnameArg *schemaList = NULL; /* List of schemas to include/exclude */
+objnameArg *tableList = NULL; /* List of tables to include/exclude */
+
+char *matchingSchemas = NULL; /* Final list of schemas to dump by oid */
+char *matchingTables = NULL; /* Final list of tables to dump by oid */
 
 char		g_opaque_type[10];	/* name for the opaque type */
 
@@ -180,6 +191,9 @@ static void check_sql_result(PGresult *res, PGconn *conn, const char *query,
 int
 main(int argc, char **argv)
 {
+	PQExpBuffer query = createPQExpBuffer();
+	PGresult   *res;
+	objnameArg *this_obj_name = NULL;
 	int			c;
 	const char *filename = NULL;
 	const char *format = "p";
@@ -195,6 +209,7 @@ main(int argc, char **argv)
 	DumpableObject **dobjs;
 	int			numObjs;
 	int			i;
+	bool		switch_include_exclude;
 	bool		force_password = false;
 	int			compressLevel = -1;
 	bool		ignore_version = false;
@@ -226,9 +241,11 @@ main(int argc, char **argv)
 		{"no-owner", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
 		{"schema", required_argument, NULL, 'n'},
+		{"exclude-schema", required_argument, NULL, 'N'},
 		{"schema-only", no_argument, NULL, 's'},
 		{"superuser", required_argument, NULL, 'S'},
 		{"table", required_argument, NULL, 't'},
+		{"exclude-table", required_argument, NULL, 'T'},
 		{"password", no_argument, NULL, 'W'},
 		{"username", required_argument, NULL, 'U'},
 		{"verbose", no_argument, NULL, 'v'},
@@ -281,9 +298,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "abcCdDE:f:F:h:in:oOp:RsS:t:uU:vWxX:Z:",
+	while ((c = getopt_long(argc, argv, "abcCdDE:f:F:h:in:N:oOp:RsS:t:T:uU:vWxX:Z:",
 							long_options, &optindex)) != -1)
 	{
+		objnameArg *schemaList_tail = NULL, *tableList_tail = NULL;
+
 		switch (c)
 		{
 			case 'a':			/* Dump data only */
@@ -332,8 +351,42 @@ main(int argc, char **argv)
 				ignore_version = true;
 				break;
 
-			case 'n':			/* Dump data for this schema only */
-				selectSchemaName = strdup(optarg);
+			case 'n': 		/* Include schemas */
+			case 'N':		/* Exclude schemas */
+			case 't':		/* Include tables */
+			case 'T':		/* Exclude tables */
+
+				if (strlen(optarg) < 1)
+				{
+					fprintf(stderr, _("%s: invalid -%c option\n"), progname, c);
+					exit(1);
+				}
+
+				{
+					/* Create a struct for this name */
+					objnameArg *new_obj_name = (objnameArg *)
+												malloc(sizeof(objnameArg));
+
+					new_obj_name->next = NULL;
+					new_obj_name->name = strdup(optarg);
+					new_obj_name->is_include = islower(c) ? true : false;
+
+					/* add new entry to the proper list */
+					if (tolower(c) == 'n')
+					{
+						if (!schemaList_tail)
+							schemaList_tail = schemaList = new_obj_name;
+						else
+							schemaList_tail = schemaList_tail->next = new_obj_name;
+					}
+					else
+					{
+						if (!tableList_tail)
+							tableList_tail = tableList = new_obj_name;
+						else
+							tableList_tail = tableList_tail->next = new_obj_name;
+					}
+				}
 				break;
 
 			case 'o':			/* Dump oids */
@@ -359,10 +412,6 @@ main(int argc, char **argv)
 
 			case 'S':			/* Username for superuser in plain text output */
 				outputSuperuser = strdup(optarg);
-				break;
-
-			case 't':			/* Dump data for this table only */
-				selectTableName = strdup(optarg);
 				break;
 
 			case 'u':
@@ -449,7 +498,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (selectTableName != NULL || selectSchemaName != NULL)
+	if (matchingTables != NULL || matchingSchemas != NULL)
 		outputBlobs = false;
 
 	if (dumpInserts == true && oids == true)
@@ -568,11 +617,157 @@ main(int argc, char **argv)
 			write_msg(NULL, "last built-in OID is %u\n", g_last_builtin_oid);
 	}
 
+
+	if (schemaList != NULL && g_fout->remoteVersion < 70300)
+	{
+		write_msg(NULL, "Postgres must be at least version 7.3 to use schema switches\n");
+		exit_nicely();
+	}
+
+	/* Check schema selection flags */
+	resetPQExpBuffer(query);
+	switch_include_exclude = true;
+	for (this_obj_name = schemaList; this_obj_name; this_obj_name = this_obj_name->next)
+	{
+		if (switch_include_exclude)
+		{
+			/* Special case for when -N is the first argument */
+			if (this_obj_name == schemaList && !this_obj_name->is_include)
+				appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_namespace EXCEPT\n");
+	
+			appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_namespace WHERE");
+		}
+	
+		appendPQExpBuffer(query, "%s nspname %c ", switch_include_exclude ? "" : " OR",
+							/* any meta-characters? */
+							strpbrk(this_obj_name->name,"([{\\.?+") == NULL ? '=' : '~');
+		appendStringLiteralAH(query, this_obj_name->name, g_fout);
+	
+		if (this_obj_name->next && this_obj_name->next->is_include == this_obj_name->is_include)
+			switch_include_exclude = false;
+		else
+		{
+			switch_include_exclude = true;
+	
+			/* Add the joiner if needed */
+			if (this_obj_name->next)
+				appendPQExpBuffer(query, "\n%s\n",
+								  this_obj_name->next->is_include ? "UNION" : "EXCEPT");
+		}
+	}
+
+	/* Construct OID list of matching schemas */
+	if (schemaList)
+	{
+		int len;
+		
+		res = PQexec(g_conn, query->data);
+		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+		if (PQntuples(res) == 0)
+		{
+			write_msg(NULL, "No matching schemas were found\n");
+			exit_nicely();
+		}
+
+		for (i = 0, len = strlen(" "); i < PQntuples(res); i++)
+			len += strlen(PQgetvalue(res, i, 0)) + 1;
+
+		/*
+		 *	Need to use comma separators so it can be used by IN.  zero
+		 *	is a dummy placeholder.  Format is " oid oid oid ".
+		 */
+		matchingSchemas = malloc(len + 1);
+		strcpy(matchingSchemas, " ");
+		for (i = 0; i < PQntuples(res); i++)
+		{
+			strcat(matchingSchemas, PQgetvalue(res, i, 0));
+			strcat(matchingSchemas, " ");
+		}
+	}
+
+	/* Check table selection flags */
+	resetPQExpBuffer(query);
+	switch_include_exclude = true;
+	for (this_obj_name = tableList; this_obj_name; this_obj_name = this_obj_name->next)
+	{
+		if (switch_include_exclude)
+		{
+			/* Special case for when -T is the first argument */
+			if (this_obj_name == tableList && !this_obj_name->is_include && !strlen(query->data))
+				appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_class WHERE relkind='r' EXCEPT\n");
+	
+			appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_class WHERE relkind='r' AND (");
+		}
+	
+		appendPQExpBuffer(query, "%srelname %c ", switch_include_exclude ? "" : " OR ",
+							/* any meta-characters? */
+							strpbrk(this_obj_name->name,"([{\\.?+") == NULL ? '=' : '~');
+		appendStringLiteralAH(query, this_obj_name->name, g_fout);
+	
+		if (this_obj_name->next && this_obj_name->next->is_include == this_obj_name->is_include)
+			switch_include_exclude = false;
+		else
+		{
+			switch_include_exclude = true;
+			appendPQExpBuffer(query, ")");
+		
+			/* Add the joiner if needed */
+			if (this_obj_name->next)
+				appendPQExpBuffer(query, "\n%s\n", this_obj_name->next->is_include ?
+								  "UNION" : "EXCEPT");
+		}
+	}
+
+	/* Construct OID list of matching tables */
+	if (tableList)
+	{
+		int len;
+		
+		/* Restrict by schema? */
+		if (matchingSchemas != NULL)
+		{
+			char *matchingSchemas_commas = strdup(matchingSchemas), *p;
+
+			/* Construct "IN" SQL string by adding commas, " oid, oid, oid " */
+			for (p = matchingSchemas_commas; *p; p++)
+			{
+				/* No commas for first/last characters */
+				if (*p == ' ' && p != matchingSchemas_commas && *(p+1))
+					*p = ',';
+			}
+
+			appendPQExpBuffer(query,
+							  "\nINTERSECT\nSELECT oid FROM pg_catalog.pg_class WHERE relkind='r' AND relnamespace IN (%s)\n",
+							  matchingSchemas_commas);
+		}
+
+		res = PQexec(g_conn, query->data);
+		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+		if (PQntuples(res) == 0)
+		{
+			write_msg(NULL, "No matching tables were found\n");
+			exit_nicely();
+		}
+
+		for (i = 0, len = strlen(" "); i < PQntuples(res); i++)
+			len += strlen(PQgetvalue(res, i, 0)) + 1;
+
+		matchingTables = malloc(len + 1);
+		strcpy(matchingTables, " ");
+		for (i = 0; i < PQntuples(res); i++)
+		{
+			strcat(matchingTables, PQgetvalue(res, i, 0));
+			strcat(matchingTables, " ");
+		}
+	}
+
+	destroyPQExpBuffer(query);
+
 	/*
 	 * Now scan the database and create DumpableObject structs for all the
 	 * objects we intend to dump.
 	 */
-	tblinfo = getSchemaData(&numTables, schemaOnly, dataOnly);
+	tblinfo = getSchemaData(&numTables);
 
 	if (!schemaOnly)
 		getTableData(tblinfo, numTables, oids);
@@ -628,7 +823,7 @@ main(int argc, char **argv)
 	dumpStdStrings(g_fout);
 
 	/* The database item is always next, unless we don't want it at all */
-	if (!dataOnly && selectTableName == NULL && selectSchemaName == NULL)
+	if (!dataOnly && matchingTables == NULL && matchingSchemas == NULL)
 		dumpDatabase(g_fout);
 
 	/* Now the rearrangeable objects. */
@@ -687,28 +882,30 @@ help(const char *progname)
 	printf(_("  --version                output version information, then exit\n"));
 
 	printf(_("\nOptions controlling the output content:\n"));
-	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
-	printf(_("  -c, --clean              clean (drop) schema prior to create\n"));
-	printf(_("  -C, --create             include commands to create database in dump\n"));
-	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
-	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
-	printf(_("  -E, --encoding=ENCODING  dump the data in encoding ENCODING\n"));
-	printf(_("  -n, --schema=SCHEMA      dump the named schema only\n"));
-	printf(_("  -o, --oids               include OIDs in dump\n"));
-	printf(_("  -O, --no-owner           skip restoration of object ownership\n"
-			 "                           in plain text format\n"));
-	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
-	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in\n"
-			 "                           plain text format\n"));
-	printf(_("  -t, --table=TABLE        dump the named table only\n"));
-	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
+	printf(_("  -a, --data-only             dump only the data, not the schema\n"));
+	printf(_("  -c, --clean                 clean (drop) schema prior to create\n"));
+	printf(_("  -C, --create                include commands to create database in dump\n"));
+	printf(_("  -d, --inserts               dump data as INSERT, rather than COPY, commands\n"));
+	printf(_("  -D, --column-inserts        dump data as INSERT commands with column names\n"));
+	printf(_("  -E, --encoding=ENCODING     dump the data in encoding ENCODING\n"));
+	printf(_("  -n, --schema=SCHEMA         dump the named schema only\n"));
+	printf(_("  -N, --exclude-schema=SCHEMA do NOT dump the named schema\n"));
+	printf(_("  -o, --oids                  include OIDs in dump\n"));
+	printf(_("  -O, --no-owner              skip restoration of object ownership\n"
+			 "                              in plain text format\n"));
+	printf(_("  -s, --schema-only           dump only the schema, no data\n"));
+	printf(_("  -S, --superuser=NAME        specify the superuser user name to use in\n"
+			 "                              plain text format\n"));
+	printf(_("  -t, --table=TABLE           dump the named table only\n"));
+	printf(_("  -T, --exclude-table=TABLE   do NOT dump the named table\n"));
+	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
 	printf(_("  -X disable-dollar-quoting, --disable-dollar-quoting\n"
-			 "                           disable dollar quoting, use SQL standard quoting\n"));
+			 "                              disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
-			 "                           disable triggers during data-only restore\n"));
+			 "                              disable triggers during data-only restore\n"));
 	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
-			 "                           use SESSION AUTHORIZATION commands instead of\n"
-			 "                           OWNER TO commands\n"));
+			 "                              use SESSION AUTHORIZATION commands instead of\n"
+			 "                              OWNER TO commands\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
@@ -738,18 +935,20 @@ static void
 selectDumpableNamespace(NamespaceInfo *nsinfo)
 {
 	/*
-	 * If a specific table is being dumped, do not dump any complete
-	 * namespaces.	If a specific namespace is being dumped, dump just that
-	 * namespace. Otherwise, dump all non-system namespaces.
+	 * If specific tables are being dumped, do not dump any complete
+	 * namespaces.	If specific namespaces are being dumped, dump just 
+	 * those namespaces. Otherwise, dump all non-system namespaces.
 	 */
-	if (selectTableName != NULL)
+	if (matchingTables != NULL)
 		nsinfo->dobj.dump = false;
-	else if (selectSchemaName != NULL)
+	else if (matchingSchemas != NULL)
 	{
-		if (strcmp(nsinfo->dobj.name, selectSchemaName) == 0)
+		char *searchname = NULL;
+		searchname = malloc(20);
+		sprintf(searchname, " %d ", nsinfo->dobj.catId.oid);
+		if (strstr(matchingSchemas, searchname) != NULL)
 			nsinfo->dobj.dump = true;
-		else
-			nsinfo->dobj.dump = false;
+		free(searchname);
 	}
 	else if (strncmp(nsinfo->dobj.name, "pg_", 3) == 0 ||
 			 strcmp(nsinfo->dobj.name, "information_schema") == 0)
@@ -771,16 +970,16 @@ selectDumpableTable(TableInfo *tbinfo)
 	 * dump.
 	 */
 	tbinfo->dobj.dump = false;
-	if (tbinfo->dobj.namespace->dobj.dump)
+	if (tbinfo->dobj.namespace->dobj.dump || matchingTables == NULL)
 		tbinfo->dobj.dump = true;
-	else if (selectTableName != NULL &&
-			 strcmp(tbinfo->dobj.name, selectTableName) == 0)
+	else
 	{
-		/* If both -s and -t specified, must match both to dump */
-		if (selectSchemaName == NULL)
+		char *searchname = NULL;
+		searchname = malloc(20);
+		sprintf(searchname, " %d ", tbinfo->dobj.catId.oid);
+		if (strstr(matchingTables, searchname) != NULL)
 			tbinfo->dobj.dump = true;
-		else if (strcmp(tbinfo->dobj.namespace->dobj.name, selectSchemaName) == 0)
-			tbinfo->dobj.dump = true;
+		free(searchname);
 	}
 }
 
@@ -1720,25 +1919,6 @@ getNamespaces(int *numNamespaces)
 		if (strlen(nsinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of schema \"%s\" appears to be invalid\n",
 					  nsinfo[i].dobj.name);
-	}
-
-	/*
-	 * If the user attempted to dump a specific namespace, check to ensure
-	 * that the specified namespace actually exists.
-	 */
-	if (selectSchemaName)
-	{
-		for (i = 0; i < ntups; i++)
-			if (strcmp(nsinfo[i].dobj.name, selectSchemaName) == 0)
-				break;
-
-		/* Didn't find a match */
-		if (i == ntups)
-		{
-			write_msg(NULL, "specified schema \"%s\" does not exist\n",
-					  selectSchemaName);
-			exit_nicely();
-		}
 	}
 
 	PQclear(res);
@@ -2903,26 +3083,6 @@ getTables(int *numTables)
 		if (strlen(tblinfo[i].rolname) == 0)
 			write_msg(NULL, "WARNING: owner of table \"%s\" appears to be invalid\n",
 					  tblinfo[i].dobj.name);
-	}
-
-	/*
-	 * If the user is attempting to dump a specific table, check to ensure
-	 * that the specified table actually exists.  (This is a bit simplistic
-	 * since we don't fully check the combination of -n and -t switches.)
-	 */
-	if (selectTableName)
-	{
-		for (i = 0; i < ntups; i++)
-			if (strcmp(tblinfo[i].dobj.name, selectTableName) == 0)
-				break;
-
-		/* Didn't find a match */
-		if (i == ntups)
-		{
-			write_msg(NULL, "specified table \"%s\" does not exist\n",
-					  selectTableName);
-			exit_nicely();
-		}
 	}
 
 	PQclear(res);
@@ -5438,7 +5598,7 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
 static bool
 shouldDumpProcLangs(void)
 {
-	if (selectTableName != NULL || selectSchemaName != NULL)
+	if (matchingTables != NULL || matchingSchemas != NULL)
 		return false;
 	/* And they're schema not data */
 	if (dataOnly)

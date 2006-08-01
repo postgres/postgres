@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.91 2006/07/14 14:52:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.92 2006/08/01 18:05:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,7 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
  *	  Collect information about all potentially dumpable objects
  */
 TableInfo *
-getSchemaData(int *numTablesPtr,
-			  const bool schemaOnly,
-			  const bool dataOnly)
+getSchemaData(int *numTablesPtr)
 {
 	NamespaceInfo *nsinfo;
 	AggInfo    *agginfo;

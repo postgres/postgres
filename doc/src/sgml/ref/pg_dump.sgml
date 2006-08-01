@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.86 2006/05/13 17:10:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.87 2006/08/01 18:05:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -398,21 +398,104 @@ PostgreSQL documentation
       <listitem>
        <para>
         Dump data for <replaceable class="parameter">table</replaceable>
-        only. It is possible for there to be
-        multiple tables with the same name in different schemas; if that
-        is the case, all matching tables will be dumped.  Specify both
-        <option>--schema</> and <option>--table</> to select just one table.
+        only. It is possible for there to be multiple tables with the same 
+        name in different schemas; if that is the case, all matching tables 
+        will be dumped. Also, if any POSIX regular expression character appears
+        in the table name (<literal>([{\.?+</>, the string will be interpreted
+        as a regular expression.  Note that when in regular expression mode, the
+        string will not be anchored to the start/end unless <literal>^</> and
+        <literal>$</> are used at the beginning/end of the string.
        </para>
+
+       <para>
+       The options <option>-t</>, <option>-T</>, <option>-n</>, and <option>-N</> 
+       can be used together to achieve a high degree of control over what is
+       dumped. Multiple arguments can be used, and are parsed in the order 
+       given to build a list of valid tables and schemas. The schema options are 
+       parsed first to create a list of schemas to dump, and then the table options 
+       are parsed to only find tables in the matching schemas.
+       </para>
+
+       <para>For example, to dump a single table named <literal>pg_class</>:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -t pg_class mydb &gt; db.out</userinput>
+</screen>
+       </para>
+
+       <para>To dump all tables starting with <literal>employee</> in the 
+       <literal>detroit</> schema, except for the table named <literal>employee_log</literal>:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -n detroit -t ^employee -T employee_log mydb &gt; db.out</userinput>
+</screen>
+       </para>
+
+       <para>To dump all schemas starting with <literal>east</> or <literal>west</> and ending in
+       <literal>gsm</>, but not schemas that contain the letters <literal>test</>, except for 
+       one named <literal>east_alpha_test_five</>:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -n "^(east|west).*gsm$" -N test -n east_alpha_test_five mydb &gt; db.out</userinput>
+</screen>
+       </para>
+
+
+       <para>To dump all tables except for those beginning with <literal>ts_</literal>:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -T "^ts_" mydb &gt; db.out</userinput>
+</screen>
+       </para>
+
 
        <note>
         <para>
          In this mode, <application>pg_dump</application> makes no
-         attempt to dump any other database objects that the selected table
+         attempt to dump any other database objects that the selected tables
          may depend upon. Therefore, there is no guarantee
-         that the results of a single-table dump can be successfully
+         that the results of a specific-table dump can be successfully
          restored by themselves into a clean database.
         </para>
        </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-T <replaceable class="parameter">table</replaceable></option></term>
+      <term><option>--exclude-table=<replaceable class="parameter">table</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not dump any matching <replaceable class="parameter">tables</replaceable>.
+        More than one option can be used, and POSIX regular expressions are handled just
+        like <literal>-t</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-n <replaceable class="parameter">schema</replaceable></option></term>
+      <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <listitem>
+       <para>
+        Dump only the matching <replaceable class="parameter">schemas</replaceable>.
+        More than one option can be used, and POSIX regular expressions are handled just
+        like <literal>-t</>.
+       </para>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-N <replaceable class="parameter">schema</replaceable></option></term>
+      <term><option>--exclude-schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not dump the matching <replaceable class="parameter">schemas</replaceable>.
+        More than one option can be used, and POSIX regular expressions are handled just
+        like <literal>-t</>.
+       </para>
+
       </listitem>
      </varlistentry>
 
