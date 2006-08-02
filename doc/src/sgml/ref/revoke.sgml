@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.35 2005/10/20 19:18:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.35.2.1 2006/08/02 16:30:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -58,8 +58,7 @@ REVOKE [ GRANT OPTION FOR ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ ADMIN OPTION FOR ]
-    <replaceable class="PARAMETER">role</replaceable> [, ...]
-    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    <replaceable class="PARAMETER">role</replaceable> [, ...] FROM <replaceable class="PARAMETER">username</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
@@ -112,6 +111,8 @@ REVOKE [ ADMIN OPTION FOR ]
   <para>
    When revoking membership in a role, <literal>GRANT OPTION</> is instead
    called <literal>ADMIN OPTION</>, but the behavior is similar.
+   Note also that this form of the command does not
+   allow the noise word <literal>GROUP</>.
   </para>
  </refsect1>
 

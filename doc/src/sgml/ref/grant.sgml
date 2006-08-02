@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.50 2005/10/20 19:18:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.50.2.1 2006/08/02 16:30:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -45,8 +45,7 @@ GRANT { CREATE | ALL [ PRIVILEGES ] }
     ON TABLESPACE <replaceable>tablespacename</> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
-GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH ADMIN OPTION ]
+GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable class="PARAMETER">username</replaceable> [, ...] [ WITH ADMIN OPTION ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -299,6 +298,12 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...]
    database superusers can grant or revoke membership in any role to anyone.
    Roles having <literal>CREATEROLE</> privilege can grant or revoke
    membership in any role that is not a superuser.
+  </para>
+
+  <para>
+   Unlike the case with privileges, membership in a role cannot be granted
+   to <literal>PUBLIC</>.  Note also that this form of the command does not
+   allow the noise word <literal>GROUP</>.
   </para>
  </refsect2>
  </refsect1>
