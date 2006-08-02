@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.341 2006/08/02 01:59:46 joe Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.342 2006/08/02 13:58:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -745,10 +745,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		 * construct to ensure that the values would be available while
 		 * evaluating the VALUES RTE.  This is a shame.  FIXME
 		 */
-		if (contain_vars_of_level((Node *) exprsLists, 0))
+		if (pstate->p_rtable != NIL &&
+			contain_vars_of_level((Node *) exprsLists, 0))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("VALUES must not contain OLD or NEW references")));
+					 errmsg("VALUES must not contain OLD or NEW references"),
+					 errhint("Use SELECT ... UNION ALL ... instead.")));
 
 		/*
 		 * Generate the VALUES RTE
@@ -2264,10 +2266,12 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	 * construct to ensure that the values would be available while
 	 * evaluating the VALUES RTE.  This is a shame.  FIXME
 	 */
-	if (contain_vars_of_level((Node *) newExprsLists, 0))
+	if (list_length(pstate->p_rtable) != 1 &&
+		contain_vars_of_level((Node *) newExprsLists, 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("VALUES must not contain OLD or NEW references")));
+				 errmsg("VALUES must not contain OLD or NEW references"),
+				 errhint("Use SELECT ... UNION ALL ... instead.")));
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
