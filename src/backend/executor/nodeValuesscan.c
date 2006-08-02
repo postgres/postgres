@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.1 2006/08/02 01:59:45 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.2 2006/08/02 18:58:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,6 @@
 
 
 static TupleTableSlot *ValuesNext(ValuesScanState *node);
-static void ExecMakeValuesResult(List *targetlist,
-					 ExprContext *econtext,
-					 TupleTableSlot *slot);
 
 
 /* ----------------------------------------------------------------
@@ -61,7 +58,7 @@ ValuesNext(ValuesScanState *node)
 	estate = node->ss.ps.state;
 	direction = estate->es_direction;
 	slot = node->ss.ss_ScanTupleSlot;
-	econtext = node->ss.ps.ps_ExprContext;
+	econtext = node->rowcontext;
 
 	/*
 	 * Get the next tuple. Return NULL if no more tuples.
@@ -85,73 +82,77 @@ ValuesNext(ValuesScanState *node)
 			exprlist = NIL;
 	}
 
-	if (exprlist)
-	{
-		List		   *init_exprlist;
-
-		init_exprlist = (List *) ExecInitExpr((Expr *) exprlist,
-											  (PlanState *) node);
-		ExecMakeValuesResult(init_exprlist,
-							 econtext,
-							 slot);
-		list_free_deep(init_exprlist);
-	}
-	else
-		ExecClearTuple(slot);
-
-	return slot;
-}
-
-/*
- *		ExecMakeValuesResult
- *
- * Evaluate a values list, store into a virtual slot.
- */
-static void
-ExecMakeValuesResult(List *targetlist,
-					 ExprContext *econtext,
-					 TupleTableSlot *slot)
-{
-	MemoryContext		oldContext;
-	Datum	   *values;
-	bool	   *isnull;
-	ListCell		   *lc;
-	int					resind = 0;
-
-	/* caller should have checked all targetlists are the same length */
-	Assert(list_length(targetlist) == slot->tts_tupleDescriptor->natts);
-
 	/*
-	 * Prepare to build a virtual result tuple.
+	 * Always clear the result slot; this is appropriate if we are at the
+	 * end of the data, and if we're not, we still need it as the first step
+	 * of the store-virtual-tuple protocol.  It seems wise to clear the slot
+	 * before we reset the context it might have pointers into.
 	 */
 	ExecClearTuple(slot);
-	values = slot->tts_values;
-	isnull = slot->tts_isnull;
 
-	/*
-	 * Switch to short-lived context for evaluating the row.
-	 * Reset per-tuple memory context before each row.
-	 */
-	ResetExprContext(econtext);
-	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-
-	foreach(lc, targetlist)
+	if (exprlist)
 	{
-		ExprState *estate = (ExprState *) lfirst(lc);
+		MemoryContext oldContext;
+		List	   *exprstatelist;
+		Datum	   *values;
+		bool	   *isnull;
+		ListCell   *lc;
+		int			resind;
 
-		values[resind] = ExecEvalExpr(estate,
-									  econtext,
-									  &isnull[resind],
-									  NULL);
-		resind++;
+		/*
+		 * Get rid of any prior cycle's leftovers.  We use ReScanExprContext
+		 * not just ResetExprContext because we want any registered shutdown
+		 * callbacks to be called.
+		 */
+		ReScanExprContext(econtext);
+
+		/*
+		 * Build the expression eval state in the econtext's per-tuple
+		 * memory.  This is a tad unusual, but we want to delete the eval
+		 * state again when we move to the next row, to avoid growth of
+		 * memory requirements over a long values list.
+		 */
+		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
+		/*
+		 * Pass NULL, not my plan node, because we don't want anything
+		 * in this transient state linking into permanent state.  The
+		 * only possibility is a SubPlan, and there shouldn't be any
+		 * (any subselects in the VALUES list should be InitPlans).
+		 */
+		exprstatelist = (List *) ExecInitExpr((Expr *) exprlist, NULL);
+
+		/* parser should have checked all sublists are the same length */
+		Assert(list_length(exprstatelist) == slot->tts_tupleDescriptor->natts);
+
+		/*
+		 * Compute the expressions and build a virtual result tuple.
+		 * We already did ExecClearTuple(slot).
+		 */
+		values = slot->tts_values;
+		isnull = slot->tts_isnull;
+
+		resind = 0;
+		foreach(lc, exprstatelist)
+		{
+			ExprState *estate = (ExprState *) lfirst(lc);
+
+			values[resind] = ExecEvalExpr(estate,
+										  econtext,
+										  &isnull[resind],
+										  NULL);
+			resind++;
+		}
+
+		MemoryContextSwitchTo(oldContext);
+
+		/*
+		 * And return the virtual tuple.
+		 */
+		ExecStoreVirtualTuple(slot);
 	}
 
-	MemoryContextSwitchTo(oldContext);
-
-	/*
-	 * And return the virtual tuple.
-	 */
-	ExecStoreVirtualTuple(slot);
+	return slot;
 }
 
 
@@ -186,7 +187,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	ListCell		   *vtl;
 	int					i;
 	PlanState		   *planstate;
-	ExprContext		   *econtext;
 
 	/*
 	 * ValuesScan should not have any children.
@@ -203,12 +203,17 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 
 	/*
 	 * Miscellaneous initialization
-	 *
-	 * create expression context for node
 	 */
 	planstate = &scanstate->ss.ps;
+
+	/*
+	 * Create expression contexts.	We need two, one for per-sublist
+	 * processing and one for execScan.c to use for quals and projections.
+	 * We cheat a little by using ExecAssignExprContext() to build both.
+	 */
 	ExecAssignExprContext(estate, planstate);
-	econtext = planstate->ps_ExprContext;
+	scanstate->rowcontext = planstate->ps_ExprContext;
+	ExecAssignExprContext(estate, planstate);
 
 #define VALUESSCAN_NSLOTS 2
 
@@ -282,8 +287,10 @@ void
 ExecEndValuesScan(ValuesScanState *node)
 {
 	/*
-	 * Free the exprcontext
+	 * Free both exprcontexts
 	 */
+	ExecFreeExprContext(&node->ss.ps);
+	node->ss.ps.ps_ExprContext = node->rowcontext;
 	ExecFreeExprContext(&node->ss.ps);
 
 	/*

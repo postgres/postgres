@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.156 2006/08/02 01:59:47 joe Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.157 2006/08/02 18:58:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,18 +1044,25 @@ typedef struct FunctionScanState
 /* ----------------
  *	 ValuesScanState information
  *
- *		Values nodes are used to scan the results of a
- *		values list appearing in FROM or INSERT
+ *		ValuesScan nodes are used to scan the results of a VALUES list
  *
+ *		rowcontext			per-expression-list context
  *		exprlists			array of expression lists being evaluated
  *		array_len			size of array
  *		curr_idx			current array index (0-based)
  *		marked_idx			marked position (for mark/restore)
+ *
+ *	Note: ss.ps.ps_ExprContext is used to evaluate any qual or projection
+ *	expressions attached to the node.  We create a second ExprContext,
+ *	rowcontext, in which to build the executor expression state for each
+ *	Values sublist.  Resetting this context lets us get rid of expression
+ *	state for each row, avoiding major memory leakage over a long values list.
  * ----------------
  */
 typedef struct ValuesScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
+	ExprContext *rowcontext;
 	List	  **exprlists;
 	int			array_len;
 	int			curr_idx;
