@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.444 2006/08/01 21:05:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.445 2006/08/02 21:43:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -625,6 +625,7 @@ main(int argc, char **argv)
 	/* Check schema selection flags */
 	resetPQExpBuffer(query);
 	switch_include_exclude = true;
+
 	for (this_obj_name = schemaList; this_obj_name; this_obj_name = this_obj_name->next)
 	{
 		if (switch_include_exclude)
@@ -686,6 +687,7 @@ main(int argc, char **argv)
 	/* Check table selection flags */
 	resetPQExpBuffer(query);
 	switch_include_exclude = true;
+
 	for (this_obj_name = tableList; this_obj_name; this_obj_name = this_obj_name->next)
 	{
 		if (switch_include_exclude)
@@ -937,21 +939,23 @@ selectDumpableNamespace(NamespaceInfo *nsinfo)
 	 * namespaces.	If specific namespaces are being dumped, dump just 
 	 * those namespaces. Otherwise, dump all non-system namespaces.
 	 */
+	nsinfo->dobj.dump = false;
+
 	if (matchingTables != NULL)
-		nsinfo->dobj.dump = false;
+		/* false */;
 	else if (matchingSchemas != NULL)
 	{
-		char *searchname = NULL;
-		searchname = malloc(20);
-		sprintf(searchname, " %d ", nsinfo->dobj.catId.oid);
-		if (strstr(matchingSchemas, searchname) != NULL)
+		char *search_oid = malloc(20);
+
+		sprintf(search_oid, " %d ", nsinfo->dobj.catId.oid);
+		if (strstr(matchingSchemas, search_oid) != NULL)
 			nsinfo->dobj.dump = true;
-		free(searchname);
+
+		free(search_oid);
 	}
-	else if (strncmp(nsinfo->dobj.name, "pg_", 3) == 0 ||
-			 strcmp(nsinfo->dobj.name, "information_schema") == 0)
-		nsinfo->dobj.dump = false;
-	else
+	/* The server prevents users from creating pg_ schemas */
+	else if (strncmp(nsinfo->dobj.name, "pg_", 3) != 0 &&
+			 strcmp(nsinfo->dobj.name, "information_schema") != 0)
 		nsinfo->dobj.dump = true;
 }
 
@@ -968,16 +972,21 @@ selectDumpableTable(TableInfo *tbinfo)
 	 * dump.
 	 */
 	tbinfo->dobj.dump = false;
-	if (tbinfo->dobj.namespace->dobj.dump || matchingTables == NULL)
-		tbinfo->dobj.dump = true;
+
+	if (matchingTables == NULL)
+	{
+		if (tbinfo->dobj.namespace->dobj.dump)
+			tbinfo->dobj.dump = true;
+	}
 	else
 	{
-		char *searchname = NULL;
-		searchname = malloc(20);
-		sprintf(searchname, " %d ", tbinfo->dobj.catId.oid);
-		if (strstr(matchingTables, searchname) != NULL)
+		char *search_oid = malloc(20);
+
+		sprintf(search_oid, " %d ", tbinfo->dobj.catId.oid);
+		if (strstr(matchingTables, search_oid) != NULL)
 			tbinfo->dobj.dump = true;
-		free(searchname);
+
+		free(search_oid);
 	}
 }
 
