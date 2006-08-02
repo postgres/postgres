@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.55 2006/07/28 11:49:36 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.56 2006/08/02 13:43:23 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1465,7 +1465,7 @@ ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name,
 {
 	va_list		args;
 	struct statement *stmt;
-	struct connection *con = ECPGget_connection(connection_name);
+	struct connection *con;
 	bool		status;
 	char	   *oldlocale;
 
@@ -1473,6 +1473,12 @@ ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name,
 	/* since the database wants the standard decimal point */
 	oldlocale = ECPGstrdup(setlocale(LC_NUMERIC, NULL), lineno);
 	setlocale(LC_NUMERIC, "C");
+
+#ifdef ENABLE_THREAD_SAFETY
+	ecpg_pthreads_init();
+#endif
+
+	con = ECPGget_connection(connection_name);
 
 	if (!ECPGinit(con, connection_name, lineno))
 	{

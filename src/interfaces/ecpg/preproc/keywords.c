@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.73 2006/03/05 15:59:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.74 2006/08/02 13:43:23 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"including", INCLUDING},
 	{"increment", INCREMENT},
 	{"index", INDEX},
+	{"indexes", INDEXES},
 	{"inherit", INHERIT},
 	{"inherits", INHERITS},
 	{"initially", INITIALLY},
@@ -324,7 +325,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},
 	{"to", TO},
-	{"toast", TOAST},
 	{"trailing", TRAILING},
 	{"transaction", TRANSACTION},
 	{"treat", TREAT},

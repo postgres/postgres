@@ -1,46 +1,50 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.53 2006/02/08 09:10:05 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.54 2006/08/02 13:43:23 meskes Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -I$(srcdir)/../include -I$(libpq_srcdir) $(CPPFLAGS)
-override CFLAGS += $(PTHREAD_CFLAGS)
+# port number for temp-installation test postmaster
+TEMP_PORT = 5$(DEF_PGPORT)
 
-ECPG = ../preproc/ecpg -I$(srcdir)/../include
+# default encoding
+MULTIBYTE = SQL_ASCII
 
-TESTS = test1 test2 test3 test4 test5 perftest dyntest dyntest2 test_notice \
-	test_code100 test_init testdynalloc num_test dt_test test_informix \
-	test_informix2 test_desc test_func
-ifeq ($(enable_thread_safety), yes)
-TESTS += test_thread test_thread_implicit
+# locale
+NOLOCALE :=
+ifdef NO_LOCALE
+NOLOCALE += --no-locale
 endif
 
-all: $(TESTS)
+all clean install installdirs uninstall dep depend distprep:
+	$(MAKE) -C connect $@
+	$(MAKE) -C sql $@
+	$(MAKE) -C pgtypeslib $@
+	$(MAKE) -C errors $@
+	$(MAKE) -C compat_informix $@
+	$(MAKE) -C complex $@
+	$(MAKE) -C thread $@
+# for some reason I couldn't figure out, ifeq($@,clean) ... does not work
+	if [ $@ = clean ]; then rm -f results/*.stdout results/*.stderr results/*.c; rm -rf tmp_check/; rm -f log/*.log; rm -f pg_regress.inc.sh regression.diff; fi
 
-%: %.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lpq $(PTHREAD_LIBS) -o $@
+all: pg_regress.sh
 
-test_informix: test_informix.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -L../compatlib -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lecpg_compat -lpq $(PTHREAD_LIBS) -o $@
+pg_regress.sh: pg_regress.inc.sh
 
-test_informix2: test_informix2.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -L../compatlib -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lecpg_compat -lpq $(PTHREAD_LIBS) -o $@
-	
-test4: test4.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lpq $(PTHREAD_LIBS) -o $@
+pg_regress.inc.sh: pg_regress.inc.sh.in $(top_builddir)/src/Makefile.global
+	sed -e 's,@bindir@,$(bindir),g' \
+	    -e 's,@libdir@,$(libdir),g' \
+	    -e 's,@pkglibdir@,$(pkglibdir),g' \
+	    -e 's,@datadir@,$(datadir),g' \
+	    -e 's/@VERSION@/$(VERSION)/g' \
+	    -e 's/@host_tuple@/$(host_tuple)/g' \
+	    -e 's,@GMAKE@,$(MAKE),g' \
+	    -e 's/@enable_shared@/$(enable_shared)/g' \
+	    -e 's/@GCC@/$(GCC)/g' \
+	  $< >$@
 
-%.c: %.pgc
-	$(ECPG) -o $@ -I$(srcdir) $<
+test: all pg_regress.inc.sh
+	sh ./pg_regress.sh  --dbname=regress1 --debug --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --listen-on-tcp --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
 
-test_informix.c: test_informix.pgc
-	$(ECPG) -o $@ -C INFORMIX -r no_indicator $<
+check: all test
 
-test_informix2.c: test_informix2.pgc
-	$(ECPG) -o $@ -C INFORMIX  $<
-
-test4.c: test4.pgc
-	$(ECPG) -o $@ -c  $<
-
-clean:
-	rm -f $(TESTS) $(TESTS:%=%.o) $(TESTS:%=%.c) log
