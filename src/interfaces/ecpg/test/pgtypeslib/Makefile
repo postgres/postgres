@@ -1,0 +1,11 @@
+subdir = src/interfaces/ecpg/test/pgtypeslib
+top_builddir = ../../../../..
+include $(top_builddir)/src/Makefile.global
+include ../Makefile.regress
+
+TESTS = dt_test dt_test.c \
+        dt_test2 dt_test2.c \
+        num_test num_test.c
+
+all: $(TESTS)
+
