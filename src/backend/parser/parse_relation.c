@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.123 2006/04/30 18:30:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.124 2006/08/02 01:59:47 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -941,6 +941,75 @@ addRangeTableEntryForFunction(ParseState *pstate,
 }
 
 /*
+ * Add an entry for a VALUES list to the pstate's range table (p_rtable).
+ *
+ * This is much like addRangeTableEntry() except that it makes a values RTE.
+ */
+RangeTblEntry *
+addRangeTableEntryForValues(ParseState *pstate,
+							List *exprs,
+							Alias *alias,
+							bool inFromCl)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	char	   *refname = alias ? alias->aliasname : pstrdup("*VALUES*");
+	Alias	   *eref;
+	int			numaliases;
+	int			numcolumns;
+
+	rte->rtekind = RTE_VALUES;
+	rte->relid = InvalidOid;
+	rte->subquery = NULL;
+	rte->values_lists = exprs;
+	rte->alias = alias;
+
+	eref = alias ? copyObject(alias) : makeAlias(refname, NIL);
+
+	/* fill in any unspecified alias columns */
+	numcolumns = list_length((List *) linitial(exprs));
+	numaliases = list_length(eref->colnames);
+	while (numaliases < numcolumns)
+	{
+		char	attrname[64];
+
+		numaliases++;
+		snprintf(attrname, sizeof(attrname), "column%d", numaliases);
+		eref->colnames = lappend(eref->colnames,
+								 makeString(pstrdup(attrname)));
+	}
+	if (numcolumns < numaliases)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("VALUES lists \"%s\" have %d columns available but %d columns specified",
+						refname, numcolumns, numaliases)));
+
+	rte->eref = eref;
+
+	/*----------
+	 * Flags:
+	 * - this RTE should be expanded to include descendant tables,
+	 * - this RTE is in the FROM clause,
+	 * - this RTE should be checked for appropriate access rights.
+	 *
+	 * Subqueries are never checked for access rights.
+	 *----------
+	 */
+	rte->inh = false;			/* never true for values RTEs */
+	rte->inFromCl = inFromCl;
+	rte->requiredPerms = 0;
+	rte->checkAsUser = InvalidOid;
+
+	/*
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
+	 */
+	if (pstate != NULL)
+		pstate->p_rtable = lappend(pstate->p_rtable, rte);
+
+	return rte;
+}
+
+/*
  * Add an entry for a join to the pstate's range table (p_rtable).
  *
  * This is much like addRangeTableEntry() except that it makes a join RTE.
@@ -1230,6 +1299,41 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				{
 					/* addRangeTableEntryForFunction should've caught this */
 					elog(ERROR, "function in FROM has unsupported return type");
+				}
+			}
+			break;
+		case RTE_VALUES:
+			{
+				/* Values RTE */
+				ListCell   *aliasp_item = list_head(rte->eref->colnames);
+				ListCell   *lc;
+
+				varattno = 0;
+				foreach(lc, (List *) linitial(rte->values_lists))
+				{
+					Node *col = (Node *) lfirst(lc);
+
+					varattno++;
+					if (colnames)
+					{
+						/* Assume there is one alias per column */
+						char	   *label = strVal(lfirst(aliasp_item));
+
+						*colnames = lappend(*colnames,
+											makeString(pstrdup(label)));
+						aliasp_item = lnext(aliasp_item);
+					}
+
+					if (colvars)
+					{
+						Var		   *varnode;
+
+						varnode = makeVar(rtindex, varattno,
+										  exprType(col),
+										  exprTypmod(col),
+										  sublevels_up);
+						*colvars = lappend(*colvars, varnode);
+					}
 				}
 			}
 			break;
@@ -1569,6 +1673,20 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				}
 			}
 			break;
+		case RTE_VALUES:
+			{
+				/* Values RTE --- get type info from first sublist */
+				List   *collist = (List *) linitial(rte->values_lists);
+				Node	   *col;
+
+				if (attnum < 1 || attnum > list_length(collist))
+					elog(ERROR, "values list %s does not have attribute %d",
+						 rte->eref->aliasname, attnum);
+				col = (Node *) list_nth(collist, attnum-1);
+				*vartype = exprType(col);
+				*vartypmod = exprTypmod(col);
+			}
+			break;
 		case RTE_JOIN:
 			{
 				/*
@@ -1619,7 +1737,8 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 			}
 			break;
 		case RTE_SUBQUERY:
-			/* Subselect RTEs never have dropped columns */
+		case RTE_VALUES:
+			/* Subselect and Values RTEs never have dropped columns */
 			result = false;
 			break;
 		case RTE_JOIN:

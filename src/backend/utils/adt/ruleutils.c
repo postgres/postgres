@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.229 2006/07/27 19:52:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.230 2006/08/02 01:59:47 joe Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -131,6 +131,7 @@ static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 			  TupleDesc resultDesc, int prettyFlags, int startIndent);
+static void get_values_def(List *values_lists, deparse_context *context);
 static void get_select_query_def(Query *query, deparse_context *context,
 					 TupleDesc resultDesc);
 static void get_insert_query_def(Query *query, deparse_context *context);
@@ -172,7 +173,8 @@ static void get_from_clause_coldeflist(List *names, List *types, List *typmods,
 						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
-static Node *processIndirection(Node *node, deparse_context *context);
+static Node *processIndirection(Node *node, deparse_context *context,
+								bool printit);
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
@@ -1800,6 +1802,50 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	}
 }
 
+/* ----------
+ * get_values_def			- Parse back a VALUES list
+ * ----------
+ */
+static void
+get_values_def(List *values_lists, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	bool		first_list = true;
+	ListCell   *vtl;
+
+	appendStringInfoString(buf, "VALUES ");
+
+	foreach(vtl, values_lists)
+	{
+		List	   *sublist = (List *) lfirst(vtl);
+		bool		first_col = true;
+		ListCell   *lc;
+
+		if (first_list)
+			first_list = false;
+		else
+			appendStringInfoString(buf, ", ");
+
+		appendStringInfoChar(buf, '(');
+		foreach(lc, sublist)
+		{
+			Node   *col = (Node *) lfirst(lc);
+
+			if (first_col)
+				first_col = false;
+			else
+				appendStringInfoChar(buf, ',');
+
+			/*
+			 * Strip any top-level nodes representing indirection assignments,
+			 * then print the result.
+			 */
+			get_rule_expr(processIndirection(col, context, false),
+						  context, false);
+		}
+		appendStringInfoChar(buf, ')');
+	}
+}
 
 /* ----------
  * get_select_query_def			- Parse back a SELECT parsetree
@@ -1910,14 +1956,37 @@ get_basic_select_query(Query *query, deparse_context *context,
 	ListCell   *l;
 	int			colno;
 
-	/*
-	 * Build up the query string - first we say SELECT
-	 */
 	if (PRETTY_INDENT(context))
 	{
 		context->indentLevel += PRETTYINDENT_STD;
 		appendStringInfoChar(buf, ' ');
 	}
+
+	/*
+	 * If the query looks like SELECT * FROM (VALUES ...), then print just
+	 * the VALUES part.  This reverses what transformValuesClause() did at
+	 * parse time.  If the jointree contains just a single VALUES RTE,
+	 * we assume this case applies (without looking at the targetlist...)
+	 */
+	if (list_length(query->jointree->fromlist) == 1)
+	{
+		RangeTblRef *rtr = (RangeTblRef *) linitial(query->jointree->fromlist);
+
+		if (IsA(rtr, RangeTblRef))
+		{
+			RangeTblEntry *rte = rt_fetch(rtr->rtindex, query->rtable);
+
+			if (rte->rtekind == RTE_VALUES)
+			{
+				get_values_def(rte->values_lists, context);
+				return;
+			}
+		}
+	}
+
+	/*
+	 * Build up the query string - first we say SELECT
+	 */
 	appendStringInfo(buf, "SELECT");
 
 	/* Add the DISTINCT clause if given */
@@ -2191,24 +2260,37 @@ get_insert_query_def(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	RangeTblEntry *select_rte = NULL;
+	RangeTblEntry *values_rte = NULL;
 	RangeTblEntry *rte;
 	char	   *sep;
+	ListCell   *values_cell;
 	ListCell   *l;
 	List	   *strippedexprs;
 
 	/*
-	 * If it's an INSERT ... SELECT there will be a single subquery RTE for
-	 * the SELECT.
+	 * If it's an INSERT ... SELECT or VALUES (...), (...), ...
+	 * there will be a single RTE for the SELECT or VALUES.
 	 */
 	foreach(l, query->rtable)
 	{
 		rte = (RangeTblEntry *) lfirst(l);
-		if (rte->rtekind != RTE_SUBQUERY)
-			continue;
-		if (select_rte)
-			elog(ERROR, "too many RTEs in INSERT");
-		select_rte = rte;
+
+		if (rte->rtekind == RTE_SUBQUERY)
+		{
+			if (select_rte)
+				elog(ERROR, "too many subquery RTEs in INSERT");
+			select_rte = rte;
+		}
+		
+		if (rte->rtekind == RTE_VALUES)
+		{
+			if (values_rte)
+				elog(ERROR, "too many values RTEs in INSERT");
+			values_rte = rte;
+		}
 	}
+	if (select_rte && values_rte)
+		elog(ERROR, "both subquery and values RTEs in INSERT");
 
 	/*
 	 * Start the query with INSERT INTO relname
@@ -2225,9 +2307,17 @@ get_insert_query_def(Query *query, deparse_context *context)
 					 generate_relation_name(rte->relid));
 
 	/*
-	 * Add the insert-column-names list, and make a list of the actual
-	 * assignment source expressions.
+	 * Add the insert-column-names list.  To handle indirection properly,
+	 * we need to look for indirection nodes in the top targetlist (if it's
+	 * INSERT ... SELECT or INSERT ... single VALUES), or in the first
+	 * expression list of the VALUES RTE (if it's INSERT ... multi VALUES).
+	 * We assume that all the expression lists will have similar indirection
+	 * in the latter case.
 	 */
+	if (values_rte)
+		values_cell = list_head((List *) linitial(values_rte->values_lists));
+	else
+		values_cell = NULL;
 	strippedexprs = NIL;
 	sep = "";
 	foreach(l, query->targetList)
@@ -2252,23 +2342,41 @@ get_insert_query_def(Query *query, deparse_context *context)
 		 * Print any indirection needed (subfields or subscripts), and strip
 		 * off the top-level nodes representing the indirection assignments.
 		 */
-		strippedexprs = lappend(strippedexprs,
-								processIndirection((Node *) tle->expr,
-												   context));
+		if (values_cell)
+		{
+			/* we discard the stripped expression in this case */
+			processIndirection((Node *) lfirst(values_cell), context, true);
+			values_cell = lnext(values_cell);
+		}
+		else
+		{
+			/* we keep a list of the stripped expressions in this case */
+			strippedexprs = lappend(strippedexprs,
+									processIndirection((Node *) tle->expr,
+													   context, true));
+		}
 	}
 	appendStringInfo(buf, ") ");
 
-	/* Add the VALUES or the SELECT */
-	if (select_rte == NULL)
+	if (select_rte)
 	{
+		/* Add the SELECT */
+		get_query_def(select_rte->subquery, buf, NIL, NULL,
+					  context->prettyFlags, context->indentLevel);
+	}
+	else if (values_rte)
+	{
+		/* Add the multi-VALUES expression lists */
+		get_values_def(values_rte->values_lists, context);
+	}
+	else
+	{
+		/* Add the single-VALUES expression list */
 		appendContextKeyword(context, "VALUES (",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
 		get_rule_expr((Node *) strippedexprs, context, false);
 		appendStringInfoChar(buf, ')');
 	}
-	else
-		get_query_def(select_rte->subquery, buf, NIL, NULL,
-					  context->prettyFlags, context->indentLevel);
 }
 
 
@@ -2323,7 +2431,7 @@ get_update_query_def(Query *query, deparse_context *context)
 		 * Print any indirection needed (subfields or subscripts), and strip
 		 * off the top-level nodes representing the indirection assignments.
 		 */
-		expr = processIndirection((Node *) tle->expr, context);
+		expr = processIndirection((Node *) tle->expr, context, true);
 
 		appendStringInfo(buf, " = ");
 
@@ -2612,11 +2720,12 @@ get_name_for_var_field(Var *var, int fieldno,
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
+		case RTE_VALUES:
 
 			/*
-			 * This case should not occur: a column of a table shouldn't have
-			 * type RECORD.  Fall through and fail (most likely) at the
-			 * bottom.
+			 * This case should not occur: a column of a table or values list
+			 * shouldn't have type RECORD.  Fall through and fail
+			 * (most likely) at the bottom.
 			 */
 			break;
 		case RTE_SUBQUERY:
@@ -4232,6 +4341,10 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				/* Function RTE */
 				get_rule_expr(rte->funcexpr, context, true);
 				break;
+			case RTE_VALUES:
+				/* Values list RTE */
+				get_values_def(rte->values_lists, context);
+				break;
 			default:
 				elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
 				break;
@@ -4576,12 +4689,12 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
  * processIndirection - take care of array and subfield assignment
  *
  * We strip any top-level FieldStore or assignment ArrayRef nodes that
- * appear in the input, printing out the appropriate decoration for the
- * base column name (that the caller just printed).  We return the
- * subexpression that's to be assigned.
+ * appear in the input, and return the subexpression that's to be assigned.
+ * If printit is true, we also print out the appropriate decoration for the
+ * base column name (that the caller just printed).
  */
 static Node *
-processIndirection(Node *node, deparse_context *context)
+processIndirection(Node *node, deparse_context *context, bool printit)
 {
 	StringInfo	buf = context->buf;
 
@@ -4602,15 +4715,16 @@ processIndirection(Node *node, deparse_context *context)
 					 format_type_be(fstore->resulttype));
 
 			/*
-			 * Get the field name.	Note we assume here that there's only one
-			 * field being assigned to.  This is okay in stored rules but
+			 * Print the field name.  Note we assume here that there's only
+			 * one field being assigned to.  This is okay in stored rules but
 			 * could be wrong in executable target lists.  Presently no
 			 * problem since explain.c doesn't print plan targetlists, but
 			 * someday may have to think of something ...
 			 */
 			fieldname = get_relid_attribute_name(typrelid,
 											linitial_int(fstore->fieldnums));
-			appendStringInfo(buf, ".%s", quote_identifier(fieldname));
+			if (printit)
+				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 
 			/*
 			 * We ignore arg since it should be an uninteresting reference to
@@ -4624,7 +4738,8 @@ processIndirection(Node *node, deparse_context *context)
 
 			if (aref->refassgnexpr == NULL)
 				break;
-			printSubscripts(aref, context);
+			if (printit)
+				printSubscripts(aref, context);
 
 			/*
 			 * We ignore refexpr since it should be an uninteresting reference

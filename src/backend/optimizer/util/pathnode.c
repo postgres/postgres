@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.131 2006/07/22 15:41:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.132 2006/08/02 01:59:46 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1078,6 +1078,25 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->pathkeys = NIL;	/* for now, assume unordered result */
 
 	cost_functionscan(pathnode, root, rel);
+
+	return pathnode;
+}
+
+/*
+ * create_valuesscan_path
+ *	  Creates a path corresponding to a scan of a VALUES list,
+ *	  returning the pathnode.
+ */
+Path *
+create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel)
+{
+	Path	   *pathnode = makeNode(Path);
+
+	pathnode->pathtype = T_ValuesScan;
+	pathnode->parent = rel;
+	pathnode->pathkeys = NIL;	/* result is always unordered */
+
+	cost_valuesscan(pathnode, root, rel);
 
 	return pathnode;
 }

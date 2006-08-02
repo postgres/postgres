@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.110 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.111 2006/08/02 01:59:46 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1087,6 +1087,17 @@ finalize_plan(Plan *plan, List *rtable,
 							   rtable);
 				Assert(rte->rtekind == RTE_FUNCTION);
 				finalize_primnode(rte->funcexpr, &context);
+			}
+			break;
+
+		case T_ValuesScan:
+			{
+				RangeTblEntry *rte;
+
+				rte = rt_fetch(((ValuesScan *) plan)->scan.scanrelid,
+							   rtable);
+				Assert(rte->rtekind == RTE_VALUES);
+				finalize_primnode((Node *) rte->values_lists, &context);
 			}
 			break;
 

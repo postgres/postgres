@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.78 2006/07/26 11:35:56 petere Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.79 2006/08/02 01:59:48 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,8 @@ extern void cost_tidscan(Path *path, PlannerInfo *root,
 extern void cost_subqueryscan(Path *path, RelOptInfo *baserel);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
 				  RelOptInfo *baserel);
+extern void cost_valuesscan(Path *path, PlannerInfo *root,
+				  RelOptInfo *baserel);
 extern void cost_sort(Path *path, PlannerInfo *root,
 		  List *pathkeys, Cost input_cost, double tuples, int width);
 extern void cost_material(Path *path,
@@ -94,6 +96,7 @@ extern void set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   JoinType jointype,
 						   List *restrictlist);
 extern void set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel);
+extern void set_values_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 
 /*
  * prototypes for clausesel.c

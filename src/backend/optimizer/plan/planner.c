@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.205 2006/07/26 19:31:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.206 2006/08/02 01:59:46 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,10 @@ ParamListInfo PlannerBoundParamList = NULL;		/* current boundParams */
 #define EXPRKIND_QUAL		0
 #define EXPRKIND_TARGET		1
 #define EXPRKIND_RTFUNC		2
-#define EXPRKIND_LIMIT		3
-#define EXPRKIND_ININFO		4
-#define EXPRKIND_APPINFO	5
+#define EXPRKIND_VALUES		3
+#define EXPRKIND_LIMIT		4
+#define EXPRKIND_ININFO		5
+#define EXPRKIND_APPINFO	6
 
 
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
@@ -295,7 +296,7 @@ subquery_planner(Query *parse, double tuple_fraction,
 		preprocess_expression(root, (Node *) root->append_rel_list,
 							  EXPRKIND_APPINFO);
 
-	/* Also need to preprocess expressions for function RTEs */
+	/* Also need to preprocess expressions for function and values RTEs */
 	foreach(l, parse->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
@@ -303,6 +304,10 @@ subquery_planner(Query *parse, double tuple_fraction,
 		if (rte->rtekind == RTE_FUNCTION)
 			rte->funcexpr = preprocess_expression(root, rte->funcexpr,
 												  EXPRKIND_RTFUNC);
+		else if (rte->rtekind == RTE_VALUES)
+			rte->values_lists = (List *)
+				preprocess_expression(root, (Node *) rte->values_lists,
+									  EXPRKIND_VALUES);
 	}
 
 	/*
@@ -418,8 +423,10 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * If the query has any join RTEs, replace join alias variables with
 	 * base-relation variables. We must do this before sublink processing,
 	 * else sublinks expanded out from join aliases wouldn't get processed.
+	 * We can skip it in VALUES lists, however, since they can't contain
+	 * any Vars at all.
 	 */
-	if (root->hasJoinRTEs)
+	if (root->hasJoinRTEs && kind != EXPRKIND_VALUES)
 		expr = flatten_join_alias_vars(root, expr);
 
 	/*
@@ -437,10 +444,14 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * and we will waste cycles copying the tree.  Notice however that we
 	 * still must do it for quals (to get AND/OR flatness); and if we are in a
 	 * subquery we should not assume it will be done only once.
+	 *
+	 * For VALUES lists we never do this at all, again on the grounds that
+	 * we should optimize for one-time evaluation.
 	 */
-	if (root->parse->jointree->fromlist != NIL ||
-		kind == EXPRKIND_QUAL ||
-		PlannerQueryLevel > 1)
+	if (kind != EXPRKIND_VALUES &&
+		(root->parse->jointree->fromlist != NIL ||
+		 kind == EXPRKIND_QUAL ||
+		 PlannerQueryLevel > 1))
 		expr = eval_const_expressions(expr);
 
 	/*
@@ -465,7 +476,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * SS_replace_correlation_vars ...
 	 */
 
-	/* Replace uplevel vars with Param nodes */
+	/* Replace uplevel vars with Param nodes (this IS possible in VALUES) */
 	if (PlannerQueryLevel > 1)
 		expr = SS_replace_correlation_vars(expr);
 

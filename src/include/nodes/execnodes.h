@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.155 2006/07/27 19:52:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.156 2006/08/02 01:59:47 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1040,6 +1040,27 @@ typedef struct FunctionScanState
 	Tuplestorestate *tuplestorestate;
 	ExprState  *funcexpr;
 } FunctionScanState;
+
+/* ----------------
+ *	 ValuesScanState information
+ *
+ *		Values nodes are used to scan the results of a
+ *		values list appearing in FROM or INSERT
+ *
+ *		exprlists			array of expression lists being evaluated
+ *		array_len			size of array
+ *		curr_idx			current array index (0-based)
+ *		marked_idx			marked position (for mark/restore)
+ * ----------------
+ */
+typedef struct ValuesScanState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	List	  **exprlists;
+	int			array_len;
+	int			curr_idx;
+	int			marked_idx;
+} ValuesScanState;
 
 /* ----------------------------------------------------------------
  *				 Join State Information

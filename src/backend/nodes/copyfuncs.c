@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.344 2006/07/27 19:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.345 2006/08/02 01:59:45 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,6 +357,22 @@ static FunctionScan *
 _copyFunctionScan(FunctionScan *from)
 {
 	FunctionScan *newnode = makeNode(FunctionScan);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	return newnode;
+}
+
+/*
+ * _copyValuesScan
+ */
+static ValuesScan *
+_copyValuesScan(ValuesScan *from)
+{
+	ValuesScan *newnode = makeNode(ValuesScan);
 
 	/*
 	 * copy node superclass fields
@@ -1356,6 +1372,7 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	COPY_NODE_FIELD(funcexpr);
 	COPY_NODE_FIELD(funccoltypes);
 	COPY_NODE_FIELD(funccoltypmods);
+	COPY_NODE_FIELD(values_lists);
 	COPY_SCALAR_FIELD(jointype);
 	COPY_NODE_FIELD(joinaliasvars);
 	COPY_NODE_FIELD(alias);
@@ -1707,7 +1724,6 @@ _copyInsertStmt(InsertStmt *from)
 
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(cols);
-	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(selectStmt);
 
 	return newnode;
@@ -1754,6 +1770,7 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingClause);
+	COPY_NODE_FIELD(valuesLists);
 	COPY_NODE_FIELD(sortClause);
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
@@ -2811,6 +2828,9 @@ copyObject(void *from)
 			break;
 		case T_FunctionScan:
 			retval = _copyFunctionScan(from);
+			break;
+		case T_ValuesScan:
+			retval = _copyValuesScan(from);
 			break;
 		case T_Join:
 			retval = _copyJoin(from);

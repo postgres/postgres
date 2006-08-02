@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.215 2006/07/27 19:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.216 2006/08/02 01:59:46 joe Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3351,6 +3351,10 @@ range_table_walker(List *rtable,
 				if (walker(rte->funcexpr, context))
 					return true;
 				break;
+			case RTE_VALUES:
+				if (walker(rte->values_lists, context))
+					return true;
+				break;
 		}
 	}
 	return false;
@@ -3916,6 +3920,9 @@ range_table_mutator(List *rtable,
 				break;
 			case RTE_FUNCTION:
 				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);
+				break;
+			case RTE_VALUES:
+				MUTATE(newrte->values_lists, rte->values_lists, List *);
 				break;
 		}
 		newrt = lappend(newrt, newrte);

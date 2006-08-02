@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.186 2006/04/30 18:30:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.187 2006/08/02 01:59:47 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@ typedef enum NodeTag
 	T_TidScan,
 	T_SubqueryScan,
 	T_FunctionScan,
+	T_ValuesScan,
 	T_Join,
 	T_NestLoop,
 	T_MergeJoin,
@@ -85,6 +86,7 @@ typedef enum NodeTag
 	T_TidScanState,
 	T_SubqueryScanState,
 	T_FunctionScanState,
+	T_ValuesScanState,
 	T_JoinState,
 	T_NestLoopState,
 	T_MergeJoinState,

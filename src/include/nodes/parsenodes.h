@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.319 2006/07/31 01:16:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.320 2006/08/02 01:59:47 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,13 +303,13 @@ typedef struct A_Indirection
  * ResTarget -
  *	  result target (used in target list of pre-transformed parse trees)
  *
- * In a SELECT or INSERT target list, 'name' is the column label from an
+ * In a SELECT target list, 'name' is the column label from an
  * 'AS ColumnLabel' clause, or NULL if there was none, and 'val' is the
  * value expression itself.  The 'indirection' field is not used.
  *
- * INSERT has a second ResTarget list which is the target-column-names list.
- * Here, 'val' is not used, 'name' is the name of the destination column,
- * and 'indirection' stores any subscripts attached to the destination.
+ * INSERT uses ResTarget in its target-column-names list.  Here, 'name' is
+ * the name of the destination column, 'indirection' stores any subscripts
+ * attached to the destination, and 'val' is not used.
  *
  * In an UPDATE target list, 'name' is the name of the destination column,
  * 'indirection' stores any subscripts attached to the destination, and
@@ -517,7 +517,8 @@ typedef enum RTEKind
 	RTE_SUBQUERY,				/* subquery in FROM */
 	RTE_JOIN,					/* join */
 	RTE_SPECIAL,				/* special rule relation (NEW or OLD) */
-	RTE_FUNCTION				/* function in FROM */
+	RTE_FUNCTION,				/* function in FROM */
+	RTE_VALUES					/* VALUES (<exprlist>), (<exprlist>), ... */
 } RTEKind;
 
 typedef struct RangeTblEntry
@@ -552,6 +553,11 @@ typedef struct RangeTblEntry
 	Node	   *funcexpr;		/* expression tree for func call */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods;	/* integer list of column typmods */
+
+	/*
+	 * Fields valid for a values RTE (else NIL):
+	 */
+	List	   *values_lists;	/* list of expression lists */
 
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
@@ -630,6 +636,10 @@ typedef struct RowMarkClause
 
 /* ----------------------
  *		Insert Statement
+ *
+ * The source expression is represented by SelectStmt for both the
+ * SELECT and VALUES cases.  If selectStmt is NULL, then the query
+ * is INSERT ... DEFAULT VALUES.
  * ----------------------
  */
 typedef struct InsertStmt
@@ -637,14 +647,7 @@ typedef struct InsertStmt
 	NodeTag		type;
 	RangeVar   *relation;		/* relation to insert into */
 	List	   *cols;			/* optional: names of the target columns */
-
-	/*
-	 * An INSERT statement has *either* VALUES or SELECT, never both. If
-	 * VALUES, a targetList is supplied (empty for DEFAULT VALUES). If SELECT,
-	 * a complete SelectStmt (or set-operation tree) is supplied.
-	 */
-	List	   *targetList;		/* the target list (of ResTarget) */
-	Node	   *selectStmt;		/* the source SELECT */
+	Node	   *selectStmt;		/* the source SELECT/VALUES, or NULL */
 } InsertStmt;
 
 /* ----------------------
@@ -676,9 +679,9 @@ typedef struct UpdateStmt
  *		Select Statement
  *
  * A "simple" SELECT is represented in the output of gram.y by a single
- * SelectStmt node.  A SELECT construct containing set operators (UNION,
- * INTERSECT, EXCEPT) is represented by a tree of SelectStmt nodes, in
- * which the leaf nodes are component SELECTs and the internal nodes
+ * SelectStmt node; so is a VALUES construct.  A query containing set
+ * operators (UNION, INTERSECT, EXCEPT) is represented by a tree of SelectStmt
+ * nodes, in which the leaf nodes are component SELECTs and the internal nodes
  * represent UNION, INTERSECT, or EXCEPT operators.  Using the same node
  * type for both leaf and internal nodes allows gram.y to stick ORDER BY,
  * LIMIT, etc, clause values into a SELECT statement without worrying
@@ -715,6 +718,16 @@ typedef struct SelectStmt
 	Node	   *whereClause;	/* WHERE qualification */
 	List	   *groupClause;	/* GROUP BY clauses */
 	Node	   *havingClause;	/* HAVING conditional-expression */
+
+	/*
+	 * In a "leaf" node representing a VALUES list, the above fields are all
+	 * null, and instead this field is set.  Note that the elements of
+	 * the sublists are just expressions, without ResTarget decoration.
+	 * Also note that a list element can be DEFAULT (represented as a
+	 * SetToDefault node), regardless of the context of the VALUES list.
+	 * It's up to parse analysis to reject that where not valid.
+	 */
+	List	   *valuesLists;	/* untransformed list of expression lists */
 
 	/*
 	 * These fields are used in both "leaf" SelectStmts and upper-level

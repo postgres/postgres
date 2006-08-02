@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.215 2006/07/26 00:34:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.216 2006/08/02 01:59:45 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,8 @@ static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root, Path *best_path
 						 List *tlist, List *scan_clauses);
 static FunctionScan *create_functionscan_plan(PlannerInfo *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
+static ValuesScan *create_valuesscan_plan(PlannerInfo *root, Path *best_path,
+						 List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
@@ -94,6 +96,8 @@ static BitmapHeapScan *make_bitmap_heapscan(List *qptlist,
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
+				  Index scanrelid);
+static ValuesScan *make_valuesscan(List *qptlist, List *qpqual,
 				  Index scanrelid);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
@@ -146,6 +150,7 @@ create_plan(PlannerInfo *root, Path *best_path)
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
+		case T_ValuesScan:
 			plan = create_scan_plan(root, best_path);
 			break;
 		case T_HashJoin:
@@ -262,6 +267,13 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 													 scan_clauses);
 			break;
 
+		case T_ValuesScan:
+			plan = (Plan *) create_valuesscan_plan(root,
+												   best_path,
+												   tlist,
+												   scan_clauses);
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) best_path->pathtype);
@@ -315,12 +327,13 @@ use_physical_tlist(RelOptInfo *rel)
 	int			i;
 
 	/*
-	 * We can do this for real relation scans, subquery scans, and function
-	 * scans (but not for, eg, joins).
+	 * We can do this for real relation scans, subquery scans, function
+	 * scans, and values scans (but not for, eg, joins).
 	 */
 	if (rel->rtekind != RTE_RELATION &&
 		rel->rtekind != RTE_SUBQUERY &&
-		rel->rtekind != RTE_FUNCTION)
+		rel->rtekind != RTE_FUNCTION &&
+		rel->rtekind != RTE_VALUES)
 		return false;
 
 	/*
@@ -365,6 +378,7 @@ disuse_physical_tlist(Plan *plan, Path *path)
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
+		case T_ValuesScan:
 			plan->targetlist = build_relation_tlist(path->parent);
 			break;
 		default:
@@ -1312,6 +1326,35 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 	return scan_plan;
 }
 
+/*
+ * create_valuesscan_plan
+ *	 Returns a valuesscan plan for the base relation scanned by 'best_path'
+ *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static ValuesScan *
+create_valuesscan_plan(PlannerInfo *root, Path *best_path,
+						 List *tlist, List *scan_clauses)
+{
+	ValuesScan *scan_plan;
+	Index		scan_relid = best_path->parent->relid;
+
+	/* it should be a values base rel... */
+	Assert(scan_relid > 0);
+	Assert(best_path->parent->rtekind == RTE_VALUES);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Sort clauses into best execution order */
+	scan_clauses = order_qual_clauses(root, scan_clauses);
+
+	scan_plan = make_valuesscan(tlist, scan_clauses, scan_relid);
+
+	copy_path_costsize(&scan_plan->scan.plan, best_path);
+
+	return scan_plan;
+}
+
 /*****************************************************************************
  *
  *	JOIN METHODS
@@ -2111,6 +2154,24 @@ make_functionscan(List *qptlist,
 				  Index scanrelid)
 {
 	FunctionScan *node = makeNode(FunctionScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+
+	return node;
+}
+
+static ValuesScan *
+make_valuesscan(List *qptlist,
+				List *qpqual,
+				Index scanrelid)
+{
+	ValuesScan *node = makeNode(ValuesScan);
 	Plan	   *plan = &node->scan.plan;
 
 	/* cost should be inserted by caller */

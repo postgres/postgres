@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.88 2006/07/14 14:52:18 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.89 2006/08/02 01:59:45 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "executor/nodeSubqueryscan.h"
 #include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
+#include "executor/nodeValuesscan.h"
 
 
 /*
@@ -144,6 +145,10 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 			ExecFunctionReScan((FunctionScanState *) node, exprCtxt);
 			break;
 
+		case T_ValuesScanState:
+			ExecValuesReScan((ValuesScanState *) node, exprCtxt);
+			break;
+
 		case T_NestLoopState:
 			ExecReScanNestLoop((NestLoopState *) node, exprCtxt);
 			break;
@@ -226,6 +231,10 @@ ExecMarkPos(PlanState *node)
 			ExecFunctionMarkPos((FunctionScanState *) node);
 			break;
 
+		case T_ValuesScanState:
+			ExecValuesMarkPos((ValuesScanState *) node);
+			break;
+
 		case T_MaterialState:
 			ExecMaterialMarkPos((MaterialState *) node);
 			break;
@@ -275,6 +284,10 @@ ExecRestrPos(PlanState *node)
 			ExecFunctionRestrPos((FunctionScanState *) node);
 			break;
 
+		case T_ValuesScanState:
+			ExecValuesRestrPos((ValuesScanState *) node);
+			break;
+
 		case T_MaterialState:
 			ExecMaterialRestrPos((MaterialState *) node);
 			break;
@@ -298,8 +311,8 @@ ExecRestrPos(PlanState *node)
  *
  * (However, since the only present use of mark/restore is in mergejoin,
  * there is no need to support mark/restore in any plan type that is not
- * capable of generating ordered output.  So the seqscan, tidscan, and
- * functionscan support is actually useless code at present.)
+ * capable of generating ordered output.  So the seqscan, tidscan,
+ * functionscan, and valuesscan support is actually useless code at present.)
  */
 bool
 ExecSupportsMarkRestore(NodeTag plantype)
@@ -310,6 +323,7 @@ ExecSupportsMarkRestore(NodeTag plantype)
 		case T_IndexScan:
 		case T_TidScan:
 		case T_FunctionScan:
+		case T_ValuesScan:
 		case T_Material:
 		case T_Sort:
 			return true;
@@ -359,6 +373,7 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_IndexScan:
 		case T_TidScan:
 		case T_FunctionScan:
+		case T_ValuesScan:
 			return true;
 
 		case T_SubqueryScan:
@@ -413,6 +428,7 @@ ExecMayReturnRawTuples(PlanState *node)
 		case T_TidScanState:
 		case T_SubqueryScanState:
 		case T_FunctionScanState:
+		case T_ValuesScanState:
 			if (node->ps_ProjInfo == NULL)
 				return true;
 			break;

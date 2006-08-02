@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.311 2006/07/31 20:09:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.312 2006/08/02 01:59:44 joe Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1841,7 +1841,7 @@ cookDefault(ParseState *pstate,
 	/*
 	 * Coerce the expression to the correct type and typmod, if given. This
 	 * should match the parser's processing of non-defaulted expressions ---
-	 * see updateTargetListEntry().
+	 * see transformAssignedExpr().
 	 */
 	if (OidIsValid(atttypid))
 	{

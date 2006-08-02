@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.149 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.150 2006/08/02 01:59:45 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@ static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
+					  RangeTblEntry *rte);
+static void set_values_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
 static RelOptInfo *make_one_rel_by_joins(PlannerInfo *root, int levels_needed,
@@ -169,6 +171,11 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, Index rti)
 	{
 		/* RangeFunction --- generate a separate plan for it */
 		set_function_pathlist(root, rel, rte);
+	}
+	else if (rel->rtekind == RTE_VALUES)
+	{
+		/* Values list --- generate a separate plan for it */
+		set_values_pathlist(root, rel, rte);
 	}
 	else
 	{
@@ -532,6 +539,23 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* Generate appropriate path */
 	add_path(rel, create_functionscan_path(root, rel));
+
+	/* Select cheapest path (pretty easy in this case...) */
+	set_cheapest(rel);
+}
+
+/*
+ * set_values_pathlist
+ *		Build the (single) access path for a VALUES RTE
+ */
+static void
+set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
+{
+	/* Mark rel with estimated output rows, width, etc */
+	set_values_size_estimates(root, rel);
+
+	/* Generate appropriate path */
+	add_path(rel, create_valuesscan_path(root, rel));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);

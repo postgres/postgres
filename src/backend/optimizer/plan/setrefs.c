@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.122 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.123 2006/08/02 01:59:46 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,6 +184,18 @@ set_plan_references(Plan *plan, List *rtable)
 							   rtable);
 				Assert(rte->rtekind == RTE_FUNCTION);
 				fix_expr_references(plan, rte->funcexpr);
+			}
+			break;
+		case T_ValuesScan:
+			{
+				RangeTblEntry *rte;
+
+				fix_expr_references(plan, (Node *) plan->targetlist);
+				fix_expr_references(plan, (Node *) plan->qual);
+				rte = rt_fetch(((ValuesScan *) plan)->scan.scanrelid,
+							   rtable);
+				Assert(rte->rtekind == RTE_VALUES);
+				fix_expr_references(plan, (Node *) rte->values_lists);
 			}
 			break;
 		case T_NestLoop:
@@ -518,6 +530,12 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 			break;
 		case T_FunctionScan:
 			((FunctionScan *) plan)->scan.scanrelid += rtoffset;
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			/* rte was already fixed by set_subqueryscan_references */
+			break;
+		case T_ValuesScan:
+			((ValuesScan *) plan)->scan.scanrelid += rtoffset;
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
 			adjust_expr_varnos((Node *) plan->qual, rtoffset);
 			/* rte was already fixed by set_subqueryscan_references */

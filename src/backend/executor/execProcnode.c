@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.57 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.58 2006/08/02 01:59:45 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,7 @@
 #include "executor/nodeSubqueryscan.h"
 #include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
+#include "executor/nodeValuesscan.h"
 #include "miscadmin.h"
 
 /* ------------------------------------------------------------------------
@@ -191,6 +192,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 
 		case T_FunctionScan:
 			result = (PlanState *) ExecInitFunctionScan((FunctionScan *) node,
+														estate, eflags);
+			break;
+
+		case T_ValuesScan:
+			result = (PlanState *) ExecInitValuesScan((ValuesScan *) node,
 														estate, eflags);
 			break;
 
@@ -365,6 +371,10 @@ ExecProcNode(PlanState *node)
 			result = ExecFunctionScan((FunctionScanState *) node);
 			break;
 
+		case T_ValuesScanState:
+			result = ExecValuesScan((ValuesScanState *) node);
+			break;
+
 			/*
 			 * join nodes
 			 */
@@ -536,6 +546,9 @@ ExecCountSlotsNode(Plan *node)
 		case T_FunctionScan:
 			return ExecCountSlotsFunctionScan((FunctionScan *) node);
 
+		case T_ValuesScan:
+			return ExecCountSlotsValuesScan((ValuesScan *) node);
+
 			/*
 			 * join nodes
 			 */
@@ -667,6 +680,10 @@ ExecEndNode(PlanState *node)
 
 		case T_FunctionScanState:
 			ExecEndFunctionScan((FunctionScanState *) node);
+			break;
+
+		case T_ValuesScanState:
+			ExecEndValuesScan((ValuesScanState *) node);
 			break;
 
 			/*

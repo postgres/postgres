@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.84 2006/07/26 19:31:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.85 2006/08/02 01:59:47 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,6 +295,16 @@ typedef struct FunctionScan
 	Scan		scan;
 	/* no other fields needed at present */
 } FunctionScan;
+
+/* ----------------
+ *		ValuesScan node
+ * ----------------
+ */
+typedef struct ValuesScan
+{
+	Scan		scan;
+	/* no other fields needed at present */
+} ValuesScan;
 
 /*
  * ==========

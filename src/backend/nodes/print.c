@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.80 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.81 2006/08/02 01:59:45 joe Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -275,6 +275,10 @@ print_rt(List *rtable)
 				printf("%d\t%s\t[rangefunction]",
 					   i, rte->eref->aliasname);
 				break;
+			case RTE_VALUES:
+				printf("%d\t%s\t[values list]",
+					   i, rte->eref->aliasname);
+				break;
 			case RTE_JOIN:
 				printf("%d\t%s\t[join]",
 					   i, rte->eref->aliasname);
@@ -507,6 +511,8 @@ plannode_type(Plan *p)
 			return "SUBQUERYSCAN";
 		case T_FunctionScan:
 			return "FUNCTIONSCAN";
+		case T_ValuesScan:
+			return "VALUESSCAN";
 		case T_Join:
 			return "JOIN";
 		case T_NestLoop:
@@ -573,6 +579,13 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 		RangeTblEntry *rte;
 
 		rte = rt_fetch(((FunctionScan *) p)->scan.scanrelid, parsetree->rtable);
+		StrNCpy(extraInfo, rte->eref->aliasname, NAMEDATALEN);
+	}
+	else if (IsA(p, ValuesScan))
+	{
+		RangeTblEntry *rte;
+
+		rte = rt_fetch(((ValuesScan *) p)->scan.scanrelid, parsetree->rtable);
 		StrNCpy(extraInfo, rte->eref->aliasname, NAMEDATALEN);
 	}
 	else

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.553 2006/07/31 01:16:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.554 2006/08/02 01:59:46 joe Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -173,7 +173,7 @@ static void doNegateFloat(Value *v);
 		DropOwnedStmt ReassignOwnedStmt
 
 %type <node>	select_no_parens select_with_parens select_clause
-				simple_select
+				simple_select values_clause
 
 %type <node>	alter_column_default opclass_item alter_using
 %type <ival>	add_drop
@@ -238,7 +238,7 @@ static void doNegateFloat(Value *v);
 				qualified_name_list any_name any_name_list
 				any_operator expr_list attrs
 				target_list update_target_list insert_column_list
-				insert_target_list def_list indirection opt_indirection
+				values_list def_list indirection opt_indirection
 				group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list
 				transaction_mode_list_or_empty
@@ -299,7 +299,7 @@ static void doNegateFloat(Value *v);
 %type <list>	when_clause_list
 %type <ival>	sub_type
 %type <list>	OptCreateAs CreateAsList
-%type <node>	CreateAsElement
+%type <node>	CreateAsElement values_item
 %type <value>	NumericOnly FloatOnly IntegerOnly
 %type <alias>	alias_clause
 %type <sortby>	sortby
@@ -308,7 +308,7 @@ static void doNegateFloat(Value *v);
 %type <jexpr>	joined_table
 %type <range>	relation_expr
 %type <range>	relation_expr_opt_alias
-%type <target>	target_el insert_target_el update_target_el insert_column_item
+%type <target>	target_el update_target_el insert_column_item
 
 %type <typnam>	Typename SimpleTypename ConstTypename
 				GenericType Numeric opt_float
@@ -5342,40 +5342,23 @@ InsertStmt:
 		;
 
 insert_rest:
-			VALUES '(' insert_target_list ')'
+			SelectStmt
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = NIL;
-					$$->targetList = $3;
-					$$->selectStmt = NULL;
-				}
-			| DEFAULT VALUES
-				{
-					$$ = makeNode(InsertStmt);
-					$$->cols = NIL;
-					$$->targetList = NIL;
-					$$->selectStmt = NULL;
-				}
-			| SelectStmt
-				{
-					$$ = makeNode(InsertStmt);
-					$$->cols = NIL;
-					$$->targetList = NIL;
 					$$->selectStmt = $1;
-				}
-			| '(' insert_column_list ')' VALUES '(' insert_target_list ')'
-				{
-					$$ = makeNode(InsertStmt);
-					$$->cols = $2;
-					$$->targetList = $6;
-					$$->selectStmt = NULL;
 				}
 			| '(' insert_column_list ')' SelectStmt
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
-					$$->targetList = NIL;
 					$$->selectStmt = $4;
+				}
+			| DEFAULT VALUES
+				{
+					$$ = makeNode(InsertStmt);
+					$$->cols = NIL;
+					$$->selectStmt = NULL;
 				}
 		;
 
@@ -5629,6 +5612,7 @@ simple_select:
 					n->havingClause = $8;
 					$$ = (Node *)n;
 				}
+			| values_clause							{ $$ = $1; }
 			| select_clause UNION opt_all select_clause
 				{
 					$$ = makeSetOp(SETOP_UNION, $3, $1, $4);
@@ -5848,6 +5832,32 @@ locked_rels_list:
 			| /* EMPTY */							{ $$ = NIL; }
 		;
 
+
+values_clause:
+			VALUES '(' values_list ')'
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->valuesLists = list_make1($3);
+					$$ = (Node *) n;
+				}
+			| values_clause ',' '(' values_list ')'
+				{
+					SelectStmt *n = (SelectStmt *) $1;
+					n->valuesLists = lappend(n->valuesLists, $4);
+					$$ = (Node *) n;
+				}
+		;
+
+values_list: values_item							{ $$ = list_make1($1); }
+			| values_list ',' values_item			{ $$ = lappend($1, $3); }
+		;
+
+values_item:
+			a_expr					{ $$ = (Node *) $1; }
+			| DEFAULT				{ $$ = (Node *) makeNode(SetToDefault); }
+		;
+
+
 /*****************************************************************************
  *
  *	clauses common to all Optimizable Stmts:
@@ -5937,10 +5947,17 @@ table_ref:	relation_expr
 					 * However, it does seem like a good idea to emit
 					 * an error message that's better than "syntax error".
 					 */
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("subquery in FROM must have an alias"),
-							 errhint("For example, FROM (SELECT ...) [AS] foo.")));
+					if (IsA($1, SelectStmt) &&
+						((SelectStmt *) $1)->valuesLists)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("VALUES in FROM must have an alias"),
+								 errhint("For example, FROM (VALUES ...) [AS] foo.")));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("subquery in FROM must have an alias"),
+								 errhint("For example, FROM (SELECT ...) [AS] foo.")));
 					$$ = NULL;
 				}
 			| select_with_parens alias_clause
@@ -8176,30 +8193,6 @@ update_target_el:
 
 		;
 
-insert_target_list:
-			insert_target_el						{ $$ = list_make1($1); }
-			| insert_target_list ',' insert_target_el { $$ = lappend($1, $3); }
-		;
-
-insert_target_el:
-			a_expr
-				{
-					$$ = makeNode(ResTarget);
-					$$->name = NULL;
-					$$->indirection = NIL;
-					$$->val = (Node *)$1;
-					$$->location = @1;
-				}
-			| DEFAULT
-				{
-					$$ = makeNode(ResTarget);
-					$$->name = NULL;
-					$$->indirection = NIL;
-					$$->val = (Node *) makeNode(SetToDefault);
-					$$->location = @1;
-				}
-		;
-
 
 /*****************************************************************************
  *
@@ -8656,7 +8649,6 @@ unreserved_keyword:
 			| VACUUM
 			| VALID
 			| VALIDATOR
-			| VALUES
 			| VARYING
 			| VIEW
 			| VOLATILE
@@ -8715,6 +8707,7 @@ col_name_keyword:
 			| TIMESTAMP
 			| TREAT
 			| TRIM
+			| VALUES
 			| VARCHAR
 		;
 

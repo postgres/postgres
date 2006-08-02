@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.164 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.165 2006/08/02 01:59:47 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,11 +41,14 @@ static Query *rewriteRuleAction(Query *parsetree,
 				  int rt_index,
 				  CmdType event);
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
-static void rewriteTargetList(Query *parsetree, Relation target_relation);
+static void rewriteTargetList(Query *parsetree, Relation target_relation,
+							  List **attrno_list);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 					TargetEntry *prior_tle,
 					const char *attrName);
 static Node *get_assignment_input(Node *node);
+static void rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation,
+							 List *attrnos);
 static void markQueryForLocking(Query *qry, bool forUpdate, bool noWait,
 					bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
@@ -480,9 +483,15 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * references to NEW.foo will produce wrong or incomplete results.	Item 3
  * is not needed for rewriting, but will be needed by the planner, and we
  * can do it essentially for free while handling items 1 and 2.
+ *
+ * If attrno_list isn't NULL, we return an additional output besides the
+ * rewritten targetlist: an integer list of the assigned-to attnums, in
+ * order of the original tlist's non-junk entries.  This is needed for
+ * processing VALUES RTEs.
  */
 static void
-rewriteTargetList(Query *parsetree, Relation target_relation)
+rewriteTargetList(Query *parsetree, Relation target_relation,
+				  List **attrno_list)
 {
 	CmdType		commandType = parsetree->commandType;
 	TargetEntry **new_tles;
@@ -493,6 +502,9 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 				next_junk_attrno,
 				numattrs;
 	ListCell   *temp;
+
+	if (attrno_list)			/* initialize optional result list */
+		*attrno_list = NIL;
 
 	/*
 	 * We process the normal (non-junk) attributes by scanning the input tlist
@@ -518,6 +530,10 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			if (attrno < 1 || attrno > numattrs)
 				elog(ERROR, "bogus resno %d in targetlist", attrno);
 			att_tup = target_relation->rd_att->attrs[attrno - 1];
+
+			/* put attrno into attrno_list even if it's dropped */
+			if (attrno_list)
+				*attrno_list = lappend_int(*attrno_list, attrno);
 
 			/* We can (and must) ignore deleted attributes */
 			if (att_tup->attisdropped)
@@ -820,7 +836,7 @@ build_column_default(Relation rel, int attrno)
 	 * generally be true already, but there seem to be some corner cases
 	 * involving domain defaults where it might not be true. This should match
 	 * the parser's processing of non-defaulted expressions --- see
-	 * updateTargetListEntry().
+	 * transformAssignedExpr().
 	 */
 	exprtype = exprType(expr);
 
@@ -840,6 +856,111 @@ build_column_default(Relation rel, int attrno)
 			   errhint("You will need to rewrite or cast the expression.")));
 
 	return expr;
+}
+
+
+/* Does VALUES RTE contain any SetToDefault items? */
+static bool
+searchForDefault(RangeTblEntry *rte)
+{
+	ListCell   *lc;
+
+	foreach(lc, rte->values_lists)
+	{
+		List   *sublist = (List *) lfirst(lc);
+		ListCell *lc2;
+
+		foreach(lc2, sublist)
+		{
+			Node  *col = (Node *) lfirst(lc2);
+
+			if (IsA(col, SetToDefault))
+				return true;
+		}
+	}
+	return false;
+}
+
+/*
+ * When processing INSERT ... VALUES with a VALUES RTE (ie, multiple VALUES
+ * lists), we have to replace any DEFAULT items in the VALUES lists with
+ * the appropriate default expressions.  The other aspects of rewriteTargetList
+ * need be applied only to the query's targetlist proper.
+ *
+ * Note that we currently can't support subscripted or field assignment
+ * in the multi-VALUES case.  The targetlist will contain simple Vars
+ * referencing the VALUES RTE, and therefore process_matched_tle() will
+ * reject any such attempt with "multiple assignments to same column".
+ */
+static void
+rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
+{
+	List	   *newValues;
+	ListCell   *lc;
+
+	/*
+	 * Rebuilding all the lists is a pretty expensive proposition in a big
+	 * VALUES list, and it's a waste of time if there aren't any DEFAULT
+	 * placeholders.  So first scan to see if there are any.
+	 */
+	if (!searchForDefault(rte))
+		return;					/* nothing to do */
+
+	/* Check list lengths (we can assume all the VALUES sublists are alike) */
+	Assert(list_length(attrnos) == list_length(linitial(rte->values_lists)));
+
+	newValues = NIL;
+	foreach(lc, rte->values_lists)
+	{
+		List   *sublist = (List *) lfirst(lc);
+		List   *newList = NIL;
+		ListCell *lc2;
+		ListCell *lc3;
+
+		forboth(lc2, sublist, lc3, attrnos)
+		{
+			Node  *col = (Node *) lfirst(lc2);
+			int		attrno = lfirst_int(lc3);
+
+			if (IsA(col, SetToDefault))
+			{
+				Form_pg_attribute att_tup;
+				Node	   *new_expr;
+
+				att_tup = target_relation->rd_att->attrs[attrno - 1];
+
+				if (!att_tup->attisdropped)
+					new_expr = build_column_default(target_relation, attrno);
+				else
+					new_expr = NULL;		/* force a NULL if dropped */
+
+				/*
+				 * If there is no default (ie, default is effectively NULL),
+				 * we've got to explicitly set the column to NULL.
+				 */
+				if (!new_expr)
+				{
+					new_expr = (Node *) makeConst(att_tup->atttypid,
+												  att_tup->attlen,
+												  (Datum) 0,
+												  true, /* isnull */
+												  att_tup->attbyval);
+					/* this is to catch a NOT NULL domain constraint */
+					new_expr = coerce_to_domain(new_expr,
+												InvalidOid, -1,
+												att_tup->atttypid,
+												COERCE_IMPLICIT_CAST,
+												false,
+												false);
+				}
+				newList = lappend(newList, new_expr);
+			}
+			else
+				newList = lappend(newList, col);
+		}
+		newValues = lappend(newValues, newList);
+	}
+	rte->values_lists = newValues;
 }
 
 
@@ -1375,8 +1496,45 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		 * form.  This will be needed by the planner anyway, and doing it now
 		 * ensures that any references to NEW.field will behave sanely.
 		 */
-		if (event == CMD_INSERT || event == CMD_UPDATE)
-			rewriteTargetList(parsetree, rt_entry_relation);
+		if (event == CMD_UPDATE)
+			rewriteTargetList(parsetree, rt_entry_relation, NULL);
+		else if (event == CMD_INSERT)
+		{
+			RangeTblEntry *values_rte = NULL;
+
+			/*
+			 * If it's an INSERT ... VALUES (...), (...), ...
+			 * there will be a single RTE for the VALUES targetlists.
+			 */
+			if (list_length(parsetree->jointree->fromlist) == 1)
+			{
+				RangeTblRef *rtr = (RangeTblRef *) linitial(parsetree->jointree->fromlist);
+
+				if (IsA(rtr, RangeTblRef))
+				{
+					RangeTblEntry *rte = rt_fetch(rtr->rtindex,
+												  parsetree->rtable);
+
+					if (rte->rtekind == RTE_VALUES)
+						values_rte = rte;
+				}
+			}
+
+			if (values_rte)
+			{
+				List   *attrnos;
+
+				/* Process the main targetlist ... */
+				rewriteTargetList(parsetree, rt_entry_relation, &attrnos);
+				/* ... and the VALUES expression lists */
+				rewriteValuesRTE(values_rte, rt_entry_relation, attrnos);
+			}
+			else
+			{
+				/* Process just the main targetlist */
+				rewriteTargetList(parsetree, rt_entry_relation, NULL);
+			}
+		}
 
 		/*
 		 * Collect and apply the appropriate rules.
