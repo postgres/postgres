@@ -328,7 +328,7 @@
 					#        processes
 					#   %% = '%'
 					# e.g. '<%u%%%d> '
-#log_statement = 'none'			# none, mod, ddl, all
+#log_statement = 'none'			# none, ddl, mod, all
 #log_hostname = off
 
 
