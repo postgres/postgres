@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.35 2006/04/30 21:15:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.36 2006/08/02 16:29:49 tgl Exp $ -->
 
 <chapter id="user-manag">
  <title>Database Roles and Privileges</title>
@@ -375,7 +375,9 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
 </synopsis>
    You can grant membership to other group roles, too (since there isn't
    really any distinction between group roles and non-group roles).  The
-   only restriction is that you can't set up circular membership loops.
+   database will not let you set up circular membership loops.  Also,
+   it is not permitted to grant membership in a role to
+   <literal>PUBLIC</literal>.
   </para>
 
   <para>
