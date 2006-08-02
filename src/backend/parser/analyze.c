@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.342 2006/08/02 13:58:52 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.343 2006/08/02 14:14:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -745,7 +745,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		 * construct to ensure that the values would be available while
 		 * evaluating the VALUES RTE.  This is a shame.  FIXME
 		 */
-		if (pstate->p_rtable != NIL &&
+		if (list_length(pstate->p_rtable) != 1 &&
 			contain_vars_of_level((Node *) exprsLists, 0))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
