@@ -1,0 +1,7 @@
+sqlca.sqlwarn: W2
+49 0:
+52 0:
+62 -400:'Cursor >>x<< existiert bereits' in line 61.
+65 -400:'aktuelle Transaktion wurde abgebrochen, Befehle werden bis zum Ende 
+68 -400:'aktuelle Transaktion wurde abgebrochen, Befehle werden bis zum Ende 
+74 -400:'aktuelle Transaktion wurde abgebrochen, Befehle werden bis zum Ende 

@@ -1,0 +1,52 @@
+exec sql include sqlca;
+#include <stdio.h>
+
+exec sql include ../regression;
+
+
+int main(int argc, char **argv)
+{  exec sql begin declare section;
+   int index;
+   exec sql end declare section;
+
+
+   ECPGdebug(1,stderr);
+   
+   exec sql connect to REGRESSDB1;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+
+   exec sql create table test (
+        "index" numeric(3) primary key,
+        "payload" int4 NOT NULL);
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   exec sql commit work;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   for (index=0;index<10;++index)
+   {  exec sql insert into test
+                (payload, index)
+                values (0, :index);
+      if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   }
+   exec sql commit work;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql update test
+   	set payload=payload+1 where index=-1;
+   if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql delete from test where index=-1;
+   if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+
+   exec sql insert into test (select * from test where index=-1);
+   if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+
+   exec sql drop table test;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   exec sql commit work;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   exec sql disconnect;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   return 0;
+}

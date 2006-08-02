@@ -1,0 +1,10 @@
+doSQLprint: Error: 'duplicate key violates unique constraint "test_pkey"' in line 30.
+INSERT: -239='duplicate key violates unique constraint "test_pkey"' in line 30.
+doSQLprint: Error: 'more than one row returned by a subquery used as an expression' in line 38.
+doSQLprint: Error: 'current transaction is aborted, commands ignored until end of transaction block' in line 41.
+SELECT: -400='current transaction is aborted, commands ignored until end of transaction block' in line 41.
+7 0
+14 1
+DELETE: 100
+Exists: 0
+Does not exist: 100

@@ -1,0 +1,4 @@
+5,abc
+6,def
+7,ghi
+copy to STDOUT : sqlca.sqlcode = 0

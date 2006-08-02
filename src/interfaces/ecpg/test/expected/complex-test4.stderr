@@ -1,0 +1,62 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGsetcommit line 42 action = on connection = regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 44 action = begin transaction  connection = regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 46: QUERY: create  table test ( f float    , i int   , a int [ 10 ]   , text char  ( 10 )    , b bool   , t int   , err int   )     on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 46 Ok: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 48: QUERY: insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 404.90 , 3 , '{0,1,2,3,4,5,6,7,8,9}' , 'abcdefghij' , 'f' , 0 , 0 ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 48 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 50: QUERY: insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 140787.0 , 2 ,  array [9,8,7,6,5,4,3,2,1,0] ,  'klmnopqrst' , 't' , 2 , 14 ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 50 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 55: QUERY: insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 14.07 ,  1 ,  array [9,8,7,6,5,4,3,2,1,0] ,  '0123456789' ,  't' , 1 , 147 ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 55 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 59 action = commit connection = regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 61 action = begin transaction  connection = regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 63: QUERY: select  f , text , b  from test where i = 1   on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 63: Correctly got 1 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 63: RESULT: 14.07 offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 63: RESULT: 0123456789 offset: 25 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 63: RESULT: t offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: QUERY: select  a , text  from test where f =  140787   on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: Correctly got 1 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGis_type_an_array line 71: TYPE database: 1007 C: 5 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 71: RESULT: {9,8,7,6,5,4,3,2,1,0} offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 71: RESULT: klmnopqrst offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 81: QUERY: select  a  from test where f =  140787   on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 81: Correctly got 1 tuples with 1 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 81: RESULT: {9,8,7,6,5,4,3,2,1,0} offset: 25 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 88: QUERY: drop table test  on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 88 Ok: DROP TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 90 action = commit connection = regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: sqlca: code: 0, state: 00000

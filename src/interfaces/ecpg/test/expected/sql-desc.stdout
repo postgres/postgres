@@ -1,0 +1,4 @@
+output = 1
+val1=1 val2='one'
+val1=2 val2=null
+val1=2 val2=null

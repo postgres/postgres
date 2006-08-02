@@ -1,0 +1,95 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 20: QUERY: select  tablename  from pg_tables    on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 20: Correctly got 40 tuples with 1 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute putting result (40 tuples) into descriptor 'mydesc'
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_desc: reading items for tuple 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 21: allocating 656 bytes for 40 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: sql_parts offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: sql_sizing offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: sql_sizing_profiles offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_authid offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: sql_features offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: sql_implementation_info offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: sql_languages offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: sql_packages offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_statistic offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_type offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_attribute offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_proc offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_class offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_autovacuum offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_attrdef offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_constraint offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_inherits offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_index offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_operator offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_opclass offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_am offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_amop offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_amproc offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_language offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_largeobject offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_aggregate offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_rewrite offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_trigger offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_listener offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_description offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_cast offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_namespace offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_conversion offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_depend offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_tablespace offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_pltemplate offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_shdepend offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_shdescription offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_database offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: pg_auth_members offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: sqlca: code: 0, state: 00000

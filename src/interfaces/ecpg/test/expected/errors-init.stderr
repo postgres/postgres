@@ -1,0 +1,14 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode -220 in line 87, 'No such connection NULL in line 87.'.
+[NO_PID]: sqlca: code: -220, state: 08003
+[NO_PID]: raising sqlcode -220 in line 89, 'No such connection NULL in line 89.'.
+[NO_PID]: sqlca: code: -220, state: 08003
+[NO_PID]: raising sqlcode -220 in line 91, 'No such connection NULL in line 91.'.
+[NO_PID]: sqlca: code: -220, state: 08003
+[NO_PID]: raising sqlcode -220 in line 93, 'No such connection NULL in line 93.'.
+[NO_PID]: sqlca: code: -220, state: 08003
+[NO_PID]: raising sqlcode -220 in line 95, 'No such connection NULL in line 95.'.
+[NO_PID]: sqlca: code: -220, state: 08003
+[NO_PID]: raising sqlcode -220 in line 97, 'No such connection NULL in line 97.'.
+[NO_PID]: sqlca: code: -220, state: 08003

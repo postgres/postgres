@@ -1,0 +1,144 @@
+#include <stdio.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+exec sql include sqlca;
+exec sql include ../regression;
+
+exec sql whenever sqlerror sqlprint;
+exec sql whenever not found sqlprint;
+
+static void
+print_result(long sec, long usec, char *text)
+{
+	if (usec < 0)
+	{
+		sec--;
+		usec+=1000000;
+	}
+	printf("%ld seconds and %ld microseconds for test %s\n", sec, usec, text);
+	exec sql vacuum;
+	sleep(1);
+}
+
+int
+main (void)
+{
+exec sql begin declare section;
+	long i;
+exec sql end declare section;
+	struct timeval tvs, tve;
+
+	exec sql connect to REGRESSDB1;
+
+	exec sql create table perftest1(number int4, ascii char(16));
+
+	exec sql create unique index number1 on perftest1(number);
+
+	exec sql create table perftest2(number int4, next_number int4);
+
+	exec sql create unique index number2 on perftest2(number);
+
+	exec sql commit;
+
+	exec sql set autocommit to on;
+
+	exec sql begin transaction;
+
+	gettimeofday(&tvs, NULL);
+
+	for (i = 0;i < 1407; i++)
+	{
+		exec sql begin declare section;
+			char text[16];
+		exec sql end declare section;
+
+		sprintf(text, "%ld", i);
+		exec sql insert into perftest1(number, ascii) values (:i, :text);
+		exec sql insert into perftest2(number, next_number) values (:i, :i+1);
+	}
+
+	exec sql commit;
+
+	gettimeofday(&tve, NULL);
+
+	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "insert");
+
+	exec sql begin transaction;
+
+	gettimeofday(&tvs, NULL);
+
+	for (i = 0;i < 1407; i++)
+	{
+		exec sql begin declare section;
+			char text[16];
+		exec sql end declare section;
+
+		exec sql select ascii into :text from perftest1 where number = :i;
+	}
+
+	exec sql commit;
+
+	gettimeofday(&tve, NULL);
+
+	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "selection&projection");
+
+	exec sql begin transaction;
+
+	gettimeofday(&tvs, NULL);
+
+	for (i = 0;i < 1407; i++)
+	{
+		exec sql begin declare section;
+			char text[16];
+		exec sql end declare section;
+
+		exec sql select perftest1.ascii into :text from perftest1, perftest2 where perftest1.number = perftest2.number and perftest2.number = :i;
+	}
+
+	exec sql commit;
+
+	gettimeofday(&tve, NULL);
+
+	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "join");
+
+	exec sql begin transaction;
+
+	gettimeofday(&tvs, NULL);
+
+	exec sql update perftest2 set next_number = next_number + 1;
+
+	exec sql commit;
+
+	gettimeofday(&tve, NULL);
+
+	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "update");
+
+	exec sql begin transaction;
+
+	gettimeofday(&tvs, NULL);
+
+	exec sql delete from perftest2;
+
+	exec sql commit;
+
+	gettimeofday(&tve, NULL);
+
+	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "delete");
+
+	exec sql set autocommit = off;
+
+	exec sql drop index number2;
+
+	exec sql drop table perftest2;
+
+	exec sql drop index number1;
+
+	exec sql drop table perftest1;
+
+	exec sql commit;
+
+	exec sql disconnect;
+
+	return (0);
+}

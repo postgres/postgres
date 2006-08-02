@@ -1,0 +1,46 @@
+/*
+ * this file tests multiple connections to databases and switches
+ * between them.
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+/* do not include regression.h */
+
+int
+main(void)
+{
+exec sql begin declare section;
+	char id[200];
+	char res[200];
+exec sql end declare section;
+
+	ECPGdebug(1, stderr);
+
+	strcpy(id, "first");
+	exec sql connect to connectdb as :id;
+	exec sql connect to regress1@localhost as second;
+
+	/* this selects from "second" which was opened last */
+	exec sql select current_database() into :res;
+	exec sql at first select current_database() into :res;
+	exec sql at second select current_database() into :res;
+
+	exec sql set connection first;
+	exec sql select current_database() into :res;
+
+	/* this will disconnect from "first" */
+	exec sql disconnect;
+	exec sql select current_database() into :res;
+
+	/* error here since "first" is already disconnected */
+	exec sql disconnect :id;
+
+	/* disconnect from "second" */
+	exec sql disconnect;
+
+	return (0);
+}

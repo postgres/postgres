@@ -1,0 +1,53 @@
+#include <stdio.h>
+exec sql include sqlca;
+#include <stdlib.h>
+exec sql include ../regression;
+
+int main(void)
+{
+   exec sql begin declare section;
+   int *ip1=0;
+   char **cp2=0;
+   int *ipointer1=0;
+   int *ipointer2=0;
+   int colnum;
+   exec sql end declare section;
+   int i;
+
+   ECPGdebug(1, stderr);
+
+   exec sql whenever sqlerror do sqlprint();
+   exec sql connect to REGRESSDB1;
+
+   exec sql create table test (a int, b text);
+   exec sql insert into test values (1, 'one');
+   exec sql insert into test values (2, 'two');
+   exec sql insert into test values (NULL, 'three');
+   exec sql insert into test values (4, 'four');
+   exec sql insert into test values (5, NULL);
+   exec sql insert into test values (NULL, NULL);
+
+   exec sql allocate descriptor mydesc;
+   exec sql select * into descriptor mydesc from test;
+   exec sql get descriptor mydesc :colnum=COUNT;
+   exec sql get descriptor mydesc value 1 :ip1=DATA, :ipointer1=INDICATOR;
+   exec sql get descriptor mydesc value 2 :cp2=DATA, :ipointer2=INDICATOR;
+
+   printf("Result (%d columns):\n", colnum);
+   for (i=0;i < sqlca.sqlerrd[2];++i)
+   {
+      if (ipointer1[i]) printf("NULL, ");
+      else printf("%d, ",ip1[i]); 
+
+      if (ipointer2[i]) printf("NULL, ");
+      else printf("'%s', ",cp2[i]); 
+      printf("\n");
+   }
+   ECPGfree_auto_mem();
+   printf("\n");
+
+   exec sql deallocate descriptor mydesc;
+   exec sql rollback;
+   exec sql disconnect;
+   return 0;
+}

@@ -1,0 +1,58 @@
+exec sql include sqlca;
+exec sql include ../regression;
+exec sql define STR 'abcdef';
+exec sql define INSERTNULL 1;
+exec sql define NUMBER 29;
+
+int main(void)
+{
+   exec sql begin declare section;
+     int i;
+     char s[200];
+   exec sql end declare section;
+
+   ECPGdebug(1, stderr);
+
+   exec sql whenever sqlerror do sqlprint();
+   exec sql connect to REGRESSDB1;
+
+   exec sql create table test (a int, b text);
+   exec sql insert into test values (NUMBER, STR);
+
+   exec sql ifdef INSERTNULL;
+   exec sql insert into test values (NULL, 'defined');
+   exec sql endif;
+
+   exec sql ifndef INSERTNULL;
+   exec sql insert into test values (NULL, 'not defined');
+   exec sql elif SOMEOTHERVAR;
+   exec sql insert into test values (NULL, 'someothervar defined');
+   exec sql else;
+   exec sql insert into test values (NULL, 'someothervar not defined');
+   exec sql endif;
+
+   exec sql define NUMBER 29;
+
+   exec sql select INSERTNULL, NUMBER::text || '-' || STR INTO :i, :s;
+
+   printf("i: %d, s: %s\n", i, s);
+
+   exec sql undef STR;
+   exec sql ifndef STR;
+   exec sql insert into test values (NUMBER, 'no string');
+   exec sql endif;
+
+   exec sql define TZVAR;  /* no value */
+   exec sql define TZVAR 'UTC';
+
+   exec sql ifndef TZVAR;
+   exec sql SET TIMEZONE TO 'GMT';
+   exec sql elif TZNAME;
+   exec sql SET TIMEZONE TO TZNAME;
+   exec sql else;
+   exec sql SET TIMEZONE TO TZVAR;
+   exec sql endif;
+
+   exec sql disconnect;
+   return 0;
+}

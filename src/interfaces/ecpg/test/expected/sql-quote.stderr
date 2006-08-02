@@ -1,0 +1,57 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGsetcommit line 15 action = on connection = regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 19: QUERY: create  table My_Table ( Item1 int   , Item2 text   )     on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 19 Ok: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 21: QUERY: show standard_conforming_strings on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 21: Correctly got 1 tuples with 1 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 21: RESULT: off offset: 25 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 25: QUERY: insert into My_Table values( 1 , 'a\\b' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: nonstandard use of \\ in a string literal[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode 0
+[NO_PID]: sqlca: code: 0, state: 22P06
+[NO_PID]: ECPGexecute line 25 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 22P06
+sql error nonstandard use of \\ in a string literal
+[NO_PID]: ECPGexecute line 27: QUERY: insert into My_Table values( 1 , 'a\\b' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: nonstandard use of \\ in a string literal[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode 0
+[NO_PID]: sqlca: code: 0, state: 22P06
+[NO_PID]: ECPGexecute line 27 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 22P06
+sql error nonstandard use of \\ in a string literal
+[NO_PID]: ECPGexecute line 29: QUERY: set standard_conforming_strings to on on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 29 Ok: SET
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 32: QUERY: insert into My_Table values( 1 , 'a\\b' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 32 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 34: QUERY: insert into My_Table values( 1 , 'a\\b' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 34 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 36: QUERY: select  *  from My_Table    on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 36: Correctly got 4 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode -202 in line 36, 'Too few arguments in line 36.'.
+[NO_PID]: sqlca: code: -202, state: 07002
+sql error Too few arguments in line 36.
+[NO_PID]: ECPGexecute line 38: QUERY: drop table My_Table  on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 38 Ok: DROP TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: sqlca: code: 0, state: 00000

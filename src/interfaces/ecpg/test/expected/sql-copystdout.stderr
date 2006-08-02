@@ -1,0 +1,28 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 20: QUERY: create  table foo ( a int   , b varchar    )     on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 20 Ok: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 21: QUERY: insert into foo values( 5 , 'abc' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 21 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 22: QUERY: insert into foo values( 6 , 'def' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 22 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 23: QUERY: insert into foo values( 7 , 'ghi' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 23 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 29: QUERY: copy  foo  to stdout  with  delimiter  ',' on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 29: Got PGRES_COPY_OUT
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 29: Got PGRES_COMMAND_OK after PGRES_COPY_OUT
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: sqlca: code: 0, state: 00000

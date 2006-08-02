@@ -1,0 +1,13 @@
+Found f=14,070000 text=0123456789 b=1
+Found a[0] = 9
+Found a[1] = 8
+Found a[2] = 7
+Found a[3] = 6
+Found a[4] = 5
+Found a[5] = 4
+Found a[6] = 3
+Found a[7] = 2
+Found a[8] = 1
+Found a[9] = 0
+Found text=klmnopqrst
+Found text={9,8,7,6,5,4,3,2,1,0}

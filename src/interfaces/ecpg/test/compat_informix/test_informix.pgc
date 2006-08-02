@@ -1,0 +1,92 @@
+#include "sqltypes.h"
+
+$include ../regression;
+$define NUMBER 12;
+
+static void openit(void);
+static void dosqlprint(void) {
+	printf("doSQLprint: Error: %s\n", sqlca.sqlerrm.sqlerrmc);
+}
+
+int main(void)
+{
+	$int i = 14; 
+	$decimal j, m, n;
+
+	ECPGdebug(1, stderr);
+	$whenever sqlerror do dosqlprint();
+
+	$connect to REGRESSDB1;
+	if (sqlca.sqlcode != 0) exit(1);
+
+	$create table test(i int primary key, j int);
+
+	/* this INSERT works */
+	rsetnull(CDECIMALTYPE, (char *)&j);
+	$insert into test (i, j) values (7, :j);
+	$commit;
+
+	/* this INSERT should fail because i is a unique column */
+	$insert into test (i, j) values (7, NUMBER);
+	printf("INSERT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+	if (sqlca.sqlcode != 0) $rollback;
+
+	$insert into test (i, j) values (:i, 1);
+	$commit;
+
+	/* this will fail (more than one row in subquery) */
+	$select i from test where j=(select j from test);
+
+	/* this however should be ok */
+	$select i from test where j=(select j from test limit 1);
+	printf("SELECT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+	if (sqlca.sqlcode != 0) $rollback;
+
+	$declare c cursor for select * from test where i <= :i;
+	openit();
+
+	deccvint(0, &j);
+
+	while (1)
+	{
+		$fetch forward c into :i, :j;
+		if (sqlca.sqlcode == 100) break;
+		else if (sqlca.sqlcode != 0) printf ("Error: %ld\n", sqlca.sqlcode);
+
+		if (risnull(CDECIMALTYPE, (char *)&j))
+			printf("%d NULL\n", i);
+		else
+		{
+			int a;
+
+			dectoint(&j, &a);
+			printf("%d %d\n", i, a);
+		}
+	}
+
+	deccvint(7, &j);
+	deccvint(14, &m);
+	decadd(&j, &m, &n);
+	$delete from test where i=:n;
+	printf("DELETE: %ld\n", sqlca.sqlcode);
+
+	$select 1 from test where i=14;
+	printf("Exists: %ld\n", sqlca.sqlcode);
+
+	$select 1 from test where i=147;
+	printf("Does not exist: %ld\n", sqlca.sqlcode);
+
+	$commit;
+	$drop table test;
+	$commit;
+
+	$close database;
+
+	return 0;
+}
+
+static void openit(void)
+{
+	$open c;
+}
+

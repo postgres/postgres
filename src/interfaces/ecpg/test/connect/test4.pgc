@@ -1,0 +1,20 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+exec sql include ../regression;
+
+int
+main(void)
+{
+	ECPGdebug(1, stderr);
+
+	exec sql connect to REGRESSDB1 as main;
+
+	exec sql set connection to main;
+
+	exec sql disconnect DEFAULT;
+
+	return (0);
+}

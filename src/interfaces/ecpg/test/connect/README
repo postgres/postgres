@@ -1,0 +1,7 @@
+Programs in this directory test all sorts of connections.
+
+All other programs just use one standard connection method.
+
+If any details of the regression database get changed (port, unix socket file,
+user names, passwords, ...), these programs here have to be changed as well
+because they contain hardcoded values.

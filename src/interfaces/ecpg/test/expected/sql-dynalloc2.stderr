@@ -1,0 +1,73 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 22: QUERY: create  table test ( a int   , b text   )     on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 22 Ok: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 23: QUERY: insert into test values( 1 , 'one' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 23 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 24: QUERY: insert into test values( 2 , 'two' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 24 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 25: QUERY: insert into test values( null , 'three' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 25 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 26: QUERY: insert into test values( 4 , 'four' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 26 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 27: QUERY: insert into test values( 5 , null ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 27 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 28: QUERY: insert into test values( null , null ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 28 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 31: QUERY: select  *  from test    on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 31: Correctly got 6 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute putting result (6 tuples) into descriptor 'mydesc'
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_desc_header: found 2 attributes.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_desc: reading items for tuple 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 33: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 33: RESULT: 2 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 33: RESULT:  offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 33: RESULT: 4 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 33: RESULT: 5 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 33: RESULT:  offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_desc: reading items for tuple 2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 34: allocating 49 bytes for 6 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 34: RESULT: one offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 34: RESULT: two offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 34: RESULT: three offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 34: RESULT: four offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 34: RESULT:  offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 34: RESULT:  offset: 0 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 50 action = rollback connection = regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: sqlca: code: 0, state: 00000

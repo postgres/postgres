@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+EXEC SQL INCLUDE ../regression;
+
+int main(int argc, char* argv[]) {
+
+  ECPGdebug(1, stderr);
+  EXEC SQL CONNECT TO REGRESSDB1;
+
+  EXEC SQL SET AUTOCOMMIT TO ON;
+  EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+  EXEC SQL WHENEVER SQLERROR SQLPRINT;
+
+  EXEC SQL CREATE TABLE My_Table ( Item1 int, Item2 text );
+
+  EXEC SQL CREATE FUNCTION My_Table_Check() RETURNS trigger
+    AS $test$
+    BEGIN
+	RAISE WARNING 'Notice: TG_NAME=%, TG WHEN=%', TG_NAME, TG_WHEN;
+	RETURN NEW;
+    END; $test$
+    LANGUAGE plpgsql;
+
+  EXEC SQL CREATE TRIGGER My_Table_Check_Trigger
+    BEFORE INSERT
+    ON My_Table
+    FOR EACH ROW
+    EXECUTE PROCEDURE My_Table_Check();
+
+  EXEC SQL INSERT INTO My_Table VALUES (1234, 'Some random text');
+  EXEC SQL INSERT INTO My_Table VALUES (5678, 'The Quick Brown');
+
+  EXEC SQL DROP TRIGGER My_Table_Check_Trigger ON My_Table;
+  EXEC SQL DROP FUNCTION My_Table_Check();
+  EXEC SQL DROP TABLE My_Table;
+
+  EXEC SQL DISCONNECT ALL;
+
+  return 0;
+}

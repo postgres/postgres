@@ -1,0 +1,33 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <pgtypes_date.h>
+#include <pgtypes_timestamp.h>
+
+exec sql include ../regression;
+
+int
+main(void)
+{
+	exec sql begin declare section;
+		date date1;
+		timestamp ts1;
+		char* text;
+	exec sql end declare section;
+
+	ECPGdebug(1, stderr);
+
+	ts1 = PGTYPEStimestamp_from_asc("2003-12-04 17:34:29", NULL);
+	text = PGTYPEStimestamp_to_asc(ts1);
+
+	printf("timestamp: %s\n", text);
+	free(text);
+
+	date1 = PGTYPESdate_from_timestamp(ts1);
+	text = PGTYPESdate_to_asc(date1);
+	printf("Date of timestamp: %s\n", text);
+	free(text);
+
+	return (0);
+}
+

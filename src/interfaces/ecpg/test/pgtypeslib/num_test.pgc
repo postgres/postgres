@@ -1,0 +1,81 @@
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/pgtypeslib/num_test.pgc,v 1.1 2006/08/02 14:14:04 meskes Exp $ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pgtypes_numeric.h>
+#include <decimal.h>
+
+exec sql include ../regression;
+
+int
+main(void)
+{
+	char *text="error\n";
+	numeric *value1, *value2, *res;
+	exec sql begin declare section;
+		numeric(14,7) *des;
+		/* = {0, 0, 0, 0, 0, NULL, NULL} ; */
+	exec sql end declare section;
+	double d;
+
+	ECPGdebug(1, stderr);
+	exec sql whenever sqlerror do sqlprint();
+
+	exec sql connect to REGRESSDB1;
+
+	exec sql set autocommit = off;
+	exec sql create table test (text char(5), num numeric(14,7));
+
+	value1 = PGTYPESnumeric_new();
+	PGTYPESnumeric_from_int(1407, value1);
+	text = PGTYPESnumeric_to_asc(value1, -1);
+	printf("long = %s\n", text);
+	free(text);
+	PGTYPESnumeric_free(value1);
+
+	value1 = PGTYPESnumeric_from_asc("2369.7", NULL);
+	value2 = PGTYPESnumeric_from_asc("10.0", NULL);
+	res = PGTYPESnumeric_new();
+	PGTYPESnumeric_add(value1, value2, res);
+	text = PGTYPESnumeric_to_asc(res, -1);
+	printf("add = %s\n", text);
+	free(text);
+
+	PGTYPESnumeric_sub(res, value2, res);
+	text = PGTYPESnumeric_to_asc(res, -1);
+	printf("sub = %s\n", text);
+	free(text);
+	PGTYPESnumeric_free(value2);
+
+	des = PGTYPESnumeric_new();
+	PGTYPESnumeric_copy(res, des);
+	exec sql insert into test (text, num) values ('test', :des);
+
+	value2 = PGTYPESnumeric_from_asc("2369.7", NULL);
+	PGTYPESnumeric_mul(value1, value2, res);
+	PGTYPESnumeric_free(value2);
+
+	exec sql select num into :des from test where text = 'test';
+
+	PGTYPESnumeric_mul(res, des, res);
+	text = PGTYPESnumeric_to_asc(res, -1);
+	printf("mul = %s\n", text);
+	free(text);
+	PGTYPESnumeric_free(des);
+
+	value2 = PGTYPESnumeric_from_asc("10000", NULL);
+	PGTYPESnumeric_div(res, value2, res);
+	text = PGTYPESnumeric_to_asc(res, -1);
+	PGTYPESnumeric_to_double(res, &d);
+	printf("div = %s %e\n", text, d);
+	free(text);
+	PGTYPESnumeric_free(value1);
+	PGTYPESnumeric_free(value2);
+	PGTYPESnumeric_free(res);
+
+	exec sql rollback;
+	exec sql disconnect;
+
+	return (0);
+}
+

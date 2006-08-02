@@ -1,0 +1,52 @@
+/*
+ * this file just tests the several possibilities you have for a disconnect
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+/* do not include regression.h */
+
+int
+main(void)
+{
+exec sql begin declare section;
+	char id[200];
+	char res[200];
+exec sql end declare section;
+
+	ECPGdebug(1, stderr);
+
+	strcpy(id, "first");
+	exec sql connect to connectdb as :id;
+	exec sql connect to regress1@localhost as second;
+
+	/* this selects from "second" which was opened last */
+	exec sql select current_database() into :res;
+
+	/* will close "second" */
+	exec sql disconnect CURRENT;
+	exec sql select current_database() into :res;
+
+	exec sql connect to regress1@localhost as second;
+	/* will close "second" */
+	exec sql disconnect DEFAULT;
+
+	exec sql connect to regress1@localhost as second;
+	exec sql disconnect ALL;
+
+	exec sql disconnect CURRENT;
+	exec sql disconnect DEFAULT;
+	exec sql disconnect ALL;
+
+	/*
+	 * exec sql disconnect;
+	 * exec sql disconnect name;
+	 *
+	 *     are used in other tests
+	 */
+
+	return (0);
+}

@@ -1,0 +1,49 @@
+Date: 1966-01-17
+timestamp: 2000-07-12 17:34:29
+interval: @ 13556 days 12 hours 34 mins
+m: 4, d: 19, y: 1998
+date seems to get encoded to julian -622
+m: 4, d: 19, y: 1998
+date_day of 2003-12-04 17:34:29 is 4
+using date 2003-12-04 17:34:29
+Above date in format "(ddd), mmm. dd, yyyy, repeat: (ddd), mmm. dd, yyyy. end" is "(Thu), Dec. 04, 2003, repeat: (Thu), Dec. 04, 2003. end"
+date_defmt_asc1: 1995-12-25
+date_defmt_asc2: 0095-12-25
+date_defmt_asc3: 0095-12-25
+date_defmt_asc4: 1995-12-25
+date_defmt_asc5: 1995-12-25
+date_defmt_asc6: 1995-12-25
+date_defmt_asc7: 1995-12-25
+date_defmt_asc8: 1995-12-25
+date_defmt_asc9: 1995-12-25
+date_defmt_asc10: 1995-12-25
+date_defmt_asc12: 0095-12-25
+timestamp_to_asc1: 1996-02-29 00:00:00
+timestamp_to_asc2: 1994-02-11 03:10:35
+timestamp_to_asc3: 2000-01-01 00:00:00
+timestamp_fmt_asc: 0: abc-00:00:00-def-01/01/00-ghi%
+timestamp_defmt_asc(This is a 4/12/80 3-39l12test, This is a %m/%d/%y %H-%Ml%Stest) = 1980-04-12 03:39:12, error: 0
+timestamp_defmt_asc(Tue Jul 22 17:28:44 +0200 2003, %a %b %d %H:%M:%S %z %Y) = 2003-07-22 15:28:44, error: 0
+timestamp_defmt_asc(Tue Feb 29 17:28:44 +0200 2000, %a %b %d %H:%M:%S %z %Y) = 2000-02-29 15:28:44, error: 0
+timestamp_defmt_asc(Tue Feb 29 17:28:44 +0200 1900, %a %b %d %H:%M:%S %z %Y) = 1900-02-28 15:28:44, error (should be error!): 1
+timestamp_defmt_asc(Tue Feb 29 17:28:44 +0200 1996, %a %b %d %H:%M:%S %z %Y) = 1996-02-29 15:28:44, error: 0
+timestamp_defmt_asc(      Jul 31 17:28:44 +0200 1996, %b %d %H:%M:%S %z %Y) = 1996-07-31 15:28:44, error: 0
+timestamp_defmt_asc(      Jul 32 17:28:44 +0200 1996, %b %d %H:%M:%S %z %Y) = 1996-07-31 15:28:44, error (should be error!): 1
+timestamp_defmt_asc(Tue Feb 29 17:28:44 +0200 1997, %a %b %d %H:%M:%S %z %Y) = 1997-02-28 15:28:44, error (should be error!): 1
+timestamp_defmt_asc(Tue Jul 22 17:28:44 +0200 2003, %) = 1997-02-28 15:28:44, error (should be error!): 1
+timestamp_defmt_asc(Tue Jul 22 17:28:44 +0200 2003, a %) = 1997-02-28 15:28:44, error (should be error!): 1
+timestamp_defmt_asc(    Jul, 22 17_28 `44 +0200  2003  , %b, %d %H_%M`%S %z %Y) = 2003-07-22 15:28:44, error: 0
+timestamp_defmt_asc(Tue Jul %22 17:28:44 CEST 2003, %a %b %%%d %H:%M:%S %Z %Y) = 2003-07-22 15:28:44, error: 0
+timestamp_defmt_asc(Tue Jul %22 17:28:44 CEST 2003, %a %b %%%d %H:%M:%S %Z %Y) = 2003-07-22 15:28:44, error: 0
+timestamp_defmt_asc(abc
+   19 October %22 17:28:44 CEST 2003, abc%n %C %B %%%d %H:%M:%S %Z %Y) = 2003-10-22 15:28:44, error: 0
+timestamp_defmt_asc(abc
+   18 October %34 17:28:44 CEST 80, abc%n %C %B %%%d %H:%M:%S %Z %y) = 1880-10-31 15:28:44, error (should be error!): 1
+timestamp_defmt_asc(abc
+   18 October %34 17:28:44 CEST 80, ) = 1880-10-31 15:28:44, error (should be error!): 1
+timestamp_defmt_asc(1980-04-12 3:49:44      , (null)) = 1980-04-12 03:49:44, error: 0
+timestamp_defmt_asc(July 14, 1988. Time: 9:15am, %B %d, %Y. Time: %I:%M%p) = 1988-07-14 09:15:00, error: 0
+timestamp_defmt_asc(September 6 at 01:30 pm in the year 1983, %B %d at %I:%M %p in the year %Y) = 1983-09-06 13:30:00, error: 0
+timestamp_defmt_asc(  1976, July 14. Time: 9:15am, %Y,   %B %d. Time: %I:%M %p) = 1976-07-14 09:15:00, error: 0
+timestamp_defmt_asc(  1976, July 14. Time: 9:15 am, %Y,   %B %d. Time: %I:%M%p) = 1976-07-14 09:15:00, error: 0
+timestamp_defmt_asc(  1976, P.M. July 14. Time: 9:15, %Y, %P  %B %d. Time: %I:%M) = 1976-07-14 21:15:00, error: 0

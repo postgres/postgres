@@ -1,0 +1,51 @@
+#include <stdio.h>
+
+exec sql include sqlca;
+exec sql include ../regression;
+
+
+int main(int argc, char **argv)
+{
+	exec sql begin declare section;
+		int intvar = 5;
+		int nullind = -1;
+	exec sql end declare section;
+
+	ECPGdebug(1,stderr);
+
+	exec sql connect to REGRESSDB1;
+	exec sql set autocommit to off;
+
+	exec sql create table test (
+	     "id" int primary key,
+	     "str" text NOT NULL,
+	      val int null);
+	exec sql commit work;
+
+	exec sql insert into test (id, str, val) values ( 1, 'Hello', 0);
+
+	/* use indicator in insert */
+	exec sql insert into test (id, str, val) values ( 2, 'Hi there', :intvar :nullind);
+	nullind = 0;
+	exec sql insert into test (id, str, val) values ( 3, 'Good evening', :intvar :nullind);
+	exec sql commit work;
+
+	/* use indicators to get information about selects */
+	exec sql select val into :intvar from test where id = 1;
+	exec sql select val into :intvar :nullind from test where id = 2;
+	printf("intvar: %d, nullind: %d\n", intvar, nullind);
+	exec sql select val into :intvar :nullind from test where id = 3;
+	printf("intvar: %d, nullind: %d\n", intvar, nullind);
+
+	/* use indicators for update */
+	intvar = 5; nullind = -1;
+	exec sql update test set val = :intvar :nullind where id = 1;
+	exec sql select val into :intvar :nullind from test where id = 1;
+	printf("intvar: %d, nullind: %d\n", intvar, nullind);
+
+	exec sql drop table test;
+	exec sql commit work;
+
+	exec sql disconnect;
+	return 0;
+}

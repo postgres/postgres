@@ -1,0 +1,5 @@
+Var: Search path: "$user",public
+Var: WAL buffers: 8
+Var: Standard conforming strings: off
+Time Zone: PST8PDT
+Transaction isolation level: read committed

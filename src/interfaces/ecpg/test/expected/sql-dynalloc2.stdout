@@ -1,0 +1,8 @@
+Result (2 columns):
+1, 'one', 
+2, 'two', 
+NULL, 'three', 
+4, 'four', 
+5, NULL, 
+NULL, NULL, 
+

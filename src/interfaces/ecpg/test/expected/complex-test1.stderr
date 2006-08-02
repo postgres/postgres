@@ -1,0 +1,240 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> for user regressuser1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 75: QUERY: create  table "Test" ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )     on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 75 Ok: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 76: QUERY: create  table "Test" ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )     on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 76 Ok: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 79 action = commit connection = main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 80 action = commit connection = pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 87: QUERY: insert into "Test" (name, amount, letter) values ('db: ''r1''', 1, 'f') on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 87 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 91: QUERY: insert into "Test" (name, amount, letter) values ('db: ''r1''', 2, 't') on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 91 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 95: QUERY: insert into "Test" (name, amount, letter) values ('db: ''pm''', 1, 'f') on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 95 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 99: QUERY: insert into "Test" (name, amount, letter) select name, amount+10, letter from "Test" on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 99 Ok: INSERT 0 2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGprepare line 105: QUERY: insert into "Test" (name, amount, letter) select name, amount+?, letter from "Test"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 106: QUERY: insert into "Test" (name, amount, letter) select name, amount+100, letter from "Test" on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 106 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 111 action = commit connection = main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGsetcommit line 114 action = on connection = pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 115 action = begin transaction  connection = pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 118: QUERY: select  *  from "Test"    on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 118: Correctly got 4 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: 2 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: 11 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: 12 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: t offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 118: RESULT: t offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 133: QUERY: insert into "Test" ( name  , amount  , letter  ) values(  'db: ''r1''' ,  1001 ,  'f' ) on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 133 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 133: QUERY: insert into "Test" ( name  , amount  , letter  ) values(  'db: ''r1''' ,  1002 ,  't' ) on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 133 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 133: QUERY: insert into "Test" ( name  , amount  , letter  ) values(  'db: ''r1''' ,  1011 ,  'f' ) on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 133 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 133: QUERY: insert into "Test" ( name  , amount  , letter  ) values(  'db: ''r1''' ,  1012 ,  't' ) on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 133 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 137 action = commit connection = pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGprepare line 141: QUERY: select * from "Test"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 145: QUERY: declare CUR  cursor  for select * from "Test" on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 145 Ok: DECLARE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 148: QUERY: fetch  4 in CUR on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 148: Correctly got 4 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: 2 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: 11 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: 12 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: t offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 148: RESULT: t offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 162: QUERY: close CUR on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 162 Ok: CLOSE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 165: QUERY: select  name , amount , letter  from "Test"    on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 165: Correctly got 6 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'pm' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'pm' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: 101 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: 1001 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: 1002 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: 1011 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: 1012 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: t offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 165: RESULT: t offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 172 action = commit connection = main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 175: QUERY: select  name , amount , letter  from "Test"    on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 175: Correctly got 6 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'pm' offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'pm' offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: 1 offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: 101 offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: 1001 offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: 1002 offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: 1011 offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: 1012 offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: f offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: f offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: f offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: t offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: f offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 175: RESULT: t offset: 16 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 183: QUERY: insert into "Test" ( name  , amount  , letter  ) values(  'db: ''r1''' ,  1407 ,  'f' ) on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 183 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 186: QUERY: select  name , amount , letter  from "Test" where amount = 1407   on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 186: Correctly got 1 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 186: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 186: RESULT: 1407 offset: 4 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 186: RESULT: f offset: 1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGsetcommit line 192 action = on connection = main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 195: QUERY: drop table "Test"  on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 195 Ok: DROP TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 196: QUERY: drop table "Test"  on connection pm
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 196 Ok: DROP TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection pm closed.
+[NO_PID]: sqlca: code: 0, state: 00000
