@@ -91,10 +91,6 @@ main (void)
 
   EXEC SQL CLOSE B;
 
-  i=a.t[0];
-  a.t[0]=a.t[1];
-  a.t[1]=i;
-
   printf ("name=%s, accs=%d byte=", empl.name, a.accs);
   for (i=0; i<20; i++)
   {

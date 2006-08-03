@@ -13,6 +13,7 @@ main(void)
 	char val2[] = "one", val2output[] = "AAA";
 	int val1output = 2, val2i = 0;
 	int val2null = -1;
+	int ind1, ind2;
 	EXEC SQL END DECLARE SECTION;
 
 	ECPGdebug(1, stderr);
@@ -48,8 +49,9 @@ main(void)
 	EXEC SQL DECLARE c1 CURSOR FOR foo2;
 	EXEC SQL OPEN c1 USING DESCRIPTOR indesc;
 
-	EXEC SQL FETCH next FROM c1 INTO :val1output, :val2output;
-	printf("val1=%d val2=%s\n", val1output, val2output);
+	EXEC SQL FETCH next FROM c1 INTO :val1output:ind1, :val2output:ind2;
+	printf("val1=%d (ind1: %d) val2=%s (ind2: %d)\n",
+		val1output, ind1, val2output, ind2);
 
 	EXEC SQL CLOSE c1;
 

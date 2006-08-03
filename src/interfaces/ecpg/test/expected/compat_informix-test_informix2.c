@@ -142,6 +142,7 @@ int main(void)
 		 
 		 
 		 
+		 
 	
 #line 49 "test_informix2.pgc"
  int  c    ;
@@ -150,16 +151,21 @@ int main(void)
  timestamp  d    ;
  
 #line 51 "test_informix2.pgc"
- timestamp  maxd    ;
+ timestamp  e    ;
  
 #line 52 "test_informix2.pgc"
+ timestamp  maxd    ;
+ 
+#line 53 "test_informix2.pgc"
  char  dbname [ 30 ]    ;
 /* exec sql end declare section */
-#line 53 "test_informix2.pgc"
+#line 54 "test_informix2.pgc"
 
+
+	interval *intvl;
 
 	/* exec sql whenever sqlerror  sqlprint ; */
-#line 55 "test_informix2.pgc"
+#line 58 "test_informix2.pgc"
 
 
 	ECPGdebug(1, stderr);
@@ -170,36 +176,36 @@ int main(void)
 */
 	strcpy(dbname, "regress1");
 	{ ECPGconnect(__LINE__, 1, dbname , NULL,NULL , NULL, 0); 
-#line 64 "test_informix2.pgc"
+#line 67 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 64 "test_informix2.pgc"
+#line 67 "test_informix2.pgc"
 
 	sql_check("main", "connect", 0);
 
 	{ ECPGdo(__LINE__, 1, 0, NULL, "create  table history ( customerid integer   , timestamp timestamp without time zone   , action_taken char  ( 5 )    , narrative varchar ( 100 )    )    ", ECPGt_EOIT, ECPGt_EORT);
-#line 67 "test_informix2.pgc"
+#line 70 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 67 "test_informix2.pgc"
+#line 70 "test_informix2.pgc"
 
 	sql_check("main", "create", 0);
 	
 	{ ECPGdo(__LINE__, 1, 0, NULL, "insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values( 1 , '2003-05-07 13:28:34 CEST' , 'test' , 'test' )", ECPGt_EOIT, ECPGt_EORT);
-#line 72 "test_informix2.pgc"
+#line 75 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 72 "test_informix2.pgc"
+#line 75 "test_informix2.pgc"
 
 	sql_check("main", "insert", 0);
 
 	{ ECPGdo(__LINE__, 1, 0, NULL, "select  max ( timestamp )  from history   ", ECPGt_EOIT, 
 	ECPGt_timestamp,&(maxd),(long)1,(long)1,sizeof(timestamp), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 77 "test_informix2.pgc"
+#line 80 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 77 "test_informix2.pgc"
+#line 80 "test_informix2.pgc"
 
 	sql_check("main", "select max", 100);
 
@@ -216,61 +222,59 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(d),(long)1,(long)1,sizeof(timestamp), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 90 "test_informix2.pgc"
+#line 93 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 90 "test_informix2.pgc"
+#line 93 "test_informix2.pgc"
 
 	sql_check("main", "select", 0);
 
 	printf("Read in customer %d\n", c);
-	
-	/* Adding 1 to d adds 1 second. So:
-	         60           1 minute
-	       3600           1 hour
-              86400           1 day */
-	d=d+86400;
+
+	intvl = PGTYPESinterval_from_asc("1 day 2 hours 24 minutes 65 seconds", NULL);
+	PGTYPEStimestamp_add_interval(&d, intvl, &e);
+
 	c++;
 
 	{ ECPGdo(__LINE__, 1, 0, NULL, "insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values(  ? ,  ? , 'test' , 'test' )", 
 	ECPGt_int,&(c),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_timestamp,&(d),(long)1,(long)1,sizeof(timestamp), 
+	ECPGt_timestamp,&(e),(long)1,(long)1,sizeof(timestamp), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 104 "test_informix2.pgc"
+#line 105 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 104 "test_informix2.pgc"
+#line 105 "test_informix2.pgc"
 
 	sql_check("main", "update", 0);
   
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 107 "test_informix2.pgc"
+#line 108 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 107 "test_informix2.pgc"
+#line 108 "test_informix2.pgc"
 
 
 	{ ECPGdo(__LINE__, 1, 0, NULL, "drop table history ", ECPGt_EOIT, ECPGt_EORT);
-#line 109 "test_informix2.pgc"
+#line 110 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 109 "test_informix2.pgc"
+#line 110 "test_informix2.pgc"
 
 	sql_check("main", "drop", 0);
 
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 112 "test_informix2.pgc"
+#line 113 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 112 "test_informix2.pgc"
+#line 113 "test_informix2.pgc"
 
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 114 "test_informix2.pgc"
+#line 115 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 114 "test_informix2.pgc"
+#line 115 "test_informix2.pgc"
 
 	sql_check("main", "disconnect", 0);
 

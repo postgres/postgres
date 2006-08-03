@@ -1,5 +1,3 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/pgtypeslib/num_test.pgc,v 1.1 2006/08/02 14:14:04 meskes Exp $ */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pgtypes_numeric.h>

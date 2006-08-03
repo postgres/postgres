@@ -48,9 +48,12 @@ int main(void)
 	EXEC SQL BEGIN DECLARE SECTION;
 		int c;
 		timestamp d;
+		timestamp e;
 		timestamp maxd;
 		char dbname[30];
 	EXEC SQL END DECLARE SECTION;
+
+	interval *intvl;
 
 	EXEC SQL whenever sqlerror sqlprint;
 
@@ -91,17 +94,15 @@ int main(void)
 	sql_check("main", "select", 0);
 
 	printf("Read in customer %d\n", c);
-	
-	/* Adding 1 to d adds 1 second. So:
-	         60           1 minute
-	       3600           1 hour
-              86400           1 day */
-	d=d+86400;
+
+	intvl = PGTYPESinterval_from_asc("1 day 2 hours 24 minutes 65 seconds", NULL);
+	PGTYPEStimestamp_add_interval(&d, intvl, &e);
+
 	c++;
 
 	EXEC SQL insert into history
 			(customerid, timestamp, action_taken, narrative)
-			values(:c, :d, 'test', 'test');
+			values(:c, :e, 'test', 'test');
 	sql_check("main", "update", 0);
   
 	EXEC SQL commit;

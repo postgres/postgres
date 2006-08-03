@@ -1,4 +1,4 @@
 output = 1
-val1=1 val2='one'
+val1=1 (ind1: 0) val2='one' (ind2: 0)
 val1=2 val2=null
 val1=2 val2=null

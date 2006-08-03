@@ -1,1 +1,4 @@
-Result 'sql_parts', 'sql_sizing', 'sql_sizing_profiles', 'pg_authid', 'sql_features', 'sql_implementation_info', 'sql_languages', 'sql_packages', 'pg_statistic', 'pg_type', 'pg_attribute', 'pg_proc', 'pg_class', 'pg_autovacuum', 'pg_attrdef', 'pg_constraint', 'pg_inherits', 'pg_index', 'pg_operator', 'pg_opclass', 'pg_am', 'pg_amop', 'pg_amproc', 'pg_language', 'pg_largeobject', 'pg_aggregate', 'pg_rewrite', 'pg_trigger', 'pg_listener', 'pg_description', 'pg_cast', 'pg_namespace', 'pg_conversion', 'pg_depend', 'pg_tablespace', 'pg_pltemplate', 'pg_shdepend', 'pg_shdescription', 'pg_database', 'pg_auth_members', 
+Result:
+1, 23.456000, 'varchar', 'v', 'c   ', 'Mon Mar 03 11:33:07 2003 PST', 't', '2001:4f8:3:ba:2e0:81ff:fe22:d1f1', 
+2, 2.446000, NULL, 'v', 'c   ', 'Mon Mar 03 11:33:07 2003 PST', 'f', NULL, 
+

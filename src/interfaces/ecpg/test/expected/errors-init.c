@@ -190,20 +190,20 @@ int main(void)
 #line 74 "init.pgc"
 
 
-	ECPGdebug(1, stderr);
-
 	int f=fa();
 
 #ifdef _cplusplus
 	/* exec sql begin declare section */
 	  /* compile error */
 	
-#line 82 "init.pgc"
+#line 80 "init.pgc"
  int  k   = N : : i ;
 /* exec sql end declare section */
-#line 83 "init.pgc"
+#line 81 "init.pgc"
 
 #endif
+
+	ECPGdebug(1, stderr);
 
 	/* exec sql whenever sqlerror  do fa (  ) ; */
 #line 86 "init.pgc"

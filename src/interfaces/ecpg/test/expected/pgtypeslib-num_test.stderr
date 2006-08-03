@@ -2,23 +2,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGsetcommit line 26 action = off connection = regress1
+[NO_PID]: ECPGsetcommit line 24 action = off connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 27: QUERY: create  table test ( text char  ( 5 )    , num numeric ( 14 , 7 )   )     on connection regress1
+[NO_PID]: ECPGexecute line 25: QUERY: create  table test ( text char  ( 5 )    , num numeric ( 14 , 7 )   )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 27 Ok: CREATE TABLE
+[NO_PID]: ECPGexecute line 25 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 52: QUERY: insert into test ( text  , num  ) values( 'test' ,  2369.7 ) on connection regress1
+[NO_PID]: ECPGexecute line 50: QUERY: insert into test ( text  , num  ) values( 'test' ,  2369.7 ) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 52 Ok: INSERT 0 1
+[NO_PID]: ECPGexecute line 50 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 58: QUERY: select  num  from test where text = 'test'   on connection regress1
+[NO_PID]: ECPGexecute line 56: QUERY: select  num  from test where text = 'test'   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 58: Correctly got 1 tuples with 1 fields
+[NO_PID]: ECPGexecute line 56: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 58: RESULT: 2369.7000000 offset: 28 array: Yes
+[NO_PID]: ECPGget_data line 56: RESULT: 2369.7000000 offset: 28 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 76 action = rollback connection = regress1
+[NO_PID]: ECPGtrans line 74 action = rollback connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection regress1 closed.
 [NO_PID]: sqlca: code: 0, state: 00000

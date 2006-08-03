@@ -7,8 +7,6 @@
 /* End of automatic include section */
 
 #line 1 "dt_test.pgc"
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/expected/pgtypeslib-dt_test.c,v 1.1 2006/08/02 14:14:03 meskes Exp $ */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,7 +22,7 @@
 
 
 
-#line 10 "dt_test.pgc"
+#line 8 "dt_test.pgc"
 
 
 int
@@ -36,19 +34,19 @@ main(void)
 		 
 		 
 	
-#line 16 "dt_test.pgc"
+#line 14 "dt_test.pgc"
  date  date1    ;
  
-#line 17 "dt_test.pgc"
+#line 15 "dt_test.pgc"
  timestamp  ts1    ;
  
-#line 18 "dt_test.pgc"
+#line 16 "dt_test.pgc"
  interval  iv1    ;
  
-#line 19 "dt_test.pgc"
+#line 17 "dt_test.pgc"
  char * text    ;
 /* exec sql end declare section */
-#line 20 "dt_test.pgc"
+#line 18 "dt_test.pgc"
 
 	date date2;
 	int mdy[3] = { 4, 19, 1998 };
@@ -59,25 +57,25 @@ main(void)
 
         ECPGdebug(1, stderr);
         /* exec sql whenever sqlerror  do sqlprint (  ) ; */
-#line 29 "dt_test.pgc"
+#line 27 "dt_test.pgc"
 
         { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
-#line 30 "dt_test.pgc"
+#line 28 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 30 "dt_test.pgc"
+#line 28 "dt_test.pgc"
 
         { ECPGdo(__LINE__, 0, 1, NULL, "create  table date_test ( d date   , ts timestamp    , iv interval    )    ", ECPGt_EOIT, ECPGt_EORT);
-#line 31 "dt_test.pgc"
+#line 29 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 31 "dt_test.pgc"
+#line 29 "dt_test.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "set datestyle to iso", ECPGt_EOIT, ECPGt_EORT);
-#line 32 "dt_test.pgc"
+#line 30 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 32 "dt_test.pgc"
+#line 30 "dt_test.pgc"
 
 
 	date1 = PGTYPESdate_from_asc(d1, NULL); 
@@ -88,10 +86,10 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(ts1),(long)1,(long)1,sizeof(timestamp), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 37 "dt_test.pgc"
+#line 35 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 37 "dt_test.pgc"
+#line 35 "dt_test.pgc"
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "select  *  from date_test where d =  ?  ", 
@@ -103,10 +101,10 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_interval,&(iv1),(long)1,(long)1,sizeof(interval), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 39 "dt_test.pgc"
+#line 37 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 39 "dt_test.pgc"
+#line 37 "dt_test.pgc"
 
 
 	text = PGTYPESdate_to_asc(date1);
@@ -425,16 +423,16 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	free(text);
 
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 356 "dt_test.pgc"
+#line 354 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 356 "dt_test.pgc"
+#line 354 "dt_test.pgc"
 
         { ECPGdisconnect(__LINE__, "CURRENT");
-#line 357 "dt_test.pgc"
+#line 355 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 357 "dt_test.pgc"
+#line 355 "dt_test.pgc"
 
 
 	return (0);

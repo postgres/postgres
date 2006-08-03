@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.1 2006/08/02 13:53:45 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.2 2006/08/03 13:11:03 meskes Exp $
 
 me=`basename $0`
 
@@ -98,16 +98,17 @@ for i in \
 	formatted=`echo $i | awk '{printf "%-38.38s", $1;}'`
 	$ECHO_N "testing $formatted ... $ECHO_C"
 
-	runprg=${i/.pgc/}
-	outfile_stderr=$outputdir/${runprg//\//-}.stderr
-	outfile_stdout=$outputdir/${runprg//\//-}.stdout
-	cp $runprg.c "$outputdir/${runprg//\//-}.c"
+	runprg=${i%.pgc}
+	outprg=`echo $runprg | sed -e's/\//-/'`
+	outfile_stderr=$outputdir/$outprg.stderr
+	outfile_stdout=$outputdir/$outprg.stdout
+	cp $runprg.c "$outputdir/$outprg.c"
 #	echo "$runprg > $outfile_stdout 2> $outfile_stderr"
 	$runprg > "$outfile_stdout" 2> "$outfile_stderr"
 	DIFFER=""
-	diff -u expected/${runprg//\//-}.stderr "$outputdir"/${runprg//\//-}.stderr >/dev/null 2>&1 || DIFFER="$DIFFER, log"
-	diff -u expected/${runprg//\//-}.stdout "$outputdir"/${runprg//\//-}.stdout >/dev/null 2>&1 || DIFFER="$DIFFER, output"
-	diff -u expected/${runprg//\//-}.c "$outputdir"/${runprg//\//-}.c >/dev/null 2>&1 || DIFFER="$DIFFER, source"
+	diff -c3 expected/$outprg.stderr "$outputdir"/$outprg.stderr >/dev/null 2>&1 || DIFFER="$DIFFER, log"
+	diff -c3 expected/$outprg.stdout "$outputdir"/$outprg.stdout >/dev/null 2>&1 || DIFFER="$DIFFER, output"
+	diff -c3 expected/$outprg.c "$outputdir"/$outprg.c >/dev/null 2>&1 || DIFFER="$DIFFER, source"
 	DIFFER=${DIFFER#, }
 	if [ "x$DIFFER" = "x" ]; then
 		echo ok
@@ -116,7 +117,7 @@ for i in \
 	fi
 done
 
-diff -ur expected/ $outputdir > regression.diff && rm regression.diff
+diff -c3 -r expected/ $outputdir > regression.diff && rm regression.diff
 
 [ $? -ne 0 ] && exit
 

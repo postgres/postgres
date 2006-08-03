@@ -73,8 +73,6 @@ int main(void)
 		long long iax /* = 40000000000LL */ ;
 	exec sql end declare section;
 
-	ECPGdebug(1, stderr);
-
 	int f=fa();
 
 #ifdef _cplusplus
@@ -82,6 +80,8 @@ int main(void)
 	int k=N::i; /* compile error */
 	exec sql end declare section;
 #endif
+
+	ECPGdebug(1, stderr);
 
 	exec sql whenever sqlerror do fa();
 	exec sql select now();

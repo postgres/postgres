@@ -1,5 +1,3 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/test/complex/header_test.h,v 1.1 2006/08/02 14:14:02 meskes Exp $ */
-
 #include "stdlib.h"
 
 static void

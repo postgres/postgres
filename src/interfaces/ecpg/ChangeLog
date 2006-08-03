@@ -2064,5 +2064,9 @@ We Aug  2 13:15:25 CEST 2006
 	- Implemented EXEC SQL UNDEF.
 	- Applied first version of the regression test patch by Joachim
 	  Wieland <joe@mcknight.de>.
+
+Th Aug  3 14:45:06 CEST 2006
+
+	- Applied test suite update by Joachim Wieland <joe@mcknight.de>.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

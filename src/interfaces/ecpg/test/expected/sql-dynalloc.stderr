@@ -2,94 +2,77 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 20: QUERY: select  tablename  from pg_tables    on connection regress1
+[NO_PID]: ECPGexecute line 35: QUERY: create  table test ( a serial   , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz   , g boolean   , h box   , i inet   )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 20: Correctly got 40 tuples with 1 fields
+[NO_PID]: ECPGexecute line 35 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute putting result (40 tuples) into descriptor 'mydesc'
+[NO_PID]: ECPGexecute line 36: QUERY: insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 36 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 37: QUERY: insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null ) on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 37 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 40: QUERY: select  a , b , c , d , e , f , g , h , i  from test    order by a on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 40: Correctly got 2 tuples with 9 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute putting result (2 tuples) into descriptor 'mydesc'
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGstore_result: line 21: allocating 656 bytes for 40 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: sql_parts offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 41: RESULT: 1 offset: 4 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: sql_sizing offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 41: RESULT: 2 offset: 4 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: sql_sizing_profiles offset: 0 array: Yes
+[NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_authid offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 42: RESULT: 23.456 offset: 8 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: sql_features offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 42: RESULT: 2.446 offset: 8 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: sql_implementation_info offset: 0 array: Yes
+[NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: sql_languages offset: 0 array: Yes
+[NO_PID]: ECPGstore_result: line 43: allocating 21 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 43: RESULT: varchar offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: sql_packages offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 43: RESULT:  offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_statistic offset: 0 array: Yes
+[NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_type offset: 0 array: Yes
+[NO_PID]: ECPGstore_result: line 44: allocating 16 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 44: RESULT: v offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_attribute offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 44: RESULT: v offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_proc offset: 0 array: Yes
+[NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_class offset: 0 array: Yes
+[NO_PID]: ECPGstore_result: line 45: allocating 22 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 45: RESULT: c    offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_autovacuum offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 45: RESULT: c    offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_attrdef offset: 0 array: Yes
+[NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_constraint offset: 0 array: Yes
+[NO_PID]: ECPGstore_result: line 46: allocating 70 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 46: RESULT: Mon Mar 03 11:33:07 2003 PST offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_inherits offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 46: RESULT: Mon Mar 03 11:33:07 2003 PST offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_index offset: 0 array: Yes
+[NO_PID]: ECPGget_desc: reading items for tuple 7
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_operator offset: 0 array: Yes
+[NO_PID]: ECPGstore_result: line 47: allocating 16 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 47: RESULT: t offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_opclass offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 47: RESULT: f offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_am offset: 0 array: Yes
+[NO_PID]: ECPGget_desc: reading items for tuple 9
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_amop offset: 0 array: Yes
+[NO_PID]: ECPGstore_result: line 50: allocating 46 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 50: RESULT: 2001:4f8:3:ba:2e0:81ff:fe22:d1f1 offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_amproc offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_language offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_largeobject offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_aggregate offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_rewrite offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_trigger offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_listener offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_description offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_cast offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_namespace offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_conversion offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_depend offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_tablespace offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_pltemplate offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_shdepend offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_shdescription offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_database offset: 0 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: pg_auth_members offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 50: RESULT:  offset: 0 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection regress1 closed.
 [NO_PID]: sqlca: code: 0, state: 00000

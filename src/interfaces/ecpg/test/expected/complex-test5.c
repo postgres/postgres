@@ -199,10 +199,6 @@ main (void)
 #line 92 "test5.pgc"
 
 
-  i=a.t[0];
-  a.t[0]=a.t[1];
-  a.t[1]=i;
-
   printf ("name=%s, accs=%d byte=", empl.name, a.accs);
   for (i=0; i<20; i++)
   {
@@ -212,7 +208,7 @@ main (void)
   }
   printf("\n");
   { ECPGdisconnect(__LINE__, "CURRENT");}
-#line 106 "test5.pgc"
+#line 102 "test5.pgc"
 
   exit (0);
 }
