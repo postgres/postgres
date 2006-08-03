@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.87 2006/07/04 18:07:24 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.88 2006/08/03 20:57:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -738,6 +738,19 @@ ALTER TABLE foo
     ALTER COLUMN foo_timestamp TYPE timestamp with time zone
     USING
         timestamp with time zone 'epoch' + foo_timestamp * interval '1 second';
+</programlisting>
+  </para>
+
+  <para>
+   The same, when the column has a default expression that won't automatically
+   cast to the new datatype:
+<programlisting>
+ALTER TABLE foo
+    ALTER COLUMN foo_timestamp DROP DEFAULT,
+    ALTER COLUMN foo_timestamp TYPE timestamp with time zone
+    USING
+        timestamp with time zone 'epoch' + foo_timestamp * interval '1 second',
+    ALTER COLUMN foo_timestamp SET DEFAULT now();
 </programlisting>
   </para>
 
