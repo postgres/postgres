@@ -3,40 +3,39 @@ exec sql include sqlca;
 enum e { ENUM0, ENUM1 };
 struct sa { int member; };
 
-int
-fa(void)
+static int fa(void)
 {
 	printf("in fa\n");
 	return 2;
 }
 
-int
+static int
 fb(int x)
 {
 	printf("in fb (%d)\n", x);
 	return x;
 }
 
-int
+static int
 fc(const char *x)
 {
 	printf("in fc (%s)\n", x);
 	return *x;
 }
 
-int fd(const char *x,int i)
+static int fd(const char *x,int i)
 {
 	printf("in fd (%s, %d)\n", x, i);
 	return (*x)*i;
 }
 
-int fe(enum e x)
+static int fe(enum e x)
 {
 	printf("in fe (%d)\n", (int) x);
 	return (int)x;
 }
 
-void sqlnotice(char *notice, short trans)
+static void sqlnotice(char *notice, short trans)
 {
 	if (!notice)
 		notice = "-empty-";
@@ -56,7 +55,7 @@ namespace N
 
 int main(void)
 {
-	struct sa x,*y;
+	struct sa x = { 14 },*y = &x;
 	exec sql begin declare section;
 		int a=(int)2;
 		int b=2+2;
@@ -83,6 +82,9 @@ int main(void)
 
 	ECPGdebug(1, stderr);
 
+	printf("%d %d %d %d %d %d %d %d %d %d %d\n", a, b, b2, c, d, e, f, g, h, i, j);
+	iax = iay = 0;
+	printf("%ld %lld\n", iay, iax);
 	exec sql whenever sqlerror do fa();
 	exec sql select now();
 	exec sql whenever sqlerror do fb(20);

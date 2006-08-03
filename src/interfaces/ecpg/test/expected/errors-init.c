@@ -82,40 +82,39 @@ struct sqlca_t *ECPGget_sqlca(void);
 enum e { ENUM0, ENUM1 };
 struct sa { int member; };
 
-int
-fa(void)
+static int fa(void)
 {
 	printf("in fa\n");
 	return 2;
 }
 
-int
+static int
 fb(int x)
 {
 	printf("in fb (%d)\n", x);
 	return x;
 }
 
-int
+static int
 fc(const char *x)
 {
 	printf("in fc (%s)\n", x);
 	return *x;
 }
 
-int fd(const char *x,int i)
+static int fd(const char *x,int i)
 {
 	printf("in fd (%s, %d)\n", x, i);
 	return (*x)*i;
 }
 
-int fe(enum e x)
+static int fe(enum e x)
 {
 	printf("in fe (%d)\n", (int) x);
 	return (int)x;
 }
 
-void sqlnotice(char *notice, short trans)
+static void sqlnotice(char *notice, short trans)
 {
 	if (!notice)
 		notice = "-empty-";
@@ -135,7 +134,7 @@ namespace N
 
 int main(void)
 {
-	struct sa x,*y;
+	struct sa x = { 14 },*y = &x;
 	/* exec sql begin declare section */
 		 
 		 
@@ -151,43 +150,43 @@ int main(void)
 		  /* = 1L */ 
 		   /* = 40000000000LL */ 
 	
-#line 61 "init.pgc"
+#line 60 "init.pgc"
  int  a   = ( int ) 2 ;
  
-#line 62 "init.pgc"
+#line 61 "init.pgc"
  int  b   = 2 + 2 ;
  
-#line 63 "init.pgc"
+#line 62 "init.pgc"
  int  b2   = ( 14 * 7 ) ;
  
-#line 64 "init.pgc"
+#line 63 "init.pgc"
  int  d   = x . member ;
  
-#line 65 "init.pgc"
+#line 64 "init.pgc"
  int  g   = fb ( 2 ) ;
  
-#line 66 "init.pgc"
+#line 65 "init.pgc"
  int  i   = 3 ^ 1 ;
  
-#line 67 "init.pgc"
+#line 66 "init.pgc"
  int  j   = 1 ? 1 : 2 ;
  
-#line 69 "init.pgc"
+#line 68 "init.pgc"
  int  e   = y -> member ;
  
-#line 70 "init.pgc"
+#line 69 "init.pgc"
  int  c   = 10 >> 2 ;
  
-#line 71 "init.pgc"
+#line 70 "init.pgc"
  bool  h   = 2 || 1 ;
  
-#line 72 "init.pgc"
+#line 71 "init.pgc"
  long  iay    ;
  
-#line 73 "init.pgc"
+#line 72 "init.pgc"
  long long  iax    ;
 /* exec sql end declare section */
-#line 74 "init.pgc"
+#line 73 "init.pgc"
 
 
 	int f=fa();
@@ -196,68 +195,71 @@ int main(void)
 	/* exec sql begin declare section */
 	  /* compile error */
 	
-#line 80 "init.pgc"
+#line 79 "init.pgc"
  int  k   = N : : i ;
 /* exec sql end declare section */
-#line 81 "init.pgc"
+#line 80 "init.pgc"
 
 #endif
 
 	ECPGdebug(1, stderr);
 
+	printf("%d %d %d %d %d %d %d %d %d %d %d\n", a, b, b2, c, d, e, f, g, h, i, j);
+	iax = iay = 0;
+	printf("%ld %lld\n", iay, iax);
 	/* exec sql whenever sqlerror  do fa (  ) ; */
-#line 86 "init.pgc"
-
-	{ ECPGdo(__LINE__, 0, 1, NULL, "select  now ()     ", ECPGt_EOIT, ECPGt_EORT);
-#line 87 "init.pgc"
-
-if (sqlca.sqlcode < 0) fa (  );}
-#line 87 "init.pgc"
-
-	/* exec sql whenever sqlerror  do fb ( 20 ) ; */
 #line 88 "init.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "select  now ()     ", ECPGt_EOIT, ECPGt_EORT);
 #line 89 "init.pgc"
 
-if (sqlca.sqlcode < 0) fb ( 20 );}
+if (sqlca.sqlcode < 0) fa (  );}
 #line 89 "init.pgc"
 
-	/* exec sql whenever sqlerror  do fc ( \"50\" ) ; */
+	/* exec sql whenever sqlerror  do fb ( 20 ) ; */
 #line 90 "init.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "select  now ()     ", ECPGt_EOIT, ECPGt_EORT);
 #line 91 "init.pgc"
 
-if (sqlca.sqlcode < 0) fc ( "50" );}
+if (sqlca.sqlcode < 0) fb ( 20 );}
 #line 91 "init.pgc"
 
-	/* exec sql whenever sqlerror  do fd ( \"50\" , 1 ) ; */
+	/* exec sql whenever sqlerror  do fc ( \"50\" ) ; */
 #line 92 "init.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "select  now ()     ", ECPGt_EOIT, ECPGt_EORT);
 #line 93 "init.pgc"
 
-if (sqlca.sqlcode < 0) fd ( "50" , 1 );}
+if (sqlca.sqlcode < 0) fc ( "50" );}
 #line 93 "init.pgc"
 
-	/* exec sql whenever sqlerror  do fe ( ENUM0 ) ; */
+	/* exec sql whenever sqlerror  do fd ( \"50\" , 1 ) ; */
 #line 94 "init.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "select  now ()     ", ECPGt_EOIT, ECPGt_EORT);
 #line 95 "init.pgc"
 
-if (sqlca.sqlcode < 0) fe ( ENUM0 );}
+if (sqlca.sqlcode < 0) fd ( "50" , 1 );}
 #line 95 "init.pgc"
 
-	/* exec sql whenever sqlerror  do sqlnotice ( NULL , 0 ) ; */
+	/* exec sql whenever sqlerror  do fe ( ENUM0 ) ; */
 #line 96 "init.pgc"
- 
+
 	{ ECPGdo(__LINE__, 0, 1, NULL, "select  now ()     ", ECPGt_EOIT, ECPGt_EORT);
 #line 97 "init.pgc"
 
-if (sqlca.sqlcode < 0) sqlnotice ( NULL , 0 );}
+if (sqlca.sqlcode < 0) fe ( ENUM0 );}
 #line 97 "init.pgc"
+
+	/* exec sql whenever sqlerror  do sqlnotice ( NULL , 0 ) ; */
+#line 98 "init.pgc"
+ 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "select  now ()     ", ECPGt_EOIT, ECPGt_EORT);
+#line 99 "init.pgc"
+
+if (sqlca.sqlcode < 0) sqlnotice ( NULL , 0 );}
+#line 99 "init.pgc"
 
 	return 0;
 }

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.2 2006/08/03 13:11:03 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.3 2006/08/03 14:50:11 meskes Exp $
 
 me=`basename $0`
 
@@ -106,9 +106,9 @@ for i in \
 #	echo "$runprg > $outfile_stdout 2> $outfile_stderr"
 	$runprg > "$outfile_stdout" 2> "$outfile_stderr"
 	DIFFER=""
-	diff -c3 expected/$outprg.stderr "$outputdir"/$outprg.stderr >/dev/null 2>&1 || DIFFER="$DIFFER, log"
-	diff -c3 expected/$outprg.stdout "$outputdir"/$outprg.stdout >/dev/null 2>&1 || DIFFER="$DIFFER, output"
-	diff -c3 expected/$outprg.c "$outputdir"/$outprg.c >/dev/null 2>&1 || DIFFER="$DIFFER, source"
+	diff -C3 expected/$outprg.stderr "$outputdir"/$outprg.stderr >/dev/null 2>&1 || DIFFER="$DIFFER, log"
+	diff -C3 expected/$outprg.stdout "$outputdir"/$outprg.stdout >/dev/null 2>&1 || DIFFER="$DIFFER, output"
+	diff -C3 expected/$outprg.c "$outputdir"/$outprg.c >/dev/null 2>&1 || DIFFER="$DIFFER, source"
 	DIFFER=${DIFFER#, }
 	if [ "x$DIFFER" = "x" ]; then
 		echo ok
@@ -117,7 +117,7 @@ for i in \
 	fi
 done
 
-diff -c3 -r expected/ $outputdir > regression.diff && rm regression.diff
+diff -C3 -r expected/ $outputdir > regression.diff && rm regression.diff
 
 [ $? -ne 0 ] && exit
 
