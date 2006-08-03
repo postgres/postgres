@@ -110,3 +110,31 @@ SELECT p.name, p.age FROM person* p ORDER BY age using >, name;
 select foo from (select 1) as foo;
 select foo from (select null) as foo;
 select foo from (select 'xyzzy',1,null) as foo;
+
+--
+-- Test VALUES lists
+--
+select * from onek, (values(147, 'RFAAAA'), (931, 'VJAAAA')) as v (i, j)
+    WHERE onek.unique1 = v.i and onek.stringu1 = v.j;
+
+-- a more complex case
+-- looks like we're coding lisp :-)
+select * from onek,
+  (values ((select i from
+    (values(10000), (2), (389), (1000), (2000), ((select 10029))) as foo(i)
+    order by i asc limit 1))) bar (i)
+  where onek.unique1 = bar.i;
+
+-- try VALUES in a subquery
+select * from onek
+    where (unique1,ten) in (values (1,1), (20,0), (99,9), (17,99))
+    order by unique1;
+
+-- VALUES is also legal as a standalone query or a set-operation member
+VALUES (1,2), (3,4+4), (7,77.7);
+
+VALUES (1,2), (3,4+4), (7,77.7)
+UNION ALL
+SELECT 2+2, 57
+UNION ALL
+SELECT * FROM int8_tbl;

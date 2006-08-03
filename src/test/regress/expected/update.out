@@ -39,6 +39,18 @@ SELECT * FROM update_test;
  10 | 20
 (2 rows)
 
+--
+-- Test VALUES in FROM
+--
+UPDATE update_test SET a=v.i FROM (VALUES(100, 20)) AS v(i, j)
+	WHERE update_test.b = v.j;
+SELECT * FROM update_test;
+  a  | b  
+-----+----
+ 100 | 20
+ 100 | 20
+(2 rows)
+
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
 BEGIN;

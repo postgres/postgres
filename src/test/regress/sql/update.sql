@@ -25,6 +25,15 @@ UPDATE update_test t SET b = t.b + 10 WHERE t.a = 10;
 
 SELECT * FROM update_test;
 
+--
+-- Test VALUES in FROM
+--
+
+UPDATE update_test SET a=v.i FROM (VALUES(100, 20)) AS v(i, j)
+	WHERE update_test.b = v.j;
+
+SELECT * FROM update_test;
+
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
 BEGIN;

@@ -37,4 +37,21 @@ select * from inserttest;
       |    7 | testing
 (4 rows)
 
+--
+-- VALUES test
+--
+insert into inserttest values(10, 20, '40'), (-1, 2, DEFAULT),
+    ((select 2), (select i from (values(3)) as foo (i)), 'values are fun!');
+select * from inserttest;
+ col1 | col2 |      col3       
+------+------+-----------------
+      |    3 | testing
+      |    5 | testing
+      |    5 | test
+      |    7 | testing
+   10 |   20 | 40
+   -1 |    2 | testing
+    2 |    3 | values are fun!
+(7 rows)
+
 drop table inserttest;
