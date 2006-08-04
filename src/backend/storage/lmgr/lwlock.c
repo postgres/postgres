@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.43 2006/08/01 19:03:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.44 2006/08/04 16:42:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ RegisterAddinLWLock(LWLockId *lock)
 /*
  *	NumAddinLWLocks() --- Return the number of LWLocks requested by add-ins.
  */
-int
+static int
 NumAddinLWLocks()
 {
 	return num_addin_locks;
@@ -136,7 +136,7 @@ NumAddinLWLocks()
 /*
  *	AssignAddinLWLocks() --- Assign LWLocks previously requested by add-ins.
  */
-void
+static void
 AssignAddinLWLocks()
 {
 	LWLockNode *node = addin_locks;
