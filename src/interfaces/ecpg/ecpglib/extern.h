@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.17 2006/06/21 10:24:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.18 2006/08/04 03:23:37 momjian Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -27,6 +27,9 @@ void		ECPGadd_mem(void *ptr, int lineno);
 bool ECPGget_data(const PGresult *, int, int, int, enum ECPGttype type,
 			 enum ECPGttype, char *, char *, long, long, long,
 			 enum ARRAY_TYPE, enum COMPAT_MODE, bool);
+#ifdef ENABLE_THREAD_SAFETY
+void		ecpg_pthreads_init(void);
+#endif
 struct connection *ECPGget_connection(const char *);
 char	   *ECPGalloc(long, int);
 char	   *ECPGrealloc(void *, long, int);
