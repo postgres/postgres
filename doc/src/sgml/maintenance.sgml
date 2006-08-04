@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.58 2006/08/01 19:17:17 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.59 2006/08/04 04:07:38 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -34,7 +34,7 @@
   <para>
    The other main category of maintenance task is periodic <quote>vacuuming</>
    of the database.  This activity is discussed in
-   <xref linkend="routine-vacuuming">.  Closely related to this is to update
+   <xref linkend="routine-vacuuming">.  Closely related to this updating
    the statistics that will be used by the query planner, as discussed in
    <xref linkend="vacuum-for-statistics">.
   </para>
