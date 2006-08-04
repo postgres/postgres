@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.55 2006/08/04 08:52:17 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.56 2006/08/04 14:18:09 tgl Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -35,9 +35,7 @@ clean distclean maintainer-clean:
 	$(MAKE) -C compat_informix $@
 	$(MAKE) -C complex $@
 	$(MAKE) -C thread $@
-	rm -f results/*.stdout results/*.stderr results/*.c
-	rm -rf tmp_check/
-	rm -f log/*.log
+	rm -rf tmp_check results log
 	rm -f pg_regress.inc.sh regression.diff
 
 all: pg_regress.sh
