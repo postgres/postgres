@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.445 2006/08/02 21:43:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.446 2006/08/04 18:32:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -632,7 +632,10 @@ main(int argc, char **argv)
 		{
 			/* Special case for when -N is the first argument */
 			if (this_obj_name == schemaList && !this_obj_name->is_include)
-				appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_namespace EXCEPT\n");
+				appendPQExpBuffer(query,
+					"SELECT oid FROM pg_catalog.pg_namespace "
+					"WHERE nspname NOT LIKE 'pg_%%' AND "
+					"      nspname != 'information_schema' EXCEPT\n");
 	
 			appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_namespace WHERE");
 		}
@@ -694,7 +697,12 @@ main(int argc, char **argv)
 		{
 			/* Special case for when -T is the first argument */
 			if (this_obj_name == tableList && !this_obj_name->is_include && !strlen(query->data))
-				appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_class WHERE relkind='r' EXCEPT\n");
+				appendPQExpBuffer(query,
+					"SELECT pg_class.oid FROM pg_catalog.pg_class, pg_catalog.pg_namespace "
+					"WHERE relkind='r' AND "
+					"      relnamespace = pg_namespace.oid AND "
+					"      nspname NOT LIKE 'pg_%%' AND "
+					"      nspname != 'information_schema' EXCEPT\n");
 	
 			appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_class WHERE relkind='r' AND (");
 		}
@@ -6169,7 +6177,7 @@ dumpCast(Archive *fout, CastInfo *cast)
 	 * Skip this cast if all objects are from pg_
 	 */
 	if ((funcInfo == NULL ||
-		 strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) == 0) &&
+		strncmp(funcInfo->dobj.namespace->dobj.name, "pg_", 3) == 0) &&
 		strncmp(sourceInfo->dobj.namespace->dobj.name, "pg_", 3) == 0 &&
 		strncmp(targetInfo->dobj.namespace->dobj.name, "pg_", 3) == 0)
 		return;
