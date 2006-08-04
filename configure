@@ -3081,7 +3081,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
-elif test ${CC} = "xlc"; then
+elif test x"${CC}" = x"xlc"; then
   # AIX xlc has to have strict aliasing turned off too
   echo "$as_me:$LINENO: checking if $CC supports -qnoansialias" >&5
 echo $ECHO_N "checking if $CC supports -qnoansialias... $ECHO_C" >&6
