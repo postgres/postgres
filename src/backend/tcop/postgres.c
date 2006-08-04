@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.493 2006/07/29 03:02:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.494 2006/08/04 18:53:46 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1146,8 +1146,8 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("statement: [protocol] PREPARE %s AS %s",
-						(*stmt_name != '\0') ? stmt_name : "<unnamed>",
+				(errmsg("statement: <protocol> PREPARE %s AS %s",
+						*stmt_name ? stmt_name : "<unnamed>",
 						query_string)));
 
 	/*
@@ -1452,7 +1452,9 @@ exec_bind_message(StringInfo input_message)
 	/* We need to output the parameter values someday */
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("statement: [protocol] <BIND> %s", portal_name)));
+				(errmsg("statement: <protocol> <BIND> %s  [PREPARE:  %s]",
+						*portal_name ? portal_name : "<unnamed>",
+						portal->sourceText ? portal->sourceText : "")));
 
 	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
@@ -1718,9 +1720,9 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (log_statement == LOGSTMT_ALL)
 		/* We have the portal, so output the source query. */
 		ereport(LOG,
-				(errmsg("statement: [protocol] %sEXECUTE %s  [PREPARE:  %s]",
+				(errmsg("statement: <protocol> %sEXECUTE %s  [PREPARE:  %s]",
 						execute_is_fetch ? "FETCH from " : "",
-						(*portal_name) ? portal_name : "<unnamed>",
+						*portal_name ? portal_name : "<unnamed>",
 						portal->sourceText ? portal->sourceText : "")));
 
 	BeginCommand(portal->commandTag, dest);
@@ -1826,11 +1828,11 @@ exec_execute_message(const char *portal_name, long max_rows)
 								secs, msecs)));
 			else
 				ereport(LOG,
-						(errmsg("duration: %ld.%03d ms  statement: [protocol] %sEXECUTE %s  [PREPARE:  %s]",
+						(errmsg("duration: %ld.%03d ms  statement: <protocol> %sEXECUTE %s  [PREPARE:  %s]",
 								secs, msecs,
 								execute_is_fetch ? "FETCH from " : "",
-								(*portal_name) ? portal_name : "<unnamed>",
-							portal->sourceText ? portal->sourceText : "")));
+								*portal_name ? portal_name : "<unnamed>",
+								portal->sourceText ? portal->sourceText : "")));
 		}
 	}
 
