@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.216 2006/08/02 01:59:46 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.217 2006/08/04 14:09:51 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2091,6 +2091,58 @@ eval_const_expressions_mutator(Node *node,
 		newfselect->resulttype = fselect->resulttype;
 		newfselect->resulttypmod = fselect->resulttypmod;
 		return (Node *) newfselect;
+	}
+	if (IsA(node, BooleanTest))
+	{
+		BooleanTest *btest = (BooleanTest *) node;
+		BooleanTest *newbtest;
+		Node	   *arg;
+
+		arg = eval_const_expressions_mutator((Node *) btest->arg,
+											 context);
+		if (arg && IsA(arg, Const))
+		{
+			Const  *carg = (Const *) arg;
+			bool	result;
+
+			switch (btest->booltesttype)
+			{
+				case IS_TRUE:
+					result = (!carg->constisnull &&
+							  DatumGetBool(carg->constvalue));
+					break;
+				case IS_NOT_TRUE:
+					result = (carg->constisnull ||
+							  !DatumGetBool(carg->constvalue));
+					break;
+				case IS_FALSE:
+					result = (!carg->constisnull &&
+							  !DatumGetBool(carg->constvalue));
+					break;
+				case IS_NOT_FALSE:
+					result = (carg->constisnull ||
+							  DatumGetBool(carg->constvalue));
+					break;
+				case IS_UNKNOWN:
+					result = carg->constisnull;
+					break;
+				case IS_NOT_UNKNOWN:
+					result = !carg->constisnull;
+					break;
+				default:
+					elog(ERROR, "unrecognized booltesttype: %d",
+						 (int) btest->booltesttype);
+					result = false;	/* keep compiler quiet */
+					break;
+			}
+
+			return makeBoolConst(result, false);
+		}
+
+		newbtest = makeNode(BooleanTest);
+		newbtest->arg = (Expr *) arg;
+		newbtest->booltesttype = btest->booltesttype;
+		return (Node *) newbtest;
 	}
 
 	/*
