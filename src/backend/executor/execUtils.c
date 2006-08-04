@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.138 2006/07/31 20:09:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.139 2006/08/04 21:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
  *		CreateExecutorState		Create/delete executor working state
  *		FreeExecutorState
  *		CreateExprContext
+ *		CreateStandaloneExprContext
  *		FreeExprContext
  *		ReScanExprContext
  *
@@ -332,6 +333,68 @@ CreateExprContext(EState *estate)
 }
 
 /* ----------------
+ *		CreateStandaloneExprContext
+ *
+ *		Create a context for standalone expression evaluation.
+ *
+ * An ExprContext made this way can be used for evaluation of expressions
+ * that contain no Params, subplans, or Var references (it might work to
+ * put tuple references into the scantuple field, but it seems unwise).
+ *
+ * The ExprContext struct is allocated in the caller's current memory
+ * context, which also becomes its "per query" context.
+ *
+ * It is caller's responsibility to free the ExprContext when done,
+ * or at least ensure that any shutdown callbacks have been called
+ * (ReScanExprContext() is suitable).  Otherwise, non-memory resources
+ * might be leaked.
+ * ----------------
+ */
+ExprContext *
+CreateStandaloneExprContext(void)
+{
+	ExprContext *econtext;
+
+	/* Create the ExprContext node within the caller's memory context */
+	econtext = makeNode(ExprContext);
+
+	/* Initialize fields of ExprContext */
+	econtext->ecxt_scantuple = NULL;
+	econtext->ecxt_innertuple = NULL;
+	econtext->ecxt_outertuple = NULL;
+
+	econtext->ecxt_per_query_memory = CurrentMemoryContext;
+
+	/*
+	 * Create working memory for expression evaluation in this context.
+	 */
+	econtext->ecxt_per_tuple_memory =
+		AllocSetContextCreate(CurrentMemoryContext,
+							  "ExprContext",
+							  ALLOCSET_DEFAULT_MINSIZE,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE);
+
+	econtext->ecxt_param_exec_vals = NULL;
+	econtext->ecxt_param_list_info = NULL;
+
+	econtext->ecxt_aggvalues = NULL;
+	econtext->ecxt_aggnulls = NULL;
+
+	econtext->caseValue_datum = (Datum) 0;
+	econtext->caseValue_isNull = true;
+
+	econtext->domainValue_datum = (Datum) 0;
+	econtext->domainValue_isNull = true;
+
+	econtext->ecxt_estate = NULL;
+
+	econtext->ecxt_callbacks = NULL;
+
+	return econtext;
+}
+
+/* ----------------
  *		FreeExprContext
  *
  *		Free an expression context, including calling any remaining
@@ -352,9 +415,11 @@ FreeExprContext(ExprContext *econtext)
 	ShutdownExprContext(econtext);
 	/* And clean up the memory used */
 	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
-	/* Unlink self from owning EState */
+	/* Unlink self from owning EState, if any */
 	estate = econtext->ecxt_estate;
-	estate->es_exprcontexts = list_delete_ptr(estate->es_exprcontexts, econtext);
+	if (estate)
+		estate->es_exprcontexts = list_delete_ptr(estate->es_exprcontexts,
+												  econtext);
 	/* And delete the ExprContext node */
 	pfree(econtext);
 }

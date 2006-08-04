@@ -11,17 +11,13 @@
  *
  * The overhead required for constraint checking can be high, since examining
  * the catalogs to discover the constraints for a given domain is not cheap.
- * We have two mechanisms for minimizing this cost:
+ * We have three mechanisms for minimizing this cost:
  *	1.	In a nest of domains, we flatten the checking of all the levels
  *		into just one operation.
  *	2.	We cache the list of constraint items in the FmgrInfo struct
  *		passed by the caller.
- *
- * We also have to create an EState to evaluate CHECK expressions in.
- * Creating and destroying an EState is somewhat expensive, and so it's
- * tempting to cache the EState too.  However, that would mean that the
- * EState never gets an explicit FreeExecutorState call, which is a bad idea
- * because it risks leaking non-memory resources.
+ *	3.	If there are CHECK constraints, we cache a standalone ExprContext
+ *		to evaluate them in.
  *
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
@@ -29,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/domains.c,v 1.2 2006/07/14 14:52:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/domains.c,v 1.3 2006/08/04 21:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +50,10 @@ typedef struct DomainIOData
 	FmgrInfo	proc;
 	/* List of constraint items to check */
 	List	   *constraint_list;
+	/* Context for evaluating CHECK constraints in */
+	ExprContext *econtext;
+	/* Memory context this cache is in */
+	MemoryContext mcxt;
 } DomainIOData;
 
 
@@ -95,6 +95,10 @@ domain_state_setup(DomainIOData *my_extra, Oid domainType, bool binary,
 	my_extra->constraint_list = GetDomainConstraints(domainType);
 	MemoryContextSwitchTo(oldcontext);
 
+	/* We don't make an ExprContext until needed */
+	my_extra->econtext = NULL;
+	my_extra->mcxt = mcxt;
+
 	/* Mark cache valid */
 	my_extra->domain_type = domainType;
 }
@@ -107,7 +111,7 @@ domain_state_setup(DomainIOData *my_extra, Oid domainType, bool binary,
 static void
 domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 {
-	EState	   *estate = NULL;
+	ExprContext *econtext = my_extra->econtext;
 	ListCell   *l;
 
 	foreach(l, my_extra->constraint_list)
@@ -125,25 +129,26 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 				break;
 			case DOM_CONSTRAINT_CHECK:
 				{
-					ExprContext *econtext;
 					Datum		conResult;
 					bool		conIsNull;
-					Datum		save_datum;
-					bool		save_isNull;
 
-					if (estate == NULL)
-						estate = CreateExecutorState();
-					econtext = GetPerTupleExprContext(estate);
+					/* Make the econtext if we didn't already */
+					if (econtext == NULL)
+					{
+						MemoryContext oldcontext;
+
+						oldcontext = MemoryContextSwitchTo(my_extra->mcxt);
+						econtext = CreateStandaloneExprContext();
+						MemoryContextSwitchTo(oldcontext);
+						my_extra->econtext = econtext;
+					}
 
 					/*
 					 * Set up value to be returned by CoerceToDomainValue
-					 * nodes. We must save and restore prior setting of
-					 * econtext's domainValue fields, in case this node is
-					 * itself within a check expression for another domain.
+					 * nodes.  Unlike ExecEvalCoerceToDomain, this econtext
+					 * couldn't be shared with anything else, so no need
+					 * to save and restore fields.
 					 */
-					save_datum = econtext->domainValue_datum;
-					save_isNull = econtext->domainValue_isNull;
-
 					econtext->domainValue_datum = value;
 					econtext->domainValue_isNull = isnull;
 
@@ -158,9 +163,6 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 								 errmsg("value for domain %s violates check constraint \"%s\"",
 										format_type_be(my_extra->domain_type),
 										con->name)));
-					econtext->domainValue_datum = save_datum;
-					econtext->domainValue_isNull = save_isNull;
-
 					break;
 				}
 			default:
@@ -170,8 +172,13 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 		}
 	}
 
-	if (estate)
-		FreeExecutorState(estate);
+	/*
+	 * Before exiting, call any shutdown callbacks and reset econtext's
+	 * per-tuple memory.  This avoids leaking non-memory resources,
+	 * if anything in the expression(s) has any.
+	 */
+	if (econtext)
+		ReScanExprContext(econtext);
 }
 
 

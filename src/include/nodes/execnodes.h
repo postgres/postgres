@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.157 2006/08/02 18:58:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.158 2006/08/04 21:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ typedef struct ExprContext
 	Datum		domainValue_datum;
 	bool		domainValue_isNull;
 
-	/* Link to containing EState */
+	/* Link to containing EState (NULL if a standalone ExprContext) */
 	struct EState *ecxt_estate;
 
 	/* Functions to call back when ExprContext is shut down */
