@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.17 2006/07/05 10:49:56 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.18 2006/08/04 08:52:17 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -249,7 +249,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				data_var.ind_varcharsize = varcharsize;
 				data_var.ind_arrsize = arrsize;
 				data_var.ind_offset = offset;
-				if ((data_var.ind_arrsize == 0 || data_var.ind_varcharsize == 0) && data_var.ind_pointer != NULL)
+				if (data_var.ind_arrsize == 0 || data_var.ind_varcharsize == 0)
 					data_var.ind_value = *((void **) (data_var.ind_pointer));
 				else
 					data_var.ind_value = data_var.ind_pointer;

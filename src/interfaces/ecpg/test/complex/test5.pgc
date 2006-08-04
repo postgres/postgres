@@ -91,7 +91,8 @@ main (void)
 
   EXEC SQL CLOSE B;
 
-  printf ("name=%s, accs=%d byte=", empl.name, a.accs);
+  /* do not print a.accs because big/little endian will have different outputs here */
+  printf ("name=%s, byte=", empl.name);
   for (i=0; i<20; i++)
   {
 	if (empl.byte[i] == '#')

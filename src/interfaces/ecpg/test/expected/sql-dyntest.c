@@ -180,7 +180,7 @@ int main(int argc,char **argv)
  bool  BOOLVAR    ;
  
 #line 24 "dyntest.pgc"
- int  TYPE    ,  LENGTH    ,  OCTET_LENGTH    ,  PRECISION    ,  SCALE    ,  NULLABLE    ,  RETURNED_OCTET_LENGTH    ;
+ int  TYPE    ,  LENGTH    ,  OCTET_LENGTH    ,  PRECISION    ,  SCALE    ,  RETURNED_OCTET_LENGTH    ;
  
 #line 25 "dyntest.pgc"
  int  DATETIME_INTERVAL_CODE    ;
@@ -270,10 +270,9 @@ if (sqlca.sqlcode < 0) error (  );}
         printf("%d Columns\n",COUNT);
         for (INDEX=1;INDEX<=COUNT;++INDEX)
         {
-		{ ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_ret_octet,
+		/* :NULLABLE=nullable, */{ ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_ret_octet,
 	ECPGt_int,&(RETURNED_OCTET_LENGTH),(long)1,(long)1,sizeof(int), ECPGd_name,
-	ECPGt_char,(NAME),(long)120,(long)1,(120)*sizeof(char), ECPGd_nullable,
-	ECPGt_int,&(NULLABLE),(long)1,(long)1,sizeof(int), ECPGd_scale,
+	ECPGt_char,(NAME),(long)120,(long)1,(120)*sizeof(char), ECPGd_scale,
 	ECPGt_int,&(SCALE),(long)1,(long)1,sizeof(int), ECPGd_precision,
 	ECPGt_int,&(PRECISION),(long)1,(long)1,sizeof(int), ECPGd_octet,
 	ECPGt_int,&(OCTET_LENGTH),(long)1,(long)1,sizeof(int), ECPGd_length,
@@ -350,7 +349,7 @@ if (sqlca.sqlcode < 0) error (  );}
         	        break;
         	}
 		/* nullable is not yet implemented in ecpg */
-        	if (!NULLABLE) printf("not null ");
+        	/* if (!NULLABLE) printf("not null "); */
         	if (OCTET_LENGTH>0) printf("[%d bytes]",OCTET_LENGTH);
         	putchar('\n');
         }

@@ -2,7 +2,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database regress1 on localhost port <DEFAULT> 
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 28: QUERY: select  current_database ()      on connection second
 [NO_PID]: sqlca: code: 0, state: 00000

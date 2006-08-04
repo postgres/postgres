@@ -38,20 +38,20 @@ exec sql end declare section;
 	exec sql connect to connectdb@localhost as main user connectuser/connectdb;
 	exec sql disconnect main;
 
-	exec sql connect to tcp:postgresql://localhost:55432/connectdb user connectuser identified by connectpw;
+	exec sql connect to tcp:postgresql://localhost:@TEMP_PORT@/connectdb user connectuser identified by connectpw;
 	exec sql disconnect nonexistant;
 	exec sql disconnect;
 
 	strcpy(pw, "connectpw");
-	strcpy(db, "tcp:postgresql://localhost:55432/connectdb");
+	strcpy(db, "tcp:postgresql://localhost:@TEMP_PORT@/connectdb");
 	exec sql connect to :db user connectuser using :pw;
 	exec sql disconnect;
 
-	exec sql connect to unix:postgresql://localhost:55432/connectdb user connectuser using "connectpw";
+	exec sql connect to unix:postgresql://localhost:@TEMP_PORT@/connectdb user connectuser using "connectpw";
 	exec sql disconnect;
 
 	/* wrong db */
-	exec sql connect to tcp:postgresql://localhost:55432/nonexistant user connectuser identified by connectpw;
+	exec sql connect to tcp:postgresql://localhost:@TEMP_PORT@/nonexistant user connectuser identified by connectpw;
 	exec sql disconnect;
 
 	/* wrong port */
@@ -59,7 +59,7 @@ exec sql end declare section;
 	/* no disconnect necessary */
 
 	/* wrong password */
-	exec sql connect to unix:postgresql://localhost:55432/connectdb user connectuser identified by "wrongpw";
+	exec sql connect to unix:postgresql://localhost:@TEMP_PORT@/connectdb user connectuser identified by "wrongpw";
 	/* no disconnect necessary */
 
 	/* connect twice */

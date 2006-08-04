@@ -177,7 +177,7 @@ int main(int argc,char **argv)
  int  INDICATOR    ;
  
 #line 24 "dyntest2.pgc"
- int  TYPE    ,  LENGTH    ,  OCTET_LENGTH    ,  PRECISION    ,  SCALE    ,  NULLABLE    ,  RETURNED_OCTET_LENGTH    ;
+ int  TYPE    ,  LENGTH    ,  OCTET_LENGTH    ,  PRECISION    ,  SCALE    ,  RETURNED_OCTET_LENGTH    ;
  
 #line 25 "dyntest2.pgc"
  int  DATETIME_INTERVAL_CODE    ;
@@ -207,7 +207,7 @@ int main(int argc,char **argv)
 
   ECPGdebug(1, stderr);
 
-  QUERY="select rulename, ev_class, ev_attr, ev_type, is_instead, ev_qual from pg_rewrite";
+  QUERY="select rulename, ev_class, ev_attr, ev_type, is_instead, ev_qual from pg_rewrite order by rulename limit 2";
 
   /* exec sql whenever sqlerror  do error (  ) ; */
 #line 40 "dyntest2.pgc"
@@ -274,10 +274,9 @@ if (sqlca.sqlcode < 0) error (  );}
 
      for (INDEX=1;INDEX<=COUNT;++INDEX)
      {
-     	{ ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_indicator,
+     	/* :NULLABLE=nullable, */{ ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_indicator,
 	ECPGt_int,&(INDICATOR),(long)1,(long)1,sizeof(int), ECPGd_name,
-	ECPGt_char,(NAME),(long)120,(long)1,(120)*sizeof(char), ECPGd_nullable,
-	ECPGt_int,&(NULLABLE),(long)1,(long)1,sizeof(int), ECPGd_scale,
+	ECPGt_char,(NAME),(long)120,(long)1,(120)*sizeof(char), ECPGd_scale,
 	ECPGt_int,&(SCALE),(long)1,(long)1,sizeof(int), ECPGd_precision,
 	ECPGt_int,&(PRECISION),(long)1,(long)1,sizeof(int), ECPGd_ret_octet,
 	ECPGt_int,&(RETURNED_OCTET_LENGTH),(long)1,(long)1,sizeof(int), ECPGd_octet,
@@ -291,9 +290,9 @@ if (sqlca.sqlcode < 0) error (  );}
 #line 72 "dyntest2.pgc"
 
      	printf("%2d\t%s (type: %d length: %d precision: %d scale: %d\n"
-		"\toctet_length: %d returned_octet_length: %d nullable: %d)\n\t= "
+		"\toctet_length: %d returned_octet_length: %d)\n\t= "
      			,INDEX,NAME,TYPE,LENGTH,PRECISION,SCALE
-     			,OCTET_LENGTH,RETURNED_OCTET_LENGTH,NULLABLE);
+     			,OCTET_LENGTH,RETURNED_OCTET_LENGTH /* ,NULLABLE */);
      	if (INDICATOR==-1) printf("NULL\n");
         else switch (TYPE)
      	{

@@ -199,7 +199,8 @@ main (void)
 #line 92 "test5.pgc"
 
 
-  printf ("name=%s, accs=%d byte=", empl.name, a.accs);
+  /* do not print a.accs because big/little endian will have different outputs here */
+  printf ("name=%s, byte=", empl.name);
   for (i=0; i<20; i++)
   {
 	if (empl.byte[i] == '#')
@@ -208,7 +209,7 @@ main (void)
   }
   printf("\n");
   { ECPGdisconnect(__LINE__, "CURRENT");}
-#line 102 "test5.pgc"
+#line 103 "test5.pgc"
 
   exit (0);
 }

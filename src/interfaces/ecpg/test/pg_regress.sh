@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.3 2006/08/03 14:50:11 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.4 2006/08/04 08:52:17 meskes Exp $
 
 me=`basename $0`
 
@@ -86,6 +86,9 @@ export ECPG_DONT_LOG_PID=1
 export PGPORT=$temp_port
 export LD_LIBRARY_PATH=$libdir
 
+DIFFFLAGS="$DIFFFLAGS -C3"
+FAILNUM=0
+
 for i in \
          connect/*.pgc \
          compat_informix/*.pgc \
@@ -98,31 +101,58 @@ for i in \
 	formatted=`echo $i | awk '{printf "%-38.38s", $1;}'`
 	$ECHO_N "testing $formatted ... $ECHO_C"
 
+	# connect/test1.pgc uses tcp to connect to the server. We run this test
+	# only if called with --listen-on-tcp
+	if [ $listen_on_tcp = no ] && [ "$i" = "connect/test1.pgc" ]; then
+		echo skipped
+		continue;
+	fi
+
 	runprg=${i%.pgc}
 	outprg=`echo $runprg | sed -e's/\//-/'`
-	outfile_stderr=$outputdir/$outprg.stderr
-	outfile_stdout=$outputdir/$outprg.stdout
-	cp $runprg.c "$outputdir/$outprg.c"
+	outfile_stderr="$outputdir/$outprg.stderr"
+	outfile_stdout="$outputdir/$outprg.stdout"
+	outfile_source="$outputdir/$outprg.c"
+	cp $runprg.c "$outfile_source"
 #	echo "$runprg > $outfile_stdout 2> $outfile_stderr"
 	$runprg > "$outfile_stdout" 2> "$outfile_stderr"
+
+	# If we don't run on the default port we'll get different output
+	# so tweak output files and replace the port number (we put a warning
+	# but the price to pay is that we have to tweak the files every time
+	# now not only if the port differs from the standard port).
+	if [ "$i" = "connect/test1.pgc" ]; then
+		# can we use sed -i on all platforms?
+		for f in "$outfile_stderr" "$outfile_stdout" "$outfile_source"; do
+			mv $f $f.tmp
+			echo >> $f
+			echo "THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT" >> $f
+			echo >> $f
+			cat $f.tmp | sed -e s,$PGPORT,55432,g >> $f
+			rm $f.tmp
+		done
+	fi
+
 	DIFFER=""
-	diff -C3 expected/$outprg.stderr "$outputdir"/$outprg.stderr >/dev/null 2>&1 || DIFFER="$DIFFER, log"
-	diff -C3 expected/$outprg.stdout "$outputdir"/$outprg.stdout >/dev/null 2>&1 || DIFFER="$DIFFER, output"
-	diff -C3 expected/$outprg.c "$outputdir"/$outprg.c >/dev/null 2>&1 || DIFFER="$DIFFER, source"
+	diff $DIFFFLAGS expected/$outprg.stderr "$outfile_stderr" >> regression.diff 2>&1 || DIFFER="$DIFFER, log"
+	diff $DIFFFLAGS expected/$outprg.stdout "$outfile_stdout" >> regression.diff 2>&1 || DIFFER="$DIFFER, output"
+	diff $DIFFFLAGS expected/$outprg.c "$outputdir"/$outprg.c >> regression.diff 2>&1 || DIFFER="$DIFFER, source"
+
 	DIFFER=${DIFFER#, }
 	if [ "x$DIFFER" = "x" ]; then
 		echo ok
 	else
 		echo "FAILED ($DIFFER)"
+		FAILNUM=$((FAILNUM+1))
 	fi
 done
 
-diff -C3 -r expected/ $outputdir > regression.diff && rm regression.diff
-
-[ $? -ne 0 ] && exit
+if [ $FAILNUM -eq 0 ]; then
+	rm regression.diff
+fi
 
 postmaster_shutdown
-evaluate
 
-(exit $result); exit
+[ $FAILNUM -eq 0 ] && exit
+[ $FAILNUM -ne 0 ] && (exit 1); exit
 

@@ -16,7 +16,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* do not include regression.h */
+
+#line 1 "./../regression.h"
+
+
+
+
+
+
+#line 10 "test3.pgc"
+
 
 int
 main(void)
@@ -40,7 +49,7 @@ main(void)
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , id, 0); }
 #line 23 "test3.pgc"
 
-	{ ECPGconnect(__LINE__, 0, "regress1@localhost" , NULL,NULL , "second", 0); }
+	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , "second", 0); }
 #line 24 "test3.pgc"
 
 
@@ -61,7 +70,7 @@ main(void)
 #line 31 "test3.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "regress1@localhost" , NULL,NULL , "second", 0); }
+	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , "second", 0); }
 #line 33 "test3.pgc"
 
 	/* will close "second" */
@@ -69,7 +78,7 @@ main(void)
 #line 35 "test3.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "regress1@localhost" , NULL,NULL , "second", 0); }
+	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , "second", 0); }
 #line 37 "test3.pgc"
 
 	{ ECPGdisconnect(__LINE__, "ALL");}

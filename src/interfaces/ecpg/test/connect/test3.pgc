@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* do not include regression.h */
+exec sql include ../regression;
 
 int
 main(void)
@@ -21,7 +21,7 @@ exec sql end declare section;
 
 	strcpy(id, "first");
 	exec sql connect to connectdb as :id;
-	exec sql connect to regress1@localhost as second;
+	exec sql connect to REGRESSDB1 as second;
 
 	/* this selects from "second" which was opened last */
 	exec sql select current_database() into :res;
@@ -30,11 +30,11 @@ exec sql end declare section;
 	exec sql disconnect CURRENT;
 	exec sql select current_database() into :res;
 
-	exec sql connect to regress1@localhost as second;
+	exec sql connect to REGRESSDB1 as second;
 	/* will close "second" */
 	exec sql disconnect DEFAULT;
 
-	exec sql connect to regress1@localhost as second;
+	exec sql connect to REGRESSDB1 as second;
 	exec sql disconnect ALL;
 
 	exec sql disconnect CURRENT;
