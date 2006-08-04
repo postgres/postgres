@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.113 2006/05/21 20:19:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.114 2006/08/04 18:58:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 #include <signal.h>
 #endif
 
-#ifdef WIN32_CLIENT_ONLY
+#ifdef WIN32_ONLY_COMPILER
 typedef int ssize_t;			/* ssize_t doesn't exist in VC (at least not
 								 * VC6) */
 #endif
