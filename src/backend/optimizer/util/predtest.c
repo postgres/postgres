@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.7 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.8 2006/08/05 00:21:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,7 @@ static Node *arrayexpr_next_fn(PredIterInfo info);
 static void arrayexpr_cleanup_fn(PredIterInfo info);
 static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause);
 static bool predicate_refuted_by_simple_clause(Expr *predicate, Node *clause);
+static Node *extract_not_arg(Node *clause);
 static bool btree_predicate_proof(Expr *predicate, Node *clause,
 					  bool refute_it);
 
@@ -393,6 +394,13 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
  *	OR-expr A R=> AND-expr B iff:	each of A's components R=> any of B's
  *	OR-expr A R=> OR-expr B iff:	A R=> each of B's components
  *
+ * In addition, if the predicate is a NOT-clause then we can use
+ *	A R=> NOT B if:					A => B
+ * while if the restriction clause is a NOT-clause then we can use
+ *	NOT A R=> B if:					B => A
+ * This works for several different SQL constructs that assert the non-truth
+ * of their argument, ie NOT, IS FALSE, IS NOT TRUE, IS UNKNOWN.
+ *
  * Other comments are as for predicate_implied_by_recurse().
  *----------
  */
@@ -402,6 +410,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 	PredIterInfoData clause_info;
 	PredIterInfoData pred_info;
 	PredClass	pclass;
+	Node	   *not_arg;
 	bool		result;
 
 	/* skip through RestrictInfo */
@@ -468,6 +477,13 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 
 				case CLASS_ATOM:
 					/*
+					 * If B is a NOT-clause, A R=> B if A => B's arg
+					 */
+					not_arg = extract_not_arg(predicate);
+					if (not_arg &&
+						predicate_implied_by_recurse(clause, not_arg))
+						return true;
+					/*
 					 * AND-clause R=> atom if any of A's items refutes B
 					 */
 					result = false;
@@ -533,6 +549,13 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 
 				case CLASS_ATOM:
 					/*
+					 * If B is a NOT-clause, A R=> B if A => B's arg
+					 */
+					not_arg = extract_not_arg(predicate);
+					if (not_arg &&
+						predicate_implied_by_recurse(clause, not_arg))
+						return true;
+					/*
 					 * OR-clause R=> atom if each of A's items refutes B
 					 */
 					result = true;
@@ -550,6 +573,13 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			break;
 
 		case CLASS_ATOM:
+			/*
+			 * If A is a NOT-clause, A R=> B if B => A's arg
+			 */
+			not_arg = extract_not_arg(clause);
+			if (not_arg &&
+				predicate_implied_by_recurse(predicate, not_arg))
+				return true;
 			switch (pclass)
 			{
 				case CLASS_AND:
@@ -585,6 +615,13 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_ATOM:
+					/*
+					 * If B is a NOT-clause, A R=> B if A => B's arg
+					 */
+					not_arg = extract_not_arg(predicate);
+					if (not_arg &&
+						predicate_implied_by_recurse(clause, not_arg))
+						return true;
 					/*
 					 * atom R=> atom is the base case
 					 */
@@ -917,8 +954,7 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
  * We return TRUE if able to prove the refutation, FALSE if not.
  *
  * Unlike the implication case, checking for equal() clauses isn't
- * helpful.  (XXX is it worth looking at "x vs NOT x" cases?  Probably
- * not seeing that canonicalization tries to get rid of NOTs.)
+ * helpful.
  *
  * When the predicate is of the form "foo IS NULL", we can conclude that
  * the predicate is refuted if the clause is a strict operator or function
@@ -931,7 +967,12 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 static bool
 predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 {
-	/* First try the IS NULL case */
+	/* A simple clause can't refute itself */
+	/* Worth checking because of relation_excluded_by_constraints() */
+	if ((Node *) predicate == clause)
+		return false;
+
+	/* Try the IS NULL case */
 	if (predicate && IsA(predicate, NullTest) &&
 		((NullTest *) predicate)->nulltesttype == IS_NULL)
 	{
@@ -950,6 +991,35 @@ predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 
 	/* Else try btree operator knowledge */
 	return btree_predicate_proof(predicate, clause, true);
+}
+
+
+/*
+ * If clause asserts the non-truth of a subclause, return that subclause;
+ * otherwise return NULL.
+ */
+static Node *
+extract_not_arg(Node *clause)
+{
+	if (clause == NULL)
+		return NULL;
+	if (IsA(clause, BoolExpr))
+	{
+		BoolExpr   *bexpr = (BoolExpr *) clause;
+
+		if (bexpr->boolop == NOT_EXPR)
+			return (Node *) linitial(bexpr->args);
+	}
+	else if (IsA(clause, BooleanTest))
+	{
+		BooleanTest *btest = (BooleanTest *) clause;
+
+		if (btest->booltesttype == IS_NOT_TRUE ||
+			btest->booltesttype == IS_FALSE ||
+			btest->booltesttype == IS_UNKNOWN)
+			return (Node *) btest->arg;
+	}
+	return NULL;
 }
 
 
