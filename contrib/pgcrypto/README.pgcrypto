@@ -331,7 +331,7 @@ Now common part, the session-key encrypted data packet:
 
 Return a symmetric-key encrypted PGP message.
 
-Options are described in section 5.7.
+Options are described in section 5.8.
 
 
 5.3. pgp_sym_decrypt(msg, psw)
@@ -346,7 +346,7 @@ Decrypting bytea data with `pgp_sym_decrypt` is disallowed.
 This is to avoid outputting invalid character data.  Decrypting
 originally textual data with `pgp_sym_decrypt_bytea` is fine.
 
-Options are described in section 5.7.
+Options are described in section 5.8.
 
 
 5.4.  pgp_pub_encrypt(data, pub_key)
@@ -358,7 +358,7 @@ Options are described in section 5.7.
 Encrypt data with a public key.  Giving this function a secret key will
 produce a error.
 
-Options are described in section 5.7.
+Options are described in section 5.8.
 
 
 5.5.  pgp_pub_decrypt(msg, sec_key [, psw])
@@ -378,7 +378,7 @@ Decrypting bytea data with `pgp_pub_decrypt` is disallowed.
 This is to avoid outputting invalid character data.  Decrypting
 originally textual data with `pgp_pub_decrypt_bytea` is fine.
 
-Options are described in section 5.7.
+Options are described in section 5.8.
 
 
 5.6.  pgp_key_id(key / msg)
@@ -714,4 +714,4 @@ http://www.cs.ut.ee/~helger/crypto/[]::
 	Collection of cryptology pointers.
 
 
-// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.16 2006/07/19 17:05:50 neilc Exp $
+// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.17 2006/08/05 00:29:11 neilc Exp $
