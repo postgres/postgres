@@ -41,7 +41,7 @@ timestamp_defmt_asc(abc
    18 October %34 17:28:44 CEST 80, abc%n %C %B %%%d %H:%M:%S %Z %y) = 1880-10-31 15:28:44, error (should be error!): 1
 timestamp_defmt_asc(abc
    18 October %34 17:28:44 CEST 80, ) = 1880-10-31 15:28:44, error (should be error!): 1
-timestamp_defmt_asc(1980-04-12 3:49:44      , (null)) = 1980-04-12 03:49:44, error: 0
+timestamp_defmt_asc(1980-04-12 3:49:44      , NULL) = 1980-04-12 03:49:44, error: 0
 timestamp_defmt_asc(July 14, 1988. Time: 9:15am, %B %d, %Y. Time: %I:%M%p) = 1988-07-14 09:15:00, error: 0
 timestamp_defmt_asc(September 6 at 01:30 pm in the year 1983, %B %d at %I:%M %p in the year %Y) = 1983-09-06 13:30:00, error: 0
 timestamp_defmt_asc(  1976, July 14. Time: 9:15am, %Y,   %B %d. Time: %I:%M %p) = 1976-07-14 09:15:00, error: 0

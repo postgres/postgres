@@ -384,7 +384,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	in =  "1980-04-12 3:49:44      ";
 	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
 	text = PGTYPEStimestamp_to_asc(ts1);
-	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
+	printf("timestamp_defmt_asc(%s, NULL) = %s, error: %d\n", in, text, i);
 	free(text);
 
 	fmt = "%B %d, %Y. Time: %I:%M%p";
