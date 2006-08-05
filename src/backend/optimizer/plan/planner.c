@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.206 2006/08/02 01:59:46 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.207 2006/08/05 17:21:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@ static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Plan *inheritance_planner(PlannerInfo *root);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
+static bool is_dummy_plan(Plan *plan);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
@@ -553,11 +554,10 @@ inheritance_planner(PlannerInfo *root)
 	Query	   *parse = root->parse;
 	int			parentRTindex = parse->resultRelation;
 	List	   *subplans = NIL;
+	List	   *rtable = NIL;
 	List	   *tlist = NIL;
 	PlannerInfo subroot;
 	ListCell   *l;
-
-	subroot.parse = NULL;		/* catch it if no matches in loop */
 
 	parse->resultRelations = NIL;
 
@@ -569,10 +569,6 @@ inheritance_planner(PlannerInfo *root)
 		/* append_rel_list contains all append rels; ignore others */
 		if (appinfo->parent_relid != parentRTindex)
 			continue;
-
-		/* Build target-relations list for the executor */
-		parse->resultRelations = lappend_int(parse->resultRelations,
-											 appinfo->child_relid);
 
 		/*
 		 * Generate modified query with this rel as target.  We have to be
@@ -592,12 +588,38 @@ inheritance_planner(PlannerInfo *root)
 		/* Generate plan */
 		subplan = grouping_planner(&subroot, 0.0 /* retrieve all tuples */ );
 
+		/*
+		 * If this child rel was excluded by constraint exclusion, exclude
+		 * it from the plan.
+		 */
+		if (is_dummy_plan(subplan))
+			continue;
+
+		/* Save rtable and tlist from first rel for use below */
+		if (subplans == NIL)
+		{
+			rtable = subroot.parse->rtable;
+			tlist = subplan->targetlist;
+		}
+
 		subplans = lappend(subplans, subplan);
 
-		/* Save preprocessed tlist from first rel for use in Append */
-		if (tlist == NIL)
-			tlist = subplan->targetlist;
+		/* Build target-relations list for the executor */
+		parse->resultRelations = lappend_int(parse->resultRelations,
+											 appinfo->child_relid);
 	}
+
+	/* Mark result as unordered (probably unnecessary) */
+	root->query_pathkeys = NIL;
+
+	/*
+	 * If we managed to exclude every child rel, return a dummy plan
+	 */
+	if (subplans == NIL)
+		return (Plan *) make_result(tlist,
+									(Node *) list_make1(makeBoolConst(false,
+																	  false)),
+									NULL);
 
 	/*
 	 * Planning might have modified the rangetable, due to changes of the
@@ -610,10 +632,7 @@ inheritance_planner(PlannerInfo *root)
 	 *
 	 * XXX should clean this up someday
 	 */
-	parse->rtable = subroot.parse->rtable;
-
-	/* Mark result as unordered (probably unnecessary) */
-	root->query_pathkeys = NIL;
+	parse->rtable = rtable;
 
 	return (Plan *) make_append(subplans, true, tlist);
 }
@@ -1070,6 +1089,35 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	root->query_pathkeys = current_pathkeys;
 
 	return result_plan;
+}
+
+/*
+ * Detect whether a plan node is a "dummy" plan created when a relation
+ * is deemed not to need scanning due to constraint exclusion.
+ *
+ * Currently, such dummy plans are Result nodes with constant FALSE
+ * filter quals.
+ */
+static bool
+is_dummy_plan(Plan *plan)
+{
+	if (IsA(plan, Result))
+	{
+		List *rcqual = (List *) ((Result *) plan)->resconstantqual;
+
+		if (list_length(rcqual) == 1)
+		{
+			Const *constqual = (Const *) linitial(rcqual);
+
+			if (constqual && IsA(constqual, Const))
+			{
+				if (!constqual->constisnull &&
+					!DatumGetBool(constqual->constvalue))
+					return true;
+			}
+		}
+	}
+	return false;
 }
 
 /*
