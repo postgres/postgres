@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.123 2006/08/02 01:59:46 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.124 2006/08/05 00:22:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,17 +438,41 @@ get_relation_constraints(Oid relationObjectId, RelOptInfo *rel)
 /*
  * relation_excluded_by_constraints
  *
- * Detect whether the relation need not be scanned because it has CHECK
- * constraints that conflict with the query's WHERE clause.
+ * Detect whether the relation need not be scanned because it has either
+ * self-inconsistent restrictions, or restrictions inconsistent with the
+ * relation's CHECK constraints.
  */
 bool
 relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
 {
+	List	   *safe_restrictions;
 	List	   *constraint_pred;
+	List	   *safe_constraints;
+	ListCell   *lc;
 
 	/* Skip the test if constraint exclusion is disabled */
 	if (!constraint_exclusion)
 		return false;
+
+	/*
+	 * Check for self-contradictory restriction clauses.  We dare not make
+	 * deductions with non-immutable functions, but any immutable clauses that
+	 * are self-contradictory allow us to conclude the scan is unnecessary.
+	 *
+	 * Note: strip off RestrictInfo because predicate_refuted_by() isn't
+	 * expecting to see any in its predicate argument.
+	 */
+	safe_restrictions = NIL;
+	foreach(lc, rel->baserestrictinfo)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		if (!contain_mutable_functions((Node *) rinfo->clause))
+			safe_restrictions = lappend(safe_restrictions, rinfo->clause);
+	}
+
+	if (predicate_refuted_by(safe_restrictions, safe_restrictions))
+		return true;
 
 	/* Only plain relations have constraints */
 	if (rte->rtekind != RTE_RELATION || rte->inh)
@@ -461,16 +485,29 @@ relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
 	 * We do not currently enforce that CHECK constraints contain only
 	 * immutable functions, so it's necessary to check here. We daren't draw
 	 * conclusions from plan-time evaluation of non-immutable functions.
+	 * Since they're ANDed, we can just ignore any mutable constraints in
+	 * the list, and reason about the rest.
 	 */
-	if (contain_mutable_functions((Node *) constraint_pred))
-		return false;
+	safe_constraints = NIL;
+	foreach(lc, constraint_pred)
+	{
+		Node *pred = (Node *) lfirst(lc);
+
+		if (!contain_mutable_functions(pred))
+			safe_constraints = lappend(safe_constraints, pred);
+	}
 
 	/*
 	 * The constraints are effectively ANDed together, so we can just try to
 	 * refute the entire collection at once.  This may allow us to make proofs
 	 * that would fail if we took them individually.
+	 *
+	 * Note: we use rel->baserestrictinfo, not safe_restrictions as might
+	 * seem an obvious optimization.  Some of the clauses might be OR clauses
+	 * that have volatile and nonvolatile subclauses, and it's OK to make
+	 * deductions with the nonvolatile parts.
 	 */
-	if (predicate_refuted_by(constraint_pred, rel->baserestrictinfo))
+	if (predicate_refuted_by(safe_constraints, rel->baserestrictinfo))
 		return true;
 
 	return false;
