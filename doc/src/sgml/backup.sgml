@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.81 2006/06/18 15:38:35 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.82 2006/08/06 03:53:43 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -598,6 +598,15 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
    </para>
 
    <para>
+    Another way to limit your exposure to data loss is to call
+    <function>pg_switch_xlog()</> periodically, such as once a minute.
+    This function forces the current WAL segment file to be completed
+    and made available to the archiving command.  This approach does
+    not work well for extremely short update intervals, however, since
+    copying a new 16MB segment file every few seconds is expensive.
+   </para>
+
+   <para>
     In writing your archive command, you should assume that the file names to
     be archived may be up to 64 characters long and may contain any
     combination of ASCII letters, digits, and dots.  It is not necessary to
@@ -670,7 +679,9 @@ SELECT pg_stop_backup();
    <listitem>
     <para>
      Once the WAL segment files used during the backup are archived as part
-     of normal database activity, you are done.
+     of normal database activity, you are done.  The file identified by
+     <function>pg_stop_backup</>'s result is the last segment that needs
+     to be archived to complete the backup.
     </para>
    </listitem>
   </orderedlist>
@@ -739,10 +750,7 @@ SELECT pg_stop_backup();
     segments with names numerically less are no longer needed to recover
     the file system backup and may be deleted. However, you should
     consider keeping several backup sets to be absolutely certain that
-    you can recover your data. Keep in mind that only completed WAL
-    segment files are archived, so there will be delay between running
-    <function>pg_stop_backup</> and the archiving of all WAL segment
-    files needed to make the file system backup consistent.
+    you can recover your data.
    </para>
 
    <para>

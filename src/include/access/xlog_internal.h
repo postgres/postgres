@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.13 2006/04/05 03:34:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.14 2006/08/06 03:53:44 tgl Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -241,5 +241,9 @@ extern const RmgrData RmgrTable[];
  */
 extern Datum pg_start_backup(PG_FUNCTION_ARGS);
 extern Datum pg_stop_backup(PG_FUNCTION_ARGS);
+extern Datum pg_switch_xlog(PG_FUNCTION_ARGS);
+extern Datum pg_current_xlog_location(PG_FUNCTION_ARGS);
+extern Datum pg_xlogfile_name_offset(PG_FUNCTION_ARGS);
+extern Datum pg_xlogfile_name(PG_FUNCTION_ARGS);
 
 #endif   /* XLOG_INTERNAL_H */

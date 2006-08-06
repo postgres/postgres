@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.328 2006/07/28 18:33:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.329 2006/08/06 03:53:43 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10143,13 +10143,25 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_stop_backup</primary>
    </indexterm>
    <indexterm zone="functions-admin">
+    <primary>pg_switch_xlog</primary>
+   </indexterm>
+   <indexterm zone="functions-admin">
+    <primary>pg_current_xlog_location</primary>
+   </indexterm>
+   <indexterm zone="functions-admin">
+    <primary>pg_xlogfile_name_offset</primary>
+   </indexterm>
+   <indexterm zone="functions-admin">
+    <primary>pg_xlogfile_name</primary>
+   </indexterm>
+   <indexterm zone="functions-admin">
     <primary>backup</primary>
    </indexterm>
 
    <para>
     The functions shown in <xref
     linkend="functions-admin-backup-table"> assist in making on-line backups.
-    Use of these functions is restricted to superusers.
+    Use of the first three functions is restricted to superusers.
    </para>
 
    <table id="functions-admin-backup-table">
@@ -10175,6 +10187,34 @@ SELECT set_config('log_statement_stats', 'off', false);
        <entry><type>text</type></entry>
        <entry>Finish performing on-line backup</entry>
       </row>
+      <row>
+       <entry>
+        <literal><function>pg_switch_xlog</function>()</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Force switch to a new xlog file</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_current_xlog_location</function>()</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Get current xlog location</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_xlogfile_name_offset</function>(<parameter>location</> <type>text</>)</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Convert xlog location string to filename and decimal byte offset within file</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_xlogfile_name</function>(<parameter>location</> <type>text</>)</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Convert xlog location string to filename</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -10184,19 +10224,62 @@ SELECT set_config('log_statement_stats', 'off', false);
     arbitrary user-defined label for the backup.  (Typically this would be
     the name under which the backup dump file will be stored.)  The function
     writes a backup label file into the database cluster's data directory,
-    and then returns the backup's starting WAL offset as text.  (The user
+    and then returns the backup's starting xlog location as text.  The user
     need not pay any attention to this result value, but it is provided in
-    case it is of use.)
+    case it is of use. 
+<programlisting>
+postgres=# select pg_start_backup('label_goes_here');
+ pg_start_backup
+-----------------
+ 0/D4445B8
+(1 row)
+</programlisting>
    </para>
 
    <para>
     <function>pg_stop_backup</> removes the label file created by
     <function>pg_start_backup</>, and instead creates a backup history file in
-    the WAL archive area.  The history file includes the label given to
-    <function>pg_start_backup</>, the starting and ending WAL offsets for
+    the xlog archive area.  The history file includes the label given to
+    <function>pg_start_backup</>, the starting and ending xlog locations for
     the backup, and the starting and ending times of the backup.  The return
-    value is the backup's ending WAL offset (which again may be of little
-    interest).
+    value is the backup's ending xlog location (which again may be of little
+    interest).  After noting the ending location, the current xlog insertion
+    point is automatically advanced to the next xlog file, so that the
+    ending xlog file can be archived immediately to complete the backup.
+   </para>
+
+   <para>
+    <function>pg_switch_xlog</> moves to the next xlog file, allowing the 
+    current file to be archived (assuming you are using continuous archiving).
+    The result is the ending xlog location within the just-completed xlog file.
+    If there has been no xlog activity since the last xlog switch,
+    <function>pg_switch_xlog</> does nothing and returns the end location
+    of the previous xlog file.
+   </para>
+
+   <para>
+    <function>pg_current_xlog_location</> displays the current xlog insertion
+    point in the same format used by the above functions.  This is a
+    read-only operation and does not require superuser permissions.
+   </para>
+
+   <para>
+    You can use <function>pg_xlogfile_name_offset</> to extract the
+    corresponding xlog filename and byte offset from the results of any of the
+    above functions.  For example:
+<programlisting>
+postgres=# select pg_xlogfile_name_offset(pg_stop_backup());
+     pg_xlogfile_name_offset      
+----------------------------------
+ 00000001000000000000000D 4039624
+(1 row)
+</programlisting>
+    Similarly, <function>pg_xlogfile_name</> extracts just the xlog filename.
+    When the given xlog location is exactly at an xlog file boundary, both
+    these functions return the name of the preceding xlog file.
+    This is usually the desired behavior for managing xlog archiving
+    behavior, since the preceding file is the last one that currently
+    needs to be archived.
    </para>
 
    <para>
