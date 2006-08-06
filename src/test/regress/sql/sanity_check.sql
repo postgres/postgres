@@ -2,12 +2,13 @@ VACUUM;
 
 --
 -- sanity check, if we don't have indices the test will take years to
--- complete.  But skip TOAST relations since they will have varying
--- names depending on the current OID counter.
+-- complete.  But skip TOAST relations (since they will have varying
+-- names depending on the current OID counter) as well as temp tables
+-- of other backends (to avoid timing-dependent behavior).
 --
 SELECT relname, relhasindex
-   FROM pg_class
-   WHERE relhasindex AND relkind != 't'
+   FROM pg_class c LEFT JOIN pg_namespace n ON n.oid = relnamespace
+   WHERE relkind = 'r' AND (nspname ~ '^pg_temp_') IS NOT TRUE
    ORDER BY relname;
 
 --

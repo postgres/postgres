@@ -1,77 +1,146 @@
 VACUUM;
 --
 -- sanity check, if we don't have indices the test will take years to
--- complete.  But skip TOAST relations since they will have varying
--- names depending on the current OID counter.
+-- complete.  But skip TOAST relations (since they will have varying
+-- names depending on the current OID counter) as well as temp tables
+-- of other backends (to avoid timing-dependent behavior).
 --
 SELECT relname, relhasindex
-   FROM pg_class
-   WHERE relhasindex AND relkind != 't'
+   FROM pg_class c LEFT JOIN pg_namespace n ON n.oid = relnamespace
+   WHERE relkind = 'r' AND (nspname ~ '^pg_temp_') IS NOT TRUE
    ORDER BY relname;
-       relname       | relhasindex 
----------------------+-------------
- array_index_op_test | t
- bt_f8_heap          | t
- bt_i4_heap          | t
- bt_name_heap        | t
- bt_txt_heap         | t
- circle_tbl          | t
- fast_emp4000        | t
- func_index_heap     | t
- hash_f8_heap        | t
- hash_i4_heap        | t
- hash_name_heap      | t
- hash_txt_heap       | t
- ihighway            | t
- inhx                | t
- num_exp_add         | t
- num_exp_div         | t
- num_exp_ln          | t
- num_exp_log10       | t
- num_exp_mul         | t
- num_exp_power_10_ln | t
- num_exp_sqrt        | t
- num_exp_sub         | t
- onek                | t
- onek2               | t
- pg_aggregate        | t
- pg_am               | t
- pg_amop             | t
- pg_amproc           | t
- pg_attrdef          | t
- pg_attribute        | t
- pg_auth_members     | t
- pg_authid           | t
- pg_autovacuum       | t
- pg_cast             | t
- pg_class            | t
- pg_constraint       | t
- pg_conversion       | t
- pg_database         | t
- pg_depend           | t
- pg_description      | t
- pg_index            | t
- pg_inherits         | t
- pg_language         | t
- pg_largeobject      | t
- pg_namespace        | t
- pg_opclass          | t
- pg_operator         | t
- pg_pltemplate       | t
- pg_proc             | t
- pg_rewrite          | t
- pg_shdepend         | t
- pg_shdescription    | t
- pg_statistic        | t
- pg_tablespace       | t
- pg_trigger          | t
- pg_type             | t
- polygon_tbl         | t
- road                | t
- shighway            | t
- tenk1               | t
- tenk2               | t
-(61 rows)
+         relname         | relhasindex 
+-------------------------+-------------
+ a                       | f
+ a_star                  | f
+ abstime_tbl             | f
+ aggtest                 | f
+ array_index_op_test     | t
+ array_op_test           | f
+ b                       | f
+ b_star                  | f
+ box_tbl                 | f
+ bprime                  | f
+ bt_f8_heap              | t
+ bt_i4_heap              | t
+ bt_name_heap            | t
+ bt_txt_heap             | t
+ c                       | f
+ c_star                  | f
+ char_tbl                | f
+ check2_tbl              | f
+ check_tbl               | f
+ circle_tbl              | t
+ city                    | f
+ copy_tbl                | f
+ d                       | f
+ d_star                  | f
+ date_tbl                | f
+ default_tbl             | f
+ defaultexpr_tbl         | f
+ dept                    | f
+ e_star                  | f
+ emp                     | f
+ equipment_r             | f
+ f_star                  | f
+ fast_emp4000            | t
+ float4_tbl              | f
+ float8_tbl              | f
+ func_index_heap         | t
+ hash_f8_heap            | t
+ hash_i4_heap            | t
+ hash_name_heap          | t
+ hash_txt_heap           | t
+ hobbies_r               | f
+ ihighway                | t
+ inet_tbl                | f
+ inhe                    | f
+ inhf                    | f
+ inhx                    | t
+ insert_tbl              | f
+ int2_tbl                | f
+ int4_tbl                | f
+ int8_tbl                | f
+ interval_tbl            | f
+ iportaltest             | f
+ log_table               | f
+ lseg_tbl                | f
+ main_table              | f
+ num_data                | f
+ num_exp_add             | t
+ num_exp_div             | t
+ num_exp_ln              | t
+ num_exp_log10           | t
+ num_exp_mul             | t
+ num_exp_power_10_ln     | t
+ num_exp_sqrt            | t
+ num_exp_sub             | t
+ num_input_test          | f
+ num_result              | f
+ onek                    | t
+ onek2                   | t
+ path_tbl                | f
+ person                  | f
+ pg_aggregate            | t
+ pg_am                   | t
+ pg_amop                 | t
+ pg_amproc               | t
+ pg_attrdef              | t
+ pg_attribute            | t
+ pg_auth_members         | t
+ pg_authid               | t
+ pg_autovacuum           | t
+ pg_cast                 | t
+ pg_class                | t
+ pg_constraint           | t
+ pg_conversion           | t
+ pg_database             | t
+ pg_depend               | t
+ pg_description          | t
+ pg_index                | t
+ pg_inherits             | t
+ pg_language             | t
+ pg_largeobject          | t
+ pg_listener             | f
+ pg_namespace            | t
+ pg_opclass              | t
+ pg_operator             | t
+ pg_pltemplate           | t
+ pg_proc                 | t
+ pg_rewrite              | t
+ pg_shdepend             | t
+ pg_shdescription        | t
+ pg_statistic            | t
+ pg_tablespace           | t
+ pg_trigger              | t
+ pg_type                 | t
+ point_tbl               | f
+ polygon_tbl             | t
+ ramp                    | f
+ real_city               | f
+ reltime_tbl             | f
+ road                    | t
+ shighway                | t
+ slow_emp4000            | f
+ sql_features            | f
+ sql_implementation_info | f
+ sql_languages           | f
+ sql_packages            | f
+ sql_parts               | f
+ sql_sizing              | f
+ sql_sizing_profiles     | f
+ stud_emp                | f
+ student                 | f
+ tenk1                   | t
+ tenk2                   | t
+ text_tbl                | f
+ time_tbl                | f
+ timestamp_tbl           | f
+ timestamptz_tbl         | f
+ timetz_tbl              | f
+ tinterval_tbl           | f
+ varchar_tbl             | f
+(129 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have
