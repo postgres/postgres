@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.494 2006/08/04 18:53:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.495 2006/08/06 02:00:52 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1364,7 +1364,6 @@ exec_bind_message(StringInfo input_message)
 	int			numParams;
 	int			numRFormats;
 	int16	   *rformats = NULL;
-	int			i;
 	PreparedStatement *pstmt;
 	Portal		portal;
 	ParamListInfo params;
@@ -1391,6 +1390,8 @@ exec_bind_message(StringInfo input_message)
 	numPFormats = pq_getmsgint(input_message, 2);
 	if (numPFormats > 0)
 	{
+		int i;
+		
 		pformats = (int16 *) palloc(numPFormats * sizeof(int16));
 		for (i = 0; i < numPFormats; i++)
 			pformats[i] = pq_getmsgint(input_message, 2);
@@ -1463,6 +1464,7 @@ exec_bind_message(StringInfo input_message)
 	{
 		ListCell   *l;
 		MemoryContext oldContext;
+		int			paramno;
 
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
@@ -1471,7 +1473,7 @@ exec_bind_message(StringInfo input_message)
 								(numParams - 1) * sizeof(ParamExternData));
 		params->numParams = numParams;
 
-		i = 0;
+		paramno = 0;
 		foreach(l, pstmt->argtype_list)
 		{
 			Oid			ptype = lfirst_oid(l);
@@ -1511,7 +1513,7 @@ exec_bind_message(StringInfo input_message)
 			}
 
 			if (numPFormats > 1)
-				pformat = pformats[i];
+				pformat = pformats[paramno];
 			else if (numPFormats > 0)
 				pformat = pformats[0];
 			else
@@ -1534,7 +1536,7 @@ exec_bind_message(StringInfo input_message)
 				else
 					pstring = pg_client_to_server(pbuf.data, plength);
 
-				params->params[i].value = OidInputFunctionCall(typinput,
+				params->params[paramno].value = OidInputFunctionCall(typinput,
 															   pstring,
 															   typioparam,
 															   -1);
@@ -1558,7 +1560,7 @@ exec_bind_message(StringInfo input_message)
 				else
 					bufptr = &pbuf;
 
-				params->params[i].value = OidReceiveFunctionCall(typreceive,
+				params->params[paramno].value = OidReceiveFunctionCall(typreceive,
 																 bufptr,
 																 typioparam,
 																 -1);
@@ -1568,7 +1570,7 @@ exec_bind_message(StringInfo input_message)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 							 errmsg("incorrect binary data format in bind parameter %d",
-									i + 1)));
+									paramno + 1)));
 			}
 			else
 			{
@@ -1582,10 +1584,10 @@ exec_bind_message(StringInfo input_message)
 			if (!isNull)
 				pbuf.data[plength] = csave;
 
-			params->params[i].isnull = isNull;
-			params->params[i].ptype = ptype;
+			params->params[paramno].isnull = isNull;
+			params->params[paramno].ptype = ptype;
 
-			i++;
+			paramno++;
 		}
 
 		MemoryContextSwitchTo(oldContext);
@@ -1597,6 +1599,8 @@ exec_bind_message(StringInfo input_message)
 	numRFormats = pq_getmsgint(input_message, 2);
 	if (numRFormats > 0)
 	{
+		int i;
+
 		rformats = (int16 *) palloc(numRFormats * sizeof(int16));
 		for (i = 0; i < numRFormats; i++)
 			rformats[i] = pq_getmsgint(input_message, 2);
