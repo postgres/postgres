@@ -31,7 +31,7 @@ main(void)
 	/* exec sql begin declare section */
 		 
 		 
-		 
+		  
 		 
 	
 #line 14 "dt_test.pgc"
@@ -41,7 +41,7 @@ main(void)
  timestamp  ts1    ;
  
 #line 16 "dt_test.pgc"
- interval  iv1    ;
+ interval * iv1    ,  iv2    ;
  
 #line 17 "dt_test.pgc"
  char * text    ;
@@ -65,7 +65,7 @@ main(void)
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 28 "dt_test.pgc"
 
-        { ECPGdo(__LINE__, 0, 1, NULL, "create  table date_test ( d date   , ts timestamp    , iv interval    )    ", ECPGt_EOIT, ECPGt_EORT);
+        { ECPGdo(__LINE__, 0, 1, NULL, "create  table date_test ( d date   , ts timestamp    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
@@ -81,7 +81,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	date1 = PGTYPESdate_from_asc(d1, NULL); 
 	ts1 = PGTYPEStimestamp_from_asc(t1, NULL); 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into date_test ( d  , ts  , iv  ) values(  ? ,  ? , '2003-02-28 12:34' :: timestamp   - 'Mon Jan 17 1966' :: timestamp   )", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into date_test ( d  , ts  ) values(  ? ,  ? )", 
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(ts1),(long)1,(long)1,sizeof(timestamp), 
@@ -98,8 +98,6 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(ts1),(long)1,(long)1,sizeof(timestamp), 
-	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_interval,&(iv1),(long)1,(long)1,sizeof(interval), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 37 "dt_test.pgc"
 
@@ -115,7 +113,9 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	printf ("timestamp: %s\n", text);
 	free(text);
 
-	text = PGTYPESinterval_to_asc(&iv1);
+	iv1 = PGTYPESinterval_from_asc("13556 days 12 hours 34 minutes 14 seconds ", NULL);
+	PGTYPESinterval_copy(iv1, &iv2);
+	text = PGTYPESinterval_to_asc(&iv2);
 	printf ("interval: %s\n", text);
 	free(text);
 
@@ -132,11 +132,6 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ts1 = PGTYPEStimestamp_from_asc("2003-12-04 17:34:29", NULL);
 	text = PGTYPEStimestamp_to_asc(ts1);
 	printf("date_day of %s is %d\n", text, PGTYPESdate_dayofweek(ts1));
-
-	PGTYPESdate_today(&date1);
-	/* can't output this in regression mode */
-
-	printf("using date %s\n", text);
 	free(text);
 
 	fmt = "(ddd), mmm. dd, yyyy, repeat: (ddd), mmm. dd, yyyy. end";
@@ -423,16 +418,16 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	free(text);
 
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 354 "dt_test.pgc"
+#line 351 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 354 "dt_test.pgc"
+#line 351 "dt_test.pgc"
 
         { ECPGdisconnect(__LINE__, "CURRENT");
-#line 355 "dt_test.pgc"
+#line 352 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 355 "dt_test.pgc"
+#line 352 "dt_test.pgc"
 
 
 	return (0);

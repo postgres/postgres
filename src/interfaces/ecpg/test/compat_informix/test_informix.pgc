@@ -37,9 +37,10 @@ int main(void)
 
 	/* this will fail (more than one row in subquery) */
 	$select i from test where j=(select j from test);
+	$rollback;
 
 	/* this however should be ok */
-	$select i from test where j=(select j from test limit 1);
+	$select i from test where j=(select j from test order by i limit 1);
 	printf("SELECT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
 	if (sqlca.sqlcode != 0) $rollback;
 

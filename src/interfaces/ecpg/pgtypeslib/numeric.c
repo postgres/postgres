@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.27 2006/06/21 10:24:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.28 2006/08/07 13:17:01 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <ctype.h>
@@ -386,10 +386,18 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 char *
 PGTYPESnumeric_to_asc(numeric *num, int dscale)
 {
+	numeric *numcopy = PGTYPESnumeric_new();
+	char	*s;
+
 	if (dscale < 0)
 		dscale = num->dscale;
 
-	return (get_str_from_var(num, dscale));
+	if (PGTYPESnumeric_copy(num, numcopy) < 0)
+		return NULL;
+	/* get_str_from_var may change its argument */
+	s = get_str_from_var(numcopy, dscale);
+	PGTYPESnumeric_free(numcopy);
+	return (s);
 }
 
 /* ----------
@@ -1448,6 +1456,7 @@ PGTYPESnumeric_from_double(double d, numeric *dst)
 	if (PGTYPESnumeric_copy(tmp, dst) != 0)
 		return -1;
 	PGTYPESnumeric_free(tmp);
+	errno = 0;
 	return 0;
 }
 
@@ -1457,12 +1466,23 @@ numericvar_to_double_no_overflow(numeric *var, double *dp)
 	char	   *tmp;
 	double		val;
 	char	   *endptr;
+	numeric	   *varcopy = PGTYPESnumeric_new();
 
-	if ((tmp = get_str_from_var(var, var->dscale)) == NULL)
+	if (PGTYPESnumeric_copy(var, varcopy) < 0)
 		return -1;
+	if ((tmp = get_str_from_var(varcopy, varcopy->dscale)) == NULL)
+		return -1;
+	PGTYPESnumeric_free(varcopy);
 
-	/* unlike float8in, we ignore ERANGE from strtod */
 	val = strtod(tmp, &endptr);
+	if (errno == ERANGE)
+	{
+		free(tmp);
+		errno = PGTYPES_NUM_OVERFLOW;
+		return -1;
+	}
+
+	/* can't free tmp yet, endptr points still into it */
 	if (*endptr != '\0')
 	{
 		/* shouldn't happen ... */
@@ -1470,8 +1490,8 @@ numericvar_to_double_no_overflow(numeric *var, double *dp)
 		errno = PGTYPES_NUM_BAD_NUMERIC;
 		return -1;
 	}
-	*dp = val;
 	free(tmp);
+	*dp = val;
 	return 0;
 }
 
@@ -1509,28 +1529,23 @@ PGTYPESnumeric_to_int(numeric *nv, int *ip)
 int
 PGTYPESnumeric_to_long(numeric *nv, long *lp)
 {
-	int			i;
-	long		l = 0;
+	char *s = PGTYPESnumeric_to_asc(nv, 0);
+	char *endptr;
 
-	for (i = 1; i < nv->weight + 2; i++)
-	{
-		l *= 10;
-		l += nv->buf[i];
-	}
-	if (nv->buf[i] >= 5)
-	{
-		/* round up */
-		l++;
-	}
-	if (l > LONG_MAX || l < 0)
+	if (s == NULL)
+		return -1;
+
+	errno = 0;
+	*lp = strtol(s, &endptr, 10);
+	if (endptr == s)
+		/* this should not happen actually */
+		return -1;
+	if (errno == ERANGE)
 	{
 		errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
 	}
-
-	if (nv->sign == NUMERIC_NEG)
-		l *= -1;
-	*lp = l;
+	free(s);
 	return 0;
 }
 

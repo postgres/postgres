@@ -5,7 +5,8 @@ include ../Makefile.regress
 
 TESTS = dt_test dt_test.c \
         dt_test2 dt_test2.c \
-        num_test num_test.c
+        num_test num_test.c \
+        num_test2 num_test2.c
 
 all: $(TESTS)
 

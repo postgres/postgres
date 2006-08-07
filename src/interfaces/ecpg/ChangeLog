@@ -2068,5 +2068,9 @@ We Aug  2 13:15:25 CEST 2006
 Fr Aug  4 10:44:30 CEST 2006
 
 	- Applied test suite update by Joachim Wieland <joe@mcknight.de>.
+
+Mo Aug  7 14:56:44 CEST 2006
+
+	- Joachim fixed some bugs in numeric handling in pgtypeslib.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

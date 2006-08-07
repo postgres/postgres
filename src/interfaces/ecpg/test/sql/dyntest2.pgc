@@ -25,7 +25,6 @@ exec sql begin declare section;
   int DATETIME_INTERVAL_CODE;
   char NAME[120];
   char STRINGVAR[1024];
-  float FLOATVAR;
   double DOUBLEVAR;
   char *QUERY;
 exec sql end declare section;
@@ -35,13 +34,17 @@ exec sql end declare section;
 
   ECPGdebug(1, stderr);
 
-  QUERY="select rulename, ev_class, ev_attr, ev_type, is_instead, ev_qual from pg_rewrite order by rulename limit 2";
+  QUERY="select * from dyntest";
 
   exec sql whenever sqlerror do error();
 
   exec sql allocate descriptor MYDESC;
 
   exec sql connect to REGRESSDB1;
+
+  exec sql create table dyntest (name char(14), d float8, i int, bignumber int8, b boolean, comment text, day date);
+  exec sql insert into dyntest values('first entry', 14.7, 14, 123045607890, true, 'The world''''s most advanced open source database.', '1987-07-14');
+  exec sql insert into dyntest values('second entry', 1407.87, 1407, 987065403210, false, 'The elephant never forgets.', '1999-11-5');
 
   exec sql prepare MYQUERY from :QUERY;
   exec sql declare MYCURS cursor for MYQUERY;
@@ -68,12 +71,11 @@ exec sql end declare section;
      		:LENGTH = length, :OCTET_LENGTH=octet_length,
      		:RETURNED_OCTET_LENGTH=returned_octet_length,
      		:PRECISION = precision, :SCALE=scale,
-     		/* :NULLABLE=nullable, */ :NAME=name,
-     		:INDICATOR=indicator;
+     		:NAME=name, :INDICATOR=indicator;
      	printf("%2d\t%s (type: %d length: %d precision: %d scale: %d\n"
 		"\toctet_length: %d returned_octet_length: %d)\n\t= "
      			,INDEX,NAME,TYPE,LENGTH,PRECISION,SCALE
-     			,OCTET_LENGTH,RETURNED_OCTET_LENGTH /* ,NULLABLE */);
+     			,OCTET_LENGTH,RETURNED_OCTET_LENGTH);
      	if (INDICATOR==-1) printf("NULL\n");
         else switch (TYPE)
      	{
@@ -81,28 +83,10 @@ exec sql end declare section;
      	        exec sql get descriptor MYDESC value :INDEX :BOOLVAR=data;
      		printf("%s\n",BOOLVAR ? "true":"false");
      		break;
-     	   case SQL3_NUMERIC:
-     	   case SQL3_DECIMAL:
-     	        if (SCALE==0)
-     	        {
-     	           exec sql get descriptor MYDESC value :INDEX :INTVAR=data;
-     	           printf("%d\n",INTVAR);
-     	        }
-     	        else
-     	        {
-     	           exec sql get descriptor MYDESC value :INDEX :FLOATVAR=data;
-     	           printf("%.*f\n",SCALE,FLOATVAR);
-     	        }
-     	        break;
      	   case SQL3_INTEGER:
      	   case SQL3_SMALLINT:
      	        exec sql get descriptor MYDESC value :INDEX :INTVAR=data;
      	        printf("%d\n",INTVAR);
-     	        break;
-     	   case SQL3_FLOAT:
-     	   case SQL3_REAL:
-     	        exec sql get descriptor MYDESC value :INDEX :FLOATVAR=data;
-     	        printf("%.*f\n",PRECISION,FLOATVAR);
      	        break;
      	   case SQL3_DOUBLE_PRECISION:
      	        exec sql get descriptor MYDESC value :INDEX :DOUBLEVAR=data;
@@ -113,10 +97,6 @@ exec sql end declare section;
      	   		:DATETIME_INTERVAL_CODE=datetime_interval_code,
      	   		:STRINGVAR=data;
      	        printf("%d \"%s\"\n",DATETIME_INTERVAL_CODE,STRINGVAR);
-     	        break;
-     	   case SQL3_INTERVAL:
-     	        exec sql get descriptor MYDESC value :INDEX :STRINGVAR=data;
-     	        printf("\"%s\"\n",STRINGVAR);
      	        break;
      	   case SQL3_CHARACTER:
      	   case SQL3_CHARACTER_VARYING:

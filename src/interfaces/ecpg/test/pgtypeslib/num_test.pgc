@@ -15,6 +15,8 @@ main(void)
 		/* = {0, 0, 0, 0, 0, NULL, NULL} ; */
 	exec sql end declare section;
 	double d;
+	long l1, l2;
+	int i;
 
 	ECPGdebug(1, stderr);
 	exec sql whenever sqlerror do sqlprint();
@@ -27,7 +29,7 @@ main(void)
 	value1 = PGTYPESnumeric_new();
 	PGTYPESnumeric_from_int(1407, value1);
 	text = PGTYPESnumeric_to_asc(value1, -1);
-	printf("long = %s\n", text);
+	printf("from int = %s\n", text);
 	free(text);
 	PGTYPESnumeric_free(value1);
 
@@ -66,6 +68,12 @@ main(void)
 	text = PGTYPESnumeric_to_asc(res, -1);
 	PGTYPESnumeric_to_double(res, &d);
 	printf("div = %s %e\n", text, d);
+
+	value1 = PGTYPESnumeric_from_asc("2E7", NULL);
+	value2 = PGTYPESnumeric_from_asc("14", NULL);
+	i = PGTYPESnumeric_to_long(value1, &l1) | PGTYPESnumeric_to_long(value2, &l2);
+	printf("to long(%d) = %ld %ld\n", i, l1, l2);
+
 	free(text);
 	PGTYPESnumeric_free(value1);
 	PGTYPESnumeric_free(value2);

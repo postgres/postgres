@@ -118,25 +118,31 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 if (sqlca.sqlcode < 0) dosqlprint (  );}
 #line 39 "test_informix.pgc"
 
-
-	/* this however should be ok */
-	{ ECPGdo(__LINE__, 1, 1, NULL, "select  i  from test where j = ( select  j  from test     limit 1  )  ", ECPGt_EOIT, ECPGt_EORT);
-#line 42 "test_informix.pgc"
+	{ ECPGtrans(__LINE__, NULL, "rollback");
+#line 40 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 42 "test_informix.pgc"
+#line 40 "test_informix.pgc"
+
+
+	/* this however should be ok */
+	{ ECPGdo(__LINE__, 1, 1, NULL, "select  i  from test where j = ( select  j  from test    order by i limit 1  )  ", ECPGt_EOIT, ECPGt_EORT);
+#line 43 "test_informix.pgc"
+
+if (sqlca.sqlcode < 0) dosqlprint (  );}
+#line 43 "test_informix.pgc"
 
 	printf("SELECT: %ld=%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
 	if (sqlca.sqlcode != 0) { ECPGtrans(__LINE__, NULL, "rollback");
-#line 44 "test_informix.pgc"
+#line 45 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 44 "test_informix.pgc"
+#line 45 "test_informix.pgc"
 
 
 	 ECPG_informix_set_var( 0, &( i ), __LINE__);\
   /* declare c  cursor  for select  *  from test where i <=  ?   */
-#line 46 "test_informix.pgc"
+#line 47 "test_informix.pgc"
 
 	openit();
 
@@ -149,10 +155,10 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_decimal,&(j),(long)1,(long)1,sizeof(decimal), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 53 "test_informix.pgc"
+#line 54 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 53 "test_informix.pgc"
+#line 54 "test_informix.pgc"
 
 		if (sqlca.sqlcode == 100) break;
 		else if (sqlca.sqlcode != 0) printf ("Error: %ld\n", sqlca.sqlcode);
@@ -174,53 +180,53 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 	{ ECPGdo(__LINE__, 1, 1, NULL, "delete from test  where i =  ?", 
 	ECPGt_decimal,&(n),(long)1,(long)1,sizeof(decimal), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 71 "test_informix.pgc"
+#line 72 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 71 "test_informix.pgc"
+#line 72 "test_informix.pgc"
 
 	printf("DELETE: %ld\n", sqlca.sqlcode);
 
 	{ ECPGdo(__LINE__, 1, 1, NULL, "select  1  from test where i = 14  ", ECPGt_EOIT, ECPGt_EORT);
-#line 74 "test_informix.pgc"
+#line 75 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 74 "test_informix.pgc"
+#line 75 "test_informix.pgc"
 
 	printf("Exists: %ld\n", sqlca.sqlcode);
 
 	{ ECPGdo(__LINE__, 1, 1, NULL, "select  1  from test where i = 147  ", ECPGt_EOIT, ECPGt_EORT);
-#line 77 "test_informix.pgc"
+#line 78 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 77 "test_informix.pgc"
+#line 78 "test_informix.pgc"
 
 	printf("Does not exist: %ld\n", sqlca.sqlcode);
 
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 80 "test_informix.pgc"
+#line 81 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 80 "test_informix.pgc"
+#line 81 "test_informix.pgc"
 
 	{ ECPGdo(__LINE__, 1, 1, NULL, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
-#line 81 "test_informix.pgc"
+#line 82 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 81 "test_informix.pgc"
+#line 82 "test_informix.pgc"
 
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 82 "test_informix.pgc"
+#line 83 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 82 "test_informix.pgc"
+#line 83 "test_informix.pgc"
 
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 84 "test_informix.pgc"
+#line 85 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 84 "test_informix.pgc"
+#line 85 "test_informix.pgc"
 
 
 	return 0;
@@ -231,10 +237,10 @@ static void openit(void)
 	{ ECPGdo(__LINE__, 1, 1, NULL, "declare c  cursor  for select  *  from test where i <=  ?  ", 
 	ECPGt_int,&(*( int  *)(ECPG_informix_get_var( 0))),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 91 "test_informix.pgc"
+#line 92 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
-#line 91 "test_informix.pgc"
+#line 92 "test_informix.pgc"
 
 }
 

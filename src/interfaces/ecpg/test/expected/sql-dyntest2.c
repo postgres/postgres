@@ -162,7 +162,6 @@ int main(int argc,char **argv)
    
    
    
-   
 
 #line 20 "dyntest2.pgc"
  int  COUNT    ;
@@ -189,61 +188,77 @@ int main(int argc,char **argv)
  char  STRINGVAR [ 1024 ]    ;
  
 #line 28 "dyntest2.pgc"
- float  FLOATVAR    ;
- 
-#line 29 "dyntest2.pgc"
  double  DOUBLEVAR    ;
  
-#line 30 "dyntest2.pgc"
+#line 29 "dyntest2.pgc"
  char * QUERY    ;
 /* exec sql end declare section */
-#line 31 "dyntest2.pgc"
+#line 30 "dyntest2.pgc"
 
   int done=0;
 
   /* exec sql var BOOLVAR is bool   */
-#line 34 "dyntest2.pgc"
+#line 33 "dyntest2.pgc"
 
 
   ECPGdebug(1, stderr);
 
-  QUERY="select rulename, ev_class, ev_attr, ev_type, is_instead, ev_qual from pg_rewrite order by rulename limit 2";
+  QUERY="select * from dyntest";
 
   /* exec sql whenever sqlerror  do error (  ) ; */
-#line 40 "dyntest2.pgc"
+#line 39 "dyntest2.pgc"
 
 
   ECPGallocate_desc(__LINE__, "MYDESC");
-#line 42 "dyntest2.pgc"
+#line 41 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );
-#line 42 "dyntest2.pgc"
+#line 41 "dyntest2.pgc"
 
 
   { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
-#line 44 "dyntest2.pgc"
+#line 43 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 44 "dyntest2.pgc"
+#line 43 "dyntest2.pgc"
+
+
+  { ECPGdo(__LINE__, 0, 1, NULL, "create  table dyntest ( name char  ( 14 )    , d float8   , i int   , bignumber int8   , b boolean   , comment text   , day date   )    ", ECPGt_EOIT, ECPGt_EORT);
+#line 45 "dyntest2.pgc"
+
+if (sqlca.sqlcode < 0) error (  );}
+#line 45 "dyntest2.pgc"
+
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into dyntest values( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' )", ECPGt_EOIT, ECPGt_EORT);
+#line 46 "dyntest2.pgc"
+
+if (sqlca.sqlcode < 0) error (  );}
+#line 46 "dyntest2.pgc"
+
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into dyntest values( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' )", ECPGt_EOIT, ECPGt_EORT);
+#line 47 "dyntest2.pgc"
+
+if (sqlca.sqlcode < 0) error (  );}
+#line 47 "dyntest2.pgc"
 
 
   { ECPGprepare(__LINE__, "MYQUERY" , QUERY);
-#line 46 "dyntest2.pgc"
+#line 49 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 46 "dyntest2.pgc"
+#line 49 "dyntest2.pgc"
 
   /* declare MYCURS  cursor  for ? */
-#line 47 "dyntest2.pgc"
+#line 50 "dyntest2.pgc"
 
 
   { ECPGdo(__LINE__, 0, 1, NULL, "declare MYCURS  cursor  for ?", 
 	ECPGt_char_variable,(ECPGprepared_statement("MYQUERY")),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 49 "dyntest2.pgc"
+#line 52 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 49 "dyntest2.pgc"
+#line 52 "dyntest2.pgc"
 
 
   while (1)
@@ -251,20 +266,20 @@ if (sqlca.sqlcode < 0) error (  );}
      { ECPGdo(__LINE__, 0, 1, NULL, "fetch in MYCURS", ECPGt_EOIT, 
 	ECPGt_descriptor, "MYDESC", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 53 "dyntest2.pgc"
+#line 56 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 53 "dyntest2.pgc"
+#line 56 "dyntest2.pgc"
 
 
      if (sqlca.sqlcode) break;
 
      { ECPGget_desc_header(__LINE__, "MYDESC", &(COUNT));
 
-#line 57 "dyntest2.pgc"
+#line 60 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 57 "dyntest2.pgc"
+#line 60 "dyntest2.pgc"
 
      if (!done)
      {
@@ -274,7 +289,7 @@ if (sqlca.sqlcode < 0) error (  );}
 
      for (INDEX=1;INDEX<=COUNT;++INDEX)
      {
-     	/* :NULLABLE=nullable, */{ ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_indicator,
+     	{ ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_indicator,
 	ECPGt_int,&(INDICATOR),(long)1,(long)1,sizeof(int), ECPGd_name,
 	ECPGt_char,(NAME),(long)120,(long)1,(120)*sizeof(char), ECPGd_scale,
 	ECPGt_int,&(SCALE),(long)1,(long)1,sizeof(int), ECPGd_precision,
@@ -284,15 +299,15 @@ if (sqlca.sqlcode < 0) error (  );}
 	ECPGt_int,&(LENGTH),(long)1,(long)1,sizeof(int), ECPGd_type,
 	ECPGt_int,&(TYPE),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
-#line 72 "dyntest2.pgc"
+#line 74 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 72 "dyntest2.pgc"
+#line 74 "dyntest2.pgc"
 
      	printf("%2d\t%s (type: %d length: %d precision: %d scale: %d\n"
 		"\toctet_length: %d returned_octet_length: %d)\n\t= "
      			,INDEX,NAME,TYPE,LENGTH,PRECISION,SCALE
-     			,OCTET_LENGTH,RETURNED_OCTET_LENGTH /* ,NULLABLE */);
+     			,OCTET_LENGTH,RETURNED_OCTET_LENGTH);
      	if (INDICATOR==-1) printf("NULL\n");
         else switch (TYPE)
      	{
@@ -300,72 +315,33 @@ if (sqlca.sqlcode < 0) error (  );}
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_bool,&(BOOLVAR),(long)1,(long)1,sizeof(bool), ECPGd_EODT);
 
-#line 81 "dyntest2.pgc"
+#line 83 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 81 "dyntest2.pgc"
+#line 83 "dyntest2.pgc"
 
      		printf("%s\n",BOOLVAR ? "true":"false");
      		break;
-     	   case SQL3_NUMERIC:
-     	   case SQL3_DECIMAL:
-     	        if (SCALE==0)
-     	        {
-     	           { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
-	ECPGt_int,&(INTVAR),(long)1,(long)1,sizeof(int), ECPGd_EODT);
-
-#line 88 "dyntest2.pgc"
-
-if (sqlca.sqlcode < 0) error (  );}
-#line 88 "dyntest2.pgc"
-
-     	           printf("%d\n",INTVAR);
-     	        }
-     	        else
-     	        {
-     	           { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
-	ECPGt_float,&(FLOATVAR),(long)1,(long)1,sizeof(float), ECPGd_EODT);
-
-#line 93 "dyntest2.pgc"
-
-if (sqlca.sqlcode < 0) error (  );}
-#line 93 "dyntest2.pgc"
-
-     	           printf("%.*f\n",SCALE,FLOATVAR);
-     	        }
-     	        break;
      	   case SQL3_INTEGER:
      	   case SQL3_SMALLINT:
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_int,&(INTVAR),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
-#line 99 "dyntest2.pgc"
+#line 88 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 99 "dyntest2.pgc"
+#line 88 "dyntest2.pgc"
 
      	        printf("%d\n",INTVAR);
-     	        break;
-     	   case SQL3_FLOAT:
-     	   case SQL3_REAL:
-     	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
-	ECPGt_float,&(FLOATVAR),(long)1,(long)1,sizeof(float), ECPGd_EODT);
-
-#line 104 "dyntest2.pgc"
-
-if (sqlca.sqlcode < 0) error (  );}
-#line 104 "dyntest2.pgc"
-
-     	        printf("%.*f\n",PRECISION,FLOATVAR);
      	        break;
      	   case SQL3_DOUBLE_PRECISION:
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_double,&(DOUBLEVAR),(long)1,(long)1,sizeof(double), ECPGd_EODT);
 
-#line 108 "dyntest2.pgc"
+#line 92 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 108 "dyntest2.pgc"
+#line 92 "dyntest2.pgc"
 
      	        printf("%.*f\n",PRECISION,DOUBLEVAR);
      	        break;
@@ -374,33 +350,22 @@ if (sqlca.sqlcode < 0) error (  );}
 	ECPGt_char,(STRINGVAR),(long)1024,(long)1,(1024)*sizeof(char), ECPGd_di_code,
 	ECPGt_int,&(DATETIME_INTERVAL_CODE),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
-#line 114 "dyntest2.pgc"
+#line 98 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 114 "dyntest2.pgc"
+#line 98 "dyntest2.pgc"
 
      	        printf("%d \"%s\"\n",DATETIME_INTERVAL_CODE,STRINGVAR);
-     	        break;
-     	   case SQL3_INTERVAL:
-     	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
-	ECPGt_char,(STRINGVAR),(long)1024,(long)1,(1024)*sizeof(char), ECPGd_EODT);
-
-#line 118 "dyntest2.pgc"
-
-if (sqlca.sqlcode < 0) error (  );}
-#line 118 "dyntest2.pgc"
-
-     	        printf("\"%s\"\n",STRINGVAR);
      	        break;
      	   case SQL3_CHARACTER:
      	   case SQL3_CHARACTER_VARYING:
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_char,(STRINGVAR),(long)1024,(long)1,(1024)*sizeof(char), ECPGd_EODT);
 
-#line 123 "dyntest2.pgc"
+#line 103 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 123 "dyntest2.pgc"
+#line 103 "dyntest2.pgc"
 
      	        printf("\"%s\"\n",STRINGVAR);
      	        break;
@@ -408,10 +373,10 @@ if (sqlca.sqlcode < 0) error (  );}
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_char,(STRINGVAR),(long)1024,(long)1,(1024)*sizeof(char), ECPGd_EODT);
 
-#line 127 "dyntest2.pgc"
+#line 107 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 127 "dyntest2.pgc"
+#line 107 "dyntest2.pgc"
 
      	        printf("<\"%s\">\n",STRINGVAR);
      	        break;
@@ -420,17 +385,17 @@ if (sqlca.sqlcode < 0) error (  );}
   }
 
   { ECPGdo(__LINE__, 0, 1, NULL, "close MYCURS", ECPGt_EOIT, ECPGt_EORT);
-#line 134 "dyntest2.pgc"
+#line 114 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 134 "dyntest2.pgc"
+#line 114 "dyntest2.pgc"
 
 
   ECPGdeallocate_desc(__LINE__, "MYDESC");
-#line 136 "dyntest2.pgc"
+#line 116 "dyntest2.pgc"
 
 if (sqlca.sqlcode < 0) error (  );
-#line 136 "dyntest2.pgc"
+#line 116 "dyntest2.pgc"
 
 
   return 0;

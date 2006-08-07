@@ -1,11 +1,10 @@
 Date: 1966-01-17
 timestamp: 2000-07-12 17:34:29
-interval: @ 13556 days 12 hours 34 mins
+interval: @ 13556 days 12 hours 34 mins 14 secs
 m: 4, d: 19, y: 1998
 date seems to get encoded to julian -622
 m: 4, d: 19, y: 1998
 date_day of 2003-12-04 17:34:29 is 4
-using date 2003-12-04 17:34:29
 Above date in format "(ddd), mmm. dd, yyyy, repeat: (ddd), mmm. dd, yyyy. end" is "(Thu), Dec. 04, 2003, repeat: (Thu), Dec. 04, 2003. end"
 date_defmt_asc1: 1995-12-25
 date_defmt_asc2: 0095-12-25

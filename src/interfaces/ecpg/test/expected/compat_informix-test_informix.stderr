@@ -32,63 +32,61 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlstate 21000 (sqlcode: -284) in line 39, ''more than one row returned by a subquery used as an expression' in line 39.'.
 [NO_PID]: sqlca: code: -284, state: 21000
-[NO_PID]: ECPGexecute line 42: QUERY: select  i  from test where j = ( select  j  from test     limit 1  )   on connection regress1
+[NO_PID]: ECPGtrans line 40 action = rollback connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 42: Error: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+[NO_PID]: ECPGexecute line 43: QUERY: select  i  from test where j = ( select  j  from test    order by i limit 1  )   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 25P02 (sqlcode: -400) in line 42, ''current transaction is aborted, commands ignored until end of transaction block' in line 42.'.
-[NO_PID]: sqlca: code: -400, state: 25P02
-[NO_PID]: ECPGtrans line 44 action = rollback connection = regress1
+[NO_PID]: ECPGexecute line 43: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 91: QUERY: declare c  cursor  for select  *  from test where i <=  14   on connection regress1
+[NO_PID]: ECPGexecute line 92: QUERY: declare c  cursor  for select  *  from test where i <=  14   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 91 Ok: DECLARE CURSOR
+[NO_PID]: ECPGexecute line 92 Ok: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: QUERY: fetch forward from c on connection regress1
+[NO_PID]: ECPGexecute line 54: QUERY: fetch forward from c on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: Correctly got 1 tuples with 2 fields
+[NO_PID]: ECPGexecute line 54: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 53: RESULT: 7 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 54: RESULT: 7 offset: 4 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 53: RESULT: 0 offset: 52 array: Yes
+[NO_PID]: ECPGget_data line 54: RESULT: 0 offset: 52 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: QUERY: fetch forward from c on connection regress1
+[NO_PID]: ECPGexecute line 54: QUERY: fetch forward from c on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: Correctly got 1 tuples with 2 fields
+[NO_PID]: ECPGexecute line 54: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 53: RESULT: 14 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 54: RESULT: 14 offset: 4 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 53: RESULT: 1 offset: 52 array: Yes
+[NO_PID]: ECPGget_data line 54: RESULT: 1 offset: 52 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: QUERY: fetch forward from c on connection regress1
+[NO_PID]: ECPGexecute line 54: QUERY: fetch forward from c on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: Correctly got 0 tuples with 2 fields
+[NO_PID]: ECPGexecute line 54: Correctly got 0 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 53, 'No data found in line 53.'.
+[NO_PID]: raising sqlcode 100 in line 54, 'No data found in line 54.'.
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGexecute line 71: QUERY: delete from test  where i =  21.0 on connection regress1
+[NO_PID]: ECPGexecute line 72: QUERY: delete from test  where i =  21.0 on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 71 Ok: DELETE 0
+[NO_PID]: ECPGexecute line 72 Ok: DELETE 0
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 71, 'No data found in line 71.'.
+[NO_PID]: raising sqlcode 100 in line 72, 'No data found in line 72.'.
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGexecute line 74: QUERY: select  1  from test where i = 14   on connection regress1
+[NO_PID]: ECPGexecute line 75: QUERY: select  1  from test where i = 14   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 74: Correctly got 1 tuples with 1 fields
+[NO_PID]: ECPGexecute line 75: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 77: QUERY: select  1  from test where i = 147   on connection regress1
+[NO_PID]: ECPGexecute line 78: QUERY: select  1  from test where i = 147   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 77: Correctly got 0 tuples with 1 fields
+[NO_PID]: ECPGexecute line 78: Correctly got 0 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 77, 'No data found in line 77.'.
+[NO_PID]: raising sqlcode 100 in line 78, 'No data found in line 78.'.
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGtrans line 80 action = commit connection = regress1
+[NO_PID]: ECPGtrans line 81 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 81: QUERY: drop table test  on connection regress1
+[NO_PID]: ECPGexecute line 82: QUERY: drop table test  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 81 Ok: DROP TABLE
+[NO_PID]: ECPGexecute line 82 Ok: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 82 action = commit connection = regress1
+[NO_PID]: ECPGtrans line 83 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection regress1 closed.
 [NO_PID]: sqlca: code: 0, state: 00000
