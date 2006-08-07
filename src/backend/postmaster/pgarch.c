@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.24 2006/06/27 22:16:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.25 2006/08/07 17:41:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,7 +286,6 @@ static void
 pgarch_MainLoop(void)
 {
 	time_t		last_copy_time = 0;
-	time_t		curtime;
 
 	/*
 	 * We run the copy loop immediately upon entry, in case there are
@@ -298,7 +297,6 @@ pgarch_MainLoop(void)
 
 	do
 	{
-
 		/* Check for config update */
 		if (got_SIGHUP)
 		{
@@ -318,15 +316,19 @@ pgarch_MainLoop(void)
 
 		/*
 		 * There shouldn't be anything for the archiver to do except to wait
-		 * for a signal, ... however, the archiver exists to protect our data,
-		 * so she wakes up occasionally to allow herself to be proactive. In
-		 * particular this avoids getting stuck if a signal arrives just
-		 * before we sleep.
+		 * for a signal ... however, the archiver exists to protect our data,
+		 * so she wakes up occasionally to allow herself to be proactive.
+		 *
+		 * On some platforms, signals won't interrupt the sleep.  To ensure we
+		 * respond reasonably promptly when someone signals us, break down the
+		 * sleep into 1-second increments, and check for interrupts after each
+		 * nap.
 		 */
-		if (!wakened)
+		while (!(wakened || got_SIGHUP))
 		{
-			pg_usleep(PGARCH_AUTOWAKE_INTERVAL * 1000000L);
+			time_t		curtime;
 
+			pg_usleep(1000000L);
 			curtime = time(NULL);
 			if ((unsigned int) (curtime - last_copy_time) >=
 				(unsigned int) PGARCH_AUTOWAKE_INTERVAL)
