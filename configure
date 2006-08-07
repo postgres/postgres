@@ -2432,12 +2432,58 @@ else
   fi
 fi
 
-if test "$GCC" = yes; then
-  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith"
+# Some versions of GCC support some additional useful warning flags.
+# Check whether they are supported, and add them to CFLAGS if so.
 
-  # Some versions of GCC support some additional useful warning flags.
-  # Check whether they are supported, and add them to CFLAGS if so.
-  echo "$as_me:$LINENO: checking if $CC supports -Wdeclaration-after-statement" >&5
+if test "$GCC" = yes; then
+
+# ICC pretends to be GCC but it's lying; it doesn't support these options.
+# So we have to check if "GCC" is really ICC.
+
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+#ifndef __INTEL_COMPILER
+choke me
+#endif
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ICC=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ICC=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
+  if test "$ICC" = no; then
+    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith"
+
+    echo "$as_me:$LINENO: checking if $CC supports -Wdeclaration-after-statement" >&5
 echo $ECHO_N "checking if $CC supports -Wdeclaration-after-statement... $ECHO_C" >&6
 pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -Wdeclaration-after-statement"
@@ -2482,52 +2528,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 
-  echo "$as_me:$LINENO: checking if $CC supports -Wold-style-definition" >&5
-echo $ECHO_N "checking if $CC supports -Wold-style-definition... $ECHO_C" >&6
-pgac_save_CFLAGS=$CFLAGS
-CFLAGS="$pgac_save_CFLAGS -Wold-style-definition"
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-CFLAGS="$pgac_save_CFLAGS"
-                    echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-
-  echo "$as_me:$LINENO: checking if $CC supports -Wendif-labels" >&5
+    echo "$as_me:$LINENO: checking if $CC supports -Wendif-labels" >&5
 echo $ECHO_N "checking if $CC supports -Wendif-labels... $ECHO_C" >&6
 pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -Wendif-labels"
@@ -2572,12 +2573,109 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
 
+  else
+    # Intel compiler has a bug/misoptimization in checking for
+    # division by NAN (NaN == 0), -mp1 fixes it, so add it to the
+    # CFLAGS.
+    echo "$as_me:$LINENO: checking if $CC supports -mp1" >&5
+echo $ECHO_N "checking if $CC supports -mp1... $ECHO_C" >&6
+pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -mp1"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+CFLAGS="$pgac_save_CFLAGS"
+                    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
+  fi
 
   # Disable strict-aliasing rules; needed for gcc 3.3+
   echo "$as_me:$LINENO: checking if $CC supports -fno-strict-aliasing" >&5
 echo $ECHO_N "checking if $CC supports -fno-strict-aliasing... $ECHO_C" >&6
 pgac_save_CFLAGS=$CFLAGS
 CFLAGS="$pgac_save_CFLAGS -fno-strict-aliasing"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+CFLAGS="$pgac_save_CFLAGS"
+                    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
+elif test x"${CC}" = x"xlc"; then
+  # AIX xlc has to have strict aliasing turned off too
+  echo "$as_me:$LINENO: checking if $CC supports -qnoansialias" >&5
+echo $ECHO_N "checking if $CC supports -qnoansialias... $ECHO_C" >&6
+pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -qnoansialias"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
@@ -2637,7 +2735,6 @@ fi
 # Check if the compiler still works with the template settings
 echo "$as_me:$LINENO: checking whether the C compiler still works" >&5
 echo $ECHO_N "checking whether the C compiler still works... $ECHO_C" >&6
-
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
