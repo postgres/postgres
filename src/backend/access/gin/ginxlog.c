@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.3 2006/07/14 14:52:16 momjian Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.4 2006/08/07 16:57:56 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -528,7 +528,8 @@ gin_xlog_cleanup(void) {
 
 	topCtx = MemoryContextSwitchTo(opCtx);
 
-	foreach(l, incomplete_splits) {
+	foreach(l, incomplete_splits)
+	{
 		ginIncompleteSplit *split = (ginIncompleteSplit *) lfirst(l);
 		ginContinueSplit( split );
 		MemoryContextReset( opCtx );
@@ -538,3 +539,10 @@ gin_xlog_cleanup(void) {
 	MemoryContextDelete(opCtx);
 }
 
+bool
+gin_safe_restartpoint(void)
+{
+	if (incomplete_splits)
+		return false;
+	return true;
+}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.102 2006/07/25 19:13:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.103 2006/08/07 16:57:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -545,5 +545,6 @@ extern void btree_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void btree_desc(StringInfo buf, uint8 xl_info, char *rec);
 extern void btree_xlog_startup(void);
 extern void btree_xlog_cleanup(void);
+extern bool btree_safe_restartpoint(void);
 
 #endif   /* NBTREE_H */

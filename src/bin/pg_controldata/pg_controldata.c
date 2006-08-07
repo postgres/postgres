@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.29 2006/06/07 22:24:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.30 2006/08/07 16:57:56 tgl Exp $
  */
 #include "postgres.h"
 
@@ -50,8 +50,10 @@ dbState(DBState state)
 			return _("shut down");
 		case DB_SHUTDOWNING:
 			return _("shutting down");
-		case DB_IN_RECOVERY:
-			return _("in recovery");
+		case DB_IN_CRASH_RECOVERY:
+			return _("in crash recovery");
+		case DB_IN_ARCHIVE_RECOVERY:
+			return _("in archive recovery");
 		case DB_IN_PRODUCTION:
 			return _("in production");
 	}
@@ -147,40 +149,70 @@ main(int argc, char *argv[])
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 			 ControlFile.system_identifier);
 
-	printf(_("pg_control version number:            %u\n"), ControlFile.pg_control_version);
-	printf(_("Catalog version number:               %u\n"), ControlFile.catalog_version_no);
-	printf(_("Database system identifier:           %s\n"), sysident_str);
-	printf(_("Database cluster state:               %s\n"), dbState(ControlFile.state));
-	printf(_("pg_control last modified:             %s\n"), pgctime_str);
-	printf(_("Current log file ID:                  %u\n"), ControlFile.logId);
-	printf(_("Next log file segment:                %u\n"), ControlFile.logSeg);
+	printf(_("pg_control version number:            %u\n"),
+		   ControlFile.pg_control_version);
+	printf(_("Catalog version number:               %u\n"),
+		   ControlFile.catalog_version_no);
+	printf(_("Database system identifier:           %s\n"),
+		   sysident_str);
+	printf(_("Database cluster state:               %s\n"),
+		   dbState(ControlFile.state));
+	printf(_("pg_control last modified:             %s\n"),
+		   pgctime_str);
+	printf(_("Current log file ID:                  %u\n"),
+		   ControlFile.logId);
+	printf(_("Next log file segment:                %u\n"),
+		   ControlFile.logSeg);
 	printf(_("Latest checkpoint location:           %X/%X\n"),
-		   ControlFile.checkPoint.xlogid, ControlFile.checkPoint.xrecoff);
+		   ControlFile.checkPoint.xlogid,
+		   ControlFile.checkPoint.xrecoff);
 	printf(_("Prior checkpoint location:            %X/%X\n"),
-	  ControlFile.prevCheckPoint.xlogid, ControlFile.prevCheckPoint.xrecoff);
+		   ControlFile.prevCheckPoint.xlogid,
+		   ControlFile.prevCheckPoint.xrecoff);
 	printf(_("Latest checkpoint's REDO location:    %X/%X\n"),
-		   ControlFile.checkPointCopy.redo.xlogid, ControlFile.checkPointCopy.redo.xrecoff);
+		   ControlFile.checkPointCopy.redo.xlogid,
+		   ControlFile.checkPointCopy.redo.xrecoff);
 	printf(_("Latest checkpoint's UNDO location:    %X/%X\n"),
-		   ControlFile.checkPointCopy.undo.xlogid, ControlFile.checkPointCopy.undo.xrecoff);
-	printf(_("Latest checkpoint's TimeLineID:       %u\n"), ControlFile.checkPointCopy.ThisTimeLineID);
-	printf(_("Latest checkpoint's NextXID:          %u\n"), ControlFile.checkPointCopy.nextXid);
-	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
-	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"), ControlFile.checkPointCopy.nextMulti);
-	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"), ControlFile.checkPointCopy.nextMultiOffset);
-	printf(_("Time of latest checkpoint:            %s\n"), ckpttime_str);
-	printf(_("Maximum data alignment:               %u\n"), ControlFile.maxAlign);
+		   ControlFile.checkPointCopy.undo.xlogid,
+		   ControlFile.checkPointCopy.undo.xrecoff);
+	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
+		   ControlFile.checkPointCopy.ThisTimeLineID);
+	printf(_("Latest checkpoint's NextXID:          %u\n"),
+		   ControlFile.checkPointCopy.nextXid);
+	printf(_("Latest checkpoint's NextOID:          %u\n"),
+		   ControlFile.checkPointCopy.nextOid);
+	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
+		   ControlFile.checkPointCopy.nextMulti);
+	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"),
+		   ControlFile.checkPointCopy.nextMultiOffset);
+	printf(_("Time of latest checkpoint:            %s\n"),
+		   ckpttime_str);
+	printf(_("Minimum recovery ending location:     %X/%X\n"),
+		   ControlFile.minRecoveryPoint.xlogid,
+		   ControlFile.minRecoveryPoint.xrecoff);
+	printf(_("Maximum data alignment:               %u\n"),
+		   ControlFile.maxAlign);
 	/* we don't print floatFormat since can't say much useful about it */
-	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
-	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
-	printf(_("WAL block size:                       %u\n"), ControlFile.xlog_blcksz);
-	printf(_("Bytes per WAL segment:                %u\n"), ControlFile.xlog_seg_size);
-	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
-	printf(_("Maximum columns in an index:          %u\n"), ControlFile.indexMaxKeys);
+	printf(_("Database block size:                  %u\n"),
+		   ControlFile.blcksz);
+	printf(_("Blocks per segment of large relation: %u\n"),
+		   ControlFile.relseg_size);
+	printf(_("WAL block size:                       %u\n"),
+		   ControlFile.xlog_blcksz);
+	printf(_("Bytes per WAL segment:                %u\n"),
+		   ControlFile.xlog_seg_size);
+	printf(_("Maximum length of identifiers:        %u\n"),
+		   ControlFile.nameDataLen);
+	printf(_("Maximum columns in an index:          %u\n"),
+		   ControlFile.indexMaxKeys);
 	printf(_("Date/time type storage:               %s\n"),
 		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
-	printf(_("Maximum length of locale name:        %u\n"), ControlFile.localeBuflen);
-	printf(_("LC_COLLATE:                           %s\n"), ControlFile.lc_collate);
-	printf(_("LC_CTYPE:                             %s\n"), ControlFile.lc_ctype);
+	printf(_("Maximum length of locale name:        %u\n"),
+		   ControlFile.localeBuflen);
+	printf(_("LC_COLLATE:                           %s\n"),
+		   ControlFile.lc_collate);
+	printf(_("LC_CTYPE:                             %s\n"),
+		   ControlFile.lc_ctype);
 
 	return 0;
 }

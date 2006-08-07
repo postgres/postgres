@@ -3,7 +3,7 @@
  *    header file for postgres inverted index access method implementation.
  *
  *  Copyright (c) 2006, PostgreSQL Global Development Group
- *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.5 2006/07/11 16:55:34 teodor Exp $
+ *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.6 2006/08/07 16:57:57 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -234,6 +234,7 @@ extern void gin_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gin_desc(StringInfo buf, uint8 xl_info, char *rec);
 extern void gin_xlog_startup(void);
 extern void gin_xlog_cleanup(void);
+extern bool gin_safe_restartpoint(void);
 
 /* ginbtree.c */
 

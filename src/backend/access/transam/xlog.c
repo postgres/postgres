@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.246 2006/08/06 03:53:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.247 2006/08/07 16:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,7 @@
 
 /* File path names (all relative to $PGDATA) */
 #define BACKUP_LABEL_FILE		"backup_label"
+#define BACKUP_LABEL_OLD		"backup_label.old"
 #define RECOVERY_COMMAND_FILE	"recovery.conf"
 #define RECOVERY_COMMAND_DONE	"recovery.done"
 
@@ -184,9 +185,6 @@ static time_t recoveryTargetTime;
 static TransactionId recoveryStopXid;
 static time_t recoveryStopTime;
 static bool recoveryStopAfter;
-
-/* constraint set by read_backup_label */
-static XLogRecPtr recoveryMinXlogOffset = {0, 0};
 
 /*
  * During normal operation, the only timeline we care about is ThisTimeLineID.
@@ -463,6 +461,7 @@ static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
+static void CheckPointGuts(XLogRecPtr checkPointRedo);
 
 static bool XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
 				XLogRecPtr *lsn, BkpBlock *bkpb);
@@ -499,8 +498,8 @@ static void issue_xlog_fsync(void);
 #ifdef WAL_DEBUG
 static void xlog_outrec(StringInfo buf, XLogRecord *record);
 #endif
-static bool read_backup_label(XLogRecPtr *checkPointLoc);
-static void remove_backup_label(void);
+static bool read_backup_label(XLogRecPtr *checkPointLoc,
+							  XLogRecPtr *minRecoveryLoc);
 static void rm_redo_error_callback(void *arg);
 
 
@@ -4594,9 +4593,11 @@ StartupXLOG(void)
 	CheckPoint	checkPoint;
 	bool		wasShutdown;
 	bool		needNewTimeLine = false;
+	bool		haveBackupLabel = false;
 	XLogRecPtr	RecPtr,
 				LastRec,
 				checkPointLoc,
+				minRecoveryLoc,
 				EndOfLog;
 	uint32		endLogId;
 	uint32		endLogSeg;
@@ -4629,12 +4630,18 @@ StartupXLOG(void)
 		ereport(LOG,
 				(errmsg("database system shutdown was interrupted at %s",
 						str_time(ControlFile->time))));
-	else if (ControlFile->state == DB_IN_RECOVERY)
+	else if (ControlFile->state == DB_IN_CRASH_RECOVERY)
 		ereport(LOG,
 		   (errmsg("database system was interrupted while in recovery at %s",
 				   str_time(ControlFile->time)),
 			errhint("This probably means that some data is corrupted and"
 					" you will have to use the last backup for recovery.")));
+	else if (ControlFile->state == DB_IN_ARCHIVE_RECOVERY)
+		ereport(LOG,
+		   (errmsg("database system was interrupted while in recovery at log time %s",
+				   str_time(ControlFile->checkPointCopy.time)),
+			errhint("If this has occurred more than once some data may be corrupted"
+					" and you may need to choose an earlier recovery target.")));
 	else if (ControlFile->state == DB_IN_PRODUCTION)
 		ereport(LOG,
 				(errmsg("database system was interrupted at %s",
@@ -4673,7 +4680,7 @@ StartupXLOG(void)
 						recoveryTargetTLI,
 						ControlFile->checkPointCopy.ThisTimeLineID)));
 
-	if (read_backup_label(&checkPointLoc))
+	if (read_backup_label(&checkPointLoc, &minRecoveryLoc))
 	{
 		/*
 		 * When a backup_label file is present, we want to roll forward from
@@ -4693,6 +4700,8 @@ StartupXLOG(void)
 					(errmsg("could not locate required checkpoint record"),
 					 errhint("If you are not restoring from a backup, try removing the file \"%s/backup_label\".", DataDir)));
 		}
+		/* set flag to delete it later */
+		haveBackupLabel = true;
 	}
 	else
 	{
@@ -4790,16 +4799,50 @@ StartupXLOG(void)
 	{
 		int			rmid;
 
+		/*
+		 * Update pg_control to show that we are recovering and to show
+		 * the selected checkpoint as the place we are starting from.
+		 * We also mark pg_control with any minimum recovery stop point
+		 * obtained from a backup history file.
+		 */
 		if (InArchiveRecovery)
+		{
 			ereport(LOG,
 					(errmsg("automatic recovery in progress")));
+			ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
+		}
 		else
+		{
 			ereport(LOG,
 					(errmsg("database system was not properly shut down; "
 							"automatic recovery in progress")));
-		ControlFile->state = DB_IN_RECOVERY;
+			ControlFile->state = DB_IN_CRASH_RECOVERY;
+		}
+		ControlFile->prevCheckPoint = ControlFile->checkPoint;
+		ControlFile->checkPoint = checkPointLoc;
+		ControlFile->checkPointCopy = checkPoint;
+		if (minRecoveryLoc.xlogid != 0 || minRecoveryLoc.xrecoff != 0)
+			ControlFile->minRecoveryPoint = minRecoveryLoc;
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
+
+		/*
+		 * If there was a backup label file, it's done its job and the
+		 * info has now been propagated into pg_control.  We must get rid of
+		 * the label file so that if we crash during recovery, we'll pick up
+		 * at the latest recovery restartpoint instead of going all the way
+		 * back to the backup start point.  It seems prudent though to just
+		 * rename the file out of the way rather than delete it completely.
+		 */
+		if (haveBackupLabel)
+		{
+			unlink(BACKUP_LABEL_OLD);
+			if (rename(BACKUP_LABEL_FILE, BACKUP_LABEL_OLD) != 0)
+				ereport(FATAL,
+						(errcode_for_file_access(),
+						 errmsg("could not rename file \"%s\" to \"%s\": %m",
+								BACKUP_LABEL_FILE, BACKUP_LABEL_OLD)));
+		}
 
 		/* Start up the recovery environment */
 		XLogInitRelationCache();
@@ -4927,7 +4970,7 @@ StartupXLOG(void)
 	 * Complain if we did not roll forward far enough to render the backup
 	 * dump consistent.
 	 */
-	if (XLByteLT(EndOfLog, recoveryMinXlogOffset))
+	if (XLByteLT(EndOfLog, ControlFile->minRecoveryPoint))
 	{
 		if (needNewTimeLine)	/* stopped because of stop request */
 			ereport(FATAL,
@@ -5051,34 +5094,20 @@ StartupXLOG(void)
 		pgstat_reset_all();
 
 		/*
-		 * Perform a new checkpoint to update our recovery activity to disk.
+		 * Perform a checkpoint to update all our recovery activity to disk.
 		 *
 		 * Note that we write a shutdown checkpoint rather than an on-line
 		 * one. This is not particularly critical, but since we may be
 		 * assigning a new TLI, using a shutdown checkpoint allows us to have
 		 * the rule that TLI only changes in shutdown checkpoints, which
 		 * allows some extra error checking in xlog_redo.
-		 *
-		 * In case we had to use the secondary checkpoint, make sure that it
-		 * will still be shown as the secondary checkpoint after this
-		 * CreateCheckPoint operation; we don't want the broken primary
-		 * checkpoint to become prevCheckPoint...
 		 */
-		if (XLByteEQ(checkPointLoc, ControlFile->prevCheckPoint))
-			ControlFile->checkPoint = checkPointLoc;
-
 		CreateCheckPoint(true, true);
 
 		/*
 		 * Close down recovery environment
 		 */
 		XLogCloseRelationCache();
-
-		/*
-		 * Now that we've checkpointed the recovery, it's safe to flush old
-		 * backup_label, if present.
-		 */
-		remove_backup_label();
 	}
 
 	/*
@@ -5464,6 +5493,10 @@ CreateCheckPoint(bool shutdown, bool force)
 
 	LWLockRelease(CheckpointStartLock);
 
+	if (!shutdown)
+		ereport(DEBUG2,
+				(errmsg("checkpoint starting")));
+
 	/*
 	 * Get the other info we need for the checkpoint record.
 	 */
@@ -5494,16 +5527,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	 */
 	END_CRIT_SECTION();
 
-	if (!shutdown)
-		ereport(DEBUG2,
-				(errmsg("checkpoint starting")));
-
-	CheckPointCLOG();
-	CheckPointSUBTRANS();
-	CheckPointMultiXact();
-	FlushBufferPool();
-	/* We deliberately delay 2PC checkpointing as long as possible */
-	CheckPointTwoPhase(checkPoint.redo);
+	CheckPointGuts(checkPoint.redo);
 
 	START_CRIT_SECTION();
 
@@ -5589,6 +5613,85 @@ CreateCheckPoint(bool shutdown, bool force)
 						nsegsadded, nsegsremoved, nsegsrecycled)));
 
 	LWLockRelease(CheckpointLock);
+}
+
+/*
+ * Flush all data in shared memory to disk, and fsync
+ *
+ * This is the common code shared between regular checkpoints and
+ * recovery restartpoints.
+ */
+static void
+CheckPointGuts(XLogRecPtr checkPointRedo)
+{
+	CheckPointCLOG();
+	CheckPointSUBTRANS();
+	CheckPointMultiXact();
+	FlushBufferPool();     /* performs all required fsyncs */
+	/* We deliberately delay 2PC checkpointing as long as possible */
+	CheckPointTwoPhase(checkPointRedo);
+}
+
+/*
+ * Set a recovery restart point if appropriate
+ *
+ * This is similar to CreateCheckpoint, but is used during WAL recovery
+ * to establish a point from which recovery can roll forward without
+ * replaying the entire recovery log.  This function is called each time
+ * a checkpoint record is read from XLOG; it must determine whether a
+ * restartpoint is needed or not.
+ */
+static void
+RecoveryRestartPoint(const CheckPoint *checkPoint)
+{
+	int		elapsed_secs;
+	int     rmid;
+
+	/*
+	 * Do nothing if the elapsed time since the last restartpoint is less
+	 * than half of checkpoint_timeout.  (We use a value less than
+	 * checkpoint_timeout so that variations in the timing of checkpoints on
+	 * the master, or speed of transmission of WAL segments to a slave, won't
+	 * make the slave skip a restartpoint once it's synced with the master.)
+	 * Checking true elapsed time keeps us from doing restartpoints too often
+	 * while rapidly scanning large amounts of WAL.
+	 */
+	elapsed_secs = time(NULL) - ControlFile->time;
+	if (elapsed_secs < CheckPointTimeout / 2)
+		return;
+
+	/*
+	 * Is it safe to checkpoint?  We must ask each of the resource managers
+	 * whether they have any partial state information that might prevent a
+	 * correct restart from this point.  If so, we skip this opportunity, but
+	 * return at the next checkpoint record for another try.
+	 */
+	for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
+	{
+		if (RmgrTable[rmid].rm_safe_restartpoint != NULL)
+			if (!(RmgrTable[rmid].rm_safe_restartpoint()))
+				return;
+	}
+
+	/*
+	 * OK, force data out to disk
+	 */
+	CheckPointGuts(checkPoint->redo);
+
+	/*
+	 * Update pg_control so that any subsequent crash will restart from
+	 * this checkpoint.  Note: ReadRecPtr gives the XLOG address of the
+	 * checkpoint record itself.
+	 */
+	ControlFile->prevCheckPoint = ControlFile->checkPoint;
+	ControlFile->checkPoint = ReadRecPtr;
+	ControlFile->checkPointCopy = *checkPoint;
+	ControlFile->time = time(NULL);
+	UpdateControlFile();
+
+	ereport(DEBUG2,
+			(errmsg("recovery restart point at %X/%X",
+					checkPoint->redo.xlogid, checkPoint->redo.xrecoff)));
 }
 
 /*
@@ -5687,6 +5790,8 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			/* Following WAL records should be run with new TLI */
 			ThisTimeLineID = checkPoint.ThisTimeLineID;
 		}
+
+		RecoveryRestartPoint(&checkPoint);
 	}
 	else if (info == XLOG_CHECKPOINT_ONLINE)
 	{
@@ -5709,6 +5814,8 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			ereport(PANIC,
 					(errmsg("unexpected timeline ID %u (should be %u) in checkpoint record",
 							checkPoint.ThisTimeLineID, ThisTimeLineID)));
+
+		RecoveryRestartPoint(&checkPoint);
 	}
 	else if (info == XLOG_SWITCH)
 	{
@@ -6349,14 +6456,14 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
  * point, we will fail to restore a consistent database state.
  *
  * We also attempt to retrieve the corresponding backup history file.
- * If successful, set recoveryMinXlogOffset to constrain valid PITR stopping
+ * If successful, set *minRecoveryLoc to constrain valid PITR stopping
  * points.
  *
  * Returns TRUE if a backup_label was found (and fills the checkpoint
  * location into *checkPointLoc); returns FALSE if not.
  */
 static bool
-read_backup_label(XLogRecPtr *checkPointLoc)
+read_backup_label(XLogRecPtr *checkPointLoc, XLogRecPtr *minRecoveryLoc)
 {
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
@@ -6370,6 +6477,10 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 	FILE	   *lfp;
 	FILE	   *fp;
 	char		ch;
+
+	/* Default is to not constrain recovery stop point */
+	minRecoveryLoc->xlogid = 0;
+	minRecoveryLoc->xrecoff = 0;
 
 	/*
 	 * See if label file is present
@@ -6439,7 +6550,7 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 			ereport(FATAL,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("invalid data in file \"%s\"", histfilename)));
-		recoveryMinXlogOffset = stoppoint;
+		*minRecoveryLoc = stoppoint;
 		if (ferror(fp) || FreeFile(fp))
 			ereport(FATAL,
 					(errcode_for_file_access(),
@@ -6448,24 +6559,6 @@ read_backup_label(XLogRecPtr *checkPointLoc)
 	}
 
 	return true;
-}
-
-/*
- * remove_backup_label: remove any extant backup_label after successful
- * recovery.  Once we have completed the end-of-recovery checkpoint there
- * is no reason to have to replay from the start point indicated by the
- * label (and indeed we'll probably have removed/recycled the needed WAL
- * segments), so remove the label to prevent trouble in later crash recoveries.
- */
-static void
-remove_backup_label(void)
-{
-	if (unlink(BACKUP_LABEL_FILE) != 0)
-		if (errno != ENOENT)
-			ereport(FATAL,
-					(errcode_for_file_access(),
-					 errmsg("could not remove file \"%s\": %m",
-							BACKUP_LABEL_FILE)));
 }
 
 /*

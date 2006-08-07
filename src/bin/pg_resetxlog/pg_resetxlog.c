@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.50 2006/07/14 14:52:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.51 2006/08/07 16:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,6 +578,8 @@ RewriteControlFile(void)
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 	ControlFile.prevCheckPoint.xlogid = 0;
 	ControlFile.prevCheckPoint.xrecoff = 0;
+	ControlFile.minRecoveryPoint.xlogid = 0;
+	ControlFile.minRecoveryPoint.xrecoff = 0;
 
 	/* Contents are protected with a CRC */
 	INIT_CRC32(ControlFile.crc);

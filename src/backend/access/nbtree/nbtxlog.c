@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.36 2006/07/25 19:13:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.37 2006/08/07 16:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -793,4 +793,12 @@ btree_xlog_cleanup(void)
 						  split->is_root, is_only);
 	}
 	incomplete_splits = NIL;
+}
+
+bool
+btree_safe_restartpoint(void)
+{
+	if (incomplete_splits)
+		return false;
+	return true;
 }

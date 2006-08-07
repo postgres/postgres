@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.22 2006/07/14 14:52:16 momjian Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.23 2006/08/07 16:57:56 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -816,6 +816,14 @@ gist_xlog_cleanup(void)
 
 	MemoryContextDelete(opCtx);
 	MemoryContextDelete(insertCtx);
+}
+
+bool
+gist_safe_restartpoint(void)
+{
+	if (incomplete_inserts)
+		return false;
+	return true;
 }
 
 
