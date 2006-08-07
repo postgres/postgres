@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.16 2006/07/11 16:00:44 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.17 2006/08/07 17:39:04 teodor Exp $
  */
 
 #include "ltree.h"
@@ -459,27 +459,13 @@ gist_isparent(ltree_gist * key, ltree * query)
 static bool
 gist_ischild(ltree_gist * key, ltree * query)
 {
-	ltree	   *left = LTG_GETLNODE(key);
-	ltree	   *right = LTG_GETRNODE(key);
-	int4		numlevelL = left->numlevel;
-	int4		numlevelR = right->numlevel;
-	bool		res = true;
+	if (ltree_compare(query, LTG_GETLNODE(key)) < 0)
+		return false;
 
-	if (numlevelL > query->numlevel)
-		left->numlevel = query->numlevel;
+	if (ltree_compare(query, LTG_GETRNODE(key)) > 0)
+		return false;
 
-	if (ltree_compare(query, left) < 0)
-		res = false;
-
-	if (numlevelR > query->numlevel)
-		right->numlevel = query->numlevel;
-
-	if (res && ltree_compare(query, right) > 0)
-		res = false;
-
-	left->numlevel = numlevelL;
-	right->numlevel = numlevelR;
-	return res;
+	return true;
 }
 
 static bool
@@ -547,36 +533,22 @@ gist_tqcmp(ltree * t, lquery * q)
 		ql = LQL_NEXT(ql);
 	}
 
-	return t->numlevel - q->firstgood;
+	return Min(t->numlevel, q->firstgood) - q->firstgood;
 }
 
 static bool
 gist_between(ltree_gist * key, lquery * query)
 {
-	ltree	   *left = LTG_GETLNODE(key);
-	ltree	   *right = LTG_GETRNODE(key);
-	int4		numlevelL = left->numlevel;
-	int4		numlevelR = right->numlevel;
-	bool		res = true;
-
 	if (query->firstgood == 0)
 		return true;
 
-	if (numlevelL > query->firstgood)
-		left->numlevel = query->firstgood;
+	if (gist_tqcmp(LTG_GETLNODE(key), query) > 0)
+		return false;
 
-	if (gist_tqcmp(left, query) > 0)
-		res = false;
+	if (gist_tqcmp(LTG_GETRNODE(key), query) < 0)
+		return false;
 
-	if (numlevelR > query->firstgood)
-		right->numlevel = query->firstgood;
-
-	if (res && gist_tqcmp(right, query) < 0)
-		res = false;
-
-	left->numlevel = numlevelL;
-	right->numlevel = numlevelR;
-	return res;
+	return true;
 }
 
 static bool
@@ -675,7 +647,7 @@ ltree_consistent(PG_FUNCTION_ARGS)
 				gist_isparent(key, (ltree *) query);
 			break;
 		case 11:
-			query = PG_GETARG_LTREE_COPY(1);
+			query = PG_GETARG_LTREE(1);
 			res = (GIST_LEAF(entry)) ?
 				inner_isparent(LTG_NODE(key), (ltree *) query)
 				:
