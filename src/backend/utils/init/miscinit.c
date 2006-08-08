@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.155 2006/07/14 14:52:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.156 2006/08/08 19:15:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1097,14 +1097,14 @@ ValidatePgVersion(const char *path)
  *-------------------------------------------------------------------------
  */
 
-typedef void (*func_ptr) ();
+/* GUC variable: list of library names to be preloaded */
+char	   *preload_libraries_string = NULL;
 
 /*
- * process any libraries that should be preloaded and
- * optionally pre-initialized
+ * process any libraries that should be preloaded at postmaster start
  */
 void
-process_preload_libraries(char *preload_libraries_string)
+process_preload_libraries(void)
 {
 	char	   *rawstring;
 	List	   *elemlist;
@@ -1131,54 +1131,14 @@ process_preload_libraries(char *preload_libraries_string)
 	foreach(l, elemlist)
 	{
 		char	   *tok = (char *) lfirst(l);
-		char	   *sep = strstr(tok, ":");
-		char	   *filename = NULL;
-		char	   *funcname = NULL;
-		func_ptr	initfunc;
+		char	   *filename;
 
-		if (sep)
-		{
-			/*
-			 * a colon separator implies there is an initialization function
-			 * that we need to run in addition to loading the library
-			 */
-			size_t		filename_len = sep - tok;
-			size_t		funcname_len = strlen(tok) - filename_len - 1;
-
-			filename = (char *) palloc(filename_len + 1);
-			memcpy(filename, tok, filename_len);
-			filename[filename_len] = '\0';
-
-			funcname = (char *) palloc(funcname_len + 1);
-			strcpy(funcname, sep + 1);
-		}
-		else
-		{
-			/*
-			 * no separator -- just load the library
-			 */
-			filename = pstrdup(tok);
-			funcname = NULL;
-		}
-
+		filename = pstrdup(tok);
 		canonicalize_path(filename);
-		initfunc = (func_ptr) load_external_function(filename, funcname,
-													 true, NULL);
-		if (initfunc)
-			(*initfunc) ();
-
-		if (funcname)
-			ereport(LOG,
-					(errmsg("preloaded library \"%s\" with initialization function \"%s\"",
-							filename, funcname)));
-		else
-			ereport(LOG,
-					(errmsg("preloaded library \"%s\"",
-							filename)));
-
+		(void) load_external_function(filename, NULL, true, NULL);
+		ereport(LOG,
+				(errmsg("preloaded library \"%s\"", filename)));
 		pfree(filename);
-		if (funcname)
-			pfree(funcname);
 	}
 
 	pfree(rawstring);

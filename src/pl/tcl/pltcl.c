@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.105 2006/06/16 18:42:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.106 2006/08/08 19:15:09 tgl Exp $
  *
  **********************************************************************/
 
@@ -120,14 +120,13 @@ static pltcl_proc_desc *pltcl_current_prodesc = NULL;
 /**********************************************************************
  * Forward declarations
  **********************************************************************/
-static void pltcl_init_all(void);
-static void pltcl_init_interp(Tcl_Interp *interp);
-
-static void pltcl_init_load_unknown(Tcl_Interp *interp);
-
 Datum		pltcl_call_handler(PG_FUNCTION_ARGS);
 Datum		pltclu_call_handler(PG_FUNCTION_ARGS);
-void		pltcl_init(void);
+void		_PG_init(void);
+
+static void pltcl_init_all(void);
+static void pltcl_init_interp(Tcl_Interp *interp);
+static void pltcl_init_load_unknown(Tcl_Interp *interp);
 
 static Datum pltcl_func_handler(PG_FUNCTION_ARGS);
 
@@ -182,17 +181,15 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 	fmgr_info_cxt(functionId, finfo, TopMemoryContext);
 }
 
-/**********************************************************************
- * pltcl_init()		- Initialize all that's safe to do in the postmaster
+/*
+ * _PG_init()			- library load-time initialization
  *
- * DO NOT make this static --- it has to be callable by preload
- **********************************************************************/
+ * DO NOT make this static nor change its name!
+ */
 void
-pltcl_init(void)
+_PG_init(void)
 {
-	/************************************************************
-	 * Do initialization only once
-	 ************************************************************/
+	/* Be sure we do initialization only once (should be redundant now) */
 	if (pltcl_pm_init_done)
 		return;
 
@@ -236,20 +233,15 @@ pltcl_init(void)
 
 /**********************************************************************
  * pltcl_init_all()		- Initialize all
+ *
+ * This does initialization that can't be done in the postmaster, and
+ * hence is not safe to do at library load time.
  **********************************************************************/
 static void
 pltcl_init_all(void)
 {
 	/************************************************************
-	 * Execute postmaster-startup safe initialization
-	 ************************************************************/
-	if (!pltcl_pm_init_done)
-		pltcl_init();
-
-	/************************************************************
-	 * Any other initialization that must be done each time a new
-	 * backend starts:
-	 * - Try to load the unknown procedure from pltcl_modules
+	 * Try to load the unknown procedure from pltcl_modules
 	 ************************************************************/
 	if (!pltcl_be_init_done)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.86 2006/06/07 22:24:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.87 2006/08/08 19:15:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,10 @@
 #include "miscadmin.h"
 #include "utils/dynamic_loader.h"
 
+
+/* signatures for PostgreSQL-specific library init/fini functions */
+typedef void (*PG_init_t)(void);
+typedef void (*PG_fini_t)(void);
 
 /*
  * List of dynamically loaded files (kept in malloc'd memory).
@@ -79,7 +83,7 @@ static const Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
  * identifying the library file.  The filehandle can be used with
  * lookup_external_function to lookup additional functions in the same file
  * at less cost than repeating load_external_function.
-  */
+ */
 PGFunction
 load_external_function(char *filename, char *funcname,
 					   bool signalNotFound, void **filehandle)
@@ -90,6 +94,7 @@ load_external_function(char *filename, char *funcname,
 	char	   *load_error;
 	struct stat stat_buf;
 	char	   *fullname;
+	PG_init_t	PG_init;
 
 	fullname = expand_dynamic_library_name(filename);
 	if (!fullname)
@@ -201,7 +206,14 @@ load_external_function(char *filename, char *funcname,
 							fullname),
 					 errhint("Extension libraries are now required to use the PG_MODULE_MAGIC macro.")));
 		}
-		
+
+		/*
+		 * If the library has a _PG_init() function, call it.
+		 */
+		PG_init = (PG_init_t) pg_dlsym(file_scanner->handle, "_PG_init");
+		if (PG_init)
+			(*PG_init)();
+
 		/* OK to link it into list */
 		if (file_list == NULL)
 			file_list = file_scanner;
@@ -248,6 +260,7 @@ load_file(char *filename)
 			   *nxt;
 	struct stat stat_buf;
 	char	   *fullname;
+	PG_fini_t	PG_fini;
 
 	fullname = expand_dynamic_library_name(filename);
 	if (!fullname)
@@ -280,6 +293,14 @@ load_file(char *filename)
 			else
 				file_list = nxt;
 			clear_external_function_hash(file_scanner->handle);
+
+			/*
+			 * If the library has a _PG_fini() function, call it.
+			 */
+			PG_fini = (PG_fini_t) pg_dlsym(file_scanner->handle, "_PG_fini");
+			if (PG_fini)
+				(*PG_fini)();
+
 			pg_dlclose(file_scanner->handle);
 			free((char *) file_scanner);
 			/* prv does not change */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.115 2006/05/31 20:58:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.116 2006/08/08 19:15:07 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1149,6 +1149,15 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
    </para>
 
    <para>
+    It is recommended to locate shared libraries either relative to
+    <literal>$libdir</literal> or through the dynamic library path.
+    This simplifies version upgrades if the new installation is at a
+    different location.  The actual directory that
+    <literal>$libdir</literal> stands for can be found out with the
+    command <literal>pg_config --pkglibdir</literal>.
+   </para>
+
+   <para>
     The user ID the <productname>PostgreSQL</productname> server runs
     as must be able to traverse the path to the file you intend to
     load.  Making the file or a higher-level directory not readable
@@ -1173,6 +1182,32 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     </para>
    </note>
 
+   <indexterm zone="xfunc-c-dynload">
+    <primary>magic block</primary>
+   </indexterm>
+
+   <para>
+    To ensure that a dynamically loaded object file is not loaded into an
+    incompatible server, <productname>PostgreSQL</productname> checks that the
+    file contains a <quote>magic block</> with the appropriate contents.
+    This allows the server to detect obvious incompatibilities, such as code
+    compiled for a different major version of
+    <productname>PostgreSQL</productname>.  A magic block is required as of
+    <productname>PostgreSQL</productname> 8.2.  To include a magic block,
+    write this in one (and only one) of the module source files, after having
+    included the header <filename>fmgr.h</>:
+
+<programlisting>
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
+</programlisting>
+
+    The <literal>#ifdef</> test can be omitted if the code doesn't
+    need to compile against pre-8.2 <productname>PostgreSQL</productname>
+    releases.
+   </para>
+
    <para>
     After it is used for the first time, a dynamically loaded object
     file is retained in memory.  Future calls in the same session to
@@ -1183,13 +1218,31 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     fresh session.
    </para>
 
+   <indexterm zone="xfunc-c-dynload">
+    <primary>_PG_init</primary>
+   </indexterm>
+   <indexterm zone="xfunc-c-dynload">
+    <primary>_PG_fini</primary>
+   </indexterm>
+   <indexterm zone="xfunc-c-dynload">
+    <primary>library initialization function</primary>
+   </indexterm>
+   <indexterm zone="xfunc-c-dynload">
+    <primary>library finalization function</primary>
+   </indexterm>
+
    <para>
-    It is recommended to locate shared libraries either relative to
-    <literal>$libdir</literal> or through the dynamic library path.
-    This simplifies version upgrades if the new installation is at a
-    different location.  The actual directory that
-    <literal>$libdir</literal> stands for can be found out with the
-    command <literal>pg_config --pkglibdir</literal>.
+    Optionally, a dynamically loaded file can contain initialization and
+    finalization functions.  If the file includes a function named
+    <literal>_PG_init</>, that function will be called immediately after
+    loading the file.  The function receives no parameters and should
+    return void.  If the file includes a function named
+    <literal>_PG_fini</>, that function will be called immediately before
+    unloading the file.  Likewise, the function receives no parameters and
+    should return void.  Note that <literal>_PG_fini</> will only be called
+    during an unload of the file, not during process termination.
+    (Presently, an unload only happens in the context of re-loading
+    the file due to an explicit <command>LOAD</> command.)
    </para>
 
   </sect2>
@@ -1912,36 +1965,18 @@ concat_text(PG_FUNCTION_ARGS)
 
       <listitem>
        <para>
-        To ensure your module is not loaded into an incompatible server,
-        it must include a <quote>magic block</>.  This allows
-        the server to detect obvious incompatibilities, such as a module
-        compiled for a different major version of
-        <productname>PostgreSQL</productname>.  A magic block is required
-        as of <productname>PostgreSQL</productname> 8.2.  To include a magic
-        block, write this in one (and only one) of your module source files,
-        after having included the header <filename>fmgr.h</>:
-       </para>
-
-<programlisting>
-#ifdef PG_MODULE_MAGIC
-PG_MODULE_MAGIC;
-#endif
-</programlisting>
-
-       <para>
-        The <literal>#ifdef</> test can be omitted if your code doesn't
-        need to compile against pre-8.2 <productname>PostgreSQL</productname>
-        releases.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Compiling and linking your code so that it can be dynamically
         loaded into <productname>PostgreSQL</productname> always
         requires special flags.  See <xref linkend="dfunc"> for a
         detailed explanation of how to do it for your particular
         operating system.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remember to define a <quote>magic block</> for your shared library,
+        as described in <xref linkend="xfunc-c-dynload">.
        </para>
       </listitem>
 

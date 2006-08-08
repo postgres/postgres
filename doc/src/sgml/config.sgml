@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.72 2006/08/08 01:23:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.73 2006/08/08 19:15:07 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -957,36 +957,33 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         This variable specifies one or more shared libraries that are
-        to be preloaded at server start. A parameterless
-        initialization function can optionally be called for each
-        library.  To specify that, add a colon and the name of the
-        initialization function after the library name. For example
-        <literal>'$libdir/mylib:mylib_init'</literal> would cause
-        <literal>mylib</> to be preloaded and <literal>mylib_init</>
-        to be executed. If more than one library is to be loaded,
-        separate their names with commas.
-       </para>
-
-       <para>
-        If a specified library or initialization function is not found,
-        the server will fail to start.
+        to be preloaded at server start. If more than one library is to be
+        loaded, separate their names with commas. For example,
+        <literal>'$libdir/mylib'</literal> would cause
+        <literal>mylib.so</> (or on some platforms,
+        <literal>mylib.sl</>) to be preloaded from the installation's
+        standard library directory.
        </para>
 
        <para>
         <productname>PostgreSQL</productname> procedural language
         libraries can be preloaded in this way, typically by using the
-        syntax <literal>'$libdir/plXXX:plXXX_init'</literal> where
+        syntax <literal>'$libdir/plXXX'</literal> where
         <literal>XXX</literal> is <literal>pgsql</>, <literal>perl</>,
         <literal>tcl</>, or <literal>python</>.
        </para>
 
        <para>
-        By preloading a shared library (and initializing it if
-        applicable), the library startup time is avoided when the
-        library is first used.  However, the time to start each new
+        By preloading a shared library, the library startup time is avoided
+        when the library is first used.  However, the time to start each new
         server process may increase slightly, even if that process never
         uses the library.  So this parameter is recommended only for
         libraries that will be used in most sessions. 
+       </para>
+
+       <para>
+        If a specified library is not found,
+        the server will fail to start.
        </para>
 
        <para>

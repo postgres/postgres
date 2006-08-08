@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.29 2006/05/30 22:12:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.30 2006/08/08 19:15:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,41 +28,25 @@ extern DLLIMPORT bool check_function_bodies;
 
 PG_MODULE_MAGIC;
 
-static bool plpgsql_firstcall = true;
-
-static void plpgsql_init_all(void);
-
 
 /*
- * plpgsql_init()			- postmaster-startup safe initialization
+ * _PG_init()			- library load-time initialization
  *
- * DO NOT make this static --- it has to be callable by preload
+ * DO NOT make this static nor change its name!
  */
 void
-plpgsql_init(void)
+_PG_init(void)
 {
-	/* Do initialization only once */
-	if (!plpgsql_firstcall)
+	/* Be sure we do initialization only once (should be redundant now) */
+	static bool inited = false;
+
+	if (inited)
 		return;
 
 	plpgsql_HashTableInit();
 	RegisterXactCallback(plpgsql_xact_cb, NULL);
-	plpgsql_firstcall = false;
-}
 
-/*
- * plpgsql_init_all()		- Initialize all
- */
-static void
-plpgsql_init_all(void)
-{
-	/* Execute any postmaster-startup safe initialization */
-	plpgsql_init();
-
-	/*
-	 * Any other initialization that must be done each time a new backend
-	 * starts -- currently none
-	 */
+	inited = true;
 }
 
 /* ----------
@@ -80,9 +64,6 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	PLpgSQL_function *func;
 	Datum		retval;
 	int			rc;
-
-	/* perform initialization */
-	plpgsql_init_all();
 
 	/*
 	 * Connect to SPI manager
@@ -134,9 +115,6 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	char	   *argmodes;
 	bool		istrigger = false;
 	int			i;
-
-	/* perform initialization */
-	plpgsql_init_all();
 
 	/* Get the new function's pg_proc entry */
 	tuple = SearchSysCache(PROCOID,

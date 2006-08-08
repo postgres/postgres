@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/postmaster.h,v 1.13 2006/03/05 15:58:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/postmaster.h,v 1.14 2006/08/08 19:15:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@ extern char *ListenAddresses;
 extern bool ClientAuthInProgress;
 extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
-extern char *preload_libraries_string;
 extern bool Log_connections;
 extern bool log_hostname;
 extern char *bonjour_name;

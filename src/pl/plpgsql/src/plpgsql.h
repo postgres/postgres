@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.77 2006/07/11 17:26:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.78 2006/08/08 19:15:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -678,7 +678,7 @@ extern void plpgsql_compile_error_callback(void *arg);
  * Functions in pl_handler.c
  * ----------
  */
-extern void plpgsql_init(void);
+extern void _PG_init(void);
 extern Datum plpgsql_call_handler(PG_FUNCTION_ARGS);
 extern Datum plpgsql_validator(PG_FUNCTION_ARGS);
 

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.112 2006/06/16 18:42:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.113 2006/08/08 19:15:09 tgl Exp $
  *
  **********************************************************************/
 
@@ -87,7 +87,6 @@ typedef struct plperl_query_desc
 /**********************************************************************
  * Global data
  **********************************************************************/
-static bool plperl_firstcall = true;
 static bool plperl_safe_init_done = false;
 static PerlInterpreter *plperl_interp = NULL;
 static HV  *plperl_proc_hash = NULL;
@@ -101,12 +100,11 @@ static plperl_call_data *current_call_data = NULL;
 /**********************************************************************
  * Forward declarations
  **********************************************************************/
-static void plperl_init_all(void);
-static void plperl_init_interp(void);
-
 Datum		plperl_call_handler(PG_FUNCTION_ARGS);
 Datum		plperl_validator(PG_FUNCTION_ARGS);
-void		plperl_init(void);
+void		_PG_init(void);
+
+static void plperl_init_interp(void);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 
@@ -135,16 +133,21 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 }
 
 
-/* Perform initialization during postmaster startup. */
-
+/*
+ * _PG_init()			- library load-time initialization
+ *
+ * DO NOT make this static nor change its name!
+ */
 void
-plperl_init(void)
+_PG_init(void)
 {
-	if (!plperl_firstcall)
+	/* Be sure we do initialization only once (should be redundant now) */
+	static bool inited = false;
+
+	if (inited)
 		return;
 
-	DefineCustomBoolVariable(
-							 "plperl.use_strict",
+	DefineCustomBoolVariable("plperl.use_strict",
 	  "If true, will compile trusted and untrusted perl code in strict mode",
 							 NULL,
 							 &plperl_use_strict,
@@ -154,19 +157,8 @@ plperl_init(void)
 	EmitWarningsOnPlaceholders("plperl");
 
 	plperl_init_interp();
-	plperl_firstcall = false;
-}
 
-
-/* Perform initialization during backend startup. */
-
-static void
-plperl_init_all(void)
-{
-	if (plperl_firstcall)
-		plperl_init();
-
-	/* We don't need to do anything yet when a new backend starts. */
+	inited = true;
 }
 
 /* Each of these macros must represent a single string literal */
@@ -657,8 +649,6 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	plperl_call_data *save_call_data;
 
-	plperl_init_all();
-
 	save_call_data = current_call_data;
 	PG_TRY();
 	{
@@ -741,11 +731,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 	/* Postpone body checks if !check_function_bodies */
 	if (check_function_bodies)
 	{
-		plperl_proc_desc *prodesc;
-
-		plperl_init_all();
-
-		prodesc = compile_plperl_function(funcoid, istrigger);
+		(void) compile_plperl_function(funcoid, istrigger);
 	}
 
 	/* the result of a validator is ignored */

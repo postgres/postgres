@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.84 2006/07/06 01:55:51 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.85 2006/08/08 19:15:09 tgl Exp $
  *
  *********************************************************************
  */
@@ -155,11 +155,11 @@ typedef struct PLyResultObject
 /* function declarations */
 
 /* Two exported functions: first is the magic telling Postgresql
- * what function call interface it implements. Second allows
- * preinitialization of the interpreter during postmaster startup.
+ * what function call interface it implements. Second is for
+ * initialization of the interpreter during library load.
  */
 Datum		plpython_call_handler(PG_FUNCTION_ARGS);
-void		plpython_init(void);
+void		_PG_init(void);
 
 PG_FUNCTION_INFO_V1(plpython_call_handler);
 
@@ -169,7 +169,6 @@ PG_FUNCTION_INFO_V1(plpython_call_handler);
  * of plpython_call_handler.  initialize the python interpreter
  * and global data.
  */
-static void PLy_init_all(void);
 static void PLy_init_interp(void);
 static void PLy_init_plpy(void);
 
@@ -232,9 +231,6 @@ static PyObject *PLyInt_FromString(const char *);
 static PyObject *PLyLong_FromString(const char *);
 static PyObject *PLyString_FromString(const char *);
 
-
-/* global data */
-static bool	PLy_first_call = true;
 
 /*
  * Currently active plpython function
@@ -300,8 +296,6 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	PLyProcedure *save_curr_proc;
 	PLyProcedure *volatile proc = NULL;
-
-	PLy_init_all();
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
@@ -2263,24 +2257,18 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
  */
 
 /*
- * plpython_init()			- Initialize everything that can be
- *							  safely initialized during postmaster
- *							  startup.
+ * _PG_init()			- library load-time initialization
  *
- * DO NOT make this static --- it has to be callable by preload
+ * DO NOT make this static nor change its name!
  */
 void
-plpython_init(void)
+_PG_init(void)
 {
-	static volatile bool init_active = false;
+	/* Be sure we do initialization only once (should be redundant now) */
+	static bool inited = false;
 
-	/* Do initialization only once */
-	if (!PLy_first_call)
+	if (inited)
 		return;
-
-	if (init_active)
-		elog(FATAL, "initialization of language module failed");
-	init_active = true;
 
 	Py_Initialize();
 	PLy_init_interp();
@@ -2291,20 +2279,7 @@ plpython_init(void)
 	if (PLy_procedure_cache == NULL)
 		PLy_elog(ERROR, "could not create procedure cache");
 
-	PLy_first_call = false;
-}
-
-static void
-PLy_init_all(void)
-{
-	/* Execute postmaster-startup safe initialization */
-	if (PLy_first_call)
-		plpython_init();
-
-	/*
-	 * Any other initialization that must be done each time a new backend
-	 * starts -- currently none
-	 */
+	inited = true;
 }
 
 static void
