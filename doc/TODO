@@ -841,7 +841,7 @@ Clients
 	o Make SET CONNECTION thread-aware, non-standard?
 	o Allow multidimensional arrays
 	o Add internationalized message strings
-	o Add COPY TO STDIN handling
+	o COPY FROM STDIN not implemented because not useful?
 
 
 * libpq
