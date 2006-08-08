@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.152 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.153 2006/08/08 01:23:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -919,6 +919,7 @@ SPI_cursor_open(const char *name, void *plan,
 	 * Set up the portal.
 	 */
 	PortalDefineQuery(portal,
+					  NULL,
 					  spiplan->query,
 					  "SELECT", /* don't have the raw parse tree... */
 					  list_make1(queryTree),

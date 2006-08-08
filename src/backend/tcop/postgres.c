@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.495 2006/08/06 02:00:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.496 2006/08/08 01:23:15 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -955,6 +955,7 @@ exec_simple_query(const char *query_string)
 		portal->visible = false;
 
 		PortalDefineQuery(portal,
+						  NULL,
 						  query_string,
 						  commandTag,
 						  querytree_list,
@@ -1146,7 +1147,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("statement: <protocol> PREPARE %s AS %s",
+				(errmsg("prepare %s:  %s",
 						*stmt_name ? stmt_name : "<unnamed>",
 						query_string)));
 
@@ -1367,6 +1368,7 @@ exec_bind_message(StringInfo input_message)
 	PreparedStatement *pstmt;
 	Portal		portal;
 	ParamListInfo params;
+	StringInfoData str;
 
 	pgstat_report_activity("<BIND>");
 
@@ -1381,6 +1383,9 @@ exec_bind_message(StringInfo input_message)
 
 	/* Switch back to message context */
 	MemoryContextSwitchTo(MessageContext);
+
+	if (log_statement == LOGSTMT_ALL)
+		initStringInfo(&str);
 
 	/* Get the fixed part of the message */
 	portal_name = pq_getmsgstring(input_message);
@@ -1450,13 +1455,6 @@ exec_bind_message(StringInfo input_message)
 	else
 		portal = CreatePortal(portal_name, false, false);
 
-	/* We need to output the parameter values someday */
-	if (log_statement == LOGSTMT_ALL)
-		ereport(LOG,
-				(errmsg("statement: <protocol> <BIND> %s  [PREPARE:  %s]",
-						*portal_name ? portal_name : "<unnamed>",
-						portal->sourceText ? portal->sourceText : "")));
-
 	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
 	 */
@@ -1519,7 +1517,7 @@ exec_bind_message(StringInfo input_message)
 			else
 				pformat = 0;	/* default = text */
 
-			if (pformat == 0)
+			if (pformat == 0)	/* text mode */
 			{
 				Oid			typinput;
 				Oid			typioparam;
@@ -1540,11 +1538,16 @@ exec_bind_message(StringInfo input_message)
 															   pstring,
 															   typioparam,
 															   -1);
+
+				if (log_statement == LOGSTMT_ALL)
+					appendStringInfo(&str, "%s$%d = \"%s\"",
+						*str.data ? ", " : "", paramno + 1, pstring);
+
 				/* Free result of encoding conversion, if any */
 				if (pstring && pstring != pbuf.data)
 					pfree(pstring);
 			}
-			else if (pformat == 1)
+			else if (pformat == 1)	/* binary mode */
 			{
 				Oid			typreceive;
 				Oid			typioparam;
@@ -1595,6 +1598,26 @@ exec_bind_message(StringInfo input_message)
 	else
 		params = NULL;
 
+	if (log_statement == LOGSTMT_ALL)
+	{
+		if (*str.data)
+			ereport(LOG,
+					(errmsg("bind %s%s%s:  %s",
+							*stmt_name ? stmt_name : "<unnamed>",
+							*portal->name ? "/" : "",
+                	        *portal->name ? portal->name : "",
+							pstmt->query_string ? pstmt->query_string : ""),
+					 errdetail(str.data)));
+		else
+			ereport(LOG,
+					(errmsg("bind %s%s%s:  %s",
+							*stmt_name ? stmt_name : "<unnamed>",
+							*portal->name ? "/" : "",
+                	        *portal->name ? portal->name : "",
+							pstmt->query_string ? pstmt->query_string : "")));
+		pfree(str.data);
+	}
+
 	/* Get the result format codes */
 	numRFormats = pq_getmsgint(input_message, 2);
 	if (numRFormats > 0)
@@ -1628,6 +1651,7 @@ exec_bind_message(StringInfo input_message)
 	 * Define portal and start execution.
 	 */
 	PortalDefineQuery(portal,
+					  *stmt_name ? pstrdup(stmt_name) : NULL,
 					  pstmt->query_string,
 					  pstmt->commandTag,
 					  pstmt->query_list,
@@ -1724,9 +1748,11 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (log_statement == LOGSTMT_ALL)
 		/* We have the portal, so output the source query. */
 		ereport(LOG,
-				(errmsg("statement: <protocol> %sEXECUTE %s  [PREPARE:  %s]",
-						execute_is_fetch ? "FETCH from " : "",
-						*portal_name ? portal_name : "<unnamed>",
+				(errmsg("execute %s%s%s%s:  %s",
+						execute_is_fetch ? "fetch from " : "",
+						portal->prepStmtName ? portal->prepStmtName : "<unnamed>",
+						*portal->name ? "/" : "",
+                        *portal->name ? portal->name : "",
 						portal->sourceText ? portal->sourceText : "")));
 
 	BeginCommand(portal->commandTag, dest);
@@ -1832,10 +1858,12 @@ exec_execute_message(const char *portal_name, long max_rows)
 								secs, msecs)));
 			else
 				ereport(LOG,
-						(errmsg("duration: %ld.%03d ms  statement: <protocol> %sEXECUTE %s  [PREPARE:  %s]",
+						(errmsg("duration: %ld.%03d ms  execute %s%s%s%s:  %s",
 								secs, msecs,
-								execute_is_fetch ? "FETCH from " : "",
-								*portal_name ? portal_name : "<unnamed>",
+								execute_is_fetch ? "fetch from " : "",
+								portal->prepStmtName ? portal->prepStmtName : "<unnamed>",
+								*portal->name ? "/" : "",
+	    	                    *portal->name ? portal->name : "",
 								portal->sourceText ? portal->sourceText : "")));
 		}
 	}

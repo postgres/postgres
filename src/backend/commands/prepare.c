@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.58 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.59 2006/08/08 01:23:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,6 +201,7 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 	}
 
 	PortalDefineQuery(portal,
+					  NULL,
 					  query_string,
 					  entry->commandTag,
 					  query_list,
