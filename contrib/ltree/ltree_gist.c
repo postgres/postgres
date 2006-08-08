@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.17 2006/08/07 17:39:04 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.18 2006/08/08 15:45:18 teodor Exp $
  */
 
 #include "ltree.h"
@@ -456,16 +456,36 @@ gist_isparent(ltree_gist * key, ltree * query)
 	return false;
 }
 
+static ltree *
+copy_ltree( ltree *src ) {
+	ltree *dst = (ltree*)palloc(src->len);
+	memcpy(dst, src, src->len);
+	return dst;
+}
+
 static bool
 gist_ischild(ltree_gist * key, ltree * query)
 {
-	if (ltree_compare(query, LTG_GETLNODE(key)) < 0)
-		return false;
+	ltree      *left = copy_ltree(LTG_GETLNODE(key));
+	ltree      *right = copy_ltree(LTG_GETRNODE(key));
+	bool            res = true;
 
-	if (ltree_compare(query, LTG_GETRNODE(key)) > 0)
-		return false;
+	if (left->numlevel > query->numlevel)
+		left->numlevel = query->numlevel;
 
-	return true;
+	if (ltree_compare(query, left) < 0)
+		res = false;
+
+	if (right->numlevel > query->numlevel)
+		right->numlevel = query->numlevel;
+
+	if (res && ltree_compare(query, right) > 0)
+		res = false;
+
+	pfree(left);
+	pfree(right);
+
+	return res;
 }
 
 static bool
