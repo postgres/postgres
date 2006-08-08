@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Aug  8 18:39:04 EDT 2006
+Last updated:		Tue Aug  8 18:51:31 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -690,7 +690,10 @@ SQL Commands
 		o Add Oracle-style packages  (Pavel)
 
 		  A package would be a schema with its own variables,
-		  private functions, and initialization functions
+		  private functions, and initialization functions.  It
+		  is also possible to implement these capabilities
+		  in all schemas and not use a separate "packages"
+		  syntax at all.
 
 		o Allow handling of %TYPE arrays, e.g. tab.col%TYPE[]
 		o Allow listing of record column names, and access to

@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Aug  8 18:39:04 EDT 2006
+Last updated:           Tue Aug  8 18:51:31 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -624,7 +624,10 @@ first.
                   get_employee_salary(12345 AS emp_id, 2001 AS tax_year)
       </li><li>Add Oracle-style packages  (Pavel)
 <p>                  A package would be a schema with its own variables,
-                  private functions, and initialization functions
+                  private functions, and initialization functions.  It
+                  is also possible to implement these capabilities
+                  in all schemas and not use a separate "packages"
+                  syntax at all.
 </p>
       </li><li>Allow handling of %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
       </li><li>Allow listing of record column names, and access to
