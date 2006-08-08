@@ -42,6 +42,8 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT: 3 offset: -1 array: Yes
@@ -55,6 +57,8 @@
 [NO_PID]: ECPGget_data line 70: RESULT: 19660117 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT: 35 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -70,6 +74,8 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT: 10 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
@@ -84,6 +90,8 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT: 8 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
@@ -97,6 +105,8 @@
 [NO_PID]: ECPGget_data line 70: RESULT: 19970923 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT: 4 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -127,6 +137,8 @@
 [NO_PID]: ECPGget_data line 100: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 100: RESULT:  offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 100: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 100: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000

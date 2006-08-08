@@ -40,6 +40,8 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 33: allocating memory for 6 tuples
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 33: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 33: RESULT: 2 offset: -1 array: Yes
@@ -54,7 +56,8 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGstore_result: line 34: allocating 49 bytes for 6 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGstore_result: line 34: allocating memory for 6 tuples
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 34: RESULT: one offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 34: RESULT: two offset: -1 array: Yes
