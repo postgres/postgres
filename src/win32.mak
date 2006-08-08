@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/win32.mak,v 1.13 2006/07/06 02:12:32 momjian Exp $
+# $PostgreSQL: pgsql/src/win32.mak,v 1.14 2006/08/08 22:44:05 momjian Exp $
 
 # Makefile for Microsoft Visual C++ 5.0 (or compat)
 # Top-file makefile for Win32 parts of postgresql.
@@ -40,5 +40,5 @@ CLEAN:
 
 DISTCLEAN: CLEAN
    cd include
-   del config.h
+   del pg_config.h pg_config_os.h
    cd ..
