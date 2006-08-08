@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Aug  8 15:03:53 EDT 2006
+Last updated:		Tue Aug  8 18:39:04 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -835,7 +835,7 @@ Clients
 	o Make SET CONNECTION thread-aware, non-standard?
 	o Allow multidimensional arrays
 	o Add internationalized message strings
-	o COPY FROM STDIN not implemented because not useful?
+	o Implement COPY FROM STDIN
 
 
 * libpq
