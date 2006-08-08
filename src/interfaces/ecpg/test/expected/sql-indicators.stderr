@@ -28,19 +28,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 34: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 34: RESULT: 0 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 34: RESULT: 0 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 35: QUERY: select  val  from test where id = 2   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 35: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 35: RESULT:  offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 35: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 37: QUERY: select  val  from test where id = 3   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 37: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 37: RESULT: 5 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 37: RESULT: 5 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 42: QUERY: update test set val  =  null  where id = 1 on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -50,7 +50,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 43: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 43: RESULT:  offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 43: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 46: QUERY: drop table test  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

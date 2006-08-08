@@ -14,11 +14,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 59: Correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 59: RESULT: first user           offset: 21 array: Yes
+[NO_PID]: ECPGget_data line 59: RESULT: first user           offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 59: RESULT: 320 offset: 2 array: Yes
+[NO_PID]: ECPGget_data line 59: RESULT: 320 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 59: RESULT: \001m\000\212 offset: 20 array: Yes
+[NO_PID]: ECPGget_data line 59: RESULT: \001m\000\212 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71: QUERY: declare C  cursor  for select  name , accs , byte  from empl where idnum =  1   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -28,11 +28,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 72: Correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 72: RESULT: first user           offset: 21 array: Yes
+[NO_PID]: ECPGget_data line 72: RESULT: first user           offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 72: RESULT: 320 offset: 2 array: Yes
+[NO_PID]: ECPGget_data line 72: RESULT: 320 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 72: RESULT: \001m\000\212 offset: 20 array: Yes
+[NO_PID]: ECPGget_data line 72: RESULT: \001m\000\212 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 84: QUERY: declare B  binary cursor  for select  name , accs , byte  from empl where idnum =  1   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -42,11 +42,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 85: Correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 85: RESULT: BINARY offset: 21 array: Yes
+[NO_PID]: ECPGget_data line 85: RESULT: BINARY offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 85: RESULT: BINARY offset: 2 array: Yes
+[NO_PID]: ECPGget_data line 85: RESULT: BINARY offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 85: RESULT: BINARY offset: 20 array: Yes
+[NO_PID]: ECPGget_data line 85: RESULT: BINARY offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 92: QUERY: close B on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

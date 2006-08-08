@@ -16,7 +16,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 58: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 58: RESULT: 2369.7000000 offset: 28 array: Yes
+[NO_PID]: ECPGget_data line 58: RESULT: 2369.7000000 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 82 action = rollback connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000

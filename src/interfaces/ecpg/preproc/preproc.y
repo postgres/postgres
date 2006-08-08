@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.327 2006/08/02 13:43:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.328 2006/08/08 11:51:24 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1379,19 +1379,23 @@ ClosePortalStmt:  CLOSE name
 
 CopyStmt:  COPY opt_binary qualified_name opt_oids copy_from
 		copy_file_name copy_delimiter opt_with copy_opt_list
-			{ $$ = cat_str(9, make_str("copy"), $2, $3, $4, $5, $6, $7, $8, $9); }
+			{
+				if (strcmp($5, "to") == 0 && strcmp($6, "stdin") == 0)
+					mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible.\n");
+				else if (strcmp($5, "from") == 0 && strcmp($6, "stdout") == 0)
+					mmerror(PARSE_ERROR, ET_ERROR, "copy from stdout not possible.\n");
+				else if (strcmp($5, "from") == 0 && strcmp($6, "stdin") == 0)
+					mmerror(PARSE_ERROR, ET_WARNING, "copy from stdin not implemented.\n");
+				
+				$$ = cat_str(9, make_str("copy"), $2, $3, $4, $5, $6, $7, $8, $9);
+			}
 		;
 
 copy_from:	TO					{ $$ = make_str("to"); }
 		| FROM					{ $$ = make_str("from"); }
 		;
 
-/*
- * copy_file_name NULL indicates stdio is used. Whether stdin or stdout is
- * used depends on the direction. (It really doesn't make sense to copy from
- * stdout. We silently correct the "typo".		 - AY 9/94
- */
-copy_file_name:  StringConst	{ $$ = $1; }
+copy_file_name:  StringConst				{ $$ = $1; }
 		| STDIN					{ $$ = make_str("stdin"); }
 		| STDOUT				{ $$ = make_str("stdout"); }
 		;

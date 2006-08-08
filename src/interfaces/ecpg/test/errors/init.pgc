@@ -69,7 +69,6 @@ int main(void)
 		int c=10>>2;
 		bool h=2||1; 
 		long iay /* = 1L */ ;
-		long long iax /* = 40000000000LL */ ;
 	exec sql end declare section;
 
 	int f=fa();
@@ -83,8 +82,8 @@ int main(void)
 	ECPGdebug(1, stderr);
 
 	printf("%d %d %d %d %d %d %d %d %d %d %d\n", a, b, b2, c, d, e, f, g, h, i, j);
-	iax = iay = 0;
-	printf("%ld %lld\n", iay, iax);
+	iay = 0;
+	printf("%ld\n", iay);
 	exec sql whenever sqlerror do fa();
 	exec sql select now();
 	exec sql whenever sqlerror do fb(20);

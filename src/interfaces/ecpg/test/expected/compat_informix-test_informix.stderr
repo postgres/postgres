@@ -46,17 +46,17 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 54: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 54: RESULT: 7 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 54: RESULT: 7 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 54: RESULT: 0 offset: 52 array: Yes
+[NO_PID]: ECPGget_data line 54: RESULT: 0 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 54: QUERY: fetch forward from c on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 54: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 54: RESULT: 14 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 54: RESULT: 14 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 54: RESULT: 1 offset: 52 array: Yes
+[NO_PID]: ECPGget_data line 54: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 54: QUERY: fetch forward from c on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

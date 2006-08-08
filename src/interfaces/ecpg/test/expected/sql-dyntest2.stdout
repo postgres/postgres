@@ -34,7 +34,7 @@ Count 7
 	= <"987065403210">
  5	b (type: 16 length: -5 precision: -1 scale: 65531
 	octet_length: 1 returned_octet_length: 1)
-	= true
+	= false
  6	comment (type: 1 length: -5 precision: -1 scale: 65531
 	octet_length: -1 returned_octet_length: 27)
 	= "The elephant never forgets."

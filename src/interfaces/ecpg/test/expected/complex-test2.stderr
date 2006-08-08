@@ -36,71 +36,71 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Petra    offset: 12 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: Petra    offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: 2 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 04-04-1990 offset: 11 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 3 offset: 4 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Michael  offset: 12 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 19660117 offset: 4 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 35 offset: 2 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 04-04-1990 offset: 11 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 3 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: 3 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Carsten  offset: 12 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: Michael  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 19910103 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: 19660117 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 10 offset: 2 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: 35 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: 4 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Marc     offset: 12 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 19930907 offset: 4 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 8 offset: 2 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: 1 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: 3 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Chris    offset: 12 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: Carsten  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 19970923 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: 19910103 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 4 offset: 2 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT: 10 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT: Marc     offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT: 19930907 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT: 8 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT: Chris    offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT: 19970923 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT: 4 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -122,15 +122,15 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 100: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT: Petra    offset: 12 array: Yes
+[NO_PID]: ECPGget_data line 100: RESULT: Petra    offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT:  offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 100: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT:  offset: 2 array: Yes
+[NO_PID]: ECPGget_data line 100: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT: 04-04-1990 offset: 11 array: Yes
+[NO_PID]: ECPGget_data line 100: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT: 3 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 100: RESULT: 3 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 100: QUERY: fetch in prep on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -22,57 +22,57 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 41: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 41: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 41: RESULT: 2 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 41: RESULT: 2 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 42: RESULT: 23.456 offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 42: RESULT: 23.456 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 42: RESULT: 2.446 offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 42: RESULT: 2.446 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGstore_result: line 43: allocating 21 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 43: RESULT: varchar offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 43: RESULT: varchar offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 43: RESULT:  offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 43: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGstore_result: line 44: allocating 16 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 44: RESULT: v offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 44: RESULT: v offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 44: RESULT: v offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 44: RESULT: v offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGstore_result: line 45: allocating 22 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 45: RESULT: c    offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 45: RESULT: c    offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 45: RESULT: c    offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 45: RESULT: c    offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGstore_result: line 46: allocating 70 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 46: RESULT: Mon Mar 03 11:33:07 2003 PST offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 46: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 46: RESULT: Mon Mar 03 11:33:07 2003 PST offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 46: RESULT: Mon Mar 03 11:33:07 2003 PST offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 7
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGstore_result: line 47: allocating 16 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 47: RESULT: t offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 47: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 47: RESULT: f offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 47: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 9
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGstore_result: line 50: allocating 46 bytes for 2 tuples (char**=0)[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 50: RESULT: 2001:4f8:3:ba:2e0:81ff:fe22:d1f1 offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 50: RESULT: 2001:4f8:3:ba:2e0:81ff:fe22:d1f1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 50: RESULT:  offset: 0 array: Yes
+[NO_PID]: ECPGget_data line 50: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection regress1 closed.
 [NO_PID]: sqlca: code: 0, state: 00000

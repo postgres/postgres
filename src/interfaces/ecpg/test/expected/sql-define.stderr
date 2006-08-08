@@ -22,9 +22,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 36: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 36: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 36: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 36: RESULT: 29-abcdef offset: 200 array: Yes
+[NO_PID]: ECPGget_data line 36: RESULT: 29-abcdef offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 42: QUERY: insert into test values( 29 , 'no string' ) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

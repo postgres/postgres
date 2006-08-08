@@ -38,7 +38,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 52: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 52: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 52: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 52: RESULT: 'one' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -54,7 +54,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 64: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 64: RESULT: 2 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 64: RESULT: 2 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 64: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -66,7 +66,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 69: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 69: RESULT: 2 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 69: RESULT: 2 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 69: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000

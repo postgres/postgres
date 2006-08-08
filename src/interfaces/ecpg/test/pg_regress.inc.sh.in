@@ -461,7 +461,8 @@ dont_temp_install(){
 }
 
 setup_client_environment_variables(){
-	export PGDATESTYLE=Postgres
+	PGDATESTYLE='Postgres'
+	export PGDATESTYLE
 }
 
 # ----------

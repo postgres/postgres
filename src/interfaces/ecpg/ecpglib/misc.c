@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.29 2006/07/31 13:26:46 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.30 2006/08/08 11:51:24 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -262,7 +262,7 @@ ECPGlog(const char *format,...)
 		 * regression tests set this environment variable to get the same
 		 * output for every run.
 		 */
-		if (getenv("ECPG_DONT_LOG_PID"))
+		if (getenv("ECPG_REGRESSION"))
 			snprintf(f, bufsize, "[NO_PID]: %s", format);
 		else
 			snprintf(f, bufsize, "[%d]: %s", (int) getpid(), format);
@@ -272,7 +272,7 @@ ECPGlog(const char *format,...)
 		va_end(ap);
 
 		/* dump out internal sqlca variables */
-		if (getenv("ECPG_DONT_LOG_PID"))
+		if (getenv("ECPG_REGRESSION"))
 			fprintf(debugstream, "[NO_PID]: sqlca: code: %ld, state: %s\n",
 					sqlca->sqlcode, sqlca->sqlstate);
 

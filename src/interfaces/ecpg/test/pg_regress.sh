@@ -1,9 +1,9 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.4 2006/08/04 08:52:17 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.5 2006/08/08 11:51:24 meskes Exp $
 
 me=`basename $0`
 
-. pg_regress.inc.sh
+. ./pg_regress.inc.sh
 
 additional_regress_options=""
 
@@ -82,12 +82,14 @@ if [ $? -ne 0 ]; then
 fi
 
 # this variable prevents that the PID gets included in the logfiles
-export ECPG_DONT_LOG_PID=1
-export PGPORT=$temp_port
-export LD_LIBRARY_PATH=$libdir
+ECPG_REGRESSION=1; export ECPG_REGRESSION
+PGPORT=$temp_port; export PGPORT
+LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
 
 DIFFFLAGS="$DIFFFLAGS -C3"
-FAILNUM=0
+FAILNUM=""
+
+rm -f regression.diffs
 
 for i in \
          connect/*.pgc \
@@ -108,13 +110,13 @@ for i in \
 		continue;
 	fi
 
-	runprg=${i%.pgc}
+	runprg=`echo $i | sed -e 's,\.pgc$,,'`
 	outprg=`echo $runprg | sed -e's/\//-/'`
 	outfile_stderr="$outputdir/$outprg.stderr"
 	outfile_stdout="$outputdir/$outprg.stdout"
 	outfile_source="$outputdir/$outprg.c"
 	cp $runprg.c "$outfile_source"
-#	echo "$runprg > $outfile_stdout 2> $outfile_stderr"
+	# echo "$runprg > $outfile_stdout 2> $outfile_stderr"
 	$runprg > "$outfile_stdout" 2> "$outfile_stderr"
 
 	# If we don't run on the default port we'll get different output
@@ -134,25 +136,27 @@ for i in \
 	fi
 
 	DIFFER=""
-	diff $DIFFFLAGS expected/$outprg.stderr "$outfile_stderr" >> regression.diff 2>&1 || DIFFER="$DIFFER, log"
-	diff $DIFFFLAGS expected/$outprg.stdout "$outfile_stdout" >> regression.diff 2>&1 || DIFFER="$DIFFER, output"
-	diff $DIFFFLAGS expected/$outprg.c "$outputdir"/$outprg.c >> regression.diff 2>&1 || DIFFER="$DIFFER, source"
+	diff $DIFFFLAGS expected/$outprg.stderr "$outfile_stderr" >> regression.diffs 2>&1 || DIFFER="$DIFFER, log"
+	diff $DIFFFLAGS expected/$outprg.stdout "$outfile_stdout" >> regression.diffs 2>&1 || DIFFER="$DIFFER, output"
+	diff $DIFFFLAGS expected/$outprg.c "$outputdir"/$outprg.c >> regression.diffs 2>&1 || DIFFER="$DIFFER, source"
 
-	DIFFER=${DIFFER#, }
+	DIFFER=`echo $DIFFER | sed -e 's/^, //'`
 	if [ "x$DIFFER" = "x" ]; then
 		echo ok
 	else
 		echo "FAILED ($DIFFER)"
-		FAILNUM=$((FAILNUM+1))
+		# some sh's don't know about $((x+1))
+		FAILNUM=x$FAILNUM
 	fi
 done
 
-if [ $FAILNUM -eq 0 ]; then
-	rm regression.diff
+if [ "x$FAILNUM" = x"" ]; then
+	rm regression.diffs
 fi
 
 postmaster_shutdown
 
-[ $FAILNUM -eq 0 ] && exit
-[ $FAILNUM -ne 0 ] && (exit 1); exit
+# FAILNUM is empty if no test has failed
+[ x"$FAILNUM" = x"" ] && exit 0
+(exit 1); exit
 

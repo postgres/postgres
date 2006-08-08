@@ -12,7 +12,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 21: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 21: RESULT: off offset: 25 array: Yes
+[NO_PID]: ECPGget_data line 21: RESULT: off offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 25: QUERY: insert into My_Table values( 1 , 'a\\b' ) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

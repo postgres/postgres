@@ -153,12 +153,12 @@ int main(int argc,char **argv)
 {
 /* exec sql begin declare section */
    
+   
+   
+   
+   
+   
     
-   
-   
-   
-   
-   
    
    
    
@@ -167,7 +167,7 @@ int main(int argc,char **argv)
  int  COUNT    ;
  
 #line 21 "dyntest2.pgc"
- int  INTVAR    ,  BOOLVAR    ;
+ int  INTVAR    ;
  
 #line 22 "dyntest2.pgc"
  int  INDEX    ;
@@ -182,7 +182,7 @@ int main(int argc,char **argv)
  int  DATETIME_INTERVAL_CODE    ;
  
 #line 26 "dyntest2.pgc"
- char  NAME [ 120 ]    ;
+ char  NAME [ 120 ]    ,  BOOLVAR    ;
  
 #line 27 "dyntest2.pgc"
  char  STRINGVAR [ 1024 ]    ;

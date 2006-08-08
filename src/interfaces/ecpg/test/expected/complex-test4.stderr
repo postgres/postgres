@@ -30,11 +30,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 63: Correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 63: RESULT: 14.07 offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 63: RESULT: 14.07 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 63: RESULT: 0123456789 offset: 25 array: Yes
+[NO_PID]: ECPGget_data line 63: RESULT: 0123456789 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 63: RESULT: t offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 63: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71: QUERY: select  a , text  from test where f =  140787   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -42,15 +42,15 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGis_type_an_array line 71: TYPE database: 1007 C: 5 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 71: RESULT: {9,8,7,6,5,4,3,2,1,0} offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 71: RESULT: {9,8,7,6,5,4,3,2,1,0} offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 71: RESULT: klmnopqrst offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 71: RESULT: klmnopqrst offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 81: QUERY: select  a  from test where f =  140787   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 81: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 81: RESULT: {9,8,7,6,5,4,3,2,1,0} offset: 25 array: Yes
+[NO_PID]: ECPGget_data line 81: RESULT: {9,8,7,6,5,4,3,2,1,0} offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 88: QUERY: drop table test  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

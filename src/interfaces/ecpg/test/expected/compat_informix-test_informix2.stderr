@@ -14,15 +14,15 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 78: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 78: RESULT: Wed May 07 13:28:34 2003 offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 78: RESULT: Wed May 07 13:28:34 2003 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 89: QUERY: select  customerid , timestamp  from history where timestamp =  timestamp '2003-05-07 13:28:34'    limit 1  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 89: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 89: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 89: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 89: RESULT: Wed May 07 13:28:34 2003 offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 89: RESULT: Wed May 07 13:28:34 2003 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 103: QUERY: insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values(  2 ,  timestamp '2003-05-08 15:53:39' , 'test' , 'test' ) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

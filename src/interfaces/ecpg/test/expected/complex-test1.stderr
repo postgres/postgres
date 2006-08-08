@@ -48,29 +48,29 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 118: Correctly got 4 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: 2 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: 2 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: 11 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: 11 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: 12 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: 12 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: t offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 118: RESULT: t offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 118: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 133: QUERY: insert into "Test" ( name  , amount  , letter  ) values(  'db: ''r1''' ,  1001 ,  'f' ) on connection pm
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -100,29 +100,29 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 148: Correctly got 4 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: 2 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: 2 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: 11 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: 11 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: 12 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: 12 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: t offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 148: RESULT: t offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 148: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 162: QUERY: close CUR on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -132,41 +132,41 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 165: Correctly got 6 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: db: 'pm' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'pm' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: db: 'pm' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'pm' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: 1 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: 101 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: 101 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: 1001 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: 1001 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: 1002 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: 1002 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: 1011 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: 1011 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: 1012 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: 1012 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: t offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 165: RESULT: t offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 165: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 172 action = commit connection = main
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -174,41 +174,41 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 175: Correctly got 6 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: db: 'pm' offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'pm' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: db: 'pm' offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'pm' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: 1 offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: 101 offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: 101 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: 1001 offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: 1001 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: 1002 offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: 1002 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: 1011 offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: 1011 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: 1012 offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: 1012 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: f offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: f offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: f offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: t offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: f offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 175: RESULT: t offset: 16 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 183: QUERY: insert into "Test" ( name  , amount  , letter  ) values(  'db: ''r1''' ,  1407 ,  'f' ) on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -218,11 +218,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 186: Correctly got 1 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 186: RESULT: db: 'r1' offset: 8 array: Yes
+[NO_PID]: ECPGget_data line 186: RESULT: db: 'r1' offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 186: RESULT: 1407 offset: 4 array: Yes
+[NO_PID]: ECPGget_data line 186: RESULT: 1407 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 186: RESULT: f offset: 1 array: Yes
+[NO_PID]: ECPGget_data line 186: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGsetcommit line 192 action = on connection = main
 [NO_PID]: sqlca: code: 0, state: 00000
