@@ -37,9 +37,11 @@ main(void)
 		num = PGTYPESnumeric_from_asc(nums[i], &endptr);
 		check_errno();
 		if (endptr != NULL)
+		{
 			printf("endptr of %d is not NULL\n", i);
-		if (*endptr != '\0')
-			printf("*endptr of %d is not \\0\n", i);
+			if (*endptr != '\0')
+				printf("*endptr of %d is not \\0\n", i);
+		}
 		text = PGTYPESnumeric_to_asc(num, -1);
 		check_errno();
 		printf("num[%d,1]: %s\n", i, text); free(text);

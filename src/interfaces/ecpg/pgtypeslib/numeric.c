@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.29 2006/08/09 07:30:56 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.30 2006/08/09 09:08:31 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <ctype.h>
@@ -405,7 +405,10 @@ PGTYPESnumeric_to_asc(numeric *num, int dscale)
 		dscale = num->dscale;
 
 	if (PGTYPESnumeric_copy(num, numcopy) < 0)
+	{
+		PGTYPESnumeric_free(numcopy);
 		return NULL;
+	}
 	/* get_str_from_var may change its argument */
 	s = get_str_from_var(numcopy, dscale);
 	PGTYPESnumeric_free(numcopy);
@@ -1465,15 +1468,18 @@ PGTYPESnumeric_from_double(double d, numeric *dst)
 {
 	char		buffer[100];
 	numeric    *tmp;
+	int i;
 
 	if (sprintf(buffer, "%f", d) == 0)
 		return -1;
 
 	if ((tmp = PGTYPESnumeric_from_asc(buffer, NULL)) == NULL)
 		return -1;
-	if (PGTYPESnumeric_copy(tmp, dst) != 0)
-		return -1;
+	i = PGTYPESnumeric_copy(tmp, dst);
 	PGTYPESnumeric_free(tmp);
+	if (i != 0)
+		return -1;
+
 	errno = 0;
 	return 0;
 }
@@ -1485,13 +1491,18 @@ numericvar_to_double(numeric *var, double *dp)
 	double		val;
 	char	   *endptr;
 	numeric	   *varcopy = PGTYPESnumeric_new();
-	int i;
 
 	if (PGTYPESnumeric_copy(var, varcopy) < 0)
+	{
+		PGTYPESnumeric_free(varcopy);
 		return -1;
-	if ((tmp = get_str_from_var(varcopy, varcopy->dscale)) == NULL)
-		return -1;
+	}
+
+	tmp = get_str_from_var(varcopy, varcopy->dscale);
 	PGTYPESnumeric_free(varcopy);
+
+	if (tmp == NULL)
+		return -1;
 
 	/*
 	 * strtod seems to not reset errno to 0 in case of success.

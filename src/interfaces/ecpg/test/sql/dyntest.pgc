@@ -62,7 +62,7 @@ int main(int argc,char **argv)
         		:TYPE = type,
         		:LENGTH = length, :OCTET_LENGTH=octet_length,
         		:PRECISION = precision, :SCALE=scale,
-        		/* :NULLABLE=nullable, */ :NAME=name,
+        		:NAME=name,
         		:RETURNED_OCTET_LENGTH=returned_octet_length;
 			printf("%s ",NAME);
         	switch (TYPE)
@@ -122,8 +122,6 @@ int main(int argc,char **argv)
         	        else printf("<SQL3 %d> ",TYPE);
         	        break;
         	}
-		/* nullable is not yet implemented in ecpg */
-        	/* if (!NULLABLE) printf("not null "); */
         	if (OCTET_LENGTH>0) printf("[%d bytes]",OCTET_LENGTH);
         	putchar('\n');
         }

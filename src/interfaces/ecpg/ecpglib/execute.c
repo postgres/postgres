@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.57 2006/08/08 15:30:39 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.58 2006/08/09 09:08:31 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1018,6 +1018,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 							strcpy(mallocedval + strlen(mallocedval), "date ");
 							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
+							ECPGfree(str);
 						}
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
@@ -1037,11 +1038,11 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 						strcpy(mallocedval, "date ");
 						/* also copy trailing '\0' */
 						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+						ECPGfree(str);
 					}
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
-					ECPGfree(str);
 				}
 				break;
 
@@ -1072,6 +1073,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 							strcpy(mallocedval + strlen(mallocedval), "timestamp ");
 							strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
 							strcpy(mallocedval + strlen(mallocedval), ",");
+							ECPGfree(str);
 						}
 						strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 					}
@@ -1091,11 +1093,11 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 						strcpy(mallocedval, "timestamp ");
 						/* also copy trailing '\0' */
 						strncpy(mallocedval + strlen(mallocedval), str, slen + 1);
+						ECPGfree(str);
 					}
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
-					ECPGfree(str);
 				}
 				break;
 

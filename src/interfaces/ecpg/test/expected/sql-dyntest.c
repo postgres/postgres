@@ -270,7 +270,7 @@ if (sqlca.sqlcode < 0) error (  );}
         printf("%d Columns\n",COUNT);
         for (INDEX=1;INDEX<=COUNT;++INDEX)
         {
-		/* :NULLABLE=nullable, */{ ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_ret_octet,
+		{ ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_ret_octet,
 	ECPGt_int,&(RETURNED_OCTET_LENGTH),(long)1,(long)1,sizeof(int), ECPGd_name,
 	ECPGt_char,(NAME),(long)120,(long)1,(120)*sizeof(char), ECPGd_scale,
 	ECPGt_int,&(SCALE),(long)1,(long)1,sizeof(int), ECPGd_precision,
@@ -348,8 +348,6 @@ if (sqlca.sqlcode < 0) error (  );}
         	        else printf("<SQL3 %d> ",TYPE);
         	        break;
         	}
-		/* nullable is not yet implemented in ecpg */
-        	/* if (!NULLABLE) printf("not null "); */
         	if (OCTET_LENGTH>0) printf("[%d bytes]",OCTET_LENGTH);
         	putchar('\n');
         }
@@ -365,10 +363,10 @@ if (sqlca.sqlcode < 0) error (  );}
 	ECPGt_int,&(SCALE),(long)1,(long)1,sizeof(int), ECPGd_type,
 	ECPGt_int,&(TYPE),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
-#line 138 "dyntest.pgc"
+#line 136 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 138 "dyntest.pgc"
+#line 136 "dyntest.pgc"
 
      	if (INDICATOR==-1) printf("NULL");
         else switch (TYPE)
@@ -376,10 +374,10 @@ if (sqlca.sqlcode < 0) error (  );}
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_bool,&(BOOLVAR),(long)1,(long)1,sizeof(bool), ECPGd_EODT);
 
-#line 142 "dyntest.pgc"
+#line 140 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 142 "dyntest.pgc"
+#line 140 "dyntest.pgc"
 
      			printf(BOOLVAR?"true":"false");
      			break;
@@ -389,10 +387,10 @@ if (sqlca.sqlcode < 0) error (  );}
      	        {  { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_int,&(INTVAR),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
-#line 148 "dyntest.pgc"
+#line 146 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 148 "dyntest.pgc"
+#line 146 "dyntest.pgc"
 
      	           printf("%*d",PRECISION,INTVAR);
      	        }
@@ -400,10 +398,10 @@ if (sqlca.sqlcode < 0) error (  );}
      	        {  { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_float,&(FLOATVAR),(long)1,(long)1,sizeof(float), ECPGd_EODT);
 
-#line 152 "dyntest.pgc"
+#line 150 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 152 "dyntest.pgc"
+#line 150 "dyntest.pgc"
 
      	           printf("%*.*f",PRECISION+1,SCALE,FLOATVAR);
      	        }
@@ -413,10 +411,10 @@ if (sqlca.sqlcode < 0) error (  );}
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_int,&(INTVAR),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
-#line 158 "dyntest.pgc"
+#line 156 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 158 "dyntest.pgc"
+#line 156 "dyntest.pgc"
 
      	        printf("%d",INTVAR);
      	        break;
@@ -425,10 +423,10 @@ if (sqlca.sqlcode < 0) error (  );}
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_float,&(FLOATVAR),(long)1,(long)1,sizeof(float), ECPGd_EODT);
 
-#line 163 "dyntest.pgc"
+#line 161 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 163 "dyntest.pgc"
+#line 161 "dyntest.pgc"
 
      	        printf("%f",FLOATVAR);
      	        break;
@@ -436,10 +434,10 @@ if (sqlca.sqlcode < 0) error (  );}
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_double,&(DOUBLEVAR),(long)1,(long)1,sizeof(double), ECPGd_EODT);
 
-#line 167 "dyntest.pgc"
+#line 165 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 167 "dyntest.pgc"
+#line 165 "dyntest.pgc"
 
      	        printf("%f",DOUBLEVAR);
      	        break;
@@ -451,10 +449,10 @@ if (sqlca.sqlcode < 0) error (  );}
      	        { ECPGget_desc(__LINE__, "MYDESC", INDEX,ECPGd_data,
 	ECPGt_char,(STRINGVAR),(long)1024,(long)1,(1024)*sizeof(char), ECPGd_EODT);
 
-#line 175 "dyntest.pgc"
+#line 173 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 175 "dyntest.pgc"
+#line 173 "dyntest.pgc"
 
      	        printf("'%s'",STRINGVAR);
      	        break;
@@ -465,16 +463,16 @@ if (sqlca.sqlcode < 0) error (  );}
   }
 
   { ECPGdo(__LINE__, 0, 1, NULL, "close MYCURS", ECPGt_EOIT, ECPGt_EORT);
-#line 184 "dyntest.pgc"
+#line 182 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
-#line 184 "dyntest.pgc"
+#line 182 "dyntest.pgc"
 
   ECPGdeallocate_desc(__LINE__, "MYDESC");
-#line 185 "dyntest.pgc"
+#line 183 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );
-#line 185 "dyntest.pgc"
+#line 183 "dyntest.pgc"
 
 
   /* no exec sql disconnect; */
