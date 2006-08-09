@@ -119,9 +119,10 @@ pg_config_paths.h: win32.mak
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /W3 /GX $(OPT) /I "..\..\include" /I "..\..\include\port\win32" /I "..\..\include\port\win32_msvc" /I "..\..\port" /I. /D "FRONTEND" $(DEBUGDEF) /D\
- "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
- /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP"
+CPP_PROJ=/nologo /W3 /EHsc $(OPT) /I "..\..\include" /I "..\..\include\port\win32" /I "..\..\include\port\win32_msvc" /I "..\..\port" /I. /D "FRONTEND" $(DEBUGDEF) /D\
+ "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" \
+ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  \
+ /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP" /D "_CRT_SECURE_NO_DEPRECATE"
 
 !IFDEF USE_SSL
 CPP_PROJ=$(CPP_PROJ) /D USE_SSL
