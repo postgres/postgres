@@ -6,9 +6,13 @@
 
 exec sql include ../regression;
 
-char* nums[] = { "2E394", "-2", ".794", "3.44", "592.49E07", "-32.84e4",
+char* nums[] = { "2E394", "-2", ".794", "3.44", "592.49E21", "-32.84e4",
 				 "2E-394", ".1E-2", "+.0", "-592.49E-07", "+32.84e-4",
 				 ".500001", "-.5000001",
+				 "1234567890123456789012345678.91", /* 30 digits should fit
+				                                       into decimal */
+				 "1234567890123456789012345678.921", /* 31 digits should NOT
+				                                        fit into decimal */
 				 NULL};
 
 
@@ -21,8 +25,9 @@ main(void)
 	char *text="error\n";
 	char *endptr;
 	numeric *num, *nin;
+	decimal *dec;
 	long l;
-	int i, r, k;
+	int i, q, r, k;
 	double d;
 
 	ECPGdebug(1, stderr);
@@ -61,8 +66,9 @@ main(void)
 			r = PGTYPESnumeric_from_long(l, nin);
 			check_errno();
 			text = PGTYPESnumeric_to_asc(nin, 2);
-			r = PGTYPESnumeric_cmp(num, nin);
-			printf("num[%d,7]: %s (cmp: %d)\n", i, text, r); free(text);
+			q = PGTYPESnumeric_cmp(num, nin);
+			printf("num[%d,7]: %s (r: %d - cmp: %d)\n", i, text, r, q);
+			free(text);
 		}
 
 		r = PGTYPESnumeric_to_int(num, &k);
@@ -73,8 +79,9 @@ main(void)
 			r = PGTYPESnumeric_from_int(k, nin);
 			check_errno();
 			text = PGTYPESnumeric_to_asc(nin, 2);
-			r = PGTYPESnumeric_cmp(num, nin);
-			printf("num[%d,9]: %s (cmp: %d)\n", i, text, r); free(text);
+			q = PGTYPESnumeric_cmp(num, nin);
+			printf("num[%d,9]: %s (r: %d - cmp: %d)\n", i, text, r, q);
+			free(text);
 		}
 
 		r = PGTYPESnumeric_to_double(num, &d);
@@ -85,11 +92,28 @@ main(void)
 			r = PGTYPESnumeric_from_double(d, nin);
 			check_errno();
 			text = PGTYPESnumeric_to_asc(nin, 2);
-			r = PGTYPESnumeric_cmp(num, nin);
-			printf("num[%d,11]: %s (cmp: %d)\n", i, text, r); free(text);
+			q = PGTYPESnumeric_cmp(num, nin);
+			printf("num[%d,11]: %s (r: %d - cmp: %d)\n", i, text, r, q);
+			free(text);
 		}
 
-		/* xxx decimal conversions still missing */
+		dec = PGTYPESdecimal_new();
+		r = PGTYPESnumeric_to_decimal(num, dec);
+		check_errno();
+		/* we have no special routine for outputting decimal, it would
+		 * convert to a numeric anyway */
+		printf("num[%d,12]: - (r: %d)\n", i, r);
+		if (r == 0)
+		{
+			r = PGTYPESnumeric_from_decimal(dec, nin);
+			check_errno();
+			text = PGTYPESnumeric_to_asc(nin, 2);
+			q = PGTYPESnumeric_cmp(num, nin);
+			printf("num[%d,13]: %s (r: %d - cmp: %d)\n", i, text, r, q);
+			free(text);
+		}
+
+		PGTYPESdecimal_free(dec);
 		PGTYPESnumeric_free(nin);
 		printf("\n");
 	}

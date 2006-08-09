@@ -7,6 +7,8 @@
 (errno == PGTYPES_NUM_OVERFLOW) - num[0,6]: 0 (r: -1)
 (errno == PGTYPES_NUM_OVERFLOW) - num[0,8]: 0 (r: -1)
 (errno == PGTYPES_NUM_OVERFLOW) - num[0,10]: 0.0000000 (r: -1)
+(errno == PGTYPES_NUM_OVERFLOW) - num[0,12]: - (r: 0)
+(errno == PGTYPES_NUM_OVERFLOW) - num[0,13]: 20000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 1 is not NULL
 (no errno set) - num[1,1]: -2
@@ -15,11 +17,13 @@
 (no errno set) - num[1,4]: -2.00
 (no errno set) - num[1,5]: 0.00
 (no errno set) - num[1,6]: -2 (r: 0)
-(no errno set) - num[1,7]: -2.00 (cmp: 0)
+(no errno set) - num[1,7]: -2.00 (r: 0 - cmp: 0)
 (no errno set) - num[1,8]: -2 (r: 0)
-(no errno set) - num[1,9]: -2.00 (cmp: 0)
+(no errno set) - num[1,9]: -2.00 (r: 0 - cmp: 0)
 (no errno set) - num[1,10]: -2.0000000 (r: 0)
-(no errno set) - num[1,11]: -2.00 (cmp: 0)
+(no errno set) - num[1,11]: -2.00 (r: 0 - cmp: 0)
+(no errno set) - num[1,12]: - (r: 0)
+(no errno set) - num[1,13]: -2.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 2 is not NULL
 (no errno set) - num[2,1]: 0.794
@@ -28,11 +32,13 @@
 (no errno set) - num[2,4]: 0.79
 (no errno set) - num[2,5]: 0.00
 (no errno set) - num[2,6]: 1 (r: 0)
-(no errno set) - num[2,7]: 1.00 (cmp: -1)
+(no errno set) - num[2,7]: 1.00 (r: 0 - cmp: -1)
 (no errno set) - num[2,8]: 1 (r: 0)
-(no errno set) - num[2,9]: 1.00 (cmp: -1)
+(no errno set) - num[2,9]: 1.00 (r: 0 - cmp: -1)
 (no errno set) - num[2,10]: 0.7940000 (r: 0)
-(no errno set) - num[2,11]: 0.79 (cmp: 0)
+(no errno set) - num[2,11]: 0.79 (r: 0 - cmp: 0)
+(no errno set) - num[2,12]: - (r: 0)
+(no errno set) - num[2,13]: 0.79 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 3 is not NULL
 (no errno set) - num[3,1]: 3.44
@@ -41,22 +47,26 @@
 (no errno set) - num[3,4]: 3.44
 (no errno set) - num[3,5]: 0.00
 (no errno set) - num[3,6]: 3 (r: 0)
-(no errno set) - num[3,7]: 3.00 (cmp: 1)
+(no errno set) - num[3,7]: 3.00 (r: 0 - cmp: 1)
 (no errno set) - num[3,8]: 3 (r: 0)
-(no errno set) - num[3,9]: 3.00 (cmp: 1)
+(no errno set) - num[3,9]: 3.00 (r: 0 - cmp: 1)
 (no errno set) - num[3,10]: 3.4400000 (r: 0)
-(no errno set) - num[3,11]: 3.44 (cmp: 0)
+(no errno set) - num[3,11]: 3.44 (r: 0 - cmp: 0)
+(no errno set) - num[3,12]: - (r: 0)
+(no errno set) - num[3,13]: 3.44 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 4 is not NULL
-(no errno set) - num[4,1]: 5924900000
-(no errno set) - num[4,2]: 5924900000
-(no errno set) - num[4,3]: 5924900000.0
-(no errno set) - num[4,4]: 5924900000.00
+(no errno set) - num[4,1]: 592490000000000000000000
+(no errno set) - num[4,2]: 592490000000000000000000
+(no errno set) - num[4,3]: 592490000000000000000000.0
+(no errno set) - num[4,4]: 592490000000000000000000.00
 (no errno set) - num[4,5]: 0.00
 (errno == PGTYPES_NUM_OVERFLOW) - num[4,6]: 0 (r: -1)
 (errno == PGTYPES_NUM_OVERFLOW) - num[4,8]: 0 (r: -1)
-(errno == PGTYPES_NUM_OVERFLOW) - num[4,10]: 5924900000.0000000 (r: 0)
-(no errno set) - num[4,11]: 5924900000.00 (cmp: 0)
+(no errno set) - num[4,10]: 592490000000000009961472.0000000 (r: 0)
+(no errno set) - num[4,11]: 592490000000000009961472.00 (r: 0 - cmp: -1)
+(no errno set) - num[4,12]: - (r: 0)
+(no errno set) - num[4,13]: 592490000000000000000000.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 5 is not NULL
 (no errno set) - num[5,1]: -328400
@@ -65,11 +75,13 @@
 (no errno set) - num[5,4]: -328400.00
 (no errno set) - num[5,5]: 0.00
 (no errno set) - num[5,6]: -328400 (r: 0)
-(no errno set) - num[5,7]: -328400.00 (cmp: 0)
+(no errno set) - num[5,7]: -328400.00 (r: 0 - cmp: 0)
 (no errno set) - num[5,8]: -328400 (r: 0)
-(no errno set) - num[5,9]: -328400.00 (cmp: 0)
+(no errno set) - num[5,9]: -328400.00 (r: 0 - cmp: 0)
 (no errno set) - num[5,10]: -328400.0000000 (r: 0)
-(no errno set) - num[5,11]: -328400.00 (cmp: 0)
+(no errno set) - num[5,11]: -328400.00 (r: 0 - cmp: 0)
+(no errno set) - num[5,12]: - (r: 0)
+(no errno set) - num[5,13]: -328400.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 6 is not NULL
 (no errno set) - num[6,1]: 0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002
@@ -78,10 +90,12 @@
 (no errno set) - num[6,4]: 0.00
 (no errno set) - num[6,5]: 0.00
 (no errno set) - num[6,6]: 0 (r: 0)
-(no errno set) - num[6,7]: 0.00 (cmp: 1)
+(no errno set) - num[6,7]: 0.00 (r: 0 - cmp: 1)
 (no errno set) - num[6,8]: 0 (r: 0)
-(no errno set) - num[6,9]: 0.00 (cmp: 1)
+(no errno set) - num[6,9]: 0.00 (r: 0 - cmp: 1)
 (errno == PGTYPES_NUM_OVERFLOW) - num[6,10]: 0.0000000 (r: -1)
+(errno == PGTYPES_NUM_OVERFLOW) - num[6,12]: - (r: 0)
+(errno == PGTYPES_NUM_OVERFLOW) - num[6,13]: 0.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 7 is not NULL
 (no errno set) - num[7,1]: 0.001
@@ -90,11 +104,13 @@
 (no errno set) - num[7,4]: 0.00
 (no errno set) - num[7,5]: 0.00
 (no errno set) - num[7,6]: 0 (r: 0)
-(no errno set) - num[7,7]: 0.00 (cmp: 1)
+(no errno set) - num[7,7]: 0.00 (r: 0 - cmp: 1)
 (no errno set) - num[7,8]: 0 (r: 0)
-(no errno set) - num[7,9]: 0.00 (cmp: 1)
+(no errno set) - num[7,9]: 0.00 (r: 0 - cmp: 1)
 (no errno set) - num[7,10]: 0.0010000 (r: 0)
-(no errno set) - num[7,11]: 0.00 (cmp: 0)
+(no errno set) - num[7,11]: 0.00 (r: 0 - cmp: 0)
+(no errno set) - num[7,12]: - (r: 0)
+(no errno set) - num[7,13]: 0.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 8 is not NULL
 (no errno set) - num[8,1]: 0.0
@@ -103,11 +119,13 @@
 (no errno set) - num[8,4]: 0.00
 (no errno set) - num[8,5]: 0.00
 (no errno set) - num[8,6]: 0 (r: 0)
-(no errno set) - num[8,7]: 0.00 (cmp: 0)
+(no errno set) - num[8,7]: 0.00 (r: 0 - cmp: 0)
 (no errno set) - num[8,8]: 0 (r: 0)
-(no errno set) - num[8,9]: 0.00 (cmp: 0)
+(no errno set) - num[8,9]: 0.00 (r: 0 - cmp: 0)
 (no errno set) - num[8,10]: 0.0000000 (r: 0)
-(no errno set) - num[8,11]: 0.00 (cmp: 0)
+(no errno set) - num[8,11]: 0.00 (r: 0 - cmp: 0)
+(no errno set) - num[8,12]: - (r: 0)
+(no errno set) - num[8,13]: 0.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 9 is not NULL
 (no errno set) - num[9,1]: -0.000059249
@@ -116,11 +134,13 @@
 (no errno set) - num[9,4]: -0.00
 (no errno set) - num[9,5]: 0.00
 (no errno set) - num[9,6]: 0 (r: 0)
-(no errno set) - num[9,7]: 0.00 (cmp: -1)
+(no errno set) - num[9,7]: 0.00 (r: 0 - cmp: -1)
 (no errno set) - num[9,8]: 0 (r: 0)
-(no errno set) - num[9,9]: 0.00 (cmp: -1)
+(no errno set) - num[9,9]: 0.00 (r: 0 - cmp: -1)
 (no errno set) - num[9,10]: -0.0000592 (r: 0)
-(no errno set) - num[9,11]: -0.00 (cmp: -1)
+(no errno set) - num[9,11]: -0.00 (r: 0 - cmp: -1)
+(no errno set) - num[9,12]: - (r: 0)
+(no errno set) - num[9,13]: -0.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 10 is not NULL
 (no errno set) - num[10,1]: 0.003284
@@ -129,11 +149,13 @@
 (no errno set) - num[10,4]: 0.00
 (no errno set) - num[10,5]: 0.00
 (no errno set) - num[10,6]: 0 (r: 0)
-(no errno set) - num[10,7]: 0.00 (cmp: 1)
+(no errno set) - num[10,7]: 0.00 (r: 0 - cmp: 1)
 (no errno set) - num[10,8]: 0 (r: 0)
-(no errno set) - num[10,9]: 0.00 (cmp: 1)
+(no errno set) - num[10,9]: 0.00 (r: 0 - cmp: 1)
 (no errno set) - num[10,10]: 0.0032840 (r: 0)
-(no errno set) - num[10,11]: 0.00 (cmp: 0)
+(no errno set) - num[10,11]: 0.00 (r: 0 - cmp: 0)
+(no errno set) - num[10,12]: - (r: 0)
+(no errno set) - num[10,13]: 0.00 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 11 is not NULL
 (no errno set) - num[11,1]: 0.500001
@@ -142,11 +164,13 @@
 (no errno set) - num[11,4]: 0.50
 (no errno set) - num[11,5]: 0.00
 (no errno set) - num[11,6]: 1 (r: 0)
-(no errno set) - num[11,7]: 1.00 (cmp: -1)
+(no errno set) - num[11,7]: 1.00 (r: 0 - cmp: -1)
 (no errno set) - num[11,8]: 1 (r: 0)
-(no errno set) - num[11,9]: 1.00 (cmp: -1)
+(no errno set) - num[11,9]: 1.00 (r: 0 - cmp: -1)
 (no errno set) - num[11,10]: 0.5000010 (r: 0)
-(no errno set) - num[11,11]: 0.50 (cmp: 0)
+(no errno set) - num[11,11]: 0.50 (r: 0 - cmp: 0)
+(no errno set) - num[11,12]: - (r: 0)
+(no errno set) - num[11,13]: 0.50 (r: 0 - cmp: 0)
 
 (no errno set) - endptr of 12 is not NULL
 (no errno set) - num[12,1]: -0.5000001
@@ -155,9 +179,36 @@
 (no errno set) - num[12,4]: -0.50
 (no errno set) - num[12,5]: 0.00
 (no errno set) - num[12,6]: -1 (r: 0)
-(no errno set) - num[12,7]: -1.00 (cmp: 1)
+(no errno set) - num[12,7]: -1.00 (r: 0 - cmp: 1)
 (no errno set) - num[12,8]: -1 (r: 0)
-(no errno set) - num[12,9]: -1.00 (cmp: 1)
+(no errno set) - num[12,9]: -1.00 (r: 0 - cmp: 1)
 (no errno set) - num[12,10]: -0.5000001 (r: 0)
-(no errno set) - num[12,11]: -0.50 (cmp: -1)
+(no errno set) - num[12,11]: -0.50 (r: 0 - cmp: -1)
+(no errno set) - num[12,12]: - (r: 0)
+(no errno set) - num[12,13]: -0.50 (r: 0 - cmp: 0)
+
+(no errno set) - endptr of 13 is not NULL
+(no errno set) - num[13,1]: 1234567890123456789012345678.91
+(no errno set) - num[13,2]: 1234567890123456789012345679
+(no errno set) - num[13,3]: 1234567890123456789012345678.9
+(no errno set) - num[13,4]: 1234567890123456789012345678.91
+(no errno set) - num[13,5]: 0.00
+(errno == PGTYPES_NUM_OVERFLOW) - num[13,6]: 0 (r: -1)
+(errno == PGTYPES_NUM_OVERFLOW) - num[13,8]: 0 (r: -1)
+(no errno set) - num[13,10]: 1234567890123456850245451776.0000000 (r: 0)
+(no errno set) - num[13,11]: 1234567890123456850245451776.00 (r: 0 - cmp: -1)
+(no errno set) - num[13,12]: - (r: 0)
+(no errno set) - num[13,13]: 1234567890123456789012345678.91 (r: 0 - cmp: 0)
+
+(no errno set) - endptr of 14 is not NULL
+(no errno set) - num[14,1]: 1234567890123456789012345678.921
+(no errno set) - num[14,2]: 1234567890123456789012345679
+(no errno set) - num[14,3]: 1234567890123456789012345678.9
+(no errno set) - num[14,4]: 1234567890123456789012345678.92
+(no errno set) - num[14,5]: 0.00
+(errno == PGTYPES_NUM_OVERFLOW) - num[14,6]: 0 (r: -1)
+(errno == PGTYPES_NUM_OVERFLOW) - num[14,8]: 0 (r: -1)
+(no errno set) - num[14,10]: 1234567890123456850245451776.0000000 (r: 0)
+(no errno set) - num[14,11]: 1234567890123456850245451776.00 (r: 0 - cmp: -1)
+(errno == PGTYPES_NUM_OVERFLOW) - num[14,12]: - (r: -1)
 

@@ -2076,5 +2076,9 @@ Mo Aug  7 14:56:44 CEST 2006
 Tu Aug  8 13:26:25 CEST 2006
 
 	- Made parser check for valid copy to/from stdin/stdout combinations.
+
+We Aug  9 09:28:56 CEST 2006
+
+	- Fixed error handling in numeric conversion (Joachim).
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
