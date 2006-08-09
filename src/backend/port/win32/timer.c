@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/timer.c,v 1.6.2.1 2005/11/22 18:23:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/timer.c,v 1.6.2.2 2006/08/09 17:47:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,8 @@ pg_timer_thread(LPVOID param)
 				timerCommArea.value.it_value.tv_usec == 0)
 				waittime = INFINITE;	/* Cancel the interrupt */
 			else
-				waittime = timerCommArea.value.it_value.tv_usec / 10 + timerCommArea.value.it_value.tv_sec * 1000;
+				/* WaitForSingleObjectEx() uses milliseconds */
+				waittime = timerCommArea.value.it_value.tv_usec / 1000 + timerCommArea.value.it_value.tv_sec * 1000;
 			ResetEvent(timerCommArea.event);
 			LeaveCriticalSection(&timerCommArea.crit_sec);
 		}
