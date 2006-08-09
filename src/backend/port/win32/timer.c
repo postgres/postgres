@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/timer.c,v 1.8 2006/03/05 15:58:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/timer.c,v 1.9 2006/08/09 17:33:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ pg_timer_thread(LPVOID param)
  * to handle the timer setting and notification upon timeout.
  */
 int
-setitimer(int which, const struct itimerval * value, struct itimerval * ovalue)
+setitimer(int which, const struct itimerval *value, struct itimerval *ovalue)
 {
 	Assert(value != NULL);
 	Assert(value->it_interval.tv_sec == 0 && value->it_interval.tv_usec == 0);
