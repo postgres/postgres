@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.343 2006/08/02 14:14:22 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.344 2006/08/10 02:36:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,8 @@ static void transformFKConstraints(ParseState *pstate,
 					   bool skipValidation,
 					   bool isAddConstraint);
 static void applyColumnNames(List *dst, List *src);
-static List *getSetColTypes(ParseState *pstate, Node *node);
+static void getSetColTypes(ParseState *pstate, Node *node,
+						   List **colTypes, List **colTypmods);
 static void transformLockingClause(Query *qry, LockingClause *lc);
 static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
@@ -2312,7 +2313,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	List	   *lockingClause;
 	Node	   *node;
 	ListCell   *left_tlist,
-			   *dtlist,
+			   *lct,
+			   *lcm,
 			   *l;
 	List	   *targetvars,
 			   *targetnames,
@@ -2395,9 +2397,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	targetnames = NIL;
 	left_tlist = list_head(leftmostQuery->targetList);
 
-	foreach(dtlist, sostmt->colTypes)
+	forboth(lct, sostmt->colTypes, lcm, sostmt->colTypmods)
 	{
-		Oid			colType = lfirst_oid(dtlist);
+		Oid			colType = lfirst_oid(lct);
+		int32		colTypmod = lfirst_int(lcm);
 		TargetEntry *lefttle = (TargetEntry *) lfirst(left_tlist);
 		char	   *colName;
 		TargetEntry *tle;
@@ -2408,7 +2411,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		expr = (Expr *) makeVar(leftmostRTI,
 								lefttle->resno,
 								colType,
-								-1,
+								colTypmod,
 								0);
 		tle = makeTargetEntry(expr,
 							  (AttrNumber) pstate->p_next_resno++,
@@ -2609,8 +2612,12 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		SetOperationStmt *op = makeNode(SetOperationStmt);
 		List	   *lcoltypes;
 		List	   *rcoltypes;
-		ListCell   *l;
-		ListCell   *r;
+		List	   *lcoltypmods;
+		List	   *rcoltypmods;
+		ListCell   *lct;
+		ListCell   *rct;
+		ListCell   *lcm;
+		ListCell   *rcm;
 		const char *context;
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
@@ -2630,24 +2637,43 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 * Verify that the two children have the same number of non-junk
 		 * columns, and determine the types of the merged output columns.
 		 */
-		lcoltypes = getSetColTypes(pstate, op->larg);
-		rcoltypes = getSetColTypes(pstate, op->rarg);
+		getSetColTypes(pstate, op->larg, &lcoltypes, &lcoltypmods);
+		getSetColTypes(pstate, op->rarg, &rcoltypes, &rcoltypmods);
 		if (list_length(lcoltypes) != list_length(rcoltypes))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("each %s query must have the same number of columns",
 						context)));
+		Assert(list_length(lcoltypes) == list_length(lcoltypmods));
+		Assert(list_length(rcoltypes) == list_length(rcoltypmods));
 
 		op->colTypes = NIL;
-		forboth(l, lcoltypes, r, rcoltypes)
+		op->colTypmods = NIL;
+		/* don't have a "foreach4", so chase two of the lists by hand */
+		lcm = list_head(lcoltypmods);
+		rcm = list_head(rcoltypmods);
+		forboth(lct, lcoltypes, rct, rcoltypes)
 		{
-			Oid			lcoltype = lfirst_oid(l);
-			Oid			rcoltype = lfirst_oid(r);
+			Oid			lcoltype = lfirst_oid(lct);
+			Oid			rcoltype = lfirst_oid(rct);
+			int32		lcoltypmod = lfirst_int(lcm);
+			int32		rcoltypmod = lfirst_int(rcm);
 			Oid			rescoltype;
+			int32		rescoltypmod;
 
+			/* select common type, same as CASE et al */
 			rescoltype = select_common_type(list_make2_oid(lcoltype, rcoltype),
 											context);
+			/* if same type and same typmod, use typmod; else default */
+			if (lcoltype == rcoltype && lcoltypmod == rcoltypmod)
+				rescoltypmod = lcoltypmod;
+			else
+				rescoltypmod = -1;
 			op->colTypes = lappend_oid(op->colTypes, rescoltype);
+			op->colTypmods = lappend_int(op->colTypmods, rescoltypmod);
+
+			lcm = lnext(lcm);
+			rcm = lnext(rcm);
 		}
 
 		return (Node *) op;
@@ -2656,17 +2682,19 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 
 /*
  * getSetColTypes
- *		Get output column types of an (already transformed) set-op node
+ *	  Get output column types/typmods of an (already transformed) set-op node
  */
-static List *
-getSetColTypes(ParseState *pstate, Node *node)
+static void
+getSetColTypes(ParseState *pstate, Node *node,
+			   List **colTypes, List **colTypmods)
 {
+	*colTypes = NIL;
+	*colTypmods = NIL;
 	if (IsA(node, RangeTblRef))
 	{
 		RangeTblRef *rtr = (RangeTblRef *) node;
 		RangeTblEntry *rte = rt_fetch(rtr->rtindex, pstate->p_rtable);
 		Query	   *selectQuery = rte->subquery;
-		List	   *result = NIL;
 		ListCell   *tl;
 
 		Assert(selectQuery != NULL);
@@ -2677,9 +2705,11 @@ getSetColTypes(ParseState *pstate, Node *node)
 
 			if (tle->resjunk)
 				continue;
-			result = lappend_oid(result, exprType((Node *) tle->expr));
+			*colTypes = lappend_oid(*colTypes,
+									exprType((Node *) tle->expr));
+			*colTypmods = lappend_int(*colTypmods,
+									  exprTypmod((Node *) tle->expr));
 		}
-		return result;
 	}
 	else if (IsA(node, SetOperationStmt))
 	{
@@ -2687,13 +2717,11 @@ getSetColTypes(ParseState *pstate, Node *node)
 
 		/* Result already computed during transformation of node */
 		Assert(op->colTypes != NIL);
-		return op->colTypes;
+		*colTypes = op->colTypes;
+		*colTypmods = op->colTypmods;
 	}
 	else
-	{
 		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
-		return NIL;				/* keep compiler quiet */
-	}
 }
 
 /* Attach column names from a ColumnDef list to a TargetEntry list */
