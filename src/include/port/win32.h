@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.57 2006/08/10 01:35:21 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.58 2006/08/10 01:41:29 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -258,6 +258,15 @@ extern void _dosmaperr(unsigned long);
 #ifdef WIN32_ONLY_COMPILER
 typedef long ssize_t;
 typedef unsigned short mode_t;
+
+/*
+ *	Certain "standard edition" versions of MSVC throw a warning
+ *	that later generates an error for "inline" statements, but
+ *	__inline seems to work.  e.g.  Microsoft Visual C++ .NET
+ *	Version 7.1.3088
+ */
+#define inline __inline
+#define __inline__ __inline
 
 #undef errcode
 #define errcode __vc_errcode
