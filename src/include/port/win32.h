@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.49 2005/10/25 15:15:16 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.49.2.1 2006/08/10 01:45:17 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -179,6 +179,17 @@ typedef long key_t;
 
 #ifdef WIN32_CLIENT_ONLY
 typedef int pid_t;
+#endif
+
+#ifdef MSVC
+/*
+ *	Certain "standard edition" versions of MSVC throw a warning
+ *	that later generates an error for "inline" statements, but
+ *	__inline seems to work.  e.g.  Microsoft Visual C++ .NET
+ *	Version 7.1.3088
+ */
+#define inline __inline
+#define __inline__ __inline
 #endif
 
 /*
