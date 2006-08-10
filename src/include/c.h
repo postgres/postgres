@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.209 2006/08/08 18:49:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.210 2006/08/10 01:35:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,6 +742,17 @@ typedef NameData *Name;
 #define PG_BINARY	0
 #define PG_BINARY_R "r"
 #define PG_BINARY_W "w"
+#endif
+
+#ifdef MSVC
+/*
+ *	Certain "standard edition" versions of MSVC throw a warning
+ *	that later generates an error for "inline" statements, but
+ *	__inline seems to work.  e.g.  Microsoft Visual C++ .NET
+ *	Version 7.1.3088
+ */
+#define inline __inline
+#define __inline__ __inline
 #endif
 
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)

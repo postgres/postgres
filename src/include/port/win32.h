@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.56 2006/08/09 17:33:52 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.57 2006/08/10 01:35:21 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -258,9 +258,6 @@ extern void _dosmaperr(unsigned long);
 #ifdef WIN32_ONLY_COMPILER
 typedef long ssize_t;
 typedef unsigned short mode_t;
-
-#define inline __inline
-#define __inline__ __inline
 
 #undef errcode
 #define errcode __vc_errcode
