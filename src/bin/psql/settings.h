@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.27 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.28 2006/08/11 19:20:59 momjian Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -50,7 +50,7 @@ typedef struct _psqlSettings
 	char	   *inputfile;		/* for error reporting */
 	char	   *dirname;		/* current directory for \s display */
 
-	unsigned	lineno;			/* also for error reporting */
+	uint64		lineno;			/* also for error reporting */
 
 	bool		timing;			/* enable timing of all queries */
 

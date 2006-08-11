@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.81 2006/07/14 14:52:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.82 2006/08/11 19:20:59 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -44,7 +44,7 @@ MainLoop(FILE *source)
 	/* Save the prior command source */
 	FILE	   *prev_cmd_source;
 	bool		prev_cmd_interactive;
-	unsigned int prev_lineno;
+	uint64		prev_lineno;
 
 	/* Save old settings */
 	prev_cmd_source = pset.cur_cmd_source;
