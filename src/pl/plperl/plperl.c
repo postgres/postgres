@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.113 2006/08/08 19:15:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.114 2006/08/11 19:42:35 momjian Exp $
  *
  **********************************************************************/
 
@@ -52,6 +52,7 @@ typedef struct plperl_proc_desc
 	FmgrInfo	result_in_func; /* I/O function and arg for result type */
 	Oid			result_typioparam;
 	int			nargs;
+	int         num_out_args;   /* number of out arguments */
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
 	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 	SV		   *reference;
@@ -114,6 +115,9 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
+
+static SV  *plperl_convert_to_pg_array(SV *src);
+static SV *plperl_transform_result(plperl_proc_desc *prodesc, SV *result);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -404,7 +408,12 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
 							key)));
-		if (SvOK(val) && SvTYPE(val) != SVt_NULL)
+
+		/* if value is ref on array do to pg string array conversion */
+		if (SvTYPE(val) == SVt_RV &&
+			SvTYPE(SvRV(val)) == SVt_PVAV)
+			values[attn - 1] = SvPV(plperl_convert_to_pg_array(val), PL_na);
+		else if (SvOK(val) && SvTYPE(val) != SVt_NULL)
 			values[attn - 1] = SvPV(val, PL_na);
 	}
 	hv_iterinit(perlhash);
@@ -681,12 +690,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Form_pg_proc proc;
 	char		functyptype;
-	int			numargs;
-	Oid		   *argtypes;
-	char	  **argnames;
-	char	   *argmodes;
 	bool		istrigger = false;
-	int			i;
 
 	/* Get the new function's pg_proc entry */
 	tuple = SearchSysCache(PROCOID,
@@ -712,18 +716,6 @@ plperl_validator(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("plperl functions cannot return type %s",
 							format_type_be(proc->prorettype))));
-	}
-
-	/* Disallow pseudotypes in arguments (either IN or OUT) */
-	numargs = get_func_arg_info(tuple,
-								&argtypes, &argnames, &argmodes);
-	for (i = 0; i < numargs; i++)
-	{
-		if (get_typtype(argtypes[i]) == 'p')
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("plperl functions cannot take type %s",
-							format_type_be(argtypes[i]))));
 	}
 
 	ReleaseSysCache(tuple);
@@ -1128,6 +1120,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		/* Return a perl string converted to a Datum */
 		char	   *val;
 
+		perlret = plperl_transform_result(prodesc, perlret);
+
 		if (prodesc->fn_retisarray && SvROK(perlret) &&
 			SvTYPE(SvRV(perlret)) == SVt_PVAV)
 		{
@@ -1256,7 +1250,6 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	char		internal_proname[64];
 	int			proname_len;
 	plperl_proc_desc *prodesc = NULL;
-	int			i;
 	SV		  **svp;
 
 	/* We'll need the pg_proc tuple in any case... */
@@ -1319,6 +1312,12 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		Datum		prosrcdatum;
 		bool		isnull;
 		char	   *proc_source;
+		int			i;
+		int			numargs;
+		Oid		   *argtypes;
+		char	  **argnames;
+		char	   *argmodes;
+
 
 		/************************************************************
 		 * Allocate a new procedure description block
@@ -1336,6 +1335,25 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		/* Remember if function is STABLE/IMMUTABLE */
 		prodesc->fn_readonly =
 			(procStruct->provolatile != PROVOLATILE_VOLATILE);
+
+
+		/* Disallow pseudotypes in arguments (either IN or OUT) */
+		/* Count number of out arguments */
+		numargs = get_func_arg_info(procTup,
+									&argtypes, &argnames, &argmodes);
+		for (i = 0; i < numargs; i++)
+		{
+			if (get_typtype(argtypes[i]) == 'p')
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("plperl functions cannot take type %s",
+								format_type_be(argtypes[i]))));
+
+		    if (argmodes && argmodes[i] == PROARGMODE_OUT)
+				prodesc->num_out_args++;
+
+		}
+
 
 		/************************************************************
 		 * Lookup the pg_language tuple by Oid
@@ -1676,6 +1694,8 @@ plperl_return_next(SV *sv)
 	fcinfo = current_call_data->fcinfo;
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
+	sv = plperl_transform_result(prodesc, sv);
+
 	if (!prodesc->fn_retisset)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1753,7 +1773,16 @@ plperl_return_next(SV *sv)
 
 		if (SvOK(sv) && SvTYPE(sv) != SVt_NULL)
 		{
-			char	   *val = SvPV(sv, PL_na);
+			char	   *val;
+			SV         *array_ret;
+
+			if (SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV )
+			{
+				array_ret = plperl_convert_to_pg_array(sv);
+				sv = array_ret;
+			}
+
+			val = SvPV(sv, PL_na);
 
 			ret = InputFunctionCall(&prodesc->result_in_func, val,
 									prodesc->result_typioparam, -1);
@@ -2367,4 +2396,47 @@ plperl_spi_freeplan(char *query)
 	free(qdesc);
 
 	SPI_freeplan( plan);
+}
+
+/*
+ * If plerl result is hash and fce result is scalar, it's hash form of
+ * out argument. Then, transform it to scalar
+ */
+
+static SV *
+plperl_transform_result(plperl_proc_desc *prodesc, SV *result)
+{
+	bool        exactly_one_field = false;
+	HV         *hvr;
+	SV		   *val;
+	char	   *key;
+	I32			klen;
+
+
+	if (prodesc->num_out_args == 1 && SvOK(result) 
+		&& SvTYPE(result) == SVt_RV && SvTYPE(SvRV(result)) == SVt_PVHV)
+	{
+		hvr = (HV *) SvRV(result);
+		hv_iterinit(hvr);
+
+		while ((val = hv_iternextsv(hvr, &key, &klen)))
+		{
+			if (exactly_one_field)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("Perl hash contains nonexistent column \"%s\"",
+								key)));
+			exactly_one_field = true;
+			result = val;
+		}
+
+		if (!exactly_one_field)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("Perl hash is empty")));
+			
+		hv_iterinit(hvr);
+	}	    
+
+	return result;
 }
