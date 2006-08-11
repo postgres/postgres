@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Aug 8 15:05:10 EDT 2006
+   Last updated: Fri Aug 11 14:47:45 EDT 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -188,7 +188,7 @@
    (#postgresqlfr). There is also a PostgreSQL channel on EFNet.
    
    A list of commercial support companies is available at
-   http://techdocs.postgresql.org/companies.php.
+   http://www.postgresql.org/support/professional_support.
    
   1.8) How do I submit a bug report?
   
