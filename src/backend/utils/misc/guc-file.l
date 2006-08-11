@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.39 2006/08/11 20:08:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.40 2006/08/11 20:15:16 momjian Exp $
  */
 
 %{
@@ -117,6 +117,7 @@ ProcessConfigFile(GucContext context)
 {
 	int			elevel, i;
 	struct name_value_pair *item, *head, *tail;
+	char	   *env;
 	bool	   *apply_list = NULL;
 	int			varcount = 0;
 
@@ -183,6 +184,58 @@ ProcessConfigFile(GucContext context)
 			set_config_option(item->name, item->value, context,
 							  PGC_S_FILE, false, true);
 
+	if( context == PGC_SIGHUP)
+	{
+	/*
+	 * Revert all "untouched" options with reset source PGC_S_FILE to
+	 * default/boot value.
+	 */
+		for (i = 0; i < num_guc_variables; i++)
+		{
+			struct config_generic *gconf = guc_variables[i];
+			if ( gconf->reset_source == PGC_S_FILE &&
+				 !(gconf->status & GUC_IN_CONFFILE) )
+			{
+				if ( gconf->context == PGC_BACKEND && IsUnderPostmaster)
+					; /* Be silent. Does any body want message from each session? */
+				else if (gconf->context == PGC_POSTMASTER)
+					ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						errmsg("parameter \"%s\" cannot be changed (commented) after server start; configuration file change ignored",
+						gconf->name)));
+				else if(set_config_option(gconf->name,
+														NULL, context,
+														PGC_S_FILE,
+														false, true))
+				{
+					GucStack   *stack;
+					/* set correctly source */
+					gconf->reset_source = PGC_S_DEFAULT;
+					for (stack = gconf->stack; stack; stack = stack->prev)
+						if (stack->source == PGC_S_FILE)
+							stack->source = PGC_S_DEFAULT;
+
+						ereport(elevel,
+								(errcode(ERRCODE_SUCCESSFUL_COMPLETION),
+								errmsg("configuration option %s falls back to default value", gconf->name)));
+				}
+			}
+			gconf->status &= ~GUC_IN_CONFFILE;
+		}
+
+		/* Revert to environment variable. PGPORT is ignored, because it cannot be
+		 * set in running state.
+		 */
+		env = getenv("PGDATESTYLE");
+		if (env != NULL)
+			set_config_option("datestyle", env, context,
+							  PGC_S_ENV_VAR, false, true);
+
+		env = getenv("PGCLIENTENCODING");
+		if (env != NULL)
+			set_config_option("client_encoding", env, context,
+							PGC_S_ENV_VAR, false, true);
+	}
 
 cleanup_list:
 	if (apply_list)
