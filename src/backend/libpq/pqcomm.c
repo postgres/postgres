@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.186 2006/07/14 05:28:27 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.187 2006/08/11 20:44:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,6 +592,20 @@ StreamConnection(int server_fd, Port *port)
 			elog(LOG, "setsockopt(SO_KEEPALIVE) failed: %m");
 			return STATUS_ERROR;
 		}
+
+#ifdef WIN32
+		/*
+		 *	This is a Win32 socket optimization.  The ideal size is 32k.
+		 *	http://support.microsoft.com/kb/823764/EN-US/
+		 */
+		on = PQ_BUFFER_SIZE * 4;
+		if (setsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &on,
+			sizeof(on)) < 0)
+		{
+			elog(LOG, "setsockopt(SO_SNDBUF) failed: %m");
+			return STATUS_ERROR;
+		}
+#endif
 
 		/*
 		 * Also apply the current keepalive parameters.  If we fail to set a
