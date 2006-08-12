@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.335 2006/08/11 20:15:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.336 2006/08/12 04:11:50 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2694,39 +2694,39 @@ InitializeGUCOptions(void)
 					struct config_bool *conf = (struct config_bool *) gconf;
 
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->boot_val, true,
+						if (!(*conf->assign_hook) (conf->reset_val, true,
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, (int) conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val;
+								 conf->gen.name, (int) conf->reset_val);
+					*conf->variable = conf->reset_val;
 					break;
 				}
 			case PGC_INT:
 				{
 					struct config_int *conf = (struct config_int *) gconf;
 
-					Assert(conf->boot_val >= conf->min);
-					Assert(conf->boot_val <= conf->max);
+					Assert(conf->reset_val >= conf->min);
+					Assert(conf->reset_val <= conf->max);
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->boot_val, true,
+						if (!(*conf->assign_hook) (conf->reset_val, true,
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val; 
+								 conf->gen.name, conf->reset_val);
+					*conf->variable = conf->reset_val;
 					break;
 				}
 			case PGC_REAL:
 				{
 					struct config_real *conf = (struct config_real *) gconf;
 
-					Assert(conf->boot_val >= conf->min);
-					Assert(conf->boot_val <= conf->max);
+					Assert(conf->reset_val >= conf->min);
+					Assert(conf->reset_val <= conf->max);
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->boot_val, true,
+						if (!(*conf->assign_hook) (conf->reset_val, true,
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %g",
-								 conf->gen.name, conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val; 
+								 conf->gen.name, conf->reset_val);
+					*conf->variable = conf->reset_val;
 					break;
 				}
 			case PGC_STRING:
@@ -3179,7 +3179,7 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
-		int			my_status = gconf->status & (~GUC_IN_CONFFILE);
+		int			my_status = gconf->status;
 		GucStack   *stack = gconf->stack;
 		bool		useTentative;
 		bool		changed;
@@ -3726,19 +3726,8 @@ parse_value(int elevel, const struct config_generic *record,
 				}
 				else
 				{
-					/* Revert value to default if source is configuration file. It is used when 
-					 * configuration parameter is removed/commented out in the config file. Else
-					 * RESET or SET TO DEFAULT command is called and reset_val is used. 
-					 */
-					if( *source == PGC_S_FILE )
-					{
-						newval =  conf->boot_val;
-					}
-					else
-					{
-						newval = conf->reset_val;
-						*source = conf->gen.reset_source;
-					}
+					newval = conf->reset_val;
+					*source = conf->gen.reset_source;
 				}
 
 				if (conf->assign_hook)
@@ -3781,19 +3770,8 @@ parse_value(int elevel, const struct config_generic *record,
 				}
 				else
 				{
-					/* Revert value to default if source is configuration file. It is used when 
-					 * configuration parameter is removed/commented out in the config file. Else
-					 * RESET or SET TO DEFAULT command is called and reset_val is used. 
-					 */
-					if( *source == PGC_S_FILE )
-					{
-						newval =  conf->boot_val;
-					}
-					else
-					{
-						newval = conf->reset_val;
-						*source = conf->gen.reset_source;
-					}
+					newval = conf->reset_val;
+					*source = conf->gen.reset_source;
 				}
 
 				if (conf->assign_hook)
@@ -3836,19 +3814,8 @@ parse_value(int elevel, const struct config_generic *record,
 				}
 				else
 				{
-					/* Revert value to default if source is configuration file. It is used when 
-					 * configuration parameter is removed/commented out in the config file. Else
-					 * RESET or SET TO DEFAULT command is called and reset_val is used. 
-					 */
-					if( *source == PGC_S_FILE )
-					{
-						newval =  conf->boot_val;
-					}
-					else
-					{
-						newval = conf->reset_val;
-						*source = conf->gen.reset_source;
-					}
+					newval = conf->reset_val;
+					*source = conf->gen.reset_source;
 				}
 
 				if (conf->assign_hook)
@@ -3882,20 +3849,6 @@ parse_value(int elevel, const struct config_generic *record,
 					if (conf->gen.flags & GUC_IS_NAME)
 						truncate_identifier(newval, strlen(newval), true);
 				}
-				else if (*source == PGC_S_FILE)
-				{
-					/* Revert value to default when item is removed from config file. */
-					if ( conf->boot_val != NULL )
-					{
-						newval = guc_strdup(elevel, conf->boot_val);
-						if (newval == NULL)
-							return false;
-					}
-					else
-					{
-						return false;
-					}
-				} 
 				else if (conf->reset_val)
 				{
 					/*
@@ -4100,11 +4053,6 @@ verify_config_option(const char *name, const char *value,
 
 	if( parse_value(elevel, record, value, &source, false,  &newval) )
 	{
-		/* Mark record like presented in the config file. Be carefull if
-		 * you use this function for another purpose than config file 
-         * verification. It causes confusion configfile parser. */
-		record->status |= GUC_IN_CONFFILE;
-
 		if( isNewEqual != NULL)
 			*isNewEqual = is_newvalue_equal(record, value);
 		if( isContextOK != NULL)
@@ -4167,7 +4115,7 @@ set_config_option(const char *name, const char *value,
 	 * Should we set reset/stacked values?	(If so, the behavior is not
 	 * transactional.)
 	 */
-	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) && (value != NULL || source == PGC_S_FILE);
+	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) && (value != NULL);
 
 	/*
 	 * Ignore attempted set if overridden by previously processed setting.

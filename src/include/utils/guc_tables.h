@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.25 2006/08/11 20:15:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.26 2006/08/12 04:11:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,8 +143,7 @@ struct config_generic
 #define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
 #define GUC_HAVE_LOCAL		0x0002		/* a SET LOCAL has been executed */
 #define GUC_HAVE_STACK		0x0004		/* we have stacked prior value(s) */
-#define GUC_IN_CONFFILE		0x0008		/* value shows up in the configuration
-										   file (is not commented) */
+
 
 /* GUC records for specific variable types */
 
@@ -154,12 +153,11 @@ struct config_bool
 	/* these fields must be set correctly in initial value: */
 	/* (all but reset_val are constants) */
 	bool	   *variable;
-	bool		boot_val;
+	bool		reset_val;
 	GucBoolAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	bool		tentative_val;
-	bool		reset_val;
 };
 
 struct config_int
@@ -168,14 +166,13 @@ struct config_int
 	/* these fields must be set correctly in initial value: */
 	/* (all but reset_val are constants) */
 	int		   *variable;
-	int			boot_val;
+	int			reset_val;
 	int			min;
 	int			max;
 	GucIntAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	int			tentative_val;
-	int			reset_val;
 };
 
 struct config_real
@@ -184,14 +181,13 @@ struct config_real
 	/* these fields must be set correctly in initial value: */
 	/* (all but reset_val are constants) */
 	double	   *variable;
-	double		boot_val;
+	double		reset_val;
 	double		min;
 	double		max;
 	GucRealAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	double		tentative_val;
-  	double		reset_val;
 };
 
 struct config_string
