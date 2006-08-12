@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.555 2006/08/12 02:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.556 2006/08/12 18:58:54 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4525,7 +4525,6 @@ RuleActionStmtOrEmpty:
 			|	/*EMPTY*/							{ $$ = NULL; }
 		;
 
-/* change me to select, update, etc. some day */
 event:		SELECT									{ $$ = CMD_SELECT; }
 			| UPDATE								{ $$ = CMD_UPDATE; }
 			| DELETE_P								{ $$ = CMD_DELETE; }
