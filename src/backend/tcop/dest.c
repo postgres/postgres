@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.68 2006/03/05 15:58:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.69 2006/08/12 02:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 
 #include "access/printtup.h"
 #include "access/xact.h"
+#include "executor/executor.h"
 #include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -124,6 +125,9 @@ CreateDestReceiver(CommandDest dest, Portal portal)
 				elog(ERROR, "portal has no holdStore");
 			return CreateTuplestoreDestReceiver(portal->holdStore,
 												portal->holdContext);
+
+		case DestIntoRel:
+			return CreateIntoRelDestReceiver();
 	}
 
 	/* should never get here */
@@ -148,6 +152,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 		case DestDebug:
 		case DestSPI:
 		case DestTuplestore:
+		case DestIntoRel:
 			break;
 	}
 }
@@ -186,6 +191,7 @@ NullCommand(CommandDest dest)
 		case DestDebug:
 		case DestSPI:
 		case DestTuplestore:
+		case DestIntoRel:
 			break;
 	}
 }
@@ -226,6 +232,7 @@ ReadyForQuery(CommandDest dest)
 		case DestDebug:
 		case DestSPI:
 		case DestTuplestore:
+		case DestIntoRel:
 			break;
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.207 2006/08/05 17:21:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.208 2006/08/12 02:52:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,6 +278,10 @@ subquery_planner(Query *parse, double tuple_fraction,
 	 */
 	parse->targetList = (List *)
 		preprocess_expression(root, (Node *) parse->targetList,
+							  EXPRKIND_TARGET);
+
+	parse->returningList = (List *)
+		preprocess_expression(root, (Node *) parse->returningList,
 							  EXPRKIND_TARGET);
 
 	preprocess_qual_conditions(root, (Node *) parse->jointree);
@@ -554,12 +558,12 @@ inheritance_planner(PlannerInfo *root)
 	Query	   *parse = root->parse;
 	int			parentRTindex = parse->resultRelation;
 	List	   *subplans = NIL;
+	List	   *resultRelations = NIL;
+	List	   *returningLists = NIL;
 	List	   *rtable = NIL;
 	List	   *tlist = NIL;
 	PlannerInfo subroot;
 	ListCell   *l;
-
-	parse->resultRelations = NIL;
 
 	foreach(l, root->append_rel_list)
 	{
@@ -605,9 +609,19 @@ inheritance_planner(PlannerInfo *root)
 		subplans = lappend(subplans, subplan);
 
 		/* Build target-relations list for the executor */
-		parse->resultRelations = lappend_int(parse->resultRelations,
-											 appinfo->child_relid);
+		resultRelations = lappend_int(resultRelations, appinfo->child_relid);
+
+		/* Build list of per-relation RETURNING targetlists */
+		if (parse->returningList)
+		{
+			Assert(list_length(subroot.parse->returningLists) == 1);
+			returningLists = list_concat(returningLists,
+										 subroot.parse->returningLists);
+		}
 	}
+
+	parse->resultRelations = resultRelations;
+	parse->returningLists = returningLists;
 
 	/* Mark result as unordered (probably unnecessary) */
 	root->query_pathkeys = NIL;
@@ -1080,6 +1094,21 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 										  parse->limitCount,
 										  offset_est,
 										  count_est);
+	}
+
+	/*
+	 * Deal with the RETURNING clause if any.  It's convenient to pass the
+	 * returningList through setrefs.c now rather than at top level (if
+	 * we waited, handling inherited UPDATE/DELETE would be much harder).
+	 */
+	if (parse->returningList)
+	{
+		List   *rlist;
+
+		rlist = set_returning_clause_references(parse->returningList,
+												result_plan,
+												parse->resultRelation);
+		parse->returningLists = list_make1(rlist);
 	}
 
 	/*

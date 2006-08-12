@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.344 2006/08/10 02:36:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.345 2006/08/12 02:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,6 +100,7 @@ static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 					List **extras_before, List **extras_after);
 static List *transformInsertRow(ParseState *pstate, List *exprlist,
 						  List *stmtcols, List *icolumns, List *attrnos);
+static List *transformReturningList(ParseState *pstate, List *returningList);
 static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt);
 static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt,
 				  List **extras_before, List **extras_after);
@@ -494,8 +495,9 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	 */
 	transformFromClause(pstate, stmt->usingClause);
 
-	/* fix where clause */
 	qual = transformWhereClause(pstate, stmt->whereClause, "WHERE");
+
+	qry->returningList = transformReturningList(pstate, stmt->returningList);
 
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
@@ -818,6 +820,22 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 
 		icols = lnext(icols);
 		attnos = lnext(attnos);
+	}
+
+	/*
+	 * If we have a RETURNING clause, we need to add the target relation
+	 * to the query namespace before processing it, so that Var references
+	 * in RETURNING will work.  Also, remove any namespace entries added
+	 * in a sub-SELECT or VALUES list.
+	 */
+	if (stmt->returningList)
+	{
+		pstate->p_relnamespace = NIL;
+		pstate->p_varnamespace = NIL;
+		addRTEtoQuery(pstate, pstate->p_target_rangetblentry,
+					  false, true, true);
+		qry->returningList = transformReturningList(pstate,
+													stmt->returningList);
 	}
 
 	/* done building the range table and jointree */
@@ -1297,7 +1315,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 	if (including_indexes)
 		elog(ERROR, "TODO");
-	
+
 	/*
 	 * Insert the inherited attributes into the cxt for the new table
 	 * definition.
@@ -1368,11 +1386,11 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			def->cooked_default = pstrdup(this_default);
 		}
 	}
-	
+
 	if (including_constraints && tupleDesc->constr) {
 		int ccnum;
 		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
-		
+
 		for(ccnum = 0; ccnum < tupleDesc->constr->num_check; ccnum++) {
 			char *ccname = tupleDesc->constr->check[ccnum].ccname;
 			char *ccbin = tupleDesc->constr->check[ccnum].ccbin;
@@ -1380,7 +1398,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			Constraint *n = makeNode(Constraint);
 
 			change_varattnos_of_a_node(ccbin_node, attmap);
-			
+
 			n->contype = CONSTR_CHECK;
 			n->name = pstrdup(ccname);
 			n->raw_expr = ccbin_node;
@@ -2777,6 +2795,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 	qual = transformWhereClause(pstate, stmt->whereClause, "WHERE");
 
+	qry->returningList = transformReturningList(pstate, stmt->returningList);
+
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
@@ -2851,7 +2871,62 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 }
 
 /*
- * tranformAlterTableStmt -
+ * transformReturningList -
+ *	handle a RETURNING clause in INSERT/UPDATE/DELETE
+ */
+static List *
+transformReturningList(ParseState *pstate, List *returningList)
+{
+	List	   *rlist;
+	int			save_next_resno;
+	bool		save_hasAggs;
+	int			length_rtable;
+
+	if (returningList == NIL)
+		return NIL;				/* nothing to do */
+
+	/*
+	 * We need to assign resnos starting at one in the RETURNING list.
+	 * Save and restore the main tlist's value of p_next_resno, just in
+	 * case someone looks at it later (probably won't happen).
+	 */
+	save_next_resno = pstate->p_next_resno;
+	pstate->p_next_resno = 1;
+
+	/* save other state so that we can detect disallowed stuff */
+	save_hasAggs = pstate->p_hasAggs;
+	pstate->p_hasAggs = false;
+	length_rtable = list_length(pstate->p_rtable);
+
+	/* transform RETURNING identically to a SELECT targetlist */
+	rlist = transformTargetList(pstate, returningList);
+
+	/* check for disallowed stuff */
+
+	/* aggregates not allowed (but subselects are okay) */
+	if (pstate->p_hasAggs)
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("cannot use aggregate function in RETURNING")));
+
+	/* no new relation references please */
+	if (list_length(pstate->p_rtable) != length_rtable)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("RETURNING may not contain references to other relations")));
+
+	/* mark column origins */
+	markTargetListOrigins(pstate, rlist);
+
+	/* restore state */
+	pstate->p_next_resno = save_next_resno;
+	pstate->p_hasAggs = save_hasAggs;
+
+	return rlist;
+}
+
+/*
+ * transformAlterTableStmt -
  *	transform an Alter Table Statement
  */
 static Query *

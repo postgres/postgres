@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.230 2006/08/02 01:59:47 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.231 2006/08/12 02:52:05 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -140,6 +140,8 @@ static void get_delete_query_def(Query *query, deparse_context *context);
 static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context,
 					   TupleDesc resultDesc);
+static void get_target_list(List *targetList, deparse_context *context,
+							TupleDesc resultDesc);
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context,
 				TupleDesc resultDesc);
@@ -1954,7 +1956,6 @@ get_basic_select_query(Query *query, deparse_context *context,
 	StringInfo	buf = context->buf;
 	char	   *sep;
 	ListCell   *l;
-	int			colno;
 
 	if (PRETTY_INDENT(context))
 	{
@@ -2012,9 +2013,63 @@ get_basic_select_query(Query *query, deparse_context *context,
 	}
 
 	/* Then we tell what to select (the targetlist) */
+	get_target_list(query->targetList, context, resultDesc);
+
+	/* Add the FROM clause if needed */
+	get_from_clause(query, " FROM ", context);
+
+	/* Add the WHERE clause if given */
+	if (query->jointree->quals != NULL)
+	{
+		appendContextKeyword(context, " WHERE ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+		get_rule_expr(query->jointree->quals, context, false);
+	}
+
+	/* Add the GROUP BY clause if given */
+	if (query->groupClause != NULL)
+	{
+		appendContextKeyword(context, " GROUP BY ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+		sep = "";
+		foreach(l, query->groupClause)
+		{
+			GroupClause *grp = (GroupClause *) lfirst(l);
+
+			appendStringInfoString(buf, sep);
+			get_rule_sortgroupclause(grp, query->targetList,
+									 false, context);
+			sep = ", ";
+		}
+	}
+
+	/* Add the HAVING clause if given */
+	if (query->havingQual != NULL)
+	{
+		appendContextKeyword(context, " HAVING ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+		get_rule_expr(query->havingQual, context, false);
+	}
+}
+
+/* ----------
+ * get_target_list			- Parse back a SELECT target list
+ *
+ * This is also used for RETURNING lists in INSERT/UPDATE/DELETE.
+ * ----------
+ */
+static void
+get_target_list(List *targetList, deparse_context *context,
+				TupleDesc resultDesc)
+{
+	StringInfo	buf = context->buf;
+	char	   *sep;
+	int			colno;
+	ListCell   *l;
+
 	sep = " ";
 	colno = 0;
-	foreach(l, query->targetList)
+	foreach(l, targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		char	   *colname;
@@ -2094,42 +2149,6 @@ get_basic_select_query(Query *query, deparse_context *context,
 			if (attname == NULL || strcmp(attname, colname) != 0)
 				appendStringInfo(buf, " AS %s", quote_identifier(colname));
 		}
-	}
-
-	/* Add the FROM clause if needed */
-	get_from_clause(query, " FROM ", context);
-
-	/* Add the WHERE clause if given */
-	if (query->jointree->quals != NULL)
-	{
-		appendContextKeyword(context, " WHERE ",
-							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
-		get_rule_expr(query->jointree->quals, context, false);
-	}
-
-	/* Add the GROUP BY clause if given */
-	if (query->groupClause != NULL)
-	{
-		appendContextKeyword(context, " GROUP BY ",
-							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
-		sep = "";
-		foreach(l, query->groupClause)
-		{
-			GroupClause *grp = (GroupClause *) lfirst(l);
-
-			appendStringInfoString(buf, sep);
-			get_rule_sortgroupclause(grp, query->targetList,
-									 false, context);
-			sep = ", ";
-		}
-	}
-
-	/* Add the HAVING clause if given */
-	if (query->havingQual != NULL)
-	{
-		appendContextKeyword(context, " HAVING ",
-							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
-		get_rule_expr(query->havingQual, context, false);
 	}
 }
 
@@ -2377,6 +2396,14 @@ get_insert_query_def(Query *query, deparse_context *context)
 		get_rule_expr((Node *) strippedexprs, context, false);
 		appendStringInfoChar(buf, ')');
 	}
+
+	/* Add RETURNING if present */
+	if (query->returningList)
+	{
+		appendContextKeyword(context, " RETURNING",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+		get_target_list(query->returningList, context, NULL);
+	}
 }
 
 
@@ -2441,12 +2468,20 @@ get_update_query_def(Query *query, deparse_context *context)
 	/* Add the FROM clause if needed */
 	get_from_clause(query, " FROM ", context);
 
-	/* Finally add a WHERE clause if given */
+	/* Add a WHERE clause if given */
 	if (query->jointree->quals != NULL)
 	{
 		appendContextKeyword(context, " WHERE ",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
 		get_rule_expr(query->jointree->quals, context, false);
+	}
+
+	/* Add RETURNING if present */
+	if (query->returningList)
+	{
+		appendContextKeyword(context, " RETURNING",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+		get_target_list(query->returningList, context, NULL);
 	}
 }
 
@@ -2484,6 +2519,14 @@ get_delete_query_def(Query *query, deparse_context *context)
 		appendContextKeyword(context, " WHERE ",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
 		get_rule_expr(query->jointree->quals, context, false);
+	}
+
+	/* Add RETURNING if present */
+	if (query->returningList)
+	{
+		appendContextKeyword(context, " RETURNING",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
+		get_target_list(query->returningList, context, NULL);
 	}
 }
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.40 2006/08/10 02:36:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.41 2006/08/12 02:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,6 +370,10 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subtlist = subquery->targetList;
 	parse->targetList = (List *)
 		ResolveNew((Node *) parse->targetList,
+				   varno, 0, rte,
+				   subtlist, CMD_SELECT, 0);
+	parse->returningList = (List *)
+		ResolveNew((Node *) parse->returningList,
 				   varno, 0, rte,
 				   subtlist, CMD_SELECT, 0);
 	resolvenew_in_jointree((Node *) parse->jointree, varno,

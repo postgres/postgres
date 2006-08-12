@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.20 2006/07/27 19:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.21 2006/08/12 02:52:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,6 +439,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	subparse->commandType = CMD_SELECT;
 	subparse->resultRelation = 0;
 	subparse->resultRelations = NIL;
+	subparse->returningLists = NIL;
 	subparse->into = NULL;
 	subparse->hasAggs = false;
 	subparse->groupClause = NIL;

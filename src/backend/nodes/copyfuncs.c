@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.346 2006/08/10 02:36:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.347 2006/08/12 02:52:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1704,6 +1704,7 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(targetList);
+	COPY_NODE_FIELD(returningList);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingQual);
 	COPY_NODE_FIELD(distinctClause);
@@ -1713,6 +1714,7 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(resultRelations);
+	COPY_NODE_FIELD(returningLists);
 
 	return newnode;
 }
@@ -1725,6 +1727,7 @@ _copyInsertStmt(InsertStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(cols);
 	COPY_NODE_FIELD(selectStmt);
+	COPY_NODE_FIELD(returningList);
 
 	return newnode;
 }
@@ -1735,8 +1738,9 @@ _copyDeleteStmt(DeleteStmt *from)
 	DeleteStmt *newnode = makeNode(DeleteStmt);
 
 	COPY_NODE_FIELD(relation);
-	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(usingClause);
+	COPY_NODE_FIELD(whereClause);
+	COPY_NODE_FIELD(returningList);
 
 	return newnode;
 }
@@ -1750,6 +1754,7 @@ _copyUpdateStmt(UpdateStmt *from)
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(fromClause);
+	COPY_NODE_FIELD(returningList);
 
 	return newnode;
 }

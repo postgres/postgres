@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.217 2006/08/04 14:09:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.218 2006/08/12 02:52:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3351,6 +3351,8 @@ query_tree_walker(Query *query,
 
 	if (walker((Node *) query->targetList, context))
 		return true;
+	if (walker((Node *) query->returningList, context))
+		return true;
 	if (walker((Node *) query->jointree, context))
 		return true;
 	if (walker(query->setOperations, context))
@@ -3913,6 +3915,7 @@ query_tree_mutator(Query *query,
 	}
 
 	MUTATE(query->targetList, query->targetList, List *);
+	MUTATE(query->returningList, query->returningList, List *);
 	MUTATE(query->jointree, query->jointree, FromExpr *);
 	MUTATE(query->setOperations, query->setOperations, Node *);
 	MUTATE(query->havingQual, query->havingQual, Node *);

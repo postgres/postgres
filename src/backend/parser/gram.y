@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.554 2006/08/02 01:59:46 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.555 2006/08/12 02:52:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -244,7 +244,7 @@ static void doNegateFloat(Value *v);
 				transaction_mode_list_or_empty
 				TableFuncElementList
 				prep_type_clause prep_type_list
-				execute_param_clause using_clause
+				execute_param_clause using_clause returning_clause
 
 %type <range>	into_clause OptTempTableName
 
@@ -412,7 +412,7 @@ static void doNegateFloat(Value *v);
 	QUOTE
 
 	READ REAL REASSIGN RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
-	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNS REVOKE RIGHT
+	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNING RETURNS REVOKE RIGHT
 	ROLE ROLLBACK ROW ROWS RULE
 
 	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
@@ -5334,9 +5334,10 @@ DeallocateStmt: DEALLOCATE name
  *****************************************************************************/
 
 InsertStmt:
-			INSERT INTO qualified_name insert_rest
+			INSERT INTO qualified_name insert_rest returning_clause
 				{
 					$4->relation = $3;
+					$4->returningList = $5;
 					$$ = (Node *) $4;
 				}
 		;
@@ -5380,6 +5381,11 @@ insert_column_item:
 				}
 		;
 
+returning_clause:
+			RETURNING target_list		{ $$ = $2; }
+			| /* EMPTY */				{ $$ = NIL; }
+		;
+
 
 /*****************************************************************************
  *
@@ -5389,12 +5395,13 @@ insert_column_item:
  *****************************************************************************/
 
 DeleteStmt: DELETE_P FROM relation_expr_opt_alias
-			using_clause where_clause
+			using_clause where_clause returning_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relation = $3;
 					n->usingClause = $4;
 					n->whereClause = $5;
+					n->returningList = $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -5445,12 +5452,14 @@ UpdateStmt: UPDATE relation_expr_opt_alias
 			SET update_target_list
 			from_clause
 			where_clause
+			returning_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relation = $2;
 					n->targetList = $4;
 					n->fromClause = $5;
 					n->whereClause = $6;
+					n->returningList = $7;
 					$$ = (Node *)n;
 				}
 		;
@@ -8809,6 +8818,7 @@ reserved_keyword:
 			| PLACING
 			| PRIMARY
 			| REFERENCES
+			| RETURNING
 			| SELECT
 			| SESSION_USER
 			| SOME

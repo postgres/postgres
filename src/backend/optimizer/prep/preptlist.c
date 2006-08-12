@@ -9,13 +9,14 @@
  * relation in the correct order.  For both UPDATE and DELETE queries,
  * we need a junk targetlist entry holding the CTID attribute --- the
  * executor relies on this to find the tuple to be replaced/deleted.
+ * We may also need junk tlist entries for Vars used in the RETURNING list.
  *
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.82 2006/04/30 18:30:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.83 2006/08/12 02:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +28,8 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
+#include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
@@ -149,6 +152,40 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 
 			tlist = lappend(tlist, tle);
 		}
+	}
+
+	/*
+	 * If the query has a RETURNING list, add resjunk entries for any Vars
+	 * used in RETURNING that belong to other relations.  We need to do this
+	 * to make these Vars available for the RETURNING calculation.  Vars
+	 * that belong to the result rel don't need to be added, because they
+	 * will be made to refer to the actual heap tuple.
+	 */
+	if (parse->returningList && list_length(parse->rtable) > 1)
+	{
+		List   *vars;
+		ListCell   *l;
+
+		vars = pull_var_clause((Node *) parse->returningList, false);
+		foreach(l, vars)
+		{
+			Var		   *var = (Var *) lfirst(l);
+			TargetEntry *tle;
+
+			if (var->varno == result_relation)
+				continue;		/* don't need it */
+
+			if (tlist_member((Node *) var, tlist))
+				continue;		/* already got it */
+
+			tle = makeTargetEntry((Expr *) var,
+								  list_length(tlist) + 1,
+								  NULL,
+								  true);
+
+			tlist = lappend(tlist, tle);
+		}
+		list_free(vars);
 	}
 
 	return tlist;

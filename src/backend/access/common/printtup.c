@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.97 2006/07/14 14:52:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.98 2006/08/12 02:52:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,10 +127,10 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	}
 
 	/*
-	 * If this is a retrieve, and we are supposed to emit row descriptions,
-	 * then we send back the tuple descriptor of the tuples.
+	 * If we are supposed to emit row descriptions,
+	 * then send the tuple descriptor of the tuples.
 	 */
-	if (operation == CMD_SELECT && myState->sendDescrip)
+	if (myState->sendDescrip)
 		SendRowDescriptionMessage(typeinfo,
 								  FetchPortalTargetList(portal),
 								  portal->formats);

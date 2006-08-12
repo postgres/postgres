@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.64 2006/08/08 01:23:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.65 2006/08/12 02:52:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,12 @@
  * supports holdable cursors (the Executor results can be dumped into a
  * tuplestore for access after transaction completion).
  *
+ * PORTAL_ONE_RETURNING: the portal contains a single INSERT/UPDATE/DELETE
+ * query with a RETURNING clause.  On first execution, we run the statement
+ * and dump its results into the portal tuplestore; the results are then
+ * returned to the client as demanded.  (We can't support suspension of
+ * the query partway through, because the AFTER TRIGGER code can't cope.)
+ *
  * PORTAL_UTIL_SELECT: the portal contains a utility statement that returns
  * a SELECT-like result (for example, EXPLAIN or SHOW).  On first execution,
  * we run the statement and dump its results into the portal tuplestore;
@@ -73,6 +79,7 @@
 typedef enum PortalStrategy
 {
 	PORTAL_ONE_SELECT,
+	PORTAL_ONE_RETURNING,
 	PORTAL_UTIL_SELECT,
 	PORTAL_MULTI_QUERY
 } PortalStrategy;
@@ -133,7 +140,6 @@ typedef struct PortalData
 
 	/* Status data */
 	PortalStatus status;		/* see above */
-	bool		portalUtilReady;	/* PortalRunUtility complete? */
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */
@@ -144,9 +150,9 @@ typedef struct PortalData
 	int16	   *formats;		/* a format code for each column */
 
 	/*
-	 * Where we store tuples for a held cursor or a PORTAL_UTIL_SELECT query.
-	 * (A cursor held past the end of its transaction no longer has any active
-	 * executor state.)
+	 * Where we store tuples for a held cursor or a PORTAL_ONE_RETURNING or
+	 * PORTAL_UTIL_SELECT query.  (A cursor held past the end of its
+	 * transaction no longer has any active executor state.)
 	 */
 	Tuplestorestate *holdStore; /* store for holdable cursors */
 	MemoryContext holdContext;	/* memory containing holdStore */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.321 2006/08/10 02:36:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.322 2006/08/12 02:52:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,8 @@ typedef struct Query
 
 	List	   *targetList;		/* target list (of TargetEntry) */
 
+	List	   *returningList;	/* return-values list (of TargetEntry) */
+
 	List	   *groupClause;	/* a list of GroupClause's */
 
 	Node	   *havingQual;		/* qualifications applied to groups */
@@ -125,10 +127,23 @@ typedef struct Query
 	 * tree, the planner will add all the child tables to the rtable and store
 	 * a list of the rtindexes of all the result relations here. This is done
 	 * at plan time, not parse time, since we don't want to commit to the
-	 * exact set of child tables at parse time.  This field ought to go in
+	 * exact set of child tables at parse time.  XXX This field ought to go in
 	 * some sort of TopPlan plan node, not in the Query.
 	 */
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
+
+	/*
+	 * If the query has a returningList then the planner will store a list
+	 * of processed targetlists (one per result relation) here.  We must
+	 * have a separate RETURNING targetlist for each result rel because
+	 * column numbers may vary within an inheritance tree.  In the targetlists,
+	 * Vars referencing the result relation will have their original varno
+	 * and varattno, while Vars referencing other rels will be converted
+	 * to have varno OUTER and varattno referencing a resjunk entry in the
+	 * top plan node's targetlist.  XXX This field ought to go in some sort of
+	 * TopPlan plan node, not in the Query.
+	 */
+	List	   *returningLists;		/* list of lists of TargetEntry, or NIL */
 } Query;
 
 
@@ -648,6 +663,7 @@ typedef struct InsertStmt
 	RangeVar   *relation;		/* relation to insert into */
 	List	   *cols;			/* optional: names of the target columns */
 	Node	   *selectStmt;		/* the source SELECT/VALUES, or NULL */
+	List	   *returningList;	/* list of expressions to return */
 } InsertStmt;
 
 /* ----------------------
@@ -658,8 +674,9 @@ typedef struct DeleteStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* relation to delete from */
-	Node	   *whereClause;	/* qualifications */
 	List	   *usingClause;	/* optional using clause for more tables */
+	Node	   *whereClause;	/* qualifications */
+	List	   *returningList;	/* list of expressions to return */
 } DeleteStmt;
 
 /* ----------------------
@@ -673,6 +690,7 @@ typedef struct UpdateStmt
 	List	   *targetList;		/* the target list (of ResTarget) */
 	Node	   *whereClause;	/* qualifications */
 	List	   *fromClause;		/* optional from clause for more tables */
+	List	   *returningList;	/* list of expressions to return */
 } UpdateStmt;
 
 /* ----------------------

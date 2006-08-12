@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.174 2006/07/31 01:16:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.175 2006/08/12 02:52:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,6 +284,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"reset", RESET},
 	{"restart", RESTART},
 	{"restrict", RESTRICT},
+	{"returning", RETURNING},
 	{"returns", RETURNS},
 	{"revoke", REVOKE},
 	{"right", RIGHT},

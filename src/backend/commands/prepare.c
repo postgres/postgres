@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.59 2006/08/08 01:23:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.60 2006/08/12 02:52:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,6 +447,10 @@ FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 			query = (Query *) linitial(stmt->query_list);
 			return ExecCleanTypeFromTL(query->targetList, false);
 
+		case PORTAL_ONE_RETURNING:
+			query = (Query *) linitial(stmt->query_list);
+			return ExecCleanTypeFromTL(query->returningList, false);
+
 		case PORTAL_UTIL_SELECT:
 			query = (Query *) linitial(stmt->query_list);
 			return UtilityTupleDescriptor(query->utilityStmt);
@@ -472,6 +476,7 @@ PreparedStatementReturnsTuples(PreparedStatement *stmt)
 	switch (ChoosePortalStrategy(stmt->query_list))
 	{
 		case PORTAL_ONE_SELECT:
+		case PORTAL_ONE_RETURNING:
 		case PORTAL_UTIL_SELECT:
 			return true;
 
@@ -499,6 +504,8 @@ FetchPreparedStatementTargetList(PreparedStatement *stmt)
 
 	if (strategy == PORTAL_ONE_SELECT)
 		return ((Query *) linitial(stmt->query_list))->targetList;
+	if (strategy == PORTAL_ONE_RETURNING)
+		return ((Query *) linitial(stmt->query_list))->returningList;
 	if (strategy == PORTAL_UTIL_SELECT)
 	{
 		Node	   *utilityStmt;

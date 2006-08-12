@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.158 2006/08/04 21:33:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.159 2006/08/12 02:52:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,6 +262,7 @@ typedef struct JunkFilter
  *		TrigInstrument			optional runtime measurements for triggers
  *		ConstraintExprs			array of constraint-checking expr states
  *		junkFilter				for removing junk attributes from tuples
+ *		projectReturning		for computing a RETURNING list
  * ----------------
  */
 typedef struct ResultRelInfo
@@ -277,6 +278,7 @@ typedef struct ResultRelInfo
 	struct Instrumentation *ri_TrigInstrument;
 	List	  **ri_ConstraintExprs;
 	JunkFilter *ri_junkFilter;
+	ProjectionInfo *ri_projectReturning;
 } ResultRelInfo;
 
 /* ----------------

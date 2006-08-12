@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.31 2006/08/04 00:00:13 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/serial_schedule,v 1.32 2006/08/12 02:52:06 tgl Exp $
 # This should probably be in an order similar to parallel_schedule.
 test: boolean
 test: char
@@ -100,5 +100,6 @@ test: alter_table
 test: sequence
 test: polymorphism
 test: rowtypes
+test: returning
 test: stats
 test: tablespace
