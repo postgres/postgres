@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.155 2006/07/26 19:31:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.156 2006/08/12 20:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,7 +447,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "expected SELECT query from subquery in FROM");
-	if (query->resultRelation != 0 || query->into != NULL)
+	if (query->into != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("subquery in FROM may not have SELECT INTO")));

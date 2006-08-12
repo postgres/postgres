@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.322 2006/08/12 02:52:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.323 2006/08/12 20:05:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,8 @@ typedef struct Query
 	Node	   *utilityStmt;	/* non-null if this is a non-optimizable
 								 * statement */
 
-	int			resultRelation; /* target relation (index into rtable) */
+	int			resultRelation; /* rtable index of target relation for
+								 * INSERT/UPDATE/DELETE; 0 for SELECT */
 
 	RangeVar   *into;			/* target relation for SELECT INTO */
 	List	   *intoOptions;		/* options from WITH clause */

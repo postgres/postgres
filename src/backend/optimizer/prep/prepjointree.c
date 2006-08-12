@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.41 2006/08/12 02:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.42 2006/08/12 20:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -623,7 +623,6 @@ is_simple_subquery(Query *subquery)
 	 */
 	if (!IsA(subquery, Query) ||
 		subquery->commandType != CMD_SELECT ||
-		subquery->resultRelation != 0 ||
 		subquery->into != NULL)
 		elog(ERROR, "subquery is bogus");
 
@@ -686,7 +685,6 @@ is_simple_union_all(Query *subquery)
 	/* Let's just make sure it's a valid subselect ... */
 	if (!IsA(subquery, Query) ||
 		subquery->commandType != CMD_SELECT ||
-		subquery->resultRelation != 0 ||
 		subquery->into != NULL)
 		elog(ERROR, "subquery is bogus");
 

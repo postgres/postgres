@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.55 2006/05/30 11:40:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.56 2006/08/12 20:05:54 tgl Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -244,17 +244,7 @@ $$ LANGUAGE plperl;
 
 SELECT * FROM perl_set();
 </programlisting>
-
   </para>
-
-    <para>
-     <application>PL/Perl</> does not currently have full support for
-     domain types: it treats a domain the same as the underlying scalar
-     type.  This means that constraints associated with the domain will
-     not be enforced.  This is not an issue for function arguments, but
-     it is a hazard if you declare a <application>PL/Perl</> function
-     as returning a domain type.
-    </para>
 
   <para>
    If you wish to use the <literal>strict</> pragma with your code,
@@ -439,26 +429,26 @@ SELECT * from lotsa_md5(500);
     
     <para>
     The advantage of prepared queries is that is it possible to use one prepared plan for more
-    than one query execution. After the plan is not needed anymore, it must be freed with 
+    than one query execution. After the plan is not needed anymore, it may be freed with 
     <literal>spi_freeplan</literal>:
     </para>
 
     <para>
     <programlisting>
 CREATE OR REPLACE FUNCTION init() RETURNS INTEGER AS $$
-	$_SHARED{my_plan} = spi_prepare( 'SELECT (now() + $1)::date AS now', 'INTERVAL');
+        $_SHARED{my_plan} = spi_prepare( 'SELECT (now() + $1)::date AS now', 'INTERVAL');
 $$ LANGUAGE plperl;
 
 CREATE OR REPLACE FUNCTION add_time( INTERVAL ) RETURNS TEXT AS $$
-	return spi_exec_prepared( 
-		$_SHARED{my_plan},
-		$_[0],
-	)->{rows}->[0]->{now};
+        return spi_exec_prepared( 
+                $_SHARED{my_plan},
+                $_[0],
+        )->{rows}->[0]->{now};
 $$ LANGUAGE plperl;
 
 CREATE OR REPLACE FUNCTION done() RETURNS INTEGER AS $$
-	spi_freeplan( $_SHARED{my_plan});
-	undef $_SHARED{my_plan};
+        spi_freeplan( $_SHARED{my_plan});
+        undef $_SHARED{my_plan};
 $$ LANGUAGE plperl;
 
 SELECT init();
@@ -478,16 +468,14 @@ SELECT done();
     </para>
 
     <para>
-    <literal>spi_cursor_close</literal> can be used to abort sequence of
-    <literal>spi_fetchrow</literal> calls. Normally, the call to
-    <literal>spi_fetchrow</literal> that returns <literal>undef</literal> is
-    the signal that there are no more rows to read. Also
-    that call automatically frees the cursor associated with the query. If it is desired not
-    to read all retuned rows, <literal>spi_cursor_close</literal> must be
-    called to avoid memory leaks.  
+     Normally, <function>spi_fetchrow</> should be repeated until it
+     returns <literal>undef</literal>, indicating that there are no more
+     rows to read.  The cursor is automatically freed when
+     <function>spi_fetchrow</> returns <literal>undef</literal>.
+     If you do not wish to read all the rows, instead call
+     <function>spi_cursor_close</> to free the cursor.
+     Failure to do so will result in memory leaks.
     </para>
-
-
      </listitem>
     </varlistentry>
 
@@ -630,8 +618,8 @@ CREATE FUNCTION badfunc() RETURNS integer AS $$
     return 1;
 $$ LANGUAGE plperl;
 </programlisting>
-	The creation of this function will fail as its use of a forbidden
-	operation will be be caught by the validator.
+    The creation of this function will fail as its use of a forbidden
+    operation will be be caught by the validator.
   </para>
 
   <para>
@@ -748,8 +736,8 @@ $$ LANGUAGE plperl;
      <listitem>
       <para>
        Name of the table on which the trigger fired. This has been deprecated,
-	   and could be removed in a future release. 
-	   Please use $_TD-&gt;{table_name} instead.
+       and could be removed in a future release. 
+       Please use $_TD-&gt;{table_name} instead.
       </para>
      </listitem>
     </varlistentry>

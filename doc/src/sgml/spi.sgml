@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.45 2006/03/10 19:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.46 2006/08/12 20:05:54 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -535,15 +535,15 @@ typedef struct
      <term><symbol>SPI_ERROR_TRANSACTION</symbol></term>
      <listitem>
       <para>
-	   if any command involving transaction manipulation was attempted
-	   (<command>BEGIN</>,
-	   <command>COMMIT</>,
-	   <command>ROLLBACK</>,
-	   <command>SAVEPOINT</>,
-	   <command>PREPARE TRANSACTION</>,
-	   <command>COMMIT PREPARED</>,
-	   <command>ROLLBACK PREPARED</>,
-	   or any variant thereof)
+       if any command involving transaction manipulation was attempted
+       (<command>BEGIN</>,
+       <command>COMMIT</>,
+       <command>ROLLBACK</>,
+       <command>SAVEPOINT</>,
+       <command>PREPARE TRANSACTION</>,
+       <command>COMMIT PREPARED</>,
+       <command>ROLLBACK PREPARED</>,
+       or any variant thereof)
       </para>
      </listitem>
     </varlistentry>
@@ -917,10 +917,12 @@ bool SPI_is_cursor_plan(void * <parameter>plan</parameter>)
   <para>
    <function>SPI_is_cursor_plan</function> returns <symbol>true</symbol>
    if a plan prepared by <function>SPI_prepare</function> can be passed
-   as an argument to <function>SPI_cursor_open</function> and <symbol>
-   false</symbol> if that is not the case. The criteria are that the
+   as an argument to <function>SPI_cursor_open</function>, or
+   <symbol>false</symbol> if that is not the case. The criteria are that the
    <parameter>plan</parameter> represents one single command and that this
-   command is a <command>SELECT</command> without an <command>INTO</command>
+   command returns tuples to the caller; for example, <command>SELECT</>
+   is allowed unless it contains an <literal>INTO</> clause, and
+   <command>UPDATE</> is allowed only if it contains a <literal>RETURNING</>
    clause.
   </para>
  </refsect1>

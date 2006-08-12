@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.154 2006/08/12 02:52:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.155 2006/08/12 20:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -837,26 +837,12 @@ SPI_cursor_open(const char *name, void *plan,
 	planTree = (Plan *) linitial(ptlist);
 
 	/* Must be a query that returns tuples */
-	switch (queryTree->commandType)
-	{
-		case CMD_SELECT:
-			if (queryTree->into != NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-						 errmsg("cannot open SELECT INTO query as cursor")));
-			break;
-		case CMD_UTILITY:
-			if (!UtilityReturnsTuples(queryTree->utilityStmt))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-						 errmsg("cannot open non-SELECT query as cursor")));
-			break;
-		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-					 errmsg("cannot open non-SELECT query as cursor")));
-			break;
-	}
+	if (!QueryReturnsTuples(queryTree))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 /* translator: %s is name of a SQL command, eg INSERT */
+				 errmsg("cannot open %s query as cursor",
+						CreateQueryTag(queryTree))));
 
 	/* Reset SPI result (note we deliberately don't touch lastoid) */
 	SPI_processed = 0;
@@ -876,7 +862,7 @@ SPI_cursor_open(const char *name, void *plan,
 		portal = CreatePortal(name, false, false);
 	}
 
-	/* Switch to portals memory and copy the parsetree and plan to there */
+	/* Switch to portal's memory and copy the parsetree and plan to there */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 	queryTree = copyObject(queryTree);
 	planTree = copyObject(planTree);
@@ -919,9 +905,9 @@ SPI_cursor_open(const char *name, void *plan,
 	 * Set up the portal.
 	 */
 	PortalDefineQuery(portal,
-					  NULL,
+					  NULL,		/* no statement name */
 					  spiplan->query,
-					  "SELECT", /* don't have the raw parse tree... */
+					  CreateQueryTag(queryTree),
 					  list_make1(queryTree),
 					  list_make1(planTree),
 					  PortalGetHeapMemory(portal));
@@ -954,9 +940,16 @@ SPI_cursor_open(const char *name, void *plan,
 	 */
 	PortalStart(portal, paramLI, snapshot);
 
-	Assert(portal->strategy == PORTAL_ONE_SELECT ||
-		   portal->strategy == PORTAL_ONE_RETURNING ||
-		   portal->strategy == PORTAL_UTIL_SELECT);
+	/*
+	 * If this test fails then we're out of sync with pquery.c about
+	 * which queries can return tuples...
+	 */
+	if (portal->strategy == PORTAL_MULTI_QUERY)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 /* translator: %s is name of a SQL command, eg INSERT */
+				 errmsg("cannot open %s query as cursor",
+						CreateQueryTag(queryTree))));
 
 	/* Return the created portal */
 	return portal;
@@ -1046,12 +1039,12 @@ SPI_getargcount(void *plan)
 
 /*
  * Returns true if the plan contains exactly one command
- * and that command originates from normal SELECT (i.e.
- * *not* a SELECT ... INTO). In essence, the result indicates
- * if the command can be used with SPI_cursor_open
+ * and that command returns tuples to the caller (eg, SELECT or
+ * INSERT ... RETURNING, but not SELECT ... INTO). In essence,
+ * the result indicates if the command can be used with SPI_cursor_open
  *
  * Parameters
- *	  plan A plan previously prepared using SPI_prepare
+ *	  plan: A plan previously prepared using SPI_prepare
  */
 bool
 SPI_is_cursor_plan(void *plan)
@@ -1070,7 +1063,7 @@ SPI_is_cursor_plan(void *plan)
 	{
 		Query	   *queryTree = (Query *) linitial((List *) linitial(qtlist));
 
-		if (queryTree->commandType == CMD_SELECT && queryTree->into == NULL)
+		if (QueryReturnsTuples(queryTree))
 			return true;
 	}
 	return false;

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.278 2006/08/12 02:52:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.279 2006/08/12 20:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,7 +497,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * if there is a result relation, initialize result relation stuff
 	 */
-	if (parseTree->resultRelation != 0 && operation != CMD_SELECT)
+	if (parseTree->resultRelation)
 	{
 		List	   *resultRelations = parseTree->resultRelations;
 		int			numResultRelations;

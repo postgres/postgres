@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.49 2006/08/08 01:23:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.50 2006/08/12 20:05:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 
 	if (query->into)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 errmsg("DECLARE CURSOR may not specify INTO")));
 	if (query->rowMarks != NIL)
 		ereport(ERROR,

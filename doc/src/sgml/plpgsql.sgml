@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.97 2006/06/16 23:29:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.98 2006/08/12 20:05:54 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -2040,9 +2040,8 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      The <replaceable>target</replaceable> is a record variable, row variable,
      or comma-separated list of scalar variables.
      The <replaceable>target</replaceable> is successively assigned each row
-     resulting from the <replaceable>query</replaceable> (which must be a
-     <command>SELECT</command> command) and the loop body is executed for each
-     row. Here is an example:
+     resulting from the <replaceable>query</replaceable> and the loop body is
+     executed for each row. Here is an example:
 <programlisting>
 CREATE FUNCTION cs_refresh_mviews() RETURNS integer AS $$
 DECLARE
@@ -2070,6 +2069,15 @@ $$ LANGUAGE plpgsql;
     </para>
 
     <para>
+     The <replaceable>query</replaceable> used in this type of <literal>FOR</>
+     statement can be any query that returns rows to the caller:
+     <command>SELECT</> (without <literal>INTO</>) is the most common case,
+     but you can also use <command>INSERT</>, <command>UPDATE</>, or
+     <command>DELETE</> with a <literal>RETURNING</> clause.  Some utility
+     commands such as <command>EXPLAIN</> will work too.
+    </para>
+
+    <para>
      The <literal>FOR-IN-EXECUTE</> statement is another way to iterate over
      rows:
 <synopsis>
@@ -2078,12 +2086,11 @@ FOR <replaceable>target</replaceable> IN EXECUTE <replaceable>text_expression</r
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
-     This is like the previous form, except that the source
-     <command>SELECT</command> statement is specified as a string
-     expression, which is evaluated and replanned on each entry to
-     the <literal>FOR</> loop.  This allows the programmer to choose the speed of
-     a preplanned query or the flexibility of a dynamic query, just
-     as with a plain <command>EXECUTE</command> statement.
+     This is like the previous form, except that the source query
+     is specified as a string expression, which is evaluated and replanned
+     on each entry to the <literal>FOR</> loop.  This allows the programmer to
+     choose the speed of a preplanned query or the flexibility of a dynamic
+     query, just as with a plain <command>EXECUTE</command> statement.
     </para>
 
     <note>

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.264 2006/08/12 02:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.265 2006/08/12 20:05:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1221,6 +1221,38 @@ UtilityTupleDescriptor(Node *parsetree)
 		default:
 			return NULL;
 	}
+}
+
+
+/*
+ * QueryReturnsTuples
+ *		Return "true" if this Query will send output to the destination.
+ */
+bool
+QueryReturnsTuples(Query *parsetree)
+{
+	switch (parsetree->commandType)
+	{
+		case CMD_SELECT:
+			/* returns tuples ... unless it's SELECT INTO */
+			if (parsetree->into == NULL)
+				return true;
+			break;
+		case CMD_INSERT:
+		case CMD_UPDATE:
+		case CMD_DELETE:
+			/* the forms with RETURNING return tuples */
+			if (parsetree->returningList)
+				return true;
+			break;
+		case CMD_UTILITY:
+			return UtilityReturnsTuples(parsetree->utilityStmt);
+		case CMD_UNKNOWN:
+		case CMD_NOTHING:
+			/* probably shouldn't get here */
+			break;
+	}
+	return false;				/* default */
 }
 
 

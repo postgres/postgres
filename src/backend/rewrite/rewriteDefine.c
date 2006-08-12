@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.111 2006/07/18 17:42:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.112 2006/08/12 20:05:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * ... the one action must be a SELECT, ...
 		 */
 		query = (Query *) linitial(action);
-		if (!is_instead || query->commandType != CMD_SELECT)
+		if (!is_instead ||
+			query->commandType != CMD_SELECT || query->into != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("rules on SELECT must have action INSTEAD SELECT")));
