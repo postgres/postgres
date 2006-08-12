@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Aug 11 16:17:22 EDT 2006
+Last updated:           Fri Aug 11 23:50:26 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -591,15 +591,11 @@ first.
   <ul>
     <li>Allow INSERT/UPDATE of the system-generated oid value for a row
     </li><li>-<em>Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)</em>
-    </li><li>Allow INSERT/UPDATE ... RETURNING new.col or old.col
-<p>          This is useful for returning the auto-generated key for an INSERT.
-          One complication is how to handle rules that run as part of
-          the insert.  
-          <a href="http://archives.postgresql.org/pgsql-patches/2005-07/msg00568.php">http://archives.postgresql.org/pgsql-patches/2005-07/msg00568.php</a>
-    <li>In rules, allow VALUES() to contain a mixture of 'old' and 'new'
+    </li><li>-<em>Allow INSERT/UPDATE ... RETURNING new.col or old.col</em>
+    </li><li>In rules, allow VALUES() to contain a mixture of 'old' and 'new'
           references
   </li></ul>
-  <li>SHOW/SET
+  </li><li>SHOW/SET
   <ul>
     <li>Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
           ANALYZE, and CLUSTER
@@ -677,7 +673,7 @@ first.
     </li></ul>
   </li></ul>
 </li></ul>
-</p><h1><a name="section_9">Clients</a></h1>
+<h1><a name="section_9">Clients</a></h1>
 
 <ul>
   <li>-<em>Have initdb set the input DateStyle (MDY or DMY) based on locale</em>
@@ -1337,6 +1333,6 @@ first.
   </li><li>Teodor is Teodor Sigaev &lt;<a href="mailto:teodor@sigaev.ru">teodor@sigaev.ru</a>&gt;
   </li><li>Tom is Tom Lane &lt;<a href="mailto:tgl@sss.pgh.pa.us">tgl@sss.pgh.pa.us</a>&gt; of Red Hat
 </li></ul>
-</li></ul></li></ul>
+
 </body>
 </html>
