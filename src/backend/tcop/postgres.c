@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468.2.5 2006/06/11 15:49:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.468.2.6 2006/08/13 22:18:22 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1642,12 +1642,14 @@ exec_execute_message(const char *portal_name, long max_rows)
 	Portal		portal;
 	bool		completed;
 	char		completionTag[COMPLETION_TAG_BUFSIZE];
+	const char *sourceText = NULL;
 	struct timeval start_t,
 				stop_t;
 	bool		save_log_duration = log_duration;
 	int			save_log_min_duration_statement = log_min_duration_statement;
 	bool		save_log_statement_stats = log_statement_stats;
-	bool		execute_is_fetch = false;
+	bool		is_xact_command;
+	bool		execute_is_fetch;
 
 	/* Adjust destination to tell printtup.c what to do */
 	dest = whereToSendOutput;
@@ -1661,15 +1663,6 @@ exec_execute_message(const char *portal_name, long max_rows)
 				 errmsg("portal \"%s\" does not exist", portal_name)));
 
 	/*
-	 * If we re-issue an Execute protocol request against an existing portal,
-	 * then we are only fetching more rows rather than completely re-executing
-	 * the query from the start. atStart is never reset for a v3 portal, so we
-	 * are safe to use this check.
-	 */
-	if (!portal->atStart)
-		execute_is_fetch = true;
-
-	/*
 	 * If the original query was a null string, just return
 	 * EmptyQueryResponse.
 	 */
@@ -1680,6 +1673,17 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
+	/* Does the portal contain a transaction command? */
+	is_xact_command = IsTransactionStmtList(portal->parseTrees);
+
+	/*
+	 * If we re-issue an Execute protocol request against an existing portal,
+	 * then we are only fetching more rows rather than completely re-executing
+	 * the query from the start. atStart is never reset for a v3 portal, so we
+	 * are safe to use this check.
+	 */
+	execute_is_fetch = !portal->atStart;
+
 	/* Should we display the portal names here? */
 	if (execute_is_fetch)
 	{
@@ -1688,8 +1692,18 @@ exec_execute_message(const char *portal_name, long max_rows)
 	}
 	else if (portal->sourceText)
 	{
-		debug_query_string = portal->sourceText;
-		pgstat_report_activity(portal->sourceText);
+		/*
+		 * We must copy the sourceText into MessageContext in case the
+		 * portal is destroyed during finish_xact_command.  Can avoid
+		 * the copy if it's not an xact command, though.
+		 */
+		if (is_xact_command)
+			sourceText = pstrdup(portal->sourceText);
+		else
+			sourceText = portal->sourceText;
+
+		debug_query_string = sourceText;
+		pgstat_report_activity(sourceText);
 	}
 	else
 	{
@@ -1712,12 +1726,11 @@ exec_execute_message(const char *portal_name, long max_rows)
 		ResetUsage();
 
 	if (log_statement == LOGSTMT_ALL)
-		/* We have the portal, so output the source query. */
 		ereport(LOG,
 				(errmsg("statement: %sEXECUTE %s  [PREPARE:  %s]",
 						(execute_is_fetch) ? "FETCH from " : "",
 						(*portal_name != '\0') ? portal_name : "<unnamed>",
-						portal->sourceText ? portal->sourceText : "")));
+						sourceText ? sourceText : "")));
 
 	BeginCommand(portal->commandTag, dest);
 
@@ -1763,7 +1776,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	if (completed)
 	{
-		if (IsTransactionStmtList(portal->parseTrees))
+		if (is_xact_command)
 		{
 			/*
 			 * If this was a transaction control statement, commit it.	We
@@ -1828,8 +1841,8 @@ exec_execute_message(const char *portal_name, long max_rows)
 								  (stop_t.tv_usec - start_t.tv_usec) / 1000),
 							(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
 							(execute_is_fetch) ? "FETCH from " : "",
-						  (*portal_name != '\0') ? portal_name : "<unnamed>",
-							portal->sourceText ? portal->sourceText : "")));
+							(*portal_name != '\0') ? portal_name : "<unnamed>",
+							sourceText ? sourceText : "")));
 	}
 
 	if (save_log_statement_stats)
