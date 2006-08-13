@@ -468,3 +468,112 @@ SELECT * from perl_spi_prepared_set(1,2);
                      4
 (2 rows)
 
+--- 
+--- Some OUT and OUT array tests
+---
+CREATE OR REPLACE FUNCTION test_out_params(OUT a varchar, OUT b varchar) AS $$
+  return { a=> 'ahoj', b=>'svete'};
+$$ LANGUAGE plperl;
+SELECT '01' AS i, * FROM test_out_params();
+ i  |  a   |   b   
+----+------+-------
+ 01 | ahoj | svete
+(1 row)
+
+CREATE OR REPLACE FUNCTION test_out_params_array(OUT a varchar[], OUT b varchar[]) AS $$
+  return { a=> ['ahoj'], b=>['svete']};
+$$ LANGUAGE plperl;
+SELECT '02' AS i, * FROM test_out_params_array();
+ERROR:  array value must start with "{" or dimension information
+CREATE OR REPLACE FUNCTION test_out_params_set(OUT a varchar, out b varchar) RETURNS SETOF RECORD AS $$
+  return_next { a=> 'ahoj', b=>'svete'};
+  return_next { a=> 'ahoj', b=>'svete'};
+  return_next { a=> 'ahoj', b=>'svete'};
+$$ LANGUAGE plperl;
+SELECT '03' AS I,* FROM test_out_params_set();
+ i  |  a   |   b   
+----+------+-------
+ 03 | ahoj | svete
+ 03 | ahoj | svete
+ 03 | ahoj | svete
+(3 rows)
+
+CREATE OR REPLACE FUNCTION test_out_params_set_array(OUT a varchar[], out b varchar[]) RETURNS SETOF RECORD AS $$
+  return_next { a=> ['ahoj'], b=>['velky','svete']};
+  return_next { a=> ['ahoj'], b=>['velky','svete']};
+  return_next { a=> ['ahoj'], b=>['velky','svete']};
+$$ LANGUAGE plperl;
+SELECT '04' AS I,* FROM test_out_params_set_array();
+ERROR:  error from Perl function: array value must start with "{" or dimension information at line 2.
+DROP FUNCTION test_out_params();
+DROP FUNCTION test_out_params_set();
+DROP FUNCTION test_out_params_array();
+DROP FUNCTION test_out_params_set_array();
+-- one out argument can be returned as scalar or hash
+CREATE OR REPLACE FUNCTION test01(OUT a varchar) AS $$
+  return 'ahoj';
+$$ LANGUAGE plperl ;
+SELECT '01' AS i,* FROM test01();
+ i  |  a   
+----+------
+ 01 | ahoj
+(1 row)
+
+CREATE OR REPLACE FUNCTION test02(OUT a varchar[]) AS $$
+  return {a=>['ahoj']};
+$$ LANGUAGE plperl;
+SELECT '02' AS i,a[1] FROM test02();
+ERROR:  array value must start with "{" or dimension information
+CREATE OR REPLACE FUNCTION test03(OUT a varchar[]) RETURNS SETOF varchar[] AS $$
+  return_next { a=> ['ahoj']};
+  return_next { a=> ['ahoj']};
+  return_next { a=> ['ahoj']};
+$$ LANGUAGE plperl;
+SELECT '03' AS i,* FROM test03();
+ERROR:  error from Perl function: array value must start with "{" or dimension information at line 2.
+CREATE OR REPLACE FUNCTION test04() RETURNS SETOF VARCHAR[] AS $$
+  return_next ['ahoj'];
+  return_next ['ahoj'];
+$$ LANGUAGE plperl;
+SELECT '04' AS i,* FROM test04();
+ERROR:  error from Perl function: array value must start with "{" or dimension information at line 2.
+CREATE OR REPLACE FUNCTION test05(OUT a varchar) AS $$
+  return {a=>'ahoj'};
+$$ LANGUAGE plperl;
+SELECT '05' AS i,a FROM test05();
+ i  |        a        
+----+-----------------
+ 05 | HASH(0x8558f9c)
+(1 row)
+
+CREATE OR REPLACE FUNCTION test06(OUT a varchar) RETURNS SETOF varchar AS $$
+  return_next { a=> 'ahoj'};
+  return_next { a=> 'ahoj'};
+  return_next { a=> 'ahoj'};
+$$ LANGUAGE plperl;
+SELECT '06' AS i,* FROM test06();
+ i  |        a        
+----+-----------------
+ 06 | HASH(0x8559230)
+ 06 | HASH(0x8559230)
+ 06 | HASH(0x8559230)
+(3 rows)
+
+CREATE OR REPLACE FUNCTION test07() RETURNS SETOF VARCHAR AS $$
+  return_next 'ahoj';
+  return_next 'ahoj';
+$$ LANGUAGE plperl;
+SELECT '07' AS i,* FROM test07();
+ i  | test07 
+----+--------
+ 07 | ahoj
+ 07 | ahoj
+(2 rows)
+
+DROP FUNCTION test01();
+DROP FUNCTION test02();
+DROP FUNCTION test03();
+DROP FUNCTION test04();
+DROP FUNCTION test05();
+DROP FUNCTION test06();
+DROP FUNCTION test07();
