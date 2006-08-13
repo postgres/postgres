@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.42 2006/08/12 04:12:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.43 2006/08/13 01:30:17 momjian Exp $
  */
 
 %{
@@ -50,7 +50,8 @@ int GUC_yylex(void);
 static bool ParseConfigFile(const char *config_file, const char *calling_file,
 							int depth, GucContext context, int elevel,
 							struct name_value_pair **head_p,
-							struct name_value_pair **tail_p);
+							struct name_value_pair **tail_p,
+							int *varcount);
 static void free_name_value_list(struct name_value_pair * list);
 static char *GUC_scanstr(const char *s);
 
@@ -114,8 +115,10 @@ STRING          \'([^'\\\n]|\\.|\'\')*\'
 void
 ProcessConfigFile(GucContext context)
 {
-	int			elevel;
+	int			elevel, i;
 	struct name_value_pair *item, *head, *tail;
+	bool	   *apply_list = NULL;
+	int			varcount = 0;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 
@@ -134,25 +137,56 @@ ProcessConfigFile(GucContext context)
 
 	if (!ParseConfigFile(ConfigFileName, NULL,
 						 0, context, elevel,
-						 &head, &tail))
+						 &head, &tail, &varcount))
 		goto cleanup_list;
 
+	/* Can we allocate memory here, what about leaving here prematurely? */
+	apply_list = (bool *) palloc(sizeof(bool) * varcount);
+
 	/* Check if all options are valid */
-	for (item = head; item; item = item->next)
+	for (item = head, i = 0; item; item = item->next, i++)
 	{
-		if (!set_config_option(item->name, item->value, context,
-							   PGC_S_FILE, false, false))
+		bool isEqual, isContextOk;
+
+		if (!verify_config_option(item->name, item->value, context,
+						  PGC_S_FILE, &isEqual, &isContextOk))
+		{
+			ereport(elevel,
+				(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+				errmsg("configuration file is invalid")));
 			goto cleanup_list;
+		}
+
+		if (isContextOk == false)
+		{
+			apply_list[i] = false;
+			if (context == PGC_SIGHUP)
+			{
+				if (isEqual == false)
+					ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
+						item->name)));
+			}
+			else
+				/* if it is boot phase, context must be valid for all
+				 * configuration item. */
+				goto cleanup_list;
+		}
+		else
+			apply_list[i] = true;
 	}
 
 	/* If we got here all the options checked out okay, so apply them. */
-	for (item = head; item; item = item->next)
-	{
-		set_config_option(item->name, item->value, context,
-						  PGC_S_FILE, false, true);
-	}
+	for (item = head, i = 0; item; item = item->next, i++)
+		if (apply_list[i])
+			set_config_option(item->name, item->value, context,
+							  PGC_S_FILE, false, true);
 
- cleanup_list:
+
+cleanup_list:
+	if (apply_list)
+		pfree(apply_list);
 	free_name_value_list(head);
 }
 
@@ -189,13 +223,14 @@ static bool
 ParseConfigFile(const char *config_file, const char *calling_file,
 				int depth, GucContext context, int elevel,
 				struct name_value_pair **head_p,
-				struct name_value_pair **tail_p)
+				struct name_value_pair **tail_p,
+				int *varcount)
 {
-	bool		OK = true;
-	char		abs_path[MAXPGPATH];
-	FILE	   *fp;
+	bool			OK = true;
+	char			abs_path[MAXPGPATH];
+	FILE		   *fp;
 	YY_BUFFER_STATE lex_buffer;
-	int			token;
+	int				token;
 
 	/*
 	 * Reject too-deep include nesting depth.  This is just a safety check
@@ -289,7 +324,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 
 			if (!ParseConfigFile(opt_value, config_file,
 								 depth + 1, context, elevel,
-								 head_p, tail_p))
+								 head_p, tail_p, varcount))
 			{
 				pfree(opt_name);
 				pfree(opt_value);
@@ -333,6 +368,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 			else
 				(*tail_p)->next = item;
 			*tail_p = item;
+			(*varcount)++;
 		}
 
 		/* break out of loop if read EOF, else loop for next line */
