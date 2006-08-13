@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.339 2006/08/13 02:22:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.340 2006/08/13 15:37:02 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4082,9 +4082,9 @@ verify_config_option(const char *name, const char *value,
 	if (parse_value(elevel, record, value, &source, false, NULL))
 	{
 		/*
-		 * Mark record like presented in the config file. Be carefull if
+		 * Mark record as present in the config file. Be carefull if
 		 * you use this function for another purpose than config file 
-		 * verification. It causes confusion configfile parser.
+		 * verification. It causes confusion in the config file parser.
 		 */
 		record->status |= GUC_IN_CONFFILE;
 
@@ -5512,7 +5512,10 @@ is_newvalue_equal(struct config_generic *record, const char *newvalue)
 		{
 			struct config_string *conf = (struct config_string *) record;
 
-			return strcmp(*conf->variable, newvalue) == 0;
+			if (!*conf->variable)	/* custom variable with no value yet */
+				return false;
+			else
+				return strcmp(*conf->variable, newvalue) == 0;
 		}
 	}
 
