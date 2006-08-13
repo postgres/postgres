@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.497 2006/08/10 00:44:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.498 2006/08/13 22:18:08 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1368,7 +1368,7 @@ exec_bind_message(StringInfo input_message)
 	PreparedStatement *pstmt;
 	Portal		portal;
 	ParamListInfo params;
-	StringInfoData str;
+	StringInfoData bind_values_str;
 
 	pgstat_report_activity("<BIND>");
 
@@ -1385,7 +1385,7 @@ exec_bind_message(StringInfo input_message)
 	MemoryContextSwitchTo(MessageContext);
 
 	if (log_statement == LOGSTMT_ALL)
-		initStringInfo(&str);
+		initStringInfo(&bind_values_str);
 
 	/* Get the fixed part of the message */
 	portal_name = pq_getmsgstring(input_message);
@@ -1534,14 +1534,18 @@ exec_bind_message(StringInfo input_message)
 				else
 					pstring = pg_client_to_server(pbuf.data, plength);
 
-				params->params[paramno].value = OidInputFunctionCall(typinput,
-															   pstring,
-															   typioparam,
-															   -1);
+				params->params[paramno].value =
+					OidInputFunctionCall(typinput,
+										 pstring,
+										 typioparam,
+										 -1);
 
+				/* Log the parameter value if needed */
 				if (log_statement == LOGSTMT_ALL)
-					appendStringInfo(&str, "%s$%d = \"%s\"",
-						*str.data ? ", " : "", paramno + 1, pstring);
+					appendStringInfo(&bind_values_str, "%s$%d = \"%s\"",
+									 bind_values_str.len ? ", " : "",
+									 paramno + 1,
+									 pstring);
 
 				/* Free result of encoding conversion, if any */
 				if (pstring && pstring != pbuf.data)
@@ -1574,6 +1578,8 @@ exec_bind_message(StringInfo input_message)
 							(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 							 errmsg("incorrect binary data format in bind parameter %d",
 									paramno + 1)));
+
+				/* XXX TODO: convert value to text and log it */
 			}
 			else
 			{
@@ -1600,22 +1606,14 @@ exec_bind_message(StringInfo input_message)
 
 	if (log_statement == LOGSTMT_ALL)
 	{
-		if (*str.data)
-			ereport(LOG,
-					(errmsg("bind %s%s%s:  %s",
-							*stmt_name ? stmt_name : "<unnamed>",
-							*portal->name ? "/" : "",
-                	        *portal->name ? portal->name : "",
-							pstmt->query_string ? pstmt->query_string : ""),
-					 errdetail(str.data)));
-		else
-			ereport(LOG,
-					(errmsg("bind %s%s%s:  %s",
-							*stmt_name ? stmt_name : "<unnamed>",
-							*portal->name ? "/" : "",
-                	        *portal->name ? portal->name : "",
-							pstmt->query_string ? pstmt->query_string : "")));
-		pfree(str.data);
+		ereport(LOG,
+				(errmsg("bind %s%s%s:  %s",
+						*stmt_name ? stmt_name : "<unnamed>",
+						*portal->name ? "/" : "",
+						*portal->name ? portal->name : "",
+						pstmt->query_string ? pstmt->query_string : ""),
+				 bind_values_str.len ? errdetail(bind_values_str.data) : 0));
+		pfree(bind_values_str.data);
 	}
 
 	/* Get the result format codes */
@@ -1685,8 +1683,11 @@ exec_execute_message(const char *portal_name, long max_rows)
 	Portal		portal;
 	bool		completed;
 	char		completionTag[COMPLETION_TAG_BUFSIZE];
+	const char *sourceText = NULL;
+	const char *prepStmtName;
 	bool		save_log_statement_stats = log_statement_stats;
-	bool		execute_is_fetch = false;
+	bool		is_xact_command;
+	bool		execute_is_fetch;
 
 	/* Adjust destination to tell printtup.c what to do */
 	dest = whereToSendOutput;
@@ -1700,15 +1701,6 @@ exec_execute_message(const char *portal_name, long max_rows)
 				 errmsg("portal \"%s\" does not exist", portal_name)));
 
 	/*
-	 * If we re-issue an Execute protocol request against an existing portal,
-	 * then we are only fetching more rows rather than completely re-executing
-	 * the query from the start. atStart is never reset for a v3 portal, so we
-	 * are safe to use this check.
-	 */
-	if (!portal->atStart)
-		execute_is_fetch = true;
-
-	/*
 	 * If the original query was a null string, just return
 	 * EmptyQueryResponse.
 	 */
@@ -1719,6 +1711,17 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
+	/* Does the portal contain a transaction command? */
+	is_xact_command = IsTransactionStmtList(portal->parseTrees);
+
+	/*
+	 * If we re-issue an Execute protocol request against an existing portal,
+	 * then we are only fetching more rows rather than completely re-executing
+	 * the query from the start. atStart is never reset for a v3 portal, so we
+	 * are safe to use this check.
+	 */
+	execute_is_fetch = !portal->atStart;
+
 	/* Should we display the portal names here? */
 	if (execute_is_fetch)
 	{
@@ -1727,8 +1730,18 @@ exec_execute_message(const char *portal_name, long max_rows)
 	}
 	else if (portal->sourceText)
 	{
-		debug_query_string = portal->sourceText;
-		pgstat_report_activity(portal->sourceText);
+		/*
+		 * We must copy the sourceText into MessageContext in case the
+		 * portal is destroyed during finish_xact_command.  Can avoid
+		 * the copy if it's not an xact command, though.
+		 */
+		if (is_xact_command)
+			sourceText = pstrdup(portal->sourceText);
+		else
+			sourceText = portal->sourceText;
+
+		debug_query_string = sourceText;
+		pgstat_report_activity(sourceText);
 	}
 	else
 	{
@@ -1738,6 +1751,12 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	set_ps_display(portal->commandTag, false);
 
+	/* copy prepStmtName now too, in case portal is destroyed */
+	if (portal->prepStmtName)
+		prepStmtName = pstrdup(portal->prepStmtName);
+	else
+		prepStmtName = "<unnamed>";
+
 	/*
 	 * We use save_log_statement_stats so ShowUsage doesn't report incorrect
 	 * results because ResetUsage wasn't called.
@@ -1746,14 +1765,13 @@ exec_execute_message(const char *portal_name, long max_rows)
 		ResetUsage();
 
 	if (log_statement == LOGSTMT_ALL)
-		/* We have the portal, so output the source query. */
 		ereport(LOG,
 				(errmsg("execute %s%s%s%s:  %s",
 						execute_is_fetch ? "fetch from " : "",
-						portal->prepStmtName ? portal->prepStmtName : "<unnamed>",
-						*portal->name ? "/" : "",
-                        *portal->name ? portal->name : "",
-						portal->sourceText ? portal->sourceText : "")));
+						prepStmtName,
+						*portal_name ? "/" : "",
+						*portal_name ? portal_name : "",
+						sourceText ? sourceText : "")));
 
 	BeginCommand(portal->commandTag, dest);
 
@@ -1799,7 +1817,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	if (completed)
 	{
-		if (IsTransactionStmtList(portal->parseTrees))
+		if (is_xact_command)
 		{
 			/*
 			 * If this was a transaction control statement, commit it.	We
@@ -1861,10 +1879,10 @@ exec_execute_message(const char *portal_name, long max_rows)
 						(errmsg("duration: %ld.%03d ms  execute %s%s%s%s:  %s",
 								secs * 1000 + msecs, usecs % 1000,
 								execute_is_fetch ? "fetch from " : "",
-								portal->prepStmtName ? portal->prepStmtName : "<unnamed>",
-								*portal->name ? "/" : "",
-	    	                    *portal->name ? portal->name : "",
-								portal->sourceText ? portal->sourceText : "")));
+								prepStmtName,
+								*portal_name ? "/" : "",
+	    	                    *portal_name ? portal_name : "",
+								sourceText ? sourceText : "")));
 		}
 	}
 
