@@ -152,11 +152,11 @@ SELECT * FROM foochild;
 
 UPDATE foo SET f3 = f3*2
   FROM int8_tbl i
-  WHERE foo.f1 = i.q1
+  WHERE foo.f1 = i.q2
   RETURNING *;
- f1  |  f2   |  f3  |  f4  | q1  | q2  
------+-------+------+------+-----+-----
- 123 | child | 1998 | 1098 | 123 | 456
+ f1  |  f2   |  f3  |  f4  |        q1        | q2  
+-----+-------+------+------+------------------+-----
+ 123 | child | 1998 | 1098 | 4567890123456789 | 123
 (1 row)
 
 SELECT * FROM foo;
@@ -174,11 +174,11 @@ SELECT * FROM foochild;
 
 DELETE FROM foo
   USING int8_tbl i
-  WHERE foo.f1 = i.q1
+  WHERE foo.f1 = i.q2
   RETURNING *;
- f1  |  f2   |  f3  |  f4  | q1  | q2  
------+-------+------+------+-----+-----
- 123 | child | 1998 | 1098 | 123 | 456
+ f1  |  f2   |  f3  |  f4  |        q1        | q2  
+-----+-------+------+------+------------------+-----
+ 123 | child | 1998 | 1098 | 4567890123456789 | 123
 (1 row)
 
 SELECT * FROM foo;
