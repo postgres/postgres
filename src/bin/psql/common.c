@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.123 2006/08/11 19:20:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.124 2006/08/13 21:10:04 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -684,6 +684,36 @@ ProcessCopyResult(PGresult *results)
 
 
 /*
+ * PrintQueryStatus: report command status as required
+ *
+ * Note: Utility function for use by PrintQueryResults() only.
+ */
+static void
+PrintQueryStatus(PGresult *results)
+{
+	char		buf[16];
+
+	if (!QUIET())
+	{
+		if (pset.popt.topt.format == PRINT_HTML)
+		{
+			fputs("<p>", pset.queryFout);
+			html_escaped_print(PQcmdStatus(results), pset.queryFout);
+			fputs("</p>\n", pset.queryFout);
+		}
+		else
+			fprintf(pset.queryFout, "%s\n", PQcmdStatus(results));
+	}
+
+	if (pset.logfile)
+		fprintf(pset.logfile, "%s\n", PQcmdStatus(results));
+
+	snprintf(buf, sizeof(buf), "%u", (unsigned int) PQoidValue(results));
+	SetVariable(pset.vars, "LASTOID", buf);
+}
+
+
+/*
  * PrintQueryResults: print out query results as required
  *
  * Note: Utility function for use by SendQuery() only.
@@ -694,6 +724,7 @@ static bool
 PrintQueryResults(PGresult *results)
 {
 	bool		success = false;
+	const char *cmdstatus;
 
 	if (!results)
 		return false;
@@ -701,33 +732,20 @@ PrintQueryResults(PGresult *results)
 	switch (PQresultStatus(results))
 	{
 		case PGRES_TUPLES_OK:
+			/* print the data ... */
 			success = PrintQueryTuples(results);
+			/* if it's INSERT/UPDATE/DELETE RETURNING, also print status */
+			cmdstatus = PQcmdStatus(results);
+			if (strncmp(cmdstatus, "INSERT", 6) == 0 ||
+				strncmp(cmdstatus, "UPDATE", 6) == 0 ||
+				strncmp(cmdstatus, "DELETE", 6) == 0)
+				PrintQueryStatus(results);
 			break;
 
 		case PGRES_COMMAND_OK:
-			{
-				char		buf[10];
-
-				success = true;
-				snprintf(buf, sizeof(buf),
-						 "%u", (unsigned int) PQoidValue(results));
-				if (!QUIET())
-				{
-					if (pset.popt.topt.format == PRINT_HTML)
-					{
-						fputs("<p>", pset.queryFout);
-						html_escaped_print(PQcmdStatus(results),
-										   pset.queryFout);
-						fputs("</p>\n", pset.queryFout);
-					}
-					else
-						fprintf(pset.queryFout, "%s\n", PQcmdStatus(results));
-				}
-				if (pset.logfile)
-					fprintf(pset.logfile, "%s\n", PQcmdStatus(results));
-				SetVariable(pset.vars, "LASTOID", buf);
-				break;
-			}
+			PrintQueryStatus(results);
+			success = true;
+			break;
 
 		case PGRES_EMPTY_QUERY:
 			success = true;
