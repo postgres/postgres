@@ -1,7 +1,7 @@
 subdir = src/interfaces/ecpg/test/errors
 top_builddir = ../../../../..
 include $(top_builddir)/src/Makefile.global
-include ../Makefile.regress
+include $(top_srcdir)/$(subdir)/../Makefile.regress
 
 
 TESTS = init init.c

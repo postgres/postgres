@@ -1,11 +1,10 @@
 subdir = src/interfaces/ecpg/test/sql
 top_builddir = ../../../../..
 include $(top_builddir)/src/Makefile.global
-include ../Makefile.regress
+include $(top_srcdir)/$(subdir)/../Makefile.regress
 
 TESTS = define define.c \
         dyntest dyntest.c \
-        dyntest2 dyntest2.c \
         code100 code100.c \
         desc desc.c \
         dynalloc dynalloc.c \

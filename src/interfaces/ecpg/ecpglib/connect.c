@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.32 2006/08/02 13:43:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.33 2006/08/13 10:18:29 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -387,8 +387,9 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 							ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
 							if (host)
 								ECPGfree(host);
-							if (port)
-								ECPGfree(port);
+							/* port not set yet
+							 * if (port)
+							 * 	ECPGfree(port); */
 							if (options)
 								ECPGfree(options);
 							if (realname)

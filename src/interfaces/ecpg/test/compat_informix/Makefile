@@ -1,7 +1,7 @@
 subdir = src/interfaces/ecpg/test/compat_informix
 top_builddir = ../../../../..
 include $(top_builddir)/src/Makefile.global
-include ../Makefile.regress
+include $(top_srcdir)/$(subdir)/../Makefile.regress
 
 # special informix compatiblity switches
 ECPG += -C INFORMIX

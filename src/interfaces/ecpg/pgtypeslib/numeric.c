@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.30 2006/08/09 09:08:31 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.31 2006/08/13 10:18:30 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <ctype.h>
@@ -1505,8 +1505,7 @@ numericvar_to_double(numeric *var, double *dp)
 		return -1;
 
 	/*
-	 * strtod seems to not reset errno to 0 in case of success.
-	 * at least on aome architectures
+	 * strtod does not reset errno to 0 in case of success.
 	 */
 	errno = 0;
 	val = strtod(tmp, &endptr);

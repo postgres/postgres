@@ -1,81 +1,43 @@
-6 Columns
-rulename <OID 19> [64 bytes]
-ev_class <OID 26> [4 bytes]
-ev_attr smallint [2 bytes]
-ev_type <OID 18> [1 bytes]
-is_instead bool [1 bytes]
-ev_qual char(?) 
-
-'_RETURN'|'10297'|-1|'1'|true|'<>'|
-'_RETURN'|'10300'|-1|'1'|true|'<>'|
-'_RETURN'|'10303'|-1|'1'|true|'<>'|
-'_RETURN'|'10306'|-1|'1'|true|'<>'|
-'_RETURN'|'10309'|-1|'1'|true|'<>'|
-'_RETURN'|'10313'|-1|'1'|true|'<>'|
-'_RETURN'|'10316'|-1|'1'|true|'<>'|
-'_RETURN'|'10320'|-1|'1'|true|'<>'|
-'_RETURN'|'10324'|-1|'1'|true|'<>'|
-'_RETURN'|'10328'|-1|'1'|true|'<>'|
-'_RETURN'|'10331'|-1|'1'|true|'<>'|
-'_RETURN'|'10334'|-1|'1'|true|'<>'|
-'_RETURN'|'10337'|-1|'1'|true|'<>'|
-'_RETURN'|'10340'|-1|'1'|true|'<>'|
-'pg_settings_u'|'10340'|-1|'2'|false|'{OPEXPR :opno 98 :opfuncid 0 :opresulttype 16 :opretset false :args ({VAR :varno 2 :varattno 1 :vartype 25 :vartypmod -1 :varlevelsup 0 :varnoold 2 :varoattno 1} {VAR :varno 1 :varattno 1 :vartype 25 :vartypmod -1 :varlevelsup 0 :varnoold 1 :varoattno 1})}'|
-'pg_settings_n'|'10340'|-1|'2'|true|'<>'|
-'_RETURN'|'10345'|-1|'1'|true|'<>'|
-'_RETURN'|'10348'|-1|'1'|true|'<>'|
-'_RETURN'|'10352'|-1|'1'|true|'<>'|
-'_RETURN'|'10355'|-1|'1'|true|'<>'|
-'_RETURN'|'10358'|-1|'1'|true|'<>'|
-'_RETURN'|'10362'|-1|'1'|true|'<>'|
-'_RETURN'|'10365'|-1|'1'|true|'<>'|
-'_RETURN'|'10368'|-1|'1'|true|'<>'|
-'_RETURN'|'10372'|-1|'1'|true|'<>'|
-'_RETURN'|'10375'|-1|'1'|true|'<>'|
-'_RETURN'|'10378'|-1|'1'|true|'<>'|
-'_RETURN'|'10382'|-1|'1'|true|'<>'|
-'_RETURN'|'10385'|-1|'1'|true|'<>'|
-'_RETURN'|'10388'|-1|'1'|true|'<>'|
-'_RETURN'|'10391'|-1|'1'|true|'<>'|
-'_RETURN'|'10394'|-1|'1'|true|'<>'|
-'_RETURN'|'10397'|-1|'1'|true|'<>'|
-'_RETURN'|'10400'|-1|'1'|true|'<>'|
-'_RETURN'|'10634'|-1|'1'|true|'<>'|
-'_RETURN'|'10638'|-1|'1'|true|'<>'|
-'_RETURN'|'10641'|-1|'1'|true|'<>'|
-'_RETURN'|'10644'|-1|'1'|true|'<>'|
-'_RETURN'|'10648'|-1|'1'|true|'<>'|
-'_RETURN'|'10651'|-1|'1'|true|'<>'|
-'_RETURN'|'10655'|-1|'1'|true|'<>'|
-'_RETURN'|'10659'|-1|'1'|true|'<>'|
-'_RETURN'|'10663'|-1|'1'|true|'<>'|
-'_RETURN'|'10667'|-1|'1'|true|'<>'|
-'_RETURN'|'10671'|-1|'1'|true|'<>'|
-'_RETURN'|'10675'|-1|'1'|true|'<>'|
-'_RETURN'|'10678'|-1|'1'|true|'<>'|
-'_RETURN'|'10681'|-1|'1'|true|'<>'|
-'_RETURN'|'10684'|-1|'1'|true|'<>'|
-'_RETURN'|'10688'|-1|'1'|true|'<>'|
-'_RETURN'|'10691'|-1|'1'|true|'<>'|
-'_RETURN'|'10695'|-1|'1'|true|'<>'|
-'_RETURN'|'10699'|-1|'1'|true|'<>'|
-'_RETURN'|'10703'|-1|'1'|true|'<>'|
-'_RETURN'|'10707'|-1|'1'|true|'<>'|
-'_RETURN'|'10711'|-1|'1'|true|'<>'|
-'_RETURN'|'10715'|-1|'1'|true|'<>'|
-'_RETURN'|'10718'|-1|'1'|true|'<>'|
-'_RETURN'|'10722'|-1|'1'|true|'<>'|
-'_RETURN'|'10726'|-1|'1'|true|'<>'|
-'_RETURN'|'10729'|-1|'1'|true|'<>'|
-'_RETURN'|'10767'|-1|'1'|true|'<>'|
-'_RETURN'|'10771'|-1|'1'|true|'<>'|
-'_RETURN'|'10775'|-1|'1'|true|'<>'|
-'_RETURN'|'10779'|-1|'1'|true|'<>'|
-'_RETURN'|'10782'|-1|'1'|true|'<>'|
-'_RETURN'|'10786'|-1|'1'|true|'<>'|
-'_RETURN'|'10789'|-1|'1'|true|'<>'|
-'_RETURN'|'10793'|-1|'1'|true|'<>'|
-'_RETURN'|'10797'|-1|'1'|true|'<>'|
-'_RETURN'|'10801'|-1|'1'|true|'<>'|
-'_RETURN'|'10805'|-1|'1'|true|'<>'|
-'_RETURN'|'10809'|-1|'1'|true|'<>'|
+Found 7 columns
+ 1	name (type: 1 length: 14 precision: 0 scale: 14 = char(14))
+	octet_length: -1 returned_octet_length: 14)
+	= "first entry   "
+ 2	d (type: 8 length: -5 precision: -1 scale: 65531 = double precision)
+	octet_length: 8 returned_octet_length: 4)
+	= 14.700000
+ 3	i (type: 4 length: -5 precision: -1 scale: 65531 = integer)
+	octet_length: 4 returned_octet_length: 2)
+	= 14
+ 4	bignumber (type: -20 length: -5 precision: -1 scale: 65531 = <OID 20>)
+	octet_length: 8 returned_octet_length: 12)
+	= <"123045607890">
+ 5	b (type: 16 length: -5 precision: -1 scale: 65531 = bool)
+	octet_length: 1 returned_octet_length: 1)
+	= true
+ 6	comment (type: 1 length: -5 precision: -1 scale: 65531 = text)
+	octet_length: -1 returned_octet_length: 47)
+	= "The world's most advanced open source database."
+ 7	day (type: 9 length: -5 precision: -1 scale: 65531 = date)
+	octet_length: 4 returned_octet_length: 10)
+	= 1 "07-14-1987"
+ 1	name (type: 1 length: 14 precision: 0 scale: 14 = char(14))
+	octet_length: -1 returned_octet_length: 14)
+	= "second entry  "
+ 2	d (type: 8 length: -5 precision: -1 scale: 65531 = double precision)
+	octet_length: 8 returned_octet_length: 7)
+	= 1407.870000
+ 3	i (type: 4 length: -5 precision: -1 scale: 65531 = integer)
+	octet_length: 4 returned_octet_length: 4)
+	= 1407
+ 4	bignumber (type: -20 length: -5 precision: -1 scale: 65531 = <OID 20>)
+	octet_length: 8 returned_octet_length: 12)
+	= <"987065403210">
+ 5	b (type: 16 length: -5 precision: -1 scale: 65531 = bool)
+	octet_length: 1 returned_octet_length: 1)
+	= false
+ 6	comment (type: 1 length: -5 precision: -1 scale: 65531 = text)
+	octet_length: -1 returned_octet_length: 27)
+	= "The elephant never forgets."
+ 7	day (type: 9 length: -5 precision: -1 scale: 65531 = date)
+	octet_length: 4 returned_octet_length: 10)
+	= 1 "11-05-1999"

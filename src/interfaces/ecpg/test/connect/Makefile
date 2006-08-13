@@ -1,7 +1,7 @@
 subdir = src/interfaces/ecpg/test/connect
 top_builddir = ../../../../..
 include $(top_builddir)/src/Makefile.global
-include ../Makefile.regress
+include $(top_srcdir)/$(subdir)/../Makefile.regress
 
 # port number for temp-installation test postmaster
 # this is also defined in ../Makefile
