@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.338 2006/08/13 01:30:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.339 2006/08/13 02:22:24 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2692,40 +2692,40 @@ InitializeGUCOptions(void)
 				{
 					struct config_bool *conf = (struct config_bool *) gconf;
 
-					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true,
-												   PGC_S_DEFAULT))
-							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, (int) conf->reset_val);
-					*conf->variable = conf->reset_val;
+					if (conf->assign_hook &&
+						!(*conf->assign_hook) (conf->boot_val, true,
+												PGC_S_DEFAULT))
+						elog(FATAL, "failed to initialize %s to %d",
+							 conf->gen.name, (int) conf->boot_val);
+					*conf->variable = conf->reset_val = conf->boot_val;
 					break;
 				}
 			case PGC_INT:
 				{
 					struct config_int *conf = (struct config_int *) gconf;
 
-					Assert(conf->reset_val >= conf->min);
-					Assert(conf->reset_val <= conf->max);
-					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true,
-												   PGC_S_DEFAULT))
-							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, conf->reset_val);
-					*conf->variable = conf->reset_val;
+					Assert(conf->boot_val >= conf->min);
+					Assert(conf->boot_val <= conf->max);
+					if (conf->assign_hook &&
+						!(*conf->assign_hook) (conf->boot_val, true,
+												PGC_S_DEFAULT))
+						elog(FATAL, "failed to initialize %s to %d",
+							 conf->gen.name, conf->boot_val);
+					*conf->variable = conf->reset_val = conf->boot_val; 
 					break;
 				}
 			case PGC_REAL:
 				{
 					struct config_real *conf = (struct config_real *) gconf;
 
-					Assert(conf->reset_val >= conf->min);
-					Assert(conf->reset_val <= conf->max);
-					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true,
-												   PGC_S_DEFAULT))
-							elog(FATAL, "failed to initialize %s to %g",
-								 conf->gen.name, conf->reset_val);
-					*conf->variable = conf->reset_val;
+					Assert(conf->boot_val >= conf->min);
+					Assert(conf->boot_val <= conf->max);
+					if (conf->assign_hook &&
+						!(*conf->assign_hook) (conf->boot_val, true,
+											   PGC_S_DEFAULT))
+						elog(FATAL, "failed to initialize %s to %g",
+							 conf->gen.name, conf->boot_val);
+					*conf->variable = conf->reset_val = conf->boot_val; 
 					break;
 				}
 			case PGC_STRING:
@@ -2738,10 +2738,8 @@ InitializeGUCOptions(void)
 					conf->tentative_val = NULL;
 
 					if (conf->boot_val == NULL)
-					{
 						/* Cannot set value yet */
 						break;
-					}
 
 					str = guc_strdup(FATAL, conf->boot_val);
 					conf->reset_val = str;
@@ -2753,10 +2751,8 @@ InitializeGUCOptions(void)
 						newstr = (*conf->assign_hook) (str, true,
 													   PGC_S_DEFAULT);
 						if (newstr == NULL)
-						{
 							elog(FATAL, "failed to initialize %s to \"%s\"",
 								 conf->gen.name, str);
-						}
 						else if (newstr != str)
 						{
 							free(str);
@@ -2796,12 +2792,10 @@ InitializeGUCOptions(void)
 	if (env != NULL)
 		SetConfigOption("port", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
 
-	env = getenv("PGDATESTYLE");
-	if (env != NULL)
+	if ((env = getenv("PGDATESTYLE")) != NULL)
 		SetConfigOption("datestyle", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
 
-	env = getenv("PGCLIENTENCODING");
-	if (env != NULL)
+	if ((env = getenv("PGCLIENTENCODING")) != NULL)
 		SetConfigOption("client_encoding", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
 }
 
@@ -3178,7 +3172,7 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
-		int			my_status = gconf->status;
+		int			my_status = gconf->status & (~GUC_IN_CONFFILE);
 		GucStack   *stack = gconf->stack;
 		bool		useTentative;
 		bool		changed;
@@ -3723,12 +3717,22 @@ parse_value(int elevel, const struct config_generic *record,
 				}
 				else
 				{
-					newval = conf->reset_val;
-					*source = conf->gen.reset_source;
+					/*
+					 * Revert value to default if source is configuration file. It is used when
+					 * configuration parameter is removed/commented out in the config file. Else
+					 * RESET or SET TO DEFAULT command is called and reset_val is used.
+					 */
+					if (*source == PGC_S_FILE)
+						newval =  conf->boot_val;
+					else
+					{
+						newval = conf->reset_val;
+						*source = conf->gen.reset_source;
+					}
 				}
 
-				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, changeVal, *source))
+				if (conf->assign_hook &&
+					!(*conf->assign_hook) (newval, changeVal, *source))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -3767,8 +3771,18 @@ parse_value(int elevel, const struct config_generic *record,
 				}
 				else
 				{
-					newval = conf->reset_val;
-					*source = conf->gen.reset_source;
+					/*
+					 * Revert value to default if source is configuration file. It is used when
+					 * configuration parameter is removed/commented out in the config file. Else
+					 * RESET or SET TO DEFAULT command is called and reset_val is used.
+					 */
+					if (*source == PGC_S_FILE)
+						newval =  conf->boot_val;
+					else
+					{
+						newval = conf->reset_val;
+						*source = conf->gen.reset_source;
+					}
 				}
 
 				if (conf->assign_hook)
@@ -3811,12 +3825,22 @@ parse_value(int elevel, const struct config_generic *record,
 				}
 				else
 				{
-					newval = conf->reset_val;
-					*source = conf->gen.reset_source;
+					/*
+					 * Revert value to default if source is configuration file. It is used when
+					 * configuration parameter is removed/commented out in the config file. Else
+					 * RESET or SET TO DEFAULT command is called and reset_val is used.
+					 */
+					if (*source == PGC_S_FILE)
+						newval =  conf->boot_val;
+					else
+					{
+						newval = conf->reset_val;
+						*source = conf->gen.reset_source;
+					}
 				}
 
-				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, changeVal, *source))
+				if (conf->assign_hook &&
+					!(*conf->assign_hook) (newval, changeVal, *source))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -3845,6 +3869,18 @@ parse_value(int elevel, const struct config_generic *record,
 					if (conf->gen.flags & GUC_IS_NAME)
 						truncate_identifier(newval, strlen(newval), true);
 				}
+				else if (*source == PGC_S_FILE)
+				{
+					/* Revert value to default when item is removed from config file. */
+					if (conf->boot_val != NULL)
+					{
+						newval = guc_strdup(elevel, conf->boot_val);
+						if (newval == NULL)
+							return false;
+					}
+					else
+						return false;
+				} 
 				else if (conf->reset_val)
 				{
 					/*
@@ -3856,10 +3892,8 @@ parse_value(int elevel, const struct config_generic *record,
 					*source = conf->gen.reset_source;
 				}
 				else
-				{
 					/* Nothing to reset to, as yet; so do nothing */
 					break;
-				}
 
 				if (conf->assign_hook)
 				{
@@ -4047,6 +4081,13 @@ verify_config_option(const char *name, const char *value,
 
 	if (parse_value(elevel, record, value, &source, false, NULL))
 	{
+		/*
+		 * Mark record like presented in the config file. Be carefull if
+		 * you use this function for another purpose than config file 
+		 * verification. It causes confusion configfile parser.
+		 */
+		record->status |= GUC_IN_CONFFILE;
+
 		if (isNewEqual != NULL)
 			*isNewEqual = is_newvalue_equal(record, value);
 		if (isContextOK != NULL)
@@ -4109,7 +4150,8 @@ set_config_option(const char *name, const char *value,
 	 * Should we set reset/stacked values?	(If so, the behavior is not
 	 * transactional.)
 	 */
-	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) && (value != NULL);
+	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) &&
+					(value != NULL || source == PGC_S_FILE);
 
 	/*
 	 * Ignore attempted set if overridden by previously processed setting.
