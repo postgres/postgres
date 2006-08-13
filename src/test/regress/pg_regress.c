@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.19 2006/08/01 18:01:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.20 2006/08/13 20:39:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1552,9 +1552,25 @@ main(int argc, char *argv[])
 
 			pg_usleep(1000000L);
 		}
-		if (i == 60)
+		if (i >= 60)
 		{
-			fprintf(stderr, _("\n%s: postmaster did not start within 60 seconds\nExamine %s/log/postmaster.log for the reason\n"), progname, outputdir);
+			fprintf(stderr, _("\n%s: postmaster did not respond within 60 seconds\nExamine %s/log/postmaster.log for the reason\n"), progname, outputdir);
+
+			/*
+			 * If we get here, the postmaster is probably wedged somewhere
+			 * in startup.  Try to kill it ungracefully rather than leaving
+			 * a stuck postmaster that might interfere with subsequent test
+			 * attempts.
+			 *
+			 * XXX is there a way to do this on Windows?
+			 */
+#ifndef WIN32
+			if (kill(postmaster_pid, SIGKILL) != 0 &&
+				errno != ESRCH)
+				fprintf(stderr, _("\n%s: could not kill failed postmaster: %s\n"),
+						progname, strerror(errno));
+#endif
+
 			exit_nicely(2);
 		}
 
