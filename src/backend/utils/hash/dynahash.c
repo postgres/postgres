@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.70 2006/07/22 23:04:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.71 2006/08/14 12:39:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,10 +392,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 
 	/* Build the hash directory structure */
 	if (!init_htab(hashp, nelem))
-	{
-		hash_destroy(hashp);
 		elog(ERROR, "failed to initialize hash table");
-	}
 
 	/*
 	 * For a shared hash table, preallocate the requested number of elements.
@@ -409,12 +406,9 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		nelem < hctl->nelem_alloc)
 	{
 		if (!element_alloc(hashp, (int) nelem))
-		{
-			hash_destroy(hashp);
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
-		}
 	}
 
 	return hashp;
