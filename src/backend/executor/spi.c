@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.155 2006/08/12 20:05:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.156 2006/08/14 13:40:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1306,7 +1306,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
 				  bool read_only, long tcount)
 {
-	volatile int res = 0;
+	volatile int my_res = 0;
 	volatile uint32 my_processed = 0;
 	volatile Oid my_lastoid = InvalidOid;
 	SPITupleTable *volatile my_tuptable = NULL;
@@ -1364,6 +1364,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				Plan	   *planTree;
 				QueryDesc  *qdesc;
 				DestReceiver *dest;
+				int			res;
 
 				planTree = lfirst(plan_list_item);
 				plan_list_item = lnext(plan_list_item);
@@ -1380,7 +1381,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 
 						if (stmt->filename == NULL)
 						{
-							res = SPI_ERROR_COPY;
+							my_res = SPI_ERROR_COPY;
 							goto fail;
 						}
 					}
@@ -1388,12 +1389,12 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 							 IsA(queryTree->utilityStmt, ClosePortalStmt) ||
 							 IsA(queryTree->utilityStmt, FetchStmt))
 					{
-						res = SPI_ERROR_CURSOR;
+						my_res = SPI_ERROR_CURSOR;
 						goto fail;
 					}
 					else if (IsA(queryTree->utilityStmt, TransactionStmt))
 					{
-						res = SPI_ERROR_TRANSACTION;
+						my_res = SPI_ERROR_TRANSACTION;
 						goto fail;
 					}
 				}
@@ -1459,7 +1460,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				ActiveSnapshot = NULL;
 
 				/*
-				 * The last canSetTag query sets the auxiliary values returned
+				 * The last canSetTag query sets the status values returned
 				 * to the caller.  Be careful to free any tuptables not
 				 * returned, to avoid intratransaction memory leak.
 				 */
@@ -1469,6 +1470,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 					my_lastoid = _SPI_current->lastoid;
 					SPI_freetuptable(my_tuptable);
 					my_tuptable = _SPI_current->tuptable;
+					my_res = res;
 				}
 				else
 				{
@@ -1477,7 +1479,10 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				}
 				/* we know that the receiver doesn't need a destroy call */
 				if (res < 0)
+				{
+					my_res = res;
 					goto fail;
+				}
 			}
 		}
 
@@ -1503,7 +1508,7 @@ fail:
 	SPI_lastoid = my_lastoid;
 	SPI_tuptable = my_tuptable;
 
-	return res;
+	return my_res;
 }
 
 static int
