@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.106 2006/08/12 02:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.107 2006/08/14 22:57:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,30 +213,59 @@ ProcessQuery(Query *parsetree,
 PortalStrategy
 ChoosePortalStrategy(List *parseTrees)
 {
-	PortalStrategy strategy;
+	int			nSetTag;
+	ListCell   *lc;
 
-	strategy = PORTAL_MULTI_QUERY;		/* default assumption */
-
+	/*
+	 * PORTAL_ONE_SELECT and PORTAL_UTIL_SELECT need only consider the
+	 * single-Query-struct case, since there are no rewrite rules that
+	 * can add auxiliary queries to a SELECT or a utility command.
+	 */
 	if (list_length(parseTrees) == 1)
 	{
 		Query	   *query = (Query *) linitial(parseTrees);
 
+		Assert(IsA(query, Query));
 		if (query->canSetTag)
 		{
 			if (query->commandType == CMD_SELECT &&
 				query->into == NULL)
-				strategy = PORTAL_ONE_SELECT;
-			else if (query->returningList != NIL)
-				strategy = PORTAL_ONE_RETURNING;
-			else if (query->commandType == CMD_UTILITY &&
-					 query->utilityStmt != NULL)
+				return PORTAL_ONE_SELECT;
+			if (query->commandType == CMD_UTILITY &&
+				query->utilityStmt != NULL)
 			{
 				if (UtilityReturnsTuples(query->utilityStmt))
-					strategy = PORTAL_UTIL_SELECT;
+					return PORTAL_UTIL_SELECT;
+				/* it can't be ONE_RETURNING, so give up */
+				return PORTAL_MULTI_QUERY;
 			}
 		}
 	}
-	return strategy;
+
+	/*
+	 * PORTAL_ONE_RETURNING has to allow auxiliary queries added by rewrite.
+	 * Choose PORTAL_ONE_RETURNING if there is exactly one canSetTag query
+	 * and it has a RETURNING list.
+	 */
+	nSetTag = 0;
+	foreach(lc, parseTrees)
+	{
+		Query	   *query = (Query *) lfirst(lc);
+
+		Assert(IsA(query, Query));
+		if (query->canSetTag)
+		{
+			if (++nSetTag > 1)
+				return PORTAL_MULTI_QUERY;	/* no need to look further */
+			if (query->returningList == NIL)
+				return PORTAL_MULTI_QUERY;	/* no need to look further */
+		}
+	}
+	if (nSetTag == 1)
+		return PORTAL_ONE_RETURNING;
+
+	/* Else, it's the general case... */
+	return PORTAL_MULTI_QUERY;
 }
 
 /*
@@ -255,7 +284,7 @@ FetchPortalTargetList(Portal portal)
 	if (portal->strategy == PORTAL_ONE_SELECT)
 		return ((Query *) linitial(portal->parseTrees))->targetList;
 	if (portal->strategy == PORTAL_ONE_RETURNING)
-		return ((Query *) linitial(portal->parseTrees))->returningList;
+		return (PortalGetPrimaryQuery(portal))->returningList;
 	if (portal->strategy == PORTAL_UTIL_SELECT)
 	{
 		Node	   *utilityStmt;
@@ -422,7 +451,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				 * the portal.  We do need to set up the result tupdesc.
 				 */
 				portal->tupDesc =
-					ExecCleanTypeFromTL(((Query *) linitial(portal->parseTrees))->returningList, false);
+					ExecCleanTypeFromTL((PortalGetPrimaryQuery(portal))->returningList, false);
 
 				/*
 				 * Reset cursor position data to "start of query"
@@ -894,10 +923,11 @@ FillPortalStore(Portal portal)
 	{
 		case PORTAL_ONE_RETURNING:
 			/*
-			 * We run the query just as if it were in a MULTI portal,
-			 * but send the output to the tuplestore.
+			 * Run the portal to completion just as for the default MULTI_QUERY
+			 * case, but send the primary query's output to the tuplestore.
+			 * Auxiliary query outputs are discarded.
 			 */
-			PortalRunMulti(portal, treceiver, treceiver, completionTag);
+			PortalRunMulti(portal, treceiver, None_Receiver, completionTag);
 			/* Override default completion tag with actual command result */
 			portal->commandTag = pstrdup(completionTag);
 			break;

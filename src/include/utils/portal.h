@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.65 2006/08/12 02:52:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.66 2006/08/14 22:57:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,10 +63,13 @@
  * tuplestore for access after transaction completion).
  *
  * PORTAL_ONE_RETURNING: the portal contains a single INSERT/UPDATE/DELETE
- * query with a RETURNING clause.  On first execution, we run the statement
- * and dump its results into the portal tuplestore; the results are then
- * returned to the client as demanded.  (We can't support suspension of
- * the query partway through, because the AFTER TRIGGER code can't cope.)
+ * query with a RETURNING clause (plus possibly auxiliary queries added by
+ * rule rewriting).  On first execution, we run the portal to completion
+ * and dump the primary query's results into the portal tuplestore; the
+ * results are then returned to the client as demanded.  (We can't support
+ * suspension of the query partway through, because the AFTER TRIGGER code
+ * can't cope, and also because we don't want to risk failing to execute
+ * all the auxiliary queries.)
  *
  * PORTAL_UTIL_SELECT: the portal contains a utility statement that returns
  * a SELECT-like result (for example, EXPLAIN or SHOW).  On first execution,
@@ -187,6 +190,7 @@ typedef struct PortalData
  */
 #define PortalGetQueryDesc(portal)	((portal)->queryDesc)
 #define PortalGetHeapMemory(portal) ((portal)->heap)
+#define PortalGetPrimaryQuery(portal) PortalListGetPrimaryQuery((portal)->parseTrees)
 
 
 /* Prototypes for functions in utils/mmgr/portalmem.c */
@@ -215,6 +219,7 @@ extern void PortalDefineQuery(Portal portal,
 				  List *parseTrees,
 				  List *planTrees,
 				  MemoryContext queryContext);
+extern Query *PortalListGetPrimaryQuery(List *parseTrees);
 extern void PortalCreateHoldStore(Portal portal);
 
 #endif   /* PORTAL_H */

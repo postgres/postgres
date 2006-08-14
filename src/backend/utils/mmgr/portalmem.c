@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.91 2006/08/08 01:23:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.92 2006/08/14 22:57:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,34 @@ GetPortalByName(const char *name)
 		portal = NULL;
 
 	return portal;
+}
+
+/*
+ * PortalListGetPrimaryQuery
+ *		Get the "primary" Query within a portal, ie, the one marked canSetTag.
+ *
+ * Returns NULL if no such Query.  If multiple Query structs within the
+ * portal are marked canSetTag, returns the first one.  Neither of these
+ * cases should occur in present usages of this function.
+ *
+ * Note: the reason this is just handed a List is so that prepared statements
+ * can share the code.  For use with a portal, use PortalGetPrimaryQuery
+ * rather than calling this directly.
+ */
+Query *
+PortalListGetPrimaryQuery(List *parseTrees)
+{
+	ListCell   *lc;
+
+	foreach(lc, parseTrees)
+	{
+		Query	   *query = (Query *) lfirst(lc);
+
+		Assert(IsA(query, Query));
+		if (query->canSetTag)
+			return query;
+	}
+	return NULL;
 }
 
 /*

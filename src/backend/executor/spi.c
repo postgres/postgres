@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.156 2006/08/14 13:40:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.157 2006/08/14 22:57:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -818,31 +818,44 @@ SPI_cursor_open(const char *name, void *plan,
 				bool read_only)
 {
 	_SPI_plan  *spiplan = (_SPI_plan *) plan;
-	List	   *qtlist = spiplan->qtlist;
-	List	   *ptlist = spiplan->ptlist;
-	Query	   *queryTree;
-	Plan	   *planTree;
+	List	   *qtlist;
+	List	   *ptlist;
 	ParamListInfo paramLI;
 	Snapshot	snapshot;
 	MemoryContext oldcontext;
 	Portal		portal;
 	int			k;
 
-	/* Ensure that the plan contains only one query */
-	if (list_length(ptlist) != 1 || list_length(qtlist) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-				 errmsg("cannot open multi-query plan as cursor")));
-	queryTree = (Query *) linitial((List *) linitial(qtlist));
-	planTree = (Plan *) linitial(ptlist);
+	/*
+	 * Check that the plan is something the Portal code will special-case
+	 * as returning one tupleset.
+	 */
+	if (!SPI_is_cursor_plan(spiplan))
+	{
+		/* try to give a good error message */
+		Query	   *queryTree;
 
-	/* Must be a query that returns tuples */
-	if (!QueryReturnsTuples(queryTree))
+		if (list_length(spiplan->qtlist) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+					 errmsg("cannot open multi-query plan as cursor")));
+		queryTree = PortalListGetPrimaryQuery((List *) linitial(spiplan->qtlist));
+		if (queryTree == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+					 errmsg("cannot open empty query as cursor")));
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 /* translator: %s is name of a SQL command, eg INSERT */
 				 errmsg("cannot open %s query as cursor",
 						CreateQueryTag(queryTree))));
+	}
+
+	Assert(list_length(spiplan->qtlist) == 1);
+	qtlist = (List *) linitial(spiplan->qtlist);
+	ptlist = spiplan->ptlist;
+	if (list_length(qtlist) != list_length(ptlist))
+		elog(ERROR, "corrupted SPI plan lists");
 
 	/* Reset SPI result (note we deliberately don't touch lastoid) */
 	SPI_processed = 0;
@@ -862,10 +875,10 @@ SPI_cursor_open(const char *name, void *plan,
 		portal = CreatePortal(name, false, false);
 	}
 
-	/* Switch to portal's memory and copy the parsetree and plan to there */
+	/* Switch to portal's memory and copy the parsetrees and plans to there */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-	queryTree = copyObject(queryTree);
-	planTree = copyObject(planTree);
+	qtlist = copyObject(qtlist);
+	ptlist = copyObject(ptlist);
 
 	/* If the plan has parameters, set them up */
 	if (spiplan->nargs > 0)
@@ -907,9 +920,9 @@ SPI_cursor_open(const char *name, void *plan,
 	PortalDefineQuery(portal,
 					  NULL,		/* no statement name */
 					  spiplan->query,
-					  CreateQueryTag(queryTree),
-					  list_make1(queryTree),
-					  list_make1(planTree),
+					  CreateQueryTag(PortalListGetPrimaryQuery(qtlist)),
+					  qtlist,
+					  ptlist,
 					  PortalGetHeapMemory(portal));
 
 	MemoryContextSwitchTo(oldcontext);
@@ -918,7 +931,8 @@ SPI_cursor_open(const char *name, void *plan,
 	 * Set up options for portal.
 	 */
 	portal->cursorOptions &= ~(CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL);
-	if (planTree == NULL || ExecSupportsBackwardScan(planTree))
+	if (list_length(ptlist) == 1 &&
+		ExecSupportsBackwardScan((Plan *) linitial(ptlist)))
 		portal->cursorOptions |= CURSOR_OPT_SCROLL;
 	else
 		portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
@@ -940,16 +954,7 @@ SPI_cursor_open(const char *name, void *plan,
 	 */
 	PortalStart(portal, paramLI, snapshot);
 
-	/*
-	 * If this test fails then we're out of sync with pquery.c about
-	 * which queries can return tuples...
-	 */
-	if (portal->strategy == PORTAL_MULTI_QUERY)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-				 /* translator: %s is name of a SQL command, eg INSERT */
-				 errmsg("cannot open %s query as cursor",
-						CreateQueryTag(queryTree))));
+	Assert(portal->strategy != PORTAL_MULTI_QUERY);
 
 	/* Return the created portal */
 	return portal;
@@ -1050,7 +1055,6 @@ bool
 SPI_is_cursor_plan(void *plan)
 {
 	_SPI_plan  *spiplan = (_SPI_plan *) plan;
-	List	   *qtlist;
 
 	if (spiplan == NULL)
 	{
@@ -1058,13 +1062,20 @@ SPI_is_cursor_plan(void *plan)
 		return false;
 	}
 
-	qtlist = spiplan->qtlist;
-	if (list_length(spiplan->ptlist) == 1 && list_length(qtlist) == 1)
-	{
-		Query	   *queryTree = (Query *) linitial((List *) linitial(qtlist));
+	if (list_length(spiplan->qtlist) != 1)
+		return false;			/* not exactly 1 pre-rewrite command */
 
-		if (QueryReturnsTuples(queryTree))
+	switch (ChoosePortalStrategy((List *) linitial(spiplan->qtlist)))
+	{
+		case PORTAL_ONE_SELECT:
+		case PORTAL_ONE_RETURNING:
+		case PORTAL_UTIL_SELECT:
+			/* OK */
 			return true;
+
+		case PORTAL_MULTI_QUERY:
+			/* will not return tuples */
+			break;
 	}
 	return false;
 }
