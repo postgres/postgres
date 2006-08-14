@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.340 2006/08/13 15:37:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.341 2006/08/14 02:27:26 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2313,7 +2313,7 @@ guc_strdup(int elevel, const char *src)
  * states).
  */
 static void
-set_string_field(struct config_string *conf, char **field, char *newval)
+set_string_field(struct config_string * conf, char **field, char *newval)
 {
 	char	   *oldval = *field;
 	GucStack   *stack;
@@ -2535,7 +2535,8 @@ add_placeholder_variable(const char *name, int elevel)
 	gen = &var->gen;
 	memset(var, 0, sz);
 
-	if ((gen->name = guc_strdup(elevel, name)) == NULL)
+	gen->name = guc_strdup(elevel, name);
+	if (gen->name == NULL)
 	{
 		free(var);
 		return NULL;
@@ -2692,40 +2693,40 @@ InitializeGUCOptions(void)
 				{
 					struct config_bool *conf = (struct config_bool *) gconf;
 
-					if (conf->assign_hook &&
-						!(*conf->assign_hook) (conf->boot_val, true,
-												PGC_S_DEFAULT))
-						elog(FATAL, "failed to initialize %s to %d",
-							 conf->gen.name, (int) conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val;
+					if (conf->assign_hook)
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_DEFAULT))
+							elog(FATAL, "failed to initialize %s to %d",
+								 conf->gen.name, (int) conf->reset_val);
+					*conf->variable = conf->reset_val;
 					break;
 				}
 			case PGC_INT:
 				{
 					struct config_int *conf = (struct config_int *) gconf;
 
-					Assert(conf->boot_val >= conf->min);
-					Assert(conf->boot_val <= conf->max);
-					if (conf->assign_hook &&
-						!(*conf->assign_hook) (conf->boot_val, true,
-												PGC_S_DEFAULT))
-						elog(FATAL, "failed to initialize %s to %d",
-							 conf->gen.name, conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val; 
+					Assert(conf->reset_val >= conf->min);
+					Assert(conf->reset_val <= conf->max);
+					if (conf->assign_hook)
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_DEFAULT))
+							elog(FATAL, "failed to initialize %s to %d",
+								 conf->gen.name, conf->reset_val);
+					*conf->variable = conf->reset_val;
 					break;
 				}
 			case PGC_REAL:
 				{
 					struct config_real *conf = (struct config_real *) gconf;
 
-					Assert(conf->boot_val >= conf->min);
-					Assert(conf->boot_val <= conf->max);
-					if (conf->assign_hook &&
-						!(*conf->assign_hook) (conf->boot_val, true,
-											   PGC_S_DEFAULT))
-						elog(FATAL, "failed to initialize %s to %g",
-							 conf->gen.name, conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val; 
+					Assert(conf->reset_val >= conf->min);
+					Assert(conf->reset_val <= conf->max);
+					if (conf->assign_hook)
+						if (!(*conf->assign_hook) (conf->reset_val, true,
+												   PGC_S_DEFAULT))
+							elog(FATAL, "failed to initialize %s to %g",
+								 conf->gen.name, conf->reset_val);
+					*conf->variable = conf->reset_val;
 					break;
 				}
 			case PGC_STRING:
@@ -2738,8 +2739,10 @@ InitializeGUCOptions(void)
 					conf->tentative_val = NULL;
 
 					if (conf->boot_val == NULL)
+					{
 						/* Cannot set value yet */
 						break;
+					}
 
 					str = guc_strdup(FATAL, conf->boot_val);
 					conf->reset_val = str;
@@ -2751,8 +2754,10 @@ InitializeGUCOptions(void)
 						newstr = (*conf->assign_hook) (str, true,
 													   PGC_S_DEFAULT);
 						if (newstr == NULL)
+						{
 							elog(FATAL, "failed to initialize %s to \"%s\"",
 								 conf->gen.name, str);
+						}
 						else if (newstr != str)
 						{
 							free(str);
@@ -2792,10 +2797,12 @@ InitializeGUCOptions(void)
 	if (env != NULL)
 		SetConfigOption("port", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
 
-	if ((env = getenv("PGDATESTYLE")) != NULL)
+	env = getenv("PGDATESTYLE");
+	if (env != NULL)
 		SetConfigOption("datestyle", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
 
-	if ((env = getenv("PGCLIENTENCODING")) != NULL)
+	env = getenv("PGCLIENTENCODING");
+	if (env != NULL)
 		SetConfigOption("client_encoding", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
 }
 
@@ -3172,7 +3179,7 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
-		int			my_status = gconf->status & (~GUC_IN_CONFFILE);
+		int			my_status = gconf->status;
 		GucStack   *stack = gconf->stack;
 		bool		useTentative;
 		bool		changed;
@@ -3683,422 +3690,6 @@ call_string_assign_hook(GucStringAssignHook assign_hook,
 	return result;
 }
 
-/*
- * Try to parse value. Determine what is type and call related
- * parsing function or if newval is equal to NULL, reset value 
- * to default or bootval. If the value parsed okay return true,
- * else false.
- */
-static bool
-parse_value(int elevel, const struct config_generic *record, 
-		const char *value, GucSource *source, bool changeVal, 
-		union config_var_value *retval)
-{
-	/*
-	 * Evaluate value and set variable.
-	 */
-	switch (record->vartype)
-	{
-		case PGC_BOOL:
-			{
-				struct config_bool *conf = (struct config_bool *) record;
-				bool		newval;
-
-				if (value)
-				{
-					if (!parse_bool(value, &newval))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						  errmsg("parameter \"%s\" requires a Boolean value",
-								 record->name)));
-						return false;
-					}
-				}
-				else
-				{
-					/*
-					 * Revert value to default if source is configuration file. It is used when
-					 * configuration parameter is removed/commented out in the config file. Else
-					 * RESET or SET TO DEFAULT command is called and reset_val is used.
-					 */
-					if (*source == PGC_S_FILE)
-						newval =  conf->boot_val;
-					else
-					{
-						newval = conf->reset_val;
-						*source = conf->gen.reset_source;
-					}
-				}
-
-				if (conf->assign_hook &&
-					!(*conf->assign_hook) (newval, changeVal, *source))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid value for parameter \"%s\": %d",
-									record->name, (int) newval)));
-						return false;
-					}
-				if (retval)
-					retval->boolval = newval;
-				break;
-			}
-
-		case PGC_INT:
-			{
-				struct config_int *conf = (struct config_int *) record;
-				int			newval;
-
-				if (value)
-				{
-					if (!parse_int(value, &newval, conf->gen.flags))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("parameter \"%s\" requires an integer value",
-								record->name)));
-						return false;
-					}
-					if (newval < conf->min || newval > conf->max)
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-										newval, record->name, conf->min, conf->max)));
-						return false;
-					}
-				}
-				else
-				{
-					/*
-					 * Revert value to default if source is configuration file. It is used when
-					 * configuration parameter is removed/commented out in the config file. Else
-					 * RESET or SET TO DEFAULT command is called and reset_val is used.
-					 */
-					if (*source == PGC_S_FILE)
-						newval =  conf->boot_val;
-					else
-					{
-						newval = conf->reset_val;
-						*source = conf->gen.reset_source;
-					}
-				}
-
-				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, changeVal, *source))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid value for parameter \"%s\": %d",
-									record->name, newval)));
-						return false;
-					}
-				if (retval)
-					retval->intval = newval;
-				break;
-			}
-
-		case PGC_REAL:
-			{
-				struct config_real *conf = (struct config_real *) record;
-				double		newval;
-
-				if (value)
-				{
-					if (!parse_real(value, &newval))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						  errmsg("parameter \"%s\" requires a numeric value",
-								 record->name)));
-						return false;
-					}
-					if (newval < conf->min || newval > conf->max)
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("%g is outside the valid range for parameter \"%s\" (%g .. %g)",
-										newval, record->name, conf->min, conf->max)));
-						return false;
-					}
-				}
-				else
-				{
-					/*
-					 * Revert value to default if source is configuration file. It is used when
-					 * configuration parameter is removed/commented out in the config file. Else
-					 * RESET or SET TO DEFAULT command is called and reset_val is used.
-					 */
-					if (*source == PGC_S_FILE)
-						newval =  conf->boot_val;
-					else
-					{
-						newval = conf->reset_val;
-						*source = conf->gen.reset_source;
-					}
-				}
-
-				if (conf->assign_hook &&
-					!(*conf->assign_hook) (newval, changeVal, *source))
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid value for parameter \"%s\": %g",
-									record->name, newval)));
-						return false;
-					}
-				if (retval)
-					retval->realval = newval;
-				break;
-			}
-
-		case PGC_STRING:
-			{
-				struct config_string *conf = (struct config_string *) record;
-				char	   *newval;
-
-				if (value)
-				{
-					if ((newval = guc_strdup(elevel, value)) == NULL)
-						return false;
-					/*
-					 * The only sort of "parsing" check we need to do is
-					 * apply truncation if GUC_IS_NAME.
-					 */
-					if (conf->gen.flags & GUC_IS_NAME)
-						truncate_identifier(newval, strlen(newval), true);
-				}
-				else if (*source == PGC_S_FILE)
-				{
-					/* Revert value to default when item is removed from config file. */
-					if (conf->boot_val != NULL)
-					{
-						newval = guc_strdup(elevel, conf->boot_val);
-						if (newval == NULL)
-							return false;
-					}
-					else
-						return false;
-				} 
-				else if (conf->reset_val)
-				{
-					/*
-					 * We could possibly avoid strdup here, but easier to make
-					 * this case work the same as the normal assignment case.
-					 */
-					if ((newval = guc_strdup(elevel, conf->reset_val)) == NULL)
-						return false;
-					*source = conf->gen.reset_source;
-				}
-				else
-					/* Nothing to reset to, as yet; so do nothing */
-					break;
-
-				if (conf->assign_hook)
-				{
-					const char *hookresult;
-
-					/*
-					 * If the hook ereports, we have to make sure we free
-					 * newval, else it will be a permanent memory leak.
-					 */
-					hookresult = call_string_assign_hook(conf->assign_hook,
-														 newval,
-														 changeVal,
-														 *source);
-					if (hookresult == NULL)
-					{
-						free(newval);
-						ereport(elevel,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid value for parameter \"%s\": \"%s\"",
-								record->name, value ? value : "")));
-						return false;
-					}
-					else if (hookresult != newval)
-					{
-						free(newval);
-
-						/*
-						 * Having to cast away const here is annoying, but the
-						 * alternative is to declare assign_hooks as returning
-						 * char*, which would mean they'd have to cast away
-						 * const, or as both taking and returning char*, which
-						 * doesn't seem attractive either --- we don't want
-						 * them to scribble on the passed str.
-						 */
-						newval = (char *) hookresult;
-					}
-				}
-
-				if (retval)
-					retval->stringval = newval;
-				else
-					free(newval);
-				break;
-			}
-	}
-	return true;
-}
-
-/*
- * Check if the option can be set at this time. See guc.h for the precise
- * rules. 
- */
-static bool
-checkContext(int elevel, struct config_generic *record, GucContext context)
-{
-	switch (record->context)
-	{
-		case PGC_INTERNAL:
-			if (context != PGC_INTERNAL)
-			{
-				ereport(elevel,
-						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						 errmsg("parameter \"%s\" cannot be changed",
-								record->name)));
-				return false;
-			}
-			break;
-		case PGC_POSTMASTER:
-			if (context == PGC_SIGHUP)
-				return false;
-
-			if (context != PGC_POSTMASTER)
-			{
-				ereport(elevel,
-						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						 errmsg("parameter \"%s\" cannot be changed after server start",
-								record->name)));
-				return false;
-			}
-			break;
-		case PGC_SIGHUP:
-			if (context != PGC_SIGHUP && context != PGC_POSTMASTER)
-			{
-				ereport(elevel,
-						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						 errmsg("parameter \"%s\" cannot be changed now",
-								record->name)));
-				return false;
-			}
-
-			/*
-			 * Hmm, the idea of the SIGHUP context is "ought to be global, but
-			 * can be changed after postmaster start". But there's nothing
-			 * that prevents a crafty administrator from sending SIGHUP
-			 * signals to individual backends only.
-			 */
-			break;
-		case PGC_BACKEND:
-			if (context == PGC_SIGHUP)
-			{
-				/*
-				 * If a PGC_BACKEND parameter is changed in the config file,
-				 * we want to accept the new value in the postmaster (whence
-				 * it will propagate to subsequently-started backends), but
-				 * ignore it in existing backends.	This is a tad klugy, but
-				 * necessary because we don't re-read the config file during
-				 * backend start.
-				 */
-				if (IsUnderPostmaster)
-				{
-					return false;
-				}
-			}
-			else if (context != PGC_BACKEND && context != PGC_POSTMASTER)
-			{
-				ereport(elevel,
-						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						 errmsg("parameter \"%s\" cannot be set after connection start",
-								record->name)));
-				return false;
-			}
-			break;
-		case PGC_SUSET:
-			if (context == PGC_USERSET || context == PGC_BACKEND)
-			{
-				ereport(elevel,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied to set parameter \"%s\"",
-								record->name)));
-				return false;
-			}
-			break;
-		case PGC_USERSET:
-			/* always okay */
-			break;
-	}
-	return true;
-}
-
-/*
- * Get error level for different sources and context.
- */
-static int
-get_elevel(GucContext context, GucSource source)
-{
-	int elevel;
-	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
-	{
-		/*
-		 * To avoid cluttering the log, only the postmaster bleats loudly
-		 * about problems with the config file.
-		 */
-		elevel = IsUnderPostmaster ? DEBUG2 : LOG;
-	}
-	else if (source == PGC_S_DATABASE || source == PGC_S_USER)
-		elevel = INFO;
-	else
-		elevel = ERROR;
-
-	return elevel;
-}
-
-/*
- * Verify if option exists and value is valid.
- * It is primary used for validation of items in configuration file.
- */
-bool
-verify_config_option(const char *name, const char *value,
-				GucContext context, GucSource source,
-				bool *isNewEqual, bool *isContextOK)
-{
-	int					   elevel;
-	struct config_generic *record;
-
-	elevel = get_elevel(context, source);
-
-	record = find_option(name, elevel);
-	if (record == NULL)
-	{
-		ereport(elevel,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("unrecognized configuration parameter \"%s\"", name)));
-		return false;
-	}
-
-	if (parse_value(elevel, record, value, &source, false, NULL))
-	{
-		/*
-		 * Mark record as present in the config file. Be carefull if
-		 * you use this function for another purpose than config file 
-		 * verification. It causes confusion in the config file parser.
-		 */
-		record->status |= GUC_IN_CONFFILE;
-
-		if (isNewEqual != NULL)
-			*isNewEqual = is_newvalue_equal(record, value);
-		if (isContextOK != NULL)
-			*isContextOK = checkContext(elevel, record, context);
-	}
-	else 
-		return false;
-
-    return true;
-}
-
 
 /*
  * Sets option `name' to given value. The value should be a string
@@ -4131,7 +3722,18 @@ set_config_option(const char *name, const char *value,
 	int			elevel;
 	bool		makeDefault;
 
-	elevel = get_elevel(context, source);
+	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
+	{
+		/*
+		 * To avoid cluttering the log, only the postmaster bleats loudly
+		 * about problems with the config file.
+		 */
+		elevel = IsUnderPostmaster ? DEBUG2 : LOG;
+	}
+	else if (source == PGC_S_DATABASE || source == PGC_S_USER)
+		elevel = INFO;
+	else
+		elevel = ERROR;
 
 	record = find_option(name, elevel);
 	if (record == NULL)
@@ -4142,16 +3744,105 @@ set_config_option(const char *name, const char *value,
 		return false;
 	}
 
-	/* Check if change is allowed in the running context. */
-	if (!checkContext(elevel, record, context))
-		return false;
+	/*
+	 * Check if the option can be set at this time. See guc.h for the precise
+	 * rules. Note that we don't want to throw errors if we're in the SIGHUP
+	 * context. In that case we just ignore the attempt and return true.
+	 */
+	switch (record->context)
+	{
+		case PGC_INTERNAL:
+			if (context == PGC_SIGHUP)
+				return true;
+			if (context != PGC_INTERNAL)
+			{
+				ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("parameter \"%s\" cannot be changed",
+								name)));
+				return false;
+			}
+			break;
+		case PGC_POSTMASTER:
+			if (context == PGC_SIGHUP)
+			{
+				if (changeVal && !is_newvalue_equal(record, value))
+					ereport(elevel,
+							(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+							 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
+									name)));
+
+				return true;
+			}
+			if (context != PGC_POSTMASTER)
+			{
+				ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("parameter \"%s\" cannot be changed after server start",
+								name)));
+				return false;
+			}
+			break;
+		case PGC_SIGHUP:
+			if (context != PGC_SIGHUP && context != PGC_POSTMASTER)
+			{
+				ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("parameter \"%s\" cannot be changed now",
+								name)));
+				return false;
+			}
+
+			/*
+			 * Hmm, the idea of the SIGHUP context is "ought to be global, but
+			 * can be changed after postmaster start". But there's nothing
+			 * that prevents a crafty administrator from sending SIGHUP
+			 * signals to individual backends only.
+			 */
+			break;
+		case PGC_BACKEND:
+			if (context == PGC_SIGHUP)
+			{
+				/*
+				 * If a PGC_BACKEND parameter is changed in the config file,
+				 * we want to accept the new value in the postmaster (whence
+				 * it will propagate to subsequently-started backends), but
+				 * ignore it in existing backends.	This is a tad klugy, but
+				 * necessary because we don't re-read the config file during
+				 * backend start.
+				 */
+				if (IsUnderPostmaster)
+					return true;
+			}
+			else if (context != PGC_BACKEND && context != PGC_POSTMASTER)
+			{
+				ereport(elevel,
+						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+						 errmsg("parameter \"%s\" cannot be set after connection start",
+								name)));
+				return false;
+			}
+			break;
+		case PGC_SUSET:
+			if (context == PGC_USERSET || context == PGC_BACKEND)
+			{
+				ereport(elevel,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission denied to set parameter \"%s\"",
+								name)));
+				return false;
+			}
+			break;
+		case PGC_USERSET:
+			/* always okay */
+			break;
+	}
 
 	/*
 	 * Should we set reset/stacked values?	(If so, the behavior is not
 	 * transactional.)
 	 */
-	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) &&
-					(value != NULL || source == PGC_S_FILE);
+	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) && (value != NULL);
 
 	/*
 	 * Ignore attempted set if overridden by previously processed setting.
@@ -4180,23 +3871,44 @@ set_config_option(const char *name, const char *value,
 			{
 				struct config_bool *conf = (struct config_bool *) record;
 				bool		newval;
-				
-				if (!parse_value(elevel, record, value, &source, changeVal,
-					(union config_var_value*) &newval))
-					return false;
+
+				if (value)
+				{
+					if (!parse_bool(value, &newval))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						  errmsg("parameter \"%s\" requires a Boolean value",
+								 name)));
+						return false;
+					}
+				}
+				else
+				{
+					newval = conf->reset_val;
+					source = conf->gen.reset_source;
+				}
+
+				if (conf->assign_hook)
+					if (!(*conf->assign_hook) (newval, changeVal, source))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("invalid value for parameter \"%s\": %d",
+									name, (int) newval)));
+						return false;
+					}
 
 				if (changeVal || makeDefault)
 				{
 					/* Save old value to support transaction abort */
 					if (!makeDefault)
 						push_old_value(&conf->gen);
-
 					if (changeVal)
 					{
 						*conf->variable = newval;
 						conf->gen.source = source;
 					}
-
 					if (makeDefault)
 					{
 						GucStack   *stack;
@@ -4236,22 +3948,51 @@ set_config_option(const char *name, const char *value,
 				struct config_int *conf = (struct config_int *) record;
 				int			newval;
 
- 				if (!parse_value(elevel, record, value, &source, changeVal,
-					(union config_var_value*) &newval))
- 					return false;
+				if (value)
+				{
+					if (!parse_int(value, &newval, conf->gen.flags))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("parameter \"%s\" requires an integer value",
+								name)));
+						return false;
+					}
+					if (newval < conf->min || newval > conf->max)
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
+										newval, name, conf->min, conf->max)));
+						return false;
+					}
+				}
+				else
+				{
+					newval = conf->reset_val;
+					source = conf->gen.reset_source;
+				}
+
+				if (conf->assign_hook)
+					if (!(*conf->assign_hook) (newval, changeVal, source))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("invalid value for parameter \"%s\": %d",
+									name, newval)));
+						return false;
+					}
 
 				if (changeVal || makeDefault)
 				{
 					/* Save old value to support transaction abort */
 					if (!makeDefault)
 						push_old_value(&conf->gen);
-
 					if (changeVal)
 					{
 						*conf->variable = newval;
 						conf->gen.source = source;
 					}
-
 					if (makeDefault)
 					{
 						GucStack   *stack;
@@ -4291,22 +4032,51 @@ set_config_option(const char *name, const char *value,
 				struct config_real *conf = (struct config_real *) record;
 				double		newval;
 
-				if (!parse_value(elevel, record, value, &source, changeVal,
-					(union config_var_value*) &newval))
-					return false; 
+				if (value)
+				{
+					if (!parse_real(value, &newval))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						  errmsg("parameter \"%s\" requires a numeric value",
+								 name)));
+						return false;
+					}
+					if (newval < conf->min || newval > conf->max)
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("%g is outside the valid range for parameter \"%s\" (%g .. %g)",
+										newval, name, conf->min, conf->max)));
+						return false;
+					}
+				}
+				else
+				{
+					newval = conf->reset_val;
+					source = conf->gen.reset_source;
+				}
+
+				if (conf->assign_hook)
+					if (!(*conf->assign_hook) (newval, changeVal, source))
+					{
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("invalid value for parameter \"%s\": %g",
+									name, newval)));
+						return false;
+					}
 
 				if (changeVal || makeDefault)
 				{
 					/* Save old value to support transaction abort */
 					if (!makeDefault)
 						push_old_value(&conf->gen);
-
 					if (changeVal)
 					{
 						*conf->variable = newval;
 						conf->gen.source = source;
 					}
-
 					if (makeDefault)
 					{
 						GucStack   *stack;
@@ -4346,22 +4116,82 @@ set_config_option(const char *name, const char *value,
 				struct config_string *conf = (struct config_string *) record;
 				char	   *newval;
 
-				if (!parse_value(elevel, record, value, &source, changeVal,
-					(union config_var_value*) &newval))
-					return false;
+				if (value)
+				{
+					newval = guc_strdup(elevel, value);
+					if (newval == NULL)
+						return false;
+					/*
+					 * The only sort of "parsing" check we need to do is
+					 * apply truncation if GUC_IS_NAME.
+					 */
+					if (conf->gen.flags & GUC_IS_NAME)
+						truncate_identifier(newval, strlen(newval), true);
+				}
+				else if (conf->reset_val)
+				{
+					/*
+					 * We could possibly avoid strdup here, but easier to make
+					 * this case work the same as the normal assignment case.
+					 */
+					newval = guc_strdup(elevel, conf->reset_val);
+					if (newval == NULL)
+						return false;
+					source = conf->gen.reset_source;
+				}
+				else
+				{
+					/* Nothing to reset to, as yet; so do nothing */
+					break;
+				}
+
+				if (conf->assign_hook)
+				{
+					const char *hookresult;
+
+					/*
+					 * If the hook ereports, we have to make sure we free
+					 * newval, else it will be a permanent memory leak.
+					 */
+					hookresult = call_string_assign_hook(conf->assign_hook,
+														 newval,
+														 changeVal,
+														 source);
+					if (hookresult == NULL)
+					{
+						free(newval);
+						ereport(elevel,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid value for parameter \"%s\": \"%s\"",
+								name, value ? value : "")));
+						return false;
+					}
+					else if (hookresult != newval)
+					{
+						free(newval);
+
+						/*
+						 * Having to cast away const here is annoying, but the
+						 * alternative is to declare assign_hooks as returning
+						 * char*, which would mean they'd have to cast away
+						 * const, or as both taking and returning char*, which
+						 * doesn't seem attractive either --- we don't want
+						 * them to scribble on the passed str.
+						 */
+						newval = (char *) hookresult;
+					}
+				}
 
 				if (changeVal || makeDefault)
 				{
 					/* Save old value to support transaction abort */
 					if (!makeDefault)
 						push_old_value(&conf->gen);
-
 					if (changeVal)
 					{
 						set_string_field(conf, conf->variable, newval);
 						conf->gen.source = source;
 					}
-
 					if (makeDefault)
 					{
 						GucStack   *stack;
@@ -4937,7 +4767,8 @@ GetPGVariableResultDesc(const char *name)
 
 		/* need a tuple descriptor representing a single TEXT column */
 		tupdesc = CreateTemplateTupleDesc(1, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, varname, TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, varname,
+						   TEXTOID, -1, 0);
 	}
 	return tupdesc;
 }
@@ -5029,6 +4860,7 @@ ShowAllGUCConfig(DestReceiver *dest)
 		/* send it to dest */
 		do_tup_output(tstate, values);
 
+		/* clean up */
 		if (values[1] != NULL)
 			pfree(values[1]);
 	}
@@ -5482,9 +5314,6 @@ _ShowOption(struct config_generic * record, bool use_units)
 static bool
 is_newvalue_equal(struct config_generic *record, const char *newvalue)
 {
-	if (!newvalue)
-		return false;
-  
 	switch (record->vartype)
 	{
 		case PGC_BOOL:
@@ -5512,10 +5341,7 @@ is_newvalue_equal(struct config_generic *record, const char *newvalue)
 		{
 			struct config_string *conf = (struct config_string *) record;
 
-			if (!*conf->variable)	/* custom variable with no value yet */
-				return false;
-			else
-				return strcmp(*conf->variable, newvalue) == 0;
+			return strcmp(*conf->variable, newvalue) == 0;
 		}
 	}
 

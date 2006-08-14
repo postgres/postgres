@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.74 2006/08/13 01:30:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.75 2006/08/14 02:27:27 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -193,9 +193,6 @@ extern void ParseLongOption(const char *string, char **name, char **value);
 extern bool set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
 				  bool isLocal, bool changeVal);
-extern bool verify_config_option(const char *name, const char *value,
-				GucContext context, GucSource source,
-				bool *isNewEqual, bool *isContextOK);
 extern char *GetConfigOptionByName(const char *name, const char **varname);
 extern void GetConfigOptionByNum(int varnum, const char **values, bool *noshow);
 extern int	GetNumConfigOptions(void);

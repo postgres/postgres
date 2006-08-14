@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.44 2006/08/13 02:22:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.45 2006/08/14 02:27:26 momjian Exp $
  */
 
 %{
@@ -50,8 +50,7 @@ int GUC_yylex(void);
 static bool ParseConfigFile(const char *config_file, const char *calling_file,
 							int depth, GucContext context, int elevel,
 							struct name_value_pair **head_p,
-							struct name_value_pair **tail_p,
-							int *varcount);
+							struct name_value_pair **tail_p);
 static void free_name_value_list(struct name_value_pair * list);
 static char *GUC_scanstr(const char *s);
 
@@ -115,11 +114,8 @@ STRING          \'([^'\\\n]|\\.|\'\')*\'
 void
 ProcessConfigFile(GucContext context)
 {
-	int			elevel, i;
+	int			elevel;
 	struct name_value_pair *item, *head, *tail;
-	char	   *env;
-	bool	   *apply_list = NULL;
-	int			varcount = 0;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 
@@ -138,109 +134,25 @@ ProcessConfigFile(GucContext context)
 
 	if (!ParseConfigFile(ConfigFileName, NULL,
 						 0, context, elevel,
-						 &head, &tail, &varcount))
+						 &head, &tail))
 		goto cleanup_list;
 
-	/* Can we allocate memory here, what about leaving here prematurely? */
-	apply_list = (bool *) palloc(sizeof(bool) * varcount);
-
 	/* Check if all options are valid */
-	for (item = head, i = 0; item; item = item->next, i++)
+	for (item = head; item; item = item->next)
 	{
-		bool isEqual, isContextOk;
-
-		if (!verify_config_option(item->name, item->value, context,
-						  PGC_S_FILE, &isEqual, &isContextOk))
-		{
-			ereport(elevel,
-				(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-				errmsg("configuration file is invalid")));
+		if (!set_config_option(item->name, item->value, context,
+							   PGC_S_FILE, false, false))
 			goto cleanup_list;
-		}
-
-		if (isContextOk == false)
-		{
-			apply_list[i] = false;
-			if (context == PGC_SIGHUP)
-			{
-				if (isEqual == false)
-					ereport(elevel,
-						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
-						item->name)));
-			}
-			else
-				/* if it is boot phase, context must be valid for all
-				 * configuration item. */
-				goto cleanup_list;
-		}
-		else
-			apply_list[i] = true;
 	}
 
 	/* If we got here all the options checked out okay, so apply them. */
-	for (item = head, i = 0; item; item = item->next, i++)
-		if (apply_list[i])
-			set_config_option(item->name, item->value, context,
-							  PGC_S_FILE, false, true);
-
-	if (context == PGC_SIGHUP)
+	for (item = head; item; item = item->next)
 	{
-	/*
-	 * Revert all "untouched" options with reset source PGC_S_FILE to
-	 * default/boot value.
-	 */
-		for (i = 0; i < num_guc_variables; i++)
-		{
-			struct config_generic *gconf = guc_variables[i];
-
-			if (gconf->reset_source == PGC_S_FILE &&
-				 !(gconf->status & GUC_IN_CONFFILE))
-			{
-				if (gconf->context == PGC_BACKEND && IsUnderPostmaster)
-					; /* Be silent. Does any body want message from each session? */
-				else if (gconf->context == PGC_POSTMASTER)
-					ereport(elevel,
-						(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-						errmsg("parameter \"%s\" cannot be changed (commented) after server start; configuration file change ignored",
-						gconf->name)));
-				else if (set_config_option(gconf->name, NULL, context,
-										   PGC_S_FILE, false, true))
-				{
-					GucStack   *stack;
-
-					gconf->reset_source = PGC_S_DEFAULT;
-
-					for (stack = gconf->stack; stack; stack = stack->prev)
-						if (stack->source == PGC_S_FILE)
-							stack->source = PGC_S_DEFAULT;
-
-					ereport(elevel,
-							(errcode(ERRCODE_SUCCESSFUL_COMPLETION),
-							errmsg("configuration option %s returned to default value", gconf->name)));
-				}
-			}
-			gconf->status &= ~GUC_IN_CONFFILE;
-		}
-
-		/*
-		 * Revert to environment variable. PGPORT is ignored, because it cannot be
-		 * set in running state.
-		 */
-		env = getenv("PGDATESTYLE");
-		if (env != NULL)
-			set_config_option("datestyle", env, context,
-							  PGC_S_ENV_VAR, false, true);
-
-		env = getenv("PGCLIENTENCODING");
-		if (env != NULL)
-			set_config_option("client_encoding", env, context,
-							PGC_S_ENV_VAR, false, true);
+		set_config_option(item->name, item->value, context,
+						  PGC_S_FILE, false, true);
 	}
 
-cleanup_list:
-	if (apply_list)
-		pfree(apply_list);
+ cleanup_list:
 	free_name_value_list(head);
 }
 
@@ -277,14 +189,13 @@ static bool
 ParseConfigFile(const char *config_file, const char *calling_file,
 				int depth, GucContext context, int elevel,
 				struct name_value_pair **head_p,
-				struct name_value_pair **tail_p,
-				int *varcount)
+				struct name_value_pair **tail_p)
 {
-	bool			OK = true;
-	char			abs_path[MAXPGPATH];
-	FILE		   *fp;
+	bool		OK = true;
+	char		abs_path[MAXPGPATH];
+	FILE	   *fp;
 	YY_BUFFER_STATE lex_buffer;
-	int				token;
+	int			token;
 
 	/*
 	 * Reject too-deep include nesting depth.  This is just a safety check
@@ -378,7 +289,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 
 			if (!ParseConfigFile(opt_value, config_file,
 								 depth + 1, context, elevel,
-								 head_p, tail_p, varcount))
+								 head_p, tail_p))
 			{
 				pfree(opt_name);
 				pfree(opt_value);
@@ -422,7 +333,6 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 			else
 				(*tail_p)->next = item;
 			*tail_p = item;
-			(*varcount)++;
 		}
 
 		/* break out of loop if read EOF, else loop for next line */
