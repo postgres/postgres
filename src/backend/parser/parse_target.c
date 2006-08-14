@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.147 2006/08/02 01:59:47 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.148 2006/08/14 23:39:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -889,6 +889,9 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 			rte = addImplicitRTE(pstate, makeRangeVar(schemaname, relname),
 								 cref->location);
 
+		/* Require read access --- see comments in setTargetTable() */
+		rte->requiredPerms |= ACL_SELECT;
+
 		rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
 		if (targetlist)
@@ -929,6 +932,9 @@ ExpandAllTables(ParseState *pstate)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 		int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
+
+		/* Require read access --- see comments in setTargetTable() */
+		rte->requiredPerms |= ACL_SELECT;
 
 		target = list_concat(target,
 							 expandRelAttrs(pstate, rte, rtindex, 0));
