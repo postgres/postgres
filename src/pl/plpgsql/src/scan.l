@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.52 2006/06/16 23:29:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.53 2006/08/14 00:46:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,6 @@ static int	scanner_functype;
 static bool	scanner_typereported;
 static int	pushback_token;
 static bool have_pushback_token;
-static int	lookahead_token;	
-static bool have_lookahead_token;
 static const char *cur_line_start;
 static int	cur_line_num;
 static char    *dolqstart;      /* current $foo$ quote start string */
@@ -346,53 +344,25 @@ dump			{ return O_DUMP;			}
 
 /*
  * This is the yylex routine called from outside. It exists to provide
- * a pushback facility, as well as to allow us to parse syntax that
- * requires more than one token of lookahead.
+ * a one-token pushback facility.  Beware of trying to make it do more:
+ * for the most part, plpgsql's gram.y assumes that yytext is in step
+ * with the "current token".
  */
 int
 plpgsql_yylex(void)
 {
-	int cur_token;
-
 	if (have_pushback_token)
 	{
 		have_pushback_token = false;
-		cur_token = pushback_token;
+		return pushback_token;
 	}
-	else if (have_lookahead_token)
-	{
-		have_lookahead_token = false;
-		cur_token = lookahead_token;
-	}
-	else
-		cur_token = yylex();
-
-	/* Do we need to look ahead for a possible multiword token? */
-	switch (cur_token)
-	{
-		/* RETURN NEXT must be reduced to a single token */
-		case K_RETURN:
-			if (!have_lookahead_token)
-			{
-				lookahead_token = yylex();
-				have_lookahead_token = true;
-			}
-			if (lookahead_token == K_NEXT)
-			{
-				have_lookahead_token = false;
-				cur_token = K_RETURN_NEXT;
-			}
-			break;
-
-		default:
-			break;
-	}
-
-	return cur_token;
+	return yylex();
 }
 
 /*
  * Push back a single token to be re-read by next plpgsql_yylex() call.
+ *
+ * NOTE: this does not cause yytext to "back up".
  */
 void
 plpgsql_push_back_token(int token)
@@ -494,7 +464,6 @@ plpgsql_scanner_init(const char *str, int functype)
     scanner_typereported = false;
 
 	have_pushback_token = false;
-	have_lookahead_token = false;
 
 	cur_line_start = scanbuf;
 	cur_line_num = 1;
