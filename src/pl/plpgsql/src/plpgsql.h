@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.78 2006/08/08 19:15:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.79 2006/08/14 21:14:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,6 @@ enum
 	PLPGSQL_STMT_WHILE,
 	PLPGSQL_STMT_FORI,
 	PLPGSQL_STMT_FORS,
-	PLPGSQL_STMT_SELECT,
 	PLPGSQL_STMT_EXIT,
 	PLPGSQL_STMT_RETURN,
 	PLPGSQL_STMT_RETURN_NEXT,
@@ -429,17 +428,6 @@ typedef struct
 
 
 typedef struct
-{								/* SELECT ... INTO statement		*/
-	int			cmd_type;
-	int			lineno;
-	bool		strict;
-	PLpgSQL_rec *rec;
-	PLpgSQL_row *row;
-	PLpgSQL_expr *query;
-} PLpgSQL_stmt_select;
-
-
-typedef struct
 {								/* OPEN a curvar					*/
 	int			cmd_type;
 	int			lineno;
@@ -510,6 +498,12 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *sqlstmt;
+	bool		mod_stmt;		/* is the stmt INSERT/UPDATE/DELETE? */
+	/* note: mod_stmt is set when we plan the query */
+	bool		into;			/* INTO supplied? */
+	bool		strict;			/* INTO STRICT flag */
+	PLpgSQL_rec *rec;			/* INTO target, if record */
+	PLpgSQL_row *row;			/* INTO target, if row */
 } PLpgSQL_stmt_execsql;
 
 
@@ -517,9 +511,11 @@ typedef struct
 {								/* Dynamic SQL string to execute */
 	int			cmd_type;
 	int			lineno;
-	PLpgSQL_rec *rec;			/* INTO record or row variable */
-	PLpgSQL_row *row;
-	PLpgSQL_expr *query;
+	PLpgSQL_expr *query;		/* string expression */
+	bool		into;			/* INTO supplied? */
+	bool		strict;			/* INTO STRICT flag */
+	PLpgSQL_rec *rec;			/* INTO target, if record */
+	PLpgSQL_row *row;			/* INTO target, if row */
 } PLpgSQL_stmt_dynexecute;
 
 

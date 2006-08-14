@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.94 2006/08/14 00:46:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.95 2006/08/14 21:14:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,13 @@ static PLpgSQL_expr		*read_sql_construct(int until,
 											int *endtoken);
 static	PLpgSQL_expr	*read_sql_stmt(const char *sqlstart);
 static	PLpgSQL_type	*read_datatype(int tok);
-static	PLpgSQL_stmt	*make_select_stmt(int lineno);
+static	PLpgSQL_stmt	*make_execsql_stmt(const char *sqlstart, int lineno);
 static	PLpgSQL_stmt	*make_fetch_stmt(int lineno, int curvar);
 static	PLpgSQL_stmt	*make_return_stmt(int lineno);
 static	PLpgSQL_stmt	*make_return_next_stmt(int lineno);
 static	void			 check_assignable(PLpgSQL_datum *datum);
+static	void			 read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row,
+										  bool *strict);
 static	PLpgSQL_row		*read_into_scalar_list(const char *initial_name,
 											   PLpgSQL_datum *initial_datum);
 static PLpgSQL_row		*make_scalar_list1(const char *initial_name,
@@ -120,9 +122,8 @@ static	void			 check_labels(const char *start_label,
 %type <loop_body>	loop_body
 %type <stmt>	proc_stmt pl_block
 %type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
-%type <stmt>	stmt_return stmt_raise stmt_execsql
-%type <stmt>	stmt_for stmt_select stmt_perform
-%type <stmt>	stmt_dynexecute stmt_getdiag
+%type <stmt>	stmt_return stmt_raise stmt_execsql stmt_execsql_insert
+%type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_close stmt_null
 
 %type <list>	proc_exceptions
@@ -169,6 +170,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_IF
 %token	K_IN
 %token	K_INFO
+%token	K_INSERT
 %token	K_INTO
 %token	K_IS
 %token	K_LOG
@@ -186,7 +188,6 @@ static	void			 check_labels(const char *start_label,
 %token	K_RESULT_OID
 %token	K_RETURN
 %token	K_REVERSE
-%token	K_SELECT
 %token	K_STRICT
 %token	K_THEN
 %token	K_TO
@@ -591,8 +592,6 @@ proc_stmt		: pl_block ';'
 						{ $$ = $1; }
 				| stmt_for
 						{ $$ = $1; }
-				| stmt_select
-						{ $$ = $1; }
 				| stmt_exit
 						{ $$ = $1; }
 				| stmt_return
@@ -600,6 +599,8 @@ proc_stmt		: pl_block ';'
 				| stmt_raise
 						{ $$ = $1; }
 				| stmt_execsql
+						{ $$ = $1; }
+				| stmt_execsql_insert
 						{ $$ = $1; }
 				| stmt_dynexecute
 						{ $$ = $1; }
@@ -1127,12 +1128,6 @@ for_variable	: T_SCALAR
 					}
 				;
 
-stmt_select		: K_SELECT lno
-					{
-						$$ = make_select_stmt($2);
-					}
-				;
-
 stmt_exit		: exit_type lno opt_label opt_exitcond
 					{
 						PLpgSQL_stmt_exit *new;
@@ -1259,14 +1254,28 @@ loop_body		: proc_sect K_END K_LOOP opt_label ';'
 
 stmt_execsql	: execsql_start lno
 					{
-						PLpgSQL_stmt_execsql	*new;
+						$$ = make_execsql_stmt($1, $2);
+					}
+				;
 
-						new = palloc(sizeof(PLpgSQL_stmt_execsql));
-						new->cmd_type = PLPGSQL_STMT_EXECSQL;
-						new->lineno   = $2;
-						new->sqlstmt  = read_sql_stmt($1);
+/* this matches any otherwise-unrecognized starting keyword */
+execsql_start	: T_WORD
+					{ $$ = pstrdup(yytext); }
+				| T_ERROR
+					{ $$ = pstrdup(yytext); }
+				;
 
-						$$ = (PLpgSQL_stmt *)new;
+stmt_execsql_insert : K_INSERT lno K_INTO
+					{
+						/*
+						 * We have to special-case INSERT so that its INTO
+						 * won't be treated as an INTO-variables clause.
+						 *
+						 * Fortunately, this is the only valid use of INTO
+						 * in a pl/pgsql SQL command, and INTO is already
+						 * a fully reserved word in the main grammar.
+						 */
+						$$ = make_execsql_stmt("INSERT INTO", $2);
 					}
 				;
 
@@ -1276,46 +1285,24 @@ stmt_dynexecute : K_EXECUTE lno
 						PLpgSQL_expr *expr;
 						int endtoken;
 
-						expr = read_sql_construct(K_INTO, ';', "INTO|;", "SELECT ",
+						expr = read_sql_construct(K_INTO, ';', "INTO|;",
+												  "SELECT ",
 												  true, true, &endtoken);
 
 						new = palloc(sizeof(PLpgSQL_stmt_dynexecute));
 						new->cmd_type = PLPGSQL_STMT_DYNEXECUTE;
-						new->lineno   = $2;
-						new->query    = expr;
+						new->lineno = $2;
+						new->query = expr;
+						new->into = false;
+						new->strict = false;
 						new->rec = NULL;
 						new->row = NULL;
 
-						/*
-						 * If we saw "INTO", look for a following row
-						 * var, record var, or list of scalars.
-						 */
+						/* If we found "INTO", collect the argument */
 						if (endtoken == K_INTO)
 						{
-							switch (yylex())
-							{
-								case T_ROW:
-									new->row = yylval.row;
-									check_assignable((PLpgSQL_datum *) new->row);
-									break;
-
-								case T_RECORD:
-									new->rec = yylval.rec;
-									check_assignable((PLpgSQL_datum *) new->rec);
-									break;
-
-								case T_SCALAR:
-									new->row = read_into_scalar_list(yytext, yylval.scalar);
-									break;
-
-								default:
-									plpgsql_error_lineno = $2;
-									ereport(ERROR,
-											(errcode(ERRCODE_SYNTAX_ERROR),
-											 errmsg("syntax error at \"%s\"", yytext),
-											 errdetail("Expected record variable, row variable, "
-													   "or list of scalar variables.")));
-							}
+							new->into = true;
+							read_into_target(&new->rec, &new->row, &new->strict);
 							if (yylex() != ';')
 								yyerror("syntax error");
 						}
@@ -1500,12 +1487,6 @@ cursor_variable	: T_SCALAR
 						}
 						$$ = yylval.scalar->dno;
 					}
-				;
-
-execsql_start	: T_WORD
-					{ $$ = pstrdup(yytext); }
-				| T_ERROR
-					{ $$ = pstrdup(yytext); }
 				;
 
 exception_sect	:
@@ -1892,12 +1873,13 @@ read_datatype(int tok)
 }
 
 static PLpgSQL_stmt *
-make_select_stmt(int lineno)
+make_execsql_stmt(const char *sqlstart, int lineno)
 {
 	PLpgSQL_dstring		ds;
 	int					nparams = 0;
 	int					params[MAX_EXPR_PARAMS];
 	char				buf[32];
+	PLpgSQL_stmt_execsql *execsql;
 	PLpgSQL_expr		*expr;
 	PLpgSQL_row			*row = NULL;
 	PLpgSQL_rec			*rec = NULL;
@@ -1906,12 +1888,11 @@ make_select_stmt(int lineno)
 	bool				have_strict = false;
 
 	plpgsql_dstring_init(&ds);
-	plpgsql_dstring_append(&ds, "SELECT ");
+	plpgsql_dstring_append(&ds, sqlstart);
 
-	while (1)
+	for (;;)
 	{
 		tok = yylex();
-
 		if (tok == ';')
 			break;
 		if (tok == 0)
@@ -1930,37 +1911,8 @@ make_select_stmt(int lineno)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("INTO specified more than once")));
 			}
-			tok = yylex();
-			if (tok == K_STRICT)
-			{
-				have_strict = true;
-				tok = yylex();
-			}
-			switch (tok)
-			{
-				case T_ROW:
-					row = yylval.row;
-					check_assignable((PLpgSQL_datum *) row);
-					have_into = true;
-					break;
-
-				case T_RECORD:
-					rec = yylval.rec;
-					check_assignable((PLpgSQL_datum *) rec);
-					have_into = true;
-					break;
-
-				case T_SCALAR:
-					row = read_into_scalar_list(yytext, yylval.scalar);
-					have_into = true;
-					break;
-
-				default:
-					/* Treat the INTO as non-special */
-					plpgsql_dstring_append(&ds, " INTO ");
-					plpgsql_push_back_token(tok);
-					break;
-			}
+			have_into = true;
+			read_into_target(&rec, &row, &have_strict);
 			continue;
 		}
 
@@ -2007,31 +1959,16 @@ make_select_stmt(int lineno)
 
 	check_sql_expr(expr->query);
 
-	if (have_into)
-	{
-		PLpgSQL_stmt_select *select;
+	execsql = palloc(sizeof(PLpgSQL_stmt_execsql));
+	execsql->cmd_type = PLPGSQL_STMT_EXECSQL;
+	execsql->lineno  = lineno;
+	execsql->sqlstmt = expr;
+	execsql->into	 = have_into;
+	execsql->strict	 = have_strict;
+	execsql->rec	 = rec;
+	execsql->row	 = row;
 
-		select = palloc0(sizeof(PLpgSQL_stmt_select));
-		select->cmd_type = PLPGSQL_STMT_SELECT;
-		select->lineno   = lineno;
-		select->rec		 = rec;
-		select->row		 = row;
-		select->query	 = expr;
-		select->strict	 = have_strict;
-
-		return (PLpgSQL_stmt *)select;
-	}
-	else
-	{
-		PLpgSQL_stmt_execsql *execsql;
-
-		execsql = palloc(sizeof(PLpgSQL_stmt_execsql));
-		execsql->cmd_type = PLPGSQL_STMT_EXECSQL;
-		execsql->lineno   = lineno;
-		execsql->sqlstmt  = expr;
-
-		return (PLpgSQL_stmt *)execsql;
-	}
+	return (PLpgSQL_stmt *) execsql;
 }
 
 
@@ -2039,38 +1976,12 @@ static PLpgSQL_stmt *
 make_fetch_stmt(int lineno, int curvar)
 {
 	int					tok;
-	PLpgSQL_row		   *row = NULL;
-	PLpgSQL_rec		   *rec = NULL;
+	PLpgSQL_rec		   *rec;
+	PLpgSQL_row		   *row;
 	PLpgSQL_stmt_fetch *fetch;
 
 	/* We have already parsed everything through the INTO keyword */
-
-	tok = yylex();
-	switch (tok)
-	{
-		case T_ROW:
-			row = yylval.row;
-			check_assignable((PLpgSQL_datum *) row);
-			break;
-
-		case T_RECORD:
-			rec = yylval.rec;
-			check_assignable((PLpgSQL_datum *) rec);
-			break;
-
-		case T_SCALAR:
-			row = read_into_scalar_list(yytext, yylval.scalar);
-			break;
-
-		default:
-			plpgsql_error_lineno = plpgsql_scanner_lineno();
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("syntax error at \"%s\"", yytext),
-					 errdetail("Expected record variable, row variable, "
-							   "or list of scalar variables.")));
-	}
-
+	read_into_target(&rec, &row, NULL);
 	tok = yylex();
 	if (tok != ';')
 		yyerror("syntax error");
@@ -2229,6 +2140,54 @@ check_assignable(PLpgSQL_datum *datum)
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
 			break;
+	}
+}
+
+/*
+ * Read the argument of an INTO clause.  On entry, we have just read the
+ * INTO keyword.
+ */
+static void
+read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row, bool *strict)
+{
+	int			tok;
+
+	/* Set default results */
+	*rec = NULL;
+	*row = NULL;
+	if (strict)
+		*strict = false;
+
+	tok = yylex();
+	if (strict && tok == K_STRICT)
+	{
+		*strict = true;
+		tok = yylex();
+	}
+
+	switch (tok)
+	{
+		case T_ROW:
+			*row = yylval.row;
+			check_assignable((PLpgSQL_datum *) *row);
+			break;
+
+		case T_RECORD:
+			*rec = yylval.rec;
+			check_assignable((PLpgSQL_datum *) *rec);
+			break;
+
+		case T_SCALAR:
+			*row = read_into_scalar_list(yytext, yylval.scalar);
+			break;
+
+		default:
+			plpgsql_error_lineno = plpgsql_scanner_lineno();
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("syntax error at \"%s\"", yytext),
+					 errdetail("Expected record variable, row variable, "
+							   "or list of scalar variables following INTO.")));
 	}
 }
 

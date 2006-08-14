@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.53 2006/06/12 16:45:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.54 2006/08/14 21:14:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,8 +439,6 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 			return "for with integer loopvar";
 		case PLPGSQL_STMT_FORS:
 			return "for over select rows";
-		case PLPGSQL_STMT_SELECT:
-			return "select into variables";
 		case PLPGSQL_STMT_EXIT:
 			return "exit";
 		case PLPGSQL_STMT_RETURN:
@@ -485,7 +483,6 @@ static void dump_loop(PLpgSQL_stmt_loop *stmt);
 static void dump_while(PLpgSQL_stmt_while *stmt);
 static void dump_fori(PLpgSQL_stmt_fori *stmt);
 static void dump_fors(PLpgSQL_stmt_fors *stmt);
-static void dump_select(PLpgSQL_stmt_select *stmt);
 static void dump_exit(PLpgSQL_stmt_exit *stmt);
 static void dump_return(PLpgSQL_stmt_return *stmt);
 static void dump_return_next(PLpgSQL_stmt_return_next *stmt);
@@ -536,9 +533,6 @@ dump_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_FORS:
 			dump_fors((PLpgSQL_stmt_fors *) stmt);
-			break;
-		case PLPGSQL_STMT_SELECT:
-			dump_select((PLpgSQL_stmt_select *) stmt);
 			break;
 		case PLPGSQL_STMT_EXIT:
 			dump_exit((PLpgSQL_stmt_exit *) stmt);
@@ -732,29 +726,6 @@ dump_fors(PLpgSQL_stmt_fors *stmt)
 }
 
 static void
-dump_select(PLpgSQL_stmt_select *stmt)
-{
-	dump_ind();
-	printf("SELECT ");
-	dump_expr(stmt->query);
-	printf("\n");
-
-	dump_indent += 2;
-	if (stmt->rec != NULL)
-	{
-		dump_ind();
-		printf("    target = %d %s\n", stmt->rec->recno, stmt->rec->refname);
-	}
-	if (stmt->row != NULL)
-	{
-		dump_ind();
-		printf("    target = %d %s\n", stmt->row->rowno, stmt->row->refname);
-	}
-	dump_indent -= 2;
-
-}
-
-static void
 dump_open(PLpgSQL_stmt_open *stmt)
 {
 	dump_ind();
@@ -891,6 +862,23 @@ dump_execsql(PLpgSQL_stmt_execsql *stmt)
 	printf("EXECSQL ");
 	dump_expr(stmt->sqlstmt);
 	printf("\n");
+
+	dump_indent += 2;
+	if (stmt->rec != NULL)
+	{
+		dump_ind();
+		printf("    INTO%s target = %d %s\n",
+			   stmt->strict ? " STRICT" : "",
+			   stmt->rec->recno, stmt->rec->refname);
+	}
+	if (stmt->row != NULL)
+	{
+		dump_ind();
+		printf("    INTO%s target = %d %s\n",
+			   stmt->strict ? " STRICT" : "",
+			   stmt->row->rowno, stmt->row->refname);
+	}
+	dump_indent -= 2;
 }
 
 static void
@@ -905,12 +893,16 @@ dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt)
 	if (stmt->rec != NULL)
 	{
 		dump_ind();
-		printf("    target = %d %s\n", stmt->rec->recno, stmt->rec->refname);
+		printf("    INTO%s target = %d %s\n",
+			   stmt->strict ? " STRICT" : "",
+			   stmt->rec->recno, stmt->rec->refname);
 	}
-	else if (stmt->row != NULL)
+	if (stmt->row != NULL)
 	{
 		dump_ind();
-		printf("    target = %d %s\n", stmt->row->rowno, stmt->row->refname);
+		printf("    INTO%s target = %d %s\n",
+			   stmt->strict ? " STRICT" : "",
+			   stmt->row->rowno, stmt->row->refname);
 	}
 	dump_indent -= 2;
 }

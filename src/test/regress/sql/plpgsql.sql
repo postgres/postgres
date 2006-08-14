@@ -1777,6 +1777,8 @@ reset statement_timeout;
 
 select * from foo;
 
+drop table foo;
+
 -- Test for pass-by-ref values being stored in proper context
 create function test_variable_storage() returns text as $$
 declare x text;
@@ -2324,3 +2326,117 @@ begin
 end$$ language plpgsql;
 
 select multi_datum_use(42);
+
+--
+-- Test STRICT limiter in both planned and EXECUTE invocations.
+-- Note that a data-modifying query is quasi strict (disallow multi rows)
+-- by default in the planned case, but not in EXECUTE.
+--
+
+create temp table foo (f1 int, f2 int);
+
+insert into foo values (1,2), (3,4);
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should work
+  insert into foo values(5,6) returning * into x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail due to implicit strict
+  insert into foo values(7,8),(9,10) returning * into x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should work
+  execute 'insert into foo values(5,6) returning *' into x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- this should work since EXECUTE isn't as picky
+  execute 'insert into foo values(7,8),(9,10) returning *' into x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+select * from foo;
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should work
+  select * from foo where f1 = 3 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail, no rows
+  select * from foo where f1 = 0 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail, too many rows
+  select * from foo where f1 > 3 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should work
+  execute 'select * from foo where f1 = 3' into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail, no rows
+  execute 'select * from foo where f1 = 0' into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail, too many rows
+  execute 'select * from foo where f1 > 3' into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+
+select footest();
+
+drop function footest();

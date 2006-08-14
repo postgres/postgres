@@ -2048,6 +2048,7 @@ select * from foo;
  20
 (2 rows)
 
+drop table foo;
 -- Test for pass-by-ref values being stored in proper context
 create function test_variable_storage() returns text as $$
 declare x text;
@@ -2794,3 +2795,142 @@ select multi_datum_use(42);
  t
 (1 row)
 
+--
+-- Test STRICT limiter in both planned and EXECUTE invocations.
+-- Note that a data-modifying query is quasi strict (disallow multi rows)
+-- by default in the planned case, but not in EXECUTE.
+--
+create temp table foo (f1 int, f2 int);
+insert into foo values (1,2), (3,4);
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should work
+  insert into foo values(5,6) returning * into x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+NOTICE:  x.f1 = 5, x.f2 = 6
+ footest 
+---------
+ 
+(1 row)
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail due to implicit strict
+  insert into foo values(7,8),(9,10) returning * into x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should work
+  execute 'insert into foo values(5,6) returning *' into x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+NOTICE:  x.f1 = 5, x.f2 = 6
+ footest 
+---------
+ 
+(1 row)
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- this should work since EXECUTE isn't as picky
+  execute 'insert into foo values(7,8),(9,10) returning *' into x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+NOTICE:  x.f1 = 7, x.f2 = 8
+ footest 
+---------
+ 
+(1 row)
+
+select * from foo;
+ f1 | f2 
+----+----
+  1 |  2
+  3 |  4
+  5 |  6
+  5 |  6
+  7 |  8
+  9 | 10
+(6 rows)
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should work
+  select * from foo where f1 = 3 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+NOTICE:  x.f1 = 3, x.f2 = 4
+ footest 
+---------
+ 
+(1 row)
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail, no rows
+  select * from foo where f1 = 0 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned no rows
+CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail, too many rows
+  select * from foo where f1 > 3 into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+CONTEXT:  PL/pgSQL function "footest" line 4 at SQL statement
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should work
+  execute 'select * from foo where f1 = 3' into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+NOTICE:  x.f1 = 3, x.f2 = 4
+ footest 
+---------
+ 
+(1 row)
+
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail, no rows
+  execute 'select * from foo where f1 = 0' into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned no rows
+CONTEXT:  PL/pgSQL function "footest" line 4 at execute statement
+create or replace function footest() returns void as $$
+declare x record;
+begin
+  -- should fail, too many rows
+  execute 'select * from foo where f1 > 3' into strict x;
+  raise notice 'x.f1 = %, x.f2 = %', x.f1, x.f2;
+end$$ language plpgsql;
+select footest();
+ERROR:  query returned more than one row
+CONTEXT:  PL/pgSQL function "footest" line 4 at execute statement
+drop function footest();

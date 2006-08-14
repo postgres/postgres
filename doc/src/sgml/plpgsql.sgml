@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.98 2006/08/12 20:05:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.99 2006/08/14 21:14:41 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -227,17 +227,6 @@ $$ LANGUAGE plpgsql;
      Finally, a <application>PL/pgSQL</> function may be declared to return
      <type>void</> if it has no useful return value.
     </para>
-
-    <note>
-    <para>
-     <application>PL/pgSQL</> does not currently have full support for
-     domain types: it treats a domain the same as the underlying scalar
-     type.  This means that constraints associated with the domain will
-     not be enforced.  This is not an issue for function arguments, but
-     it is a hazard if you declare a <application>PL/pgSQL</> function
-     as returning a domain type.
-    </para>
-    </note>
 
     <para>
      <application>PL/pgSQL</> functions can also be declared with output
@@ -1024,21 +1013,17 @@ $$ LANGUAGE plpgsql;
     types that are explicitly understood by
     <application>PL/pgSQL</application>.
     Anything not recognized as one of these statement types is presumed
-    to be an SQL command and is sent to the main database engine to execute
-    (after substitution of any <application>PL/pgSQL</application> variables
-    used in the statement).  Thus,
-    for example, the SQL commands <command>INSERT</>, <command>UPDATE</>, and
-    <command>DELETE</> may be considered to be statements of
-    <application>PL/pgSQL</application>, but they are not specifically
-    listed here.
+    to be an SQL command and is sent to the main database engine to execute,
+    as described in <xref linkend="plpgsql-statements-sql-noresult">
+    and <xref linkend="plpgsql-statements-sql-onerow">.
    </para>
 
    <sect2 id="plpgsql-statements-assignment">
     <title>Assignment</title>
 
     <para>
-     An assignment of a value to a variable or row/record field is
-     written as:
+     An assignment of a value to a <application>PL/pgSQL</application>
+     variable or row/record field is written as:
 <synopsis>
 <replaceable>identifier</replaceable> := <replaceable>expression</replaceable>;
 </synopsis>
@@ -1067,114 +1052,66 @@ tax := subtotal * 0.06;
     </para>
    </sect2>
 
-   <sect2 id="plpgsql-select-into">
-    <title><command>SELECT INTO</command></title>
-
-    <indexterm zone="plpgsql-select-into">
-     <primary>SELECT INTO</primary>
-     <secondary>in PL/pgSQL</secondary>
-    </indexterm>
+   <sect2 id="plpgsql-statements-sql-noresult">
+    <title>Executing a Query With No Result</title>
 
     <para>
-     The result of a <command>SELECT</command> command yielding multiple
-     columns (but only one row) can be assigned to a record variable, row-type
-     variable, or list of scalar variables.  This is done by:
-
-<synopsis>
-SELECT INTO <optional>STRICT</optional> <replaceable>target</replaceable> <replaceable>select_expressions</replaceable> FROM ...;
-</synopsis>
-
-     where <replaceable>target</replaceable> can be a record variable, a row
-     variable, or a comma-separated list of simple variables and
-     record/row fields.  The <replaceable>select_expressions</replaceable>
-     and the remainder of the command are the same as in regular SQL.
+     For any SQL query that does not return rows, for example
+     <command>INSERT</> without a <literal>RETURNING</> clause, you can
+     execute the query within a <application>PL/pgSQL</application> function
+     just by writing the query.
     </para>
 
     <para>
-     Note that this is quite different from
-     <productname>PostgreSQL</>'s normal interpretation of
-     <command>SELECT INTO</command>, where the <literal>INTO</> target
-     is a newly created table.  If you want to create a table from a
-     <command>SELECT</> result inside a
-     <application>PL/pgSQL</application> function, use the syntax
-     <command>CREATE TABLE ... AS SELECT</command>.
-    </para>
-
-    <para>
-     If a row or a variable list is used as target, the selected values
-     must exactly match the structure of the target, or a run-time error
-     occurs.  When a record variable is the target, it automatically
-     configures itself to the row type of the query result columns.
-    </para>
-
-    <para>
-     Except for the <literal>INTO</> clause, the <command>SELECT</>
-     statement is the same as a normal SQL <command>SELECT</> command
-     and can use its full power.
-    </para>
-
-    <para>
-     The <literal>INTO</> clause can appear almost anywhere in the
-     <command>SELECT</command> statement.  Customarily it is written
-     either just after <literal>SELECT</> as shown above, or
-     just before <literal>FROM</> &mdash; that is, either just before
-     or just after the list of <replaceable>select_expressions</replaceable>.
-    </para>
-
-    <para>
-     If <literal>STRICT</literal> is not specified then
-     <replaceable>target</replaceable> will be set to the first row
-     returned by the query, or if the query returned no rows,
-     null values are assigned. (Note that <quote>the first row</> is not
-     well-defined unless you've used <literal>ORDER BY</>.)  Any result rows
-     after the first row are discarded.
-     You can check the special <literal>FOUND</literal> variable (see
-     <xref linkend="plpgsql-statements-diagnostics">) to
-     determine whether a row was returned:
-
-<programlisting>
-SELECT INTO myrec * FROM emp WHERE empname = myname;
-IF NOT FOUND THEN
-    RAISE EXCEPTION 'employee % not found', myname;
-END IF;
-</programlisting>
-
-     If the <literal>STRICT</literal> option is specified, the query must
-     return exactly one row or a run-time error will be thrown, either
-     <literal>NO_DATA_FOUND</> (no rows) or <literal>TOO_MANY_ROWS</>
-     (more than one row). You can use an exception block if you wish
-     to catch the error, for example:
-
-<programlisting>
-BEGIN;
-    SELECT INTO STRICT myrec * FROM emp WHERE empname = myname;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            RAISE EXCEPTION 'employee % not found', myname;
-        WHEN TOO_MANY_ROWS THEN
-            RAISE EXCEPTION 'employee % not unique', myname;
-END;
-</programlisting>
-     Successful execution of <command>SELECT INTO STRICT</command>
-     always sets <literal>FOUND</literal> to true.
+     Any <application>PL/pgSQL</application> variable name appearing
+     in the query text is replaced by a parameter symbol, and then the
+     current value of the variable is provided as the parameter value
+     at runtime.  This allows the same textual query to do different
+     things in different calls of the function.
     </para>
 
     <note>
      <para>
-      <command>SELECT INTO STRICT</command> matches the behavior of
-      Oracle PL/SQL's <command>SELECT INTO</command> statement.
+      This two-step process allows
+      <application>PL/pgSQL</application> to plan the query just once
+      and re-use the plan on subsequent executions.  As an example,
+      if you write
+<programlisting>
+DECLARE
+    key TEXT;
+    delta INTEGER;
+BEGIN
+    ...
+    UPDATE mytab SET val = val + delta WHERE id = key;
+</programlisting>
+      the query text seen by the main SQL engine will look like
+<programlisting>
+    UPDATE mytab SET val = val + $1 WHERE id = $2;
+</programlisting>
+      Although you don't normally have to think about this, it's helpful
+      to know it when you need to make sense of syntax-error messages.
      </para>
     </note>
 
-   </sect2>
-
-   <sect2 id="plpgsql-statements-perform">
-    <title>Executing an Expression or Query With No Result</title>
+    <caution>
+     <para>
+      <application>PL/pgSQL</application> will substitute for any identifier
+      matching one of the function's declared variables; it is not bright
+      enough to know whether that's what you meant!  Thus, it is a bad idea
+      to use a variable name that is the same as any table or column name
+      that you need to reference in queries within the function.  Sometimes
+      you can work around this by using qualified names in the query:
+      <application>PL/pgSQL</application> will not substitute in a
+      qualified name <replaceable>foo</>.<replaceable>bar</>, even if
+      <replaceable>foo</> or <replaceable>bar</> is a declared variable
+      name.
+     </para>
+    </caution>
 
     <para>
-     Sometimes one wishes to evaluate an expression or query but
-     discard the result (typically because one is calling a function
-     that has useful side-effects but no useful result value).  To do
+     Sometimes it is useful to evaluate an expression or <command>SELECT</>
+     query but discard the result, for example when calling a function
+     that has side-effects but no useful result value.  To do
      this in <application>PL/pgSQL</application>, use the
      <command>PERFORM</command> statement:
 
@@ -1184,20 +1121,23 @@ PERFORM <replaceable>query</replaceable>;
 
      This executes <replaceable>query</replaceable> and discards the
      result.  Write the <replaceable>query</replaceable> the same
-     way as you would in an SQL <command>SELECT</> command, but replace the
+     way you would write an SQL <command>SELECT</> command, but replace the
      initial keyword <command>SELECT</> with <command>PERFORM</command>.
      <application>PL/pgSQL</application> variables will be
      substituted into the query as usual.  Also, the special variable
      <literal>FOUND</literal> is set to true if the query produced at
-     least one row or false if it produced no rows.
+     least one row, or false if it produced no rows.
     </para>
 
     <note>
      <para>
-      One might expect that <command>SELECT</command> with no
-      <literal>INTO</> clause would accomplish this result, but at
+      One might expect that writing <command>SELECT</command> directly
+      would accomplish this result, but at
       present the only accepted way to do it is
-      <command>PERFORM</command>.
+      <command>PERFORM</command>.  A SQL command that can return rows,
+      such as <command>SELECT</command>, will be rejected as an error
+      unless it has an <literal>INTO</> clause as discussed in the
+      next section.
      </para>
     </note>
 
@@ -1207,6 +1147,136 @@ PERFORM <replaceable>query</replaceable>;
 PERFORM create_mv('cs_session_page_requests_mv', my_query);
 </programlisting>
     </para>
+   </sect2>
+
+   <sect2 id="plpgsql-statements-sql-onerow">
+    <title>Executing a Query with a Single-Row Result</title>
+
+    <indexterm zone="plpgsql-statements-sql-onerow">
+     <primary>SELECT INTO</primary>
+     <secondary>in PL/pgSQL</secondary>
+    </indexterm>
+
+    <indexterm zone="plpgsql-statements-sql-onerow">
+     <primary>RETURNING INTO</primary>
+     <secondary>in PL/pgSQL</secondary>
+    </indexterm>
+
+    <para>
+     The result of a SQL command yielding a single row (possibly of multiple
+     columns) can be assigned to a record variable, row-type variable, or list
+     of scalar variables.  This is done by writing the base SQL command and
+     adding an <literal>INTO</> clause.  For example,
+
+<synopsis>
+SELECT <replaceable>select_expressions</replaceable> INTO <optional>STRICT</optional> <replaceable>target</replaceable> FROM ...;
+INSERT ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRICT</optional> <replaceable>target</replaceable>;
+UPDATE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRICT</optional> <replaceable>target</replaceable>;
+DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRICT</optional> <replaceable>target</replaceable>;
+</synopsis>
+
+     where <replaceable>target</replaceable> can be a record variable, a row
+     variable, or a comma-separated list of simple variables and
+     record/row fields.
+     <application>PL/pgSQL</application> variables will be
+     substituted into the rest of the query as usual.
+     This works for <command>SELECT</>,
+     <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> with
+     <literal>RETURNING</>, and utility commands that return rowset
+     results (such as <command>EXPLAIN</>).
+     Except for the <literal>INTO</> clause, the SQL command is the same
+     as it would be written outside <application>PL/pgSQL</application>.
+    </para>
+
+   <tip>
+    <para>
+     Note that this interpretation of <command>SELECT</> with <literal>INTO</>
+     is quite different from <productname>PostgreSQL</>'s regular
+     <command>SELECT INTO</command> command, wherein the <literal>INTO</>
+     target is a newly created table.  If you want to create a table from a
+     <command>SELECT</> result inside a
+     <application>PL/pgSQL</application> function, use the syntax
+     <command>CREATE TABLE ... AS SELECT</command>.
+    </para>
+   </tip>
+
+    <para>
+     If a row or a variable list is used as target, the query's result columns
+     must exactly match the structure of the target as to number and data
+     types, or a run-time error
+     occurs.  When a record variable is the target, it automatically
+     configures itself to the row type of the query result columns.
+    </para>
+
+    <para>
+     The <literal>INTO</> clause can appear almost anywhere in the SQL
+     command.  Customarily it is written either just before or just after
+     the list of <replaceable>select_expressions</replaceable> in a
+     <command>SELECT</> command, or at the end of the command for other
+     command types.  It is recommended that you follow this convention
+     in case the <application>PL/pgSQL</application> parser becomes
+     stricter in future versions.
+    </para>
+
+    <para>
+     If <literal>STRICT</literal> is not specified, then
+     <replaceable>target</replaceable> will be set to the first row
+     returned by the query, or to nulls if the query returned no rows.
+     (Note that <quote>the first row</> is not
+     well-defined unless you've used <literal>ORDER BY</>.)  Any result rows
+     after the first row are discarded.
+     You can check the special <literal>FOUND</literal> variable (see
+     <xref linkend="plpgsql-statements-diagnostics">) to
+     determine whether a row was returned:
+
+<programlisting>
+SELECT * INTO myrec FROM emp WHERE empname = myname;
+IF NOT FOUND THEN
+    RAISE EXCEPTION 'employee % not found', myname;
+END IF;
+</programlisting>
+
+     If the <literal>STRICT</literal> option is specified, the query must
+     return exactly one row or a run-time error will be reported, either
+     <literal>NO_DATA_FOUND</> (no rows) or <literal>TOO_MANY_ROWS</>
+     (more than one row). You can use an exception block if you wish
+     to catch the error, for example:
+
+<programlisting>
+BEGIN;
+    SELECT * INTO STRICT myrec FROM emp WHERE empname = myname;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE EXCEPTION 'employee % not found', myname;
+        WHEN TOO_MANY_ROWS THEN
+            RAISE EXCEPTION 'employee % not unique', myname;
+END;
+</programlisting>
+     Successful execution of a command with <literal>STRICT</>
+     always sets <literal>FOUND</literal> to true.
+    </para>
+
+    <para>
+     For <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> with
+     <literal>RETURNING</>, <application>PL/pgSQL</application> reports
+     an error for more than one returned row, even when
+     <literal>STRICT</literal> is not specified.  This is because there
+     is no option such as <literal>ORDER BY</> with which to determine
+     which affected row would be returned.
+    </para>
+
+    <note>
+     <para>
+      The <literal>STRICT</> option matches the behavior of
+      Oracle PL/SQL's <command>SELECT INTO</command> and related statements.
+     </para>
+    </note>
+
+    <para>
+     To handle cases where you need to process multiple result rows
+     from a SQL query, see <xref linkend="plpgsql-records-iterating">.
+    </para>
+
    </sect2>
 
    <sect2 id="plpgsql-statements-null">
@@ -1268,7 +1338,7 @@ NULL;
      <command>EXECUTE</command> statement is provided:
 
 <synopsis>
-EXECUTE <replaceable class="command">command-string</replaceable> [ INTO <replaceable>target</replaceable> ];
+EXECUTE <replaceable class="command">command-string</replaceable> <optional> INTO <optional>STRICT</optional> <replaceable>target</replaceable> </optional>;
 </synopsis>
 
      where <replaceable>command-string</replaceable> is an expression
@@ -1280,8 +1350,8 @@ EXECUTE <replaceable class="command">command-string</replaceable> [ INTO <replac
 
     <para>
      Note in particular that no substitution of <application>PL/pgSQL</>
-     variables is done on the command string.  The values of variables must
-     be inserted in the command string as it is constructed.
+     variables is done on the computed command string.  The values of
+     variables must be inserted in the command string as it is constructed.
     </para>
 
     <para>
@@ -1295,16 +1365,20 @@ EXECUTE <replaceable class="command">command-string</replaceable> [ INTO <replac
 
     <para>
      The <literal>INTO</literal> clause specifies where the results of
-     a <command>SELECT</command> command should be assigned. If a row
+     a SQL command returning rows should be assigned. If a row
      or variable list is provided, it must exactly match the structure
-     of the results produced by the <command>SELECT</command> (when a
+     of the query's results (when a
      record variable is used, it will configure itself to match the
-     result's structure automatically). If multiple rows are returned,
+     result structure automatically). If multiple rows are returned,
      only the first will be assigned to the <literal>INTO</literal>
      variable. If no rows are returned, NULL is assigned to the
      <literal>INTO</literal> variable. If no <literal>INTO</literal>
-     clause is specified, the results of a <command>SELECT</command>
-     command are discarded.
+     clause is specified, the query results are discarded.
+    </para>
+
+    <para>
+     If the <literal>STRICT</> option is given, an error is reported
+     unless the query produces exactly one row.
     </para>
 
     <para>
@@ -2070,8 +2144,8 @@ $$ LANGUAGE plpgsql;
 
     <para>
      The <replaceable>query</replaceable> used in this type of <literal>FOR</>
-     statement can be any query that returns rows to the caller:
-     <command>SELECT</> (without <literal>INTO</>) is the most common case,
+     statement can be any SQL command that returns rows to the caller:
+     <command>SELECT</> is the most common case,
      but you can also use <command>INSERT</>, <command>UPDATE</>, or
      <command>DELETE</> with a <literal>RETURNING</> clause.  Some utility
      commands such as <command>EXPLAIN</> will work too.
@@ -3158,17 +3232,19 @@ SELECT * FROM sales_summary_bytime;
 
      <listitem>
       <para>
-       You cannot use parameter names that are the same as columns
-       that are referenced in the function. Oracle allows you to do this
-       if you qualify the parameter name using
-       <literal>function_name.paramater_name</>.
+       You can overload function names in <productname>PostgreSQL</>. This is
+       often used to work around the lack of default parameters.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       You can overload function names in <productname>PostgreSQL</>. This is
-       often used to work around the lack of default parameters.
+       You cannot use parameter names that are the same as columns
+       that are referenced in the function. Oracle allows you to do this
+       if you qualify the parameter name using
+       <literal>function_name.parameter_name</>.
+       In <application>PL/pgSQL</>, you can instead avoid a conflict by
+       qualifying the column or table name.
       </para>
      </listitem>
 
@@ -3684,7 +3760,7 @@ $$ LANGUAGE plpgsql;
      <function>quote_ident</function> as described in <xref
      linkend="plpgsql-statements-executing-dyn">.  Constructs of the
      type <literal>EXECUTE 'SELECT * FROM $1';</literal> will not work
-     unless you use these functions.
+     reliably unless you use these functions.
     </para>
    </sect3>
 

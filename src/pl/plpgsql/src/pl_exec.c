@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.174 2006/07/13 16:49:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.175 2006/08/14 21:14:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,8 +74,6 @@ static int exec_stmt_fori(PLpgSQL_execstate *estate,
 			   PLpgSQL_stmt_fori *stmt);
 static int exec_stmt_fors(PLpgSQL_execstate *estate,
 			   PLpgSQL_stmt_fors *stmt);
-static int exec_stmt_select(PLpgSQL_execstate *estate,
-				 PLpgSQL_stmt_select *stmt);
 static int exec_stmt_open(PLpgSQL_execstate *estate,
 			   PLpgSQL_stmt_open *stmt);
 static int exec_stmt_fetch(PLpgSQL_execstate *estate,
@@ -1079,10 +1077,6 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 			rc = exec_stmt_fors(estate, (PLpgSQL_stmt_fors *) stmt);
 			break;
 
-		case PLPGSQL_STMT_SELECT:
-			rc = exec_stmt_select(estate, (PLpgSQL_stmt_select *) stmt);
-			break;
-
 		case PLPGSQL_STMT_EXIT:
 			rc = exec_stmt_exit(estate, (PLpgSQL_stmt_exit *) stmt);
 			break;
@@ -1674,81 +1668,6 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 
 
 /* ----------
- * exec_stmt_select			Run a query and assign the first
- *					row to a record or rowtype.
- * ----------
- */
-static int
-exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
-{
-	PLpgSQL_rec *rec = NULL;
-	PLpgSQL_row *row = NULL;
-	SPITupleTable *tuptab;
-	uint32		n;
-
-	/*
-	 * Initialize the global found variable to false
-	 */
-	exec_set_found(estate, false);
-
-	/*
-	 * Determine if we assign to a record or a row
-	 */
-	if (stmt->rec != NULL)
-		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
-	else if (stmt->row != NULL)
-		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
-	else
-		elog(ERROR, "unsupported target");
-
-	/*
-	 * Run the query
-	 *
-	 * Retrieving two rows can be slower than a single row, e.g. 
-	 * a sequential scan where the scan has to be completed to
-	 * check for a second row.  For this reason, we only retrieve
-	 * the second row if checking STRICT.
-	 */
-	exec_run_select(estate, stmt->query, stmt->strict ? 2 : 1, NULL);
-	tuptab = estate->eval_tuptable;
-	n = estate->eval_processed;
-
-	/*
-	 * If SELECT ... INTO specified STRICT, and the query didn't
-	 * find exactly one row, throw an error.  If STRICT was not specified,
-	 * then allow the query to find any number of rows.
-	 */
-	if (n == 0)
-	{
-		if (stmt->strict)
-			ereport(ERROR,
-					(errcode(ERRCODE_NO_DATA_FOUND),
-					 errmsg("query returned no rows")));
-
-		/* set the target to NULL(s) */
-		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
-		exec_eval_cleanup(estate);
-		return PLPGSQL_RC_OK;
-	}
-
-	if (n > 1 && stmt->strict)
-		ereport(ERROR,
-				(errcode(ERRCODE_TOO_MANY_ROWS),
-				 errmsg("query returned more than one row")));
-
-	/*
-	 * Put the first result into the target and set found to true
-	 */
-	exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
-	exec_set_found(estate, true);
-
-	exec_eval_cleanup(estate);
-
-	return PLPGSQL_RC_OK;
-}
-
-
-/* ----------
  * exec_stmt_exit			Implements EXIT and CONTINUE
  *
  * This begins the process of exiting / restarting a loop.
@@ -2296,8 +2215,7 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 
 
 /* ----------
- * exec_stmt_execsql			Execute an SQL statement not
- *					returning any data.
+ * exec_stmt_execsql			Execute an SQL statement (possibly with INTO).
  * ----------
  */
 static int
@@ -2307,14 +2225,41 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	int			i;
 	Datum	   *values;
 	char	   *nulls;
+	long		tcount;
 	int			rc;
 	PLpgSQL_expr *expr = stmt->sqlstmt;
 
 	/*
-	 * On the first call for this expression generate the plan
+	 * On the first call for this statement generate the plan, and
+	 * detect whether the statement is INSERT/UPDATE/DELETE
 	 */
 	if (expr->plan == NULL)
+	{
+		_SPI_plan  *spi_plan;
+		ListCell   *l;
+
 		exec_prepare_plan(estate, expr);
+		stmt->mod_stmt = false;
+		spi_plan = (_SPI_plan *) expr->plan;
+		foreach(l, spi_plan->qtlist)
+		{
+			ListCell   *l2;
+
+			foreach(l2, (List *) lfirst(l))
+			{
+				Query *q = (Query *) lfirst(l2);
+
+				Assert(IsA(q, Query));
+				if (q->canSetTag)
+				{
+					if (q->commandType == CMD_INSERT ||
+						q->commandType == CMD_UPDATE ||
+						q->commandType == CMD_DELETE)
+						stmt->mod_stmt = true;
+				}
+			}
+		}
+	}
 
 	/*
 	 * Now build up the values and nulls arguments for SPI_execute_plan()
@@ -2337,48 +2282,133 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	}
 
 	/*
+	 * If we have INTO, then we only need one row back ... but if we have
+	 * INTO STRICT, ask for two rows, so that we can verify the statement
+	 * returns only one.  INSERT/UPDATE/DELETE are always treated strictly.
+	 * Without INTO, just run the statement to completion (tcount = 0).
+	 *
+	 * We could just ask for two rows always when using INTO, but there
+	 * are some cases where demanding the extra row costs significant time,
+	 * eg by forcing completion of a sequential scan.  So don't do it unless
+	 * we need to enforce strictness.
+	 */
+	if (stmt->into)
+	{
+		if (stmt->strict || stmt->mod_stmt)
+			tcount = 2;
+		else
+			tcount = 1;
+	}
+	else
+		tcount = 0;
+
+	/*
 	 * Execute the plan
 	 */
 	rc = SPI_execute_plan(expr->plan, values, nulls,
-						  estate->readonly_func, 0);
+						  estate->readonly_func, tcount);
+
+	/*
+	 * Check for error, and set FOUND if appropriate (for historical reasons
+	 * we set FOUND only for certain query types).  Also Assert that we
+	 * identified the statement type the same as SPI did.
+	 */
 	switch (rc)
 	{
-		case SPI_OK_UTILITY:
-		case SPI_OK_SELINTO:
-			break;
-
-		case SPI_OK_INSERT:
-		case SPI_OK_DELETE:
-		case SPI_OK_UPDATE:
-
-			/*
-			 * If the INSERT, DELETE, or UPDATE query affected at least one
-			 * tuple, set the magic 'FOUND' variable to true. This conforms
-			 * with the behavior of PL/SQL.
-			 */
+		case SPI_OK_SELECT:
+			Assert(!stmt->mod_stmt);
 			exec_set_found(estate, (SPI_processed != 0));
 			break;
 
-		case SPI_OK_SELECT:
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-				   errmsg("SELECT query has no destination for result data"),
-					 errhint("If you want to discard the results, use PERFORM instead.")));
+		case SPI_OK_INSERT:
+		case SPI_OK_UPDATE:
+		case SPI_OK_DELETE:
+			Assert(stmt->mod_stmt);
+			exec_set_found(estate, (SPI_processed != 0));
+			break;
+
+		case SPI_OK_SELINTO:
+			Assert(!stmt->mod_stmt);
+			break;
+
+		case SPI_OK_UTILITY:
+			Assert(!stmt->mod_stmt);
+			/*
+			 * spi.c currently does not update SPI_processed for utility
+			 * commands.  Not clear if this should be considered a bug;
+			 * for the moment, work around it here.
+			 */
+			if (SPI_tuptable)
+				SPI_processed = (SPI_tuptable->alloced - SPI_tuptable->free);
+			break;
 
 		default:
 			elog(ERROR, "SPI_execute_plan failed executing query \"%s\": %s",
 				 expr->query, SPI_result_code_string(rc));
 	}
 
-	/*
-	 * Release any result tuples from SPI_execute_plan (probably shouldn't be
-	 * any)
-	 */
-	SPI_freetuptable(SPI_tuptable);
-
-	/* Save result info for GET DIAGNOSTICS */
+	/* All variants should save result info for GET DIAGNOSTICS */
 	estate->eval_processed = SPI_processed;
 	estate->eval_lastoid = SPI_lastoid;
+
+	/* Process INTO if present */
+	if (stmt->into)
+	{
+		SPITupleTable *tuptab = SPI_tuptable;
+		uint32		n = SPI_processed;
+		PLpgSQL_rec *rec = NULL;
+		PLpgSQL_row *row = NULL;
+
+		/* If the statement did not return a tuple table, complain */
+		if (tuptab == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("INTO used with a command that cannot return data")));
+
+		/* Determine if we assign to a record or a row */
+		if (stmt->rec != NULL)
+			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+		else if (stmt->row != NULL)
+			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
+		else
+			elog(ERROR, "unsupported target");
+
+		/*
+		 * If SELECT ... INTO specified STRICT, and the query didn't
+		 * find exactly one row, throw an error.  If STRICT was not specified,
+		 * then allow the query to find any number of rows.
+		 */
+		if (n == 0)
+		{
+			if (stmt->strict)
+				ereport(ERROR,
+						(errcode(ERRCODE_NO_DATA_FOUND),
+						 errmsg("query returned no rows")));
+			/* set the target to NULL(s) */
+			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+		}
+		else
+		{
+			if (n > 1 && (stmt->strict || stmt->mod_stmt))
+				ereport(ERROR,
+						(errcode(ERRCODE_TOO_MANY_ROWS),
+						 errmsg("query returned more than one row")));
+			/* Put the first result row into the target */
+			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
+		}
+
+		/* Clean up */
+		SPI_freetuptable(SPI_tuptable);
+	}
+	else
+	{
+		/* If the statement returned a tuple table, complain */
+		if (SPI_tuptable != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("query has no destination for result data"),
+					 (rc == SPI_OK_SELECT) ? errhint("If you want to discard the results of a SELECT, use PERFORM instead.") : 0));
+	}
 
 	pfree(values);
 	pfree(nulls);
@@ -2388,8 +2418,8 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 
 /* ----------
- * exec_stmt_dynexecute			Execute a dynamic SQL query not
- *					returning any data.
+ * exec_stmt_dynexecute			Execute a dynamic SQL query
+ *					(possibly with INTO).
  * ----------
  */
 static int
@@ -2401,17 +2431,10 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	Oid			restype;
 	char	   *querystr;
 	int			exec_res;
-	PLpgSQL_rec *rec = NULL;
-	PLpgSQL_row *row = NULL;
-
-	if (stmt->rec != NULL)
-		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
-	else if (stmt->row != NULL)
-		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 
 	/*
-	 * First we evaluate the string expression after the EXECUTE keyword. It's
-	 * result is the querystring we have to execute.
+	 * First we evaluate the string expression after the EXECUTE keyword.
+	 * Its result is the querystring we have to execute.
 	 */
 	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
 	if (isnull)
@@ -2425,28 +2448,9 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	exec_eval_cleanup(estate);
 
 	/*
-	 * Call SPI_execute() without preparing a saved plan. The returncode can
-	 * be any standard OK.	Note that while a SELECT is allowed, its results
-	 * will be discarded unless an INTO clause is specified.
+	 * Call SPI_execute() without preparing a saved plan.
 	 */
 	exec_res = SPI_execute(querystr, estate->readonly_func, 0);
-
-	/* Assign to INTO variable */
-	if (rec || row)
-	{
-		if (exec_res != SPI_OK_SELECT)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("EXECUTE ... INTO is only for SELECT")));
-		else
-		{
-			if (SPI_processed == 0)
-				exec_move_row(estate, rec, row, NULL, SPI_tuptable->tupdesc);
-			else
-				exec_move_row(estate, rec, row,
-							  SPI_tuptable->vals[0], SPI_tuptable->tupdesc);
-		}
-	}
 
 	switch (exec_res)
 	{
@@ -2454,7 +2458,16 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
+			break;
+
 		case SPI_OK_UTILITY:
+			/*
+			 * spi.c currently does not update SPI_processed for utility
+			 * commands.  Not clear if this should be considered a bug;
+			 * for the moment, work around it here.
+			 */
+			if (SPI_tuptable)
+				SPI_processed = (SPI_tuptable->alloced - SPI_tuptable->free);
 			break;
 
 		case 0:
@@ -2511,13 +2524,68 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 			break;
 	}
 
-	/* Release any result from SPI_execute, as well as the querystring */
-	SPI_freetuptable(SPI_tuptable);
-	pfree(querystr);
-
 	/* Save result info for GET DIAGNOSTICS */
 	estate->eval_processed = SPI_processed;
 	estate->eval_lastoid = SPI_lastoid;
+
+	/* Process INTO if present */
+	if (stmt->into)
+	{
+		SPITupleTable *tuptab = SPI_tuptable;
+		uint32		n = SPI_processed;
+		PLpgSQL_rec *rec = NULL;
+		PLpgSQL_row *row = NULL;
+
+		/* If the statement did not return a tuple table, complain */
+		if (tuptab == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("INTO used with a command that cannot return data")));
+
+		/* Determine if we assign to a record or a row */
+		if (stmt->rec != NULL)
+			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+		else if (stmt->row != NULL)
+			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
+		else
+			elog(ERROR, "unsupported target");
+
+		/*
+		 * If SELECT ... INTO specified STRICT, and the query didn't
+		 * find exactly one row, throw an error.  If STRICT was not specified,
+		 * then allow the query to find any number of rows.
+		 */
+		if (n == 0)
+		{
+			if (stmt->strict)
+				ereport(ERROR,
+						(errcode(ERRCODE_NO_DATA_FOUND),
+						 errmsg("query returned no rows")));
+			/* set the target to NULL(s) */
+			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+		}
+		else
+		{
+			if (n > 1 && stmt->strict)
+				ereport(ERROR,
+						(errcode(ERRCODE_TOO_MANY_ROWS),
+						 errmsg("query returned more than one row")));
+			/* Put the first result row into the target */
+			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
+		}
+	}
+	else
+	{
+		/*
+		 * It might be a good idea to raise an error if the query returned
+		 * tuples that are being ignored, but historically we have not done
+		 * that.
+		 */
+	}
+
+	/* Release any result from SPI_execute, as well as the querystring */
+	SPI_freetuptable(SPI_tuptable);
+	pfree(querystr);
 
 	return PLPGSQL_RC_OK;
 }
@@ -2823,12 +2891,12 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		if (stmt->argquery != NULL)
 		{
 			/* ----------
-			 * Er - OPEN CURSOR (args). We fake a SELECT ... INTO ...
+			 * OPEN CURSOR with args.  We fake a SELECT ... INTO ...
 			 * statement to evaluate the args and put 'em into the
 			 * internal row.
 			 * ----------
 			 */
-			PLpgSQL_stmt_select set_args;
+			PLpgSQL_stmt_execsql set_args;
 
 			if (curvar->cursor_explicit_argrow < 0)
 				ereport(ERROR,
@@ -2836,13 +2904,15 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 					errmsg("arguments given for cursor without arguments")));
 
 			memset(&set_args, 0, sizeof(set_args));
-			set_args.cmd_type = PLPGSQL_STMT_SELECT;
+			set_args.cmd_type = PLPGSQL_STMT_EXECSQL;
 			set_args.lineno = stmt->lineno;
+			set_args.sqlstmt = stmt->argquery;
+			set_args.into = true;
+			/* XXX historically this has not been STRICT */
 			set_args.row = (PLpgSQL_row *)
 				(estate->datums[curvar->cursor_explicit_argrow]);
-			set_args.query = stmt->argquery;
 
-			if (exec_stmt_select(estate, &set_args) != PLPGSQL_RC_OK)
+			if (exec_stmt_execsql(estate, &set_args) != PLPGSQL_RC_OK)
 				elog(ERROR, "open cursor failed during argument processing");
 		}
 		else
