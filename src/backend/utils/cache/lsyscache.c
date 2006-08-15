@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.135 2006/07/14 14:52:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.136 2006/08/15 22:36:17 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "bootstrap/bootstrap.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_namespace.h"
@@ -24,6 +25,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -1350,7 +1352,7 @@ get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
  * This knowledge is intended to be centralized here --- direct references
  * to typelem elsewhere in the code are wrong, if they are associated with
  * I/O calls and not with actual subscripting operations!  (But see
- * bootstrap.c, which can't conveniently use this routine.)
+ * bootstrap.c's boot_get_type_io_data() if you need to change this.)
  *
  * As of PostgreSQL 8.1, output functions receive only the value itself
  * and not any auxiliary parameters, so the name of this routine is now
@@ -1391,6 +1393,38 @@ get_type_io_data(Oid typid,
 {
 	HeapTuple	typeTuple;
 	Form_pg_type typeStruct;
+
+	/*
+	 * In bootstrap mode, pass it off to bootstrap.c.  This hack allows
+	 * us to use array_in and array_out during bootstrap.
+	 */
+	if (IsBootstrapProcessingMode())
+	{
+		Oid	typinput;
+		Oid	typoutput;
+
+		boot_get_type_io_data(typid,
+							  typlen,
+							  typbyval,
+							  typalign,
+							  typdelim,
+							  typioparam,
+							  &typinput,
+							  &typoutput);
+		switch (which_func)
+		{
+			case IOFunc_input:
+				*func = typinput;
+				break;
+			case IOFunc_output:
+				*func = typoutput;
+				break;
+			default:
+				elog(ERROR, "binary I/O not supported during bootstrap");
+				break;
+		}
+		return;
+	}
 
 	typeTuple = SearchSysCache(TYPEOID,
 							   ObjectIdGetDatum(typid),

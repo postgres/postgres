@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.223 2006/07/31 20:09:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.224 2006/08/15 22:36:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -590,6 +590,7 @@ boot_openrel(char *relname)
 
 	if (Typ == NULL)
 	{
+		/* We can now load the pg_type data */
 		rel = heap_open(TypeRelationId, NoLock);
 		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		i = 0;
@@ -806,6 +807,10 @@ void
 InsertOneValue(char *value, int i)
 {
 	Oid			typoid;
+	int16		typlen;
+	bool		typbyval;
+	char		typalign;
+	char		typdelim;
 	Oid			typioparam;
 	Oid			typinput;
 	Oid			typoutput;
@@ -817,51 +822,18 @@ InsertOneValue(char *value, int i)
 
 	if (Typ != NULL)
 	{
-		struct typmap **app;
-		struct typmap *ap;
-
-		elog(DEBUG5, "Typ != NULL");
 		typoid = boot_reldesc->rd_att->attrs[i]->atttypid;
-		app = Typ;
-		while (*app && (*app)->am_oid != typoid)
-			++app;
-		ap = *app;
-		if (ap == NULL)
-			elog(ERROR, "could not find atttypid %u in Typ list", typoid);
-
-		/* XXX this logic should match getTypeIOParam() */
-		if (OidIsValid(ap->am_typ.typelem))
-			typioparam = ap->am_typ.typelem;
-		else
-			typioparam = typoid;
-
-		typinput = ap->am_typ.typinput;
-		typoutput = ap->am_typ.typoutput;
 	}
 	else
 	{
-		int			typeindex;
-
-		/* XXX why is typoid determined differently in this path? */
+		/* XXX why is typoid determined differently in this case? */
 		typoid = attrtypes[i]->atttypid;
-		for (typeindex = 0; typeindex < n_types; typeindex++)
-		{
-			if (TypInfo[typeindex].oid == typoid)
-				break;
-		}
-		if (typeindex >= n_types)
-			elog(ERROR, "type oid %u not found", typoid);
-		elog(DEBUG5, "Typ == NULL, typeindex = %u", typeindex);
-
-		/* XXX this logic should match getTypeIOParam() */
-		if (OidIsValid(TypInfo[typeindex].elem))
-			typioparam = TypInfo[typeindex].elem;
-		else
-			typioparam = typoid;
-
-		typinput = TypInfo[typeindex].inproc;
-		typoutput = TypInfo[typeindex].outproc;
 	}
+
+	boot_get_type_io_data(typoid,
+						  &typlen, &typbyval, &typalign,
+						  &typdelim, &typioparam,
+						  &typinput, &typoutput);
 
 	values[i] = OidInputFunctionCall(typinput, value, typioparam, -1);
 	prt = OidOutputFunctionCall(typoutput, values[i]);
@@ -970,6 +942,83 @@ gettype(char *type)
 	err_out();
 	/* not reached, here to make compiler happy */
 	return 0;
+}
+
+/* ----------------
+ *		boot_get_type_io_data
+ *
+ * Obtain type I/O information at bootstrap time.  This intentionally has
+ * almost the same API as lsyscache.c's get_type_io_data, except that
+ * we only support obtaining the typinput and typoutput routines, not
+ * the binary I/O routines.  It is exported so that array_in and array_out
+ * can be made to work during early bootstrap.
+ * ----------------
+ */
+void
+boot_get_type_io_data(Oid typid,
+					  int16 *typlen,
+					  bool *typbyval,
+					  char *typalign,
+					  char *typdelim,
+					  Oid *typioparam,
+					  Oid *typinput,
+					  Oid *typoutput)
+{
+	if (Typ != NULL)
+	{
+		/* We have the boot-time contents of pg_type, so use it */
+		struct typmap **app;
+		struct typmap *ap;
+
+		app = Typ;
+		while (*app && (*app)->am_oid != typid)
+			++app;
+		ap = *app;
+		if (ap == NULL)
+			elog(ERROR, "type OID %u not found in Typ list", typid);
+
+		*typlen = ap->am_typ.typlen;
+		*typbyval = ap->am_typ.typbyval;
+		*typalign = ap->am_typ.typalign;
+		*typdelim = ap->am_typ.typdelim;
+
+		/* XXX this logic must match getTypeIOParam() */
+		if (OidIsValid(ap->am_typ.typelem))
+			*typioparam = ap->am_typ.typelem;
+		else
+			*typioparam = typid;
+
+		*typinput = ap->am_typ.typinput;
+		*typoutput = ap->am_typ.typoutput;
+	}
+	else
+	{
+		/* We don't have pg_type yet, so use the hard-wired TypInfo array */
+		int			typeindex;
+
+		for (typeindex = 0; typeindex < n_types; typeindex++)
+		{
+			if (TypInfo[typeindex].oid == typid)
+				break;
+		}
+		if (typeindex >= n_types)
+			elog(ERROR, "type OID %u not found in TypInfo", typid);
+
+		*typlen = TypInfo[typeindex].len;
+		*typbyval = TypInfo[typeindex].byval;
+		*typalign = TypInfo[typeindex].align;
+		/* We assume typdelim is ',' for all boot-time types */
+		*typdelim = ',';
+
+		/* XXX this logic must match getTypeIOParam() */
+		if (OidIsValid(TypInfo[typeindex].elem))
+			*typioparam = TypInfo[typeindex].elem;
+		else
+			*typioparam = typid;
+
+		*typinput = TypInfo[typeindex].inproc;
+		*typoutput = TypInfo[typeindex].outproc;
+	}
 }
 
 /* ----------------
