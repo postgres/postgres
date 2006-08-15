@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.265 2006/08/12 20:05:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.266 2006/08/15 18:26:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -886,12 +886,9 @@ ProcessUtility(Node *parsetree,
 			{
 				LoadStmt   *stmt = (LoadStmt *) parsetree;
 
-				if (!superuser())
-					ereport(ERROR,
-							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("must be superuser to do LOAD")));
 				closeAllVfds(); /* probably not necessary... */
-				load_file(stmt->filename);
+				/* Allowed names are restricted if you're not superuser */
+				load_file(stmt->filename, !superuser());
 			}
 			break;
 

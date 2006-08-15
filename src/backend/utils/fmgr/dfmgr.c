@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.87 2006/08/08 19:15:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.88 2006/08/15 18:26:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,11 +23,19 @@
 #endif
 #include "miscadmin.h"
 #include "utils/dynamic_loader.h"
+#include "utils/hsearch.h"
 
 
 /* signatures for PostgreSQL-specific library init/fini functions */
 typedef void (*PG_init_t)(void);
 typedef void (*PG_fini_t)(void);
+
+/* hashtable entry for rendezvous variables */
+typedef struct
+{ 
+	char	varName[NAMEDATALEN];	/* hash key (must be first) */
+	void   *varValue;
+} rendezvousHashEntry;
 
 /*
  * List of dynamically loaded files (kept in malloc'd memory).
@@ -62,10 +70,13 @@ static DynamicFileList *file_tail = NULL;
 
 char	   *Dynamic_library_path;
 
+static void *internal_load_library(const char *libname);
+static void internal_unload_library(const char *libname);
 static bool file_exists(const char *name);
-static char *find_in_dynamic_libpath(const char *basename);
 static char *expand_dynamic_library_name(const char *name);
+static void check_restricted_library_name(const char *name);
 static char *substitute_libpath_macro(const char *name);
+static char *find_in_dynamic_libpath(const char *basename);
 
 /* Magic structure that module needs to match to be accepted */
 static const Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
@@ -73,7 +84,7 @@ static const Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
 
 /*
  * Load the specified dynamic-link library file, and look for a function
- * named funcname in it.  (funcname can be NULL to just load the file.)
+ * named funcname in it.
  *
  * If the function is not found, we raise an error if signalNotFound is true,
  * else return (PGFunction) NULL.  Note that errors in loading the library
@@ -88,37 +99,107 @@ PGFunction
 load_external_function(char *filename, char *funcname,
 					   bool signalNotFound, void **filehandle)
 {
-	DynamicFileList *file_scanner;
+	char	   *fullname;
+	void	   *lib_handle;
 	PGFunction	retval;
+
+	/* Expand the possibly-abbreviated filename to an exact path name */
+	fullname = expand_dynamic_library_name(filename);
+
+	/* Load the shared library, unless we already did */
+	lib_handle = internal_load_library(fullname);
+
+	/* Return handle if caller wants it */
+	if (filehandle)
+		*filehandle = lib_handle;
+
+	/* Look up the function within the library */
+	retval = pg_dlsym(lib_handle, funcname);
+
+	if (retval == NULL && signalNotFound)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("could not find function \"%s\" in file \"%s\"",
+						funcname, fullname)));
+
+	pfree(fullname);
+	return retval;
+}
+
+/*
+ * This function loads a shlib file without looking up any particular
+ * function in it.	If the same shlib has previously been loaded,
+ * unload and reload it.
+ *
+ * When 'restrict' is true, only libraries in the presumed-secure
+ * directory $libdir/plugins may be referenced.
+ */
+void
+load_file(const char *filename, bool restrict)
+{
+	char	   *fullname;
+
+	/* Apply security restriction if requested */
+	if (restrict)
+		check_restricted_library_name(filename);
+
+	/* Expand the possibly-abbreviated filename to an exact path name */
+	fullname = expand_dynamic_library_name(filename);
+
+	/* Unload the library if currently loaded */
+	internal_unload_library(fullname);
+
+	/* Load the shared library */
+	(void) internal_load_library(fullname);
+
+	pfree(fullname);
+}
+
+/*
+ * Lookup a function whose library file is already loaded.
+ * Return (PGFunction) NULL if not found.
+ */
+PGFunction
+lookup_external_function(void *filehandle, char *funcname)
+{
+	return pg_dlsym(filehandle, funcname);
+}
+
+
+/*
+ * Load the specified dynamic-link library file, unless it already is
+ * loaded.  Return the pg_dl* handle for the file.
+ *
+ * Note: libname is expected to be an exact name for the library file.
+ */
+static void *
+internal_load_library(const char *libname)
+{
+	DynamicFileList *file_scanner;
 	PGModuleMagicFunction magic_func;
 	char	   *load_error;
 	struct stat stat_buf;
-	char	   *fullname;
 	PG_init_t	PG_init;
-
-	fullname = expand_dynamic_library_name(filename);
-	if (!fullname)
-		fullname = pstrdup(filename);
-	/* at this point fullname is always freshly palloc'd */
 
 	/*
 	 * Scan the list of loaded FILES to see if the file has been loaded.
 	 */
 	for (file_scanner = file_list;
 		 file_scanner != NULL &&
-		 strcmp(fullname, file_scanner->filename) != 0;
+		 strcmp(libname, file_scanner->filename) != 0;
 		 file_scanner = file_scanner->next)
 		;
+
 	if (file_scanner == NULL)
 	{
 		/*
 		 * Check for same files - different paths (ie, symlink or link)
 		 */
-		if (stat(fullname, &stat_buf) == -1)
+		if (stat(libname, &stat_buf) == -1)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access file \"%s\": %m",
-							fullname)));
+							libname)));
 
 		for (file_scanner = file_list;
 			 file_scanner != NULL &&
@@ -133,21 +214,21 @@ load_external_function(char *filename, char *funcname,
 		 * File not loaded yet.
 		 */
 		file_scanner = (DynamicFileList *)
-			malloc(sizeof(DynamicFileList) + strlen(fullname));
+			malloc(sizeof(DynamicFileList) + strlen(libname));
 		if (file_scanner == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 
 		MemSet(file_scanner, 0, sizeof(DynamicFileList));
-		strcpy(file_scanner->filename, fullname);
+		strcpy(file_scanner->filename, libname);
 		file_scanner->device = stat_buf.st_dev;
 #ifndef WIN32
 		file_scanner->inode = stat_buf.st_ino;
 #endif
 		file_scanner->next = NULL;
 
-		file_scanner->handle = pg_dlopen(fullname);
+		file_scanner->handle = pg_dlopen(file_scanner->filename);
 		if (file_scanner->handle == NULL)
 		{
 			load_error = (char *) pg_dlerror();
@@ -156,7 +237,7 @@ load_external_function(char *filename, char *funcname,
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not load library \"%s\": %s",
-							fullname, load_error)));
+							libname, load_error)));
 		}
 
 		/* Check the magic function to determine compatibility */
@@ -184,7 +265,7 @@ load_external_function(char *filename, char *funcname,
 				if (module_magic_data.version != magic_data.version)
 					ereport(ERROR,
 							(errmsg("incompatible library \"%s\": version mismatch",
-									fullname),
+									libname),
 							 errdetail("Server is version %d.%d, library is version %d.%d.",
 									   magic_data.version/100,
 									   magic_data.version % 100,
@@ -192,7 +273,7 @@ load_external_function(char *filename, char *funcname,
 									   module_magic_data.version % 100)));
 				ereport(ERROR,
 						(errmsg("incompatible library \"%s\": magic block mismatch",
-								fullname)));
+								libname)));
 			}
 		}
 		else
@@ -203,7 +284,7 @@ load_external_function(char *filename, char *funcname,
 			/* complain */
 			ereport(ERROR,
 					(errmsg("incompatible library \"%s\": missing magic block",
-							fullname),
+							libname),
 					 errhint("Extension libraries are now required to use the PG_MODULE_MAGIC macro.")));
 		}
 
@@ -222,77 +303,48 @@ load_external_function(char *filename, char *funcname,
 		file_tail = file_scanner;
 	}
 
-	/* Return handle if caller wants it. */
-	if (filehandle)
-		*filehandle = file_scanner->handle;
-
-	/*
-	 * If funcname is NULL, we only wanted to load the file.
-	 */
-	if (funcname == NULL)
-	{
-		pfree(fullname);
-		return NULL;
-	}
-
-	retval = pg_dlsym(file_scanner->handle, funcname);
-
-	if (retval == NULL && signalNotFound)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("could not find function \"%s\" in file \"%s\"",
-						funcname, fullname)));
-
-	pfree(fullname);
-	return retval;
+	return file_scanner->handle;
 }
 
 /*
- * This function loads a shlib file without looking up any particular
- * function in it.	If the same shlib has previously been loaded,
- * unload and reload it.
+ * Unload the specified dynamic-link library file, if it is loaded.
+ *
+ * Note: libname is expected to be an exact name for the library file.
  */
-void
-load_file(char *filename)
+static void
+internal_unload_library(const char *libname)
 {
 	DynamicFileList *file_scanner,
 			   *prv,
 			   *nxt;
 	struct stat stat_buf;
-	char	   *fullname;
 	PG_fini_t	PG_fini;
-
-	fullname = expand_dynamic_library_name(filename);
-	if (!fullname)
-		fullname = pstrdup(filename);
-	/* at this point fullname is always freshly palloc'd */
 
 	/*
 	 * We need to do stat() in order to determine whether this is the same
 	 * file as a previously loaded file; it's also handy so as to give a good
 	 * error message if bogus file name given.
 	 */
-	if (stat(fullname, &stat_buf) == -1)
+	if (stat(libname, &stat_buf) == -1)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not access file \"%s\": %m", fullname)));
+				 errmsg("could not access file \"%s\": %m", libname)));
 
 	/*
 	 * We have to zap all entries in the list that match on either filename or
-	 * inode, else load_external_function() won't do anything.
+	 * inode, else internal_load_library() will still think it's present.
 	 */
 	prv = NULL;
 	for (file_scanner = file_list; file_scanner != NULL; file_scanner = nxt)
 	{
 		nxt = file_scanner->next;
-		if (strcmp(fullname, file_scanner->filename) == 0 ||
+		if (strcmp(libname, file_scanner->filename) == 0 ||
 			SAME_INODE(stat_buf, *file_scanner))
 		{
 			if (prv)
 				prv->next = nxt;
 			else
 				file_list = nxt;
-			clear_external_function_hash(file_scanner->handle);
 
 			/*
 			 * If the library has a _PG_fini() function, call it.
@@ -301,6 +353,7 @@ load_file(char *filename)
 			if (PG_fini)
 				(*PG_fini)();
 
+			clear_external_function_hash(file_scanner->handle);
 			pg_dlclose(file_scanner->handle);
 			free((char *) file_scanner);
 			/* prv does not change */
@@ -308,22 +361,7 @@ load_file(char *filename)
 		else
 			prv = file_scanner;
 	}
-
-	load_external_function(fullname, NULL, false, NULL);
-
-	pfree(fullname);
 }
-
-/*
- * Lookup a function whose library file is already loaded.
- * Return (PGFunction) NULL if not found.
- */
-PGFunction
-lookup_external_function(void *filehandle, char *funcname)
-{
-	return pg_dlsym(filehandle, funcname);
-}
-
 
 static bool
 file_exists(const char *name)
@@ -353,9 +391,9 @@ file_exists(const char *name)
  * the name.  Else (no slash) try to expand using search path (see
  * find_in_dynamic_libpath below); if that works, return the fully
  * expanded file name.	If the previous failed, append DLSUFFIX and
- * try again.  If all fails, return NULL.
+ * try again.  If all fails, just return the original name.
  *
- * A non-NULL result will always be freshly palloc'd.
+ * The result will always be freshly palloc'd.
  */
 static char *
 expand_dynamic_library_name(const char *name)
@@ -402,9 +440,28 @@ expand_dynamic_library_name(const char *name)
 		pfree(full);
 	}
 
-	return NULL;
+	/*
+	 * If we can't find the file, just return the string as-is.
+	 * The ensuing load attempt will fail and report a suitable message.
+	 */
+	return pstrdup(name);
 }
 
+/*
+ * Check a restricted library name.  It must begin with "$libdir/plugins/"
+ * and there must not be any directory separators after that (this is
+ * sufficient to prevent ".." style attacks).
+ */
+static void
+check_restricted_library_name(const char *name)
+{
+	if (strncmp(name, "$libdir/plugins/", 16) != 0 ||
+		first_dir_separator(name + 16) != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("access to library \"%s\" is not allowed",
+						name)));
+}
 
 /*
  * Substitute for any macros appearing in the given string.
@@ -418,6 +475,7 @@ substitute_libpath_macro(const char *name)
 
 	AssertArg(name != NULL);
 
+	/* Currently, we only recognize $libdir at the start of the string */
 	if (name[0] != '$')
 		return pstrdup(name);
 
@@ -428,7 +486,8 @@ substitute_libpath_macro(const char *name)
 		strncmp(name, "$libdir", strlen("$libdir")) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-			errmsg("invalid macro name in dynamic library path: %s", name)));
+				 errmsg("invalid macro name in dynamic library path: %s",
+						name)));
 
 	ret = palloc(strlen(pkglib_path) + strlen(sep_ptr) + 1);
 
@@ -512,4 +571,59 @@ find_in_dynamic_libpath(const char *basename)
 	}
 
 	return NULL;
+}
+
+
+/*
+ * Find (or create) a rendezvous variable that one dynamically 
+ * loaded library can use to meet up with another.
+ *
+ * On the first call of this function for a particular varName,
+ * a "rendezvous variable" is created with the given name.
+ * The value of the variable is a void pointer (initially set to NULL).
+ * Subsequent calls with the same varName just return the address of
+ * the existing variable.  Once created, a rendezvous variable lasts
+ * for the life of the process.
+ *
+ * Dynamically loaded libraries can use rendezvous variables
+ * to find each other and share information: they just need to agree
+ * on the variable name and the data it will point to.
+ */
+void **
+find_rendezvous_variable(const char *varName)
+{
+	static HTAB         *rendezvousHash = NULL;
+
+	char			     key[NAMEDATALEN];
+	rendezvousHashEntry *hentry;
+	bool				 found;
+
+	/* Create a hashtable if we haven't already done so in this process */
+	if (rendezvousHash == NULL)
+	{
+		HASHCTL ctl;
+
+		MemSet(&ctl, 0, sizeof(ctl));
+		ctl.keysize    = NAMEDATALEN;
+		ctl.entrysize  = sizeof(rendezvousHashEntry);
+		rendezvousHash = hash_create("Rendezvous variable hash",
+									 16,
+									 &ctl,
+									 HASH_ELEM);
+	}
+
+	/* Turn the varName into a fixed-size string */
+	StrNCpy(key, varName, sizeof(key));
+
+	/* Find or create the hashtable entry for this varName */
+	hentry = (rendezvousHashEntry *) hash_search(rendezvousHash,
+												 key,
+												 HASH_ENTER,
+												 &found);
+
+	/* Initialize to NULL if first time */
+	if (!found)
+		hentry->varValue = NULL;
+
+	return &hentry->varValue;
 }

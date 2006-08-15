@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.498 2006/08/08 19:15:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.499 2006/08/15 18:26:58 tgl Exp $
  *
  * NOTES
  *
@@ -709,7 +709,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * process any libraries that should be preloaded at postmaster start
 	 */
-	process_preload_libraries();
+	process_shared_preload_libraries();
 
 	/*
 	 * Remove old temporary files.	At this point there can be no other

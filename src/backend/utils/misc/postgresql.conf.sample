@@ -120,7 +120,7 @@
 
 #max_files_per_process = 1000		# min 25
 					# (change requires restart)
-#preload_libraries = ''			# (change requires restart)
+#shared_preload_libraries = ''		# (change requires restart)
 
 # - Cost-Based Vacuum Delay -
 
@@ -419,6 +419,7 @@
 
 #explain_pretty_print = on
 #dynamic_library_path = '$libdir'
+#local_preload_libraries = ''
 
 
 #---------------------------------------------------------------------------

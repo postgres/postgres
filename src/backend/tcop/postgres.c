@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.498 2006/08/13 22:18:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.499 2006/08/15 18:26:58 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2999,6 +2999,12 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 */
 	if (IsUnderPostmaster && Log_disconnections)
 		on_proc_exit(log_disconnections, 0);
+
+	/*
+	 * process any libraries that should be preloaded at backend start
+	 * (this likewise can't be done until GUC settings are complete)
+	 */
+	process_local_preload_libraries();
 
 	/*
 	 * Send this backend's cancellation info to the frontend.

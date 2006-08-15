@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.156 2006/08/08 19:15:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.157 2006/08/15 18:26:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1097,24 +1097,31 @@ ValidatePgVersion(const char *path)
  *-------------------------------------------------------------------------
  */
 
-/* GUC variable: list of library names to be preloaded */
-char	   *preload_libraries_string = NULL;
+/* 
+ * GUC variables: lists of library names to be preloaded at postmaster
+ * start and at backend start
+ */
+char	   *shared_preload_libraries_string = NULL;
+char	   *local_preload_libraries_string = NULL;
 
 /*
- * process any libraries that should be preloaded at postmaster start
+ * load the shared libraries listed in 'libraries'
+ *
+ * 'gucname': name of GUC variable, for error reports
+ * 'restrict': if true, force libraries to be in $libdir/plugins/
  */
-void
-process_preload_libraries(void)
+static void
+load_libraries(const char *libraries, const char *gucname, bool restrict)
 {
 	char	   *rawstring;
 	List	   *elemlist;
 	ListCell   *l;
 
-	if (preload_libraries_string == NULL)
-		return;
+	if (libraries == NULL || libraries[0] == '\0')
+		return;					/* nothing to do */
 
 	/* Need a modifiable copy of string */
-	rawstring = pstrdup(preload_libraries_string);
+	rawstring = pstrdup(libraries);
 
 	/* Parse string into list of identifiers */
 	if (!SplitIdentifierString(rawstring, ',', &elemlist))
@@ -1124,7 +1131,8 @@ process_preload_libraries(void)
 		list_free(elemlist);
 		ereport(LOG,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-		 errmsg("invalid list syntax for parameter \"preload_libraries\"")));
+				 errmsg("invalid list syntax in parameter \"%s\"",
+						gucname)));
 		return;
 	}
 
@@ -1135,12 +1143,45 @@ process_preload_libraries(void)
 
 		filename = pstrdup(tok);
 		canonicalize_path(filename);
-		(void) load_external_function(filename, NULL, true, NULL);
+		/* If restricting, insert $libdir/plugins if not mentioned already */
+		if (restrict && first_dir_separator(filename) == NULL)
+		{
+			char   *expanded;
+
+			expanded = palloc(strlen("$libdir/plugins/") + strlen(filename) + 1);
+			strcpy(expanded, "$libdir/plugins/");
+			strcat(expanded, filename);
+			pfree(filename);
+			filename = expanded;
+		}
+		load_file(filename, restrict);
 		ereport(LOG,
-				(errmsg("preloaded library \"%s\"", filename)));
+				(errmsg("loaded library \"%s\"", filename)));
 		pfree(filename);
 	}
 
 	pfree(rawstring);
 	list_free(elemlist);
+}
+
+/*
+ * process any libraries that should be preloaded at postmaster start
+ */
+void
+process_shared_preload_libraries(void)
+{
+	load_libraries(shared_preload_libraries_string,
+				   "shared_preload_libraries",
+				   false);
+}
+
+/*
+ * process any libraries that should be preloaded at backend start
+ */
+void
+process_local_preload_libraries(void)
+{
+	load_libraries(local_preload_libraries_string,
+				   "local_preload_libraries",
+				   true);
 }

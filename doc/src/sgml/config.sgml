@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.73 2006/08/08 19:15:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.74 2006/08/15 18:26:58 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -949,10 +949,10 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry id="guc-preload-libraries" xreflabel="preload_libraries">
-      <term><varname>preload_libraries</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-shared-preload-libraries" xreflabel="shared_preload_libraries">
+      <term><varname>shared_preload_libraries</varname> (<type>string</type>)</term>
       <indexterm>
-       <primary><varname>preload_libraries</> configuration parameter</primary>
+       <primary><varname>shared_preload_libraries</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
@@ -963,6 +963,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <literal>mylib.so</> (or on some platforms,
         <literal>mylib.sl</>) to be preloaded from the installation's
         standard library directory.
+        This parameter can only be set at server start.
        </para>
 
        <para>
@@ -3639,6 +3640,60 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         development purposes. The recommended way to set this parameter
         is in the <filename>postgresql.conf</filename> configuration
         file.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry id="guc-local-preload-libraries" xreflabel="local_preload_libraries">
+      <term><varname>local_preload_libraries</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>local_preload_libraries</> configuration parameter</primary>
+      </indexterm>
+      <indexterm>
+       <primary><filename>$libdir/plugins</></primary>
+      </indexterm>
+      <listitem>
+       <para>
+        This variable specifies one or more shared libraries that are
+        to be preloaded at connection start.  If more than one library
+        is to be loaded, separate their names with commas.
+        This parameter cannot be changed after the start of a particular
+        session.
+       </para>
+
+       <para>
+        Because this is not a superuser-only option, the libraries
+        that can be loaded are restricted to those appearing in the
+        <filename>plugins</> subdirectory of the installation's
+        standard library directory.  (It is the database administrator's
+        responsibility to ensure that only <quote>safe</> libraries
+        are installed there.)  Entries in <varname>local_preload_libraries</>
+        can specify this directory explicitly, for example
+        <literal>$libdir/plugins/mylib</literal>, or just specify
+        the library name &mdash; <literal>mylib</literal> would have
+        the same effect as <literal>$libdir/plugins/mylib</literal>.
+       </para>
+
+       <para>
+        There is no performance advantage to loading a library at session
+        start rather than when it is first used.  Rather, the intent of
+        this feature is to allow debugging or performance-measurement
+        libraries to be loaded into specific sessions without an explicit
+        <command>LOAD</> command being given.  For example, debugging could
+        be enabled for all sessions under a given user name by setting
+        this parameter with <command>ALTER USER SET</>.
+       </para>
+
+       <para>
+        If a specified library is not found,
+        the connection attempt will fail.
+       </para>
+
+       <para>
+        Every  PostgreSQL-supported library has a <quote>magic
+        block</> that is checked to guarantee compatibility.  
+        For this reason, non-PostgreSQL libraries cannot be 
+        loaded in this way.
        </para>
       </listitem>
      </varlistentry>

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.187 2006/08/08 19:15:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.188 2006/08/15 18:26:59 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -307,7 +307,8 @@ extern void BaseInit(void);
 
 /* in utils/init/miscinit.c */
 extern bool IgnoreSystemIndexes;
-extern char *preload_libraries_string;
+extern char *shared_preload_libraries_string;
+extern char *local_preload_libraries_string;
 
 extern void SetReindexProcessing(Oid heapOid, Oid indexOid);
 extern void ResetReindexProcessing(void);
@@ -319,6 +320,7 @@ extern void TouchSocketLockFile(void);
 extern void RecordSharedMemoryInLockFile(unsigned long id1,
 							 unsigned long id2);
 extern void ValidatePgVersion(const char *path);
-extern void process_preload_libraries(void);
+extern void process_shared_preload_libraries(void);
+extern void process_local_preload_libraries(void);
 
 #endif   /* MISCADMIN_H */
