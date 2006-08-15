@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.79 2006/08/14 21:14:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.80 2006/08/15 19:01:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,7 +617,55 @@ typedef struct
 	PLpgSQL_function *err_func; /* current func */
 	PLpgSQL_stmt *err_stmt;		/* current stmt */
 	const char *err_text;		/* additional state info */
+	void	   *plugin_info;	/* reserved for use by optional plugin */
 } PLpgSQL_execstate;
+
+
+/*
+ * A PLpgSQL_plugin structure represents an instrumentation plugin.
+ * To instrument PL/pgSQL, a plugin library must access the rendezvous
+ * variable "PLpgSQL_plugin" and set it to point to a PLpgSQL_plugin struct.
+ * Typically the struct could just be static data in the plugin library.
+ * We expect that a plugin would do this at library load time (_PG_init()).
+ * It must also be careful to set the rendezvous variable back to NULL
+ * if it is unloaded (_PG_fini()).
+ * 
+ * This structure is basically a collection of function pointers --- at
+ * various interesting points in pl_exec.c, we call these functions
+ * (if the pointers are non-NULL) to give the plugin a chance to watch
+ * what we are doing.
+ *
+ *  func_setup is called when we start a function, before we've initialized
+ *  the local variables defined by the function.
+ *
+ *  func_beg is called when we start a function, after we've initialized
+ *  the local variables.
+ *
+ *  func_end is called at the end of a function.
+ *
+ *  stmt_beg and stmt_end are called before and after (respectively) each
+ *  statement.
+ *
+ * Also, immediately before any call to func_setup, PL/pgSQL fills in the
+ * error_callback and assign_expr fields with pointers to its own
+ * plpgsql_exec_error_callback and exec_assign_expr functions.  This is
+ * a somewhat ad-hoc expedient to simplify life for debugger plugins.
+ */
+
+typedef struct
+{
+	/* Function pointers set up by the plugin */
+	void (*func_setup) (PLpgSQL_execstate *estate, PLpgSQL_function *func);
+	void (*func_beg) (PLpgSQL_execstate *estate, PLpgSQL_function *func);
+	void (*func_end) (PLpgSQL_execstate *estate, PLpgSQL_function *func);
+	void (*stmt_beg) (PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt);
+	void (*stmt_end) (PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt);
+
+	/* Function pointers set by PL/pgSQL itself */
+	void (*error_callback) (void *arg);
+	void (*assign_expr) (PLpgSQL_execstate *estate, PLpgSQL_datum *target,
+						 PLpgSQL_expr *expr);
+} PLpgSQL_plugin;
 
 
 /**********************************************************************
@@ -640,6 +688,8 @@ extern char *plpgsql_base_yytext;
 extern PLpgSQL_function *plpgsql_curr_compile;
 extern bool plpgsql_check_syntax;
 extern MemoryContext compile_tmp_cxt;
+
+extern PLpgSQL_plugin **plugin_ptr;
 
 /**********************************************************************
  * Function declarations

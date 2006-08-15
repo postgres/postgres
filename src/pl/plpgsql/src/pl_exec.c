@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.175 2006/08/14 21:14:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.176 2006/08/15 19:01:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,6 +253,12 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	exec_set_found(&estate, false);
 
 	/*
+	 * Let the instrumentation plugin peek at this function
+	 */
+	if (*plugin_ptr && (*plugin_ptr)->func_beg)
+		((*plugin_ptr)->func_beg)(&estate, func);
+
+	/*
 	 * Now call the toplevel block of statements
 	 */
 	estate.err_text = NULL;
@@ -386,6 +392,12 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 			}
 		}
 	}
+
+	/*
+	 * Let the instrumentation plugin peek at this function
+	 */
+	if (*plugin_ptr && (*plugin_ptr)->func_end)
+		((*plugin_ptr)->func_end)(&estate, func);
 
 	/* Clean up any leftover temporary memory */
 	FreeExprContext(estate.eval_econtext);
@@ -581,6 +593,12 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	exec_set_found(&estate, false);
 
 	/*
+	 * Let the instrumentation plugin peek at this function
+	 */
+	if (*plugin_ptr && (*plugin_ptr)->func_beg)
+		((*plugin_ptr)->func_beg)(&estate, func);
+
+	/*
 	 * Now call the toplevel block of statements
 	 */
 	estate.err_text = NULL;
@@ -632,6 +650,12 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		/* Copy tuple to upper executor memory */
 		rettup = SPI_copytuple((HeapTuple) (estate.retval));
 	}
+
+	/*
+	 * Let the instrumentation plugin peek at this function
+	 */
+	if (*plugin_ptr && (*plugin_ptr)->func_end)
+		((*plugin_ptr)->func_end)(&estate, func);
 
 	/* Clean up any leftover temporary memory */
 	FreeExprContext(estate.eval_econtext);
@@ -1037,6 +1061,10 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 	save_estmt = estate->err_stmt;
 	estate->err_stmt = stmt;
 
+	/* Let the plugin know that we are about to execute this statement */
+	if (*plugin_ptr && (*plugin_ptr)->stmt_beg)
+		((*plugin_ptr)->stmt_beg)(estate, stmt);
+
 	CHECK_FOR_INTERRUPTS();
 
 	switch (stmt->cmd_type)
@@ -1121,6 +1149,10 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 			estate->err_stmt = save_estmt;
 			elog(ERROR, "unrecognized cmdtype: %d", stmt->cmd_type);
 	}
+
+	/* Let the plugin know that we have finished executing this statement */
+	if (*plugin_ptr && (*plugin_ptr)->stmt_end)
+		((*plugin_ptr)->stmt_end)(estate, stmt);
 
 	estate->err_stmt = save_estmt;
 
@@ -2123,6 +2155,21 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	 * child of simple_eval_estate.
 	 */
 	estate->eval_econtext = CreateExprContext(simple_eval_estate);
+
+	/*
+	 * Let the plugin see this function before we initialize any
+	 * local PL/pgSQL variables - note that we also give the plugin
+	 * a few function pointers so it can call back into PL/pgSQL
+	 * for doing things like variable assignments and stack traces
+	 */
+	if (*plugin_ptr)
+	{
+		(*plugin_ptr)->error_callback = plpgsql_exec_error_callback;
+		(*plugin_ptr)->assign_expr = exec_assign_expr;
+
+		if ((*plugin_ptr)->func_setup)
+			((*plugin_ptr)->func_setup)(estate, func);
+	}
 }
 
 /* ----------
