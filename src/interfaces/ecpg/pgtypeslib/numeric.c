@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.31 2006/08/13 10:18:30 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.32 2006/08/15 06:40:19 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <ctype.h>
@@ -1512,7 +1512,10 @@ numericvar_to_double(numeric *var, double *dp)
 	if (errno == ERANGE)
 	{
 		free(tmp);
-		errno = PGTYPES_NUM_OVERFLOW;
+		if (val == 0)
+			errno = PGTYPES_NUM_UNDERFLOW;
+		else
+			errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
 	}
 
@@ -1576,7 +1579,10 @@ PGTYPESnumeric_to_long(numeric *nv, long *lp)
 		return -1;
 	if (errno == ERANGE)
 	{
-		errno = PGTYPES_NUM_OVERFLOW;
+		if (*lp == LONG_MIN)
+			errno = PGTYPES_NUM_UNDERFLOW;
+		else
+			errno = PGTYPES_NUM_OVERFLOW;
 		return -1;
 	}
 	free(s);

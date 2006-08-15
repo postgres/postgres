@@ -59,10 +59,6 @@ int main(void)
 
 	ECPGdebug(1, stderr);
 
-/*	if (strlen(REGRESSDB1) > MAXDBLEN) {
-		exit(1);
-	}
-*/
 	strcpy(dbname, "regress1");
 	EXEC SQL connect to :dbname;
 	sql_check("main", "connect", 0);
@@ -79,12 +75,6 @@ int main(void)
 		   into :maxd
 		   from history;
 	sql_check("main", "select max", 100);
-
-	if (risnull(CDTIMETYPE, (char *) &maxd))
-	{
-		printf("Nothing on the history table\n\n");
-		exit(0);
-	}
 
 	EXEC SQL select customerid, timestamp
 		   into :c, :d

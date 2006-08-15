@@ -10,7 +10,11 @@ override LDFLAGS += -L../../compatlib
 override LIBS += $(LIBS) -lecpg_compat
 
 TESTS = test_informix test_informix.c \
-        test_informix2 test_informix2.c
+        test_informix2 test_informix2.c \
+        dec_test dec_test.c \
+        rfmtdate rfmtdate.c \
+        rfmtlong rfmtlong.c \
+        charfuncs charfuncs.c
 
 all: $(TESTS)
 
@@ -18,5 +22,19 @@ test_informix.c: test_informix.pgc ../regression.h
 	$(ECPG) -o $@ -I$(srcdir) $<
 
 test_informix2.c: test_informix2.pgc ../regression.h
+	$(ECPG) -o $@ -I$(srcdir) $<
+
+dec_test.c: dec_test.pgc ../regression.h
+	$(ECPG) -o $@ -I$(srcdir) $<
+
+rfmtdate.c: rfmtdate.pgc ../regression.h
+	$(ECPG) -o $@ -I$(srcdir) $<
+
+rfmtlong.c: rfmtlong.pgc ../regression.h
+	$(ECPG) -o $@ -I$(srcdir) $<
+
+rnull.c: rnull.pgc ../regression.h
 	$(ECPG_NOIND) -o $@ -I$(srcdir) $<
 
+charfuncs.c: charfuncs.pgc ../regression.h
+	$(ECPG) -o $@ -I$(srcdir) $<

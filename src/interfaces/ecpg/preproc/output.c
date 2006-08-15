@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.17 2006/03/11 04:38:40 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.18 2006/08/15 06:40:19 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -139,6 +139,11 @@ output_escaped_str(char *str)
 			fputs("\\\"", yyout);
 		else if (str[i] == '\n')
 			fputs("\\\n", yyout);
+		else if (str[i] == '\r' && str[i+1] == '\n')
+		{
+			fputs("\\\r\n", yyout);
+			i++;
+		}
 		else
 			fputc(str[i], yyout);
 	}

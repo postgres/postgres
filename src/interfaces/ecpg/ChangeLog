@@ -2082,5 +2082,18 @@ We Aug  9 09:28:56 CEST 2006
 	- Fixed error handling in numeric conversion (Joachim).
 	- Fixed some memory bugs that somehow reappeared.
 	- Also fixed a new Coverity report.
+
+Su Aug 13 11:01:13 CEST 2006
+
+	- Applied patch for VPATH builds by Alvaro Herrera
+	  <alvherre@commandprompt.com>
+	- Merged dyntest.pgc and dyntest2.pgc.
+
+Mo Aug 14 10:39:59 CEST 2006
+
+	- Added lots of SoC stuff made by Joachim.
+	- Fixed broken newline on Windows.
+	- Fixed a nasty buffer underrun that only occured when using Informix
+	  no_indicator NULL setting on timestamps and intervals.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
