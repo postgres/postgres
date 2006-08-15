@@ -1,0 +1,6 @@
+t1: _abc  def  ghi  _
+t1: _ABC  DEF  GHI  _
+byleng(t1, 2): 2, ldchar: _AB_
+byleng(t1, 5): 3, ldchar: _ABC_
+byleng(t1, 9): 8, ldchar: _ABC  DEF_
+byleng(t1, 15): 13, ldchar: _ABC  DEF  GHI_

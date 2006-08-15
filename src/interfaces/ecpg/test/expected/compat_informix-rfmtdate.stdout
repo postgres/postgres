@@ -1,0 +1,36 @@
+create: r: 0
+date: 1959-11-23
+r: 0 q: 0 date 0: 1994-12-03
+r: 0 q: 0 date 1: 1994-09-06
+r: 0 date: 0: 112359
+r: 0 date: 1: 231159
+r: 0 date: 2: 591123
+r: 0 date: 3: 59/11/23
+r: 0 date: 4: 59 11 23
+r: 0 date: 5: 59.11.23
+r: 0 date: 6: .11.1959.23.
+r: 0 date: 7: Nov. 23, 1959
+r: 0 date: 8: Nov 23 1959
+r: 0 date: 9: 1959 23 11
+r: 0 date: 10: Mon, Nov. 23, 1959
+r: 0 date: 11: (Mon) Nov. 23, 1959
+r: 0 q: 0 date 0: 0054-02-21
+r: 0 q: 0 date 1: 0054-12-02
+r: 0 q: 0 date 2: 1954-11-20
+r: 0 q: 0 date 3: 0064-04-13
+r: 0 q: 0 date 4: 1967-03-12
+r: 0 q: 0 date 5: 1954-02-03
+r: 0 q: 0 date 6: 0069-04-12
+r: 0 q: 0 date 7: 2525-07-28
+r: 0 q: 0 date 8: 2525-07-28
+r: 0 q: 0 date 9: 0058-09-14
+r: 0 q: 0 date 10: 0047-03-29
+r: 0 q: 0 date 11: 1975-10-28
+r: 0 q: 0 date 12: 1985-11-14
+r: 0 q: 0 date 13: 1954-11-20
+r: 0 q: 0 date 14: 1994-03-01
+r: -1212 (ECPG_INFORMIX_ENOTDMY)
+r: -1209 (ECPG_INFORMIX_ENOSHORTDATE)
+r: -1209 (ECPG_INFORMIX_ENOSHORTDATE)
+r: -1206 (ECPG_INFORMIX_BAD_DAY)
+r: -1205 (ECPG_INFORMIX_BAD_MONTH)
