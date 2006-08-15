@@ -38,7 +38,7 @@ main(void)
 	long l;
 	int i, j, k, q, r, count = 0;
 	double dbl;
-	decimal **decarr = (decimal **) malloc(1);
+	decimal **decarr = (decimal **) calloc(1, sizeof(decimal));
 
 	ECPGdebug(1, stderr);
 
@@ -71,7 +71,7 @@ main(void)
 
 		din = PGTYPESdecimal_new();
 		r = dectoasc(din, buf, BUFSIZE-1, 2);
-		if (!r < 0) check_errno();
+		if (r < 0) check_errno();
 		printf("dec[%d,5]: r: %d, %s\n", i, r, buf);
 
 		r = dectolong(dec, &l);

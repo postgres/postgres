@@ -48,7 +48,7 @@ main(void)
 	long l;
 	int i, j, k, q, r, count = 0;
 	double d;
-	numeric **numarr = (numeric **) malloc(1);
+	numeric **numarr = (numeric **) calloc(1, sizeof(numeric));
 
 	ECPGdebug(1, stderr);
 
