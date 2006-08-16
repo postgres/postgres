@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.117 2006/07/24 16:32:44 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.118 2006/08/16 14:57:37 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -140,7 +140,7 @@ $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 
 
 utils/probes.o: utils/probes.d $(SUBSYSOBJS)
-	$(DTRACE) $(DTRACEFLAGS) -G -s $^
+	$(DTRACE) $(DTRACEFLAGS) -G -s $^ -o $@
 
 
 ##########################################################################
