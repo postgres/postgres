@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.88 2006/08/15 18:26:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.89 2006/08/16 04:32:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,16 +131,16 @@ load_external_function(char *filename, char *funcname,
  * function in it.	If the same shlib has previously been loaded,
  * unload and reload it.
  *
- * When 'restrict' is true, only libraries in the presumed-secure
+ * When 'restricted' is true, only libraries in the presumed-secure
  * directory $libdir/plugins may be referenced.
  */
 void
-load_file(const char *filename, bool restrict)
+load_file(const char *filename, bool restricted)
 {
 	char	   *fullname;
 
 	/* Apply security restriction if requested */
-	if (restrict)
+	if (restricted)
 		check_restricted_library_name(filename);
 
 	/* Expand the possibly-abbreviated filename to an exact path name */

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.46 2006/08/15 18:26:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.47 2006/08/16 04:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -488,7 +488,7 @@ extern char *Dynamic_library_path;
 extern PGFunction load_external_function(char *filename, char *funcname,
 					   bool signalNotFound, void **filehandle);
 extern PGFunction lookup_external_function(void *filehandle, char *funcname);
-extern void load_file(const char *filename, bool restrict);
+extern void load_file(const char *filename, bool restricted);
 extern void **find_rendezvous_variable(const char *varName);
 
 

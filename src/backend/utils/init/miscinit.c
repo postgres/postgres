@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.157 2006/08/15 18:26:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.158 2006/08/16 04:32:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1108,10 +1108,10 @@ char	   *local_preload_libraries_string = NULL;
  * load the shared libraries listed in 'libraries'
  *
  * 'gucname': name of GUC variable, for error reports
- * 'restrict': if true, force libraries to be in $libdir/plugins/
+ * 'restricted': if true, force libraries to be in $libdir/plugins/
  */
 static void
-load_libraries(const char *libraries, const char *gucname, bool restrict)
+load_libraries(const char *libraries, const char *gucname, bool restricted)
 {
 	char	   *rawstring;
 	List	   *elemlist;
@@ -1144,7 +1144,7 @@ load_libraries(const char *libraries, const char *gucname, bool restrict)
 		filename = pstrdup(tok);
 		canonicalize_path(filename);
 		/* If restricting, insert $libdir/plugins if not mentioned already */
-		if (restrict && first_dir_separator(filename) == NULL)
+		if (restricted && first_dir_separator(filename) == NULL)
 		{
 			char   *expanded;
 
@@ -1154,7 +1154,7 @@ load_libraries(const char *libraries, const char *gucname, bool restrict)
 			pfree(filename);
 			filename = expanded;
 		}
-		load_file(filename, restrict);
+		load_file(filename, restricted);
 		ereport(LOG,
 				(errmsg("loaded library \"%s\"", filename)));
 		pfree(filename);
