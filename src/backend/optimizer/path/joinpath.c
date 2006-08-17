@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.105 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.106 2006/08/17 17:06:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,8 +542,11 @@ match_unsorted_outer(PlannerInfo *root,
 		 * Look for presorted inner paths that satisfy the innersortkey list
 		 * --- or any truncation thereof, if we are allowed to build a
 		 * mergejoin using a subset of the merge clauses.  Here, we consider
-		 * both cheap startup cost and cheap total cost.  Ignore
-		 * inner_cheapest_total, since we already made a path with it.
+		 * both cheap startup cost and cheap total cost.  We can ignore
+		 * inner_cheapest_total on the first iteration, since we already made
+		 * a path with it --- but not on later iterations with shorter
+		 * sort keys, because then we are considering a different situation,
+		 * viz using a simpler mergejoin to avoid a sort of the inner rel.
 		 */
 		num_sortkeys = list_length(innersortkeys);
 		if (num_sortkeys > 1 && !useallclauses)
@@ -568,7 +571,8 @@ match_unsorted_outer(PlannerInfo *root,
 													   trialsortkeys,
 													   TOTAL_COST);
 			if (innerpath != NULL &&
-				innerpath != inner_cheapest_total &&
+				(innerpath != inner_cheapest_total ||
+				 sortkeycnt < num_sortkeys) &&
 				(cheapest_total_inner == NULL ||
 				 compare_path_costs(innerpath, cheapest_total_inner,
 									TOTAL_COST) < 0))
@@ -603,7 +607,8 @@ match_unsorted_outer(PlannerInfo *root,
 													   trialsortkeys,
 													   STARTUP_COST);
 			if (innerpath != NULL &&
-				innerpath != inner_cheapest_total &&
+				(innerpath != inner_cheapest_total ||
+				 sortkeycnt < num_sortkeys) &&
 				(cheapest_startup_inner == NULL ||
 				 compare_path_costs(innerpath, cheapest_startup_inner,
 									STARTUP_COST) < 0))
