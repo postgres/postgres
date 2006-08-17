@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.77 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.78 2006/08/17 17:02:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1059,39 +1059,73 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 		{
 			PathKeyItem *sub_item = (PathKeyItem *) lfirst(j);
 			Node	   *sub_key = sub_item->key;
+			Expr	   *rtarg;
 			ListCell   *k;
+
+			/*
+			 * We handle two cases: the sub_pathkey key can be either an exact
+			 * match for a targetlist entry, or a RelabelType of a targetlist
+			 * entry.  (The latter case is worth extra code because it arises
+			 * frequently in connection with varchar fields.)
+			 */
+			if (IsA(sub_key, RelabelType))
+				rtarg = ((RelabelType *) sub_key)->arg;
+			else
+				rtarg = NULL;
 
 			foreach(k, sub_tlist)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(k);
+				Node	   *outer_expr;
+				PathKeyItem *outer_item;
+				int			score;
 
-				if (!tle->resjunk &&
-					equal(tle->expr, sub_key))
+				/* resjunk items aren't visible to outer query */
+				if (tle->resjunk)
+					continue;
+
+				if (equal(tle->expr, sub_key))
 				{
-					/* Found a representation for this sub_key */
-					Var		   *outer_var;
-					PathKeyItem *outer_item;
-					int			score;
+					/* Exact match */
+					outer_expr = (Node *)
+						makeVar(rel->relid,
+								tle->resno,
+								exprType((Node *) tle->expr),
+								exprTypmod((Node *) tle->expr),
+								0);
+				}
+				else if (rtarg && equal(tle->expr, rtarg))
+				{
+					/* Match after discarding RelabelType */
+					outer_expr = (Node *)
+						makeVar(rel->relid,
+								tle->resno,
+								exprType((Node *) tle->expr),
+								exprTypmod((Node *) tle->expr),
+								0);
+					outer_expr = (Node *)
+						makeRelabelType((Expr *) outer_expr,
+										((RelabelType *) sub_key)->resulttype,
+										((RelabelType *) sub_key)->resulttypmod,
+										((RelabelType *) sub_key)->relabelformat);
+				}
+				else
+					continue;
 
-					outer_var = makeVar(rel->relid,
-										tle->resno,
-										exprType((Node *) tle->expr),
-										exprTypmod((Node *) tle->expr),
-										0);
-					outer_item = makePathKeyItem((Node *) outer_var,
-												 sub_item->sortop,
-												 true);
-					/* score = # of mergejoin peers */
-					score = count_canonical_peers(root, outer_item);
-					/* +1 if it matches the proper query_pathkeys item */
-					if (retvallen < outer_query_keys &&
-						list_member(list_nth(root->query_pathkeys, retvallen), outer_item))
-						score++;
-					if (score > best_score)
-					{
-						best_item = outer_item;
-						best_score = score;
-					}
+				/* Found a representation for this sub_key */
+				outer_item = makePathKeyItem(outer_expr,
+											 sub_item->sortop,
+											 true);
+				/* score = # of mergejoin peers */
+				score = count_canonical_peers(root, outer_item);
+				/* +1 if it matches the proper query_pathkeys item */
+				if (retvallen < outer_query_keys &&
+					list_member(list_nth(root->query_pathkeys, retvallen), outer_item))
+					score++;
+				if (score > best_score)
+				{
+					best_item = outer_item;
+					best_score = score;
 				}
 			}
 		}
