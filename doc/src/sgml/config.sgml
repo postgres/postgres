@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.74 2006/08/15 18:26:58 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.75 2006/08/17 23:04:03 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1580,6 +1580,35 @@ SET ENABLE_SEQSCAN TO OFF;
 archive_command = 'cp "%p" /mnt/server/archivedir/"%f"'
 archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
 </programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry id="guc-archive-timeout" xreflabel="archive_timeout">
+      <term><varname>archive_timeout</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>archive_timeout</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        The <xref linkend="guc-archive-command"> is only invoked on completed 
+        WAL segments. Hence,
+        if your server generates only little WAL traffic (or has slack periods 
+        where it does so), there could be a long delay between the completion
+        of a transaction and its safe recording in archive storage.  To put
+        a limit on how old unarchived data can be, you can set
+        <varname>archive_timeout</> to force the server to switch
+        to a new WAL segment file periodically.  When this parameter is
+        greater than zero, the server will switch to a new segment file
+        whenever this many seconds elapse since the last segment file switch.
+        Note that archived
+        files that are ended early due to a forced switch are still the same
+        length as completely full files.  It is therefore unwise to set a very
+        short <varname>archive_timeout</> &mdash; it will bloat your archive
+        storage.  <varname>archive_timeout</> settings of a minute or so are
+        usually reasonable.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>

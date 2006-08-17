@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.329 2006/08/06 03:53:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.330 2006/08/17 23:04:03 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10149,6 +10149,9 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_current_xlog_location</primary>
    </indexterm>
    <indexterm zone="functions-admin">
+    <primary>pg_current_xlog_insert_location</primary>
+   </indexterm>
+   <indexterm zone="functions-admin">
     <primary>pg_xlogfile_name_offset</primary>
    </indexterm>
    <indexterm zone="functions-admin">
@@ -10199,13 +10202,20 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_current_xlog_location</function>()</literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Get current xlog location</entry>
+       <entry>Get current xlog write location</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_current_xlog_insert_location</function>()</literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>Get current xlog insert location</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_xlogfile_name_offset</function>(<parameter>location</> <type>text</>)</literal>
         </entry>
-       <entry><type>text</type></entry>
+       <entry><type>text</>, <type>integer</></entry>
        <entry>Convert xlog location string to filename and decimal byte offset within file</entry>
       </row>
       <row>
@@ -10258,9 +10268,17 @@ postgres=# select pg_start_backup('label_goes_here');
    </para>
 
    <para>
-    <function>pg_current_xlog_location</> displays the current xlog insertion
-    point in the same format used by the above functions.  This is a
-    read-only operation and does not require superuser permissions.
+    <function>pg_current_xlog_location</> displays the current xlog write
+    location in the same format used by the above functions.  Similarly
+    <function>pg_current_xlog_insert_location</> displays the current xlog
+    insertion point.  The insertion point is the <quote>logical</> end of xlog
+    at any instant, while the write location is the end of what has actually
+    been written out from the server's internal buffers.  The write location
+    is the end of what can be examined from outside the server, and is usually
+    what you want if you are interested in archiving partially-complete xlog
+    files.  The insertion point is made available primarily for server
+    debugging purposes.  These are both read-only operations and do not
+    require superuser permissions.
    </para>
 
    <para>
@@ -10268,10 +10286,10 @@ postgres=# select pg_start_backup('label_goes_here');
     corresponding xlog filename and byte offset from the results of any of the
     above functions.  For example:
 <programlisting>
-postgres=# select pg_xlogfile_name_offset(pg_stop_backup());
-     pg_xlogfile_name_offset      
-----------------------------------
- 00000001000000000000000D 4039624
+postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
+        file_name         | file_offset 
+--------------------------+-------------
+ 00000001000000000000000D |     4039624
 (1 row)
 </programlisting>
     Similarly, <function>pg_xlogfile_name</> extracts just the xlog filename.

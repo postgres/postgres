@@ -167,8 +167,9 @@
 
 # - Archiving -
 
-#archive_command = ''			# command to use to archive a logfile 
-					# segment
+#archive_command = ''		# command to use to archive a logfile segment
+#archive_timeout = 0		# force a logfile segment switch after this
+				# many seconds; 0 is off
 
 
 #---------------------------------------------------------------------------

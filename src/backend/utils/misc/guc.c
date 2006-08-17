@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.342 2006/08/15 18:26:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.343 2006/08/17 23:04:06 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1001,7 +1001,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"ignore_system_indexes", PGC_BACKEND, DEVELOPER_OPTIONS,
-		 gettext_noop("Disabled reading from system indexes."),
+		 gettext_noop("Disables reading from system indexes."),
 		 gettext_noop("It does not prevent updating the indexes, so it is safe "
 					  "to use.  The worst consequence is slowness."),
 		 GUC_NOT_IN_SAMPLE
@@ -1019,6 +1019,16 @@ static struct config_bool ConfigureNamesBool[] =
 
 static struct config_int ConfigureNamesInt[] =
 {
+	{
+		{"archive_timeout", PGC_SIGHUP, WAL_SETTINGS,
+		 gettext_noop("Forces a switch to the next xlog file if a "
+                      "new file has not been started within N seconds."),
+		 NULL,
+		 GUC_UNIT_S
+		},
+		&XLogArchiveTimeout,
+		0, 0, INT_MAX, NULL, NULL
+	},
 	{
 		{"post_auth_delay", PGC_BACKEND, DEVELOPER_OPTIONS,
 		 gettext_noop("Waits N seconds on connection startup after authentication."),

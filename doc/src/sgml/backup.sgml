@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.82 2006/08/06 03:53:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.83 2006/08/17 23:04:02 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -492,7 +492,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     the archiving will be done.  Instead, <productname>PostgreSQL</> lets
     the administrator specify a shell command to be executed to copy a
     completed segment file to wherever it needs to go.  The command could be
-    as simple as a <application>cp</>, or it could invoke a complex shell
+    as simple as a <literal>cp</>, or it could invoke a complex shell
     script &mdash; it's all up to you.
    </para>
 
@@ -577,36 +577,6 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
    </para>
 
    <para>
-    If you are concerned about being able to recover right up to the
-    current instant, you may want to take additional steps to ensure that
-    the current, partially-filled WAL segment is also copied someplace.
-    This is particularly important if your server generates only little WAL
-    traffic (or has slack periods where it does so), since it could take a
-    long time before a WAL segment file is completely filled and ready to
-    archive.  One possible way to handle this is to set up a
-    <application>cron</> job that periodically (once a minute, perhaps)
-    identifies the current WAL segment file and saves it someplace safe.
-    Then the combination of the archived WAL segments and the saved current
-    segment will be enough to ensure you can always restore to within a
-    minute of current time.  This behavior is not presently built into
-    <productname>PostgreSQL</> because we did not want to complicate the
-    definition of the <xref linkend="guc-archive-command"> by requiring it
-    to keep track of successively archived, but different, copies of the
-    same WAL file.  The <xref linkend="guc-archive-command"> is only
-    invoked on completed WAL segments. Except in the case of retrying a
-    failure, it will be called only once for any given file name.
-   </para>
-
-   <para>
-    Another way to limit your exposure to data loss is to call
-    <function>pg_switch_xlog()</> periodically, such as once a minute.
-    This function forces the current WAL segment file to be completed
-    and made available to the archiving command.  This approach does
-    not work well for extremely short update intervals, however, since
-    copying a new 16MB segment file every few seconds is expensive.
-   </para>
-
-   <para>
     In writing your archive command, you should assume that the file names to
     be archived may be up to 64 characters long and may contain any
     combination of ASCII letters, digits, and dots.  It is not necessary to
@@ -625,6 +595,29 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
     be backed up by your regular file system backup procedures.  See
     <xref linkend="runtime-config-file-locations"> for how to relocate the
     configuration files.
+   </para>
+
+   <para>
+    The archive command is only invoked on completed WAL segments.  Hence,
+    if your server generates only little WAL traffic (or has slack periods 
+    where it does so), there could be a long delay between the completion
+    of a transaction and its safe recording in archive storage.  To put
+    a limit on how old unarchived data can be, you can set
+    <xref linkend="guc-archive-timeout"> to force the server to switch
+    to a new WAL segment file at least that often.  Note that archived
+    files that are ended early due to a forced switch are still the same
+    length as completely full files.  It is therefore unwise to set a very
+    short <varname>archive_timeout</> &mdash; it will bloat your archive
+    storage.  <varname>archive_timeout</> settings of a minute or so are
+    usually reasonable.
+   </para>
+
+   <para>
+    Also, you can force a segment switch manually with
+    <function>pg_switch_xlog()</>,
+    if you want to ensure that a just-finished transaction is archived
+    immediately.  Other utility functions related to WAL management are
+    listed in <xref linkend="functions-admin-backup-table">.
    </para>
   </sect2>
 

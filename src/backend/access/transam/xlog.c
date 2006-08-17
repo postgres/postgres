@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.247 2006/08/07 16:57:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.248 2006/08/17 23:04:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include <sys/time.h>
 
 #include "access/clog.h"
+#include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
@@ -32,6 +33,8 @@
 #include "access/xlogutils.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
+#include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
@@ -128,6 +131,7 @@
 /* User-settable parameters */
 int			CheckPointSegments = 3;
 int			XLOGbuffers = 8;
+int			XLogArchiveTimeout = 0;
 char	   *XLogArchiveCommand = NULL;
 char	   *XLOG_sync_method = NULL;
 const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
@@ -347,8 +351,9 @@ typedef struct XLogCtlInsert
  */
 typedef struct XLogCtlWrite
 {
-	XLogwrtResult LogwrtResult; /* current value of LogwrtResult */
-	int			curridx;		/* cache index of next block to write */
+	XLogwrtResult LogwrtResult;		/* current value of LogwrtResult */
+	int			curridx;			/* cache index of next block to write */
+	time_t		lastSegSwitchTime;	/* time of last xlog segment switch */
 } XLogCtlWrite;
 
 /*
@@ -1660,7 +1665,8 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 			 * switch.
 			 *
 			 * This is also the right place to notify the Archiver that the
-			 * segment is ready to copy to archival storage.
+			 * segment is ready to copy to archival storage, and to update
+			 * the timer for archive_timeout.
 			 */
 			if (finishing_seg || (xlog_switch && last_iteration))
 			{
@@ -1669,6 +1675,8 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 
 				if (XLogArchivingActive())
 					XLogArchiveNotifySeg(openLogId, openLogSeg);
+
+				Write->lastSegSwitchTime = time(NULL);
 			}
 		}
 
@@ -5124,6 +5132,9 @@ StartupXLOG(void)
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 
+	/* start the archive_timeout timer running */
+	XLogCtl->Write.lastSegSwitchTime = ControlFile->time;
+
 	/* Start up the commit log and related stuff, too */
 	StartupCLOG();
 	StartupSUBTRANS(oldestActiveXID);
@@ -5305,6 +5316,22 @@ GetRedoRecPtr(void)
 	SpinLockRelease(&xlogctl->info_lck);
 
 	return RedoRecPtr;
+}
+
+/*
+ * Get the time of the last xlog segment switch
+ */
+time_t
+GetLastSegSwitchTime(void)
+{
+	time_t		result;
+
+	/* Need WALWriteLock, but shared lock is sufficient */
+	LWLockAcquire(WALWriteLock, LW_SHARED);
+	result = XLogCtl->Write.lastSegSwitchTime;
+	LWLockRelease(WALWriteLock);
+
+	return result;
 }
 
 /*
@@ -5728,7 +5755,7 @@ XLogPutNextOid(Oid nextOid)
  * or the end+1 address of the prior segment if we did not need to
  * write a switch record because we are already at segment start.
  */
-static XLogRecPtr
+XLogRecPtr
 RequestXLogSwitch(void)
 {
 	XLogRecPtr	RecPtr;
@@ -6335,10 +6362,43 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 }
 
 /*
- * Report the current WAL location (same format as pg_start_backup etc)
+ * Report the current WAL write location (same format as pg_start_backup etc)
+ *
+ * This is useful for determining how much of WAL is visible to an external
+ * archiving process.  Note that the data before this point is written out
+ * to the kernel, but is not necessarily synced to disk.
  */
 Datum
 pg_current_xlog_location(PG_FUNCTION_ARGS)
+{
+	text	   *result;
+	char		location[MAXFNAMELEN];
+
+	/* Make sure we have an up-to-date local LogwrtResult */
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire(&xlogctl->info_lck);
+		LogwrtResult = xlogctl->LogwrtResult;
+		SpinLockRelease(&xlogctl->info_lck);
+	}
+
+	snprintf(location, sizeof(location), "%X/%X",
+			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff);
+
+	result = DatumGetTextP(DirectFunctionCall1(textin,
+											   CStringGetDatum(location)));
+	PG_RETURN_TEXT_P(result);
+}
+
+/*
+ * Report the current WAL insert location (same format as pg_start_backup etc)
+ *
+ * This function is mostly for debugging purposes.
+ */
+Datum
+pg_current_xlog_insert_location(PG_FUNCTION_ARGS)
 {
 	text	   *result;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
@@ -6372,7 +6432,6 @@ Datum
 pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 {
 	text	   *location = PG_GETARG_TEXT_P(0);
-	text	   *result;
 	char	   *locationstr;
 	unsigned int uxlogid;
 	unsigned int uxrecoff;
@@ -6381,7 +6440,15 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	uint32		xrecoff;
 	XLogRecPtr	locationpoint;
 	char		xlogfilename[MAXFNAMELEN];
+	Datum       values[2];
+	bool        isnull[2];
+	TupleDesc   resultTupleDesc;
+	HeapTuple   resultHeapTuple;
+	Datum	    result;
 
+	/*
+	 * Read input and parse
+	 */
 	locationstr = DatumGetCString(DirectFunctionCall1(textout,
 												PointerGetDatum(location)));
 
@@ -6394,18 +6461,44 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	locationpoint.xlogid = uxlogid;
 	locationpoint.xrecoff = uxrecoff;
 
+	/*
+	 * Construct a tuple descriptor for the result row.  This must match
+	 * this function's pg_proc entry!
+	 */
+	resultTupleDesc = CreateTemplateTupleDesc(2, false);
+	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 1, "file_name",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(resultTupleDesc, (AttrNumber) 2, "file_offset",
+					   INT4OID, -1, 0);
+
+	resultTupleDesc = BlessTupleDesc(resultTupleDesc);
+
+	/*
+	 * xlogfilename
+	 */
 	XLByteToPrevSeg(locationpoint, xlogid, xlogseg);
 	XLogFileName(xlogfilename, ThisTimeLineID, xlogid, xlogseg);
 
-	xrecoff = locationpoint.xrecoff - xlogseg * XLogSegSize;
-	snprintf(xlogfilename + strlen(xlogfilename),
-			 sizeof(xlogfilename) - strlen(xlogfilename),
-			 " %u",
-			 (unsigned int) xrecoff);
+	values[0] = DirectFunctionCall1(textin,
+									CStringGetDatum(xlogfilename));
+	isnull[0] = false;
 
-	result = DatumGetTextP(DirectFunctionCall1(textin,
-											   CStringGetDatum(xlogfilename)));
-	PG_RETURN_TEXT_P(result);
+	/*
+	 * offset
+	 */
+	xrecoff = locationpoint.xrecoff - xlogseg * XLogSegSize;
+
+	values[1] = UInt32GetDatum(xrecoff);
+	isnull[1] = false;
+
+	/*
+	 * Tuple jam: Having first prepared your Datums, then squash together
+	 */
+	resultHeapTuple = heap_form_tuple(resultTupleDesc, values, isnull);
+
+	result = HeapTupleGetDatum(resultHeapTuple);
+
+	PG_RETURN_DATUM(result);
 }
 
 /*

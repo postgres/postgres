@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.26 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.27 2006/08/17 23:04:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include <signal.h>
 #include <time.h>
 
+#include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
@@ -144,6 +145,7 @@ static bool am_bg_writer = false;
 static bool ckpt_active = false;
 
 static time_t last_checkpoint_time;
+static time_t last_xlog_switch_time;
 
 
 static void bg_quickdie(SIGNAL_ARGS);
@@ -205,10 +207,10 @@ BackgroundWriterMain(void)
 #endif
 
 	/*
-	 * Initialize so that first time-driven checkpoint happens at the correct
+	 * Initialize so that first time-driven event happens at the correct
 	 * time.
 	 */
-	last_checkpoint_time = time(NULL);
+	last_checkpoint_time = last_xlog_switch_time = time(NULL);
 
 	/*
 	 * Create a resource owner to keep track of our resources (currently
@@ -404,6 +406,49 @@ BackgroundWriterMain(void)
 			BgBufferSync();
 
 		/*
+		 * Check for archive_timeout, if so, switch xlog files.  First
+		 * we do a quick check using possibly-stale local state.
+		 */
+		if (XLogArchiveTimeout > 0 &&
+			(int) (now - last_xlog_switch_time) >= XLogArchiveTimeout)
+		{
+			/*
+			 * Update local state ... note that last_xlog_switch_time is
+			 * the last time a switch was performed *or requested*.
+			 */
+			time_t	last_time = GetLastSegSwitchTime();
+
+			last_xlog_switch_time = Max(last_xlog_switch_time, last_time);
+
+			/* if we did a checkpoint, 'now' might be stale too */
+			if (do_checkpoint)
+				now = time(NULL);
+
+			/* Now we can do the real check */
+			if ((int) (now - last_xlog_switch_time) >= XLogArchiveTimeout)
+			{
+				XLogRecPtr switchpoint;
+
+				/* OK, it's time to switch */
+				switchpoint = RequestXLogSwitch();
+
+				/*
+				 * If the returned pointer points exactly to a segment
+				 * boundary, assume nothing happened.
+				 */
+				if ((switchpoint.xrecoff % XLogSegSize) != 0)
+					ereport(DEBUG1,
+							(errmsg("xlog switch forced (archive_timeout=%d)",
+									XLogArchiveTimeout)));
+				/*
+				 * Update state in any case, so we don't retry constantly
+				 * when the system is idle.
+				 */
+				last_xlog_switch_time = now;
+			}
+		}
+
+		/*
 		 * Nap for the configured time, or sleep for 10 seconds if there is no
 		 * bgwriter activity configured.
 		 *
@@ -417,9 +462,12 @@ BackgroundWriterMain(void)
 		if ((bgwriter_all_percent > 0.0 && bgwriter_all_maxpages > 0) ||
 			(bgwriter_lru_percent > 0.0 && bgwriter_lru_maxpages > 0))
 			udelay = BgWriterDelay * 1000L;
+		else if (XLogArchiveTimeout > 0)
+			udelay = 1000000L;   /* One second */
 		else
-			udelay = 10000000L;
-		while (udelay > 1000000L)
+			udelay = 10000000L;  /* Ten seconds */
+
+		while (udelay > 999999L)
 		{
 			if (got_SIGHUP || checkpoint_requested || shutdown_requested)
 				break;
@@ -427,6 +475,7 @@ BackgroundWriterMain(void)
 			AbsorbFsyncRequests();
 			udelay -= 1000000L;
 		}
+
 		if (!(got_SIGHUP || checkpoint_requested || shutdown_requested))
 			pg_usleep(udelay);
 	}
