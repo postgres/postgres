@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.259 2006/07/24 16:32:44 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.260 2006/08/17 17:25:43 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1011,9 +1011,23 @@ su - postgres
        <term><option>--enable-dtrace</option></term>
        <listitem>
         <para>
+         <indexterm>
+          <primary>DTrace</primary>
+         </indexterm>
          Compiles with support for the dynamic tracing tool DTrace.
          Operating system support for DTrace is currently only
          available in Solaris.
+        </para>
+
+        <para>
+         To point to the <command>dtrace</command> program, the
+         environment variable <envar>DTRACE</envar> can be set.  This
+         will often be necessary because <command>dtrace</command> is
+         typically installed under <filename>/usr/sbin</filename>,
+         which might not be in the path.  Additional command-line
+         options for the <command>dtrace</command> program can be
+         specified in the environment variable
+         <envar>DTRACEFLAGS</envar>.
         </para>
        </listitem>
       </varlistentry>
@@ -1109,6 +1123,25 @@ su - postgres
        <listitem>
         <para>
          Used for building the SGML documentation.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>DTRACE=<replaceable>/path/to/dtrace</></option></term>
+       <listitem>
+        <para>
+         Specifies the location of the <command>dtrace</command> program.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>DTRACEFLAGS=<replaceable>FLAGS</></option></term>
+       <listitem>
+        <para>
+         <replaceable>FLAGS</> is the a list of flags to pass to the
+         <command>dtrace</command> program.
         </para>
        </listitem>
       </varlistentry>

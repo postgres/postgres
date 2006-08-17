@@ -2004,6 +2004,11 @@ fi
   test -n "$DTRACE" && break
 done
 
+if test -z "$DTRACE"; then
+  { { echo "$as_me:$LINENO: error: dtrace not found" >&5
+echo "$as_me: error: dtrace not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
       ;;
     no)
