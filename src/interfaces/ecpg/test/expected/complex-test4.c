@@ -140,7 +140,7 @@ main (void)
  char  text [ 25 ]   = "klmnopqrst" ;
  
 #line 30 "test4.pgc"
- char * t   = ( char * ) malloc ( 10 ) ;
+ char * t   = ( char * ) malloc ( 11 ) ;
  
 #line 31 "test4.pgc"
  double  f    ;
@@ -184,14 +184,14 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 46 "test4.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 404.90 , 3 , '{0,1,2,3,4,5,6,7,8,9}' , 'abcdefghij' , 'f' , 0 , 0 )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 404.90 , 3 , '{0,1,2,3,4,5,6,7,8,9}' , 'abcdefghij' , 'f' , 0 , 0 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 48 "test4.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 48 "test4.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 140787.0 , 2 ,  ? ,  ? , 't' , 2 , 14 )", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 140787.0 , 2 ,  ? ,  ? , 't' , 2 , 14 ) ", 
 	ECPGt_int,(a),(long)1,(long)10,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(text),(long)25,(long)1,(25)*sizeof(char), 
@@ -205,7 +205,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	     
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 14.07 ,  ? ,  ? ,  ? ,  ? , 1 , 147 )", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( f  , i  , a  , text  , b  , t  , err  ) values( 14.07 ,  ? ,  ? ,  ? ,  ? , 1 , 147 ) ", 
 	ECPGt_int,&(did),(long)1,(long)0,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,(a),(long)1,(long)10,sizeof(int), 

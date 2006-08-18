@@ -27,7 +27,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 	int *did = &i;
 	int a[10] = {9,8,7,6,5,4,3,2,1,0};
 	char text[25] = "klmnopqrst";
-	char *t = (char *)malloc(10);
+	char *t = (char *)malloc(11);
 	double f;
 	bool b = true;
 EXEC SQL END DECLARE SECTION;
