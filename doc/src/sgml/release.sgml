@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.429 2006/05/23 20:20:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.430 2006/08/18 15:51:28 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -3438,7 +3438,7 @@ typedefs (Michael)</para></listitem>
         to run natively on <trademark class=registered>Microsoft Windows</> as
         a server. It can run as a <productname>Windows</> service. This
         release supports NT-based Windows releases like
-        <productname>Windows 2000</>, <productname>Windows XP</>, and
+        <productname>Windows 2000SP4</>, <productname>Windows XP</>, and
         <productname>Windows 2003</>. Older releases like
         <productname>Windows 95</>, <productname>Windows 98</>, and
         <productname>Windows ME</> are not supported because these operating
