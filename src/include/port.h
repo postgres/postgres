@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.95 2006/07/19 17:01:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.96 2006/08/18 15:47:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,7 @@ extern int find_other_exec(const char *argv0, const char *target,
  *	It also requires double-quotes around the executable name and
  *	any files used for redirection.  Other args can use single-quotes.
  *
- *	From http://www.computerhope.com/cmd.htm:
+ *	Generated using Win32 "CMD /?":
  *
  *  1. If all of the following conditions are met, then quote characters
  *  on the command line are preserved:
