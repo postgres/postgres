@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.189 2006/08/04 22:20:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.190 2006/08/18 19:52:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,8 @@ static int PQsendQueryGuts(PGconn *conn,
 static void parseInput(PGconn *conn);
 static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
+static int	PQsendDescribe(PGconn *conn, char desc_type,
+						   const char *desc_target);
 
 
 /* ----------------
@@ -147,6 +149,8 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->attDescs = NULL;
 	result->tuples = NULL;
 	result->tupArrSize = 0;
+	result->numParameters = 0;
+	result->paramDescs = NULL;
 	result->resultStatus = status;
 	result->cmdStatus[0] = '\0';
 	result->binary = 0;
@@ -367,6 +371,7 @@ PQclear(PGresult *res)
 	/* zero out the pointer fields to catch programming errors */
 	res->attDescs = NULL;
 	res->tuples = NULL;
+	res->paramDescs = NULL;
 	res->errFields = NULL;
 	/* res->curBlock was zeroed out earlier */
 
@@ -1472,6 +1477,139 @@ PQexecFinish(PGconn *conn)
 }
 
 /*
+ * PQdescribePrepared
+ *	  Obtain information about a previously prepared statement
+ *
+ * If the query was not even sent, return NULL; conn->errorMessage is set to
+ * a relevant message.
+ * If the query was sent, a new PGresult is returned (which could indicate
+ * either success or failure).  On success, the PGresult contains status
+ * PGRES_COMMAND_OK, and its parameter and column-heading fields describe
+ * the statement's inputs and outputs respectively.
+ * The user is responsible for freeing the PGresult via PQclear()
+ * when done with it.
+ */
+PGresult *
+PQdescribePrepared(PGconn *conn, const char *stmt)
+{
+	if (!PQexecStart(conn))
+		return NULL;
+	if (!PQsendDescribe(conn, 'S', stmt))
+		return NULL;
+	return PQexecFinish(conn);
+}
+
+/*
+ * PQdescribePortal
+ *	  Obtain information about a previously created portal
+ *
+ * This is much like PQdescribePrepared, except that no parameter info is
+ * returned.  Note that at the moment, libpq doesn't really expose portals
+ * to the client; but this can be used with a portal created by a SQL
+ * DECLARE CURSOR command.
+ */
+PGresult *
+PQdescribePortal(PGconn *conn, const char *portal)
+{
+	if (!PQexecStart(conn))
+		return NULL;
+	if (!PQsendDescribe(conn, 'P', portal))
+		return NULL;
+	return PQexecFinish(conn);
+}
+
+/*
+ * PQsendDescribePrepared
+ *	 Submit a Describe Statement command, but don't wait for it to finish
+ *
+ * Returns: 1 if successfully submitted
+ *			0 if error (conn->errorMessage is set)
+ */
+int
+PQsendDescribePrepared(PGconn *conn, const char *stmt)
+{
+	return PQsendDescribe(conn, 'S', stmt);
+}
+
+/*
+ * PQsendDescribePortal
+ *	 Submit a Describe Portal command, but don't wait for it to finish
+ *
+ * Returns: 1 if successfully submitted
+ *			0 if error (conn->errorMessage is set)
+ */
+int
+PQsendDescribePortal(PGconn *conn, const char *portal)
+{
+	return PQsendDescribe(conn, 'P', portal);
+}
+
+/*
+ * PQsendDescribe
+ *	 Common code to send a Describe command
+ *
+ * Available options for desc_type are
+ *   'S' to describe a prepared statement; or
+ *   'P' to describe a portal.
+ * Returns 1 on success and 0 on failure.
+ */
+static int
+PQsendDescribe(PGconn *conn, char desc_type, const char *desc_target)
+{
+	/* Treat null desc_target as empty string */
+	if (!desc_target)
+		desc_target = "";
+
+	if (!PQsendQueryStart(conn))
+		return 0;
+
+	/* This isn't gonna work on a 2.0 server */
+	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+		 libpq_gettext("function requires at least protocol version 3.0\n"));
+		return 0;
+	}
+
+	/* construct the Describe message */
+	if (pqPutMsgStart('D', false, conn) < 0 ||
+		pqPutc(desc_type, conn) < 0 ||
+		pqPuts(desc_target, conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/* construct the Sync message */
+	if (pqPutMsgStart('S', false, conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/* remember we are doing a Describe */
+	conn->queryclass = PGQUERY_DESCRIBE;
+
+	/* reset last-query string (not relevant now) */
+	if (conn->last_query)
+	{
+		free(conn->last_query);
+		conn->last_query = NULL;
+	}
+
+	/*
+	 * Give the data a push.  In nonblock mode, don't complain if we're unable
+	 * to send it all; PQgetResult() will do any additional flushing needed.
+	 */
+	if (pqFlush(conn) < 0)
+		goto sendFailed;
+
+	/* OK, it's launched! */
+	conn->asyncStatus = PGASYNC_BUSY;
+	return 1;
+
+sendFailed:
+	pqHandleSendFailure(conn);
+	return 0;
+}
+
+/*
  * PQnotifies
  *	  returns a PGnotify* structure of the latest async notification
  * that has not yet been handled
@@ -1984,6 +2122,22 @@ check_tuple_field_number(const PGresult *res,
 	return TRUE;
 }
 
+static int
+check_param_number(const PGresult *res, int param_num)
+{
+	if (!res)
+		return FALSE;			/* no way to display error message... */
+	if (param_num < 0 || param_num >= res->numParameters)
+	{
+		pqInternalNotice(&res->noticeHooks,
+						 "parameter number %d is out of range 0..%d",
+						 param_num, res->numParameters - 1);
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
 /*
  * returns NULL if the field_num is invalid
  */
@@ -2306,6 +2460,32 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 	else
 		return 0;
 }
+
+/* PQnparams:
+ * 	returns the number of input parameters of a prepared statement.
+ */
+int
+PQnparams(const PGresult *res)
+{
+	if (!res)
+		return 0;
+	return res->numParameters;
+}
+
+/* PQparamtype:
+ * 	returns type Oid of the specified statement parameter.
+ */
+Oid
+PQparamtype(const PGresult *res, int param_num)
+{
+	if (!check_param_number(res, param_num))
+		return InvalidOid;
+	if (res->paramDescs)
+		return res->paramDescs[param_num].typid;
+	else
+		return InvalidOid;
+}
+
 
 /* PQsetnonblocking:
  *	sets the PGconn's database connection non-blocking if the arg is TRUE

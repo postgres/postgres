@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.114 2006/08/04 18:58:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.115 2006/08/18 19:52:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,12 @@ typedef struct pgresAttDesc
 	int			atttypmod;		/* type-specific modifier info */
 } PGresAttDesc;
 
+/* Data about a single parameter of a prepared statement */
+typedef struct pgresParamDesc
+{
+	Oid			typid;			/* type id */
+} PGresParamDesc;
+
 /*
  * Data for a single attribute of a single tuple
  *
@@ -145,6 +151,8 @@ struct pg_result
 	PGresAttValue **tuples;		/* each PGresTuple is an array of
 								 * PGresAttValue's */
 	int			tupArrSize;		/* allocated size of tuples array */
+	int			numParameters;
+	PGresParamDesc *paramDescs;
 	ExecStatusType resultStatus;
 	char		cmdStatus[CMDSTATUS_LEN];		/* cmd status from the query */
 	int			binary;			/* binary tuple values if binary == 1,
@@ -193,7 +201,8 @@ typedef enum
 {
 	PGQUERY_SIMPLE,				/* simple Query protocol (PQexec) */
 	PGQUERY_EXTENDED,			/* full Extended protocol (PQexecParams) */
-	PGQUERY_PREPARE				/* Parse only (PQprepare) */
+	PGQUERY_PREPARE,			/* Parse only (PQprepare) */
+	PGQUERY_DESCRIBE			/* Describe Statement or Portal */
 } PGQueryClass;
 
 /* PGSetenvStatusType defines the state of the PQSetenv state machine */

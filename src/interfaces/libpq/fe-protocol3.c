@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.26 2006/03/14 22:48:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.27 2006/08/18 19:52:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 
 static void handleSyncLoss(PGconn *conn, char id, int msgLength);
 static int	getRowDescriptions(PGconn *conn);
+static int	getParamDescriptions(PGconn *conn);
 static int	getAnotherTuple(PGconn *conn, int msgLength);
 static int	getParameterStatus(PGconn *conn);
 static int	getNotify(PGconn *conn);
@@ -263,11 +264,18 @@ pqParseInput3(PGconn *conn)
 						return;
 					break;
 				case 'T':		/* Row Description */
-					if (conn->result == NULL)
+					if (conn->result == NULL ||
+						conn->queryclass == PGQUERY_DESCRIBE)
 					{
 						/* First 'T' in a query sequence */
 						if (getRowDescriptions(conn))
 							return;
+						/*
+						 * If we're doing a Describe, we're ready to pass
+						 * the result back to the client.
+						 */
+						if (conn->queryclass == PGQUERY_DESCRIBE)
+							conn->asyncStatus = PGASYNC_READY;
 					}
 					else
 					{
@@ -293,6 +301,16 @@ pqParseInput3(PGconn *conn)
 					if (conn->result == NULL)
 						conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_COMMAND_OK);
+					/*
+					 * If we're doing a Describe, we're ready to pass
+					 * the result back to the client.
+					 */
+					if (conn->queryclass == PGQUERY_DESCRIBE)
+						conn->asyncStatus = PGASYNC_READY;
+					break;
+				case 't':		/* Parameter Description */
+					if (getParamDescriptions(conn))
+						return;
 					break;
 				case 'D':		/* Data Row */
 					if (conn->result != NULL &&
@@ -409,7 +427,8 @@ handleSyncLoss(PGconn *conn, char id, int msgLength)
 
 /*
  * parseInput subroutine to read a 'T' (row descriptions) message.
- * We build a PGresult structure containing the attribute data.
+ * We'll build a new PGresult structure (unless called for a Describe
+ * command for a prepared statement) containing the attribute data.
  * Returns: 0 if completed message, EOF if not enough data yet.
  *
  * Note that if we run out of data, we have to release the partially
@@ -423,12 +442,25 @@ getRowDescriptions(PGconn *conn)
 	int			nfields;
 	int			i;
 
-	result = PQmakeEmptyPGresult(conn, PGRES_TUPLES_OK);
+	/*
+	 * When doing Describe for a prepared statement, there'll already be
+	 * a PGresult created by getParamDescriptions, and we should fill
+	 * data into that.  Otherwise, create a new, empty PGresult.
+	 */
+	if (conn->queryclass == PGQUERY_DESCRIBE)
+	{
+		if (conn->result)
+			result = conn->result;
+		else
+			result = PQmakeEmptyPGresult(conn, PGRES_COMMAND_OK);
+	}
+	else
+		result = PQmakeEmptyPGresult(conn, PGRES_TUPLES_OK);
 	if (!result)
 		goto failure;
 
 	/* parseInput already read the 'T' label and message length. */
-	/* the next two bytes are the number of fields	*/
+	/* the next two bytes are the number of fields */
 	if (pqGetInt(&(result->numAttributes), 2, conn))
 		goto failure;
 	nfields = result->numAttributes;
@@ -488,6 +520,71 @@ getRowDescriptions(PGconn *conn)
 
 		if (format != 1)
 			result->binary = 0;
+	}
+
+	/* Success! */
+	conn->result = result;
+	return 0;
+
+failure:
+	/*
+	 * Discard incomplete result, unless it's from getParamDescriptions.
+	 *
+	 * Note that if we hit a bufferload boundary while handling the
+	 * describe-statement case, we'll forget any PGresult space we just
+	 * allocated, and then reallocate it on next try.  This will bloat
+	 * the PGresult a little bit but the space will be freed at PQclear,
+	 * so it doesn't seem worth trying to be smarter.
+	 */
+	if (result != conn->result)
+		PQclear(result);
+	return EOF;
+}
+
+/*
+ * parseInput subroutine to read a 't' (ParameterDescription) message.
+ * We'll build a new PGresult structure containing the parameter data.
+ * Returns: 0 if completed message, EOF if not enough data yet.
+ *
+ * Note that if we run out of data, we have to release the partially
+ * constructed PGresult, and rebuild it again next time.  Fortunately,
+ * that shouldn't happen often, since 't' messages usually fit in a packet.
+ */
+static int
+getParamDescriptions(PGconn *conn)
+{
+	PGresult	*result;
+	int			 nparams;
+	int			 i;
+	
+	result = PQmakeEmptyPGresult(conn, PGRES_COMMAND_OK);
+	if (!result)
+		goto failure;
+
+	/* parseInput already read the 't' label and message length. */
+	/* the next two bytes are the number of parameters */
+	if (pqGetInt(&(result->numParameters), 2, conn))
+		goto failure;
+	nparams = result->numParameters;
+
+	/* allocate space for the parameter descriptors */
+	if (nparams > 0)
+	{
+		result->paramDescs = (PGresParamDesc *)
+			pqResultAlloc(result, nparams * sizeof(PGresParamDesc), TRUE);
+		if (!result->paramDescs)
+			goto failure;
+		MemSet(result->paramDescs, 0, nparams * sizeof(PGresParamDesc));
+	}
+
+	/* get parameter info */
+	for (i = 0; i < nparams; i++)
+	{
+		int		typid;
+		
+		if (pqGetInt(&typid, 4, conn))
+			goto failure;
+		result->paramDescs[i].typid = typid;
 	}
 
 	/* Success! */

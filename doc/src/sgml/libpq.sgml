@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.214 2006/07/27 13:20:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.215 2006/08/18 19:52:39 tgl Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -1244,7 +1244,8 @@ or any particular element in the array is zero, the server assigns a data type
 to the parameter symbol in the same way it would do for an untyped literal
 string.  Also, the query may use parameter symbols with numbers higher than
 <parameter>nParams</>; data types will be inferred for these symbols as
-well.
+well.  (See <function>PQdescribePrepared</function> for a means to find out
+what data types were inferred.)
 </para>
 
 <para>
@@ -1254,13 +1255,6 @@ success or failure.  A null result indicates out-of-memory or inability to
 send the command at all.
 Use <function>PQerrorMessage</function> to get more information
 about such errors.
-</para>
-
-<para>
-At present, there is no way to determine the actual data type inferred for
-any parameters whose types are not specified in <parameter>paramTypes[]</>.
-This is a <application>libpq</> omission that will probably be rectified
-in a future release.
 </para>
 </listitem>
 </varlistentry>
@@ -1312,6 +1306,72 @@ The parameters are identical to <function>PQexecParams</>, except that the
 name of a prepared statement is given instead of a query string, and the
 <parameter>paramTypes[]</> parameter is not present (it is not needed since
 the prepared statement's parameter types were determined when it was created).
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQdescribePrepared</function><indexterm><primary>PQdescribePrepared</></></term>
+<listitem>
+<para>
+          Submits a request to obtain information about the specified
+          prepared statement, and waits for completion.
+<synopsis>
+PGresult *PQdescribePrepared(PGconn *conn, const char *stmtName);
+</synopsis>
+</para>
+
+<para>
+<function>PQdescribePrepared</> allows an application to obtain information
+about a previously prepared statement.
+<function>PQdescribePrepared</> is supported only in protocol 3.0 and later
+connections; it will fail when using protocol 2.0.
+</para>
+
+<para>
+<parameter>stmtName</> may be <literal>""</> or NULL to reference the unnamed
+statement, otherwise it must be the name of an existing prepared statement.
+On success, a <structname>PGresult</> with status
+<literal>PGRES_COMMAND_OK</literal> is returned.  The functions
+<function>PQnparams</function> and <function>PQparamtype</function>
+may be applied to this <structname>PGresult</> to obtain information
+about the parameters of the prepared statement, and the functions
+<function>PQnfields</function>, <function>PQfname</function>,
+<function>PQftype</function>, etc provide information about the result
+columns (if any) of the statement.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQdescribePortal</function><indexterm><primary>PQdescribePortal</></></term>
+<listitem>
+<para>
+          Submits a request to obtain information about the specified
+          portal, and waits for completion.
+<synopsis>
+PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
+</synopsis>
+</para>
+
+<para>
+<function>PQdescribePortal</> allows an application to obtain information
+about a previously created portal.  (<application>libpq</> does not provide
+any direct access to portals, but you can use this function to inspect the
+properties of a cursor created with a <command>DECLARE CURSOR</> SQL command.)
+<function>PQdescribePortal</> is supported only in protocol 3.0 and later
+connections; it will fail when using protocol 2.0.
+</para>
+
+<para>
+<parameter>portalName</> may be <literal>""</> or NULL to reference the unnamed
+portal, otherwise it must be the name of an existing portal.
+On success, a <structname>PGresult</> with status
+<literal>PGRES_COMMAND_OK</literal> is returned.  The functions
+<function>PQnfields</function>, <function>PQfname</function>,
+<function>PQftype</function>, etc may be applied to the
+<structname>PGresult</> to obtain information about the result
+columns (if any) of the portal.
 </para>
 </listitem>
 </varlistentry>
@@ -1707,8 +1767,11 @@ object, just as with a <structname>PGresult</structname> returned by
 These functions are used to extract information from a
 <structname>PGresult</structname> object that represents a successful
 query result (that is, one that has status
-<literal>PGRES_TUPLES_OK</literal>).  For objects with other status
-values they will act as though the result has zero rows and zero columns.
+<literal>PGRES_TUPLES_OK</literal>).  They can also be used to extract
+information from a successful Describe operation: a Describe's result
+has all the same column information that actual execution of the query
+would provide, but it has zero rows.  For objects with other status values,
+these functions will act as though the result has zero rows and zero columns.
 </para>
 
 <variablelist>
@@ -2036,6 +2099,43 @@ size of the object pointed to by <function>PQgetvalue</function>.  For text
 data format this is the same as <function>strlen()</>.  For binary format
 this is essential information.  Note that one should <emphasis>not</> rely
 on <function>PQfsize</function> to obtain the actual data length.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQnparams</function><indexterm><primary>PQnparams</></></term>
+<listitem>
+<para>
+          Returns the number of parameters of a prepared statement.
+<synopsis>
+int PQnparams(const PGresult *res);
+</synopsis>
+</para>
+
+<para>
+This function is only useful when inspecting the result of
+<function>PQdescribePrepared</>.  For other types of queries it will
+return zero.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQparamtype</function><indexterm><primary>PQparamtype</></></term>
+<listitem>
+<para>
+          Returns the data type of the indicated statement parameter.
+          Parameter numbers start at 0.
+<synopsis>
+Oid PQparamtype(const PGresult *res, int param_number);
+</synopsis>
+</para>
+
+<para>
+This function is only useful when inspecting the result of
+<function>PQdescribePrepared</>.  For other types of queries it will
+return zero.
 </para>
 </listitem>
 </varlistentry>
@@ -2486,13 +2586,17 @@ underlying functions that <function>PQexec</function> is built from:
 <function>PQsendQuery</function> and <function>PQgetResult</function>.
 There are also
 <function>PQsendQueryParams</function>,
-<function>PQsendPrepare</function>, and
+<function>PQsendPrepare</function>,
 <function>PQsendQueryPrepared</function>,
+<function>PQsendDescribePrepared</function>, and
+<function>PQsendDescribePortal</function>,
 which can be used with <function>PQgetResult</function> to duplicate the
 functionality of
 <function>PQexecParams</function>,
-<function>PQprepare</function>, and
-<function>PQexecPrepared</function>
+<function>PQprepare</function>,
+<function>PQexecPrepared</function>,
+<function>PQdescribePrepared</function>, and
+<function>PQdescribePortal</function>
 respectively.
 
 <variablelist>
@@ -2593,6 +2697,50 @@ int PQsendQueryPrepared(PGconn *conn,
         The function's parameters are handled identically to
         <function>PQexecPrepared</function>.  Like
         <function>PQexecPrepared</function>, it will not work on 2.0-protocol
+        connections.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQsendDescribePrepared</><indexterm><primary>PQsendDescribePrepared</></></term>
+<listitem>
+<para>
+        Submits a request to obtain information about the specified
+        prepared statement, without waiting for completion.
+<synopsis>
+int PQsendDescribePrepared(PGconn *conn, const char *stmtName);
+</synopsis>
+
+        This is an asynchronous version of <function>PQdescribePrepared</>: it
+        returns 1 if it was able to dispatch the request, and 0 if not.
+        After a successful call, call <function>PQgetResult</function>
+        to obtain the results.
+        The function's parameters are handled identically to
+        <function>PQdescribePrepared</function>.  Like
+        <function>PQdescribePrepared</function>, it will not work on 2.0-protocol
+        connections.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term><function>PQsendDescribePortal</><indexterm><primary>PQsendDescribePortal</></></term>
+<listitem>
+<para>
+        Submits a request to obtain information about the specified
+        portal, without waiting for completion.
+<synopsis>
+int PQsendDescribePortal(PGconn *conn, const char *portalName);
+</synopsis>
+
+        This is an asynchronous version of <function>PQdescribePortal</>: it
+        returns 1 if it was able to dispatch the request, and 0 if not.
+        After a successful call, call <function>PQgetResult</function>
+        to obtain the results.
+        The function's parameters are handled identically to
+        <function>PQdescribePortal</function>.  Like
+        <function>PQdescribePortal</function>, it will not work on 2.0-protocol
         connections.
 </para>
 </listitem>

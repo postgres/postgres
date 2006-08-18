@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.131 2006/07/04 13:22:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.132 2006/08/18 19:52:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,6 +406,14 @@ extern char *PQcmdTuples(PGresult *res);
 extern char *PQgetvalue(const PGresult *res, int tup_num, int field_num);
 extern int	PQgetlength(const PGresult *res, int tup_num, int field_num);
 extern int	PQgetisnull(const PGresult *res, int tup_num, int field_num);
+extern int	PQnparams(const PGresult *res);
+extern Oid	PQparamtype(const PGresult *res, int param_num);
+
+/* Describe prepared statements and portals */
+extern PGresult	*PQdescribePrepared(PGconn *conn, const char *stmt);
+extern PGresult	*PQdescribePortal(PGconn *conn, const char *portal);
+extern int	PQsendDescribePrepared(PGconn *conn, const char *stmt);
+extern int	PQsendDescribePortal(PGconn *conn, const char *portal);
 
 /* Delete a PGresult */
 extern void PQclear(PGresult *res);
