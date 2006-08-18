@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.3 2006/06/26 14:12:42 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.311.2.4 2006/08/18 16:00:06 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4495,7 +4495,11 @@ connection_target: database_name opt_server opt_port
 			if (strlen($2) > 0 && *($2) != '@')
 				mmerror(PARSE_ERROR, ET_ERROR, "Expected '@', found '%s'", $2);
 
-			$$ = make3_str(make_str("\""), make3_str($1, $2, $3), make_str("\""));
+			/* C strings need to be handled differently */
+                        if ($1[0] == '\"')
+				$$ = $1;
+			else
+				$$ = make3_str(make_str("\""), make3_str($1, $2, $3), make_str("\""));
 		}
 		|  db_prefix ':' server opt_port '/' database_name opt_options
 		{
@@ -4512,13 +4516,6 @@ connection_target: database_name opt_server opt_port
 				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
 
 			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
-		}
-		| Sconst
-		{
-			if ($1[0] == '\"')
-				$$ = $1;
-			else
-				$$ = make3_str(make_str("\""), $1, make_str("\""));
 		}
 		| char_variable
 		{
