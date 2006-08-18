@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.218 2006/07/31 20:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.219 2006/08/18 16:09:08 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -53,6 +53,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
+#include "utils/syscache.h"
 
 
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
@@ -702,14 +703,56 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 }
 
 /* ----------------
- *		conditional_relation_open - open with option not to wait
+ *		try_relation_open - open any relation by relation OID
  *
- *		As above, but if nowait is true, then throw an error rather than
- *		waiting when the lock is not immediately obtainable.
+ *		Same as relation_open, except return NULL instead of failing
+ *		if the relation does not exist.
  * ----------------
  */
 Relation
-conditional_relation_open(Oid relationId, LOCKMODE lockmode, bool nowait)
+try_relation_open(Oid relationId, LOCKMODE lockmode)
+{
+	Relation	r;
+
+	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
+
+	/* Get the lock first */
+	if (lockmode != NoLock)
+		LockRelationOid(relationId, lockmode);
+
+	/*
+	 * Now that we have the lock, probe to see if the relation really
+	 * exists or not.
+	 */
+	if (!SearchSysCacheExists(RELOID,
+							  ObjectIdGetDatum(relationId),
+							  0, 0, 0))
+	{
+		/* Release useless lock */
+		if (lockmode != NoLock)
+			UnlockRelationOid(relationId, lockmode);
+
+		return NULL;
+	}
+
+	/* Should be safe to do a relcache load */
+	r = RelationIdGetRelation(relationId);
+
+	if (!RelationIsValid(r))
+		elog(ERROR, "could not open relation with OID %u", relationId);
+
+	return r;
+}
+
+/* ----------------
+ *		relation_open_nowait - open but don't wait for lock
+ *
+ *		Same as relation_open, except throw an error instead of waiting
+ *		when the requested lock is not immediately obtainable.
+ * ----------------
+ */
+Relation
+relation_open_nowait(Oid relationId, LOCKMODE lockmode)
 {
 	Relation	r;
 
@@ -718,27 +761,22 @@ conditional_relation_open(Oid relationId, LOCKMODE lockmode, bool nowait)
 	/* Get the lock before trying to open the relcache entry */
 	if (lockmode != NoLock)
 	{
-		if (nowait)
+		if (!ConditionalLockRelationOid(relationId, lockmode))
 		{
-			if (!ConditionalLockRelationOid(relationId, lockmode))
-			{
-				/* try to throw error by name; relation could be deleted... */
-				char   *relname = get_rel_name(relationId);
+			/* try to throw error by name; relation could be deleted... */
+			char   *relname = get_rel_name(relationId);
 
-				if (relname)
-					ereport(ERROR,
-							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-							 errmsg("could not obtain lock on relation \"%s\"",
-									relname)));
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-							 errmsg("could not obtain lock on relation with OID %u",
-									relationId)));
-			}
+			if (relname)
+				ereport(ERROR,
+						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+						 errmsg("could not obtain lock on relation \"%s\"",
+								relname)));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+						 errmsg("could not obtain lock on relation with OID %u",
+								relationId)));
 		}
-		else
-			LockRelationOid(relationId, lockmode);
 	}
 
 	/* The relcache does all the real work... */
@@ -753,7 +791,7 @@ conditional_relation_open(Oid relationId, LOCKMODE lockmode, bool nowait)
 /* ----------------
  *		relation_openrv - open any relation specified by a RangeVar
  *
- *		As above, but the relation is specified by a RangeVar.
+ *		Same as relation_open, but the relation is specified by a RangeVar.
  * ----------------
  */
 Relation

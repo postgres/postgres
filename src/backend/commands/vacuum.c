@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.337 2006/07/31 20:09:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.338 2006/08/18 16:09:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1042,29 +1042,10 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	}
 
 	/*
-	 * Tell the cache replacement strategy that vacuum is causing all
-	 * following IO
-	 */
-	StrategyHintVacuum(true);
-
-	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
 	 * transaction, so xact.c doesn't issue useless WARNING.
 	 */
 	CHECK_FOR_INTERRUPTS();
-
-	/*
-	 * Race condition -- if the pg_class tuple has gone away since the last
-	 * time we saw it, we don't need to vacuum it.
-	 */
-	if (!SearchSysCacheExists(RELOID,
-							  ObjectIdGetDatum(relid),
-							  0, 0, 0))
-	{
-		StrategyHintVacuum(false);
-		CommitTransactionCommand();
-		return;
-	}
 
 	/*
 	 * Determine the type of lock we want --- hard exclusive lock for a FULL
@@ -1074,7 +1055,21 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	lmode = vacstmt->full ? AccessExclusiveLock : ShareUpdateExclusiveLock;
 
 	/*
-	 * Open the class, get an appropriate lock on it, and check permissions.
+	 * Open the relation and get the appropriate lock on it.
+	 *
+	 * There's a race condition here: the rel may have gone away since
+	 * the last time we saw it.  If so, we don't need to vacuum it.
+	 */
+	onerel = try_relation_open(relid, lmode);
+
+	if (!onerel)
+	{
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
+	 * Check permissions.
 	 *
 	 * We allow the user to vacuum a table if he is superuser, the table
 	 * owner, or the database owner (but in the latter case, only if it's not
@@ -1083,8 +1078,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	 * Note we choose to treat permissions failure as a WARNING and keep
 	 * trying to vacuum the rest of the DB --- is this appropriate?
 	 */
-	onerel = relation_open(relid, lmode);
-
 	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
 		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
 	{
@@ -1092,7 +1085,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 				(errmsg("skipping \"%s\" --- only table or database owner can vacuum it",
 						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
-		StrategyHintVacuum(false);
 		CommitTransactionCommand();
 		return;
 	}
@@ -1107,7 +1099,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views, or special system tables",
 						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
-		StrategyHintVacuum(false);
 		CommitTransactionCommand();
 		return;
 	}
@@ -1122,7 +1113,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
 	{
 		relation_close(onerel, lmode);
-		StrategyHintVacuum(false);
 		CommitTransactionCommand();
 		return;			/* assume no long-lived data in temp tables */
 	}
@@ -1146,6 +1136,12 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	toast_relid = onerel->rd_rel->reltoastrelid;
 
 	/*
+	 * Tell the cache replacement strategy that vacuum is causing all
+	 * following IO
+	 */
+	StrategyHintVacuum(true);
+
+	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
 	if (vacstmt->full)
@@ -1153,13 +1149,14 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	else
 		lazy_vacuum_rel(onerel, vacstmt);
 
+	StrategyHintVacuum(false);
+
 	/* all done with this class, but hold lock until commit */
 	relation_close(onerel, NoLock);
 
 	/*
 	 * Complete the transaction and free all temporary memory used.
 	 */
-	StrategyHintVacuum(false);
 	CommitTransactionCommand();
 
 	/*

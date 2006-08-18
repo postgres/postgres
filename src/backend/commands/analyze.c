@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.96 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.97 2006/08/18 16:09:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,20 +129,16 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	CHECK_FOR_INTERRUPTS();
 
 	/*
-	 * Race condition -- if the pg_class tuple has gone away since the last
-	 * time we saw it, we don't need to process it.
+	 * Open the relation, getting only a read lock on it.  If the rel has
+	 * been dropped since we last saw it, we don't need to process it.
 	 */
-	if (!SearchSysCacheExists(RELOID,
-							  ObjectIdGetDatum(relid),
-							  0, 0, 0))
+	onerel = try_relation_open(relid, AccessShareLock);
+	if (!onerel)
 		return;
 
 	/*
-	 * Open the class, getting only a read lock on it, and check permissions.
-	 * Permissions check should match vacuum's check!
+	 * Check permissions --- this should match vacuum's check!
 	 */
-	onerel = relation_open(relid, AccessShareLock);
-
 	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
 		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.86 2006/07/31 20:09:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.87 2006/08/18 16:09:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,8 +128,8 @@ ConditionalLockRelationOid(Oid relid, LOCKMODE lockmode)
 /*
  *		UnlockRelationId
  *
- * Note: we don't supply UnlockRelationOid since it's normally easy for
- * callers to provide the LockRelId info from a relcache entry.
+ * Unlock, given a LockRelId.  This is preferred over UnlockRelationOid
+ * for speed reasons.
  */
 void
 UnlockRelationId(LockRelId *relid, LOCKMODE lockmode)
@@ -137,6 +137,21 @@ UnlockRelationId(LockRelId *relid, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
+
+	LockRelease(&tag, lockmode, false);
+}
+
+/*
+ *		UnlockRelationOid
+ *
+ * Unlock, given only a relation Oid.  Use UnlockRelationId if you can.
+ */
+void
+UnlockRelationOid(Oid relid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SetLocktagRelationOid(&tag, relid);
 
 	LockRelease(&tag, lockmode, false);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.114 2006/07/03 22:45:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.115 2006/08/18 16:09:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,8 @@ typedef enum
 } LockTupleMode;
 
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
-extern Relation conditional_relation_open(Oid relationId, LOCKMODE lockmode, bool nowait);
+extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode);
+extern Relation relation_open_nowait(Oid relationId, LOCKMODE lockmode);
 extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
 extern void relation_close(Relation relation, LOCKMODE lockmode);
 

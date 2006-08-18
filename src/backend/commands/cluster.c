@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.152 2006/07/31 20:09:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.153 2006/08/18 16:09:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,6 +240,18 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	CHECK_FOR_INTERRUPTS();
 
 	/*
+	 * We grab exclusive access to the target rel and index for the duration
+	 * of the transaction.	(This is redundant for the single-transaction
+	 * case, since cluster() already did it.)  The index lock is taken inside
+	 * check_index_is_clusterable.
+	 */
+	OldHeap = try_relation_open(rvtc->tableOid, AccessExclusiveLock);
+
+	/* If the table has gone away, we can skip processing it */
+	if (!OldHeap)
+		return;
+
+	/*
 	 * Since we may open a new transaction for each relation, we have to check
 	 * that the relation still is what we think it is.
 	 *
@@ -252,20 +264,23 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 		HeapTuple	tuple;
 		Form_pg_index indexForm;
 
-		/*
-		 * Check if the relation and index still exist before opening them
-		 */
-		if (!SearchSysCacheExists(RELOID,
-								  ObjectIdGetDatum(rvtc->tableOid),
-								  0, 0, 0) ||
-			!SearchSysCacheExists(RELOID,
-								  ObjectIdGetDatum(rvtc->indexOid),
-								  0, 0, 0))
-			return;
-
 		/* Check that the user still owns the relation */
 		if (!pg_class_ownercheck(rvtc->tableOid, GetUserId()))
+		{
+			relation_close(OldHeap, AccessExclusiveLock);
 			return;
+		}
+
+		/*
+		 * Check that the index still exists
+		 */
+		if (!SearchSysCacheExists(RELOID,
+								  ObjectIdGetDatum(rvtc->indexOid),
+								  0, 0, 0))
+		{
+			relation_close(OldHeap, AccessExclusiveLock);
+			return;
+		}
 
 		/*
 		 * Check that the index is still the one with indisclustered set.
@@ -273,24 +288,20 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 		tuple = SearchSysCache(INDEXRELID,
 							   ObjectIdGetDatum(rvtc->indexOid),
 							   0, 0, 0);
-		if (!HeapTupleIsValid(tuple))
-			return;				/* could have gone away... */
+		if (!HeapTupleIsValid(tuple))		/* probably can't happen */
+		{
+			relation_close(OldHeap, AccessExclusiveLock);
+			return;
+		}
 		indexForm = (Form_pg_index) GETSTRUCT(tuple);
 		if (!indexForm->indisclustered)
 		{
 			ReleaseSysCache(tuple);
+			relation_close(OldHeap, AccessExclusiveLock);
 			return;
 		}
 		ReleaseSysCache(tuple);
 	}
-
-	/*
-	 * We grab exclusive access to the target rel and index for the duration
-	 * of the transaction.	(This is redundant for the single- transaction
-	 * case, since cluster() already did it.)  The index lock is taken inside
-	 * check_index_is_clusterable.
-	 */
-	OldHeap = heap_open(rvtc->tableOid, AccessExclusiveLock);
 
 	/* Check index is valid to cluster on */
 	check_index_is_clusterable(OldHeap, rvtc->indexOid, recheck);
