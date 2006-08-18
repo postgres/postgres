@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.43.2.7 2006/07/05 10:50:06 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.43.2.8 2006/08/18 16:33:29 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -570,19 +570,21 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 	}
 	if (**tobeinserted_p == '\0')
 	{
+		int asize = var->arrsize? var->arrsize : 1;
+
 		switch (var->type)
 		{
 				int			element;
 
 			case ECPGt_short:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 20, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%hd,", ((short *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -595,14 +597,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 
 			case ECPGt_int:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 20, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%d,", ((int *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -615,14 +617,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 
 			case ECPGt_unsigned_short:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 20, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%hu,", ((unsigned short *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -635,14 +637,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 
 			case ECPGt_unsigned_int:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 20, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%u,", ((unsigned int *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -655,14 +657,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 
 			case ECPGt_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 20, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%ld,", ((long *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -675,14 +677,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 
 			case ECPGt_unsigned_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 20, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%lu,", ((unsigned long *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -695,14 +697,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 #ifdef HAVE_LONG_LONG_INT_64
 			case ECPGt_long_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 30, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 30, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%lld,", ((long long *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -715,14 +717,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 
 			case ECPGt_unsigned_long_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 30, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 30, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%llu,", ((unsigned long long *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -735,14 +737,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 			case ECPGt_float:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 25, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 25, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((float *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
@@ -755,14 +757,14 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 				break;
 
 			case ECPGt_double:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 25, lineno)))
+				if (!(mallocedval = ECPGalloc(asize * 25, lineno)))
 					return false;
 
-				if (var->arrsize > 1)
+				if (asize > 1)
 				{
 					strcpy(mallocedval, "array [");
 
-					for (element = 0; element < var->arrsize; element++)
+					for (element = 0; element < asize; element++)
 						sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((double *) var->value)[element]);
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
