@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.148 2006/08/02 13:43:23 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.149 2006/08/18 15:59:35 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ static struct _if_value
 
 %option yylineno
 
-%s C SQL incl def def_ident undef 
+%x C SQL incl def def_ident undef 
 
 /*
  * OK, here is a short description of lex/flex rules behavior.
@@ -109,7 +109,6 @@ static struct _if_value
 %x xe
 %x xq
 %x xdolq
-%x xpre
 %x xcond
 %x xskip
 
@@ -327,7 +326,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 
 <SQL>{whitespace}	{ /* ignore */ }
 
-{xcstart}		{
+<C,SQL>{xcstart}		{
 					token_start = yytext;
 					state_before = YYSTATE;
 					xcdepth = 0;
@@ -545,7 +544,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 					   * This is not an EOL marker.
 					   */
 					  if (yytext[0] == ';' && struct_level == 0)
-						 BEGIN C;
+						 BEGIN(C);
 					  return yytext[0];
 					}
 <SQL>{operator}		{
@@ -720,12 +719,12 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						}
 					}
 <SQL>{other}		{ return yytext[0]; }
-<C>{exec_sql}		{ BEGIN SQL; return SQL_START; }
+<C>{exec_sql}		{ BEGIN(SQL); return SQL_START; }
 <C>{informix_special}	{ 
 						/* are we simulating Informix? */
 						if (INFORMIX_MODE)
 						{
-							BEGIN SQL;
+							BEGIN(SQL);
 							return SQL_START;
 						}
 						else
@@ -896,7 +895,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 
 					BEGIN(C);
 				}
-<undef>{other}  		{
+<undef>{other}|\n  		{
 		                	mmerror(PARSE_ERROR, ET_FATAL, "Missing identifier in 'EXEC SQL UNDEF' command");
 			                yyterminate();
 				}
@@ -1077,24 +1076,24 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 					}
 
 					if (stacked_if_value[preproc_tos].condition)
-						BEGIN C;
+						BEGIN(C);
 					else
 						BEGIN(xskip);
 				}
 
-<xcond>{other}	{
-			mmerror(PARSE_ERROR, ET_FATAL, "Missing identifier in 'EXEC SQL IFDEF' command");
-			yyterminate();
-		}
+<xcond>{other}|\n	{
+				mmerror(PARSE_ERROR, ET_FATAL, "Missing identifier in 'EXEC SQL IFDEF' command");
+				yyterminate();
+			}
 <def_ident>{identifier} {
 				old = mm_strdup(yytext);
 				BEGIN(def);
 				startlit();
 			}
-<def_ident>{other}	{
-			mmerror(PARSE_ERROR, ET_FATAL, "Missing identifier in 'EXEC SQL DEFINE' command");
-			yyterminate();
-		}
+<def_ident>{other}|\n	{
+				mmerror(PARSE_ERROR, ET_FATAL, "Missing identifier in 'EXEC SQL DEFINE' command");
+				yyterminate();
+			}	
 <def>{space}*";"	{
 						struct _defines *ptr, *this;
 
@@ -1124,10 +1123,10 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 <incl>\<[^\>]+\>{space}*";"?		{	parse_include(); }
 <incl>{dquote}{xdinside}{dquote}{space}*";"?	{	parse_include(); }
 <incl>[^;\<\>\"]+";"		{ parse_include(); }
-<incl>{other}	{
-			mmerror(PARSE_ERROR, ET_FATAL, "Incorrect 'EXEC SQL INCLUDE' command");
-			yyterminate();
-		}
+<incl>{other}|\n		{
+					mmerror(PARSE_ERROR, ET_FATAL, "Incorrect 'EXEC SQL INCLUDE' command");
+					yyterminate();
+				}
 
 <<EOF>>				{
 			  		if (yy_buffer == NULL)
@@ -1174,6 +1173,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						
 			  		}
 				}
+<INITIAL>{other}|\n     	{ mmerror(PARSE_ERROR, ET_FATAL, "Internal error: unreachable state, please inform pgsql-bugs@postgresql.org"); }
 %%
 void
 lex_init(void)
@@ -1194,7 +1194,7 @@ lex_init(void)
 	}
 	startlit();
 
-	BEGIN C;
+	BEGIN(C);
 }
 
 static void
@@ -1318,7 +1318,7 @@ parse_include(void)
 	yylineno = 1;
 	output_line_number();
 
-  	BEGIN C;
+  	BEGIN(C);
 }
 
 static void

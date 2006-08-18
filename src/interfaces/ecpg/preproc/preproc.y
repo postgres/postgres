@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.328 2006/08/08 11:51:24 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.329 2006/08/18 15:59:35 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -407,7 +407,7 @@ add_additional_variables(char *name, bool insert)
 	QUOTE
 
 	READ REAL REASSIGN RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
-	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNS REVOKE RIGHT
+	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNING RETURNS REVOKE RIGHT
 	ROLE ROLLBACK ROW ROWS RULE
 
 	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
@@ -497,7 +497,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	columnList DeleteStmt UpdateStmt DeclareCursorStmt
 %type  <str>	NotifyStmt columnElem UnlistenStmt TableElement
 %type  <str>	copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
-%type  <str>	FetchStmt from_in CreateOpClassStmt 
+%type  <str>	FetchStmt from_in CreateOpClassStmt returning_clause
 %type  <str>	ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
 %type  <str>	opt_full func_arg OptWith opt_freeze alter_table_cmd
 %type  <str>	analyze_keyword opt_name_list ExplainStmt index_params
@@ -3090,8 +3090,8 @@ DeallocateStmt: DEALLOCATE name		{ $$ = cat2_str(make_str("deallocate"), $2); }
  *
  *****************************************************************************/
 
-InsertStmt:  INSERT INTO qualified_name insert_rest
-			{ $$ = cat_str(3, make_str("insert into"), $3, $4); }
+InsertStmt:  INSERT INTO qualified_name insert_rest returning_clause
+			{ $$ = cat_str(4, make_str("insert into"), $3, $4, $5); }
 		;
 
 insert_rest:  
@@ -3113,6 +3113,9 @@ insert_column_item:  ColId opt_indirection
 			{ $$ = cat2_str($1, $2); }
 		;
 
+returning_clause:  RETURNING target_list	{ $$ = cat2_str(make_str("returning"), $2); }
+		| /* EMPTY */			{ $$ = EMPTY; }
+		;
 
 /*****************************************************************************
  *
@@ -3121,8 +3124,8 @@ insert_column_item:  ColId opt_indirection
  *
  *****************************************************************************/
 
-DeleteStmt:  DELETE_P FROM relation_expr_opt_alias using_clause where_clause
-			{ $$ = cat_str(4, make_str("delete from"), $3, $4, $5); }
+DeleteStmt:  DELETE_P FROM relation_expr_opt_alias using_clause where_clause returning_clause
+			{ $$ = cat_str(5, make_str("delete from"), $3, $4, $5, $6); }
 		;
 
 using_clause: USING from_list	{ cat2_str(make_str("using"), $2); }
@@ -3164,7 +3167,8 @@ UpdateStmt:  UPDATE relation_expr_opt_alias
 				SET update_target_list
 				from_clause
 				where_clause
-			{$$ = cat_str(6, make_str("update"), $2, make_str("set"), $4, $5, $6); }
+				returning_clause
+			{$$ = cat_str(7, make_str("update"), $2, make_str("set"), $4, $5, $6, $7); }
 		;
 
 
@@ -4615,8 +4619,12 @@ connection_target: database_name opt_server opt_port
 			/* old style: dbname[@server][:port] */
 			if (strlen($2) > 0 && *($2) != '@')
 				mmerror(PARSE_ERROR, ET_ERROR, "Expected '@', found '%s'", $2);
-
-			$$ = make3_str(make_str("\""), make3_str($1, $2, $3), make_str("\""));
+			
+			/* C strings need to be handled differently */
+			if ($1[0] == '\"')
+				$$ = $1;
+			else
+				$$ = make3_str(make_str("\""), make3_str($1, $2, $3), make_str("\""));
 		}
 		|  db_prefix ':' server opt_port '/' database_name opt_options
 		{
@@ -4633,13 +4641,6 @@ connection_target: database_name opt_server opt_port
 				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
 
 			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
-		}
-		| Sconst
-		{
-			if ($1[0] == '\"')
-				$$ = $1;
-			else
-				$$ = make3_str(make_str("\""), $1, make_str("\""));
 		}
 		| char_variable
 		{
@@ -6509,9 +6510,10 @@ reserved_keyword:
 		| OR				{ $$ = make_str("or"); }
 		| ORDER				{ $$ = make_str("order"); }
 		| PRIMARY			{ $$ = make_str("primary"); }
-		| REFERENCES		{ $$ = make_str("references"); }
+		| REFERENCES			{ $$ = make_str("references"); }
+		| RETURNING			{ $$ = make_str("returning"); }
 		| SELECT			{ $$ = make_str("select"); }
-		| SESSION_USER		{ $$ = make_str("session_user"); }
+		| SESSION_USER			{ $$ = make_str("session_user"); }
 		| SOME				{ $$ = make_str("some"); }
 		| SYMMETRIC			{ $$ = make_str("symmetric"); }
 		| TABLE				{ $$ = make_str("table"); }
@@ -6604,7 +6606,7 @@ cvariable:	CVARIABLE
 		}
 		;
 ident: IDENT				{ $$ = $1; }
-		| CSTRING			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+		| CSTRING		{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		;
 
 quoted_ident_stringvar: name

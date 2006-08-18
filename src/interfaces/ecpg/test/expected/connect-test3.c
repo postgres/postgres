@@ -78,7 +78,7 @@ main(void)
 #line 35 "test3.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , "second", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "second", 0); }
 #line 37 "test3.pgc"
 
 	{ ECPGdisconnect(__LINE__, "ALL");}

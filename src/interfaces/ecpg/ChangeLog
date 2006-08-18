@@ -2095,5 +2095,11 @@ Mo Aug 14 10:39:59 CEST 2006
 	- Fixed broken newline on Windows.
 	- Fixed a nasty buffer underrun that only occured when using Informix
 	  no_indicator NULL setting on timestamps and intervals.
+
+Fr 18. Aug 17:32:54 CEST 2006
+
+	- Changed lexer to no longer use the default rule.
+	- Synced parser and keyword list.
+	- Fixed parsing of CONNECT statement so it accepts a C string again.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
