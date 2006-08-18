@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Aug 18 12:26:50 EDT 2006
+   Last updated: Fri Aug 18 12:27:33 EDT 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -152,7 +152,7 @@
    time of release are listed in the installation instructions.
    
    PostgreSQL also runs natively on Microsoft Windows NT-based operating
-   systems like Win2000SP4, WinXP, and Win2003. A prepackaged installer
+   systems like Win2000 SP4, WinXP, and Win2003. A prepackaged installer
    is available at http://pgfoundry.org/projects/pginstaller. MSDOS-based
    versions of Windows (Win95, Win98, WinMe) can run PostgreSQL using
    Cygwin.
