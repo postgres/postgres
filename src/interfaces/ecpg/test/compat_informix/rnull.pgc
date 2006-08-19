@@ -1,0 +1,97 @@
+#include "sqltypes.h"
+#include <stdlib.h>
+#
+$include ../regression;
+$define NUMBER 12;
+
+static void
+test_null(int type, char *ptr)
+{
+	printf("null: %d\n", risnull(type, ptr));
+}
+
+int main(void)
+{
+	$char c[] = "abc       ";
+	$short s = 17;
+	$int i = -74874;
+	$bool b = 1;
+	$float f = 3.71;
+	$long l = 487444;
+	$double dbl = 404.404;
+	$decimal dec;
+	$date dat;
+	$timestamp tmp;
+
+	ECPGdebug(1, stderr);
+	$whenever sqlerror do sqlprint();
+
+	$connect to REGRESSDB1;
+
+	$create table test(id int, c char(10), s smallint, i int, b bool,
+					   f float, l bigint, dbl double precision,
+					   dec decimal, dat date, tmp timestamptz);
+	$commit;
+
+	$insert into test (id, c, s, i, b, f, l, dbl) values (
+		1, :c, :s, :i, :b, :f, :l, :dbl
+	);
+	$commit;
+
+	rsetnull(CCHARTYPE, (char *) c);
+	rsetnull(CSHORTTYPE, (char *) &s);
+	rsetnull(CINTTYPE, (char *) &i);
+	rsetnull(CBOOLTYPE, (char *) &b);
+	rsetnull(CFLOATTYPE, (char *) &f);
+	rsetnull(CLONGTYPE, (char *) &l);
+	rsetnull(CDOUBLETYPE, (char *) &dbl);
+	rsetnull(CDECIMALTYPE, (char *) &dec);
+	rsetnull(CDATETYPE, (char *) &dat);
+	rsetnull(CDTIMETYPE, (char *) &tmp);
+
+	$insert into test (id, c, s, i, b, f, l, dbl, dec, dat, tmp) values (
+		2, :c, :s, :i, :b, :f, :l, :dbl, :dec, :dat, :tmp
+	);
+	$commit;
+
+	printf("first select\n");
+
+	$select c, s, i, b, f, l, dbl, dec, dat, tmp
+		into :c, :s, :i, :b, :f, :l, :dbl, :dec, :dat, :tmp
+		from test where id = 1;
+
+	test_null(CCHARTYPE, (char *) c);
+	test_null(CSHORTTYPE, (char *) &s);
+	test_null(CINTTYPE, (char *) &i);
+	test_null(CBOOLTYPE, (char *) &b);
+	test_null(CFLOATTYPE, (char *) &f);
+	test_null(CLONGTYPE, (char *) &l);
+	test_null(CDOUBLETYPE, (char *) &dbl);
+	test_null(CDECIMALTYPE, (char *) &dec);
+	test_null(CDATETYPE, (char *) &dat);
+	test_null(CDTIMETYPE, (char *) &tmp);
+
+	printf("second select\n");
+
+	$select c, s, i, b, f, l, dbl, dec, dat, tmp
+		into :c, :s, :i, :b, :f, :l, :dbl, :dec, :dat, :tmp
+		from test where id = 2;
+
+	test_null(CCHARTYPE, (char *) c);
+	test_null(CSHORTTYPE, (char *) &s);
+	test_null(CINTTYPE, (char *) &i);
+	test_null(CBOOLTYPE, (char *) &b);
+	test_null(CFLOATTYPE, (char *) &f);
+	test_null(CLONGTYPE, (char *) &l);
+	test_null(CDOUBLETYPE, (char *) &dbl);
+	test_null(CDECIMALTYPE, (char *) &dec);
+	test_null(CDATETYPE, (char *) &dat);
+	test_null(CDTIMETYPE, (char *) &tmp);
+
+	$drop table test;
+	$commit;
+
+	$close database;
+
+	return 0;
+}

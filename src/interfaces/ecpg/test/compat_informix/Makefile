@@ -14,6 +14,7 @@ TESTS = test_informix test_informix.c \
         dec_test dec_test.c \
         rfmtdate rfmtdate.c \
         rfmtlong rfmtlong.c \
+        rnull rnull.c \
         charfuncs charfuncs.c
 
 all: $(TESTS)
