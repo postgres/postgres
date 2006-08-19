@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.151 2006/08/10 02:36:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.152 2006/08/19 02:48:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -871,6 +871,10 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
  * 5. We must not push down any quals that refer to subselect outputs that
  * return sets, else we'd introduce functions-returning-sets into the
  * subquery's WHERE/HAVING quals.
+ *
+ * 6. We must not push down any quals that refer to subselect outputs that
+ * contain volatile functions, for fear of introducing strange results due
+ * to multiple evaluation of a volatile function.
  */
 static bool
 qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
@@ -936,6 +940,13 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 
 		/* Refuse functions returning sets (point 5) */
 		if (expression_returns_set((Node *) tle->expr))
+		{
+			safe = false;
+			break;
+		}
+
+		/* Refuse volatile functions (point 6) */
+		if (contain_volatile_functions((Node *) tle->expr))
 		{
 			safe = false;
 			break;

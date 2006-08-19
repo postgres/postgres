@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.42 2006/08/12 20:05:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.43 2006/08/19 02:48:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,6 +654,15 @@ is_simple_subquery(Query *subquery)
 	 * queries.
 	 */
 	if (expression_returns_set((Node *) subquery->targetList))
+		return false;
+
+	/*
+	 * Don't pull up a subquery that has any volatile functions in its
+	 * targetlist.  Otherwise we might introduce multiple evaluations of
+	 * these functions, if they get copied to multiple places in the upper
+	 * query, leading to surprising results.
+	 */
+	if (contain_volatile_functions((Node *) subquery->targetList))
 		return false;
 
 	/*
