@@ -63,6 +63,8 @@ int main(void)
 	EXEC SQL connect to :dbname;
 	sql_check("main", "connect", 0);
 
+	EXEC SQL SET DateStyle TO 'DMY';
+
 	EXEC SQL create table history (customerid integer, timestamp timestamp without time zone, action_taken char(5), narrative varchar(100));
 	sql_check("main", "create", 0);
 	

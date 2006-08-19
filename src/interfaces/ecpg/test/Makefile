@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.57 2006/08/08 19:43:11 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.58 2006/08/19 13:42:40 meskes Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -61,3 +61,5 @@ check: all pg_regress.inc.sh
 checktcp: all pg_regress.inc.sh
 	sh ./pg_regress.sh  --dbname=regress1 --debug --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) --listen-on-tcp
 
+installcheck: all pg_regress.inc.sh
+	sh ./pg_regress.sh  --dbname=regress1 --debug --top-builddir=$(top_builddir) --load-language=plpgsql $(NOLOCALE)

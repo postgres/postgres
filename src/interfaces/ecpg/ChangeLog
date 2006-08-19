@@ -2103,5 +2103,9 @@ Fr 18. Aug 17:32:54 CEST 2006
 	- Synced parser and keyword list.
 	- Fixed parsing of CONNECT statement so it accepts a C string again.
 	- Fixed a buffer overrun that was masked on Linux systems.
+
+Sa 19. Aug 14:11:32 CEST 2006
+
+	- More SoC stuff.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

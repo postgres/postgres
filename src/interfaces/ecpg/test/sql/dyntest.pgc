@@ -46,6 +46,8 @@ main (int argc, char **argv)
 
   exec sql connect to REGRESSDB1;
 
+  exec sql set datestyle to german;
+
   exec sql create table dyntest (name char (14), d float8, i int,
 				 bignumber int8, b boolean, comment text,
 				 day date);

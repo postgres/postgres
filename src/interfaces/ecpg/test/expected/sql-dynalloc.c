@@ -177,101 +177,108 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 33 "dynalloc.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a serial   , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz   , g boolean   , h box   , i inet   )    ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "set datestyle to mdy", ECPGt_EOIT, ECPGt_EORT);
 #line 35 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 35 "dynalloc.pgc"
+
+
+   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a serial   , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz   , g boolean   , h box   , i inet   )    ", ECPGt_EOIT, ECPGt_EORT);
+#line 37 "dynalloc.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint (  );}
+#line 37 "dynalloc.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' )", ECPGt_EOIT, ECPGt_EORT);
-#line 36 "dynalloc.pgc"
+#line 38 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 36 "dynalloc.pgc"
+#line 38 "dynalloc.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null )", ECPGt_EOIT, ECPGt_EORT);
-#line 37 "dynalloc.pgc"
+#line 39 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 37 "dynalloc.pgc"
+#line 39 "dynalloc.pgc"
 
 
    ECPGallocate_desc(__LINE__, "mydesc");
-#line 39 "dynalloc.pgc"
+#line 41 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );
-#line 39 "dynalloc.pgc"
+#line 41 "dynalloc.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "select  a , b , c , d , e , f , g , h , i  from test    order by a", ECPGt_EOIT, 
 	ECPGt_descriptor, "mydesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 40 "dynalloc.pgc"
+#line 42 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 40 "dynalloc.pgc"
+#line 42 "dynalloc.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 1,ECPGd_indicator,
 	ECPGt_int,&(i1),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_int,&(d1),(long)1,(long)0,sizeof(int), ECPGd_EODT);
 
-#line 41 "dynalloc.pgc"
+#line 43 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 41 "dynalloc.pgc"
+#line 43 "dynalloc.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 2,ECPGd_indicator,
 	ECPGt_int,&(i2),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_double,&(d2),(long)1,(long)0,sizeof(double), ECPGd_EODT);
 
-#line 42 "dynalloc.pgc"
+#line 44 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 42 "dynalloc.pgc"
+#line 44 "dynalloc.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 3,ECPGd_indicator,
 	ECPGt_int,&(i3),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_char,&(d3),(long)0,(long)0,(1)*sizeof(char), ECPGd_EODT);
 
-#line 43 "dynalloc.pgc"
+#line 45 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 43 "dynalloc.pgc"
+#line 45 "dynalloc.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 4,ECPGd_indicator,
 	ECPGt_int,&(i4),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_char,&(d4),(long)0,(long)0,(1)*sizeof(char), ECPGd_EODT);
 
-#line 44 "dynalloc.pgc"
+#line 46 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 44 "dynalloc.pgc"
+#line 46 "dynalloc.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 5,ECPGd_indicator,
 	ECPGt_int,&(i5),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_char,&(d5),(long)0,(long)0,(1)*sizeof(char), ECPGd_EODT);
 
-#line 45 "dynalloc.pgc"
+#line 47 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 45 "dynalloc.pgc"
+#line 47 "dynalloc.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 6,ECPGd_indicator,
 	ECPGt_int,&(i6),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_char,&(d6),(long)0,(long)0,(1)*sizeof(char), ECPGd_EODT);
 
-#line 46 "dynalloc.pgc"
+#line 48 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 46 "dynalloc.pgc"
+#line 48 "dynalloc.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 7,ECPGd_indicator,
 	ECPGt_int,&(i7),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_char,&(d7),(long)0,(long)0,(1)*sizeof(char), ECPGd_EODT);
 
-#line 47 "dynalloc.pgc"
+#line 49 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 47 "dynalloc.pgc"
+#line 49 "dynalloc.pgc"
 
    /* skip box for now */
    /* exec sql get descriptor mydesc value 8 :d8=DATA, :i8=INDICATOR; */
@@ -279,10 +286,10 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	ECPGt_int,&(i9),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_char,&(d9),(long)0,(long)0,(1)*sizeof(char), ECPGd_EODT);
 
-#line 50 "dynalloc.pgc"
+#line 52 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 50 "dynalloc.pgc"
+#line 52 "dynalloc.pgc"
 
 
    printf("Result:\n");
@@ -318,16 +325,16 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
    printf("\n");
 
    ECPGdeallocate_desc(__LINE__, "mydesc");
-#line 84 "dynalloc.pgc"
+#line 86 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );
-#line 84 "dynalloc.pgc"
+#line 86 "dynalloc.pgc"
 
    { ECPGdisconnect(__LINE__, "CURRENT");
-#line 85 "dynalloc.pgc"
+#line 87 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 85 "dynalloc.pgc"
+#line 87 "dynalloc.pgc"
 
    return 0;
 }

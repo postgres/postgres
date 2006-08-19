@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.5 2006/08/08 11:51:24 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.6 2006/08/19 13:42:40 meskes Exp $
 
 me=`basename $0`
 
@@ -33,6 +33,7 @@ trap 'sig_trap $?' 1 2 13 15
 if [ x"$temp_install" != x"" ]
 then
 	do_temp_install
+	PGPORT=$temp_port; export PGPORT
 else # not temp-install
 	dont_temp_install
 fi
@@ -45,10 +46,9 @@ fi
 setup_client_environment_variables
 
 # set up the dbs we use for ecpg regression tests
-#"$bindir/createdb" $encoding_opt $psql_options --template template0 regress1
-#"$bindir/createdb" $encoding_opt $psql_options --template template0 connectdb
-#database_cleanup
-create_database $dbname
+drop_database "$dbname"
+create_database "$dbname"
+drop_database connectdb
 create_database connectdb
 
 # ----------
@@ -83,10 +83,9 @@ fi
 
 # this variable prevents that the PID gets included in the logfiles
 ECPG_REGRESSION=1; export ECPG_REGRESSION
-PGPORT=$temp_port; export PGPORT
 LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
 
-DIFFFLAGS="$DIFFFLAGS -C3"
+DIFFPRETTYFLAGS="$DIFFFLAGS -C3"
 FAILNUM=""
 
 rm -f regression.diffs
@@ -136,9 +135,23 @@ for i in \
 	fi
 
 	DIFFER=""
-	diff $DIFFFLAGS expected/$outprg.stderr "$outfile_stderr" >> regression.diffs 2>&1 || DIFFER="$DIFFER, log"
-	diff $DIFFFLAGS expected/$outprg.stdout "$outfile_stdout" >> regression.diffs 2>&1 || DIFFER="$DIFFER, output"
-	diff $DIFFFLAGS expected/$outprg.c "$outputdir"/$outprg.c >> regression.diffs 2>&1 || DIFFER="$DIFFER, source"
+	diff $DIFFFLAGS expected/$outprg.stderr "$outfile_stderr" > /dev/null 2>&1
+	if [ $? != 0 ]; then
+		DIFFER="$DIFFER, log"
+		diff $DIFFPRETTYFLAGS expected/$outprg.stderr "$outfile_stderr" >> regression.diffs 2>&1
+	fi
+
+	diff $DIFFFLAGS expected/$outprg.stdout "$outfile_stdout" > /dev/null 2>&1
+	if [ $? != 0 ]; then
+		DIFFER="$DIFFER, output"
+		diff $DIFFPRETTYFLAGS expected/$outprg.stdout "$outfile_stdout" >> regression.diffs 2>&1
+	fi
+
+	diff $DIFFFLAGS expected/$outprg.c "$outputdir"/$outprg.c > /dev/null 2>&1
+	if [ $? != 0 ]; then
+		DIFFER="$DIFFER, source"
+		diff $DIFFPRETTYFLAGS expected/$outprg.c "$outputdir"/$outprg.c >> regression.diffs 2>&1
+	fi
 
 	DIFFER=`echo $DIFFER | sed -e 's/^, //'`
 	if [ "x$DIFFER" = "x" ]; then
@@ -149,10 +162,6 @@ for i in \
 		FAILNUM=x$FAILNUM
 	fi
 done
-
-if [ "x$FAILNUM" = x"" ]; then
-	rm regression.diffs
-fi
 
 postmaster_shutdown
 

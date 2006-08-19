@@ -2,27 +2,31 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 49: QUERY: create  table dyntest ( name char  ( 14 )    , d float8   , i int   , bignumber int8   , b boolean   , comment text   , day date   )     on connection regress1
+[NO_PID]: ECPGexecute line 49: QUERY: set datestyle to german on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 49 Ok: CREATE TABLE
+[NO_PID]: ECPGexecute line 49 Ok: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 52: QUERY: insert into dyntest values( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ) on connection regress1
+[NO_PID]: ECPGexecute line 51: QUERY: create  table dyntest ( name char  ( 14 )    , d float8   , i int   , bignumber int8   , b boolean   , comment text   , day date   )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 52 Ok: INSERT 0 1
+[NO_PID]: ECPGexecute line 51 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: QUERY: insert into dyntest values( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ) on connection regress1
+[NO_PID]: ECPGexecute line 54: QUERY: insert into dyntest values( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53 Ok: INSERT 0 1
+[NO_PID]: ECPGexecute line 54 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGprepare line 55: QUERY: select * from dyntest
+[NO_PID]: ECPGexecute line 55: QUERY: insert into dyntest values( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ) on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 58: QUERY: declare MYCURS  cursor  for select * from dyntest on connection regress1
+[NO_PID]: ECPGexecute line 55 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 58 Ok: DECLARE CURSOR
+[NO_PID]: ECPGprepare line 57: QUERY: select * from dyntest
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 62: QUERY: fetch in MYCURS on connection regress1
+[NO_PID]: ECPGexecute line 60: QUERY: declare MYCURS  cursor  for select * from dyntest on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 62: Correctly got 1 tuples with 7 fields
+[NO_PID]: ECPGexecute line 60 Ok: DECLARE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 64: QUERY: fetch in MYCURS on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 64: Correctly got 1 tuples with 7 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute putting result (1 tuples) into descriptor 'MYDESC'
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -48,7 +52,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 184: RESULT: first entry    offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 186: RESULT: first entry    offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -70,7 +74,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 173: RESULT: 14.7 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: 14.7 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -92,7 +96,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 169: RESULT: 14 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 171: RESULT: 14 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -114,7 +118,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 188: RESULT: 123045607890 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 190: RESULT: 123045607890 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -136,7 +140,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 164: RESULT: t offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 166: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -158,7 +162,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 184: RESULT: The world's most advanced open source database. offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 186: RESULT: The world's most advanced open source database. offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 7
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -186,11 +190,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: TYPE = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 177: RESULT: 07-14-1987 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 179: RESULT: 14.07.1987 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 62: QUERY: fetch in MYCURS on connection regress1
+[NO_PID]: ECPGexecute line 64: QUERY: fetch in MYCURS on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 62: Correctly got 1 tuples with 7 fields
+[NO_PID]: ECPGexecute line 64: Correctly got 1 tuples with 7 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute putting result (1 tuples) into descriptor 'MYDESC'
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -216,7 +220,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 184: RESULT: second entry   offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 186: RESULT: second entry   offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -238,7 +242,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 173: RESULT: 1407.87 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 175: RESULT: 1407.87 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -260,7 +264,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 169: RESULT: 1407 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 171: RESULT: 1407 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -282,7 +286,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 4
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 188: RESULT: 987065403210 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 190: RESULT: 987065403210 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -304,7 +308,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 5
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 164: RESULT: f offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 166: RESULT: f offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -326,7 +330,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 6
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 184: RESULT: The elephant never forgets. offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 186: RESULT: The elephant never forgets. offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: reading items for tuple 7
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -354,15 +358,15 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_desc: TYPE = 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 177: RESULT: 11-05-1999 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 179: RESULT: 05.11.1999 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 62: QUERY: fetch in MYCURS on connection regress1
+[NO_PID]: ECPGexecute line 64: QUERY: fetch in MYCURS on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 62: Correctly got 0 tuples with 7 fields
+[NO_PID]: ECPGexecute line 64: Correctly got 0 tuples with 7 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 62, 'No data found in line 62.'.
+[NO_PID]: raising sqlcode 100 in line 64, 'No data found in line 64.'.
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGexecute line 195: QUERY: close MYCURS on connection regress1
+[NO_PID]: ECPGexecute line 197: QUERY: close MYCURS on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 195 Ok: CLOSE CURSOR
+[NO_PID]: ECPGexecute line 197 Ok: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000

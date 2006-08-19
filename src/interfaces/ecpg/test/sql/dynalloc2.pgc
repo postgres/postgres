@@ -19,6 +19,8 @@ int main(void)
    exec sql whenever sqlerror do sqlprint();
    exec sql connect to REGRESSDB1;
 
+   exec sql set datestyle to postgres;
+
    exec sql create table test (a int, b text);
    exec sql insert into test values (1, 'one');
    exec sql insert into test values (2, 'two');

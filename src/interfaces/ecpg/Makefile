@@ -18,5 +18,5 @@ clean distclean maintainer-clean:
 	-$(MAKE) -C preproc $@
 	-$(MAKE) -C test clean
 
-check checktcp: all
+check checktcp installcheck: all
 	$(MAKE) -C test $@

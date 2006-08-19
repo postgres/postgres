@@ -454,10 +454,6 @@ dont_temp_install(){
             echo "(using postmaster on Unix socket, $port_info)"
         fi
     fi
-
-    message "dropping database \"$dbname\""
-    "$bindir/dropdb" $psql_options "$dbname"
-    # errors can be ignored
 }
 
 setup_client_environment_variables(){
@@ -525,6 +521,11 @@ setup_database(){
 		fi
 	    done
 	fi
+}
+
+drop_database(){
+	message "dropping database \"$1\""
+	"$bindir/dropdb" $psql_options "$1"
 }
 
 create_database(){

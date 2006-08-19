@@ -131,87 +131,94 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 20 "dynalloc2.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text   )    ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "set datestyle to postgres", ECPGt_EOIT, ECPGt_EORT);
 #line 22 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 22 "dynalloc2.pgc"
+
+
+   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text   )    ", ECPGt_EOIT, ECPGt_EORT);
+#line 24 "dynalloc2.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint (  );}
+#line 24 "dynalloc2.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 1 , 'one' )", ECPGt_EOIT, ECPGt_EORT);
-#line 23 "dynalloc2.pgc"
+#line 25 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 23 "dynalloc2.pgc"
+#line 25 "dynalloc2.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 2 , 'two' )", ECPGt_EOIT, ECPGt_EORT);
-#line 24 "dynalloc2.pgc"
+#line 26 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 24 "dynalloc2.pgc"
+#line 26 "dynalloc2.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , 'three' )", ECPGt_EOIT, ECPGt_EORT);
-#line 25 "dynalloc2.pgc"
+#line 27 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 25 "dynalloc2.pgc"
+#line 27 "dynalloc2.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 4 , 'four' )", ECPGt_EOIT, ECPGt_EORT);
-#line 26 "dynalloc2.pgc"
+#line 28 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 26 "dynalloc2.pgc"
+#line 28 "dynalloc2.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 5 , null )", ECPGt_EOIT, ECPGt_EORT);
-#line 27 "dynalloc2.pgc"
+#line 29 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 27 "dynalloc2.pgc"
+#line 29 "dynalloc2.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , null )", ECPGt_EOIT, ECPGt_EORT);
-#line 28 "dynalloc2.pgc"
+#line 30 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 28 "dynalloc2.pgc"
+#line 30 "dynalloc2.pgc"
 
 
    ECPGallocate_desc(__LINE__, "mydesc");
-#line 30 "dynalloc2.pgc"
+#line 32 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );
-#line 30 "dynalloc2.pgc"
+#line 32 "dynalloc2.pgc"
 
    { ECPGdo(__LINE__, 0, 1, NULL, "select  *  from test   ", ECPGt_EOIT, 
 	ECPGt_descriptor, "mydesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 31 "dynalloc2.pgc"
+#line 33 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 31 "dynalloc2.pgc"
+#line 33 "dynalloc2.pgc"
 
    { ECPGget_desc_header(__LINE__, "mydesc", &(colnum));
 
-#line 32 "dynalloc2.pgc"
+#line 34 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 32 "dynalloc2.pgc"
+#line 34 "dynalloc2.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 1,ECPGd_indicator,
 	ECPGt_int,&(ipointer1),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_int,&(ip1),(long)1,(long)0,sizeof(int), ECPGd_EODT);
 
-#line 33 "dynalloc2.pgc"
+#line 35 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 33 "dynalloc2.pgc"
+#line 35 "dynalloc2.pgc"
 
    { ECPGget_desc(__LINE__, "mydesc", 2,ECPGd_indicator,
 	ECPGt_int,&(ipointer2),(long)1,(long)0,sizeof(int), ECPGd_data,
 	ECPGt_char,&(cp2),(long)0,(long)0,(1)*sizeof(char), ECPGd_EODT);
 
-#line 34 "dynalloc2.pgc"
+#line 36 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 34 "dynalloc2.pgc"
+#line 36 "dynalloc2.pgc"
 
 
    printf("Result (%d columns):\n", colnum);
@@ -228,22 +235,22 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
    printf("\n");
 
    ECPGdeallocate_desc(__LINE__, "mydesc");
-#line 49 "dynalloc2.pgc"
+#line 51 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );
-#line 49 "dynalloc2.pgc"
+#line 51 "dynalloc2.pgc"
 
    { ECPGtrans(__LINE__, NULL, "rollback");
-#line 50 "dynalloc2.pgc"
+#line 52 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 50 "dynalloc2.pgc"
+#line 52 "dynalloc2.pgc"
 
    { ECPGdisconnect(__LINE__, "CURRENT");
-#line 51 "dynalloc2.pgc"
+#line 53 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 51 "dynalloc2.pgc"
+#line 53 "dynalloc2.pgc"
 
    return 0;
 }

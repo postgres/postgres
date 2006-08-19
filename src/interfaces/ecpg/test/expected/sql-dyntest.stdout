@@ -19,7 +19,7 @@ Found 7 columns
 	= "The world's most advanced open source database."
  7	day (type: 9 length: -5 precision: -1 scale: 65531 = date)
 	octet_length: 4 returned_octet_length: 10)
-	= 1 "07-14-1987"
+	= 1 "14.07.1987"
  1	name (type: 1 length: 14 precision: 0 scale: 14 = char(14))
 	octet_length: -1 returned_octet_length: 14)
 	= "second entry  "
@@ -40,4 +40,4 @@ Found 7 columns
 	= "The elephant never forgets."
  7	day (type: 9 length: -5 precision: -1 scale: 65531 = date)
 	octet_length: 4 returned_octet_length: 10)
-	= 1 "11-05-1999"
+	= 1 "05.11.1999"
