@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.136 2006/07/16 18:17:14 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.137 2006/08/19 01:36:24 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1358,6 +1358,7 @@ pgstat_bestart(void)
 	beentry->st_databaseid = MyDatabaseId;
 	beentry->st_userid = userid;
 	beentry->st_clientaddr = clientaddr;
+	beentry->st_waiting = false;
 	beentry->st_activity[0] = '\0';
 	/* Also make sure the last byte in the string area is always 0 */
 	beentry->st_activity[PGBE_ACTIVITY_SIZE - 1] = '\0';
@@ -1442,6 +1443,31 @@ pgstat_report_activity(const char *cmd_str)
 
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
+}
+
+
+/* ----------
+ * pgstat_report_waiting() -
+ *
+ *	Called from lock manager to report beginning or end of a lock wait.
+ * ----------
+ */
+void
+pgstat_report_waiting(bool waiting)
+{
+	volatile PgBackendStatus *beentry;
+
+	if (!pgstat_collect_querystring)
+		return;
+
+	/*
+	 * Since this is a single-byte field in a struct that only this process
+	 * may modify, there seems no need to bother with the st_changecount
+	 * protocol.  The update must appear atomic in any case.
+	 */
+	beentry = MyBEEntry;
+
+	beentry->st_waiting = waiting;
 }
 
 

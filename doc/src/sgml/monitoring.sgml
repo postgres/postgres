@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.36 2006/06/29 20:00:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.37 2006/08/19 01:36:23 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -245,7 +245,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_activity</></entry>
       <entry>One row per server process, showing database OID, database name,
-      process <acronym>ID</>, user OID, user name, current query, time at
+      process <acronym>ID</>, user OID, user name, current query, query's
+      waiting status, time at
       which the current query began execution, time at which the process
       was started, and client's address and port number.  The columns
       that report data on the current query are available unless the
@@ -644,6 +645,17 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        Active command of the given server process, but only if the
        current user is a superuser or the same user as that of
+       the session being queried (and
+       <varname>stats_command_string</varname> is on)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_backend_waiting</function>(<type>integer</type>)</literal></entry>
+      <entry><type>boolean</type></entry>
+      <entry>
+       True if the given server process is waiting for a lock,
+       but only if the current user is a superuser or the same user as that of
        the session being queried (and
        <varname>stats_command_string</varname> is on)
       </entry>

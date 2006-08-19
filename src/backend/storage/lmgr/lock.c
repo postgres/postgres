@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.170 2006/07/31 20:09:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.171 2006/08/19 01:36:28 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -36,6 +36,7 @@
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/lmgr.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -1114,6 +1115,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	LOCK_PRINT("WaitOnLock: sleeping on lock",
 			   locallock->lock, locallock->tag.mode);
 
+	/* Report change to waiting status */
 	if (update_process_title)
 	{
 		old_status = get_ps_display(&len);
@@ -1123,7 +1125,8 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 		set_ps_display(new_status, false);
 		new_status[len] = '\0';		/* truncate off " waiting" */
 	}
-	
+	pgstat_report_waiting(true);
+
 	awaitedLock = locallock;
 	awaitedOwner = owner;
 
@@ -1160,11 +1163,13 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 
 	awaitedLock = NULL;
 
+	/* Report change to non-waiting status */
 	if (update_process_title)
 	{
 		set_ps_display(new_status, false);
 		pfree(new_status);
 	}
+	pgstat_report_waiting(false);
 
 	LOCK_PRINT("WaitOnLock: wakeup on lock",
 			   locallock->lock, locallock->tag.mode);

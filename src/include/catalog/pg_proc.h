@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.421 2006/08/17 23:04:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.422 2006/08/19 01:36:33 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2898,6 +2898,8 @@ DATA(insert OID = 1939 (  pg_stat_get_backend_userid	PGNSP PGUID 12 f f t f s 1 
 DESCR("Statistics: User ID of backend");
 DATA(insert OID = 1940 (  pg_stat_get_backend_activity	PGNSP PGUID 12 f f t f s 1 25 "23" _null_ _null_ _null_ pg_stat_get_backend_activity - _null_ ));
 DESCR("Statistics: Current query of backend");
+DATA(insert OID = 2853 (  pg_stat_get_backend_waiting	PGNSP PGUID 12 f f t f s 1 16 "23" _null_ _null_ _null_ pg_stat_get_backend_waiting - _null_ ));
+DESCR("Statistics: Is backend currently waiting for a lock");
 DATA(insert OID = 2094 (  pg_stat_get_backend_activity_start PGNSP PGUID 12 f f t f s 1 1184 "23" _null_ _null_ _null_	pg_stat_get_backend_activity_start - _null_));
 DESCR("Statistics: Start time for current query of backend");
 DATA(insert OID = 1391 ( pg_stat_get_backend_start PGNSP PGUID 12 f f t f s 1 1184 "23" _null_ _null_ _null_ pg_stat_get_backend_start - _null_));

@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.48 2006/06/29 20:00:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.49 2006/08/19 01:36:34 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -334,6 +334,9 @@ typedef struct PgBackendStatus
 	Oid			st_userid;
 	SockAddr	st_clientaddr;
 
+	/* Is backend currently waiting on an lmgr lock? */
+	bool		st_waiting;
+
 	/* current command string; MUST be null-terminated */
 	char		st_activity[PGBE_ACTIVITY_SIZE];
 } PgBackendStatus;
@@ -387,6 +390,7 @@ extern void pgstat_report_analyze(Oid tableoid, bool shared,
 
 extern void pgstat_bestart(void);
 extern void pgstat_report_activity(const char *what);
+extern void pgstat_report_waiting(bool waiting);
 
 extern void pgstat_initstats(PgStat_Info *stats, Relation rel);
 
