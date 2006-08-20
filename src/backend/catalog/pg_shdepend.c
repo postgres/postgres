@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.12 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.13 2006/08/20 21:56:16 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1061,6 +1061,9 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 {
 	Relation	sdepRel;
 	ListCell   *cell;
+	ObjectAddresses *deleteobjs;
+
+	deleteobjs = new_object_addresses();
 
 	sdepRel = heap_open(SharedDependRelationId, AccessExclusiveLock);
 
@@ -1105,6 +1108,9 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 
 		while ((tuple = systable_getnext(scan)) != NULL)
 		{
+			ObjectAddress	obj;
+			GrantObjectType	objtype;
+			InternalGrant	istmt;
 			Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
 
 			/* We only operate on objects on the current database */
@@ -1113,11 +1119,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 
 			switch (sdepForm->deptype)
 			{
-					ObjectAddress obj;
-					GrantObjectType objtype;
-					InternalGrant istmt;
-
-					/* Shouldn't happen */
+				/* Shouldn't happen */
 				case SHARED_DEPENDENCY_PIN:
 				case SHARED_DEPENDENCY_INVALID:
 					elog(ERROR, "unexpected dependency type");
@@ -1126,25 +1128,25 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					switch (sdepForm->classid)
 					{
 						case RelationRelationId:
-						{
-							/* is it a sequence or non-sequence? */
-							Form_pg_class pg_class_tuple;
-							HeapTuple	tuple;
+							{
+								/* is it a sequence or non-sequence? */
+								Form_pg_class pg_class_tuple;
+								HeapTuple	tuple;
 
-							tuple = SearchSysCache(RELOID,
-								ObjectIdGetDatum(sdepForm->objid),
-								0, 0, 0);
-							if (!HeapTupleIsValid(tuple))
-								elog(ERROR, "cache lookup failed for relation %u",
-											sdepForm->objid);
-							pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
-							if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
-								istmt.objtype = ACL_OBJECT_SEQUENCE;
-							else
-								istmt.objtype = ACL_OBJECT_RELATION;
-							ReleaseSysCache(tuple);
+								tuple = SearchSysCache(RELOID,
+													   ObjectIdGetDatum(sdepForm->objid),
+													   0, 0, 0);
+								if (!HeapTupleIsValid(tuple))
+									elog(ERROR, "cache lookup failed for relation %u",
+										 sdepForm->objid);
+								pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
+								if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
+									istmt.objtype = ACL_OBJECT_SEQUENCE;
+								else
+									istmt.objtype = ACL_OBJECT_RELATION;
+								ReleaseSysCache(tuple);
+							}
 							break;
-						}
 						case DatabaseRelationId:
 							istmt.objtype = ACL_OBJECT_DATABASE;
 							break;
@@ -1178,20 +1180,12 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					ExecGrantStmt_oids(&istmt);
 					break;
 				case SHARED_DEPENDENCY_OWNER:
-
-					/*
-					 * If there's a regular (non-shared) dependency on this
-					 * object marked with DEPENDENCY_INTERNAL, skip this
-					 * object.	We will drop the referencer object instead.
-					 */
-					if (objectIsInternalDependency(sdepForm->classid, sdepForm->objid))
-						continue;
-
-					/* Drop the object */
+					/* Save it for later deleting it */
 					obj.classId = sdepForm->classid;
 					obj.objectId = sdepForm->objid;
 					obj.objectSubId = 0;
-					performDeletion(&obj, behavior);
+
+					add_exact_object_address(&obj, deleteobjs);
 					break;
 			}
 		}
@@ -1199,7 +1193,12 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 		systable_endscan(scan);
 	}
 
+	/* the dependency mechanism does the actual work */
+	performMultipleDeletions(deleteobjs, behavior);
+
 	heap_close(sdepRel, AccessExclusiveLock);
+
+	free_object_addresses(deleteobjs);
 }
 
 /*

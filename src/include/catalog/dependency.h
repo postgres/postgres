@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.25 2006/06/27 18:35:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.26 2006/08/20 21:56:16 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,8 @@ typedef struct ObjectAddress
 	int32		objectSubId;	/* Subitem within the object (column of table) */
 } ObjectAddress;
 
+/* expansible list of ObjectAddresses */
+typedef struct ObjectAddresses ObjectAddresses;
 
 /*
  * This enum covers all system catalogs whose OIDs can appear in
@@ -144,6 +146,9 @@ typedef enum ObjectClass
 extern void performDeletion(const ObjectAddress *object,
 				DropBehavior behavior);
 
+extern void performMultipleDeletions(const ObjectAddresses *objects,
+						 DropBehavior behavior);
+
 extern void deleteWhatDependsOn(const ObjectAddress *object,
 					bool showNotices);
 
@@ -159,6 +164,16 @@ extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 extern ObjectClass getObjectClass(const ObjectAddress *object);
 
 extern char *getObjectDescription(const ObjectAddress *object);
+
+extern ObjectAddresses *new_object_addresses(void);
+
+extern void add_exact_object_address(const ObjectAddress *object,
+						 ObjectAddresses *addrs);
+
+extern bool object_address_present(const ObjectAddress *object,
+					   ObjectAddresses *addrs);
+
+extern void free_object_addresses(ObjectAddresses *addrs);
 
 /* in pg_depend.c */
 
