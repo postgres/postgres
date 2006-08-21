@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Aug 17 02:48:35 EDT 2006
+Last updated:           Mon Aug 21 08:20:16 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -182,13 +182,7 @@ first.
   inaccurate, in one sense.
 </p>
 <ul>
-  <li>%Disallow changing DEFAULT expression of a SERIAL column?
-<p>  This should be done only if the existing SERIAL problems cannot be
-  fixed.
-</p>
-  </li><li>%Disallow ALTER SEQUENCE changes for SERIAL sequences because pg_dump
-  does not dump the changes
-  </li><li>Fix data types where equality comparison isn't intuitive, e.g. box
+  <li>Fix data types where equality comparison isn't intuitive, e.g. box
   </li><li>-<em>Zero umasked bits in conversion from INET cast to CIDR</em>
   </li><li>-<em>Prevent INET cast to CIDR from dropping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr</em>
   </li><li>-<em>Allow INET + INT8 to increment the host part of the address or</em>
