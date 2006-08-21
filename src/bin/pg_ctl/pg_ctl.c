@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.70 2006/06/25 04:37:55 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.71 2006/08/21 10:48:21 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,6 +320,7 @@ readfile(const char *path)
 		result[nlines++] = xstrdup(buffer);
 
 	fclose(infile);
+	free(buffer);
 	result[nlines] = NULL;
 
 	return result;
@@ -465,6 +466,7 @@ test_postmaster_connection(void)
 		}
 		else
 		{
+			PQfinish(conn);
 			print_msg(".");
 			pg_usleep(1000000); /* 1 sec */
 		}
@@ -854,6 +856,7 @@ do_status(void)
 				if (optlines != NULL)
 					for (; *optlines != NULL; optlines++)
 						fputs(*optlines, stdout);
+				free(optlines);
 				return;
 			}
 		}
