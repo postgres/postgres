@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.86 2006/07/14 14:52:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.87 2006/08/21 19:15:29 tgl Exp $
  *
  * ----------
  */
@@ -193,17 +193,11 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_check", RI_TRIGTYPE_INUP);
 
+	/*
+	 * Get arguments.
+	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-
-	/*
-	 * Get the relation descriptors of the FK and PK tables and the new tuple.
-	 *
-	 * pk_rel is opened in RowShareLock mode since that's what our eventual
-	 * SELECT FOR SHARE will get on it.
-	 */
-	pk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
-	fk_rel = trigdata->tg_relation;
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
 		old_row = trigdata->tg_trigtuple;
@@ -224,10 +218,16 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 */
 	Assert(new_row_buf != InvalidBuffer);
 	if (!HeapTupleSatisfiesItself(new_row->t_data, new_row_buf))
-	{
-		heap_close(pk_rel, RowShareLock);
 		return PointerGetDatum(NULL);
-	}
+
+	/*
+	 * Get the relation descriptors of the FK and PK tables.
+	 *
+	 * pk_rel is opened in RowShareLock mode since that's what our eventual
+	 * SELECT FOR SHARE will get on it.
+	 */
+	fk_rel = trigdata->tg_relation;
+	pk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 
 	/* ----------
 	 * SQL3 11.9 <referential constraint definition>
