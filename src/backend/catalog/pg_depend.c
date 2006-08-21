@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.21 2006/07/11 17:26:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.22 2006/08/21 00:57:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,58 +163,6 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId)
 }
 
 /*
- * objectIsInternalDependency -- return whether the specified object
- * is listed as an internal dependency for some other object.
- *
- * This is used to implement DROP/REASSIGN OWNED.  We cannot invoke
- * performDeletion blindly, because it may try to drop or modify an internal-
- * dependent object before the "main" object, so we need to skip the first
- * object and expect it to be automatically dropped when the main object is
- * dropped.
- */
-bool
-objectIsInternalDependency(Oid classId, Oid objectId)
-{
-	Relation	depRel;
-	ScanKeyData key[2];
-	SysScanDesc scan;
-	HeapTuple	tup;
-	bool		isdep = false;
-
-	depRel = heap_open(DependRelationId, AccessShareLock);
-
-	ScanKeyInit(&key[0],
-				Anum_pg_depend_classid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(classId));
-	ScanKeyInit(&key[1],
-				Anum_pg_depend_objid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(objectId));
-
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
-							  SnapshotNow, 2, key);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_depend depForm = (Form_pg_depend) GETSTRUCT(tup);
-
-		if (depForm->deptype == DEPENDENCY_INTERNAL)
-		{
-			/* No need to keep scanning */
-			isdep = true;
-			break;
-		}
-	}
-
-	systable_endscan(scan);
-
-	heap_close(depRel, AccessShareLock);
-
-	return isdep;
-}
-
-/*
  * Adjust dependency record(s) to point to a different object of the same type
  *
  * classId/objectId specify the referencing object.
@@ -310,6 +258,105 @@ changeDependencyFor(Oid classId, Oid objectId,
 	heap_close(depRel, RowExclusiveLock);
 
 	return count;
+}
+
+/*
+ * Detect whether a sequence is marked as "owned" by a column
+ *
+ * An ownership marker is an AUTO dependency from the sequence to the
+ * column.  If we find one, store the identity of the owning column
+ * into *tableId and *colId and return TRUE; else return FALSE.
+ *
+ * Note: if there's more than one such pg_depend entry then you get
+ * a random one of them returned into the out parameters.  This should
+ * not happen, though.
+ */
+bool
+sequenceIsOwned(Oid seqId, Oid *tableId, int32 *colId)
+{
+	bool		ret = false;
+	Relation	depRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationRelationId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(seqId));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid((tup = systable_getnext(scan))))
+	{
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (depform->refclassid == RelationRelationId &&
+			depform->deptype == DEPENDENCY_AUTO)
+		{
+			*tableId = depform->refobjid;
+			*colId = depform->refobjsubid;
+			ret = true;
+			break;				/* no need to keep scanning */
+		}
+	}
+
+	systable_endscan(scan);
+
+	heap_close(depRel, AccessShareLock);
+
+	return ret;
+}
+
+/*
+ * Remove any existing "owned" markers for the specified sequence.
+ *
+ * Note: we don't provide a special function to install an "owned"
+ * marker; just use recordDependencyOn().
+ */
+void
+markSequenceUnowned(Oid seqId)
+{
+	Relation	depRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	depRel = heap_open(DependRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationRelationId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(seqId));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid((tup = systable_getnext(scan))))
+	{
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (depform->refclassid == RelationRelationId &&
+			depform->deptype == DEPENDENCY_AUTO)
+		{
+			simple_heap_delete(depRel, &tup->t_self);
+		}
+	}
+
+	systable_endscan(scan);
+
+	heap_close(depRel, RowExclusiveLock);
 }
 
 /*

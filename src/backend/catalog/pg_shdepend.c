@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.13 2006/08/20 21:56:16 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.14 2006/08/21 00:57:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
@@ -869,29 +870,16 @@ shdepDropDependency(Relation sdepRel, Oid classId, Oid objectId,
  * Get the database Id that should be used in pg_shdepend, given the OID
  * of the catalog containing the object.  For shared objects, it's 0
  * (InvalidOid); for all other objects, it's the current database Id.
- *
- * XXX it's awfully tempting to hard-wire this instead of doing a syscache
- * lookup ... but resist the temptation, unless you can prove it's a
- * bottleneck.
  */
 static Oid
 classIdGetDbId(Oid classId)
 {
 	Oid			dbId;
-	HeapTuple	tup;
 
-	tup = SearchSysCache(RELOID,
-						 ObjectIdGetDatum(classId),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for relation %u", classId);
-
-	if (((Form_pg_class) GETSTRUCT(tup))->relisshared)
+	if (IsSharedRelation(classId))
 		dbId = InvalidOid;
 	else
 		dbId = MyDatabaseId;
-
-	ReleaseSysCache(tup);
 
 	return dbId;
 }
@@ -1055,6 +1043,11 @@ isSharedObjectPinned(Oid classId, Oid objectId, Relation sdepRel)
  * Drop the objects owned by any one of the given RoleIds.	If a role has
  * access to an object, the grant will be removed as well (but the object
  * will not, of course.)
+ *
+ * We can revoke grants immediately while doing the scan, but drops are
+ * saved up and done all at once with performMultipleDeletions.  This
+ * is necessary so that we don't get failures from trying to delete
+ * interdependent objects in the wrong order.
  */
 void
 shdepDropOwned(List *roleids, DropBehavior behavior)
@@ -1113,7 +1106,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 			InternalGrant	istmt;
 			Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
 
-			/* We only operate on objects on the current database */
+			/* We only operate on objects in the current database */
 			if (sdepForm->dbid != MyDatabaseId)
 				continue;
 
@@ -1128,24 +1121,8 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					switch (sdepForm->classid)
 					{
 						case RelationRelationId:
-							{
-								/* is it a sequence or non-sequence? */
-								Form_pg_class pg_class_tuple;
-								HeapTuple	tuple;
-
-								tuple = SearchSysCache(RELOID,
-													   ObjectIdGetDatum(sdepForm->objid),
-													   0, 0, 0);
-								if (!HeapTupleIsValid(tuple))
-									elog(ERROR, "cache lookup failed for relation %u",
-										 sdepForm->objid);
-								pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
-								if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
-									istmt.objtype = ACL_OBJECT_SEQUENCE;
-								else
-									istmt.objtype = ACL_OBJECT_RELATION;
-								ReleaseSysCache(tuple);
-							}
+							/* it's OK to use RELATION for a sequence */
+							istmt.objtype = ACL_OBJECT_RELATION;
 							break;
 						case DatabaseRelationId:
 							istmt.objtype = ACL_OBJECT_DATABASE;
@@ -1180,11 +1157,10 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					ExecGrantStmt_oids(&istmt);
 					break;
 				case SHARED_DEPENDENCY_OWNER:
-					/* Save it for later deleting it */
+					/* Save it for deletion below */
 					obj.classId = sdepForm->classid;
 					obj.objectId = sdepForm->objid;
 					obj.objectSubId = 0;
-
 					add_exact_object_address(&obj, deleteobjs);
 					break;
 			}
@@ -1259,7 +1235,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 		{
 			Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
 
-			/* We only operate on objects on the current database */
+			/* We only operate on objects in the current database */
 			if (sdepForm->dbid != MyDatabaseId)
 				continue;
 
@@ -1271,15 +1247,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			if (sdepForm->deptype != SHARED_DEPENDENCY_OWNER)
 				continue;
 
-			/*
-			 * If there's a regular (non-shared) dependency on this object
-			 * marked with DEPENDENCY_INTERNAL, skip this object.  We will
-			 * alter the referencer object instead.
-			 */
-			if (objectIsInternalDependency(sdepForm->classid, sdepForm->objid))
-				continue;
-
-			/* Issue the appropiate ALTER OWNER call */
+			/* Issue the appropriate ALTER OWNER call */
 			switch (sdepForm->classid)
 			{
 				case ConversionRelationId:
@@ -1299,7 +1267,12 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					break;
 
 				case RelationRelationId:
-					ATExecChangeOwner(sdepForm->objid, newrole, false);
+					/*
+					 * Pass recursing = true so that we don't fail on
+					 * indexes, owned sequences, etc when we happen
+					 * to visit them before their parent table.
+					 */
+					ATExecChangeOwner(sdepForm->objid, newrole, true);
 					break;
 
 				case ProcedureRelationId:

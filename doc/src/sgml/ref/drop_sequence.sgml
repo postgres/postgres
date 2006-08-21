@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.24 2005/11/19 17:39:44 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.25 2006/08/21 00:57:24 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -105,6 +105,7 @@ DROP SEQUENCE serial;
 
   <simplelist type="inline">
    <member><xref linkend="sql-createsequence" endterm="sql-createsequence-title"></member>
+   <member><xref linkend="sql-altersequence" endterm="sql-altersequence-title"></member>
   </simplelist>
  </refsect1>
 

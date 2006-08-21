@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.50 2006/03/14 22:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.51 2006/08/21 00:57:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,4 +321,18 @@ makeFuncExpr(Oid funcid, Oid rettype, List *args, CoercionForm fformat)
 	funcexpr->args = args;
 
 	return funcexpr;
+}
+
+/*
+ * makeDefElem -
+ *	build a DefElem node
+ */
+DefElem *
+makeDefElem(char *name, Node *arg)
+{
+	DefElem *res = makeNode(DefElem);
+
+	res->defname = name;
+	res->arg = arg;
+	return res;
 }

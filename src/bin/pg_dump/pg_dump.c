@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.446 2006/08/04 18:32:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.447 2006/08/21 00:57:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2833,14 +2833,14 @@ getTables(int *numTables)
 	 * Note: in this phase we should collect only a minimal amount of
 	 * information about each table, basically just enough to decide if it is
 	 * interesting. We must fetch all tables in this phase because otherwise
-	 * we cannot correctly identify inherited columns, serial columns, etc.
+	 * we cannot correctly identify inherited columns, owned sequences, etc.
 	 */
 
 	if (g_fout->remoteVersion >= 80200)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
-		 * serial column, if any
+		 * owning column, if any (note this dependency is AUTO as of 8.2)
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT c.tableoid, c.oid, relname, "
@@ -2857,7 +2857,7 @@ getTables(int *numTables)
 						  "(c.relkind = '%c' and "
 						  "d.classid = c.tableoid and d.objid = c.oid and "
 						  "d.objsubid = 0 and "
-						  "d.refclassid = c.tableoid and d.deptype = 'i') "
+						  "d.refclassid = c.tableoid and d.deptype = 'a') "
 						  "where relkind in ('%c', '%c', '%c', '%c') "
 						  "order by c.oid",
 						  username_subquery,
@@ -2869,7 +2869,7 @@ getTables(int *numTables)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
-		 * serial column, if any
+		 * owning column, if any
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT c.tableoid, c.oid, relname, "
@@ -2898,7 +2898,7 @@ getTables(int *numTables)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
-		 * serial column, if any
+		 * owning column, if any
 		 */
 		appendPQExpBuffer(query,
 						  "SELECT c.tableoid, c.oid, relname, "
@@ -3061,13 +3061,9 @@ getTables(int *numTables)
 		/* other fields were zeroed above */
 
 		/*
-		 * Decide whether we want to dump this table.  Sequences owned by
-		 * serial columns are never dumpable on their own; we will transpose
-		 * their owning table's dump flag to them below.
+		 * Decide whether we want to dump this table.
 		 */
 		if (tblinfo[i].relkind == RELKIND_COMPOSITE_TYPE)
-			tblinfo[i].dobj.dump = false;
-		else if (OidIsValid(tblinfo[i].owning_tab))
 			tblinfo[i].dobj.dump = false;
 		else
 			selectDumpableTable(&tblinfo[i]);
@@ -3101,6 +3097,36 @@ getTables(int *numTables)
 	}
 
 	PQclear(res);
+
+	/*
+	 * Force sequences that are "owned" by table columns to be dumped
+	 * whenever their owning table is being dumped.
+	 */
+	for (i = 0; i < ntups; i++)
+	{
+		TableInfo  *seqinfo = &tblinfo[i];
+		int		j;
+
+		if (!OidIsValid(seqinfo->owning_tab))
+			continue;			/* not an owned sequence */
+		if (seqinfo->dobj.dump)
+			continue;			/* no need to search */
+
+		/* can't use findTableByOid yet, unfortunately */
+		for (j = 0; j < ntups; j++)
+		{
+			if (tblinfo[j].dobj.catId.oid == seqinfo->owning_tab)
+			{
+				if (tblinfo[j].dobj.dump)
+				{
+					seqinfo->interesting = true;
+					seqinfo->dobj.dump = true;
+				}
+				break;
+			}
+		}
+	}
+
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(delqry);
 	destroyPQExpBuffer(lockquery);
@@ -4161,8 +4187,7 @@ void
 getTableAttrs(TableInfo *tblinfo, int numTables)
 {
 	int			i,
-				j,
-				k;
+				j;
 	PQExpBuffer q = createPQExpBuffer();
 	int			i_attnum;
 	int			i_attname;
@@ -4281,7 +4306,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tbinfo->typstorage = (char *) malloc(ntups * sizeof(char));
 		tbinfo->attisdropped = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->attislocal = (bool *) malloc(ntups * sizeof(bool));
-		tbinfo->attisserial = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->notnull = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->attrdefs = (AttrDefInfo **) malloc(ntups * sizeof(AttrDefInfo *));
 		tbinfo->inhAttrs = (bool *) malloc(ntups * sizeof(bool));
@@ -4305,7 +4329,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->typstorage[j] = *(PQgetvalue(res, j, i_typstorage));
 			tbinfo->attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
 			tbinfo->attislocal[j] = (PQgetvalue(res, j, i_attislocal)[0] == 't');
-			tbinfo->attisserial[j] = false;		/* fix below */
 			tbinfo->notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
@@ -4537,44 +4560,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				 */
 			}
 			PQclear(res);
-		}
-
-		/*
-		 * Check to see if any columns are serial columns.	Our first quick
-		 * filter is that it must be integer or bigint with a default.	If so,
-		 * we scan to see if we found a sequence linked to this column. If we
-		 * did, mark the column and sequence appropriately.
-		 */
-		for (j = 0; j < ntups; j++)
-		{
-			/*
-			 * Note assumption that format_type will show these types as
-			 * exactly "integer" and "bigint" regardless of schema path. This
-			 * is correct in 7.3 but needs to be watched.
-			 */
-			if (strcmp(tbinfo->atttypnames[j], "integer") != 0 &&
-				strcmp(tbinfo->atttypnames[j], "bigint") != 0)
-				continue;
-			if (tbinfo->attrdefs[j] == NULL)
-				continue;
-			for (k = 0; k < numTables; k++)
-			{
-				TableInfo  *seqinfo = &tblinfo[k];
-
-				if (OidIsValid(seqinfo->owning_tab) &&
-					seqinfo->owning_tab == tbinfo->dobj.catId.oid &&
-					seqinfo->owning_col == j + 1)
-				{
-					/*
-					 * Found a match.  Copy the table's interesting and
-					 * dumpable flags to the sequence.
-					 */
-					tbinfo->attisserial[j] = true;
-					seqinfo->interesting = tbinfo->interesting;
-					seqinfo->dobj.dump = tbinfo->dobj.dump;
-					break;
-				}
-			}
 		}
 	}
 
@@ -7403,16 +7388,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				/* Attribute type */
 				if (g_fout->remoteVersion >= 70100)
 				{
-					char	   *typname = tbinfo->atttypnames[j];
-
-					if (tbinfo->attisserial[j])
-					{
-						if (strcmp(typname, "integer") == 0)
-							typname = "serial";
-						else if (strcmp(typname, "bigint") == 0)
-							typname = "bigserial";
-					}
-					appendPQExpBuffer(q, "%s", typname);
+					appendPQExpBuffer(q, "%s",
+									  tbinfo->atttypnames[j]);
 				}
 				else
 				{
@@ -7423,24 +7400,17 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 
 				/*
-				 * Default value --- suppress if inherited, serial, or to be
+				 * Default value --- suppress if inherited or to be
 				 * printed separately.
 				 */
 				if (tbinfo->attrdefs[j] != NULL &&
 					!tbinfo->inhAttrDef[j] &&
-					!tbinfo->attisserial[j] &&
 					!tbinfo->attrdefs[j]->separate)
 					appendPQExpBuffer(q, " DEFAULT %s",
 									  tbinfo->attrdefs[j]->adef_expr);
 
 				/*
 				 * Not Null constraint --- suppress if inherited
-				 *
-				 * Note: we could suppress this for serial columns since
-				 * SERIAL implies NOT NULL.  We choose not to for forward
-				 * compatibility, since there has been some talk of making
-				 * SERIAL not imply NOT NULL, in which case the explicit
-				 * specification would be needed.
 				 */
 				if (tbinfo->notnull[j] && !tbinfo->inhNotNull[j])
 					appendPQExpBuffer(q, " NOT NULL");
@@ -7597,8 +7567,8 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 	if (!tbinfo->dobj.dump || !adinfo->separate || dataOnly)
 		return;
 
-	/* Don't print inherited or serial defaults, either */
-	if (tbinfo->inhAttrDef[adnum - 1] || tbinfo->attisserial[adnum - 1])
+	/* Don't print inherited defaults, either */
+	if (tbinfo->inhAttrDef[adnum - 1])
 		return;
 
 	q = createPQExpBuffer();
@@ -8111,15 +8081,14 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	/*
 	 * The logic we use for restoring sequences is as follows:
 	 *
-	 * Add a basic CREATE SEQUENCE statement (use last_val for start if called
-	 * is false, else use min_val for start_val).  Skip this if the sequence
-	 * came from a SERIAL column.
+	 * Add a CREATE SEQUENCE statement as part of a "schema" dump
+	 * (use last_val for start if called is false, else use min_val for
+	 * start_val).  Also, if the sequence is owned by a column, add an
+	 * ALTER SEQUENCE SET OWNED command for it.
 	 *
-	 * Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff we load
-	 * data. We do this for serial sequences too.
+	 * Add a 'SETVAL(seq, last_val, iscalled)' as part of a "data" dump.
 	 */
-
-	if (!dataOnly && !OidIsValid(tbinfo->owning_tab))
+	if (!dataOnly)
 	{
 		resetPQExpBuffer(delqry);
 
@@ -8166,32 +8135,57 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 					 false, "SEQUENCE", query->data, delqry->data, NULL,
 					 tbinfo->dobj.dependencies, tbinfo->dobj.nDeps,
 					 NULL, NULL);
+
+		/*
+		 * If the sequence is owned by a table column, emit the ALTER for it
+		 * as a separate TOC entry immediately following the sequence's own
+		 * entry.  It's OK to do this rather than using full sorting logic,
+		 * because the dependency that tells us it's owned will have forced
+		 * the table to be created first.  We can't just include the ALTER
+		 * in the TOC entry because it will fail if we haven't reassigned
+		 * the sequence owner to match the table's owner.
+		 *
+		 * We need not schema-qualify the table reference because both
+		 * sequence and table must be in the same schema.
+		 */
+		if (OidIsValid(tbinfo->owning_tab))
+		{
+			TableInfo  *owning_tab = findTableByOid(tbinfo->owning_tab);
+
+			if (owning_tab)
+			{
+				resetPQExpBuffer(query);
+				appendPQExpBuffer(query, "ALTER SEQUENCE %s",
+								  fmtId(tbinfo->dobj.name));
+				appendPQExpBuffer(query, " OWNED BY %s",
+								  fmtId(owning_tab->dobj.name));
+				appendPQExpBuffer(query, ".%s;\n",
+								  fmtId(owning_tab->attnames[tbinfo->owning_col - 1]));
+
+				ArchiveEntry(fout, nilCatalogId, createDumpId(),
+							 tbinfo->dobj.name,
+							 tbinfo->dobj.namespace->dobj.name,
+							 NULL,
+							 tbinfo->rolname,
+							 false, "SEQUENCE OWNED BY", query->data, "", NULL,
+							 &(tbinfo->dobj.dumpId), 1,
+							 NULL, NULL);
+			}
+		}
+
+		/* Dump Sequence Comments */
+		resetPQExpBuffer(query);
+		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo->dobj.name));
+		dumpComment(fout, query->data,
+					tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
+					tbinfo->dobj.catId, 0, tbinfo->dobj.dumpId);
 	}
 
 	if (!schemaOnly)
 	{
-		TableInfo  *owning_tab;
-
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SELECT pg_catalog.setval(");
-
-		/*
-		 * If this is a SERIAL sequence, then use the pg_get_serial_sequence
-		 * function to avoid hard-coding the sequence name.  Note that this
-		 * implicitly assumes that the sequence and its owning table are in
-		 * the same schema, because we don't schema-qualify the reference.
-		 */
-		if (OidIsValid(tbinfo->owning_tab) &&
-			(owning_tab = findTableByOid(tbinfo->owning_tab)) != NULL)
-		{
-			appendPQExpBuffer(query, "pg_catalog.pg_get_serial_sequence(");
-			appendStringLiteralAH(query, fmtId(owning_tab->dobj.name), fout);
-			appendPQExpBuffer(query, ", ");
-			appendStringLiteralAH(query, owning_tab->attnames[tbinfo->owning_col - 1], fout);
-			appendPQExpBuffer(query, ")");
-		}
-		else
-			appendStringLiteralAH(query, fmtId(tbinfo->dobj.name), fout);
+		appendStringLiteralAH(query, fmtId(tbinfo->dobj.name), fout);
 		appendPQExpBuffer(query, ", %s, %s);\n",
 						  last, (called ? "true" : "false"));
 
@@ -8203,16 +8197,6 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 					 false, "SEQUENCE SET", query->data, "", NULL,
 					 &(tbinfo->dobj.dumpId), 1,
 					 NULL, NULL);
-	}
-
-	if (!dataOnly)
-	{
-		/* Dump Sequence Comments */
-		resetPQExpBuffer(query);
-		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo->dobj.name));
-		dumpComment(fout, query->data,
-					tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
-					tbinfo->dobj.catId, 0, tbinfo->dobj.dumpId);
 	}
 
 	PQclear(res);

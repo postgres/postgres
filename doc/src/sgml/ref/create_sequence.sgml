@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.43 2005/11/01 21:09:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.44 2006/08/21 00:57:24 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,6 +23,7 @@ PostgreSQL documentation
 CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
+    [ OWNED BY { <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable> | NONE } ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -193,6 +194,22 @@ SELECT * FROM <replaceable>name</replaceable>;
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>OWNED BY</literal> <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable></term>
+    <term><literal>OWNED BY NONE</literal></term>
+    <listitem>
+     <para>
+      The <literal>OWNED BY</literal> option causes the sequence to be
+      associated with a specific table column, such that if that column
+      (or its whole table) is dropped, the sequence will be automatically
+      dropped as well.  The specified table must have the same owner and be in
+      the same schema as the sequence.
+      <literal>OWNED BY NONE</literal>, the default, specifies that there
+      is no such association.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -300,11 +317,38 @@ END;
    <command>CREATE SEQUENCE</command> conforms to the <acronym>SQL</acronym>
    standard, with the following exceptions:
    <itemizedlist>
-    <listitem><para>The standard's <literal>AS &lt;data type&gt;</literal> expression is not supported.</para></listitem>
-    <listitem><para>Obtaining the next value is done using the <function>nextval()</> function instead of the standard's <command>NEXT VALUE FOR</command> expression.</para></listitem>
+    <listitem>
+     <para>
+      The standard's <literal>AS &lt;data type&gt;</literal> expression is not
+      supported.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Obtaining the next value is done using the <function>nextval()</>
+      function instead of the standard's <command>NEXT VALUE FOR</command>
+      expression.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      The <literal>OWNED BY</> clause is a <productname>PostgreSQL</>
+      extension. 
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altersequence" endterm="sql-altersequence-title"></member>
+   <member><xref linkend="sql-dropsequence" endterm="sql-dropsequence-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

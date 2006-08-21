@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.55 2006/03/14 22:48:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.56 2006/08/21 00:57:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,5 +61,7 @@ extern TypeName *makeTypeNameFromOid(Oid typeid, int32 typmod);
 
 extern FuncExpr *makeFuncExpr(Oid funcid, Oid rettype,
 			 List *args, CoercionForm fformat);
+
+extern DefElem *makeDefElem(char *name, Node *arg);
 
 #endif   /* MAKEFUNC_H */

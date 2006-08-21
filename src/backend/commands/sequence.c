@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.138 2006/07/31 20:09:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.139 2006/08/21 00:57:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -26,6 +27,7 @@
 #include "nodes/makefuncs.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
 
@@ -82,8 +84,11 @@ static int64 nextval_internal(Oid relid);
 static Relation open_share_lock(SeqTable seq);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
-static void init_params(List *options, Form_pg_sequence new, bool isInit);
+static void init_params(List *options, bool isInit,
+						Form_pg_sequence new, List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
+static void process_owned_by(Relation seqrel, List *owned_by);
+
 
 /*
  * DefineSequence
@@ -93,6 +98,7 @@ void
 DefineSequence(CreateSeqStmt *seq)
 {
 	FormData_pg_sequence new;
+	List	   *owned_by;
 	CreateStmt *stmt = makeNode(CreateStmt);
 	Oid			seqoid;
 	Relation	rel;
@@ -107,7 +113,7 @@ DefineSequence(CreateSeqStmt *seq)
 	NameData	name;
 
 	/* Check and set all option values */
-	init_params(seq->options, &new, true);
+	init_params(seq->options, true, &new, &owned_by);
 
 	/*
 	 * Create relation (and fill *null & *value)
@@ -123,7 +129,6 @@ DefineSequence(CreateSeqStmt *seq)
 		coldef->raw_default = NULL;
 		coldef->cooked_default = NULL;
 		coldef->constraints = NIL;
-		coldef->support = NULL;
 
 		null[i - 1] = ' ';
 
@@ -287,6 +292,10 @@ DefineSequence(CreateSeqStmt *seq)
 
 	UnlockReleaseBuffer(buf);
 
+	/* process OWNED BY if given */
+	if (owned_by)
+		process_owned_by(rel, owned_by);
+
 	heap_close(rel, NoLock);
 }
 
@@ -305,6 +314,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	Page		page;
 	Form_pg_sequence seq;
 	FormData_pg_sequence new;
+	List	   *owned_by;
 
 	/* open and AccessShareLock sequence */
 	relid = RangeVarGetRelid(stmt->sequence, false);
@@ -323,7 +333,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	memcpy(&new, seq, sizeof(FormData_pg_sequence));
 
 	/* Check and set new values */
-	init_params(stmt->options, &new, false);
+	init_params(stmt->options, false, &new, &owned_by);
 
 	/* Now okay to update the on-disk tuple */
 	memcpy(seq, &new, sizeof(FormData_pg_sequence));
@@ -365,6 +375,10 @@ AlterSequence(AlterSeqStmt *stmt)
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(buf);
+
+	/* process OWNED BY if given */
+	if (owned_by)
+		process_owned_by(seqrel, owned_by);
 
 	relation_close(seqrel, NoLock);
 }
@@ -933,13 +947,15 @@ read_info(SeqTable elm, Relation rel, Buffer *buf)
 
 /*
  * init_params: process the options list of CREATE or ALTER SEQUENCE,
- * and store the values into appropriate fields of *new.
+ * and store the values into appropriate fields of *new.  Also set
+ * *owned_by to any OWNED BY option, or to NIL if there is none.
  *
  * If isInit is true, fill any unspecified options with default values;
  * otherwise, do not change existing options that aren't explicitly overridden.
  */
 static void
-init_params(List *options, Form_pg_sequence new, bool isInit)
+init_params(List *options, bool isInit,
+			Form_pg_sequence new, List **owned_by)
 {
 	DefElem    *last_value = NULL;
 	DefElem    *increment_by = NULL;
@@ -948,6 +964,8 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 	DefElem    *cache_value = NULL;
 	DefElem    *is_cycled = NULL;
 	ListCell   *option;
+
+	*owned_by = NIL;
 
 	foreach(option, options)
 	{
@@ -1005,6 +1023,14 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			is_cycled = defel;
+		}
+		else if (strcmp(defel->defname, "owned_by") == 0)
+		{
+			if (*owned_by)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			*owned_by = defGetQualifiedName(defel);
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -1128,6 +1154,99 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 	}
 	else if (isInit)
 		new->cache_value = 1;
+}
+
+/*
+ * Process an OWNED BY option for CREATE/ALTER SEQUENCE
+ *
+ * Ownership permissions on the sequence are already checked,
+ * but if we are establishing a new owned-by dependency, we must
+ * enforce that the referenced table has the same owner and namespace
+ * as the sequence.
+ */
+static void
+process_owned_by(Relation seqrel, List *owned_by)
+{
+	int			nnames;
+	Relation	tablerel;
+	AttrNumber	attnum;
+
+	nnames = list_length(owned_by);
+	Assert(nnames > 0);
+	if (nnames == 1)
+	{
+		/* Must be OWNED BY NONE */
+		if (strcmp(strVal(linitial(owned_by)), "none") != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid OWNED BY option"),
+					 errhint("Specify OWNED BY table.column or OWNED BY NONE.")));
+		tablerel = NULL;
+		attnum = 0;
+	}
+	else
+	{
+		List	   *relname;
+		char	   *attrname;
+		RangeVar   *rel;
+
+		/* Separate relname and attr name */
+		relname = list_truncate(list_copy(owned_by), nnames - 1);
+		attrname = strVal(lfirst(list_tail(owned_by)));
+
+		/* Open and lock rel to ensure it won't go away meanwhile */
+		rel = makeRangeVarFromNameList(relname);
+		tablerel = relation_openrv(rel, AccessShareLock);
+
+		/* Must be a regular table */
+		if (tablerel->rd_rel->relkind != RELKIND_RELATION)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("referenced relation \"%s\" is not a table",
+							RelationGetRelationName(tablerel))));
+
+		/* We insist on same owner and schema */
+		if (seqrel->rd_rel->relowner != tablerel->rd_rel->relowner)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("sequence must have same owner as table it is owned by")));
+		if (RelationGetNamespace(seqrel) != RelationGetNamespace(tablerel))
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("sequence must be in same schema as table it is owned by")));
+
+		/* Now, fetch the attribute number from the system cache */
+		attnum = get_attnum(RelationGetRelid(tablerel), attrname);
+		if (attnum == InvalidAttrNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							attrname, RelationGetRelationName(tablerel))));
+	}
+
+	/*
+	 * OK, we are ready to update pg_depend.  First remove any existing
+	 * AUTO dependencies for the sequence, then optionally add a new one.
+	 */
+	markSequenceUnowned(RelationGetRelid(seqrel));
+
+	if (tablerel)
+	{
+		ObjectAddress refobject,
+					depobject;
+
+		refobject.classId = RelationRelationId;
+		refobject.objectId = RelationGetRelid(tablerel);
+		refobject.objectSubId = attnum;
+		depobject.classId = RelationRelationId;
+		depobject.objectId = RelationGetRelid(seqrel);
+		depobject.objectSubId = 0;
+		recordDependencyOn(&depobject, &refobject, DEPENDENCY_AUTO);
+	}
+
+	/* Done, but hold lock until commit */
+	if (tablerel)
+		relation_close(tablerel, NoLock);
 }
 
 

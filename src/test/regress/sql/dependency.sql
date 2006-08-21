@@ -57,7 +57,7 @@ REASSIGN OWNED BY regression_user1 TO regression_user0;
 -- this one is allowed
 DROP OWNED BY regression_user0;
 
-CREATE TABLE deptest1 ();
+CREATE TABLE deptest1 (f1 int unique);
 GRANT ALL ON deptest1 TO regression_user1 WITH GRANT OPTION;
 
 SET SESSION AUTHORIZATION regression_user1;
@@ -77,10 +77,17 @@ GRANT ALL ON deptest1 TO regression_user1;
 
 SET SESSION AUTHORIZATION regression_user1;
 CREATE TABLE deptest (a serial primary key, b text);
+
+CREATE TABLE deptest2 (f1 int);
+-- make a serial column the hard way
+CREATE SEQUENCE ss1;
+ALTER TABLE deptest2 ALTER f1 SET DEFAULT nextval('ss1');
+ALTER SEQUENCE ss1 OWNED BY deptest2.f1;
 RESET SESSION AUTHORIZATION;
 
 REASSIGN OWNED BY regression_user1 TO regression_user2;
 \dt deptest
+
 -- doesn't work: grant still exists
 DROP USER regression_user1;
 DROP OWNED BY regression_user1;

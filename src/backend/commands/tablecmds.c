@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.199 2006/08/03 20:57:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.200 2006/08/21 00:57:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,8 +209,6 @@ static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 				ColumnDef *colDef);
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
-static void add_column_support_dependency(Oid relid, int32 attnum,
-							  RangeVar *support);
 static void ATExecDropNotNull(Relation rel, const char *colName);
 static void ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 				 const char *colName);
@@ -476,10 +474,6 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * work unless we have a pre-existing relation. So, the transformation has
 	 * to be postponed to this final step of CREATE TABLE.
 	 *
-	 * Another task that's conveniently done at this step is to add dependency
-	 * links between columns and supporting relations (such as SERIAL
-	 * sequences).
-	 *
 	 * First, scan schema to find new column defaults.
 	 */
 	rawDefaults = NIL;
@@ -502,10 +496,6 @@ DefineRelation(CreateStmt *stmt, char relkind)
 			rawEnt->raw_default = colDef->raw_default;
 			rawDefaults = lappend(rawDefaults, rawEnt);
 		}
-
-		/* Create dependency for supporting relation for this column */
-		if (colDef->support != NULL)
-			add_column_support_dependency(relationId, attnum, colDef->support);
 	}
 
 	/*
@@ -944,7 +934,6 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
 				def->constraints = NIL;
-				def->support = NULL;
 				inhSchema = lappend(inhSchema, def);
 				newattno[parent_attno - 1] = ++child_attno;
 			}
@@ -1159,9 +1148,10 @@ varattnos_map(TupleDesc old, TupleDesc new)
 	return attmap;
 }
 
-/* Generate a map for change_varattnos_of_a_node from a tupledesc and a list of
- * ColumnDefs */
-
+/*
+ * Generate a map for change_varattnos_of_a_node from a tupledesc and a list of
+ * ColumnDefs
+ */
 AttrNumber *
 varattnos_map_schema(TupleDesc old, List *schema) 
 {
@@ -3017,8 +3007,6 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 		/* Child should see column as singly inherited */
 		colDefChild->inhcount = 1;
 		colDefChild->is_local = false;
-		/* and don't make a support dependency on the child */
-		colDefChild->support = NULL;
 
 		ATOneLevelRecursion(wqueue, rel, childCmd);
 	}
@@ -3259,8 +3247,6 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	 * Add needed dependency entries for the new column.
 	 */
 	add_column_datatype_dependency(myrelid, i, attribute->atttypid);
-	if (colDef->support != NULL)
-		add_column_support_dependency(myrelid, i, colDef->support);
 }
 
 /*
@@ -3279,24 +3265,6 @@ add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
 	referenced.objectId = typid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-}
-
-/*
- * Install a dependency for a column's supporting relation (serial sequence).
- */
-static void
-add_column_support_dependency(Oid relid, int32 attnum, RangeVar *support)
-{
-	ObjectAddress colobject,
-				suppobject;
-
-	colobject.classId = RelationRelationId;
-	colobject.objectId = relid;
-	colobject.objectSubId = attnum;
-	suppobject.classId = RelationRelationId;
-	suppobject.objectId = RangeVarGetRelid(support, false);
-	suppobject.objectSubId = 0;
-	recordDependencyOn(&suppobject, &colobject, DEPENDENCY_INTERNAL);
 }
 
 /*
@@ -5444,9 +5412,9 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 /*
  * ALTER TABLE OWNER
  *
- * recursing is true if we are recursing from a table to its indexes or
- * toast table.  We don't allow the ownership of those things to be
- * changed separately from the parent table.  Also, we can skip permission
+ * recursing is true if we are recursing from a table to its indexes,
+ * sequences, or toast table.  We don't allow the ownership of those things to
+ * be changed separately from the parent table.  Also, we can skip permission
  * checks (this is necessary not just an optimization, else we'd fail to
  * handle toast tables properly).
  */
@@ -5479,7 +5447,6 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_VIEW:
-		case RELKIND_SEQUENCE:
 			/* ok to change owner */
 			break;
 		case RELKIND_INDEX:
@@ -5500,6 +5467,24 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 							 errhint("Change the ownership of the index's table, instead.")));
 				/* quick hack to exit via the no-op path */
 				newOwnerId = tuple_class->relowner;
+			}
+			break;
+		case RELKIND_SEQUENCE:
+			if (!recursing &&
+				tuple_class->relowner != newOwnerId)
+			{
+				/* if it's an owned sequence, disallow changing it by itself */
+				Oid		tableId;
+				int32	colId;
+
+				if (sequenceIsOwned(relationOid, &tableId, &colId))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot change owner of sequence \"%s\"",
+									NameStr(tuple_class->relname)),
+							 errdetail("Sequence \"%s\" is linked to table \"%s\".",
+									   NameStr(tuple_class->relname),
+									   get_rel_name(tableId))));
 			}
 			break;
 		case RELKIND_TOASTVALUE:
@@ -5644,7 +5629,7 @@ change_owner_recurse_to_sequences(Oid relationOid, Oid newOwnerId)
 	HeapTuple	tup;
 
 	/*
-	 * SERIAL sequences are those having an internal dependency on one of the
+	 * SERIAL sequences are those having an auto dependency on one of the
 	 * table's columns (we don't care *which* column, exactly).
 	 */
 	depRel = heap_open(DependRelationId, AccessShareLock);
@@ -5667,11 +5652,11 @@ change_owner_recurse_to_sequences(Oid relationOid, Oid newOwnerId)
 		Form_pg_depend depForm = (Form_pg_depend) GETSTRUCT(tup);
 		Relation	seqRel;
 
-		/* skip dependencies other than internal dependencies on columns */
+		/* skip dependencies other than auto dependencies on columns */
 		if (depForm->refobjsubid == 0 ||
 			depForm->classid != RelationRelationId ||
 			depForm->objsubid != 0 ||
-			depForm->deptype != DEPENDENCY_INTERNAL)
+			depForm->deptype != DEPENDENCY_AUTO)
 			continue;
 
 		/* Use relation_open just in case it's an index */
@@ -5686,7 +5671,7 @@ change_owner_recurse_to_sequences(Oid relationOid, Oid newOwnerId)
 		}
 
 		/* We don't need to close the sequence while we alter it. */
-		ATExecChangeOwner(depForm->objid, newOwnerId, false);
+		ATExecChangeOwner(depForm->objid, newOwnerId, true);
 
 		/* Now we can close it.  Keep the lock till end of transaction. */
 		relation_close(seqRel, NoLock);
@@ -6549,6 +6534,9 @@ AlterTableNamespace(RangeVar *relation, const char *newschema)
 
 	rel = heap_openrv(relation, AccessExclusiveLock);
 
+	relid = RelationGetRelid(rel);
+	oldNspOid = RelationGetNamespace(rel);
+
 	/* heap_openrv allows TOAST, but we don't want to */
 	if (rel->rd_rel->relkind == RELKIND_TOASTVALUE)
 		ereport(ERROR,
@@ -6556,8 +6544,20 @@ AlterTableNamespace(RangeVar *relation, const char *newschema)
 				 errmsg("\"%s\" is a TOAST relation",
 						RelationGetRelationName(rel))));
 
-	relid = RelationGetRelid(rel);
-	oldNspOid = RelationGetNamespace(rel);
+	/* if it's an owned sequence, disallow moving it by itself */
+	if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+	{
+		Oid		tableId;
+		int32	colId;
+
+		if (sequenceIsOwned(relid, &tableId, &colId))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot move an owned sequence into another schema"),
+					 errdetail("Sequence \"%s\" is linked to table \"%s\".",
+							   RelationGetRelationName(rel),
+							   get_rel_name(tableId))));
+	}
 
 	/* get schema OID and check its permissions */
 	nspOid = LookupCreationNamespace(newschema);
@@ -6699,7 +6699,7 @@ AlterSeqNamespaces(Relation classRel, Relation rel,
 	HeapTuple	tup;
 
 	/*
-	 * SERIAL sequences are those having an internal dependency on one of the
+	 * SERIAL sequences are those having an auto dependency on one of the
 	 * table's columns (we don't care *which* column, exactly).
 	 */
 	depRel = heap_open(DependRelationId, AccessShareLock);
@@ -6722,11 +6722,11 @@ AlterSeqNamespaces(Relation classRel, Relation rel,
 		Form_pg_depend depForm = (Form_pg_depend) GETSTRUCT(tup);
 		Relation	seqRel;
 
-		/* skip dependencies other than internal dependencies on columns */
+		/* skip dependencies other than auto dependencies on columns */
 		if (depForm->refobjsubid == 0 ||
 			depForm->classid != RelationRelationId ||
 			depForm->objsubid != 0 ||
-			depForm->deptype != DEPENDENCY_INTERNAL)
+			depForm->deptype != DEPENDENCY_AUTO)
 			continue;
 
 		/* Use relation_open just in case it's an index */

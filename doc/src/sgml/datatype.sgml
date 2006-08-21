@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.169 2006/07/06 01:46:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.170 2006/08/21 00:57:23 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -705,17 +705,19 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
 <programlisting>
 CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
 CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
-    <replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq') NOT NULL
+    <replaceable class="parameter">colname</replaceable> integer NOT NULL DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq')
 );
+ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq OWNED BY <replaceable class="parameter">tablename</replaceable>.<replaceable class="parameter">colname</replaceable>;
 </programlisting>
 
      Thus, we have created an integer column and arranged for its default
      values to be assigned from a sequence generator.  A <literal>NOT NULL</>
      constraint is applied to ensure that a null value cannot be explicitly
-     inserted, either.  In most cases you would also want to attach a
+     inserted, either.  (In most cases you would also want to attach a
      <literal>UNIQUE</> or <literal>PRIMARY KEY</> constraint to prevent
      duplicate values from being inserted by accident, but this is
-     not automatic.
+     not automatic.)  Lastly, the sequence is marked as <quote>owned by</>
+     the column, so that it will be dropped if the column or table is dropped.
     </para>
 
     <note>
@@ -749,20 +751,9 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
 
     <para>
      The sequence created for a <type>serial</type> column is
-     automatically dropped when the owning column is dropped, and
-     cannot be dropped otherwise.  (This was not true in
-     <productname>PostgreSQL</productname> releases before 7.3.  Note
-     that this automatic drop linkage will not occur for a sequence
-     created by reloading a dump from a pre-7.3 database; the dump
-     file does not contain the information needed to establish the
-     dependency link.) Furthermore, this dependency between sequence
-     and column is made only for the <type>serial</> column itself. If
-     any other columns reference the sequence (perhaps by manually
-     calling the <function>nextval</> function), they will be broken
-     if the sequence is removed. Using a <type>serial</> column's sequence
-     in such a fashion is considered bad form; if you wish to feed several
-     columns from the same sequence generator, create the sequence as an
-     independent object.
+     automatically dropped when the owning column is dropped.
+     You can drop the sequence without dropping the column, but this
+     will force removal of the column default expression.
     </para>
    </sect2>
   </sect1>

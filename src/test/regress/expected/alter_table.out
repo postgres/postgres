@@ -1443,6 +1443,6 @@ NOTICE:  drop cascades to function alter2.plus1(integer)
 NOTICE:  drop cascades to view alter2.v1
 NOTICE:  drop cascades to rule _RETURN on view alter2.v1
 NOTICE:  drop cascades to sequence alter2.t1_f1_seq
-NOTICE:  drop cascades to table alter2.t1 column f1
+NOTICE:  drop cascades to default for table alter2.t1 column f1
 NOTICE:  drop cascades to table alter2.t1
 NOTICE:  drop cascades to constraint t1_f2_check on table alter2.t1

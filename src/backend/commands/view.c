@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.96 2006/07/13 16:49:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.97 2006/08/21 00:57:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,6 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 			def->raw_default = NULL;
 			def->cooked_default = NULL;
 			def->constraints = NIL;
-			def->support = NULL;
 
 			attrList = lappend(attrList, def);
 		}

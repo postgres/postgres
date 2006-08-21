@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.556 2006/08/12 18:58:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.557 2006/08/21 00:57:25 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -95,7 +95,6 @@ static Node *makeIntConst(int val);
 static Node *makeFloatConst(char *str);
 static Node *makeAConst(Value *v);
 static Node *makeRowNullTest(NullTestType test, RowExpr *row);
-static DefElem *makeDefElem(char *name, Node *arg);
 static A_Const *makeBoolAConst(bool state);
 static FuncCall *makeOverlaps(List *largs, List *rargs, int location);
 static void check_qualified_name(List *names);
@@ -2275,7 +2274,6 @@ CreateAsElement:
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
 					n->constraints = NIL;
-					n->support = NULL;
 					$$ = (Node *)n;
 				}
 		;
@@ -2345,6 +2343,10 @@ OptSeqElem: CACHE NumericOnly
 			| NO MINVALUE
 				{
 					$$ = makeDefElem("minvalue", NULL);
+				}
+			| OWNED BY any_name
+				{
+					$$ = makeDefElem("owned_by", (Node *)$3);
 				}
 			| START opt_with NumericOnly
 				{
@@ -8975,19 +8977,6 @@ makeAConst(Value *v)
 	}
 
 	return n;
-}
-
-/* makeDefElem()
- * Create a DefElem node and set contents.
- * Could be moved to nodes/makefuncs.c if this is useful elsewhere.
- */
-static DefElem *
-makeDefElem(char *name, Node *arg)
-{
-	DefElem *f = makeNode(DefElem);
-	f->defname = name;
-	f->arg = arg;
-	return f;
 }
 
 /* makeBoolAConst()

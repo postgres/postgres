@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.88 2006/08/03 20:57:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.89 2006/08/21 00:57:24 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -371,7 +371,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <listitem>
      <para>
       This form moves the table into another schema.  Associated indexes,
-      constraints, and SERIAL-column sequences are moved as well.
+      constraints, and sequences owned by table columns are moved as well.
      </para>
     </listitem>
    </varlistentry>

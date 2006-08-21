@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.128 2006/08/01 18:05:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.129 2006/08/21 00:57:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,7 +185,7 @@ typedef struct _tableInfo
 	bool		hasoids;		/* does it have OIDs? */
 	int			ncheck;			/* # of CHECK expressions */
 	int			ntrig;			/* # of triggers */
-	/* these two are set only if table is a SERIAL column's sequence: */
+	/* these two are set only if table is a sequence owned by a column: */
 	Oid			owning_tab;		/* OID of table owning sequence */
 	int			owning_col;		/* attr # of column owning sequence */
 
@@ -204,7 +204,6 @@ typedef struct _tableInfo
 	char	   *typstorage;		/* type storage scheme */
 	bool	   *attisdropped;	/* true if attr is dropped; don't dump it */
 	bool	   *attislocal;		/* true if attr has local definition */
-	bool	   *attisserial;	/* true if attr is serial or bigserial */
 
 	/*
 	 * Note: we need to store per-attribute notnull, default, and constraint

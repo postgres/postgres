@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.346 2006/08/12 20:05:55 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.347 2006/08/21 00:57:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -980,6 +980,14 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 		}
 	}
 
+	/*
+	 * transformIndexConstraints wants cxt.alist to contain only index
+	 * statements, so transfer anything we already have into extras_after
+	 * immediately.
+	 */
+	*extras_after = list_concat(cxt.alist, *extras_after);
+	cxt.alist = NIL;
+
 	Assert(stmt->constraints == NIL);
 
 	/*
@@ -1052,6 +1060,8 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		A_Const    *snamenode;
 		FuncCall   *funccallnode;
 		CreateSeqStmt *seqstmt;
+		AlterSeqStmt *altseqstmt;
+		List	   *attnamelist;
 
 		/*
 		 * Determine namespace and name to use for the sequence.
@@ -1088,10 +1098,19 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		cxt->blist = lappend(cxt->blist, seqstmt);
 
 		/*
-		 * Mark the ColumnDef so that during execution, an appropriate
-		 * dependency will be added from the sequence to the column.
+		 * Build an ALTER SEQUENCE ... OWNED BY command to mark the sequence
+		 * as owned by this column, and add it to the list of things to be
+		 * done after this CREATE/ALTER TABLE.
 		 */
-		column->support = makeRangeVar(snamespace, sname);
+		altseqstmt = makeNode(AlterSeqStmt);
+		altseqstmt->sequence = makeRangeVar(snamespace, sname);
+		attnamelist = list_make3(makeString(snamespace),
+								 makeString(cxt->relation->relname),
+								 makeString(column->colname));
+		altseqstmt->options = list_make1(makeDefElem("owned_by",
+													 (Node *) attnamelist));
+
+		cxt->alist = lappend(cxt->alist, altseqstmt);
 
 		/*
 		 * Create appropriate constraints for SERIAL.  We do this in full,
@@ -1349,7 +1368,6 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		def->raw_default = NULL;
 		def->cooked_default = NULL;
 		def->constraints = NIL;
-		def->support = NULL;
 
 		/*
 		 * Add to column list
@@ -1604,7 +1622,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	 * XXX in ALTER TABLE case, it'd be nice to look for duplicate
 	 * pre-existing indexes, too.
 	 */
-	cxt->alist = NIL;
+	Assert(cxt->alist == NIL);
 	if (cxt->pkey != NULL)
 	{
 		/* Make sure we keep the PKEY index in preference to others... */
@@ -3040,6 +3058,14 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 				break;
 		}
 	}
+
+	/*
+	 * transformIndexConstraints wants cxt.alist to contain only index
+	 * statements, so transfer anything we already have into extras_after
+	 * immediately.
+	 */
+	*extras_after = list_concat(cxt.alist, *extras_after);
+	cxt.alist = NIL;
 
 	/* Postprocess index and FK constraints */
 	transformIndexConstraints(pstate, &cxt);

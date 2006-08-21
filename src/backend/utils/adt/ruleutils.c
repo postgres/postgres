@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.231 2006/08/12 02:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.232 2006/08/21 00:57:25 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -1287,12 +1287,12 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
 		/*
-		 * We assume any internal dependency of a relation on a column must be
+		 * We assume any auto dependency of a relation on a column must be
 		 * what we are looking for.
 		 */
 		if (deprec->classid == RelationRelationId &&
 			deprec->objsubid == 0 &&
-			deprec->deptype == DEPENDENCY_INTERNAL)
+			deprec->deptype == DEPENDENCY_AUTO)
 		{
 			sequenceId = deprec->objid;
 			break;
