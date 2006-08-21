@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.139 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.140 2006/08/21 19:21:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,13 +73,10 @@ static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
 #else
-/* Header broken in MingW */
-#define ldap_start_tls_sA __BROKEN_LDAP_HEADER
 #include <winldap.h>
-#undef ldap_start_tls_sA
 
 /* Correct header from the Platform SDK */
-WINLDAPAPI ULONG ldap_start_tls_sA (
+typedef ULONG (WINLDAPAPI *__ldap_start_tls_sA)(
     IN   PLDAP          ExternalHandle,
     OUT  PULONG         ServerReturnValue,
     OUT  LDAPMessage    **result,
@@ -713,6 +710,8 @@ CheckPAMAuth(Port *port, char *user, char *password)
 static int
 CheckLDAPAuth(Port *port)
 {
+	static __ldap_start_tls_sA _ldap_start_tls_sA = NULL;
+
     char *passwd;
     char server[128];
     char basedn[128];
@@ -810,7 +809,38 @@ CheckLDAPAuth(Port *port)
 #ifndef WIN32
         if ((r = ldap_start_tls_s(ldap, NULL, NULL)) != LDAP_SUCCESS)
 #else
-        if ((r = ldap_start_tls_sA(ldap, NULL, NULL, NULL, NULL)) != LDAP_SUCCESS) 
+		if (_ldap_start_tls_sA == NULL)
+		{
+			/*
+			 * Need to load this function dynamically because it does not
+			 * exist on Windows 2000, and causes a load error for the whole
+			 * exe if referenced.
+			 */
+			HANDLE ldaphandle;
+			
+			ldaphandle = LoadLibrary("WLDAP32.DLL");
+			if (ldaphandle == NULL)
+			{
+				/* should never happen since we import other files from wldap32, but check anyway */
+				ereport(LOG,
+						(errmsg("could not load wldap32.dll")));
+				return STATUS_ERROR;
+			}
+			_ldap_start_tls_sA = (__ldap_start_tls_sA)GetProcAddress(ldaphandle, "ldap_start_tls_sA");
+			if (_ldap_start_tls_sA == NULL)
+			{
+				ereport(LOG,
+						(errmsg("could not load function _ldap_start_tls_sA in wldap32.dll. LDAP over SSL is not supported on this platform.")));
+				return STATUS_ERROR;
+			}
+
+			/*
+			 * Leak ldaphandle on purpose, because we need the library to stay
+			 * open. This is ok because it will only ever be leaked once per
+			 * process and is automatically cleaned up on process exit.
+			 */
+		}
+        if ((r = _ldap_start_tls_sA(ldap, NULL, NULL, NULL, NULL)) != LDAP_SUCCESS) 
 #endif
         {
             ereport(LOG,

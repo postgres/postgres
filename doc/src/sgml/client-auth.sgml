@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.91 2006/06/18 15:38:35 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.92 2006/08/21 19:21:38 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -938,7 +938,8 @@ ldap://ldap.example.net/dc=example,dc=net;EXAMPLE\
     and the LDAP server. The connection between the client and the
     PostgreSQL server is not affected by this setting. To make use of
     TLS encryption, you may need to configure the LDAP library prior
-    to configuring PostgreSQL.
+    to configuring PostgreSQL. Note that encrypted LDAP is available only
+    if the platform's LDAP library supports it.
    </para>
    <para>
     If no port is specified, the default port as configured in the
