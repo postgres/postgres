@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.248 2006/08/17 23:04:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.249 2006/08/21 16:16:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,10 +312,8 @@ static XLogRecPtr RedoRecPtr;
  * new log file.
  *
  * CheckpointLock: must be held to do a checkpoint (ensures only one
- * checkpointer at a time; even though the postmaster won't launch
- * parallel checkpoint processes, we need this because manual checkpoints
- * could be launched simultaneously).  XXX now that all checkpoints are
- * done by the bgwriter, isn't this lock redundant?
+ * checkpointer at a time; currently, with all checkpoints done by the
+ * bgwriter, this is just pro forma).
  *
  *----------
  */
@@ -363,9 +361,13 @@ typedef struct XLogCtlData
 {
 	/* Protected by WALInsertLock: */
 	XLogCtlInsert Insert;
+
 	/* Protected by info_lck: */
 	XLogwrtRqst LogwrtRqst;
 	XLogwrtResult LogwrtResult;
+	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
+	TransactionId ckptXid;
+
 	/* Protected by WALWriteLock: */
 	XLogCtlWrite Write;
 
@@ -380,7 +382,7 @@ typedef struct XLogCtlData
 	int			XLogCacheBlck;	/* highest allocated xlog buffer index */
 	TimeLineID	ThisTimeLineID;
 
-	slock_t		info_lck;		/* locks shared LogwrtRqst/LogwrtResult */
+	slock_t		info_lck;		/* locks shared variables shown above */
 } XLogCtlData;
 
 static XLogCtlData *XLogCtl = NULL;
@@ -4086,6 +4088,7 @@ BootStrapXLOG(void)
 	checkPoint.redo.xrecoff = SizeOfXLogLongPHD;
 	checkPoint.undo = checkPoint.redo;
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
+	checkPoint.nextXidEpoch = 0;
 	checkPoint.nextXid = FirstNormalTransactionId;
 	checkPoint.nextOid = FirstBootstrapObjectId;
 	checkPoint.nextMulti = FirstMultiXactId;
@@ -4752,8 +4755,9 @@ StartupXLOG(void)
 			 checkPoint.undo.xlogid, checkPoint.undo.xrecoff,
 			 wasShutdown ? "TRUE" : "FALSE")));
 	ereport(LOG,
-			(errmsg("next transaction ID: %u; next OID: %u",
-					checkPoint.nextXid, checkPoint.nextOid)));
+			(errmsg("next transaction ID: %u/%u; next OID: %u",
+					checkPoint.nextXidEpoch, checkPoint.nextXid,
+					checkPoint.nextOid)));
 	ereport(LOG,
 			(errmsg("next MultiXactId: %u; next MultiXactOffset: %u",
 					checkPoint.nextMulti, checkPoint.nextMultiOffset)));
@@ -5135,6 +5139,10 @@ StartupXLOG(void)
 	/* start the archive_timeout timer running */
 	XLogCtl->Write.lastSegSwitchTime = ControlFile->time;
 
+	/* initialize shared-memory copy of latest checkpoint XID/epoch */
+	XLogCtl->ckptXidEpoch = ControlFile->checkPointCopy.nextXidEpoch;
+	XLogCtl->ckptXid = ControlFile->checkPointCopy.nextXid;
+
 	/* Start up the commit log and related stuff, too */
 	StartupCLOG();
 	StartupSUBTRANS(oldestActiveXID);
@@ -5365,6 +5373,46 @@ GetRecentNextXid(void)
 }
 
 /*
+ * GetNextXidAndEpoch - get the current nextXid value and associated epoch
+ *
+ * This is exported for use by code that would like to have 64-bit XIDs.
+ * We don't really support such things, but all XIDs within the system
+ * can be presumed "close to" the result, and thus the epoch associated
+ * with them can be determined.
+ */
+void
+GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch)
+{
+	uint32			ckptXidEpoch;
+	TransactionId	ckptXid;
+	TransactionId	nextXid;
+
+	/* Must read checkpoint info first, else have race condition */
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire(&xlogctl->info_lck);
+		ckptXidEpoch = xlogctl->ckptXidEpoch;
+		ckptXid = xlogctl->ckptXid;
+		SpinLockRelease(&xlogctl->info_lck);
+	}
+
+	/* Now fetch current nextXid */
+	nextXid = ReadNewTransactionId();
+
+	/*
+	 * nextXid is certainly logically later than ckptXid.  So if it's
+	 * numerically less, it must have wrapped into the next epoch.
+	 */
+	if (nextXid < ckptXid)
+		ckptXidEpoch++;
+
+	*xid = nextXid;
+	*epoch = ckptXidEpoch;
+}
+
+/*
  * This must be called ONCE during postmaster or standalone-backend shutdown
  */
 void
@@ -5531,6 +5579,11 @@ CreateCheckPoint(bool shutdown, bool force)
 	checkPoint.nextXid = ShmemVariableCache->nextXid;
 	LWLockRelease(XidGenLock);
 
+	/* Increase XID epoch if we've wrapped around since last checkpoint */
+	checkPoint.nextXidEpoch = ControlFile->checkPointCopy.nextXidEpoch;
+	if (checkPoint.nextXid < ControlFile->checkPointCopy.nextXid)
+		checkPoint.nextXidEpoch++;
+
 	LWLockAcquire(OidGenLock, LW_SHARED);
 	checkPoint.nextOid = ShmemVariableCache->nextOid;
 	if (!shutdown)
@@ -5599,6 +5652,17 @@ CreateCheckPoint(bool shutdown, bool force)
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 	LWLockRelease(ControlFileLock);
+
+	/* Update shared-memory copy of checkpoint XID/epoch */
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire(&xlogctl->info_lck);
+		xlogctl->ckptXidEpoch = checkPoint.nextXidEpoch;
+		xlogctl->ckptXid = checkPoint.nextXid;
+		SpinLockRelease(&xlogctl->info_lck);
+	}
 
 	/*
 	 * We are now done with critical updates; no need for system panic if we
@@ -5803,6 +5867,10 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		MultiXactSetNextMXact(checkPoint.nextMulti,
 							  checkPoint.nextMultiOffset);
 
+		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
+		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
+		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
+
 		/*
 		 * TLI may change in a shutdown checkpoint, but it shouldn't decrease
 		 */
@@ -5836,6 +5904,11 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		}
 		MultiXactAdvanceNextMXact(checkPoint.nextMulti,
 								  checkPoint.nextMultiOffset);
+
+		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
+		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
+		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
+
 		/* TLI should not change in an on-line checkpoint */
 		if (checkPoint.ThisTimeLineID != ThisTimeLineID)
 			ereport(PANIC,
@@ -5861,10 +5934,11 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
 		appendStringInfo(buf, "checkpoint: redo %X/%X; undo %X/%X; "
-				"tli %u; xid %u; oid %u; multi %u; offset %u; %s",
+				"tli %u; xid %u/%u; oid %u; multi %u; offset %u; %s",
 				checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
 				checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
-				checkpoint->ThisTimeLineID, checkpoint->nextXid,
+				checkpoint->ThisTimeLineID,
+				checkpoint->nextXidEpoch, checkpoint->nextXid,
 				checkpoint->nextOid,
 				checkpoint->nextMulti,
 				checkpoint->nextMultiOffset,

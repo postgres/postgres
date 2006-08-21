@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.31 2006/08/07 16:57:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.32 2006/08/21 16:16:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	821
+#define PG_CONTROL_VERSION	822
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -36,6 +36,7 @@ typedef struct CheckPoint
 								 * transaction when we started (i.e. UNDO end
 								 * point) */
 	TimeLineID	ThisTimeLineID; /* current TLI */
+	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
 	TransactionId nextXid;		/* next free XID */
 	Oid			nextOid;		/* next free OID */
 	MultiXactId nextMulti;		/* next free MultiXactId */

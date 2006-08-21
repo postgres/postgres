@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.51 2006/08/07 16:57:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.52 2006/08/21 16:16:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@ main(int argc, char *argv[])
 	int			c;
 	bool		force = false;
 	bool		noupdate = false;
+	uint32		set_xid_epoch = -1;
 	TransactionId set_xid = 0;
 	Oid			set_oid = 0;
 	MultiXactId set_mxid = 0;
@@ -104,7 +105,7 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "fl:m:no:O:x:")) != -1)
+	while ((c = getopt(argc, argv, "fl:m:no:O:x:e:")) != -1)
 	{
 		switch (c)
 		{
@@ -114,6 +115,21 @@ main(int argc, char *argv[])
 
 			case 'n':
 				noupdate = true;
+				break;
+
+			case 'e':
+				set_xid_epoch = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != '\0')
+				{
+					fprintf(stderr, _("%s: invalid argument for option -e\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				if (set_xid_epoch == -1)
+				{
+					fprintf(stderr, _("%s: transaction ID epoch (-e) must not be -1\n"), progname);
+					exit(1);
+				}
 				break;
 
 			case 'x':
@@ -271,6 +287,9 @@ main(int argc, char *argv[])
 	 * Adjust fields if required by switches.  (Do this now so that printout,
 	 * if any, includes these values.)
 	 */
+	if (set_xid_epoch != -1)
+		ControlFile.checkPointCopy.nextXidEpoch = set_xid_epoch;
+
 	if (set_xid != 0)
 		ControlFile.checkPointCopy.nextXid = set_xid;
 
@@ -441,6 +460,7 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogLongPHD;
 	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
 	ControlFile.checkPointCopy.ThisTimeLineID = 1;
+	ControlFile.checkPointCopy.nextXidEpoch = 0;
 	ControlFile.checkPointCopy.nextXid = (TransactionId) 514;	/* XXX */
 	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
 	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
@@ -513,29 +533,50 @@ PrintControlValues(bool guessed)
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 			 ControlFile.system_identifier);
 
-	printf(_("pg_control version number:            %u\n"), ControlFile.pg_control_version);
-	printf(_("Catalog version number:               %u\n"), ControlFile.catalog_version_no);
-	printf(_("Database system identifier:           %s\n"), sysident_str);
-	printf(_("Current log file ID:                  %u\n"), ControlFile.logId);
-	printf(_("Next log file segment:                %u\n"), ControlFile.logSeg);
-	printf(_("Latest checkpoint's TimeLineID:       %u\n"), ControlFile.checkPointCopy.ThisTimeLineID);
-	printf(_("Latest checkpoint's NextXID:          %u\n"), ControlFile.checkPointCopy.nextXid);
-	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
-	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"), ControlFile.checkPointCopy.nextMulti);
-	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"), ControlFile.checkPointCopy.nextMultiOffset);
-	printf(_("Maximum data alignment:               %u\n"), ControlFile.maxAlign);
+	printf(_("pg_control version number:            %u\n"),
+		   ControlFile.pg_control_version);
+	printf(_("Catalog version number:               %u\n"),
+		   ControlFile.catalog_version_no);
+	printf(_("Database system identifier:           %s\n"),
+		   sysident_str);
+	printf(_("Current log file ID:                  %u\n"),
+		   ControlFile.logId);
+	printf(_("Next log file segment:                %u\n"),
+		   ControlFile.logSeg);
+	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
+		   ControlFile.checkPointCopy.ThisTimeLineID);
+	printf(_("Latest checkpoint's NextXID:          %u/%u\n"),
+		   ControlFile.checkPointCopy.nextXidEpoch,
+		   ControlFile.checkPointCopy.nextXid);
+	printf(_("Latest checkpoint's NextOID:          %u\n"),
+		   ControlFile.checkPointCopy.nextOid);
+	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
+		   ControlFile.checkPointCopy.nextMulti);
+	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"),
+		   ControlFile.checkPointCopy.nextMultiOffset);
+	printf(_("Maximum data alignment:               %u\n"),
+		   ControlFile.maxAlign);
 	/* we don't print floatFormat since can't say much useful about it */
-	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
-	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
-	printf(_("WAL block size:                       %u\n"), ControlFile.xlog_blcksz);
-	printf(_("Bytes per WAL segment:                %u\n"), ControlFile.xlog_seg_size);
-	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
-	printf(_("Maximum columns in an index:          %u\n"), ControlFile.indexMaxKeys);
+	printf(_("Database block size:                  %u\n"),
+		   ControlFile.blcksz);
+	printf(_("Blocks per segment of large relation: %u\n"),
+		   ControlFile.relseg_size);
+	printf(_("WAL block size:                       %u\n"),
+		   ControlFile.xlog_blcksz);
+	printf(_("Bytes per WAL segment:                %u\n"),
+		   ControlFile.xlog_seg_size);
+	printf(_("Maximum length of identifiers:        %u\n"),
+		   ControlFile.nameDataLen);
+	printf(_("Maximum columns in an index:          %u\n"),
+		   ControlFile.indexMaxKeys);
 	printf(_("Date/time type storage:               %s\n"),
 		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
-	printf(_("Maximum length of locale name:        %u\n"), ControlFile.localeBuflen);
-	printf(_("LC_COLLATE:                           %s\n"), ControlFile.lc_collate);
-	printf(_("LC_CTYPE:                             %s\n"), ControlFile.lc_ctype);
+	printf(_("Maximum length of locale name:        %u\n"),
+		   ControlFile.localeBuflen);
+	printf(_("LC_COLLATE:                           %s\n"),
+		   ControlFile.lc_collate);
+	printf(_("LC_CTYPE:                             %s\n"),
+		   ControlFile.lc_ctype);
 }
 
 
@@ -810,6 +851,7 @@ usage(void)
 	printf(_("  -o OID          set next OID\n"));
 	printf(_("  -O OFFSET       set next multitransaction offset\n"));
 	printf(_("  -x XID          set next transaction ID\n"));
+	printf(_("  -e XIDEPOCH     set next transaction ID epoch\n"));
 	printf(_("  --help          show this help, then exit\n"));
 	printf(_("  --version       output version information, then exit\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
