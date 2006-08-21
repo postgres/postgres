@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.170 2006/08/21 00:57:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.171 2006/08/21 16:23:46 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2293,19 +2293,6 @@ SELECT * FROM test1 WHERE a;
     <type>boolean</type> values are output using the letters
     <literal>t</literal> and <literal>f</literal>.
    </para>
-
-   <tip>
-    <para>
-     Values of the <type>boolean</type> type cannot be cast directly
-     to other types (e.g., <literal>CAST
-     (<replaceable>boolval</replaceable> AS integer)</literal> does
-     not work).  This can be accomplished using the
-     <literal>CASE</literal> expression: <literal>CASE WHEN
-     <replaceable>boolval</replaceable> THEN 'value if true' ELSE
-     'value if false' END</literal>.  See <xref
-     linkend="functions-conditional">.
-    </para>
-   </tip>
 
    <para>
     <type>boolean</type> uses 1 byte of storage.
