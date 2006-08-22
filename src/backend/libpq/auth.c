@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.140 2006/08/21 19:21:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.141 2006/08/22 02:23:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,8 +68,7 @@ static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 
 #ifdef USE_LDAP
 #ifndef WIN32
-/* We use a deprecated function to keep the codepaths the same as the
- * win32 one. */
+/* We use a deprecated function to keep the codepath the same as win32. */
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
 #else
@@ -710,8 +709,6 @@ CheckPAMAuth(Port *port, char *user, char *password)
 static int
 CheckLDAPAuth(Port *port)
 {
-	static __ldap_start_tls_sA _ldap_start_tls_sA = NULL;
-
     char *passwd;
     char server[128];
     char basedn[128];
@@ -807,8 +804,10 @@ CheckLDAPAuth(Port *port)
     if (ssl)
     {
 #ifndef WIN32
-        if ((r = ldap_start_tls_s(ldap, NULL, NULL)) != LDAP_SUCCESS)
+		if ((r = ldap_start_tls_s(ldap, NULL, NULL)) != LDAP_SUCCESS)
 #else
+		static __ldap_start_tls_sA _ldap_start_tls_sA = NULL;
+
 		if (_ldap_start_tls_sA == NULL)
 		{
 			/*
