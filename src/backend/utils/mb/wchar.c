@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.56 2006/08/22 03:30:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.57 2006/08/22 12:11:28 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -1487,7 +1487,7 @@ report_invalid_encoding(int encoding, const char *mbstr, int len)
 			 errmsg("invalid byte sequence for encoding \"%s\": 0x%s",
 					pg_enc2name_tbl[encoding].name,
 					buf),
-			 errhint("This failure can also happen if the byte sequence does not "
+			 errhint("This error can also happen if the byte sequence does not "
 			 		 "match the encoding expected by the server, which is controlled "
 					 "by \"client_encoding\".")));
 }
