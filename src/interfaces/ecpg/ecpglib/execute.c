@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.59 2006/08/18 16:30:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.60 2006/08/22 12:46:17 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -39,9 +39,8 @@ static char *
 quote_postgres(char *arg, int lineno)
 {
 	char	   *res = (char *) ECPGalloc(2 * strlen(arg) + 3, lineno);
-	int			i,
+	int			i, quoted = false,
 				ri = 0;
-
 	if (!res)
 		return (res);
 
@@ -51,16 +50,29 @@ quote_postgres(char *arg, int lineno)
 	 */	
 	if (strchr(arg, '\\') != NULL)
 		res[ri++] = ESCAPE_STRING_SYNTAX;
-	res[ri++] = '\'';
 
-	for (i = 0; arg[i]; i++, ri++)
+	i = 0;
+	res[ri++] = '\'';
+	/* do not quote the string if it is already quoted */
+	if (*arg == '\'' && arg[strlen(arg)-1] == '\'')
+	{
+		quoted = true;
+		i = 1;
+	}
+
+	for (; arg[i]; i++, ri++)
 	{
 		if (SQL_STR_DOUBLE(arg[i], true))
 			res[ri++] = arg[i];
 		res[ri] = arg[i];
 	}
 
-	res[ri++] = '\'';
+	/* do not quote the string if it is already quoted */
+	if (quoted)
+		ri--;
+	else
+		res[ri++] = '\'';
+
 	res[ri] = '\0';
 
 	ECPGfree(arg);

@@ -12,7 +12,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGprepare line 32: QUERY: SELECT * from test1 where a = ?
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 34: QUERY: INSERT INTO test1 VALUES ('1', '''one''') on connection regress1
+[NO_PID]: ECPGexecute line 34: QUERY: INSERT INTO test1 VALUES ('1', 'one') on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 34 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -20,7 +20,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 39 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 44: QUERY: SELECT * from test1 where a = '1' and b = '''one''' on connection regress1
+[NO_PID]: ECPGexecute line 44: QUERY: SELECT * from test1 where a = '1' and b = 'one' on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 44: Correctly got 1 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -30,7 +30,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 46: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 50: QUERY: declare c1  cursor  for SELECT * from test1 where a = '1' and b = '''one''' on connection regress1
+[NO_PID]: ECPGexecute line 50: QUERY: declare c1  cursor  for SELECT * from test1 where a = '1' and b = 'one' on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 50 Ok: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -40,7 +40,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 52: RESULT: 1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 52: RESULT: 'one' offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 52: RESULT: one offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 56: QUERY: close c1 on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000

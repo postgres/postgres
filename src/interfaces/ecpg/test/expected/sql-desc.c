@@ -48,7 +48,7 @@ main(void)
  int  val1   = 1 ;
  
 #line 13 "desc.pgc"
- char  val2 []   = "one" ,  val2output []   = "AAA" ;
+ char  val2 [ 4 ]   = "one" ,  val2output [ 4 ]   = "AAA" ;
  
 #line 14 "desc.pgc"
  int  val1output   = 2 ,  val2i   = 0 ;
@@ -86,7 +86,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "desc.pgc"
 
 	{ ECPGset_desc(__LINE__, "indesc", 2,ECPGd_data,
-	ECPGt_char,&(val2),(long)-1,(long)1,(-1)*sizeof(char), ECPGd_indicator,
+	ECPGt_char,(val2),(long)4,(long)1,(4)*sizeof(char), ECPGd_indicator,
 	ECPGt_int,&(val2i),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
 #line 25 "desc.pgc"
@@ -147,7 +147,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 36 "desc.pgc"
 
 	{ ECPGset_desc(__LINE__, "indesc", 2,ECPGd_data,
-	ECPGt_char,&(val2),(long)-1,(long)1,(-1)*sizeof(char), ECPGd_indicator,
+	ECPGt_char,(val2),(long)4,(long)1,(4)*sizeof(char), ECPGd_indicator,
 	ECPGt_int,&(val2null),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
 #line 37 "desc.pgc"
@@ -176,7 +176,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 41 "desc.pgc"
 
 	{ ECPGset_desc(__LINE__, "indesc", 2,ECPGd_data,
-	ECPGt_char,&(val2),(long)-1,(long)1,(-1)*sizeof(char), ECPGd_indicator,
+	ECPGt_char,(val2),(long)4,(long)1,(4)*sizeof(char), ECPGd_indicator,
 	ECPGt_int,&(val2i),(long)1,(long)1,sizeof(int), ECPGd_EODT);
 
 #line 42 "desc.pgc"
@@ -199,7 +199,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGget_desc(__LINE__, "outdesc", 1,ECPGd_data,
-	ECPGt_char,&(val2output),(long)-1,(long)1,(-1)*sizeof(char), ECPGd_EODT);
+	ECPGt_char,(val2output),(long)4,(long)1,(4)*sizeof(char), ECPGd_EODT);
 
 #line 46 "desc.pgc"
 
@@ -225,7 +225,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, "fetch next from c1", ECPGt_EOIT, 
 	ECPGt_int,&(val1output),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(ind1),(long)1,(long)1,sizeof(int), 
-	ECPGt_char,&(val2output),(long)-1,(long)1,(-1)*sizeof(char), 
+	ECPGt_char,(val2output),(long)4,(long)1,(4)*sizeof(char), 
 	ECPGt_int,&(ind2),(long)1,(long)1,sizeof(int), ECPGt_EORT);
 #line 52 "desc.pgc"
 
@@ -275,7 +275,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, "fetch next from c2", ECPGt_EOIT, 
 	ECPGt_int,&(val1output),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_char,&(val2output),(long)-1,(long)1,(-1)*sizeof(char), 
+	ECPGt_char,(val2output),(long)4,(long)1,(4)*sizeof(char), 
 	ECPGt_int,&(val2i),(long)1,(long)1,sizeof(int), ECPGt_EORT);
 #line 64 "desc.pgc"
 
@@ -294,7 +294,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	{ ECPGdo(__LINE__, 0, 1, NULL, "select  *  from test1 where a = 2  ", ECPGt_EOIT, 
 	ECPGt_int,&(val1output),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_char,&(val2output),(long)-1,(long)1,(-1)*sizeof(char), 
+	ECPGt_char,(val2output),(long)4,(long)1,(4)*sizeof(char), 
 	ECPGt_int,&(val2i),(long)1,(long)1,sizeof(int), ECPGt_EORT);
 #line 69 "desc.pgc"
 

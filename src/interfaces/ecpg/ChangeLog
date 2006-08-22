@@ -2095,7 +2095,6 @@ Mo Aug 14 10:39:59 CEST 2006
 	- Fixed broken newline on Windows.
 	- Fixed a nasty buffer underrun that only occured when using Informix
 	  no_indicator NULL setting on timestamps and intervals.
-<<<<<<< ChangeLog
 
 Fr 18. Aug 17:32:54 CEST 2006
 
@@ -2107,5 +2106,9 @@ Fr 18. Aug 17:32:54 CEST 2006
 Sa 19. Aug 14:11:32 CEST 2006
 
 	- More SoC stuff.
+
+Tu 22. Aug 13:54:08 CEST 2006
+
+	- Descriptor values were quoted twice.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

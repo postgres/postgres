@@ -81,7 +81,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	date1 = PGTYPESdate_from_asc(d1, NULL); 
 	ts1 = PGTYPEStimestamp_from_asc(t1, NULL); 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into date_test ( d  , ts  ) values(  ? ,  ? )", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into date_test ( d  , ts  ) values(  ? ,  ? ) ", 
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(ts1),(long)1,(long)1,sizeof(timestamp), 
@@ -131,14 +131,13 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 
 	ts1 = PGTYPEStimestamp_from_asc("2003-12-04 17:34:29", NULL);
 	text = PGTYPEStimestamp_to_asc(ts1);
-	printf("date_day of %s is %d\n", text, PGTYPESdate_dayofweek(ts1));
-	free(text);
-
 	fmt = "(ddd), mmm. dd, yyyy, repeat: (ddd), mmm. dd, yyyy. end";
 	out = (char*) malloc(strlen(fmt) + 1);
 	date1 = PGTYPESdate_from_timestamp(ts1);
 	PGTYPESdate_fmt_asc(date1, fmt, out);
+	printf("date_day of %s is %d\n", text, PGTYPESdate_dayofweek(date1));
 	printf("Above date in format \"%s\" is \"%s\"\n", fmt, out);
+	free(text);
 	free(out);
 
 	/* rdate_defmt_asc() */
@@ -418,16 +417,16 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	free(text);
 
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 351 "dt_test.pgc"
+#line 350 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 351 "dt_test.pgc"
+#line 350 "dt_test.pgc"
 
         { ECPGdisconnect(__LINE__, "CURRENT");
-#line 352 "dt_test.pgc"
+#line 351 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 352 "dt_test.pgc"
+#line 351 "dt_test.pgc"
 
 
 	return (0);

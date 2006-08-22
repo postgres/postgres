@@ -62,14 +62,13 @@ main(void)
 
 	ts1 = PGTYPEStimestamp_from_asc("2003-12-04 17:34:29", NULL);
 	text = PGTYPEStimestamp_to_asc(ts1);
-	printf("date_day of %s is %d\n", text, PGTYPESdate_dayofweek(ts1));
-	free(text);
-
 	fmt = "(ddd), mmm. dd, yyyy, repeat: (ddd), mmm. dd, yyyy. end";
 	out = (char*) malloc(strlen(fmt) + 1);
 	date1 = PGTYPESdate_from_timestamp(ts1);
 	PGTYPESdate_fmt_asc(date1, fmt, out);
+	printf("date_day of %s is %d\n", text, PGTYPESdate_dayofweek(date1));
 	printf("Above date in format \"%s\" is \"%s\"\n", fmt, out);
+	free(text);
 	free(out);
 
 	/* rdate_defmt_asc() */

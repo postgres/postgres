@@ -10,7 +10,7 @@ main(void)
 	char *stmt3 = "SELECT * from test1 where a = ?";
 
 	int val1 = 1;
-	char val2[] = "one", val2output[] = "AAA";
+	char val2[4] = "one", val2output[4] = "AAA";
 	int val1output = 2, val2i = 0;
 	int val2null = -1;
 	int ind1, ind2;
