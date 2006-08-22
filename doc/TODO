@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Aug 21 08:50:23 EDT 2006
+Last updated:		Mon Aug 21 23:40:32 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -336,6 +336,9 @@ Functions
 
 * %Add pg_get_acldef(), pg_get_typedefault(), pg_get_attrdef(),
   pg_get_tabledef(), pg_get_domaindef(), pg_get_functiondef()
+
+  These would be for application use, not for use by pg_dump.
+
 * -Allow to_char() to print localized month names
 * Allow to_date() and to_timestamp() accept localized month names
 * Add missing parameter handling in to_char()
