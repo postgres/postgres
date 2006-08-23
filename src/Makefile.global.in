@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.225 2006/07/24 16:32:44 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.226 2006/08/23 12:01:52 meskes Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -487,6 +487,11 @@ $(top_builddir)/src/include/pg_config.h: $(top_builddir)/src/include/stamp-h
 
 $(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/pg_config.h.in $(top_builddir)/config.status
 	cd $(top_builddir) && ./config.status src/include/pg_config.h
+
+# Also remake ecpg_config.h from ecpg_config.h.in if the latter changed. Values in it can
+# only change if pg_config.h has changed, so include this file to its dependencies.
+$(top_builddir)/src/interfaces/ecpg/include/ecpg_config.h: $(top_builddir)/src/include/pg_config.h $(top_builddir)/src/interfaces/ecpg/include/ecpg_config.h.in $(top_builddir)/config.status
+	cd $(top_builddir) && ./config.status src/interfaces/ecpg/include/ecpg_config.h
 
 # When configure changes, rerun configure with the same options as
 # last time. To change configure, you need to run autoconf manually.

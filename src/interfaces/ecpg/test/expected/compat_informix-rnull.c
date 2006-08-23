@@ -119,7 +119,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 
 
 	{ ECPGdo(__LINE__, 1, 0, NULL, "insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  ) values( 1 ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ) ", 
-	ECPGt_char,&(c),(long)-1,(long)1,(-1)*sizeof(char), 
+	ECPGt_char,(c),(long)sizeof("abc       ")+1,(long)1,(sizeof("abc       ")+1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_short,&(s),(long)1,(long)1,sizeof(short), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -157,7 +157,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	rsetnull(CDTIMETYPE, (char *) &tmp);
 
 	{ ECPGdo(__LINE__, 1, 0, NULL, "insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  , dec  , dat  , tmp  ) values( 2 ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ,  ? ) ", 
-	ECPGt_char,&(c),(long)-1,(long)1,(-1)*sizeof(char), 
+	ECPGt_char,(c),(long)sizeof("abc       ")+1,(long)1,(sizeof("abc       ")+1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_short,&(s),(long)1,(long)1,sizeof(short), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -192,7 +192,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	printf("first select\n");
 
 	{ ECPGdo(__LINE__, 1, 0, NULL, "select  c , s , i , b , f , l , dbl , dec , dat , tmp  from test where id = 1  ", ECPGt_EOIT, 
-	ECPGt_char,&(c),(long)-1,(long)1,(-1)*sizeof(char), 
+	ECPGt_char,(c),(long)sizeof("abc       ")+1,(long)1,(sizeof("abc       ")+1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_short,&(s),(long)1,(long)1,sizeof(short), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
@@ -232,7 +232,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	printf("second select\n");
 
 	{ ECPGdo(__LINE__, 1, 0, NULL, "select  c , s , i , b , f , l , dbl , dec , dat , tmp  from test where id = 2  ", ECPGt_EOIT, 
-	ECPGt_char,&(c),(long)-1,(long)1,(-1)*sizeof(char), 
+	ECPGt_char,(c),(long)sizeof("abc       ")+1,(long)1,(sizeof("abc       ")+1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_short,&(s),(long)1,(long)1,sizeof(short), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 

@@ -2110,5 +2110,11 @@ Sa 19. Aug 14:11:32 CEST 2006
 Tu 22. Aug 13:54:08 CEST 2006
 
 	- Descriptor values were quoted twice.
+
+We 23. Aug 09:32:14 CEST 2006
+
+	- Replaced double-quote-fix with a hopefully better version.
+	- Use initializer string length as size for character strings.
+	- Added ecpg_config.h file that is created via configure.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

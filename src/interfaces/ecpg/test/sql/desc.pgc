@@ -10,7 +10,7 @@ main(void)
 	char *stmt3 = "SELECT * from test1 where a = ?";
 
 	int val1 = 1;
-	char val2[4] = "one", val2output[4] = "AAA";
+	char val2[4] = "one", val2output[] = "AAA";
 	int val1output = 2, val2i = 0;
 	int val2null = -1;
 	int ind1, ind2;
@@ -35,6 +35,11 @@ main(void)
 
 	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = 2;
 	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2null, DATA = :val2;
+
+	EXEC SQL EXECUTE foo1 USING DESCRIPTOR indesc;
+
+	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = 3;
+	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val1, DATA = 'this is a long test';
 
 	EXEC SQL EXECUTE foo1 USING DESCRIPTOR indesc;
 
@@ -66,8 +71,8 @@ main(void)
 
 	EXEC SQL CLOSE c2;
 
-	EXEC SQL SELECT * INTO :val1output, :val2output :val2i FROM test1 where a = 2;
-	printf("val1=%d val2=%s\n", val1output, val2i ? "null" : val2output);
+	EXEC SQL SELECT * INTO :val1output, :val2output:val2i FROM test1 where a = 3;
+	printf("val1=%d val2=%c%c%c%c warn=%c truncate=%d\n", val1output, val2output[0], val2output[1], val2output[2], val2output[3], sqlca.sqlwarn[0], val2i);
 
 	EXEC SQL DROP TABLE test1;
 	EXEC SQL DISCONNECT;

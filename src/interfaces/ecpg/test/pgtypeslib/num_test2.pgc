@@ -95,30 +95,25 @@ main(void)
 
 		r = PGTYPESnumeric_to_double(num, &d);
 		if (r) check_errno();
-		printf("num[%d,10]: %2.7f (r: %d)\n", i, r?0.0:d, r);
-		if (r == 0)
-		{
-			r = PGTYPESnumeric_from_double(d, nin);
-			if (r) check_errno();
-			text = PGTYPESnumeric_to_asc(nin, 2);
-			q = PGTYPESnumeric_cmp(num, nin);
-			printf("num[%d,11]: %s (r: %d - cmp: %d)\n", i, text, r, q);
-			free(text);
-		}
+		printf("num[%d,10]: %g (r: %d)\n", i, r?0.0:d, r);
+		/* do not test double to numeric because
+		 * - extra digits are different on different architectures
+		 * - PGTYPESnumeric_from_double internally calls PGTYPESnumeric_from_asc anyway
+		 */
 
 		dec = PGTYPESdecimal_new();
 		r = PGTYPESnumeric_to_decimal(num, dec);
 		if (r) check_errno();
 		/* we have no special routine for outputting decimal, it would
 		 * convert to a numeric anyway */
-		printf("num[%d,12]: - (r: %d)\n", i, r);
+		printf("num[%d,11]: - (r: %d)\n", i, r);
 		if (r == 0)
 		{
 			r = PGTYPESnumeric_from_decimal(dec, nin);
 			if (r) check_errno();
 			text = PGTYPESnumeric_to_asc(nin, 2);
 			q = PGTYPESnumeric_cmp(num, nin);
-			printf("num[%d,13]: %s (r: %d - cmp: %d)\n", i, text, r, q);
+			printf("num[%d,12]: %s (r: %d - cmp: %d)\n", i, text, r, q);
 			free(text);
 		}
 

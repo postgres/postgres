@@ -121,21 +121,6 @@ main(void)
 		r = dectodbl(dec, &dbl);
 		if (r) check_errno();
 		printf("dec[%d,10]: %2.7f (r: %d)\n", i, r?0.0:dbl, r);
-		if (r == 0)
-		{
-			r = deccvdbl(dbl, din);
-			if (r)
-			{
-				check_errno();
-				printf("dec[%d,11(f)]: - (r: %d)\n", i, r);
-			}
-			else
-			{
-				dectoasc(din, buf, BUFSIZE-1, 2);
-				q = deccmp(dec, din);
-				printf("dec[%d,11]: %s (r: %d - cmp: %d)\n", i, buf, r, q);
-			}
-		}
 
 		PGTYPESdecimal_free(din);
 		printf("\n");

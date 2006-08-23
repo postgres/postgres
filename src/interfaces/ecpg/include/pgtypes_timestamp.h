@@ -1,8 +1,9 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_timestamp.h,v 1.10 2006/03/11 04:38:39 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_timestamp.h,v 1.11 2006/08/23 12:01:52 meskes Exp $ */
 
 #ifndef PGTYPES_TIMESTAMP
 #define PGTYPES_TIMESTAMP
 
+/* pgtypes_interval.h includes ecpg_config.h */
 #include <pgtypes_interval.h>
 
 #ifdef HAVE_INT64_TIMESTAMP

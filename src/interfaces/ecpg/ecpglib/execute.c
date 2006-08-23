@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.60 2006/08/22 12:46:17 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.61 2006/08/23 12:01:52 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -36,47 +36,43 @@
  *	escaped.
  */
 static char *
-quote_postgres(char *arg, int lineno)
+quote_postgres(char *arg, bool quote, int lineno)
 {
-	char	   *res = (char *) ECPGalloc(2 * strlen(arg) + 3, lineno);
-	int			i, quoted = false,
-				ri = 0;
-	if (!res)
-		return (res);
+	char	   *res;
+	int			i, ri = 0;
 
-	/*
-	 *	We don't know if the target database is using
-	 *	standard_conforming_strings, so we always use E'' strings.
-	 */	
-	if (strchr(arg, '\\') != NULL)
-		res[ri++] = ESCAPE_STRING_SYNTAX;
-
-	i = 0;
-	res[ri++] = '\'';
-	/* do not quote the string if it is already quoted */
-	if (*arg == '\'' && arg[strlen(arg)-1] == '\'')
-	{
-		quoted = true;
-		i = 1;
-	}
-
-	for (; arg[i]; i++, ri++)
-	{
-		if (SQL_STR_DOUBLE(arg[i], true))
-			res[ri++] = arg[i];
-		res[ri] = arg[i];
-	}
-
-	/* do not quote the string if it is already quoted */
-	if (quoted)
-		ri--;
+	/* if quote is false we just need to store things in a descriptor 
+	 * they will be quoted once they are inserted in a statement */
+	if (!quote)
+		return res = ECPGstrdup(arg, lineno);
 	else
+	{
+		res = (char *) ECPGalloc(2 * strlen(arg) + 3, lineno);
+		if (!res)
+			return (res);
+
+		/*
+		 *	We don't know if the target database is using
+		 *	standard_conforming_strings, so we always use E'' strings.
+		 */	
+		if (strchr(arg, '\\') != NULL)
+			res[ri++] = ESCAPE_STRING_SYNTAX;
+
 		res[ri++] = '\'';
 
-	res[ri] = '\0';
+		for (i = 0; arg[i]; i++, ri++)
+		{
+			if (SQL_STR_DOUBLE(arg[i], true))
+				res[ri++] = arg[i];
+			res[ri] = arg[i];
+		}
 
-	ECPGfree(arg);
-	return res;
+		res[ri++] = '\'';
+		res[ri] = '\0';
+
+		ECPGfree(arg);
+		return res;
+	}
 }
 
 #if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
@@ -522,7 +518,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 
 bool
 ECPGstore_input(const int lineno, const bool force_indicator, const struct variable * var,
-				const char **tobeinserted_p, bool *malloced_p)
+				const char **tobeinserted_p, bool *malloced_p, bool quote)
 {
 	char	   *mallocedval = NULL;
 	char	   *newcopy = NULL;
@@ -839,7 +835,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					strncpy(newcopy, (char *) var->value, slen);
 					newcopy[slen] = '\0';
 
-					mallocedval = quote_postgres(newcopy, lineno);
+					mallocedval = quote_postgres(newcopy, quote, lineno);
 					if (!mallocedval)
 						return false;
 
@@ -873,7 +869,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					strncpy(newcopy, variable->arr, variable->len);
 					newcopy[variable->len] = '\0';
 
-					mallocedval = quote_postgres(newcopy, lineno);
+					mallocedval = quote_postgres(newcopy, quote, lineno);
 					if (!mallocedval)
 						return false;
 
@@ -961,7 +957,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPESinterval_to_asc((interval *) ((var + var->offset * element)->value)), lineno);
+							str = quote_postgres(PGTYPESinterval_to_asc((interval *) ((var + var->offset * element)->value)), quote, lineno);
 							if (!str)
 								return false;
 							slen = strlen(str);
@@ -984,7 +980,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					}
 					else
 					{
-						str = quote_postgres(PGTYPESinterval_to_asc((interval *) (var->value)), lineno);
+						str = quote_postgres(PGTYPESinterval_to_asc((interval *) (var->value)), quote, lineno);
 						if (!str)
 							return false;
 						slen = strlen(str);
@@ -1015,7 +1011,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPESdate_to_asc(*(date *) ((var + var->offset * element)->value)), lineno);
+							str = quote_postgres(PGTYPESdate_to_asc(*(date *) ((var + var->offset * element)->value)), quote, lineno);
 							if (!str)
 								return false;
 							slen = strlen(str);
@@ -1038,7 +1034,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					}
 					else
 					{
-						str = quote_postgres(PGTYPESdate_to_asc(*(date *) (var->value)), lineno);
+						str = quote_postgres(PGTYPESdate_to_asc(*(date *) (var->value)), quote, lineno);
 						if (!str)
 							return false;
 						slen = strlen(str);
@@ -1069,7 +1065,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), lineno);
+							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), quote, lineno);
 							if (!str)
 								return false;
 
@@ -1093,7 +1089,7 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					}
 					else
 					{
-						str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) (var->value)), lineno);
+						str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) (var->value)), quote, lineno);
 						if (!str)
 							return false;
 						slen = strlen(str);
@@ -1212,7 +1208,7 @@ ECPGexecute(struct statement * stmt)
 							desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = 1;
 							desc_inlist.ind_offset = 0;
 						}
-						if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, &malloced))
+						if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, &malloced, true))
 						{
 							ECPGfree(copiedquery);
 							return false;
@@ -1230,7 +1226,7 @@ ECPGexecute(struct statement * stmt)
 		}
 		else
 		{
-			if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, var, &tobeinserted, &malloced))
+			if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, var, &tobeinserted, &malloced, true))
 				return false;
 		}
 

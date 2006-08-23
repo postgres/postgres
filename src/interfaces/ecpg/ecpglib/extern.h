@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.18 2006/08/04 03:23:37 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.19 2006/08/23 12:01:52 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -129,7 +129,7 @@ PGresult  **ECPGdescriptor_lvalue(int line, const char *descriptor);
 
 bool ECPGstore_result(const PGresult *results, int act_field,
 				 const struct statement * stmt, struct variable * var);
-bool		ECPGstore_input(const int, const bool, const struct variable *, const char **, bool *);
+bool		ECPGstore_input(const int, const bool, const struct variable *, const char **, bool *, bool);
 
 #if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
  /* work around a gcc/ABI bug with va_lists on ppc+amd64 */
