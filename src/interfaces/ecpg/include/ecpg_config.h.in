@@ -1,0 +1,4 @@
+/* Define to 1 if you want 64-bit integer timestamp and interval support.
+   (--enable-integer-datetimes) */
+#undef USE_INTEGER_DATETIMES
+
