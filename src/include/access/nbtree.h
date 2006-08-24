@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.103 2006/08/07 16:57:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.104 2006/08/24 01:18:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,6 +437,15 @@ typedef struct BTScanOpaqueData
 	/* info about killed items if any (killedItems is NULL if never used) */
 	int		   *killedItems;	/* currPos.items indexes of killed items */
 	int			numKilled;		/* number of currently stored items */
+
+	/*
+	 * If the marked position is on the same page as current position,
+	 * we don't use markPos, but just keep the marked itemIndex in
+	 * markItemIndex (all the rest of currPos is valid for the mark position).
+	 * Hence, to determine if there is a mark, first look at markItemIndex,
+	 * then at markPos.
+	 */
+	int			markItemIndex;	/* itemIndex, or -1 if not valid */
 
 	/* keep these last in struct for efficiency */
 	BTScanPosData currPos;		/* current position data */

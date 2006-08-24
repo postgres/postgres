@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.149 2006/05/10 23:18:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.150 2006/08/24 01:18:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,6 +392,7 @@ btrescan(PG_FUNCTION_ARGS)
 		ReleaseBuffer(so->markPos.buf);
 		so->markPos.buf = InvalidBuffer;
 	}
+	so->markItemIndex = -1;
 
 	/*
 	 * Reset the scan keys. Note that keys ordering stuff moved to _bt_first.
@@ -430,6 +431,7 @@ btendscan(PG_FUNCTION_ARGS)
 		ReleaseBuffer(so->markPos.buf);
 		so->markPos.buf = InvalidBuffer;
 	}
+	so->markItemIndex = -1;
 
 	if (so->killedItems != NULL)
 		pfree(so->killedItems);
@@ -456,14 +458,16 @@ btmarkpos(PG_FUNCTION_ARGS)
 		so->markPos.buf = InvalidBuffer;
 	}
 
-	/* bump pin on current buffer for assignment to mark buffer */
+	/*
+	 * Just record the current itemIndex.  If we later step to next page
+	 * before releasing the marked position, _bt_steppage makes a full copy
+	 * of the currPos struct in markPos.  If (as often happens) the mark is
+	 * moved before we leave the page, we don't have to do that work.
+	 */
 	if (BTScanPosIsValid(so->currPos))
-	{
-		IncrBufferRefCount(so->currPos.buf);
-		memcpy(&so->markPos, &so->currPos,
-			   offsetof(BTScanPosData, items[1]) +
-			   so->currPos.lastItem * sizeof(BTScanPosItem));
-	}
+		so->markItemIndex = so->currPos.itemIndex;
+	else
+		so->markItemIndex = -1;
 
 	PG_RETURN_VOID();
 }
@@ -477,24 +481,35 @@ btrestrpos(PG_FUNCTION_ARGS)
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 
-	/* we aren't holding any read locks, but gotta drop the pin */
-	if (BTScanPosIsValid(so->currPos))
+	if (so->markItemIndex >= 0)
 	{
-		/* Before leaving current page, deal with any killed items */
-		if (so->numKilled > 0 &&
-			so->currPos.buf != so->markPos.buf)
-			_bt_killitems(scan, false);
-		ReleaseBuffer(so->currPos.buf);
-		so->currPos.buf = InvalidBuffer;
-	}
+		/*
+		 * The mark position is on the same page we are currently on.
+		 * Just restore the itemIndex.
+		 */
+		so->currPos.itemIndex = so->markItemIndex;
+	} 
+	else
+	{
+		/* we aren't holding any read locks, but gotta drop the pin */
+		if (BTScanPosIsValid(so->currPos))
+		{
+			/* Before leaving current page, deal with any killed items */
+			if (so->numKilled > 0 &&
+				so->currPos.buf != so->markPos.buf)
+				_bt_killitems(scan, false);
+			ReleaseBuffer(so->currPos.buf);
+			so->currPos.buf = InvalidBuffer;
+		}
 
-	/* bump pin on marked buffer */
-	if (BTScanPosIsValid(so->markPos))
-	{
-		IncrBufferRefCount(so->markPos.buf);
-		memcpy(&so->currPos, &so->markPos,
-			   offsetof(BTScanPosData, items[1]) +
-			   so->markPos.lastItem * sizeof(BTScanPosItem));
+		if (BTScanPosIsValid(so->markPos))
+		{
+			/* bump pin on mark buffer for assignment to current buffer */
+			IncrBufferRefCount(so->markPos.buf);
+			memcpy(&so->currPos, &so->markPos,
+				   offsetof(BTScanPosData, items[1]) +
+				   so->markPos.lastItem * sizeof(BTScanPosItem));
+		}
 	}
 
 	PG_RETURN_VOID();

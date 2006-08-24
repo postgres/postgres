@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.105 2006/05/07 01:21:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.106 2006/08/24 01:18:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -815,6 +815,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		so->currPos.moreRight = false;
 	}
 	so->numKilled = 0;			/* just paranoia */
+	so->markItemIndex = -1;		/* ditto */
 
 	/* position to the precise item on the page */
 	offnum = _bt_binsrch(rel, buf, keysCount, scankeys, nextkey);
@@ -1052,6 +1053,21 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 	/* Before leaving current page, deal with any killed items */
 	if (so->numKilled > 0)
 		_bt_killitems(scan, true);
+
+	/*
+	 * Before we modify currPos, make a copy of the page data if there
+	 * was a mark position that needs it.
+	 */
+	if (so->markItemIndex >= 0)
+	{
+		/* bump pin on current buffer for assignment to mark buffer */
+		IncrBufferRefCount(so->currPos.buf);
+		memcpy(&so->markPos, &so->currPos,
+			   offsetof(BTScanPosData, items[1]) +
+			   so->currPos.lastItem * sizeof(BTScanPosItem));
+		so->markPos.itemIndex = so->markItemIndex;
+		so->markItemIndex = -1;
+	}
 
 	rel = scan->indexRelation;
 
@@ -1408,6 +1424,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		so->currPos.moreRight = false;
 	}
 	so->numKilled = 0;			/* just paranoia */
+	so->markItemIndex = -1;		/* ditto */
 
 	/*
 	 * Now load data from the first page of the scan.
