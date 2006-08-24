@@ -2120,5 +2120,6 @@ We 23. Aug 09:32:14 CEST 2006
 Th 24. Aug 11:53:29 CEST 2006
 
 	- Fixed of by one variable size.
+	- Synced parser.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

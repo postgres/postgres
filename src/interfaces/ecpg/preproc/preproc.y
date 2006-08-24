@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.331 2006/08/24 10:35:58 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.332 2006/08/24 12:31:33 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1727,6 +1727,8 @@ OptSeqElem:  CACHE NumConst
 			{ $$ = make_str("no maxvalue"); }
 		| NO MINVALUE
 			{ $$ = make_str("no minvalue"); }
+		| OWNED BY any_name
+			{ $$ = cat2_str(make_str("owned by"), $3); }
 		| START opt_with NumConst
 			{ $$ = cat_str(3, make_str("start"), $2, $3); }
 		| RESTART opt_with NumConst
