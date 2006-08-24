@@ -2116,5 +2116,9 @@ We 23. Aug 09:32:14 CEST 2006
 	- Replaced double-quote-fix with a hopefully better version.
 	- Use initializer string length as size for character strings.
 	- Added ecpg_config.h file that is created via configure.
+
+Th 24. Aug 11:53:29 CEST 2006
+
+	- Fixed of by one variable size.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

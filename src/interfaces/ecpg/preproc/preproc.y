@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.330 2006/08/23 12:01:52 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.331 2006/08/24 10:35:58 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -5422,7 +5422,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 							/* if we have an initializer but no string size set, let's use the initializer's length */
 							free(length);
 							length = mm_alloc(i+sizeof("sizeof()"));
-							sprintf(length, "sizeof(%s)+1", $5+2);
+							sprintf(length, "sizeof(%s)", $5+2);
 						}
 						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
 					}
