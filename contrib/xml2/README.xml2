@@ -83,7 +83,7 @@ xpath_table(key,document,relation,xpaths,criteria)
 
 key - the name of the "key" field - this is just a field to be used as
 the first column of the output table i.e. it identifies the record from
-which each output row came.
+which each output row came (see note below about multiple values).
 
 document - the name of the field containing the XML document
 
@@ -149,6 +149,80 @@ WHERE t.author_id = p.person_id;
 
 as a more complicated example. Of course, you could wrap all
 of this in a view for convenience.
+
+Multivalued results
+
+The xpath_table function assumes that the results of each XPath query
+might be multi-valued, so the number of rows returned by the function
+may not be the same as the number of input documents. The first row
+returned contains the first result from each query, the second row the
+second result from each query. If one of the queries has fewer values
+than the others, NULLs will be returned instead.
+
+In some cases, a user will know that a given XPath query will return
+only a single result (perhaps a unique document identifier) - if used
+alongside an XPath query returning multiple results, the single-valued
+result will appear only on the first row of the result. The solution
+to this is to use the key field as part of a join against a simpler
+XPath query. As an example:
+
+
+CREATE TABLE test
+(
+  id int4 NOT NULL,
+  xml text,
+  CONSTRAINT pk PRIMARY KEY (id)
+) 
+WITHOUT OIDS;
+
+INSERT INTO test VALUES (1, '<doc num="C1">
+<line num="L1"><a>1</a><b>2</b><c>3</c></line>
+<line num="L2"><a>11</a><b>22</b><c>33</c></line>
+</doc>');
+
+INSERT INTO test VALUES (2, '<doc num="C2">
+<line num="L1"><a>111</a><b>222</b><c>333</c></line>
+<line num="L2"><a>111</a><b>222</b><c>333</c></line>
+</doc>');
+
+
+The query:
+
+SELECT * FROM  xpath_table('id','xml','test', 
+'/doc/@num|/doc/line/@num|/doc/line/a|/doc/line/b|/doc/line/c','1=1') 
+AS t(id int4, doc_num varchar(10), line_num varchar(10), val1 int4, 
+val2 int4, val3 int4)
+WHERE id = 1 ORDER BY doc_num, line_num
+
+
+Gives the result:
+
+ id | doc_num | line_num | val1 | val2 | val3
+----+---------+----------+------+------+------
+  1 | C1      | L1       |    1 |    2 |    3
+  1 |         | L2       |   11 |   22 |   33
+
+To get doc_num on every line, the solution is to use two invocations
+of xpath_table and join the results:
+
+SELECT t.*,i.doc_num FROM 
+  xpath_table('id','xml','test',
+   '/doc/line/@num|/doc/line/a|/doc/line/b|/doc/line/c','1=1') 
+        AS t(id int4, line_num varchar(10), val1 int4, val2 int4, val3 int4),
+  xpath_table('id','xml','test','/doc/@num','1=1') 
+        AS i(id int4, doc_num varchar(10))
+WHERE i.id=t.id AND i.id=1
+ORDER BY doc_num, line_num;
+
+which gives the desired result:
+
+ id | line_num | val1 | val2 | val3 | doc_num
+----+----------+------+------+------+---------
+  1 | L1       |    1 |    2 |    3 | C1
+  1 | L2       |   11 |   22 |   33 | C1
+(2 rows)
+
+
 
 XSLT functions
 --------------
