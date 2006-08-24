@@ -1,3 +1,6 @@
+/* Define to 1 if the system has the type `int64'. */
+#undef HAVE_INT64
+
 /* Define to 1 if `long int' works and is 64 bits. */
 #undef HAVE_LONG_INT_64
 

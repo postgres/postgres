@@ -7,6 +7,8 @@ override CPPFLAGS := -DFRONTEND -I$(top_srcdir)/src/interfaces/ecpg/include \
 
 informix_esql_dir = $(pkgincludedir)/informix/esql
 
+all: $(top_builddir)/src/interfaces/ecpg/include/ecpg_config.h 
+
 install: all installdirs install-headers
 
 .PHONY: install-headers
