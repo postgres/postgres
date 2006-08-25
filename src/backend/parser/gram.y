@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.557 2006/08/21 00:57:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.558 2006/08/25 04:06:51 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -364,7 +364,8 @@ static void doNegateFloat(Value *v);
 	CACHE CALLED CASCADE CASCADED CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
-	COMMITTED CONNECTION CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
+	COMMITTED CONCURRENTLY CONNECTION CONSTRAINT CONSTRAINTS
+	CONVERSION_P CONVERT COPY CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -3638,20 +3639,22 @@ opt_granted_by: GRANTED BY RoleId						{ $$ = $3; }
 
 /*****************************************************************************
  *
- *		QUERY:
- *				create index <indexname> on <relname>
- *				  [ using <access> ] "(" ( <col> [ using <opclass> ] )+ ")"
- *				  [ tablespace <tablespacename> ] [ where <predicate> ]
+ *		QUERY: CREATE INDEX
+ *
+ * Note: we can't factor CONCURRENTLY into a separate production without
+ * making it a reserved word.
  *
  * Note: we cannot put TABLESPACE clause after WHERE clause unless we are
  * willing to make TABLESPACE a fully reserved word.
  *****************************************************************************/
 
-IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
-			access_method_clause '(' index_params ')' opt_definition OptTableSpace where_clause
+IndexStmt:	CREATE index_opt_unique INDEX index_name
+			ON qualified_name access_method_clause '(' index_params ')'
+			opt_definition OptTableSpace where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
+					n->concurrent = false;
 					n->idxname = $4;
 					n->relation = $6;
 					n->accessMethod = $7;
@@ -3659,6 +3662,22 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
 					n->options = $11;
 					n->tableSpace = $12;
 					n->whereClause = $13;
+					$$ = (Node *)n;
+				}
+			| CREATE index_opt_unique INDEX CONCURRENTLY index_name
+			ON qualified_name access_method_clause '(' index_params ')'
+			opt_definition OptTableSpace where_clause
+				{
+					IndexStmt *n = makeNode(IndexStmt);
+					n->unique = $2;
+					n->concurrent = true;
+					n->idxname = $5;
+					n->relation = $7;
+					n->accessMethod = $8;
+					n->indexParams = $10;
+					n->options = $12;
+					n->tableSpace = $13;
+					n->whereClause = $14;
 					$$ = (Node *)n;
 				}
 		;
@@ -8491,6 +8510,7 @@ unreserved_keyword:
 			| COMMENT
 			| COMMIT
 			| COMMITTED
+			| CONCURRENTLY
 			| CONNECTION
 			| CONSTRAINTS
 			| CONVERSION_P

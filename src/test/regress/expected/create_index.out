@@ -360,3 +360,53 @@ INSERT INTO func_index_heap VALUES('QWERTY');
 create unique index hash_f8_index_1 on hash_f8_heap(abs(random));
 create unique index hash_f8_index_2 on hash_f8_heap((seqno + 1), random);
 create unique index hash_f8_index_3 on hash_f8_heap(random) where seqno > 1000;
+--
+-- Try some concurrent index builds
+--
+-- Unfortunately this only tests about half the code paths because there are
+-- no concurrent updates happening to the table at the same time.
+CREATE TABLE concur_heap (f1 text, f2 text);
+-- empty table
+CREATE INDEX CONCURRENTLY concur_index1 ON concur_heap(f2,f1);
+INSERT INTO concur_heap VALUES  ('a','b');
+INSERT INTO concur_heap VALUES  ('b','b');
+-- unique index
+CREATE UNIQUE INDEX CONCURRENTLY concur_index2 ON concur_heap(f1);
+-- check if constraint is set up properly to be enforced
+INSERT INTO concur_heap VALUES ('b','x');
+ERROR:  duplicate key violates unique constraint "concur_index2"
+-- check if constraint is enforced properly at build time
+CREATE UNIQUE INDEX CONCURRENTLY concur_index3 ON concur_heap(f2);
+ERROR:  could not create unique index
+DETAIL:  Table contains duplicated values.
+-- test that expression indexes and partial indexes work concurrently
+CREATE INDEX CONCURRENTLY concur_index4 on concur_heap(f2) WHERE f1='a';
+CREATE INDEX CONCURRENTLY concur_index5 on concur_heap(f2) WHERE f1='x';
+CREATE INDEX CONCURRENTLY concur_index6 on concur_heap((f2||f1));
+-- You can't do a concurrent index build in a transaction
+BEGIN;
+CREATE INDEX CONCURRENTLY concur_index7 ON concur_heap(f1);
+ERROR:  CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+COMMIT;
+-- But you can do a regular index build in a transaction
+BEGIN;
+CREATE INDEX std_index on concur_heap(f2);
+COMMIT;
+-- check to make sure that the failed indexes were cleaned up properly and the
+-- successful indexes are created properly. Notably that they do NOT have the
+-- "invalid" flag set.
+\d concur_heap
+Table "public.concur_heap"
+ Column | Type | Modifiers 
+--------+------+-----------
+ f1     | text | 
+ f2     | text | 
+Indexes:
+    "concur_index2" UNIQUE, btree (f1)
+    "concur_index1" btree (f2, f1)
+    "concur_index4" btree (f2) WHERE f1 = 'a'::text
+    "concur_index5" btree (f2) WHERE f1 = 'x'::text
+    "concur_index6" btree ((f2 || f1))
+    "std_index" btree (f2)
+
+DROP TABLE concur_heap;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.266 2006/08/15 18:26:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.267 2006/08/25 04:06:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -781,6 +781,9 @@ ProcessUtility(Node *parsetree,
 			{
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
 
+				if (stmt->concurrent)
+					PreventTransactionChain(stmt, "CREATE INDEX CONCURRENTLY");
+
 				CheckRelationOwnership(stmt->relation, true);
 
 				DefineIndex(stmt->relation,		/* relation */
@@ -795,10 +798,11 @@ ProcessUtility(Node *parsetree,
 							stmt->unique,
 							stmt->primary,
 							stmt->isconstraint,
-							false,		/* is_alter_table */
-							true,		/* check_rights */
-							false,		/* skip_build */
-							false);		/* quiet */
+							false,				/* is_alter_table */
+							true,				/* check_rights */
+							false,				/* skip_build */
+							false,				/* quiet */
+							stmt->concurrent);	/* concurrent */
 			}
 			break;
 

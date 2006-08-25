@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.124 2006/08/13 21:10:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.125 2006/08/25 04:06:54 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1075,22 +1075,71 @@ command_no_begin(const char *query)
 	 * Commands not allowed within transactions.  The statements checked for
 	 * here should be exactly those that call PreventTransactionChain() in the
 	 * backend.
-	 *
-	 * Note: we are a bit sloppy about CLUSTER, which is transactional in some
-	 * variants but not others.
 	 */
 	if (wordlen == 6 && pg_strncasecmp(query, "vacuum", 6) == 0)
 		return true;
 	if (wordlen == 7 && pg_strncasecmp(query, "cluster", 7) == 0)
-		return true;
+	{
+		/* CLUSTER with any arguments is allowed in transactions */
+		query += wordlen;
+
+		query = skip_white_space(query);
+
+		if (isalpha((unsigned char) query[0]))
+			return false;		/* has additional words */
+		return true;			/* it's CLUSTER without arguments */
+	}
+
+	if (wordlen == 6 && pg_strncasecmp(query, "create", 6) == 0)
+	{
+		query += wordlen;
+
+		query = skip_white_space(query);
+
+		wordlen = 0;
+		while (isalpha((unsigned char) query[wordlen]))
+			wordlen += PQmblen(&query[wordlen], pset.encoding);
+
+		if (wordlen == 8 && pg_strncasecmp(query, "database", 8) == 0)
+			return true;
+		if (wordlen == 10 && pg_strncasecmp(query, "tablespace", 10) == 0)
+			return true;
+
+		/* CREATE [UNIQUE] INDEX CONCURRENTLY isn't allowed in xacts */
+		if (wordlen == 6 && pg_strncasecmp(query, "unique", 6) == 0)
+		{
+			query += wordlen;
+
+			query = skip_white_space(query);
+
+			wordlen = 0;
+			while (isalpha((unsigned char) query[wordlen]))
+				wordlen += PQmblen(&query[wordlen], pset.encoding);
+		}
+
+		if (wordlen == 5 && pg_strncasecmp(query, "index", 5) == 0)
+		{
+			query += wordlen;
+
+			query = skip_white_space(query);
+
+			wordlen = 0;
+			while (isalpha((unsigned char) query[wordlen]))
+				wordlen += PQmblen(&query[wordlen], pset.encoding);
+
+			if (wordlen == 12 && pg_strncasecmp(query, "concurrently", 12) == 0)
+				return true;
+		}
+
+		return false;
+	}
 
 	/*
-	 * Note: these tests will match CREATE SYSTEM, DROP SYSTEM, and REINDEX
-	 * TABLESPACE, which aren't really valid commands so we don't care much.
-	 * The other six possible matches are correct.
+	 * Note: these tests will match DROP SYSTEM and REINDEX TABLESPACE,
+	 * which aren't really valid commands so we don't care much.
+	 * The other four possible matches are correct.
 	 */
-	if ((wordlen == 6 && pg_strncasecmp(query, "create", 6) == 0) ||
-		(wordlen == 4 && pg_strncasecmp(query, "drop", 4) == 0) ||
+	if ((wordlen == 4 && pg_strncasecmp(query, "drop", 4) == 0) ||
 		(wordlen == 7 && pg_strncasecmp(query, "reindex", 7) == 0))
 	{
 		query += wordlen;

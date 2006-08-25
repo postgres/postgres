@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.146 2006/07/31 01:16:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.147 2006/08/25 04:06:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/reloptions.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
@@ -85,6 +86,7 @@ static bool relationHasPrimaryKey(Relation rel);
  * 'skip_build': make the catalog entries but leave the index file empty;
  *		it will be filled later.
  * 'quiet': suppress the NOTICE chatter ordinarily provided for constraints.
+ * 'concurrent': avoid blocking writers to the table while building.
  */
 void
 DefineIndex(RangeVar *heapRelation,
@@ -102,7 +104,8 @@ DefineIndex(RangeVar *heapRelation,
 			bool is_alter_table,
 			bool check_rights,
 			bool skip_build,
-			bool quiet)
+			bool quiet,
+			bool concurrent)
 {
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
@@ -116,6 +119,12 @@ DefineIndex(RangeVar *heapRelation,
 	Datum		reloptions;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
+	uint32		ixcnt;
+	LockRelId	heaprelid;
+	Snapshot	snapshot;
+	Relation pg_index;
+	HeapTuple indexTuple;
+	Form_pg_index indexForm;
 
 	/*
 	 * count attributes in index
@@ -133,8 +142,16 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Open heap relation, acquire a suitable lock on it, remember its OID
+	 *
+	 * Only SELECT ... FOR UPDATE/SHARE are allowed while doing a standard
+	 * index build; but for concurrent builds we allow INSERT/UPDATE/DELETE
+	 * (but not VACUUM).
 	 */
-	rel = heap_openrv(heapRelation, ShareLock);
+	rel = heap_openrv(heapRelation,
+					  (concurrent ? ShareUpdateExclusiveLock : ShareLock));
+
+	relationId = RelationGetRelid(rel);
+	namespaceId = RelationGetNamespace(rel);
 
 	/* Note: during bootstrap may see uncataloged relation */
 	if (rel->rd_rel->relkind != RELKIND_RELATION &&
@@ -144,8 +161,13 @@ DefineIndex(RangeVar *heapRelation,
 				 errmsg("\"%s\" is not a table",
 						heapRelation->relname)));
 
-	relationId = RelationGetRelid(rel);
-	namespaceId = RelationGetNamespace(rel);
+	/*
+	 * Don't try to CREATE INDEX on temp tables of other backends.
+	 */
+	if (isOtherTempNamespace(namespaceId))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot create indexes on temporary tables of other sessions")));
 
 	/*
 	 * Verify we (still) have CREATE rights in the rel's namespace.
@@ -391,6 +413,7 @@ DefineIndex(RangeVar *heapRelation,
 	indexInfo->ii_Predicate = make_ands_implicit(predicate);
 	indexInfo->ii_PredicateState = NIL;
 	indexInfo->ii_Unique = unique;
+	indexInfo->ii_Concurrent = concurrent;
 
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	ComputeIndexAttrs(indexInfo, classObjectId, attributeList,
@@ -410,10 +433,122 @@ DefineIndex(RangeVar *heapRelation,
 				  primary ? "PRIMARY KEY" : "UNIQUE",
 				  indexRelationName, RelationGetRelationName(rel))));
 
-	index_create(relationId, indexRelationName, indexRelationId,
-				 indexInfo, accessMethodId, tablespaceId, classObjectId,
-				 reloptions, primary, isconstraint,
-				 allowSystemTableMods, skip_build);
+	indexRelationId =
+		index_create(relationId, indexRelationName, indexRelationId,
+					 indexInfo, accessMethodId, tablespaceId, classObjectId,
+					 reloptions, primary, isconstraint,
+					 allowSystemTableMods, skip_build, concurrent);
+
+	if (!concurrent)
+		return;					/* We're done, in the standard case */
+
+	/*
+	 * Phase 2 of concurrent index build (see comments for validate_index()
+	 * for an overview of how this works)
+	 *
+	 * We must commit our current transaction so that the index becomes
+	 * visible; then start another.  Note that all the data structures
+	 * we just built are lost in the commit.  The only data we keep past
+	 * here are the relation IDs.
+	 *
+	 * Before committing, get a session-level lock on the table, to ensure
+	 * that neither it nor the index can be dropped before we finish.
+	 * This cannot block, even if someone else is waiting for access, because
+	 * we already have the same lock within our transaction.
+	 *
+	 * Note: we don't currently bother with a session lock on the index,
+	 * because there are no operations that could change its state while
+	 * we hold lock on the parent table.  This might need to change later.
+	 */
+	heaprelid = rel->rd_lockInfo.lockRelId;
+	LockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
+
+	CommitTransactionCommand();
+	StartTransactionCommand();
+
+	/* Establish transaction snapshot ... else GetLatestSnapshot complains */
+	(void) GetTransactionSnapshot();
+
+	/*
+	 * Now we must wait until no running transaction could have the table open
+	 * with the old list of indexes.  If we can take an exclusive lock then
+	 * there are none now and anybody who opens it later will get the new
+	 * index in their relcache entry.  Alternatively, if our Xmin reaches our
+	 * own (new) transaction then we know no transactions that started before
+	 * the index was visible are left anyway.
+	 */
+	for (;;)
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		if (ConditionalLockRelationOid(relationId, ExclusiveLock))
+		{
+			/* Release the lock right away to avoid blocking anyone */
+			UnlockRelationOid(relationId, ExclusiveLock);
+			break;
+		}
+
+		if (TransactionIdEquals(GetLatestSnapshot()->xmin,
+								GetTopTransactionId()))
+			break;
+
+		pg_usleep(1000000L);		/* 1 sec */
+	}
+
+	/*
+	 * Now take the "reference snapshot" that will be used by validate_index()
+	 * to filter candidate tuples.  All other transactions running at this
+	 * time will have to be out-waited before we can commit, because we can't
+	 * guarantee that tuples deleted just before this will be in the index.
+	 *
+	 * We also set ActiveSnapshot to this snap, since functions in indexes
+	 * may need a snapshot.
+	 */
+	snapshot = CopySnapshot(GetTransactionSnapshot());
+	ActiveSnapshot = snapshot;
+
+	/*
+	 * Scan the index and the heap, insert any missing index entries.
+	 */
+	validate_index(relationId, indexRelationId, snapshot);
+
+	/*
+	 * The index is now valid in the sense that it contains all currently
+	 * interesting tuples.  But since it might not contain tuples deleted
+	 * just before the reference snap was taken, we have to wait out any
+	 * transactions older than the reference snap.  We can do this by
+	 * waiting for each xact explicitly listed in the snap.
+	 *
+	 * Note: GetSnapshotData() never stores our own xid into a snap,
+	 * hence we need not check for that.
+	 */
+	for (ixcnt = 0; ixcnt < snapshot->xcnt; ixcnt++)
+		XactLockTableWait(snapshot->xip[ixcnt]);
+
+	/* Index can now be marked valid -- update its pg_index entry */
+	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+
+	indexTuple = SearchSysCacheCopy(INDEXRELID,
+									ObjectIdGetDatum(indexRelationId),
+									0, 0, 0);
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
+	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+	Assert(indexForm->indexrelid = indexRelationId);
+	Assert(!indexForm->indisvalid);
+
+	indexForm->indisvalid = true;
+
+	simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
+	CatalogUpdateIndexes(pg_index, indexTuple);
+
+	heap_close(pg_index, RowExclusiveLock);
+
+	/*
+	 * Last thing to do is release the session-level lock on the parent table.
+	 */
+	UnlockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
 }
 
 

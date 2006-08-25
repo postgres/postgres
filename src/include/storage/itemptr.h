@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/itemptr.h,v 1.28 2006/03/05 15:58:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/itemptr.h,v 1.29 2006/08/25 04:06:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,5 +141,6 @@ typedef ItemPointerData *ItemPointer;
  */
 
 extern bool ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
+extern int32 ItemPointerCompare(ItemPointer arg1, ItemPointer arg2);
 
 #endif   /* ITEMPTR_H */

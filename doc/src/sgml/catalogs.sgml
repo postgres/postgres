@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.129 2006/07/31 20:08:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.130 2006/08/25 04:06:44 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -2418,6 +2418,17 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>If true, the table was last clustered on this index</entry>
+     </row>
+
+     <row>
+      <entry><structfield>indisvalid</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, the index is currently valid for queries.
+       False means the index is possibly incomplete: it must still be
+       inserted into by INSERT/UPDATE operations, but it cannot safely be
+       used for queries, and if it is unique, the uniqueness shouldn't be
+       relied on either.</entry>
      </row>
 
      <row>

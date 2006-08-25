@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.31 2006/07/04 18:07:24 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.32 2006/08/25 04:06:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
   <para>
    <command>REINDEX</command> rebuilds an index using the data
    stored in the index's table, replacing the old copy of the index. There are
-   three main reasons to use <command>REINDEX</command>:
+   several scenarios in which to use <command>REINDEX</command>:
 
    <itemizedlist>
     <listitem>
@@ -61,6 +61,18 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
       for an index, and wish to ensure that the change has taken full effect.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      An index build with the <literal>CONCURRENTLY</> option failed, leaving
+      an <quote>invalid</> index. Such indexes are useless but it can be
+      convenient to use <command>REINDEX</> to rebuild them. Note that
+      <command>REINDEX</> will not perform a concurrent build. To build the
+      index without interfering with production you should drop the index and
+      reissue the <command>CREATE INDEX CONCURRENTLY</> command.
+     </para>
+    </listitem>
+
    </itemizedlist>
   </para>
  </refsect1>

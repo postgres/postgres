@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.124 2006/08/05 00:22:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.125 2006/08/25 04:06:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,6 +137,18 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, RelOptInfo *rel)
 			 */
 			indexRelation = index_open(indexoid, lmode);
 			index = indexRelation->rd_index;
+
+			/*
+			 * Ignore invalid indexes, since they can't safely be used for
+			 * queries.  Note that this is OK because the data structure
+			 * we are constructing is only used by the planner --- the
+			 * executor still needs to insert into "invalid" indexes!
+			 */
+			if (!index->indisvalid)
+			{
+				index_close(indexRelation, NoLock);
+				continue;
+			}
 
 			info = makeNode(IndexOptInfo);
 

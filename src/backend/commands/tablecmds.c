@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.200 2006/08/21 00:57:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.201 2006/08/25 04:06:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3832,7 +3832,8 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 				true,			/* is_alter_table */
 				check_rights,
 				skip_build,
-				quiet);
+				quiet,
+				false);
 }
 
 /*

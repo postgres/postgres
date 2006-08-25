@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.55 2006/07/11 21:05:57 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.56 2006/08/25 04:06:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
+CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
     ( { <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] )
     [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
     [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ]
@@ -106,6 +106,21 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
         already exist) and each time data is added. Attempts to
         insert or update data which would result in duplicate entries
         will generate an error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CONCURRENTLY</literal></term>
+      <listitem>
+       <para>
+        When this option is used, <productname>PostgreSQL</> will build the
+        index without taking any locks that prevent concurrent inserts,
+        updates, or deletes on the table; whereas a standard index build
+        locks out writes (but not reads) on the table until it's done.
+        There are several caveats to be aware of when using this option
+        &mdash; see <xref linkend="SQL-CREATEINDEX-CONCURRENTLY"
+        endterm="SQL-CREATEINDEX-CONCURRENTLY-title">.
        </para>
       </listitem>
      </varlistentry>
@@ -239,6 +254,82 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
    </variablelist>
 
   </refsect2>
+
+  <refsect2 id="SQL-CREATEINDEX-CONCURRENTLY">
+   <title id="SQL-CREATEINDEX-CONCURRENTLY-title">Building Indexes Concurrently</title>
+
+   <indexterm zone="SQL-CREATEINDEX-CONCURRENTLY">
+   <primary>index</primary>
+   <secondary>building concurrently</secondary>
+   </indexterm>
+
+   <para>
+    Creating an index for a large table can be a long operation. In large data
+    warehousing applications it can easily take hours or even days to build
+    indexes. It's important to understand the impact creating indexes has on a
+    system.
+   </para>
+
+   <para>
+    Normally <productname>PostgreSQL</> locks the table to be indexed against
+    writes and performs the entire index build with a single scan of the
+    table. Other transactions can still read the table, but if they try to
+    insert, update, or delete rows in the table they will block until the
+    index build is finished.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</> also supports building indexes without locking
+    out writes.  This method is invoked by specifying the
+    <literal>CONCURRENTLY</> option of <command>CREATE INDEX</>.
+    When this option is used,
+    <productname>PostgreSQL</> must perform two scans of the table, and in
+    addition it must wait for all existing transactions to terminate.  Thus
+    this method requires more total work than a standard index build and takes
+    significantly longer to complete.  However, since it allows normal
+    operations to continue while the index is built, this method is useful for
+    adding new indexes in a production environment.  Of course, the extra CPU
+    and I/O load imposed by the index creation may slow other operations.
+   </para>
+
+   <para>
+    If a problem arises during the second scan of the table, such as a
+    uniqueness violation in a unique index, the <command>CREATE INDEX</>
+    command will fail but leave behind an <quote>invalid</> index. This index
+    will be ignored for querying purposes because it may be incomplete;
+    however it will still consume update overhead.  The recommended recovery
+    method in such cases is to drop the index and try again to perform
+    <command>CREATE INDEX CONCURRENTLY</>.  (Another possibility is to rebuild
+    the index with <command>REINDEX</>.  However, since <command>REINDEX</>
+    does not support concurrent builds, this option is unlikely to seem
+    attractive.)
+   </para>
+
+   <para>
+    Another caveat when building a unique index concurrently is that the
+    uniqueness constraint is already being enforced against other transactions
+    when the second table scan begins.  This means that constraint violations
+    could be reported in other queries prior to the index becoming available
+    for use, or even in cases where the index build eventually fails.  Also,
+    if a failure does occur in the second scan, the <quote>invalid</> index
+    continues to enforce its uniqueness constraint afterwards.
+   </para>
+
+   <para>
+    Concurrent builds of expression indexes and partial indexes are supported.
+    Errors occurring in the evaluation of these expressions could cause
+    behavior similar to that described above for unique constraint violations.
+   </para>
+
+   <para>
+    Regular index builds permit other regular index builds on the
+    same table to occur in parallel, but only one concurrent index build
+    can occur on a table at a time.  In both cases, no other types of schema
+    modification on the table are allowed meanwhile.  Another difference
+    is that a regular <command>CREATE INDEX</> command can be performed within
+    a transaction block, but <command>CREATE INDEX CONCURRENTLY</> cannot.
+   </para>
+  </refsect2>
  </refsect1>
 
  <refsect1>
@@ -339,14 +430,21 @@ Is this example correct?
    To create a GiST index on a point attribute so that we
    can efficiently use box operators on the result of the
    conversion function:
-  </para>
   <programlisting>
 CREATE INDEX pointloc
     ON points USING GIST (point2box(location) box_ops);
 SELECT * FROM points
     WHERE point2box(points.pointloc) = boxes.box;
   </programlisting>
+  </para>
 -->
+
+  <para>
+   To create an index without locking out writes to the table:
+<programlisting>
+CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);
+</programlisting>
+  </para>
 
  </refsect1>
 

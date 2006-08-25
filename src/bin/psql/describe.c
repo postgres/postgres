@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.142 2006/07/27 19:52:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.143 2006/08/25 04:06:54 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -942,7 +942,7 @@ describeOneTableDetails(const char *schemaname,
 		PGresult   *result;
 
 		printfPQExpBuffer(&buf,
-						  "SELECT i.indisunique, i.indisprimary, i.indisclustered, a.amname, c2.relname,\n"
+						  "SELECT i.indisunique, i.indisprimary, i.indisclustered, i.indisvalid, a.amname, c2.relname,\n"
 					"  pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
 		  "WHERE i.indexrelid = c.oid AND c.oid = '%s' AND c.relam = a.oid\n"
@@ -962,9 +962,10 @@ describeOneTableDetails(const char *schemaname,
 			char	   *indisunique = PQgetvalue(result, 0, 0);
 			char	   *indisprimary = PQgetvalue(result, 0, 1);
 			char	   *indisclustered = PQgetvalue(result, 0, 2);
-			char	   *indamname = PQgetvalue(result, 0, 3);
-			char	   *indtable = PQgetvalue(result, 0, 4);
-			char	   *indpred = PQgetvalue(result, 0, 5);
+			char	   *indisvalid = PQgetvalue(result, 0, 3);
+			char	   *indamname = PQgetvalue(result, 0, 4);
+			char	   *indtable = PQgetvalue(result, 0, 5);
+			char	   *indpred = PQgetvalue(result, 0, 6);
 			int			count_footers = 0;
 
 			if (strcmp(indisprimary, "t") == 0)
@@ -984,6 +985,9 @@ describeOneTableDetails(const char *schemaname,
 
 			if (strcmp(indisclustered, "t") == 0)
 				appendPQExpBuffer(&tmpbuf, _(", clustered"));
+
+			if (strcmp(indisvalid, "t") != 0)
+				appendPQExpBuffer(&tmpbuf, _(", invalid"));
 
 			footers = pg_malloc_zero(4 * sizeof(*footers));
 			footers[count_footers++] = pg_strdup(tmpbuf.data);
@@ -1067,7 +1071,7 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.hasindex)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT c2.relname, i.indisprimary, i.indisunique, i.indisclustered, "
+							  "SELECT c2.relname, i.indisprimary, i.indisunique, i.indisclustered, i.indisvalid, "
 							  "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true), c2.reltablespace\n"
 							  "FROM pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_index i\n"
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
@@ -1201,7 +1205,7 @@ describeOneTableDetails(const char *schemaname,
 								   ? " UNIQUE,"
 								   : ""));
 				/* Everything after "USING" is echoed verbatim */
-				indexdef = PQgetvalue(result1, i, 4);
+				indexdef = PQgetvalue(result1, i, 5);
 				usingpos = strstr(indexdef, " USING ");
 				if (usingpos)
 					indexdef = usingpos + 7;
@@ -1211,11 +1215,14 @@ describeOneTableDetails(const char *schemaname,
 				if (strcmp(PQgetvalue(result1, i, 3), "t") == 0)
 					appendPQExpBuffer(&buf, " CLUSTER");
 
+				if (strcmp(PQgetvalue(result1, i, 4), "t") != 0)
+					appendPQExpBuffer(&buf, " INVALID");
+
 				/* Print tablespace of the index on the same line */
 				count_footers += 1;
 				initPQExpBuffer(&tmpbuf);
 				if (add_tablespace_footer('i',
-										  atooid(PQgetvalue(result1, i, 5)),
+										  atooid(PQgetvalue(result1, i, 6)),
 									 footers, &count_footers, tmpbuf, false))
 				{
 					appendPQExpBuffer(&buf, ", ");

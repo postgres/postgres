@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.1 2006/07/31 01:16:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.2 2006/08/25 04:06:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,6 +218,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid)
 	indexInfo->ii_Predicate = NIL;
 	indexInfo->ii_PredicateState = NIL;
 	indexInfo->ii_Unique = true;
+	indexInfo->ii_Concurrent = false;
 
 	classObjectId[0] = OID_BTREE_OPS_OID;
 	classObjectId[1] = INT4_BTREE_OPS_OID;
@@ -227,7 +228,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid)
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
 							   classObjectId, (Datum) 0,
-							   true, false, true, false);
+							   true, false, true, false, false);
 
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row

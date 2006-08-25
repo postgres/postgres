@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_index.h,v 1.39 2006/03/05 15:58:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_index.h,v 1.40 2006/08/25 04:06:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -41,6 +41,7 @@ CATALOG(pg_index,2610) BKI_WITHOUT_OIDS
 	bool		indisunique;	/* is this a unique index? */
 	bool		indisprimary;	/* is this index for primary key? */
 	bool		indisclustered; /* is this the index last clustered by? */
+	bool		indisvalid; 	/* is this index valid for use by queries? */
 
 	/* VARIABLE LENGTH FIELDS: */
 	int2vector	indkey;			/* column numbers of indexed cols, or 0 */
@@ -63,16 +64,17 @@ typedef FormData_pg_index *Form_pg_index;
  *		compiler constants for pg_index
  * ----------------
  */
-#define Natts_pg_index					10
+#define Natts_pg_index					11
 #define Anum_pg_index_indexrelid		1
 #define Anum_pg_index_indrelid			2
 #define Anum_pg_index_indnatts			3
 #define Anum_pg_index_indisunique		4
 #define Anum_pg_index_indisprimary		5
 #define Anum_pg_index_indisclustered	6
-#define Anum_pg_index_indkey			7
-#define Anum_pg_index_indclass			8
-#define Anum_pg_index_indexprs			9
-#define Anum_pg_index_indpred			10
+#define Anum_pg_index_indisvalid		7
+#define Anum_pg_index_indkey			8
+#define Anum_pg_index_indclass			9
+#define Anum_pg_index_indexprs			10
+#define Anum_pg_index_indpred			11
 
 #endif   /* PG_INDEX_H */

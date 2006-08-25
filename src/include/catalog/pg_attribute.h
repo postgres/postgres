@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.123 2006/07/10 16:20:51 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.124 2006/08/25 04:06:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -460,9 +460,10 @@ DATA(insert ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 0, {"indisunique"},		16, -1, 1, 4, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 0, {"indisprimary"},		16, -1, 1, 5, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 0, {"indisclustered"},	16, -1, 1, 6, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 0, {"indkey"},			22, -1, -1, 7, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
-{ 0, {"indclass"},			30, -1, -1, 8, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
-{ 0, {"indexprs"},			25, -1, -1, 9, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 0, {"indpred"},			25, -1, -1, 10, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
+{ 0, {"indisvalid"},		16, -1, 1, 7, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 0, {"indkey"},			22, -1, -1, 8, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 0, {"indclass"},			30, -1, -1, 9, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
+{ 0, {"indexprs"},			25, -1, -1, 10, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 0, {"indpred"},			25, -1, -1, 11, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
 
 #endif   /* PG_ATTRIBUTE_H */

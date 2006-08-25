@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.347 2006/08/21 00:57:24 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.348 2006/08/25 04:06:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1488,6 +1488,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		index->tableSpace = constraint->indexspace;
 		index->indexParams = NIL;
 		index->whereClause = NULL;
+		index->concurrent = false;
 
 		/*
 		 * Make sure referenced keys exist.  If we are making a PRIMARY KEY

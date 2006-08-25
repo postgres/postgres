@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.54 2006/07/21 20:51:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.55 2006/08/25 04:06:53 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -158,36 +158,13 @@ tidsend(PG_FUNCTION_ARGS)
  *	 PUBLIC ROUTINES														 *
  *****************************************************************************/
 
-static int32
-tid_cmp_internal(ItemPointer arg1, ItemPointer arg2)
-{
-	/*
-	 * Don't use ItemPointerGetBlockNumber or ItemPointerGetOffsetNumber here,
-	 * because they assert ip_posid != 0 which might not be true for a
-	 * user-supplied TID.
-	 */
-	BlockNumber b1 = BlockIdGetBlockNumber(&(arg1->ip_blkid));
-	BlockNumber b2 = BlockIdGetBlockNumber(&(arg2->ip_blkid));
-	
-	if (b1 < b2)
-		return -1;
-	else if (b1 > b2)
-		return 1;
-	else if (arg1->ip_posid < arg2->ip_posid)
-		return -1;
-	else if (arg1->ip_posid > arg2->ip_posid)
-		return 1;
-	else
-		return 0;
-}
-
 Datum
 tideq(PG_FUNCTION_ARGS)
 {
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) == 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) == 0);
 }
 
 Datum
@@ -196,7 +173,7 @@ tidne(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) != 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) != 0);
 }
 
 Datum
@@ -205,7 +182,7 @@ tidlt(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) < 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) < 0);
 }
 
 Datum
@@ -214,7 +191,7 @@ tidle(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) <= 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) <= 0);
 }
 
 Datum
@@ -223,7 +200,7 @@ tidgt(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) > 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) > 0);
 }
 
 Datum
@@ -232,7 +209,7 @@ tidge(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(tid_cmp_internal(arg1,arg2) >= 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) >= 0);
 }
 
 Datum
@@ -241,7 +218,7 @@ bttidcmp(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_INT32(tid_cmp_internal(arg1, arg2));
+	PG_RETURN_INT32(ItemPointerCompare(arg1, arg2));
 }
 
 Datum
@@ -250,7 +227,7 @@ tidlarger(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_ITEMPOINTER(tid_cmp_internal(arg1,arg2) >= 0 ? arg1 : arg2);
+	PG_RETURN_ITEMPOINTER(ItemPointerCompare(arg1,arg2) >= 0 ? arg1 : arg2);
 }
 
 Datum
@@ -259,7 +236,7 @@ tidsmaller(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_ITEMPOINTER(tid_cmp_internal(arg1,arg2) <= 0 ? arg1 : arg2);
+	PG_RETURN_ITEMPOINTER(ItemPointerCompare(arg1,arg2) <= 0 ? arg1 : arg2);
 }
 
 

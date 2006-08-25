@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.75 2006/07/18 17:42:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.76 2006/08/25 04:06:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@ extern void DefineIndex(RangeVar *heapRelation,
 			bool is_alter_table,
 			bool check_rights,
 			bool skip_build,
-			bool quiet);
+			bool quiet,
+			bool concurrent);
 extern void RemoveIndex(RangeVar *relation, DropBehavior behavior);
 extern void ReindexIndex(RangeVar *indexRelation);
 extern void ReindexTable(RangeVar *relation);
