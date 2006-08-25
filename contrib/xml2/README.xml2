@@ -249,6 +249,9 @@ implications of this.
 There is also a two-parameter version of xslt_process which does not
 pass any parameters to the transformation.
 
+Feedback
+--------
+
 If you have any comments or suggestions, please do contact me at
 jgray@azuli.co.uk. Unfortunately, this isn't my main job, so I can't
 guarantee a rapid response to your query!
