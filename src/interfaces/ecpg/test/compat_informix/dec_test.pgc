@@ -100,7 +100,7 @@ main(void)
 
 		r = dectodbl(dec, &dbl);
 		if (r) check_errno();
-		printf("dec[%d,10]: %2.7f (r: %d)\n", i, r?0.0:dbl, r);
+		printf("dec[%d,10]: %g (r: %d)\n", i, r?0.0:dbl, r);
 
 		PGTYPESdecimal_free(din);
 		printf("\n");
