@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.225 2006/07/30 02:07:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.226 2006/08/27 19:11:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,14 +124,6 @@ typedef struct TransactionStateData
 } TransactionStateData;
 
 typedef TransactionStateData *TransactionState;
-
-/*
- * childXids is currently implemented as an Oid List, relying on the
- * assumption that TransactionIds are no wider than Oid.  We use these
- * macros to provide some isolation in case that changes in the future.
- */
-#define lfirst_xid(lc)				((TransactionId) lfirst_oid(lc))
-#define lappend_xid(list, datum)	lappend_oid(list, (Oid) (datum))
 
 /*
  * CurrentTransactionState always points to the current transaction state
