@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.117 2006/08/13 17:31:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.118 2006/08/27 23:47:58 tgl Exp $
  *
  **********************************************************************/
 
@@ -1630,7 +1630,7 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 	hv_store(result, "processed", strlen("processed"),
 			 newSViv(processed), 0);
 
-	if (status == SPI_OK_SELECT)
+	if (status > 0 && tuptable)
 	{
 		AV		   *rows;
 		SV		   *row;

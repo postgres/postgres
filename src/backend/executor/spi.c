@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.157 2006/08/14 22:57:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.158 2006/08/27 23:47:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1136,6 +1136,12 @@ SPI_result_code_string(int code)
 			return "SPI_OK_UPDATE";
 		case SPI_OK_CURSOR:
 			return "SPI_OK_CURSOR";
+		case SPI_OK_INSERT_RETURNING:
+			return "SPI_OK_INSERT_RETURNING";
+		case SPI_OK_DELETE_RETURNING:
+			return "SPI_OK_DELETE_RETURNING";
+		case SPI_OK_UPDATE_RETURNING:
+			return "SPI_OK_UPDATE_RETURNING";
 	}
 	/* Unrecognized code ... return something useful ... */
 	sprintf(buf, "Unrecognized SPI code %d", code);
@@ -1454,6 +1460,9 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				{
 					ProcessUtility(queryTree->utilityStmt, paramLI,
 								   dest, NULL);
+					/* Update "processed" if stmt returned tuples */
+					if (_SPI_current->tuptable)
+						_SPI_current->processed = _SPI_current->tuptable->alloced - _SPI_current->tuptable->free;
 					res = SPI_OK_UTILITY;
 				}
 				else
@@ -1542,13 +1551,22 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 				res = SPI_OK_SELECT;
 			break;
 		case CMD_INSERT:
-			res = SPI_OK_INSERT;
+			if (queryDesc->parsetree->returningList)
+				res = SPI_OK_INSERT_RETURNING;
+			else
+				res = SPI_OK_INSERT;
 			break;
 		case CMD_DELETE:
-			res = SPI_OK_DELETE;
+			if (queryDesc->parsetree->returningList)
+				res = SPI_OK_DELETE_RETURNING;
+			else
+				res = SPI_OK_DELETE;
 			break;
 		case CMD_UPDATE:
-			res = SPI_OK_UPDATE;
+			if (queryDesc->parsetree->returningList)
+				res = SPI_OK_UPDATE_RETURNING;
+			else
+				res = SPI_OK_UPDATE;
 			break;
 		default:
 			return SPI_ERROR_OPUNKNOWN;
@@ -1568,7 +1586,8 @@ _SPI_pquery(QueryDesc *queryDesc, long tcount)
 	_SPI_current->processed = queryDesc->estate->es_processed;
 	_SPI_current->lastoid = queryDesc->estate->es_lastoid;
 
-	if (operation == CMD_SELECT && queryDesc->dest->mydest == DestSPI)
+	if ((res == SPI_OK_SELECT || queryDesc->parsetree->returningList) &&
+		queryDesc->dest->mydest == DestSPI)
 	{
 		if (_SPI_checktuples())
 			elog(ERROR, "consistency check on SPI tuple count failed");

@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.106 2006/08/08 19:15:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.107 2006/08/27 23:47:58 tgl Exp $
  *
  **********************************************************************/
 
@@ -1663,10 +1663,6 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 
 	switch (spi_rc)
 	{
-		case SPI_OK_UTILITY:
-			Tcl_SetResult(interp, "0", TCL_VOLATILE);
-			break;
-
 		case SPI_OK_SELINTO:
 		case SPI_OK_INSERT:
 		case SPI_OK_DELETE:
@@ -1675,7 +1671,18 @@ pltcl_process_SPI_result(Tcl_Interp *interp,
 			Tcl_SetResult(interp, buf, TCL_VOLATILE);
 			break;
 
+		case SPI_OK_UTILITY:
+			if (tuptable == NULL)
+			{
+				Tcl_SetResult(interp, "0", TCL_VOLATILE);
+				break;
+			}
+			/* FALL THRU for utility returning tuples */
+
 		case SPI_OK_SELECT:
+		case SPI_OK_INSERT_RETURNING:
+		case SPI_OK_DELETE_RETURNING:
+		case SPI_OK_UPDATE_RETURNING:
 
 			/*
 			 * Process the tuples we got

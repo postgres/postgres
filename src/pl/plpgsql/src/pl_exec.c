@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.176 2006/08/15 19:01:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.177 2006/08/27 23:47:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2370,23 +2370,16 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
+		case SPI_OK_INSERT_RETURNING:
+		case SPI_OK_UPDATE_RETURNING:
+		case SPI_OK_DELETE_RETURNING:
 			Assert(stmt->mod_stmt);
 			exec_set_found(estate, (SPI_processed != 0));
 			break;
 
 		case SPI_OK_SELINTO:
-			Assert(!stmt->mod_stmt);
-			break;
-
 		case SPI_OK_UTILITY:
 			Assert(!stmt->mod_stmt);
-			/*
-			 * spi.c currently does not update SPI_processed for utility
-			 * commands.  Not clear if this should be considered a bug;
-			 * for the moment, work around it here.
-			 */
-			if (SPI_tuptable)
-				SPI_processed = (SPI_tuptable->alloced - SPI_tuptable->free);
 			break;
 
 		default:
@@ -2505,16 +2498,10 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		case SPI_OK_INSERT:
 		case SPI_OK_UPDATE:
 		case SPI_OK_DELETE:
-			break;
-
+		case SPI_OK_INSERT_RETURNING:
+		case SPI_OK_UPDATE_RETURNING:
+		case SPI_OK_DELETE_RETURNING:
 		case SPI_OK_UTILITY:
-			/*
-			 * spi.c currently does not update SPI_processed for utility
-			 * commands.  Not clear if this should be considered a bug;
-			 * for the moment, work around it here.
-			 */
-			if (SPI_tuptable)
-				SPI_processed = (SPI_tuptable->alloced - SPI_tuptable->free);
 			break;
 
 		case 0:

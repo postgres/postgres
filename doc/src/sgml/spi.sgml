@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.46 2006/08/12 20:05:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.47 2006/08/27 23:47:57 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -361,12 +361,16 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
 
   <para>
    The actual number of rows for which the (last) command was executed
-   is returned in the global variable <varname>SPI_processed</varname>
-   (unless the return value of the function is
-   <symbol>SPI_OK_UTILITY</symbol>).  If the return value of the
-   function is <symbol>SPI_OK_SELECT</symbol> then you may use the
+   is returned in the global variable <varname>SPI_processed</varname>.
+   If the return value of the function is <symbol>SPI_OK_SELECT</symbol>,
+   <symbol>SPI_OK_INSERT_RETURNING</symbol>,
+   <symbol>SPI_OK_DELETE_RETURNING</symbol>, or
+   <symbol>SPI_OK_UPDATE_RETURNING</symbol>,
+   then you may use the
    global pointer <literal>SPITupleTable *SPI_tuptable</literal> to
-   access the result rows.
+   access the result rows.  Some utility commands (such as
+   <command>EXPLAIN</>) also return rowsets, and <literal>SPI_tuptable</> 
+   will contain the result in these cases too.
   </para>
 
   <para>
@@ -459,15 +463,6 @@ typedef struct
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>SPI_OK_DELETE</symbol></term>
-     <listitem>
-      <para>
-       if a <command>DELETE</command> was executed
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><symbol>SPI_OK_INSERT</symbol></term>
      <listitem>
       <para>
@@ -477,10 +472,46 @@ typedef struct
     </varlistentry>
 
     <varlistentry>
+     <term><symbol>SPI_OK_DELETE</symbol></term>
+     <listitem>
+      <para>
+       if a <command>DELETE</command> was executed
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><symbol>SPI_OK_UPDATE</symbol></term>
      <listitem>
       <para>
        if an <command>UPDATE</command> was executed
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_OK_INSERT_RETURNING</symbol></term>
+     <listitem>
+      <para>
+       if an <command>INSERT RETURNING</command> was executed
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_OK_DELETE_RETURNING</symbol></term>
+     <listitem>
+      <para>
+       if a <command>DELETE RETURNING</command> was executed
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_OK_UPDATE_RETURNING</symbol></term>
+     <listitem>
+      <para>
+       if an <command>UPDATE RETURNING</command> was executed
       </para>
      </listitem>
     </varlistentry>
@@ -2987,10 +3018,9 @@ execq(text *sql, int cnt)
     
     proc = SPI_processed;
     /*
-     * If this is a SELECT and some rows were fetched,
-     * then the rows are printed via elog(INFO).
+     * If some rows were fetched, print them via elog(INFO).
      */
-    if (ret == SPI_OK_SELECT && SPI_processed &gt; 0)
+    if (ret &gt; 0 &amp;&amp; SPI_tuptable != NULL)
     {
         TupleDesc tupdesc = SPI_tuptable-&gt;tupdesc;
         SPITupleTable *tuptable = SPI_tuptable;
@@ -3005,7 +3035,7 @@ execq(text *sql, int cnt)
                 snprintf(buf + strlen (buf), sizeof(buf) - strlen(buf), " %s%s",
                         SPI_getvalue(tuple, tupdesc, i),
                         (i == tupdesc-&gt;natts) ? " " : " |");
-            elog (INFO, "EXECQ: %s", buf);
+            elog(INFO, "EXECQ: %s", buf);
         }
     }
 
