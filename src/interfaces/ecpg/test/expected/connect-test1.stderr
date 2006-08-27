@@ -5,13 +5,9 @@ THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 24: QUERY: alter user connectuser  encrypted password 'connectpw' on connection main
+[NO_PID]: ECPGexecute line 23: QUERY: alter user connectuser  encrypted password 'connectpw' on connection main
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 24 Ok: ALTER ROLE
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> 
+[NO_PID]: ECPGexecute line 23 Ok: ALTER ROLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -19,21 +15,25 @@ THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT> 
+[NO_PID]: ECPGconnect: opening database connectdb on localhost port 55432 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on localhost port <DEFAULT> for user connectuser
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port 55432 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port 55432 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -220 in line 42, 'No such connection nonexistant in line 42.'.
+[NO_PID]: raising sqlcode -220 in line 36, 'No such connection nonexistant in line 36.'.
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ecpg_finish: Connection connectdb closed.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port 55432 for user connectuser
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection connectdb closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port 55432 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection connectdb closed.
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -43,19 +43,19 @@ THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database nonexistant on localhost port 55432 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: connect: could not open database nonexistant on localhost port 55432 for user connectuser in line 54
+[NO_PID]: connect: could not open database nonexistant on localhost port 55432 for user connectuser in line 51
 	FATAL:  database "nonexistant" does not exist
 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection nonexistant closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -402 in line 54, 'Could not connect to database nonexistant in line 54.'.
+[NO_PID]: raising sqlcode -402 in line 51, 'Could not connect to database nonexistant in line 51.'.
 [NO_PID]: sqlca: code: -402, state: 08001
-[NO_PID]: raising sqlcode -220 in line 55, 'No such connection CURRENT in line 55.'.
+[NO_PID]: raising sqlcode -220 in line 52, 'No such connection CURRENT in line 52.'.
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port 0 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: connect: could not open database connectdb on localhost port 0 for user connectuser in line 58
+[NO_PID]: connect: could not open database connectdb on localhost port 0 for user connectuser in line 55
 	could not connect to server: Connection refused
 	Is the server running on host "localhost" and accepting
 	TCP/IP connections on port 0?
@@ -63,13 +63,7 @@ THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection connectdb closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -402 in line 58, 'Could not connect to database connectdb in line 58.'.
+[NO_PID]: raising sqlcode -402 in line 55, 'Could not connect to database connectdb in line 55.'.
 [NO_PID]: sqlca: code: -402, state: 08001
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port 55432 for user connectuser
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> 
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: connect: connection identifier main is already in use
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000

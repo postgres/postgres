@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.33 2006/08/13 10:18:29 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.34 2006/08/27 16:15:41 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -316,25 +316,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	if (dbname != NULL)
 	{
 		/* get the detail information out of dbname */
-		if (strchr(dbname, '@') != NULL)
-		{
-			/* old style: dbname[@server][:port] */
-			tmp = strrchr(dbname, ':');
-			if (tmp != NULL)	/* port number given */
-			{
-				port = ECPGstrdup(tmp + 1, lineno);
-				*tmp = '\0';
-			}
-
-			tmp = strrchr(dbname, '@');
-			if (tmp != NULL)	/* host name given */
-			{
-				host = ECPGstrdup(tmp + 1, lineno);
-				*tmp = '\0';
-			}
-			realname = ECPGstrdup(dbname, lineno);
-		}
-		else if (strncmp(dbname, "tcp:", 4) == 0 || strncmp(dbname, "unix:", 5) == 0)
+		if (strncmp(dbname, "tcp:", 4) == 0 || strncmp(dbname, "unix:", 5) == 0)
 		{
 			int			offset = 0;
 
@@ -396,6 +378,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 								ECPGfree(realname);
 							if (dbname)
 								ECPGfree(dbname);
+							free(this);
 							return false;
 						}
 					}
@@ -419,7 +402,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 							ECPGfree(realname);
 						if (dbname)
 							ECPGfree(dbname);
-						ecpg_finish(this);
+						free(this);
 						return false;
 					}
 				}
@@ -427,11 +410,25 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 					host = ECPGstrdup(dbname + offset, lineno);
 
 			}
-			else
-				realname = ECPGstrdup(dbname, lineno);
 		}
 		else
+		{
+			/* old style: dbname[@server][:port] */
+			tmp = strrchr(dbname, ':');
+			if (tmp != NULL)	/* port number given */
+			{
+				port = ECPGstrdup(tmp + 1, lineno);
+				*tmp = '\0';
+			}
+
+			tmp = strrchr(dbname, '@');
+			if (tmp != NULL)	/* host name given */
+			{
+				host = ECPGstrdup(tmp + 1, lineno);
+				*tmp = '\0';
+			}
 			realname = ECPGstrdup(dbname, lineno);
+		}
 	}
 	else
 		realname = NULL;

@@ -1,0 +1,63 @@
+/*
+ * this file tests all sorts of connecting to one single database.
+ */
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+/* do not include regression.h */
+
+int
+main(void)
+{
+exec sql begin declare section;
+	char db[200];
+	char id[200];
+exec sql end declare section;
+
+	ECPGdebug(1, stderr);
+
+	exec sql connect to connectdb as main;
+	exec sql alter user connectuser ENCRYPTED PASSWORD 'connectpw';
+	exec sql disconnect;  /* <-- "main" not specified */
+
+	strcpy(db, "connectdb");
+	strcpy(id, "main");
+	exec sql connect to :db as :id;
+	exec sql disconnect :id;
+
+	exec sql connect to connectdb as main;
+	exec sql disconnect main;
+
+	exec sql connect to "connectdb" as main;
+	exec sql disconnect main;
+
+	exec sql connect to 'connectdb' as main;
+	exec sql disconnect main;
+
+	exec sql connect to connectdb as main user connectuser/connectdb;
+	exec sql disconnect main;
+
+	exec sql connect to unix:postgresql://localhost/connectdb as main user connectuser;
+	exec sql disconnect main;
+
+	exec sql connect to "unix:postgresql://localhost/connectdb" as main user connectuser;
+	exec sql disconnect main;
+
+	exec sql connect to 'unix:postgresql://localhost/connectdb' as main user connectuser;
+	exec sql disconnect main;
+
+	exec sql connect to "unix:postgresql://200.46.204.71/connectdb" as main user connectuser;
+	exec sql disconnect main;
+
+	exec sql disconnect nonexistant;
+
+	/* connect twice */
+	exec sql connect to connectdb as main;
+	exec sql connect to connectdb as main;
+	exec sql disconnect main;
+
+	return (0);
+}

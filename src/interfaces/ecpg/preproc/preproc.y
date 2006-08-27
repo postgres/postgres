@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.332 2006/08/24 12:31:33 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.333 2006/08/27 16:15:41 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4640,12 +4640,21 @@ connection_target: database_name opt_server opt_port
 			if (strncmp($1, "unix", strlen("unix")) == 0 &&
 				strncmp($3 + strlen("//"), "localhost", strlen("localhost")) != 0 &&
 				strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
+				mmerror(PARSE_ERROR, ET_ERROR, "unix domain sockets only work on 'localhost' but not on '%s'", $3 + strlen("//"));
 
 			$$ = make3_str(make3_str(make_str("\""), $1, make_str(":")), $3, make3_str(make3_str($4, make_str("/"), $6),	$7, make_str("\"")));
 		}
 		| char_variable
 		{
+			$$ = $1;
+		}
+		| Sconst
+		{
+			/* We can only process double quoted strings not single quotes ones,
+			 * so we change the quotes.
+			 * Note, that the rule for Sconst adds these single quotes. */
+			$1[0] = '\"';
+			$1[strlen($1)-1] = '\"';
 			$$ = $1;
 		}
 		;
