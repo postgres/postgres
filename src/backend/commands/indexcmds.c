@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.147 2006/08/25 04:06:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.148 2006/08/27 19:14:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,8 +119,11 @@ DefineIndex(RangeVar *heapRelation,
 	Datum		reloptions;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
+	List	   *old_xact_list;
+	ListCell   *lc;
 	uint32		ixcnt;
 	LockRelId	heaprelid;
+	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
 	Relation pg_index;
 	HeapTuple indexTuple;
@@ -466,33 +469,26 @@ DefineIndex(RangeVar *heapRelation,
 	CommitTransactionCommand();
 	StartTransactionCommand();
 
-	/* Establish transaction snapshot ... else GetLatestSnapshot complains */
-	(void) GetTransactionSnapshot();
-
 	/*
 	 * Now we must wait until no running transaction could have the table open
-	 * with the old list of indexes.  If we can take an exclusive lock then
-	 * there are none now and anybody who opens it later will get the new
-	 * index in their relcache entry.  Alternatively, if our Xmin reaches our
-	 * own (new) transaction then we know no transactions that started before
-	 * the index was visible are left anyway.
+	 * with the old list of indexes.  To do this, inquire which xacts currently
+	 * would conflict with ShareLock on the table -- ie, which ones have
+	 * a lock that permits writing the table.  Then wait for each of these
+	 * xacts to commit or abort.  Note we do not need to worry about xacts
+	 * that open the table for writing after this point; they will see the
+	 * new index when they open it.
+	 *
+	 * Note: GetLockConflicts() never reports our own xid,
+	 * hence we need not check for that.
 	 */
-	for (;;)
+	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
+	old_xact_list = GetLockConflicts(&heaplocktag, ShareLock);
+
+	foreach(lc, old_xact_list)
 	{
-		CHECK_FOR_INTERRUPTS();
+		TransactionId xid = lfirst_xid(lc);
 
-		if (ConditionalLockRelationOid(relationId, ExclusiveLock))
-		{
-			/* Release the lock right away to avoid blocking anyone */
-			UnlockRelationOid(relationId, ExclusiveLock);
-			break;
-		}
-
-		if (TransactionIdEquals(GetLatestSnapshot()->xmin,
-								GetTopTransactionId()))
-			break;
-
-		pg_usleep(1000000L);		/* 1 sec */
+		XactLockTableWait(xid);
 	}
 
 	/*

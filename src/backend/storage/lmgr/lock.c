@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.171 2006/08/19 01:36:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.172 2006/08/27 19:14:34 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -1682,6 +1682,104 @@ LockReassignCurrentOwner(void)
 				lockOwners[ic] = lockOwners[locallock->numLockOwners];
 		}
 	}
+}
+
+
+/*
+ * GetLockConflicts
+ *		Get a list of TransactionIds of xacts currently holding locks
+ *		that would conflict with the specified lock/lockmode.
+ *		xacts merely awaiting such a lock are NOT reported.
+ *
+ * Of course, the result could be out of date by the time it's returned,
+ * so use of this function has to be thought about carefully.
+ *
+ * Only top-level XIDs are reported.  Note we never include the current xact
+ * in the result list, since an xact never blocks itself.
+ */
+List *
+GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
+{
+	List	   *result = NIL;
+	LOCKMETHODID lockmethodid = locktag->locktag_lockmethodid;
+	LockMethod	lockMethodTable;
+	LOCK	   *lock;
+	LOCKMASK	conflictMask;
+	SHM_QUEUE  *procLocks;
+	PROCLOCK   *proclock;
+	uint32		hashcode;
+	LWLockId	partitionLock;
+
+	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
+		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
+	lockMethodTable = LockMethods[lockmethodid];
+	if (lockmode <= 0 || lockmode > lockMethodTable->numLockModes)
+		elog(ERROR, "unrecognized lock mode: %d", lockmode);
+
+	/*
+	 * Look up the lock object matching the tag.
+	 */
+	hashcode = LockTagHashCode(locktag);
+	partitionLock = LockHashPartitionLock(hashcode);
+
+	LWLockAcquire(partitionLock, LW_SHARED);
+
+	lock = (LOCK *) hash_search_with_hash_value(LockMethodLockHash,
+												(void *) locktag,
+												hashcode,
+												HASH_FIND,
+												NULL);
+	if (!lock)
+	{
+		/*
+		 * If the lock object doesn't exist, there is nothing holding a
+		 * lock on this lockable object.
+		 */
+		LWLockRelease(partitionLock);
+		return NIL;
+	}
+
+	/*
+	 * Examine each existing holder (or awaiter) of the lock.
+	 */
+	conflictMask = lockMethodTable->conflictTab[lockmode];
+
+	procLocks = &(lock->procLocks);
+
+	proclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,
+										 offsetof(PROCLOCK, lockLink));
+
+	while (proclock)
+	{
+		if (conflictMask & proclock->holdMask)
+		{
+			PGPROC *proc = proclock->tag.myProc;
+
+			/* A backend never blocks itself */
+			if (proc != MyProc)
+			{
+				/* Fetch xid just once - see GetNewTransactionId */
+				TransactionId xid = proc->xid;
+
+				/*
+				 * Race condition: during xact commit/abort we zero out
+				 * PGPROC's xid before we mark its locks released.  If we see
+				 * zero in the xid field, assume the xact is in process of
+				 * shutting down and act as though the lock is already
+				 * released.
+				 */
+				if (TransactionIdIsValid(xid))
+					result = lappend_xid(result, xid);
+			}
+		}
+
+		proclock = (PROCLOCK *) SHMQueueNext(procLocks, &proclock->lockLink,
+											 offsetof(PROCLOCK, lockLink));
+	}
+
+	LWLockRelease(partitionLock);
+
+	return result;
 }
 
 
