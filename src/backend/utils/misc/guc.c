@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.343 2006/08/17 23:04:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.344 2006/08/28 13:37:18 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -707,7 +707,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&pgstat_collect_tuplelevel,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 	{
 		{"stats_block_level", PGC_SUSET, STATS_COLLECTOR,
@@ -744,7 +744,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&autovacuum_start_daemon,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
@@ -1138,7 +1138,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&ReservedBackends,
-		2, 0, INT_MAX / 4, NULL, NULL
+		3, 0, INT_MAX / 4, NULL, NULL
 	},
 
 	{
@@ -1563,7 +1563,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_vac_thresh,
-		1000, 0, INT_MAX, NULL, NULL
+		500, 0, INT_MAX, NULL, NULL
 	},
 	{
 		{"autovacuum_analyze_threshold", PGC_SIGHUP, AUTOVACUUM,
@@ -1571,7 +1571,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_anl_thresh,
-		500, 0, INT_MAX, NULL, NULL
+		250, 0, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -1726,7 +1726,7 @@ static struct config_real ConfigureNamesReal[] =
 			NULL
 		},
 		&autovacuum_vac_scale,
-		0.4, 0.0, 100.0, NULL, NULL
+		0.2, 0.0, 100.0, NULL, NULL
 	},
 	{
 		{"autovacuum_analyze_scale_factor", PGC_SIGHUP, AUTOVACUUM,
@@ -1734,7 +1734,7 @@ static struct config_real ConfigureNamesReal[] =
 			NULL
 		},
 		&autovacuum_anl_scale,
-		0.2, 0.0, 100.0, NULL, NULL
+		0.1, 0.0, 100.0, NULL, NULL
 	},
 
 	/* End-of-list marker */
