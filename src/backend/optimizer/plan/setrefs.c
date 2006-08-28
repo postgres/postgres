@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.124 2006/08/12 02:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.125 2006/08/28 14:32:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,16 +448,32 @@ trivial_subqueryscan(SubqueryScan *plan)
 	{
 		TargetEntry *ptle = (TargetEntry *) lfirst(lp);
 		TargetEntry *ctle = (TargetEntry *) lfirst(lc);
-		Var		   *var = (Var *) ptle->expr;
 
 		if (ptle->resjunk != ctle->resjunk)
 			return false;		/* tlist doesn't match junk status */
-		if (!var || !IsA(var, Var))
-			return false;		/* tlist item not a Var */
-		Assert(var->varno == plan->scan.scanrelid);
-		Assert(var->varlevelsup == 0);
-		if (var->varattno != attrno)
-			return false;		/* out of order */
+
+		/*
+		 * We accept either a Var referencing the corresponding element of
+		 * the subplan tlist, or a Const equaling the subplan element.
+		 * See generate_setop_tlist() for motivation.
+		 */
+		if (ptle->expr && IsA(ptle->expr, Var))
+		{
+			Var	   *var = (Var *) ptle->expr;
+
+			Assert(var->varno == plan->scan.scanrelid);
+			Assert(var->varlevelsup == 0);
+			if (var->varattno != attrno)
+				return false;	/* out of order */
+		}
+		else if (ptle->expr && IsA(ptle->expr, Const))
+		{
+			if (!equal(ptle->expr, ctle->expr))
+				return false;
+		}
+		else
+			return false;
+
 		attrno++;
 	}
 
