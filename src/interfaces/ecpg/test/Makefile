@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.58 2006/08/19 13:42:40 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.59 2006/08/28 16:13:11 tgl Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -15,6 +15,12 @@ MULTIBYTE = SQL_ASCII
 NOLOCALE :=
 ifdef NO_LOCALE
 NOLOCALE += --no-locale
+endif
+
+ifneq ($(PORTNAME),win32)
+abs_builddir := $(shell pwd)
+else
+abs_builddir := $(shell pwd -W)
 endif
 
 all install installdirs uninstall dep depend distprep:
@@ -36,13 +42,11 @@ clean distclean maintainer-clean:
 	$(MAKE) -C complex $@
 	$(MAKE) -C thread $@
 	rm -rf tmp_check results log
-	rm -f pg_regress.inc.sh regression.diffs
+	rm -f pg_regress regression.diffs
 
-all: pg_regress.sh
+all: pg_regress
 
-pg_regress.sh: pg_regress.inc.sh
-
-pg_regress.inc.sh: pg_regress.inc.sh.in $(top_builddir)/src/Makefile.global
+pg_regress: pg_regress.sh $(top_builddir)/src/Makefile.global
 	sed -e 's,@bindir@,$(bindir),g' \
 	    -e 's,@libdir@,$(libdir),g' \
 	    -e 's,@pkglibdir@,$(pkglibdir),g' \
@@ -54,12 +58,29 @@ pg_regress.inc.sh: pg_regress.inc.sh.in $(top_builddir)/src/Makefile.global
 	    -e 's/@GCC@/$(GCC)/g' \
 	  $< >$@
 
-check: all pg_regress.inc.sh
-	sh ./pg_regress.sh  --dbname=regress1 --debug --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
+# When doing a VPATH build, copy over the .pgc, .stdout and .stderr
+# files so that the driver script can find them.  We have to use an
+# absolute path for the targets, because otherwise make will try to
+# locate the missing files using VPATH, and will find them in
+# $(srcdir), but the point here is that we want to copy them from
+# $(srcdir) to the build directory.
+
+ifdef VPATH
+remaining_files_src := $(wildcard $(srcdir)/*/*.pgc) $(wildcard $(srcdir)/expected/*.c) $(wildcard $(srcdir)/expected/*.stdout) $(wildcard $(srcdir)/expected/*.stderr)
+remaining_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(remaining_files_src))
+
+all: $(remaining_files_build)
+$(remaining_files_build): $(abs_builddir)/%: $(srcdir)/%
+	ln -s $< $@
+endif
+
+
+check: all
+	sh ./pg_regress  --dbname=regress1 --debug --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
 
 # the same options, but with --listen-on-tcp
-checktcp: all pg_regress.inc.sh
-	sh ./pg_regress.sh  --dbname=regress1 --debug --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) --listen-on-tcp
+checktcp: all
+	sh ./pg_regress  --dbname=regress1 --debug --temp-install --top-builddir=$(top_builddir) --temp-port=$(TEMP_PORT) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) --listen-on-tcp
 
-installcheck: all pg_regress.inc.sh
-	sh ./pg_regress.sh  --dbname=regress1 --debug --top-builddir=$(top_builddir) --load-language=plpgsql $(NOLOCALE)
+installcheck: all
+	sh ./pg_regress  --dbname=regress1 --debug --top-builddir=$(top_builddir) --load-language=plpgsql $(NOLOCALE)

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.29 2005/12/09 21:19:36 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.30 2006/08/28 16:13:11 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,8 @@ SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 2
 DLTYPE= library
 
-override CPPFLAGS := -DFRONTEND -I$(top_srcdir)/src/interfaces/ecpg/include \
+override CPPFLAGS := -DFRONTEND \
+	-I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(top_srcdir)/src/include/utils -I$(libpq_srcdir) $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
