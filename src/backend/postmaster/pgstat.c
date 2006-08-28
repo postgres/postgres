@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.137 2006/08/19 01:36:24 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.138 2006/08/28 19:38:09 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1384,7 +1384,7 @@ pgstat_bestart(void)
 static void
 pgstat_beshutdown_hook(int code, Datum arg)
 {
-	volatile PgBackendStatus *beentry;
+	volatile PgBackendStatus *beentry = MyBEEntry;
 
 	pgstat_report_tabstat();
 
@@ -1393,7 +1393,6 @@ pgstat_beshutdown_hook(int code, Datum arg)
 	 * st_changecount before and after.  We use a volatile pointer here
 	 * to ensure the compiler doesn't try to get cute.
 	 */
-	beentry = MyBEEntry;
 	beentry->st_changecount++;
 
 	beentry->st_procpid = 0;	/* mark invalid */
@@ -1413,11 +1412,11 @@ pgstat_beshutdown_hook(int code, Datum arg)
 void
 pgstat_report_activity(const char *cmd_str)
 {
-	volatile PgBackendStatus *beentry;
+	volatile PgBackendStatus *beentry = MyBEEntry;
 	TimestampTz start_timestamp;
 	int			len;
 
-	if (!pgstat_collect_querystring)
+	if (!pgstat_collect_querystring || !beentry)
 		return;
 
 	/*
@@ -1434,7 +1433,6 @@ pgstat_report_activity(const char *cmd_str)
 	 * st_changecount before and after.  We use a volatile pointer here
 	 * to ensure the compiler doesn't try to get cute.
 	 */
-	beentry = MyBEEntry;
 	beentry->st_changecount++;
 
 	beentry->st_activity_start_timestamp = start_timestamp;
@@ -1450,14 +1448,17 @@ pgstat_report_activity(const char *cmd_str)
  * pgstat_report_waiting() -
  *
  *	Called from lock manager to report beginning or end of a lock wait.
+ *
+ * NB: this *must* be able to survive being called before MyBEEntry has been
+ * initialized.
  * ----------
  */
 void
 pgstat_report_waiting(bool waiting)
 {
-	volatile PgBackendStatus *beentry;
+	volatile PgBackendStatus *beentry = MyBEEntry;
 
-	if (!pgstat_collect_querystring)
+	if (!pgstat_collect_querystring || !beentry)
 		return;
 
 	/*
@@ -1465,8 +1466,6 @@ pgstat_report_waiting(bool waiting)
 	 * may modify, there seems no need to bother with the st_changecount
 	 * protocol.  The update must appear atomic in any case.
 	 */
-	beentry = MyBEEntry;
-
 	beentry->st_waiting = waiting;
 }
 
