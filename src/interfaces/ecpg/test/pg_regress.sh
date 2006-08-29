@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.8 2006/08/29 12:24:51 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.9 2006/08/29 13:23:26 meskes Exp $
 
 me=`basename $0`
 
@@ -750,6 +750,10 @@ for i in \
 			rm $f.tmp
 		done
 	fi
+
+	mv "$outfile_source" "$outfile_source.tmp"
+	cat "$outfile_source.tmp" | sed -e 's,^\(#line [0-9]*\) ".*/\([^/]*\)",\1 "\2",' > "$outfile_source"
+	rm "$outfile_source.tmp"
 
 	DIFFER=""
 	diff $DIFFFLAGS expected/$outprg.stderr "$outfile_stderr" > /dev/null 2>&1

@@ -11,7 +11,7 @@
 #include <string.h>
 
 
-#line 1 "./header_test.h"
+#line 1 "header_test.h"
 #include "stdlib.h"
 
 static void
@@ -22,19 +22,19 @@ Finish(char *msg)
 
 	/* finish transaction */
 	{ ECPGtrans(__LINE__, NULL, "rollback");}
-#line 10 "./header_test.h"
+#line 10 "header_test.h"
 
 
 	/* and remove test table */
 	{ ECPGdo(__LINE__, 0, 1, NULL, "drop table meskes ", ECPGt_EOIT, ECPGt_EORT);}
-#line 13 "./header_test.h"
+#line 13 "header_test.h"
 
 	{ ECPGtrans(__LINE__, NULL, "commit");}
-#line 14 "./header_test.h"
+#line 14 "header_test.h"
 
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
-#line 16 "./header_test.h"
+#line 16 "header_test.h"
 
 
 	exit(-1);
@@ -47,16 +47,16 @@ warn(void)
 }
 
 /* exec sql whenever sqlerror  do Finish ( msg ) ; */
-#line 29 "./header_test.h"
+#line 29 "header_test.h"
 
 /* exec sql whenever sql_warning  do warn (  ) ; */
-#line 32 "./header_test.h"
+#line 32 "header_test.h"
 
 
 #line 4 "test2.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 

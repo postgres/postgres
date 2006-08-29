@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 
-#line 1 "./../../include/sql3types.h"
+#line 1 "sql3types.h"
 #ifndef _ECPG_SQL3TYPES_H
 #define _ECPG_SQL3TYPES_H
 
@@ -62,7 +62,7 @@ enum
 #line 7 "dyntest.pgc"
 
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -133,7 +133,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 8 "dyntest.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 

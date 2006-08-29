@@ -18,7 +18,7 @@
 #include <stdio.h>
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 

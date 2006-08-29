@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -81,7 +81,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 3 "copystdout.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 

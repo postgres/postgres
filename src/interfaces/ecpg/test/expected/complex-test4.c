@@ -16,7 +16,7 @@
 
 
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -87,7 +87,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 7 "test4.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
