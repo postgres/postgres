@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.127 2006/08/29 22:25:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.128 2006/08/29 22:48:55 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1062,8 +1062,6 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 		/* get FETCH_COUNT tuples at a time */
 		results = PQexec(pset.db, fetch_cmd);
-		OK = AcceptResult(results) &&
-			(PQresultStatus(results) == PGRES_TUPLES_OK);
 
 		if (pset.timing)
 		{
@@ -1071,8 +1069,19 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			*elapsed_msec += DIFF_MSEC(&after, &before);
 		}
 
-		if (!OK)
+		if (PQresultStatus(results) != PGRES_TUPLES_OK)
 		{
+			/* shut down pager before printing error message */
+			if (did_pager)
+			{
+				ClosePager(pset.queryFout);
+				pset.queryFout = queryFout_copy;
+				pset.queryFoutPipe = queryFoutPipe_copy;
+				did_pager = false;
+			}
+
+			OK = AcceptResult(results);
+			psql_assert(!OK);
 			PQclear(results);
 			break;
 		}
