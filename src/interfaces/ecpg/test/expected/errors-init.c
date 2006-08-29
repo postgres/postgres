@@ -8,7 +8,7 @@
 
 #line 1 "init.pgc"
 
-#line 1 "sqlca.h"
+#line 1 "./../../include/sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 

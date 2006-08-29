@@ -26,7 +26,7 @@ main(void)
 
 
 
-#line 1 "regression.h"
+#line 1 "./../regression.h"
 
 
 

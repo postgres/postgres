@@ -14,7 +14,7 @@
 #include "sqltypes.h"
 
 
-#line 1 "sqlca.h"
+#line 1 "./../../include/sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -85,7 +85,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 5 "test_informix2.pgc"
 
 
-#line 1 "regression.h"
+#line 1 "./../regression.h"
 
 
 
