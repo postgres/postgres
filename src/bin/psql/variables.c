@@ -3,20 +3,27 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.25 2006/06/21 16:05:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.26 2006/08/29 15:19:51 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
 #include "variables.h"
 
+
+/*
+ * A "variable space" is represented by an otherwise-unused struct _variable
+ * that serves as list header.
+ */
 VariableSpace
 CreateVariableSpace(void)
 {
 	struct _variable *ptr;
 
-	ptr = pg_calloc(1, sizeof *ptr);
-	ptr->name = pg_strdup("@");
-	ptr->value = pg_strdup("");
+	ptr = pg_malloc(sizeof *ptr);
+	ptr->name = NULL;
+	ptr->value = NULL;
+	ptr->assign_hook = NULL;
+	ptr->next = NULL;
 
 	return ptr;
 }
@@ -33,7 +40,7 @@ GetVariable(VariableSpace space, const char *name)
 	{
 		if (strcmp(current->name, name) == 0)
 		{
-			psql_assert(current->value);
+			/* this is correct answer when value is NULL, too */
 			return current->value;
 		}
 	}
@@ -42,11 +49,8 @@ GetVariable(VariableSpace space, const char *name)
 }
 
 bool
-GetVariableBool(VariableSpace space, const char *name)
+ParseVariableBool(const char *val)
 {
-	const char *val;
-
-	val = GetVariable(space, name);
 	if (val == NULL)
 		return false;			/* not set -> assume "off" */
 	if (pg_strcasecmp(val, "off") == 0)
@@ -59,35 +63,28 @@ GetVariableBool(VariableSpace space, const char *name)
 	return true;
 }
 
-bool
-VariableEquals(VariableSpace space, const char name[], const char value[])
-{
-	const char *var;
-
-	var = GetVariable(space, name);
-	return var && (strcmp(var, value) == 0);
-}
-
+/*
+ * Read numeric variable, or defaultval if it is not set, or faultval if its
+ * value is not a valid numeric string.  If allowtrail is false, this will
+ * include the case where there are trailing characters after the number.
+ */
 int
-GetVariableNum(VariableSpace space,
-			   const char name[],
-			   int defaultval,
-			   int faultval,
-			   bool allowtrail)
+ParseVariableNum(const char *val,
+				 int defaultval,
+				 int faultval,
+				 bool allowtrail)
 {
-	const char *var;
 	int			result;
 
-	var = GetVariable(space, name);
-	if (!var)
+	if (!val)
 		result = defaultval;
-	else if (!var[0])
+	else if (!val[0])
 		result = faultval;
 	else
 	{
 		char	   *end;
 
-		result = strtol(var, &end, 0);
+		result = strtol(val, &end, 0);
 		if (!allowtrail && *end)
 			result = faultval;
 	}
@@ -96,27 +93,16 @@ GetVariableNum(VariableSpace space,
 }
 
 int
-SwitchVariable(VariableSpace space, const char name[], const char *opt,...)
+GetVariableNum(VariableSpace space,
+			   const char *name,
+			   int defaultval,
+			   int faultval,
+			   bool allowtrail)
 {
-	int			result;
-	const char *var;
+	const char *val;
 
-	var = GetVariable(space, name);
-	if (var)
-	{
-		va_list		args;
-
-		va_start(args, opt);
-		for (result = 1; opt && (strcmp(var, opt) != 0); result++)
-			opt = va_arg(args, const char *);
-		if (!opt)
-			result = VAR_NOTFOUND;
-		va_end(args);
-	}
-	else
-		result = VAR_NOTSET;
-
-	return result;
+	val = GetVariable(space, name);
+	return ParseVariableNum(val, defaultval, faultval, allowtrail);
 }
 
 void
@@ -129,7 +115,8 @@ PrintVariables(VariableSpace space)
 
 	for (ptr = space->next; ptr; ptr = ptr->next)
 	{
-		printf("%s = '%s'\n", ptr->name, ptr->value);
+		if (ptr->value)
+			printf("%s = '%s'\n", ptr->name, ptr->value);
 		if (cancel_pressed)
 			break;
 	}
@@ -156,16 +143,62 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 	{
 		if (strcmp(current->name, name) == 0)
 		{
-			psql_assert(current->value);
-			free(current->value);
+			/* found entry, so update */
+			if (current->value)
+				free(current->value);
 			current->value = pg_strdup(value);
+			if (current->assign_hook)
+				(*current->assign_hook) (current->value);
 			return true;
 		}
 	}
 
-	previous->next = pg_calloc(1, sizeof *(previous->next));
-	previous->next->name = pg_strdup(name);
-	previous->next->value = pg_strdup(value);
+	/* not present, make new entry */
+	current = pg_malloc(sizeof *current);
+	current->name = pg_strdup(name);
+	current->value = pg_strdup(value);
+	current->assign_hook = NULL;
+	current->next = NULL;
+	previous->next = current;
+	return true;
+}
+
+/*
+ * This both sets a hook function, and calls it on the current value (if any)
+ */
+bool
+SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook hook)
+{
+	struct _variable *current,
+			   *previous;
+
+	if (!space)
+		return false;
+
+	if (strspn(name, VALID_VARIABLE_CHARS) != strlen(name))
+		return false;
+
+	for (previous = space, current = space->next;
+		 current;
+		 previous = current, current = current->next)
+	{
+		if (strcmp(current->name, name) == 0)
+		{
+			/* found entry, so update */
+			current->assign_hook = hook;
+			(*hook) (current->value);
+			return true;
+		}
+	}
+
+	/* not present, make new entry */
+	current = pg_malloc(sizeof *current);
+	current->name = pg_strdup(name);
+	current->value = NULL;
+	current->assign_hook = hook;
+	current->next = NULL;
+	previous->next = current;
+	(*hook) (NULL);
 	return true;
 }
 
@@ -190,11 +223,18 @@ DeleteVariable(VariableSpace space, const char *name)
 	{
 		if (strcmp(current->name, name) == 0)
 		{
-			psql_assert(current->value);
-			previous->next = current->next;
-			free(current->name);
-			free(current->value);
-			free(current);
+			if (current->value)
+				free(current->value);
+			current->value = NULL;
+			/* Physically delete only if no hook function to remember */
+			if (current->assign_hook)
+				(*current->assign_hook) (NULL);
+			else
+			{
+				previous->next = current->next;
+				free(current->name);
+				free(current);
+			}
 			return true;
 		}
 	}

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.45 2006/07/14 14:52:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.46 2006/08/29 15:19:51 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -67,8 +67,7 @@ finish_lo_xact(const char *operation, bool own_transaction)
 {
 	PGresult   *res;
 
-	if (own_transaction &&
-		GetVariableBool(pset.vars, "AUTOCOMMIT"))
+	if (own_transaction && pset.autocommit)
 	{
 		/* close out our own xact */
 		if (!(res = PSQLexec("COMMIT", false)))
@@ -91,8 +90,7 @@ fail_lo_xact(const char *operation, bool own_transaction)
 {
 	PGresult   *res;
 
-	if (own_transaction &&
-		GetVariableBool(pset.vars, "AUTOCOMMIT"))
+	if (own_transaction && pset.autocommit)
 	{
 		/* close out our own xact */
 		res = PSQLexec("ROLLBACK", false);

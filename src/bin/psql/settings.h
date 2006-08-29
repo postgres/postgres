@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.28 2006/08/11 19:20:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.29 2006/08/29 15:19:51 tgl Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -26,16 +26,44 @@
 #define DEFAULT_PROMPT2 "%/%R%# "
 #define DEFAULT_PROMPT3 ">> "
 
+typedef enum
+{
+	PSQL_ECHO_NONE,
+	PSQL_ECHO_QUERIES,
+	PSQL_ECHO_ALL
+} PSQL_ECHO;
+
+typedef enum
+{
+	PSQL_ECHO_HIDDEN_OFF,
+	PSQL_ECHO_HIDDEN_ON,
+	PSQL_ECHO_HIDDEN_NOEXEC
+} PSQL_ECHO_HIDDEN;
+
+typedef enum
+{
+	PSQL_ERROR_ROLLBACK_OFF,
+	PSQL_ERROR_ROLLBACK_INTERACTIVE,
+	PSQL_ERROR_ROLLBACK_ON
+} PSQL_ERROR_ROLLBACK;
+
+typedef enum
+{
+	hctl_none = 0,
+	hctl_ignorespace = 1,
+	hctl_ignoredups = 2,
+	hctl_ignoreboth = hctl_ignorespace | hctl_ignoredups
+} HistControl;
+
 
 typedef struct _psqlSettings
 {
 	PGconn	   *db;				/* connection to backend */
-	int			encoding;
+	int			encoding;		/* client_encoding */
 	FILE	   *queryFout;		/* where to send the query results */
 	bool		queryFoutPipe;	/* queryFout is from a popen() */
 
 	printQueryOpt popt;
-	VariableSpace vars;			/* "shell variable" repository */
 
 	char	   *gfname;			/* one-shot file output argument for \g */
 
@@ -54,14 +82,31 @@ typedef struct _psqlSettings
 
 	bool		timing;			/* enable timing of all queries */
 
-	PGVerbosity verbosity;		/* current error verbosity level */
 	FILE	   *logfile;		/* session log file handle */
+
+	VariableSpace vars;			/* "shell variable" repository */
+
+	/*
+	 * The remaining fields are set by assign hooks associated with
+	 * entries in "vars".  They should not be set directly except by
+	 * those hook functions.
+	 */
+	bool		autocommit;
+	bool		on_error_stop;
+	bool		quiet;
+	bool		singleline;
+	bool		singlestep;
+	PSQL_ECHO	echo;
+	PSQL_ECHO_HIDDEN echo_hidden;
+	PSQL_ERROR_ROLLBACK on_error_rollback;
+	HistControl histcontrol;
+	const char *prompt1;
+	const char *prompt2;
+	const char *prompt3;
+	PGVerbosity verbosity;		/* current error verbosity level */
 } PsqlSettings;
 
 extern PsqlSettings pset;
-
-
-#define QUIET() (GetVariableBool(pset.vars, "QUIET"))
 
 
 #ifndef EXIT_SUCCESS

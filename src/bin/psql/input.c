@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.58 2006/08/27 15:05:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.59 2006/08/29 15:19:51 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -34,14 +34,6 @@ char	   *psql_history;
  *	for this purpose.
  */
 #define NL_IN_HISTORY	0x01
-
-enum histcontrol
-{
-	hctl_none = 0,
-	hctl_ignorespace = 1,
-	hctl_ignoredups = 2,
-	hctl_ignoreboth = hctl_ignorespace | hctl_ignoredups
-};
 #endif
 
 #ifdef HAVE_ATEXIT
@@ -49,31 +41,6 @@ static void finishInput(void);
 #else
 /* designed for use with on_exit() */
 static void finishInput(int, void *);
-#endif
-
-
-#ifdef USE_READLINE
-static enum histcontrol
-GetHistControlConfig(void)
-{
-	enum histcontrol HC;
-	const char *var;
-
-	var = GetVariable(pset.vars, "HISTCONTROL");
-
-	if (!var)
-		HC = hctl_none;
-	else if (strcmp(var, "ignorespace") == 0)
-		HC = hctl_ignorespace;
-	else if (strcmp(var, "ignoredups") == 0)
-		HC = hctl_ignoredups;
-	else if (strcmp(var, "ignoreboth") == 0)
-		HC = hctl_ignoreboth;
-	else
-		HC = hctl_none;
-
-	return HC;
-}
 #endif
 
 
@@ -147,10 +114,10 @@ pg_send_history(PQExpBuffer history_buf)
 
 	if (useHistory && s[0])
 	{
-		enum histcontrol HC = GetHistControlConfig();
-
-		if (((HC & hctl_ignorespace) && s[0] == ' ') ||
-			((HC & hctl_ignoredups) && prev_hist && strcmp(s, prev_hist) == 0))
+		if (((pset.histcontrol & hctl_ignorespace) &&
+			 s[0] == ' ') ||
+			((pset.histcontrol & hctl_ignoredups) &&
+			 prev_hist && strcmp(s, prev_hist) == 0))
 		{
 			/* Ignore this line as far as history is concerned */
 		}
@@ -287,17 +254,17 @@ initializeInput(int flags)
 #ifdef USE_READLINE
 	if (flags & 1)
 	{
+		const char *histfile;
 		char		home[MAXPGPATH];
 
 		useReadline = true;
 		initialize_readline();
 
 		useHistory = true;
-		if (GetVariable(pset.vars, "HISTSIZE") == NULL)
-			SetVariable(pset.vars, "HISTSIZE", "500");
 		using_history();
 
-		if (GetVariable(pset.vars, "HISTFILE") == NULL)
+		histfile = GetVariable(pset.vars, "HISTFILE");
+		if (histfile == NULL)
 		{
 			if (get_home_path(home))
 			{
@@ -308,7 +275,7 @@ initializeInput(int flags)
 		}
 		else
 		{
-			psql_history = pg_strdup(GetVariable(pset.vars, "HISTFILE"));
+			psql_history = pg_strdup(histfile);
 			expand_tilde(&psql_history);
 		}
 
@@ -386,7 +353,7 @@ finishInput(int exitstatus, void *arg)
 	{
 		int			hist_size;
 
-		hist_size = GetVariableNum(pset.vars, "HISTSIZE", -1, -1, true);
+		hist_size = GetVariableNum(pset.vars, "HISTSIZE", 500, -1, true);
 		if (hist_size >= 0)
 			stifle_history(hist_size);
 

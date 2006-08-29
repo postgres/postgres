@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.171 2006/07/18 17:42:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.172 2006/08/29 15:19:50 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -55,8 +55,6 @@ static backslashResult exec_command(const char *cmd,
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 static bool do_connect(char *dbname, char *user, char *host, char *port);
 static bool do_shell(const char *command);
-static void SyncVerbosityVariable(void);
-
 
 
 /*----------
@@ -196,7 +194,6 @@ exec_command(const char *cmd,
 {
 	bool		success = true; /* indicate here if the command ran ok or
 								 * failed */
-	bool		quiet = QUIET();
 	backslashResult status = PSQL_CMD_SKIP_LINE;
 
 	/*
@@ -206,9 +203,9 @@ exec_command(const char *cmd,
 	if (strcmp(cmd, "a") == 0)
 	{
 		if (pset.popt.topt.format != PRINT_ALIGNED)
-			success = do_pset("format", "aligned", &pset.popt, quiet);
+			success = do_pset("format", "aligned", &pset.popt, pset.quiet);
 		else
-			success = do_pset("format", "unaligned", &pset.popt, quiet);
+			success = do_pset("format", "unaligned", &pset.popt, pset.quiet);
 	}
 
 	/* \C -- override table title (formerly change HTML caption) */
@@ -217,7 +214,7 @@ exec_command(const char *cmd,
 		char	   *opt = psql_scan_slash_option(scan_state,
 												 OT_NORMAL, NULL, true);
 
-		success = do_pset("title", opt, &pset.popt, quiet);
+		success = do_pset("title", opt, &pset.popt, pset.quiet);
 		free(opt);
 	}
 
@@ -493,7 +490,7 @@ exec_command(const char *cmd,
 		char	   *fname = psql_scan_slash_option(scan_state,
 												   OT_NORMAL, NULL, false);
 
-		success = do_pset("fieldsep", fname, &pset.popt, quiet);
+		success = do_pset("fieldsep", fname, &pset.popt, pset.quiet);
 		free(fname);
 	}
 
@@ -528,9 +525,9 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "H") == 0 || strcmp(cmd, "html") == 0)
 	{
 		if (pset.popt.topt.format != PRINT_HTML)
-			success = do_pset("format", "html", &pset.popt, quiet);
+			success = do_pset("format", "html", &pset.popt, pset.quiet);
 		else
-			success = do_pset("format", "aligned", &pset.popt, quiet);
+			success = do_pset("format", "aligned", &pset.popt, pset.quiet);
 	}
 
 
@@ -638,7 +635,7 @@ exec_command(const char *cmd,
 	{
 		if (query_buf && query_buf->len > 0)
 			puts(query_buf->data);
-		else if (!quiet)
+		else if (!pset.quiet)
 			puts(_("Query buffer is empty."));
 		fflush(stdout);
 	}
@@ -712,7 +709,7 @@ exec_command(const char *cmd,
 			success = false;
 		}
 		else
-			success = do_pset(opt0, opt1, &pset.popt, quiet);
+			success = do_pset(opt0, opt1, &pset.popt, pset.quiet);
 
 		free(opt0);
 		free(opt1);
@@ -727,7 +724,7 @@ exec_command(const char *cmd,
 	{
 		resetPQExpBuffer(query_buf);
 		psql_scan_reset(scan_state);
-		if (!quiet)
+		if (!pset.quiet)
 			puts(_("Query buffer reset (cleared)."));
 	}
 
@@ -740,7 +737,7 @@ exec_command(const char *cmd,
 		expand_tilde(&fname);
 		/* This scrolls off the screen when using /dev/tty */
 		success = saveHistory(fname ? fname : DEVTTY, false);
-		if (success && !quiet && fname)
+		if (success && !pset.quiet && fname)
 			printf(gettext("Wrote history to file \"%s/%s\".\n"),
 				   pset.dirname ? pset.dirname : ".", fname);
 		if (!fname)
@@ -786,13 +783,7 @@ exec_command(const char *cmd,
 				free(opt);
 			}
 
-			if (SetVariable(pset.vars, opt0, newval))
-			{
-				/* Check for special variables */
-				if (strcmp(opt0, "VERBOSITY") == 0)
-					SyncVerbosityVariable();
-			}
-			else
+			if (!SetVariable(pset.vars, opt0, newval))
 			{
 				psql_error("\\%s: error\n", cmd);
 				success = false;
@@ -804,7 +795,7 @@ exec_command(const char *cmd,
 
 	/* \t -- turn off headers and row count */
 	else if (strcmp(cmd, "t") == 0)
-		success = do_pset("tuples_only", NULL, &pset.popt, quiet);
+		success = do_pset("tuples_only", NULL, &pset.popt, pset.quiet);
 
 
 	/* \T -- define html <table ...> attributes */
@@ -813,7 +804,7 @@ exec_command(const char *cmd,
 		char	   *value = psql_scan_slash_option(scan_state,
 												   OT_NORMAL, NULL, false);
 
-		success = do_pset("tableattr", value, &pset.popt, quiet);
+		success = do_pset("tableattr", value, &pset.popt, pset.quiet);
 		free(value);
 	}
 
@@ -821,7 +812,7 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "timing") == 0)
 	{
 		pset.timing = !pset.timing;
-		if (!quiet)
+		if (!pset.quiet)
 		{
 			if (pset.timing)
 				puts(_("Timing is on."));
@@ -916,7 +907,7 @@ exec_command(const char *cmd,
 
 	/* \x -- toggle expanded table representation */
 	else if (strcmp(cmd, "x") == 0)
-		success = do_pset("expanded", NULL, &pset.popt, quiet);
+		success = do_pset("expanded", NULL, &pset.popt, pset.quiet);
 
 	/* \z -- list table rights (equivalent to \dp) */
 	else if (strcmp(cmd, "z") == 0)
@@ -1114,7 +1105,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	SyncVariables();
 
 	/* Tell the user about the new connection */
-	if (!QUIET())
+	if (!pset.quiet)
 	{
 		printf(_("You are now connected to database \"%s\""), PQdb(pset.db));
 
@@ -1148,6 +1139,7 @@ SyncVariables(void)
 	/* get stuff from connection */
 	pset.encoding = PQclientEncoding(pset.db);
 	pset.popt.topt.encoding = pset.encoding;
+	pset.sversion = PQserverVersion(pset.db);
 
 	SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
 	SetVariable(pset.vars, "USER", PQuser(pset.db));
@@ -1156,7 +1148,7 @@ SyncVariables(void)
 	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 
 	/* send stuff to it, too */
-	SyncVerbosityVariable();
+	PQsetErrorVerbosity(pset.db, pset.verbosity);
 }
 
 /*
@@ -1172,32 +1164,6 @@ UnsyncVariables(void)
 	SetVariable(pset.vars, "HOST", NULL);
 	SetVariable(pset.vars, "PORT", NULL);
 	SetVariable(pset.vars, "ENCODING", NULL);
-}
-
-/*
- * Update connection state from VERBOSITY variable
- */
-static void
-SyncVerbosityVariable(void)
-{
-	switch (SwitchVariable(pset.vars, "VERBOSITY",
-						   "default", "terse", "verbose", NULL))
-	{
-		case 1:			/* default */
-			pset.verbosity = PQERRORS_DEFAULT;
-			break;
-		case 2:			/* terse */
-			pset.verbosity = PQERRORS_TERSE;
-			break;
-		case 3:			/* verbose */
-			pset.verbosity = PQERRORS_VERBOSE;
-			break;
-		default:				/* not set or unrecognized value */
-			pset.verbosity = PQERRORS_DEFAULT;
-			break;
-	}
-
-	PQsetErrorVerbosity(pset.db, pset.verbosity);
 }
 
 

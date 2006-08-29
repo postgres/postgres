@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.143 2006/08/25 04:06:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.144 2006/08/29 15:19:51 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -673,7 +673,7 @@ describeTableDetails(const char *pattern, bool verbose)
 
 	if (PQntuples(res) == 0)
 	{
-		if (!QUIET())
+		if (!pset.quiet)
 			fprintf(stderr, _("Did not find any relation named \"%s\".\n"),
 					pattern);
 		PQclear(res);
@@ -768,7 +768,7 @@ describeOneTableDetails(const char *schemaname,
 	/* Did we get anything? */
 	if (PQntuples(res) == 0)
 	{
-		if (!QUIET())
+		if (!pset.quiet)
 			fprintf(stderr, _("Did not find any relation with OID %s.\n"),
 					oid);
 		goto error_return;
@@ -1582,7 +1582,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 	if (!res)
 		return false;
 
-	if (PQntuples(res) == 0 && !QUIET())
+	if (PQntuples(res) == 0 && !pset.quiet)
 	{
 		if (pattern)
 			fprintf(pset.queryFout, _("No matching relations found.\n"));

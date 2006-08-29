@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.125 2006/08/25 04:06:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.126 2006/08/29 15:19:50 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -515,7 +515,6 @@ PGresult *
 PSQLexec(const char *query, bool start_xact)
 {
 	PGresult   *res;
-	int			echo_hidden;
 
 	if (!pset.db)
 	{
@@ -523,8 +522,7 @@ PSQLexec(const char *query, bool start_xact)
 		return NULL;
 	}
 
-	echo_hidden = SwitchVariable(pset.vars, "ECHO_HIDDEN", "noexec", NULL);
-	if (echo_hidden != VAR_NOTSET)
+	if (pset.echo_hidden != PSQL_ECHO_HIDDEN_OFF)
 	{
 		printf(_("********* QUERY **********\n"
 				 "%s\n"
@@ -539,14 +537,15 @@ PSQLexec(const char *query, bool start_xact)
 			fflush(pset.logfile);
 		}
 
-		if (echo_hidden == 1)	/* noexec? */
+		if (pset.echo_hidden == PSQL_ECHO_HIDDEN_NOEXEC)
 			return NULL;
 	}
 
 	SetCancelConn();
 
-	if (start_xact && PQtransactionStatus(pset.db) == PQTRANS_IDLE &&
-		!GetVariableBool(pset.vars, "AUTOCOMMIT"))
+	if (start_xact &&
+		!pset.autocommit &&
+		PQtransactionStatus(pset.db) == PQTRANS_IDLE)
 	{
 		res = PQexec(pset.db, "BEGIN");
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -693,7 +692,7 @@ PrintQueryStatus(PGresult *results)
 {
 	char		buf[16];
 
-	if (!QUIET())
+	if (!pset.quiet)
 	{
 		if (pset.popt.topt.format == PRINT_HTML)
 		{
@@ -789,7 +788,6 @@ SendQuery(const char *query)
 				on_error_rollback_savepoint = false;
 	PGTransactionStatusType transaction_status;
 	static bool on_error_rollback_warning = false;
-	const char *rollback_str;
 
 	if (!pset.db)
 	{
@@ -797,7 +795,7 @@ SendQuery(const char *query)
 		return false;
 	}
 
-	if (GetVariableBool(pset.vars, "SINGLESTEP"))
+	if (pset.singlestep)
 	{
 		char		buf[3];
 
@@ -810,7 +808,7 @@ SendQuery(const char *query)
 			if (buf[0] == 'x')
 				return false;
 	}
-	else if (VariableEquals(pset.vars, "ECHO", "queries"))
+	else if (pset.echo == PSQL_ECHO_QUERIES)
 	{
 		puts(query);
 		fflush(stdout);
@@ -830,7 +828,7 @@ SendQuery(const char *query)
 	transaction_status = PQtransactionStatus(pset.db);
 
 	if (transaction_status == PQTRANS_IDLE &&
-		!GetVariableBool(pset.vars, "AUTOCOMMIT") &&
+		!pset.autocommit &&
 		!command_no_begin(query))
 	{
 		results = PQexec(pset.db, "BEGIN");
@@ -846,11 +844,9 @@ SendQuery(const char *query)
 	}
 
 	if (transaction_status == PQTRANS_INTRANS &&
-	  (rollback_str = GetVariable(pset.vars, "ON_ERROR_ROLLBACK")) != NULL &&
-	/* !off and !interactive is 'on' */
-		pg_strcasecmp(rollback_str, "off") != 0 &&
+		pset.on_error_rollback != PSQL_ERROR_ROLLBACK_OFF &&
 		(pset.cur_cmd_interactive ||
-		 pg_strcasecmp(rollback_str, "interactive") != 0))
+		 pset.on_error_rollback == PSQL_ERROR_ROLLBACK_ON))
 	{
 		if (on_error_rollback_warning == false && pset.sversion < 80000)
 		{

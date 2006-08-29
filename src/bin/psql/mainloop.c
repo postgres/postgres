@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.82 2006/08/11 19:20:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.83 2006/08/29 15:19:51 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -146,12 +146,12 @@ MainLoop(FILE *source)
 
 				if (count_eof < GetVariableNum(pset.vars, "IGNOREEOF", 0, 10, false))
 				{
-					if (!QUIET())
+					if (!pset.quiet)
 						printf(_("Use \"\\q\" to leave %s.\n"), pset.progname);
 					continue;
 				}
 
-				puts(QUIET() ? "" : "\\q");
+				puts(pset.quiet ? "" : "\\q");
 			}
 			break;
 		}
@@ -168,8 +168,7 @@ MainLoop(FILE *source)
 		}
 
 		/* echo back if flag is set */
-		if (!pset.cur_cmd_interactive &&
-			VariableEquals(pset.vars, "ECHO", "all"))
+		if (pset.echo == PSQL_ECHO_ALL && !pset.cur_cmd_interactive)
 			puts(line);
 		fflush(stdout);
 
@@ -183,7 +182,7 @@ MainLoop(FILE *source)
 			added_nl_pos = -1;	/* flag we didn't add one */
 
 		/* Setting this will not have effect until next line. */
-		die_on_error = GetVariableBool(pset.vars, "ON_ERROR_STOP");
+		die_on_error = pset.on_error_stop;
 
 		/*
 		 * Parse line, looking for command separators.
@@ -205,8 +204,7 @@ MainLoop(FILE *source)
 			 * single-line mode.
 			 */
 			if (scan_result == PSCAN_SEMICOLON ||
-				(scan_result == PSCAN_EOL &&
-				 GetVariableBool(pset.vars, "SINGLELINE")))
+				(scan_result == PSCAN_EOL && pset.singleline))
 			{
 				/*
 				 * Save query in history.  We use history_buf to accumulate
