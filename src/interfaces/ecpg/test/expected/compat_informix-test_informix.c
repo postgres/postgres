@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -66,7 +66,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 
 	/* this INSERT works */
 	rsetnull(CDECIMALTYPE, (char *)&j);
-	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into test ( i  , j  ) values( 7 ,  ? )", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into test ( i  , j  ) values( 7 ,  ? ) ", 
 	ECPGt_decimal,&(j),(long)1,(long)1,sizeof(decimal), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 27 "test_informix.pgc"
@@ -82,7 +82,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 
 
 	/* this INSERT should fail because i is a unique column */
-	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into test ( i  , j  ) values( 7 , 12 )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into test ( i  , j  ) values( 7 , 12 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
@@ -96,7 +96,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 #line 33 "test_informix.pgc"
 
 
-	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into test ( i  , j  ) values(  ? , 1 )", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into test ( i  , j  ) values(  ? , 1 ) ", 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 35 "test_informix.pgc"
@@ -177,7 +177,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 	deccvint(7, &j);
 	deccvint(14, &m);
 	decadd(&j, &m, &n);
-	{ ECPGdo(__LINE__, 1, 1, NULL, "delete from test  where i =  ?", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, "delete from test  where i =  ? ", 
 	ECPGt_decimal,&(n),(long)1,(long)1,sizeof(decimal), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 72 "test_informix.pgc"

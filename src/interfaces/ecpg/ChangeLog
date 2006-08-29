@@ -2126,5 +2126,10 @@ Su 27. Aug 17:54:36 CEST 2006
 
 	- Enabled single-quoted connection targets.
 	- Fixed a memory leak/segfault in unsuccessful connection.
+
+Tu 29. Aug 14:21:31 CEST 2006
+
+	- Fixed parser and library to allow empty database names.
+	- Streamlined connection name parsing.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

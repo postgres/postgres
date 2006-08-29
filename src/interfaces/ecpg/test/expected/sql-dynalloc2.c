@@ -9,7 +9,7 @@
 #line 1 "dynalloc2.pgc"
 #include <stdio.h>
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -81,7 +81,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 #include <stdlib.h>
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -144,37 +144,37 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 24 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 1 , 'one' )", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 1 , 'one' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 25 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 25 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 2 , 'two' )", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 2 , 'two' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 26 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 26 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , 'three' )", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , 'three' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 27 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 27 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 4 , 'four' )", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 4 , 'four' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 28 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 28 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 5 , null )", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 5 , null ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 29 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , null )", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , null ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 30 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}

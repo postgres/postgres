@@ -12,7 +12,7 @@
 #include <string.h>
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -71,7 +71,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   printf("Standard conforming strings: %s\n", var);
 
   /* this is a\\b actually */
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into My_Table values( 1 , 'a\\\\b' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into My_Table values( 1 , 'a\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 25 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -81,7 +81,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 25 "quote.pgc"
 
   /* this is a\b */
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into My_Table values( 1 , 'a\\\\b' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into My_Table values( 1 , 'a\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 27 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -102,7 +102,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
   /* this is a\\b actually */
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into My_Table values( 1 , 'a\\\\b' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into My_Table values( 1 , 'a\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 32 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -112,7 +112,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 32 "quote.pgc"
 
   /* this is a\b */
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into My_Table values( 1 , 'a\\\\b' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into My_Table values( 1 , 'a\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 34 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

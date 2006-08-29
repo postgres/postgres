@@ -14,7 +14,7 @@
 #include <pgtypes_timestamp.h>
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 

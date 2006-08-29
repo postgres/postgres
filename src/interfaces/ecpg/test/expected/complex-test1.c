@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -374,7 +374,7 @@ if (sqlca.sqlcode < 0) PrintAndStop ( msg );}
 		amount[i]+=1000;
 
 		strcpy(msg, "insert");
-		{ ECPGdo(__LINE__, 0, 1, "pm", "insert into \"Test\" ( name  , amount  , letter  ) values(  ? ,  ? ,  ? )", 
+		{ ECPGdo(__LINE__, 0, 1, "pm", "insert into \"Test\" ( name  , amount  , letter  ) values(  ? ,  ? ,  ? ) ", 
 	ECPGt_char,(n),(long)8,(long)1,(8)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,&(amount[i]),(long)1,(long)1,sizeof(int), 
@@ -534,7 +534,7 @@ if (sqlca.sqlcode < 0) PrintAndStop ( msg );}
 
 	name_letter[4].amount=1407;
 	strcpy(msg, "insert");
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into \"Test\" ( name  , amount  , letter  ) values(  ? ,  ? ,  ? )", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into \"Test\" ( name  , amount  , letter  ) values(  ? ,  ? ,  ? ) ", 
 	ECPGt_char,&(name_letter[4].name),(long)8,(long)1,(8)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,&(name_letter[4].amount),(long)1,(long)1,sizeof(int), 

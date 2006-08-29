@@ -11,7 +11,7 @@
 #include <string.h>
 
 
-#line 1 "./header_test.h"
+#line 1 "header_test.h"
 #include "stdlib.h"
 
 static void
@@ -22,19 +22,19 @@ Finish(char *msg)
 
 	/* finish transaction */
 	{ ECPGtrans(__LINE__, NULL, "rollback");}
-#line 10 "./header_test.h"
+#line 10 "header_test.h"
 
 
 	/* and remove test table */
 	{ ECPGdo(__LINE__, 0, 1, NULL, "drop table meskes ", ECPGt_EOIT, ECPGt_EORT);}
-#line 13 "./header_test.h"
+#line 13 "header_test.h"
 
 	{ ECPGtrans(__LINE__, NULL, "commit");}
-#line 14 "./header_test.h"
+#line 14 "header_test.h"
 
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
-#line 16 "./header_test.h"
+#line 16 "header_test.h"
 
 
 	exit(-1);
@@ -47,16 +47,16 @@ warn(void)
 }
 
 /* exec sql whenever sqlerror  do Finish ( msg ) ; */
-#line 29 "./header_test.h"
+#line 29 "header_test.h"
 
 /* exec sql whenever sql_warning  do warn (  ) ; */
-#line 32 "./header_test.h"
+#line 32 "header_test.h"
 
 
 #line 4 "test2.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -190,7 +190,7 @@ if (sqlca.sqlcode < 0) Finish ( msg );}
 
 
 	strcpy(msg, "insert");
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , married  , children  ) values( 'Petra' , '19900404' , 3 )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , married  , children  ) values( 'Petra' , '19900404' , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 51 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
@@ -199,7 +199,7 @@ if (sqlca.sqlwarn[0] == 'W') warn (  );
 if (sqlca.sqlcode < 0) Finish ( msg );}
 #line 51 "test2.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  , married  , children  ) values( 'Michael' , 19660117 , 35 , '19900404' , 3 )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  , married  , children  ) values( 'Michael' , 19660117 , 35 , '19900404' , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 52 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
@@ -208,7 +208,7 @@ if (sqlca.sqlwarn[0] == 'W') warn (  );
 if (sqlca.sqlcode < 0) Finish ( msg );}
 #line 52 "test2.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Carsten' , 19910103 , 10 )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Carsten' , 19910103 , 10 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 53 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
@@ -217,7 +217,7 @@ if (sqlca.sqlwarn[0] == 'W') warn (  );
 if (sqlca.sqlcode < 0) Finish ( msg );}
 #line 53 "test2.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Marc' , 19930907 , 8 )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Marc' , 19930907 , 8 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 54 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
@@ -226,7 +226,7 @@ if (sqlca.sqlwarn[0] == 'W') warn (  );
 if (sqlca.sqlcode < 0) Finish ( msg );}
 #line 54 "test2.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Chris' , 19970923 , 4 )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Chris' , 19970923 , 4 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 55 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );

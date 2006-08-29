@@ -8,7 +8,7 @@
 
 #line 1 "desc.pgc"
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 

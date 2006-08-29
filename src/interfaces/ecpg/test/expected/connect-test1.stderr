@@ -15,7 +15,15 @@ THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port 55432 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on localhost port 55432 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -23,11 +31,17 @@ THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database <DEFAULT> on <DEFAULT> port 55432 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port 55432 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -220 in line 36, 'No such connection nonexistant in line 36.'.
-[NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ecpg_finish: Connection connectdb closed.
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database  on localhost port 55432 for user connectdb
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection  closed.
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port 55432 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -43,19 +57,19 @@ THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database nonexistant on localhost port 55432 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: connect: could not open database nonexistant on localhost port 55432 for user connectuser in line 51
+[NO_PID]: connect: could not open database nonexistant on localhost port 55432 for user connectuser in line 62
 	FATAL:  database "nonexistant" does not exist
 
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection nonexistant closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -402 in line 51, 'Could not connect to database nonexistant in line 51.'.
+[NO_PID]: raising sqlcode -402 in line 62, 'Could not connect to database nonexistant in line 62.'.
 [NO_PID]: sqlca: code: -402, state: 08001
-[NO_PID]: raising sqlcode -220 in line 52, 'No such connection CURRENT in line 52.'.
+[NO_PID]: raising sqlcode -220 in line 63, 'No such connection CURRENT in line 63.'.
 [NO_PID]: sqlca: code: -220, state: 08003
 [NO_PID]: ECPGconnect: opening database connectdb on localhost port 0 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: connect: could not open database connectdb on localhost port 0 for user connectuser in line 55
+[NO_PID]: connect: could not open database connectdb on localhost port 0 for user connectuser in line 66
 	could not connect to server: Connection refused
 	Is the server running on host "localhost" and accepting
 	TCP/IP connections on port 0?
@@ -63,7 +77,7 @@ THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection connectdb closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode -402 in line 55, 'Could not connect to database connectdb in line 55.'.
+[NO_PID]: raising sqlcode -402 in line 66, 'Could not connect to database connectdb in line 66.'.
 [NO_PID]: sqlca: code: -402, state: 08001
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port 55432 for user connectuser
 [NO_PID]: sqlca: code: 0, state: 00000

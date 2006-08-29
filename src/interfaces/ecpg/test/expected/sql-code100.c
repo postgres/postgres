@@ -8,7 +8,7 @@
 
 #line 1 "code100.pgc"
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -81,7 +81,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #include <stdio.h>
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
    
    for (index=0;index<10;++index)
-   {  { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( payload  , index  ) values( 0 ,  ? )", 
+   {  { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( payload  , index  ) values( 0 ,  ? ) ", 
 	ECPGt_int,&(index),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
 #line 28 "code100.pgc"
@@ -132,17 +132,17 @@ int main(int argc, char **argv)
 
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
    
-   { ECPGdo(__LINE__, 0, 1, NULL, "update test set payload  = payload + 1  where index = - 1", ECPGt_EOIT, ECPGt_EORT);}
+   { ECPGdo(__LINE__, 0, 1, NULL, "update test set payload  = payload + 1  where index = - 1 ", ECPGt_EOIT, ECPGt_EORT);}
 #line 35 "code100.pgc"
 
    if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
    
-   { ECPGdo(__LINE__, 0, 1, NULL, "delete from test  where index = - 1", ECPGt_EOIT, ECPGt_EORT);}
+   { ECPGdo(__LINE__, 0, 1, NULL, "delete from test  where index = - 1 ", ECPGt_EOIT, ECPGt_EORT);}
 #line 38 "code100.pgc"
 
    if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( select  *  from test where index = - 1   )", ECPGt_EOIT, ECPGt_EORT);}
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( select  *  from test where index = - 1   ) ", ECPGt_EOIT, ECPGt_EORT);}
 #line 41 "code100.pgc"
 
    if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);

@@ -9,7 +9,7 @@
 #line 1 "dynalloc.pgc"
 #include <stdio.h>
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -81,7 +81,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 #include <stdlib.h>
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -190,13 +190,13 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 37 "dynalloc.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' )", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values( 23.456 , 'varchar' , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , true , '(1,2,3,4)' , '2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 38 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 38 "dynalloc.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null )", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( b  , c  , d  , e  , f  , g  , h  , i  ) values( 2.446456 , null , 'v' , 'c' , '2003-03-03 12:33:07 PDT' , false , null , null ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 39 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}

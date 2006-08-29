@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -81,7 +81,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 3 "indicators.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -123,18 +123,18 @@ int main(int argc, char **argv)
 #line 23 "indicators.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( id  , str  , val  ) values( 1 , 'Hello' , 0 )", ECPGt_EOIT, ECPGt_EORT);}
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( id  , str  , val  ) values( 1 , 'Hello' , 0 ) ", ECPGt_EOIT, ECPGt_EORT);}
 #line 25 "indicators.pgc"
 
 
 	/* use indicator in insert */
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( id  , str  , val  ) values( 2 , 'Hi there' ,  ? )", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( id  , str  , val  ) values( 2 , 'Hi there' ,  ? ) ", 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
 #line 28 "indicators.pgc"
 
 	nullind = 0;
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( id  , str  , val  ) values( 3 , 'Good evening' ,  ? )", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( id  , str  , val  ) values( 3 , 'Good evening' ,  ? ) ", 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
 #line 30 "indicators.pgc"
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 
 	/* use indicators for update */
 	intvar = 5; nullind = -1;
-	{ ECPGdo(__LINE__, 0, 1, NULL, "update test set val  =  ?  where id = 1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "update test set val  =  ?  where id = 1 ", 
 	ECPGt_int,&(intvar),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(nullind),(long)1,(long)1,sizeof(int), ECPGt_EOIT, ECPGt_EORT);}
 #line 42 "indicators.pgc"

@@ -13,7 +13,7 @@
 #include <decimal.h>
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -89,7 +89,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 
 	des = PGTYPESnumeric_new();
 	PGTYPESnumeric_copy(res, des);
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( text  , num  ) values( 'test' ,  ? )", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( text  , num  ) values( 'test' ,  ? ) ", 
 	ECPGt_numeric,&(des),(long)1,(long)0,sizeof(numeric), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "num_test.pgc"

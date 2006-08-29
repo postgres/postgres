@@ -76,14 +76,14 @@ main(void)
 #line 38 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "connectdb" , "connectuser" , "connectdb" , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "" , "connectdb" , NULL , "main", 0); }
 #line 40 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
 #line 41 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb" , "connectuser" , NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , "connectuser" , "connectdb" , "main", 0); }
 #line 43 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
@@ -104,26 +104,41 @@ main(void)
 #line 50 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://200.46.204.71/connectdb" , "connectuser" , NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/connectdb" , "connectuser" , NULL , "main", 0); }
 #line 52 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
 #line 53 "test5.pgc"
 
 
-	{ ECPGdisconnect(__LINE__, "nonexistant");}
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://200.46.204.71/connectdb" , "connectuser" , NULL , "main", 0); }
 #line 55 "test5.pgc"
+
+	{ ECPGdisconnect(__LINE__, "main");}
+#line 56 "test5.pgc"
+
+
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/" , "connectdb" , NULL , "main", 0); }
+#line 58 "test5.pgc"
+
+	{ ECPGdisconnect(__LINE__, "main");}
+#line 59 "test5.pgc"
 
 
 	/* connect twice */
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
-#line 58 "test5.pgc"
+#line 62 "test5.pgc"
 
 	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
-#line 59 "test5.pgc"
+#line 63 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
-#line 60 "test5.pgc"
+#line 64 "test5.pgc"
+
+
+	/* not connected */
+	{ ECPGdisconnect(__LINE__, "nonexistant");}
+#line 67 "test5.pgc"
 
 
 	return (0);

@@ -14,7 +14,7 @@
 #include "sqltypes.h"
 
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -85,7 +85,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 5 "test_informix2.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -194,7 +194,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	sql_check("main", "create", 0);
 	
-	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values( 1 , '2003-05-07 13:28:34 CEST' , 'test' , 'test' )", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values( 1 , '2003-05-07 13:28:34 CEST' , 'test' , 'test' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 73 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -233,7 +233,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	c++;
 
-	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values(  ? ,  ? , 'test' , 'test' )", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, "insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values(  ? ,  ? , 'test' , 'test' ) ", 
 	ECPGt_int,&(c),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(e),(long)1,(long)1,sizeof(timestamp), 

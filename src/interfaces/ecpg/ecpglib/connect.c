@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.34 2006/08/27 16:15:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.35 2006/08/29 12:24:51 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -427,7 +427,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				host = ECPGstrdup(tmp + 1, lineno);
 				*tmp = '\0';
 			}
-			realname = ECPGstrdup(dbname, lineno);
+
+			realname = (strlen(dbname) > 0) ? ECPGstrdup(dbname, lineno) : NULL;
 		}
 	}
 	else

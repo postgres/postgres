@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 
-#line 1 "./../../include/sql3types.h"
+#line 1 "sql3types.h"
 #ifndef _ECPG_SQL3TYPES_H
 #define _ECPG_SQL3TYPES_H
 
@@ -62,7 +62,7 @@ enum
 #line 7 "dyntest.pgc"
 
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -133,7 +133,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 8 "dyntest.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -238,13 +238,13 @@ if (sqlca.sqlcode < 0) error (  );}
 if (sqlca.sqlcode < 0) error (  );}
 #line 53 "dyntest.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into dyntest values( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into dyntest values( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 54 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
 #line 54 "dyntest.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into dyntest values( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into dyntest values( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 55 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}

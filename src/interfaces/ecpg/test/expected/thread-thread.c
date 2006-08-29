@@ -26,7 +26,7 @@ main(void)
 
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -167,7 +167,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #ifdef DEBUG
       printf("%s: inserting %d\n", l_connection, l_i);
 #endif
-      { ECPGdo(__LINE__, 0, 1, l_connection, "insert into test_thread ( thread  , iteration  ) values(  ? ,  ? )", 
+      { ECPGdo(__LINE__, 0, 1, l_connection, "insert into test_thread ( thread  , iteration  ) values(  ? ,  ? ) ", 
 	ECPGt_char,(l_connection),(long)128,(long)1,(128)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,&(l_i),(long)1,(long)1,sizeof(int), 

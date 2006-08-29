@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 
-#line 1 "./../../include/sqlca.h"
+#line 1 "sqlca.h"
 #ifndef POSTGRES_SQLCA_H
 #define POSTGRES_SQLCA_H
 
@@ -81,7 +81,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 3 "copystdout.pgc"
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -118,19 +118,19 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 20 "copystdout.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 5 , 'abc' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 5 , 'abc' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 21 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 21 "copystdout.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 6 , 'def' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 6 , 'def' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 22 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "copystdout.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 7 , 'ghi' )", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 7 , 'ghi' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 23 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

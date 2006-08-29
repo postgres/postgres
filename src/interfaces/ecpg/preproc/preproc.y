@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.333 2006/08/27 16:15:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.334 2006/08/29 12:24:51 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -508,7 +508,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>	RuleStmt opt_column oper_argtypes NumConst var_name
-%type  <str>	MathOp RemoveFuncStmt ECPGunreserved_con
+%type  <str>	MathOp RemoveFuncStmt ECPGunreserved_con opt_database_name
 %type  <str>	RemoveAggrStmt opt_procedural select_no_parens CreateCastStmt
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_trusted opt_lancompiler
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
@@ -624,7 +624,7 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 		| '}'			{ remove_typedefs(braces_open); remove_variables(braces_open--); fputs("}", yyout); }
 		;
 
-opt_at: AT connection_target
+opt_at: AT connection_object
 		{
 			connection = $2;
 			/*
@@ -677,7 +677,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 		| ClusterStmt		{ output_statement($1, 0, connection); }
 		| CommentStmt		{ output_statement($1, 0, connection); }
 		| ConstraintsSetStmt	{ output_statement($1, 0, connection); }
-		| CopyStmt			{ output_statement($1, 0, connection); }
+		| CopyStmt		{ output_statement($1, 0, connection); }
 		| CreateAsStmt		{ output_statement($1, 0, connection); }
 		| CreateAssertStmt	{ output_statement($1, 0, connection); }
 		| CreateCastStmt	{ output_statement($1, 0, connection); }
@@ -4616,7 +4616,7 @@ ECPGConnect: SQL_CONNECT TO connection_target opt_connection_name opt_user
 			{ $$ = cat2_str($2, make_str(",NULL,NULL,NULL")); }
 		;
 
-connection_target: database_name opt_server opt_port
+connection_target: opt_database_name opt_server opt_port
 		{
 			/* old style: dbname[@server][:port] */
 			if (strlen($2) > 0 && *($2) != '@')
@@ -4628,7 +4628,7 @@ connection_target: database_name opt_server opt_port
 			else
 				$$ = make3_str(make_str("\""), make3_str($1, $2, $3), make_str("\""));
 		}
-		|  db_prefix ':' server opt_port '/' database_name opt_options
+		|  db_prefix ':' server opt_port '/' opt_database_name opt_options
 		{
 			/* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
 			if (strncmp($1, "unix:postgresql", strlen("unix:postgresql")) != 0 && strncmp($1, "tcp:postgresql", strlen("tcp:postgresql")) != 0)
@@ -4657,6 +4657,10 @@ connection_target: database_name opt_server opt_port
 			$1[strlen($1)-1] = '\"';
 			$$ = $1;
 		}
+		;
+
+opt_database_name: database_name		{ $$ = $1; }
+		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 db_prefix: ident cvariable
@@ -4690,10 +4694,10 @@ server_name: ColId					{ $$ = $1; }
 		;
 
 opt_port: ':' PosIntConst	{ $$ = make2_str(make_str(":"), $2); }
-		| /*EMPTY*/			{ $$ = EMPTY; }
+		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
-opt_connection_name: AS connection_target { $$ = $2; }
+opt_connection_name: AS connection_object	{ $$ = $2; }
 		| /*EMPTY*/			{ $$ = make_str("NULL"); }
 		;
 
@@ -5491,14 +5495,15 @@ ECPGDeclare: DECLARE STATEMENT ident
 ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
 		;
 
-dis_name: connection_object				{ $$ = $1; }
-		| SQL_CURRENT					{ $$ = make_str("\"CURRENT\""); }
-		| ALL							{ $$ = make_str("\"ALL\""); }
-		| /*EMPTY*/						{ $$ = make_str("\"CURRENT\""); }
+dis_name: connection_object			{ $$ = $1; }
+		| SQL_CURRENT			{ $$ = make_str("\"CURRENT\""); }
+		| ALL				{ $$ = make_str("\"ALL\""); }
+		| /* EMPTY */			{ $$ = make_str("\"CURRENT\""); }
 		;
 
-connection_object: connection_target	{ $$ = $1; }
-		| DEFAULT						{ $$ = make_str("\"DEFAULT\""); }
+connection_object: database_name		{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+		| DEFAULT			{ $$ = make_str("\"DEFAULT\""); }
+		| char_variable			{ $$ = $1; }
 		;
 
 /*

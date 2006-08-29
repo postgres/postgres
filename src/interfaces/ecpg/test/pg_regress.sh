@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.7 2006/08/28 16:13:11 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.8 2006/08/29 12:24:51 meskes Exp $
 
 me=`basename $0`
 
@@ -690,6 +690,12 @@ echo "$bindir/createuser" $psql_options -R -S -D -q connectuser
 "$bindir/createuser" $psql_options -R -S -D -q connectuser
 if [ $? -ne 0 ]; then
 	echo Could not create user connectuser
+fi
+# to test username = dbname 
+echo "$bindir/createuser" $psql_options -R -S -D -q connectdb
+"$bindir/createuser" $psql_options -R -S -D -q connectdb
+if [ $? -ne 0 ]; then
+	echo Could not create user connectdb
 fi
 
 # this variable prevents that the PID gets included in the logfiles

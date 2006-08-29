@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 
-#line 1 "./../regression.h"
+#line 1 "regression.h"
 
 
 
@@ -116,7 +116,7 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into empl values( 1 , 'first user' , 320 ,  ? )", 
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into empl values( 1 , 'first user' , 320 ,  ? ) ", 
 	ECPGt_char,&(data),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
 #line 52 "test5.pgc"
