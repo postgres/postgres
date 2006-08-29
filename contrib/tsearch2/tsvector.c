@@ -979,7 +979,7 @@ silly_cmp_tsvector(const tsvector * a, const tsvector * b)
 				return ( aptr->pos > bptr->pos ) ? -1 : 1;
 			} else if ( aptr->len != bptr->len ) {
 				return ( aptr->len > bptr->len ) ? -1 : 1;
-			} else if ( (res=strncmp(STRPTR(a) + aptr->pos, STRPTR(b) + bptr->pos, b->len))!= 0 ) {
+			} else if ( (res=strncmp(STRPTR(a) + aptr->pos, STRPTR(b) + bptr->pos, bptr->len))!= 0 ) {
 				return res;
 			} else if ( aptr->haspos ) {
 				WordEntryPos	*ap = POSDATAPTR(a, aptr);
