@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.77 2006/08/29 02:11:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.78 2006/08/29 11:37:47 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -383,7 +383,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        The default value is 3. The value must be less than the value of
+        The default value is 2. The value must be less than the value of
         <varname>max_connections</varname>. This parameter can only be
         set at server start.
        </para>
@@ -2990,8 +2990,7 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Enables the collection of row-level statistics on database
-        activity. This parameter is on by default, because the autovacuum
-        daemon needs the collected information.
+        activity. This parameter is off by default.
         Only superusers can change this setting.
        </para>
       </listitem>
@@ -3114,7 +3113,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the minimum number of updated or deleted tuples needed
         to trigger a <command>VACUUM</> in any one table.
-        The default is 500.
+        The default is 1000.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3132,7 +3131,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the minimum number of inserted, updated or deleted tuples
         needed to trigger an <command>ANALYZE</> in any one table.
-        The default is 250.
+        The default is 500.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3151,7 +3150,7 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies a fraction of the table size to add to
         <varname>autovacuum_vacuum_threshold</varname>
         when deciding whether to trigger a <command>VACUUM</>.
-        The default is 0.2.
+        The default is 0.4.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3170,7 +3169,7 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies a fraction of the table size to add to
         <varname>autovacuum_analyze_threshold</varname>
         when deciding whether to trigger an <command>ANALYZE</>.
-        The default is 0.1.
+        The default is 0.2.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in

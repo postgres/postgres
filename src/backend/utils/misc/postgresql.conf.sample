@@ -59,7 +59,7 @@
 # Note: increasing max_connections costs ~400 bytes of shared memory per 
 # connection slot, plus lock space (see max_locks_per_transaction).  You
 # might also need to raise shared_buffers to support more connections.
-#superuser_reserved_connections = 3	# (change requires restart)
+#superuser_reserved_connections = 2	# (change requires restart)
 #unix_socket_directory = ''		# (change requires restart)
 #unix_socket_group = ''			# (change requires restart)
 #unix_socket_permissions = 0777		# octal
@@ -345,7 +345,7 @@
 #stats_start_collector = on		# needed for block or row stats
 					# (change requires restart)
 #stats_block_level = off
-#stats_row_level = on
+#stats_row_level = off
 #stats_reset_on_server_start = off	# (change requires restart)
 
 
@@ -361,15 +361,15 @@
 # AUTOVACUUM PARAMETERS
 #---------------------------------------------------------------------------
 
-#autovacuum = on			# enable autovacuum subprocess?
+#autovacuum = off			# enable autovacuum subprocess?
 #autovacuum_naptime = 60		# time between autovacuum runs, in secs
-#autovacuum_vacuum_threshold = 500	# min # of tuple updates before
+#autovacuum_vacuum_threshold = 1000	# min # of tuple updates before
 					# vacuum
-#autovacuum_analyze_threshold = 250	# min # of tuple updates before 
+#autovacuum_analyze_threshold = 500	# min # of tuple updates before 
 					# analyze
-#autovacuum_vacuum_scale_factor = 0.2	# fraction of rel size before 
+#autovacuum_vacuum_scale_factor = 0.4	# fraction of rel size before 
 					# vacuum
-#autovacuum_analyze_scale_factor = 0.1	# fraction of rel size before 
+#autovacuum_analyze_scale_factor = 0.2	# fraction of rel size before 
 					# analyze
 #autovacuum_vacuum_cost_delay = -1	# default vacuum cost delay for 
 					# autovac, -1 means use 

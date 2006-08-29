@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.60 2006/08/28 13:37:18 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.61 2006/08/29 11:37:47 petere Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -447,14 +447,14 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
   </sect2>
 
   <sect2 id="autovacuum">
-   <title id="autovacuum-title">The autovacuum daemon</title>
+   <title id="autovacuum-title">The auto-vacuum daemon</title>
 
    <indexterm>
     <primary>autovacuum</primary>
     <secondary>general information</secondary>
    </indexterm>
    <para>
-    There is a
+    Beginning in <productname>PostgreSQL </productname> 8.1, there is a
     separate optional server process called the <firstterm>autovacuum
     daemon</firstterm>, whose purpose is to automate the execution of
     <command>VACUUM</command> and <command>ANALYZE </command> commands.
@@ -465,9 +465,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     linkend="guc-stats-start-collector"> and <xref
     linkend="guc-stats-row-level"> are set to <literal>true</literal>.  Also,
     it's important to allow a slot for the autovacuum process when choosing
-    the value of <xref linkend="guc-superuser-reserved-connections">.  In
-    the default configuration, autovacuuming is enabled and the related
-    configuration parameters are appropriately set.
+    the value of <xref linkend="guc-superuser-reserved-connections">.
    </para>
 
    <para>
