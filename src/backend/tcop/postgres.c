@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.501 2006/08/29 02:32:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.502 2006/08/29 20:10:42 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1539,17 +1539,23 @@ exec_bind_message(StringInfo input_message)
 										 -1);
 
 				/* Save the parameter values */
-				appendStringInfo(&bind_values_str, "%s$%d = '",
+				appendStringInfo(&bind_values_str, "%s$%d = ",
 								 bind_values_str.len ? ", " : "",
 								 paramno + 1);
-				for (p = pstring; *p; p++)
+				if (pstring)
 				{
-					if (*p == '\'')	/* double single quotes */
+					appendStringInfoChar(&bind_values_str, '\'');
+					for (p = pstring; *p; p++)
+					{
+						if (*p == '\'')	/* double single quotes */
+							appendStringInfoChar(&bind_values_str, *p);
 						appendStringInfoChar(&bind_values_str, *p);
-					appendStringInfoChar(&bind_values_str, *p);
+					}
+					appendStringInfoChar(&bind_values_str, '\'');
 				}
-				appendStringInfoChar(&bind_values_str, '\'');
-
+				else
+					appendStringInfo(&bind_values_str, "NULL");
+				
 				/* Free result of encoding conversion, if any */
 				if (pstring && pstring != pbuf.data)
 					pfree(pstring);
@@ -1782,7 +1788,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 						*portal_name ? portal_name : ""),
 						errdetail("prepare: %s%s%s", sourceText,
 						/* optionally print bind parameters */
-						bindText ? "  bind: " : "",
+						bindText ? ",  bind: " : "",
 						bindText ? bindText : "")));
 
 	BeginCommand(portal->commandTag, dest);
@@ -1896,7 +1902,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 								*portal_name ? portal_name : ""),
 								errdetail("prepare: %s%s%s", sourceText,
 								/* optionally print bind parameters */
-								bindText ? "  bind: " : "",
+								bindText ? ",  bind: " : "",
 								bindText ? bindText : "")));
 		}
 	}
