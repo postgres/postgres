@@ -975,8 +975,6 @@ silly_cmp_tsvector(const tsvector * a, const tsvector * b)
 		for(i=0;i<a->size;i++) {
 			if ( aptr->haspos != bptr->haspos ) {
 				return ( aptr->haspos > bptr->haspos ) ? -1 : 1;
-			} else if ( aptr->pos != bptr->pos ) {
-				return ( aptr->pos > bptr->pos ) ? -1 : 1;
 			} else if ( aptr->len != bptr->len ) {
 				return ( aptr->len > bptr->len ) ? -1 : 1;
 			} else if ( (res=strncmp(STRPTR(a) + aptr->pos, STRPTR(b) + bptr->pos, bptr->len))!= 0 ) {
