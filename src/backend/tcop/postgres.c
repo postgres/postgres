@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.499 2006/08/15 18:26:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.500 2006/08/29 02:11:29 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -583,6 +583,7 @@ log_after_parse(List *raw_parsetree_list, const char *query_string,
 		 * For the first EXECUTE we find, record the client statement used by
 		 * the PREPARE.  PREPARE doesn't save the parse tree so we have no
 		 * way to conditionally output based on the type of query prepared.
+		 * Parse does save the command tag, so perhaps we can use that.
 		 */
 		if (IsA(parsetree, ExecuteStmt))
 		{
@@ -592,20 +593,16 @@ log_after_parse(List *raw_parsetree_list, const char *query_string,
 			if (*prepare_string == NULL &&
 				(entry = FetchPreparedStatement(stmt->name, false)) != NULL &&
 				entry->query_string)
-			{
-				*prepare_string = palloc(strlen(entry->query_string) +
-									  strlen("  [PREPARE:  %s]") - 2 + 1);
-				sprintf(*prepare_string, "  [PREPARE:  %s]",
-						entry->query_string);
-			}
+				*prepare_string = pstrdup(entry->query_string);
 		}
 	}
 
 	if (log_this_statement)
 	{
 		ereport(LOG,
-				(errmsg("statement: %s%s", query_string,
-						*prepare_string ? *prepare_string : "")));
+				(errmsg("statement: %s", query_string),
+						*prepare_string ? errdetail("prepare: %s",
+						*prepare_string) : 0));
 		return true;
 	}
 	else
@@ -874,9 +871,7 @@ exec_simple_query(const char *query_string)
 	parsetree_list = pg_parse_query(query_string);
 
 	/* Log immediately if dictated by log_statement */
-	if (log_statement != LOGSTMT_NONE)
-		was_logged = log_after_parse(parsetree_list, query_string,
-									 &prepare_string);
+	was_logged = log_after_parse(parsetree_list, query_string, &prepare_string);
 
 	/*
 	 * Switch back to transaction context to enter the loop.
@@ -957,6 +952,7 @@ exec_simple_query(const char *query_string)
 		PortalDefineQuery(portal,
 						  NULL,
 						  query_string,
+						  NULL,
 						  commandTag,
 						  querytree_list,
 						  plantree_list,
@@ -1097,10 +1093,11 @@ exec_simple_query(const char *query_string)
 								secs * 1000 + msecs, usecs % 1000)));
 			else
 				ereport(LOG,
-						(errmsg("duration: %ld.%03d ms  statement: %s%s",
+						(errmsg("duration: %ld.%03d ms  statement: %s",
 								secs * 1000 + msecs, usecs % 1000,
-								query_string,
-								prepare_string ? prepare_string : "")));
+								query_string),
+						 		prepare_string ? errdetail("prepare: %s",
+								prepare_string) : 0));
 		}
 	}
 
@@ -1147,7 +1144,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("prepare %s:  %s",
+				(errmsg("statement: prepare %s, %s",
 						*stmt_name ? stmt_name : "<unnamed>",
 						query_string)));
 
@@ -1384,8 +1381,7 @@ exec_bind_message(StringInfo input_message)
 	/* Switch back to message context */
 	MemoryContextSwitchTo(MessageContext);
 
-	if (log_statement == LOGSTMT_ALL)
-		initStringInfo(&bind_values_str);
+	initStringInfo(&bind_values_str);
 
 	/* Get the fixed part of the message */
 	portal_name = pq_getmsgstring(input_message);
@@ -1521,7 +1517,7 @@ exec_bind_message(StringInfo input_message)
 			{
 				Oid			typinput;
 				Oid			typioparam;
-				char	   *pstring;
+				char	   *pstring, *p;
 
 				getTypeInputInfo(ptype, &typinput, &typioparam);
 
@@ -1540,12 +1536,17 @@ exec_bind_message(StringInfo input_message)
 										 typioparam,
 										 -1);
 
-				/* Log the parameter value if needed */
-				if (log_statement == LOGSTMT_ALL)
-					appendStringInfo(&bind_values_str, "%s$%d = \"%s\"",
-									 bind_values_str.len ? ", " : "",
-									 paramno + 1,
-									 pstring);
+				/* Save the parameter values */
+				appendStringInfo(&bind_values_str, "%s$%d = '",
+								 bind_values_str.len ? ", " : "",
+								 paramno + 1);
+				for (p = pstring; *p; p++)
+				{
+					if (*p == '\'')	/* double single quotes */
+						appendStringInfoChar(&bind_values_str, *p);
+					appendStringInfoChar(&bind_values_str, *p);
+				}
+				appendStringInfoChar(&bind_values_str, '\'');
 
 				/* Free result of encoding conversion, if any */
 				if (pstring && pstring != pbuf.data)
@@ -1607,13 +1608,14 @@ exec_bind_message(StringInfo input_message)
 	if (log_statement == LOGSTMT_ALL)
 	{
 		ereport(LOG,
-				(errmsg("bind %s%s%s:  %s",
+				(errmsg("statement: bind %s%s%s%s%s",
 						*stmt_name ? stmt_name : "<unnamed>",
 						*portal->name ? "/" : "",
 						*portal->name ? portal->name : "",
-						pstmt->query_string ? pstmt->query_string : ""),
-				 bind_values_str.len ? errdetail(bind_values_str.data) : 0));
-		pfree(bind_values_str.data);
+						/* print bind parameters if we have them */
+						bind_values_str.len ? ", " : "",
+						bind_values_str.len ? bind_values_str.data : ""),
+						errdetail("prepare: %s", pstmt->query_string)));
 	}
 
 	/* Get the result format codes */
@@ -1651,6 +1653,7 @@ exec_bind_message(StringInfo input_message)
 	PortalDefineQuery(portal,
 					  *stmt_name ? pstrdup(stmt_name) : NULL,
 					  pstmt->query_string,
+					  bind_values_str.len ? pstrdup(bind_values_str.data) : NULL,
 					  pstmt->commandTag,
 					  pstmt->query_list,
 					  pstmt->plan_list,
@@ -1684,6 +1687,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	bool		completed;
 	char		completionTag[COMPLETION_TAG_BUFSIZE];
 	const char *sourceText = NULL;
+	const char *bindText = NULL;
 	const char *prepStmtName;
 	bool		save_log_statement_stats = log_statement_stats;
 	bool		is_xact_command;
@@ -1728,21 +1732,6 @@ exec_execute_message(const char *portal_name, long max_rows)
 		debug_query_string = "fetch message";
 		pgstat_report_activity("<FETCH>");
 	}
-	else if (portal->sourceText)
-	{
-		/*
-		 * We must copy the sourceText into MessageContext in case the
-		 * portal is destroyed during finish_xact_command.  Can avoid
-		 * the copy if it's not an xact command, though.
-		 */
-		if (is_xact_command)
-			sourceText = pstrdup(portal->sourceText);
-		else
-			sourceText = portal->sourceText;
-
-		debug_query_string = sourceText;
-		pgstat_report_activity(sourceText);
-	}
 	else
 	{
 		debug_query_string = "execute message";
@@ -1758,6 +1747,24 @@ exec_execute_message(const char *portal_name, long max_rows)
 		prepStmtName = "<unnamed>";
 
 	/*
+	 * We must copy the sourceText and bindText into MessageContext
+	 * in case the portal is destroyed during finish_xact_command.
+	 * Can avoid the copy if it's not an xact command, though.
+	 */
+	if (is_xact_command)
+		sourceText = pstrdup(portal->sourceText);
+	else
+		sourceText = portal->sourceText;
+
+	if (portal->bindText)
+	{
+		if (is_xact_command)
+			bindText = pstrdup(portal->bindText);
+		else
+			bindText = portal->bindText;
+	}
+	
+	/*
 	 * We use save_log_statement_stats so ShowUsage doesn't report incorrect
 	 * results because ResetUsage wasn't called.
 	 */
@@ -1766,12 +1773,15 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
-				(errmsg("execute %s%s%s%s:  %s",
+				(errmsg("statement: execute %s%s%s%s",
 						execute_is_fetch ? "fetch from " : "",
 						prepStmtName,
 						*portal_name ? "/" : "",
-						*portal_name ? portal_name : "",
-						sourceText ? sourceText : "")));
+						*portal_name ? portal_name : ""),
+						errdetail("prepare: %s%s%s", sourceText,
+						/* optionally print bind parameters */
+						bindText ? "  bind: " : "",
+						bindText ? bindText : "")));
 
 	BeginCommand(portal->commandTag, dest);
 
@@ -1876,13 +1886,16 @@ exec_execute_message(const char *portal_name, long max_rows)
 								secs * 1000 + msecs, usecs % 1000)));
 			else
 				ereport(LOG,
-						(errmsg("duration: %ld.%03d ms  execute %s%s%s%s:  %s",
+						(errmsg("duration: %ld.%03d ms  execute %s%s%s%s",
 								secs * 1000 + msecs, usecs % 1000,
 								execute_is_fetch ? "fetch from " : "",
 								prepStmtName,
 								*portal_name ? "/" : "",
-	    	                    *portal_name ? portal_name : "",
-								sourceText ? sourceText : "")));
+								*portal_name ? portal_name : ""),
+								errdetail("prepare: %s%s%s", sourceText,
+								/* optionally print bind parameters */
+								bindText ? "  bind: " : "",
+								bindText ? bindText : "")));
 		}
 	}
 
