@@ -4,7 +4,7 @@
 # Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/backend/po/ru.po,v 1.31 2006/06/03 16:48:59 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/po/ru.po,v 1.32 2006/08/29 15:47:48 teodor Exp $
 #
 # ChangeLog:
 #   - December 10, 2004 - January 17, 2005:
@@ -7431,7 +7431,7 @@ msgstr "не получилось выделить сегмент общей памяти \"%s\""
 #: storage/lmgr/lock.c:559
 #: storage/lmgr/lock.c:622
 msgid "You may need to increase max_locks_per_transaction."
-msgstr "Вам следует увеличить значение прамера max_locks_per_transaction."
+msgstr "Вам следует увеличить значение параметра max_locks_per_transaction."
 
 #: storage/lmgr/deadlock.c:867
 #, c-format
