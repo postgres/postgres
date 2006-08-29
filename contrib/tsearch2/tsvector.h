@@ -47,6 +47,20 @@ typedef uint16 WordEntryPos;
 #define MAXNUMPOS	256
 #define LIMITPOS(x) ( ( (x) >= MAXENTRYPOS ) ? (MAXENTRYPOS-1) : (x) )
 
+/*
+ * Structure of tsvector datatype:
+ * 1) int4 	len - varlena's length 
+ * 2) int4		size - number of lexemes or WordEntry array, which is the same
+ * 3) Array of WordEntry - sorted array, comparison based on word's length
+ *						and strncmp(). WordEntry->pos points number of
+ *						bytes from end of WordEntry array to start of
+ *						corresponding lexeme.
+ * 4) Lexeme's storage:
+ *	  SHORTALIGNED(lexeme) and position information if it exists 
+ * 	  Position information: first int2 - is a number of positions and it 
+ *    follows array of WordEntryPos
+ */ 
+
 typedef struct
 {
 	int4		len;
