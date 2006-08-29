@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.4 2006/07/16 00:54:22 tgl Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginbulk.c,v 1.5 2006/08/29 14:05:44 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -244,6 +244,9 @@ ginGetEntry(BuildAccumulator *accum, Datum *value, uint32 *n) {
 		/* first call */
 		accum->stack = palloc0(sizeof(EntryAccumulator*)*(accum->maxdepth+1));
 		entry = accum->entries;
+
+		if ( entry == NULL )
+			return NULL;
 
 		/* find most-left value */
 		for(;;) {
