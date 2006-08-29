@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.29 2006/08/29 15:19:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.30 2006/08/29 22:25:07 tgl Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -96,6 +96,7 @@ typedef struct _psqlSettings
 	bool		quiet;
 	bool		singleline;
 	bool		singlestep;
+	int			fetch_count;
 	PSQL_ECHO	echo;
 	PSQL_ECHO_HIDDEN echo_hidden;
 	PSQL_ERROR_ROLLBACK on_error_rollback;

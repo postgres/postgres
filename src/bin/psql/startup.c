@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.136 2006/08/29 15:19:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.137 2006/08/29 22:25:08 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -145,6 +145,8 @@ main(int argc, char *argv[])
 	pset.popt.topt.format = PRINT_ALIGNED;
 	pset.popt.topt.border = 1;
 	pset.popt.topt.pager = 1;
+	pset.popt.topt.start_table = true;
+	pset.popt.topt.stop_table = true;
 	pset.popt.default_footer = true;
 
 	pset.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
@@ -799,6 +801,12 @@ singlestep_hook(const char *newval)
 }
 
 static void
+fetch_count_hook(const char *newval)
+{
+	pset.fetch_count = ParseVariableNum(newval, -1, -1, false);
+}
+
+static void
 echo_hook(const char *newval)
 {
 	if (newval == NULL)
@@ -899,6 +907,7 @@ EstablishVariableSpace(void)
 	SetVariableAssignHook(pset.vars, "QUIET", quiet_hook);
 	SetVariableAssignHook(pset.vars, "SINGLELINE", singleline_hook);
 	SetVariableAssignHook(pset.vars, "SINGLESTEP", singlestep_hook);
+	SetVariableAssignHook(pset.vars, "FETCH_COUNT", fetch_count_hook);
 	SetVariableAssignHook(pset.vars, "ECHO", echo_hook);
 	SetVariableAssignHook(pset.vars, "ECHO_HIDDEN", echo_hidden_hook);
 	SetVariableAssignHook(pset.vars, "ON_ERROR_ROLLBACK", on_error_rollback_hook);

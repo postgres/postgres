@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.166 2006/07/27 19:52:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.167 2006/08/29 22:25:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2004,6 +2004,33 @@ bar
         <para>
         The current client character set encoding.
         </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><varname>FETCH_COUNT</varname></term>
+        <listitem>
+        <para>
+        If this variable is set to an integer value &gt; 0,
+        the results of <command>SELECT</command> queries are fetched
+        and displayed in groups of that many rows, rather than the
+        default behavior of collecting the entire result set before
+        display.  Therefore only a
+        limited amount of memory is used, regardless of the size of
+        the result set.  Settings of 100 to 1000 are commonly used
+        when enabling this feature.
+        Keep in mind that when using this feature, a query may
+        fail after having already displayed some rows.
+        </para>
+        <tip>
+        <para>
+        Although you can use any output format with this feature,
+        the default <literal>aligned</> format tends to look bad
+        because each group of <varname>FETCH_COUNT</varname> rows
+        will be formatted separately, leading to varying column
+        widths across the row groups.  The other output formats work better.
+        </para>
+        </tip>
         </listitem>
       </varlistentry>
 
