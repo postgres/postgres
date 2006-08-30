@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/dest.h,v 1.51 2006/08/12 02:52:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/dest.h,v 1.52 2006/08/30 23:34:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,8 @@ typedef enum
 	DestRemoteExecute,			/* sent to frontend, in Execute command */
 	DestSPI,					/* results sent to SPI manager */
 	DestTuplestore,				/* results sent to Tuplestore */
-	DestIntoRel					/* results sent to relation (SELECT INTO) */
+	DestIntoRel,				/* results sent to relation (SELECT INTO) */
+	DestCopyOut					/* results sent to COPY TO code */
 } CommandDest;
 
 /* ----------------

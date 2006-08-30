@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.67 2006/08/29 15:19:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.68 2006/08/30 23:34:22 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -38,6 +38,9 @@
  * The documented preferred syntax is:
  *	\copy tablename [(columnlist)] from|to filename
  *	  [ with ] [ binary ] [ oids ] [ delimiter [as] char ] [ null [as] string ]
+ *
+ *	\copy ( select stmt ) to filename
+ *	  [ with ] [ binary ] [ delimiter [as] char ] [ null [as] string ]
  *
  * The pre-7.3 syntax was:
  *	\copy [ binary ] tablename [(columnlist)] [with oids] from|to filename
@@ -141,6 +144,26 @@ parse_slash_copy(const char *args)
 	}
 
 	result->table = pg_strdup(token);
+
+	/* Handle COPY (SELECT) case */
+	if (token[0] == '(')
+	{
+		int	parens = 1;
+
+		while (parens > 0)
+		{
+			token = strtokx(NULL, whitespace, ".,()", "\"'",
+							nonstd_backslash, true, false, pset.encoding);
+			if (!token)
+				goto error;
+			if (token[0] == '(')
+				parens++;
+			else if (token[0] == ')')
+				parens--;
+			xstrcat(&result->table, " ");
+			xstrcat(&result->table, token);
+		}
+	}
 
 	token = strtokx(NULL, whitespace, ".,()", "\"",
 					0, false, false, pset.encoding);

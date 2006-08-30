@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.283 2006/08/25 04:06:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.284 2006/08/30 23:34:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -863,6 +863,7 @@ static bool
 _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 {
 	COMPARE_NODE_FIELD(relation);
+	COMPARE_NODE_FIELD(query);
 	COMPARE_NODE_FIELD(attlist);
 	COMPARE_SCALAR_FIELD(is_from);
 	COMPARE_STRING_FIELD(filename);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.558 2006/08/25 04:06:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.559 2006/08/30 23:34:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1614,10 +1614,14 @@ ClosePortalStmt:
 /*****************************************************************************
  *
  *		QUERY :
- *				COPY <relname> ['(' columnList ')'] FROM/TO [WITH options]
+ *				COPY relname ['(' columnList ')'] FROM/TO file [WITH options]
  *
  *				BINARY, OIDS, and DELIMITERS kept in old locations
  *				for backward compatibility.  2002-06-18
+ *
+ *				COPY ( SELECT ... ) TO file [WITH options]
+ *				This form doesn't have the backwards-compatible option
+ *				syntax.
  *
  *****************************************************************************/
 
@@ -1626,6 +1630,7 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = $3;
+					n->query = NULL;
 					n->attlist = $4;
 					n->is_from = $6;
 					n->filename = $7;
@@ -1642,6 +1647,18 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 						n->options = list_concat(n->options, $10);
 					$$ = (Node *)n;
 				}
+			| COPY select_with_parens TO copy_file_name opt_with
+			  copy_opt_list
+				{
+					CopyStmt *n = makeNode(CopyStmt);
+					n->relation = NULL;
+					n->query = (Query *) $2;
+					n->attlist = NIL;
+					n->is_from = false;
+					n->filename = $4;
+					n->options = $6;
+					$$ = (Node *)n;
+				}
 		;
 
 copy_from:
@@ -1652,7 +1669,7 @@ copy_from:
 /*
  * copy_file_name NULL indicates stdio is used. Whether stdin or stdout is
  * used depends on the direction. (It really doesn't make sense to copy from
- * stdout. We silently correct the "typo".		 - AY 9/94
+ * stdout. We silently correct the "typo".)		 - AY 9/94
  */
 copy_file_name:
 			Sconst									{ $$ = $1; }

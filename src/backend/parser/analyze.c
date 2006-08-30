@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.348 2006/08/25 04:06:51 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.349 2006/08/30 23:34:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,6 +337,19 @@ transformStmt(ParseState *pstate, Node *parseTree,
 				result->commandType = CMD_UTILITY;
 				n->query = transformStmt(pstate, (Node *) n->query,
 										 extras_before, extras_after);
+				result->utilityStmt = (Node *) parseTree;
+			}
+			break;
+
+		case T_CopyStmt:
+			{
+				CopyStmt *n = (CopyStmt *) parseTree;
+
+				result = makeNode(Query);
+				result->commandType = CMD_UTILITY;
+				if (n->query)
+					n->query = transformStmt(pstate, (Node *) n->query,
+											 extras_before, extras_after);
 				result->utilityStmt = (Node *) parseTree;
 			}
 			break;

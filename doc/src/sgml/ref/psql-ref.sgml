@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.167 2006/08/29 22:25:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.168 2006/08/30 23:34:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -739,8 +739,7 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\copy <replaceable class="parameter">table</replaceable>
-        [ ( <replaceable class="parameter">column_list</replaceable> ) ]
+        <term><literal>\copy { <replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column_list</replaceable> ) ] | ( <replaceable class="parameter">query</replaceable> ) }
         { <literal>from</literal> | <literal>to</literal> }
         { <replaceable class="parameter">filename</replaceable> | stdin | stdout | pstdin | pstdout }
         [ with ]
@@ -779,9 +778,7 @@ testdb=&gt;
         </para>
 
         <para>
-        <literal>\copy <replaceable
-        class="parameter">table</replaceable> from <replaceable
-        class="parameter">stdin | stdout</replaceable></literal>
+        <literal>\copy ... from stdin | to stdout</literal>
         reads/writes based on the command input and output respectively.
         All rows are read from the same source that issued the command,
         continuing until <literal>\.</literal> is read or the stream

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.69 2006/08/12 02:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.70 2006/08/30 23:34:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 
 #include "access/printtup.h"
 #include "access/xact.h"
+#include "commands/copy.h"
 #include "executor/executor.h"
 #include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
@@ -128,6 +129,9 @@ CreateDestReceiver(CommandDest dest, Portal portal)
 
 		case DestIntoRel:
 			return CreateIntoRelDestReceiver();
+
+		case DestCopyOut:
+			return CreateCopyDestReceiver();
 	}
 
 	/* should never get here */
@@ -153,6 +157,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 		case DestSPI:
 		case DestTuplestore:
 		case DestIntoRel:
+		case DestCopyOut:
 			break;
 	}
 }
@@ -192,6 +197,7 @@ NullCommand(CommandDest dest)
 		case DestSPI:
 		case DestTuplestore:
 		case DestIntoRel:
+		case DestCopyOut:
 			break;
 	}
 }
@@ -233,6 +239,7 @@ ReadyForQuery(CommandDest dest)
 		case DestSPI:
 		case DestTuplestore:
 		case DestIntoRel:
+		case DestCopyOut:
 			break;
 	}
 }
