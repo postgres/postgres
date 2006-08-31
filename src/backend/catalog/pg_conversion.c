@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.15 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.15.4.1 2006/08/31 17:31:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,12 @@ ConversionCreate(const char *conname, Oid connamespace,
 	/* create dependency on conversion procedure */
 	referenced.classId = RelOid_pg_proc;
 	referenced.objectId = conproc;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	/* create dependency on namespace */
+	referenced.classId = get_system_catalog_relid(NamespaceRelationName);
+	referenced.objectId = connamespace;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
