@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.345 2006/08/29 11:37:47 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.346 2006/08/31 15:10:51 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3588,7 +3588,7 @@ parse_int(const char *value, int *result, int flags)
 		}
 		else if (strcmp(endptr, "GB") == 0)
 		{
-			val *= KB_PER_MB;
+			val *= KB_PER_GB;
 			used = true;
 			endptr += 2;
 		}
