@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.349 2006/09/02 23:04:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.350 2006/09/02 23:12:16 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1564,7 +1564,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_vac_thresh,
-		1000, 0, INT_MAX, NULL, NULL
+		500, 0, INT_MAX, NULL, NULL
 	},
 	{
 		{"autovacuum_analyze_threshold", PGC_SIGHUP, AUTOVACUUM,
@@ -1572,7 +1572,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_anl_thresh,
-		500, 0, INT_MAX, NULL, NULL
+		250, 0, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -1738,7 +1738,7 @@ static struct config_real ConfigureNamesReal[] =
 			NULL
 		},
 		&autovacuum_vac_scale,
-		0.4, 0.0, 100.0, NULL, NULL
+		0.2, 0.0, 100.0, NULL, NULL
 	},
 	{
 		{"autovacuum_analyze_scale_factor", PGC_SIGHUP, AUTOVACUUM,
@@ -1746,7 +1746,7 @@ static struct config_real ConfigureNamesReal[] =
 			NULL
 		},
 		&autovacuum_anl_scale,
-		0.2, 0.0, 100.0, NULL, NULL
+		0.1, 0.0, 100.0, NULL, NULL
 	},
 
 	/* End-of-list marker */

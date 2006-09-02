@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.81 2006/09/02 23:04:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.82 2006/09/02 23:12:16 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3113,7 +3113,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the minimum number of updated or deleted tuples needed
         to trigger a <command>VACUUM</> in any one table.
-        The default is 1000.
+        The default is 500.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3131,7 +3131,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the minimum number of inserted, updated or deleted tuples
         needed to trigger an <command>ANALYZE</> in any one table.
-        The default is 500.
+        The default is 250.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3150,7 +3150,7 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies a fraction of the table size to add to
         <varname>autovacuum_vacuum_threshold</varname>
         when deciding whether to trigger a <command>VACUUM</>.
-        The default is 0.4.
+        The default is 0.2.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3169,7 +3169,7 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies a fraction of the table size to add to
         <varname>autovacuum_analyze_threshold</varname>
         when deciding whether to trigger an <command>ANALYZE</>.
-        The default is 0.2.
+        The default is 0.1.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
