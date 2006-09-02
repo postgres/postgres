@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.561 2006/09/02 20:34:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.562 2006/09/02 20:52:01 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -238,7 +238,7 @@ static void doNegateFloat(Value *v);
 				qualified_name_list any_name any_name_list
 				any_operator expr_list attrs
 				target_list update_col_list update_target_list
-				update_value_list insert_column_list
+				update_value_list set_opt insert_column_list
 				values_list def_list indirection opt_indirection
 				group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list
@@ -5526,7 +5526,7 @@ opt_nowait:	NOWAIT							{ $$ = TRUE; }
  *****************************************************************************/
 
 UpdateStmt: UPDATE relation_expr_opt_alias
-			SET update_target_list
+			SET set_opt
 			from_clause
 			where_clause
 			returning_clause
@@ -5539,20 +5539,11 @@ UpdateStmt: UPDATE relation_expr_opt_alias
 					n->returningList = $7;
 					$$ = (Node *)n;
 				}
-            | UPDATE relation_expr_opt_alias
-			SET update_target_lists_list
-			from_clause
-			where_clause
-			returning_clause
-				{
-					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $2;
-					n->targetList = $4;
-					n->fromClause = $5;
-					n->whereClause = $6;
-					n->returningList = $7;
-					$$ = (Node *)n;
-				}
+		;
+
+set_opt:
+			update_target_list						{ $$ = $1; }
+			| update_target_lists_list				{ $$ = $1; }
 		;
 
 
@@ -5981,7 +5972,7 @@ update_target_lists_el:
 					{
 						/* merge update_value_list with update_col_list */
 						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
-						ResTarget *res_val = (ResTarget *) lfirst(val_cell);
+						Node *res_val = (Node *) lfirst(val_cell);
 
 						res_col->val = (Node *)copyObject(res_val);
 					}
