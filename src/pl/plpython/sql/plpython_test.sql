@@ -73,3 +73,73 @@ SELECT newline_crlf();
 SELECT test_void_func1(), test_void_func1() IS NULL AS "is null";
 SELECT test_void_func2(); -- should fail
 SELECT test_return_none(), test_return_none() IS NULL AS "is null";
+
+-- Test for functions with named parameters
+SELECT test_param_names1(1,'text');
+SELECT test_param_names2(users) from users;
+SELECT test_param_names3(1);
+
+-- Test set returning functions
+SELECT test_setof_as_list(0, 'list');
+SELECT test_setof_as_list(1, 'list');
+SELECT test_setof_as_list(2, 'list');
+SELECT test_setof_as_list(2, null);
+
+SELECT test_setof_as_tuple(0, 'tuple');
+SELECT test_setof_as_tuple(1, 'tuple');
+SELECT test_setof_as_tuple(2, 'tuple');
+SELECT test_setof_as_tuple(2, null);
+
+SELECT test_setof_as_iterator(0, 'list');
+SELECT test_setof_as_iterator(1, 'list');
+SELECT test_setof_as_iterator(2, 'list');
+SELECT test_setof_as_iterator(2, null);
+
+-- Test tuple returning functions
+SELECT * FROM test_table_record_as('dict', null, null, false);
+SELECT * FROM test_table_record_as('dict', 'one', null, false);
+SELECT * FROM test_table_record_as('dict', null, 2, false);
+SELECT * FROM test_table_record_as('dict', 'three', 3, false);
+SELECT * FROM test_table_record_as('dict', null, null, true);
+
+SELECT * FROM test_table_record_as('tuple', null, null, false);
+SELECT * FROM test_table_record_as('tuple', 'one', null, false);
+SELECT * FROM test_table_record_as('tuple', null, 2, false);
+SELECT * FROM test_table_record_as('tuple', 'three', 3, false);
+SELECT * FROM test_table_record_as('tuple', null, null, true);
+
+SELECT * FROM test_table_record_as('list', null, null, false);
+SELECT * FROM test_table_record_as('list', 'one', null, false);
+SELECT * FROM test_table_record_as('list', null, 2, false);
+SELECT * FROM test_table_record_as('list', 'three', 3, false);
+SELECT * FROM test_table_record_as('list', null, null, true);
+
+SELECT * FROM test_table_record_as('obj', null, null, false);
+SELECT * FROM test_table_record_as('obj', 'one', null, false);
+SELECT * FROM test_table_record_as('obj', null, 2, false);
+SELECT * FROM test_table_record_as('obj', 'three', 3, false);
+SELECT * FROM test_table_record_as('obj', null, null, true);
+
+SELECT * FROM test_type_record_as('dict', null, null, false);
+SELECT * FROM test_type_record_as('dict', 'one', null, false);
+SELECT * FROM test_type_record_as('dict', null, 2, false);
+SELECT * FROM test_type_record_as('dict', 'three', 3, false);
+SELECT * FROM test_type_record_as('dict', null, null, true);
+
+SELECT * FROM test_type_record_as('tuple', null, null, false);
+SELECT * FROM test_type_record_as('tuple', 'one', null, false);
+SELECT * FROM test_type_record_as('tuple', null, 2, false);
+SELECT * FROM test_type_record_as('tuple', 'three', 3, false);
+SELECT * FROM test_type_record_as('tuple', null, null, true);
+
+SELECT * FROM test_type_record_as('list', null, null, false);
+SELECT * FROM test_type_record_as('list', 'one', null, false);
+SELECT * FROM test_type_record_as('list', null, 2, false);
+SELECT * FROM test_type_record_as('list', 'three', 3, false);
+SELECT * FROM test_type_record_as('list', null, null, true);
+
+SELECT * FROM test_type_record_as('obj', null, null, false);
+SELECT * FROM test_type_record_as('obj', 'one', null, false);
+SELECT * FROM test_type_record_as('obj', null, 2, false);
+SELECT * FROM test_type_record_as('obj', 'three', 3, false);
+SELECT * FROM test_type_record_as('obj', null, null, true);

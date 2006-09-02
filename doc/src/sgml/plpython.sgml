@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.30 2006/05/26 19:23:09 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.31 2006/09/02 12:30:01 momjian Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -46,26 +46,209 @@
   <title>PL/Python Functions</title>
 
   <para>
-   Functions in PL/Python are declared via the usual <xref
+   Functions in PL/Python are declared via the standard <xref
    linkend="sql-createfunction" endterm="sql-createfunction-title">
-   syntax. For example:
+   syntax:
+
 <programlisting>
-CREATE FUNCTION myfunc(text) RETURNS text
-    AS 'return args[0]'
-    LANGUAGE plpythonu;
+CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-list</replaceable>)
+  RETURNS <replaceable>return-type</replaceable>
+AS $$
+  # PL/Python function body
+$$ LANGUAGE plpythonu;
+</programlisting>
+  </para>
+
+  <para>
+   The body of a function is simply a Python script. When the function
+   is called, all unnamed arguments are passed as elements to the array
+   <varname>args[]</varname> and named arguments as ordinary variables to the
+   Python script. The result is returned from the Python code in the usual way,
+   with <literal>return</literal> or <literal>yield</literal> (in case of
+   a resultset statement).
+  </para>
+
+  <para>
+   For example, a function to return the greater of two integers can be
+   defined as:
+
+<programlisting>
+CREATE FUNCTION pymax (a integer, b integer)
+  RETURNS integer
+AS $$
+  if a &gt; b:
+    return a
+  return b
+$$ LANGUAGE plpythonu;
 </programlisting>
 
    The Python code that is given as the body of the function definition
-   gets transformed into a Python function.
-   For example, the above results in
+   is transformed into a Python function. For example, the above results in
 
 <programlisting>
-def __plpython_procedure_myfunc_23456():
-        return args[0]
+def __plpython_procedure_pymax_23456():
+  if a &gt; b:
+    return a
+  return b
 </programlisting>
 
    assuming that 23456 is the OID assigned to the function by
    <productname>PostgreSQL</productname>.
+  </para>
+
+  <para>
+   The <productname>PostgreSQL</> function parameters are available in
+   the global <varname>args</varname> list.  In the
+   <function>pymax</function> example, <varname>args[0]</varname> contains
+   whatever was passed in as the first argument and
+   <varname>args[1]</varname> contains the second argument's value. Alternatively,
+   one can use named parameters as shown in the example above. This greatly simplifies
+   the reading and writing of <application>PL/Python</application> code.
+  </para>
+
+  <para>
+   If an SQL null value<indexterm><primary>null value</primary><secondary
+   sortas="PL/Python">PL/Python</secondary></indexterm> is passed to a
+   function, the argument value will appear as <symbol>None</symbol> in
+   Python. The above function definition will return the wrong answer for null
+   inputs. We could add <literal>STRICT</literal> to the function definition
+   to make <productname>PostgreSQL</productname> do something more reasonable:
+   if a null value is passed, the function will not be called at all,
+   but will just return a null result automatically. Alternatively,
+   we could check for null inputs in the function body:
+
+<programlisting>
+CREATE FUNCTION pymax (a integer, b integer)
+  RETURNS integer
+AS $$
+  if (a is None) or (b is None):
+    return None
+  if a > b:
+    return a
+  return b
+$$ LANGUAGE plpythonu;
+</programlisting>
+
+   As shown above, to return an SQL null value from a PL/Python
+   function, return the value <symbol>None</symbol>. This can be done whether the
+   function is strict or not.
+  </para>
+
+  <para>
+   Composite-type arguments are passed to the function as Python mappings. The
+   element names of the mapping are the attribute names of the composite type.
+   If an attribute in the passed row has the null value, it has the value
+   <symbol>None</symbol> in the mapping. Here is an example:
+
+<programlisting>
+CREATE TABLE employee (
+  name text,
+  salary integer,
+  age integer
+);
+
+CREATE FUNCTION overpaid (e employee)
+  RETURNS boolean
+AS $$
+  if e["salary"] &gt; 200000:
+    return True
+  if (e["age"] &lt; 30) and (e["salary"] &gt; 100000):
+    return True
+  return False
+$$ LANGUAGE plpythonu;
+</programlisting>
+  </para>
+
+  <para>
+   There are multiple ways to return row or composite types from a Python
+   scripts. In following examples we assume to have:
+
+<programlisting>
+CREATE TABLE named_value (
+  name   text,
+  value  integer
+);
+</programlisting>
+   or
+<programlisting>
+CREATE TYPE named_value AS (
+  name   text,
+  value  integer
+);
+</programlisting>
+
+   <variablelist>
+    <varlistentry>
+     <term>Sequence types (tuple or list), but not <literal>set</literal> (because
+     it is not indexable)</term>
+     <listitem>
+      <para>
+       Returned sequence objects must have the same number of items as
+       composite types have fields. Item with index 0 is assigned to the first field
+       of the composite type, 1 to second and so on. For example:
+
+<programlisting>
+CREATE FUNCTION make_pair (name text, value integer)
+  RETURNS named_value
+AS $$
+  return [ name, value ]
+  # or alternatively, as tuple: return ( name, value )
+$$ LANGUAGE plpythonu;
+</programlisting>
+
+       To return SQL null in any column, insert <symbol>None</symbol> at
+       the corresponding position.
+      </para>
+     </listitem>
+
+    <varlistentry>
+     <term>Mapping (dictionary)</term>
+     <listitem>
+      <para>
+       Value for a composite type's column is retrieved from the mapping with
+       the column name as key. Example:
+
+<programlisting>
+CREATE FUNCTION make_pair (name text, value integer)
+  RETURNS named_value
+AS $$
+  return { "name": name, "value": value }
+$$ LANGUAGE plpythonu;
+</programlisting>
+
+       Additional dictionary key/value pairs are ignored. Missing keys are
+       treated as errors, i.e. to return an SQL null value for any column, insert
+       <symbol>None</symbol> with the corresponding column name as the key.
+      </para>
+     </listitem>
+
+    <varlistentry>
+     <term>Object (any object providing method <literal>__getattr__</literal>)</term>
+     <listitem>
+      <para>
+       Example:
+
+<programlisting>
+CREATE FUNCTION make_pair (name text, value integer)
+  RETURNS named_value
+AS $$
+  class named_value:
+    def __init__ (self, n, v):
+      self.name = n
+      self.value = v
+  return named_value(name, value)
+
+  # or simply
+  class nv: pass
+  nv.name = name
+  nv.value = value
+  return nv
+$$ LANGUAGE plpythonu;
+</programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
 
   <para>
@@ -77,13 +260,100 @@ def __plpython_procedure_myfunc_23456():
   </para>
 
   <para>
-   The <productname>PostgreSQL</> function parameters are available in
-   the global <varname>args</varname> list.  In the
-   <function>myfunc</function> example, <varname>args[0]</> contains
-   whatever was passed in as the text argument.  For
-   <literal>myfunc2(text, integer)</literal>, <varname>args[0]</>
-   would contain the <type>text</type> argument and
-   <varname>args[1]</varname> the <type>integer</type> argument.
+   A <application>PL/Python</application> function can also return sets of
+   scalar or composite types. There are serveral ways to achieve this because
+   the returned object is internally turned into an iterator. For following
+   examples, let's assume to have composite type:
+
+<programlisting>
+CREATE TYPE greeting AS (
+  how text,
+  who text
+);
+</programlisting>
+   
+   Currently known iterable types are:
+   <variablelist>
+    <varlistentry>
+     <term>Sequence types (tuple, list, set)</term>
+     <listitem>
+      <para>
+<programlisting>
+CREATE FUNCTION greet (how text)
+  RETURNS SETOF greeting
+AS $$
+  # return tuple containing lists as composite types
+  # all other combinations work also
+  return ( [ how, "World" ], [ how, "PostgreSQL" ], [ how, "PL/Python" ] )
+$$ LANGUAGE plpythonu;
+</programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Iterator (any object providing <symbol>__iter__</symbol> and
+      <symbol>next</symbol> methods)</term>
+     <listitem>
+      <para>
+<programlisting>
+CREATE FUNCTION greet (how text)
+  RETURNS SETOF greeting
+AS $$
+  class producer:
+    def __init__ (self, how, who):
+      self.how = how
+      self.who = who
+      self.ndx = -1
+
+    def __iter__ (self):
+      return self
+
+    def next (self):
+      self.ndx += 1
+      if self.ndx == len(self.who):
+        raise StopIteration
+      return ( self.how, self.who[self.ndx] )
+
+  return producer(how, [ "World", "PostgreSQL", "PL/Python" ])
+$$ LANGUAGE plpythonu;
+</programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>Generator (<literal>yield</literal>)</term>
+     <listitem>
+      <para>
+<programlisting>
+CREATE FUNCTION greet (how text)
+  RETURNS SETOF greeting
+AS $$
+  for who in [ "World", "PostgreSQL", "PL/Python" ]:
+    yield ( how, who )
+$$ LANGUAGE plpythonu;
+</programlisting>
+
+       <warning>
+        <para>
+         Currently, due to Python 
+         <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1483133&amp;group_id=5470&amp;atid=105470">bug #1483133</ulink>,
+         some debug versions of Python 2.4
+         (configured and compiled with option <literal>--with-pydebug</literal>)
+         are known to crash the <productname>PostgreSQL</productname> server.
+         Unpatched versions of Fedora 4 contain this bug.
+         It does not happen in production version of Python or on patched
+         versions of Fedora 4.
+        </para>
+       </warning>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   Whenever new iterable types are added to Python language,
+   <application>PL/Python</application> is ready to use it.
   </para>
 
   <para>
