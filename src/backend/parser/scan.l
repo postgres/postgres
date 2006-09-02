@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.135 2006/05/21 20:10:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.136 2006/09/02 18:17:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -666,6 +666,22 @@ other			.
 #endif
 						)
 					{
+						/* For Fetch/Move stmt, convert the string into int64 value */
+						if((strcmp(yylval.keyword, "fetch")==0) || (strcmp(yylval.keyword, "move")==0))
+						{
+								int64 int64Val;
+								errno = 0;
+	
+								int64Val =	strtoll(yytext, &endptr, 10);
+								if (*endptr != '\0' || errno == ERANGE)
+								{
+											yylval.str = pstrdup(yytext);
+											return FCONST;
+								}
+								yylval.i64val = int64Val; 
+								return I64CONST;
+						}
+
 						/* integer too large, treat it as a float */
 						yylval.str = pstrdup(yytext);
 						return FCONST;

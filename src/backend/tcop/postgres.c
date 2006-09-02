@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.503 2006/08/30 18:22:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.504 2006/09/02 18:17:17 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1687,7 +1687,7 @@ exec_bind_message(StringInfo input_message)
  * Process an "Execute" message for a portal
  */
 static void
-exec_execute_message(const char *portal_name, long max_rows)
+exec_execute_message(const char *portal_name, int64 max_rows)
 {
 	CommandDest dest;
 	DestReceiver *receiver;
@@ -3308,13 +3308,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 			case 'E':			/* execute */
 				{
 					const char *portal_name;
-					int			max_rows;
+					int64			max_rows;
 
 					/* Set statement_timestamp() */
 					SetCurrentStatementStartTimestamp();
 
 					portal_name = pq_getmsgstring(&input_message);
-					max_rows = pq_getmsgint(&input_message, 4);
+					max_rows = pq_getmsgint64(&input_message);
 					pq_getmsgend(&input_message);
 
 					exec_execute_message(portal_name, max_rows);
