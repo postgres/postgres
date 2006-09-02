@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.6 2006/09/02 02:43:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.7 2006/09/02 17:10:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,13 +228,6 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	appendPQExpBuffer(&sql, ";\n");
 
 	conn = connectDatabase(dbname, host, port, username, password, progname);
-
-	/* Suppress some NOTICE messages from REINDEX command */
-	if (quiet)
-	{
-		result = PQexec(conn, "SET client_min_messages = warning");
-		PQclear(result);
-	}
 
 	if (echo)
 		printf("%s", sql.data);
