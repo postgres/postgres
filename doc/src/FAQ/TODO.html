@@ -2,16 +2,14 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
-<title>c</title>
+<title>PostgreSQL TODO List</title>
 <meta name="generator" content="HTML::TextToHTML v2.25"/>
 </head>
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
-<p>c<br/>
-PostgreSQL TODO List
-</p><hr/>
-Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Sep  2 08:31:04 EDT 2006
-
+<h1><a name="section_1">PostgreSQL TODO List</a></h1>
+<p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
+Last updated:           Sat Sep  2 16:31:46 EDT 2006
+</p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
 </p>
@@ -24,7 +22,7 @@ Last updated:           Sat Sep  2 08:31:04 EDT 2006
 you would like to work on an item, please read the Developer's FAQ<br/>
 first.
 </p>
-<h1><a name="section_1">Administration</a></h1>
+<h1><a name="section_2">Administration</a></h1>
 
 <ul>
   <li>-<em>Make postmater and postgres options distinct so the postmaster -o</em>
@@ -152,7 +150,7 @@ first.
     </li><li>Allow the PITR process to be debugged and data examined
   </li></ul>
 </li></ul>
-<h1><a name="section_2">Monitoring</a></h1>
+<h1><a name="section_3">Monitoring</a></h1>
 
 <ul>
   <li>Allow server log information to be output as INSERT statements
@@ -163,7 +161,7 @@ first.
   </li><li>-<em>Allow server logs to be remotely read and removed using SQL commands</em>
   </li><li>-<em>Allow protocol-level BIND parameter values to be logged, if text mode</em>
 </li></ul>
-<h1><a name="section_3">Data Types</a></h1>
+<h1><a name="section_4">Data Types</a></h1>
 
 <ul>
   <li>Improve the MONEY data type
@@ -298,7 +296,7 @@ first.
     </li></ul>
   </li></ul>
 </li></ul>
-<h1><a name="section_4">Functions</a></h1>
+<h1><a name="section_5">Functions</a></h1>
 
 <ul>
   <li>Allow INET subnet tests using non-constants to be indexed
@@ -341,7 +339,7 @@ first.
   </li><li>Add SPI_gettypmod() to return the typemod for a TupleDesc
   </li><li>Allow inlining of set-returning functions
 </li></ul>
-<h1><a name="section_5">Multi-Language Support</a></h1>
+<h1><a name="section_6">Multi-Language Support</a></h1>
 
 <ul>
   <li>Add NCHAR (as distinguished from ordinary varchar),
@@ -372,7 +370,7 @@ first.
   <a href="http://archives.postgresql.org/pgsql-patches/2005-11/msg00173.php">http://archives.postgresql.org/pgsql-patches/2005-11/msg00173.php</a>
 </p>
 </li></ul>
-<h1><a name="section_6">Views / Rules</a></h1>
+<h1><a name="section_7">Views / Rules</a></h1>
 
 <ul>
   <li>Automatically create rules on views so they are updateable, per SQL99
@@ -388,7 +386,7 @@ first.
   are added after the view is created.
 </p>
 </li></ul>
-<h1><a name="section_7">SQL Commands</a></h1>
+<h1><a name="section_8">SQL Commands</a></h1>
 
 <ul>
   <li>-<em>Change LIMIT/OFFSET and FETCH/MOVE to use int8</em>
@@ -498,10 +496,10 @@ first.
   <ul>
     <li>-<em>Allow an alias to be provided for the target table in</em>
           UPDATE/DELETE (Neil)
-    </li><li>Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple
-          columns
-<p>          A subselect can also be used as the value source.
-          <a href="http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php">http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php</a>
+    </li><li>-<em>Allow UPDATE tab SET ROW (col, ...) = (val, ...) for updating</em>
+          multiple columns
+    </li><li>Allow UPDATE tab SET ROW (col, ...) = (SELECT...)
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php">http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php</a>
 </p>
   </li></ul>
   </li><li>ALTER
@@ -679,7 +677,7 @@ first.
     </li></ul>
   </li></ul>
 </li></ul>
-<h1><a name="section_8">Clients</a></h1>
+<h1><a name="section_9">Clients</a></h1>
 
 <ul>
   <li>-<em>Have initdb set the input DateStyle (MDY or DMY) based on locale</em>
@@ -788,7 +786,7 @@ first.
 </p>
   </li></ul>
 </li></ul>
-<h1><a name="section_9">Triggers</a></h1>
+<h1><a name="section_10">Triggers</a></h1>
 <ul>
   <li>Add deferred trigger queue file
 <p>  Right now all deferred trigger information is stored in backend
@@ -816,7 +814,7 @@ first.
   to fire triggers.
 </p>
 </li></ul>
-<h1><a name="section_10">Dependency Checking</a></h1>
+<h1><a name="section_11">Dependency Checking</a></h1>
 
 <ul>
   <li>Flush cached query plans when the dependent objects change,
@@ -833,7 +831,7 @@ first.
   invalidate its own query plan.
 </p>
 </li></ul>
-<h1><a name="section_11">Exotic Features</a></h1>
+<h1><a name="section_12">Exotic Features</a></h1>
 
 <ul>
   <li>Add pre-parsing phase that converts non-ISO syntax to supported
@@ -860,7 +858,7 @@ first.
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php">http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php</a>
 </p>
 </li></ul>
-<h1><a name="section_12">Indexes</a></h1>
+<h1><a name="section_13">Indexes</a></h1>
 
 <ul>
   <li>Allow inherited tables to inherit index, UNIQUE constraint, and primary
@@ -927,7 +925,7 @@ first.
     </li><li>Allow multi-column hash indexes
   </li></ul>
 </li></ul>
-<h1><a name="section_13">Fsync</a></h1>
+<h1><a name="section_14">Fsync</a></h1>
 
 <ul>
   <li>Improve commit_delay handling to reduce fsync()
@@ -939,7 +937,7 @@ first.
   </li><li>%Add an option to sync() before fsync()'ing checkpoint files
   </li><li>Add program to test if fsync has a delay compared to non-fsync
 </li></ul>
-<h1><a name="section_14">Cache Usage</a></h1>
+<h1><a name="section_15">Cache Usage</a></h1>
 
 <ul>
   <li>Allow free-behind capability for large sequential scans, perhaps using
@@ -993,7 +991,7 @@ first.
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-10/msg01419.php">http://archives.postgresql.org/pgsql-hackers/2005-10/msg01419.php</a>
 </p>
 </li></ul>
-<h1><a name="section_15">Vacuum</a></h1>
+<h1><a name="section_16">Vacuum</a></h1>
 
 <ul>
   <li>Improve speed with indexes
@@ -1051,12 +1049,12 @@ first.
     </li><li>Turn on by default
   </li></ul>
 </li></ul>
-<h1><a name="section_16">Locking</a></h1>
+<h1><a name="section_17">Locking</a></h1>
 
 <ul>
   <li>Fix priority ordering of read and write light-weight locks (Neil)
 </li></ul>
-<h1><a name="section_17">Startup Time Improvements</a></h1>
+<h1><a name="section_18">Startup Time Improvements</a></h1>
 
 <ul>
   <li>Experiment with multi-threaded backend for backend creation [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?thread">thread</a>]
@@ -1079,7 +1077,7 @@ first.
   existing backends is one of the difficulties with a backend approach.
 </p>
 </li></ul>
-<h1><a name="section_18">Write-Ahead Log</a></h1>
+<h1><a name="section_19">Write-Ahead Log</a></h1>
 
 <ul>
   <li>Eliminate need to write full pages to WAL before page modification [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?wal">wal</a>]
@@ -1143,7 +1141,7 @@ first.
   of indexes on TOAST tables.
 </p>
 </li></ul>
-<h1><a name="section_19">Optimizer / Executor</a></h1>
+<h1><a name="section_20">Optimizer / Executor</a></h1>
 
 <ul>
   <li>Improve selectivity functions for geometric operators
@@ -1168,7 +1166,7 @@ first.
 <p>  This might replace GEQO, <a href="http://sixdemonbag.org/Djinni">http://sixdemonbag.org/Djinni</a>.
 </p>
 </li></ul>
-<h1><a name="section_20">Miscellaneous Performance</a></h1>
+<h1><a name="section_21">Miscellaneous Performance</a></h1>
 
 <ul>
   <li>Do async I/O for faster random read-ahead of data
@@ -1211,7 +1209,7 @@ first.
 </p>
   </li><li>Research storing disk pages with no alignment/padding
 </li></ul>
-<h1><a name="section_21">Source Code</a></h1>
+<h1><a name="section_22">Source Code</a></h1>
 
 <ul>
   <li>Add use of 'const' for variables in source tree
@@ -1293,7 +1291,7 @@ first.
           of result sets using new statement protocol
   </li></ul>
 </li></ul>
-<h1><a name="section_22">Features We Do _Not_ Want</a></h1>
+<h1><a name="section_23">Features We Do _Not_ Want</a></h1>
 
 <ul>
   <li>All backends running as threads in a single process (not wanted)
@@ -1314,7 +1312,7 @@ first.
 </li></ul>
 <hr/>
 
-<h2><a name="section_22_1">Developers who have claimed items are:</a></h2>
+<h2><a name="section_23_1">Developers who have claimed items are:</a></h2>
 <ul>
   <li>Alvaro is Alvaro Herrera &lt;<a href="mailto:alvherre@dcc.uchile.cl">alvherre@dcc.uchile.cl</a>&gt;
   </li><li>Andrew is Andrew Dunstan &lt;<a href="mailto:andrew@dunslane.net">andrew@dunslane.net</a>&gt;
