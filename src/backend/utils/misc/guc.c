@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.346 2006/08/31 15:10:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.347 2006/09/02 13:12:50 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -220,6 +220,7 @@ static char *locale_ctype;
 static char *regex_flavor_string;
 static char *server_encoding_string;
 static char *server_version_string;
+static int  server_version_num;
 static char *timezone_string;
 static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
@@ -1625,6 +1626,17 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&effective_cache_size,
 		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, INT_MAX, NULL, NULL
+	},
+
+	{
+		/* Can't be set in postgresql.conf */
+		{"server_version_num", PGC_INTERNAL, PRESET_OPTIONS,
+			gettext_noop("Shows the server version as an integer."),
+			NULL,
+			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&server_version_num,
+		PG_VERSION_NUM, PG_VERSION_NUM, PG_VERSION_NUM, NULL, NULL
 	},
 
 	/* End-of-list marker */
