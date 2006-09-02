@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.560 2006/09/02 18:17:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.561 2006/09/02 20:34:47 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -237,7 +237,8 @@ static void doNegateFloat(Value *v);
 				name_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list
 				any_operator expr_list attrs
-				target_list update_target_list insert_column_list
+				target_list update_col_list update_target_list
+				update_value_list insert_column_list
 				values_list def_list indirection opt_indirection
 				group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list
@@ -308,7 +309,8 @@ static void doNegateFloat(Value *v);
 %type <jexpr>	joined_table
 %type <range>	relation_expr
 %type <range>	relation_expr_opt_alias
-%type <target>	target_el update_target_el insert_column_item
+%type <target>	target_el update_target_el update_col_list_el insert_column_item
+%type <list>	update_target_lists_list update_target_lists_el
 
 %type <typnam>	Typename SimpleTypename ConstTypename
 				GenericType Numeric opt_float
@@ -5537,6 +5539,20 @@ UpdateStmt: UPDATE relation_expr_opt_alias
 					n->returningList = $7;
 					$$ = (Node *)n;
 				}
+            | UPDATE relation_expr_opt_alias
+			SET update_target_lists_list
+			from_clause
+			where_clause
+			returning_clause
+				{
+					UpdateStmt *n = makeNode(UpdateStmt);
+					n->relation = $2;
+					n->targetList = $4;
+					n->fromClause = $5;
+					n->whereClause = $6;
+					n->returningList = $7;
+					$$ = (Node *)n;
+				}
 		;
 
 
@@ -5939,6 +5955,60 @@ values_list: values_item							{ $$ = list_make1($1); }
 values_item:
 			a_expr					{ $$ = (Node *) $1; }
 			| DEFAULT				{ $$ = (Node *) makeNode(SetToDefault); }
+		;
+
+update_target_lists_list:
+			update_target_lists_el { $$ = $1; }
+			| update_target_lists_list ',' update_target_lists_el { $$ = list_concat($1, $3); }
+		;
+		
+update_target_lists_el:
+			'(' update_col_list ')' '=' '(' update_value_list ')'
+				{
+					ListCell *col_cell;
+					ListCell *val_cell;
+
+					if (list_length($2) != list_length($6))
+					{
+						ereport(ERROR, 
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("number of columns does not match to number of values")));
+					}
+
+					for (col_cell = list_head($2), val_cell = list_head($6);
+						 col_cell != NULL && val_cell != NULL;
+						 col_cell = lnext(col_cell), val_cell = lnext(val_cell))
+					{
+						/* merge update_value_list with update_col_list */
+						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
+						ResTarget *res_val = (ResTarget *) lfirst(val_cell);
+
+						res_col->val = (Node *)copyObject(res_val);
+					}
+				    
+					$$ = $2;
+				}
+		;
+
+update_col_list:
+			update_col_list_el { $$ = list_make1($1); }
+			| update_col_list ',' update_col_list_el { $$ = lappend($1, $3); }
+		;
+
+update_col_list_el:
+			ColId opt_indirection
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = $1;
+					$$->indirection = $2;
+					$$->val = NULL;
+					$$->location = @1;
+				}
+		;
+
+update_value_list:
+			values_item { $$ = list_make1($1); }
+			| update_value_list ',' values_item { $$ = lappend($1, $3); }
 		;
 
 
@@ -8253,7 +8323,7 @@ target_el:	a_expr AS ColLabel
 		;
 
 update_target_list:
-			update_target_el						{ $$ = list_make1($1); }
+			update_target_el			  { $$ = list_make1($1); }
 			| update_target_list ',' update_target_el { $$ = lappend($1,$3); }
 		;
 

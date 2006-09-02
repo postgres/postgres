@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.38 2006/08/12 02:52:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.39 2006/09/02 20:34:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
-    SET <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...]
+    [ SET <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] |
+      SET ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) [, ...] ]
     [ FROM <replaceable class="PARAMETER">fromlist</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ AS <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
@@ -249,6 +250,10 @@ UPDATE films SET kind = 'Dramatic' WHERE kind = 'Drama';
 
 <programlisting>
 UPDATE weather SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
+  WHERE city = 'San Francisco' AND date = '2003-07-03';
+</programlisting>
+<programlisting>
+UPDATE weather SET (temp_lo, temp_hi, prcp) = (temp_lo+1, temp_lo+15, DEFAULT)
   WHERE city = 'San Francisco' AND date = '2003-07-03';
 </programlisting>
   </para>
