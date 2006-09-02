@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.348 2006/09/02 17:08:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.349 2006/09/02 23:04:20 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1139,7 +1139,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&ReservedBackends,
-		2, 0, INT_MAX / 4, NULL, NULL
+		3, 0, INT_MAX / 4, NULL, NULL
 	},
 
 	{
