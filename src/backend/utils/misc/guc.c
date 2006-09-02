@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.347 2006/09/02 13:12:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.348 2006/09/02 17:08:10 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1633,7 +1633,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"server_version_num", PGC_INTERNAL, PRESET_OPTIONS,
 			gettext_noop("Shows the server version as an integer."),
 			NULL,
-			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&server_version_num,
 		PG_VERSION_NUM, PG_VERSION_NUM, PG_VERSION_NUM, NULL, NULL
