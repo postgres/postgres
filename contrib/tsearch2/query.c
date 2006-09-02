@@ -604,7 +604,7 @@ findoprnd(ITEM * ptr, int4 *pos)
  * input
  */
 static QUERYTYPE *
-			queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id, bool isplain)
+queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id, bool isplain)
 {
 	QPRS_STATE	state;
 	int4		i;
@@ -748,7 +748,7 @@ infix(INFIX * in, bool first)
 		{
 			if ( t_iseq(op, '\'') )
 			{
-				*(in->cur) = '\\';
+				*(in->cur) = '\'';
 				in->cur++;
 			}
 			COPYCHAR(in->cur,op);

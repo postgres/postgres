@@ -164,13 +164,14 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 	return res + 1 - a;
 }
 
-#define WAITWORD	1
-#define WAITENDWORD 2
+#define WAITWORD		1
+#define WAITENDWORD 	2
 #define WAITNEXTCHAR	3
 #define WAITENDCMPLX	4
-#define WAITPOSINFO 5
-#define INPOSINFO	6
+#define WAITPOSINFO 	5
+#define INPOSINFO		6
 #define WAITPOSDELIM	7
+#define	WAITCHARCMPLX	8
 
 #define RESIZEPRSBUF \
 do { \
@@ -270,21 +271,8 @@ gettoken_tsvector(TI_IN_STATE * state)
 		}
 		else if (state->state == WAITENDCMPLX)
 		{
-			if ( t_iseq(state->prsbuf, '\'') )
-			{
-				RESIZEPRSBUF;
-				*(state->curpos) = '\0';
-				if (state->curpos == state->word)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error")));
-				if (state->oprisdelim)
-				{
-					state->prsbuf+=pg_mblen(state->prsbuf);
-					return 1;
-				}
-				else
-					state->state = WAITPOSINFO;
+			if ( t_iseq(state->prsbuf, '\'') ) {
+				state->state = WAITCHARCMPLX; 
 			}
 			else if ( t_iseq(state->prsbuf, '\\') )
 			{
@@ -300,6 +288,31 @@ gettoken_tsvector(TI_IN_STATE * state)
 				RESIZEPRSBUF;
 				COPYCHAR(state->curpos, state->prsbuf);
 				state->curpos+=pg_mblen(state->prsbuf);
+			}
+		}
+		else if (state->state == WAITCHARCMPLX)
+		{
+			if ( t_iseq(state->prsbuf, '\'') ) 
+			{
+				RESIZEPRSBUF;
+				COPYCHAR(state->curpos, state->prsbuf);
+				state->curpos+=pg_mblen(state->prsbuf);
+				state->state = WAITENDCMPLX;
+			} else {
+				RESIZEPRSBUF;
+				*(state->curpos) = '\0';
+				if (state->curpos == state->word)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("syntax error")));
+				if (state->oprisdelim)
+				{
+					/* state->prsbuf+=pg_mblen(state->prsbuf); */
+					return 1;
+				}
+				else
+					state->state = WAITPOSINFO;
+				continue; /* recheck current character */
 			}
 		}
 		else if (state->state == WAITPOSINFO)
@@ -385,6 +398,8 @@ gettoken_tsvector(TI_IN_STATE * state)
 		else
 			/* internal error */
 			elog(ERROR, "internal error");
+
+		/* get next char */
 		state->prsbuf+=pg_mblen(state->prsbuf);
 	}
 
@@ -529,7 +544,7 @@ tsvector_out(PG_FUNCTION_ARGS)
 
 				outbuf = (char *) repalloc((void *) outbuf, ++lenbuf);
 				curout = outbuf + pos;
-				*curout++ = '\\';
+				*curout++ = '\'';
 			}
 			while(len--)
 				*curout++ = *curin++;
