@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.45 2006/04/23 03:39:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.46 2006/09/02 17:06:52 tgl Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -873,7 +873,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 
         <listitem>
         <para>
-            They can be <literal>INSTEAD</> or <literal>ALSO</> (default).
+            They can be <literal>INSTEAD</> or <literal>ALSO</> (the default).
         </para>
         </listitem>
 
@@ -920,7 +920,8 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
     Initially the query-tree list is empty.
     There can be zero (<literal>NOTHING</> key word), one, or multiple actions.
     To simplify, we will look at a rule with one action. This rule
-    can have a qualification or not and it can be <literal>INSTEAD</> or <literal>ALSO</> (default).
+    can have a qualification or not and it can be <literal>INSTEAD</> or
+    <literal>ALSO</> (the default).
 </para>
 
 <para>
@@ -932,22 +933,13 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 </para>
 
    <para>
-    So we have four cases that produce the following query trees for
+    So we have three cases that produce the following query trees for
     a one-action rule.
 
     <variablelist>
      <varlistentry>
-      <term>No qualification and <literal>ALSO</></term>
-      <listitem>
-       <para>
-        the query tree from the rule action with the original query
-        tree's qualification added
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>No qualification but <literal>INSTEAD</></term>
+      <term>No qualification, with either <literal>ALSO</> or
+      <literal>INSTEAD</></term>
       <listitem>
        <para>
         the query tree from the rule action with the original query
@@ -1283,7 +1275,7 @@ SELECT shoelace_data.sl_name, 0,
     A simple way to protect view relations from the mentioned
     possibility that someone can try to run <command>INSERT</command>,
     <command>UPDATE</command>, or <command>DELETE</command> on them is
-    to let those query trees get thrown away.  So we create the rules
+    to let those query trees get thrown away.  So we could create the rules
 
 <programlisting>
 CREATE RULE shoe_ins_protect AS ON INSERT TO shoe
@@ -1336,6 +1328,34 @@ CREATE RULE shoelace_del AS ON DELETE TO shoelace
     DELETE FROM shoelace_data
      WHERE sl_name = OLD.sl_name;
 </programlisting>
+   </para>
+
+   <para>
+    If you want to support <literal>RETURNING</> queries on the view,
+    you need to make the rules include <literal>RETURNING</> clauses that
+    compute the view rows.  This is usually pretty trivial for views on a
+    single table, but it's a bit tedious for join views such as
+    <literal>shoelace</literal>.  An example for the insert case is
+
+<programlisting>
+CREATE RULE shoelace_ins AS ON INSERT TO shoelace
+    DO INSTEAD
+    INSERT INTO shoelace_data VALUES (
+           NEW.sl_name,
+           NEW.sl_avail,
+           NEW.sl_color,
+           NEW.sl_len,
+           NEW.sl_unit
+    )
+    RETURNING
+           shoelace_data.*,
+           (SELECT shoelace_data.sl_len * u.un_fact
+            FROM unit u WHERE shoelace_data.sl_unit = u.un_name);
+</programlisting>
+
+    Note that this one rule supports both <command>INSERT</> and
+    <command>INSERT RETURNING</> queries on the view &mdash; the
+    <literal>RETURNING</> clause is simply ignored for <command>INSERT</>.
    </para>
 
    <para>

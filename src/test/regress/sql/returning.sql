@@ -84,4 +84,73 @@ DELETE FROM foo
 SELECT * FROM foo;
 SELECT * FROM foochild;
 
-DROP TABLE foochild, foo;
+DROP TABLE foochild;
+
+-- Rules and views
+
+CREATE TEMP VIEW voo AS SELECT f1, f2 FROM foo;
+
+CREATE RULE voo_i AS ON INSERT TO voo DO INSTEAD
+  INSERT INTO foo VALUES(new.*, 57);
+
+INSERT INTO voo VALUES(11,'zit');
+-- fails:
+INSERT INTO voo VALUES(12,'zoo') RETURNING *, f1*2;
+
+-- fails, incompatible list:
+CREATE OR REPLACE RULE voo_i AS ON INSERT TO voo DO INSTEAD
+  INSERT INTO foo VALUES(new.*, 57) RETURNING *;
+
+CREATE OR REPLACE RULE voo_i AS ON INSERT TO voo DO INSTEAD
+  INSERT INTO foo VALUES(new.*, 57) RETURNING f1, f2;
+
+-- should still work
+INSERT INTO voo VALUES(13,'zit2');
+-- works now
+INSERT INTO voo VALUES(14,'zoo2') RETURNING *;
+
+SELECT * FROM foo;
+SELECT * FROM voo;
+
+CREATE OR REPLACE RULE voo_u AS ON UPDATE TO voo DO INSTEAD
+  UPDATE foo SET f1 = new.f1, f2 = new.f2 WHERE f1 = old.f1
+  RETURNING f1, f2;
+
+update voo set f1 = f1 + 1 where f2 = 'zoo2';
+update voo set f1 = f1 + 1 where f2 = 'zoo2' RETURNING *, f1*2;
+
+SELECT * FROM foo;
+SELECT * FROM voo;
+
+CREATE OR REPLACE RULE voo_d AS ON DELETE TO voo DO INSTEAD
+  DELETE FROM foo WHERE f1 = old.f1
+  RETURNING f1, f2;
+
+DELETE FROM foo WHERE f1 = 13;
+DELETE FROM foo WHERE f2 = 'zit' RETURNING *;
+
+SELECT * FROM foo;
+SELECT * FROM voo;
+
+-- Try a join case
+
+CREATE TEMP TABLE joinme (f2j text, other int);
+INSERT INTO joinme VALUES('more', 12345);
+INSERT INTO joinme VALUES('zoo2', 54321);
+INSERT INTO joinme VALUES('other', 0);
+
+CREATE TEMP VIEW joinview AS
+  SELECT foo.*, other FROM foo JOIN joinme ON (f2 = f2j);
+
+SELECT * FROM joinview;
+
+CREATE RULE joinview_u AS ON UPDATE TO joinview DO INSTEAD
+  UPDATE foo SET f1 = new.f1, f3 = new.f3
+    FROM joinme WHERE f2 = f2j AND f2 = old.f2
+    RETURNING foo.*, other;
+
+UPDATE joinview SET f1 = f1 + 1 WHERE f3 = 57 RETURNING *, other + 1;
+
+SELECT * FROM joinview;
+SELECT * FROM foo;
+SELECT * FROM voo;

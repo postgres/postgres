@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.165 2006/08/02 01:59:47 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.166 2006/09/02 17:06:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,8 @@ static Query *rewriteRuleAction(Query *parsetree,
 				  Query *rule_action,
 				  Node *rule_qual,
 				  int rt_index,
-				  CmdType event);
+				  CmdType event,
+				  bool *returning_flag);
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void rewriteTargetList(Query *parsetree, Relation target_relation,
 							  List **attrno_list);
@@ -251,13 +252,26 @@ acquireLocksOnSubLinks(Node *node, void *context)
  * rewriteRuleAction -
  *	  Rewrite the rule action with appropriate qualifiers (taken from
  *	  the triggering query).
+ *
+ * Input arguments:
+ *	parsetree - original query
+ *	rule_action - one action (query) of a rule
+ *	rule_qual - WHERE condition of rule, or NULL if unconditional
+ *	rt_index - RT index of result relation in original query
+ *	event - type of rule event
+ * Output arguments:
+ *	*returning_flag - set TRUE if we rewrite RETURNING clause in rule_action
+ *					(must be initialized to FALSE)
+ * Return value:
+ *	rewritten form of rule_action
  */
 static Query *
 rewriteRuleAction(Query *parsetree,
 				  Query *rule_action,
 				  Node *rule_qual,
 				  int rt_index,
-				  CmdType event)
+				  CmdType event,
+				  bool *returning_flag)
 {
 	int			current_varno,
 				new_varno;
@@ -414,6 +428,32 @@ rewriteRuleAction(Query *parsetree,
 			*sub_action_ptr = sub_action;
 		else
 			rule_action = sub_action;
+	}
+
+	/*
+	 * If rule_action has a RETURNING clause, then either throw it away
+	 * if the triggering query has no RETURNING clause, or rewrite it to
+	 * emit what the triggering query's RETURNING clause asks for.  Throw
+	 * an error if more than one rule has a RETURNING clause.
+	 */
+	if (!parsetree->returningList)
+		rule_action->returningList = NIL;
+	else if (rule_action->returningList)
+	{
+		if (*returning_flag)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot have RETURNING lists in multiple rules")));
+		*returning_flag = true;
+		rule_action->returningList = (List *)
+			ResolveNew((Node *) parsetree->returningList,
+					   parsetree->resultRelation,
+					   0,
+					   rt_fetch(parsetree->resultRelation,
+								parsetree->rtable),
+					   rule_action->returningList,
+					   CMD_SELECT,
+					   0);
 	}
 
 	return rule_action;
@@ -1357,6 +1397,8 @@ CopyAndAddInvertedQual(Query *parsetree,
  * Output arguments:
  *	*instead_flag - set TRUE if any unqualified INSTEAD rule is found
  *					(must be initialized to FALSE)
+ *	*returning_flag - set TRUE if we rewrite RETURNING clause in any rule
+ *					(must be initialized to FALSE)
  *	*qual_product - filled with modified original query if any qualified
  *					INSTEAD rule is found (must be initialized to NULL)
  * Return value:
@@ -1377,6 +1419,7 @@ fireRules(Query *parsetree,
 		  CmdType event,
 		  List *locks,
 		  bool *instead_flag,
+		  bool *returning_flag,
 		  Query **qual_product)
 {
 	List	   *results = NIL;
@@ -1438,7 +1481,8 @@ fireRules(Query *parsetree,
 				continue;
 
 			rule_action = rewriteRuleAction(parsetree, rule_action,
-											event_qual, rt_index, event);
+											event_qual, rt_index, event,
+											returning_flag);
 
 			rule_action->querySource = qsrc;
 			rule_action->canSetTag = false;		/* might change later */
@@ -1463,6 +1507,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 {
 	CmdType		event = parsetree->commandType;
 	bool		instead = false;
+	bool		returning = false;
 	Query	   *qual_product = NULL;
 	List	   *rewritten = NIL;
 
@@ -1551,6 +1596,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 										event,
 										locks,
 										&instead,
+										&returning,
 										&qual_product);
 
 			/*
@@ -1588,6 +1634,47 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				}
 
 				rewrite_events = list_delete_first(rewrite_events);
+			}
+		}
+
+		/*
+		 * If there is an INSTEAD, and the original query has a RETURNING,
+		 * we have to have found a RETURNING in the rule(s), else fail.
+		 * (Because DefineQueryRewrite only allows RETURNING in unconditional
+		 * INSTEAD rules, there's no need to worry whether the substituted
+		 * RETURNING will actually be executed --- it must be.)
+		 */
+		if ((instead || qual_product != NULL) &&
+			parsetree->returningList &&
+			!returning)
+		{
+			switch (event)
+			{
+				case CMD_INSERT:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot INSERT RETURNING on relation \"%s\"",
+									RelationGetRelationName(rt_entry_relation)),
+							 errhint("You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause.")));
+					break;
+				case CMD_UPDATE:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot UPDATE RETURNING on relation \"%s\"",
+									RelationGetRelationName(rt_entry_relation)),
+							 errhint("You need an unconditional ON UPDATE DO INSTEAD rule with a RETURNING clause.")));
+					break;
+				case CMD_DELETE:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot DELETE RETURNING on relation \"%s\"",
+									RelationGetRelationName(rt_entry_relation)),
+							 errhint("You need an unconditional ON DELETE DO INSTEAD rule with a RETURNING clause.")));
+					break;
+				default:
+					elog(ERROR, "unrecognized commandType: %d",
+						 (int) event);
+					break;
 			}
 		}
 

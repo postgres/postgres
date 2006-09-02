@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.112 2006/08/12 20:05:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.113 2006/09/02 17:06:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,8 @@
 #include "utils/syscache.h"
 
 
+static void checkRuleResultList(List *targetList, TupleDesc resultDesc,
+								bool isSelect);
 static void setRuleCheckAsUser_Query(Query *qry, Oid userid);
 static void setRuleCheckAsUser_Expr(Node *node, Oid userid);
 static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
@@ -235,15 +237,11 @@ DefineQueryRewrite(RuleStmt *stmt)
 					 errhint("Use triggers instead.")));
 	}
 
-	/*
-	 * Rules ON SELECT are restricted to view definitions
-	 */
 	if (event_type == CMD_SELECT)
 	{
-		ListCell   *tllist;
-		int			i;
-
 		/*
+		 * Rules ON SELECT are restricted to view definitions
+		 *
 		 * So there cannot be INSTEAD NOTHING, ...
 		 */
 		if (list_length(action) == 0)
@@ -282,71 +280,17 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * ... the targetlist of the SELECT action must exactly match the
 		 * event relation, ...
 		 */
-		i = 0;
-		foreach(tllist, query->targetList)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tllist);
-			int32		tletypmod;
-			Form_pg_attribute attr;
-			char	   *attname;
-
-			if (tle->resjunk)
-				continue;
-			i++;
-			if (i > event_relation->rd_att->natts)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				  errmsg("SELECT rule's target list has too many entries")));
-
-			attr = event_relation->rd_att->attrs[i - 1];
-			attname = NameStr(attr->attname);
-
-			/*
-			 * Disallow dropped columns in the relation.  This won't happen in
-			 * the cases we actually care about (namely creating a view via
-			 * CREATE TABLE then CREATE RULE).	Trying to cope with it is much
-			 * more trouble than it's worth, because we'd have to modify the
-			 * rule to insert dummy NULLs at the right positions.
-			 */
-			if (attr->attisdropped)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot convert relation containing dropped columns to view")));
-
-			if (strcmp(tle->resname, attname) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("SELECT rule's target entry %d has different column name from \"%s\"", i, attname)));
-
-			if (attr->atttypid != exprType((Node *) tle->expr))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("SELECT rule's target entry %d has different type from column \"%s\"", i, attname)));
-
-			/*
-			 * Allow typmods to be different only if one of them is -1, ie,
-			 * "unspecified".  This is necessary for cases like "numeric",
-			 * where the table will have a filled-in default length but the
-			 * select rule's expression will probably have typmod = -1.
-			 */
-			tletypmod = exprTypmod((Node *) tle->expr);
-			if (attr->atttypmod != tletypmod &&
-				attr->atttypmod != -1 && tletypmod != -1)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("SELECT rule's target entry %d has different size from column \"%s\"", i, attname)));
-		}
-
-		if (i != event_relation->rd_att->natts)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				   errmsg("SELECT rule's target list has too few entries")));
+		checkRuleResultList(query->targetList,
+							RelationGetDescr(event_relation),
+							true);
 
 		/*
 		 * ... there must not be another ON SELECT rule already ...
 		 */
 		if (!replace && event_relation->rd_rules != NULL)
 		{
+			int		i;
+
 			for (i = 0; i < event_relation->rd_rules->numLocks; i++)
 			{
 				RewriteRule *rule;
@@ -425,6 +369,42 @@ DefineQueryRewrite(RuleStmt *stmt)
 			RelisBecomingView = true;
 		}
 	}
+	else
+	{
+		/*
+		 * For non-SELECT rules, a RETURNING list can appear in at most one
+		 * of the actions ... and there can't be any RETURNING list at all
+		 * in a conditional or non-INSTEAD rule.  (Actually, there can be
+		 * at most one RETURNING list across all rules on the same event,
+		 * but it seems best to enforce that at rule expansion time.)  If
+		 * there is a RETURNING list, it must match the event relation.
+		 */
+		bool	haveReturning = false;
+
+		foreach(l, action)
+		{
+			query = (Query *) lfirst(l);
+
+			if (!query->returningList)
+				continue;
+			if (haveReturning)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot have multiple RETURNING lists in a rule")));
+			haveReturning = true;
+			if (event_qual != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("RETURNING lists are not supported in conditional rules")));
+			if (!is_instead)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("RETURNING lists are not supported in non-INSTEAD rules")));
+			checkRuleResultList(query->returningList,
+								RelationGetDescr(event_relation),
+								false);
+		}
+	}
 
 	/*
 	 * This rule is allowed - prepare to install it.
@@ -482,6 +462,95 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);
+}
+
+/*
+ * checkRuleResultList
+ *		Verify that targetList produces output compatible with a tupledesc
+ *
+ * The targetList might be either a SELECT targetlist, or a RETURNING list;
+ * isSelect tells which.  (This is mostly used for choosing error messages,
+ * but also we don't enforce column name matching for RETURNING.)
+ */
+static void
+checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
+{
+	ListCell   *tllist;
+	int			i;
+
+	i = 0;
+	foreach(tllist, targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(tllist);
+		int32		tletypmod;
+		Form_pg_attribute attr;
+		char	   *attname;
+
+		/* resjunk entries may be ignored */
+		if (tle->resjunk)
+			continue;
+		i++;
+		if (i > resultDesc->natts)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 isSelect ?
+					 errmsg("SELECT rule's target list has too many entries") :
+					 errmsg("RETURNING list has too many entries")));
+
+		attr = resultDesc->attrs[i - 1];
+		attname = NameStr(attr->attname);
+
+		/*
+		 * Disallow dropped columns in the relation.  This won't happen in the
+		 * cases we actually care about (namely creating a view via CREATE
+		 * TABLE then CREATE RULE, or adding a RETURNING rule to a view).
+		 * Trying to cope with it is much more trouble than it's worth,
+		 * because we'd have to modify the rule to insert dummy NULLs at the
+		 * right positions.
+		 */
+		if (attr->attisdropped)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot convert relation containing dropped columns to view")));
+
+		if (isSelect && strcmp(tle->resname, attname) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("SELECT rule's target entry %d has different column name from \"%s\"", i, attname)));
+
+		if (attr->atttypid != exprType((Node *) tle->expr))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 isSelect ?
+					 errmsg("SELECT rule's target entry %d has different type from column \"%s\"",
+							i, attname) :
+					 errmsg("RETURNING list's entry %d has different type from column \"%s\"",
+							i, attname)));
+
+		/*
+		 * Allow typmods to be different only if one of them is -1, ie,
+		 * "unspecified".  This is necessary for cases like "numeric",
+		 * where the table will have a filled-in default length but the
+		 * select rule's expression will probably have typmod = -1.
+		 */
+		tletypmod = exprTypmod((Node *) tle->expr);
+		if (attr->atttypmod != tletypmod &&
+			attr->atttypmod != -1 && tletypmod != -1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 isSelect ?
+					 errmsg("SELECT rule's target entry %d has different size from column \"%s\"",
+							i, attname) :
+					 errmsg("RETURNING list's entry %d has different size from column \"%s\"",
+							i, attname)));
+	}
+
+	if (i != resultDesc->natts)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 isSelect ?
+				 errmsg("SELECT rule's target list has too few entries") :
+				 errmsg("RETURNING list has too few entries")));
 }
 
 /*

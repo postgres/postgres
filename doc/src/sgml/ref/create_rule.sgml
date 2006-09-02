@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.45 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.46 2006/09/02 17:06:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -70,7 +70,9 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    <literal>ON INSERT</literal>, <literal>ON UPDATE</literal>, and
    <literal>ON DELETE</literal> rules (or any subset of those that's
    sufficient for your purposes) to replace update actions on the view
-   with appropriate updates on other tables.
+   with appropriate updates on other tables.  If you want to support
+   <command>INSERT RETURNING</> and so on, then be sure to put a suitable
+   <literal>RETURNING</> clause into each of these rules.
   </para>
 
   <para>
@@ -87,7 +89,8 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    understands it will never be called on to update the dummy table.
    Then make the conditional rules non-<literal>INSTEAD</literal>; in
    the cases where they are applied, they add to the default
-   <literal>INSTEAD NOTHING</literal> action.
+   <literal>INSTEAD NOTHING</literal> action.  (This method does not
+   currently work to support <literal>RETURNING</> queries, however.)
   </para>
  </refsect1>
 
@@ -202,12 +205,29 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
   </para>
 
   <para>
+   In a rule for <literal>INSERT</literal>, <literal>UPDATE</literal>, or
+   <literal>DELETE</literal> on a view, you can add a <literal>RETURNING</>
+   clause that emits the view's columns.  This clause will be used to compute
+   the outputs if the rule is triggered by an <command>INSERT RETURNING</>,
+   <command>UPDATE RETURNING</>, or <command>DELETE RETURNING</> command
+   respectively.  When the rule is triggered by a command without
+   <literal>RETURNING</>, the rule's <literal>RETURNING</> clause will be
+   ignored.  The current implementation allows only unconditional
+   <literal>INSTEAD</> rules to contain <literal>RETURNING</>; furthermore
+   there can be at most one <literal>RETURNING</> clause among all the rules
+   for the same event.  (This ensures that there is only one candidate
+   <literal>RETURNING</> clause to be used to compute the results.)
+   <literal>RETURNING</> queries on the view will be rejected if
+   there is no <literal>RETURNING</> clause in any available rule.
+  </para>
+
+  <para>
    It is very important to take care to avoid circular rules.  For
    example, though each of the following two rule definitions are
    accepted by <productname>PostgreSQL</productname>, the
    <command>SELECT</command> command would cause
    <productname>PostgreSQL</productname> to report an error because
-   the query cycled too many times:
+   of recursive expansion of a rule:
 
 <programlisting>
 CREATE RULE "_RETURN" AS

@@ -192,4 +192,143 @@ SELECT * FROM foochild;
 ----+----+----+----+----
 (0 rows)
 
-DROP TABLE foochild, foo;
+DROP TABLE foochild;
+-- Rules and views
+CREATE TEMP VIEW voo AS SELECT f1, f2 FROM foo;
+CREATE RULE voo_i AS ON INSERT TO voo DO INSTEAD
+  INSERT INTO foo VALUES(new.*, 57);
+INSERT INTO voo VALUES(11,'zit');
+-- fails:
+INSERT INTO voo VALUES(12,'zoo') RETURNING *, f1*2;
+ERROR:  cannot INSERT RETURNING on relation "voo"
+HINT:  You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause.
+-- fails, incompatible list:
+CREATE OR REPLACE RULE voo_i AS ON INSERT TO voo DO INSTEAD
+  INSERT INTO foo VALUES(new.*, 57) RETURNING *;
+ERROR:  RETURNING list has too many entries
+CREATE OR REPLACE RULE voo_i AS ON INSERT TO voo DO INSTEAD
+  INSERT INTO foo VALUES(new.*, 57) RETURNING f1, f2;
+-- should still work
+INSERT INTO voo VALUES(13,'zit2');
+-- works now
+INSERT INTO voo VALUES(14,'zoo2') RETURNING *;
+ f1 |  f2  
+----+------
+ 14 | zoo2
+(1 row)
+
+SELECT * FROM foo;
+ f1 |  f2  | f3 | f4  
+----+------+----+-----
+  2 | more | 42 | 141
+ 11 | zit  | 57 |  99
+ 13 | zit2 | 57 |  99
+ 14 | zoo2 | 57 |  99
+(4 rows)
+
+SELECT * FROM voo;
+ f1 |  f2  
+----+------
+  2 | more
+ 11 | zit
+ 13 | zit2
+ 14 | zoo2
+(4 rows)
+
+CREATE OR REPLACE RULE voo_u AS ON UPDATE TO voo DO INSTEAD
+  UPDATE foo SET f1 = new.f1, f2 = new.f2 WHERE f1 = old.f1
+  RETURNING f1, f2;
+update voo set f1 = f1 + 1 where f2 = 'zoo2';
+update voo set f1 = f1 + 1 where f2 = 'zoo2' RETURNING *, f1*2;
+ f1 |  f2  | ?column? 
+----+------+----------
+ 16 | zoo2 |       32
+(1 row)
+
+SELECT * FROM foo;
+ f1 |  f2  | f3 | f4  
+----+------+----+-----
+  2 | more | 42 | 141
+ 11 | zit  | 57 |  99
+ 13 | zit2 | 57 |  99
+ 16 | zoo2 | 57 |  99
+(4 rows)
+
+SELECT * FROM voo;
+ f1 |  f2  
+----+------
+  2 | more
+ 11 | zit
+ 13 | zit2
+ 16 | zoo2
+(4 rows)
+
+CREATE OR REPLACE RULE voo_d AS ON DELETE TO voo DO INSTEAD
+  DELETE FROM foo WHERE f1 = old.f1
+  RETURNING f1, f2;
+DELETE FROM foo WHERE f1 = 13;
+DELETE FROM foo WHERE f2 = 'zit' RETURNING *;
+ f1 | f2  | f3 | f4 
+----+-----+----+----
+ 11 | zit | 57 | 99
+(1 row)
+
+SELECT * FROM foo;
+ f1 |  f2  | f3 | f4  
+----+------+----+-----
+  2 | more | 42 | 141
+ 16 | zoo2 | 57 |  99
+(2 rows)
+
+SELECT * FROM voo;
+ f1 |  f2  
+----+------
+  2 | more
+ 16 | zoo2
+(2 rows)
+
+-- Try a join case
+CREATE TEMP TABLE joinme (f2j text, other int);
+INSERT INTO joinme VALUES('more', 12345);
+INSERT INTO joinme VALUES('zoo2', 54321);
+INSERT INTO joinme VALUES('other', 0);
+CREATE TEMP VIEW joinview AS
+  SELECT foo.*, other FROM foo JOIN joinme ON (f2 = f2j);
+SELECT * FROM joinview;
+ f1 |  f2  | f3 | f4  | other 
+----+------+----+-----+-------
+  2 | more | 42 | 141 | 12345
+ 16 | zoo2 | 57 |  99 | 54321
+(2 rows)
+
+CREATE RULE joinview_u AS ON UPDATE TO joinview DO INSTEAD
+  UPDATE foo SET f1 = new.f1, f3 = new.f3
+    FROM joinme WHERE f2 = f2j AND f2 = old.f2
+    RETURNING foo.*, other;
+UPDATE joinview SET f1 = f1 + 1 WHERE f3 = 57 RETURNING *, other + 1;
+ f1 |  f2  | f3 | f4 | other | ?column? 
+----+------+----+----+-------+----------
+ 17 | zoo2 | 57 | 99 | 54321 |    54322
+(1 row)
+
+SELECT * FROM joinview;
+ f1 |  f2  | f3 | f4  | other 
+----+------+----+-----+-------
+  2 | more | 42 | 141 | 12345
+ 17 | zoo2 | 57 |  99 | 54321
+(2 rows)
+
+SELECT * FROM foo;
+ f1 |  f2  | f3 | f4  
+----+------+----+-----
+  2 | more | 42 | 141
+ 17 | zoo2 | 57 |  99
+(2 rows)
+
+SELECT * FROM voo;
+ f1 |  f2  
+----+------
+  2 | more
+ 17 | zoo2
+(2 rows)
+
