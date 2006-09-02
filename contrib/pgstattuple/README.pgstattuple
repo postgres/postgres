@@ -1,36 +1,108 @@
 pgstattuple README			2002/08/29 Tatsuo Ishii
 
-1. What is pgstattuple?
+1. Functions supported:
 
-   pgstattuple returns the relation length, percentage of the "dead"
-   tuples of a relation and other info. This may help users to determine
-   whether vacuum is necessary or not. Here is an example session:
+    pgstattuple
+    -----------
+    pgstattuple() returns the relation length, percentage of the "dead"
+    tuples of a relation and other info. This may help users to determine
+    whether vacuum is necessary or not. Here is an example session:
 
-test=# \x
-Expanded display is on.
-test=# select * from pgstattuple('pg_catalog.pg_proc');
--[ RECORD 1 ]------+-------
-table_len          | 458752
-tuple_count        | 1470
-tuple_len          | 438896
-tuple_percent      | 95.67
-dead_tuple_count   | 11
-dead_tuple_len     | 3157
-dead_tuple_percent | 0.69
-free_space         | 8932
-free_percent       | 1.95
+        test=> \x
+        Expanded display is on.
+        test=> SELECT * FROM pgstattuple('pg_catalog.pg_proc');
+        -[ RECORD 1 ]------+-------
+        table_len          | 458752
+        tuple_count        | 1470
+        tuple_len          | 438896
+        tuple_percent      | 95.67
+        dead_tuple_count   | 11
+        dead_tuple_len     | 3157
+        dead_tuple_percent | 0.69
+        free_space         | 8932
+        free_percent       | 1.95
 
+    Here are explanations for each column:
 
-Here are explanations for each column:
+        table_len		-- physical relation length in bytes
+        tuple_count		-- number of live tuples
+        tuple_len		-- total tuples length in bytes
+        tuple_percent	-- live tuples in %
+        dead_tuple_len	-- total dead tuples length in bytes
+        dead_tuple_percent	-- dead tuples in %
+        free_space		-- free space in bytes
+        free_percent	-- free space in %
 
-table_len		-- physical relation length in bytes
-tuple_count		-- number of live tuples
-tuple_len		-- total tuples length in bytes
-tuple_percent		-- live tuples in %
-dead_tuple_len		-- total dead tuples length in bytes
-dead_tuple_percent	-- dead tuples in %
-free_space		-- free space in bytes
-free_percent		-- free space in %
+    pg_relpages
+    -----------
+    pg_relpages() returns the number of pages in the relation.
+
+    pgstatindex
+    -----------
+    pgstatindex() returns an array showing the information about an index:
+
+        test=> \x
+        Expanded display is on.
+        test=> SELECT * FROM pgstatindex('pg_cast_oid_index');
+        -[ RECORD 1 ]------+------
+        version            | 2
+        tree_level         | 0
+        index_size         | 8192
+        root_block_no      | 1
+        internal_pages     | 0
+        leaf_pages         | 1
+        empty_pages        | 0
+        deleted_pages      | 0
+        avg_leaf_density   | 50.27
+        leaf_fragmentation | 0
+
+    bt_metap
+    --------
+    bt_metap() returns information about the btree index metapage:
+
+        test=> SELECT * FROM bt_metap('pg_cast_oid_index');
+        -[ RECORD 1 ]-----
+        magic     | 340322
+        version   | 2
+        root      | 1
+        level     | 0
+        fastroot  | 1
+        fastlevel | 0
+
+    bt_page_stats
+    -------------
+    bt_page_stats() shows information about single btree pages:
+
+        test=> SELECT * FROM bt_page_stats('pg_cast_oid_index', 1);
+        -[ RECORD 1 ]-+-----
+        blkno         | 1
+        type          | l
+        live_items    | 256
+        dead_items    | 0
+        avg_item_size | 12
+        page_size     | 8192
+        free_size     | 4056
+        btpo_prev     | 0
+        btpo_next     | 0
+        btpo          | 0
+        btpo_flags    | 3
+
+    bt_page_items
+    -------------
+    bt_page_items() returns information about specific items on btree pages:
+
+        test=> SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
+         itemoffset |  ctid   | itemlen | nulls | vars |    data
+        ------------+---------+---------+-------+------+-------------
+                  1 | (0,1)   |      12 | f     | f    | 23 27 00 00
+                  2 | (0,2)   |      12 | f     | f    | 24 27 00 00
+                  3 | (0,3)   |      12 | f     | f    | 25 27 00 00
+                  4 | (0,4)   |      12 | f     | f    | 26 27 00 00
+                  5 | (0,5)   |      12 | f     | f    | 27 27 00 00
+                  6 | (0,6)   |      12 | f     | f    | 28 27 00 00
+                  7 | (0,7)   |      12 | f     | f    | 29 27 00 00
+                  8 | (0,8)   |      12 | f     | f    | 2a 27 00 00
+
 
 2. Installing pgstattuple
 
@@ -38,33 +110,36 @@ free_percent		-- free space in %
     $ make install
     $ psql -e -f /usr/local/pgsql/share/contrib/pgstattuple.sql test
 
+
 3. Using pgstattuple
 
-   pgstattuple may be called as a relation function and is
-   defined as follows:
+    pgstattuple may be called as a relation function and is
+    defined as follows:
 
-   CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
+    CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
      AS 'MODULE_PATHNAME', 'pgstattuple'
      LANGUAGE C STRICT;
 
-   CREATE OR REPLACE FUNCTION pgstattuple(oid) RETURNS pgstattuple_type
+    CREATE OR REPLACE FUNCTION pgstattuple(oid) RETURNS pgstattuple_type
      AS 'MODULE_PATHNAME', 'pgstattuplebyid'
      LANGUAGE C STRICT;
 
-   The argument is the relation name (optionally it may be qualified)
-   or the OID of the relation.  Note that pgstattuple only returns
-   one row.
+    The argument is the relation name (optionally it may be qualified)
+    or the OID of the relation.  Note that pgstattuple only returns
+    one row.
+
 
 4. Notes
 
-   pgstattuple acquires only a read lock on the relation. So concurrent
-   update may affect the result.
+    pgstattuple acquires only a read lock on the relation. So concurrent
+    update may affect the result.
 
-   pgstattuple judges a tuple is "dead" if HeapTupleSatisfiesNow()
-   returns false.
+    pgstattuple judges a tuple is "dead" if HeapTupleSatisfiesNow()
+    returns false.
+
 
 5. History
 
-   2006/06/28
+    2006/06/28
 
 	Extended to work against indexes.

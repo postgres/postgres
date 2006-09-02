@@ -22,3 +22,96 @@ CREATE OR REPLACE FUNCTION pgstattuple(oid)
 RETURNS pgstattuple_type
 AS 'MODULE_PATHNAME', 'pgstattuplebyid'
 LANGUAGE C STRICT;
+
+--
+-- pgstatindex
+--
+DROP TYPE pgstatindex_type CASCADE;
+CREATE TYPE pgstatindex_type AS (
+  version int4,
+  tree_level int4,
+  index_size int4,
+  root_block_no int4,
+  internal_pages int4,
+  leaf_pages int4,
+  empty_pages int4,
+  deleted_pages int4,
+  avg_leaf_density float8,
+  leaf_fragmentation float8
+);
+
+CREATE OR REPLACE FUNCTION pgstatindex(text)
+RETURNS pgstatindex_type
+AS 'MODULE_PATHNAME', 'pgstatindex'
+LANGUAGE 'C' STRICT;
+
+--
+-- bt_metap()
+--
+DROP TYPE bt_metap_type CASCADE;
+CREATE TYPE bt_metap_type AS (
+  magic int4,
+  version int4,
+  root int4,
+  level int4,
+  fastroot int4,
+  fastlevel int4
+);
+
+CREATE OR REPLACE FUNCTION bt_metap(text)
+RETURNS bt_metap_type
+AS 'MODULE_PATHNAME', 'bt_metap'
+LANGUAGE 'C' STRICT;
+
+--
+-- bt_page_stats()
+--
+DROP TYPE bt_page_stats_type CASCADE;
+CREATE TYPE bt_page_stats_type AS (
+  blkno int4,
+  type char,
+  live_items int4,
+  dead_items int4,
+  avg_item_size float,
+  page_size int4,
+  free_size int4,
+  btpo_prev int4,
+  btpo_next int4,
+  btpo int4,
+  btpo_flags int4
+);
+
+DROP FUNCTION bt_page_stats(text, int4);
+
+CREATE OR REPLACE FUNCTION bt_page_stats(text, int4)
+RETURNS bt_page_stats_type
+AS 'MODULE_PATHNAME', 'bt_page_stats'
+LANGUAGE 'C' STRICT;
+
+--
+-- bt_page_items()
+--
+DROP TYPE bt_page_items_type CASCADE;
+CREATE TYPE bt_page_items_type AS (
+  itemoffset int4,
+  ctid tid,
+  itemlen int4,
+  nulls bool,
+  vars bool,
+  data text
+);
+
+DROP FUNCTION bt_page_items(text, int4);
+
+CREATE OR REPLACE FUNCTION bt_page_items(text, int4)
+RETURNS SETOF bt_page_items_type
+AS 'MODULE_PATHNAME', 'bt_page_items'
+LANGUAGE 'C' STRICT;
+
+--
+-- pg_relpages()
+--
+CREATE OR REPLACE FUNCTION pg_relpages(text)
+RETURNS int
+AS 'MODULE_PATHNAME', 'pg_relpages'
+LANGUAGE 'C' STRICT;
