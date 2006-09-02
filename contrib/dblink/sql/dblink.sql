@@ -319,3 +319,32 @@ SELECT dblink_disconnect('myconn');
 -- close the named persistent connection again
 -- should get 'connection "myconn" not available' error
 SELECT dblink_disconnect('myconn');
+
+-- test asynchronous queries
+SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
+SELECT * from 
+ dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
+
+SELECT dblink_connect('dtest2', 'dbname=contrib_regression');
+SELECT * from 
+ dblink_send_query('dtest2', 'select * from foo where f1 > 2 and f1 < 7') as t1;
+
+SELECT dblink_connect('dtest3', 'dbname=contrib_regression');
+SELECT * from 
+ dblink_send_query('dtest3', 'select * from foo where f1 > 6') as t1;
+
+CREATE TEMPORARY TABLE result AS
+(SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]))
+UNION
+(SELECT * from dblink_get_result('dtest2') as t2(f1 int, f2 text, f3 text[]))
+UNION
+(SELECT * from dblink_get_result('dtest3') as t3(f1 int, f2 text, f3 text[]))
+ORDER by f1;
+
+SELECT dblink_get_connections();
+
+SELECT dblink_disconnect('dtest1');
+SELECT dblink_disconnect('dtest2');
+SELECT dblink_disconnect('dtest3');
+SELECT * from result;
+

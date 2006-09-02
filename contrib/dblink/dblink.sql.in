@@ -144,3 +144,38 @@ CREATE OR REPLACE FUNCTION dblink_current_query ()
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_current_query'
 LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION dblink_send_query(text, text)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'dblink_send_query'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_is_busy(text)
+RETURNS int4
+AS 'MODULE_PATHNAME', 'dblink_is_busy'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_get_result(text)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME', 'dblink_get_result'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_get_result(text, bool)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME', 'dblink_get_result'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_get_connections()
+RETURNS text[]
+AS 'MODULE_PATHNAME', 'dblink_get_connections'
+LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION dblink_cancel_query(text)
+RETURNS text
+AS 'MODULE_PATHNAME', 'dblink_cancel_query'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_error_message(text)
+RETURNS text
+AS 'MODULE_PATHNAME', 'dblink_error_message'
+LANGUAGE C STRICT;

@@ -669,3 +669,90 @@ SELECT dblink_disconnect('myconn');
 -- should get 'connection "myconn" not available' error
 SELECT dblink_disconnect('myconn');
 ERROR:  connection "myconn" not available
+-- test asynchronous queries
+SELECT dblink_connect('dtest1', 'dbname=contrib_regression');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT * from 
+ dblink_send_query('dtest1', 'select * from foo where f1 < 3') as t1;
+ t1 
+----
+  1
+(1 row)
+
+SELECT dblink_connect('dtest2', 'dbname=contrib_regression');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT * from 
+ dblink_send_query('dtest2', 'select * from foo where f1 > 2 and f1 < 7') as t1;
+ t1 
+----
+  1
+(1 row)
+
+SELECT dblink_connect('dtest3', 'dbname=contrib_regression');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT * from 
+ dblink_send_query('dtest3', 'select * from foo where f1 > 6') as t1;
+ t1 
+----
+  1
+(1 row)
+
+CREATE TEMPORARY TABLE result AS
+(SELECT * from dblink_get_result('dtest1') as t1(f1 int, f2 text, f3 text[]))
+UNION
+(SELECT * from dblink_get_result('dtest2') as t2(f1 int, f2 text, f3 text[]))
+UNION
+(SELECT * from dblink_get_result('dtest3') as t3(f1 int, f2 text, f3 text[]))
+ORDER by f1;
+SELECT dblink_get_connections();
+ dblink_get_connections
+------------------------
+ {dtest1,dtest2,dtest3}
+(1 row)
+
+SELECT dblink_disconnect('dtest1');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+SELECT dblink_disconnect('dtest2');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+SELECT dblink_disconnect('dtest3');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+SELECT * from result;
+ f1 | f2 |      f3       
+----+----+---------------
+  0 | a  | {a0,b0,c0}
+  1 | b  | {a1,b1,c1}
+  2 | c  | {a2,b2,c2}
+  3 | d  | {a3,b3,c3}
+  4 | e  | {a4,b4,c4}
+  5 | f  | {a5,b5,c5}
+  6 | g  | {a6,b6,c6}
+  7 | h  | {a7,b7,c7}
+  8 | i  | {a8,b8,c8}
+  9 | j  | {a9,b9,c9}
+ 10 | k  | {a10,b10,c10}
+(11 rows)
+

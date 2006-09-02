@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/dblink/doc/misc,v 1.3 2006/03/11 04:38:29 momjian Exp $
+$PostgreSQL: pgsql/contrib/dblink/doc/misc,v 1.4 2006/09/02 21:11:15 joe Exp $
 ==================================================================
 Name
 
@@ -139,3 +139,94 @@ test=# select dblink_build_sql_update('foo','1 2',2,'{"1", "a"}','{"1", "b"}');
  UPDATE foo SET f1='1',f2='b',f3='1' WHERE f1='1' AND f2='b'
 (1 row)
 
+
+==================================================================
+Name
+
+dblink_get_connections -- returns a text array of all active named
+                          dblink connections
+
+Synopsis
+
+dblink_get_connections() RETURNS text[]
+
+Inputs
+
+  none
+
+Outputs
+
+  Returns text array of all active named dblink connections
+
+Example usage
+
+  SELECT dblink_get_connections();
+
+==================================================================
+Name
+
+dblink_is_busy -- checks to see if named connection is busy
+                  with an async query
+
+Synopsis
+
+dblink_is_busy(text connname) RETURNS int
+
+Inputs
+
+  connname
+    The specific connection name to use.
+
+Outputs
+
+  Returns 1 if connection is busy, 0 if it is not busy.
+  If this function returns 0, it is guaranteed that dblink_get_result
+  will not block.
+
+Example usage
+
+  SELECT dblink_is_busy('dtest1');
+
+==================================================================
+Name
+
+dblink_cancel_query -- cancels any active query on the named connection
+
+Synopsis
+
+dblink_cancel_query(text connname) RETURNS text
+
+Inputs
+
+  connname
+    The specific connection name to use.
+
+Outputs
+
+  Returns "OK" on success, or an error message on failure.
+
+Example usage
+
+  SELECT dblink_cancel_query('dtest1');
+
+==================================================================
+Name
+
+dblink_error_message -- gets last error message on the named connection
+
+Synopsis
+
+dblink_error_message(text connname) RETURNS text
+
+Inputs
+
+  connname
+    The specific connection name to use.
+
+Outputs
+
+  Returns last error message.
+
+Example usage
+
+  SELECT dblink_error_message('dtest1');

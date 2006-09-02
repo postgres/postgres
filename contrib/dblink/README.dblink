@@ -7,6 +7,7 @@
  * And contributors:
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
+ * Kai Londenberg (K.Londenberg@librics.de)
  *
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
@@ -31,6 +32,9 @@
  */
 
 Release Notes:
+  27 August 2006
+    - Added async query capability. Original patch by
+      Kai Londenberg (K.Londenberg@librics.de), modified by Joe Conway
   Version 0.7 (as of 25 Feb, 2004)
     - Added new version of dblink, dblink_exec, dblink_open, dblink_close,
       and, dblink_fetch -- allows ERROR on remote side of connection to
@@ -85,75 +89,7 @@ Installation:
 
     psql template1 < dblink.sql
 
-  installs following functions into database template1:
-
-     connection
-     ------------
-     dblink_connect(text) RETURNS text
-       - opens an unnamed connection that will persist for duration of
-         current backend or until it is disconnected
-     dblink_connect(text,text) RETURNS text
-       - opens a named connection that will persist for duration of current
-         backend or until it is disconnected
-     dblink_disconnect() RETURNS text
-       - disconnects the unnamed persistent connection
-     dblink_disconnect(text) RETURNS text
-       - disconnects a named persistent connection
-
-     cursor
-     ------------
-     dblink_open(text,text [, bool fail_on_error]) RETURNS text
-       - opens a cursor using unnamed connection already opened with
-         dblink_connect() that will persist for duration of current backend
-         or until it is closed
-     dblink_open(text,text,text [, bool fail_on_error]) RETURNS text
-       - opens a cursor using a named connection already opened with
-         dblink_connect() that will persist for duration of current backend
-         or until it is closed
-     dblink_fetch(text, int [, bool fail_on_error]) RETURNS setof record
-       - fetches data from an already opened cursor on the unnamed connection
-     dblink_fetch(text, text, int [, bool fail_on_error]) RETURNS setof record
-       - fetches data from an already opened cursor on a named connection
-     dblink_close(text [, bool fail_on_error]) RETURNS text
-       - closes a cursor on the unnamed connection
-     dblink_close(text,text [, bool fail_on_error]) RETURNS text
-       - closes a cursor on a named connection
-
-     query
-     ------------
-     dblink(text,text [, bool fail_on_error]) RETURNS setof record
-       - returns a set of results from remote SELECT query; the first argument
-         is either a connection string, or the name of an already opened
-         persistant connection
-     dblink(text [, bool fail_on_error]) RETURNS setof record
-       - returns a set of results from remote SELECT query, using the unnamed
-         connection already opened with dblink_connect()
-
-     execute
-     ------------
-     dblink_exec(text, text [, bool fail_on_error]) RETURNS text
-       - executes an INSERT/UPDATE/DELETE query remotely; the first argument
-         is either a connection string, or the name of an already opened
-         persistant connection
-     dblink_exec(text [, bool fail_on_error]) RETURNS text
-       - executes an INSERT/UPDATE/DELETE query remotely, using connection
-         already opened with dblink_connect()
-
-     misc
-     ------------
-     dblink_current_query() RETURNS text
-       - returns the current query string
-     dblink_get_pkey(text) RETURNS setof text
-       - returns the field names of a relation's primary key fields
-     dblink_build_sql_insert(text,int2vector,int2,_text,_text) RETURNS text
-       - builds an insert statement using a local tuple, replacing the
-         selection key field values with alternate supplied values
-     dblink_build_sql_delete(text,int2vector,int2,_text) RETURNS text
-       - builds a delete statement using supplied values for selection
-         key field values
-     dblink_build_sql_update(text,int2vector,int2,_text,_text) RETURNS text
-       - builds an update statement using a local tuple, replacing the
-         selection key field values with alternate supplied values
+  installs dblink functions into database template1
 
 Documentation:
 
