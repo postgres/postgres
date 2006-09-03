@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.564 2006/09/03 03:19:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.565 2006/09/03 22:37:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -236,9 +236,9 @@ static void doNegateFloat(Value *v);
 				name_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list
 				any_operator expr_list attrs
-				target_list update_col_list update_target_list
-				update_value_list set_opt insert_column_list
-				values_list def_list indirection opt_indirection
+				target_list insert_column_list set_target_list
+				set_clause_list set_clause multiple_set_clause
+				ctext_expr_list ctext_row def_list indirection opt_indirection
 				group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list
 				transaction_mode_list_or_empty
@@ -299,7 +299,7 @@ static void doNegateFloat(Value *v);
 %type <list>	when_clause_list
 %type <ival>	sub_type
 %type <list>	OptCreateAs CreateAsList
-%type <node>	CreateAsElement values_item
+%type <node>	CreateAsElement ctext_expr
 %type <value>	NumericOnly FloatOnly IntegerOnly
 %type <alias>	alias_clause
 %type <sortby>	sortby
@@ -308,8 +308,7 @@ static void doNegateFloat(Value *v);
 %type <jexpr>	joined_table
 %type <range>	relation_expr
 %type <range>	relation_expr_opt_alias
-%type <target>	target_el update_target_el update_col_list_el insert_column_item
-%type <list>	update_target_lists_list update_target_lists_el
+%type <target>	target_el single_set_clause set_target insert_column_item
 
 %type <typnam>	Typename SimpleTypename ConstTypename
 				GenericType Numeric opt_float
@@ -5488,7 +5487,7 @@ opt_nowait:	NOWAIT							{ $$ = TRUE; }
  *****************************************************************************/
 
 UpdateStmt: UPDATE relation_expr_opt_alias
-			SET set_opt
+			SET set_clause_list
 			from_clause
 			where_clause
 			returning_clause
@@ -5503,9 +5502,65 @@ UpdateStmt: UPDATE relation_expr_opt_alias
 				}
 		;
 
-set_opt:
-			update_target_list						{ $$ = $1; }
-			| update_target_lists_list				{ $$ = $1; }
+set_clause_list:
+			set_clause							{ $$ = $1; }
+			| set_clause_list ',' set_clause	{ $$ = list_concat($1,$3); }
+		;
+
+set_clause:
+			single_set_clause						{ $$ = list_make1($1); }
+			| multiple_set_clause					{ $$ = $1; }
+		;
+
+single_set_clause:
+			set_target '=' ctext_expr
+				{
+					$$ = $1;
+					$$->val = (Node *) $3;
+				}
+		;
+
+multiple_set_clause:
+			'(' set_target_list ')' '=' ctext_row
+				{
+					ListCell *col_cell;
+					ListCell *val_cell;
+
+					/*
+					 * Break the ctext_row apart, merge individual expressions
+					 * into the destination ResTargets.  XXX this approach
+					 * cannot work for general row expressions as sources.
+					 */
+					if (list_length($2) != list_length($5))
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("number of columns does not match number of values")));
+					forboth(col_cell, $2, val_cell, $5)
+					{
+						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
+						Node *res_val = (Node *) lfirst(val_cell);
+
+						res_col->val = res_val;
+					}
+				    
+					$$ = $2;
+				}
+		;
+
+set_target:
+			ColId opt_indirection
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = $1;
+					$$->indirection = $2;
+					$$->val = NULL;	/* upper production sets this */
+					$$->location = @1;
+				}
+		;
+
+set_target_list:
+			set_target								{ $$ = list_make1($1); }
+			| set_target_list ',' set_target		{ $$ = lappend($1,$3); }
 		;
 
 
@@ -5887,81 +5942,18 @@ locked_rels_list:
 
 
 values_clause:
-			VALUES '(' values_list ')'
+			VALUES ctext_row
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->valuesLists = list_make1($3);
+					n->valuesLists = list_make1($2);
 					$$ = (Node *) n;
 				}
-			| values_clause ',' '(' values_list ')'
+			| values_clause ',' ctext_row
 				{
 					SelectStmt *n = (SelectStmt *) $1;
-					n->valuesLists = lappend(n->valuesLists, $4);
+					n->valuesLists = lappend(n->valuesLists, $3);
 					$$ = (Node *) n;
 				}
-		;
-
-values_list: values_item							{ $$ = list_make1($1); }
-			| values_list ',' values_item			{ $$ = lappend($1, $3); }
-		;
-
-values_item:
-			a_expr					{ $$ = (Node *) $1; }
-			| DEFAULT				{ $$ = (Node *) makeNode(SetToDefault); }
-		;
-
-update_target_lists_list:
-			update_target_lists_el { $$ = $1; }
-			| update_target_lists_list ',' update_target_lists_el { $$ = list_concat($1, $3); }
-		;
-		
-update_target_lists_el:
-			'(' update_col_list ')' '=' '(' update_value_list ')'
-				{
-					ListCell *col_cell;
-					ListCell *val_cell;
-
-					if (list_length($2) != list_length($6))
-					{
-						ereport(ERROR, 
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("number of columns does not match to number of values")));
-					}
-
-					for (col_cell = list_head($2), val_cell = list_head($6);
-						 col_cell != NULL && val_cell != NULL;
-						 col_cell = lnext(col_cell), val_cell = lnext(val_cell))
-					{
-						/* merge update_value_list with update_col_list */
-						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
-						Node *res_val = (Node *) lfirst(val_cell);
-
-						res_col->val = res_val;
-					}
-				    
-					$$ = $2;
-				}
-		;
-
-update_col_list:
-			update_col_list_el { $$ = list_make1($1); }
-			| update_col_list ',' update_col_list_el { $$ = lappend($1, $3); }
-		;
-
-update_col_list_el:
-			ColId opt_indirection
-				{
-					$$ = makeNode(ResTarget);
-					$$->name = $1;
-					$$->indirection = $2;
-					$$->val = NULL;
-					$$->location = @1;
-				}
-		;
-
-update_value_list:
-			values_item { $$ = list_make1($1); }
-			| update_value_list ',' values_item { $$ = lappend($1, $3); }
 		;
 
 
@@ -8232,10 +8224,35 @@ opt_asymmetric: ASYMMETRIC
 			| /*EMPTY*/
 		;
 
+/*
+ * The SQL spec defines "contextually typed value expressions" and
+ * "contextually typed row value constructors", which for our purposes
+ * are the same as "a_expr" and "row" except that DEFAULT can appear at
+ * the top level.
+ */
+
+ctext_expr:
+			a_expr					{ $$ = (Node *) $1; }
+			| DEFAULT				{ $$ = (Node *) makeNode(SetToDefault); }
+		;
+
+ctext_expr_list:
+			ctext_expr								{ $$ = list_make1($1); }
+			| ctext_expr_list ',' ctext_expr		{ $$ = lappend($1, $3); }
+		;
+
+/*
+ * We should allow ROW '(' ctext_expr_list ')' too, but that seems to require
+ * making VALUES a fully reserved word, which will probably break more apps
+ * than allowing the noise-word is worth.
+ */
+ctext_row: '(' ctext_expr_list ')'					{ $$ = $2; }
+		;
+
 
 /*****************************************************************************
  *
- *	target lists for SELECT, UPDATE, INSERT
+ *	target list for SELECT
  *
  *****************************************************************************/
 
@@ -8273,31 +8290,6 @@ target_el:	a_expr AS ColLabel
 					$$->val = (Node *)n;
 					$$->location = @1;
 				}
-		;
-
-update_target_list:
-			update_target_el			  { $$ = list_make1($1); }
-			| update_target_list ',' update_target_el { $$ = lappend($1,$3); }
-		;
-
-update_target_el:
-			ColId opt_indirection '=' a_expr
-				{
-					$$ = makeNode(ResTarget);
-					$$->name = $1;
-					$$->indirection = $2;
-					$$->val = (Node *) $4;
-					$$->location = @1;
-				}
-			| ColId opt_indirection '=' DEFAULT
-				{
-					$$ = makeNode(ResTarget);
-					$$->name = $1;
-					$$->indirection = $2;
-					$$->val = (Node *) makeNode(SetToDefault);
-					$$->location = @1;
-				}
-
 		;
 
 

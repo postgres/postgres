@@ -1,56 +1,85 @@
 --
--- UPDATE ... SET <col> = DEFAULT;
+-- UPDATE syntax tests
 --
 CREATE TABLE update_test (
     a   INT DEFAULT 10,
-    b   INT
+    b   INT,
+    c   TEXT
 );
-INSERT INTO update_test VALUES (5, 10);
-INSERT INTO update_test VALUES (10, 15);
+INSERT INTO update_test VALUES (5, 10, 'foo');
+INSERT INTO update_test(b, a) VALUES (15, 10);
 SELECT * FROM update_test;
- a  | b  
-----+----
-  5 | 10
- 10 | 15
+ a  | b  |  c  
+----+----+-----
+  5 | 10 | foo
+ 10 | 15 | 
 (2 rows)
 
 UPDATE update_test SET a = DEFAULT, b = DEFAULT;
 SELECT * FROM update_test;
- a  | b 
-----+---
- 10 |  
- 10 |  
+ a  | b |  c  
+----+---+-----
+ 10 |   | foo
+ 10 |   | 
 (2 rows)
 
 -- aliases for the UPDATE target table
 UPDATE update_test AS t SET b = 10 WHERE t.a = 10;
 SELECT * FROM update_test;
- a  | b  
-----+----
- 10 | 10
- 10 | 10
+ a  | b  |  c  
+----+----+-----
+ 10 | 10 | foo
+ 10 | 10 | 
 (2 rows)
 
 UPDATE update_test t SET b = t.b + 10 WHERE t.a = 10;
 SELECT * FROM update_test;
- a  | b  
-----+----
- 10 | 20
- 10 | 20
+ a  | b  |  c  
+----+----+-----
+ 10 | 20 | foo
+ 10 | 20 | 
 (2 rows)
 
 --
 -- Test VALUES in FROM
 --
 UPDATE update_test SET a=v.i FROM (VALUES(100, 20)) AS v(i, j)
-	WHERE update_test.b = v.j;
+  WHERE update_test.b = v.j;
 SELECT * FROM update_test;
-  a  | b  
------+----
- 100 | 20
- 100 | 20
+  a  | b  |  c  
+-----+----+-----
+ 100 | 20 | foo
+ 100 | 20 | 
 (2 rows)
 
+--
+-- Test multiple-set-clause syntax
+--
+UPDATE update_test SET (c,b,a) = ('bugle', b+11, DEFAULT) WHERE c = 'foo';
+SELECT * FROM update_test;
+  a  | b  |   c   
+-----+----+-------
+ 100 | 20 | 
+  10 | 31 | bugle
+(2 rows)
+
+UPDATE update_test SET (c,b) = ('car', a+b), a = a + 1 WHERE a = 10;
+SELECT * FROM update_test;
+  a  | b  |  c  
+-----+----+-----
+ 100 | 20 | 
+  11 | 41 | car
+(2 rows)
+
+-- fail, multi assignment to same column:
+UPDATE update_test SET (c,b) = ('car', a+b), b = a + 1 WHERE a = 10;
+ERROR:  multiple assignments to same column "b"
+-- XXX this should work, but doesn't yet:
+UPDATE update_test SET (a,b) = (select a,b FROM update_test where c = 'foo')
+  WHERE a = 10;
+ERROR:  syntax error at or near "select"
+LINE 1: UPDATE update_test SET (a,b) = (select a,b FROM update_test ...
+                                        ^
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
 BEGIN;
