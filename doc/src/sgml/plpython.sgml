@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.32 2006/09/03 22:15:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.33 2006/09/03 22:23:58 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -256,9 +256,7 @@ $$ LANGUAGE plpythonu;
   <para>
    If you do not provide a return value, Python returns the default
    <symbol>None</symbol>. <application>PL/Python</application> translates
-   Python's <symbol>None</symbol> into the SQL null
-   value.<indexterm><primary>null value</><secondary
-   sortas="PL/Python">in PL/Python</></indexterm>
+   Python's <symbol>None</symbol> into the SQL null value.
   </para>
 
   <para>
