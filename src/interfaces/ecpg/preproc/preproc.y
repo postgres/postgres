@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.335 2006/09/03 12:24:07 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.336 2006/09/03 19:30:43 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -34,6 +34,7 @@ struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 
 struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, NULL, {NULL}};
 
+/* INFORMIX workaround, no longer needed
 static struct inf_compat_col
 {
 	char *name;
@@ -46,6 +47,7 @@ static struct inf_compat_val
 	char *val;
 	struct inf_compat_val *next;
 } *informix_val;
+*/
 
 /*
  * Handle parsing errors and warnings
