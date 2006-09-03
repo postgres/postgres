@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.165 2006/07/13 16:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.166 2006/09/03 03:34:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2492,19 +2492,14 @@ interval_mul(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
-	double		month_remainder,
-				day_remainder,
-				month_remainder_days;
+	double		month_remainder_days, sec_remainder;
+	int32		orig_month = span->month, orig_day = span->day;
 	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	month_remainder = span->month * factor;
-	day_remainder = span->day * factor;
-	result->month = (int32) month_remainder;
-	result->day = (int32) day_remainder;
-	month_remainder -= result->month;
-	day_remainder -= result->day;
+	result->month = (int32) (span->month * factor);
+	result->day = (int32) (span->day * factor);
 
 	/*
 	 * The above correctly handles the whole-number part of the month and day
@@ -2516,16 +2511,31 @@ interval_mul(PG_FUNCTION_ARGS)
 	 * using justify_hours and/or justify_days.
 	 */
 
-	/* fractional months full days into days */
-	month_remainder_days = month_remainder * DAYS_PER_MONTH;
-	result->day += (int32) month_remainder_days;
-	/* fractional months partial days into time */
-	day_remainder += month_remainder_days - (int32) month_remainder_days;
+	/*
+	 *	Fractional months full days into days.
+	 *
+	 *	The remainders suffer from float rounding, so instead of
+	 *	doing the computation using just the remainder, we calculate
+	 *	the total number of days and subtract.  Specifically, we are
+	 *	multipling by DAYS_PER_MONTH before dividing by factor.
+	 *	This greatly reduces rounding errors.
+	 */
+	month_remainder_days = (orig_month * (double)DAYS_PER_MONTH) * factor -
+			result->month * (double)DAYS_PER_MONTH;
+	sec_remainder = (orig_day * (double)SECS_PER_DAY) * factor -
+			result->day * (double)SECS_PER_DAY +
+			(month_remainder_days - (int32) month_remainder_days) * SECS_PER_DAY;
 
+	/* cascade units down */
+	result->day += (int32) month_remainder_days;
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = rint(span->time * factor + day_remainder * USECS_PER_DAY);
+	result->time = rint(span->time * factor + sec_remainder * USECS_PER_SEC);
 #else
-	result->time = span->time * factor + day_remainder * SECS_PER_DAY;
+	/*
+	 *	TSROUND() needed to prevent -146:23:60.00 output on PowerPC for
+	 *	SELECT interval '-41 mon -12 days -360:00' * 0.3;
+	 */
+	result->time = span->time * factor + TSROUND(sec_remainder);
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
@@ -2546,11 +2556,10 @@ interval_div(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
-	double		month_remainder,
-				day_remainder,
-				month_remainder_days;
+	double		month_remainder_days, sec_remainder;
+	int32		orig_month = span->month, orig_day = span->day;
 	Interval   *result;
-
+	
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (factor == 0.0)
@@ -2558,27 +2567,26 @@ interval_div(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
 
-	month_remainder = span->month / factor;
-	day_remainder = span->day / factor;
-	result->month = (int32) month_remainder;
-	result->day = (int32) day_remainder;
-	month_remainder -= result->month;
-	day_remainder -= result->day;
+	result->month = (int32) (span->month / factor);
+	result->day = (int32) (span->day / factor);
 
 	/*
-	 * Handle any fractional parts the same way as in interval_mul.
+	 *	Fractional months full days into days.  See comment in 
+	 *	interval_mul().
 	 */
+	month_remainder_days = (orig_month * (double)DAYS_PER_MONTH) / factor -
+			result->month * (double)DAYS_PER_MONTH;
+	sec_remainder = (orig_day * (double)SECS_PER_DAY) / factor -
+			result->day * (double)SECS_PER_DAY +
+			(month_remainder_days - (int32) month_remainder_days) * SECS_PER_DAY;
 
-	/* fractional months full days into days */
-	month_remainder_days = month_remainder * DAYS_PER_MONTH;
+	/* cascade units down */
 	result->day += (int32) month_remainder_days;
-	/* fractional months partial days into time */
-	day_remainder += month_remainder_days - (int32) month_remainder_days;
-
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = rint(span->time / factor + day_remainder * USECS_PER_DAY);
+	result->time = rint(span->time / factor + sec_remainder * USECS_PER_SEC);
 #else
-	result->time = span->time / factor + day_remainder * SECS_PER_DAY;
+	/* See TSROUND comment in interval_mul(). */
+	result->time = span->time / factor + TSROUND(sec_remainder);
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
