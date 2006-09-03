@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.562 2006/09/02 20:52:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.563 2006/09/03 00:46:41 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5974,7 +5974,7 @@ update_target_lists_el:
 						ResTarget *res_col = (ResTarget *) lfirst(col_cell);
 						Node *res_val = (Node *) lfirst(val_cell);
 
-						res_col->val = (Node *)copyObject(res_val);
+						res_col->val = res_val;
 					}
 				    
 					$$ = $2;
