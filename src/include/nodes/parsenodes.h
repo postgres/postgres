@@ -7,12 +7,14 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.327 2006/09/02 18:17:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.328 2006/09/03 01:15:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSENODES_H
 #define PARSENODES_H
+
+#include "limits.h"
 
 #include "nodes/primnodes.h"
 #include "nodes/value.h"
@@ -1439,7 +1441,12 @@ typedef enum FetchDirection
 	FETCH_RELATIVE
 } FetchDirection;
 
+#ifdef HAVE_INT64
 #define FETCH_ALL	LLONG_MAX
+#else
+#define FETCH_ALL	LONG_MAX
+#endif
+
 
 typedef struct FetchStmt
 {

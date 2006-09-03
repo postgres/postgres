@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.108 2006/09/02 18:17:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.109 2006/09/03 01:15:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1347,7 +1347,7 @@ DoPortalRunFetch(Portal portal,
 				 * we are.	In any case, we arrange to fetch the target row
 				 * going forwards.
 				 */
-				if (portal->posOverflow || portal->portalPos == LLONG_MAX ||
+				if (portal->posOverflow || portal->portalPos == FETCH_ALL ||
 					count - 1 <= portal->portalPos / 2)
 				{
 					DoPortalRewind(portal);
