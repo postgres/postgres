@@ -56,7 +56,7 @@ main(void)
 #line 27 "test1.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "@localhost" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "@localhost" , "connectdb" , NULL , "main", 0); }
 #line 29 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
@@ -70,7 +70,7 @@ main(void)
 #line 33 "test1.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "@localhost:55432" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "@localhost:55432" , "connectdb" , NULL , "main", 0); }
 #line 35 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
@@ -84,7 +84,7 @@ main(void)
 #line 39 "test1.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, ":55432" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, ":55432" , "connectdb" , NULL , "main", 0); }
 #line 41 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}

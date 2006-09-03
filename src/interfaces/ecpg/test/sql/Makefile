@@ -13,6 +13,7 @@ TESTS = define define.c \
         indicators indicators.c \
         quote quote.c \
         show show.c \
+        update update.c \
         copystdout copystdout.c
 
 all: $(TESTS)

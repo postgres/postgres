@@ -1,0 +1,35 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+EXEC SQL INCLUDE ../regression;
+
+int main(int argc, char* argv[]) {
+  EXEC SQL BEGIN DECLARE SECTION;
+  	int i1[3], i2[3];
+  EXEC SQL END DECLARE SECTION;
+
+  ECPGdebug(1, stderr);
+  EXEC SQL CONNECT TO REGRESSDB1;
+
+  EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+  EXEC SQL WHENEVER SQLERROR SQLPRINT;
+
+  EXEC SQL CREATE TABLE test(a int, b int);
+
+  EXEC SQL INSERT INTO test (a,b) values (1, 1);
+  EXEC SQL INSERT INTO test (a,b) values (2, 2);
+  EXEC SQL INSERT INTO test (a,b) values (3, 3);
+
+  EXEC SQL UPDATE test set a=a+1;
+  EXEC SQL UPDATE test set (a,b)=(5,5) where a = 4;
+  EXEC SQL UPDATE test set a=4 where a=3;;
+
+  EXEC SQL SELECT a,b into :i1,:i2 from test order by a;
+
+  printf("test\na b\n%d %d\n%d %d\n%d %d\n", i1[0], i2[0], i1[1], i2[1], i1[2], i2[2]);
+
+  EXEC SQL DISCONNECT ALL;
+
+  return 0;
+}

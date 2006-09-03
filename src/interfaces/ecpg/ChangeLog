@@ -2131,5 +2131,10 @@ Tu 29. Aug 14:21:31 CEST 2006
 
 	- Fixed parser and library to allow empty database names.
 	- Streamlined connection name parsing.
+
+Su 3. Sep 14:21:29 CEST 2006
+
+	- Synced parser.
+	- Added another regression test and fixed tcp test.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.

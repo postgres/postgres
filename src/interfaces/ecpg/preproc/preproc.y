@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.334 2006/08/29 12:24:51 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.335 2006/09/03 12:24:07 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -360,7 +360,7 @@ add_additional_variables(char *name, bool insert)
 	CACHE CALLED CASCADE CASCADED CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
-	COMMITTED CONNECTION CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
+	COMMITTED CONCURRENTLY CONNECTION CONSTRAINT CONSTRAINTS CONVERSION_P CONVERT COPY CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -575,7 +575,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval opt_ecpg_using
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
-%type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor
+%type  <str>	using_descriptor into_descriptor
 %type  <str>	prepared_name struct_union_type_with_symbol OptConsTableSpace
 %type  <str>	ECPGunreserved ECPGunreserved_interval cvariable opt_bit_field
 %type  <str>	AlterOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
@@ -587,6 +587,8 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	locked_rels_list opt_granted_by RevokeRoleStmt alterdb_opt_item using_clause
 %type  <str>	GrantRoleStmt opt_asymmetric aggr_args aggr_args_list old_aggr_definition
 %type  <str>	old_aggr_elem for_locking_items TableLikeOptionList TableLikeOption
+%type  <str>	update_target_lists_list set_opt update_target_lists_el update_col_list 
+%type  <str>	update_value_list update_col_list_el
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -1369,14 +1371,6 @@ ClosePortalStmt:  CLOSE name
 			{ $$ = cat2_str(make_str("close"), $2);	}
 		;
 
-/*****************************************************************************
- *
- *		QUERY :
- *				COPY [BINARY] <relname> FROM/TO
- *				[USING DELIMITERS <delimiter>]
- *
- *****************************************************************************/
-
 CopyStmt:  COPY opt_binary qualified_name opt_oids copy_from
 		copy_file_name copy_delimiter opt_with copy_opt_list
 			{
@@ -1388,6 +1382,13 @@ CopyStmt:  COPY opt_binary qualified_name opt_oids copy_from
 					mmerror(PARSE_ERROR, ET_WARNING, "copy from stdin not implemented.\n");
 				
 				$$ = cat_str(9, make_str("copy"), $2, $3, $4, $5, $6, $7, $8, $9);
+			}
+		| COPY select_with_parens TO copy_file_name opt_with copy_opt_list
+			{
+				if (strcmp($4, "stdin") == 0)
+					mmerror(PARSE_ERROR, ET_ERROR, "copy to stdin not possible.\n");
+				
+				$$ = cat_str(6, make_str("copy"), $2, make_str("to"), $4, $5, $6);
 			}
 		;
 
@@ -2331,15 +2332,22 @@ opt_granted_by: GRANTED BY RoleId	 { $$ = cat2_str(make_str("granted by"), $3); 
 /*****************************************************************************
  *
  *		QUERY:
- *				create index <indexname> on <relname>
- *				  [ using <access> ] "(" ( <col> | using <opclass> ] )+ ")"
- *				  [ tablespace <tablespacename> ] [ where <predicate> ]
+ *             QUERY: CREATE INDEX
+ *
+ * Note: we can't factor CONCURRENTLY into a separate production without
+ * making it a reserved word.
+ *
+ * Note: we cannot put TABLESPACE clause after WHERE clause unless we are
+ * willing to make TABLESPACE a fully reserved word.
  *
  *****************************************************************************/
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON qualified_name
 				access_method_clause '(' index_params ')' opt_definition OptTableSpace where_clause
 			{ $$ = cat_str(13, make_str("create"), $2, make_str("index"), $4, make_str("on"), $6, $7, make_str("("), $9, make_str(")"), $11, $12, $13); }
+		| CREATE index_opt_unique INDEX CONCURRENTLY index_name ON qualified_name
+				access_method_clause '(' index_params ')' opt_definition OptTableSpace where_clause
+			{ $$ = cat_str(13, make_str("create"), $2, make_str("index concurrently"), $5, make_str("on"), $7, $8, make_str("("), $10, make_str(")"), $12, $13, $14); }
 		;
 
 index_opt_unique:  UNIQUE	{ $$ = make_str("unique"); }
@@ -3166,13 +3174,17 @@ opt_nowait:    NOWAIT                   { $$ = make_str("nowait"); }
  *****************************************************************************/
 
 UpdateStmt:  UPDATE relation_expr_opt_alias
-				SET update_target_list
+				SET set_opt
 				from_clause
 				where_clause
 				returning_clause
 			{$$ = cat_str(7, make_str("update"), $2, make_str("set"), $4, $5, $6, $7); }
 		;
 
+set_opt:
+		update_target_list		{ $$ = $1; }
+		| update_target_lists_list	{ $$ = $1; }
+		;
 
 /*****************************************************************************
  *
@@ -3431,6 +3443,35 @@ values_list: values_item  			{ $$ = $1; }
 
 values_item:	a_expr		{ $$ = $1; } 
 		| DEFAULT	{ $$ = make_str("DEFAULT"); }
+		;
+
+update_target_lists_list:
+		update_target_lists_el 					{ $$ = $1; }
+		| update_target_lists_list ',' update_target_lists_el	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		;
+		
+update_target_lists_el:
+			'(' update_col_list ')' '=' '(' update_value_list ')'
+				{
+					$$ = cat_str(5, make_str("("), $2, make_str(")=("), $6, make_str(")"));
+				}
+		;
+
+update_col_list:
+			update_col_list_el 				{ $$ = $1; }
+			| update_col_list ',' update_col_list_el	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		;
+
+update_col_list_el:
+			ColId opt_indirection
+				{
+					$$ = cat2_str($1, $2);
+				}
+		;
+
+update_value_list:
+			values_item 				{ $$ = $1; }
+			| update_value_list ',' values_item	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
 /*****************************************************************************
@@ -4337,6 +4378,7 @@ target_el:	a_expr AS ColLabel
 /* Target list as found in UPDATE table SET ... */
 update_target_list:  update_target_list ',' update_target_el
 			{ $$ = cat_str(3, $1, make_str(","),$3);	}
+		/* INFORMIX workaround, no longer needed
 		| '(' inf_col_list ')' '=' '(' inf_val_list ')'
 		{
 			struct inf_compat_col *ptrc;
@@ -4360,12 +4402,12 @@ update_target_list:  update_target_list ',' update_target_el
 					vals = cat_str( 3, vals, ptrv->val, make_str(")") );
 			}
 			$$ = cat_str( 3, cols, make_str("="), vals );
-		}
+		} */
 		| update_target_el
 			{ $$ = $1;	}
 		;
 
-inf_col_list: ColId opt_indirection
+/* inf_col_list: ColId opt_indirection
 		{
 			struct inf_compat_col *ptr = mm_alloc(sizeof(struct inf_compat_col));
 
@@ -4402,6 +4444,7 @@ inf_val_list: a_expr
 		        informix_val = ptr;
 		}
 		;
+*/
 
 update_target_el:  ColId opt_indirection '=' a_expr
 			{ $$ = cat_str(4, $1, $2, make_str("="), $4); }
@@ -6216,6 +6259,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| COMMENT			{ $$ = make_str("comment"); }
 		| COMMIT			{ $$ = make_str("commit"); }
 		| COMMITTED			{ $$ = make_str("committed"); }
+		| CONCURRENTLY		{ $$ = make_str("concurrently"); }
 /*		| CONNECTION		{ $$ = make_str("connection"); }*/
 		| CONSTRAINTS		{ $$ = make_str("constraints"); }
 		| CONVERSION_P		{ $$ = make_str("conversion"); }
