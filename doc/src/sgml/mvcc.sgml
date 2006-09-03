@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.57 2006/08/25 04:06:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.58 2006/09/03 01:59:09 momjian Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -469,9 +469,9 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     transaction.  And this large expense is mostly wasted, since in
     practice most applications do not do the sorts of things that could
     result in problems.  (Certainly the example above is rather contrived
-    and unlikely to represent real software.)  Accordingly,
+    and unlikely to represent real software.)  For these reasons,
     <productname>PostgreSQL</productname> does not implement predicate
-    locking, and so far as we are aware no other production DBMS does either.
+    locking.
    </para>
 
    <para>
