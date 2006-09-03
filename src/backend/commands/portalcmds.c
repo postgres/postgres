@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.52 2006/09/02 18:17:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.53 2006/09/03 03:19:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ PerformPortalFetch(FetchStmt *stmt,
 				   char *completionTag)
 {
 	Portal		portal;
-	int64		nprocessed;
+	long		nprocessed;
 
 	/*
 	 * Disallow empty-string cursor name (conflicts with protocol-level
@@ -210,7 +210,7 @@ PerformPortalFetch(FetchStmt *stmt,
 
 	/* Return command status if wanted */
 	if (completionTag)
-		snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s " INT64_FORMAT,
+		snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %ld",
 				 stmt->ismove ? "MOVE" : "FETCH",
 				 nprocessed);
 }

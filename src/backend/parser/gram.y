@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.563 2006/09/03 00:46:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.564 2006/09/03 03:19:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -116,7 +116,6 @@ static void doNegateFloat(Value *v);
 %union
 {
 	int					ival;
-	int64				i64val; 
 	char				chr;
 	char				*str;
 	const char			*keyword;
@@ -325,7 +324,6 @@ static void doNegateFloat(Value *v);
 %type <boolean> opt_varying opt_timezone
 
 %type <ival>	Iconst SignedIconst
-%type <i64val>  SignedI64const
 %type <str>		Sconst comment_text
 %type <str>		RoleId opt_granted_by opt_boolean ColId_or_Sconst
 %type <list>	var_list var_list_or_default
@@ -450,7 +448,6 @@ static void doNegateFloat(Value *v);
 /* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT FCONST SCONST BCONST XCONST Op
 %token <ival>	ICONST PARAM
-%token <i64val> I64CONST 
 
 /* precedence: lowest to highest */
 %nonassoc	SET				/* see relation_expr_opt_alias */
@@ -3359,27 +3356,6 @@ fetch_direction:
 					n->howMany = $1;
 					$$ = (Node *)n;
 				}
-			| ABSOLUTE_P SignedI64const
-				{
-						FetchStmt *n = makeNode(FetchStmt);
-						n->direction = FETCH_ABSOLUTE;
-						n->howMany = $2;
-						$$ = (Node *)n;
-				}
-			| RELATIVE_P SignedI64const
-				{
-						FetchStmt *n = makeNode(FetchStmt);
-						n->direction = FETCH_RELATIVE;
-						n->howMany = $2;
-						$$ = (Node *)n;
-				}
-			| SignedI64const
-				{
-						FetchStmt *n = makeNode(FetchStmt);
-						n->direction = FETCH_FORWARD;
-						n->howMany = $1;
-						$$ = (Node *)n;
-				}
 			| ALL
 				{
 					FetchStmt *n = makeNode(FetchStmt);
@@ -3401,13 +3377,6 @@ fetch_direction:
 					n->howMany = $2;
 					$$ = (Node *)n;
 				}
-			| FORWARD SignedI64const
-				{
-						FetchStmt *n = makeNode(FetchStmt);
-						n->direction = FETCH_FORWARD;
-						n->howMany = $2;
-						$$ = (Node *)n;
-				}
 			| FORWARD ALL
 				{
 					FetchStmt *n = makeNode(FetchStmt);
@@ -3428,13 +3397,6 @@ fetch_direction:
 					n->direction = FETCH_BACKWARD;
 					n->howMany = $2;
 					$$ = (Node *)n;
-				}
-			| BACKWARD SignedI64const
-				{
-						FetchStmt *n = makeNode(FetchStmt);
-						n->direction = FETCH_BACKWARD;
-						n->howMany = $2;
-						$$ = (Node *)n;
 				}
 			| BACKWARD ALL
 				{
@@ -8539,9 +8501,6 @@ RoleId:		ColId									{ $$ = $1; };
 
 SignedIconst: ICONST								{ $$ = $1; }
 			| '-' ICONST							{ $$ = - $2; }
-		;
-SignedI64const: I64CONST							{ $$ = $1; }
-			| '-' I64CONST							{ $$ = - $2; }
 		;
 
 /*

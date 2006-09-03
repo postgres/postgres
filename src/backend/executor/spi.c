@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.160 2006/09/02 18:17:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.161 2006/09/03 03:19:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static int	_SPI_pquery(QueryDesc *queryDesc, long tcount);
 
 static void _SPI_error_callback(void *arg);
 
-static void _SPI_cursor_operation(Portal portal, bool forward, int64 count,
+static void _SPI_cursor_operation(Portal portal, bool forward, long count,
 					  DestReceiver *dest);
 
 static _SPI_plan *_SPI_copy_plan(_SPI_plan *plan, int location);
@@ -980,7 +980,7 @@ SPI_cursor_find(const char *name)
  *	Fetch rows in a cursor
  */
 void
-SPI_cursor_fetch(Portal portal, bool forward, int64 count)
+SPI_cursor_fetch(Portal portal, bool forward, long count)
 {
 	_SPI_cursor_operation(portal, forward, count,
 						  CreateDestReceiver(DestSPI, NULL));
@@ -994,7 +994,7 @@ SPI_cursor_fetch(Portal portal, bool forward, int64 count)
  *	Move in a cursor
  */
 void
-SPI_cursor_move(Portal portal, bool forward, int64 count)
+SPI_cursor_move(Portal portal, bool forward, long count)
 {
 	_SPI_cursor_operation(portal, forward, count, None_Receiver);
 }
@@ -1639,10 +1639,10 @@ _SPI_error_callback(void *arg)
  *	Do a FETCH or MOVE in a cursor
  */
 static void
-_SPI_cursor_operation(Portal portal, bool forward, int64 count,
+_SPI_cursor_operation(Portal portal, bool forward, long count,
 					  DestReceiver *dest)
 {
-	int64		nfetched;
+	long		nfetched;
 
 	/* Check that the portal is valid */
 	if (!PortalIsValid(portal))

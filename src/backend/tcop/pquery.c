@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.109 2006/09/03 01:15:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.110 2006/09/03 03:19:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,18 +38,18 @@ static void ProcessQuery(Query *parsetree,
 			 DestReceiver *dest,
 			 char *completionTag);
 static void FillPortalStore(Portal portal);
-static uint64 RunFromStore(Portal portal, ScanDirection direction, int64 count,
+static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
 			 DestReceiver *dest);
-static int64 PortalRunSelect(Portal portal, bool forward, int64 count,
+static long PortalRunSelect(Portal portal, bool forward, long count,
 				DestReceiver *dest);
 static void PortalRunUtility(Portal portal, Query *query,
 				 DestReceiver *dest, char *completionTag);
 static void PortalRunMulti(Portal portal,
 			   DestReceiver *dest, DestReceiver *altdest,
 			   char *completionTag);
-static int64 DoPortalRunFetch(Portal portal,
+static long DoPortalRunFetch(Portal portal,
 				 FetchDirection fdirection,
-				 int64 count,
+				 long count,
 				 DestReceiver *dest);
 static void DoPortalRewind(Portal portal);
 
@@ -581,7 +581,7 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
  * suspended due to exhaustion of the count parameter.
  */
 bool
-PortalRun(Portal portal, int64 count,
+PortalRun(Portal portal, long count,
 		  DestReceiver *dest, DestReceiver *altdest,
 		  char *completionTag)
 {
@@ -773,15 +773,15 @@ PortalRun(Portal portal, int64 count,
  *
  * Returns number of rows processed (suitable for use in result tag)
  */
-static int64
+static long
 PortalRunSelect(Portal portal,
 				bool forward,
-				int64 count,
+				long count,
 				DestReceiver *dest)
 {
 	QueryDesc  *queryDesc;
 	ScanDirection direction;
-	uint64		nprocessed;
+	uint32		nprocessed;
 
 	/*
 	 * NB: queryDesc will be NULL if we are fetching from a held cursor or a
@@ -834,12 +834,12 @@ PortalRunSelect(Portal portal,
 
 		if (!ScanDirectionIsNoMovement(direction))
 		{
-			int64		oldPos;
+			long		oldPos;
 
 			if (nprocessed > 0)
 				portal->atStart = false;		/* OK to go backward now */
 			if (count == 0 ||
-				(uint64) nprocessed < (uint64) count)
+				(unsigned long) nprocessed < (unsigned long) count)
 				portal->atEnd = true;	/* we retrieved 'em all */
 			oldPos = portal->portalPos;
 			portal->portalPos += nprocessed;
@@ -882,7 +882,7 @@ PortalRunSelect(Portal portal,
 				portal->portalPos++;	/* adjust for endpoint case */
 			}
 			if (count == 0 ||
-				(uint64) nprocessed < (uint64) count)
+				(unsigned long) nprocessed < (unsigned long) count)
 			{
 				portal->atStart = true; /* we retrieved 'em all */
 				portal->portalPos = 0;
@@ -890,7 +890,7 @@ PortalRunSelect(Portal portal,
 			}
 			else
 			{
-				int64		oldPos;
+				long		oldPos;
 
 				oldPos = portal->portalPos;
 				portal->portalPos -= nprocessed;
@@ -958,11 +958,11 @@ FillPortalStore(Portal portal)
  * are run in the caller's memory context (since we have no estate).  Watch
  * out for memory leaks.
  */
-static uint64
-RunFromStore(Portal portal, ScanDirection direction, int64 count,
+static uint32
+RunFromStore(Portal portal, ScanDirection direction, long count,
 			 DestReceiver *dest)
 {
-	int64		current_tuple_count = 0;
+	long		current_tuple_count = 0;
 	TupleTableSlot *slot;
 
 	slot = MakeSingleTupleTableSlot(portal->tupDesc);
@@ -1010,7 +1010,7 @@ RunFromStore(Portal portal, ScanDirection direction, int64 count,
 
 	ExecDropSingleTupleTableSlot(slot);
 
-	return (uint64) current_tuple_count;
+	return (uint32) current_tuple_count;
 }
 
 /*
@@ -1200,13 +1200,13 @@ PortalRunMulti(Portal portal,
  *
  * Returns number of rows processed (suitable for use in result tag)
  */
-int64
+long
 PortalRunFetch(Portal portal,
 			   FetchDirection fdirection,
-			   int64 count,
+			   long count,
 			   DestReceiver *dest)
 {
-	int64		result;
+	long		result;
 	Portal		saveActivePortal;
 	Snapshot	saveActiveSnapshot;
 	ResourceOwner saveResourceOwner;
@@ -1307,10 +1307,10 @@ PortalRunFetch(Portal portal,
  *
  * Returns number of rows processed (suitable for use in result tag)
  */
-static int64
+static long
 DoPortalRunFetch(Portal portal,
 				 FetchDirection fdirection,
-				 int64 count,
+				 long count,
 				 DestReceiver *dest)
 {
 	bool		forward;
@@ -1347,7 +1347,7 @@ DoPortalRunFetch(Portal portal,
 				 * we are.	In any case, we arrange to fetch the target row
 				 * going forwards.
 				 */
-				if (portal->posOverflow || portal->portalPos == FETCH_ALL ||
+				if (portal->posOverflow || portal->portalPos == LONG_MAX ||
 					count - 1 <= portal->portalPos / 2)
 				{
 					DoPortalRewind(portal);
@@ -1357,7 +1357,7 @@ DoPortalRunFetch(Portal portal,
 				}
 				else
 				{
-					int64		pos = portal->portalPos;
+					long		pos = portal->portalPos;
 
 					if (portal->atEnd)
 						pos++;	/* need one extra fetch if off end */
@@ -1469,7 +1469,7 @@ DoPortalRunFetch(Portal portal,
 	 */
 	if (!forward && count == FETCH_ALL && dest->mydest == DestNone)
 	{
-		int64		result = portal->portalPos;
+		long		result = portal->portalPos;
 
 		if (result > 0 && !portal->atEnd)
 			result--;
