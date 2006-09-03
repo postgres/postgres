@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.95 2006/07/13 17:47:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.96 2006/09/03 15:59:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,9 @@ Snapshot	ActiveSnapshot = NULL;
 TransactionId TransactionXmin = InvalidTransactionId;
 TransactionId RecentXmin = InvalidTransactionId;
 TransactionId RecentGlobalXmin = InvalidTransactionId;
+
+/* local functions */
+static bool XidInSnapshot(TransactionId xid, Snapshot snapshot);
 
 
 /*
@@ -943,38 +946,9 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot,
 	/*
 	 * By here, the inserting transaction has committed - have to check
 	 * when...
-	 *
-	 * Note that the provided snapshot contains only top-level XIDs, so we
-	 * have to convert a subxact XID to its parent for comparison. However, we
-	 * can make first-pass range checks with the given XID, because a subxact
-	 * with XID < xmin has surely also got a parent with XID < xmin, while one
-	 * with XID >= xmax must belong to a parent that was not yet committed at
-	 * the time of this snapshot.
 	 */
-	if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmin(tuple),
-									 snapshot->xmin))
-	{
-		TransactionId parentXid;
-
-		if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmin(tuple),
-										 snapshot->xmax))
-			return false;
-
-		parentXid = SubTransGetTopmostTransaction(HeapTupleHeaderGetXmin(tuple));
-
-		if (TransactionIdFollowsOrEquals(parentXid, snapshot->xmin))
-		{
-			uint32		i;
-
-			/* no point in checking parentXid against xmax here */
-
-			for (i = 0; i < snapshot->xcnt; i++)
-			{
-				if (TransactionIdEquals(parentXid, snapshot->xip[i]))
-					return false;
-			}
-		}
-	}
+	if (XidInSnapshot(HeapTupleHeaderGetXmin(tuple), snapshot))
+		return false;			/* treat as still in progress */
 
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
 		return true;
@@ -1017,40 +991,11 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot,
 
 	/*
 	 * OK, the deleting transaction committed too ... but when?
-	 *
-	 * See notes for the similar tests on tuple xmin, above.
 	 */
-	if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmax(tuple),
-									 snapshot->xmin))
-	{
-		TransactionId parentXid;
+	if (XidInSnapshot(HeapTupleHeaderGetXmax(tuple), snapshot))
+		return true;			/* treat as still in progress */
 
-		if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmax(tuple),
-										 snapshot->xmax))
-			return true;
-
-		parentXid = SubTransGetTopmostTransaction(HeapTupleHeaderGetXmax(tuple));
-
-		if (TransactionIdFollowsOrEquals(parentXid, snapshot->xmin))
-		{
-			uint32		i;
-
-			/* no point in checking parentXid against xmax here */
-
-			for (i = 0; i < snapshot->xcnt; i++)
-			{
-				if (TransactionIdEquals(parentXid, snapshot->xip[i]))
-					return true;
-			}
-		}
-	}
-
-/* This is to be used only for disaster recovery and requires serious analysis. */
-#ifndef MAKE_EXPIRED_TUPLES_VISIBLE
 	return false;
-#else
-	return true;
-#endif
 }
 
 
@@ -1299,11 +1244,19 @@ Snapshot
 CopySnapshot(Snapshot snapshot)
 {
 	Snapshot	newsnap;
+	Size		subxipoff;
+	Size		size;
 
-	/* We allocate any XID array needed in the same palloc block. */
-	newsnap = (Snapshot) palloc(sizeof(SnapshotData) +
-								snapshot->xcnt * sizeof(TransactionId));
+	/* We allocate any XID arrays needed in the same palloc block. */
+	size = subxipoff = sizeof(SnapshotData) +
+		snapshot->xcnt * sizeof(TransactionId);
+	if (snapshot->subxcnt > 0)
+		size += snapshot->subxcnt * sizeof(TransactionId);
+
+	newsnap = (Snapshot) palloc(size);
 	memcpy(newsnap, snapshot, sizeof(SnapshotData));
+
+	/* setup XID array */
 	if (snapshot->xcnt > 0)
 	{
 		newsnap->xip = (TransactionId *) (newsnap + 1);
@@ -1312,6 +1265,16 @@ CopySnapshot(Snapshot snapshot)
 	}
 	else
 		newsnap->xip = NULL;
+
+	/* setup subXID array */
+	if (snapshot->subxcnt > 0)
+	{
+		newsnap->subxip = (TransactionId *) ((char *) newsnap + subxipoff);
+		memcpy(newsnap->subxip, snapshot->subxip,
+			   snapshot->subxcnt * sizeof(TransactionId));
+	}
+	else
+		newsnap->subxip = NULL;
 
 	return newsnap;
 }
@@ -1346,4 +1309,75 @@ FreeXactSnapshot(void)
 	SerializableSnapshot = NULL;
 	LatestSnapshot = NULL;
 	ActiveSnapshot = NULL;		/* just for cleanliness */
+}
+
+/*
+ * XidInSnapshot
+ *		Is the given XID still-in-progress according to the snapshot?
+ *
+ * Note: GetSnapshotData never stores either top xid or subxids of our own
+ * backend into a snapshot, so these xids will not be reported as "running"
+ * by this function.  This is OK for current uses, because we actually only
+ * apply this for known-committed XIDs.
+ */
+static bool
+XidInSnapshot(TransactionId xid, Snapshot snapshot)
+{
+	uint32		i;
+
+	/*
+	 * Make a quick range check to eliminate most XIDs without looking at the
+	 * xip arrays.  Note that this is OK even if we convert a subxact XID to
+	 * its parent below, because a subxact with XID < xmin has surely also got
+	 * a parent with XID < xmin, while one with XID >= xmax must belong to a
+	 * parent that was not yet committed at the time of this snapshot.
+	 */
+
+	/* Any xid < xmin is not in-progress */
+	if (TransactionIdPrecedes(xid, snapshot->xmin))
+		return false;
+	/* Any xid >= xmax is in-progress */
+	if (TransactionIdFollowsOrEquals(xid, snapshot->xmax))
+		return true;
+
+	/*
+	 * If the snapshot contains full subxact data, the fastest way to check
+	 * things is just to compare the given XID against both subxact XIDs and
+	 * top-level XIDs.  If the snapshot overflowed, we have to use pg_subtrans
+	 * to convert a subxact XID to its parent XID, but then we need only look
+	 * at top-level XIDs not subxacts.
+	 */
+	if (snapshot->subxcnt >= 0)
+	{
+		/* full data, so search subxip */
+		int32		j;
+
+		for (j = 0; j < snapshot->subxcnt; j++)
+		{
+			if (TransactionIdEquals(xid, snapshot->subxip[j]))
+				return true;
+		}
+
+		/* not there, fall through to search xip[] */
+	}
+	else
+	{
+		/* overflowed, so convert xid to top-level */
+		xid = SubTransGetTopmostTransaction(xid);
+
+		/*
+		 * If xid was indeed a subxact, we might now have an xid < xmin,
+		 * so recheck to avoid an array scan.  No point in rechecking xmax.
+		 */
+		if (TransactionIdPrecedes(xid, snapshot->xmin))
+			return false;
+	}
+
+	for (i = 0; i < snapshot->xcnt; i++)
+	{
+		if (TransactionIdEquals(xid, snapshot->xip[i]))
+			return true;
+	}
+
+	return false;
 }

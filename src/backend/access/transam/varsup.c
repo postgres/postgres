@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.72 2006/07/14 14:52:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.73 2006/09/03 15:59:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,17 +131,28 @@ GetNewTransactionId(bool isSubXact)
 	 */
 	if (MyProc != NULL)
 	{
+		/*
+		 * Use volatile pointer to prevent code rearrangement; other backends
+		 * could be examining my subxids info concurrently, and we don't
+		 * want them to see an invalid intermediate state, such as
+		 * incrementing nxids before filling the array entry.  Note we are
+		 * assuming that TransactionId and int fetch/store are atomic.
+		 */
+		volatile PGPROC *myproc = MyProc;
+
 		if (!isSubXact)
-			MyProc->xid = xid;
+			myproc->xid = xid;
 		else
 		{
-			if (MyProc->subxids.nxids < PGPROC_MAX_CACHED_SUBXIDS)
+			int		nxids = myproc->subxids.nxids;
+
+			if (nxids < PGPROC_MAX_CACHED_SUBXIDS)
 			{
-				MyProc->subxids.xids[MyProc->subxids.nxids] = xid;
-				MyProc->subxids.nxids++;
+				myproc->subxids.xids[nxids] = xid;
+				myproc->subxids.nxids = nxids + 1;
 			}
 			else
-				MyProc->subxids.overflowed = true;
+				myproc->subxids.overflowed = true;
 		}
 	}
 

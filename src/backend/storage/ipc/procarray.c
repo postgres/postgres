@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.16 2006/07/30 20:17:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.17 2006/09/03 15:59:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,9 +475,12 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
  * This ensures that the set of transactions seen as "running" by the
  * current xact will not change after it takes the snapshot.
  *
- * Note that only top-level XIDs are included in the snapshot.	We can
- * still apply the xmin and xmax limits to subtransaction XIDs, but we
- * need to work a bit harder to see if XIDs in [xmin..xmax) are running.
+ * All running top-level XIDs are included in the snapshot.  We also try
+ * to include running subtransaction XIDs, but since PGPROC has only a
+ * limited cache area for subxact XIDs, full information may not be
+ * available.  If we find any overflowed subxid arrays, we have to mark
+ * the snapshot's subxid data as overflowed, and extra work will need to
+ * be done to determine what's running (see XidInSnapshot() in tqual.c).
  *
  * We also update the following backend-global variables:
  *		TransactionXmin: the oldest xmin of any snapshot in use in the
@@ -499,6 +502,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	TransactionId globalxmin;
 	int			index;
 	int			count = 0;
+	int			subcount = 0;
 
 	Assert(snapshot != NULL);
 
@@ -510,11 +514,12 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	/*
 	 * Allocating space for maxProcs xids is usually overkill; numProcs would
 	 * be sufficient.  But it seems better to do the malloc while not holding
-	 * the lock, so we can't look at numProcs.
+	 * the lock, so we can't look at numProcs.  Likewise, we allocate much
+	 * more subxip storage than is probably needed.
 	 *
 	 * This does open a possibility for avoiding repeated malloc/free: since
 	 * maxProcs does not change at runtime, we can simply reuse the previous
-	 * xip array if any.  (This relies on the fact that all callers pass
+	 * xip arrays if any.  (This relies on the fact that all callers pass
 	 * static SnapshotData structs.)
 	 */
 	if (snapshot->xip == NULL)
@@ -528,15 +533,29 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
+		Assert(snapshot->subxip == NULL);
+		snapshot->subxip = (TransactionId *)
+			malloc(arrayP->maxProcs * PGPROC_MAX_CACHED_SUBXIDS * sizeof(TransactionId));
+		if (snapshot->subxip == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 	}
 
 	globalxmin = xmin = GetTopTransactionId();
 
 	/*
-	 * If we are going to set MyProc->xmin then we'd better get exclusive
-	 * lock; if not, this is a read-only operation so it can be shared.
+	 * It is sufficient to get shared lock on ProcArrayLock, even if we
+	 * are computing a serializable snapshot and therefore will be setting
+	 * MyProc->xmin.  This is because any two backends that have overlapping
+	 * shared holds on ProcArrayLock will certainly compute the same xmin
+	 * (since no xact, in particular not the oldest, can exit the set of
+	 * running transactions while we hold ProcArrayLock --- see further
+	 * discussion just below).  So it doesn't matter whether another backend
+	 * concurrently doing GetSnapshotData or GetOldestXmin sees our xmin as
+	 * set or not; he'd compute the same xmin for himself either way.
 	 */
-	LWLockAcquire(ProcArrayLock, serializable ? LW_EXCLUSIVE : LW_SHARED);
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
 	/*--------------------
 	 * Unfortunately, we have to call ReadNewTransactionId() after acquiring
@@ -599,6 +618,35 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		if (TransactionIdIsNormal(xid))
 			if (TransactionIdPrecedes(xid, globalxmin))
 				globalxmin = xid;
+
+		/*
+		 * Save subtransaction XIDs if possible (if we've already overflowed,
+		 * there's no point).  Note that the subxact XIDs must be later than
+		 * their parent, so no need to check them against xmin.
+		 *
+		 * The other backend can add more subxids concurrently, but cannot
+		 * remove any.  Hence it's important to fetch nxids just once.
+		 * Should be safe to use memcpy, though.  (We needn't worry about
+		 * missing any xids added concurrently, because they must postdate
+		 * xmax.)
+		 */
+		if (subcount >= 0)
+		{
+			if (proc->subxids.overflowed)
+				subcount = -1;					/* overflowed */
+			else
+			{
+				int		nxids = proc->subxids.nxids;
+
+				if (nxids > 0)
+				{
+					memcpy(snapshot->subxip + subcount,
+						   proc->subxids.xids,
+						   nxids * sizeof(TransactionId));
+					subcount += nxids;
+				}
+			}
+		}
 	}
 
 	if (serializable)
@@ -621,6 +669,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	snapshot->xmin = xmin;
 	snapshot->xmax = xmax;
 	snapshot->xcnt = count;
+	snapshot->subxcnt = subcount;
 
 	snapshot->curcid = GetCurrentCommandId();
 
@@ -862,7 +911,7 @@ XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
 	int			i,
 				j;
 
-	Assert(!TransactionIdEquals(xid, InvalidTransactionId));
+	Assert(TransactionIdIsValid(xid));
 
 	/*
 	 * We must hold ProcArrayLock exclusively in order to remove transactions
