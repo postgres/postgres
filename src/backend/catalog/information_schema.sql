@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.34 2006/09/04 21:03:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.35 2006/09/04 23:13:01 tgl Exp $
  */
 
 /*
@@ -921,11 +921,18 @@ CREATE VIEW key_column_usage AS
            CAST(relname AS sql_identifier) AS table_name,
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST((ss.x).n AS cardinal_number) AS ordinal_position,
-           CAST(null AS cardinal_number) AS position_in_unique_constraint  -- FIXME
+           (
+             SELECT CAST(a AS cardinal_number)
+             FROM pg_constraint,
+               (SELECT a FROM generate_series(1, array_upper(ss.confkey,1)) a) AS foo
+             WHERE conrelid = ss.confrelid
+             AND conkey[foo.a] = ss.confkey[(ss.x).n]
+           ) AS position_in_unique_constraint
     FROM pg_attribute a,
-         (SELECT r.oid, nc.nspname AS nc_nspname, c.conname,
-                 nr.nspname AS nr_nspname, r.relname,
-                _pg_expandarray(c.conkey) AS x
+         (SELECT r.oid, r.relname, nc.nspname AS nc_nspname,
+                 nr.nspname AS nr_nspname,
+                 c.conname, c.confkey, c.confrelid,
+                 _pg_expandarray(c.conkey) AS x
           FROM pg_namespace nr, pg_class r, pg_namespace nc,
                pg_constraint c
           WHERE nr.oid = r.relnamespace
