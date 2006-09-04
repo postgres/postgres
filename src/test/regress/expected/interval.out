@@ -39,6 +39,18 @@ SELECT INTERVAL '-1 days +02:03' AS "22 hours ago...";
  -1 days +02:03:00
 (1 row)
 
+SELECT INTERVAL '1.5 weeks' AS "Ten days twelve hours";
+ Ten days twelve hours 
+-----------------------
+ 10 days 12:00:00
+(1 row)
+
+SELECT INTERVAL '1.5 months' AS "One month 15 days";
+ One month 15 days 
+-------------------
+ 1 mon 15 days
+(1 row)
+
 SELECT INTERVAL '10 years -11 month -12 days +13:14' AS "9 years...";
             9 years...            
 ----------------------------------
