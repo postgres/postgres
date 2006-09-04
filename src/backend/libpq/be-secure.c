@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.71 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.72 2006/09/04 14:57:27 petere Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -986,11 +986,11 @@ SSLerrmessage(void)
 
 	errcode = ERR_get_error();
 	if (errcode == 0)
-		return "No SSL error reported";
+		return _("no SSL error reported");
 	errreason = ERR_reason_error_string(errcode);
 	if (errreason != NULL)
 		return errreason;
-	snprintf(errbuf, sizeof(errbuf), "SSL error code %lu", errcode);
+	snprintf(errbuf, sizeof(errbuf), _("SSL error code %lu"), errcode);
 	return errbuf;
 }
 

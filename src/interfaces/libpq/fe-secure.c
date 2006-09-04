@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.85 2006/07/14 16:59:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.86 2006/09/04 14:57:27 petere Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -1000,7 +1000,7 @@ close_SSL(PGconn *conn)
  * return NULL if it doesn't recognize the error code.  We don't
  * want to return NULL ever.
  */
-static char ssl_nomem[] = "Out of memory allocating error description";
+static char ssl_nomem[] = "out of memory allocating error description";
 
 #define SSL_ERR_LEN 128
 
@@ -1017,7 +1017,7 @@ SSLerrmessage(void)
 	errcode = ERR_get_error();
 	if (errcode == 0)
 	{
-		strcpy(errbuf, "No SSL error reported");
+		snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("no SSL error reported"));
 		return errbuf;
 	}
 	errreason = ERR_reason_error_string(errcode);
@@ -1027,7 +1027,7 @@ SSLerrmessage(void)
 		errbuf[SSL_ERR_LEN - 1] = '\0';
 		return errbuf;
 	}
-	snprintf(errbuf, SSL_ERR_LEN, "SSL error code %lu", errcode);
+	snprintf(errbuf, SSL_ERR_LEN, libpq_gettext("SSL error code %lu"), errcode);
 	return errbuf;
 }
 
