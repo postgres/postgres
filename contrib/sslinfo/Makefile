@@ -1,9 +1,13 @@
-subdir = contrib/sslinfo
-top_builddir = ../..
-include $(top_builddir)/src/Makefile.global
-
 MODULES = sslinfo
 DATA_built = sslinfo.sql
 DOC = README.pgsslinfo
 
-include ../contrib-global.mk	
+ifdef USE_PGXS
+PGXS := $(shell pg_config --pgxs)
+include $(PGXS)
+else
+subdir = contrib/sslinfo
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
+include $(top_srcdir)/contrib/contrib-global.mk
+endif
