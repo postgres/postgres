@@ -1,0 +1,29 @@
+SET search_path = public;
+
+CREATE OR REPLACE FUNCTION ssl_client_serial() RETURNS numeric
+    LANGUAGE C STRICT
+    AS 'MODULE_PATHNAME', 'ssl_client_serial';
+
+CREATE OR REPLACE FUNCTION ssl_is_used() RETURNS boolean
+    LANGUAGE C STRICT
+    AS 'MODULE_PATHNAME', 'ssl_is_used';
+
+CREATE OR REPLACE FUNCTION ssl_client_cert_present() RETURNS boolean
+    LANGUAGE C STRICT
+    AS 'MODULE_PATHNAME', 'ssl_client_cert_present';
+
+CREATE OR REPLACE FUNCTION ssl_client_dn_field(text) RETURNS text
+    LANGUAGE C STRICT
+    AS 'MODULE_PATHNAME', 'ssl_client_dn_field';
+
+CREATE OR REPLACE FUNCTION ssl_issuer_field(text) RETURNS text
+    LANGUAGE C STRICT
+    AS 'MODULE_PATHNAME', 'ssl_issuer_field';
+
+CREATE OR REPLACE FUNCTION ssl_client_dn() RETURNS text
+    LANGUAGE C STRICT
+    AS 'MODULE_PATHNAME', 'ssl_client_dn';
+
+CREATE OR REPLACE FUNCTION ssl_issuer_dn() RETURNS text
+    LANGUAGE C STRICT
+    AS 'MODULE_PATHNAME', 'ssl_issuer_dn';
