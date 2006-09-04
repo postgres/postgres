@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.9 2006/08/29 13:23:26 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.10 2006/09/04 19:36:21 momjian Exp $
 
 me=`basename $0`
 
@@ -668,7 +668,7 @@ create_database connectdb
 
 message "running regression test queries"
 
-outputdir="results/"
+outputdir="results"
 
 if [ ! -d "$outputdir" ]; then
     mkdir -p "$outputdir" || { (exit 2); exit; }
