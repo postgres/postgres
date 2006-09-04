@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.260 2006/08/17 17:25:43 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.261 2006/09/04 21:43:18 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -853,8 +853,9 @@ su - postgres
        <term><option>--with-ldap</option></term>
        <listitem>
         <para>
-         Build with <acronym>LDAP</><indexterm><primary>LDAP</></>
-         authentication support. On Unix, this requires the
+         Build with <acronym>LDAP</><indexterm><primary>LDAP</></> support
+         for authentication and connection parameter lookup.
+         On Unix, this requires the
          <productname>OpenLDAP</> package to be installed.
          <filename>configure</> will check for the required header files
          and libraries to make sure that your <productname>OpenLDAP</>
