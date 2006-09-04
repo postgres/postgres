@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.206 2006/08/03 16:04:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.207 2006/09/04 21:15:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3113,6 +3113,74 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 			 */
 			afterTriggerInvokeEvents(events, firing_id, NULL,
 									 !IsSubTransaction());
+		}
+	}
+}
+
+/* ----------
+ * AfterTriggerCheckTruncate()
+ *		Test deferred-trigger status to see if a TRUNCATE is OK.
+ *
+ * The argument is a list of OIDs of relations due to be truncated.
+ * We raise error if there are any pending after-trigger events for them.
+ *
+ * In some scenarios it'd be reasonable to remove pending events (more
+ * specifically, mark them DONE by the current subxact) but without a lot
+ * of knowledge of the trigger semantics we can't do this in general.
+ * ----------
+ */
+void
+AfterTriggerCheckTruncate(List *relids)
+{
+	AfterTriggerEvent event;
+	int			depth;
+
+	/*
+	 * Ignore call if we aren't in a transaction.  (Shouldn't happen?)
+	 */
+	if (afterTriggers == NULL)
+		return;
+
+	/* Scan queued events */
+	for (event = afterTriggers->events.head;
+		 event != NULL;
+		 event = event->ate_next)
+	{
+		/*
+		 * We can ignore completed events.  (Even if a DONE flag is rolled
+		 * back by subxact abort, it's OK because the effects of the
+		 * TRUNCATE must get rolled back too.)
+		 */
+		if (event->ate_event & AFTER_TRIGGER_DONE)
+			continue;
+
+		if (list_member_oid(relids, event->ate_relid))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot truncate table \"%s\" because it has pending trigger events",
+							get_rel_name(event->ate_relid))));
+	}
+
+	/*
+	 * Also scan events queued by incomplete queries.  This could only
+	 * matter if a TRUNCATE is executed by a function or trigger within
+	 * an updating query on the same relation, which is pretty perverse,
+	 * but let's check.
+	 */
+	for (depth = 0; depth <= afterTriggers->query_depth; depth++)
+	{
+		for (event = afterTriggers->query_stack[depth].head;
+			 event != NULL;
+			 event = event->ate_next)
+		{
+			if (event->ate_event & AFTER_TRIGGER_DONE)
+				continue;
+
+			if (list_member_oid(relids, event->ate_relid))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot truncate table \"%s\" because it has pending trigger events",
+								get_rel_name(event->ate_relid))));
 		}
 	}
 }

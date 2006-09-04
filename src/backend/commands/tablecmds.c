@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.201 2006/08/25 04:06:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.202 2006/09/04 21:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -610,6 +610,13 @@ ExecuteTruncate(TruncateStmt *stmt)
 	if (stmt->behavior == DROP_RESTRICT)
 		heap_truncate_check_FKs(rels, false);
 #endif
+
+	/*
+	 * Also check for pending AFTER trigger events on the target relations.
+	 * We can't just leave those be, since they will try to fetch tuples
+	 * that the TRUNCATE removes.
+	 */
+	AfterTriggerCheckTruncate(relids);
 
 	/*
 	 * OK, truncate each table.
