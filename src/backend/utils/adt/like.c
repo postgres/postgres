@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.64 2006/03/05 15:58:42 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.65 2006/09/04 18:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,50 +64,23 @@ wchareq(char *p1, char *p2)
 	return 1;
 }
 
-/*--------------------
- * Support routine for MatchTextIC. Compares given multibyte streams
- * as wide characters ignoring case.
- * If they match, returns 1 otherwise returns 0.
- *--------------------
+/*
+ * Formerly we had a routine iwchareq() here that tried to do case-insensitive
+ * comparison of multibyte characters.  It did not work at all, however,
+ * because it relied on tolower() which has a single-byte API ... and
+ * towlower() wouldn't be much better since we have no suitably cheap way
+ * of getting a single character transformed to the system's wchar_t format.
+ * So now, we just downcase the strings using lower() and apply regular LIKE
+ * comparison.  This should be revisited when we install better locale support.
+ *
+ * Note that MBMatchText and MBMatchTextIC do exactly the same thing now.
+ * Is it worth refactoring to avoid duplicated code?  They might become
+ * different again in the future.
  */
-#define CHARMAX 0x80
 
-static int
-iwchareq(char *p1, char *p2)
-{
-	pg_wchar	c1[2],
-				c2[2];
-	int			l;
-
-	/*
-	 * short cut. if *p1 and *p2 is lower than CHARMAX, then we could assume
-	 * they are ASCII
-	 */
-	if ((unsigned char) *p1 < CHARMAX && (unsigned char) *p2 < CHARMAX)
-		return (tolower((unsigned char) *p1) == tolower((unsigned char) *p2));
-
-	/*
-	 * if one of them is an ASCII while the other is not, then they must be
-	 * different characters
-	 */
-	else if ((unsigned char) *p1 < CHARMAX || (unsigned char) *p2 < CHARMAX)
-		return 0;
-
-	/*
-	 * ok, p1 and p2 are both > CHARMAX, then they must be multibyte
-	 * characters
-	 */
-	l = pg_mblen(p1);
-	(void) pg_mb2wchar_with_len(p1, c1, l);
-	c1[0] = tolower(c1[0]);
-	l = pg_mblen(p2);
-	(void) pg_mb2wchar_with_len(p2, c2, l);
-	c2[0] = tolower(c2[0]);
-	return (c1[0] == c2[0]);
-}
-
+/* Set up to compile like_match.c for multibyte characters */
 #define CHAREQ(p1, p2) wchareq(p1, p2)
-#define ICHAREQ(p1, p2) iwchareq(p1, p2)
+#define ICHAREQ(p1, p2) wchareq(p1, p2)
 #define NextChar(p, plen) \
 	do { int __l = pg_mblen(p); (p) +=__l; (plen) -=__l; } while (0)
 #define CopyAdvChar(dst, src, srclen) \
@@ -120,7 +93,9 @@ iwchareq(char *p1, char *p2)
 #define MatchText	MBMatchText
 #define MatchTextIC MBMatchTextIC
 #define do_like_escape	MB_do_like_escape
+
 #include "like_match.c"
+
 #undef CHAREQ
 #undef ICHAREQ
 #undef NextChar
@@ -129,15 +104,19 @@ iwchareq(char *p1, char *p2)
 #undef MatchTextIC
 #undef do_like_escape
 
+/* Set up to compile like_match.c for single-byte characters */
 #define CHAREQ(p1, p2) (*(p1) == *(p2))
 #define ICHAREQ(p1, p2) (tolower((unsigned char) *(p1)) == tolower((unsigned char) *(p2)))
 #define NextChar(p, plen) ((p)++, (plen)--)
 #define CopyAdvChar(dst, src, srclen) (*(dst)++ = *(src)++, (srclen)--)
 
+#include "like_match.c"
+
+/* And some support for BYTEA */
 #define BYTEA_CHAREQ(p1, p2) (*(p1) == *(p2))
 #define BYTEA_NextChar(p, plen) ((p)++, (plen)--)
 #define BYTEA_CopyAdvChar(dst, src, srclen) (*(dst)++ = *(src)++, (srclen)--)
-#include "like_match.c"
+
 
 /*
  *	interface routines called by the function manager
@@ -296,15 +275,32 @@ nameiclike(PG_FUNCTION_ARGS)
 	int			slen,
 				plen;
 
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
-
 	if (pg_database_encoding_max_length() == 1)
+	{
+		s = NameStr(*str);
+		slen = strlen(s);
+		p = VARDATA(pat);
+		plen = (VARSIZE(pat) - VARHDRSZ);
 		result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
+	}
 	else
+	{
+		/* Force inputs to lower case to achieve case insensitivity */
+		text   *strtext;
+
+		strtext = DatumGetTextP(DirectFunctionCall1(name_text,
+													NameGetDatum(str)));
+		strtext = DatumGetTextP(DirectFunctionCall1(lower,
+													PointerGetDatum(strtext)));
+		pat = DatumGetTextP(DirectFunctionCall1(lower,
+												PointerGetDatum(pat)));
+
+		s = VARDATA(strtext);
+		slen = (VARSIZE(strtext) - VARHDRSZ);
+		p = VARDATA(pat);
+		plen = (VARSIZE(pat) - VARHDRSZ);
 		result = (MBMatchTextIC(s, slen, p, plen) == LIKE_TRUE);
+	}
 
 	PG_RETURN_BOOL(result);
 }
@@ -320,15 +316,32 @@ nameicnlike(PG_FUNCTION_ARGS)
 	int			slen,
 				plen;
 
-	s = NameStr(*str);
-	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
-
 	if (pg_database_encoding_max_length() == 1)
+	{
+		s = NameStr(*str);
+		slen = strlen(s);
+		p = VARDATA(pat);
+		plen = (VARSIZE(pat) - VARHDRSZ);
 		result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
+	}
 	else
+	{
+		/* Force inputs to lower case to achieve case insensitivity */
+		text   *strtext;
+
+		strtext = DatumGetTextP(DirectFunctionCall1(name_text,
+													NameGetDatum(str)));
+		strtext = DatumGetTextP(DirectFunctionCall1(lower,
+													PointerGetDatum(strtext)));
+		pat = DatumGetTextP(DirectFunctionCall1(lower,
+												PointerGetDatum(pat)));
+
+		s = VARDATA(strtext);
+		slen = (VARSIZE(strtext) - VARHDRSZ);
+		p = VARDATA(pat);
+		plen = (VARSIZE(pat) - VARHDRSZ);
 		result = (MBMatchTextIC(s, slen, p, plen) != LIKE_TRUE);
+	}
 
 	PG_RETURN_BOOL(result);
 }
@@ -344,15 +357,27 @@ texticlike(PG_FUNCTION_ARGS)
 	int			slen,
 				plen;
 
-	s = VARDATA(str);
-	slen = (VARSIZE(str) - VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
-
 	if (pg_database_encoding_max_length() == 1)
+	{
+		s = VARDATA(str);
+		slen = (VARSIZE(str) - VARHDRSZ);
+		p = VARDATA(pat);
+		plen = (VARSIZE(pat) - VARHDRSZ);
 		result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
+	}
 	else
+	{
+		/* Force inputs to lower case to achieve case insensitivity */
+		str = DatumGetTextP(DirectFunctionCall1(lower,
+												PointerGetDatum(str)));
+		pat = DatumGetTextP(DirectFunctionCall1(lower,
+												PointerGetDatum(pat)));
+		s = VARDATA(str);
+		slen = (VARSIZE(str) - VARHDRSZ);
+		p = VARDATA(pat);
+		plen = (VARSIZE(pat) - VARHDRSZ);
 		result = (MBMatchTextIC(s, slen, p, plen) == LIKE_TRUE);
+	}
 
 	PG_RETURN_BOOL(result);
 }
@@ -368,15 +393,27 @@ texticnlike(PG_FUNCTION_ARGS)
 	int			slen,
 				plen;
 
-	s = VARDATA(str);
-	slen = (VARSIZE(str) - VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
-
 	if (pg_database_encoding_max_length() == 1)
+	{
+		s = VARDATA(str);
+		slen = (VARSIZE(str) - VARHDRSZ);
+		p = VARDATA(pat);
+		plen = (VARSIZE(pat) - VARHDRSZ);
 		result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
+	}
 	else
+	{
+		/* Force inputs to lower case to achieve case insensitivity */
+		str = DatumGetTextP(DirectFunctionCall1(lower,
+												PointerGetDatum(str)));
+		pat = DatumGetTextP(DirectFunctionCall1(lower,
+												PointerGetDatum(pat)));
+		s = VARDATA(str);
+		slen = (VARSIZE(str) - VARHDRSZ);
+		p = VARDATA(pat);
+		plen = (VARSIZE(pat) - VARHDRSZ);
 		result = (MBMatchTextIC(s, slen, p, plen) != LIKE_TRUE);
+	}
 
 	PG_RETURN_BOOL(result);
 }
