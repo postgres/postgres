@@ -561,7 +561,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 			values[j] = palloc(32);
 			snprintf(values[j++], 32, "(%u,%u)", blkno, itup->t_tid.ip_posid);
 			values[j] = palloc(32);
-			snprintf(values[j++], 32, "%d", IndexTupleSize(itup));
+			snprintf(values[j++], 32, "%d", (int) IndexTupleSize(itup));
 			values[j] = palloc(32);
 			snprintf(values[j++], 32, "%c", IndexTupleHasNulls(itup) ? 't' : 'f');
 			values[j] = palloc(32);

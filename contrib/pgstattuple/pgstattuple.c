@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.23 2006/07/11 17:26:58 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.24 2006/09/04 02:03:04 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -59,35 +59,19 @@ typedef struct pgstattuple_type
 	uint64	free_space;			/* free/reusable space in bytes */
 } pgstattuple_type;
 
-/*
- * struct pgstat_btree_type
- */
-typedef struct pgstat_btree_type
-{
-	pgstattuple_type	base;	/* inherits pgstattuple_type */
-
-	uint64	continuous;
-	uint64	forward;
-	uint64	backward;
-} pgstat_btree_type;
-
 typedef void (*pgstat_page)(pgstattuple_type *, Relation, BlockNumber);
 
 static Datum build_pgstattuple_type(pgstattuple_type *stat,
 	FunctionCallInfo fcinfo);
 static Datum pgstat_relation(Relation rel, FunctionCallInfo fcinfo);
 static Datum pgstat_heap(Relation rel, FunctionCallInfo fcinfo);
-static Datum pgstat_btree(Relation rel, FunctionCallInfo fcinfo);
 static void pgstat_btree_page(pgstattuple_type *stat,
 	Relation rel, BlockNumber blkno);
-static Datum pgstat_hash(Relation rel, FunctionCallInfo fcinfo);
 static void pgstat_hash_page(pgstattuple_type *stat,
 	Relation rel, BlockNumber blkno);
-static Datum pgstat_gist(Relation rel, FunctionCallInfo fcinfo);
 static void pgstat_gist_page(pgstattuple_type *stat,
 	Relation rel, BlockNumber blkno);
-static Datum pgstat_index(pgstattuple_type *stat,
-	Relation rel, BlockNumber start,
+static Datum pgstat_index(Relation rel, BlockNumber start,
 	pgstat_page pagefn, FunctionCallInfo fcinfo);
 static void pgstat_index_page(pgstattuple_type *stat, Page page,
 	OffsetNumber minoff, OffsetNumber maxoff);
@@ -217,11 +201,14 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 		switch(rel->rd_rel->relam)
 		{
 		case BTREE_AM_OID:
-			return pgstat_btree(rel, fcinfo);
+			return pgstat_index(rel, BTREE_METAPAGE + 1,
+				pgstat_btree_page, fcinfo);
 		case HASH_AM_OID:
-			return pgstat_hash(rel, fcinfo);
+			return pgstat_index(rel, HASH_METAPAGE + 1,
+				pgstat_hash_page, fcinfo);
 		case GIST_AM_OID:
-			return pgstat_gist(rel, fcinfo);
+			return pgstat_index(rel, GIST_ROOT_BLKNO + 1,
+				pgstat_gist_page, fcinfo);
 		case GIN_AM_OID:
 			err = "gin index";
 			break;
@@ -321,36 +308,13 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 }
 
 /*
- * pgstat_btree -- returns live/dead tuples info in a btree index
- */
-static Datum
-pgstat_btree(Relation rel, FunctionCallInfo fcinfo)
-{
-	pgstat_btree_type	stat = { { 0 } };
-	Datum				datum;
-
-	datum = pgstat_index((pgstattuple_type *) &stat, rel,
-		BTREE_METAPAGE + 1, pgstat_btree_page, fcinfo);
-
-	ereport(NOTICE,
-		(errmsg("%.2f%% fragmented",
-			100.0 * (stat.forward + stat.backward) /
-			(stat.continuous + stat.forward + stat.backward)),
-		errhint("continuous=%llu, forward=%llu, backward=%llu",
-			stat.continuous, stat.forward, stat.backward)));
-
-	return datum;
-}
-
-/*
- * pgstat_btree_page
+ * pgstat_btree_page -- check tuples in a btree page
  */
 static void
 pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
 {
 	Buffer				buf;
 	Page				page;
-	pgstat_btree_type  *btstat = (pgstat_btree_type *)stat;
 
 	buf = ReadBuffer(rel, blkno);
 	LockBuffer(buf, BT_READ);
@@ -373,16 +337,6 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
 		}
 		else if (P_ISLEAF(opaque))
 		{
-			/* check fragmentation */
-			if (P_RIGHTMOST(opaque))
-				btstat->continuous++;
-			else if (opaque->btpo_next < blkno)
-				btstat->backward++;
-			else if (opaque->btpo_next > blkno + 1)
-				btstat->forward++;
-			else
-				btstat->continuous++;
-
 			pgstat_index_page(stat, page, P_FIRSTDATAKEY(opaque),
 				PageGetMaxOffsetNumber(page));
 		}
@@ -396,17 +350,7 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
 }
 
 /*
- * pgstat_hash -- returns live/dead tuples info in a hash index
- */
-static Datum
-pgstat_hash(Relation rel, FunctionCallInfo fcinfo)
-{
-	pgstattuple_type	stat = { 0 };
-	return pgstat_index(&stat, rel, HASH_METAPAGE + 1, pgstat_hash_page, fcinfo);
-}
-
-/*
- * pgstat_hash_page
+ * pgstat_hash_page -- check tuples in a hash page
  */
 static void
 pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
@@ -448,17 +392,7 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
 }
 
 /*
- * pgstat_gist -- returns live/dead tuples info in a gist index
- */
-static Datum
-pgstat_gist(Relation rel, FunctionCallInfo fcinfo)
-{
-	pgstattuple_type	stat = { 0 };
-	return pgstat_index(&stat, rel, GIST_ROOT_BLKNO + 1, pgstat_gist_page, fcinfo);
-}
-
-/*
- * pgstat_gist_page
+ * pgstat_gist_page -- check tuples in a gist page
  */
 static void
 pgstat_gist_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
@@ -488,11 +422,12 @@ pgstat_gist_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
  * pgstat_index -- returns live/dead tuples info in a generic index
  */
 static Datum
-pgstat_index(pgstattuple_type *stat, Relation rel, BlockNumber start,
-	pgstat_page pagefn, FunctionCallInfo fcinfo)
+pgstat_index(Relation rel, BlockNumber start, pgstat_page pagefn,
+			 FunctionCallInfo fcinfo)
 {
 	BlockNumber nblocks;
 	BlockNumber blkno;
+	pgstattuple_type	stat = { 0 };
 
 	blkno = start;
 	for (;;)
@@ -505,17 +440,17 @@ pgstat_index(pgstattuple_type *stat, Relation rel, BlockNumber start,
 		/* Quit if we've scanned the whole relation */
 		if (blkno >= nblocks)
 		{
-			stat->table_len = (uint64) nblocks * BLCKSZ;
+			stat.table_len = (uint64) nblocks * BLCKSZ;
 			break;
 		}
 
 		for (; blkno < nblocks; blkno++)
-			pagefn(stat, rel, blkno);
+			pagefn(&stat, rel, blkno);
 	}
 
 	relation_close(rel, AccessShareLock);
 
-	return build_pgstattuple_type(stat, fcinfo);
+	return build_pgstattuple_type(&stat, fcinfo);
 }
 
 /*

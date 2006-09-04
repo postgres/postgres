@@ -26,7 +26,6 @@ LANGUAGE C STRICT;
 --
 -- pgstatindex
 --
-DROP TYPE pgstatindex_type CASCADE;
 CREATE TYPE pgstatindex_type AS (
   version int4,
   tree_level int4,
@@ -48,7 +47,6 @@ LANGUAGE 'C' STRICT;
 --
 -- bt_metap()
 --
-DROP TYPE bt_metap_type CASCADE;
 CREATE TYPE bt_metap_type AS (
   magic int4,
   version int4,
@@ -66,7 +64,6 @@ LANGUAGE 'C' STRICT;
 --
 -- bt_page_stats()
 --
-DROP TYPE bt_page_stats_type CASCADE;
 CREATE TYPE bt_page_stats_type AS (
   blkno int4,
   type char,
@@ -81,8 +78,6 @@ CREATE TYPE bt_page_stats_type AS (
   btpo_flags int4
 );
 
-DROP FUNCTION bt_page_stats(text, int4);
-
 CREATE OR REPLACE FUNCTION bt_page_stats(text, int4)
 RETURNS bt_page_stats_type
 AS 'MODULE_PATHNAME', 'bt_page_stats'
@@ -91,7 +86,6 @@ LANGUAGE 'C' STRICT;
 --
 -- bt_page_items()
 --
-DROP TYPE bt_page_items_type CASCADE;
 CREATE TYPE bt_page_items_type AS (
   itemoffset int4,
   ctid tid,
@@ -100,8 +94,6 @@ CREATE TYPE bt_page_items_type AS (
   vars bool,
   data text
 );
-
-DROP FUNCTION bt_page_items(text, int4);
 
 CREATE OR REPLACE FUNCTION bt_page_items(text, int4)
 RETURNS SETOF bt_page_items_type
