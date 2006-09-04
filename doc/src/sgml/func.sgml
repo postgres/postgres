@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.332 2006/08/22 00:49:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.333 2006/09/04 21:47:25 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -795,7 +795,7 @@
       <row>
        <entry><literal><function>setseed</function>(<type>dp</type>)</literal></entry>
        <entry><type>int</type></entry>
-       <entry>set seed for subsequent <literal>random()</literal> calls</entry>
+       <entry>set seed for subsequent <literal>random()</literal> calls (value between 0 and 1.0)</entry>
        <entry><literal>setseed(0.54823)</literal></entry>
        <entry><literal>1177314959</literal></entry>
       </row>
