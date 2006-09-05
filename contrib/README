@@ -24,13 +24,9 @@ procedure.
 Index:
 ------
 
-adddepend -
-	Add object dependency information to pre-7.3 objects.
-	by Rod Taylor <rbt@rbt.ca>
-
 adminpack -
 	File and log manipulation routines, used by pgAdmin
-	by From: Dave Page <dpage@vale-housing.co.uk>
+	by Dave Page <dpage@vale-housing.co.uk>
 
 btree_gist -
       Support for emulating BTREE indexing in GiST
@@ -44,27 +40,13 @@ cube -
 	Multidimensional-cube datatype (GiST indexing example)
 	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
 
-dbase -
-	Converts from dbase/xbase to PostgreSQL
-	by Maarten.Boekhold <Maarten.Boekhold@reuters.com>,
-	   Frank Koormann <fkoorman@usf.uni-osnabrueck.de>,
-	   Ivan Baldo <lubaldo@adinet.com.uy>
-
 dblink -
 	Allows remote query execution
 	by Joe Conway <mail@joeconway.com>
 
-dbmirror -
-	Replication server
-	by Steven Singer <ssinger@navtechinc.com>
-
 earthdistance -
 	Operator for computing earth distance for two points
 	by Hal Snyder <hal@vailsys.com>
-
-fulltextindex -
-	Full text indexing using triggers
-	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
 
 fuzzystrmatch -
 	Levenshtein, metaphone, and soundex fuzzy string matching
@@ -89,14 +71,6 @@ lo -
 ltree -
 	Tree-like data structures
 	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>
-
-mSQL-interface -
-	mSQL API translation library
-	by Aldrin Leal <aldrin@americasnet.com>
-
-mac -
-	Support functions for MAC address types
-	by Lawrence E. Rosenman <ler@lerctr.org>
 
 oid2name - 
 	Maps numeric files to table names
@@ -139,6 +113,10 @@ seg -
 spi -
 	Various trigger functions, examples for using SPI.
 
+sslinfo -
+	Functions to get information about SSL certificates
+	by Victor Wagner <vitus@cryptocom.ru>
+
 start-scripts - 
 	Scripts for starting the server at boot time.
 
@@ -146,18 +124,10 @@ tablefunc -
 	Examples of functions returning tables
 	by Joe Conway <mail@joeconway.com>
 
-tips -
-	Getting Apache to log to PostgreSQL
-	by Terry Mackintosh <terry@terrym.com>
-
 tsearch2 -
 	Full-text-index support using GiST
 	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov
 	<oleg@sai.msu.su>.
-
-userlock -
-	User locks
-	by Massimo Dal Zotto <dz@cs.unitn.it>
 
 vacuumlo -
 	Remove orphaned large objects

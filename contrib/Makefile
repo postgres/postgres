@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.67 2006/09/04 15:07:46 petere Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.68 2006/09/05 17:20:26 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -9,11 +9,8 @@ WANTED_DIRS = \
 		btree_gist	\
 		chkpass		\
 		cube		\
-		dbase		\
 		dblink		\
-		dbmirror	\
 		earthdistance	\
-		fulltextindex	\
 		fuzzystrmatch	\
 		intagg		\
 		intarray	\
@@ -31,9 +28,7 @@ WANTED_DIRS = \
 		seg		\
 		spi		\
 		tablefunc	\
-		tips		\
 		tsearch2	\
-		userlock	\
 		vacuumlo
 
 ifeq ($(with_openssl),yes)
@@ -41,9 +36,6 @@ WANTED_DIRS += sslinfo
 endif
 
 # Missing:
-#		adddepend	\ (does not have a makefile)
-#		mSQL-interface	\ (requires msql installed)
-#		mac		\ (does not have a makefile)
 #		start-scripts	\ (does not have a makefile)
 #		xml2		\ (requires libxml installed)
 
