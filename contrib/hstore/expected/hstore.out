@@ -1,0 +1,607 @@
+\set ECHO none
+psql:hstore.sql:8: NOTICE:  type "hstore" is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:hstore.sql:13: NOTICE:  argument type hstore is only a shell
+psql:hstore.sql:132: NOTICE:  type "ghstore" is not yet defined
+DETAIL:  Creating a shell type definition.
+psql:hstore.sql:137: NOTICE:  argument type ghstore is only a shell
+--hstore;
+select ''::hstore;
+ hstore 
+--------
+ 
+(1 row)
+
+select 'a=>b'::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select ' a=>b'::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select 'a =>b'::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select 'a=>b '::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select 'a=> b'::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select '"a"=>"b"'::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select ' "a"=>"b"'::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select '"a" =>"b"'::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select '"a"=>"b" '::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select '"a"=> "b"'::hstore;
+  hstore  
+----------
+ "a"=>"b"
+(1 row)
+
+select 'aa=>bb'::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select ' aa=>bb'::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select 'aa =>bb'::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select 'aa=>bb '::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select 'aa=> bb'::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select '"aa"=>"bb"'::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select ' "aa"=>"bb"'::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select '"aa" =>"bb"'::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select '"aa"=>"bb" '::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select '"aa"=> "bb"'::hstore;
+   hstore   
+------------
+ "aa"=>"bb"
+(1 row)
+
+select 'aa=>bb, cc=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>bb , cc=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>bb ,cc=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>bb, "cc"=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>bb , "cc"=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>bb ,"cc"=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>"bb", cc=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>"bb" , cc=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>"bb" ,cc=>dd'::hstore;
+         hstore         
+------------------------
+ "aa"=>"bb", "cc"=>"dd"
+(1 row)
+
+select 'aa=>null'::hstore;
+   hstore   
+------------
+ "aa"=>NULL
+(1 row)
+
+select 'aa=>NuLl'::hstore;
+   hstore   
+------------
+ "aa"=>NULL
+(1 row)
+
+select 'aa=>"NuLl"'::hstore;
+    hstore    
+--------------
+ "aa"=>"NuLl"
+(1 row)
+
+select '\\=a=>q=w'::hstore;
+   hstore    
+-------------
+ "=a"=>"q=w"
+(1 row)
+
+select '"=a"=>q\\=w'::hstore;
+   hstore    
+-------------
+ "=a"=>"q=w"
+(1 row)
+
+select '"\\"a"=>q>w'::hstore;
+    hstore    
+--------------
+ "\"a"=>"q>w"
+(1 row)
+
+select '\\"a=>q"w'::hstore;
+    hstore     
+---------------
+ "\"a"=>"q\"w"
+(1 row)
+
+select ''::hstore;
+ hstore 
+--------
+ 
+(1 row)
+
+select '	'::hstore;
+ hstore 
+--------
+ 
+(1 row)
+
+-- -> operator
+select 'aa=>b, c=>d , b=>16'::hstore->'c';
+ ?column? 
+----------
+ d
+(1 row)
+
+select 'aa=>b, c=>d , b=>16'::hstore->'b';
+ ?column? 
+----------
+ 16
+(1 row)
+
+select 'aa=>b, c=>d , b=>16'::hstore->'aa';
+ ?column? 
+----------
+ b
+(1 row)
+
+select ('aa=>b, c=>d , b=>16'::hstore->'gg') is null;
+ ?column? 
+----------
+ t
+(1 row)
+
+select ('aa=>NULL, c=>d , b=>16'::hstore->'aa') is null;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- exists/defined
+select isexists('a=>NULL, b=>qq', 'a');
+ isexists 
+----------
+ t
+(1 row)
+
+select isexists('a=>NULL, b=>qq', 'b');
+ isexists 
+----------
+ t
+(1 row)
+
+select isexists('a=>NULL, b=>qq', 'c');
+ isexists 
+----------
+ f
+(1 row)
+
+select isdefined('a=>NULL, b=>qq', 'a');
+ isdefined 
+-----------
+ f
+(1 row)
+
+select isdefined('a=>NULL, b=>qq', 'b');
+ isdefined 
+-----------
+ t
+(1 row)
+
+select isdefined('a=>NULL, b=>qq', 'c');
+ isdefined 
+-----------
+ f
+(1 row)
+
+-- delete 
+select delete('a=>1 , b=>2, c=>3'::hstore, 'a');
+       delete       
+--------------------
+ "b"=>"2", "c"=>"3"
+(1 row)
+
+select delete('a=>null , b=>2, c=>3'::hstore, 'a');
+       delete       
+--------------------
+ "b"=>"2", "c"=>"3"
+(1 row)
+
+select delete('a=>1 , b=>2, c=>3'::hstore, 'b');
+       delete       
+--------------------
+ "a"=>"1", "c"=>"3"
+(1 row)
+
+select delete('a=>1 , b=>2, c=>3'::hstore, 'c');
+       delete       
+--------------------
+ "a"=>"1", "b"=>"2"
+(1 row)
+
+select delete('a=>1 , b=>2, c=>3'::hstore, 'd');
+            delete            
+------------------------------
+ "a"=>"1", "b"=>"2", "c"=>"3"
+(1 row)
+
+-- ||
+select 'aa=>1 , b=>2, cq=>3'::hstore || 'cq=>l, b=>g, fg=>f';
+                 ?column?                  
+-------------------------------------------
+ "b"=>"g", "aa"=>"1", "cq"=>"l", "fg"=>"f"
+(1 row)
+
+select 'aa=>1 , b=>2, cq=>3'::hstore || 'aq=>l';
+                 ?column?                  
+-------------------------------------------
+ "b"=>"2", "aa"=>"1", "aq"=>"l", "cq"=>"3"
+(1 row)
+
+select 'aa=>1 , b=>2, cq=>3'::hstore || 'aa=>l';
+            ?column?            
+--------------------------------
+ "b"=>"2", "aa"=>"l", "cq"=>"3"
+(1 row)
+
+select 'aa=>1 , b=>2, cq=>3'::hstore || '';
+            ?column?            
+--------------------------------
+ "b"=>"2", "aa"=>"1", "cq"=>"3"
+(1 row)
+
+select ''::hstore || 'cq=>l, b=>g, fg=>f';
+            ?column?            
+--------------------------------
+ "b"=>"g", "cq"=>"l", "fg"=>"f"
+(1 row)
+
+-- =>
+select 'a=>g, b=>c'::hstore || ( 'asd'=>'gf' );
+            ?column?             
+---------------------------------
+ "a"=>"g", "b"=>"c", "asd"=>"gf"
+(1 row)
+
+select 'a=>g, b=>c'::hstore || ( 'b'=>'gf' );
+      ?column?       
+---------------------
+ "a"=>"g", "b"=>"gf"
+(1 row)
+
+-- keys/values
+select akeys('aa=>1 , b=>2, cq=>3'::hstore || 'cq=>l, b=>g, fg=>f');
+    akeys     
+--------------
+ {b,aa,cq,fg}
+(1 row)
+
+select akeys('""=>1');
+ akeys 
+-------
+ {""}
+(1 row)
+
+select akeys('');
+ akeys 
+-------
+ {}
+(1 row)
+
+select avals('aa=>1 , b=>2, cq=>3'::hstore || 'cq=>l, b=>g, fg=>f');
+   avals   
+-----------
+ {g,1,l,f}
+(1 row)
+
+select avals('aa=>1 , b=>2, cq=>3'::hstore || 'cq=>l, b=>g, fg=>NULL');
+   avals    
+------------
+ {g,1,l,""}
+(1 row)
+
+select avals('""=>1');
+ avals 
+-------
+ {1}
+(1 row)
+
+select avals('');
+ avals 
+-------
+ {}
+(1 row)
+
+select * from skeys('aa=>1 , b=>2, cq=>3'::hstore || 'cq=>l, b=>g, fg=>f');
+ skeys 
+-------
+ b
+ aa
+ cq
+ fg
+(4 rows)
+
+select * from skeys('""=>1');
+ skeys 
+-------
+ 
+(1 row)
+
+select * from skeys('');
+ skeys 
+-------
+(0 rows)
+
+select * from svals('aa=>1 , b=>2, cq=>3'::hstore || 'cq=>l, b=>g, fg=>f');
+ svals 
+-------
+ g
+ 1
+ l
+ f
+(4 rows)
+
+select *, svals is null from svals('aa=>1 , b=>2, cq=>3'::hstore || 'cq=>l, b=>g, fg=>NULL');
+ svals | ?column? 
+-------+----------
+ g     | f
+ 1     | f
+ l     | f
+       | t
+(4 rows)
+
+select * from svals('""=>1');
+ svals 
+-------
+ 1
+(1 row)
+
+select * from svals('');
+ svals 
+-------
+(0 rows)
+
+select * from each('aaa=>bq, b=>NULL, ""=>1 ');
+ key | value 
+-----+-------
+     | 1
+ b   | 
+ aaa | bq
+(3 rows)
+
+-- @
+select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL, c=>NULL';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL, g=>NULL';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'a=>b, b=>1, c=>NULL'::hstore @ 'g=>NULL';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>c';
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b, c=>NULL';
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b, c=>q';
+ ?column? 
+----------
+ f
+(1 row)
+
+CREATE TABLE testhstore (h hstore);
+\copy testhstore from 'data/hstore.data'
+select count(*) from testhstore where h @ 'wait=>NULL';
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from testhstore where h @ 'wait=>CC';
+ count 
+-------
+    15
+(1 row)
+
+select count(*) from testhstore where h @ 'wait=>CC, public=>t';
+ count 
+-------
+     2
+(1 row)
+
+create index hidx on testhstore using gist(h);
+set enable_seqscan=off;
+select count(*) from testhstore where h @ 'wait=>NULL';
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from testhstore where h @ 'wait=>CC';
+ count 
+-------
+    15
+(1 row)
+
+select count(*) from testhstore where h @ 'wait=>CC, public=>t';
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from (select (each(h)).key from testhstore) as wow ;
+ count 
+-------
+  4779
+(1 row)
+
+select key, count(*) from (select (each(h)).key from testhstore) as wow group by key order by count desc, key;
+    key    | count 
+-----------+-------
+ line      |   883
+ query     |   207
+ pos       |   203
+ node      |   202
+ space     |   197
+ status    |   195
+ public    |   194
+ title     |   190
+ org       |   189
+ user      |   189
+ wait      |   189
+ coauthors |   188
+ disabled  |   185
+ indexed   |   184
+ cleaned   |   180
+ bad       |   179
+ date      |   179
+ world     |   176
+ state     |   172
+ subtitle  |   169
+ auth      |   168
+ abstract  |   161
+(22 rows)
+

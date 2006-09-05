@@ -52,6 +52,10 @@ fuzzystrmatch -
 	Levenshtein, metaphone, and soundex fuzzy string matching
 	by Joe Conway <mail@joeconway.com>, Joel Burton <jburton@scw.org>
 
+hstore -
+	Hstore - module for storing (key,value) pairs
+    by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
+
 intagg -
 	Integer aggregator
 	by mlw <markw@mohawksoft.com>
