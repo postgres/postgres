@@ -11,9 +11,8 @@ Authors
     * Oleg Bartunov <oleg@sai.msu.su>, Moscow, Moscow University, Russia
     * Teodor Sigaev <teodor@sigaev.ru>, Moscow, Delta-Soft Ltd.,Russia
 
-License
-
-Stable version, included into PostgreSQL distribution, released under BSD license. Development version, available from this site, released under the GNU General Public License, version 2 (June 1991).
+LEGAL NOTICES: This module is released under BSD license (as PostgreSQL
+itself)
 
 Operations
 
@@ -61,7 +60,8 @@ regression=# select 'a=>b, b=>1, c=>NULL'::hstore @ 'b=>1';
  t
 (1 row)
 
-    * hstore ~ hstore - contained operation, check if left operand is contained in right
+    * hstore ~ hstore - contained operation, check if left operand is contained 
+	 in right
 
 Functions
 
@@ -95,7 +95,8 @@ regression=# select svals('a=>1,b=>2');
  1
  2
 
-    * delete (hstore,text) - delete (key,value) from hstore if key matches argument. 
+    * delete (hstore,text) - delete (key,value) from hstore if key matches 
+	  argument. 
 
 regression=# select delete('a=>1,b=>2','b');
   delete  
@@ -110,14 +111,16 @@ regression=# select * from each('a=>1,b=>2');
  a   | 1
  b   | 2
 
-    * isexists (hstore,text) - returns 'true if key is exists in hstore and false otherwise. 
+    * isexists (hstore,text) - returns 'true if key is exists in hstore and 
+	false otherwise. 
 
 regression=# select isexists('a=>1','a');
  isexists 
 ----------
  t
 
-    * isdefined (hstore,text) - returns true if key is exists in hstore and its value is not NULL. 
+    * isdefined (hstore,text) - returns true if key is exists in hstore and 
+	  its value is not NULL. 
 
 regression=# select isdefined('a=>NULL','a');
  isdefined 
@@ -148,7 +151,9 @@ update tt set h=delete(h,'k1');
 
     * Statistics
 
-hstore type, because of its intrinsic liberality, could contain a lot of different keys. Checking for valid keys is the task of application. Examples below demonstrate several techniques how to check keys statistics.
+hstore type, because of its intrinsic liberality, could contain a lot of 
+different keys. Checking for valid keys is the task of application. 
+Examples below demonstrate several techniques how to check keys statistics.
 
           o simple example 
 
