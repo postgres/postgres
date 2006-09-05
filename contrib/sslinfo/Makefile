@@ -1,4 +1,5 @@
-MODULES = sslinfo
+MODULE_big = sslinfo
+OBJS = sslinfo.o
 DATA_built = sslinfo.sql
 DOC = README.pgsslinfo
 
@@ -11,3 +12,5 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
+
+SHLIB_LINK += $(LIBS)
