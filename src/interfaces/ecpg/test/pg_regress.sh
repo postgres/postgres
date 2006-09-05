@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.11 2006/09/05 10:00:53 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.12 2006/09/05 12:17:09 meskes Exp $
 
 me=`basename $0`
 
@@ -711,7 +711,7 @@ for i in \
          connect/*.pgc \
          compat_informix/*.pgc \
          complex/*.pgc \
-         errors/*.pgc \
+         preproc/*.pgc \
          pgtypeslib/*.pgc \
          sql/*.pgc \
          thread/*.pgc; do

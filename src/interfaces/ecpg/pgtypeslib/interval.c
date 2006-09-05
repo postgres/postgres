@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.33 2006/09/04 01:26:28 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.34 2006/09/05 12:17:09 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -836,10 +836,10 @@ PGTYPESinterval_to_asc(interval * span)
 }
 
 int
-PGTYPESinterval_copy(interval * intvlsrc, interval * intrcldest)
+PGTYPESinterval_copy(interval * intvlsrc, interval * intvldest)
 {
-	intrcldest->time = intvlsrc->time;
-	intrcldest->month = intvlsrc->month;
+	intvldest->time = intvlsrc->time;
+	intvldest->month = intvlsrc->month;
 
 	return 0;
 }

@@ -2142,5 +2142,7 @@ Tu 5. Sep 11:49:08 CEST 2006
 	- Synced parser.
 	- Fixed ecpglib trying to read one character after end-of-string.
 	- Fixed port number setting in regression suite.
+	- Added some interval checks to regression suite.
+	- Started to cleanup complex tests.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
