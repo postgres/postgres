@@ -1,6 +1,6 @@
 pgcrypto - cryptographic functions for PostgreSQL
 =================================================
-Marko Kreen <marko@l-t.ee>
+Marko Kreen <markokr@gmail.com>
 
 // Note: this document is in asciidoc format.
 
@@ -79,14 +79,7 @@ As standard in SQL, all functions return NULL, if any of the arguments
 are NULL.  This may create security risks on careless usage.
 
 
-2.3.  Deprecated functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The `digest_exists()`, `hmac_exists()` and `cipher_exists()` functions
-are deprecated.  The plan is to remove them in PostgreSQL 8.2.
-
-
-2.4.  Security
+2.3.  Security
 ~~~~~~~~~~~~~~~
 
 All the functions here run inside database server.  That means that all
@@ -714,4 +707,4 @@ http://www.cs.ut.ee/~helger/crypto/[]::
 	Collection of cryptology pointers.
 
 
-// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.17 2006/08/05 00:29:11 neilc Exp $
+// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.18 2006/09/05 21:26:48 tgl Exp $

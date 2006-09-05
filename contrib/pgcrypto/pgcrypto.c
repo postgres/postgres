@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.22 2006/07/13 04:15:25 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.23 2006/09/05 21:26:48 tgl Exp $
  */
 
 #include "postgres.h"
@@ -87,32 +87,6 @@ pg_digest(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(res);
 }
 
-/* check if given hash exists */
-PG_FUNCTION_INFO_V1(pg_digest_exists);
-
-Datum
-pg_digest_exists(PG_FUNCTION_ARGS)
-{
-	text	   *name;
-	PX_MD	   *res;
-
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-
-	name = PG_GETARG_TEXT_P(0);
-
-	res = find_provider(name, (PFN) px_find_digest, "Digest", 1);
-
-	PG_FREE_IF_COPY(name, 0);
-
-	if (res == NULL)
-		PG_RETURN_BOOL(false);
-
-	res->free(res);
-
-	PG_RETURN_BOOL(true);
-}
-
 /* SQL function: hmac(data:bytea, key:bytea, type:text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_hmac);
 
@@ -156,32 +130,6 @@ pg_hmac(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(name, 2);
 
 	PG_RETURN_BYTEA_P(res);
-}
-
-/* check if given hmac type exists */
-PG_FUNCTION_INFO_V1(pg_hmac_exists);
-
-Datum
-pg_hmac_exists(PG_FUNCTION_ARGS)
-{
-	text	   *name;
-	PX_HMAC    *h;
-
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-
-	name = PG_GETARG_TEXT_P(0);
-
-	h = find_provider(name, (PFN) px_find_hmac, "HMAC", 1);
-
-	PG_FREE_IF_COPY(name, 0);
-
-	if (h != NULL)
-	{
-		px_hmac_free(h);
-		PG_RETURN_BOOL(true);
-	}
-	PG_RETURN_BOOL(false);
 }
 
 
@@ -563,27 +511,6 @@ pg_random_bytes(PG_FUNCTION_ARGS)
 				 errmsg("Random generator error: %s", px_strerror(err))));
 
 	PG_RETURN_BYTEA_P(res);
-}
-
-/* SQL function: pg_cipher_exists(text) returns bool */
-PG_FUNCTION_INFO_V1(pg_cipher_exists);
-
-Datum
-pg_cipher_exists(PG_FUNCTION_ARGS)
-{
-	text	   *arg;
-	PX_Combo   *c;
-
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-
-	arg = PG_GETARG_TEXT_P(0);
-
-	c = find_provider(arg, (PFN) px_find_combo, "Cipher", 1);
-	if (c != NULL)
-		px_combo_free(c);
-
-	PG_RETURN_BOOL((c != NULL) ? true : false);
 }
 
 static void *

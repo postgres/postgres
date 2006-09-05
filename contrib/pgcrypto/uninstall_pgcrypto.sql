@@ -3,11 +3,9 @@ SET search_path = public;
 
 DROP FUNCTION digest(text, text);
 DROP FUNCTION digest(bytea, text);
-DROP FUNCTION digest_exists(text);
 
 DROP FUNCTION hmac(text, text, text);
 DROP FUNCTION hmac(bytea, bytea, text);
-DROP FUNCTION hmac_exists(text);
 
 DROP FUNCTION crypt(text, text);
 DROP FUNCTION gen_salt(text);
@@ -17,7 +15,7 @@ DROP FUNCTION encrypt(bytea, bytea, text);
 DROP FUNCTION decrypt(bytea, bytea, text);
 DROP FUNCTION encrypt_iv(bytea, bytea, bytea, text);
 DROP FUNCTION decrypt_iv(bytea, bytea, bytea, text);
-DROP FUNCTION cipher_exists(text);
+
 DROP FUNCTION gen_random_bytes(int4);
 
 DROP FUNCTION pgp_sym_encrypt(text, text);
