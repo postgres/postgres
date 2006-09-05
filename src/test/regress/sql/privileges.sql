@@ -214,7 +214,7 @@ select has_table_privilege('pg_shad','select');
 select has_table_privilege('nosuchuser','pg_authid','select');
 select has_table_privilege('pg_authid','sel');
 select has_table_privilege(-999999,'pg_authid','update');
-select has_table_privilege(1,'rule');
+select has_table_privilege(1,'select');
 
 -- superuser
 \c -
@@ -227,6 +227,8 @@ from (select oid from pg_roles where rolname = current_user) as t2;
 select has_table_privilege(t2.oid,'pg_authid','delete')
 from (select oid from pg_roles where rolname = current_user) as t2;
 
+-- 'rule' privilege no longer exists, but for backwards compatibility
+-- has_table_privilege still recognizes the keyword and says FALSE
 select has_table_privilege(current_user,t1.oid,'rule')
 from (select oid from pg_class where relname = 'pg_authid') as t1;
 select has_table_privilege(current_user,t1.oid,'references')
@@ -258,8 +260,6 @@ from (select oid from pg_roles where rolname = current_user) as t2;
 select has_table_privilege(t2.oid,'pg_class','delete')
 from (select oid from pg_roles where rolname = current_user) as t2;
 
-select has_table_privilege(current_user,t1.oid,'rule')
-from (select oid from pg_class where relname = 'pg_class') as t1;
 select has_table_privilege(current_user,t1.oid,'references')
 from (select oid from pg_class where relname = 'pg_class') as t1;
 
@@ -286,8 +286,6 @@ from (select oid from pg_roles where rolname = current_user) as t2;
 select has_table_privilege(t2.oid,'atest1','delete')
 from (select oid from pg_roles where rolname = current_user) as t2;
 
-select has_table_privilege(current_user,t1.oid,'rule')
-from (select oid from pg_class where relname = 'atest1') as t1;
 select has_table_privilege(current_user,t1.oid,'references')
 from (select oid from pg_class where relname = 'atest1') as t1;
 

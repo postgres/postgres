@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.247 2006/07/31 20:09:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.248 2006/09/05 21:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
+#include "rewrite/rewriteDefine.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
@@ -682,6 +683,22 @@ RelationBuildRuleLock(Relation relation)
 		pfree(rule_str);
 		if ((Pointer) rule_text != DatumGetPointer(rule_datum))
 			pfree(rule_text);
+
+		/*
+		 * We want the rule's table references to be checked as though by the
+		 * table owner, not the user referencing the rule.  Therefore, scan
+		 * through the rule's actions and set the checkAsUser field on all
+		 * rtable entries.  We have to look at the qual as well, in case it
+		 * contains sublinks.
+		 *
+		 * The reason for doing this when the rule is loaded, rather than
+		 * when it is stored, is that otherwise ALTER TABLE OWNER would have
+		 * to grovel through stored rules to update checkAsUser fields.
+		 * Scanning the rule tree during load is relatively cheap (compared
+		 * to constructing it in the first place), so we do it here.
+		 */
+		setRuleCheckAsUser((Node *) rule->actions, relation->rd_rel->relowner);
+		setRuleCheckAsUser(rule->qual, relation->rd_rel->relowner);
 
 		if (numlocks >= maxlocks)
 		{

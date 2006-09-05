@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.60 2006/07/14 00:13:05 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.61 2006/09/05 21:08:33 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1342,7 +1342,7 @@ ALTER TABLE products RENAME TO items;
   <para>
    There are several different privileges: <literal>SELECT</>,
    <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
-   <literal>RULE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
+   <literal>REFERENCES</>, <literal>TRIGGER</>,
    <literal>CREATE</>, <literal>CONNECT</>, <literal>TEMPORARY</>,
    <literal>EXECUTE</>, and <literal>USAGE</>.
    The privileges applicable to a particular

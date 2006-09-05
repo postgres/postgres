@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.90 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.91 2006/09/05 21:08:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -741,7 +741,6 @@ CommentRule(List *qualname, char *comment)
 	HeapTuple	tuple;
 	Oid			reloid;
 	Oid			ruleoid;
-	AclResult	aclcheck;
 
 	/* Separate relname and trig name */
 	nnames = list_length(qualname);
@@ -819,9 +818,8 @@ CommentRule(List *qualname, char *comment)
 	}
 
 	/* Check object security */
-	aclcheck = pg_class_aclcheck(reloid, GetUserId(), ACL_RULE);
-	if (aclcheck != ACLCHECK_OK)
-		aclcheck_error(aclcheck, ACL_KIND_CLASS,
+	if (!pg_class_ownercheck(reloid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   get_rel_name(reloid));
 
 	/* Call CreateComments() to create/drop the comments */

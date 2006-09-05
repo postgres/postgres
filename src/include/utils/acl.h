@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.96 2006/05/03 22:45:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.97 2006/09/05 21:08:36 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -128,7 +128,6 @@ typedef ArrayType Acl;
 #define ACL_SELECT_CHR			'r'		/* formerly known as "read" */
 #define ACL_UPDATE_CHR			'w'		/* formerly known as "write" */
 #define ACL_DELETE_CHR			'd'
-#define ACL_RULE_CHR			'R'
 #define ACL_REFERENCES_CHR		'x'
 #define ACL_TRIGGER_CHR			't'
 #define ACL_EXECUTE_CHR			'X'
@@ -143,7 +142,7 @@ typedef ArrayType Acl;
 /*
  * Bitmasks defining "all rights" for each supported object type
  */
-#define ACL_ALL_RIGHTS_RELATION		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_RULE|ACL_REFERENCES|ACL_TRIGGER)
+#define ACL_ALL_RIGHTS_RELATION		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_REFERENCES|ACL_TRIGGER)
 #define ACL_ALL_RIGHTS_SEQUENCE		(ACL_USAGE|ACL_SELECT|ACL_UPDATE)
 #define ACL_ALL_RIGHTS_DATABASE		(ACL_CREATE|ACL_CREATE_TEMP|ACL_CONNECT)
 #define ACL_ALL_RIGHTS_FUNCTION		(ACL_EXECUTE)

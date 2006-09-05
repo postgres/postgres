@@ -301,7 +301,7 @@ select has_table_privilege('pg_authid','sel');
 ERROR:  unrecognized privilege type: "sel"
 select has_table_privilege(-999999,'pg_authid','update');
 ERROR:  role with OID 4293967297 does not exist
-select has_table_privilege(1,'rule');
+select has_table_privilege(1,'select');
 ERROR:  relation with OID 1 does not exist
 -- superuser
 \c -
@@ -331,11 +331,13 @@ from (select oid from pg_roles where rolname = current_user) as t2;
  t
 (1 row)
 
+-- 'rule' privilege no longer exists, but for backwards compatibility
+-- has_table_privilege still recognizes the keyword and says FALSE
 select has_table_privilege(current_user,t1.oid,'rule')
 from (select oid from pg_class where relname = 'pg_authid') as t1;
  has_table_privilege 
 ---------------------
- t
+ f
 (1 row)
 
 select has_table_privilege(current_user,t1.oid,'references')
@@ -415,13 +417,6 @@ from (select oid from pg_roles where rolname = current_user) as t2;
  f
 (1 row)
 
-select has_table_privilege(current_user,t1.oid,'rule')
-from (select oid from pg_class where relname = 'pg_class') as t1;
- has_table_privilege 
----------------------
- f
-(1 row)
-
 select has_table_privilege(current_user,t1.oid,'references')
 from (select oid from pg_class where relname = 'pg_class') as t1;
  has_table_privilege 
@@ -492,13 +487,6 @@ from (select oid from pg_roles where rolname = current_user) as t2;
 
 select has_table_privilege(t2.oid,'atest1','delete')
 from (select oid from pg_roles where rolname = current_user) as t2;
- has_table_privilege 
----------------------
- f
-(1 row)
-
-select has_table_privilege(current_user,t1.oid,'rule')
-from (select oid from pg_class where relname = 'atest1') as t1;
  has_table_privilege 
 ---------------------
  f

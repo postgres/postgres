@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.60 2006/08/02 16:29:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.61 2006/09/05 21:08:35 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }
+GRANT { { SELECT | INSERT | UPDATE | DELETE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
@@ -174,16 +174,6 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
       <para>
        Allows <xref linkend="sql-delete" endterm="sql-delete-title"> of a row from the
        specified table.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>RULE</term>
-     <listitem>
-      <para>
-       Allows the creation of a rule on the table/view.  (See the <xref
-       linkend="sql-createrule" endterm="sql-createrule-title"> statement.)
       </para>
      </listitem>
     </varlistentry>
@@ -418,8 +408,8 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
 
                         Access privileges for database "lusitania"
  Schema |  Name   | Type  |                     Access privileges
---------+---------+-------+------------------------------------------------------------
- public | mytable | table | {miriam=arwdRxt/miriam,=r/miriam,"group todos=arw/miriam"}
+--------+---------+-------+-----------------------------------------------------------
+ public | mytable | table | {miriam=arwdxt/miriam,=r/miriam,"group todos=arw/miriam"}
 (1 row)
 </programlisting>
     The entries shown by <command>\z</command> are interpreted thus:
@@ -432,7 +422,6 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
                   w -- UPDATE ("write")
                   a -- INSERT ("append")
                   d -- DELETE
-                  R -- RULE
                   x -- REFERENCES
                   t -- TRIGGER
                   X -- EXECUTE
@@ -440,7 +429,7 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
                   C -- CREATE
                   c -- CONNECT
                   T -- TEMPORARY
-            arwdRxt -- ALL PRIVILEGES (for tables)
+             arwdxt -- ALL PRIVILEGES (for tables)
                   * -- grant option for preceding privilege
 
               /yyyy -- user who granted this privilege
@@ -463,7 +452,7 @@ and may include some privileges for <literal>PUBLIC</> depending on the
 object type, as explained above.  The first <command>GRANT</> or
 <command>REVOKE</> on an object
 will instantiate the default privileges (producing, for example,
-<literal>{miriam=arwdRxt/miriam}</>) and then modify them per the
+<literal>{miriam=arwdxt/miriam}</>) and then modify them per the
 specified request.
    </para>
 
@@ -548,8 +537,7 @@ GRANT <replaceable class="PARAMETER">privileges</replaceable>
    </para>
 
    <para>
-    The <literal>RULE</literal> privilege, and privileges on
-    databases, tablespaces, schemas, and languages are
+    Privileges on databases, tablespaces, schemas, and languages are
     <productname>PostgreSQL</productname> extensions.
    </para>
  </refsect1>

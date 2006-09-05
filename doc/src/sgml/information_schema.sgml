@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.26 2006/05/02 18:07:51 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.27 2006/09/05 21:08:34 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2832,7 +2832,7 @@ ORDER BY c.ordinal_position;
        Type of the privilege: <literal>SELECT</literal>,
        <literal>DELETE</literal>, <literal>INSERT</literal>,
        <literal>UPDATE</literal>, <literal>REFERENCES</literal>,
-       <literal>RULE</literal>, or <literal>TRIGGER</literal>
+       or <literal>TRIGGER</literal>
       </entry>
      </row>
 
@@ -4418,7 +4418,7 @@ ORDER BY c.ordinal_position;
        Type of the privilege: <literal>SELECT</literal>,
        <literal>DELETE</literal>, <literal>INSERT</literal>,
        <literal>UPDATE</literal>, <literal>REFERENCES</literal>,
-       <literal>RULE</literal>, or <literal>TRIGGER</literal>
+       or <literal>TRIGGER</literal>
       </entry>
      </row>
 

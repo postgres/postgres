@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.134 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.135 2006/09/05 21:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,9 +265,6 @@ aclparse(const char *s, AclItem *aip)
 			case ACL_DELETE_CHR:
 				read = ACL_DELETE;
 				break;
-			case ACL_RULE_CHR:
-				read = ACL_RULE;
-				break;
 			case ACL_REFERENCES_CHR:
 				read = ACL_REFERENCES;
 				break;
@@ -288,6 +285,9 @@ aclparse(const char *s, AclItem *aip)
 				break;
 			case ACL_CONNECT_CHR:
 				read = ACL_CONNECT;
+				break;
+			case 'R':			/* ignore old RULE privileges */
+				read = 0;
 				break;
 			default:
 				ereport(ERROR,
@@ -1325,8 +1325,6 @@ convert_priv_string(text *priv_type_text)
 		return ACL_UPDATE;
 	if (pg_strcasecmp(priv_type, "DELETE") == 0)
 		return ACL_DELETE;
-	if (pg_strcasecmp(priv_type, "RULE") == 0)
-		return ACL_RULE;
 	if (pg_strcasecmp(priv_type, "REFERENCES") == 0)
 		return ACL_REFERENCES;
 	if (pg_strcasecmp(priv_type, "TRIGGER") == 0)
@@ -1343,6 +1341,8 @@ convert_priv_string(text *priv_type_text)
 		return ACL_CREATE_TEMP;
 	if (pg_strcasecmp(priv_type, "CONNECT") == 0)
 		return ACL_CONNECT;
+	if (pg_strcasecmp(priv_type, "RULE") == 0)
+		return 0;				/* ignore old RULE privileges */
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1553,11 +1553,6 @@ convert_table_priv_string(text *priv_type_text)
 	if (pg_strcasecmp(priv_type, "DELETE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_DELETE);
 
-	if (pg_strcasecmp(priv_type, "RULE") == 0)
-		return ACL_RULE;
-	if (pg_strcasecmp(priv_type, "RULE WITH GRANT OPTION") == 0)
-		return ACL_GRANT_OPTION_FOR(ACL_RULE);
-
 	if (pg_strcasecmp(priv_type, "REFERENCES") == 0)
 		return ACL_REFERENCES;
 	if (pg_strcasecmp(priv_type, "REFERENCES WITH GRANT OPTION") == 0)
@@ -1567,6 +1562,11 @@ convert_table_priv_string(text *priv_type_text)
 		return ACL_TRIGGER;
 	if (pg_strcasecmp(priv_type, "TRIGGER WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_TRIGGER);
+
+	if (pg_strcasecmp(priv_type, "RULE") == 0)
+		return 0;				/* ignore old RULE privileges */
+	if (pg_strcasecmp(priv_type, "RULE WITH GRANT OPTION") == 0)
+		return 0;
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

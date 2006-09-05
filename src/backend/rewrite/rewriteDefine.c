@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.113 2006/09/02 17:06:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.114 2006/09/05 21:08:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,8 @@
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,
 								bool isSelect);
-static void setRuleCheckAsUser_Query(Query *qry, Oid userid);
-static void setRuleCheckAsUser_Expr(Node *node, Oid userid);
 static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
+static void setRuleCheckAsUser_Query(Query *qry, Oid userid);
 
 
 /*
@@ -193,7 +192,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 	int			event_attno;
 	ListCell   *l;
 	Query	   *query;
-	AclResult	aclresult;
 	bool		RelisBecomingView = false;
 
 	/*
@@ -209,9 +207,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/*
 	 * Check user has permission to apply rules to this relation.
 	 */
-	aclresult = pg_class_aclcheck(ev_relid, GetUserId(), ACL_RULE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_CLASS,
+	if (!pg_class_ownercheck(ev_relid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   RelationGetRelationName(event_relation));
 
 	/*
@@ -411,19 +408,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	event_attno = -1;
 
-	/*
-	 * We want the rule's table references to be checked as though by the rule
-	 * owner, not the user referencing the rule.  Therefore, scan through the
-	 * rule's rtables and set the checkAsUser field on all rtable entries.  We
-	 * have to look at event_qual as well, in case it contains sublinks.
-	 */
-	foreach(l, action)
-	{
-		query = (Query *) lfirst(l);
-		setRuleCheckAsUser_Query(query, GetUserId());
-	}
-	setRuleCheckAsUser_Expr(event_qual, GetUserId());
-
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
 	{
@@ -554,9 +538,9 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
 }
 
 /*
- * setRuleCheckAsUser_Query
- *		Recursively scan a query and set the checkAsUser field to the
- *		given userid in all rtable entries.
+ * setRuleCheckAsUser
+ *		Recursively scan a query or expression tree and set the checkAsUser
+ *		field to the given userid in all rtable entries.
  *
  * Note: for a view (ON SELECT rule), the checkAsUser field of the *OLD*
  * RTE entry will be overridden when the view rule is expanded, and the
@@ -565,6 +549,26 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
  * it's important to set these fields to match the rule owner.  So we just set
  * them always.
  */
+void
+setRuleCheckAsUser(Node *node, Oid userid)
+{
+	(void) setRuleCheckAsUser_walker(node, &userid);
+}
+
+static bool
+setRuleCheckAsUser_walker(Node *node, Oid *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Query))
+	{
+		setRuleCheckAsUser_Query((Query *) node, *context);
+		return false;
+	}
+	return expression_tree_walker(node, setRuleCheckAsUser_walker,
+								  (void *) context);
+}
+
 static void
 setRuleCheckAsUser_Query(Query *qry, Oid userid)
 {
@@ -589,31 +593,6 @@ setRuleCheckAsUser_Query(Query *qry, Oid userid)
 	if (qry->hasSubLinks)
 		query_tree_walker(qry, setRuleCheckAsUser_walker, (void *) &userid,
 						  QTW_IGNORE_RT_SUBQUERIES);
-}
-
-/*
- * Expression-tree walker to find sublink queries
- */
-static void
-setRuleCheckAsUser_Expr(Node *node, Oid userid)
-{
-	(void) setRuleCheckAsUser_walker(node, &userid);
-}
-
-static bool
-setRuleCheckAsUser_walker(Node *node, Oid *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Query))
-	{
-		Query	   *qry = (Query *) node;
-
-		setRuleCheckAsUser_Query(qry, *context);
-		return false;
-	}
-	return expression_tree_walker(node, setRuleCheckAsUser_walker,
-								  (void *) context);
 }
 
 

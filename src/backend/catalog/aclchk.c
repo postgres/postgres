@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.130 2006/07/14 14:52:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.131 2006/09/05 21:08:35 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1328,8 +1328,6 @@ string_to_privilege(const char *privname)
 		return ACL_UPDATE;
 	if (strcmp(privname, "delete") == 0)
 		return ACL_DELETE;
-	if (strcmp(privname, "rule") == 0)
-		return ACL_RULE;
 	if (strcmp(privname, "references") == 0)
 		return ACL_REFERENCES;
 	if (strcmp(privname, "trigger") == 0)
@@ -1346,6 +1344,8 @@ string_to_privilege(const char *privname)
 		return ACL_CREATE_TEMP;
 	if (strcmp(privname, "connect") == 0)
 		return ACL_CONNECT;
+	if (strcmp(privname, "rule") == 0)
+		return 0;				/* ignore old RULE privileges */
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("unrecognized privilege type \"%s\"", privname)));
@@ -1365,8 +1365,6 @@ privilege_to_string(AclMode privilege)
 			return "UPDATE";
 		case ACL_DELETE:
 			return "DELETE";
-		case ACL_RULE:
-			return "RULE";
 		case ACL_REFERENCES:
 			return "REFERENCES";
 		case ACL_TRIGGER:

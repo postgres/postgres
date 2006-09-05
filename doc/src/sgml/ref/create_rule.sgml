@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.46 2006/09/02 17:06:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.47 2006/09/05 21:08:35 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -200,8 +200,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
   <title>Notes</title>
 
   <para>
-   You must have the privilege <literal>RULE</literal> on a table to
-   be allowed to define a rule on it.
+   You must be the owner of a table to create or change rules for it.
   </para>
 
   <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.65 2006/06/16 20:23:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.66 2006/09/05 21:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior,
 {
 	HeapTuple	tuple;
 	Oid			eventRelationOid;
-	AclResult	aclresult;
 	ObjectAddress object;
 
 	/*
@@ -72,9 +71,8 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior,
 	 */
 	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
 	Assert(eventRelationOid == owningRel);
-	aclresult = pg_class_aclcheck(eventRelationOid, GetUserId(), ACL_RULE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_CLASS,
+	if (!pg_class_ownercheck(eventRelationOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   get_rel_name(eventRelationOid));
 
 	/*
