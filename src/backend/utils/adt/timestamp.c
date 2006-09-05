@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.166 2006/09/03 03:34:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.167 2006/09/05 01:13:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2514,28 +2514,34 @@ interval_mul(PG_FUNCTION_ARGS)
 	/*
 	 *	Fractional months full days into days.
 	 *
-	 *	The remainders suffer from float rounding, so instead of
-	 *	doing the computation using just the remainder, we calculate
-	 *	the total number of days and subtract.  Specifically, we are
-	 *	multipling by DAYS_PER_MONTH before dividing by factor.
-	 *	This greatly reduces rounding errors.
+	 *	Floating point calculation are inherently inprecise, so these
+	 *	calculations are crafted to produce the most reliable result
+	 *	possible.  TSROUND() is needed to more accurately produce whole
+	 *	numbers where appropriate.
 	 */
-	month_remainder_days = (orig_month * (double)DAYS_PER_MONTH) * factor -
-			result->month * (double)DAYS_PER_MONTH;
-	sec_remainder = (orig_day * (double)SECS_PER_DAY) * factor -
-			result->day * (double)SECS_PER_DAY +
-			(month_remainder_days - (int32) month_remainder_days) * SECS_PER_DAY;
+	month_remainder_days = (orig_month * factor - result->month) * DAYS_PER_MONTH;
+	month_remainder_days = TSROUND(month_remainder_days);
+	sec_remainder = (orig_day * factor - result->day +
+			month_remainder_days - (int)month_remainder_days) * SECS_PER_DAY;
+	sec_remainder = TSROUND(sec_remainder);
+
+	/*
+	 *	Might have 24:00:00 hours due to rounding, or >24 hours because of
+	 *	time cascade from months and days.  It might still be >24 if the
+	 *	combination of cascade and the seconds factor operation itself.
+	 */
+	if (Abs(sec_remainder) >= SECS_PER_DAY)
+	{
+		result->day += (int)(sec_remainder / SECS_PER_DAY);
+		sec_remainder -= (int)(sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
+	}
 
 	/* cascade units down */
 	result->day += (int32) month_remainder_days;
 #ifdef HAVE_INT64_TIMESTAMP
 	result->time = rint(span->time * factor + sec_remainder * USECS_PER_SEC);
 #else
-	/*
-	 *	TSROUND() needed to prevent -146:23:60.00 output on PowerPC for
-	 *	SELECT interval '-41 mon -12 days -360:00' * 0.3;
-	 */
-	result->time = span->time * factor + TSROUND(sec_remainder);
+	result->time = span->time * factor + sec_remainder;
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
@@ -2574,11 +2580,16 @@ interval_div(PG_FUNCTION_ARGS)
 	 *	Fractional months full days into days.  See comment in 
 	 *	interval_mul().
 	 */
-	month_remainder_days = (orig_month * (double)DAYS_PER_MONTH) / factor -
-			result->month * (double)DAYS_PER_MONTH;
-	sec_remainder = (orig_day * (double)SECS_PER_DAY) / factor -
-			result->day * (double)SECS_PER_DAY +
-			(month_remainder_days - (int32) month_remainder_days) * SECS_PER_DAY;
+	month_remainder_days = (orig_month / factor - result->month) * DAYS_PER_MONTH;
+	month_remainder_days = TSROUND(month_remainder_days);
+	sec_remainder = (orig_day / factor - result->day +
+			month_remainder_days - (int)month_remainder_days) * SECS_PER_DAY;
+	sec_remainder = TSROUND(sec_remainder);
+	if (Abs(sec_remainder) >= SECS_PER_DAY)
+	{
+		result->day += (int)(sec_remainder / SECS_PER_DAY);
+		sec_remainder -= (int)(sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
+	}
 
 	/* cascade units down */
 	result->day += (int32) month_remainder_days;
@@ -2586,7 +2597,7 @@ interval_div(PG_FUNCTION_ARGS)
 	result->time = rint(span->time / factor + sec_remainder * USECS_PER_SEC);
 #else
 	/* See TSROUND comment in interval_mul(). */
-	result->time = span->time / factor + TSROUND(sec_remainder);
+	result->time = span->time / factor + sec_remainder;
 #endif
 
 	PG_RETURN_INTERVAL_P(result);

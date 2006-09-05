@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.62 2006/07/13 16:49:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.63 2006/09/05 01:13:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,11 +161,14 @@ typedef int32 fsec_t;
 
 typedef double fsec_t;
 
-/* round off to MAX_TIMESTAMP_PRECISION decimal places */
-/* note: this is also used for rounding off intervals */
+#endif
+
+/*
+ *	Round off to MAX_TIMESTAMP_PRECISION decimal places.
+ *	Note: this is also used for rounding off intervals.
+ */
 #define TS_PREC_INV 1000000.0
 #define TSROUND(j) (rint(((double) (j)) * TS_PREC_INV) / TS_PREC_INV)
-#endif
 
 #define TIMESTAMP_MASK(b) (1 << (b))
 #define INTERVAL_MASK(b) (1 << (b))
