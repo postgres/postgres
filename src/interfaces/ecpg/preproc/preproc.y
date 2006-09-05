@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.336 2006/09/03 19:30:43 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.337 2006/09/05 10:00:52 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -478,8 +478,8 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	ColConstraint ColConstraintElem drop_type Bconst Iresult
 %type  <str>	TableConstraint OptTableElementList Xconst opt_transaction
 %type  <str>	ConstraintElem key_actions ColQualList type_name
-%type  <str>	target_list target_el update_target_list alias_clause
-%type  <str>	update_target_el qualified_name database_name alter_using
+%type  <str>	target_list target_el alias_clause
+%type  <str>	qualified_name database_name alter_using
 %type  <str>	access_method attr_name index_name name func_name
 %type  <str>	file_name AexprConst c_expr ConstTypename var_list
 %type  <str>	a_expr b_expr TruncateStmt CommentStmt OnCommitOption opt_by
@@ -545,7 +545,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	OptSchemaName OptSchemaEltList schema_stmt opt_drop_behavior
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
 %type  <str>	columnref function_name values_clause AllConstVar
-%type  <str>	values_list insert_column_item DropRuleStmt values_item
+%type  <str>	insert_column_item DropRuleStmt ctext_expr
 %type  <str>	createfunc_opt_item set_rest var_list_or_default alter_rel_cmd
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
 %type  <str>	DropUserStmt copy_from copy_opt_list copy_opt_item
@@ -577,7 +577,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval opt_ecpg_using
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
-%type  <str>	using_descriptor into_descriptor
+%type  <str>	using_descriptor into_descriptor 
 %type  <str>	prepared_name struct_union_type_with_symbol OptConsTableSpace
 %type  <str>	ECPGunreserved ECPGunreserved_interval cvariable opt_bit_field
 %type  <str>	AlterOwnerStmt OptTableSpaceOwner CreateTableSpaceStmt
@@ -589,8 +589,8 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	locked_rels_list opt_granted_by RevokeRoleStmt alterdb_opt_item using_clause
 %type  <str>	GrantRoleStmt opt_asymmetric aggr_args aggr_args_list old_aggr_definition
 %type  <str>	old_aggr_elem for_locking_items TableLikeOptionList TableLikeOption
-%type  <str>	update_target_lists_list set_opt update_target_lists_el update_col_list 
-%type  <str>	update_value_list update_col_list_el
+%type  <str>	set_target_list	set_clause_list set_clause multiple_set_clause
+%type  <str>	ctext_expr_list ctext_row single_set_clause set_target
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -3176,16 +3176,35 @@ opt_nowait:    NOWAIT                   { $$ = make_str("nowait"); }
  *****************************************************************************/
 
 UpdateStmt:  UPDATE relation_expr_opt_alias
-				SET set_opt
+				SET set_clause_list
 				from_clause
 				where_clause
 				returning_clause
 			{$$ = cat_str(7, make_str("update"), $2, make_str("set"), $4, $5, $6, $7); }
 		;
 
-set_opt:
-		update_target_list		{ $$ = $1; }
-		| update_target_lists_list	{ $$ = $1; }
+set_clause_list:
+		set_clause				{ $$ = $1; }
+		| set_clause_list ',' set_clause	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		;
+
+set_clause:
+		single_set_clause		{ $$ = $1; }
+		| multiple_set_clause		{ $$ = $1; }
+		;
+
+single_set_clause:
+		set_target '=' ctext_expr	{ $$ = cat_str(3, $1, make_str("="), $3); };
+
+multiple_set_clause:
+		'(' set_target_list ')' '=' ctext_row	{ $$ = cat_str(4, make_str("("), $2, make_str(")="), $5); };
+
+set_target:
+		ColId opt_indirection		{ $$ = cat2_str($1, $2); };
+
+set_target_list:
+		set_target  				{ $$ = $1; }
+		| set_target_list ',' set_target	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
 /*****************************************************************************
@@ -3433,47 +3452,10 @@ locked_rels_list:
 		| /* EMPTY */		{ $$ = EMPTY; }
 		;
 
-values_clause:  VALUES '(' values_list ')'
-			{ $$ = cat_str(3, make_str("values("), $3, make_str(")")); }
-		| values_clause ',' '(' values_list ')'
-			{ $$ = cat_str(4, $1, make_str(", ("), $4, make_str(")")); }
-		;
-
-values_list: values_item  			{ $$ = $1; }
-		| values_list ',' values_item  	{ $$ = cat_str(3, $1, make_str(","), $3); }
-		;
-
-values_item:	a_expr		{ $$ = $1; } 
-		| DEFAULT	{ $$ = make_str("DEFAULT"); }
-		;
-
-update_target_lists_list:
-		update_target_lists_el 					{ $$ = $1; }
-		| update_target_lists_list ',' update_target_lists_el	{ $$ = cat_str(3, $1, make_str(","), $3); }
-		;
-		
-update_target_lists_el:
-			'(' update_col_list ')' '=' '(' update_value_list ')'
-				{
-					$$ = cat_str(5, make_str("("), $2, make_str(")=("), $6, make_str(")"));
-				}
-		;
-
-update_col_list:
-			update_col_list_el 				{ $$ = $1; }
-			| update_col_list ',' update_col_list_el	{ $$ = cat_str(3, $1, make_str(","), $3); }
-		;
-
-update_col_list_el:
-			ColId opt_indirection
-				{
-					$$ = cat2_str($1, $2);
-				}
-		;
-
-update_value_list:
-			values_item 				{ $$ = $1; }
-			| update_value_list ',' values_item	{ $$ = cat_str(3, $1, make_str(","), $3); }
+values_clause:  VALUES ctext_row
+			{ $$ = cat2_str(make_str("values"), $2); }
+		| values_clause ',' ctext_row
+			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
 /*****************************************************************************
@@ -4356,9 +4338,21 @@ opt_asymmetric: ASYMMETRIC	{ $$ = make_str("asymmetric"); }
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
+ctext_expr:
+		a_expr     	{ $$ = $1; }
+		| DEFAULT	{ $$ = make_str("default"); }
+		;
+
+ctext_expr_list:
+		 ctext_expr				{ $$ = $1; }
+		 |  ctext_expr_list ',' ctext_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		 ;
+
+ctext_row: '(' ctext_expr_list ')' 	{ $$ = cat_str(3, make_str("("), $2, make_str(")"));};
+
 /*****************************************************************************
  *
- *	target lists for SELECT, UPDATE, INSERT
+ *	target lists for SELECT
  *
  *****************************************************************************/
 
@@ -4377,11 +4371,8 @@ target_el:	a_expr AS ColLabel
 			{ $$ = make_str("*"); }
 		;
 
-/* Target list as found in UPDATE table SET ... */
-update_target_list:  update_target_list ',' update_target_el
-			{ $$ = cat_str(3, $1, make_str(","),$3);	}
-		/* INFORMIX workaround, no longer needed
-		| '(' inf_col_list ')' '=' '(' inf_val_list ')'
+/* INFORMIX workaround, no longer needed
+update_target_list:  '(' inf_col_list ')' '=' '(' inf_val_list ')'
 		{
 			struct inf_compat_col *ptrc;
 			struct inf_compat_val *ptrv;
@@ -4404,12 +4395,10 @@ update_target_list:  update_target_list ',' update_target_el
 					vals = cat_str( 3, vals, ptrv->val, make_str(")") );
 			}
 			$$ = cat_str( 3, cols, make_str("="), vals );
-		} */
-		| update_target_el
-			{ $$ = $1;	}
+		} 
 		;
 
-/* inf_col_list: ColId opt_indirection
+inf_col_list: ColId opt_indirection
 		{
 			struct inf_compat_col *ptr = mm_alloc(sizeof(struct inf_compat_col));
 
@@ -4447,12 +4436,6 @@ inf_val_list: a_expr
 		}
 		;
 */
-
-update_target_el:  ColId opt_indirection '=' a_expr
-			{ $$ = cat_str(4, $1, $2, make_str("="), $4); }
-		| ColId opt_indirection '=' DEFAULT
-			{ $$ = cat_str(3, $1, $2, make_str("= default")); }
-		;
 
 /*****************************************************************************
  *

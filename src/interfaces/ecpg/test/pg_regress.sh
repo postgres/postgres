@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.10 2006/09/04 19:36:21 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.11 2006/09/05 10:00:53 meskes Exp $
 
 me=`basename $0`
 
@@ -644,7 +644,7 @@ trap 'sig_trap $?' 1 2 13 15
 if [ x"$temp_install" != x"" ]
 then
 	do_temp_install
-	PGPORT=$temp_port; export PGPORT
+	#PGPORT=$temp_port; export PGPORT
 else # not temp-install
 	dont_temp_install
 fi

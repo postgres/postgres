@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.16 2006/02/04 20:54:42 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.17 2006/09/05 10:00:52 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -53,6 +53,8 @@ replace_variables(char *text)
 				*ptr = '?';
 				for (++ptr; *ptr && isvarchar(*ptr); ptr++)
 					*ptr = ' ';
+				if (*ptr == '\0') /* we reached the end */
+					ptr--; /* since we will ptr++ in the top level for loop */
 			}
 		}
 	}
