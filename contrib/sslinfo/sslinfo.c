@@ -122,7 +122,10 @@ Datum ASN1_STRING_to_text(ASN1_STRING *str)
 	outlen = 0;
 	BIO_write(membuf, &outlen, 1);
 	size = BIO_get_mem_data(membuf, &sp);
-	dp = pg_do_encoding_conversion(sp, size-1, PG_UTF8, GetDatabaseEncoding());
+	dp = (char *) pg_do_encoding_conversion((unsigned char *) sp,
+											size-1,
+											PG_UTF8,
+											GetDatabaseEncoding());
 	outlen = strlen(dp);
 	result = palloc(VARHDRSZ + outlen);
 	memcpy(VARDATA(result), dp, outlen);
@@ -288,7 +291,10 @@ Datum X509_NAME_to_text(X509_NAME *name)
 	BIO_write(membuf, &i, 1);
 	size = BIO_get_mem_data(membuf, &sp);
 
-	dp = pg_do_encoding_conversion(sp, size-1, PG_UTF8, GetDatabaseEncoding());
+	dp = (char *) pg_do_encoding_conversion((unsigned char *) sp,
+											size-1,
+											PG_UTF8,
+											GetDatabaseEncoding());
 	BIO_free(membuf);
 	outlen = strlen(dp);
 	result = palloc(VARHDRSZ + outlen);
