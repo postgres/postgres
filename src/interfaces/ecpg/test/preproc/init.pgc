@@ -1,0 +1,100 @@
+exec sql include sqlca;
+
+enum e { ENUM0, ENUM1 };
+struct sa { int member; };
+
+static int fa(void)
+{
+	printf("in fa\n");
+	return 2;
+}
+
+static int
+fb(int x)
+{
+	printf("in fb (%d)\n", x);
+	return x;
+}
+
+static int
+fc(const char *x)
+{
+	printf("in fc (%s)\n", x);
+	return *x;
+}
+
+static int fd(const char *x,int i)
+{
+	printf("in fd (%s, %d)\n", x, i);
+	return (*x)*i;
+}
+
+static int fe(enum e x)
+{
+	printf("in fe (%d)\n", (int) x);
+	return (int)x;
+}
+
+static void sqlnotice(char *notice, short trans)
+{
+	if (!notice)
+		notice = "-empty-";
+	printf("in sqlnotice (%s, %d)\n", notice, trans);
+}
+
+exec sql define NONO 0;
+
+#define YES 1
+
+#ifdef _cplusplus
+namespace N
+{
+	static const int i=2;
+};
+#endif
+
+int main(void)
+{
+	struct sa x = { 14 },*y = &x;
+	exec sql begin declare section;
+		int a=(int)2;
+		int b=2+2;
+		int b2=(14*7);
+		int d=x.member;
+		int g=fb(2);
+		int i=3^1;
+		int j=1?1:2;
+
+		int e=y->member;
+		int c=10>>2;
+		bool h=2||1; 
+		long iay /* = 1L */ ;
+	exec sql end declare section;
+
+	int f=fa();
+
+#ifdef _cplusplus
+	exec sql begin declare section;
+	int k=N::i; /* compile error */
+	exec sql end declare section;
+#endif
+
+	ECPGdebug(1, stderr);
+
+	printf("%d %d %d %d %d %d %d %d %d %d %d\n", a, b, b2, c, d, e, f, g, h, i, j);
+	iay = 0;
+	printf("%ld\n", iay);
+	exec sql whenever sqlerror do fa();
+	exec sql select now();
+	exec sql whenever sqlerror do fb(20);
+	exec sql select now();
+	exec sql whenever sqlerror do fc("50");
+	exec sql select now();
+	exec sql whenever sqlerror do fd("50",1);
+	exec sql select now();
+	exec sql whenever sqlerror do fe(ENUM0);
+	exec sql select now();
+	exec sql whenever sqlerror do sqlnotice(NULL, NONO); 
+	exec sql select now();
+	return 0;
+}

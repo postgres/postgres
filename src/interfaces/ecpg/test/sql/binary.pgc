@@ -3,17 +3,13 @@
 
 EXEC SQL include ../regression;
 
-EXEC SQL typedef long mmInteger;
-EXEC SQL typedef char mmChar;
-EXEC SQL typedef short mmSmallInt;
-
 EXEC SQL BEGIN DECLARE SECTION;
 struct TBempl
 {
-  mmInteger idnum;
-  mmChar name[21];
-  mmSmallInt accs;
-  mmChar byte[20];
+  long idnum;
+  char name[21];
+  short accs;
+  char byte[20];
 };
 EXEC SQL END DECLARE SECTION;
 
@@ -23,11 +19,6 @@ main (void)
   EXEC SQL BEGIN DECLARE SECTION;
   struct TBempl empl;
   char *data = "\\001\\155\\000\\212";
-  union 
-  {
-	mmSmallInt accs;
-	char t[2];
-  } a;
   EXEC SQL END DECLARE SECTION;
   int i;
 
@@ -49,23 +40,12 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  EXEC SQL insert into empl values (1, 'first user', 320,:data);
+  EXEC SQL insert into empl values (1, 'first user', 320, :data);
   if (sqlca.sqlcode)
     {
       printf ("insert error = %ld\n", sqlca.sqlcode);
       exit (sqlca.sqlcode);
     }
-
-  EXEC SQL select name, accs, byte
-	into :empl.name, :empl.accs, :empl.byte
-	from empl
-	where idnum =:empl.idnum;
-  if (sqlca.sqlcode)
-    {
-      printf ("select error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-  printf ("name=%s, accs=%d byte=%s\n", empl.name, empl.accs, empl.byte);
 
   EXEC SQL DECLARE C CURSOR FOR select name, accs, byte from empl where idnum =:empl.idnum;
   EXEC SQL OPEN C;
@@ -82,7 +62,7 @@ main (void)
   memset(empl.byte, '#', 20L);
   EXEC SQL DECLARE B BINARY CURSOR FOR select name, accs, byte from empl where idnum =:empl.idnum;
   EXEC SQL OPEN B;
-  EXEC SQL FETCH B INTO :empl.name,:a.accs,:empl.byte;
+  EXEC SQL FETCH B INTO :empl.name,:empl.accs,:empl.byte;
   if (sqlca.sqlcode)
     {
       printf ("fetch error = %ld\n", sqlca.sqlcode);

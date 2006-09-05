@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.60 2006/08/29 12:33:45 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.61 2006/09/05 12:11:01 meskes Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -27,7 +27,7 @@ all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C connect $@
 	$(MAKE) -C sql $@
 	$(MAKE) -C pgtypeslib $@
-	$(MAKE) -C errors $@
+	$(MAKE) -C preproc $@
 	$(MAKE) -C compat_informix $@
 	$(MAKE) -C complex $@
 	$(MAKE) -C thread $@
@@ -37,7 +37,7 @@ clean distclean maintainer-clean:
 	$(MAKE) -C connect extraclean
 	$(MAKE) -C sql $@
 	$(MAKE) -C pgtypeslib $@
-	$(MAKE) -C errors $@
+	$(MAKE) -C preproc $@
 	$(MAKE) -C compat_informix $@
 	$(MAKE) -C complex $@
 	$(MAKE) -C thread $@

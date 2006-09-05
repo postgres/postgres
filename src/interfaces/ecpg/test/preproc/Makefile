@@ -1,12 +1,11 @@
-subdir = src/interfaces/ecpg/test/complex
+subdir = src/interfaces/ecpg/test/preproc
 top_builddir = ../../../../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/$(subdir)/../Makefile.regress
 
 
-TESTS = test1 test1.c \
-        test2 test2.c \
-        test3 test3.c 
+TESTS = define define.c \
+	init init.c
 
 all: $(TESTS)
 
