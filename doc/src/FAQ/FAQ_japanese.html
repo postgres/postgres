@@ -9,9 +9,9 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Tue May 23 11:50:55 EDT 2006</p>
+<p>原文最終更新日:		Fri Aug 18 12:27:33 EDT 2006</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
-href="mailto:pgman at candle.pha.pa.us">pgman at candle.pha.pa.us</a>)<br />
+href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
 href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <p>この文書の最新版は<a href=
@@ -221,7 +221,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     なされたプラットホームについてはインストール手引書に列挙してあります。
     </p>
 
-    <p>PostgreSQL は、Win2000, WinXP, そして、Win2003 のような Microsoft
+    <p>PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft
     Windows NTベースのオペレーティングシステムで、ネイティブに走ります。
     あらかじめパッケージにされたインストーラが<a href= 
     "http://pgfoundry.org/projects/pginstaller">
@@ -304,8 +304,8 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     </pre></small></p>
 
     <p>商用サポート会社のリストは<a
-    href="http://techdocs.postgresql.org/companies.php">
-    http://techdocs.postgresql.org/companies.php</a>にあります。</p>
+    href="http://www.postgresql.org/support/professional_support">
+    http://www.postgresql.org/support/professional_support</a>にあります。</p>
 
 
 <h4 id="item1.8">1.8</a>) バグレポートはどのように発信しますか？
@@ -589,10 +589,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <h4 id="item2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？</h4>
 
 
-    <p>もちろん、あります。 
- 	詳細は、<a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a> 
-    をごらんください。</p>
-
+    <p>商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用可能で、詳細なリストは、<a href="http://www.postgresql.org/docs/techdocs.54">PostgreSQLコミュニティ文書</a> でごらんください。</p>
 
 <hr />
 
@@ -655,12 +652,13 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
     <dt><b>ハードウェアの選定</b></dt>
 
-    <dd>性能におけるハードウェアの影響は <a
-    href="http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html">
-    http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html</a>
+    <dd>性能におけるハードウェアの影響は
+    <a href="http://www.powerpostgresql.com/PerfList/">
+    http://www.powerpostgresql.com/PerfList/</a> と、 <a
+    href="http://momjian.us/main/writings/pgsql/hw_performance/index.html">
+    http://momjian.us/main/writings/pgsql/hw_performance/index.html</a>
     (<a href="http://www.postgresql.jp/wg/psqltrans/hw_performance_j/index.html">JPUGサイトの日本語版</a>)
-    と <a href="http://www.powerpostgresql.com/PerfList/">
-    http://www.powerpostgresql.com/PerfList/</a> に述べられています。
+    に述べられています。
     <br/>
     <br/>
     </dd>
@@ -1080,21 +1078,21 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
     <p>PostgreSQLでつくられるすべてのロウは、<small>WITHOUT OIDS</small>
     でつくられないかぎり一意の<small>OID</small>を得ます。
-    O<small>ID</small>は自動的に4バイトの整数で与えられ、それは、全イン
+    <small>OID</small>は自動的に4バイトの整数で与えられ、それは、全イン
     ストレーションを通して一意な値となります。しかし、約40億でオーバーフ
-    ローし、そして、O<small>ID</small>は重複をしはじめます。PostgreSQLは
-    内部システムテーブルを一緒にリンクするためにO<small>ID</small> を使
+    ローし、そして、<small>OID</small>は重複をしはじめます。PostgreSQLは
+    内部システムテーブルを一緒にリンクするために<small>OID</small> を使
     います。
 
     <p>ユーザのテーブルのカラムに一意の番号を付けるためには、
-    O<small>ID</small> ではなく <small>SERIAL</small> を使うのが最もよい
+    <small>OID</small> ではなく <small>SERIAL</small> を使うのが最もよい
     でしょう。<small>SERIAL</small>の連番は1つのテーブル内でのみ一意にな
     るからで、オーバーフローを起こしにくいと考えられます。
     8バイトのシーケンス値を保存するために、<small>SERIAL8</small>があり
     ます。</p>
 
-    <p>C<small>TID</small> は、特定の物理ロウをブロックとオフセットの値
-    で識別するために使われます。C<small>TID</small>は、ロウが修正された
+    <p><small>CTID</small> は、特定の物理ロウをブロックとオフセットの値
+    で識別するために使われます。<small>CTID</small>は、ロウが修正された
     り再読込みされたときに変わります。また、物理ロウを差すためにインデッ
     クスの記載に使われます。</p>
 
@@ -1256,7 +1254,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2006年05月30日
+  最終更新日:	2006年08月19日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):

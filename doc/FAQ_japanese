@@ -1,8 +1,8 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Tue May 23 11:50:55 EDT 2006
+原文最終更新日: Fri Aug 18 12:27:33 EDT 2006
 
-現在の維持管理者: Bruce Momjian (pgman at candle.pha.pa.us)
+現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 
 この文書の最新版は http://www.postgresql.org/docs/faqs.FAQ.html で見ることがで
@@ -198,7 +198,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 す。リリースの時点で実際にテストを行なったことの報告がなされたプラットホームに
 ついてはインストール手引書に列挙してあります。
 
-PostgreSQL は、Win2000, WinXP, そして、Win2003 のような Microsoft Windows NTベ
+PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft Windows NTベ
 ースのオペレーティングシステムで、ネイティブに走ります。あらかじめパッケージに
 されたインストーラが http://pgfoundry.org/projects/pginstaller にあり、利用でき
 ます。MSDOSベースのWindowsのバージョン(Win95, Win98, WinMe)では、Cygwinを使って
@@ -263,8 +263,8 @@ postgresql-es)もあり、フランス語のチャンネル (#postgresqlfr)もあります。EFNetに
     ]
 
 
-商用サポート会社のリストは http://techdocs.postgresql.org/companies.phpにありま
-す。
+商用サポート会社のリストは http://www.postgresql.org/support/
+professional_supportにあります。
 
 1.8) バグレポートはどのように発信しますか？
 
@@ -461,8 +461,8 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェースとな
 
 2.3) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？
 
-もちろん、あります。詳細は、http://techdocs.postgresql.org/guides/GUITools をご
-らんください。
+商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用
+可能で、詳細なリストは、PostgreSQLコミュニティ文書でごらんください。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -508,9 +508,9 @@ Web への拡張のためには、PHP(http://www.php.net/) が卓越したインターフェースとな
     んください。
 
 ハードウェアの選定
-    性能におけるハードウェアの影響は http://candle.pha.pa.us/main/writings/
-    pgsql/hw_performance/index.html (JPUGサイトの日本語版) と http://
-    www.powerpostgresql.com/PerfList/ に述べられています。
+    性能におけるハードウェアの影響は http://www.powerpostgresql.com/PerfList/
+    と、 http://momjian.us/main/writings/pgsql/hw_performance/index.html (JPUG
+    サイトの日本語版) に述べられています。
 
 
     [訳注:
@@ -1008,7 +1008,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2006年05月30日
+  最終更新日:   2006年08月19日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
