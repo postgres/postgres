@@ -59,6 +59,41 @@ SELECT '' AS fortyfive, r1.*, r2.*
    WHERE r1.f1 > r2.f1
    ORDER BY r1.f1, r2.f1;
 
+
+-- Test multiplication and division with intervals.
+-- Floating point arithmetic rounding errors can lead to unexpected results, 
+-- though the code attempts to do the right thing and round up to days and 
+-- minutes to avoid results such as '3 days 24:00 hours' or '14:20:60'. 
+-- Note that it is expected for some day components to be greater than 29 and 
+-- some time components be greater than 23:59:59 due to how intervals are 
+-- stored internally.
+
+CREATE TABLE INTERVAL_MULDIV_TBL (span interval);
+COPY INTERVAL_MULDIV_TBL FROM STDIN;
+41 mon 12 days 360:00
+-41 mon -12 days +360:00
+-12 days
+9 mon -27 days 12:34:56
+-3 years 482 days 76:54:32.189
+4 mon
+14 mon
+999 mon 999 days
+\.
+
+SELECT span * 0.3 AS product
+FROM INTERVAL_MULDIV_TBL;
+
+SELECT span * 8.2 AS product
+FROM INTERVAL_MULDIV_TBL;
+
+SELECT span / 10 AS quotient
+FROM INTERVAL_MULDIV_TBL;
+
+SELECT span / 100 AS quotient
+FROM INTERVAL_MULDIV_TBL;
+
+DROP TABLE INTERVAL_MULDIV_TBL;
+
 SET DATESTYLE = 'postgres';
 
 SELECT '' AS ten, * FROM INTERVAL_TBL;
