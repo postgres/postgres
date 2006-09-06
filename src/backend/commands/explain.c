@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.150 2006/08/02 01:59:45 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.151 2006/09/06 20:40:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, ParamListInfo params,
 	}
 
 	/* plan the query */
-	plan = planner(query, isCursor, cursorOptions, NULL);
+	plan = planner(query, isCursor, cursorOptions, params);
 
 	/*
 	 * Update snapshot command ID to ensure this query sees results of any

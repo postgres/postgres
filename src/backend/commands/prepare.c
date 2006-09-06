@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.62 2006/08/29 02:11:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.63 2006/09/06 20:40:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,6 +261,7 @@ EvaluateParams(EState *estate, List *params, List *argtypes)
 		ParamExternData *prm = &paramLI->params[i];
 
 		prm->ptype = lfirst_oid(la);
+		prm->pflags = 0;
 		prm->value = ExecEvalExprSwitchContext(n,
 											   GetPerTupleExprContext(estate),
 											   &prm->isnull,

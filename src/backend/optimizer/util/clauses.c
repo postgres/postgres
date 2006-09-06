@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.219 2006/08/12 20:05:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.220 2006/09/06 20:40:47 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1462,7 +1462,9 @@ eval_const_expressions(Node *node)
  *
  * Currently the extra steps that are taken in this mode are:
  * 1. Substitute values for Params, where a bound Param value has been made
- *	  available by the caller of planner().
+ *	  available by the caller of planner(), even if the Param isn't marked
+ *	  constant.  This effectively means that we plan using the first supplied
+ *	  value of the Param.
  * 2. Fold stable, as well as immutable, functions to constants.
  *--------------------
  */
@@ -1487,33 +1489,38 @@ eval_const_expressions_mutator(Node *node,
 	{
 		Param	   *param = (Param *) node;
 
-		/* OK to try to substitute value? */
-		if (context->estimate && param->paramkind == PARAM_EXTERN &&
-			PlannerBoundParamList != NULL)
+		/* Look to see if we've been given a value for this Param */
+		if (param->paramkind == PARAM_EXTERN &&
+			PlannerBoundParamList != NULL &&
+			param->paramid > 0 &&
+			param->paramid <= PlannerBoundParamList->numParams)
 		{
-			/* Look to see if we've been given a value for this Param */
-			if (param->paramid > 0 &&
-				param->paramid <= PlannerBoundParamList->numParams)
-			{
-				ParamExternData *prm = &PlannerBoundParamList->params[param->paramid - 1];
+			ParamExternData *prm = &PlannerBoundParamList->params[param->paramid - 1];
 
-				if (OidIsValid(prm->ptype))
+			if (OidIsValid(prm->ptype))
+			{
+				/* OK to substitute parameter value? */
+				if (context->estimate || (prm->pflags & PARAM_FLAG_CONST))
 				{
 					/*
-					 * Found it, so return a Const representing the param
-					 * value.  Note that we don't copy pass-by-ref datatypes,
-					 * so the Const will only be valid as long as the bound
-					 * parameter list exists.  This is okay for intended uses
-					 * of estimate_expression_value().
+					 * Return a Const representing the param value.  Must copy
+					 * pass-by-ref datatypes, since the Param might be in a
+					 * memory context shorter-lived than our output plan
+					 * should be.
 					 */
 					int16		typLen;
 					bool		typByVal;
+					Datum		pval;
 
 					Assert(prm->ptype == param->paramtype);
 					get_typlenbyval(param->paramtype, &typLen, &typByVal);
+					if (prm->isnull || typByVal)
+						pval = prm->value;
+					else
+						pval = datumCopy(prm->value, typByVal, typLen);
 					return (Node *) makeConst(param->paramtype,
 											  (int) typLen,
-											  prm->value,
+											  pval,
 											  prm->isnull,
 											  typByVal);
 				}
@@ -3016,10 +3023,9 @@ evaluate_expr(Expr *expr, Oid result_type)
  * stage.  In particular, it handles List nodes since a cnf-ified qual clause
  * will have List structure at the top level, and it handles TargetEntry nodes
  * so that a scan of a target list can be handled without additional code.
- * (But only the "expr" part of a TargetEntry is examined, unless the walker
- * chooses to process TargetEntry nodes specially.)  Also, RangeTblRef,
- * FromExpr, JoinExpr, and SetOperationStmt nodes are handled, so that query
- * jointrees and setOperation trees can be processed without additional code.
+ * Also, RangeTblRef, FromExpr, JoinExpr, and SetOperationStmt nodes are
+ * handled, so that query jointrees and setOperation trees can be processed
+ * without additional code.
  *
  * expression_tree_walker will handle SubLink nodes by recursing normally
  * into the "testexpr" subtree (which is an expression belonging to the outer
@@ -3364,6 +3370,38 @@ query_tree_walker(Query *query,
 		return true;
 	if (range_table_walker(query->rtable, walker, context, flags))
 		return true;
+	if (query->utilityStmt)
+	{
+		/*
+		 * Certain utility commands contain general-purpose Querys embedded
+		 * in them --- if this is one, invoke the walker on the sub-Query.
+		 */
+		if (IsA(query->utilityStmt, CopyStmt))
+		{
+			if (walker(((CopyStmt *) query->utilityStmt)->query, context))
+				return true;
+		}
+		if (IsA(query->utilityStmt, DeclareCursorStmt))
+		{
+			if (walker(((DeclareCursorStmt *) query->utilityStmt)->query, context))
+				return true;
+		}
+		if (IsA(query->utilityStmt, ExplainStmt))
+		{
+			if (walker(((ExplainStmt *) query->utilityStmt)->query, context))
+				return true;
+		}
+		if (IsA(query->utilityStmt, PrepareStmt))
+		{
+			if (walker(((PrepareStmt *) query->utilityStmt)->query, context))
+				return true;
+		}
+		if (IsA(query->utilityStmt, ViewStmt))
+		{
+			if (walker(((ViewStmt *) query->utilityStmt)->query, context))
+				return true;
+		}
+	}
 	return false;
 }
 

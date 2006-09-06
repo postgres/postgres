@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/params.h,v 1.31 2006/04/22 01:26:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/params.h,v 1.32 2006/09/06 20:40:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,15 +26,22 @@
  *	  Although parameter numbers are normally consecutive, we allow
  *	  ptype == InvalidOid to signal an unused array entry.
  *
+ *	  PARAM_FLAG_CONST signals the planner that it may treat this parameter
+ *	  as a constant (i.e., generate a plan that works only for this value
+ *	  of the parameter).
+ *
  *	  Although the data structure is really an array, not a list, we keep
  *	  the old typedef name to avoid unnecessary code changes.
  * ----------------
  */
 
+#define PARAM_FLAG_CONST	0x0001			/* parameter is constant */
+
 typedef struct ParamExternData
 {
 	Datum		value;			/* parameter value */
 	bool		isnull;			/* is it NULL? */
+	uint16		pflags;			/* flag bits, see above */
 	Oid			ptype;			/* parameter's datatype, or 0 */
 } ParamExternData;
 

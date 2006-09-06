@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.177 2006/08/27 23:47:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.178 2006/09/06 20:40:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3958,6 +3958,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 			ParamExternData *prm = &paramLI->params[i];
 			PLpgSQL_datum *datum = estate->datums[expr->params[i]];
 
+			prm->pflags = 0;
 			exec_eval_datum(estate, datum, expr->plan_argtypes[i],
 							&prm->ptype,
 							&prm->value, &prm->isnull);

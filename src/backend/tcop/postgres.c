@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.505 2006/09/03 03:19:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.506 2006/09/06 20:40:48 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1168,7 +1168,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	 * statement, we assume the statement isn't going to hang around long, so
 	 * getting rid of temp space quickly is probably not worth the costs of
 	 * copying parse/plan trees.  So in this case, we set up a special context
-	 * for the unnamed statement, and do all the parsing/planning therein.
+	 * for the unnamed statement, and do all the parsing work therein.
 	 */
 	is_named = (stmt_name[0] != '\0');
 	if (is_named)
@@ -1367,6 +1367,7 @@ exec_bind_message(StringInfo input_message)
 	PreparedStatement *pstmt;
 	Portal		portal;
 	ParamListInfo params;
+	List	   *plan_list;
 	StringInfoData bind_values_str;
 
 	pgstat_report_activity("<BIND>");
@@ -1474,6 +1475,7 @@ exec_bind_message(StringInfo input_message)
 		{
 			Oid			ptype = lfirst_oid(l);
 			int32		plength;
+			Datum		pval;
 			bool		isNull;
 			StringInfoData pbuf;
 			char		csave;
@@ -1532,11 +1534,7 @@ exec_bind_message(StringInfo input_message)
 				else
 					pstring = pg_client_to_server(pbuf.data, plength);
 
-				params->params[paramno].value =
-					OidInputFunctionCall(typinput,
-										 pstring,
-										 typioparam,
-										 -1);
+				pval = OidInputFunctionCall(typinput, pstring, typioparam, -1);
 
 				/* Save the parameter values */
 				appendStringInfo(&bind_values_str, "%s$%d = ",
@@ -1576,10 +1574,7 @@ exec_bind_message(StringInfo input_message)
 				else
 					bufptr = &pbuf;
 
-				params->params[paramno].value = OidReceiveFunctionCall(typreceive,
-																 bufptr,
-																 typioparam,
-																 -1);
+				pval = OidReceiveFunctionCall(typreceive, bufptr, typioparam, -1);
 
 				/* Trouble if it didn't eat the whole buffer */
 				if (!isNull && pbuf.cursor != pbuf.len)
@@ -1596,13 +1591,22 @@ exec_bind_message(StringInfo input_message)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("unsupported format code: %d",
 								pformat)));
+				pval = 0;		/* keep compiler quiet */
 			}
 
 			/* Restore message buffer contents */
 			if (!isNull)
 				pbuf.data[plength] = csave;
 
+			params->params[paramno].value = pval;
 			params->params[paramno].isnull = isNull;
+			/*
+			 * We mark the params as CONST.  This has no effect if we already
+			 * did planning, but if we didn't, it licenses the planner to
+			 * substitute the parameters directly into the one-shot plan we
+			 * will generate below.
+			 */
+			params->params[paramno].pflags = PARAM_FLAG_CONST;
 			params->params[paramno].ptype = ptype;
 
 			paramno++;
@@ -1641,19 +1645,29 @@ exec_bind_message(StringInfo input_message)
 
 	/*
 	 * If we didn't plan the query before, do it now.  This allows the planner
-	 * to make use of the concrete parameter values we now have.
+	 * to make use of the concrete parameter values we now have.  Because we
+	 * use PARAM_FLAG_CONST, the plan is good only for this set of param
+	 * values, and so we generate the plan in the portal's own memory context
+	 * where it will be thrown away after use.  As in exec_parse_message,
+	 * we make no attempt to recover planner temporary memory until the end
+	 * of the operation.
 	 *
-	 * This happens only for unnamed statements, and so switching into the
-	 * statement context for planning is correct (see notes in
-	 * exec_parse_message).
+	 * XXX because the planner has a bad habit of scribbling on its input,
+	 * we have to make a copy of the parse trees, just in case someone binds
+	 * and executes an unnamed statement multiple times.  FIXME someday
 	 */
 	if (pstmt->plan_list == NIL && pstmt->query_list != NIL)
 	{
-		MemoryContext oldContext = MemoryContextSwitchTo(pstmt->context);
+		MemoryContext oldContext;
 
-		pstmt->plan_list = pg_plan_queries(pstmt->query_list, params, true);
+		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+		plan_list = pg_plan_queries(copyObject(pstmt->query_list),
+									params,
+									true);
 		MemoryContextSwitchTo(oldContext);
 	}
+	else
+		plan_list = pstmt->plan_list;
 
 	/*
 	 * Define portal and start execution.
@@ -1664,7 +1678,7 @@ exec_bind_message(StringInfo input_message)
 					  bind_values_str.len ? pstrdup(bind_values_str.data) : NULL,
 					  pstmt->commandTag,
 					  pstmt->query_list,
-					  pstmt->plan_list,
+					  plan_list,
 					  pstmt->context);
 
 	PortalStart(portal, params, InvalidSnapshot);
