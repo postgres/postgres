@@ -48,7 +48,7 @@ get_val( HSParser *state, bool ignoreeq, bool *escaped ) {
 			} else if ( *(state->ptr) == '\0' ) {
 				return false;
 			} else if (  *(state->ptr) == '=' && !ignoreeq ) {
-				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), state->ptr-state->begin);
+				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), (int4)(state->ptr-state->begin));
 			} else if ( *(state->ptr) == '\\' ) {
 				st = GV_WAITESCIN;
 			} else if ( !isspace(*(state->ptr)) ) {
@@ -147,7 +147,7 @@ parse_hstore( HSParser *state ) {
 			} else if ( *(state->ptr) == '\0' ) {
 				elog(ERROR,"Unexpectd end of string");
 			} else if (!isspace(*(state->ptr))) {
-				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), state->ptr-state->begin);
+				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), (int4)(state->ptr-state->begin));
 			}
 		} else if ( st == WGT ) {
 			if ( *(state->ptr) == '>' ) {
@@ -155,7 +155,7 @@ parse_hstore( HSParser *state ) {
 			} else if ( *(state->ptr) == '\0' ) {
 				elog(ERROR,"Unexpectd end of string");
 			} else { 
-				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), state->ptr-state->begin);
+				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), (int4)(state->ptr-state->begin));
 			}
 		} else if ( st == WVAL ) {
 			if ( !get_val(state, true, &escaped) )
@@ -178,7 +178,7 @@ parse_hstore( HSParser *state ) {
 			} else if ( *(state->ptr) == '\0' ) {
 				return;
 			} else if (!isspace(*(state->ptr))) {
-				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), state->ptr-state->begin);
+				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), (int4)(state->ptr-state->begin));
 			}
 		} else 
 			elog(ERROR,"Unknown state %d at line %d in file '%s'", st, __LINE__, __FILE__);
