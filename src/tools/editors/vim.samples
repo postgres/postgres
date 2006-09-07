@@ -1,0 +1,18 @@
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"
+" These settings are appropriate for editing PostgreSQL code with vim
+"
+" You would copy this into your .vimrc or equivalent
+"
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+:if match(getcwd(), "/pgsql") >=0 ||  match(getcwd(), "/postgresql") >= 0
+
+:  set cinoptions=(0
+:  set tabstop=4
+:  set shiftwidth=4
+
+:endif
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

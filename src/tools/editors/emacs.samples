@@ -1,0 +1,78 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; This file contains several examples of how to set up emacs and/or xemacs
+;;; to edit PostgreSQL code.
+;;;
+;;; Whichever set you choose would go in your .emacs file or equivalent.
+;;;
+;;; You only need one of these.
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; This set is known to work with old versions of emacs
+
+(setq auto-mode-alist
+  (cons '("\\(postgres\\|pgsql\\).*\\.[ch]\\'" . pgsql-c-mode)
+        auto-mode-alist))
+(setq auto-mode-alist
+  (cons '("\\(postgres\\|pgsql\\).*\\.cc\\'" . pgsql-c-mode)
+        auto-mode-alist))
+
+(defun pgsql-c-mode ()
+  ;; sets up formatting for PostgreSQL C code
+  (interactive)
+  (c-mode)
+  (setq-default tab-width 4)
+  (c-set-style "bsd")             ; set c-basic-offset to 4, plus other stuff
+  (c-set-offset 'case-label '+)   ; tweak case indent to match PG custom
+  (setq indent-tabs-mode t))      ; make sure we keep tabs when indenting
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Similar approach, known to work with xemacs
+;;; Use of a named style makes it easy to use the style elsewhere
+
+(c-add-style "pgsql"
+                      '("bsd"
+                                 (indent-tabs-mode . t)
+                                 (c-basic-offset   . 4)
+                                 (tab-width . 4)
+                                 (c-offsets-alist .
+                                            ((case-label . +)))
+                      )
+                      nil ) ; t = set this mode, nil = don't
+
+(defun pgsql-c-mode ()
+  (c-mode)
+  (c-set-style "pgsql")
+)
+
+(setq auto-mode-alist
+  (cons '("\\(postgres\\|pgsql\\).*\\.[chyl]\\'" . pgsql-c-mode)
+        auto-mode-alist))
+(setq auto-mode-alist
+  (cons '("\\(postgres\\|pgsql\\).*\\.cc\\'" . pgsql-c-mode)
+        auto-mode-alist))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Slightly different approach - use a hook instead of a mode
+
+(add-hook 'c-mode-hook
+	  (function
+	   (lambda nil 
+	     (if (string-match "pgsql" buffer-file-name)
+		 (progn
+		   (c-set-style "bsd")
+		   (setq c-basic-offset 4) 
+		   (setq tab-width 4)
+		   (c-set-offset 'case-label '+)
+		   (setq indent-tabs-mode t)
+		   )
+	       ))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.17 2006/03/10 19:10:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.18 2006/09/07 00:10:46 momjian Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -21,44 +21,11 @@
    </para>
 
    <para>
-    For <productname>Emacs</productname>, add the following (or
-    something similar) to your <filename>~/.emacs</filename> 
-    initialization file:
-
-<programlisting>
-;; check for files with a path containing "postgres" or "pgsql"
-(setq auto-mode-alist
-  (cons '("\\(postgres\\|pgsql\\).*\\.[ch]\\'" . pgsql-c-mode)
-        auto-mode-alist))
-(setq auto-mode-alist
-  (cons '("\\(postgres\\|pgsql\\).*\\.cc\\'" . pgsql-c-mode)
-        auto-mode-alist))
-
-(defun pgsql-c-mode ()
-  ;; sets up formatting for PostgreSQL C code
-  (interactive)
-  (c-mode)
-  (setq-default tab-width 4)
-  (c-set-style "bsd")             ; set c-basic-offset to 4, plus other stuff
-  (c-set-offset 'case-label '+)   ; tweak case indent to match PG custom
-  (setq indent-tabs-mode t))      ; make sure we keep tabs when indenting
-</programlisting>
-   </para>
-
-   <para>
-    For <application>vi</application>, your
-    <filename>~/.vimrc</filename> or equivalent file should contain
-    the following:
-
-<programlisting>
-set tabstop=4
-</programlisting>
-
-    or equivalently from within <application>vi</application>, try
-
-<programlisting>
-:set ts=4
-</programlisting>
+    The <filename>src/tools</filename> directory contains sample settings 
+	files that can be used with the <productname>emacs</productname>, 
+	<productname>xemacs</productname> or <productname>vim</productname> 
+	editors to help ensure that they format	code according to these 
+	conventions.
    </para>
 
    <para>
