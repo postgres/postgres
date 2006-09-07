@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.69 2006/09/03 03:19:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.70 2006/09/07 22:52:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,7 @@ typedef struct PortalData
 {
 	/* Bookkeeping data */
 	const char *name;			/* portal's name */
-	const char *prepStmtName;	/* protocol prepare name */
+	const char *prepStmtName;	/* source prepared statement (NULL if none) */
 	MemoryContext heap;			/* subsidiary memory for portal */
 	ResourceOwner resowner;		/* resources owned by portal */
 	void		(*cleanup) (Portal portal);		/* cleanup hook */
@@ -122,20 +122,20 @@ typedef struct PortalData
 	 */
 
 	/* The query or queries the portal will execute */
-	const char *sourceText;		/* text of query, if known, might be NULL */
-	const char *bindText;		/* text of bind parameters, might be NULL */
+	const char *sourceText;		/* text of query, if known (may be NULL) */
 	const char *commandTag;		/* command tag for original query */
 	List	   *parseTrees;		/* parse tree(s) */
 	List	   *planTrees;		/* plan tree(s) */
-	MemoryContext queryContext; /* where the above trees live */
+	MemoryContext queryContext; /* where the parse trees live */
 
 	/*
 	 * Note: queryContext effectively identifies which prepared statement the
 	 * portal depends on, if any.  The queryContext is *not* owned by the
 	 * portal and is not to be deleted by portal destruction.  (But for a
 	 * cursor it is the same as "heap", and that context is deleted by portal
-	 * destruction.)
+	 * destruction.)  The plan trees may be in either queryContext or heap.
 	 */
+
 	ParamListInfo portalParams; /* params to pass to query */
 
 	/* Features/options */
@@ -216,7 +216,6 @@ extern Portal GetPortalByName(const char *name);
 extern void PortalDefineQuery(Portal portal,
 				  const char *prepStmtName,
 				  const char *sourceText,
-				  const char *bindText,
 				  const char *commandTag,
 				  List *parseTrees,
 				  List *planTrees,

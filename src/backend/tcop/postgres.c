@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.506 2006/09/06 20:40:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.507 2006/09/07 22:52:01 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -156,9 +156,12 @@ static int	UseNewLine = 0;		/* Use EOF as query delimiters */
 static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
-static bool log_after_parse(List *raw_parsetree_list,
-				const char *query_string, char **prepare_string);
 static List *pg_rewrite_queries(List *querytree_list);
+static bool check_log_statement_raw(List *raw_parsetree_list);
+static bool check_log_statement_cooked(List *parsetree_list);
+static bool check_log_duration(char *msec_str);
+static int	errdetail_execute(List *raw_parsetree_list);
+static int	errdetail_params(ParamListInfo params);
 static void start_xact_command(void);
 static void finish_xact_command(void);
 static bool IsTransactionExitStmt(Node *parsetree);
@@ -533,83 +536,6 @@ pg_parse_query(const char *query_string)
 	return raw_parsetree_list;
 }
 
-static bool
-log_after_parse(List *raw_parsetree_list, const char *query_string,
-				char **prepare_string)
-{
-	ListCell   *parsetree_item;
-	bool		log_this_statement = (log_statement == LOGSTMT_ALL);
-
-	*prepare_string = NULL;
-
-	/* Check if we need to log the statement, and get prepare_string. */
-	foreach(parsetree_item, raw_parsetree_list)
-	{
-		Node	   *parsetree = (Node *) lfirst(parsetree_item);
-		const char *commandTag;
-
-		if (IsA(parsetree, ExplainStmt) &&
-			((ExplainStmt *) parsetree)->analyze)
-			parsetree = (Node *) (((ExplainStmt *) parsetree)->query);
-
-		if (IsA(parsetree, PrepareStmt))
-			parsetree = (Node *) (((PrepareStmt *) parsetree)->query);
-
-		if (IsA(parsetree, SelectStmt) &&
-			((SelectStmt *) parsetree)->into == NULL)
-			continue;			/* optimization for frequent command */
-
-		if (log_statement == LOGSTMT_MOD &&
-			(IsA(parsetree, InsertStmt) ||
-			 IsA(parsetree, UpdateStmt) ||
-			 IsA(parsetree, DeleteStmt) ||
-			 IsA(parsetree, TruncateStmt) ||
-			 (IsA(parsetree, CopyStmt) &&
-			  ((CopyStmt *) parsetree)->is_from)))		/* COPY FROM */
-			log_this_statement = true;
-
-		commandTag = CreateCommandTag(parsetree);
-		if ((log_statement == LOGSTMT_MOD ||
-			 log_statement == LOGSTMT_DDL) &&
-			(strncmp(commandTag, "CREATE ", strlen("CREATE ")) == 0 ||
-			 IsA(parsetree, SelectStmt) ||		/* SELECT INTO, CREATE AS */
-			 strncmp(commandTag, "ALTER ", strlen("ALTER ")) == 0 ||
-			 strncmp(commandTag, "DROP ", strlen("DROP ")) == 0 ||
-			 IsA(parsetree, GrantStmt) ||		/* GRANT or REVOKE */
-			 IsA(parsetree, CommentStmt)))
-			log_this_statement = true;
-
-		/*
-		 * For the first EXECUTE we find, record the client statement used by
-		 * the PREPARE.  PREPARE doesn't save the parse tree so we have no
-		 * way to conditionally output based on the type of query prepared.
-		 * Parse does save the command tag, so perhaps we can use that.
-		 */
-		if (IsA(parsetree, ExecuteStmt))
-		{
-			ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
-			PreparedStatement *entry;
-
-			if (*prepare_string == NULL &&
-				(entry = FetchPreparedStatement(stmt->name, false)) != NULL &&
-				entry->query_string)
-				*prepare_string = pstrdup(entry->query_string);
-		}
-	}
-
-	if (log_this_statement)
-	{
-		ereport(LOG,
-				(errmsg("statement: %s", query_string),
-						*prepare_string ? errdetail("prepare: %s",
-						*prepare_string) : 0));
-		return true;
-	}
-	else
-		return false;
-}
-
-
 /*
  * Given a raw parsetree (gram.y output), and optionally information about
  * types of parameter symbols ($n), perform parse analysis and rule rewriting.
@@ -817,8 +743,8 @@ exec_simple_query(const char *query_string)
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	bool		save_log_statement_stats = log_statement_stats;
-	char	   *prepare_string = NULL;
 	bool		was_logged = false;
+	char		msec_str[32];
 
 	/*
 	 * Report query to various monitoring facilities.
@@ -871,9 +797,13 @@ exec_simple_query(const char *query_string)
 	parsetree_list = pg_parse_query(query_string);
 
 	/* Log immediately if dictated by log_statement */
-	if (log_statement != LOGSTMT_NONE || log_duration ||
-		log_min_duration_statement >= 0)
-		was_logged = log_after_parse(parsetree_list, query_string, &prepare_string);
+	if (check_log_statement_raw(parsetree_list))
+	{
+		ereport(LOG,
+				(errmsg("statement: %s", query_string),
+				 errdetail_execute(parsetree_list)));
+		was_logged = true;
+	}
 
 	/*
 	 * Switch back to transaction context to enter the loop.
@@ -954,7 +884,6 @@ exec_simple_query(const char *query_string)
 		PortalDefineQuery(portal,
 						  NULL,
 						  query_string,
-						  NULL,
 						  commandTag,
 						  querytree_list,
 						  plantree_list,
@@ -1066,48 +995,20 @@ exec_simple_query(const char *query_string)
 	/*
 	 * Emit duration logging if appropriate.
 	 */
-	if (log_duration || log_min_duration_statement >= 0)
+	if (check_log_duration(msec_str))
 	{
-		long		secs;
-		int			usecs;
-		int			msecs;
-
-		TimestampDifference(GetCurrentStatementStartTimestamp(),
-							GetCurrentTimestamp(),
-							&secs, &usecs);
-		msecs = usecs / 1000;
-
-		/*
-		 * The odd-looking test for log_min_duration_statement being
-		 * exceeded is designed to avoid integer overflow with very
-		 * long durations: don't compute secs * 1000 until we've
-		 * verified it will fit in int.
-		 */
-		if (log_duration ||
-			log_min_duration_statement == 0 ||
-			(log_min_duration_statement > 0 &&
-			 (secs > log_min_duration_statement / 1000 ||
-			  secs * 1000 + msecs >= log_min_duration_statement)))
-		{
-			if (was_logged)
-				ereport(LOG,
-						(errmsg("duration: %ld.%03d ms",
-								secs * 1000 + msecs, usecs % 1000)));
-			else
-				ereport(LOG,
-						(errmsg("duration: %ld.%03d ms  statement: %s",
-								secs * 1000 + msecs, usecs % 1000,
-								query_string),
-						 		prepare_string ? errdetail("prepare: %s",
-								prepare_string) : 0));
-		}
+		if (was_logged)
+			ereport(LOG,
+					(errmsg("duration: %s ms", msec_str)));
+		else
+			ereport(LOG,
+					(errmsg("duration: %s ms  statement: %s",
+							msec_str, query_string),
+					 errdetail_execute(parsetree_list)));
 	}
 
 	if (save_log_statement_stats)
 		ShowUsage("QUERY STATISTICS");
-
-	if (prepare_string != NULL)
-		pfree(prepare_string);
 
 	debug_query_string = NULL;
 }
@@ -1131,6 +1032,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			   *param_list;
 	bool		is_named;
 	bool		save_log_statement_stats = log_statement_stats;
+	char		msec_str[32];
 
 	/*
 	 * Report query to various monitoring facilities.
@@ -1144,11 +1046,10 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	if (save_log_statement_stats)
 		ResetUsage();
 
-	if (log_statement == LOGSTMT_ALL)
-		ereport(LOG,
-				(errmsg("statement: prepare %s: %s",
-						*stmt_name ? stmt_name : "<unnamed>",
-						query_string)));
+	ereport(DEBUG2,
+			(errmsg("parse %s: %s",
+					*stmt_name ? stmt_name : "<unnamed>",
+					query_string)));
 
 	/*
 	 * Start up a transaction command so we can run parse analysis etc. (Note
@@ -1343,6 +1244,16 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	if (whereToSendOutput == DestRemote)
 		pq_putemptymessage('1');
 
+	/*
+	 * Emit duration logging if appropriate.
+	 */
+	if (check_log_duration(msec_str))
+		ereport(LOG,
+				(errmsg("duration: %s ms  parse %s: %s",
+						msec_str,
+						*stmt_name ? stmt_name : "<unnamed>",
+						query_string)));
+
 	if (save_log_statement_stats)
 		ShowUsage("PARSE MESSAGE STATISTICS");
 
@@ -1368,11 +1279,43 @@ exec_bind_message(StringInfo input_message)
 	Portal		portal;
 	ParamListInfo params;
 	List	   *plan_list;
-	StringInfoData bind_values_str;
+	MemoryContext qContext;
+	bool		save_log_statement_stats = log_statement_stats;
+	char		msec_str[32];
 
-	pgstat_report_activity("<BIND>");
+	/* Get the fixed part of the message */
+	portal_name = pq_getmsgstring(input_message);
+	stmt_name = pq_getmsgstring(input_message);
+
+	ereport(DEBUG2,
+			(errmsg("bind %s to %s",
+					*portal_name ? portal_name : "<unnamed>",
+					*stmt_name ? stmt_name : "<unnamed>")));
+
+	/* Find prepared statement */
+	if (stmt_name[0] != '\0')
+		pstmt = FetchPreparedStatement(stmt_name, true);
+	else
+	{
+		/* special-case the unnamed statement */
+		pstmt = unnamed_stmt_pstmt;
+		if (!pstmt)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_PSTATEMENT),
+					 errmsg("unnamed prepared statement does not exist")));
+	}
+
+	/*
+	 * Report query to various monitoring facilities.
+	 */
+	debug_query_string = "bind message";
+
+	pgstat_report_activity(pstmt->query_string ? pstmt->query_string : "<BIND>");
 
 	set_ps_display("BIND", false);
+
+	if (save_log_statement_stats)
+		ResetUsage();
 
 	/*
 	 * Start up a transaction command so we can call functions etc. (Note that
@@ -1383,12 +1326,6 @@ exec_bind_message(StringInfo input_message)
 
 	/* Switch back to message context */
 	MemoryContextSwitchTo(MessageContext);
-
-	initStringInfo(&bind_values_str);
-
-	/* Get the fixed part of the message */
-	portal_name = pq_getmsgstring(input_message);
-	stmt_name = pq_getmsgstring(input_message);
 
 	/* Get the parameter format codes */
 	numPFormats = pq_getmsgint(input_message, 2);
@@ -1409,19 +1346,6 @@ exec_bind_message(StringInfo input_message)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 			errmsg("bind message has %d parameter formats but %d parameters",
 				   numPFormats, numParams)));
-
-	/* Find prepared statement */
-	if (stmt_name[0] != '\0')
-		pstmt = FetchPreparedStatement(stmt_name, true);
-	else
-	{
-		/* special-case the unnamed statement */
-		pstmt = unnamed_stmt_pstmt;
-		if (!pstmt)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_PSTATEMENT),
-					 errmsg("unnamed prepared statement does not exist")));
-	}
 
 	if (numParams != list_length(pstmt->argtype_list))
 		ereport(ERROR,
@@ -1521,7 +1445,7 @@ exec_bind_message(StringInfo input_message)
 			{
 				Oid			typinput;
 				Oid			typioparam;
-				char	   *pstring, *p;
+				char	   *pstring;
 
 				getTypeInputInfo(ptype, &typinput, &typioparam);
 
@@ -1536,24 +1460,6 @@ exec_bind_message(StringInfo input_message)
 
 				pval = OidInputFunctionCall(typinput, pstring, typioparam, -1);
 
-				/* Save the parameter values */
-				appendStringInfo(&bind_values_str, "%s$%d = ",
-								 bind_values_str.len ? ", " : "",
-								 paramno + 1);
-				if (pstring)
-				{
-					appendStringInfoChar(&bind_values_str, '\'');
-					for (p = pstring; *p; p++)
-					{
-						if (*p == '\'')	/* double single quotes */
-							appendStringInfoChar(&bind_values_str, *p);
-						appendStringInfoChar(&bind_values_str, *p);
-					}
-					appendStringInfoChar(&bind_values_str, '\'');
-				}
-				else
-					appendStringInfo(&bind_values_str, "NULL");
-				
 				/* Free result of encoding conversion, if any */
 				if (pstring && pstring != pbuf.data)
 					pfree(pstring);
@@ -1582,8 +1488,6 @@ exec_bind_message(StringInfo input_message)
 							(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 							 errmsg("incorrect binary data format in bind parameter %d",
 									paramno + 1)));
-
-				/* XXX TODO: convert value to text and log it */
 			}
 			else
 			{
@@ -1617,19 +1521,6 @@ exec_bind_message(StringInfo input_message)
 	else
 		params = NULL;
 
-	if (log_statement == LOGSTMT_ALL)
-	{
-		ereport(LOG,
-				(errmsg("statement: bind %s%s%s%s%s",
-						*stmt_name ? stmt_name : "<unnamed>",
-						*portal->name ? "/" : "",
-						*portal->name ? portal->name : "",
-						/* print bind parameters if we have them */
-						bind_values_str.len ? ": " : "",
-						bind_values_str.len ? bind_values_str.data : ""),
-						errdetail("prepare: %s", pstmt->query_string)));
-	}
-
 	/* Get the result format codes */
 	numRFormats = pq_getmsgint(input_message, 2);
 	if (numRFormats > 0)
@@ -1654,32 +1545,37 @@ exec_bind_message(StringInfo input_message)
 	 *
 	 * XXX because the planner has a bad habit of scribbling on its input,
 	 * we have to make a copy of the parse trees, just in case someone binds
-	 * and executes an unnamed statement multiple times.  FIXME someday
+	 * and executes an unnamed statement multiple times; this also means that
+	 * the portal's queryContext becomes its own heap context rather than the
+	 * prepared statement's context.  FIXME someday
 	 */
 	if (pstmt->plan_list == NIL && pstmt->query_list != NIL)
 	{
 		MemoryContext oldContext;
 
-		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+		qContext = PortalGetHeapMemory(portal);
+		oldContext = MemoryContextSwitchTo(qContext);
 		plan_list = pg_plan_queries(copyObject(pstmt->query_list),
 									params,
 									true);
 		MemoryContextSwitchTo(oldContext);
 	}
 	else
+	{
 		plan_list = pstmt->plan_list;
+		qContext = pstmt->context;
+	}
 
 	/*
 	 * Define portal and start execution.
 	 */
 	PortalDefineQuery(portal,
-					  *stmt_name ? pstrdup(stmt_name) : NULL,
+					  *pstmt->stmt_name ? pstmt->stmt_name : NULL,
 					  pstmt->query_string,
-					  bind_values_str.len ? pstrdup(bind_values_str.data) : NULL,
 					  pstmt->commandTag,
 					  pstmt->query_list,
 					  plan_list,
-					  pstmt->context);
+					  qContext);
 
 	PortalStart(portal, params, InvalidSnapshot);
 
@@ -1693,6 +1589,23 @@ exec_bind_message(StringInfo input_message)
 	 */
 	if (whereToSendOutput == DestRemote)
 		pq_putemptymessage('2');
+
+	/*
+	 * Emit duration logging if appropriate.
+	 */
+	if (check_log_duration(msec_str))
+		ereport(LOG,
+				(errmsg("duration: %s ms  bind %s to %s: %s",
+						msec_str,
+						*portal_name ? portal_name : "<unnamed>",
+						*stmt_name ? stmt_name : "<unnamed>",
+						pstmt->query_string ? pstmt->query_string : "<source not stored>"),
+				 errdetail_params(params)));
+
+	if (save_log_statement_stats)
+		ShowUsage("BIND MESSAGE STATISTICS");
+
+	debug_query_string = NULL;
 }
 
 /*
@@ -1708,12 +1621,14 @@ exec_execute_message(const char *portal_name, long max_rows)
 	Portal		portal;
 	bool		completed;
 	char		completionTag[COMPLETION_TAG_BUFSIZE];
-	const char *sourceText = NULL;
-	const char *bindText = NULL;
+	const char *sourceText;
 	const char *prepStmtName;
+	ParamListInfo portalParams;
 	bool		save_log_statement_stats = log_statement_stats;
 	bool		is_xact_command;
 	bool		execute_is_fetch;
+	bool		was_logged = false;
+	char		msec_str[32];
 
 	/* Adjust destination to tell printtup.c what to do */
 	dest = whereToSendOutput;
@@ -1737,6 +1652,18 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
+	/*
+	 * Report query to various monitoring facilities.
+	 */
+	debug_query_string = "execute message";
+
+	pgstat_report_activity(portal->sourceText ? portal->sourceText : "<EXECUTE>");
+
+	set_ps_display(portal->commandTag, false);
+
+	if (save_log_statement_stats)
+		ResetUsage();
+
 	/* Does the portal contain a transaction command? */
 	is_xact_command = IsTransactionStmtList(portal->parseTrees);
 
@@ -1748,62 +1675,33 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 */
 	execute_is_fetch = !portal->atStart;
 
-	/* Should we display the portal names here? */
-	if (execute_is_fetch)
-	{
-		debug_query_string = "fetch message";
-		pgstat_report_activity("<FETCH>");
-	}
-	else
-	{
-		debug_query_string = "execute message";
-		pgstat_report_activity("<EXECUTE>");
-	}
-
-	set_ps_display(portal->commandTag, false);
-
-	/* copy prepStmtName now too, in case portal is destroyed */
-	if (portal->prepStmtName)
-		prepStmtName = pstrdup(portal->prepStmtName);
-	else
-		prepStmtName = "<unnamed>";
-
 	/*
-	 * We must copy the sourceText and bindText into MessageContext
+	 * We must copy the sourceText and prepStmtName into MessageContext
 	 * in case the portal is destroyed during finish_xact_command.
 	 * Can avoid the copy if it's not an xact command, though.
 	 */
 	if (is_xact_command)
-		sourceText = pstrdup(portal->sourceText);
-	else
-		sourceText = portal->sourceText;
-
-	if (portal->bindText)
 	{
-		if (is_xact_command)
-			bindText = pstrdup(portal->bindText);
+		sourceText = pstrdup(portal->sourceText);
+		if (portal->prepStmtName)
+			prepStmtName = pstrdup(portal->prepStmtName);
 		else
-			bindText = portal->bindText;
+			prepStmtName = "<unnamed>";
+		/*
+		 * An xact command shouldn't have any parameters, which is a good
+		 * thing because they wouldn't be around after finish_xact_command.
+		 */
+		portalParams = NULL;
 	}
-	
-	/*
-	 * We use save_log_statement_stats so ShowUsage doesn't report incorrect
-	 * results because ResetUsage wasn't called.
-	 */
-	if (save_log_statement_stats)
-		ResetUsage();
-
-	if (log_statement == LOGSTMT_ALL)
-		ereport(LOG,
-				(errmsg("statement: execute %s%s%s%s",
-						execute_is_fetch ? "fetch from " : "",
-						prepStmtName,
-						*portal_name ? "/" : "",
-						*portal_name ? portal_name : ""),
-						errdetail("prepare: %s%s%s", sourceText,
-						/* optionally print bind parameters */
-						bindText ? "  |  bind: " : "",
-						bindText ? bindText : "")));
+	else
+	{
+		sourceText = portal->sourceText;
+		if (portal->prepStmtName)
+			prepStmtName = portal->prepStmtName;
+		else
+			prepStmtName = "<unnamed>";
+		portalParams = portal->portalParams;
+	}
 
 	BeginCommand(portal->commandTag, dest);
 
@@ -1818,6 +1716,23 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 * case already due to prior BIND).
 	 */
 	start_xact_command();
+
+	/* Log immediately if dictated by log_statement */
+	if (check_log_statement_cooked(portal->parseTrees))
+	{
+		ereport(LOG,
+				(errmsg("%s %s%s%s%s%s",
+						execute_is_fetch ?
+						_("statement: execute fetch from") :
+						_("statement: execute"),
+						prepStmtName,
+						*portal_name ? "/" : "",
+						*portal_name ? portal_name : "",
+						sourceText ? ": " : "",
+						sourceText ? sourceText : ""),
+				 errdetail_params(portalParams)));
+		was_logged = true;
+	}
 
 	/*
 	 * If we are in aborted transaction state, the only portals we can
@@ -1879,6 +1794,96 @@ exec_execute_message(const char *portal_name, long max_rows)
 	/*
 	 * Emit duration logging if appropriate.
 	 */
+	if (check_log_duration(msec_str))
+	{
+		if (was_logged)
+			ereport(LOG,
+					(errmsg("duration: %s ms", msec_str)));
+		else
+			ereport(LOG,
+					(errmsg("duration: %s ms  %s %s%s%s%s%s",
+							msec_str,
+							execute_is_fetch ?
+							_("execute fetch from") :
+							_("execute"),
+							prepStmtName,
+							*portal_name ? "/" : "",
+							*portal_name ? portal_name : "",
+							sourceText ? ": " : "",
+							sourceText ? sourceText : ""),
+					 errdetail_params(portalParams)));
+	}
+
+	if (save_log_statement_stats)
+		ShowUsage("EXECUTE MESSAGE STATISTICS");
+
+	debug_query_string = NULL;
+}
+
+/*
+ * check_log_statement_raw
+ *		Determine whether command should be logged because of log_statement
+ *
+ * raw_parsetree_list is the raw grammar output
+ */
+static bool
+check_log_statement_raw(List *raw_parsetree_list)
+{
+	ListCell   *parsetree_item;
+
+	if (log_statement == LOGSTMT_NONE)
+		return false;
+	if (log_statement == LOGSTMT_ALL)
+		return true;
+
+	/* Else we have to inspect the statement(s) to see whether to log */
+	foreach(parsetree_item, raw_parsetree_list)
+	{
+		Node	   *parsetree = (Node *) lfirst(parsetree_item);
+
+		if (GetCommandLogLevel(parsetree) <= log_statement)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * check_log_statement_cooked
+ *		As above, but work from already-analyzed querytrees
+ */
+static bool
+check_log_statement_cooked(List *parsetree_list)
+{
+	ListCell   *parsetree_item;
+
+	if (log_statement == LOGSTMT_NONE)
+		return false;
+	if (log_statement == LOGSTMT_ALL)
+		return true;
+
+	/* Else we have to inspect the statement(s) to see whether to log */
+	foreach(parsetree_item, parsetree_list)
+	{
+		Query	   *parsetree = (Query *) lfirst(parsetree_item);
+
+		if (GetQueryLogLevel(parsetree) <= log_statement)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * check_log_duration
+ *		Determine whether current command's duration should be logged
+ *
+ * If logging is needed, the duration in msec is formatted into msec_str[],
+ * which must be a 32-byte buffer.
+ */
+static bool
+check_log_duration(char *msec_str)
+{
 	if (log_duration || log_min_duration_statement >= 0)
 	{
 		long		secs;
@@ -1902,29 +1907,109 @@ exec_execute_message(const char *portal_name, long max_rows)
 			 (secs > log_min_duration_statement / 1000 ||
 			  secs * 1000 + msecs >= log_min_duration_statement)))
 		{
-			if (log_statement == LOGSTMT_ALL)	/* already logged? */
-				ereport(LOG,
-						(errmsg("duration: %ld.%03d ms",
-								secs * 1000 + msecs, usecs % 1000)));
-			else
-				ereport(LOG,
-						(errmsg("duration: %ld.%03d ms  execute %s%s%s%s",
-								secs * 1000 + msecs, usecs % 1000,
-								execute_is_fetch ? "fetch from " : "",
-								prepStmtName,
-								*portal_name ? "/" : "",
-								*portal_name ? portal_name : ""),
-								errdetail("prepare: %s%s%s", sourceText,
-								/* optionally print bind parameters */
-								bindText ? "  |  bind: " : "",
-								bindText ? bindText : "")));
+			snprintf(msec_str, 32, "%ld.%03d",
+					 secs * 1000 + msecs, usecs % 1000);
+			return true;
 		}
 	}
 
-	if (save_log_statement_stats)
-		ShowUsage("QUERY STATISTICS");
+	return false;
+}
 
-	debug_query_string = NULL;
+/*
+ * errdetail_execute
+ *
+ * Add an errdetail() line showing the query referenced by an EXECUTE, if any.
+ * The argument is the raw parsetree list.
+ */
+static int
+errdetail_execute(List *raw_parsetree_list)
+{
+	ListCell   *parsetree_item;
+
+	foreach(parsetree_item, raw_parsetree_list)
+	{
+		Node	   *parsetree = (Node *) lfirst(parsetree_item);
+
+		if (IsA(parsetree, ExecuteStmt))
+		{
+			ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
+			PreparedStatement *pstmt;
+
+			pstmt = FetchPreparedStatement(stmt->name, false);
+			if (pstmt && pstmt->query_string)
+			{
+				errdetail("prepare: %s", pstmt->query_string);
+				return 0;
+			}
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * errdetail_params
+ *
+ * Add an errdetail() line showing bind-parameter data, if available.
+ */
+static int
+errdetail_params(ParamListInfo params)
+{
+	/* We mustn't call user-defined I/O functions when in an aborted xact */
+	if (params && params->numParams > 0 && !IsAbortedTransactionBlockState())
+	{
+		StringInfoData param_str;
+		MemoryContext oldcontext;
+		int			paramno;
+
+		/* Make sure any trash is generated in MessageContext */
+		oldcontext = MemoryContextSwitchTo(MessageContext);
+
+		initStringInfo(&param_str);
+
+		for (paramno = 0; paramno < params->numParams; paramno++)
+		{
+			ParamExternData *prm = &params->params[paramno];
+			Oid			typoutput;
+			bool		typisvarlena;
+			char	   *pstring;
+			char	   *p;
+
+			appendStringInfo(&param_str, "%s$%d = ",
+							 paramno > 0 ? ", " : "",
+							 paramno + 1);
+
+			if (prm->isnull || !OidIsValid(prm->ptype))
+			{
+				appendStringInfoString(&param_str, "NULL");
+				continue;
+			}
+
+			getTypeOutputInfo(prm->ptype, &typoutput, &typisvarlena);
+
+			pstring = OidOutputFunctionCall(typoutput, prm->value);
+
+			appendStringInfoCharMacro(&param_str, '\'');
+			for (p = pstring; *p; p++)
+			{
+				if (*p == '\'')				/* double single quotes */
+					appendStringInfoCharMacro(&param_str, *p);
+				appendStringInfoCharMacro(&param_str, *p);
+			}
+			appendStringInfoCharMacro(&param_str, '\'');
+
+			pfree(pstring);
+		}
+
+		errdetail("parameters: %s", param_str.data);
+
+		pfree(param_str.data);
+
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	return 0;
 }
 
 /*

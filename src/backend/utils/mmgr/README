@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.8 2004/08/04 21:34:04 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.9 2006/09/07 22:52:01 tgl Exp $
 
 Notes about memory allocation redesign
 --------------------------------------
@@ -202,13 +202,13 @@ data kept here is pending NOTIFY messages, which are sent at top-level commit,
 but only if the generating subtransaction did not abort.
 
 QueryContext --- this is not actually a separate context, but a global
-variable pointing to the context that holds the current command's parse
-and plan trees.  (In simple-Query mode this points to MessageContext;
-when executing a prepared statement it will point at the prepared
-statement's private context.)  Generally it is not appropriate for any
-code to use QueryContext as an allocation target --- from the point of
-view of any code that would be referencing the QueryContext variable,
-it's a read-only context.
+variable pointing to the context that holds the current command's parse tree.
+(In simple-Query mode this points to MessageContext; when executing a
+prepared statement it will point to the prepared statement's private context.
+Note that the plan tree may or may not be in this same context.)
+Generally it is not appropriate for any code to use QueryContext as an
+allocation target --- from the point of view of any code that would be
+referencing the QueryContext variable, it's a read-only context.
 
 PortalContext --- this is not actually a separate context either, but a
 global variable pointing to the per-portal context of the currently active

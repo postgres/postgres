@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.267 2006/08/25 04:06:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.268 2006/09/07 22:52:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1815,6 +1815,8 @@ CreateQueryTag(Query *parsetree)
 {
 	const char *tag;
 
+	Assert(IsA(parsetree, Query));
+
 	switch (parsetree->commandType)
 	{
 		case CMD_SELECT:
@@ -1855,4 +1857,394 @@ CreateQueryTag(Query *parsetree)
 	}
 
 	return tag;
+}
+
+
+/*
+ * GetCommandLogLevel
+ *		utility to get the minimum log_statement level for a command,
+ *		given a raw (un-analyzed) parsetree.
+ *
+ * This must handle all raw command types, but since the vast majority
+ * of 'em are utility commands, it seems sensible to keep it here.
+ */
+LogStmtLevel
+GetCommandLogLevel(Node *parsetree)
+{
+	LogStmtLevel lev;
+
+	switch (nodeTag(parsetree))
+	{
+		case T_InsertStmt:
+		case T_DeleteStmt:
+		case T_UpdateStmt:
+			lev = LOGSTMT_MOD;
+			break;
+
+		case T_SelectStmt:
+			if (((SelectStmt *) parsetree)->into)
+				lev = LOGSTMT_DDL;			/* CREATE AS, SELECT INTO */
+			else
+				lev = LOGSTMT_ALL;
+			break;
+
+		case T_TransactionStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_DeclareCursorStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_ClosePortalStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_FetchStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_CreateDomainStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateSchemaStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateTableSpaceStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropTableSpaceStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_TruncateStmt:
+			lev = LOGSTMT_MOD;
+			break;
+
+		case T_CommentStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CopyStmt:
+			if (((CopyStmt *) parsetree)->is_from)
+				lev = LOGSTMT_MOD;
+			else
+				lev = LOGSTMT_ALL;
+			break;
+
+		case T_RenameStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterObjectSchemaStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterOwnerStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterTableStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterDomainStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterFunctionStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_GrantStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_GrantRoleStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DefineStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CompositeTypeStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_ViewStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateFunctionStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_IndexStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_RuleStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateSeqStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterSeqStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_RemoveFuncStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreatedbStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterDatabaseStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterDatabaseSetStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropdbStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_NotifyStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_ListenStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_UnlistenStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_LoadStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_ClusterStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_VacuumStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_ExplainStmt:
+			{
+				ExplainStmt  *stmt = (ExplainStmt *) parsetree;
+
+				/* Look through an EXPLAIN ANALYZE to the contained stmt */
+				if (stmt->analyze)
+					return GetCommandLogLevel((Node *) stmt->query);
+				/* Plain EXPLAIN isn't so interesting */
+				lev = LOGSTMT_ALL;
+			}
+			break;
+
+		case T_VariableSetStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_VariableShowStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_VariableResetStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_CreateTrigStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropPropertyStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreatePLangStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropPLangStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateRoleStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterRoleStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterRoleSetStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropRoleStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropOwnedStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_ReassignOwnedStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_LockStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_ConstraintsSetStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_CheckPointStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_ReindexStmt:
+			lev = LOGSTMT_ALL;				/* should this be DDL? */
+			break;
+
+		case T_CreateConversionStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateCastStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_DropCastStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateOpClassStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_RemoveOpClassStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_PrepareStmt:
+			{
+				PrepareStmt  *stmt = (PrepareStmt *) parsetree;
+
+				/* Look through a PREPARE to the contained stmt */
+				return GetCommandLogLevel((Node *) stmt->query);
+			}
+			break;
+
+		case T_ExecuteStmt:
+			{
+				ExecuteStmt  *stmt = (ExecuteStmt *) parsetree;
+				PreparedStatement *pstmt;
+				ListCell *l;
+
+				/* Look through an EXECUTE to the referenced stmt(s) */
+				lev = LOGSTMT_ALL;
+				pstmt = FetchPreparedStatement(stmt->name, false);
+				if (pstmt)
+				{
+					foreach(l, pstmt->query_list)
+					{
+						Query   *query = (Query *) lfirst(l);
+						LogStmtLevel stmt_lev;
+
+						stmt_lev = GetQueryLogLevel(query);
+						lev = Min(lev, stmt_lev);
+					}
+				}
+			}
+			break;
+
+		case T_DeallocateStmt:
+			lev = LOGSTMT_ALL;
+			break;
+
+		case T_Query:
+			/*
+			 * In complicated situations (eg, EXPLAIN ANALYZE in an extended
+			 * Query protocol), we might find an already-analyzed query
+			 * within a utility statement.  Cope.
+			 */
+			lev = GetQueryLogLevel((Query *) parsetree);
+			break;
+
+		default:
+			elog(WARNING, "unrecognized node type: %d",
+				 (int) nodeTag(parsetree));
+			lev = LOGSTMT_ALL;
+			break;
+	}
+
+	return lev;
+}
+
+/*
+ * GetQueryLogLevel
+ *		utility to get the minimum log_statement level for a Query operation.
+ *
+ * This is exactly like GetCommandLogLevel, except it works on a Query
+ * that has already been through parse analysis (and possibly further).
+ */
+LogStmtLevel
+GetQueryLogLevel(Query *parsetree)
+{
+	LogStmtLevel lev;
+
+	Assert(IsA(parsetree, Query));
+
+	switch (parsetree->commandType)
+	{
+		case CMD_SELECT:
+			if (parsetree->into != NULL)
+				lev = LOGSTMT_DDL;			/* CREATE AS, SELECT INTO */
+			else
+				lev = LOGSTMT_ALL;
+			break;
+
+		case CMD_UPDATE:
+		case CMD_INSERT:
+		case CMD_DELETE:
+			lev = LOGSTMT_MOD;
+			break;
+
+		case CMD_UTILITY:
+			lev = GetCommandLogLevel(parsetree->utilityStmt);
+			break;
+
+		default:
+			elog(WARNING, "unrecognized commandType: %d",
+				 (int) parsetree->commandType);
+			lev = LOGSTMT_ALL;
+			break;
+	}
+
+	return lev;
 }

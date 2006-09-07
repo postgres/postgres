@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.83 2006/09/03 19:06:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.84 2006/09/07 22:51:59 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2492,18 +2492,36 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
        <listitem>
         <para>
-         Logs the statement and its duration on a single log line if its
-         duration is greater than or equal to the specified number of
-         milliseconds. Setting this to zero will print all statements
-         and their durations. Minus-one (the default) disables the
-         feature. For example, if you set it to <literal>250</literal>
+         Causes the duration of each completed statement to be logged
+         if the statement ran for at least the specified number of
+         milliseconds.  Setting this to zero prints all statement durations.
+         Minus-one (the default) disables logging statement durations.
+         For example, if you set it to <literal>250</literal>
          then all SQL statements that run 250ms or longer will be
-         logged. Enabling this parameter can be useful in tracking down
-         unoptimized queries in your applications. This setting is
-         independent of <varname>log_statement</varname> and
-         <varname>log_duration</varname>. Only superusers can change
-         this setting.
+         logged.  Enabling this parameter can be helpful in tracking down
+         unoptimized queries in your applications.
+         Only superusers can change this setting.
         </para>
+
+        <para>
+         For clients using extended query protocol, durations of the Parse,
+         Bind, and Execute steps are logged independently.
+        </para>
+
+       <note>
+        <para>
+         When using this option together with
+         <xref linkend="guc-log-statement">,
+         the text of statements that are logged because of
+         <varname>log_statement</> will not be repeated in the
+         duration log message.
+         If you are not using <application>syslog</>, it is recommended 
+         that you log the PID or session ID using
+         <xref linkend="guc-log-line-prefix">
+         so that you can link the statement message to the later
+         duration message using the process ID or session ID.
+        </para>
+       </note>
        </listitem>
       </varlistentry>
 
@@ -2695,14 +2713,30 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        Causes the duration of every completed statement which satisfies
-        <varname>log_statement</> to be logged.  When using this option, 
-        if you are not using <application>syslog</>, it is recommended 
-        that you log the PID or session ID using <varname>log_line_prefix</> 
-        so that you can link the statement message to the later
-        duration message using the process ID or session ID. The default is
-        <literal>off</>. Only superusers can change this setting.
+        Causes the duration of every completed statement to be logged.
+        The default is <literal>off</>.
+        Only superusers can change this setting.
        </para>
+
+        <para>
+         For clients using extended query protocol, durations of the Parse,
+         Bind, and Execute steps are logged independently.
+        </para>
+
+       <note>
+        <para>
+         When using this option together with
+         <xref linkend="guc-log-statement">,
+         the text of statements that are logged because of
+         <varname>log_statement</> will not be repeated in the
+         duration log message.
+         If you are not using <application>syslog</>, it is recommended 
+         that you log the PID or session ID using
+         <xref linkend="guc-log-line-prefix">
+         so that you can link the statement message to the later
+         duration message using the process ID or session ID.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
      
@@ -2829,18 +2863,20 @@ SELECT * FROM parent WHERE key = 2400;
         Controls which SQL statements are logged. Valid values are
         <literal>none</>, <literal>ddl</>, <literal>mod</>, and
         <literal>all</>. <literal>ddl</> logs all data definition
-        commands like <literal>CREATE</>, <literal>ALTER</>, and
-        <literal>DROP</> commands. <literal>mod</> logs all
-        <literal>ddl</> statements, plus <literal>INSERT</>,
-        <literal>UPDATE</>, <literal>DELETE</>, <literal>TRUNCATE</>,
-        and <literal>COPY FROM</>. <literal>PREPARE</> and
-        <literal>EXPLAIN ANALYZE</> statements are also logged if their
-        contained command is of an appropriate type.  Protocol-level
-        prepare, bind, and execute commands are logged only if
-        <varname>log_statement</> is <literal>all</>.  Bind parameter 
-        values are also logged if they are supplied in <literal>text</>
-        format (literal single quotes are doubled).
+        statements, such as <command>CREATE</>, <command>ALTER</>, and
+        <command>DROP</> statements. <literal>mod</> logs all
+        <literal>ddl</> statements, plus data-modifying statements
+        such as <command>INSERT</>,
+        <command>UPDATE</>, <command>DELETE</>, <command>TRUNCATE</>,
+        and <command>COPY FROM</>.
+        <command>PREPARE</>, <command>EXECUTE</>, and
+        <command>EXPLAIN ANALYZE</> statements are also logged if their
+        contained command is of an appropriate type.  For clients using
+        extended query protocol, logging occurs when an Execute message
+        is received, and values of the Bind parameters are included
+        (with any embedded single-quote marks doubled).
        </para>
+
        <para>
         The default is <literal>none</>. Only superusers can change this
         setting.
@@ -2848,9 +2884,7 @@ SELECT * FROM parent WHERE key = 2400;
 
        <note>
         <para>
-         The <command>EXECUTE</command> statement is not considered a
-         <literal>ddl</> or <literal>mod</> statement.  Statements that
-         generate syntax errors are not logged.  Set
+         Statements that generate syntax errors are not logged.  Set
          <varname>log_min_error_statement</> to <literal>error</> to
          log such statements.      
         </para>
