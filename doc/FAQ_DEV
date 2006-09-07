@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Sep 6 20:08:24 EDT 2006
+   Last updated: Wed Sep 6 20:12:13 EDT 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -288,9 +288,10 @@ General Questions
     less:
             less -x4
 
-   The tools directory of the latest sources contains sample settings
-   that can be used with the emacs, xemacs and vim editors, that assist
-   in keeping to PostgreSQL coding standards.
+   The tools/editors directory of the latest sources contains sample
+   settings that can be used with the emacs, xemacs and vim editors, that
+   assist in keeping to PostgreSQL coding standards.
+   
    pgindent will the format code by specifying flags to your operating
    system's utility indent. This article describes the value of a
    consistent coding style.
