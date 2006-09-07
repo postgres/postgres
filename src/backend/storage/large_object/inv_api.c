@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.119 2006/07/31 20:09:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.120 2006/09/07 15:37:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -488,7 +488,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 }
 
 int
-inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
+inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 {
 	int			nwritten = 0;
 	int			n;

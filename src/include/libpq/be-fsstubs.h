@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/be-fsstubs.h,v 1.26 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/be-fsstubs.h,v 1.27 2006/09/07 15:37:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ extern Datum lo_unlink(PG_FUNCTION_ARGS);
  * but too late now...
  */
 extern int	lo_read(int fd, char *buf, int len);
-extern int	lo_write(int fd, char *buf, int len);
+extern int	lo_write(int fd, const char *buf, int len);
 
 /*
  * Cleanup LOs at xact commit/abort
