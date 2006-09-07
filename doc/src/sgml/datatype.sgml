@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.171 2006/08/21 16:23:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.172 2006/09/07 00:04:48 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3292,6 +3292,154 @@ SELECT * FROM pg_attribute
     declared to return <type>internal</> unless it has at least one
     <type>internal</> argument.
    </para>
+
+  </sect1>
+
+  <sect1 id="datatype-xml">
+   <title><acronym>XML</> Document Support</title>
+
+   <indexterm zone="datatype">
+    <primary>xml</primary>
+   </indexterm>
+
+   <para>
+    <acronym>XML</> (eXtensible Markup Language) support is not one
+    capability, but a variety of features supported by a database
+    system. These capabilities include storage, import/export,
+    validation, indexing, efficiency of modification, searching,
+    transforming, and <acronym>XML</> to <acronym>SQL</> mapping.
+    <productname>PostgreSQL</> supports some but not all of these
+    <acronym>XML</> capabilities. Future releases of
+    <productname>PostgreSQL</> will continue to improve <acronym>XML</>
+    support. For an overview of <acronym>XML</> use in databases, see <ulink
+    url="http://www.rpbourret.com/xml/XMLAndDatabases.htm"></>.
+   </para>
+
+   <variablelist>
+
+   <varlistentry>
+    <term>Storage</term>
+    <listitem>
+
+     <para>
+      PostgreSQL does not have a specialized <acronym>XML</> data type.
+      Users should store <acronym>XML</> documents in ordinary
+      <type>TEXT</> fields. If you need the document split apart into
+      its component parts so each element is stored separately, you must
+      use a middle-ware solution to do that, but once done, the data
+      becomes relational and has to be processed accordingly.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Import/Export</term>
+    <listitem>
+
+     <para>
+      There is no facility for mapping <acronym>XML</> to relational
+      tables. An external tool must be used for this. One simple way to
+      export <acronym>XML</> is to use <application>psql</> in
+      <acronym>HTML</> mode (<literal>\pset format html</>), and convert
+      the <acronym>XHTML</> output to XML using an external tool.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Validation</term>
+    <listitem>
+
+     <para>
+      <filename>/contrib/xml2</> has a function called
+      <function>xml_valid()</> that can be used in a <literal>CHECK</>
+      constraint to enforce that a field contains valid <acronym>XML</>.
+      It does not support validation against a specific <acronym>XML</>
+      schema. A server-side language with <acronym>XML</> capabilities
+      could be used to do schema-specific <acronym>XML</> checks.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Indexing</term>
+    <listitem>
+
+     <para>
+      <filename>/contrib/xml2</> functions can be used in expression
+      indexes to index specific <acronym>XML</> fields. To index the
+      full contents of <acronym>XML</> documents, the full-text indexing
+      tool <filename>/contrib/tsearch2</> can be used. Of course,
+      tsearch2 indexes have no <acronym>XML</> awareness so additional
+      <filename>/contrib/xml2</> checks should be added to queries.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Modification</term>
+    <listitem>
+
+     <para>
+      If an <command>UPDATE</> does not modify an <acronym>XML</> field,
+      the <acronym>XML</> data is shared between the old and new rows.
+      However, if the <command>UPDATE</> modifies an <acronym>XML</>
+      field, a full modified copy of the <acronym>XML</> field must be
+      created internally.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Searching</term>
+    <listitem>
+
+     <para>
+      XPath searches are implemented using <filename>/contrib/xml2</>.
+      It processes <acronym>XML</> text documents and returns results
+      based on the requested query.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Transforming</term>
+    <listitem>
+
+     <para>
+      <filename>/contrib/xml2</> supports <acronym>XSLT</> (XML
+      Stylesheet Language Transformation).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>XML to SQL Mapping</term>
+    <listitem>
+
+     <para>
+      This involves converting <acronym>XML</> data to and from
+      relational structures. <productname>PostgreSQL</> has no internal
+      support for such mapping, and relies on external tools to do such
+      conversions.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Missing Features</term>
+    <listitem>
+
+     <para>
+	Missing features include XQuery, SQL/XML syntax (ISO/IEC
+	9075-14), and an <acronym>XML</> data type optimized for
+	<acronym>XML</> storage.
+	
+     </para>
+    </listitem>
+   </varlistentry>
+
+   </variablelist>
 
   </sect1>
 
