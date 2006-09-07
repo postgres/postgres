@@ -2,163 +2,163 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 48: QUERY: create  table meskes ( name char  ( 8 )    , born integer   , age smallint   , married date   , children integer   )     on connection regress1
+[NO_PID]: ECPGexecute line 46: QUERY: create  table meskes ( name char  ( 8 )    , born integer   , age smallint   , married date   , children integer   )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 48 Ok: CREATE TABLE
+[NO_PID]: ECPGexecute line 46 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 51: QUERY: insert into meskes ( name  , married  , children  ) values( 'Petra' , '19900404' , 3 ) on connection regress1
+[NO_PID]: ECPGexecute line 49: QUERY: insert into meskes ( name  , married  , children  ) values ( 'Petra' , '19900404' , 3 )  on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 49 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 50: QUERY: insert into meskes ( name  , born  , age  , married  , children  ) values ( 'Michael' , 19660117 , 35 , '19900404' , 3 )  on connection regress1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 50 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 51: QUERY: insert into meskes ( name  , born  , age  ) values ( 'Carsten' , 19910103 , 10 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 51 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 52: QUERY: insert into meskes ( name  , born  , age  , married  , children  ) values( 'Michael' , 19660117 , 35 , '19900404' , 3 ) on connection regress1
+[NO_PID]: ECPGexecute line 52: QUERY: insert into meskes ( name  , born  , age  ) values ( 'Marc' , 19930907 , 8 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 52 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: QUERY: insert into meskes ( name  , born  , age  ) values( 'Carsten' , 19910103 , 10 ) on connection regress1
+[NO_PID]: ECPGexecute line 53: QUERY: insert into meskes ( name  , born  , age  ) values ( 'Chris' , 19970923 , 4 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 53 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 54: QUERY: insert into meskes ( name  , born  , age  ) values( 'Marc' , 19930907 , 8 ) on connection regress1
+[NO_PID]: ECPGtrans line 56 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 54 Ok: INSERT 0 1
+[NO_PID]: ECPGexecute line 59: QUERY: declare cur  cursor  for select  name , born , age , married , children  from meskes    on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 55: QUERY: insert into meskes ( name  , born  , age  ) values( 'Chris' , 19970923 , 4 ) on connection regress1
+[NO_PID]: ECPGexecute line 59 Ok: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 55 Ok: INSERT 0 1
+[NO_PID]: ECPGexecute line 68: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 58 action = commit connection = regress1
+[NO_PID]: ECPGexecute line 68: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 61: QUERY: declare cur  cursor  for select  name , born , age , married , children  from meskes    on connection regress1
+[NO_PID]: ECPGget_data line 68: RESULT: Petra    offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 61 Ok: DECLARE CURSOR
+[NO_PID]: ECPGget_data line 68: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGget_data line 68: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
+[NO_PID]: ECPGstore_result: line 68: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Petra    offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: 3 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: ECPGexecute line 68: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
+[NO_PID]: ECPGexecute line 68: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 04-04-1990 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: Michael  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 3 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: 19660117 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGget_data line 68: RESULT: 35 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
+[NO_PID]: ECPGstore_result: line 68: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Michael  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 19660117 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: 3 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 35 offset: -1 array: Yes
+[NO_PID]: ECPGexecute line 68: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
+[NO_PID]: ECPGexecute line 68: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 04-04-1990 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: Carsten  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 3 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: 19910103 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGget_data line 68: RESULT: 10 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
+[NO_PID]: ECPGstore_result: line 68: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Carsten  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 19910103 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 10 offset: -1 array: Yes
+[NO_PID]: ECPGexecute line 68: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
+[NO_PID]: ECPGexecute line 68: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: Marc     offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: 19930907 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGget_data line 68: RESULT: 8 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
+[NO_PID]: ECPGstore_result: line 68: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Marc     offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 19930907 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 8 offset: -1 array: Yes
+[NO_PID]: ECPGexecute line 68: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
+[NO_PID]: ECPGexecute line 68: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: Chris    offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT: 19970923 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGget_data line 68: RESULT: 4 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: Correctly got 1 tuples with 5 fields
+[NO_PID]: ECPGstore_result: line 68: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: Chris    offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 19970923 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 68: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT: 4 offset: -1 array: Yes
+[NO_PID]: ECPGexecute line 68: QUERY: fetch cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGstore_result: line 70: allocating memory for 1 tuples
+[NO_PID]: ECPGexecute line 68: Correctly got 0 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 70: RESULT:  offset: -1 array: Yes
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: QUERY: fetch cur on connection regress1
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 70: Correctly got 0 tuples with 5 fields
-[NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 70, 'No data found in line 70.'.
+[NO_PID]: raising sqlcode 100 in line 68, 'No data found in line 68.'.
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGexecute line 87: QUERY: close cur on connection regress1
+[NO_PID]: ECPGexecute line 85: QUERY: close cur on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 87 Ok: CLOSE CURSOR
+[NO_PID]: ECPGexecute line 85 Ok: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGprepare line 90: QUERY: select name, born, age, married, children from meskes where name = ?    
+[NO_PID]: ECPGprepare line 88: QUERY: select name, born, age, married, children from meskes where name = ?    
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 94: QUERY: declare prep  cursor  for select name, born, age, married, children from meskes where name = 'Petra'     on connection regress1
+[NO_PID]: ECPGexecute line 92: QUERY: declare prep  cursor  for select name, born, age, married, children from meskes where name = 'Petra'     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 94 Ok: DECLARE CURSOR
+[NO_PID]: ECPGexecute line 92 Ok: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 100: QUERY: fetch in prep on connection regress1
+[NO_PID]: ECPGexecute line 98: QUERY: fetch in prep on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 100: Correctly got 1 tuples with 5 fields
+[NO_PID]: ECPGexecute line 98: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT: Petra    offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 98: RESULT: Petra    offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT:  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 98: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT:  offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 98: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGstore_result: line 100: allocating memory for 1 tuples
+[NO_PID]: ECPGstore_result: line 98: allocating memory for 1 tuples
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT: 04-04-1990 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 98: RESULT: 04-04-1990 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 100: RESULT: 3 offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 98: RESULT: 3 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 100: QUERY: fetch in prep on connection regress1
+[NO_PID]: ECPGexecute line 98: QUERY: fetch in prep on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 100: Correctly got 0 tuples with 5 fields
+[NO_PID]: ECPGexecute line 98: Correctly got 0 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlcode 100 in line 100, 'No data found in line 100.'.
+[NO_PID]: raising sqlcode 100 in line 98, 'No data found in line 98.'.
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGexecute line 116: QUERY: close prep on connection regress1
+[NO_PID]: ECPGexecute line 114: QUERY: close prep on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 116 Ok: CLOSE CURSOR
+[NO_PID]: ECPGexecute line 114 Ok: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 119: QUERY: drop table meskes  on connection regress1
+[NO_PID]: ECPGexecute line 117: QUERY: drop table meskes  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 119 Ok: DROP TABLE
+[NO_PID]: ECPGexecute line 117 Ok: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans line 122 action = commit connection = regress1
+[NO_PID]: ECPGtrans line 120 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection regress1 closed.
 [NO_PID]: sqlca: code: 0, state: 00000

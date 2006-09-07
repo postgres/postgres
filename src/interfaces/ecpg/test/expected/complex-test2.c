@@ -148,7 +148,7 @@ main (void)
 
 	
 #line 35 "test2.pgc"
- float  ind_married    ;
+ long  ind_married    ;
 
 #line 35 "test2.pgc"
 
@@ -159,38 +159,52 @@ main (void)
 #line 36 "test2.pgc"
 
 
-	/* exec sql var ind_married is long   */
-#line 38 "test2.pgc"
-
-
 	char msg[128];
 
         ECPGdebug(1, stderr);
 
 	strcpy(msg, "connect");
 	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
-#line 45 "test2.pgc"
+#line 43 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 45 "test2.pgc"
+#line 43 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 45 "test2.pgc"
+#line 43 "test2.pgc"
 
 
 	strcpy(msg, "create");
 	{ ECPGdo(__LINE__, 0, 1, NULL, "create  table meskes ( name char  ( 8 )    , born integer   , age smallint   , married date   , children integer   )    ", ECPGt_EOIT, ECPGt_EORT);
-#line 48 "test2.pgc"
+#line 46 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 48 "test2.pgc"
+#line 46 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 48 "test2.pgc"
+#line 46 "test2.pgc"
 
 
 	strcpy(msg, "insert");
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , married  , children  ) values( 'Petra' , '19900404' , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , married  , children  ) values ( 'Petra' , '19900404' , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
+#line 49 "test2.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') warn (  );
+#line 49 "test2.pgc"
+
+if (sqlca.sqlcode < 0) Finish ( msg );}
+#line 49 "test2.pgc"
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  , married  , children  ) values ( 'Michael' , 19660117 , 35 , '19900404' , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
+#line 50 "test2.pgc"
+
+if (sqlca.sqlwarn[0] == 'W') warn (  );
+#line 50 "test2.pgc"
+
+if (sqlca.sqlcode < 0) Finish ( msg );}
+#line 50 "test2.pgc"
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values ( 'Carsten' , 19910103 , 10 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 51 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
@@ -199,7 +213,7 @@ if (sqlca.sqlwarn[0] == 'W') warn (  );
 if (sqlca.sqlcode < 0) Finish ( msg );}
 #line 51 "test2.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  , married  , children  ) values( 'Michael' , 19660117 , 35 , '19900404' , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values ( 'Marc' , 19930907 , 8 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 52 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
@@ -208,7 +222,7 @@ if (sqlca.sqlwarn[0] == 'W') warn (  );
 if (sqlca.sqlcode < 0) Finish ( msg );}
 #line 52 "test2.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Carsten' , 19910103 , 10 ) ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values ( 'Chris' , 19970923 , 4 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 53 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
@@ -216,50 +230,32 @@ if (sqlca.sqlwarn[0] == 'W') warn (  );
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
 #line 53 "test2.pgc"
-
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Marc' , 19930907 , 8 ) ", ECPGt_EOIT, ECPGt_EORT);
-#line 54 "test2.pgc"
-
-if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 54 "test2.pgc"
-
-if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 54 "test2.pgc"
-
-	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into meskes ( name  , born  , age  ) values( 'Chris' , 19970923 , 4 ) ", ECPGt_EOIT, ECPGt_EORT);
-#line 55 "test2.pgc"
-
-if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 55 "test2.pgc"
-
-if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 55 "test2.pgc"
 
 
 	strcpy(msg, "commit");
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 58 "test2.pgc"
+#line 56 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 58 "test2.pgc"
+#line 56 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 58 "test2.pgc"
+#line 56 "test2.pgc"
 
 
 	strcpy(msg, "open");
 	{ ECPGdo(__LINE__, 0, 1, NULL, "declare cur  cursor  for select  name , born , age , married , children  from meskes   ", ECPGt_EOIT, ECPGt_EORT);
-#line 61 "test2.pgc"
+#line 59 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 61 "test2.pgc"
+#line 59 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 61 "test2.pgc"
+#line 59 "test2.pgc"
 
 
 	/* exec sql whenever not found  break ; */
-#line 63 "test2.pgc"
+#line 61 "test2.pgc"
 
 
 	p=&personal;
@@ -278,23 +274,23 @@ if (sqlca.sqlcode < 0) Finish ( msg );}
 	ECPGt_long,&(ind_married),(long)1,(long)1,sizeof(long), 
 	ECPGt_int,&(children.integer),(long)1,(long)1,sizeof(int), 
 	ECPGt_short,&(ind_children.smallint),(long)1,(long)1,sizeof(short), ECPGt_EORT);
-#line 70 "test2.pgc"
+#line 68 "test2.pgc"
 
 if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
-#line 70 "test2.pgc"
+#line 68 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 70 "test2.pgc"
+#line 68 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 70 "test2.pgc"
+#line 68 "test2.pgc"
 
 		printf("%8.8s", personal.name.arr);
 		if (i->ind_birth.born >= 0)
 			printf(", born %ld", personal.birth.born);
 		if (i->ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if ((long)ind_married >= 0)
+		if (ind_married >= 0)
 			printf(", married %s", married);
 		if (ind_children.smallint >= 0)
 			printf(", children = %d", children.integer);
@@ -306,27 +302,27 @@ if (sqlca.sqlcode < 0) Finish ( msg );}
 
 	strcpy(msg, "close");
 	{ ECPGdo(__LINE__, 0, 1, NULL, "close cur", ECPGt_EOIT, ECPGt_EORT);
-#line 87 "test2.pgc"
+#line 85 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 87 "test2.pgc"
+#line 85 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 87 "test2.pgc"
+#line 85 "test2.pgc"
 
 
 	/* and now a same query with prepare */
 	{ ECPGprepare(__LINE__, "MM" , query);
-#line 90 "test2.pgc"
+#line 88 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 90 "test2.pgc"
+#line 88 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 90 "test2.pgc"
+#line 88 "test2.pgc"
 
 	/* declare prep  cursor  for ? */
-#line 91 "test2.pgc"
+#line 89 "test2.pgc"
 
 
 	strcpy(msg, "open");
@@ -335,17 +331,17 @@ if (sqlca.sqlcode < 0) Finish ( msg );}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_const,"'Petra'",(long)7,(long)1,strlen("'Petra'"), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 94 "test2.pgc"
+#line 92 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 94 "test2.pgc"
+#line 92 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 94 "test2.pgc"
+#line 92 "test2.pgc"
 
 
 	/* exec sql whenever not found  break ; */
-#line 96 "test2.pgc"
+#line 94 "test2.pgc"
 
 
 	while (1) {
@@ -361,23 +357,23 @@ if (sqlca.sqlcode < 0) Finish ( msg );}
 	ECPGt_long,&(ind_married),(long)1,(long)1,sizeof(long), 
 	ECPGt_int,&(children.integer),(long)1,(long)1,sizeof(int), 
 	ECPGt_short,&(ind_children.smallint),(long)1,(long)1,sizeof(short), ECPGt_EORT);
-#line 100 "test2.pgc"
+#line 98 "test2.pgc"
 
 if (sqlca.sqlcode == ECPG_NOT_FOUND) break;
-#line 100 "test2.pgc"
+#line 98 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 100 "test2.pgc"
+#line 98 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 100 "test2.pgc"
+#line 98 "test2.pgc"
 
 		printf("%8.8s", personal.name.arr);
 		if (ind_personal.ind_birth.born >= 0)
 			printf(", born %ld", personal.birth.born);
 		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if ((long)ind_married >= 0)
+		if (ind_married >= 0)
 			printf(", married %s", married);
 		if (ind_children.smallint >= 0)
 			printf(", children = %d", children.integer);
@@ -388,46 +384,46 @@ if (sqlca.sqlcode < 0) Finish ( msg );}
 
 	strcpy(msg, "close");
 	{ ECPGdo(__LINE__, 0, 1, NULL, "close prep", ECPGt_EOIT, ECPGt_EORT);
-#line 116 "test2.pgc"
+#line 114 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 116 "test2.pgc"
+#line 114 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 116 "test2.pgc"
+#line 114 "test2.pgc"
 
 
 	strcpy(msg, "drop");
 	{ ECPGdo(__LINE__, 0, 1, NULL, "drop table meskes ", ECPGt_EOIT, ECPGt_EORT);
-#line 119 "test2.pgc"
+#line 117 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 119 "test2.pgc"
+#line 117 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 119 "test2.pgc"
+#line 117 "test2.pgc"
 
 
 	strcpy(msg, "commit");
 	{ ECPGtrans(__LINE__, NULL, "commit");
-#line 122 "test2.pgc"
+#line 120 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 122 "test2.pgc"
+#line 120 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 122 "test2.pgc"
+#line 120 "test2.pgc"
 
 
 	strcpy(msg, "disconnect"); 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 125 "test2.pgc"
+#line 123 "test2.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn (  );
-#line 125 "test2.pgc"
+#line 123 "test2.pgc"
 
 if (sqlca.sqlcode < 0) Finish ( msg );}
-#line 125 "test2.pgc"
+#line 123 "test2.pgc"
 
 
 	return (0);

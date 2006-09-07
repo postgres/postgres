@@ -32,10 +32,8 @@ exec sql begin declare section;
 exec sql end declare section;
 
 	exec sql char *married = NULL;
-	exec sql float ind_married;
+	exec sql long ind_married;
 	exec sql ind children;
-
-	exec sql var ind_married is long;
 
 	char msg[128];
 
@@ -73,7 +71,7 @@ exec sql end declare section;
 			printf(", born %ld", personal.birth.born);
 		if (i->ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if ((long)ind_married >= 0)
+		if (ind_married >= 0)
 			printf(", married %s", married);
 		if (ind_children.smallint >= 0)
 			printf(", children = %d", children.integer);
@@ -103,7 +101,7 @@ exec sql end declare section;
 			printf(", born %ld", personal.birth.born);
 		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if ((long)ind_married >= 0)
+		if (ind_married >= 0)
 			printf(", married %s", married);
 		if (ind_children.smallint >= 0)
 			printf(", children = %d", children.integer);
