@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Sep 6 18:02:57 EDT 2006
+   Last updated: Wed Sep 6 20:08:24 EDT 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -277,9 +277,9 @@ General Questions
    applied to the distribution. This produces context diffs, which is our
    preferred format.
    
-   Our standard format is to indent each code level with one tab, where
-   each tab is four spaces. You will need to set your editor to display
-   tabs as four spaces:
+   Our standard format BSD style, with each level of code indented one
+   tab, where each tab is four spaces. You will need to set your editor
+   or file viewer to display tabs as four spaces:
     vi in ~/.exrc:
             set tabstop=4
             set sw=4
@@ -287,40 +287,10 @@ General Questions
             more -x4
     less:
             less -x4
-    emacs:
-        M-x set-variable tab-width
 
-        or
-
-        (c-add-style "pgsql"
-                '("bsd"
-                        (indent-tabs-mode . t)
-                        (c-basic-offset   . 4)
-                        (tab-width . 4)
-                        (c-offsets-alist .
-                                ((case-label . +)))
-                )
-                nil ) ; t = set this style, nil = don't
-
-        (defun pgsql-c-mode ()
-                (c-mode)
-                (c-set-style "pgsql")
-        )
-
-        and add this to your autoload list (modify file path in macro):
-
-        (setq auto-mode-alist
-                (cons '("\\`/home/andrew/pgsql/.*\\.[chyl]\\'" . pgsql-c-mode)
-                auto-mode-alist))
-        or
-            /*
-             * Local variables:
-             *  tab-width: 4
-             *  c-indent-level: 4
-             *  c-basic-offset: 4
-             * End:
-             */
-
+   The tools directory of the latest sources contains sample settings
+   that can be used with the emacs, xemacs and vim editors, that assist
+   in keeping to PostgreSQL coding standards.
    pgindent will the format code by specifying flags to your operating
    system's utility indent. This article describes the value of a
    consistent coding style.

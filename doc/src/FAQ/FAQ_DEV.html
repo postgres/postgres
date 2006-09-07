@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Wed Sep  6 18:02:57 EDT 2006</P>
+    <P>Last updated: Wed Sep  6 20:08:24 EDT 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -357,9 +357,9 @@
     can be applied to the distribution. This produces context diffs,
     which is our preferred format.</P>
 
-    <P>Our standard format is to indent each code level with one tab,
-    where each tab is four spaces. You will need to set your editor to
-    display tabs as four spaces:<BR>
+    <P>Our standard format <I>BSD</I> style, with each level of code indented
+    one tab, where each tab is four spaces. You will need to set your editor 
+    or file viewer to display tabs as four spaces:<BR>
     </P>
 <PRE>
     vi in ~/.exrc:
@@ -369,40 +369,11 @@
             more -x4
     less:
             less -x4
-    emacs:
-        M-x set-variable tab-width
-
-        or
-
-        (c-add-style "pgsql"
-                '("bsd"
-                        (indent-tabs-mode . t)
-                        (c-basic-offset   . 4)
-                        (tab-width . 4)
-                        (c-offsets-alist .
-                                ((case-label . +)))
-                )
-                nil ) ; t = set this style, nil = don't
-
-        (defun pgsql-c-mode ()
-                (c-mode)
-                (c-set-style "pgsql")
-        )
-
-        and add this to your autoload list (modify file path in macro):
-
-        (setq auto-mode-alist
-                (cons '("\\`/home/andrew/pgsql/.*\\.[chyl]\\'" . pgsql-c-mode)
-                auto-mode-alist))
-        or
-            /*
-             * Local variables:
-             *  tab-width: 4
-             *  c-indent-level: 4
-             *  c-basic-offset: 4
-             * End:
-             */
 </PRE>
+   <P>The <I>tools</I> directory of the latest sources contains sample 
+   settings that can be used with the <I>emacs, xemacs</I> and <I>vim</I> 
+   editors, that assist in keeping to PostgreSQL coding standards.
+   </P>
     <BR>
      <I>pgindent</I> will the format code by specifying flags to your
     operating system's utility <I>indent.</I> This <A href=
