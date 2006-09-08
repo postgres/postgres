@@ -9,9 +9,6 @@ exec sql include ../regression;
 /* Test comment                                                             */
 /*--------------------------------------------------------------------------*/
 
-// we also understand this style
-int k;
-
 int main(void)
 {
   ECPGdebug(1, stderr);

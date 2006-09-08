@@ -27,19 +27,16 @@
 /* Test comment                                                             */
 /*--------------------------------------------------------------------------*/
 
-// we also understand this style
-int k;
-
 int main(void)
 {
   ECPGdebug(1, stderr);
 
   { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
-#line 20 "comment.pgc"
+#line 17 "comment.pgc"
 
 
   { ECPGdisconnect(__LINE__, "CURRENT");}
-#line 22 "comment.pgc"
+#line 19 "comment.pgc"
 
   exit (0);
 }
