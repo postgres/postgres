@@ -1,1 +1,2 @@
-id=1 name=first user          , accs=320
+name[0]=false   	amount[0]=1	letter[0]=f
+name[1]=true    	amount[1]=2	letter[1]=t

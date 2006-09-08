@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+EXEC SQL include ../regression;
+
+EXEC SQL typedef long mmInteger;
+EXEC SQL typedef char mmChar;
+EXEC SQL typedef short mmSmallInt;
+
+exec sql type string is char[11];
+typedef char string[11];
+
+exec sql type c is char reference;
+typedef char* c;
+
+EXEC SQL BEGIN DECLARE SECTION;
+struct TBempl
+{
+  mmInteger idnum;
+  mmChar name[21];
+  mmSmallInt accs;
+};
+EXEC SQL END DECLARE SECTION;
+
+int
+main (void)
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  struct TBempl empl;
+  string str;
+  c ptr = NULL;
+  struct varchar_vc
+  {
+  	int len;
+	char text[10];
+  } vc;
+  EXEC SQL END DECLARE SECTION;
+
+  EXEC SQL var vc is varchar[10];
+  ECPGdebug (1, stderr);
+
+  empl.idnum = 1;
+  EXEC SQL connect to REGRESSDB1;
+  if (sqlca.sqlcode)
+    {
+      printf ("connect error = %ld\n", sqlca.sqlcode);
+      exit (sqlca.sqlcode);
+    }
+
+  EXEC SQL create table empl
+    (idnum integer, name char(20), accs smallint, string1 char(10), string2 char(10), string3 char(10));
+  if (sqlca.sqlcode)
+    {
+      printf ("create error = %ld\n", sqlca.sqlcode);
+      exit (sqlca.sqlcode);
+    }
+
+  EXEC SQL insert into empl values (1, 'user name', 320, 'first str', 'second str', 'third str');
+  if (sqlca.sqlcode)
+    {
+      printf ("insert error = %ld\n", sqlca.sqlcode);
+      exit (sqlca.sqlcode);
+    }
+
+  EXEC SQL select idnum, name, accs, string1, string2, string3
+	into :empl, :str, :ptr, :vc
+	from empl
+	where idnum =:empl.idnum;
+  if (sqlca.sqlcode)
+    {
+      printf ("select error = %ld\n", sqlca.sqlcode);
+      exit (sqlca.sqlcode);
+    }
+  printf ("id=%ld name='%s' accs=%d str='%s' ptr='%s' vc='%10.10s'\n", empl.idnum, empl.name, empl.accs, str, ptr, vc.text);
+
+  EXEC SQL disconnect;
+  exit (0);
+}

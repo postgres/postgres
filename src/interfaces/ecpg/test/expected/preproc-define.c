@@ -7,8 +7,10 @@
 /* End of automatic include section */
 
 #line 1 "define.pgc"
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 
 #line 1 "regression.h"
@@ -18,110 +20,145 @@
 
 
 
-#line 4 "define.pgc"
-
-
-typedef long  mmInteger ;
-
 #line 6 "define.pgc"
 
-#line 6 "define.pgc"
 
-typedef char  mmChar ;
-
-#line 7 "define.pgc"
-
-#line 7 "define.pgc"
-
-typedef short  mmSmallInt ;
-
-#line 8 "define.pgc"
-
+/* exec sql whenever sqlerror  sqlprint ; */
 #line 8 "define.pgc"
 
 
-/* exec sql begin declare section */
- 
 
-   
-   
-   
 
-struct TBempl { 
+
+/* exec sql type intarray is int [ 6 ]   */
 #line 13 "define.pgc"
- mmInteger  idnum    ;
- 
-#line 14 "define.pgc"
- mmChar  name [ 21 ]    ;
- 
-#line 15 "define.pgc"
- mmSmallInt  accs    ;
- } ;/* exec sql end declare section */
-#line 17 "define.pgc"
 
+typedef int intarray[ 6];
 
 int
-main (void)
+main(void)
 {
-  /* exec sql begin declare section */
-    
-  
+/* exec sql begin declare section */
+
+	   typedef char  string [ 8 ] ;
+
+#line 21 "define.pgc"
+
+	 
+	   
+	  	 
+ 
+#line 22 "define.pgc"
+ intarray  amount    ;
+ 
 #line 23 "define.pgc"
- struct TBempl  empl    ;
-/* exec sql end declare section */
+ char  name [ 6 ] [ 8 ]    ;
+ 
 #line 24 "define.pgc"
-
-
-  ECPGdebug (1, stderr);
-
-  empl.idnum = 1;
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+ char  letter [ 6 ] [ 1 ]    ;
+ 
+#if 0
+ 
+#line 26 "define.pgc"
+ int  not_used    ;
+ 
+#endif
+/* exec sql end declare section */
 #line 29 "define.pgc"
 
-  if (sqlca.sqlcode)
-    {
-      printf ("connect error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
+	int i,j;
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table empl ( idnum integer   , name char  ( 20 )    , accs smallint   )    ", ECPGt_EOIT, ECPGt_EORT);}
+	ECPGdebug(1, stderr);
+
+	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
+#line 34 "define.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 34 "define.pgc"
+
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )    ", ECPGt_EOIT, ECPGt_EORT);
+#line 36 "define.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 36 "define.pgc"
+
+	{ ECPGtrans(__LINE__, NULL, "commit");
 #line 37 "define.pgc"
 
-  if (sqlca.sqlcode)
-    {
-      printf ("create error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 37 "define.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into empl values ( 1 , 'first user' , 320 ) ", ECPGt_EOIT, ECPGt_EORT);}
-#line 44 "define.pgc"
 
-  if (sqlca.sqlcode)
-    {
-      printf ("insert error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into Test ( name  , amount  , letter  ) values ( 'false' , 1 , 'f' ) ", ECPGt_EOIT, ECPGt_EORT);
+#line 39 "define.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "select  idnum , name , accs  from empl where idnum =  ?  ", 
-	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
-	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
-	ECPGt_long,&(empl.idnum),(long)1,(long)1,sizeof(long), 
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 39 "define.pgc"
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( name  , amount  , letter  ) values ( 'true' , 2 , 't' ) ", ECPGt_EOIT, ECPGt_EORT);
+#line 40 "define.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 40 "define.pgc"
+
+	{ ECPGtrans(__LINE__, NULL, "commit");
+#line 41 "define.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 41 "define.pgc"
+
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, "select  *  from test   ", ECPGt_EOIT, 
+	ECPGt_char,(name),(long)8,(long)6,(8)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_char,&(empl.name),(long)21,(long)1,(21)*sizeof(char), 
+	ECPGt_int,(amount),(long)1,(long)6,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_short,&(empl.accs),(long)1,(long)1,sizeof(short), 
-	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 54 "define.pgc"
+	ECPGt_char,(letter),(long)1,(long)6,(1)*sizeof(char), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
+#line 43 "define.pgc"
 
-  if (sqlca.sqlcode)
-    {
-      printf ("select error = %ld\n", sqlca.sqlcode);
-      exit (sqlca.sqlcode);
-    }
-  printf ("id=%ld name=%s, accs=%d\n", empl.idnum, empl.name, empl.accs);
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 43 "define.pgc"
 
-  { ECPGdisconnect(__LINE__, "CURRENT");}
-#line 62 "define.pgc"
 
-  exit (0);
+	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+	{
+		/* exec sql begin declare section */
+		    
+		   
+		
+#line 48 "define.pgc"
+ char  n [ 8 ]    ,  l   = letter [ i ] [ 0 ] ;
+ 
+#line 49 "define.pgc"
+ int  a   = amount [ i ] ;
+/* exec sql end declare section */
+#line 50 "define.pgc"
+
+
+		strncpy(n, name[i],  8);
+		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
+	}
+
+	{ ECPGdo(__LINE__, 0, 1, NULL, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
+#line 56 "define.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 56 "define.pgc"
+
+	{ ECPGtrans(__LINE__, NULL, "commit");
+#line 57 "define.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 57 "define.pgc"
+
+	{ ECPGdisconnect(__LINE__, "CURRENT");
+#line 58 "define.pgc"
+
+if (sqlca.sqlcode < 0) sqlprint();}
+#line 58 "define.pgc"
+
+
+	return (0);
 }

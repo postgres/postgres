@@ -5,7 +5,9 @@ include $(top_srcdir)/$(subdir)/../Makefile.regress
 
 
 TESTS = define define.c \
-	init init.c
+	init init.c \
+	type type.c \
+	variable variable.c
 
 all: $(TESTS)
 

@@ -1,0 +1,97 @@
+#include <stdlib.h>
+#include <string.h>
+
+exec sql include ../regression;
+
+exec sql whenever sqlerror sqlprint;
+
+exec sql type c is char reference;
+typedef char* c;
+
+exec sql type ind is union { int integer; short smallint; };
+typedef union { int integer; short smallint; } ind;
+
+#define BUFFERSIZ 8
+exec sql type str is varchar[BUFFERSIZ];
+
+exec sql declare cur cursor for
+       select name, born, age, married, children from family;
+
+int
+main (void)
+{
+	exec sql struct birthinfo { long born; short age; };
+exec sql begin declare section;
+	struct personal_struct	{	str name;
+					struct birthinfo birth;
+				} personal, *p;
+	struct personal_indicator {	int ind_name;
+					struct birthinfo ind_birth;
+				  } ind_personal, *i;
+	ind ind_children;
+exec sql end declare section;
+
+	exec sql char *married = NULL;
+	exec sql long ind_married;
+	exec sql ind children;
+
+	char msg[128];
+
+        ECPGdebug(1, stderr);
+
+	strcpy(msg, "connect");
+	exec sql connect to REGRESSDB1;
+
+	strcpy(msg, "create");
+	exec sql create table family(name char(8), born integer, age smallint, married date, children integer);
+
+	strcpy(msg, "insert");
+	exec sql insert into family(name, married, children) values ('Mum', '19870714', 3);
+	exec sql insert into family(name, born, married, children) values ('Dad', '19610721', '19870714', 3);
+	exec sql insert into family(name, age) values ('Child 1', 16);
+	exec sql insert into family(name, age) values ('Child 2', 14);
+	exec sql insert into family(name, age) values ('Child 3', 9);
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	strcpy(msg, "open");
+	exec sql open cur;
+
+	exec sql whenever not found do break;
+
+	p=&personal;
+	i=&ind_personal;
+	memset(i, 0, sizeof(ind_personal));
+	while (1) {
+		strcpy(msg, "fetch");
+		exec sql fetch cur into :p:i, :married:ind_married, :children.integer:ind_children.smallint;
+		printf("%8.8s", personal.name.arr);
+		if (i->ind_birth.born >= 0)
+			printf(", born %ld", personal.birth.born);
+		if (i->ind_birth.age >= 0)
+			printf(", age = %d", personal.birth.age);
+		if (ind_married >= 0)
+			printf(", married %s", married);
+		if (ind_children.smallint >= 0)
+			printf(", children = %d", children.integer);
+		putchar('\n');
+
+		free(married);
+		married = NULL;
+	}
+
+	strcpy(msg, "close");
+	exec sql close cur;
+
+	strcpy(msg, "drop");
+	exec sql drop table family;
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	strcpy(msg, "disconnect"); 
+	exec sql disconnect;
+
+	return (0);
+}
