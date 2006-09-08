@@ -1,0 +1,65 @@
+#include <stdlib.h>
+
+exec sql include ../regression;
+
+exec sql whenever sqlerror sqlprint;
+
+static void print(char *msg)
+{
+        fprintf(stderr, "Error in statement '%s':\n", msg);
+        sqlprint();
+}
+
+static void print2(void)
+{
+        fprintf(stderr, "Found another error\n");
+        sqlprint();
+}
+
+static void warn(void)
+{
+        fprintf(stderr, "Warning: At least one column was truncated\n");
+}
+
+int main(void)
+{
+	exec sql int i;
+	exec sql char c[6];
+
+	ECPGdebug(1, stderr);
+
+	exec sql connect to REGRESSDB1;
+	exec sql create table test(i int, c char(10));
+	exec sql insert into test values(1, 'abcdefghij');
+
+	exec sql whenever sqlwarning do warn();
+	exec sql select * into :i, :c from test;
+	exec sql rollback;
+
+	exec sql select * into :i from nonexistant;
+	exec sql rollback;
+
+	exec sql whenever sqlerror do print("select");
+	exec sql select * into :i from nonexistant;
+	exec sql rollback;
+
+	exec sql whenever sqlerror call print2();
+	exec sql select * into :i from nonexistant;
+	exec sql rollback;
+
+	exec sql whenever sqlerror continue;
+	exec sql select * into :i from nonexistant;
+	exec sql rollback;
+
+	exec sql whenever sqlerror goto error;
+	exec sql select * into :i from nonexistant;
+	printf("Should not be reachable\n");
+
+	error:
+	exec sql rollback;
+
+	exec sql whenever sqlerror stop;
+	exec sql select * into :i from nonexistant;
+	exec sql rollback;
+	exit (0);
+}	

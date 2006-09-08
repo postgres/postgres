@@ -1,0 +1,120 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 25: QUERY: create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )     on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 25 Ok: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 26 action = commit connection = main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 29: QUERY: insert into test (name, amount, letter) values ('db: ''r1''', 1, 'f') on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 29 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 32: QUERY: insert into test (name, amount, letter) values ('db: ''r1''', 2, 't') on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 32 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 35: QUERY: insert into test (name, amount, letter) select name, amount+10, letter from test on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 35 Ok: INSERT 0 2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGprepare line 40: QUERY: insert into test (name, amount, letter) select name, amount+?, letter from test
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 41: QUERY: insert into test (name, amount, letter) select name, amount+100, letter from test on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 41 Ok: INSERT 0 4
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 45 action = commit connection = main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGprepare line 49: QUERY: select * from test
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 52: QUERY: declare CUR  cursor  for select * from test on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 52 Ok: DECLARE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 53: QUERY: fetch 8 in CUR on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 53: Correctly got 8 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: 1 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: 2 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: 11 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: 12 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: 101 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: 102 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: 111 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: 112 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: f offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: t offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: f offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: t offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: f offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: t offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: f offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 53: RESULT: t offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 66: QUERY: close CUR on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 66 Ok: CLOSE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGprepare line 70: QUERY: select * from test where amount = ?
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 73: QUERY: declare CUR2  cursor  for select * from test where amount = 1 on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 73 Ok: DECLARE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 74: QUERY: fetch in CUR2 on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 74: Correctly got 1 tuples with 3 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 74: RESULT: db: 'r1' offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 74: RESULT: 1 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 74: RESULT: f offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 87: QUERY: close CUR2 on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 87 Ok: CLOSE CURSOR
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 88: QUERY: drop table test  on connection main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 88 Ok: DROP TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans line 89 action = commit connection = main
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection main closed.
+[NO_PID]: sqlca: code: 0, state: 00000

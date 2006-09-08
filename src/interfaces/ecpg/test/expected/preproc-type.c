@@ -164,5 +164,7 @@ main (void)
   { ECPGdisconnect(__LINE__, "CURRENT");}
 #line 76 "type.pgc"
 
+
+  free(ptr);
   exit (0);
 }

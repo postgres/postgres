@@ -74,5 +74,7 @@ main (void)
   printf ("id=%ld name='%s' accs=%d str='%s' ptr='%s' vc='%10.10s'\n", empl.idnum, empl.name, empl.accs, str, ptr, vc.text);
 
   EXEC SQL disconnect;
+
+  free(ptr);
   exit (0);
 }

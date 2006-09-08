@@ -1,0 +1,49 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+EXEC SQL INCLUDE ../regression;
+
+int main(int argc, char* argv[]) {
+  EXEC SQL BEGIN DECLARE SECTION;
+    char str[25];
+    int i, how_many = 1;
+  EXEC SQL END DECLARE SECTION;
+
+  ECPGdebug(1, stderr);
+  EXEC SQL CONNECT TO REGRESSDB1;
+
+  EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+  EXEC SQL WHENEVER SQLERROR SQLPRINT;
+
+  EXEC SQL CREATE TABLE My_Table ( Item1 int, Item2 text );
+
+  EXEC SQL INSERT INTO My_Table VALUES ( 1, 'text1');
+  EXEC SQL INSERT INTO My_Table VALUES ( 2, 'text2');
+  EXEC SQL INSERT INTO My_Table VALUES ( 3, 'text3');
+  EXEC SQL INSERT INTO My_Table VALUES ( 4, 'text4');
+
+  EXEC SQL DECLARE C CURSOR FOR SELECT * FROM My_Table;
+
+  EXEC SQL OPEN C;
+
+  EXEC SQL WHENEVER NOT FOUND DO BREAK;
+  while (1) {
+  	EXEC SQL FETCH 1 IN C INTO :i, :str;
+	printf("%d: %s\n", i, str);
+  }
+
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+  EXEC SQL MOVE BACKWARD 2 IN C;
+
+  EXEC SQL FETCH :how_many IN C INTO :i, :str;
+  printf("%d: %s\n", i, str);
+
+  EXEC SQL CLOSE C;
+
+  EXEC SQL DROP TABLE My_Table;
+
+  EXEC SQL DISCONNECT ALL;
+
+  return 0;
+}

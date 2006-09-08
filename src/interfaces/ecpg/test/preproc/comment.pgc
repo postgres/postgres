@@ -1,0 +1,25 @@
+#include <stdlib.h>
+
+exec sql include ../regression;
+
+/* just a test comment */ int i;
+/* just a test comment int j*/;
+
+/****************************************************************************/
+/* Test comment                                                             */
+/*--------------------------------------------------------------------------*/
+
+// we also understand this style
+int k;
+
+int main(void)
+{
+  ECPGdebug(1, stderr);
+
+  exec sql --this is a comment too
+  connect to REGRESSDB1;
+
+  exec sql disconnect;
+  exit (0);
+}
+

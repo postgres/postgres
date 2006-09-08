@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.12 2006/09/05 12:17:09 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.13 2006/09/08 13:32:27 meskes Exp $
 
 me=`basename $0`
 
@@ -710,7 +710,6 @@ rm -f regression.diffs
 for i in \
          connect/*.pgc \
          compat_informix/*.pgc \
-         complex/*.pgc \
          preproc/*.pgc \
          pgtypeslib/*.pgc \
          sql/*.pgc \

@@ -12,6 +12,8 @@ TESTS = array array.c \
         dyntest dyntest.c \
         dynalloc dynalloc.c \
         dynalloc2 dynalloc2.c \
+        execute execute.c \
+        fetch fetch.c \
         func func.c \
         indicators indicators.c \
         quote quote.c \

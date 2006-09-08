@@ -16,26 +16,26 @@ int main(int argc, char* argv[]) {
   EXEC SQL WHENEVER SQLWARNING SQLPRINT;
   EXEC SQL WHENEVER SQLERROR SQLPRINT;
 
-  EXEC SQL CREATE TABLE My_Table ( Item1 int, Item2 text );
+  EXEC SQL CREATE TABLE "My_Table" ( Item1 int, Item2 text );
 
   EXEC SQL SHOW standard_conforming_strings INTO :var;
   printf("Standard conforming strings: %s\n", var);
 
   /* this is a\\b actually */
-  EXEC SQL INSERT INTO My_Table VALUES ( 1, 'a\\\\b' );
+  EXEC SQL INSERT INTO "My_Table" VALUES ( 1, 'a\\\\b' );
   /* this is a\b */
-  EXEC SQL INSERT INTO My_Table VALUES ( 1, E'a\\\\b' );
+  EXEC SQL INSERT INTO "My_Table" VALUES ( 1, E'a\\\\b' );
 
   EXEC SQL SET standard_conforming_strings TO on;
 
   /* this is a\\b actually */
-  EXEC SQL INSERT INTO My_Table VALUES ( 1, 'a\\\\b' );
+  EXEC SQL INSERT INTO "My_Table" VALUES ( 1, 'a\\\\b' );
   /* this is a\b */
-  EXEC SQL INSERT INTO My_Table VALUES ( 1, E'a\\\\b' );
+  EXEC SQL INSERT INTO "My_Table" VALUES ( 1, E'a\\\\b' );
 
-  EXEC SQL SELECT * FROM My_Table;
+  EXEC SQL SELECT * FROM "My_Table";
 
-  EXEC SQL DROP TABLE My_Table;
+  EXEC SQL DROP TABLE "My_Table";
 
   EXEC SQL DISCONNECT ALL;
 
