@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.82 2006/07/13 18:01:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.83 2006/09/08 15:55:53 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -64,6 +64,7 @@ extern void client_read_ended(void);
 extern int	PostgresMain(int argc, char *argv[], const char *username);
 extern void ResetUsage(void);
 extern void ShowUsage(const char *title);
+extern int	check_log_duration(char *msec_str, bool was_logged);
 extern void set_debug_options(int debug_flag,
 				  GucContext context, GucSource source);
 extern bool set_plan_disabling_options(const char *arg,

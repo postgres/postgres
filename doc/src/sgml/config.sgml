@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.84 2006/09/07 22:51:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.85 2006/09/08 15:55:52 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2718,23 +2718,22 @@ SELECT * FROM parent WHERE key = 2400;
         Only superusers can change this setting.
        </para>
 
-        <para>
-         For clients using extended query protocol, durations of the Parse,
-         Bind, and Execute steps are logged independently.
-        </para>
+       <para>
+        For clients using extended query protocol, durations of the Parse,
+        Bind, and Execute steps are logged independently.
+       </para>
 
        <note>
         <para>
-         When using this option together with
-         <xref linkend="guc-log-statement">,
-         the text of statements that are logged because of
-         <varname>log_statement</> will not be repeated in the
-         duration log message.
-         If you are not using <application>syslog</>, it is recommended 
-         that you log the PID or session ID using
-         <xref linkend="guc-log-line-prefix">
-         so that you can link the statement message to the later
-         duration message using the process ID or session ID.
+         The difference between setting this option and setting
+         <xref linkend="guc-log-min-duration-statement"> to zero is that
+         exceeding <varname>log_min_duration_statement</> forces the text of
+         the query to be logged, but this option doesn't.  Thus, if
+         <varname>log_duration</> is <literal>on</> and
+         <varname>log_min_duration_statement</> has a positive value, all
+         durations are logged but the query text is included only for
+         statements exceeding the threshold.  This behavior can be useful for
+         gathering statistics in high-load installations.
         </para>
        </note>
       </listitem>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.507 2006/09/07 22:52:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.508 2006/09/08 15:55:53 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -159,7 +159,6 @@ static int	ReadCommand(StringInfo inBuf);
 static List *pg_rewrite_queries(List *querytree_list);
 static bool check_log_statement_raw(List *raw_parsetree_list);
 static bool check_log_statement_cooked(List *parsetree_list);
-static bool check_log_duration(char *msec_str);
 static int	errdetail_execute(List *raw_parsetree_list);
 static int	errdetail_params(ParamListInfo params);
 static void start_xact_command(void);
@@ -995,16 +994,18 @@ exec_simple_query(const char *query_string)
 	/*
 	 * Emit duration logging if appropriate.
 	 */
-	if (check_log_duration(msec_str))
+	switch (check_log_duration(msec_str, was_logged))
 	{
-		if (was_logged)
+		case 1:
 			ereport(LOG,
 					(errmsg("duration: %s ms", msec_str)));
-		else
+			break;
+		case 2:
 			ereport(LOG,
 					(errmsg("duration: %s ms  statement: %s",
 							msec_str, query_string),
 					 errdetail_execute(parsetree_list)));
+			break;
 	}
 
 	if (save_log_statement_stats)
@@ -1247,12 +1248,20 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	/*
 	 * Emit duration logging if appropriate.
 	 */
-	if (check_log_duration(msec_str))
-		ereport(LOG,
-				(errmsg("duration: %s ms  parse %s: %s",
-						msec_str,
-						*stmt_name ? stmt_name : "<unnamed>",
-						query_string)));
+	switch (check_log_duration(msec_str, false))
+	{
+		case 1:
+			ereport(LOG,
+					(errmsg("duration: %s ms", msec_str)));
+			break;
+		case 2:
+			ereport(LOG,
+					(errmsg("duration: %s ms  parse %s: %s",
+							msec_str,
+							*stmt_name ? stmt_name : "<unnamed>",
+							query_string)));
+			break;
+	}
 
 	if (save_log_statement_stats)
 		ShowUsage("PARSE MESSAGE STATISTICS");
@@ -1593,14 +1602,22 @@ exec_bind_message(StringInfo input_message)
 	/*
 	 * Emit duration logging if appropriate.
 	 */
-	if (check_log_duration(msec_str))
-		ereport(LOG,
-				(errmsg("duration: %s ms  bind %s to %s: %s",
-						msec_str,
-						*portal_name ? portal_name : "<unnamed>",
-						*stmt_name ? stmt_name : "<unnamed>",
-						pstmt->query_string ? pstmt->query_string : "<source not stored>"),
-				 errdetail_params(params)));
+	switch (check_log_duration(msec_str, false))
+	{
+		case 1:
+			ereport(LOG,
+					(errmsg("duration: %s ms", msec_str)));
+			break;
+		case 2:
+			ereport(LOG,
+					(errmsg("duration: %s ms  bind %s to %s: %s",
+							msec_str,
+							*portal_name ? portal_name : "<unnamed>",
+							*stmt_name ? stmt_name : "<unnamed>",
+							pstmt->query_string ? pstmt->query_string : "<source not stored>"),
+					 errdetail_params(params)));
+			break;
+	}
 
 	if (save_log_statement_stats)
 		ShowUsage("BIND MESSAGE STATISTICS");
@@ -1794,12 +1811,13 @@ exec_execute_message(const char *portal_name, long max_rows)
 	/*
 	 * Emit duration logging if appropriate.
 	 */
-	if (check_log_duration(msec_str))
+	switch (check_log_duration(msec_str, was_logged))
 	{
-		if (was_logged)
+		case 1:
 			ereport(LOG,
 					(errmsg("duration: %s ms", msec_str)));
-		else
+			break;
+		case 2:
 			ereport(LOG,
 					(errmsg("duration: %s ms  %s %s%s%s%s%s",
 							msec_str,
@@ -1812,6 +1830,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 							sourceText ? ": " : "",
 							sourceText ? sourceText : ""),
 					 errdetail_params(portalParams)));
+			break;
 	}
 
 	if (save_log_statement_stats)
@@ -1878,17 +1897,26 @@ check_log_statement_cooked(List *parsetree_list)
  * check_log_duration
  *		Determine whether current command's duration should be logged
  *
+ * Returns:
+ *		0 if no logging is needed
+ *		1 if just the duration should be logged
+ *		2 if duration and query details should be logged
+ *
  * If logging is needed, the duration in msec is formatted into msec_str[],
  * which must be a 32-byte buffer.
+ *
+ * was_logged should be TRUE if caller already logged query details (this
+ * essentially prevents 2 from being returned).
  */
-static bool
-check_log_duration(char *msec_str)
+int
+check_log_duration(char *msec_str, bool was_logged)
 {
 	if (log_duration || log_min_duration_statement >= 0)
 	{
 		long		secs;
 		int			usecs;
 		int			msecs;
+		bool		exceeded;
 
 		TimestampDifference(GetCurrentStatementStartTimestamp(),
 							GetCurrentTimestamp(),
@@ -1896,24 +1924,28 @@ check_log_duration(char *msec_str)
 		msecs = usecs / 1000;
 
 		/*
-		 * The odd-looking test for log_min_duration_statement being
+		 * This odd-looking test for log_min_duration_statement being
 		 * exceeded is designed to avoid integer overflow with very
 		 * long durations: don't compute secs * 1000 until we've
 		 * verified it will fit in int.
 		 */
-		if (log_duration ||
-			log_min_duration_statement == 0 ||
-			(log_min_duration_statement > 0 &&
-			 (secs > log_min_duration_statement / 1000 ||
-			  secs * 1000 + msecs >= log_min_duration_statement)))
+		exceeded = (log_min_duration_statement == 0 ||
+					(log_min_duration_statement > 0 &&
+					 (secs > log_min_duration_statement / 1000 ||
+					  secs * 1000 + msecs >= log_min_duration_statement)));
+
+		if (exceeded || log_duration)
 		{
 			snprintf(msec_str, 32, "%ld.%03d",
 					 secs * 1000 + msecs, usecs % 1000);
-			return true;
+			if (exceeded && !was_logged)
+				return 2;
+			else
+				return 1;
 		}
 	}
 
-	return false;
+	return 0;
 }
 
 /*
