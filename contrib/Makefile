@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.69 2006/09/05 18:00:57 teodor Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.70 2006/09/09 04:07:51 tgl Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -12,10 +12,10 @@ WANTED_DIRS = \
 		dblink		\
 		earthdistance	\
 		fuzzystrmatch	\
-		hstore			\
+		hstore		\
 		intagg		\
 		intarray	\
-		isbn_issn	\
+		isn		\
 		lo		\
 		ltree		\
 		oid2name	\
