@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.473 2006/08/23 12:01:52 meskes Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.474 2006/09/09 03:15:40 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -709,14 +709,6 @@ if test "$with_pam" = yes ; then
 fi
 
 
-if test "$with_ldap" = yes ; then
-  if test "$PORTNAME" != "win32"; then
-     AC_CHECK_LIB(ldap,    ldap_bind, [], [AC_MSG_ERROR([library 'ldap' is required for LDAP])])
-  else
-     AC_CHECK_LIB(wldap32, ldap_bind, [], [AC_MSG_ERROR([library 'wldap32' is required for LDAP])])
-  fi
-fi
-
 ##
 ## Header files
 ##
@@ -1109,14 +1101,6 @@ AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
 PGAC_FUNC_GETPWUID_R_5ARG
 PGAC_FUNC_STRERROR_R_INT
 
-# this will link libpq against libldap_r
-if test "$with_ldap" = yes ; then
-  if test "$PORTNAME" != "win32"; then
-    AC_CHECK_LIB(ldap_r,    ldap_simple_bind, [], [AC_MSG_ERROR([library 'ldap_r' is required for LDAP])])
-    PTHREAD_LIBS="$PTHREAD_LIBS -lldap_r"
-  fi
-fi
-
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
 
@@ -1128,6 +1112,32 @@ fi
 
 AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
+
+
+# We can test for libldap_r only after we know PTHREAD_LIBS
+if test "$with_ldap" = yes ; then
+  _LIBS="$LIBS"
+  if test "$PORTNAME" != "win32"; then
+    AC_CHECK_LIB(ldap, ldap_bind, [], [AC_MSG_ERROR([library 'ldap' is required for LDAP])])
+    LDAP_LIBS_BE="-lldap"
+    if test "$enable_thread_safety" = yes; then
+      # on some platforms ldap_r fails to link without PTHREAD_LIBS
+      AC_CHECK_LIB(ldap_r, ldap_simple_bind, [],
+		   [AC_MSG_ERROR([library 'ldap_r' is required for LDAP])],
+		   [$PTHREAD_LIBS])
+      LDAP_LIBS_FE="-lldap_r"
+    else
+      LDAP_LIBS_FE="-lldap"
+    fi
+  else
+    AC_CHECK_LIB(wldap32, ldap_bind, [], [AC_MSG_ERROR([library 'wldap32' is required for LDAP])])
+    LDAP_LIBS_FE="-lwldap32"
+    LDAP_LIBS_BE="-lwldap32"
+  fi
+  LIBS="$_LIBS"
+fi
+AC_SUBST(LDAP_LIBS_FE)
+AC_SUBST(LDAP_LIBS_BE)
 
 
 # This test makes sure that run tests work at all.  Sometimes a shared

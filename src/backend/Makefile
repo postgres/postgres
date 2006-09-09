@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.118 2006/08/16 14:57:37 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.119 2006/09/09 03:15:40 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,8 +25,8 @@ endif
 
 OBJS = $(SUBSYSOBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a
 
-# We put libpgport into OBJS, so remove it from LIBS
-LIBS := $(filter-out -lpgport, $(LIBS))
+# We put libpgport into OBJS, so remove it from LIBS; also add libldap
+LIBS := $(filter-out -lpgport, $(LIBS)) $(LDAP_LIBS_BE)
 
 # The backend doesn't need everything that's in LIBS, however
 LIBS := $(filter-out -lz -lreadline -ledit -ltermcap -lncurses -lcurses, $(LIBS))
