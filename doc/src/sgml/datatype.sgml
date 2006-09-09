@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.172 2006/09/07 00:04:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.173 2006/09/09 18:45:37 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2835,13 +2835,6 @@ SELECT * FROM test1 WHERE a;
      address.  Upper and lower case is accepted for the digits
      <literal>a</> through <literal>f</>.  Output is always in the
      last of the forms shown.
-    </para>
-
-    <para>
-     The directory <filename class="directory">contrib/mac</filename>
-     in the <productname>PostgreSQL</productname> source distribution
-     contains tools that can be used to map MAC addresses to hardware
-     manufacturer names.
     </para>
    </sect2>
 
