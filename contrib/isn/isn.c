@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.1 2006/09/09 04:07:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.2 2006/09/10 20:45:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ PG_MODULE_MAGIC;
 
 enum isn_type { INVALID, ANY, EAN13, ISBN, ISMN, ISSN, UPC };
 
-static const char *isn_names[] = { "ISN", "ISN", "EAN13", "ISBN", "ISMN", "ISSN", "UPC" };
+static const char *isn_names[] = { "EAN13/UPC/ISxN", "EAN13/UPC/ISxN", "EAN13", "ISBN", "ISMN", "ISSN", "UPC" };
 
 static bool g_weak = false;
 static bool g_initialized = false;
@@ -43,11 +43,11 @@ static bool g_initialized = false;
 
 /***********************************************************************
  **
- **		Routines for ISNs.
+ **		Routines for EAN13/UPC/ISxNs.
  **
  ** Note:
  **  In this code, a normalized string is one that is known to be a valid 
- **  ISN number containing only digits and hyphens and with enough space 
+ **  ISxN number containing only digits and hyphens and with enough space 
  **  to hold the full 13 digits plus the maximum of four hyphens.
  ***********************************************************************/
 
@@ -217,7 +217,7 @@ unsigned hyphenate(char *bufO, char *bufI, const char *(*TABLE)[2], const unsign
 }
 
 /*
- * weight_checkdig -- Receives a buffer with a normalized ISN string number, 
+ * weight_checkdig -- Receives a buffer with a normalized ISxN string number, 
  *                     and the length to weight.
  *
  * Returns the weight of the number (the check digit value, 0-10)
@@ -239,7 +239,7 @@ unsigned weight_checkdig(char *isn, unsigned size)
 
 
 /*
- * checkdig --- Receives a buffer with a normalized ISN string number, 
+ * checkdig --- Receives a buffer with a normalized ISxN string number, 
  *               and the length to check.
  *
  * Returns the check digit value (0-9)
@@ -267,8 +267,94 @@ unsigned checkdig(char *num, unsigned size)
 }
 
 /*
- * ean2isn --- Convert in-place a normalized EAN13 string to the corresponding 
- *            ISN string number. Assumes the input string is normalized.
+ * ean2isn --- Try to convert an ean13 number to a UPC/ISxN number.
+ *             This doesn't verify for a valid check digit.
+ *
+ * If errorOK is false, ereport a useful error message if the ean13 is bad.
+ * If errorOK is true, just return "false" for bad input.
+ */
+static
+bool ean2isn(ean13 ean, bool errorOK, ean13 *result, enum isn_type accept)
+{
+	enum isn_type type = INVALID;
+
+	char buf[MAXEAN13LEN + 1];
+	char *firstdig, *aux;
+	unsigned digval;
+	unsigned search;
+	ean13 ret = ean;
+	
+	ean >>= 1;
+	/* verify it's in the EAN13 range */
+	if(ean > UINT64CONST(9999999999999))
+		goto eantoobig;
+
+	/* convert the number */
+	search = 0;
+	firstdig = aux = buf + 13;
+	*aux = '\0';	    /* terminate string; aux points to last digit */
+	do {
+	    digval = (unsigned)(ean % 10);		/* get the decimal value */ 
+	    ean /= 10;												/* get next digit */
+		*--aux = (char)(digval + '0');			/* convert to ascii and store */
+	} while(ean && search++<12);
+	while(search++<12) *--aux = '0';			/* fill the remaining EAN13 with '0' */
+	
+	/* find out the data type: */
+	if(!strncmp("978", buf, 3)) { /* ISBN */
+		type = ISBN;
+	} else if(!strncmp("977", buf, 3)) { /* ISSN */
+		type = ISSN;
+	} else if(!strncmp("9790", buf, 4)) { /* ISMN */
+		type = ISMN;
+	} else if(!strncmp("979", buf, 3)) { /* ISBN-13 */
+		type = ISBN;
+	} else if(*buf == '0') { /* UPC */
+		type = UPC;
+	} else {
+		type = EAN13;
+	}
+	if(accept != ANY && accept != EAN13 && accept != type) goto eanwrongtype;
+
+	*result = ret;
+	return true;
+	
+eanwrongtype:
+	if(!errorOK) {
+		if(type!=EAN13) {
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("cannot cast EAN13(%s) to %s for number: \"%s\"",
+						isn_names[type], isn_names[accept], buf)));
+		} else {
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("cannot cast %s to %s for number: \"%s\"",
+						isn_names[type], isn_names[accept], buf)));
+		}
+	}
+	return false;
+
+eantoobig:
+	if(!errorOK) {
+		char	eanbuf[64];
+
+		/*
+		 * Format the number separately to keep the machine-dependent
+		 * format code out of the translatable message text
+		 */
+		snprintf(eanbuf, sizeof(eanbuf), EAN13_FORMAT, ean);
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value \"%s\" is out of range for %s type",
+						eanbuf, isn_names[type])));
+	}
+	return false;
+}
+
+/*
+ * ean2UPC/ISxN --- Convert in-place a normalized EAN13 string to the corresponding 
+ *                  UPC/ISxN string number. Assumes the input string is normalized.
  */
 static inline
 void ean2ISBN(char *isn)
@@ -325,7 +411,8 @@ ean13 str2ean(const char *num)
 {
 	ean13 ean = 0;	/* current ean */
 	while(*num) {
-		ean = 10 * ean + ((*num++) - '0');
+		if(isdigit(*num)) ean = 10 * ean + (*num - '0');
+		num++;
 	}
     return (ean<<1); /* also give room to a flag */
 }
@@ -336,7 +423,7 @@ ean13 str2ean(const char *num)
  *                the string (maximum MAXEAN13LEN+1 bytes)
  *                This doesn't verify for a valid check digit.
  *
- * If shortType is true, the returned string is in the old ISN short format.
+ * If shortType is true, the returned string is in the old ISxN short format.
  * If errorOK is false, ereport a useful error message if the string is bad.
  * If errorOK is true, just return "false" for bad input.
  */
@@ -369,8 +456,8 @@ bool ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 	    digval = (unsigned)(ean % 10);		/* get the decimal value */ 
 	    ean /= 10;												/* get next digit */
 		*--aux = (char)(digval + '0');			/* convert to ascii and store */
-		if(++search == 1) *--aux = '-';			/* the check digit is always there */
-	} while(ean);
+		if(search == 0) *--aux = '-';			/* the check digit is always there */
+	} while(ean && search++<13);
 	while(search++<13) *--aux = '0';			/* fill the remaining EAN13 with '0' */
 
 	/* The string should be in this form: ???DDDDDDDDDDDD-D" */
@@ -409,7 +496,7 @@ bool ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 		TABLE_index = NULL;
 	}
 
-	/* verify it's a logically valid EAN13/ISN */
+	/* verify it's a logically valid EAN13/UPC/ISxN */
 	digval = search;
 	search = hyphenate(result+digval, result+digval+2, TABLE, TABLE_index);
 
@@ -452,8 +539,8 @@ eantoobig:
 		snprintf(eanbuf, sizeof(eanbuf), EAN13_FORMAT, ean);
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%s\" is out of range for ISN type",
-						eanbuf)));
+				 errmsg("value \"%s\" is out of range for %s type",
+						eanbuf, isn_names[type])));
 	}
 	return false;
 }
@@ -483,7 +570,7 @@ bool string2ean(const char *str, bool errorOK, ean13 *result,
 	/* recognize and validate the number: */
 	while(*aux2 && length <= 13) {
 		last = (*(aux2+1) == '!' || *(aux2+1) == '\0'); /* is the last character */
-		digit = isdigit(*aux2); /* is current character a digit? */
+		digit = (isdigit(*aux2)!=0); /* is current character a digit? */
 		if(*aux2=='?' && last) /* automagically calculate check digit if it's '?' */
 			magic = digit = true;
 		if(length == 0 &&  (*aux2=='M' || *aux2=='m')) {
@@ -583,19 +670,25 @@ bool string2ean(const char *str, bool errorOK, ean13 *result,
 			break;
 	}
 
-	if(!valid && !magic) goto eanbadcheck;
-			
+  /* fix the check digit: */
 	for(aux1 = buf; *aux1 && *aux1 <= ' '; aux1++);
 	aux1[12] = checkdig(aux1, 13) + '0';
 	aux1[13] = '\0';
 	
+	if(!valid && !magic) goto eanbadcheck;
+
 	*result = str2ean(aux1);
 	*result |= valid?0:1;
-
 	return true;
 
 eanbadcheck: 
-	if(!g_weak) {
+	if(g_weak) { /* weak input mode is activated: */
+	  /* set the "invalid-check-digit-on-input" flag */ 
+		*result = str2ean(aux1);
+		*result |= 1;
+	return true;
+	}
+
 		if(!errorOK) {
 			if(rcheck == (unsigned)-1) {
 				ereport(ERROR,
@@ -610,30 +703,6 @@ eanbadcheck:
 			}
 		}
 		return false;
-	}
-
-	if(accept != EAN13 && accept != ANY && type != accept) goto eanwrongtype;
-
-	/* fix the check digit: */
-	for(aux1 = buf; *aux1 && *aux1 <= ' '; aux1++);
-	aux1[12] = checkdig(aux1, 13) + '0';
-	aux1[13] = '\0';
-	*result = str2ean(aux1);
-
-	 /* set the "invalid-check-digit-on-input" flag */ 
-	*result |= 1;
-
-	/* just warn about the error when there was a real check digit error: */
-	if(check != rcheck) {
-		if(rcheck == (unsigned)-1) {
-			elog(WARNING, "invalid %s number: \"%s\"",
-				isn_names[accept], str);
-		} else {
-			elog(WARNING, "invalid check digit for %s number: \"%s\", should be %c",
-				isn_names[accept], str, (rcheck==10)?('X'):(rcheck+'0'));
-		}
-	}
-	return true;
 
 eaninvalid:
 	if(!errorOK)
@@ -647,8 +716,8 @@ eanwrongtype:
 	if(!errorOK)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid %s type for number: \"%s\"",
-						isn_names[accept], str)));
+				 errmsg("cannot cast %s to %s for number: \"%s\"",
+						isn_names[type], isn_names[accept], str)));
 	return false;
 
 eantoobig:
@@ -803,6 +872,55 @@ isn_cast_to_text(PG_FUNCTION_ARGS)
 
     PG_RETURN_TEXT_P(GET_TEXT(buf));
 }
+
+PG_FUNCTION_INFO_V1(isbn_cast_from_ean13);
+Datum
+isbn_cast_from_ean13(PG_FUNCTION_ARGS)
+{
+	ean13		val = PG_GETARG_EAN13(0);
+	ean13		result;
+
+	(void) ean2isn(val, false, &result, ISBN);
+
+	PG_RETURN_EAN13(result);
+}
+
+PG_FUNCTION_INFO_V1(ismn_cast_from_ean13);
+Datum
+ismn_cast_from_ean13(PG_FUNCTION_ARGS)
+{
+	ean13		val = PG_GETARG_EAN13(0);
+	ean13		result;
+
+	(void) ean2isn(val, false, &result, ISMN);
+
+	PG_RETURN_EAN13(result);
+}
+
+PG_FUNCTION_INFO_V1(issn_cast_from_ean13);
+Datum
+issn_cast_from_ean13(PG_FUNCTION_ARGS)
+{
+	ean13		val = PG_GETARG_EAN13(0);
+	ean13		result;
+
+	(void) ean2isn(val, false, &result, ISSN);
+
+	PG_RETURN_EAN13(result);
+}
+
+PG_FUNCTION_INFO_V1(upc_cast_from_ean13);
+Datum
+upc_cast_from_ean13(PG_FUNCTION_ARGS)
+{
+	ean13		val = PG_GETARG_EAN13(0);
+	ean13		result;
+
+	(void) ean2isn(val, false, &result, UPC);
+
+	PG_RETURN_EAN13(result);
+}
+
 
 PG_FUNCTION_INFO_V1(ean13_cast_from_text);
 Datum

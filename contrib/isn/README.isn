@@ -1,6 +1,6 @@
 
-EAN13 - UPC - ISBN (books) - ISMN (music) - ISSN (serials)
-----------------------------------------------------------
+-- EAN13 - UPC - ISBN (books) - ISMN (music) - ISSN (serials)
+-------------------------------------------------------------
 
 Copyright Germán Méndez Bravo (Kronuz), 2004 - 2006
 This module is released under the same BSD license as the rest of PostgreSQL.
@@ -24,7 +24,7 @@ THIS MODULE IS PROVIDED "AS IS" AND WITHOUT ANY WARRANTY
         OF ANY KIND, EXPRESS OR IMPLIED.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Content of the Module
+-- Content of the Module
 -------------------------------------------------
 
 This directory contains definitions for a few PostgreSQL
@@ -143,7 +143,7 @@ On success:
 
 (on failure, the functions 'ereport' the error)
 
-Testing/Playing Functions
+-- Testing/Playing Functions
 -------------------------------------------------
 isn_weak(boolean) - Sets the weak input mode. 
 This function is intended for testing use only!
@@ -173,7 +173,7 @@ To work with invalid numbers, you can use two functions:
   + make_valid(), which validates an invalid number (deleting the invalid flag)
   + is_valid(), which checks for the invalid flag presence.
 
-Examples of Use
+-- Examples of Use
 -------------------------------------------------
 --Using the types directly:
 	select isbn('978-0-393-04002-9');
@@ -181,9 +181,12 @@ Examples of Use
 	select issn('1436-4522');
 
 --Casting types:
--- note that you can't cast from ean13 to other type, thus the following
--- will NOT work: select upc(ean13('0220356483481'));
-	select ean13(upc('220356483481'));
+-- note that you can only cast from ean13 to other type when the casted 
+-- number would be valid in the realm of the casted type; 
+-- thus, the following will NOT work: select isbn(ean13('0220356483481')); 
+-- but these will: 
+    select upc(ean13('0220356483481')); 
+    select ean13(upc('220356483481')); 
 
 --Create a table with a single column to hold ISBN numbers:
 	create table test ( id isbn );
@@ -210,7 +213,7 @@ Examples of Use
 
   select isbn13(id) from test;
 
-Contact
+-- Contact
 -------------------------------------------------
 Please suggestions or bug reports to kronuz at users.sourceforge.net
 
