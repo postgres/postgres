@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.335 2006/09/10 00:29:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.336 2006/09/10 19:03:57 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7630,6 +7630,13 @@ SELECT NULLIF(value, '(none)') ...
         <entry> <literal>&lt;@</literal> </entry>
         <entry>is contained by</entry>
         <entry><literal>ARRAY[2,7] &lt;@ ARRAY[1,7,4,2,6]</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&amp;&amp;</literal> </entry>
+        <entry>overlap (have elements in common)</entry>
+        <entry><literal>ARRAY[1,4,3] &amp;&amp; ARRAY[2,1]</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 
