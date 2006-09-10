@@ -68,12 +68,14 @@ ginint4_consistent(PG_FUNCTION_ARGS) {
     switch( strategy ) {
         case RTOverlapStrategyNumber:
         case RTContainedByStrategyNumber:
+        case RTOldContainedByStrategyNumber:
             /* at least one element in check[] is true, so result = true */
 
             res = TRUE;
             break;
         case RTSameStrategyNumber:
         case RTContainsStrategyNumber:
+        case RTOldContainsStrategyNumber:
             res = TRUE;
 			do {
     			ArrayType   *query = PG_GETARG_ARRAYTYPE_P(2);

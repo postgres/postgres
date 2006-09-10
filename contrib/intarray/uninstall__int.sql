@@ -1,5 +1,11 @@
 SET search_path = public;
 
+DROP OPERATOR CLASS gin__int_ops USING gin;
+
+DROP FUNCTION ginint4_queryextract(internal, internal, int2);
+
+DROP FUNCTION ginint4_consistent(internal, int2, internal);
+
 DROP OPERATOR CLASS gist__intbig_ops USING gist;
 
 DROP FUNCTION g_intbig_same(internal, internal, internal);
@@ -81,6 +87,10 @@ DROP OPERATOR # (NONE, _int4);
 DROP FUNCTION icount(_int4);
 
 DROP FUNCTION intset(int4);
+
+DROP OPERATOR <@ (_int4, _int4);
+
+DROP OPERATOR @> (_int4, _int4);
 
 DROP OPERATOR ~ (_int4, _int4);
 

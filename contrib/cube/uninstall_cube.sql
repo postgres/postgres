@@ -22,6 +22,10 @@ DROP OPERATOR ~ (cube, cube);
 
 DROP OPERATOR @ (cube, cube);
 
+DROP OPERATOR <@ (cube, cube);
+
+DROP OPERATOR @> (cube, cube);
+
 DROP OPERATOR <> (cube, cube);
 
 DROP OPERATOR = (cube, cube);

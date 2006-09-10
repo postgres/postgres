@@ -61,6 +61,30 @@ RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE 'C' with (isstrict,iscachable);
 
+CREATE FUNCTION hs_contained(hstore,hstore)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' with (isstrict,iscachable);
+
+CREATE OPERATOR @> (
+	LEFTARG = hstore,
+	RIGHTARG = hstore,
+	PROCEDURE = hs_contains,
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR <@ (
+	LEFTARG = hstore,
+	RIGHTARG = hstore,
+	PROCEDURE = hs_contained,
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+-- obsolete:
 CREATE OPERATOR @ (
 	LEFTARG = hstore,
 	RIGHTARG = hstore,
@@ -69,11 +93,6 @@ CREATE OPERATOR @ (
 	RESTRICT = contsel,
 	JOIN = contjoinsel
 );
-
-CREATE FUNCTION hs_contained(hstore,hstore)
-RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
 
 CREATE OPERATOR ~ (
 	LEFTARG = hstore,
@@ -181,8 +200,10 @@ LANGUAGE 'C';
 CREATE OPERATOR CLASS gist_hstore_ops
 DEFAULT FOR TYPE hstore USING gist
 AS
-        OPERATOR        7       @       RECHECK,
-        --OPERATOR        8       ~       RECHECK,
+        OPERATOR        7       @>       RECHECK,
+        --OPERATOR        8       <@       RECHECK,
+        OPERATOR        13      @       RECHECK,
+        --OPERATOR        14      ~       RECHECK,
         FUNCTION        1       ghstore_consistent (internal, internal, int4),
         FUNCTION        2       ghstore_union (internal, internal),
         FUNCTION        3       ghstore_compress (internal),

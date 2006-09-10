@@ -1,10 +1,11 @@
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of hstore.sql.
+--
+SET client_min_messages = warning;
 \set ECHO none
-psql:hstore.sql:8: NOTICE:  type "hstore" is not yet defined
-DETAIL:  Creating a shell type definition.
-psql:hstore.sql:13: NOTICE:  argument type hstore is only a shell
-psql:hstore.sql:132: NOTICE:  type "ghstore" is not yet defined
-DETAIL:  Creating a shell type definition.
-psql:hstore.sql:137: NOTICE:  argument type ghstore is only a shell
+RESET client_min_messages;
+set escape_string_warning=off;
 --hstore;
 select ''::hstore;
  hstore 
@@ -483,50 +484,50 @@ select * from each('aaa=>bq, b=>NULL, ""=>1 ');
  aaa | bq
 (3 rows)
 
--- @
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL';
+-- @>
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL, c=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL, c=>NULL';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL, g=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL, g=>NULL';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'g=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'g=>NULL';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>c';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>c';
  ?column? 
 ----------
  f
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b, c=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>NULL';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b, c=>q';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>q';
  ?column? 
 ----------
  f
@@ -534,19 +535,19 @@ select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b, c=>q';
 
 CREATE TABLE testhstore (h hstore);
 \copy testhstore from 'data/hstore.data'
-select count(*) from testhstore where h @ 'wait=>NULL';
+select count(*) from testhstore where h @> 'wait=>NULL';
  count 
 -------
    189
 (1 row)
 
-select count(*) from testhstore where h @ 'wait=>CC';
+select count(*) from testhstore where h @> 'wait=>CC';
  count 
 -------
     15
 (1 row)
 
-select count(*) from testhstore where h @ 'wait=>CC, public=>t';
+select count(*) from testhstore where h @> 'wait=>CC, public=>t';
  count 
 -------
      2
@@ -554,19 +555,19 @@ select count(*) from testhstore where h @ 'wait=>CC, public=>t';
 
 create index hidx on testhstore using gist(h);
 set enable_seqscan=off;
-select count(*) from testhstore where h @ 'wait=>NULL';
+select count(*) from testhstore where h @> 'wait=>NULL';
  count 
 -------
    189
 (1 row)
 
-select count(*) from testhstore where h @ 'wait=>CC';
+select count(*) from testhstore where h @> 'wait=>CC';
  count 
 -------
     15
 (1 row)
 
-select count(*) from testhstore where h @ 'wait=>CC, public=>t';
+select count(*) from testhstore where h @> 'wait=>CC, public=>t';
  count 
 -------
      2

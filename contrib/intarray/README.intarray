@@ -70,10 +70,10 @@ test=# select intset(1);
 
 OPERATIONS:
 
-  int[] && int[]  - overlap - returns TRUE if arrays has at least one common elements.
-  int[] @  int[]  - contains - returns TRUE if left array contains right array
-  int[] ~ int[]   - contained - returns TRUE if left array is contained in right array
-  # int[]         - return the number of elements in array
+  int[] && int[]  - overlap - returns TRUE if arrays have at least one common element
+  int[] @> int[]  - contains - returns TRUE if left array contains right array
+  int[] <@ int[]  - contained - returns TRUE if left array is contained in right array
+  # int[]         - returns the number of elements in array
   int[] + int     - push element to array ( add to end of array)
   int[] + int[]   - merge of arrays (right array added to the end of left one)
   int[] - int     - remove entries matched by right argument from array
@@ -81,8 +81,14 @@ OPERATIONS:
   int[] | int     - returns intarray - union of arguments
   int[] | int[]   - returns intarray as a union of two arrays
   int[] & int[]   - returns intersection of arrays
-  int[] @@ query_int  - returns TRUE if array satisfies query (like '1&(2|3)') 
-  query_int ~~ int[]  - -/-
+  int[] @@ query_int - returns TRUE if array satisfies query (like '1&(2|3)') 
+  query_int ~~ int[] - returns TRUE if array satisfies query (commutator of @@)
+
+(Before PostgreSQL 8.2, the containment operators @> and <@ were
+respectively called @ and ~.  These names are still available, but are
+deprecated and will eventually be retired.  Notice that the old names
+are reversed from the convention formerly followed by the core geometric
+datatypes!)
 
 CHANGES:
 
@@ -128,9 +134,9 @@ CREATE INDEX message_rdtree_idx on message using gist ( sections gist__int_ops);
   select message.mid from message where message.sections && '{1,2}';  
 
   -- select messages contains in sections 1 AND 2 - CONTAINS operator
-  select message.mid from message where message.sections @ '{1,2}';
+  select message.mid from message where message.sections @> '{1,2}';
   -- the same, CONTAINED operator
-  select message.mid from message where '{1,2}' ~ message.sections;
+  select message.mid from message where '{1,2}' <@ message.sections;
 
 BENCHMARK:
 

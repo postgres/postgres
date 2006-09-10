@@ -1,10 +1,12 @@
 --
 -- first, define the datatype.  Turn off echoing so that expected file
--- does not depend on contents of seg.sql.
+-- does not depend on contents of tsearch2.sql.
 --
+SET client_min_messages = warning;
 \set ECHO none
 \i tsearch2.sql
 \set ECHO all
+RESET client_min_messages;
 
 --tsvector
 SELECT '1'::tsvector;
@@ -119,30 +121,30 @@ select rewrite( ARRAY['moscow & hotel', keyword, sample] ) from test_tsquery;
 select rewrite( ARRAY['bar &  new & qq & foo & york', keyword, sample] ) from test_tsquery;
 
 
-select keyword from test_tsquery where keyword @ 'new';
-select keyword from test_tsquery where keyword @ 'moscow';
-select keyword from test_tsquery where keyword ~ 'new';
-select keyword from test_tsquery where keyword ~ 'moscow';
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where keyword ~ query;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where keyword ~ query;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where keyword ~ query;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where query @ keyword;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where query @ keyword;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where query @ keyword;
+select keyword from test_tsquery where keyword @> 'new';
+select keyword from test_tsquery where keyword @> 'moscow';
+select keyword from test_tsquery where keyword <@ 'new';
+select keyword from test_tsquery where keyword <@ 'moscow';
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where keyword <@ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where keyword <@ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where keyword <@ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where query @> keyword;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where query @> keyword;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where query @> keyword;
 
 create index qq on test_tsquery using gist (keyword gist_tp_tsquery_ops);
 set enable_seqscan='off';
 
-select keyword from test_tsquery where keyword @ 'new';
-select keyword from test_tsquery where keyword @ 'moscow';
-select keyword from test_tsquery where keyword ~ 'new';
-select keyword from test_tsquery where keyword ~ 'moscow';
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where keyword ~ query;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where keyword ~ query;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where keyword ~ query;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where query @ keyword;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where query @ keyword;
-select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where query @ keyword;
+select keyword from test_tsquery where keyword @> 'new';
+select keyword from test_tsquery where keyword @> 'moscow';
+select keyword from test_tsquery where keyword <@ 'new';
+select keyword from test_tsquery where keyword <@ 'moscow';
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where keyword <@ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where keyword <@ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where keyword <@ query;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow') as query where query @> keyword;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'moscow & hotel') as query where query @> keyword;
+select rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('default', 'bar &  new & qq & foo & york') as query where query @> keyword;
 set enable_seqscan='on';
 
 

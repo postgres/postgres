@@ -2,9 +2,11 @@
 -- first, define the datatype.  Turn off echoing so that expected file
 -- does not depend on contents of _int.sql.
 --
+SET client_min_messages = warning;
 \set ECHO none
 \i _int.sql
 \set ECHO all
+RESET client_min_messages;
 
 SELECT intset(1234);
 SELECT icount('{1234234,234234}');
@@ -78,22 +80,22 @@ CREATE TABLE test__int( a int[] );
 
 SELECT count(*) from test__int WHERE a && '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23|50';
-SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @> '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23&50';
-SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @> '{20,23}';
 SELECT count(*) from test__int WHERE a @@ '50&68';
-SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
 SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
 
 CREATE INDEX text_idx on test__int using gist ( a gist__int_ops );
 
 SELECT count(*) from test__int WHERE a && '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23|50';
-SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @> '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23&50';
-SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @> '{20,23}';
 SELECT count(*) from test__int WHERE a @@ '50&68';
-SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
 SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
 
 DROP INDEX text_idx;
@@ -101,11 +103,11 @@ CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops );
 
 SELECT count(*) from test__int WHERE a && '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23|50';
-SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @> '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23&50';
-SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @> '{20,23}';
 SELECT count(*) from test__int WHERE a @@ '50&68';
-SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
 SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
 
 DROP INDEX text_idx;
@@ -113,9 +115,9 @@ CREATE INDEX text_idx on test__int using gin ( a );
 
 SELECT count(*) from test__int WHERE a && '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23|50';
-SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @> '{23,50}';
 SELECT count(*) from test__int WHERE a @@ '23&50';
-SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @> '{20,23}';
 SELECT count(*) from test__int WHERE a @@ '50&68';
-SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
 SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';

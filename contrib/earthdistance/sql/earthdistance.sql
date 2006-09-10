@@ -224,28 +224,28 @@ SELECT cube_ll_coord(earth_box(ll_to_earth(0,0),10*earth()),1)::numeric(20,5),
 --
 
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))*1.00001) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))*1.00001) @>
        ll_to_earth(0,1);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.1))*1.00001) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.1))*1.00001) @>
        ll_to_earth(0,0.1);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.01))*1.00001) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.01))*1.00001) @>
        ll_to_earth(0,0.01);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.001))*1.00001) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.001))*1.00001) @>
        ll_to_earth(0,0.001);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.0001))*1.00001) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.0001))*1.00001) @>
        ll_to_earth(0,0.0001);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0.0001,0.0001))*1.00001) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0.0001,0.0001))*1.00001) @>
        ll_to_earth(0.0001,0.0001);
 SELECT earth_box(ll_to_earth(45,45),
-       earth_distance(ll_to_earth(45,45),ll_to_earth(45.0001,45.0001))*1.00001) @
+       earth_distance(ll_to_earth(45,45),ll_to_earth(45.0001,45.0001))*1.00001) @>
        ll_to_earth(45.0001,45.0001);
 SELECT earth_box(ll_to_earth(90,180),
-       earth_distance(ll_to_earth(90,180),ll_to_earth(90.0001,180.0001))*1.00001) @
+       earth_distance(ll_to_earth(90,180),ll_to_earth(90.0001,180.0001))*1.00001) @>
        ll_to_earth(90.0001,180.0001);
 
 --
@@ -255,28 +255,28 @@ SELECT earth_box(ll_to_earth(90,180),
 --
 
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))*.57735) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,1))*.57735) @>
        ll_to_earth(0,1);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.1))*.57735) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.1))*.57735) @>
        ll_to_earth(0,0.1);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.01))*.57735) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.01))*.57735) @>
        ll_to_earth(0,0.01);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.001))*.57735) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.001))*.57735) @>
        ll_to_earth(0,0.001);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.0001))*.57735) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0,0.0001))*.57735) @>
        ll_to_earth(0,0.0001);
 SELECT earth_box(ll_to_earth(0,0),
-       earth_distance(ll_to_earth(0,0),ll_to_earth(0.0001,0.0001))*.57735) @
+       earth_distance(ll_to_earth(0,0),ll_to_earth(0.0001,0.0001))*.57735) @>
        ll_to_earth(0.0001,0.0001);
 SELECT earth_box(ll_to_earth(45,45),
-       earth_distance(ll_to_earth(45,45),ll_to_earth(45.0001,45.0001))*.57735) @
+       earth_distance(ll_to_earth(45,45),ll_to_earth(45.0001,45.0001))*.57735) @>
        ll_to_earth(45.0001,45.0001);
 SELECT earth_box(ll_to_earth(90,180),
-       earth_distance(ll_to_earth(90,180),ll_to_earth(90.0001,180.0001))*.57735) @
+       earth_distance(ll_to_earth(90,180),ll_to_earth(90.0001,180.0001))*.57735) @>
        ll_to_earth(90.0001,180.0001);
 
 --

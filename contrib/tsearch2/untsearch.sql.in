@@ -5,6 +5,8 @@ BEGIN;
 --in tsearch2.sql
 
 
+DROP OPERATOR CLASS gin_tsvector_ops USING gin CASCADE;
+
 DROP OPERATOR CLASS gist_tsvector_ops USING gist CASCADE;
 
 
@@ -27,7 +29,7 @@ DROP TYPE gtsvector CASCADE;
 --DROP TYPE tsstat CASCADE;
 DROP TYPE statinfo CASCADE;
 DROP TYPE tsdebug CASCADE;
-
+DROP TYPE gtsq CASCADE;
 
 DROP FUNCTION lexize(oid, text) ;
 DROP FUNCTION lexize(text, text);
@@ -38,11 +40,12 @@ DROP FUNCTION dex_init(internal);
 DROP FUNCTION dex_lexize(internal,internal,int4);
 DROP FUNCTION snb_en_init(internal);
 DROP FUNCTION snb_lexize(internal,internal,int4);
-DROP FUNCTION snb_ru_init(internal);
+DROP FUNCTION snb_ru_init_koi8(internal);
+DROP FUNCTION snb_ru_init_utf8(internal);
 DROP FUNCTION spell_init(internal);
 DROP FUNCTION spell_lexize(internal,internal,int4);
 DROP FUNCTION thesaurus_init(internal);
-DROP FUNCTION thesaurus_lexize(internal,internal,int4);
+DROP FUNCTION thesaurus_lexize(internal,internal,int4,internal);
 DROP FUNCTION syn_init(internal);
 DROP FUNCTION syn_lexize(internal,internal,int4);
 DROP FUNCTION set_curprs(int);
@@ -60,6 +63,11 @@ DROP FUNCTION gtsvector_decompress(internal);
 DROP FUNCTION gtsvector_penalty(internal,internal,internal);
 DROP FUNCTION gtsvector_picksplit(internal, internal);
 DROP FUNCTION gtsvector_union(internal, internal);
+DROP FUNCTION gtsq_compress(internal);
+DROP FUNCTION gtsq_decompress(internal);
+DROP FUNCTION gtsq_penalty(internal,internal,internal);
+DROP FUNCTION gtsq_picksplit(internal, internal);
+DROP FUNCTION gtsq_union(bytea, internal);
 DROP FUNCTION reset_tsearch();
 DROP FUNCTION tsearch2() CASCADE;
 DROP FUNCTION _get_parser_from_curcfg();

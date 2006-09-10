@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.14 2006/01/13 18:10:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.15 2006/09/10 17:36:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -238,8 +238,8 @@ CREATE OPERATOR CLASS gist__int_ops
     DEFAULT FOR TYPE _int4 USING gist AS
         OPERATOR        3       &&,
         OPERATOR        6       =       RECHECK,
-        OPERATOR        7       @,
-        OPERATOR        8       ~,
+        OPERATOR        7       @>,
+        OPERATOR        8       <@,
         OPERATOR        20      @@ (_int4, query_int),
         FUNCTION        1       g_int_consistent (internal, _int4, int4),
         FUNCTION        2       g_int_union (bytea, internal),

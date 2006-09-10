@@ -18,6 +18,10 @@ DROP FUNCTION gseg_compress(internal);
 
 DROP FUNCTION gseg_consistent(internal,seg,int4);
 
+DROP OPERATOR <@ (seg, seg);
+
+DROP OPERATOR @> (seg, seg);
+
 DROP OPERATOR ~ (seg, seg);
 
 DROP OPERATOR @ (seg, seg);

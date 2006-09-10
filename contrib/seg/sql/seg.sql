@@ -6,9 +6,11 @@
 -- first, define the datatype.  Turn off echoing so that expected file
 -- does not depend on contents of seg.sql.
 --
+SET client_min_messages = warning;
 \set ECHO none
 \i seg.sql
 \set ECHO all
+RESET client_min_messages;
 
 --
 -- testing the input and output functions
@@ -191,24 +193,24 @@ SELECT '2 .. 3'::seg >> '0 .. 1'::seg AS bool;
 
 -- "contained in" (the left value belongs within the interval specified in the right value):
 --
-SELECT '0'::seg        ~ '0'::seg AS bool;
-SELECT '0'::seg        ~ '0 ..'::seg AS bool;
-SELECT '0'::seg        ~ '.. 0'::seg AS bool;
-SELECT '0'::seg        ~ '-1 .. 1'::seg AS bool;
-SELECT '0'::seg        ~ '-1 .. 1'::seg AS bool;
-SELECT '-1'::seg       ~ '-1 .. 1'::seg AS bool;
-SELECT '1'::seg        ~ '-1 .. 1'::seg AS bool;
-SELECT '-1 .. 1'::seg  ~ '-1 .. 1'::seg AS bool;
+SELECT '0'::seg        <@ '0'::seg AS bool;
+SELECT '0'::seg        <@ '0 ..'::seg AS bool;
+SELECT '0'::seg        <@ '.. 0'::seg AS bool;
+SELECT '0'::seg        <@ '-1 .. 1'::seg AS bool;
+SELECT '0'::seg        <@ '-1 .. 1'::seg AS bool;
+SELECT '-1'::seg       <@ '-1 .. 1'::seg AS bool;
+SELECT '1'::seg        <@ '-1 .. 1'::seg AS bool;
+SELECT '-1 .. 1'::seg  <@ '-1 .. 1'::seg AS bool;
 
 -- "contains" (the left value contains the interval specified in the right value):
 --
-SELECT '0'::seg @ '0'::seg AS bool;
-SELECT '0 .. '::seg ~ '0'::seg AS bool;
-SELECT '.. 0'::seg ~ '0'::seg AS bool;
-SELECT '-1 .. 1'::seg ~ '0'::seg AS bool;
-SELECT '0'::seg ~ '-1 .. 1'::seg AS bool;
-SELECT '-1'::seg ~ '-1 .. 1'::seg AS bool;
-SELECT '1'::seg ~ '-1 .. 1'::seg AS bool;
+SELECT '0'::seg @> '0'::seg AS bool;
+SELECT '0 .. '::seg <@ '0'::seg AS bool;
+SELECT '.. 0'::seg <@ '0'::seg AS bool;
+SELECT '-1 .. 1'::seg <@ '0'::seg AS bool;
+SELECT '0'::seg <@ '-1 .. 1'::seg AS bool;
+SELECT '-1'::seg <@ '-1 .. 1'::seg AS bool;
+SELECT '1'::seg <@ '-1 .. 1'::seg AS bool;
 
 -- Load some example data and build the index
 -- 
@@ -217,7 +219,7 @@ CREATE TABLE test_seg (s seg);
 \copy test_seg from 'data/test_seg.data'
 
 CREATE INDEX test_seg_ix ON test_seg USING gist (s);
-SELECT count(*) FROM test_seg WHERE s @ '11..11.3';
+SELECT count(*) FROM test_seg WHERE s @> '11..11.3';
 
 -- Test sorting 
-SELECT * FROM test_seg WHERE s @ '11..11.3' GROUP BY s;
+SELECT * FROM test_seg WHERE s @> '11..11.3' GROUP BY s;

@@ -1080,6 +1080,25 @@ CREATE OR REPLACE FUNCTION tsq_mcontained(tsquery, tsquery)
         LANGUAGE C
         RETURNS NULL ON NULL INPUT IMMUTABLE;
 
+CREATE OPERATOR @> (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsq_mcontains,
+        COMMUTATOR = '<@',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR <@ (
+        LEFTARG = tsquery,
+        RIGHTARG = tsquery,
+        PROCEDURE = tsq_mcontained,
+        COMMUTATOR = '@>',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+-- obsolete:
 CREATE OPERATOR @ (
         LEFTARG = tsquery,
         RIGHTARG = tsquery,
@@ -1154,8 +1173,10 @@ LANGUAGE C;
 CREATE OPERATOR CLASS gist_tp_tsquery_ops
 DEFAULT FOR TYPE tsquery USING gist
 AS
-        OPERATOR        1       @ (tsquery, tsquery) RECHECK,
-        OPERATOR        2       ~ (tsquery, tsquery) RECHECK,
+        OPERATOR        7       @> (tsquery, tsquery) RECHECK,
+        OPERATOR        8       <@ (tsquery, tsquery) RECHECK,
+        OPERATOR        13      @ (tsquery, tsquery) RECHECK,
+        OPERATOR        14      ~ (tsquery, tsquery) RECHECK,
         FUNCTION        1       gtsq_consistent (gtsq, internal, int4),
         FUNCTION        2       gtsq_union (bytea, internal),
         FUNCTION        3       gtsq_compress (internal),

@@ -2,13 +2,9 @@
 -- first, define the datatype.  Turn off echoing so that expected file
 -- does not depend on contents of _int.sql.
 --
+SET client_min_messages = warning;
 \set ECHO none
-psql:_int.sql:15: NOTICE:  type "query_int" is not yet defined
-DETAIL:  Creating a shell type definition.
-psql:_int.sql:20: NOTICE:  argument type query_int is only a shell
-psql:_int.sql:370: NOTICE:  type "intbig_gkey" is not yet defined
-DETAIL:  Creating a shell type definition.
-psql:_int.sql:375: NOTICE:  argument type intbig_gkey is only a shell
+RESET client_min_messages;
 SELECT intset(1234);
  intset 
 --------
@@ -384,7 +380,7 @@ SELECT count(*) from test__int WHERE a @@ '23|50';
    403
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @> '{23,50}';
  count 
 -------
     12
@@ -396,7 +392,7 @@ SELECT count(*) from test__int WHERE a @@ '23&50';
     12
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @> '{20,23}';
  count 
 -------
     12
@@ -408,7 +404,7 @@ SELECT count(*) from test__int WHERE a @@ '50&68';
      9
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
  count 
 -------
     21
@@ -433,7 +429,7 @@ SELECT count(*) from test__int WHERE a @@ '23|50';
    403
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @> '{23,50}';
  count 
 -------
     12
@@ -445,7 +441,7 @@ SELECT count(*) from test__int WHERE a @@ '23&50';
     12
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @> '{20,23}';
  count 
 -------
     12
@@ -457,7 +453,7 @@ SELECT count(*) from test__int WHERE a @@ '50&68';
      9
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
  count 
 -------
     21
@@ -483,7 +479,7 @@ SELECT count(*) from test__int WHERE a @@ '23|50';
    403
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @> '{23,50}';
  count 
 -------
     12
@@ -495,7 +491,7 @@ SELECT count(*) from test__int WHERE a @@ '23&50';
     12
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @> '{20,23}';
  count 
 -------
     12
@@ -507,7 +503,7 @@ SELECT count(*) from test__int WHERE a @@ '50&68';
      9
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
  count 
 -------
     21
@@ -533,7 +529,7 @@ SELECT count(*) from test__int WHERE a @@ '23|50';
    403
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{23,50}';
+SELECT count(*) from test__int WHERE a @> '{23,50}';
  count 
 -------
     12
@@ -545,7 +541,7 @@ SELECT count(*) from test__int WHERE a @@ '23&50';
     12
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{20,23}';
+SELECT count(*) from test__int WHERE a @> '{20,23}';
  count 
 -------
     12
@@ -557,7 +553,7 @@ SELECT count(*) from test__int WHERE a @@ '50&68';
      9
 (1 row)
 
-SELECT count(*) from test__int WHERE a @ '{20,23}' or a @ '{50,68}';
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
  count 
 -------
     21

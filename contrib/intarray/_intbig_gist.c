@@ -560,9 +560,11 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 				retval = _intbig_contains((GISTTYPE *) DatumGetPointer(entry->key), query);
 			break;
 		case RTContainsStrategyNumber:
+		case RTOldContainsStrategyNumber:
 			retval = _intbig_contains((GISTTYPE *) DatumGetPointer(entry->key), query);
 			break;
 		case RTContainedByStrategyNumber:
+		case RTOldContainedByStrategyNumber:
 			if (GIST_LEAF(entry))
 			{
 				int			i,

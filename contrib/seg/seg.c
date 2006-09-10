@@ -492,9 +492,11 @@ gseg_leaf_consistent(SEG * key,
 			retval = (bool) seg_same(key, query);
 			break;
 		case RTContainsStrategyNumber:
+		case RTOldContainsStrategyNumber:
 			retval = (bool) seg_contains(key, query);
 			break;
 		case RTContainedByStrategyNumber:
+		case RTOldContainedByStrategyNumber:
 			retval = (bool) seg_contained(key, query);
 			break;
 		default:
@@ -533,9 +535,11 @@ gseg_internal_consistent(SEG * key,
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
+		case RTOldContainsStrategyNumber:
 			retval = (bool) seg_contains(key, query);
 			break;
 		case RTContainedByStrategyNumber:
+		case RTOldContainedByStrategyNumber:
 			retval = (bool) seg_overlap(key, query);
 			break;
 		default:

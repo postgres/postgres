@@ -46,22 +46,28 @@ select 'a'=>'b';
 ----------
   "a"=>"b"
 
-    * hstore @ hstore - contains operation, check if left operand contains right. 
+    * hstore @> hstore - contains operation, check if left operand contains right. 
 
-regression=# select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>c';
+regression=# select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>c';
  ?column? 
 ----------
  f
 (1 row)
 
-regression=# select 'a=>b, b=>1, c=>NULL'::hstore @ 'b=>1';
+regression=# select 'a=>b, b=>1, c=>NULL'::hstore @> 'b=>1';
  ?column? 
 ----------
  t
 (1 row)
 
-    * hstore ~ hstore - contained operation, check if left operand is contained 
+    * hstore <@ hstore - contained operation, check if left operand is contained 
 	 in right
+
+(Before PostgreSQL 8.2, the containment operators @> and <@ were
+respectively called @ and ~.  These names are still available, but are
+deprecated and will eventually be retired.  Notice that the old names
+are reversed from the convention formerly followed by the core geometric
+datatypes!)
 
 Functions
 
@@ -129,7 +135,7 @@ regression=# select isdefined('a=>NULL','a');
 
 Indices
 
-Module provides index support for '@' and '~' operations.
+Module provides index support for '@>' and '<@' operations.
 
 create index hidx on testhstore using gist(h);
 

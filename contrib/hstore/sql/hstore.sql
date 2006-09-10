@@ -1,7 +1,15 @@
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of hstore.sql.
+--
+SET client_min_messages = warning;
 \set ECHO none
 \i hstore.sql
-set escape_string_warning=off;
 \set ECHO all
+RESET client_min_messages;
+
+set escape_string_warning=off;
+
 --hstore;
 
 select ''::hstore;
@@ -103,29 +111,29 @@ select * from svals('');
 
 select * from each('aaa=>bq, b=>NULL, ""=>1 ');
 
--- @
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL';
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL, c=>NULL';
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>NULL, g=>NULL';
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'g=>NULL';
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>c';
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b';
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b, c=>NULL';
-select 'a=>b, b=>1, c=>NULL'::hstore @ 'a=>b, c=>q';
+-- @>
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL, c=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL, g=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'g=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>c';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>q';
 
 CREATE TABLE testhstore (h hstore);
 \copy testhstore from 'data/hstore.data'
 
-select count(*) from testhstore where h @ 'wait=>NULL';
-select count(*) from testhstore where h @ 'wait=>CC';
-select count(*) from testhstore where h @ 'wait=>CC, public=>t';
+select count(*) from testhstore where h @> 'wait=>NULL';
+select count(*) from testhstore where h @> 'wait=>CC';
+select count(*) from testhstore where h @> 'wait=>CC, public=>t';
 
 create index hidx on testhstore using gist(h);
 set enable_seqscan=off;
 
-select count(*) from testhstore where h @ 'wait=>NULL';
-select count(*) from testhstore where h @ 'wait=>CC';
-select count(*) from testhstore where h @ 'wait=>CC, public=>t';
+select count(*) from testhstore where h @> 'wait=>NULL';
+select count(*) from testhstore where h @> 'wait=>CC';
+select count(*) from testhstore where h @> 'wait=>CC, public=>t';
 
 select count(*) from (select (each(h)).key from testhstore) as wow ;
 select key, count(*) from (select (each(h)).key from testhstore) as wow group by key order by count desc, key;

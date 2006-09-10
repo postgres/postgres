@@ -243,6 +243,19 @@ CREATE OPERATOR <> (
 	RESTRICT = neqsel, JOIN = neqjoinsel
 );
 
+CREATE OPERATOR @> (
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_contains,
+	COMMUTATOR = '<@',
+	RESTRICT = contsel, JOIN = contjoinsel
+);
+
+CREATE OPERATOR <@ (
+	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_contained,
+	COMMUTATOR = '@>',
+	RESTRICT = contsel, JOIN = contjoinsel
+);
+
+-- these are obsolete/deprecated:
 CREATE OPERATOR @ (
 	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_contains,
 	COMMUTATOR = '~',
@@ -308,8 +321,10 @@ CREATE OPERATOR CLASS gist_cube_ops
     DEFAULT FOR TYPE cube USING gist AS
 	OPERATOR	3	&& ,
 	OPERATOR	6	= ,
-	OPERATOR	7	@ ,
-	OPERATOR	8	~ ,
+	OPERATOR	7	@> ,
+	OPERATOR	8	<@ ,
+	OPERATOR	13	@ ,
+	OPERATOR	14	~ ,
 	FUNCTION	1	g_cube_consistent (internal, cube, int4),
 	FUNCTION	2	g_cube_union (internal, internal),
 	FUNCTION	3	g_cube_compress (internal),

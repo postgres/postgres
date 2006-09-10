@@ -184,11 +184,28 @@ gtsq_consistent(PG_FUNCTION_ARGS)
 	QUERYTYPE  *query = (QUERYTYPE *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	TPQTGist	sq = makesign(query);
+	bool		retval;
 
-	if (GIST_LEAF(entry))
-		PG_RETURN_BOOL(((*key) & sq) == ((strategy == 1) ? sq : *key));
-	else
-		PG_RETURN_BOOL((*key) & sq);
+	switch (strategy)
+	{
+		case RTContainsStrategyNumber:
+		case RTOldContainsStrategyNumber:
+			if (GIST_LEAF(entry))
+				retval = (*key & sq) == sq;
+			else
+				retval = (*key & sq) != 0;
+			break;
+		case RTContainedByStrategyNumber:
+		case RTOldContainedByStrategyNumber:
+			if (GIST_LEAF(entry))
+				retval = (*key & sq) == *key;
+			else
+				retval = (*key & sq) != 0;
+			break;
+		default:
+			retval = FALSE;
+	}
+	PG_RETURN_BOOL(retval);
 }
 
 Datum

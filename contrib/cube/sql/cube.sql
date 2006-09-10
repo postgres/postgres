@@ -180,41 +180,41 @@ SELECT '[(-1,-1,-1),(1,1,1)]'::cube && '[(2,1,1),(2,2,2)]'::cube AS bool;
 -- "contained in" (the left operand is the cube entirely enclosed by
 -- the right operand):
 --
-SELECT '0'::cube                 ~ '0'::cube                        AS bool;
-SELECT '0,0,0'::cube             ~ '0,0,0'::cube                    AS bool;
-SELECT '0,0'::cube               ~ '0,0,1'::cube                    AS bool;
-SELECT '0,0,0'::cube             ~ '0,0,1'::cube                    AS bool;
-SELECT '1,0,0'::cube             ~ '0,0,1'::cube                    AS bool;
-SELECT '(1,0,0),(0,0,1)'::cube   ~ '(1,0,0),(0,0,1)'::cube          AS bool;
-SELECT '(1,0,0),(0,0,1)'::cube   ~ '(-1,-1,-1),(1,1,1)'::cube       AS bool;
-SELECT '(1,0,0),(0,0,1)'::cube   ~ '(-1,-1,-1,-1),(1,1,1,1)'::cube  AS bool;
-SELECT '0'::cube                 ~ '(-1),(1)'::cube                 AS bool;
-SELECT '1'::cube                 ~ '(-1),(1)'::cube                 AS bool;
-SELECT '-1'::cube                ~ '(-1),(1)'::cube                 AS bool;
-SELECT '(-1),(1)'::cube          ~ '(-1),(1)'::cube                 AS bool;
-SELECT '(-1),(1)'::cube          ~ '(-1,-1),(1,1)'::cube            AS bool;
-SELECT '(-2),(1)'::cube          ~ '(-1),(1)'::cube                 AS bool;
-SELECT '(-2),(1)'::cube          ~ '(-1,-1),(1,1)'::cube            AS bool;
+SELECT '0'::cube                 <@ '0'::cube                        AS bool;
+SELECT '0,0,0'::cube             <@ '0,0,0'::cube                    AS bool;
+SELECT '0,0'::cube               <@ '0,0,1'::cube                    AS bool;
+SELECT '0,0,0'::cube             <@ '0,0,1'::cube                    AS bool;
+SELECT '1,0,0'::cube             <@ '0,0,1'::cube                    AS bool;
+SELECT '(1,0,0),(0,0,1)'::cube   <@ '(1,0,0),(0,0,1)'::cube          AS bool;
+SELECT '(1,0,0),(0,0,1)'::cube   <@ '(-1,-1,-1),(1,1,1)'::cube       AS bool;
+SELECT '(1,0,0),(0,0,1)'::cube   <@ '(-1,-1,-1,-1),(1,1,1,1)'::cube  AS bool;
+SELECT '0'::cube                 <@ '(-1),(1)'::cube                 AS bool;
+SELECT '1'::cube                 <@ '(-1),(1)'::cube                 AS bool;
+SELECT '-1'::cube                <@ '(-1),(1)'::cube                 AS bool;
+SELECT '(-1),(1)'::cube          <@ '(-1),(1)'::cube                 AS bool;
+SELECT '(-1),(1)'::cube          <@ '(-1,-1),(1,1)'::cube            AS bool;
+SELECT '(-2),(1)'::cube          <@ '(-1),(1)'::cube                 AS bool;
+SELECT '(-2),(1)'::cube          <@ '(-1,-1),(1,1)'::cube            AS bool;
 
 
 -- "contains" (the left operand is the cube that entirely encloses the
 -- right operand)
 --
-SELECT '0'::cube                        @ '0'::cube                 AS bool;
-SELECT '0,0,0'::cube                    @ '0,0,0'::cube             AS bool;
-SELECT '0,0,1'::cube                    @ '0,0'::cube               AS bool;
-SELECT '0,0,1'::cube                    @ '0,0,0'::cube             AS bool;
-SELECT '0,0,1'::cube                    @ '1,0,0'::cube             AS bool;
-SELECT '(1,0,0),(0,0,1)'::cube          @ '(1,0,0),(0,0,1)'::cube   AS bool;
-SELECT '(-1,-1,-1),(1,1,1)'::cube       @ '(1,0,0),(0,0,1)'::cube   AS bool;
-SELECT '(-1,-1,-1,-1),(1,1,1,1)'::cube  @ '(1,0,0),(0,0,1)'::cube   AS bool;
-SELECT '(-1),(1)'::cube                 @ '0'::cube                 AS bool;
-SELECT '(-1),(1)'::cube                 @ '1'::cube                 AS bool;
-SELECT '(-1),(1)'::cube                 @ '-1'::cube                AS bool;
-SELECT '(-1),(1)'::cube                 @ '(-1),(1)'::cube          AS bool;
-SELECT '(-1,-1),(1,1)'::cube            @ '(-1),(1)'::cube          AS bool;
-SELECT '(-1),(1)'::cube                 @ '(-2),(1)'::cube          AS bool;
-SELECT '(-1,-1),(1,1)'::cube            @ '(-2),(1)'::cube          AS bool;
+SELECT '0'::cube                        @> '0'::cube                 AS bool;
+SELECT '0,0,0'::cube                    @> '0,0,0'::cube             AS bool;
+SELECT '0,0,1'::cube                    @> '0,0'::cube               AS bool;
+SELECT '0,0,1'::cube                    @> '0,0,0'::cube             AS bool;
+SELECT '0,0,1'::cube                    @> '1,0,0'::cube             AS bool;
+SELECT '(1,0,0),(0,0,1)'::cube          @> '(1,0,0),(0,0,1)'::cube   AS bool;
+SELECT '(-1,-1,-1),(1,1,1)'::cube       @> '(1,0,0),(0,0,1)'::cube   AS bool;
+SELECT '(-1,-1,-1,-1),(1,1,1,1)'::cube  @> '(1,0,0),(0,0,1)'::cube   AS bool;
+SELECT '(-1),(1)'::cube                 @> '0'::cube                 AS bool;
+SELECT '(-1),(1)'::cube                 @> '1'::cube                 AS bool;
+SELECT '(-1),(1)'::cube                 @> '-1'::cube                AS bool;
+SELECT '(-1),(1)'::cube                 @> '(-1),(1)'::cube          AS bool;
+SELECT '(-1,-1),(1,1)'::cube            @> '(-1),(1)'::cube          AS bool;
+SELECT '(-1),(1)'::cube                 @> '(-2),(1)'::cube          AS bool;
+SELECT '(-1,-1),(1,1)'::cube            @> '(-2),(1)'::cube          AS bool;
 
 -- Test of distance function
 --

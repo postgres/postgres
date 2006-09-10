@@ -78,7 +78,7 @@ earth_distance(earth, earth) - Returns the great circle distance between
 two points on the surface of the Earth.
 
 earth_box(earth, float8)  - Returns a box suitable for an indexed search using
-the cube @ operator for points within a given great circle distance of a
+the cube @> operator for points within a given great circle distance of a
 location. Some points in this box are further than the specified great circle
 distance from the location so a second check using earth_distance should be
 made at the same time.

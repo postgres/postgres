@@ -72,10 +72,12 @@ g_int_consistent(PG_FUNCTION_ARGS)
 											query);
 			break;
 		case RTContainsStrategyNumber:
+		case RTOldContainsStrategyNumber:
 			retval = inner_int_contains((ArrayType *) DatumGetPointer(entry->key),
 										query);
 			break;
 		case RTContainedByStrategyNumber:
+		case RTOldContainedByStrategyNumber:
 			if (GIST_LEAF(entry))
 				retval = inner_int_contains(query,
 								  (ArrayType *) DatumGetPointer(entry->key));

@@ -281,6 +281,25 @@ CREATE OPERATOR <> (
 	JOIN = neqjoinsel
 );
 
+CREATE OPERATOR @> (
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_contains,
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+CREATE OPERATOR <@ (
+	LEFTARG = seg,
+	RIGHTARG = seg,
+	PROCEDURE = seg_contained,
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+-- obsolete:
 CREATE OPERATOR @ (
 	LEFTARG = seg,
 	RIGHTARG = seg,
@@ -357,8 +376,10 @@ AS
 	OPERATOR	4	&> ,
 	OPERATOR	5	>> ,
 	OPERATOR	6	= ,
-	OPERATOR	7	@ ,
-	OPERATOR	8	~ ,
+	OPERATOR	7	@> ,
+	OPERATOR	8	<@ ,
+	OPERATOR	13	@ ,
+	OPERATOR	14	~ ,
 	FUNCTION	1	gseg_consistent (internal, seg, int4),
 	FUNCTION	2	gseg_union (internal, internal),
 	FUNCTION	3	gseg_compress (internal),
