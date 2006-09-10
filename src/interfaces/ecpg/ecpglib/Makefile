@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.41 2006/08/28 16:13:11 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.42 2006/09/10 22:07:02 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,8 +34,7 @@ ifneq ($(PORTNAME), win32)
 OBJS += thread.o
 endif
 
-SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) \
-	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(PTHREAD_LIBS)
+SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) -lm $(PTHREAD_LIBS)
 
 ifeq ($(PORTNAME), win32)
 # Link to shfolder.dll instead of shell32.dll

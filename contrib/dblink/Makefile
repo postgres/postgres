@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.12 2006/09/10 21:38:26 tgl Exp $
+# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.13 2006/09/10 22:07:02 tgl Exp $
 
 MODULE_big = dblink
 PG_CPPFLAGS = -I$(libpq_srcdir)
@@ -20,6 +20,3 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
-
-# Apparently AIX requires that we mention everything libpq depends on :-(
-SHLIB_LINK += $(filter -lintl -lssl -lcrypto, $(LIBS))

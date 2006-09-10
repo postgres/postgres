@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.227 2006/09/09 03:15:40 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.228 2006/09/10 22:07:02 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -336,23 +336,24 @@ libpq_srcdir = $(top_srcdir)/src/interfaces/libpq
 libpq_builddir = $(top_builddir)/src/interfaces/libpq
 endif
 
-# This is for use for libraries linking to libpq.  Because libpqport
-# isn't created with the same link flags as libpq, it can't be used.
-libpq = -L$(libpq_builddir) -lpq
+# This macro is for use by libraries linking to libpq.  (Because libpgport
+# isn't created with the same link flags as libpq, it can't be used.)
+libpq := -L$(libpq_builddir) -lpq
   
-# If doing static linking, shared library dependency can't be
-# used so we specify pthread libs for every usage of libpq
+# If doing static linking, shared library dependency info isn't available,
+# so add in the libraries that libpq depends on.
 ifeq ($(enable_shared), no)
-libpq += $(PTHREAD_LIBS)
+libpq += $(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) $(PTHREAD_LIBS)
 else
-# AIX libraries do not remember their required libs so we have to force
-# thread dependent libraires in the link
+# On AIX even shared libraries do not remember their required libs,
+# so again add in what libpq depends on.
 ifeq ($(PORTNAME), aix)
-libpq += $(PTHREAD_LIBS)
+libpq += $(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) $(PTHREAD_LIBS)
 endif
 endif
 
-# Force clients to pull symbols from the non-shared library libpgport 
+# This macro is for use by client executables (not libraries) that use libpq.
+# We force clients to pull symbols from the non-shared library libpgport 
 # rather than pulling some libpgport symbols from libpq just because 
 # libpq uses those functions too.  This makes applications less 
 # dependent on changes in libpq's usage of pgport.  To do this we link to
