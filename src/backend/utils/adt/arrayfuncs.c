@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.130 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.131 2006/09/10 20:14:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3342,6 +3342,232 @@ array_cmp(FunctionCallInfo fcinfo)
 	PG_FREE_IF_COPY(array2, 1);
 
 	return result;
+}
+
+
+/*-----------------------------------------------------------------------------
+ * array overlap/containment comparisons
+ *		These use the same methods of comparing array elements as array_eq.
+ *		We consider only the elements of the arrays, ignoring dimensionality.
+ *----------------------------------------------------------------------------
+ */
+
+/*
+ * array_contain_compare :
+ *		  compares two arrays for overlap/containment
+ *
+ * When matchall is true, return true if all members of array1 are in array2.
+ * When matchall is false, return true if any members of array1 are in array2.
+ */
+static bool
+array_contain_compare(ArrayType *array1, ArrayType *array2, bool matchall,
+					  void **fn_extra)
+{
+	bool		result = matchall;
+	Oid			element_type = ARR_ELEMTYPE(array1);
+	TypeCacheEntry *typentry;
+	int			nelems1;
+	Datum	   *values2;
+	bool	   *nulls2;
+	int			nelems2;
+	int			typlen;
+	bool		typbyval;
+	char		typalign;
+	char	   *ptr1;
+	bits8	   *bitmap1;
+	int			bitmask;
+	int			i;
+	int			j;
+	FunctionCallInfoData locfcinfo;
+
+	if (element_type != ARR_ELEMTYPE(array2))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot compare arrays of different element types")));
+
+	/*
+	 * We arrange to look up the equality function only once per series of
+	 * calls, assuming the element type doesn't change underneath us.  The
+	 * typcache is used so that we have no memory leakage when being used
+	 * as an index support function.
+	 */
+	typentry = (TypeCacheEntry *) *fn_extra;
+	if (typentry == NULL ||
+		typentry->type_id != element_type)
+	{
+		typentry = lookup_type_cache(element_type,
+									 TYPECACHE_EQ_OPR_FINFO);
+		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("could not identify an equality operator for type %s",
+							format_type_be(element_type))));
+		*fn_extra = (void *) typentry;
+	}
+	typlen = typentry->typlen;
+	typbyval = typentry->typbyval;
+	typalign = typentry->typalign;
+
+	/*
+	 * Since we probably will need to scan array2 multiple times, it's
+	 * worthwhile to use deconstruct_array on it.  We scan array1 the hard way
+	 * however, since we very likely won't need to look at all of it.
+	 */
+	deconstruct_array(array2, element_type, typlen, typbyval, typalign,
+					  &values2, &nulls2, &nelems2);
+
+	/*
+	 * Apply the comparison operator to each pair of array elements.
+	 */
+	InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
+							 NULL, NULL);
+
+	/* Loop over source data */
+	nelems1 = ArrayGetNItems(ARR_NDIM(array1), ARR_DIMS(array1));
+	ptr1 = ARR_DATA_PTR(array1);
+	bitmap1 = ARR_NULLBITMAP(array1);
+	bitmask = 1;
+
+	for (i = 0; i < nelems1; i++)
+	{
+		Datum		elt1;
+		bool		isnull1;
+
+		/* Get element, checking for NULL */
+		if (bitmap1 && (*bitmap1 & bitmask) == 0)
+		{
+			isnull1 = true;
+			elt1 = (Datum) 0;
+		}
+		else
+		{
+			isnull1 = false;
+			elt1 = fetch_att(ptr1, typbyval, typlen);
+			ptr1 = att_addlength(ptr1, typlen, PointerGetDatum(ptr1));
+			ptr1 = (char *) att_align(ptr1, typalign);
+		}
+
+		/* advance bitmap pointer if any */
+		bitmask <<= 1;
+		if (bitmask == 0x100)
+		{
+			if (bitmap1)
+				bitmap1++;
+			bitmask = 1;
+		}
+
+		/*
+		 * We assume that the comparison operator is strict, so a NULL
+		 * can't match anything.  XXX this diverges from the "NULL=NULL"
+		 * behavior of array_eq, should we act like that?
+		 */
+		if (isnull1)
+		{
+			if (matchall)
+			{
+				result = false;
+				break;
+			}
+			continue;
+		}
+
+		for (j = 0; j < nelems2; j++)
+		{
+			Datum		elt2 = values2[j];
+			bool		isnull2 = nulls2[j];
+			bool		oprresult;
+
+			if (isnull2)
+				continue;		/* can't match */
+
+			/*
+			 * Apply the operator to the element pair
+			 */
+			locfcinfo.arg[0] = elt1;
+			locfcinfo.arg[1] = elt2;
+			locfcinfo.argnull[0] = false;
+			locfcinfo.argnull[1] = false;
+			locfcinfo.isnull = false;
+			oprresult = DatumGetBool(FunctionCallInvoke(&locfcinfo));
+			if (oprresult)
+				break;
+		}
+
+		if (j < nelems2)
+		{
+			/* found a match for elt1 */
+			if (!matchall)
+			{
+				result = true;
+				break;
+			}
+		}
+		else
+		{
+			/* no match for elt1 */
+			if (matchall)
+			{
+				result = false;
+				break;
+			}
+		}
+	}
+
+	pfree(values2);
+	pfree(nulls2);
+
+	return result;
+}
+
+Datum
+arrayoverlap(PG_FUNCTION_ARGS)
+{
+	ArrayType  *array1 = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *array2 = PG_GETARG_ARRAYTYPE_P(1);
+	bool		result;
+
+	result = array_contain_compare(array1, array2, false,
+								   &fcinfo->flinfo->fn_extra);
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(array1, 0);
+	PG_FREE_IF_COPY(array2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+arraycontains(PG_FUNCTION_ARGS)
+{
+	ArrayType  *array1 = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *array2 = PG_GETARG_ARRAYTYPE_P(1);
+	bool		result;
+
+	result = array_contain_compare(array2, array1, true,
+								   &fcinfo->flinfo->fn_extra);
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(array1, 0);
+	PG_FREE_IF_COPY(array2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+arraycontained(PG_FUNCTION_ARGS)
+{
+	ArrayType  *array1 = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *array2 = PG_GETARG_ARRAYTYPE_P(1);
+	bool		result;
+
+	result = array_contain_compare(array1, array2, true,
+								   &fcinfo->flinfo->fn_extra);
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(array1, 0);
+	PG_FREE_IF_COPY(array2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 

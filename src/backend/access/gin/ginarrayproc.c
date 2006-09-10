@@ -1,23 +1,22 @@
 /*-------------------------------------------------------------------------
  *
- * ginvacuum.c
- *    support function for GIN's indexing of any array
+ * ginarrayproc.c
+ *    support functions for GIN's indexing of any array
  *
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.4 2006/07/14 14:52:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.5 2006/09/10 20:14:20 tgl Exp $
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
-#include "utils/array.h"
-#include "utils/builtins.h"
-#include "utils/lsyscache.h"
-#include "utils/typcache.h"
+
 #include "access/gin.h"
+#include "utils/array.h"
+#include "utils/lsyscache.h"
+
 
 #define GinOverlapStrategy		1
 #define GinContainsStrategy		2
@@ -29,12 +28,8 @@
 		ereport(ERROR, 										\
 			(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED), 		\
 			 errmsg("array must not contain nulls"))); 		\
-															\
-	if ( ARR_NDIM(x) != 1 && ARR_NDIM(x) != 0 ) 			\
-		ereport(ERROR, 										\
-			(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR), 		\
-			 errmsg("array must be one-dimensional"))); 	\
 } while(0) 
+
 
 /*
  * Function used as extractValue and extractQuery both
@@ -70,9 +65,9 @@ ginarrayconsistent(PG_FUNCTION_ARGS) {
 	bool	*check = (bool*)PG_GETARG_POINTER(0);
 	StrategyNumber 	strategy = PG_GETARG_UINT16(1);
 	ArrayType   *query = PG_GETARG_ARRAYTYPE_P(2);
-	int res=FALSE, i, nentries=ArrayGetNItems(ARR_NDIM(query), ARR_DIMS(query));
+	int res, i, nentries;
 
-	/* we can do not check array carefully, it's done by previous ginarrayextract call */
+	/* ARRAYCHECK was already done by previous ginarrayextract call */
 
 	switch( strategy ) {
 		case GinOverlapStrategy:
@@ -82,6 +77,7 @@ ginarrayconsistent(PG_FUNCTION_ARGS) {
 			break;
 		case GinContainsStrategy:
 		case GinEqualStrategy:
+			nentries=ArrayGetNItems(ARR_NDIM(query), ARR_DIMS(query));
 			res = TRUE;
 			for(i=0;i<nentries;i++)
 				if ( !check[i] ) {
@@ -90,168 +86,10 @@ ginarrayconsistent(PG_FUNCTION_ARGS) {
 				}
 			break;
 		default:
-			elog(ERROR, "ginarrayconsistent: unknown strategy number: %d", strategy);
+			elog(ERROR, "ginarrayconsistent: unknown strategy number: %d",
+				 strategy);
+			res = FALSE;
 	}
 
 	PG_RETURN_BOOL(res);
 }
-
-static TypeCacheEntry*
-fillTypeCacheEntry( TypeCacheEntry *typentry, Oid element_type ) {
-	if ( typentry && typentry->type_id == element_type )
-		return typentry;
-
-	typentry = lookup_type_cache(element_type,	TYPECACHE_EQ_OPR_FINFO);
-	if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality operator for type %s", format_type_be(element_type))));
-
-	return typentry;
-}
-
-static bool
-typeEQ(FunctionCallInfoData *locfcinfo, Datum a, Datum b) {
-	locfcinfo->arg[0] = a;
-	locfcinfo->arg[1] = b;
-	locfcinfo->argnull[0] = false;
-	locfcinfo->argnull[1] = false;
-	locfcinfo->isnull = false;
-
-	return DatumGetBool(FunctionCallInvoke(locfcinfo));
-}
-
-static bool
-ginArrayOverlap(TypeCacheEntry *typentry, ArrayType *a, ArrayType *b) {
-	Datum 	*da, *db;
-	int		na, nb, j, i;
-	FunctionCallInfoData locfcinfo;
-	
-	if ( ARR_ELEMTYPE(a) != ARR_ELEMTYPE(b) )
-		ereport(ERROR,
-			(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("cannot compare arrays of different element types")));
-
-	ARRAYCHECK(a);
-	ARRAYCHECK(b);
-
-	deconstruct_array(a,
-		ARR_ELEMTYPE(a),
-		typentry->typlen, typentry->typbyval, typentry->typalign,
-		&da, NULL, &na);
-	deconstruct_array(b,
-		ARR_ELEMTYPE(b),
-		typentry->typlen, typentry->typbyval, typentry->typalign,
-		&db, NULL, &nb);
-
-	InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
-		NULL, NULL);
-
-	for(i=0;i<na;i++) {
-		for(j=0;j<nb;j++) {
-			if ( typeEQ(&locfcinfo, da[i], db[j]) ) {
-					pfree( da );
-					pfree( db );
-					return TRUE;
-			}
-		}
-	}
-
-	pfree( da );
-	pfree( db );
-
-	return FALSE;
-}
-
-static bool
-ginArrayContains(TypeCacheEntry *typentry, ArrayType *a, ArrayType *b) {
-	Datum 	*da, *db;
-	int		na, nb, j, i, n = 0;
-	FunctionCallInfoData locfcinfo;
-	
-	if ( ARR_ELEMTYPE(a) != ARR_ELEMTYPE(b) )
-		ereport(ERROR,
-			(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("cannot compare arrays of different element types")));
-
-	ARRAYCHECK(a);
-	ARRAYCHECK(b);
-
-	deconstruct_array(a,
-		ARR_ELEMTYPE(a),
-		typentry->typlen, typentry->typbyval, typentry->typalign,
-		&da, NULL, &na);
-	deconstruct_array(b,
-		ARR_ELEMTYPE(b),
-		typentry->typlen, typentry->typbyval, typentry->typalign,
-		&db, NULL, &nb);
-
-	InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
-		NULL, NULL);
-
-	for(i=0;i<nb;i++) {
-		for(j=0;j<na;j++) {
-			if ( typeEQ(&locfcinfo, db[i], da[j]) ) {
-				n++;
-				break;
-			}
-		}
-	}
-
-	pfree( da );
-	pfree( db );
-
-	return ( n==nb ) ? TRUE : FALSE;
-}
-
-Datum
-arrayoverlap(PG_FUNCTION_ARGS) {
-	ArrayType   *a = PG_GETARG_ARRAYTYPE_P(0);
-	ArrayType   *b = PG_GETARG_ARRAYTYPE_P(1);
-	TypeCacheEntry *typentry = fillTypeCacheEntry( fcinfo->flinfo->fn_extra, ARR_ELEMTYPE(a) ); 
-	bool res;
-
-	fcinfo->flinfo->fn_extra = (void*)typentry;
-
-	res = ginArrayOverlap( typentry, a, b ); 
-
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
-
-	PG_RETURN_BOOL(res);
-}
-
-Datum
-arraycontains(PG_FUNCTION_ARGS) {
-	ArrayType   *a = PG_GETARG_ARRAYTYPE_P(0);
-	ArrayType   *b = PG_GETARG_ARRAYTYPE_P(1);
-	TypeCacheEntry *typentry = fillTypeCacheEntry( fcinfo->flinfo->fn_extra, ARR_ELEMTYPE(a) ); 
-	bool res;
-
-	fcinfo->flinfo->fn_extra = (void*)typentry;
-
-	res = ginArrayContains( typentry, a, b ); 
-
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
-
-	PG_RETURN_BOOL(res);
-}
-
-Datum
-arraycontained(PG_FUNCTION_ARGS) {
-	ArrayType   *a = PG_GETARG_ARRAYTYPE_P(0);
-	ArrayType   *b = PG_GETARG_ARRAYTYPE_P(1);
-	TypeCacheEntry *typentry = fillTypeCacheEntry( fcinfo->flinfo->fn_extra, ARR_ELEMTYPE(a) ); 
-	bool res;
-
-	fcinfo->flinfo->fn_extra = (void*)typentry;
-
-	res = ginArrayContains( typentry, b, a ); 
-
-	PG_FREE_IF_COPY(a,0);
-	PG_FREE_IF_COPY(b,1);
-
-	PG_RETURN_BOOL(res);
-}
-

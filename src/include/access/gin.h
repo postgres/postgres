@@ -3,7 +3,7 @@
  *    header file for postgres inverted index access method implementation.
  *
  *  Copyright (c) 2006, PostgreSQL Global Development Group
- *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.6 2006/08/07 16:57:57 tgl Exp $
+ *  $PostgreSQL: pgsql/src/include/access/gin.h,v 1.7 2006/09/10 20:14:20 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -408,11 +408,6 @@ extern Datum ginvacuumcleanup(PG_FUNCTION_ARGS);
 /* ginarrayproc.c */
 extern Datum ginarrayextract(PG_FUNCTION_ARGS);
 extern Datum ginarrayconsistent(PG_FUNCTION_ARGS);
-
-/* I'm not sure that is the best place */
-extern Datum arrayoverlap(PG_FUNCTION_ARGS);
-extern Datum arraycontains(PG_FUNCTION_ARGS);
-extern Datum arraycontained(PG_FUNCTION_ARGS);
 
 /* ginbulk.c */
 typedef struct EntryAccumulator {
