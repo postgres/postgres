@@ -164,7 +164,7 @@ SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
 SET enable_bitmapscan = ON;
 CREATE INDEX intarrayidx ON array_index_op_test USING gin (i);
-SELECT * FROM array_index_op_test WHERE i @ '{32}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @> '{32}' ORDER BY seqno;
  seqno |                i                |                                                                 t                                                                  
 -------+---------------------------------+------------------------------------------------------------------------------------------------------------------------------------
      6 | {39,35,5,94,17,92,60,32}        | {AAAAAAAAAAAAAAA35875,AAAAAAAAAAAAAAAA23657}
@@ -186,7 +186,7 @@ SELECT * FROM array_index_op_test WHERE i && '{32}' ORDER BY seqno;
    100 | {85,32,57,39,49,84,32,3,30}     | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
 (6 rows)
 
-SELECT * FROM array_index_op_test WHERE i @ '{17}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @> '{17}' ORDER BY seqno;
  seqno |                i                |                                                                 t                                                                  
 -------+---------------------------------+------------------------------------------------------------------------------------------------------------------------------------
      6 | {39,35,5,94,17,92,60,32}        | {AAAAAAAAAAAAAAA35875,AAAAAAAAAAAAAAAA23657}
@@ -212,7 +212,7 @@ SELECT * FROM array_index_op_test WHERE i && '{17}' ORDER BY seqno;
     89 | {40,32,17,6,30,88}              | {AA44673,AAAAAAAAAAA6119,AAAAAAAAAAAAAAAA23657,AAAAAAAAAAAAAAAAAA47955,AAAAAAAAAAAAAAAA33598,AAAAAAAAAAA33576,AA44673}
 (8 rows)
 
-SELECT * FROM array_index_op_test WHERE i @ '{32,17}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i @> '{32,17}' ORDER BY seqno;
  seqno |                i                |                                                                 t                                                                  
 -------+---------------------------------+------------------------------------------------------------------------------------------------------------------------------------
      6 | {39,35,5,94,17,92,60,32}        | {AAAAAAAAAAAAAAA35875,AAAAAAAAAAAAAAAA23657}
@@ -236,7 +236,7 @@ SELECT * FROM array_index_op_test WHERE i && '{32,17}' ORDER BY seqno;
    100 | {85,32,57,39,49,84,32,3,30}     | {AAAAAAA80240,AAAAAAAAAAAAAAAA1729,AAAAA60038,AAAAAAAAAAA92631,AAAAAAAA9523}
 (11 rows)
 
-SELECT * FROM array_index_op_test WHERE i ~ '{38,34,32,89}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE i <@ '{38,34,32,89}' ORDER BY seqno;
  seqno |       i       |                                                             t                                                              
 -------+---------------+----------------------------------------------------------------------------------------------------------------------------
     40 | {34}          | {AAAAAAAAAAAAAA10611,AAAAAAAAAAAAAAAAAAA1205,AAAAAAAAAAA50956,AAAAAAAAAAAAAAAA31334,AAAAA70466,AAAAAAAA81587,AAAAAAA74623}
@@ -251,7 +251,7 @@ SELECT * FROM array_index_op_test WHERE i = '{47,77}' ORDER BY seqno;
 (1 row)
 
 CREATE INDEX textarrayidx ON array_index_op_test USING gin (t);
-SELECT * FROM array_index_op_test WHERE t @ '{AAAAAAAA72908}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAAA72908}' ORDER BY seqno;
  seqno |           i           |                                                                     t                                                                      
 -------+-----------------------+--------------------------------------------------------------------------------------------------------------------------------------------
     22 | {11,6,56,62,53,30}    | {AAAAAAAA72908}
@@ -269,7 +269,7 @@ SELECT * FROM array_index_op_test WHERE t && '{AAAAAAAA72908}' ORDER BY seqno;
     79 | {45}                  | {AAAAAAAAAA646,AAAAAAAAAAAAAAAAAAA70415,AAAAAA43678,AAAAAAAA72908}
 (4 rows)
 
-SELECT * FROM array_index_op_test WHERE t @ '{AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAAAAA646}' ORDER BY seqno;
  seqno |        i         |                                 t                                  
 -------+------------------+--------------------------------------------------------------------
     15 | {17,14,16,63,67} | {AA6416,AAAAAAAAAA646,AAAAA95309}
@@ -285,7 +285,7 @@ SELECT * FROM array_index_op_test WHERE t && '{AAAAAAAAAA646}' ORDER BY seqno;
     96 | {23,97,43}       | {AAAAAAAAAA646,A87088}
 (3 rows)
 
-SELECT * FROM array_index_op_test WHERE t @ '{AAAAAAAA72908,AAAAAAAAAA646}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t @> '{AAAAAAAA72908,AAAAAAAAAA646}' ORDER BY seqno;
  seqno |  i   |                                 t                                  
 -------+------+--------------------------------------------------------------------
     79 | {45} | {AAAAAAAAAA646,AAAAAAAAAAAAAAAAAAA70415,AAAAAA43678,AAAAAAAA72908}
@@ -302,7 +302,7 @@ SELECT * FROM array_index_op_test WHERE t && '{AAAAAAAA72908,AAAAAAAAAA646}' ORD
     96 | {23,97,43}            | {AAAAAAAAAA646,A87088}
 (6 rows)
 
-SELECT * FROM array_index_op_test WHERE t ~ '{AAAAAAAA72908,AAAAAAAAAAAAAAAAAAA17075,AA88409,AAAAAAAAAAAAAAAAAA36842,AAAAAAA48038,AAAAAAAAAAAAAA10611}' ORDER BY seqno;
+SELECT * FROM array_index_op_test WHERE t <@ '{AAAAAAAA72908,AAAAAAAAAAAAAAAAAAA17075,AA88409,AAAAAAAAAAAAAAAAAA36842,AAAAAAA48038,AAAAAAAAAAAAAA10611}' ORDER BY seqno;
  seqno |         i          |                                                     t                                                     
 -------+--------------------+-----------------------------------------------------------------------------------------------------------
     22 | {11,6,56,62,53,30} | {AAAAAAAA72908}

@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.73 2006/07/21 20:51:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.74 2006/09/10 00:29:34 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -611,6 +611,8 @@ DATA(insert (	2593	0 9  f	2571 ));
 DATA(insert (	2593	0 10 f	2570 ));
 DATA(insert (	2593	0 11 f	2573 ));
 DATA(insert (	2593	0 12 f	2572 ));
+DATA(insert (	2593	0 13 f	2863 ));
+DATA(insert (	2593	0 14 f	2862 ));
 
 /*
  *	gist poly_ops (supports polygons)
@@ -628,6 +630,8 @@ DATA(insert (	2594	0 9  t	2575 ));
 DATA(insert (	2594	0 10 t	2574 ));
 DATA(insert (	2594	0 11 t	2577 ));
 DATA(insert (	2594	0 12 t	2576 ));
+DATA(insert (	2594	0 13 t	2861 ));
+DATA(insert (	2594	0 14 t	2860 ));
 
 /*
  *	gist circle_ops
@@ -645,6 +649,8 @@ DATA(insert (	2595	0 9  t	2589 ));
 DATA(insert (	2595	0 10 t	1515 ));
 DATA(insert (	2595	0 11 t	1514 ));
 DATA(insert (	2595	0 12 t	2590 ));
+DATA(insert (	2595	0 13 t	2865 ));
+DATA(insert (	2595	0 14 t	2864 ));
 
 /*
  * gin _int4_ops

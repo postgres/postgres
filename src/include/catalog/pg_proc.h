@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.422 2006/08/19 01:36:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.423 2006/09/10 00:29:34 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -393,7 +393,7 @@ DESCR("overlaps or is right of");
 DATA(insert OID = 191 (  box_right		   PGNSP PGUID 12 f f t f i 2 16 "603 603" _null_ _null_ _null_ box_right - _null_ ));
 DESCR("is right of");
 DATA(insert OID = 192 (  box_contained	   PGNSP PGUID 12 f f t f i 2 16 "603 603" _null_ _null_ _null_ box_contained - _null_ ));
-DESCR("contained in?");
+DESCR("is contained by?");
 
 /* OIDS 200 - 299 */
 
@@ -537,7 +537,7 @@ DESCR("greater-than-or-equal");
 DATA(insert OID = 263 (  tintervalsame	   PGNSP PGUID 12 f f t f i 2 16 "704 704" _null_ _null_ _null_ tintervalsame - _null_ ));
 DESCR("same as?");
 DATA(insert OID = 264 (  tintervalct	   PGNSP PGUID 12 f f t f i 2 16 "704 704" _null_ _null_ _null_ tintervalct - _null_ ));
-DESCR("less-than");
+DESCR("contains?");
 DATA(insert OID = 265 (  tintervalov	   PGNSP PGUID 12 f f t f i 2 16 "704 704" _null_ _null_ _null_ tintervalov - _null_ ));
 DESCR("overlaps");
 DATA(insert OID = 266 (  tintervalleneq    PGNSP PGUID 12 f f t f i 2 16 "704 703" _null_ _null_ _null_ tintervalleneq - _null_ ));
@@ -696,7 +696,7 @@ DESCR("overlaps or is right of");
 DATA(insert OID = 344 (  poly_right		   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_ poly_right - _null_ ));
 DESCR("is right of");
 DATA(insert OID = 345 (  poly_contained    PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_ poly_contained - _null_ ));
-DESCR("contained in?");
+DESCR("is contained by?");
 DATA(insert OID = 346 (  poly_overlap	   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_ poly_overlap - _null_ ));
 DESCR("overlaps");
 DATA(insert OID = 347 (  poly_in		   PGNSP PGUID 12 f f t f i 1 604 "2275" _null_ _null_ _null_  poly_in - _null_ ));
@@ -1326,7 +1326,7 @@ DESCR("add/update ACL item");
 DATA(insert OID = 1036 (  aclremove		   PGNSP PGUID 12 f f t f i 2 1034 "1034 1033" _null_ _null_ _null_ aclremove - _null_ ));
 DESCR("remove ACL item");
 DATA(insert OID = 1037 (  aclcontains	   PGNSP PGUID 12 f f t f i 2 16 "1034 1033" _null_ _null_ _null_ aclcontains - _null_ ));
-DESCR("does ACL contain item?");
+DESCR("ACL contains item?");
 DATA(insert OID = 1062 (  aclitemeq		   PGNSP PGUID 12 f f t f i 2 16 "1033 1033" _null_ _null_ _null_ aclitem_eq - _null_ ));
 DESCR("equality operator for ACL items");
 DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 f f t f i 4 1033 "26 26 25 16" _null_ _null_ _null_ makeaclitem - _null_ ));
@@ -1934,7 +1934,7 @@ DESCR("overlaps or is right of");
 DATA(insert OID = 1457 (  circle_right		PGNSP PGUID 12 f f t f i 2	16 "718 718" _null_ _null_ _null_  circle_right - _null_ ));
 DESCR("is right of");
 DATA(insert OID = 1458 (  circle_contained	PGNSP PGUID 12 f f t f i 2	16 "718 718" _null_ _null_ _null_  circle_contained - _null_ ));
-DESCR("contained in?");
+DESCR("is contained by?");
 DATA(insert OID = 1459 (  circle_overlap	PGNSP PGUID 12 f f t f i 2	16 "718 718" _null_ _null_ _null_  circle_overlap - _null_ ));
 DESCR("overlaps");
 DATA(insert OID = 1460 (  circle_below		PGNSP PGUID 12 f f t f i 2	16 "718 718" _null_ _null_ _null_  circle_below - _null_ ));
@@ -1974,7 +1974,7 @@ DESCR("distance between point and circle");
 DATA(insert OID = 1477 (  circle_contain_pt PGNSP PGUID 12 f f t f i 2	16 "718 600" _null_ _null_ _null_  circle_contain_pt - _null_ ));
 DESCR("circle contains point?");
 DATA(insert OID = 1478 (  pt_contained_circle	PGNSP PGUID 12 f f t f i 2	16 "600 718" _null_ _null_ _null_  pt_contained_circle - _null_ ));
-DESCR("point inside circle?");
+DESCR("point contained in circle?");
 DATA(insert OID = 1479 (  circle			PGNSP PGUID 12 f f t f i 1 718 "603" _null_ _null_ _null_ box_circle - _null_ ));
 DESCR("convert box to circle");
 DATA(insert OID = 1480 (  box				PGNSP PGUID 12 f f t f i 1 603 "718" _null_ _null_ _null_ circle_box - _null_ ));
@@ -3934,11 +3934,11 @@ DESCR("GIN array support");
 
 /* overlap/contains/contained */
 DATA(insert OID = 2747 (  arrayoverlap		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" _null_ _null_ _null_ arrayoverlap - _null_ ));
-DESCR("anyarray overlap");
+DESCR("overlaps");
 DATA(insert OID = 2748 (  arraycontains		   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" _null_ _null_ _null_ arraycontains - _null_ ));
-DESCR("anyarray contains");
+DESCR("contains");
 DATA(insert OID = 2749 (  arraycontained	   PGNSP PGUID 12 f f t f i 2 16 "2277 2277" _null_ _null_ _null_ arraycontained - _null_ ));
-DESCR("anyarray contained");
+DESCR("is contained by");
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

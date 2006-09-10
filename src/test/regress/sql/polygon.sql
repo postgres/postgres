@@ -68,7 +68,7 @@ SELECT '' AS zero, p.*
 -- contained 
 SELECT '' AS one, p.* 
    FROM POLYGON_TBL p
-   WHERE p.f1 @ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
+   WHERE p.f1 <@ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
 
 -- same 
 SELECT '' AS one, p.*
@@ -78,7 +78,7 @@ SELECT '' AS one, p.*
 -- contains 
 SELECT '' AS one, p.*
    FROM POLYGON_TBL p
-   WHERE p.f1 ~ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
+   WHERE p.f1 @> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)';
 
 --
 -- polygon logic
@@ -106,10 +106,10 @@ SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' &> polygon '(3.0,1.0),(3.0,3.0),(
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' >> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
 
 -- contained in 
-SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' @ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' <@ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
 
 -- contains 
-SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' ~ polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
+SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' @> polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;
 
 -- same 
 SELECT polygon '(2.0,0.0),(2.0,4.0),(0.0,0.0)' ~= polygon '(3.0,1.0),(3.0,3.0),(1.0,0.0)' AS false;

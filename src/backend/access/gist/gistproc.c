@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.7 2006/07/14 14:52:16 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.8 2006/09/10 00:29:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,11 +542,13 @@ gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 													PointerGetDatum(query)));
 			break;
 		case RTContainsStrategyNumber:
+		case RTOldContainsStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contain,
 													  PointerGetDatum(key),
 													PointerGetDatum(query)));
 			break;
 		case RTContainedByStrategyNumber:
+		case RTOldContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contained,
 													  PointerGetDatum(key),
 													PointerGetDatum(query)));
@@ -631,11 +633,13 @@ rtree_internal_consistent(BOX *key, BOX *query, StrategyNumber strategy)
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
+		case RTOldContainsStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contain,
 													  PointerGetDatum(key),
 													PointerGetDatum(query)));
 			break;
 		case RTContainedByStrategyNumber:
+		case RTOldContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap,
 													  PointerGetDatum(key),
 													PointerGetDatum(query)));

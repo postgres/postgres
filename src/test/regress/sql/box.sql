@@ -95,12 +95,12 @@ SELECT '' AS two, b.f1
 -- contained in 
 SELECT '' AS three, b.f1
    FROM BOX_TBL b
-   WHERE b.f1 @ box '(0,0,3,3)';
+   WHERE b.f1 <@ box '(0,0,3,3)';
 
 -- contains 
 SELECT '' AS three, b.f1
    FROM BOX_TBL b
-   WHERE box '(0,0,3,3)' ~ b.f1;
+   WHERE box '(0,0,3,3)' @> b.f1;
 
 -- box equality 
 SELECT '' AS one, b.f1
@@ -114,7 +114,7 @@ SELECT '' AS four, @@(b1.f1) AS p
 -- wholly-contained 
 SELECT '' AS one, b1.*, b2.*
    FROM BOX_TBL b1, BOX_TBL b2 
-   WHERE b1.f1 ~ b2.f1 and not b1.f1 ~= b2.f1;
+   WHERE b1.f1 @> b2.f1 and not b1.f1 ~= b2.f1;
 
 SELECT '' AS four, height(f1), width(f1) FROM BOX_TBL;
 

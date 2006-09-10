@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.59 2006/09/04 19:58:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.60 2006/09/10 00:29:34 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -225,8 +225,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <member><literal>&amp;&lt;|</literal></member>
     <member><literal>|&amp;&gt;</literal></member>
     <member><literal>|&gt;&gt;</literal></member>
-    <member><literal>~</literal></member>
-    <member><literal>@</literal></member>
+    <member><literal>@&gt;</literal></member>
+    <member><literal>&lt;@</literal></member>
     <member><literal>~=</literal></member>
     <member><literal>&amp;&amp;</literal></member>
    </simplelist>

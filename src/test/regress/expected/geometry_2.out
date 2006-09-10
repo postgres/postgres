@@ -342,7 +342,7 @@ RESET geqo;
 -- Polygons
 --
 -- containment
-SELECT '' AS twentyfour, p.f1, poly.f1, poly.f1 ~ p.f1 AS contains
+SELECT '' AS twentyfour, p.f1, poly.f1, poly.f1 @> p.f1 AS contains
    FROM POLYGON_TBL poly, POINT_TBL p;
  twentyfour |     f1     |         f1          | contains 
 ------------+------------+---------------------+----------
@@ -372,7 +372,7 @@ SELECT '' AS twentyfour, p.f1, poly.f1, poly.f1 ~ p.f1 AS contains
             | (10,10)    | ((0,1),(0,1))       | f
 (24 rows)
 
-SELECT '' AS twentyfour, p.f1, poly.f1, p.f1 @ poly.f1 AS contained
+SELECT '' AS twentyfour, p.f1, poly.f1, p.f1 <@ poly.f1 AS contained
    FROM POLYGON_TBL poly, POINT_TBL p;
  twentyfour |     f1     |         f1          | contained 
 ------------+------------+---------------------+-----------

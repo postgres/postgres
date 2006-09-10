@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.334 2006/09/05 21:08:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.335 2006/09/10 00:29:33 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -6498,14 +6498,14 @@ SELECT pg_sleep(1.5);
         <entry><literal>lseg '((-1,0),(1,0))' ?|| lseg '((-1,2),(1,2))'</literal></entry>
        </row>
        <row>
-        <entry> <literal>~</literal> </entry>
+        <entry> <literal>@&gt;</literal> </entry>
         <entry>Contains?</entry>
-        <entry><literal>circle '((0,0),2)' ~ point '(1,1)'</literal></entry>
+        <entry><literal>circle '((0,0),2)' @&gt; point '(1,1)'</literal></entry>
        </row>
        <row>
-        <entry> <literal>@</literal> </entry>
+        <entry> <literal>&lt;@</literal> </entry>
         <entry>Contained in or on?</entry>
-        <entry><literal>point '(1,1)' @ circle '((0,0),2)'</literal></entry>
+        <entry><literal>point '(1,1)' &lt;@ circle '((0,0),2)'</literal></entry>
        </row>
        <row>
         <entry> <literal>~=</literal> </entry>
@@ -6515,6 +6515,15 @@ SELECT pg_sleep(1.5);
       </tbody>
      </tgroup>
    </table>
+
+   <note>
+    <para>
+     Before <productname>PostgreSQL</productname> 8.2, the containment
+     operators <literal>@&gt;</> and <literal>&lt;@</> were respectively
+     called <literal>~</> and <literal>@</>.  These names are still
+     available, but are deprecated and will eventually be retired.
+    </para>
+   </note>
 
    <indexterm>
     <primary>area</primary>
@@ -7051,10 +7060,7 @@ SELECT pg_sleep(1.5);
    available for use with the <type>macaddr</type> type.  The function
    <literal><function>trunc</function>(<type>macaddr</type>)</literal> returns a MAC
    address with the last 3 bytes set to zero.  This can be used to
-   associate the remaining prefix with a manufacturer.  The directory
-   <filename>contrib/mac</filename> in the source distribution
-   contains some utilities to create and maintain such an association
-   table.
+   associate the remaining prefix with a manufacturer.
   </para>
 
     <table id="macaddr-functions-table">
@@ -7610,6 +7616,20 @@ SELECT NULLIF(value, '(none)') ...
         <entry> <literal>&gt;=</literal> </entry>
         <entry>greater than or equal</entry>
         <entry><literal>ARRAY[1,4,3] &gt;= ARRAY[1,4,3]</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>@&gt;</literal> </entry>
+        <entry>contains</entry>
+        <entry><literal>ARRAY[1,4,3] @&gt; ARRAY[3,1]</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&lt;@</literal> </entry>
+        <entry>is contained by</entry>
+        <entry><literal>ARRAY[2,7] &lt;@ ARRAY[1,7,4,2,6]</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 

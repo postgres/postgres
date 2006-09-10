@@ -31,9 +31,9 @@ Gin comes with built-in support for one-dimensional arrays (eg. integer[],
 text[]), but no support for NULL elements.  The following operations are
 available:
 
-  * contains: value_array @ query_array
-  * overlap: value_array && query_array
-  * contained: value_array ~ query_array
+  * contains: value_array @> query_array
+  * overlaps: value_array && query_array
+  * is contained by: value_array <@ query_array
 
 Synopsis
 --------

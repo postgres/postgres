@@ -20,26 +20,27 @@
 -- allowed.
 
 -- This should match IsBinaryCoercible() in parse_coerce.c.
-create function binary_coercible(oid, oid) returns bool as
-'SELECT ($1 = $2) OR
- EXISTS(select 1 from pg_cast where
+create function binary_coercible(oid, oid) returns bool as $$
+SELECT ($1 = $2) OR
+ EXISTS(select 1 from pg_catalog.pg_cast where
         castsource = $1 and casttarget = $2 and
-        castfunc = 0 and castcontext = ''i'') OR
- ( EXISTS(select 1 from pg_type source where
-		source.oid = $1 and source.typelem != 0 )
-	AND
-   EXISTS(select 1 from pg_type target where
-		target.oid = $2 and target.typname = ''anyarray'' ) )'
-language sql;
+        castfunc = 0 and castcontext = 'i') OR
+ ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
+  EXISTS(select 1 from pg_catalog.pg_type where
+         oid = $1 and typelem != 0 and typlen = -1))
+$$ language sql strict stable;
 
 -- This one ignores castcontext, so it considers only physical equivalence
 -- and not whether the coercion can be invoked implicitly.
-create function physically_coercible(oid, oid) returns bool as
-'SELECT ($1 = $2) OR
- EXISTS(select 1 from pg_cast where
+create function physically_coercible(oid, oid) returns bool as $$
+SELECT ($1 = $2) OR
+ EXISTS(select 1 from pg_catalog.pg_cast where
         castsource = $1 and casttarget = $2 and
-        castfunc = 0)'
-language sql;
+        castfunc = 0) OR
+ ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
+  EXISTS(select 1 from pg_catalog.pg_type where
+         oid = $1 and typelem != 0 and typlen = -1))
+$$ language sql strict stable;
 
 -- **************** pg_proc ****************
 
@@ -646,8 +647,8 @@ WHERE p1.amopclaid = p3.oid AND p3.opcamid = p2.oid AND
 -- Detect missing pg_amop entries: should have as many strategy operators
 -- as AM expects for each opclass for the AM.  When nondefault subtypes are
 -- present, enforce condition separately for each subtype.
--- We have to exclude GiST and GIN, unfortunately, since its havn't got any fixed
--- requirements about strategy operators.
+-- We have to exclude GiST and GIN, unfortunately, since they haven't got
+-- any fixed requirements about strategy operators.
 
 SELECT p1.oid, p1.amname, p2.oid, p2.opcname, p3.amopsubtype
 FROM pg_am AS p1, pg_opclass AS p2, pg_amop AS p3
