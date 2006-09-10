@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.47 2006/08/27 23:47:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.48 2006/09/10 20:56:42 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -1614,10 +1614,7 @@ void * SPI_saveplan(void * <parameter>plan</parameter>)
    by <function>SPI_finish</function> and by the transaction manager
    and returns a pointer to the saved plan.  This gives you the
    ability to reuse prepared plans in the subsequent invocations of
-   your procedure in the current session.  You may save the pointer
-   returned in a local variable.  Always check if this pointer is
-   <symbol>NULL</symbol> or not either when preparing a plan or using
-   an already prepared plan in <function>SPI_execute_plan</function>.
+   your procedure in the current session.
   </para>
  </refsect1>
 
