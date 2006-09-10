@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.63 2006/07/31 20:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.64 2006/09/10 23:33:22 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -162,9 +162,7 @@ heap_tuple_untoast_attr_slice(varattrib *attr, int32 sliceoffset, int32 slicelen
 		if (VARATT_IS_EXTERNAL(attr))
 			tmp = toast_fetch_datum(attr);
 		else
-		{
 			tmp = attr;			/* compressed in main tuple */
-		}
 
 		preslice = (varattrib *) palloc(attr->va_content.va_external.va_rawsize
 										+ VARHDRSZ);
