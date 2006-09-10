@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.111 2006/09/03 01:22:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.112 2006/09/10 22:54:47 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2006, PostgreSQL Global Development Group
@@ -2367,6 +2367,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			}
 			break;
 		case DCH_D:
+			INVALID_FOR_INTERVAL;
 			if (is_to_char)
 			{
 				sprintf(inout, "%d", tm->tm_wday + 1);
