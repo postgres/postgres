@@ -16,6 +16,9 @@
 #include <libxml/xmlerror.h>
 #include <libxml/parserInternals.h>
 
+
+PG_MODULE_MAGIC;
+
 /* declarations */
 
 static void *pgxml_palloc(size_t size);

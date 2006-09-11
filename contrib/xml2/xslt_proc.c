@@ -21,8 +21,6 @@
 #include <libxslt/xsltutils.h>
 
 
-PG_MODULE_MAGIC;
-
 /* declarations to come from xpath.c */
 
 extern void elog_error(int level, char *explain, int force);
