@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.228 2006/09/10 22:07:02 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.229 2006/09/11 13:35:08 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -343,12 +343,14 @@ libpq := -L$(libpq_builddir) -lpq
 # If doing static linking, shared library dependency info isn't available,
 # so add in the libraries that libpq depends on.
 ifeq ($(enable_shared), no)
-libpq += $(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) $(PTHREAD_LIBS)
+libpq += $(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) \
+	$(LDAP_LIBS_FE) $(PTHREAD_LIBS)
 else
 # On AIX even shared libraries do not remember their required libs,
 # so again add in what libpq depends on.
 ifeq ($(PORTNAME), aix)
-libpq += $(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) $(PTHREAD_LIBS)
+libpq += $(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) \
+	$(LDAP_LIBS_FE) $(PTHREAD_LIBS)
 endif
 endif
 
