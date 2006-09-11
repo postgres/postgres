@@ -57,3 +57,17 @@ DROP FUNCTION dblink_disconnect ();
 DROP FUNCTION dblink_connect (text, text);
 
 DROP FUNCTION dblink_connect (text);
+
+DROP FUNCTION dblink_cancel_query(text);
+
+DROP FUNCTION dblink_error_message(text);
+
+DROP FUNCTION dblink_get_connections();
+
+DROP FUNCTION dblink_get_result(text);
+
+DROP FUNCTION dblink_get_result(text, boolean);
+
+DROP FUNCTION dblink_is_busy(text);
+
+DROP FUNCTION dblink_send_query(text, text);

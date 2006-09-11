@@ -164,6 +164,8 @@ DROP OPERATOR ^@> (ltree, ltree);
 
 DROP OPERATOR @> (ltree, ltree);
 
+DROP FUNCTION ltreeparentsel(internal, oid, internal, integer);
+
 DROP FUNCTION ltree_textadd(text,ltree);
 
 DROP FUNCTION ltree_addtext(ltree,text);
