@@ -60,7 +60,7 @@ main(void)
 }
 
 static void
-check_return(ret)
+check_return(int ret)
 {
 	switch(ret)
 	{
