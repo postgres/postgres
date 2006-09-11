@@ -1,8 +1,8 @@
-# $PostgreSQL: pgsql/contrib/lo/Makefile,v 1.14 2005/09/27 17:13:04 tgl Exp $
+# $PostgreSQL: pgsql/contrib/lo/Makefile,v 1.15 2006/09/11 15:14:46 tgl Exp $
 
 MODULES = lo
 DATA_built = lo.sql
-DATA = lo_drop.sql lo_test.sql
+DATA = uninstall_lo.sql
 DOCS = README.lo
 
 ifdef USE_PGXS
