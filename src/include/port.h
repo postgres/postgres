@@ -6,21 +6,20 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.97 2006/08/30 18:06:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.98 2006/09/11 20:10:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <pwd.h>
-#include <netdb.h>
-
 #include <ctype.h>
+#include <netdb.h>
+#include <pwd.h>
 
 /* non-blocking */
 extern bool pg_set_noblock(int sock);
 extern bool pg_set_block(int sock);
 
-/* Portable path handling for Unix/Win32 */
+/* Portable path handling for Unix/Win32 (in path.c) */
 
 extern char *first_dir_separator(const char *filename);
 extern char *last_dir_separator(const char *filename);
@@ -42,15 +41,13 @@ extern void get_pkglib_path(const char *my_exec_path, char *ret_path);
 extern void get_locale_path(const char *my_exec_path, char *ret_path);
 extern void get_doc_path(const char *my_exec_path, char *ret_path);
 extern void get_man_path(const char *my_exec_path, char *ret_path);
-extern void set_pglocale_pgservice(const char *argv0, const char *app);
 extern bool get_home_path(char *ret_path);
 extern void get_parent_directory(char *path);
 
 /*
  *	is_absolute_path
  *
- *	By making this a macro we prevent the need for libpq to include
- *	path.c which uses exec.c.
+ *	By making this a macro we avoid needing to include path.c in libpq.
  */
 #ifndef WIN32
 #define is_absolute_path(filename) \
@@ -67,8 +64,10 @@ extern void get_parent_directory(char *path);
 )
 #endif
 
+/* Portable locale initialization (in exec.c) */
+extern void set_pglocale_pgservice(const char *argv0, const char *app);
 
-/* Portable way to find binaries */
+/* Portable way to find binaries (in exec.c) */
 extern int	find_my_exec(const char *argv0, char *retpath);
 extern int find_other_exec(const char *argv0, const char *target,
 				const char *versionstr, char *retpath);

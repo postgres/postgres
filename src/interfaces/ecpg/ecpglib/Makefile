@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.42 2006/09/10 22:07:02 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.43 2006/09/11 20:10:30 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 LIBS := $(filter-out -lpgport, $(LIBS))
 
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
-	connect.o misc.o path.o exec.o \
+	connect.o misc.o path.o \
 	$(filter snprintf.o, $(LIBOBJS))
 
 # thread.c is needed only for non-WIN32 implementation of path.c
@@ -51,7 +51,7 @@ include $(top_srcdir)/src/Makefile.shlib
 # necessarily use the same object files as the backend uses. Instead,
 # symlink the source files in here and build our own object file.
 
-path.c exec.c snprintf.c thread.c: % : $(top_srcdir)/src/port/%
+path.c snprintf.c thread.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 path.o: path.c $(top_builddir)/src/port/pg_config_paths.h
@@ -67,7 +67,7 @@ installdirs:
 uninstall: uninstall-lib
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) path.c exec.c snprintf.c thread.c
+	rm -f $(OBJS) path.c snprintf.c thread.c
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
