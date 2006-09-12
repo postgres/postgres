@@ -26,19 +26,19 @@ exec sql end declare section;
 	exec sql connect to connectdb@localhost as main;
 	exec sql disconnect main;
 
-	exec sql connect to @localhost as main;
+	exec sql connect to @localhost as main user connectdb;
 	exec sql disconnect main;
 
 	exec sql connect to connectdb@localhost:@TEMP_PORT@ as main;
 	exec sql disconnect main;
 
-	exec sql connect to @localhost:@TEMP_PORT@ as main;
+	exec sql connect to @localhost:@TEMP_PORT@ as main user connectdb;
 	exec sql disconnect main;
 
 	exec sql connect to connectdb:@TEMP_PORT@ as main;
 	exec sql disconnect main;
 
-	exec sql connect to :@TEMP_PORT@ as main;
+	exec sql connect to :@TEMP_PORT@ as main user connectdb;
 	exec sql disconnect main;
 
 	exec sql connect to tcp:postgresql://localhost:@TEMP_PORT@/connectdb user connectuser identified by connectpw;
