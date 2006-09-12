@@ -1,7 +1,7 @@
 MODULE_big = sslinfo
 OBJS = sslinfo.o
 DATA_built = sslinfo.sql
-DOCS = README.pgsslinfo
+DOCS = README.sslinfo
 
 ifdef USE_PGXS
 PGXS := $(shell pg_config --pgxs)
