@@ -16,10 +16,6 @@
  * perform a pass of index cleanup and page compaction, then resume the heap
  * scan with an empty TID array.
  *
- * As a special exception if we're processing a table with no indexes we can
- * vacuum each page as we go so we don't need to allocate more space than
- * enough to hold as many heap tuples fit on one page.
- *
  * We can limit the storage for page free space to MaxFSMPages entries,
  * since that's the most the free space map will be willing to remember
  * anyway.	If the relation has fewer than that many pages with free space,
@@ -29,13 +25,18 @@
  * have more than MaxFSMPages entries in all.  The surviving page entries
  * are passed to the free space map at conclusion of the scan.
  *
+ * If we're processing a table with no indexes, we can just vacuum each page
+ * as we go; there's no need to save up multiple tuples to minimize the number
+ * of index scans performed.  So we don't use maintenance_work_mem memory for
+ * the TID array, just enough to hold as many heap tuples as fit on one page.
+ *
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.77 2006/09/04 21:40:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.78 2006/09/13 17:47:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +69,8 @@
 
 typedef struct LVRelStats
 {
+	/* hasindex = true means two-pass strategy; false means one-pass */
+	bool		hasindex;
 	/* Overall statistics about rel */
 	BlockNumber rel_pages;
 	double		rel_tuples;
@@ -110,7 +113,7 @@ static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats,
 							   TransactionId OldestXmin);
 static BlockNumber count_nondeletable_pages(Relation onerel,
 						 LVRelStats *vacrelstats, TransactionId OldestXmin);
-static void lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks, unsigned nindexes);
+static void lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks);
 static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
 					   ItemPointer itemptr);
 static void lazy_record_free_space(LVRelStats *vacrelstats,
@@ -137,7 +140,6 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
 	int			nindexes;
-	bool		hasindex;
 	BlockNumber possibly_freeable;
 	TransactionId OldestXmin,
 				  FreezeLimit;
@@ -169,7 +171,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
-	hasindex = (nindexes > 0);
+	vacrelstats->hasindex = (nindexes > 0);
 
 	/* Do the vacuuming */
 	lazy_scan_heap(onerel, vacrelstats, Irel, nindexes, FreezeLimit, OldestXmin);
@@ -195,7 +197,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vac_update_relstats(RelationGetRelid(onerel),
 						vacrelstats->rel_pages,
 						vacrelstats->rel_tuples,
-						hasindex,
+						vacrelstats->hasindex,
 						vacrelstats->minxid, OldestXmin);
 
 	/* report results to the stats collector, too */
@@ -210,11 +212,13 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
  *		This routine sets commit status bits, builds lists of dead tuples
  *		and pages with free space, and calculates statistics on the number
  *		of live tuples in the heap.  When done, or when we run low on space
- *		for dead-tuple TIDs, or after every page if the table has no indexes 
- *		invoke vacuuming of indexes and heap.
+ *		for dead-tuple TIDs, invoke vacuuming of indexes and heap.
  *
  *		It also updates the minimum Xid found anywhere on the table in
  *		vacrelstats->minxid, for later storing it in pg_class.relminxid.
+ *
+ *		If there are no indexes then we just vacuum each dirty page as we
+ *		process it, since there's no point in gathering many tuples.
  */
 static void
 lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
@@ -225,7 +229,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				blkno;
 	HeapTupleData tuple;
 	char	   *relname;
-	BlockNumber empty_pages;
+	BlockNumber empty_pages,
+				vacuumed_pages;
 	double		num_tuples,
 				tups_vacuumed,
 				nkeep,
@@ -242,7 +247,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					get_namespace_name(RelationGetNamespace(onerel)),
 					relname)));
 
-	empty_pages = 0;
+	empty_pages = vacuumed_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
 
 	indstats = (IndexBulkDeleteResult **)
@@ -252,7 +257,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	vacrelstats->rel_pages = nblocks;
 	vacrelstats->nonempty_pages = 0;
 
-	lazy_space_alloc(vacrelstats, nblocks, nindexes);
+	lazy_space_alloc(vacrelstats, nblocks);
 
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
@@ -287,14 +292,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 		buf = ReadBuffer(onerel, blkno);
 
-		/* In this phase we only need shared access to the buffer unless we're
-		 * going to do the vacuuming now which we do if there are no indexes 
-		 */
-
-		if (nindexes)
-			LockBuffer(buf, BUFFER_LOCK_SHARE);
-		else
-			LockBufferForCleanup(buf);
+		/* In this phase we only need shared access to the buffer */
+		LockBuffer(buf, BUFFER_LOCK_SHARE);
 
 		page = BufferGetPage(buf);
 
@@ -452,21 +451,33 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		}						/* scan along page */
 
 		/*
+		 * If there are no indexes then we can vacuum the page right now
+		 * instead of doing a second scan.
+		 */
+		if (nindexes == 0 &&
+			vacrelstats->num_dead_tuples > 0)
+		{
+			/* Trade in buffer share lock for super-exclusive lock */
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+			LockBufferForCleanup(buf);
+			/* Remove tuples from heap */
+			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats);
+			/* Forget the now-vacuumed tuples, and press on */
+			vacrelstats->num_dead_tuples = 0;
+			vacuumed_pages++;
+		}
+
+		/*
 		 * If we remembered any tuples for deletion, then the page will be
 		 * visited again by lazy_vacuum_heap, which will compute and record
 		 * its post-compaction free space.	If not, then we're done with this
-		 * page, so remember its free space as-is.
+		 * page, so remember its free space as-is.  (This path will always
+		 * be taken if there are no indexes.)
 		 */
 		if (vacrelstats->num_dead_tuples == prev_dead_count)
 		{
 			lazy_record_free_space(vacrelstats, blkno,
 								   PageGetFreeSpace(page));
-		} else if (!nindexes) {
-			/* If there are no indexes we can vacuum the page right now instead
-			 * of doing a second scan */
-			lazy_vacuum_page(onerel, blkno, buf, 0, vacrelstats);
-			lazy_record_free_space(vacrelstats, blkno, PageGetFreeSpace(BufferGetPage(buf)));
-			vacrelstats->num_dead_tuples = 0;
 		}
 
 		/* Remember the location of the last page with nonremovable tuples */
@@ -498,6 +509,13 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	/* Do post-vacuum cleanup and statistics update for each index */
 	for (i = 0; i < nindexes; i++)
 		lazy_cleanup_index(Irel[i], indstats[i], vacrelstats);
+
+	/* If no indexes, make log report that lazy_vacuum_heap would've made */
+	if (vacuumed_pages)
+		ereport(elevel,
+				(errmsg("\"%s\": removed %.0f row versions in %u pages",
+						RelationGetRelationName(onerel),
+						tups_vacuumed, vacuumed_pages)));
 
 	ereport(elevel,
 			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages",
@@ -908,18 +926,21 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats,
  * See the comments at the head of this file for rationale.
  */
 static void
-lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks, unsigned nindexes)
+lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 {
 	long		maxtuples;
 	int			maxpages;
 
-	if (nindexes) {
+	if (vacrelstats->hasindex)
+	{
 		maxtuples = (maintenance_work_mem * 1024L) / sizeof(ItemPointerData);
 		maxtuples = Min(maxtuples, INT_MAX);
 		maxtuples = Min(maxtuples, MaxAllocSize / sizeof(ItemPointerData));
 		/* stay sane if small maintenance_work_mem */
 		maxtuples = Max(maxtuples, MaxHeapTuplesPerPage);
-	} else {
+	}
+	else
+	{
 		maxtuples = MaxHeapTuplesPerPage;
 	}
 
