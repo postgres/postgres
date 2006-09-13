@@ -73,7 +73,7 @@ pgbench $B$K$O$$$m$$$m$J%*%W%7%g%s$,$"$j$^$9!%(B
 		$BBg$-$5$,(B 10$BK|(B x [$B%9%1!<%j%s%0%U%!%/%?!<(B]$B$K$J$j$^$9!%(B
 		$B%G%U%)%k%H$N%9%1!<%j%s%0%U%!%/%?!<$O(B 1 $B$G$9!%(B
 		-f $B%*%W%7%g%s$G;XDj$7$?%U%!%$%k$+$i%9%1!<%j%s%0%U%!%/(B
-		$B%?!<$r;2>H$9$k$K$O(B tps $B$H$$$&JQ?tL>$r;HMQ$7$^$9!%(B
+		$B%?!<$r;2>H$9$k$K$O(B scale $B$H$$$&JQ?tL>$r;HMQ$7$^$9!%(B
 
 -D varname=value
 
@@ -223,7 +223,7 @@ pgbench $B$G$O!$0J2<$N%7!<%1%s%9$rA4It40N;$7$F(B1$B%H%i%s%6%/%7%g%s$H?t$($F(
 	$BJQ?t$K1i;;$N7k2L$r@_Dj$9$k$K$O!$(B\set $B%a%?%3%^%s%I$r;HMQ$7$F0J(B
 	$B2<$N$h$&$K5-=R$7$^$9!%(B
 
-	\set ntellers 10 * :tps
+	\set ntellers 10 * :tp
 
 	$B$3$l$O!$JQ?t(B ntellers $B$K%9%1!<%j%s%0%U%!%/%?!<(B (-s $B%*%W%7%g%s(B
 	$B$G;XDj$7$?(B) $B$r(B 10 $BG\$7$?7k2L$r@_Dj$7$^$9!%(B
@@ -253,9 +253,9 @@ SELECT abalance FROM accounts WHERE aid = :aid
 $B%6%/%7%g%s$NFbMF$r%U%!%$%k$K5-=R$7!$(B-f $B%*%W%7%g%s$K$h$C$F$=$N%U%!%$%k(B
 $B$r;XDj$7$F(B pgbench $B$r<B9T$7$^$9!%(B
 
-\set nbranches :tps
-\set ntellers 10 * :tps
-\set naccounts 100000 * :tps
+\set nbranches :scale
+\set ntellers 10 * :scale
+\set naccounts 100000 * :scale
 \setrandom aid 1 :naccounts
 \setrandom bid 1 :nbranches
 \setrandom tid 1 :ntellers
@@ -284,6 +284,10 @@ pgbench $B$O@P0f(B $BC#IW$K$h$C$F=q$+$l$^$7$?!%%i%$%;%s%9>r7o$O(B pgbench.c 
 $B$G$-$^$9!%(B
 
 $B"#2~DjMzNr(B
+
+2006/09/13
+	* $BJQ?t(Btps$B$OJ6$i$o$7$$$N$G(Bscale$B$KJQ99!%%G%U%)%k%H%7%J%j%*$N;~$K!$(B
+	  $B%G%U%)%k%H$N%9%1!<%j%s%0%U%!%/%?$r(Bbranches$B$+$i<h$C$F$3$J$$%P%0$r=$@5!%(B
 
 2006/07/26
 	* $B:4F#$5$s$N%Q%C%A$rE,MQ!%0J2<$N5!G=DI2C!%(BPostgreSQL 8.2$B$K<h$j(B

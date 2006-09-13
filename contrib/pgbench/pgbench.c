@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.53 2006/08/15 13:05:30 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.54 2006/09/13 00:39:19 ishii Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -58,10 +58,10 @@ int			nclients = 1;		/* default number of simulated clients */
 int			nxacts = 10;		/* default number of transactions per clients */
 
 /*
- * scaling factor. for example, tps = 10 will make 1000000 tuples of
+ * scaling factor. for example, scale = 10 will make 1000000 tuples of
  * accounts table.
  */
-int			tps = 1;
+int			scale = 1;
 
 /*
  * end of configurable parameters
@@ -134,9 +134,9 @@ int			num_files;			/* its number */
 
 /* default scenario */
 static char *tpc_b = {
-	"\\set nbranches :tps\n"
-	"\\set ntellers 10 * :tps\n"
-    "\\set naccounts 100000 * :tps\n"
+	"\\set nbranches :scale\n"
+	"\\set ntellers 10 * :scale\n"
+    "\\set naccounts 100000 * :scale\n"
 	"\\setrandom aid 1 :naccounts\n"
 	"\\setrandom bid 1 :nbranches\n"
 	"\\setrandom tid 1 :ntellers\n"
@@ -152,9 +152,9 @@ static char *tpc_b = {
 
 /* -N case */
 static char *simple_update = {
-	"\\set nbranches :tps\n"
-	"\\set ntellers 10 * :tps\n"
-    "\\set naccounts 100000 * :tps\n"
+	"\\set nbranches :scale\n"
+	"\\set ntellers 10 * :scale\n"
+    "\\set naccounts 100000 * :scale\n"
 	"\\setrandom aid 1 :naccounts\n"
 	"\\setrandom bid 1 :nbranches\n"
 	"\\setrandom tid 1 :ntellers\n"
@@ -168,7 +168,7 @@ static char *simple_update = {
 
 /* -S case */
 static char *select_only = {
-    "\\set naccounts 100000 * :tps\n"
+    "\\set naccounts 100000 * :scale\n"
 	"\\setrandom aid 1 :naccounts\n"
 	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
 };
@@ -338,10 +338,13 @@ putVariable(CState * st, char *name, char *value)
 	}
 	else
 	{
-		if ((value = strdup(value)) == NULL)
+		char *val;
+
+		if ((val = strdup(value)) == NULL)
 			return false;
+
 		free(var->value);
-		var->value = value;
+		var->value = val;
 	}
 
 	return true;
@@ -755,7 +758,7 @@ init(void)
 	}
 	PQclear(res);
 
-	for (i = 0; i < nbranches * tps; i++)
+	for (i = 0; i < nbranches * scale; i++)
 	{
 		snprintf(sql, 256, "insert into branches(bid,bbalance) values(%d,0)", i + 1);
 		res = PQexec(con, sql);
@@ -767,7 +770,7 @@ init(void)
 		PQclear(res);
 	}
 
-	for (i = 0; i < ntellers * tps; i++)
+	for (i = 0; i < ntellers * scale; i++)
 	{
 		snprintf(sql, 256, "insert into tellers(tid,bid,tbalance) values (%d,%d,0)"
 				 ,i + 1, i / ntellers + 1);
@@ -792,7 +795,7 @@ init(void)
 	 * occupy accounts table with some data
 	 */
 	fprintf(stderr, "creating tables...\n");
-	for (i = 0; i < naccounts * tps; i++)
+	for (i = 0; i < naccounts * scale; i++)
 	{
 		int			j = i + 1;
 
@@ -1133,7 +1136,7 @@ printResults(
 		s = "Custom query";
 
 	printf("transaction type: %s\n", s);
-	printf("scaling factor: %d\n", tps);
+	printf("scaling factor: %d\n", scale);
 	printf("number of clients: %d\n", nclients);
 	printf("number of transactions per client: %d\n", nxacts);
 	printf("number of transactions actually processed: %d/%d\n", normal_xacts, nxacts * nclients);
@@ -1174,6 +1177,8 @@ main(int argc, char **argv)
 	PGconn	   *con;
 	PGresult   *res;
 	char	   *env;
+
+	char		val[64];
 
 	if ((env = getenv("PGHOST")) != NULL && *env != '\0')
 		pghost = env;
@@ -1248,10 +1253,10 @@ main(int argc, char **argv)
 				is_connect = 1;
 				break;
 			case 's':
-				tps = atoi(optarg);
-				if (tps <= 0)
+				scale = atoi(optarg);
+				if (scale <= 0)
 				{
-					fprintf(stderr, "invalid scaling factor: %d\n", tps);
+					fprintf(stderr, "invalid scaling factor: %d\n", scale);
 					exit(1);
 				}
 				break;
@@ -1323,12 +1328,10 @@ main(int argc, char **argv)
 
 	remains = nclients;
 
-	if (getVariable(&state[0], "tps") == NULL)
+	if (getVariable(&state[0], "scale") == NULL)
 	{
-		char		val[64];
-
-		snprintf(val, sizeof(val), "%d", tps);
-		if (putVariable(&state[0], "tps", val) == false)
+		snprintf(val, sizeof(val), "%d", scale);
+		if (putVariable(&state[0], "scale", val) == false)
 		{
 			fprintf(stderr, "Couldn't allocate memory for variable\n");
 			exit(1);
@@ -1405,13 +1408,20 @@ main(int argc, char **argv)
 			fprintf(stderr, "%s", PQerrorMessage(con));
 			exit(1);
 		}
-		tps = atoi(PQgetvalue(res, 0, 0));
-		if (tps < 0)
+		scale = atoi(PQgetvalue(res, 0, 0));
+		if (scale < 0)
 		{
-			fprintf(stderr, "count(*) from branches invalid (%d)\n", tps);
+			fprintf(stderr, "count(*) from branches invalid (%d)\n", scale);
 			exit(1);
 		}
 		PQclear(res);
+
+		snprintf(val, sizeof(val), "%d", scale);
+		if (putVariable(&state[0], "scale", val) == false)
+		{
+			fprintf(stderr, "Couldn't allocate memory for variable\n");
+			exit(1);
+		}
 	}
 
 	if (!is_no_vacuum)

@@ -184,7 +184,7 @@ o -f option
 
   example:
 
-  \set ntellers 10 * :tps
+  \set ntellers 10 * :scale
 
   \setrandom name min max
 
@@ -206,9 +206,9 @@ o -f option
   Example, TPC-B like benchmark can be defined as follows(scaling
   factor = 1):
 
-\set nbranches :tps
-\set ntellers 10 * :tps
-\set naccounts 100000 * :tps
+\set nbranches :scale
+\set ntellers 10 * :scale
+\set naccounts 100000 * :scale
 \setrandom aid 1 :naccounts
 \setrandom bid 1 :nbranches
 \setrandom tid 1 :ntellers
@@ -234,6 +234,12 @@ o License?
 Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
+
+2006/09/14
+	* change "tps" to "scale" to avoid confusion
+
+	* fix bug with handling default scaling factor in the default
+          scenarios
 
 2006/07/26
 	* New features contributed by Tomoaki Sato.
