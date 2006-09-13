@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.60 2006/09/10 00:29:34 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.61 2006/09/13 23:42:26 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -93,8 +93,9 @@ CREATE INDEX test1_id_index ON test1 (id);
   <para>
    Creating an index on a large table can take a long time.  By default,
    <productname>PostgreSQL</productname> allows reads (selects) to occur
-   on the table in parallel with index creation, but writes (inserts,
+   on the table in parallel with creation of an index, but writes (inserts,
    updates, deletes) are blocked until the index build is finished.
+   In production environments this is often unacceptable.
    It is possible to allow writes to occur in parallel with index
    creation, but there are several caveats to be aware of &mdash;
    for more information see <xref linkend="SQL-CREATEINDEX-CONCURRENTLY"

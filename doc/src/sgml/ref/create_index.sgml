@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.56 2006/08/25 04:06:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.57 2006/09/13 23:42:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -264,22 +264,19 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
    </indexterm>
 
    <para>
-    Creating an index for a large table can be a long operation. In large data
-    warehousing applications it can easily take hours or even days to build
-    indexes. It's important to understand the impact creating indexes has on a
-    system.
-   </para>
-
-   <para>
+    Creating an index can interfere with regular operation of a database.
     Normally <productname>PostgreSQL</> locks the table to be indexed against
     writes and performs the entire index build with a single scan of the
     table. Other transactions can still read the table, but if they try to
     insert, update, or delete rows in the table they will block until the
-    index build is finished.
+    index build is finished. This could have a severe effect if the system is
+    a live production database. Large tables can take many hours to be
+    indexed, and even for smaller tables, an index build can lock out writers
+    for periods that are unacceptably long for a production system.
    </para>
 
    <para>
-    <productname>PostgreSQL</> also supports building indexes without locking
+    <productname>PostgreSQL</> supports building indexes without locking
     out writes.  This method is invoked by specifying the
     <literal>CONCURRENTLY</> option of <command>CREATE INDEX</>.
     When this option is used,
