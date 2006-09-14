@@ -137,7 +137,7 @@ main(void)
 
 
 	/* wrong port */
-	{ ECPGconnect(__LINE__, 0, "tcp:postgresql://localhost:0/connectdb" , "connectuser" , "connectpw" , NULL, 0); }
+	{ ECPGconnect(__LINE__, 0, "tcp:postgresql://localhost:20/connectdb" , "connectuser" , "connectpw" , NULL, 0); }
 #line 66 "test1.pgc"
 
 	/* no disconnect necessary */
