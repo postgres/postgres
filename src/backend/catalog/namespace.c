@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.86 2006/07/14 14:52:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.87 2006/09/14 22:05:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,6 +143,8 @@ Datum		pg_function_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_operator_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_opclass_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_conversion_is_visible(PG_FUNCTION_ARGS);
+Datum		pg_my_temp_schema(PG_FUNCTION_ARGS);
+Datum		pg_is_other_temp_schema(PG_FUNCTION_ARGS);
 
 
 /*
@@ -2034,4 +2036,18 @@ pg_conversion_is_visible(PG_FUNCTION_ARGS)
 	Oid			oid = PG_GETARG_OID(0);
 
 	PG_RETURN_BOOL(ConversionIsVisible(oid));
+}
+
+Datum
+pg_my_temp_schema(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_OID(myTempNamespace);
+}
+
+Datum
+pg_is_other_temp_schema(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(isOtherTempNamespace(oid));
 }

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.336 2006/09/10 19:03:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.337 2006/09/14 22:05:05 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -9233,6 +9233,18 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
       </row>
 
       <row>
+       <entry><literal><function>pg_my_temp_schema</function>()</literal></entry>
+       <entry><type>oid</type></entry>
+       <entry>OID of session's temporary schema, or 0 if none</entry>
+      </row>
+
+      <row>
+       <entry><literal><function>pg_is_other_temp_schema</function>(<type>oid</type>)</literal></entry>
+       <entry><type>boolean</type></entry>
+       <entry>is schema another session's temporary schema?</entry>
+      </row>
+
+      <row>
        <entry><literal><function>pg_postmaster_start_time</function>()</literal></entry>
        <entry><type>timestamp with time zone</type></entry>
        <entry>server start time</entry>
@@ -9341,6 +9353,24 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
      <function>inet_server_port</function> returns the port number.
      All these functions return NULL if the current connection is via a
      Unix-domain socket.
+   </para>
+
+   <indexterm zone="functions-info">
+    <primary>pg_my_temp_schema</primary>
+   </indexterm>
+
+   <indexterm zone="functions-info">
+    <primary>pg_is_other_temp_schema</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_my_temp_schema</function> returns the OID of the current
+    session's temporary schema, or 0 if it has none (because it has not
+    created any temporary tables).
+    <function>pg_is_other_temp_schema</function> returns true if the
+    given OID is the OID of any other session's temporary schema.
+    (This can be useful, for example, to exclude other sessions' temporary
+    tables from a catalog display.)
    </para>
 
    <indexterm zone="functions-info">

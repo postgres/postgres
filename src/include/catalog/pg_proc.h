@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.423 2006/09/10 00:29:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.424 2006/09/14 22:05:06 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3096,6 +3096,10 @@ DATA(insert OID = 2083 (  pg_opclass_is_visible		PGNSP PGUID 12 f f t f s 1 16 "
 DESCR("is opclass visible in search path?");
 DATA(insert OID = 2093 (  pg_conversion_is_visible	PGNSP PGUID 12 f f t f s 1 16 "26" _null_ _null_ _null_ pg_conversion_is_visible - _null_ ));
 DESCR("is conversion visible in search path?");
+DATA(insert OID = 2854 (  pg_my_temp_schema			PGNSP PGUID 12 f f t f s 0 26 "" _null_ _null_ _null_ pg_my_temp_schema - _null_ ));
+DESCR("get OID of current session's temp schema, if any");
+DATA(insert OID = 2855 (  pg_is_other_temp_schema	PGNSP PGUID 12 f f t f s 1 16 "26" _null_ _null_ _null_ pg_is_other_temp_schema - _null_ ));
+DESCR("is schema another session's temp schema?");
 
 DATA(insert OID = 2171 ( pg_cancel_backend		PGNSP PGUID 12 f f t f v 1 16 "23" _null_ _null_ _null_ pg_cancel_backend - _null_ ));
 DESCR("Cancel a server process' current query");

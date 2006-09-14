@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.36 2006/09/05 21:08:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.37 2006/09/14 22:05:06 tgl Exp $
  */
 
 /*
@@ -644,7 +644,8 @@ CREATE VIEW columns AS
     WHERE a.attrelid = c.oid
           AND a.atttypid = t.oid
           AND nc.oid = c.relnamespace
-          AND (nc.nspname NOT LIKE 'pg!_temp!_%' ESCAPE '!' OR pg_catalog.pg_table_is_visible(c.oid))
+          AND (NOT pg_is_other_temp_schema(nc.oid))
+
           AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v')
 
           AND (pg_has_role(c.relowner, 'USAGE')
@@ -940,7 +941,7 @@ CREATE VIEW key_column_usage AS
                 AND nc.oid = c.connamespace
                 AND c.contype IN ('p', 'u', 'f')
                 AND r.relkind = 'r'
-                AND (nr.nspname NOT LIKE 'pg!_temp!_%' ESCAPE '!' OR pg_catalog.pg_table_is_visible(r.oid))
+                AND (NOT pg_is_other_temp_schema(nr.oid))
                 AND (pg_has_role(r.relowner, 'USAGE')
                      OR has_table_privilege(c.oid, 'SELECT')
                      OR has_table_privilege(c.oid, 'INSERT')
@@ -1467,7 +1468,7 @@ CREATE VIEW sequences AS
     FROM pg_namespace nc, pg_class c
     WHERE c.relnamespace = nc.oid
           AND c.relkind = 'S'
-          AND (nc.nspname NOT LIKE 'pg!_temp!_%' ESCAPE '!' OR pg_catalog.pg_table_is_visible(c.oid))
+          AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_table_privilege(c.oid, 'SELECT')
                OR has_table_privilege(c.oid, 'UPDATE') );
@@ -1698,7 +1699,7 @@ CREATE VIEW table_constraints AS
     WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
           AND c.conrelid = r.oid
           AND r.relkind = 'r'
-          AND (nr.nspname NOT LIKE 'pg!_temp!_%' ESCAPE '!' OR pg_catalog.pg_table_is_visible(r.oid))
+          AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                -- SELECT privilege omitted, per SQL standard
                OR has_table_privilege(r.oid, 'INSERT')
@@ -1731,7 +1732,7 @@ CREATE VIEW table_constraints AS
           AND a.attnum > 0
           AND NOT a.attisdropped
           AND r.relkind = 'r'
-          AND (nr.nspname NOT LIKE 'pg!_temp!_%' ESCAPE '!' OR pg_catalog.pg_table_is_visible(r.oid))
+          AND (NOT pg_is_other_temp_schema(nr.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT')
                OR has_table_privilege(r.oid, 'INSERT')
@@ -1806,7 +1807,7 @@ CREATE VIEW tables AS
            CAST(c.relname AS sql_identifier) AS table_name,
 
            CAST(
-             CASE WHEN nc.nspname LIKE 'pg!_temp!_%' ESCAPE '!' THEN 'LOCAL TEMPORARY'
+             CASE WHEN nc.oid = pg_my_temp_schema() THEN 'LOCAL TEMPORARY'
                   WHEN c.relkind = 'r' THEN 'BASE TABLE'
                   WHEN c.relkind = 'v' THEN 'VIEW'
                   ELSE null END
@@ -1823,7 +1824,7 @@ CREATE VIEW tables AS
                 THEN 'YES' ELSE 'NO' END AS character_data) AS is_insertable_into,
            CAST('NO' AS character_data) AS is_typed,
            CAST(
-             CASE WHEN nc.nspname LIKE 'pg!_temp!_%' ESCAPE '!' THEN 'PRESERVE'
+             CASE WHEN nc.oid = pg_my_temp_schema() THEN 'PRESERVE' -- FIXME
                   ELSE null END
              AS character_data) AS commit_action
 
@@ -1831,7 +1832,7 @@ CREATE VIEW tables AS
 
     WHERE c.relnamespace = nc.oid
           AND c.relkind IN ('r', 'v')
-          AND (nc.nspname NOT LIKE 'pg!_temp!_%' ESCAPE '!' OR pg_catalog.pg_table_is_visible(c.oid))
+          AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_table_privilege(c.oid, 'SELECT')
                OR has_table_privilege(c.oid, 'INSERT')
@@ -1952,7 +1953,7 @@ CREATE VIEW triggers AS
           AND c.oid = t.tgrelid
           AND t.tgtype & em.num <> 0
           AND NOT t.tgisconstraint
-          AND (n.nspname NOT LIKE 'pg!_temp!_%' ESCAPE '!' OR pg_catalog.pg_table_is_visible(c.oid))
+          AND (NOT pg_is_other_temp_schema(n.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
                -- SELECT privilege omitted, per SQL standard
                OR has_table_privilege(c.oid, 'INSERT')
@@ -2150,7 +2151,7 @@ CREATE VIEW views AS
 
     WHERE c.relnamespace = nc.oid
           AND c.relkind = 'v'
-          AND (nc.nspname NOT LIKE 'pg!_temp!_%' ESCAPE '!' OR pg_catalog.pg_table_is_visible(c.oid))
+          AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_table_privilege(c.oid, 'SELECT')
                OR has_table_privilege(c.oid, 'INSERT')
