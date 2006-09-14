@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.4 2006/08/03 15:22:09 tgl Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.5 2006/09/14 11:26:49 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -127,6 +127,11 @@ newScanKey( IndexScanDesc scan ) {
 
 	so->keys = (GinScanKey) palloc( scan->numberOfKeys * sizeof(GinScanKeyData) );
 
+	if (scan->numberOfKeys < 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("GIN indexes do not support whole-index scans")));
+
 	for(i=0; i<scan->numberOfKeys; i++) {
 		Datum*	entryValues;
 		uint32	nEntryValues;
@@ -155,7 +160,9 @@ newScanKey( IndexScanDesc scan ) {
 	so->nkeys = nkeys;
 
 	if ( so->nkeys == 0 )
-		elog(ERROR, "Gin doesn't support full scan due to it's awful inefficiency");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("GIN index doesn't support search with void query")));
 
 	pgstat_count_index_scan(&scan->xs_pgstat_info);
 }
