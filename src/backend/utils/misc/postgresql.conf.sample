@@ -98,7 +98,7 @@
 
 # - Memory -
 
-#shared_buffers = 1000			# min 16 or max_connections*2, 8kB each
+#shared_buffers = 32000kB		# min 16 or max_connections*2, 8kB each
 					# (change requires restart)
 #temp_buffers = 1000			# min 100, 8kB each
 #max_prepared_transactions = 5		# can be 0 or more
@@ -111,7 +111,7 @@
 
 # - Free Space Map -
 
-#max_fsm_pages = 20000			# min max_fsm_relations*16, 6 bytes each
+#max_fsm_pages = 1600000		# min max_fsm_relations*16, 6 bytes each
 					# (change requires restart)
 #max_fsm_relations = 1000		# min 100, ~70 bytes each
 					# (change requires restart)

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.121 2006/08/20 16:08:09 meskes Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.122 2006/09/14 23:21:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1214,10 +1214,10 @@ setup_config(void)
 	conflines = replace_token(conflines, "#max_connections = 100", repltok);
 
 	snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB", n_buffers);
-	conflines = replace_token(conflines, "#shared_buffers = 1000", repltok);
+	conflines = replace_token(conflines, "#shared_buffers = 32000kB", repltok);
 
 	snprintf(repltok, sizeof(repltok), "max_fsm_pages = %d", n_fsm_pages);
-	conflines = replace_token(conflines, "#max_fsm_pages = 20000", repltok);
+	conflines = replace_token(conflines, "#max_fsm_pages = 1600000", repltok);
 
 #if DEF_PGPORT != 5432
 	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
