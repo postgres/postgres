@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_interval.h,v 1.11 2006/08/24 10:48:21 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/pgtypes_interval.h,v 1.12 2006/09/14 08:02:38 meskes Exp $ */
 
 #ifndef PGTYPES_INTERVAL
 #define PGTYPES_INTERVAL
@@ -49,6 +49,8 @@ extern		"C"
 {
 #endif
 
+extern interval *PGTYPESinterval_new(void);
+extern void PGTYPESinterval_free(interval *);
 extern interval *PGTYPESinterval_from_asc(char *, char **);
 extern char *PGTYPESinterval_to_asc(interval *);
 extern int	PGTYPESinterval_copy(interval *, interval *);

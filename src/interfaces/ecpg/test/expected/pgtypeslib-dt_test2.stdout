@@ -88,9 +88,15 @@ TS[19,0]: 0099-01-08 00:04:00 BC
 TS[19,1]: 0099-01-08 01:59:00 BC
 TS[19,2]: 0099-01-08 13:24:40 BC
 interval[0]: @ 1 min
+interval_copy[0]: @ 1 min
 interval[1]: @ 1 day 12 hours 59 mins 10 secs
+interval_copy[1]: @ 1 day 12 hours 59 mins 10 secs
 interval[2]: @ 2 days 12 hours 59 mins 10 secs
+interval_copy[2]: @ 2 days 12 hours 59 mins 10 secs
 interval[3]: @ 1 day 12 hours 59 mins 10 secs
+interval_copy[3]: @ 1 day 12 hours 59 mins 10 secs
 interval[4]: @ 1 day 1 hour 1 min 1 sec
+interval_copy[4]: @ 1 day 1 hour 1 min 1 sec
 interval[5]: @ 1 year 59 mins
+interval_copy[5]: @ 1 year 59 mins
 Error parsing interval 6

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.34 2006/09/05 12:17:09 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.35 2006/09/14 08:02:38 meskes Exp $ */
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -752,6 +752,21 @@ tm2interval(struct tm * tm, fsec_t fsec, interval * span)
 
 	return 0;
 }	/* tm2interval() */
+
+interval *
+PGTYPESinterval_new(void)
+{
+	interval *result;
+	result = (interval *) pgtypes_alloc(sizeof(interval));
+	/* result can be NULL if we run out of memory */
+	return result;
+}
+
+void
+PGTYPESinterval_free(interval *intvl)
+{
+	free(intvl);
+}
 
 interval *
 PGTYPESinterval_from_asc(char *str, char **endptr)

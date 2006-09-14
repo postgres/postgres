@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.30 2006/08/15 06:40:19 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.31 2006/09/14 08:02:38 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -11,6 +11,21 @@
 #include "dt.h"
 #include "pgtypes_error.h"
 #include "pgtypes_date.h"
+
+date *
+PGTYPESdate_new(void)
+{
+	date *result;
+	result = (date *) pgtypes_alloc(sizeof(date));
+	/* result can be NULL if we run out of memory */
+	return result;
+}
+
+void
+PGTYPESdate_free(date *d)
+{
+	free(d);
+}
 
 date
 PGTYPESdate_from_timestamp(timestamp dt)

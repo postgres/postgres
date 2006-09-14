@@ -70,6 +70,7 @@ main(void)
 		  
 		 
 		 
+		 
 	
 #line 51 "dt_test2.pgc"
  date  date1    ;
@@ -82,8 +83,11 @@ main(void)
  
 #line 54 "dt_test2.pgc"
  interval * i1    ;
-/* exec sql end declare section */
+ 
 #line 55 "dt_test2.pgc"
+ date * dc    ;
+/* exec sql end declare section */
+#line 56 "dt_test2.pgc"
 
 
 	int i, j;
@@ -98,9 +102,12 @@ main(void)
 	free(text);
 
 	date1 = PGTYPESdate_from_timestamp(ts1);
-	text = PGTYPESdate_to_asc(date1);
+	dc = PGTYPESdate_new();
+	*dc = date1;
+	text = PGTYPESdate_to_asc(*dc);
 	printf("Date of timestamp: %s\n", text);
 	free(text);
+	PGTYPESdate_free(dc);
 
 	for (i = 0; dates[i]; i++)
 	{
@@ -139,6 +146,7 @@ main(void)
 
 	for (i = 0; intervals[i]; i++)
 	{
+		interval *ic;
 		i1 = PGTYPESinterval_from_asc(intervals[i], &endptr);
 		if (*endptr)
 			printf("endptr set to %s\n", endptr);
@@ -153,6 +161,13 @@ main(void)
 		text = PGTYPESinterval_to_asc(i1);
 		printf("interval[%d]: %s\n", i, text ? text : "-");
 		free(text);
+
+		ic = PGTYPESinterval_new();
+		PGTYPESinterval_copy(i1, ic);
+		text = PGTYPESinterval_to_asc(i1);
+		printf("interval_copy[%d]: %s\n", i, text ? text : "-");
+		free(text);
+		PGTYPESinterval_free(ic);
 	}
 
 	return (0);
