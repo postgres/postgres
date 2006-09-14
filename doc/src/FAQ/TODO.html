@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Sep 14 17:41:06 EDT 2006
+Last updated:           Thu Sep 14 17:43:58 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -411,8 +411,6 @@ first.
   called, and the table is locked in exclusive mode.
 </p>
   </li><li>Allow PREPARE of cursors
-  </li><li>-<em>Allow PREPARE to automatically determine parameter types based on the SQL</em>
-  statement (Neil)
   </li><li>Allow finer control over the caching of prepared query plans
 <p>  Currently, queries prepared via the libpq API are planned on first
   execute using the supplied parameters --- allow SQL PREPARE to do the
