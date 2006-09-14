@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.46 2006/09/14 11:16:27 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.47 2006/09/14 13:40:28 teodor Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -459,7 +459,6 @@
        <entry>consistent - determine whether value matches by the
 			   query</entry>
        <entry>4</entry>
-      </row>
       </row>
      </tbody>
     </tgroup>
