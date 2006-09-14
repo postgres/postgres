@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Sep 12 17:02:34 EDT 2006
+Last updated:           Thu Sep 14 13:11:44 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1217,9 +1217,19 @@ first.
 </p>
   </li><li>Consider ways of storing rows more compactly on disk
   <ul>
-    <li>Store disk pages with no alignment/padding?
-    </li><li>Reorder physical storage order to reduce padding?
+    <li>Reorder physical storage order to reduce padding?
+<p>          This involves having the user-specified order of columns
+          be different from the physical order.  SELECT * would 
+          need to reorder the physical values to match the
+          user-specified ordering.
+</p>
+    </li><li>Store disk pages with no alignment/padding?
+<p>          This necessitates adding CPU-required padding when moving
+          rows from disk to memory.
+</p>
     </li><li>Support a smaller header for short variable-length fields?
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg00848.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg00848.php</a>
+</p>
     </li><li>Reduce the row header size?
   </li></ul>
 </li></ul>
