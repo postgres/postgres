@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.431 2006/08/22 00:45:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.432 2006/09/14 16:51:39 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -11,6 +11,8 @@ pg_[A-Za-z0-9_]                 <application>
 [A-Z][A-Z]                      <type>, <envar>, <literal>
 &<>                             use &
 non-ascii                       convert to & escapes
+				http://www.mountaindragon.com/html/iso.htm
+				encode multibytes as UTF8
 
 For new features, add links to the documentation sections.
 
