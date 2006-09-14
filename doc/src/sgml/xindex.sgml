@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.45 2006/09/05 03:09:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.46 2006/09/14 11:16:27 teodor Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -243,6 +243,44 @@
    </table>
 
   <para>
+   GIN indexes are similar to GiST in flexibility: it hasn't a fixed set
+   of strategies. Instead, the <quote>consistency</> support routine
+   interprets the strategy numbers accordingly with operator class
+   definition. As an example, strategies of operator class over arrays
+   is shown in <xref linkend="xindex-gin-array-strat-table">.
+  </para>
+
+   <table tocentry="1" id="xindex-gin-array-strat-table">
+    <title>GiST Two-Dimensional <quote>R-tree</> Strategies</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Strategy Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>overlap</entry>
+       <entry>1</entry>
+      </row>
+      <row>
+       <entry>contains</entry>
+       <entry>2</entry>
+      </row>
+      <row>
+       <entry>is contained by</entry>
+       <entry>3</entry>
+      </row>
+      <row>
+       <entry>equal</entry>
+       <entry>4</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
    Note that all strategy operators return Boolean values.  In
    practice, all operators defined as index method strategies must
    return type <type>boolean</type>, since they must appear at the top
@@ -349,32 +387,79 @@
      </thead>
      <tbody>
       <row>
-       <entry>consistent</entry>
+       <entry>consistent - determine whether key satifies the 
+		query qualifier</entry>
        <entry>1</entry>
       </row>
       <row>
-       <entry>union</entry>
+       <entry>union - compute union of of a set of given keys</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry>compress</entry>
+       <entry>compress - computes a compressed representation of a key or value
+		to be indexed</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry>decompress</entry>
+       <entry>decompress - computes a decompressed representation of a 
+	   compressed key </entry>
        <entry>4</entry>
       </row>
       <row>
-       <entry>penalty</entry>
+       <entry>penalty - compute penalty for inserting new key into subtree 
+	   with given subtree's key</entry>
        <entry>5</entry>
       </row>
       <row>
-       <entry>picksplit</entry>
+       <entry>picksplit - determine which entries of a page are to be moved
+	   to the new page and compute the union keys for resulting pages </entry>
        <entry>6</entry>
       </row>
       <row>
-       <entry>equal</entry>
+       <entry>equal - compare two keys and returns true if they are equal 
+		</entry>
        <entry>7</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   GIN indexes require four support functions,
+   shown in <xref linkend="xindex-gin-support-table">.
+  </para>
+
+   <table tocentry="1" id="xindex-gin-support-table">
+    <title>GIN Support Functions</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Support Number</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>
+   compare - Compare two keys and return an integer less than zero, zero, or
+   greater than zero, indicating whether the first key is less than, equal to,
+   or greater than the second.
+	   </entry>
+       <entry>1</entry>
+      </row>
+      <row>
+       <entry>extractValue - extract keys from value to be indexed</entry>
+       <entry>2</entry>
+      </row>
+      <row>
+       <entry>extractQuery - extract keys from query</entry>
+       <entry>3</entry>
+      </row>
+      <row>
+       <entry>consistent - determine whether value matches by the
+			   query</entry>
+       <entry>4</entry>
+      </row>
       </row>
      </tbody>
     </tgroup>

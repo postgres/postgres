@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.15 2006/09/10 17:36:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.16 2006/09/14 11:16:27 teodor Exp $
 PostgreSQL documentation
 -->
 
@@ -192,7 +192,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
      <para>
       The data type actually stored in the index.  Normally this is
       the same as the column data type, but some index methods
-      (only GiST at this writing) allow it to be different.  The
+      (GIN and GiST for now) allow it to be different.  The
       <literal>STORAGE</> clause must be omitted unless the index
       method allows a different type to be used.
      </para>

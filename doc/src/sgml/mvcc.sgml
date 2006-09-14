@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.58 2006/09/03 01:59:09 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.59 2006/09/14 11:16:27 teodor Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -987,6 +987,20 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>
+       <acronym>GIN</acronym> indexes
+      </term>
+      <listitem>
+       <para>
+		Short-term share/exclusive page-level locks are used for 
+		read/write access. Locks are released immediately after each
+		index row is fetched or inserted. However, note that GIN index
+		usually requires several inserts per one table row.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 
@@ -995,7 +1009,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     applications; since they also have more features than hash
     indexes, they are the recommended index type for concurrent
     applications that need to index scalar data. When dealing with
-    non-scalar data, B-trees are not useful, and GiST indexes should
+    non-scalar data, B-trees are not useful, and GiST or GIN indexes should
     be used instead.
    </para>
   </sect1>

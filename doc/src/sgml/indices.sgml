@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.61 2006/09/13 23:42:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.62 2006/09/14 11:16:27 teodor Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -116,7 +116,7 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <productname>PostgreSQL</productname> provides several index types:
-   B-tree, Hash, and GiST.  Each index type uses a different
+   B-tree, Hash, GIN and GiST.  Each index type uses a different
    algorithm that is best suited to different types of queries.
    By default, the <command>CREATE INDEX</command> command will create a
    B-tree index, which fits the most common situations.
@@ -237,6 +237,37 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    Many other GiST operator
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GiST">.
+  </para>
+  <para>
+   <indexterm>
+    <primary>index</primary>
+    <secondary>GIN</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>GIN</primary>
+    <see>index</see>
+   </indexterm>
+   GIN is a inverted index and it's usable for values which have more
+   than one key, arrays for example. Like to GiST, GIN may support
+   many different user-defined indexing strategies and the particular 
+   operators with which a GIN index can be used vary depending on the 
+   indexing strategy.  
+   As an example, the standard distribution of
+   <productname>PostgreSQL</productname> includes GIN operator classes
+   for one-dimentional arrays, which support indexed
+   queries using these operators:
+
+   <simplelist>
+    <member><literal>&lt;@</literal></member>
+    <member><literal>@&gt;</literal></member>
+    <member><literal>=</literal></member>
+    <member><literal>&amp;&amp;</literal></member>
+   </simplelist>
+
+   (See <xref linkend="functions-array"> for the meaning of
+   these operators.)
+   Another GIN operator classes are available in the <literal>contrib</> 
+   tsearch2 and intarray modules. For more information see <xref linkend="GIN">.
   </para>
  </sect1>
 

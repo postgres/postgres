@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.36 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.37 2006/09/14 11:16:27 teodor Exp $ -->
 
  <chapter id="geqo">
   <chapterinfo>
@@ -49,8 +49,8 @@
     methods</firstterm> (e.g., nested loop, hash join, merge join in
     <productname>PostgreSQL</productname>) to process individual joins
     and a diversity of <firstterm>indexes</firstterm> (e.g.,
-    B-tree, hash, GiST in <productname>PostgreSQL</productname>) as access
-    paths for relations.
+    B-tree, hash, GiST and GIN in <productname>PostgreSQL</productname>) as 
+	access paths for relations.
    </para>
 
    <para>
