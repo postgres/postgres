@@ -1,8 +1,7 @@
 /*
  * module for PostgreSQL to access client SSL certificate information
  *
- * Copyright (c) Cryptocom LTD, 2006
- * Written by Victor B. Wagner <vitus@cryptocom.ru>
+ * Written by Victor B. Wagner <vitus@cryptocom.ru>, Cryptocom LTD
  * This file is distributed under BSD-style license.
  */
 

@@ -1,7 +1,6 @@
 sslinfo - information about current SSL certificate for PostgreSQL
 ==================================================================
-Copyright (c) 2006 Cryptocom LTD
-Author: Victor Wagner <vitus@cryptocom.ru>
+Author: Victor Wagner <vitus@cryptocom.ru>, Cryptocom LTD
 E-Mail of Cryptocom OpenSSL development group: <openssl@cryptocom.ru>
 
 
