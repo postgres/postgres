@@ -166,7 +166,7 @@ parse_hstore( HSParser *state ) {
 			state->pairs[ state->pcur ].needfree = true;
 			if ( state->cur - state->word == 4 && !escaped) {
 				state->word[4] = '\0';
-				if ( 0==strcasecmp(state->word, "null") ) 
+				if ( 0==pg_strcasecmp(state->word, "null") ) 
 					state->pairs[ state->pcur ].isnull=true;
 			} 
 			state->word=NULL;
