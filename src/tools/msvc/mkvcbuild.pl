@@ -5,12 +5,12 @@ use warnings;
 use Project;
 use Solution;
 
-chdir('..') if (-d '..\vcbuild' && -d '..\src');
-die 'Must run from root directory or vcbuild directory' unless (-d 'vcbuild' && -d 'src');
-die 'Could not find config.pl' unless (-f 'vcbuild/config.pl');
+chdir('..\..\..') if (-d '..\msvc' && -d '..\..\..\src');
+die 'Must run from root or msvc directory' unless (-d 'src\tools\msvc' && -d 'src');
+die 'Could not find config.pl' unless (-f 'src/tools/msvc/config.pl');
 
 our $config;
-require 'vcbuild/config.pl';
+require 'src/tools/msvc/config.pl';
 
 my $solution = new Solution($config);
 
@@ -79,6 +79,7 @@ my $libpq = $solution->AddProject('libpq','dll','interfaces','src\interfaces\lib
 $libpq->AddDefine('FRONTEND');
 $libpq->AddIncludeDir('src\port');
 $libpq->AddLibrary('wsock32.lib');
+$libpq->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
 $libpq->UseDef('src\interfaces\libpq\libpqdll.def');
 $libpq->ReplaceFile('src\interfaces\libpq\libpqrc.c','src\interfaces\libpq\libpq.rc');
 
@@ -188,8 +189,6 @@ foreach my $prg (split /\s+/,$1) {
 	$proj->AddIncludeDir('src\bin\psql');
 	$proj->AddReference($libpq,$libpgport);
 	$proj->AddResourceFile('src\bin\scripts','PostgreSQL Utility');
-	$proj->AddLibrary('debug\libpgport\libpgport.lib');
-	$proj->AddLibrary('debug\libpq\libpq.lib');
 }
 $/ = $t;
 
@@ -224,11 +223,9 @@ sub AddSimpleFrontend {
 	$p->AddDir('src\bin\\' . $n);
 	$p->AddDefine('FRONTEND');
 	$p->AddReference($libpgport);
-	$p->AddLibrary('debug\libpgport\libpgport.lib');
 	if ($uselibpq) {
 		$p->AddIncludeDir('src\interfaces\libpq');
 		$p->AddReference($libpq);
-		$p->AddLibrary('debug\libpq\libpq.lib');
 	}
 	return $p;
 }

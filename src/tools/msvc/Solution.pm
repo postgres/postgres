@@ -21,8 +21,8 @@ sub new {
 # Special case - if config.pl has changed, always return 1
 sub IsNewer {
 	my ($newfile, $oldfile) = @_;
-	if ($oldfile ne 'vcbuild\config.pl') {
-		return 1 if IsNewer($newfile, 'vcbuild\config.pl');
+	if ($oldfile ne 'src\tools\msvc\config.pl') {
+		return 1 if IsNewer($newfile, 'src\tools\msvc\config.pl');
 	}
 	return 1 if (!(-e $newfile));
 	my @nstat = stat($newfile);
@@ -177,6 +177,17 @@ sub GenerateFiles {
 		chdir('..\..\..');
 	}
 
+	if (IsNewer('src\interfaces\ecpg\include\ecpg_config.h', 'src\interfaces\ecpg\include\ecpg_config.h.in')) {
+		print "Generating ecpg_config.h...\n";
+		open(O,'>','src\interfaces\ecpg\include\ecpg_config.h') || confess "Could not open ecpg_config.h";
+		print O <<EOF;
+#if (_MSC_VER > 1200)
+#define HAVE_LONG_LONG_INT_64
+#endif
+EOF
+		close(O);
+	}
+
 	unless (-f "src\\port\\pg_config_paths.h") {
 		print "Generating pg_config_paths.h...\n";
 		open(O,'>', 'src\port\pg_config_paths.h') || confess "Could not open pg_config_paths.h";
@@ -271,6 +282,7 @@ EOF
 		print SLN <<EOF;
 		$proj->{guid}.Debug|Win32.ActiveCfg = Debug|Win32
 		$proj->{guid}.Debug|Win32.Build.0  = Debug|Win32	
+		$proj->{guid}.Release|Win32.ActiveCfg = Release|Win32
 		$proj->{guid}.Release|Win32.Build.0 = Release|Win32
 EOF
 		}

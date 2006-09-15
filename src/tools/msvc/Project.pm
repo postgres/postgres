@@ -81,7 +81,7 @@ sub AddReference {
 
 	while (my $ref = shift) {
 		push @{$self->{references}},$ref;
-		$self->AddLibrary("debug\\" . $ref->{name} . "\\" . $ref->{name} . ".lib") if ($ref->{type} eq "exe");
+		$self->AddLibrary("__CFGNAME__\\" . $ref->{name} . "\\" . $ref->{name} . ".lib");
 	}
 }
 
@@ -113,8 +113,8 @@ sub FullExportDLL {
 	my ($self, $libname) = @_;
 
 	$self->{builddef} = 1;
-	$self->{def} = ".\\debug\\$self->{name}\\$self->{name}.def";
-	$self->{implib} = "debug\\$self->{name}\\$libname";
+	$self->{def} = ".\\__CFGNAME__\\$self->{name}\\$self->{name}.def";
+	$self->{implib} = "__CFGNAME__\\$self->{name}\\$libname";
 }
 
 sub UseDef {
@@ -286,19 +286,19 @@ EOF
 			my $of = $f;
 			$of =~ s/\.y$/.c/;
 			$of =~ s{^src\\pl\\plpgsql\\src\\gram.c$}{src\\pl\\plpgsql\\src\\pl_gram.c};
-			print F '><FileConfiguration Name="Debug|Win32"><Tool Name="VCCustomBuildTool" Description="Running bison on ' . $f . '" CommandLine="vcbuild\pgbison.bat ' . $f . '" AdditionalDependencies="" Outputs="' . $of . '" /></FileConfiguration></File>' . "\n";
+			print F '>' . GenerateCustomTool('Running bison on ' . $f, 'src\tools\msvc\pgbison.bat ' . $f, $of) . '</File>' . "\n";
 		}
 		elsif ($f =~ /\.l$/) {
 			my $of = $f;
 			$of =~ s/\.l$/.c/;
 			$of =~ s{^src\\pl\\plpgsql\\src\\scan.c$}{src\\pl\\plpgsql\\src\\pl_scan.c};
-			print F "><FileConfiguration Name=\"Debug|Win32\"><Tool Name=\"VCCustomBuildTool\" Description=\"Running flex on $f\" CommandLine=\"vcbuild\\pgflex.bat $f\" AdditionalDependencies=\"\" Outputs=\"$of\" /></FileConfiguration></File>\n";
+			print F '>' . GenerateCustomTool('Running flex on ' . $f, 'src\tools\msvc\pgflex.bat ' . $f,$of) . '</File>' . "\n";
 		}
 		elsif (defined($uniquefiles{$file})) {
 # File already exists, so fake a new name
 			my $obj = $dir;
 			$obj =~ s/\\/_/g;
-			print F "><FileConfiguration Name=\"Debug|Win32\"><Tool Name=\"VCCLCompilerTool\" ObjectFile=\".\\debug\\$self->{name}\\$obj" . "_$file.obj\" /></FileConfiguration></File>\n";
+			print F "><FileConfiguration Name=\"Debug|Win32\"><Tool Name=\"VCCLCompilerTool\" ObjectFile=\".\\debug\\$self->{name}\\$obj" . "_$file.obj\" /></FileConfiguration><FileConfiguration Name=\"Release|Win32\"><Tool Name=\"VCCLCompilerTool\" ObjectFile=\".\\release\\$self->{name}\\$obj" . "_$file.obj\" /></FileConfiguration></File>\n";
 		}
 		else {
 			$uniquefiles{$file} = 1;
@@ -313,6 +313,15 @@ EOF
 	close(F);
 }
 
+sub GenerateCustomTool {
+	my ($desc, $tool, $output, $cfg) = @_;
+	if (!defined($cfg)) {
+		return GenerateCustomTool($desc, $tool, $output, 'Debug') . 
+			   GenerateCustomTool($desc, $tool, $output, 'Release');
+	}
+	return "<FileConfiguration Name=\"$cfg|Win32\"><Tool Name=\"VCCustomBuildTool\" Description=\"$desc\" CommandLine=\"$tool\" AdditionalDependencies=\"\" Outputs=\"$output\" /></FileConfiguration>";
+}
+
 sub WriteReferences {
 	my ($self, $f) = @_;
 	print $f " <References>\n";
@@ -325,48 +334,65 @@ sub WriteReferences {
 sub WriteHeader {
 	my ($self, $f) = @_;
 
-	my $cfgtype = ($self->{type} eq "exe")?1:($self->{type} eq "dll"?2:4);
-
 	print $f <<EOF;
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject ProjectType="Visual C++" Version="8.00" Name="$self->{name}" ProjectGUID="$self->{guid}">
  <Platforms><Platform Name="Win32"/></Platforms>
  <Configurations>
-  <Configuration Name="Debug|Win32" OutputDirectory=".\\Debug\\$self->{name}" IntermediateDirectory=".\\Debug\\$self->{name}"
-	ConfigurationType="$cfgtype" UseOfMFC="0" ATLMinimizesCRunTimeLibraryUsage="FALSE" CharacterSet="2">
-	<Tool Name="VCCLCompilerTool" Optimization="0"
+EOF
+	$self->WriteConfiguration($f, 'Debug', { defs=>'_DEBUG;DEBUG=1;', wholeopt=>0 , opt=>0, strpool=>'false', runtime=>3 });
+	$self->WriteConfiguration($f, 'Release', { defs=>'', wholeopt=>0, opt=>3, strpool=>'true', runtime=>2 });
+print $f <<EOF;
+ </Configurations>
+EOF
+}
+
+sub WriteConfiguration
+{
+	my ($self, $f, $cfgname, $p) = @_;
+	my $cfgtype = ($self->{type} eq "exe")?1:($self->{type} eq "dll"?2:4);
+	my $libs = $self->{libraries};
+	$libs =~ s/__CFGNAME__/$cfgname/g;
+	print $f <<EOF;
+  <Configuration Name="$cfgname|Win32" OutputDirectory=".\\$cfgname\\$self->{name}" IntermediateDirectory=".\\$cfgname\\$self->{name}"
+	ConfigurationType="$cfgtype" UseOfMFC="0" ATLMinimizesCRunTimeLibraryUsage="FALSE" CharacterSet="2" WholeProgramOptimization="$p->{wholeopt}">
+	<Tool Name="VCCLCompilerTool" Optimization="$p->{opt}"
 		AdditionalIncludeDirectories="src/include;src/include/port/win32;src/include/port/win32_msvc;$self->{solution}->{options}->{pthread};$self->{includes}"
-		PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;__WINDOWS__;DEBUG=1;__WIN32__;EXEC_BACKEND;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE$self->{defines}"
-		RuntimeLibrary="3" DisableSpecificWarnings="$self->{disablewarnings}"
+		PreprocessorDefinitions="WIN32;_WINDOWS;__WINDOWS__;__WIN32__;EXEC_BACKEND;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE$self->{defines}$p->{defs}"
+		StringPooling="$p->{strpool}"
+		RuntimeLibrary="$p->{runtime}" DisableSpecificWarnings="$self->{disablewarnings}"
 EOF
 	print $f <<EOF;
-		AssemblerOutput="0" AssemblerListingLocation=".\\debug\\$self->{name}\\" ObjectFile=".\\debug\\$self->{name}\\"
-		ProgramDataBaseFileName=".\\debug\\$self->{name}\\" BrowseInformation="0"
+		AssemblerOutput="0" AssemblerListingLocation=".\\$cfgname\\$self->{name}\\" ObjectFile=".\\$cfgname\\$self->{name}\\"
+		ProgramDataBaseFileName=".\\$cfgname\\$self->{name}\\" BrowseInformation="0"
 		WarningLevel="3" SuppressStartupBanner="TRUE" DebugInformationFormat="3" CompileAs="0"/>
-	<Tool Name="VCLinkerTool" OutputFile=".\\debug\\$self->{name}\\$self->{name}.$self->{type}"
-		AdditionalDependencies="$self->{libraries}"
+	<Tool Name="VCLinkerTool" OutputFile=".\\$cfgname\\$self->{name}\\$self->{name}.$self->{type}"
+		AdditionalDependencies="$libs"
 		LinkIncremental="0" SuppressStartupBanner="TRUE" AdditionalLibraryDirectories="" IgnoreDefaultLibraryNames="libc"
 		StackReserveSize="4194304" DisableSpecificWarnings="$self->{disablewarnings}"
-		GenerateDebugInformation="TRUE" ProgramDatabaseFile=".\\debug\\$self->{name}\\$self->{name}.pdb"
-		GenerateMapFile="FALSE" MapFileName=".\\debug\\$self->{name}\\$self->{name}.map"
+		GenerateDebugInformation="TRUE" ProgramDatabaseFile=".\\$cfgname\\$self->{name}\\$self->{name}.pdb"
+		GenerateMapFile="FALSE" MapFileName=".\\$cfgname\\$self->{name}\\$self->{name}.map"
 		SubSystem="1" TargetMachine="1"
 EOF
 	if ($self->{implib}) {
-		print $f "\t\tImportLibrary=\"$self->{implib}\"\n";
+		my $l = $self->{implib};
+		$l =~ s/__CFGNAME__/$cfgname/g;
+		print $f "\t\tImportLibrary=\"$l\"\n";
 	}
 	if ($self->{def}) {
-		print $f "\t\tModuleDefinitionFile=\"$self->{def}\"\n";
+		my $d = $self->{def};
+		$d =~ s/__CFGNAME__/$cfgname/g;
+		print $f "\t\tModuleDefinitionFile=\"$d\"\n";
 	}
 
 	print $f "\t/>\n";
-	print $f "\t<Tool Name=\"VCLibrarianTool\" OutputFile=\".\\Debug\\$self->{name}\\$self->{name}.lib\" IgnoreDefaultLibraryNames=\"libc\" />\n";
+	print $f "\t<Tool Name=\"VCLibrarianTool\" OutputFile=\".\\$cfgname\\$self->{name}\\$self->{name}.lib\" IgnoreDefaultLibraryNames=\"libc\" />\n";
 	print $f "\t<Tool Name=\"VCResourceCompilerTool\" AdditionalIncludeDirectories=\"src\\include\" />\n";
 	if ($self->{builddef}) {
-		print $f "\t<Tool Name=\"VCPreLinkEventTool\" Description=\"Generate DEF file\" CommandLine=\"perl vcbuild\\gendef.pl debug\\$self->{name}\" />\n";
+		print $f "\t<Tool Name=\"VCPreLinkEventTool\" Description=\"Generate DEF file\" CommandLine=\"perl src\\tools\\msvc\\gendef.pl $cfgname\\$self->{name}\" />\n";
 	}
 	print $f <<EOF;
   </Configuration>
- </Configurations>
 EOF
 }
 
