@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.83 2006/08/17 23:04:02 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.84 2006/09/15 21:55:07 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -855,7 +855,9 @@ SELECT pg_stop_backup();
    <listitem>
     <para>
      Start the server.  The server will go into recovery mode and
-     proceed to read through the archived WAL files it needs.  Upon completion
+     proceed to read through the archived WAL files it needs.  Should the
+     recovery be terminated because of an external error, the server can
+     simply be restarted and it will continue recovery.  Upon completion
      of the recovery process, the server will rename
      <filename>recovery.conf</> to <filename>recovery.done</> (to prevent
      accidentally re-entering recovery mode in case of a crash later) and then
@@ -935,7 +937,21 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
       recover to such a time, you must go back to your previous base backup
       and roll forward from there.)
      </para>
-    </note>
+   </note>
+
+   <para>
+    If recovery finds a corruption in the WAL data then recovery will
+    complete at that point and the server will not start. The recovery 
+    process could be re-run from the beginning, specifying a 
+    <quote>recovery target</> so that recovery can complete normally.
+    If recovery fails for an external reason, such as a system crash or
+    the WAL archive has become inaccessible, then the recovery can be
+    simply restarted and it will restart almost from where it failed.
+    Restartable recovery works by writing a restartpoint record to the control
+    file at the first safely usable checkpoint record found after 
+    <varname>checkpoint_timeout</> seconds. 
+   </para>
+
 
     <sect3 id="recovery-config-settings" xreflabel="Recovery Settings">
      <title>Recovery Settings</title>
