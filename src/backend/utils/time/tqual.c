@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.96 2006/09/03 15:59:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.97 2006/09/15 16:39:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,19 +253,18 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple, Buffer buffer)
  *
  * The satisfaction of "now" requires the following:
  *
- * ((Xmin == my-transaction &&				changed by the current transaction
- *	 Cmin != my-command &&					but not by this command, and
- *		(Xmax is null ||						the row has not been deleted, or
- *			(Xmax == my-transaction &&			it was deleted by the current transaction
- *			 Cmax != my-command)))				but not by this command,
+ * ((Xmin == my-transaction &&				inserted by the current transaction
+ *	 Cmin < my-command &&					before this command, and
+ *	 (Xmax is null ||						the row has not been deleted, or
+ *	  (Xmax == my-transaction &&			it was deleted by the current transaction
+ *	   Cmax >= my-command)))				but not before this command,
  * ||										or
- *
- *	(Xmin is committed &&					the row was modified by a committed transaction, and
+ *	(Xmin is committed &&					the row was inserted by a committed transaction, and
  *		(Xmax is null ||					the row has not been deleted, or
- *			(Xmax == my-transaction &&			the row is being deleted by this command, or
- *			 Cmax == my-command) ||
- *			(Xmax is not committed &&			the row was deleted by another transaction
- *			 Xmax != my-transaction))))			that has not been committed
+ *		 (Xmax == my-transaction &&			the row is being deleted by this transaction
+ *		  Cmax >= my-command) ||			but it's not deleted "yet", or
+ *		 (Xmax != my-transaction &&			the row was deleted by another transaction
+ *		  Xmax is not committed))))			that has not been committed
  *
  *		mao says 17 march 1993:  the tests in this routine are correct;
  *		if you think they're not, you're wrong, and you should think
