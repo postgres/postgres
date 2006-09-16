@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Sep 14 17:43:58 EDT 2006
+Last updated:		Sat Sep 16 18:06:27 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1353,23 +1353,14 @@ Miscellaneous Performance
 
 * Consider ways of storing rows more compactly on disk
 
-	o Reorder physical storage order to reduce padding?
-
-	  This involves having the user-specified order of columns
-	  be different from the physical order.  SELECT * would 
-	  need to reorder the physical values to match the
-	  user-specified ordering.
-
-	o Store disk pages with no alignment/padding?
-
-	  This necessitates adding CPU-required padding when moving
-	  rows from disk to memory.
-
 	o Support a smaller header for short variable-length fields?
 
-	  One idea is to store the header in network byte order (high bits
-	  first), and read the high bits to determine the header length.
-	  http://archives.postgresql.org/pgsql-hackers/2006-09/msg00848.php
+	  One idea is to create zero-or-one-byte-header versions 
+	  of varlena data types.  In involves setting the high-bit and 
+	  0-127 length in the single-byte header, or clear the high bit
+	  and store the 7-bit ASCII value in the rest of the byte.
+	  The small-header versions have no alignment requirements.
+	  http://archives.postgresql.org/pgsql-hackers/2006-09/msg01372.php
 
 	o Reduce the row header size?
 
