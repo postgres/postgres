@@ -1,14 +1,12 @@
 # ISO 3166 alpha-2 country codes
 #
-# $PostgreSQL: pgsql/src/timezone/data/iso3166.tab,v 1.4 2006/03/11 04:38:41 momjian Exp $
+# @(#)iso3166.tab	8.2
 #
-# @(#)iso3166.tab	1.17
-#
-# From Paul Eggert (2004-06-14):
+# From Paul Eggert (2006-04-24):
 #
 # This file contains a table with the following columns:
 # 1.  ISO 3166-1 alpha-2 country code, current as of
-#     ISO 3166-1 Newsletter No. V-10 (2004-04-26).  See:
+#     ISO 3166-1 Newsletter No. V-11 (2006-03-29).  See:
 #     <a href="http://www.iso.org/iso/en/prods-services/iso3166ma/index.html">
 #     ISO 3166 Maintenance agency (ISO 3166/MA)
 #     </a>.
@@ -102,6 +100,7 @@ GB	Britain (UK)
 GD	Grenada
 GE	Georgia
 GF	French Guiana
+GG	Guernsey
 GH	Ghana
 GI	Gibraltar
 GL	Greenland
@@ -124,12 +123,14 @@ HU	Hungary
 ID	Indonesia
 IE	Ireland
 IL	Israel
+IM	Isle of Man
 IN	India
 IO	British Indian Ocean Territory
 IQ	Iraq
 IR	Iran
 IS	Iceland
 IT	Italy
+JE	Jersey
 JM	Jamaica
 JO	Jordan
 JP	Japan

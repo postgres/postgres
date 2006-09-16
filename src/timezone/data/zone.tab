@@ -1,4 +1,4 @@
-# @(#)zone.tab	1.32
+# @(#)zone.tab	8.4
 #
 # TZ zone descriptions
 #
@@ -44,7 +44,7 @@ AQ	-690022+0393524	Antarctica/Syowa	Syowa Station, E Ongul I
 AR	-3436-05827	America/Argentina/Buenos_Aires	Buenos Aires (BA, CF)
 AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, LP, MN, NQ, RN, SA, SE, SF, SL)
 AR	-2411-06518	America/Argentina/Jujuy	Jujuy (JY)
-AR	-3124-06411	America/Argentina/Tucuman	Tucuman (TM)
+AR	-2649-06513	America/Argentina/Tucuman	Tucuman (TM)
 AR	-2828-06547	America/Argentina/Catamarca	Catamarca (CT), Chubut (CH)
 AR	-2926-06651	America/Argentina/La_Rioja	La Rioja (LR)
 AR	-3132-06831	America/Argentina/San_Juan	San Juan (SJ)
@@ -99,26 +99,28 @@ BT	+2728+08939	Asia/Thimphu
 BW	-2545+02555	Africa/Gaborone
 BY	+5354+02734	Europe/Minsk
 BZ	+1730-08812	America/Belize
-CA	+4734-05243	America/St_Johns	Newfoundland Island
-CA	+4439-06336	America/Halifax	Atlantic Time - Nova Scotia (most places), NB, W Labrador, E Quebec & PEI
+CA	+4734-05243	America/St_Johns	Newfoundland Time, including SE Labrador
+CA	+4439-06336	America/Halifax	Atlantic Time - Nova Scotia (most places), PEI
 CA	+4612-05957	America/Glace_Bay	Atlantic Time - Nova Scotia - places that did not observe DST 1966-1971
-CA	+5320-06025	America/Goose_Bay	Atlantic Time - E Labrador
+CA	+4606-06447	America/Moncton	Atlantic Time - New Brunswick
+CA	+5320-06025	America/Goose_Bay	Atlantic Time - Labrador - most locations
+CA	+5125-05707	America/Blanc-Sablon	Atlantic Standard Time - Quebec - Lower North Shore
 CA	+4531-07334	America/Montreal	Eastern Time - Quebec - most locations
 CA	+4339-07923	America/Toronto	Eastern Time - Ontario - most locations
 CA	+4901-08816	America/Nipigon	Eastern Time - Ontario & Quebec - places that did not observe DST 1967-1973
 CA	+4823-08915	America/Thunder_Bay	Eastern Time - Thunder Bay, Ontario
 CA	+6608-06544	America/Pangnirtung	Eastern Time - Pangnirtung, Nunavut
 CA	+6344-06828	America/Iqaluit	Eastern Time - east Nunavut
-CA	+6408-08310	America/Coral_Harbour	Eastern Standard Time - Southampton Island
-CA	+6245-09210	America/Rankin_Inlet	Central Time - central Nunavut
+CA	+484531-0913718	America/Atikokan	Eastern Standard Time - Atikokan, Ontario and Southampton I, Nunavut
+CA	+624900-0920459	America/Rankin_Inlet	Central Time - central Nunavut
 CA	+4953-09709	America/Winnipeg	Central Time - Manitoba & west Ontario
-CA	+4843-09429	America/Rainy_River	Central Time - Rainy River & Fort Frances, Ontario
+CA	+4843-09434	America/Rainy_River	Central Time - Rainy River & Fort Frances, Ontario
 CA	+6903-10505	America/Cambridge_Bay	Central Time - west Nunavut
 CA	+5024-10439	America/Regina	Central Standard Time - Saskatchewan - most locations
 CA	+5017-10750	America/Swift_Current	Central Standard Time - Saskatchewan - midwest
 CA	+5333-11328	America/Edmonton	Mountain Time - Alberta, east British Columbia & west Saskatchewan
 CA	+6227-11421	America/Yellowknife	Mountain Time - central Northwest Territories
-CA	+6825-11330	America/Inuvik	Mountain Time - west Northwest Territories
+CA	+682059-1334300	America/Inuvik	Mountain Time - west Northwest Territories
 CA	+5946-12014	America/Dawson_Creek	Mountain Standard Time - Dawson Creek & Fort Saint John, British Columbia
 CA	+4916-12307	America/Vancouver	Pacific Time - west British Columbia
 CA	+6043-13503	America/Whitehorse	Pacific Time - south Yukon
@@ -135,10 +137,10 @@ CL	-3327-07040	America/Santiago	most locations
 CL	-2710-10927	Pacific/Easter	Easter Island & Sala y Gomez
 CM	+0403+00942	Africa/Douala
 CN	+3114+12128	Asia/Shanghai	east China - Beijing, Guangdong, Shanghai, etc.
-CN	+4545+12641	Asia/Harbin	Heilongjiang
-CN	+2934+10635	Asia/Chongqing	central China - Gansu, Guizhou, Sichuan, Yunnan, etc.
-CN	+4348+08735	Asia/Urumqi	Tibet & most of Xinjiang Uyghur
-CN	+3929+07559	Asia/Kashgar	southwest Xinjiang Uyghur
+CN	+4545+12641	Asia/Harbin	Heilongjiang (except Mohe), Jilin
+CN	+2934+10635	Asia/Chongqing	central China - Sichuan, Yunnan, Guangxi, Shaanxi, Guizhou, etc.
+CN	+4348+08735	Asia/Urumqi	most of Tibet & Xinjiang
+CN	+3929+07559	Asia/Kashgar	west Tibet & Xinjiang
 CO	+0436-07405	America/Bogota
 CR	+0956-08405	America/Costa_Rica
 CS	+4450+02030	Europe/Belgrade
@@ -176,11 +178,12 @@ GB	+512830-0001845	Europe/London
 GD	+1203-06145	America/Grenada
 GE	+4143+04449	Asia/Tbilisi
 GF	+0456-05220	America/Cayenne
+GG	+4927-00232	Europe/Guernsey
 GH	+0533-00013	Africa/Accra
 GI	+3608-00521	Europe/Gibraltar
 GL	+6411-05144	America/Godthab	most locations
 GL	+7646-01840	America/Danmarkshavn	east coast, north of Scoresbysund
-GL	+7030-02215	America/Scoresbysund	Scoresbysund / Ittoqqortoormiit
+GL	+7029-02158	America/Scoresbysund	Scoresbysund / Ittoqqortoormiit
 GL	+7634-06847	America/Thule	Thule / Pituffik
 GM	+1328-01639	Africa/Banjul
 GN	+0931-01343	Africa/Conakry
@@ -203,12 +206,14 @@ ID	-0507+11924	Asia/Makassar	east & south Borneo, Celebes, Bali, Nusa Tengarra, 
 ID	-0232+14042	Asia/Jayapura	Irian Jaya & the Moluccas
 IE	+5320-00615	Europe/Dublin
 IL	+3146+03514	Asia/Jerusalem
+IM	+5409-00428	Europe/Isle_of_Man
 IN	+2232+08822	Asia/Calcutta
 IO	-0720+07225	Indian/Chagos
 IQ	+3321+04425	Asia/Baghdad
 IR	+3540+05126	Asia/Tehran
 IS	+6409-02151	Atlantic/Reykjavik
 IT	+4154+01229	Europe/Rome
+JE	+4912-00237	Europe/Jersey
 JM	+1800-07648	America/Jamaica
 JO	+3157+03556	Asia/Amman
 JP	+353916+1394441	Asia/Tokyo
@@ -256,7 +261,7 @@ MO	+2214+11335	Asia/Macau
 MP	+1512+14545	Pacific/Saipan
 MQ	+1436-06105	America/Martinique
 MR	+1806-01557	Africa/Nouakchott
-MS	+1644-06213	America/Montserrat
+MS	+1643-06213	America/Montserrat
 MT	+3554+01431	Europe/Malta
 MU	-2010+05730	Indian/Mauritius
 MV	+0410+07330	Indian/Maldives
@@ -309,7 +314,8 @@ RE	-2052+05528	Indian/Reunion
 RO	+4426+02606	Europe/Bucharest
 RU	+5443+02030	Europe/Kaliningrad	Moscow-01 - Kaliningrad
 RU	+5545+03735	Europe/Moscow	Moscow+00 - west Russia
-RU	+5312+05009	Europe/Samara	Moscow+01 - Caspian Sea
+RU	+4844+04425	Europe/Volgograd	Moscow+00 - Caspian Sea
+RU	+5312+05009	Europe/Samara	Moscow+01 - Samara, Udmurtia
 RU	+5651+06036	Asia/Yekaterinburg	Moscow+02 - Urals
 RU	+5500+07324	Asia/Omsk	Moscow+03 - west Siberia
 RU	+5502+08255	Asia/Novosibirsk	Moscow+03 - Novosibirsk
@@ -370,13 +376,16 @@ US	+404251-0740023	America/New_York	Eastern Time
 US	+421953-0830245	America/Detroit	Eastern Time - Michigan - most locations
 US	+381515-0854534	America/Kentucky/Louisville	Eastern Time - Kentucky - Louisville area
 US	+364947-0845057	America/Kentucky/Monticello	Eastern Time - Kentucky - Wayne County
-US	+394606-0860929	America/Indiana/Indianapolis	Eastern Standard Time - Indiana - most locations
-US	+382232-0862041	America/Indiana/Marengo	Eastern Standard Time - Indiana - Crawford County
-US	+411745-0863730	America/Indiana/Knox	Eastern Standard Time - Indiana - Starke County
-US	+384452-0850402	America/Indiana/Vevay	Eastern Standard Time - Indiana - Switzerland County
+US	+394606-0860929	America/Indiana/Indianapolis	Eastern Time - Indiana - most locations
+US	+382232-0862041	America/Indiana/Marengo	Eastern Time - Indiana - Crawford County
+US	+411745-0863730	America/Indiana/Knox	Eastern Time - Indiana - Starke County
+US	+384452-0850402	America/Indiana/Vevay	Eastern Time - Indiana - Switzerland County
 US	+415100-0873900	America/Chicago	Central Time
-US	+450628-0873651	America/Menominee	Central Time - Michigan - Wisconsin border
+US	+384038-0873143	America/Indiana/Vincennes	Central Time - Indiana - Daviess, Dubois, Knox, Martin, Perry & Pulaski Counties
+US	+382931-0871643	America/Indiana/Petersburg	Central Time - Indiana - Pike County
+US	+450628-0873651	America/Menominee	Central Time - Michigan - Dickinson, Gogebic, Iron & Menominee Counties
 US	+470659-1011757	America/North_Dakota/Center	Central Time - North Dakota - Oliver County
+US	+465042-1012439	America/North_Dakota/New_Salem	Central Time - North Dakota - Morton County (except Mandan area)
 US	+394421-1045903	America/Denver	Mountain Time
 US	+433649-1161209	America/Boise	Mountain Time - south Idaho & east Oregon
 US	+364708-1084111	America/Shiprock	Mountain Time - Navajo

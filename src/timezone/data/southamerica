@@ -1,13 +1,14 @@
-# @(#)southamerica	7.61
+# @(#)southamerica	8.3
+# <pre>
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert (1999-07-07):
+# From Paul Eggert (2006-03-22):
 # A good source for time zone historical data outside the U.S. is
-# Thomas G. Shanks, The International Atlas (5th edition),
-# San Diego: ACS Publications, Inc. (1999).
+# Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
+# San Diego: ACS Publications, Inc. (2003).
 #
 # Gwillim Law writes that a good source
 # for recent time zone data is the International Air Transport
@@ -15,8 +16,8 @@
 # published semiannually.  Law sent in several helpful summaries
 # of the IATA's data after 1990.
 #
-# Except where otherwise noted, Shanks is the source for entries through 1990,
-# and IATA SSIM is the source for entries after 1990.
+# Except where otherwise noted, Shanks & Pottenger is the source for
+# entries through 1990, and IATA SSIM is the source for entries afterwards.
 #
 # Earlier editions of these tables used the North American style (e.g. ARST and
 # ARDT for Argentine Standard and Daylight Time), but the following quote
@@ -91,8 +92,6 @@ Rule	Arg	1988	only	-	Dec	 1	0:00	1:00	S
 # obtaining the data from the:
 # Talleres de Hidrografia Naval Argentina
 # (Argentine Naval Hydrography Institute)
-#
-# Shanks stops after 1992-03-01; go with Otero.
 Rule	Arg	1989	1993	-	Mar	Sun>=1	0:00	0	-
 Rule	Arg	1989	1992	-	Oct	Sun>=15	0:00	1:00	S
 #
@@ -149,12 +148,12 @@ Rule	Arg	2000	only	-	Mar	Sun>=1	0:00	0	-
 # It's Law No. 7,210.  This change is due to a public power emergency, so for
 # now we'll assume it's for this year only.
 #
-# From Paul Eggert (2002-01-22):
+# From Paul Eggert (2006-03-22):
 # <a href="http://www.spicasc.net/horvera.html">
-# Hora de verano para la Republica Argentina (2000-10-01)
+# Hora de verano para la Republica Argentina (2003-06-08)
 # </a> says that standard time in Argentina from 1894-10-31
 # to 1920-05-01 was -4:16:48.25.  Go with this more-precise value
-# over Shanks.
+# over Shanks & Pottenger.
 #
 # From Mariano Absatz (2004-06-05):
 # These media articles from a major newspaper mostly cover the current state:
@@ -201,8 +200,8 @@ Rule	Arg	2000	only	-	Mar	Sun>=1	0:00	0	-
 # http://www.sanjuan.gov.ar/prensa/archivo/000426.html
 # http://www.sanjuan.gov.ar/prensa/archivo/000441.html
 
-# Unless otherwise specified, data are from Shanks through 1992, from
-# the IATA otherwise.  As noted below, Shanks says that
+# Unless otherwise specified, data are from Shanks & Pottenger through 1992,
+# from the IATA otherwise.  As noted below, Shanks & Pottenger say that
 # America/Cordoba split into 6 subregions during 1991/1992, but we
 # haven't verified this yet so for now we'll keep it a single region.
 #
@@ -221,7 +220,7 @@ Zone America/Argentina/Buenos_Aires -3:53:48 - LMT 1894 Oct 31
 # Formosa (FM), Salta (SA), Santiago del Estero (SE), Cordoba (CB),
 # San Luis (SL), La Pampa (LP), Neuquen (NQ), Rio Negro (RN)
 #
-# Shanks also makes the following claims, which we haven't verified:
+# Shanks & Pottenger also make the following claims, which we haven't verified:
 # - Formosa switched to -3:00 on 1991-01-07.
 # - Misiones switched to -3:00 on 1990-12-29.
 # - Chaco switched to -3:00 on 1991-01-04.
@@ -525,12 +524,6 @@ Rule	Brazil	1997	only	-	Feb	16	 0:00	0	-
 # This year, the ending date of DS was postponed to March 1
 # to help dealing with the shortages of electric power.
 #
-# From Paul Eggert (1998-02-25):
-# <a href="http://churchnet.ucsm.ac.uk/news/files2/news165.htm">
-# Brazil Prepares for Papal Visit
-# </a>,
-# Church Net UK (1997-10-02).
-#
 # Decree 2,317 (1997-09-04), adopted by same states.
 Rule	Brazil	1997	only	-	Oct	 6	 0:00	1:00	S
 # Decree <a href="http://pcdsh01.on.br/figuras/HV2495.JPG">2,495</a>
@@ -565,11 +558,12 @@ Rule	Brazil	2003	only	-	Oct	19	 0:00	1:00	S
 # Decree 5,223 (2004-10-01) reestablishes DST in MT.
 # <a href="http://www.planalto.gov.br/ccivil_03/_Ato2004-2006/2004/Decreto/D5223.htm"></a>
 Rule	Brazil	2004	only	-	Nov	 2	 0:00	1:00	S
+# Decree <a href="http://pcdsh01.on.br/DecHV5539.gif">5,539</a> (2005-09-19),
+# adopted by the same states as before.
+Rule	Brazil	2005	max	-	Oct	Sun>=15	 0:00	1:00	S
 # The latest ruleset listed above says that the following states observe DST:
 # DF, ES, GO, MG, MS, MT, PR, RJ, RS, SC, SP.
-#
-Rule	Brazil	2005	max	-	Oct	Sun>=15	 0:00	1:00	S
-# For dates after mid-2005, the above rules with TO="max" are guesses
+# For dates after mid-2006, the above rules with TO="max" are guesses
 # and are quite possibly wrong, but are more likely than no DST at all.
 
 
@@ -716,7 +710,7 @@ Zone America/Rio_Branco	-4:31:12 -	LMT	1914
 # It clearly confirms my earlier suggestion, that DST begins at 22:00
 # on Easter Island....  But it also seems to be saying that the
 # observance of DST in Chile began in 1966, rather than 1969 as
-# ... [Shanks] has it....
+# ... [Shanks & Pottenger have] it....
 #
 # My translation:
 #
@@ -728,8 +722,8 @@ Zone America/Rio_Branco	-4:31:12 -	LMT	1914
 # to Easter Island and Sala y Gomez Island, will be set forward at
 # midnight and at 22:00, respectively, by 20 minutes."
 
-# From Paul Eggert (2001-05-04):
-# Go with this article in preference to Shanks's 1969 date for modern DST.
+# From Paul Eggert (2006-03-22):
+# Go with Law in preference to Shanks & Pottenger's 1969 date for modern DST.
 # Assume this rule has been used since DST was introduced in the islands.
 
 # From Paul Eggert (2002-10-24):
@@ -756,7 +750,7 @@ Zone America/Santiago	-4:42:40 -	LMT	1890
 			-4:00	Chile	CL%sT
 Zone Pacific/Easter	-7:17:28 -	LMT	1890	    # Mataveri
 			-7:17:28 -	MMT	1932 Sep    # Mataveri Mean Time
-			-7:00	Chile	EAS%sT	1982 Mar 14 # Easter I Time
+			-7:00	Chile	EAS%sT	1982 Mar 13 21:00 # Easter I Time
 			-6:00	Chile	EAS%sT
 #
 # Sala y Gomez Island is like Pacific/Easter.
@@ -764,11 +758,9 @@ Zone Pacific/Easter	-7:17:28 -	LMT	1890	    # Mataveri
 # San Felix, and Antarctic bases, are like America/Santiago.
 
 # Colombia
-# Shanks specifies 24:00 for 1992 transition times; go with IATA,
-# as it seems implausible to change clocks at midnight New Year's Eve.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	CO	1992	only	-	May	 2	0:00	1:00	S
-Rule	CO	1992	only	-	Dec	31	0:00	0	-
+Rule	CO	1992	only	-	May	 3	0:00	1:00	S
+Rule	CO	1993	only	-	Apr	 4	0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Bogota	-4:56:20 -	LMT	1884 Mar 13
 			-4:56:20 -	BMT	1914 Nov 23 # Bogota Mean Time
@@ -777,10 +769,21 @@ Zone	America/Bogota	-4:56:20 -	LMT	1884 Mar 13
 # no information; probably like America/Bogota
 
 # Curacao
-# Shanks says that Bottom and Oranjestad have been at -4:00 since
-# standard time was introduced on 1912-03-02; and that Kralendijk and Rincon
-# used Kralendijk Mean Time (-4:33:08) from 1912-02-02 to 1965-01-01.
-# This all predates our 1970 cutoff, though.
+#
+# From Paul Eggert (2006-03-22): 
+# Shanks & Pottenger say that The Bottom and Philipsburg have been at
+# -4:00 since standard time was introduced on 1912-03-02; and that
+# Kralendijk and Rincon used Kralendijk Mean Time (-4:33:08) from
+# 1912-02-02 to 1965-01-01.  The former is dubious, since S&P also say
+# Saba Island has been like Curacao.
+# This all predates our 1970 cutoff, though.  
+#
+# By July 2007 Curacao and St Maarten are planned to become
+# associated states within the Netherlands, much like Aruba;
+# Bonaire, Saba and St Eustatius would become directly part of the
+# Netherlands as Kingdom Islands.  This won't affect their time zones
+# though, as far as we know.
+# 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Curacao	-4:35:44 -	LMT	1912 Feb 12	# Willemstad
 			-4:30	-	ANT	1965 # Netherlands Antilles Time
@@ -797,9 +800,9 @@ Zone Pacific/Galapagos	-5:58:24 -	LMT	1931 # Puerto Baquerizo Moreno
 
 # Falklands
 
-# From Paul Eggert (2001-03-05):
-# Between 1990 and 2000 inclusive, Shanks and the IATA agree except
-# the IATA gives 1996-09-08.  Go with Shanks.
+# From Paul Eggert (2006-03-22):
+# Between 1990 and 2000 inclusive, Shanks & Pottenger and the IATA agree except
+# the IATA gives 1996-09-08.  Go with Shanks & Pottenger.
 
 # From Falkland Islands Government Office, London (2001-01-22)
 # via Jesper Norgaard:
@@ -882,9 +885,9 @@ Zone	America/Guyana	-3:52:40 -	LMT	1915 Mar	# Georgetown
 			-4:00	-	GYT
 
 # Paraguay
-# From Paul Eggert (1999-10-29):
-# Shanks (1999) says that spring transitions are from 01:00 -> 02:00,
-# and autumn transitions are from 00:00 -> 23:00.  Go with earlier
+# From Paul Eggert (2006-03-22):
+# Shanks & Pottenger say that spring transitions are from 01:00 -> 02:00,
+# and autumn transitions are from 00:00 -> 23:00.  Go with pre-1999
 # editions of Shanks, and with the IATA, who say transitions occur at 00:00.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Para	1975	1988	-	Oct	 1	0:00	1:00	S
@@ -919,9 +922,9 @@ Rule	Para	1996	only	-	Mar	 1	0:00	0	-
 # http://gateway.abc.com.py:8000/pub/pag04.mbr/artic?FHA=2001-03-03-02.24.52.900592
 #
 Rule	Para	1996	2001	-	Oct	Sun>=1	0:00	1:00	S
-# IATA SSIM (1997-09) says Mar 1; go with Shanks.
+# IATA SSIM (1997-09) says Mar 1; go with Shanks & Pottenger.
 Rule	Para	1997	only	-	Feb	lastSun	0:00	0	-
-# Shanks says 1999-02-28; IATA SSIM (1999-02) says 1999-02-27, but
+# Shanks & Pottenger say 1999-02-28; IATA SSIM (1999-02) says 1999-02-27, but
 # (1999-09) reports no date; go with above sources and Gerd Knops (2001-02-27).
 Rule	Para	1998	2001	-	Mar	Sun>=1	0:00	0	-
 # From Rives McDow (2002-02-28):
@@ -953,8 +956,8 @@ Zone America/Asuncion	-3:50:40 -	LMT	1890
 # When we were in Peru in 1985-1986, they apparently switched over
 # sometime between December 29 and January 3 while we were on the Amazon.
 #
-# From Paul Eggert (2003-11-02):
-# Shanks doesn't have this transition.  Assume 1986 was like 1987.
+# From Paul Eggert (2006-03-22):
+# Shanks & Pottenger don't have this transition.  Assume 1986 was like 1987.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Peru	1938	only	-	Jan	 1	0:00	1:00	S
@@ -965,7 +968,7 @@ Rule	Peru	1986	1987	-	Jan	 1	0:00	1:00	S
 Rule	Peru	1986	1987	-	Apr	 1	0:00	0	-
 Rule	Peru	1990	only	-	Jan	 1	0:00	1:00	S
 Rule	Peru	1990	only	-	Apr	 1	0:00	0	-
-# IATA is ambiguous for 1993/1995; go with Shanks.
+# IATA is ambiguous for 1993/1995; go with Shanks & Pottenger.
 Rule	Peru	1994	only	-	Jan	 1	0:00	1:00	S
 Rule	Peru	1994	only	-	Apr	 1	0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -998,23 +1001,23 @@ Zone America/Port_of_Spain -4:06:04 -	LMT	1912 Mar 2
 # Uruguay
 # From Paul Eggert (1993-11-18):
 # Uruguay wins the prize for the strangest peacetime manipulation of the rules.
-# From Shanks:
+# From Shanks & Pottenger:
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-# Whitman gives 1923 Oct 1; go with Shanks.
+# Whitman gives 1923 Oct 1; go with Shanks & Pottenger.
 Rule	Uruguay	1923	only	-	Oct	 2	 0:00	0:30	HS
 Rule	Uruguay	1924	1926	-	Apr	 1	 0:00	0	-
 Rule	Uruguay	1924	1925	-	Oct	 1	 0:00	0:30	HS
 Rule	Uruguay	1933	1935	-	Oct	lastSun	 0:00	0:30	HS
-# Shanks gives 1935 Apr 1 0:00 and 1936 Mar 30 0:00; go with Whitman.
+# Shanks & Pottenger give 1935 Apr 1 0:00 & 1936 Mar 30 0:00; go with Whitman.
 Rule	Uruguay	1934	1936	-	Mar	Sat>=25	23:30s	0	-
 Rule	Uruguay	1936	only	-	Nov	 1	 0:00	0:30	HS
 Rule	Uruguay	1937	1941	-	Mar	lastSun	 0:00	0	-
-# Whitman gives 1937 Oct 3; go with Shanks.
+# Whitman gives 1937 Oct 3; go with Shanks & Pottenger.
 Rule	Uruguay	1937	1940	-	Oct	lastSun	 0:00	0:30	HS
 # Whitman gives 1941 Oct 24 - 1942 Mar 27, 1942 Dec 14 - 1943 Apr 13,
-# and 1943 Apr 13 ``to present time''; go with Shanks.
-Rule	Uruguay	1941	only	-	Aug	 1	 0:00	0	-
-Rule	Uruguay	1942	only	-	Jan	 1	 0:00	0:30	HS
+# and 1943 Apr 13 ``to present time''; go with Shanks & Pottenger.
+Rule	Uruguay	1941	only	-	Aug	 1	 0:00	0:30	HS
+Rule	Uruguay	1942	only	-	Jan	 1	 0:00	0	-
 Rule	Uruguay	1942	only	-	Dec	14	 0:00	1:00	S
 Rule	Uruguay	1943	only	-	Mar	14	 0:00	0	-
 Rule	Uruguay	1959	only	-	May	24	 0:00	1:00	S
@@ -1040,7 +1043,7 @@ Rule	Uruguay	1988	only	-	Mar	14	 0:00	0	-
 Rule	Uruguay	1988	only	-	Dec	11	 0:00	1:00	S
 Rule	Uruguay	1989	only	-	Mar	12	 0:00	0	-
 Rule	Uruguay	1989	only	-	Oct	29	 0:00	1:00	S
-# Shanks says no DST was observed in 1990/1 and 1991/2,
+# Shanks & Pottenger say no DST was observed in 1990/1 and 1991/2,
 # and that 1992/3's DST was from 10-25 to 03-01.  Go with IATA.
 Rule	Uruguay	1990	1992	-	Mar	Sun>=1	 0:00	0	-
 Rule	Uruguay	1990	1991	-	Oct	Sun>=21	 0:00	1:00	S
@@ -1055,6 +1058,12 @@ Rule	Uruguay	2004	only	-	Sep	19	 0:00	1:00	S
 # save energy ... it was postponed two weeks....
 # http://www.presidencia.gub.uy/_Web/noticias/2005/03/2005031005.htm
 Rule	Uruguay	2005	only	-	Mar	27	 2:00	0	-
+# From Eduardo Cota (2005-09-27):
+# http://www.presidencia.gub.uy/_Web/decretos/2005/09/CM%20119_09%2009%202005_00001.PDF
+# This means that from 2005-10-09 at 02:00 local time, until 2006-03-12 at
+# 02:00 local time, official time in Uruguay will be at GMT -2.
+Rule	Uruguay	2005	only	-	Oct	 9	 2:00	1:00	S
+Rule	Uruguay	2006	only	-	Mar	12	 2:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Montevideo	-3:44:44 -	LMT	1898 Jun 28
 			-3:44:44 -	MMT	1920 May  1	# Montevideo MT

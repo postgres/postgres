@@ -1,14 +1,15 @@
-# @(#)africa	7.39
+# @(#)africa	8.3
+# <pre>
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert (1999-03-22):
+# From Paul Eggert (2006-03-22):
 #
 # A good source for time zone historical data outside the U.S. is
-# Thomas G. Shanks, The International Atlas (5th edition),
-# San Diego: ACS Publications, Inc. (1999).
+# Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
+# San Diego: ACS Publications, Inc. (2003).
 #
 # Gwillim Law writes that a good source
 # for recent time zone data is the International Air Transport
@@ -16,8 +17,8 @@
 # published semiannually.  Law sent in several helpful summaries
 # of the IATA's data after 1990.
 #
-# Except where otherwise noted, Shanks is the source for entries through 1990,
-# and IATA SSIM is the source for entries after 1990.
+# Except where otherwise noted, Shanks & Pottenger is the source for
+# entries through 1990, and IATA SSIM is the source for entries afterwards.
 #
 # Another source occasionally used is Edward W. Whitman, World Time Differences,
 # Whitman Publishing Co, 2 Niagara Av, Ealing, London (undated), which
@@ -64,7 +65,7 @@
 # Algeria
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Algeria	1916	only	-	Jun	14	23:00s	1:00	S
-Rule	Algeria	1916	1919	-	Oct	Sun<=7	23:00s	0	-
+Rule	Algeria	1916	1919	-	Oct	Sun>=1	23:00s	0	-
 Rule	Algeria	1917	only	-	Mar	24	23:00s	1:00	S
 Rule	Algeria	1918	only	-	Mar	 9	23:00s	1:00	S
 Rule	Algeria	1919	only	-	Mar	 1	23:00s	1:00	S
@@ -74,7 +75,7 @@ Rule	Algeria	1921	only	-	Mar	14	23:00s	1:00	S
 Rule	Algeria	1921	only	-	Jun	21	23:00s	0	-
 Rule	Algeria	1939	only	-	Sep	11	23:00s	1:00	S
 Rule	Algeria	1939	only	-	Nov	19	 1:00	0	-
-Rule	Algeria	1944	1945	-	Apr	Mon<=7	 2:00	1:00	S
+Rule	Algeria	1944	1945	-	Apr	Mon>=1	 2:00	1:00	S
 Rule	Algeria	1944	only	-	Oct	 8	 2:00	0	-
 Rule	Algeria	1945	only	-	Sep	16	 1:00	0	-
 Rule	Algeria	1971	only	-	Apr	25	23:00s	1:00	S
@@ -85,7 +86,8 @@ Rule	Algeria	1978	only	-	Mar	24	 1:00	1:00	S
 Rule	Algeria	1978	only	-	Sep	22	 3:00	0	-
 Rule	Algeria	1980	only	-	Apr	25	 0:00	1:00	S
 Rule	Algeria	1980	only	-	Oct	31	 2:00	0	-
-# Shanks gives 0:09 for Paris Mean Time; go with Howse's more precise 0:09:21.
+# Shanks & Pottenger give 0:09:20 for Paris Mean Time; go with Howse's
+# more precise 0:09:21.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Algiers	0:12:12 -	LMT	1891 Mar 15 0:01
 			0:09:21	-	PMT	1911 Mar 11    # Paris Mean Time
@@ -105,7 +107,8 @@ Zone	Africa/Luanda	0:52:56	-	LMT	1892
 			1:00	-	WAT
 
 # Benin
-# Whitman says they switched to 1:00 in 1946, not 1934; go with Shanks.
+# Whitman says they switched to 1:00 in 1946, not 1934;
+# go with Shanks & Pottenger.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Africa/Porto-Novo	0:10:28	-	LMT	1912
 			0:00	-	GMT	1934 Feb 26
@@ -129,7 +132,7 @@ Zone Africa/Bujumbura	1:57:28	-	LMT	1890
 			2:00	-	CAT
 
 # Cameroon
-# Whitman says they switched to 1:00 in 1920; go with Shanks.
+# Whitman says they switched to 1:00 in 1920; go with Shanks & Pottenger.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Douala	0:38:48	-	LMT	1912
 			1:00	-	WAT
@@ -228,9 +231,9 @@ Zone	Africa/Asmera	2:35:32 -	LMT	1870
 			3:00	-	EAT
 
 # Ethiopia
-# From Paul Eggert (1997-10-05):
-# Shanks writes that Ethiopia had six narrowly-spaced time zones between
-# 1870 and 1890, and that they merged to 38E50 (2:35:20) in 1890.
+# From Paul Eggert (2006-03-22):
+# Shanks & Pottenger write that Ethiopia had six narrowly-spaced time zones
+# between 1870 and 1890, and that they merged to 38E50 (2:35:20) in 1890.
 # We'll guess that 38E50 is for Adis Dera.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Africa/Addis_Ababa	2:34:48 -	LMT	1870
@@ -251,7 +254,8 @@ Zone	Africa/Banjul	-1:06:36 -	LMT	1912
 
 # Ghana
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-# Whitman says DST was observed from 1931 to ``the present''; go with Shanks.
+# Whitman says DST was observed from 1931 to ``the present'';
+# go with Shanks & Pottenger.
 Rule	Ghana	1936	1942	-	Sep	 1	0:00	0:20	GHST
 Rule	Ghana	1936	1942	-	Dec	31	0:00	0	GMT
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -287,13 +291,14 @@ Zone	Africa/Maseru	1:50:00 -	LMT	1903 Mar
 			2:00	-	SAST
 
 # Liberia
-# From Paul Eggert (2001-07-17):
+# From Paul Eggert (2006-03-22):
 # In 1972 Liberia was the last country to switch
 # from a UTC offset that was not a multiple of 15 or 20 minutes.
 # Howse reports that it was in honor of their president's birthday.
-# Shanks reports the date as May 1, whereas Howse reports Jan; go with Shanks.
-# For Liberia before 1972, Shanks reports -0:44, whereas Howse and Whitman
-# each report -0:44:30; go with the more precise figure.
+# Shank & Pottenger report the date as May 1, whereas Howse reports Jan;
+# go with Shanks & Pottenger.
+# For Liberia before 1972, Shanks & Pottenger report -0:44, whereas Howse and
+# Whitman each report -0:44:30; go with the more precise figure.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Monrovia	-0:43:08 -	LMT	1882
 			-0:43:08 -	MMT	1919 Mar # Monrovia Mean Time
@@ -323,7 +328,7 @@ Zone	Africa/Tripoli	0:52:44 -	LMT	1920
 			1:00	Libya	CE%sT	1959
 			2:00	-	EET	1982
 			1:00	Libya	CE%sT	1990 May  4
-# The following entries are all from Shanks;
+# The following entries are from Shanks & Pottenger;
 # the IATA SSIM data contain some obvious errors.
 			2:00	-	EET	1996 Sep 30
 			1:00	-	CET	1997 Apr  4
@@ -402,8 +407,8 @@ Zone	Africa/Maputo	2:10:20 -	LMT	1903 Mar
 			2:00	-	CAT
 
 # Namibia
-# The 1994-04-03 transition is from Shanks.
-# Shanks reports no DST after 1998-04; go with IATA.
+# The 1994-04-03 transition is from Shanks & Pottenger.
+# Shanks & Pottenger report no DST after 1998-04; go with IATA.
 # RULE	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Namibia	1994	max	-	Sep	Sun>=1	2:00	1:00	S
 Rule	Namibia	1995	max	-	Apr	Sun>=1	2:00	0	-
@@ -487,7 +492,7 @@ Zone	Indian/Mahe	3:41:48 -	LMT	1906 Jun	# Victoria
 
 # Sierra Leone
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-# Whitman gives Mar 31 - Aug 31 for 1931 on; go with Shanks.
+# Whitman gives Mar 31 - Aug 31 for 1931 on; go with Shanks & Pottenger.
 Rule	SL	1935	1942	-	Jun	 1	0:00	0:40	SLST
 Rule	SL	1935	1942	-	Oct	 1	0:00	0	WAT
 Rule	SL	1957	1962	-	Jun	 1	0:00	1:00	SLST
@@ -556,7 +561,6 @@ Zone	Africa/Lome	0:04:52 -	LMT	1893
 # Tunisia
 
 # From Gwillim Law (2005-04-30):
-#
 # My correspondent, Risto Nykanen, has alerted me to another adoption of DST,
 # this time in Tunisia.  According to Yahoo France News
 # <http://fr.news.yahoo.com/050426/5/4dumk.html>, in a story attributed to AP
@@ -570,6 +574,12 @@ Zone	Africa/Lome	0:04:52 -	LMT	1893
 # <http://www.lapresse.tn/archives/archives280405/actualites/lheure.html>
 # ... DST for 2005: on: Sun May 1 0h standard time, off: Fri Sept. 30,
 # 1h standard time.
+#
+# From Atef Loukil (2006-03-28):
+# The daylight saving time will be the same each year:
+# Beginning      : the last Sunday of March at 02:00
+# Ending         : the last Sunday of October at 03:00 ...
+# http://www.tap.info.tn/en/index.php?option=com_content&task=view&id=1188&Itemid=50
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Tunisia	1939	only	-	Apr	15	23:00s	1:00	S
@@ -595,8 +605,11 @@ Rule	Tunisia	1989	only	-	Mar	26	 0:00s	1:00	S
 Rule	Tunisia	1990	only	-	May	 1	 0:00s	1:00	S
 Rule	Tunisia	2005	only	-	May	 1	 0:00s	1:00	S
 Rule	Tunisia	2005	only	-	Sep	30	 1:00s	0	-
-# Shanks gives 0:09 for Paris Mean Time; go with Howse's more precise 0:09:21.
-# Shanks says the 1911 switch occurred on Mar 9; go with Howse's Mar 11.
+Rule	Tunisia	2006	max	-	Mar	lastSun	 2:00s	1:00	S
+Rule	Tunisia	2006	max	-	Oct	lastSun	 2:00s	0	-
+# Shanks & Pottenger give 0:09:20 for Paris Mean Time; go with Howse's
+# more precise 0:09:21.
+# Shanks & Pottenger say the 1911 switch was on Mar 9; go with Howse's Mar 11.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Tunis	0:40:44 -	LMT	1881 May 12
 			0:09:21	-	PMT	1911 Mar 11    # Paris Mean Time

@@ -1,4 +1,6 @@
-# @(#)australasia	7.73
+# @(#)australasia	8.3
+# <pre>
+
 # This file also includes Pacific islands.
 
 # Notes are at the end of this file
@@ -208,7 +210,7 @@ Zone Indian/Christmas	7:02:52 -	LMT	1895 Feb
 			7:00	-	CXT	# Christmas Island Time
 
 # Cook Is
-# From Shanks:
+# From Shanks & Pottenger:
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cook	1978	only	-	Nov	12	0:00	0:30	HS
 Rule	Cook	1979	1991	-	Mar	Sun>=1	0:00	0	-
@@ -306,7 +308,7 @@ Zone	Pacific/Nauru	11:07:40 -	LMT	1921 Jan 15	# Uaobe
 Rule	NC	1977	1978	-	Dec	Sun>=1	0:00	1:00	S
 Rule	NC	1978	1979	-	Feb	27	0:00	0	-
 Rule	NC	1996	only	-	Dec	 1	2:00s	1:00	S
-# Shanks says the following was at 2:00; go with IATA.
+# Shanks & Pottenger say the following was at 2:00; go with IATA.
 Rule	NC	1997	only	-	Mar	 2	2:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Pacific/Noumea	11:05:48 -	LMT	1912 Jan 13
@@ -505,10 +507,10 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert (1999-10-29):
+# From Paul Eggert (2006-03-22):
 # A good source for time zone historical data outside the U.S. is
-# Thomas G. Shanks, The International Atlas (5th edition),
-# San Diego: ACS Publications, Inc. (1999).
+# Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
+# San Diego: ACS Publications, Inc. (2003).
 #
 # Gwillim Law writes that a good source
 # for recent time zone data is the International Air Transport
@@ -516,8 +518,8 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # published semiannually.  Law sent in several helpful summaries
 # of the IATA's data after 1990.
 #
-# Except where otherwise noted, Shanks is the source for entries through 1990,
-# and IATA SSIM is the source for entries after 1990.
+# Except where otherwise noted, Shanks & Pottenger is the source for
+# entries through 1990, and IATA SSIM is the source for entries afterwards.
 #
 # Another source occasionally used is Edward W. Whitman, World Time Differences,
 # Whitman Publishing Co, 2 Niagara Av, Ealing, London (undated), which
@@ -551,9 +553,15 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 
 # Australia
 
-# <a href="http://www.dstc.qut.edu.au/DST/marg/daylight.html">
-# Australia's Daylight Saving Times
-# </a>, by Margaret Turner, summarizes daylight saving issues in Australia.
+# From Paul Eggert (2005-12-08):
+# <a href="http://www.bom.gov.au/climate/averages/tables/dst_times.shtml">
+# Implementation Dates of Daylight Saving Time within Australia
+# </a> summarizes daylight saving issues in Australia.
+
+# From Arthur David Olson (2005-12-12):
+# <a href="http://www.lawlink.nsw.gov.au/lawlink/Corporate/ll_agdinfo.nsf/pages/community_relations_daylight_saving">
+# Lawlink NSW:Daylight Saving in New South Wales
+# </a> covers New South Wales in particular.
 
 # From John Mackin (1991-03-06):
 # We in Australia have _never_ referred to DST as `daylight' time.
@@ -578,6 +586,12 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 #	CST	for any place operating at a GMTOFF of 9:30
 #	WST	for any place operating at a GMTOFF of 8:00
 #	EST	for any place operating at a GMTOFF of 10:00
+
+# From Chuck Soper (2006-06-01):
+# I recently found this Australian government web page on time zones:
+# <http://www.australia.gov.au/about-australia-13time>
+# And this government web page lists time zone names and abbreviations:
+# <http://www.bom.gov.au/climate/averages/tables/daysavtm.shtml>
 
 # From Paul Eggert (2001-04-05), summarizing a long discussion about "EST"
 # versus "AEST" etc.:
@@ -661,7 +675,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 #   understood in Australia.
 
 # From Paul Eggert (1995-12-19):
-# Shanks reports 2:00 for all autumn changes in Australia and New Zealand.
+# Shanks & Pottenger report 2:00 for all autumn changes in Australia and NZ.
 # Mark Prior writes that his newspaper
 # reports that NSW's fall 1995 change will occur at 2:00,
 # but Robert Elz says it's been 3:00 in Victoria since 1970
@@ -834,14 +848,14 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # current DST ending dates, no worries.
 #
 # Rule	Oz	1971	1985	-	Oct	lastSun	2:00	1:00	-
-# Rule	Oz	1986	max	-	Oct	Sun<=24	2:00	1:00	-
+# Rule	Oz	1986	max	-	Oct	Sun>=18	2:00	1:00	-
 # Rule	Oz	1972	only	-	Feb	27	3:00	0	-
 # Rule	Oz	1973	1986	-	Mar	Sun>=1	3:00	0	-
-# Rule	Oz	1987	max	-	Mar	Sun<=21	3:00	0	-
+# Rule	Oz	1987	max	-	Mar	Sun>=15	3:00	0	-
 # Zone	Australia/Tasmania	10:00	Oz	EST
 # Zone	Australia/South		9:30	Oz	CST
 # Zone	Australia/Victoria	10:00	Oz	EST	1985 Oct lastSun 2:00
-#				10:00	1:00	EST	1986 Mar Sun<=21 3:00
+#				10:00	1:00	EST	1986 Mar Sun>=15 3:00
 #				10:00	Oz	EST
 
 # From Robert Elz (1991-03-06):
@@ -867,7 +881,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # ...
 # Rule	 AS	1971	max	-	Oct	lastSun	2:00	1:00	D
 # Rule	 AS	1972	1985	-	Mar	Sun>=1	3:00	0	C
-# Rule	 AS	1986	1990	-	Mar	Sun<=21	3:00	0	C
+# Rule	 AS	1986	1990	-	Mar	Sun>=15	3:00	0	C
 # Rule	 AS	1991	max	-	Mar	Sun>=1	3:00	0	C
 
 # From Bradley White (1992-03-11):
@@ -960,17 +974,6 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 #	legislation.  This is very important to understand.
 #	I have researched New South Wales time only...
 
-# From Paul Eggert (1999-09-27):
-# The Information Service of the Australian National Standards Commission
-# <a href="http://www.nsc.gov.au/InfoServ/Ileaflet/il27.htm">
-# Daylight Saving
-# </a> page (1995-04) has an excellent overall history of Australian DST.
-# The Community Relations Division of the NSW Attorney General's Department
-# publishes a history of daylight saving in NSW.  See:
-# <a href="http://www.lawlink.nsw.gov.au/crd.nsf/pages/time2">
-# Lawlink NSW: Daylight Saving in New South Wales
-# </a>
-
 # From Eric Ulevik (1999-05-26):
 # DST will start in NSW on the last Sunday of August, rather than the usual
 # October in 2000.  [See: Matthew Moore,
@@ -1048,7 +1051,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # Lord Howe Island
 
 # From George Shepherd via Simon Woodhead via Robert Elz (1991-03-06):
-# LHI...		[ Courtesy of Pauline Van Winsen.. pauline@Aus ]
+# LHI...		[ Courtesy of Pauline Van Winsen ]
 #					[ Dec 1990 ]
 # Lord Howe Island is located off the New South Wales coast, and is half an
 # hour ahead of NSW time.
@@ -1071,9 +1074,9 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # shown on clocks on LHI. I guess this means that for 30 minutes at the start
 # of DST, LHI is actually 1 hour ahead of the rest of NSW.
 
-# From Paul Eggert (2001-02-09):
-# For Lord Howe dates we use Shanks through 1989, and Lonergan thereafter.
-# For times we use Lonergan.
+# From Paul Eggert (2006-03-22):
+# For Lord Howe dates we use Shanks & Pottenger through 1989, and
+# Lonergan thereafter.  For times we use Lonergan.
 
 ###############################################################################
 
@@ -1088,7 +1091,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # From George Shepherd via Simon Woodhead via Robert Elz (1991-03-06):
 # # The Country of New Zealand   (Australia's east island -) Gee they hate that!
 # #				   or is Australia the west island of N.Z.
-# #	[ courtesy of Geoff Tribble.. Geofft@Aus.. Auckland N.Z. ]
+# #	[ courtesy of Geoff Tribble.. Auckland N.Z. ]
 # #				[ Nov 1990 ]
 # ...
 # Rule	NZ      1974    1988	-	Oct	lastSun	2:00	1:00	D
@@ -1104,16 +1107,16 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # rather than the October 1 value.
 
 # From Paul Eggert (1995-12-19);
-# Shanks reports 2:00 for all autumn changes in Australia and New Zealand.
+# Shank & Pottenger report 2:00 for all autumn changes in Australia and NZ.
 # Robert Uzgalis writes that the New Zealand Daylight
 # Savings Time Order in Council dated 1990-06-18 specifies 2:00 standard
 # time on both the first Sunday in October and the third Sunday in March.
 # As with Australia, we'll assume the tradition is 2:00s, not 2:00.
 #
-# From Paul Eggert (2003-05-26):
+# From Paul Eggert (2006-03-22):
 # The Department of Internal Affairs (DIA) maintains a brief history,
 # as does Carol Squires; see tz-link.htm for the full references.
-# Use these sources in preference to Shanks.
+# Use these sources in preference to Shanks & Pottenger.
 #
 # For Chatham, IATA SSIM (1991/1999) gives the NZ rules but with
 # transitions at 2:45 local standard time; this confirms that Chatham
@@ -1188,8 +1191,8 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # ``I am certain, having lived there for the past decade, that "Truk"
 # (now properly known as Chuuk) ... is in the time zone GMT+10.''
 #
-# Shanks writes that Truk switched from UTC+10 to UTC+11 on 1978-10-01;
-# ignore this for now.
+# Shanks & Pottenger write that Truk switched from UTC+10 to UTC+11
+# on 1978-10-01; ignore this for now.
 
 # From Paul Eggert (1999-10-29):
 # The Federated States of Micronesia Visitors Board writes in
@@ -1282,8 +1285,8 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # on the World Day of Prayer, you would be the first people on Earth
 # to say your prayers in the morning."
 
-# From Paul Eggert (1999-08-12):
-# Shanks says the transition was on 1968-10-01; go with Mundell.
+# From Paul Eggert (2006-03-22):
+# Shanks & Pottenger say the transition was on 1968-10-01; go with Mundell.
 
 # From Eric Ulevik (1999-05-03):
 # Tonga's director of tourism, who is also secretary of the National Millenium
@@ -1375,15 +1378,25 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # mapmakers redrew the IDL following the boundary of Kiribati.  Even that line
 # has a rather arbitrary nature.  The straight-line boundaries between Pacific
 # island nations that are shown on many maps are based on an international
-# convention, but are not legally binding national borders.
-#
-# An Anglo-French Conference on Time-Keeping at Sea (June, 1917) agreed that
-# legal time on the high seas would be zone time, i.e., the standard time at
-# the nearest meridian that is a multiple of fifteen degrees.  The date is
+# convention, but are not legally binding national borders.... The date is
 # governed by the IDL; therefore, even on the high seas, there may be some
 # places as late as fourteen hours later than UTC.  And, since the IDL is not
 # an international standard, there are some places on the high seas where the
 # correct date is ambiguous.
+
+# From Wikipedia <http://en.wikipedia.org/wiki/Time_zone> (2005-08-31):
+# Before 1920, all ships kept local apparent time on the high seas by setting
+# their clocks at night or at the morning sight so that, given the ship's
+# speed and direction, it would be 12 o'clock when the Sun crossed the ship's
+# meridian (12 o'clock = local apparent noon).  During 1917, at the
+# Anglo-French Conference on Time-keeping at Sea, it was recommended that all
+# ships, both military and civilian, should adopt hourly standard time zones
+# on the high seas.  Whenever a ship was within the territorial waters of any
+# nation it would use that nation's standard time.  The captain was permitted
+# to change his ship's clocks at a time of his choice following his ship's
+# entry into another zone time--he often chose midnight.  These zones were
+# adopted by all major fleets between 1920 and 1925 but not by many
+# independent merchant ships until World War II.
 
 # From Paul Eggert, using references suggested by Oscar van Vlijmen
 # (2005-03-20):
