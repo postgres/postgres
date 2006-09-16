@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.30 2006/08/19 01:36:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.31 2006/09/16 20:14:33 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -186,10 +186,11 @@ CREATE RULE pg_settings_n AS
 
 GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
 
-CREATE VIEW pg_timezonenames AS
-    SELECT *
-    FROM pg_timezonenames() AS T
-    (name text, utc_offset interval, is_dst boolean);
+CREATE VIEW pg_timezone_abbrevs AS
+    SELECT * FROM pg_timezone_abbrevs();
+
+CREATE VIEW pg_timezone_names AS
+    SELECT * FROM pg_timezone_names();
 
 -- Statistics views
 

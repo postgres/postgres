@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.44 2006/07/14 14:52:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.45 2006/09/16 20:14:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1135,4 +1135,121 @@ pg_timezone_initialize(void)
 		/* Tell GUC about the value. Will redundantly call pg_tzset() */
 		SetConfigOption("timezone", def_tz, PGC_POSTMASTER, PGC_S_ARGV);
 	}
+}
+
+
+/*
+ * Functions to enumerate available timezones
+ *
+ * Note that pg_tzenumerate_next() will return a pointer into the pg_tzenum
+ * structure, so the data is only valid up to the next call.
+ *
+ * All data is allocated using palloc in the current context.
+ */
+#define MAX_TZDIR_DEPTH 10
+
+struct pg_tzenum {
+   int baselen;
+   int depth;
+   DIR *dirdesc[MAX_TZDIR_DEPTH];
+   char *dirname[MAX_TZDIR_DEPTH];
+   struct pg_tz tz;
+};
+/* typedef pg_tzenum is declared in pgtime.h */
+
+pg_tzenum *
+pg_tzenumerate_start(void) 
+{
+	pg_tzenum *ret = (pg_tzenum *) palloc0(sizeof(pg_tzenum));
+	char *startdir = pstrdup(pg_TZDIR());
+
+	ret->baselen = strlen(startdir) + 1;
+	ret->depth = 0;
+	ret->dirname[0] = startdir;
+	ret->dirdesc[0] = AllocateDir(startdir);
+	if (!ret->dirdesc[0]) 
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m", startdir)));
+	return ret;
+}
+
+void
+pg_tzenumerate_end(pg_tzenum *dir)
+{
+	while (dir->depth >= 0)
+	{
+		FreeDir(dir->dirdesc[dir->depth]);
+		pfree(dir->dirname[dir->depth]);
+		dir->depth--;
+	}
+	pfree(dir);
+}
+
+pg_tz *
+pg_tzenumerate_next(pg_tzenum *dir)
+{
+	while (dir->depth >= 0)
+	{
+		struct dirent *direntry;
+		char fullname[MAXPGPATH];
+		struct stat statbuf;
+
+		direntry = ReadDir(dir->dirdesc[dir->depth], dir->dirname[dir->depth]);
+
+		if (!direntry)
+		{
+			/* End of this directory */
+			FreeDir(dir->dirdesc[dir->depth]);
+			pfree(dir->dirname[dir->depth]);
+			dir->depth--;
+			continue;
+		}
+
+		if (direntry->d_name[0] == '.')
+			continue;
+
+		snprintf(fullname, MAXPGPATH, "%s/%s",
+				 dir->dirname[dir->depth], direntry->d_name);
+		if (stat(fullname, &statbuf) != 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat \"%s\": %m", fullname)));
+
+		if (S_ISDIR(statbuf.st_mode))
+		{
+			/* Step into the subdirectory */
+			if (dir->depth >= MAX_TZDIR_DEPTH-1)
+				ereport(ERROR,
+						(errmsg("timezone directory stack overflow")));
+			dir->depth++;
+			dir->dirname[dir->depth] = pstrdup(fullname);
+			dir->dirdesc[dir->depth] = AllocateDir(fullname);
+			if (!dir->dirdesc[dir->depth]) 
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not open directory \"%s\": %m",
+								fullname)));
+
+			/* Start over reading in the new directory */
+			continue;
+		}
+
+		/*
+		 * Load this timezone using tzload() not pg_tzset(),
+		 * so we don't fill the cache
+		 */
+		if (tzload(fullname + dir->baselen, &dir->tz.state) != 0)
+		{
+			/* Zone could not be loaded, ignore it */
+			continue;
+		}
+
+		/* Timezone loaded OK. */
+		strcpy(dir->tz.TZname, fullname + dir->baselen);
+		return &dir->tz;
+	}
+
+	/* Nothing more found */
+	return NULL;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.170 2006/09/04 01:26:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.171 2006/09/16 20:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3839,21 +3839,21 @@ InstallTimeZoneAbbrevs(tzEntry *abbrevs, int n)
 
 /*
  * This set-returning function reads all the available time zone abbreviations
- * and returns a set of (name, utc_offset, is_dst).
+ * and returns a set of (abbrev, utc_offset, is_dst).
  */
 Datum
-pg_timezonenames(PG_FUNCTION_ARGS)
+pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 {
 	FuncCallContext	   *funcctx;
 	int				   *pindex;
 	Datum				result;
-	Interval		   *resInterval;
 	HeapTuple			tuple;
 	Datum				values[3];
 	bool				nulls[3];
 	char				buffer[TOKMAXLEN + 1];
 	unsigned char	   *p;
 	struct pg_tm		tm;
+	Interval		   *resInterval;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -3876,11 +3876,11 @@ pg_timezonenames(PG_FUNCTION_ARGS)
 		funcctx->user_fctx = (void *) pindex;
 
 		/*
-		 * build tupdesc for result tuples. This must match the
-		 * definition of the pg_timezonenames view in system_views.sql
+		 * build tupdesc for result tuples. This must match this function's
+		 * pg_proc entry!
 		 */
 		tupdesc = CreateTemplateTupleDesc(3, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "abbrev",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "utc_offset",
 						   INTERVALOID, -1, 0);
@@ -3922,6 +3922,117 @@ pg_timezonenames(PG_FUNCTION_ARGS)
 	values[2] = BoolGetDatum(timezonetktbl[*pindex].type == DTZ);
 
 	(*pindex)++;
+
+	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
+
+	SRF_RETURN_NEXT(funcctx, result);
+}
+
+/*
+ * This set-returning function reads all the available full time zones
+ * and returns a set of (name, abbrev, utc_offset, is_dst).
+ */
+Datum
+pg_timezone_names(PG_FUNCTION_ARGS)
+{
+	MemoryContext	oldcontext;
+	FuncCallContext	   *funcctx;
+	pg_tzenum          *tzenum;
+	pg_tz              *tz;
+	Datum				result;
+	HeapTuple			tuple;
+	Datum				values[4];
+	bool				nulls[4];
+	int			tzoff;
+	struct pg_tm		tm;
+	fsec_t		fsec;
+	char	   *tzn;
+	Interval		   *resInterval;
+	struct pg_tm		itm;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		TupleDesc		tupdesc;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function
+		 * calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* initialize timezone scanning code */
+		tzenum = pg_tzenumerate_start();
+		funcctx->user_fctx = (void *) tzenum;
+
+		/*
+		 * build tupdesc for result tuples. This must match this function's
+		 * pg_proc entry!
+		 */
+		tupdesc = CreateTemplateTupleDesc(4, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "abbrev",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "utc_offset",
+						   INTERVALOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "is_dst",
+						   BOOLOID, -1, 0);
+
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+	tzenum = (pg_tzenum *) funcctx->user_fctx;
+
+	/* search for another zone to display */
+	for (;;)
+	{
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		tz = pg_tzenumerate_next(tzenum);
+		MemoryContextSwitchTo(oldcontext);
+
+		if (!tz)
+		{
+			pg_tzenumerate_end(tzenum);
+			funcctx->user_fctx = NULL;
+			SRF_RETURN_DONE(funcctx);
+		}
+
+		/* Convert now() to local time in this zone */
+		if (timestamp2tm(GetCurrentTransactionStartTimestamp(),
+						 &tzoff, &tm, &fsec, &tzn, tz) != 0)
+			continue;			/* ignore if conversion fails */
+
+		/* Ignore zic's rather silly "Factory" time zone */
+		if (tzn && strcmp(tzn, "Local time zone must be set--see zic manual page") == 0)
+			continue;
+
+		/* Found a displayable zone */
+		break;
+	}
+
+	MemSet(nulls, 0, sizeof(nulls));
+
+	values[0] = DirectFunctionCall1(textin,
+									CStringGetDatum(pg_get_timezone_name(tz)));
+
+	values[1] = DirectFunctionCall1(textin,
+									CStringGetDatum(tzn ? tzn : ""));
+
+	MemSet(&itm, 0, sizeof(struct pg_tm));
+	itm.tm_sec = -tzoff;
+	resInterval = (Interval *) palloc(sizeof(Interval));
+	tm2interval(&itm, 0, resInterval);
+	values[2] = IntervalPGetDatum(resInterval);
+
+	values[3] = BoolGetDatum(tm.tm_isdst > 0);
 
 	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 	result = HeapTupleGetDatum(tuple);

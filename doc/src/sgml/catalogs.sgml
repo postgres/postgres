@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.131 2006/09/16 00:30:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.132 2006/09/16 20:14:32 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4564,8 +4564,13 @@
      </row>
 
      <row>
-      <entry><link linkend="view-pg-timezonenames"><structname>pg_timezonenames</structname></link></entry>
+      <entry><link linkend="view-pg-timezone-abbrevs"><structname>pg_timezone_abbrevs</structname></link></entry>
       <entry>time zone abbreviations</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-timezone-names"><structname>pg_timezone_names</structname></link></entry>
+      <entry>time zone names</entry>
      </row>
 
      <row>
@@ -5884,22 +5889,74 @@
 
  </sect1>
 
- <sect1 id="view-pg-timezonenames">
-  <title><structname>pg_timezonenames</structname></title>
+ <sect1 id="view-pg-timezone-abbrevs">
+  <title><structname>pg_timezone_abbrevs</structname></title>
 
-  <indexterm zone="view-pg-timezonenames">
-   <primary>pg_timezonenames</primary>
+  <indexterm zone="view-pg-timezone-abbrevs">
+   <primary>pg_timezone_abbrevs</primary>
   </indexterm>
 
   <para>
-   The view <structname>pg_timezonenames</structname> provides a list
+   The view <structname>pg_timezone_abbrevs</structname> provides a list
    of time zone abbreviations that are currently recognized by the datetime
    input routines.  The contents of this view change when the
    <xref linkend="guc-timezone-abbreviations"> run-time parameter is modified.
   </para>
 
   <table>
-   <title><structname>pg_timezonenames</> Columns</title>
+   <title><structname>pg_timezone_abbrevs</> Columns</title>
+
+   <tgroup cols=3>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>abbrev</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>time zone abbreviation</entry>
+     </row>
+     <row>
+      <entry><structfield>utc_offset</structfield></entry>
+      <entry><type>interval</type></entry>
+      <entry>offset from UTC (positive means east of Greenwich)</entry>
+     </row>
+     <row>
+      <entry><structfield>is_dst</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry>true if this is a daylight-savings abbreviation</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+ <sect1 id="view-pg-timezone-names">
+  <title><structname>pg_timezone_names</structname></title>
+
+  <indexterm zone="view-pg-timezone-names">
+   <primary>pg_timezone_names</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_timezone_names</structname> provides a list
+   of time zone names that are recognized by <command>SET TIMEZONE</>,
+   along with their associated abbreviations, UTC offsets,
+   and daylight-savings status.
+   Unlike the abbreviations shown in <link
+   linkend="view-pg-timezone-abbrevs"><structname>pg_timezone_abbrevs</structname></link>, many of these names imply a set of daylight-savings transition
+   date rules.  Therefore, the associated information changes across local DST
+   boundaries.  The displayed information is computed based on the current
+   value of <function>CURRENT_TIMESTAMP</>.
+  </para>
+
+  <table>
+   <title><structname>pg_timezone_names</> Columns</title>
 
    <tgroup cols=3>
     <thead>
@@ -5913,6 +5970,11 @@
      <row>
       <entry><structfield>name</structfield></entry>
       <entry><type>text</type></entry>
+      <entry>time zone name</entry>
+     </row>
+     <row>
+      <entry><structfield>abbrev</structfield></entry>
+      <entry><type>text</type></entry>
       <entry>time zone abbreviation</entry>
      </row>
      <row>
@@ -5923,7 +5985,7 @@
      <row>
       <entry><structfield>is_dst</structfield></entry>
       <entry><type>boolean</type></entry>
-      <entry>true if this is a daylight-savings zone</entry>
+      <entry>true if currently observing daylight savings</entry>
      </row>
     </tbody>
    </tgroup>
