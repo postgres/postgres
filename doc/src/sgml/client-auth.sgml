@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.92 2006/08/21 19:21:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.93 2006/09/16 00:30:11 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1039,4 +1039,3 @@ FATAL:  database "testdb" does not exist
   </sect1>
 
  </chapter>
-
