@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.58 2006/08/10 01:41:29 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.59 2006/09/16 13:35:49 tgl Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -269,7 +269,7 @@ typedef unsigned short mode_t;
 #define __inline__ __inline
 
 #undef errcode
-#define errcode __vc_errcode
+#define errcode __msvc_errcode
 
 #define _S_IRWXU	(_S_IREAD | _S_IWRITE | _S_IEXEC)
 #define _S_IXUSR	_S_IEXEC

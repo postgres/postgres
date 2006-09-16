@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.87 2006/09/02 12:30:01 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.88 2006/09/16 13:35:49 tgl Exp $
  *
  *********************************************************************
  */
@@ -11,7 +11,7 @@
  * _DEBUG is defined */
 #undef _DEBUG
 /* Also hide away errcode, since we load Python.h before postgres.h */
-#define errcode __vc_errcode
+#define errcode __msvc_errcode
 #include <Python.h>
 #undef errcode
 #define _DEBUG
