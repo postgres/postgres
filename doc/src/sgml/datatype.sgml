@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.174 2006/09/16 00:30:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.175 2006/09/16 16:18:11 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3345,8 +3345,8 @@ SELECT * FROM pg_attribute
 
      <para>
       <filename>/contrib/xml2</> has a function called
-      <function>xml_valid()</> that can be used in a <literal>CHECK</>
-      constraint to enforce that a field contains valid <acronym>XML</>.
+      <function>xml_is_well_formed()</> that can be used in a <literal>CHECK</>
+      constraint to enforce that a field contains well-formed <acronym>XML</>.
       It does not support validation against a specific <acronym>XML</>
       schema. A server-side language with <acronym>XML</> capabilities
       could be used to do schema-specific <acronym>XML</> checks.

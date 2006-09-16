@@ -42,7 +42,7 @@ xmlChar    *pgxml_texttoxmlchar(text *textstring);
 static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar * xpath);
 
 
-Datum		xml_valid(PG_FUNCTION_ARGS);
+Datum		xml_is_well_formed(PG_FUNCTION_ARGS);
 Datum		xml_encode_special_chars(PG_FUNCTION_ARGS);
 Datum		xpath_nodeset(PG_FUNCTION_ARGS);
 Datum		xpath_string(PG_FUNCTION_ARGS);
@@ -166,12 +166,12 @@ pgxml_parser_init()
 
 /* Returns true if document is well-formed */
 
-PG_FUNCTION_INFO_V1(xml_valid);
+PG_FUNCTION_INFO_V1(xml_is_well_formed);
 
 Datum
-xml_valid(PG_FUNCTION_ARGS)
+xml_is_well_formed(PG_FUNCTION_ARGS)
 {
-	/* called as xml_valid(document) */
+	/* called as xml_is_well_formed(document) */
 	xmlDocPtr	doctree;
 	text	   *t = PG_GETARG_TEXT_P(0);		/* document buffer */
 	int32		docsize = VARSIZE(t) - VARHDRSZ;

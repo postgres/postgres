@@ -1,7 +1,11 @@
 --SQL for XML parser
 
-CREATE OR REPLACE FUNCTION xml_valid(text) RETURNS bool
+CREATE OR REPLACE FUNCTION xml_is_well_formed(text) RETURNS bool
 	AS 'MODULE_PATHNAME' LANGUAGE C STRICT IMMUTABLE;
+
+-- deprecated old name for xml_is_well_formed
+CREATE OR REPLACE FUNCTION xml_valid(text) RETURNS bool
+	AS 'MODULE_PATHNAME', 'xml_is_well_formed' LANGUAGE C STRICT IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION xml_encode_special_chars(text) RETURNS text
 	AS 'MODULE_PATHNAME' LANGUAGE C STRICT IMMUTABLE;
