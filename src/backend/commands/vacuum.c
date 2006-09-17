@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.338 2006/08/18 16:09:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.339 2006/09/17 22:16:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -460,6 +460,8 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 	{
 		/* Make sure cost accounting is turned off after error */
 		VacuumCostActive = false;
+		/* And reset buffer replacement strategy, too */
+		StrategyHintVacuum(false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -1173,8 +1175,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	 * Now release the session-level lock on the master table.
 	 */
 	UnlockRelationIdForSession(&onerelid, lmode);
-
-	return;
 }
 
 

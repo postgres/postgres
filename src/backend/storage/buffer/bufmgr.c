@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.209 2006/07/23 03:07:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.210 2006/09/17 22:16:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1171,9 +1171,6 @@ AtEOXact_Buffers(bool isCommit)
 #endif
 
 	AtEOXact_LocalBuffers(isCommit);
-
-	/* Make sure we reset the strategy hint in case VACUUM errored out */
-	StrategyHintVacuum(false);
 }
 
 /*
