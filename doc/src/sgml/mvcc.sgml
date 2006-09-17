@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.60 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.61 2006/09/17 22:50:31 tgl Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -77,7 +77,7 @@
       </term>
      <listitem>
       <para>
-	A transaction reads data written by a concurrent uncommitted transaction.
+        A transaction reads data written by a concurrent uncommitted transaction.
        </para>
       </listitem>
      </varlistentry>
@@ -89,9 +89,9 @@
       </term>
      <listitem>
       <para>
-	A transaction re-reads data it has previously read and finds that data
-	has been modified by another transaction (that committed since the
-	initial read).
+        A transaction re-reads data it has previously read and finds that data
+        has been modified by another transaction (that committed since the
+        initial read).
        </para>
       </listitem>
      </varlistentry>
@@ -103,9 +103,9 @@
       </term>
      <listitem>
       <para>
-	A transaction re-executes a query returning a set of rows that satisfy a
-	search condition and finds that the set of rows satisfying the condition
-	has changed due to another recently-committed transaction.
+        A transaction re-executes a query returning a set of rows that satisfy a
+        search condition and finds that the set of rows satisfying the condition
+        has changed due to another recently-committed transaction.
        </para>
       </listitem>
      </varlistentry>
@@ -125,79 +125,79 @@
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>
+        <entry>
          Isolation Level
-	</entry>
-	<entry>
-	 Dirty Read
-	</entry>
-	<entry>
-	 Nonrepeatable Read
-	</entry>
-	<entry>
-	 Phantom Read
-	</entry>
+        </entry>
+        <entry>
+         Dirty Read
+        </entry>
+        <entry>
+         Nonrepeatable Read
+        </entry>
+        <entry>
+         Phantom Read
+        </entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>
-	 Read uncommitted
-	</entry>
-	<entry>
-	 Possible
-	</entry>
-	<entry>
-	 Possible
-	</entry>
-	<entry>
-	 Possible
-	</entry>
+        <entry>
+         Read uncommitted
+        </entry>
+        <entry>
+         Possible
+        </entry>
+        <entry>
+         Possible
+        </entry>
+        <entry>
+         Possible
+        </entry>
        </row>
 
        <row>
-	<entry>
-	 Read committed
-	</entry>
-	<entry>
-	 Not possible
-	</entry>
-	<entry>
-	 Possible
-	</entry>
-	<entry>
-	 Possible
-	</entry>
+        <entry>
+         Read committed
+        </entry>
+        <entry>
+         Not possible
+        </entry>
+        <entry>
+         Possible
+        </entry>
+        <entry>
+         Possible
+        </entry>
        </row>
 
        <row>
-	<entry>
-	 Repeatable read
-	</entry>
-	<entry>
-	 Not possible
-	</entry>
-	<entry>
-	 Not possible
-	</entry>
-	<entry>
-	 Possible
-	</entry>
+        <entry>
+         Repeatable read
+        </entry>
+        <entry>
+         Not possible
+        </entry>
+        <entry>
+         Not possible
+        </entry>
+        <entry>
+         Possible
+        </entry>
        </row>
 
        <row>
-	<entry>
-	 Serializable
-	</entry>
-	<entry>
-	 Not possible
-	</entry>
-	<entry>
-	 Not possible
-	</entry>
-	<entry>
-	 Not possible
-	</entry>
+        <entry>
+         Serializable
+        </entry>
+        <entry>
+         Not possible
+        </entry>
+        <entry>
+         Not possible
+        </entry>
+        <entry>
+         Not possible
+        </entry>
        </row>
       </tbody>
      </tgroup>
@@ -547,174 +547,173 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
       <title>Table-level lock modes</title>
       <varlistentry>
        <term>
-	<literal>ACCESS SHARE</literal>
+        <literal>ACCESS SHARE</literal>
        </term>
        <listitem>
-	<para>
-	 Conflicts with the <literal>ACCESS EXCLUSIVE</literal> lock
-	 mode only.
-	</para>
+        <para>
+         Conflicts with the <literal>ACCESS EXCLUSIVE</literal> lock
+         mode only.
+        </para>
 
-	<para>
-	 The commands <command>SELECT</command> and
-	 <command>ANALYZE</command> acquire a lock of this mode on
-	 referenced tables.  In general, any query that only reads a table
-	 and does not modify it will acquire this lock mode.
-	</para>
+        <para>
+         The <command>SELECT</command> command acquires a lock of this mode on
+         referenced tables.  In general, any query that only reads a table
+         and does not modify it will acquire this lock mode.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	<literal>ROW SHARE</literal>
+        <literal>ROW SHARE</literal>
        </term>
        <listitem>
-	<para>
-	 Conflicts with the <literal>EXCLUSIVE</literal> and
-	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
-	</para>
+        <para>
+         Conflicts with the <literal>EXCLUSIVE</literal> and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
+        </para>
 
-	<para>
-	 The <command>SELECT FOR UPDATE</command> and
-	 <command>SELECT FOR SHARE</command> commands acquire a
-	 lock of this mode on the target table(s) (in addition to
-	 <literal>ACCESS SHARE</literal> locks on any other tables
-	 that are referenced but not selected
-	 <option>FOR UPDATE/FOR SHARE</option>).
-	</para>
+        <para>
+         The <command>SELECT FOR UPDATE</command> and
+         <command>SELECT FOR SHARE</command> commands acquire a
+         lock of this mode on the target table(s) (in addition to
+         <literal>ACCESS SHARE</literal> locks on any other tables
+         that are referenced but not selected
+         <option>FOR UPDATE/FOR SHARE</option>).
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	<literal>ROW EXCLUSIVE</literal>
+        <literal>ROW EXCLUSIVE</literal>
        </term>
        <listitem>
-	<para>
-	 Conflicts with the <literal>SHARE</literal>, <literal>SHARE ROW
-	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
-	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
-	</para>
+        <para>
+         Conflicts with the <literal>SHARE</literal>, <literal>SHARE ROW
+         EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
+        </para>
 
-	<para>
-	 The commands <command>UPDATE</command>,
-	 <command>DELETE</command>, and <command>INSERT</command>
-	 acquire this lock mode on the target table (in addition to
-	 <literal>ACCESS SHARE</literal> locks on any other referenced
-	 tables).  In general, this lock mode will be acquired by any
-	 command that modifies the data in a table.
-	</para>
+        <para>
+         The commands <command>UPDATE</command>,
+         <command>DELETE</command>, and <command>INSERT</command>
+         acquire this lock mode on the target table (in addition to
+         <literal>ACCESS SHARE</literal> locks on any other referenced
+         tables).  In general, this lock mode will be acquired by any
+         command that modifies the data in a table.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	<literal>SHARE UPDATE EXCLUSIVE</literal>
+        <literal>SHARE UPDATE EXCLUSIVE</literal>
        </term>
        <listitem>
-	<para>
-	 Conflicts with the <literal>SHARE UPDATE EXCLUSIVE</literal>,
-	 <literal>SHARE</literal>, <literal>SHARE ROW
-	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
-	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
-	 This mode protects a table against
-	 concurrent schema changes and <command>VACUUM</> runs.
-	</para>
+        <para>
+         Conflicts with the <literal>SHARE UPDATE EXCLUSIVE</literal>,
+         <literal>SHARE</literal>, <literal>SHARE ROW
+         EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
+         This mode protects a table against
+         concurrent schema changes and <command>VACUUM</> runs.
+        </para>
 
-	<para>
-	 Acquired by <command>VACUUM</command> (without <option>FULL</option>)
-	 and by <command>CREATE INDEX CONCURRENTLY</>.
-	</para>
+        <para>
+         Acquired by <command>VACUUM</command> (without <option>FULL</option>),
+         <command>ANALYZE</>, and <command>CREATE INDEX CONCURRENTLY</>.
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	<literal>SHARE</literal>
+        <literal>SHARE</literal>
        </term>
        <listitem>
-	<para>
-	 Conflicts with the <literal>ROW EXCLUSIVE</literal>,
-	 <literal>SHARE UPDATE EXCLUSIVE</literal>, <literal>SHARE ROW
-	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
-	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
-	 This mode protects a table against concurrent data changes.
-	</para>
+        <para>
+         Conflicts with the <literal>ROW EXCLUSIVE</literal>,
+         <literal>SHARE UPDATE EXCLUSIVE</literal>, <literal>SHARE ROW
+         EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
+         This mode protects a table against concurrent data changes.
+        </para>
 
-	<para>
-	 Acquired by <command>CREATE INDEX</command>
-	 (without <option>CONCURRENTLY</option>).
-	</para>
+        <para>
+         Acquired by <command>CREATE INDEX</command>
+         (without <option>CONCURRENTLY</option>).
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	<literal>SHARE ROW EXCLUSIVE</literal>
+        <literal>SHARE ROW EXCLUSIVE</literal>
        </term>
        <listitem>
-	<para>
-	 Conflicts with the <literal>ROW EXCLUSIVE</literal>,
-	 <literal>SHARE UPDATE EXCLUSIVE</literal>,
-	 <literal>SHARE</literal>, <literal>SHARE ROW
-	 EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
-	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
-	</para>
+        <para>
+         Conflicts with the <literal>ROW EXCLUSIVE</literal>,
+         <literal>SHARE UPDATE EXCLUSIVE</literal>,
+         <literal>SHARE</literal>, <literal>SHARE ROW
+         EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
+        </para>
 
-	<para>
+        <para>
          This lock mode is not automatically acquired by any
          <productname>PostgreSQL</productname> command.
-	</para>
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	<literal>EXCLUSIVE</literal>
+        <literal>EXCLUSIVE</literal>
        </term>
        <listitem>
-	<para>
-	 Conflicts with the <literal>ROW SHARE</literal>, <literal>ROW
-	 EXCLUSIVE</literal>, <literal>SHARE UPDATE
-	 EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
-	 ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
-	 <literal>ACCESS EXCLUSIVE</literal> lock modes.
-	 This mode allows only concurrent <literal>ACCESS SHARE</literal> locks,
-	 i.e., only reads from the table can proceed in parallel with a
-	 transaction holding this lock mode.
-	</para>
+        <para>
+         Conflicts with the <literal>ROW SHARE</literal>, <literal>ROW
+         EXCLUSIVE</literal>, <literal>SHARE UPDATE
+         EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
+         ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal> lock modes.
+         This mode allows only concurrent <literal>ACCESS SHARE</literal> locks,
+         i.e., only reads from the table can proceed in parallel with a
+         transaction holding this lock mode.
+        </para>
 
-	<para>
+        <para>
          This lock mode is not automatically acquired on user tables by any
          <productname>PostgreSQL</productname> command.  However it is
          acquired on certain system catalogs in some operations.
-	</para>
+        </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term>
-	<literal>ACCESS EXCLUSIVE</literal>
+        <literal>ACCESS EXCLUSIVE</literal>
        </term>
        <listitem>
-	<para>
-	 Conflicts with locks of all modes (<literal>ACCESS
-	 SHARE</literal>, <literal>ROW SHARE</literal>, <literal>ROW
-	 EXCLUSIVE</literal>, <literal>SHARE UPDATE
-	 EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
-	 ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
-	 <literal>ACCESS EXCLUSIVE</literal>).
-	 This mode guarantees that the
-	 holder is the only transaction accessing the table in any way.
-	</para>
+        <para>
+         Conflicts with locks of all modes (<literal>ACCESS
+         SHARE</literal>, <literal>ROW SHARE</literal>, <literal>ROW
+         EXCLUSIVE</literal>, <literal>SHARE UPDATE
+         EXCLUSIVE</literal>, <literal>SHARE</literal>, <literal>SHARE
+         ROW EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
+         <literal>ACCESS EXCLUSIVE</literal>).
+         This mode guarantees that the
+         holder is the only transaction accessing the table in any way.
+        </para>
 
-	<para>
-	 Acquired by the <command>ALTER TABLE</command>, <command>DROP
-	 TABLE</command>, <command>TRUNCATE</command>, <command>REINDEX</command>,
-	 <command>CLUSTER</command>, and <command>VACUUM FULL</command>
-	 commands.  This is also the default lock mode for <command>LOCK
-	 TABLE</command> statements that do not specify a mode explicitly.
-	</para>
+        <para>
+         Acquired by the <command>ALTER TABLE</command>, <command>DROP
+         TABLE</command>, <command>TRUNCATE</command>, <command>REINDEX</command>,
+         <command>CLUSTER</command>, and <command>VACUUM FULL</command>
+         commands.  This is also the default lock mode for <command>LOCK
+         TABLE</command> statements that do not specify a mode explicitly.
+        </para>
        </listitem>
       </varlistentry>
      </variablelist>
@@ -994,10 +993,10 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
       </term>
       <listitem>
        <para>
-		Short-term share/exclusive page-level locks are used for 
-		read/write access. Locks are released immediately after each
-		index row is fetched or inserted. However, note that GIN index
-		usually requires several inserts per one table row.
+        Short-term share/exclusive page-level locks are used for 
+        read/write access. Locks are released immediately after each
+        index row is fetched or inserted. However, note that a GIN index
+        usually requires several inserts for each table row.
        </para>
       </listitem>
      </varlistentry>

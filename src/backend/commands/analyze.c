@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.97 2006/08/18 16:09:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.98 2006/09/17 22:50:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,10 +129,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	CHECK_FOR_INTERRUPTS();
 
 	/*
-	 * Open the relation, getting only a read lock on it.  If the rel has
-	 * been dropped since we last saw it, we don't need to process it.
+	 * Open the relation, getting ShareUpdateExclusiveLock to ensure that
+	 * two ANALYZEs don't run on it concurrently.  (This also locks out
+	 * a concurrent VACUUM, which doesn't matter much at the moment but
+	 * might matter if we ever try to accumulate stats on dead tuples.)
+	 * If the rel has been dropped since we last saw it, we don't need
+	 * to process it.
 	 */
-	onerel = try_relation_open(relid, AccessShareLock);
+	onerel = try_relation_open(relid, ShareUpdateExclusiveLock);
 	if (!onerel)
 		return;
 
@@ -147,7 +151,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			ereport(WARNING,
 					(errmsg("skipping \"%s\" --- only table or database owner can analyze it",
 							RelationGetRelationName(onerel))));
-		relation_close(onerel, AccessShareLock);
+		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
 	}
 
@@ -162,7 +166,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			ereport(WARNING,
 					(errmsg("skipping \"%s\" --- cannot analyze indexes, views, or special system tables",
 							RelationGetRelationName(onerel))));
-		relation_close(onerel, AccessShareLock);
+		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
 	}
 
@@ -174,7 +178,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 */
 	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
 	{
-		relation_close(onerel, AccessShareLock);
+		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
 	}
 
@@ -183,7 +187,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 */
 	if (RelationGetRelid(onerel) == StatisticRelationId)
 	{
-		relation_close(onerel, AccessShareLock);
+		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
 	}
 
@@ -317,7 +321,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 								  0, 0);
 
 		vac_close_indexes(nindexes, Irel, AccessShareLock);
-		relation_close(onerel, AccessShareLock);
+		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
 	}
 
@@ -444,7 +448,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
 	 * before we commit.  (If someone did, they'd fail to clean up the entries
-	 * we made in pg_statistic.)
+	 * we made in pg_statistic.  Also, releasing the lock before commit would
+	 * expose us to concurrent-update failures in update_attstats.)
 	 */
 	relation_close(onerel, NoLock);
 }
@@ -1079,14 +1084,9 @@ compare_rows(const void *a, const void *b)
  *		Note analyze_rel() has seen to it that we won't come here when
  *		vacuuming pg_statistic itself.
  *
- *		Note: if two backends concurrently try to analyze the same relation,
- *		the second one is likely to fail here with a "tuple concurrently
- *		updated" error.  This is slightly annoying, but no real harm is done.
- *		We could prevent the problem by using a stronger lock on the
- *		relation for ANALYZE (ie, ShareUpdateExclusiveLock instead
- *		of AccessShareLock); but that cure seems worse than the disease,
- *		especially now that ANALYZE doesn't start a new transaction
- *		for each relation.	The lock could be held for a long time...
+ *		Note: there would be a race condition here if two backends could
+ *		ANALYZE the same table concurrently.  Presently, we lock that out
+ *		by taking a self-exclusive lock on the relation in analyze_rel().
  */
 static void
 update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
@@ -1202,7 +1202,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		else
 		{
 			/* No, insert new tuple */
-			stup = heap_formtuple(sd->rd_att, values, nulls);
+			stup = heap_formtuple(RelationGetDescr(sd), values, nulls);
 			simple_heap_insert(sd, stup);
 		}
 
