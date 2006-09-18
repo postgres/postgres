@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.435 2006/09/18 21:45:10 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.436 2006/09/18 22:43:16 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -85,9 +85,9 @@ For new features, add links to the documentation sections.
     <title>Additional Changes</title>
  
     <para>
-     Below you will find a detailed account of the additional changes
-     between <productname>PostgreSQL</productname> 8.2 and the
-     previous major release.
+     Below you will find a detailed account of the additional
+     changes between <productname>PostgreSQL</productname> 8.2 and
+     the previous major release.
     </para>
  
     <sect3>
@@ -230,7 +230,15 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Improve performance of statistics monitoring, especially <literal>pg_stat_activity</> (Tom)
+	Improve performance of statistics monitoring, especially
+	<literal>stats_command_string</> (Tom, Bruce)
+       </para>
+
+       <para>
+	This release sets <envar>stats_command_string</> to
+	<literal>on</> by default, now that its overhead is minimal.
+	This means <literal>pg_stat_activity</> now will show all
+	active queries by default.
        </para>
       </listitem>
 
@@ -316,17 +324,6 @@ For new features, add links to the documentation sections.
         <application>postmaster</> and <application>postgres</> commands now act identically, with the behavior
         determined by switches.  The <application>postmaster</> symlink is kept for 
         compatibility, but is not really needed.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Default <envar>stats_command_string</> to <literal>on</>, now that its overhead is minimal
-        (Bruce)
-       </para>
-
-       <para>
-        This means <literal>pg_stat_activity</> now will show all active queries by default.
        </para>
       </listitem>
 
@@ -587,9 +584,9 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        The old behavior is still available by omitting <literal>.*</>.  The new behavior is
-        substantially more useful since it allows, for example, triggers to check
-        for data changes with <literal>if row(new.*) IS DISTINCT FROM row(old.*)</>.
+        The new behavior is substantially more useful since it allows, for example,
+        triggers to check for data changes with <literal>IF row(new.*) IS DISTINCT FROM row(old.*)</>.
+        The old behavior is still available by omitting <literal>.*</>.
        </para>
       </listitem>
 
@@ -799,7 +796,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow placeholder (shell) types to be create (Martijn van Oosterhout)
+        Allow placeholder (shell) types to be created (Martijn van Oosterhout)
        </para>
 
        <para>
@@ -906,12 +903,6 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Remove dead index entries during btree page split (Junji Teramoto)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Allow <command>VACUUM</> to expire rows without being affected by other concurrent
         <command>VACUUM</>s (Hannu Krossing, Alvaro, Tom)
        </para>
@@ -919,13 +910,13 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Avoid extra scan of table during <command>VACUUM</> of index-less table (Greg Stark)
+        Avoid extra scan of tables during <command>VACUUM</> of index-less table (Greg Stark)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add option to allow indexes to be created indexes without blocking 
+        Add option to allow indexes to be created without blocking
         concurrent writes to the table (Greg Stark)
        </para>
 
@@ -1549,7 +1540,7 @@ Tom)
        </para>
 
        <para>
-        Rtree has been re implemented using <acronym>GIST</>.
+        Rtree has been re-implemented using <acronym>GIST</>.
        </para>
       </listitem>
 
