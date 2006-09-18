@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.22 2006/06/06 17:59:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.23 2006/09/18 22:40:40 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -99,16 +99,6 @@
  * backslash sequences in the first place.
  */
 /* #define TCL_ARRAYS */
-
-/*
- * User locks are handled totally on the application side as long term
- * cooperative locks which extend beyond the normal transaction
- * boundaries.	Their purpose is to indicate to an application that
- * someone is `working' on an item.  Define this flag to enable user
- * locks.  You will need the loadable module user-locks.c to use this
- * feature.
- */
-#define USER_LOCKS
 
 /*
  * Define this if you want psql to _always_ ask for a username and a

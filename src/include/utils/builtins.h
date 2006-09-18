@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.281 2006/07/28 18:33:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.282 2006/09/18 22:40:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -892,6 +892,19 @@ extern Datum show_all_settings(PG_FUNCTION_ARGS);
 
 /* lockfuncs.c */
 extern Datum pg_lock_status(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_lock_int8(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_lock_shared_int8(PG_FUNCTION_ARGS);
+extern Datum pg_try_advisory_lock_int8(PG_FUNCTION_ARGS);
+extern Datum pg_try_advisory_lock_shared_int8(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_unlock_int8(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_unlock_shared_int8(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_lock_int4(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_lock_shared_int4(PG_FUNCTION_ARGS);
+extern Datum pg_try_advisory_lock_int4(PG_FUNCTION_ARGS);
+extern Datum pg_try_advisory_lock_shared_int4(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_unlock_int4(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_unlock_shared_int4(PG_FUNCTION_ARGS);
+extern Datum pg_advisory_unlock_all(PG_FUNCTION_ARGS);
 
 /* access/transam/twophase.c */
 extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);

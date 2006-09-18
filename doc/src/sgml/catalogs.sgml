@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.132 2006/09/16 20:14:32 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.133 2006/09/18 22:40:36 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -5029,9 +5029,14 @@
   </para>
 
   <para>
-   If user-defined locks are in use, they are displayed using the columns
-   for general database objects.  However, the actual meaning of the lock
-   fields in such cases is up to the user.
+   User-defined locks can be acquired on keys consisting of either a single
+   bigint value or two integer values.  A bigint key is displayed with its
+   high-order half in the <structfield>classid</> column, its low-order half
+   in the <structfield>objid</> column, and <structfield>objsubid</> equal
+   to 1.  Integer keys are displayed with the first key in the
+   <structfield>classid</> column, the second key in the <structfield>objid</>
+   column, and <structfield>objsubid</> equal to 2.  The actual meaning of
+   the keys is up to the user.
   </para>
 
   <para>

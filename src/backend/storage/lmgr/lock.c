@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.172 2006/08/27 19:14:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.173 2006/09/18 22:40:36 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -127,8 +127,6 @@ static const LockMethodData default_lockmethod = {
 #endif
 };
 
-#ifdef USER_LOCKS
-
 static const LockMethodData user_lockmethod = {
 	AccessExclusiveLock,		/* highest valid lock mode number */
 	false,
@@ -141,17 +139,13 @@ static const LockMethodData user_lockmethod = {
 #endif
 };
 
-#endif /* USER_LOCKS */
-
 /*
  * map from lock method id to the lock table data structures
  */
 static const LockMethod LockMethods[] = {
 	NULL,
 	&default_lockmethod,
-#ifdef USER_LOCKS
 	&user_lockmethod
-#endif
 };
 
 

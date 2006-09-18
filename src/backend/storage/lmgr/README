@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.20 2006/07/23 23:08:46 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.21 2006/09/18 22:40:36 tgl Exp $
 
 
 LOCKING OVERVIEW
@@ -48,7 +48,7 @@ The rest of this README file discusses the regular lock manager in detail.
 LOCK DATA STRUCTURES
 
 Lock methods describe the overall locking behavior.  Currently there are
-two lock methods: DEFAULT and USER.  (USER locks are non-blocking.)
+two lock methods: DEFAULT and USER.
 
 Lock modes describe the type of the lock (read/write or shared/exclusive).
 In principle, each lock method can have its own set of lock modes with
@@ -502,11 +502,6 @@ level by someone.
 User locks and normal locks are completely orthogonal and they don't
 interfere with each other.
 
-User locks are always non blocking, therefore they are never acquired if
-already held by another process.  They must be released explicitly by the
-application but they are released automatically when a backend terminates.
-
-The lockmode parameter can have the same values as for normal locks although
-probably only ExclusiveLock can have some practical use.
-
-	DZ - 22 Nov 1997
+User locks are always held as session locks, so that they are not released at
+transaction end.  They must be released explicitly by the application --- but
+they are released automatically when a backend terminates.

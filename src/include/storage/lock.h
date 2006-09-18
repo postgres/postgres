@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.98 2006/08/27 19:14:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.99 2006/09/18 22:40:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,8 +146,7 @@ typedef enum LockTagType
 	 * pg_description, but notice that we are constraining SUBID to 16 bits.
 	 * Also, we use DB OID = 0 for shared objects such as tablespaces.
 	 */
-	LOCKTAG_USERLOCK			/* reserved for contrib/userlock */
-	/* ID info for a userlock is defined by user_locks.c */
+	LOCKTAG_USERLOCK			/* advisory "user" locks */
 } LockTagType;
 
 /*
@@ -220,6 +219,14 @@ typedef struct LOCKTAG
 	 (locktag).locktag_field4 = (objsubid), \
 	 (locktag).locktag_type = LOCKTAG_OBJECT, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
+
+#define SET_LOCKTAG_USERLOCK(locktag,id1,id2,id3,id4) \
+	((locktag).locktag_field1 = (id1), \
+	 (locktag).locktag_field2 = (id2), \
+	 (locktag).locktag_field3 = (id3), \
+	 (locktag).locktag_field4 = (id4), \
+	 (locktag).locktag_type = LOCKTAG_USERLOCK, \
+	 (locktag).locktag_lockmethodid = USER_LOCKMETHOD)
 
 
 /*
@@ -362,8 +369,8 @@ typedef struct LOCALLOCK
 
 /*
  * This struct holds information passed from lmgr internals to the lock
- * listing user-level functions (lockfuncs.c).	For each PROCLOCK in the
- * system, copies of the PROCLOCK object and associated PGPROC and
+ * listing user-level functions (in lockfuncs.c).	For each PROCLOCK in
+ * the system, copies of the PROCLOCK object and associated PGPROC and
  * LOCK objects are stored.  Note there will often be multiple copies
  * of the same PGPROC or LOCK --- to detect whether two are the same,
  * compare the PROCLOCK tag fields.

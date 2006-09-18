@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.169 2006/07/13 16:49:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.170 2006/09/18 22:40:38 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -554,9 +554,7 @@ ShutdownPostgres(int code, Datum arg)
 	 * User locks are not released by transaction end, so be sure to release
 	 * them explicitly.
 	 */
-#ifdef USER_LOCKS
 	LockReleaseAll(USER_LOCKMETHOD, true);
-#endif
 }
 
 
