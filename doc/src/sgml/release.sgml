@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.437 2006/09/18 23:01:43 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.438 2006/09/18 23:19:50 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -14,6 +14,7 @@ non-ascii                       convert to & escapes
 				  http://www.mountaindragon.com/html/iso.htm
 				encode multibytes as UTF8
 				  http://www.pemberley.com/janeinfo/latin1.html#latexta
+wrap long lines
 
 For new features, add links to the documentation sections.
 
@@ -220,14 +221,14 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <literal>FILLFACTOR</> to <command>CREATE INDEX</>
+	Add <literal>FILLFACTOR</> to table and index creation
 	(ITAGAKI Takahiro)
        </para>
 
        <para>
-	This provides infrastructure to allow index access methods
-	to accept special parameters of all kinds, but
-	<literal>FILLFACTOR</> is implemented first.
+	This adds extra free space to each heap or index page,
+	allowing improved performance as the database grows.  This
+	is particularly valuable to maintain <command>CLUSTER</>ing.
        </para>
       </listitem>
 
