@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.349 2006/08/30 23:34:21 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.350 2006/09/18 00:52:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2097,7 +2097,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->into = stmt->into;
 	if (stmt->intoColNames)
 		applyColumnNames(qry->targetList, stmt->intoColNames);
-
 	qry->intoOptions = copyObject(stmt->intoOptions);
 	qry->intoOnCommit = stmt->intoOnCommit;
 	qry->intoTableSpaceName = stmt->intoTableSpaceName;
@@ -2180,8 +2179,6 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 
 	/* Most SELECT stuff doesn't apply in a VALUES clause */
 	Assert(stmt->distinctClause == NIL);
-	Assert(stmt->into == NULL);
-	Assert(stmt->intoColNames == NIL);
 	Assert(stmt->targetList == NIL);
 	Assert(stmt->fromClause == NIL);
 	Assert(stmt->whereClause == NULL);
@@ -2281,8 +2278,16 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	Assert(pstate->p_next_resno == 1);
 	qry->targetList = expandRelAttrs(pstate, rte, rtr->rtindex, 0);
 
+	/* handle any CREATE TABLE AS spec */
+	qry->into = stmt->into;
+	if (stmt->intoColNames)
+		applyColumnNames(qry->targetList, stmt->intoColNames);
+	qry->intoOptions = copyObject(stmt->intoOptions);
+	qry->intoOnCommit = stmt->intoOnCommit;
+	qry->intoTableSpaceName = stmt->intoTableSpaceName;
+
 	/*
-	 * The grammar does allow attaching ORDER BY, LIMIT, and FOR UPDATE
+	 * The grammar allows attaching ORDER BY, LIMIT, and FOR UPDATE
 	 * to a VALUES, so cope.
 	 */
 	qry->sortClause = transformSortClause(pstate,
@@ -2355,7 +2360,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	int			leftmostRTI;
 	Query	   *leftmostQuery;
 	SetOperationStmt *sostmt;
-	RangeVar   *into;
 	List	   *intoColNames;
 	List	   *sortClause;
 	Node	   *limitOffset;
@@ -2378,19 +2382,23 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * Find leftmost leaf SelectStmt; extract the one-time-only items from it
-	 * and from the top-level node.
+	 * and from the top-level node.  (Most of the INTO options can be
+	 * transferred to the Query immediately, but intoColNames has to be
+	 * saved to apply below.)
 	 */
 	leftmostSelect = stmt->larg;
 	while (leftmostSelect && leftmostSelect->op != SETOP_NONE)
 		leftmostSelect = leftmostSelect->larg;
 	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
 		   leftmostSelect->larg == NULL);
-	into = leftmostSelect->into;
+	qry->into = leftmostSelect->into;
 	intoColNames = leftmostSelect->intoColNames;
+	qry->intoOptions = copyObject(leftmostSelect->intoOptions);
+	qry->intoOnCommit = leftmostSelect->intoOnCommit;
+	qry->intoTableSpaceName = leftmostSelect->intoTableSpaceName;
 
-	/* clear them to prevent complaints in transformSetOperationTree() */
+	/* clear this to prevent complaints in transformSetOperationTree() */
 	leftmostSelect->into = NULL;
-	leftmostSelect->intoColNames = NIL;
 
 	/*
 	 * These are not one-time, exactly, but we want to process them here and
@@ -2480,7 +2488,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * top level and the leftmost subquery.  We do not do this earlier because
 	 * we do *not* want the targetnames list to be affected.
 	 */
-	qry->into = into;
 	if (intoColNames)
 	{
 		applyColumnNames(qry->targetList, intoColNames);
