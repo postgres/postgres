@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.63 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.64 2006/09/18 12:11:36 teodor Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -248,7 +248,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <see>index</see>
    </indexterm>
    GIN is a inverted index and it's usable for values which have more
-   than one key, arrays for example. Like to GiST, GIN may support
+   than one key, arrays for example. Like GiST, GIN may support
    many different user-defined indexing strategies and the particular 
    operators with which a GIN index can be used vary depending on the 
    indexing strategy.  
@@ -266,7 +266,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
    (See <xref linkend="functions-array"> for the meaning of
    these operators.)
-   Another GIN operator classes are available in the <literal>contrib</> 
+   Other GIN operator classes are available in the <literal>contrib</>
    tsearch2 and intarray modules. For more information see <xref linkend="GIN">.
   </para>
  </sect1>

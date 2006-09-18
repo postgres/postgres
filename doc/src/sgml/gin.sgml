@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.3 2006/09/14 21:15:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.4 2006/09/18 12:11:36 teodor Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -14,7 +14,7 @@
  <para>
    <acronym>GIN</acronym> stands for Generalized Inverted Index.  It is
    an index structure storing a set of (key, posting list) pairs, where
-   'posting list' is a set of rows in which the key occurs. The
+   'posting list' is a set of rows in which the key occurs. Each
    row may contain many keys.
  </para>
 
@@ -104,7 +104,8 @@
      <listitem>
       <para>
 	   Returns an array of keys of the query to be executed. n contains
-	   strategy number of operation (see <xref linkend="xindex-strategies">).
+	   the strategy number of the operation 
+	   (see <xref linkend="xindex-strategies">).
 	   Depending on n, query may be different type.
       </para>
      </listitem>
@@ -114,9 +115,9 @@
      <term>bool consistent( bool check[], StrategyNumber n, Datum query)</term>
      <listitem>
       <para>
-	   Returns TRUE if indexed value satisfies query qualifier with strategy n 
-	   (or may satisfy in case of RECHECK mark in operator class). 
-	   Each element of the check array is TRUE if indexed value has a 
+	   Returns TRUE if the indexed value satisfies the query qualifier with 
+	   strategy n (or may satisfy in case of RECHECK mark in operator class). 
+	   Each element of the check array is TRUE if the indexed value has a 
 	   corresponding key in the query: if (check[i] == TRUE ) the i-th key of 
 	   the query is present in the indexed value.
       </para>
@@ -135,10 +136,10 @@
    <term>Create vs insert</term>
    <listitem>
 	<para>
-	 In most cases, insertion into <acronym>GIN</acronym> index is slow because
-	 many GIN keys may be inserted for each table row. So, when loading data
-	 in bulk it may be useful to drop index and recreate it
-	 after the data is loaded in the table.
+	 In most cases, insertion into <acronym>GIN</acronym> index is slow
+	 due to the likelihood of many keys being inserted for each value.
+	 So, for bulk insertions into a table it is advisable to to drop the GIN 
+	 index and recreate it after finishing bulk insertion.
 	</para>
    </listitem>
   </varlistentry>
@@ -147,7 +148,7 @@
    <term>gin_fuzzy_search_limit</term>
    <listitem>
 	<para>
-	 The primary goal of development <acronym>GIN</acronym> indices was 
+	 The primary goal of developing <acronym>GIN</acronym> indices was 
 	 support for highly scalable, full-text search in 
 	 <productname>PostgreSQL</productname> and there are often situations when 
 	 a full-text search returns a very large set of results.  Since reading 
@@ -158,7 +159,7 @@
 	<para>
 	 Such queries usually contain very frequent words, so the results are not 
 	 very helpful. To facilitate execution of such queries 
-	 <acronym>GIN</acronym> has a configurable  soft upper limit of the size 
+	 <acronym>GIN</acronym> has a configurable soft upper limit of the size 
 	 of the returned set, determined by the 
 	 <varname>gin_fuzzy_search_limit</varname> GUC variable.  It is set to 0 by
 	 default (no limit).
@@ -182,16 +183,16 @@
  <title>Limitations</title>
 
  <para>
-  <acronym>GIN</acronym> doesn't support full scan of index due to it's 
-  extremely inefficiency: because of a lot of keys per value, 
+  <acronym>GIN</acronym> doesn't support full index scans due to their
+  extremely inefficiency: because there are often many keys per value,
   each heap pointer will returned several times.
  </para>
 
  <para>
-  When extractQuery returns zero number of keys, <acronym>GIN</acronym> will 
-  emit a error: for different opclass and strategy semantic meaning of void 
-  query may be different (for example, any array contains void array, 
-  but they aren't overlapped with void one), and <acronym>GIN</acronym> can't 
+  When extractQuery returns zero keys, <acronym>GIN</acronym> will emit a 
+  error: for different opclasses and strategies the semantic meaning of a void
+  query may be different (for example, any array contains the void array,
+  but they don't overlap the void array), and <acronym>GIN</acronym> can't
   suggest reasonable answer.
  </para>
 

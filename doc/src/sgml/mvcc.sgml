@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.61 2006/09/17 22:50:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.62 2006/09/18 12:11:36 teodor Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -993,10 +993,12 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
       </term>
       <listitem>
        <para>
-        Short-term share/exclusive page-level locks are used for 
-        read/write access. Locks are released immediately after each
-        index row is fetched or inserted. However, note that a GIN index
-        usually requires several inserts for each table row.
+		Short-term share/exclusive page-level locks are used for 
+		read/write access. Locks are released immediately after each
+		index row is fetched or inserted. But note that a GIN-indexed
+		value insertion usually produces several index key insertions
+		per row, so GIN may do substantial work for a single value's
+		insertion.
        </para>
       </listitem>
      </varlistentry>

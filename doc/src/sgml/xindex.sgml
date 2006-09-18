@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.48 2006/09/16 00:30:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.49 2006/09/18 12:11:36 teodor Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -243,8 +243,8 @@
    </table>
 
   <para>
-   GIN indexes are similar to GiST in flexibility: it hasn't a fixed set
-   of strategies. Instead, the <quote>consistency</> support routine
+   GIN indexes are similar to GiST's in flexibility: they don't have a fixed
+   et of strategies. Instead, the <quote>consistency</> support routine
    interprets the strategy numbers accordingly with operator class
    definition. As an example, strategies of operator class over arrays
    is shown in <xref linkend="xindex-gin-array-strat-table">.
