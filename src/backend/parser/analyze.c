@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.350 2006/09/18 00:52:14 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.351 2006/09/18 16:04:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2093,14 +2093,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/* transform targetlist */
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	/* handle any SELECT INTO/CREATE TABLE AS spec */
-	qry->into = stmt->into;
-	if (stmt->intoColNames)
-		applyColumnNames(qry->targetList, stmt->intoColNames);
-	qry->intoOptions = copyObject(stmt->intoOptions);
-	qry->intoOnCommit = stmt->intoOnCommit;
-	qry->intoTableSpaceName = stmt->intoTableSpaceName;
-
 	/* mark column origins */
 	markTargetListOrigins(pstate, qry->targetList);
 
@@ -2136,6 +2128,17 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 											"OFFSET");
 	qry->limitCount = transformLimitClause(pstate, stmt->limitCount,
 										   "LIMIT");
+
+	/* handle any SELECT INTO/CREATE TABLE AS spec */
+	if (stmt->into)
+	{
+		qry->into = stmt->into;
+		if (stmt->intoColNames)
+			applyColumnNames(qry->targetList, stmt->intoColNames);
+		qry->intoOptions = copyObject(stmt->intoOptions);
+		qry->intoOnCommit = stmt->intoOnCommit;
+		qry->intoTableSpaceName = stmt->intoTableSpaceName;
+	}
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
@@ -2271,20 +2274,13 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	rtr->rtindex = list_length(pstate->p_rtable);
 	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 	pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+	pstate->p_varnamespace = lappend(pstate->p_varnamespace, rte);
 
 	/*
 	 * Generate a targetlist as though expanding "*"
 	 */
 	Assert(pstate->p_next_resno == 1);
 	qry->targetList = expandRelAttrs(pstate, rte, rtr->rtindex, 0);
-
-	/* handle any CREATE TABLE AS spec */
-	qry->into = stmt->into;
-	if (stmt->intoColNames)
-		applyColumnNames(qry->targetList, stmt->intoColNames);
-	qry->intoOptions = copyObject(stmt->intoOptions);
-	qry->intoOnCommit = stmt->intoOnCommit;
-	qry->intoTableSpaceName = stmt->intoTableSpaceName;
 
 	/*
 	 * The grammar allows attaching ORDER BY, LIMIT, and FOR UPDATE
@@ -2304,6 +2300,17 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
+
+	/* handle any CREATE TABLE AS spec */
+	if (stmt->into)
+	{
+		qry->into = stmt->into;
+		if (stmt->intoColNames)
+			applyColumnNames(qry->targetList, stmt->intoColNames);
+		qry->intoOptions = copyObject(stmt->intoOptions);
+		qry->intoOnCommit = stmt->intoOnCommit;
+		qry->intoTableSpaceName = stmt->intoTableSpaceName;
+	}
 
 	/*
 	 * There mustn't have been any table references in the expressions,
@@ -2360,7 +2367,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	int			leftmostRTI;
 	Query	   *leftmostQuery;
 	SetOperationStmt *sostmt;
-	List	   *intoColNames;
+	List	   *intoColNames = NIL;
 	List	   *sortClause;
 	Node	   *limitOffset;
 	Node	   *limitCount;
@@ -2391,11 +2398,14 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		leftmostSelect = leftmostSelect->larg;
 	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
 		   leftmostSelect->larg == NULL);
-	qry->into = leftmostSelect->into;
-	intoColNames = leftmostSelect->intoColNames;
-	qry->intoOptions = copyObject(leftmostSelect->intoOptions);
-	qry->intoOnCommit = leftmostSelect->intoOnCommit;
-	qry->intoTableSpaceName = leftmostSelect->intoTableSpaceName;
+	if (leftmostSelect->into)
+	{
+		qry->into = leftmostSelect->into;
+		intoColNames = leftmostSelect->intoColNames;
+		qry->intoOptions = copyObject(leftmostSelect->intoOptions);
+		qry->intoOnCommit = leftmostSelect->intoOnCommit;
+		qry->intoTableSpaceName = leftmostSelect->intoTableSpaceName;
+	}
 
 	/* clear this to prevent complaints in transformSetOperationTree() */
 	leftmostSelect->into = NULL;
@@ -2482,19 +2492,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	/*
-	 * Handle SELECT INTO/CREATE TABLE AS.
-	 *
-	 * Any column names from CREATE TABLE AS need to be attached to both the
-	 * top level and the leftmost subquery.  We do not do this earlier because
-	 * we do *not* want the targetnames list to be affected.
-	 */
-	if (intoColNames)
-	{
-		applyColumnNames(qry->targetList, intoColNames);
-		applyColumnNames(leftmostQuery->targetList, intoColNames);
-	}
-
-	/*
 	 * As a first step towards supporting sort clauses that are expressions
 	 * using the output columns, generate a varnamespace entry that makes the
 	 * output columns visible.	A Join RTE node is handy for this, since we
@@ -2546,6 +2543,19 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 											"OFFSET");
 	qry->limitCount = transformLimitClause(pstate, limitCount,
 										   "LIMIT");
+
+	/*
+	 * Handle SELECT INTO/CREATE TABLE AS.
+	 *
+	 * Any column names from CREATE TABLE AS need to be attached to both the
+	 * top level and the leftmost subquery.  We do not do this earlier because
+	 * we do *not* want sortClause processing to be affected.
+	 */
+	if (intoColNames)
+	{
+		applyColumnNames(qry->targetList, intoColNames);
+		applyColumnNames(leftmostQuery->targetList, intoColNames);
+	}
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
@@ -2788,19 +2798,32 @@ applyColumnNames(List *dst, List *src)
 	ListCell   *dst_item;
 	ListCell   *src_item;
 
-	if (list_length(src) > list_length(dst))
+	src_item = list_head(src);
+
+	foreach(dst_item, dst)
+	{
+		TargetEntry *d = (TargetEntry *) lfirst(dst_item);
+		ColumnDef  *s;
+
+		/* junk targets don't count */
+		if (d->resjunk)
+			continue;
+
+		/* fewer ColumnDefs than target entries is OK */
+		if (src_item == NULL)
+			break;
+
+		s = (ColumnDef *) lfirst(src_item);
+		src_item = lnext(src_item);
+
+		d->resname = pstrdup(s->colname);
+	}
+
+	/* more ColumnDefs than target entries is not OK */
+	if (src_item != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("CREATE TABLE AS specifies too many column names")));
-
-	forboth(dst_item, dst, src_item, src)
-	{
-		TargetEntry *d = (TargetEntry *) lfirst(dst_item);
-		ColumnDef  *s = (ColumnDef *) lfirst(src_item);
-
-		Assert(!d->resjunk);
-		d->resname = pstrdup(s->colname);
-	}
 }
 
 
