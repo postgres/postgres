@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.35 2006/02/18 23:14:45 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.36 2006/09/18 19:54:01 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -104,7 +104,7 @@ SELECT random();
    produce a virtual table that provides the rows that are passed to
    the select list to compute the output rows of the query.
   </para>
-	
+
   <sect2 id="queries-from">
    <title>The <literal>FROM</literal> Clause</title>
  
@@ -253,12 +253,12 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
        <para>
         <indexterm>
-	 <primary>join</primary>
-	 <secondary>natural</secondary>
-	</indexterm>
+         <primary>join</primary>
+         <secondary>natural</secondary>
+        </indexterm>
         <indexterm>
-	 <primary>natural join</primary>
-	</indexterm>
+         <primary>natural join</primary>
+        </indexterm>
         Finally, <literal>NATURAL</> is a shorthand form of
         <literal>USING</>: it forms a <literal>USING</> list
         consisting of exactly those column names that appear in both
@@ -511,33 +511,36 @@ SELECT * FROM some_very_long_table_name s JOIN another_fairly_long_name a ON s.i
 <programlisting>
 SELECT * FROM my_table AS m WHERE my_table.a &gt; 5;
 </programlisting>
-     is not valid SQL syntax.  What will actually happen (this is a
-     <productname>PostgreSQL</productname> extension to the standard)
-     is that an implicit table reference is added to the
+     is not valid according to the SQL standard.  In
+     <productname>PostgreSQL</productname> this will draw an error if the
+     <xref linkend="guc-add-missing-from"> configuration variable is
+     <literal>off</>.  If it is <literal>on</>, an implicit table reference
+     will be added to the
      <literal>FROM</literal> clause, so the query is processed as if
      it were written as
 <programlisting>
 SELECT * FROM my_table AS m, my_table AS my_table WHERE my_table.a &gt; 5;
 </programlisting>
-     which will result in a cross join, which is usually not what you
-     want.
+     That will result in a cross join, which is usually not what you want.
     </para>
 
     <para>
      Table aliases are mainly for notational convenience, but it is
      necessary to use them when joining a table to itself, e.g.,
 <programlisting>
-SELECT * FROM my_table AS a CROSS JOIN my_table AS b ...
+SELECT * FROM people AS mother JOIN people AS child ON mother.id = child.mother_id;
 </programlisting>
      Additionally, an alias is required if the table reference is a
      subquery (see <xref linkend="queries-subqueries">).
     </para>
 
     <para>
-     Parentheses are used to resolve ambiguities.  The following
-     statement will assign the alias <literal>b</literal> to the
-     result of the join, unlike the previous example:
+     Parentheses are used to resolve ambiguities.  In the following example,
+     the first statement assigns the alias <literal>b</literal> to the second
+     instance of <literal>my_table</>, but the second statement assigns the
+     alias to the result of the join:
 <programlisting>
+SELECT * FROM my_table AS a CROSS JOIN my_table AS b ...
 SELECT * FROM (my_table AS a CROSS JOIN my_table) AS b ...
 </programlisting>
     </para>
@@ -591,6 +594,17 @@ FROM (SELECT * FROM table1) AS alias_name
      alias_name</literal>.  More interesting cases, which can't be
      reduced to a plain join, arise when the subquery involves
      grouping or aggregation.
+    </para>
+
+    <para>
+     A subquery can also be a <command>VALUES</> list:
+<programlisting>
+FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
+     AS names(first, last)
+</programlisting>
+     Again, a table alias is required.  Assigning alias names to the columns
+     of the <command>VALUES</> list is optional, but is good practice.
+     For more information see <xref linkend="queries-values">.
     </para>
    </sect3>
 
@@ -814,7 +828,7 @@ SELECT <replaceable>select_list</replaceable>
 (3 rows)
 </screen>
    </para>
-	  
+
    <para>
     In the second query, we could not have written <literal>SELECT *
     FROM test1 GROUP BY x</literal>, because there is no single value
@@ -1194,7 +1208,7 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
   <indexterm zone="queries-order">
    <primary>ORDER BY</primary>
   </indexterm>
-	   
+
   <para>
    After a query has produced an output table (after the select list
    has been processed) it can optionally be sorted.  If sorting is not
@@ -1333,6 +1347,76 @@ SELECT <replaceable>select_list</replaceable>
    computed inside the server; therefore a large <literal>OFFSET</>
    can be inefficient.
   </para>
+ </sect1>
+
+
+ <sect1 id="queries-values">
+  <title><literal>VALUES</literal> Lists</title>
+
+  <indexterm zone="queries-values">
+   <primary>VALUES</primary>
+  </indexterm>
+
+  <para>
+   <literal>VALUES</> provides a way to generate a <quote>constant table</>
+   that can be used in a query without having to actually create and populate
+   a table on-disk.  The syntax is
+<synopsis>
+VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ...]
+</synopsis>
+   Each parenthesized list of expressions generates a row in the table.
+   The lists must all have the same number of elements (i.e., the number
+   of columns in the table), and corresponding entries in each list must
+   have compatible datatypes.  The actual datatype assigned to each column
+   of the result is determined using the same rules as for <literal>UNION</>
+   (see <xref linkend="typeconv-union-case">).
+  </para>
+
+  <para>
+   As an example,
+
+<programlisting>
+VALUES (1, 'one'), (2, 'two'), (3, 'three');
+</programlisting>
+
+   will return a table of two columns and three rows.  It's effectively
+   equivalent to
+
+<programlisting>
+SELECT 1 AS column1, 'one' AS column2
+UNION ALL
+SELECT 2, 'two'
+UNION ALL
+SELECT 3, 'three';
+</programlisting>
+
+   By default, <productname>PostgreSQL</productname> assigns the names
+   <literal>column1</>, <literal>column2</>, etc. to the columns of a
+   <literal>VALUES</> table.  The column names are not specified by the
+   SQL standard and different database systems do it differently, so
+   it's usually better to override the default names with a table alias
+   list.
+  </para>
+
+  <para>
+   Syntactically, <literal>VALUES</> followed by expression lists is
+   treated as equivalent to
+<synopsis>
+SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression</replaceable>
+</synopsis>
+   and can appear anywhere a <literal>SELECT</> can.  For example, you can
+   use it as an arm of a <literal>UNION</>, or attach a
+   <replaceable>sort_specification</replaceable> (<literal>ORDER BY</>,
+   <literal>LIMIT</>, and/or <literal>OFFSET</>) to it.  <literal>VALUES</>
+   is most commonly used as the data source in an <command>INSERT</> command,
+   and next most commonly as a subquery.
+  </para>
+
+  <para>
+   For more information see <xref linkend="sql-values"
+   endterm="sql-values-title">.
+  </para>
+
  </sect1>
 
 </chapter>

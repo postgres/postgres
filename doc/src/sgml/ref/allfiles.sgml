@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.67 2005/11/21 12:49:30 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.68 2006/09/18 19:54:01 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -116,6 +116,7 @@ Complete list of usable sgml source files in this directory.
 <!entity unlisten           system "unlisten.sgml">
 <!entity update             system "update.sgml">
 <!entity vacuum             system "vacuum.sgml">
+<!entity values             system "values.sgml">
 
 <!-- applications and utilities -->
 <!entity clusterdb          system "clusterdb.sgml">

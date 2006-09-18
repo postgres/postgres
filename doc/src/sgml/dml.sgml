@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.13 2006/02/18 23:14:45 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.14 2006/09/18 19:54:01 tgl Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -90,6 +90,16 @@ INSERT INTO products VALUES (1, 'Cheese');
 <programlisting>
 INSERT INTO products (product_no, name, price) VALUES (1, 'Cheese', DEFAULT);
 INSERT INTO products DEFAULT VALUES;
+</programlisting>
+  </para>
+
+  <para>
+   You can insert multiple rows in a single command:
+<programlisting>
+INSERT INTO products (product_no, name, price) VALUES
+    (1, 'Cheese', 9.99),
+    (2, 'Bread', 1.99),
+    (3, 'Milk', 2.99);
 </programlisting>
   </para>
 

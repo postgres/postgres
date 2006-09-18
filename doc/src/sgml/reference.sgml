@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.59 2006/09/16 00:30:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.60 2006/09/18 19:54:01 tgl Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -144,6 +144,7 @@
    &unlisten;
    &update;
    &vacuum;
+   &values;
 
  </reference>
 

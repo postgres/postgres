@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.32 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.33 2006/09/18 19:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -99,13 +99,9 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A query (that is, a <command>SELECT</> statement) which will
-      provide the columns and rows of the view.
-     </para>
-
-     <para>
-      Refer to <xref linkend="sql-select" endterm="sql-select-title">
-      for more information about valid queries.
+      A <xref linkend="sql-select" endterm="sql-select-title"> or
+      <xref linkend="sql-values" endterm="sql-values-title"> command
+      which will provide the columns and rows of the view.
      </para>
     </listitem>
    </varlistentry>

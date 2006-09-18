@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.47 2006/09/16 00:30:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.48 2006/09/18 19:54:01 tgl Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -799,6 +799,11 @@ padding spaces.
 </indexterm>
 
 <indexterm zone="typeconv-union-case">
+ <primary>VALUES</primary>
+ <secondary>determination of result type</secondary>
+</indexterm>
+
+<indexterm zone="typeconv-union-case">
  <primary>GREATEST</primary>
  <secondary>determination of result type</secondary>
 </indexterm>
@@ -814,8 +819,8 @@ types to become a single result set.  The resolution algorithm is
 applied separately to each output column of a union query.  The
 <literal>INTERSECT</> and <literal>EXCEPT</> constructs resolve
 dissimilar types in the same way as <literal>UNION</>.  The
-<literal>CASE</>, <literal>ARRAY</>, <function>GREATEST</> and
-<function>LEAST</> constructs use the identical
+<literal>CASE</>, <literal>ARRAY</>, <literal>VALUES</>,
+<function>GREATEST</> and <function>LEAST</> constructs use the identical
 algorithm to match up their component expressions and select a result
 data type.
 </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.20 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.21 2006/09/18 19:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -116,7 +116,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ (<replaceable class=
     <listitem>
      <para>
       Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-      or <command>DELETE</> statement.
+      <command>DELETE</>, or <command>VALUES</> statement.
      </para>
     </listitem>
    </varlistentry>

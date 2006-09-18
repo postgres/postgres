@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.92 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.93 2006/09/18 19:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -226,7 +226,9 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
         this single <command>SELECT</command> command.  Note that the
         sub-<command>SELECT</command> must be surrounded by
         parentheses, and an alias <emphasis>must</emphasis> be
-        provided for it.
+        provided for it.  A
+        <xref linkend="sql-values" endterm="sql-values-title"> command
+        can also be used here.
        </para>
       </listitem>
      </varlistentry>

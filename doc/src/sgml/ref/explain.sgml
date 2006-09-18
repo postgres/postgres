@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.37 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.38 2006/09/18 19:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -121,8 +121,8 @@ ROLLBACK;
     <listitem>
      <para>
       Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-      <command>DELETE</>, <command>EXECUTE</>, or <command>DECLARE</>
-      statement, whose execution plan you wish to see.
+      <command>DELETE</>, <command>VALUES</>, <command>EXECUTE</>, or
+      <command>DECLARE</> statement, whose execution plan you wish to see.
      </para>
     </listitem>
    </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.76 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.77 2006/09/18 19:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -107,7 +107,9 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A <command>SELECT</> query whose results are to be copied.
+      A <xref linkend="sql-select" endterm="sql-select-title"> or
+      <xref linkend="sql-values" endterm="sql-values-title"> command
+      whose results are to be copied.
       Note that parentheses are required around the query.
      </para>
     </listitem>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.32 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.33 2006/09/18 19:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,8 +31,8 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
 
   <para>
    <command>INSERT</command> inserts new rows into a table.
-   One can insert rows specified by value expressions,
-   or rows computed as a result of a query.
+   One can insert one or more rows specified by value expressions,
+   or zero or more rows resulting from a query.
   </para>
 
   <para>
@@ -67,8 +67,9 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
   </para>
 
   <para>
-   You must have <literal>INSERT</literal> privilege to a table in
-   order to insert into it.  If you use the <replaceable
+   You must have <literal>INSERT</literal> privilege on a table in
+   order to insert into it, and <literal>SELECT</> privilege on it to
+   use <literal>RETURNING</>.  If you use the <replaceable
    class="PARAMETER">query</replaceable> clause to insert rows from a
    query, you also need to have <literal>SELECT</literal> privilege on
    any table used in the query.
@@ -229,6 +230,16 @@ INSERT INTO films (code, title, did, date_prod, kind)
 
 <programlisting>
 INSERT INTO films DEFAULT VALUES;
+</programlisting>
+  </para>
+
+  <para>
+   To insert multiple rows using the multi-row <command>VALUES</> syntax:
+
+<programlisting>
+INSERT INTO films (code, title, did, date_prod, kind) VALUES
+    ('B6717', 'Tampopo', 110, '1985-02-10', 'Comedy'),
+    ('HG120', 'The Dinner Game', 140, DEFAULT, 'Comedy');
 </programlisting>
   </para>
 

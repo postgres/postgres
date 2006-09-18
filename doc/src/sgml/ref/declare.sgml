@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.38 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.39 2006/09/18 19:54:01 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -157,10 +157,9 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
-      A <command>SELECT</> command that will provide the rows to be
-      returned by the cursor.  Refer to <xref linkend="sql-select"
-      endterm="sql-select-title"> for further information about valid
-      queries.
+      A <xref linkend="sql-select" endterm="sql-select-title"> or
+      <xref linkend="sql-values" endterm="sql-values-title"> command
+      which will provide the rows to be returned by the cursor.
      </para>
     </listitem>
    </varlistentry>
