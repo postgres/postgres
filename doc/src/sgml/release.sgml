@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.439 2006/09/19 00:57:07 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.440 2006/09/19 02:08:30 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -37,15 +37,15 @@ For new features, add links to the documentation sections.
  
     <para>
      This release adds many improvements to commands and database
-     facilities that were requested by users.  Rather than add a
-     few large new features, this release makes many features from
-     previous releases easier to use.  For example, it is now much
-     easier to create standby point-in-time-recovery (PITR) servers.
-     Many performance bottlenecks have been eliminated, allowing
-     more functionality to be enabled by default.  Various additions
+     facilities that were requested by users.  Rather add a few
+     new features, this release makes many features from previous
+     releases easier to use.  For example, it is now much easier
+     to create standby point-in-time-recovery (PITR) servers.  Many
+     performance bottlenecks have been eliminated, allowing more
+     functionality to be enabled by default.  Various additions
      will make porting from other databases easier.  The changes
      in this release continue the <productname>PostgreSQL</>
-     tradition of not only being the most advanced open source
+     tradition of being not only the most advanced open source
      database, but also the easiest to use.
     </para>
 
@@ -65,58 +65,6 @@ For new features, add links to the documentation sections.
     </para>
 
     <itemizedlist>
-
-      <listitem>
-       <para>
-        Improve cost estimation for nestloop index scans (Tom)
-       </para>
-
-       <para>
-        This may eliminate the need to set unrealistically small
-        values of <envar>random_page_cost</>.  If you have been
-        using a very small <envar>random_page_cost</>, please
-        recheck your test cases.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Deprecate use of <application>postmaster</> symlink (Peter)
-       </para>
-
-       <para>
-        <application>postmaster</> and <application>postgres</>
-        commands now act identically, with the behavior determined
-        by switches.  The <application>postmaster</> symlink is
-        kept for compatibility, but is not really needed.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Change <envar>log_duration</> to output even if the query
-        is not output (Tom)
-       </para>
-
-       <para>
-        In prior releases, <envar>log_duration</> only printed if
-        the query appeared earlier in the logs.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Make row comparisons follow <acronym>SQL</> standard
-        semantics and allow them to be used in index scans (Tom)
-       </para>
-
-       <para>
-        Previously, row = and &lt;&gt; comparisons followed the
-        standard but &lt; &lt;= &gt; &gt;= did not.  A row comparison
-        can now be used as an index constraint for a multicolumn
-        index matching the row value.
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -155,6 +103,20 @@ For new features, add links to the documentation sections.
         allows, for example, triggers to check for data changes
         with <literal>IF row(new.*) IS DISTINCT FROM row(old.*)</>.
         The old behavior is still available by omitting <literal>.*</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make row comparisons follow <acronym>SQL</> standard
+        semantics and allow them to be used in index scans (Tom)
+       </para>
+
+       <para>
+        Previously, row = and &lt;&gt; comparisons followed the
+        standard but &lt; &lt;= &gt; &gt;= did not.  A row comparison
+        can now be used as an index constraint for a multicolumn
+        index matching the row value.
        </para>
       </listitem>
 
@@ -211,6 +173,43 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Make command-line options of postmaster and postgres
+        identical (Peter)
+       </para>
+
+       <para>
+        This allows the postmaster to pass arguments to each backend
+        without using <literal>-o</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Deprecate use of <application>postmaster</> symlink (Peter)
+       </para>
+
+       <para>
+        <application>postmaster</> and <application>postgres</>
+        commands now act identically, with the behavior determined
+        by switches.  The <application>postmaster</> symlink is
+        kept for compatibility, but is not really needed.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Change <envar>log_duration</> to output even if the query
+        is not output (Tom)
+       </para>
+
+       <para>
+        In prior releases, <envar>log_duration</> only printed if
+        the query appeared earlier in the logs.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Have <function>to_char(time)</> and <function>to_char(interval)</>
         treat <literal>'HH'</> and <literal>'HH12'</> as 12-hour
         intervals.
@@ -242,6 +241,19 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Improve cost estimation for nestloop index scans (Tom)
+       </para>
+
+       <para>
+        This may eliminate the need to set unrealistically small
+        values of <envar>random_page_cost</>.  If you have been
+        using a very small <envar>random_page_cost</>, please
+        recheck your test cases.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Change <application>libpq</> <function>PQdsplen()</> to
         return a useful value (Martijn van Oosterhout)
        </para>
@@ -262,23 +274,14 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Remove <acronym>QNX</> and <acronym>BEOS</> ports (Bruce)
+        In /contrib/xml2, rename <function>xml_valid()</> to
+        <function>xml_is_well_formed()</> (Tom)
        </para>
 
        <para>
-        These ports no longer had active maintainers.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Make command-line options of postmaster and postgres
-        identical (Peter)
-       </para>
-
-       <para>
-        This allows the postmaster to pass arguments to each backend
-        without using <literal>-o</>.
+        <function>xml_valid()</> will remain for backward compability,
+        but its behavior will change to do schema checks in future
+        releases.
        </para>
       </listitem>
 
@@ -304,14 +307,11 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        In /contrib/xml2, rename <function>xml_valid()</> to
-        <function>xml_is_well_formed()</> (Tom)
+        Remove <acronym>QNX</> and <acronym>BEOS</> ports (Bruce)
        </para>
 
        <para>
-        <function>xml_valid()</> will remain for backward compability,
-        but its behavior will change to do schema checks in future
-        releases.
+        These ports no longer had active maintainers.
        </para>
       </listitem>
 
@@ -472,146 +472,14 @@ For new features, add links to the documentation sections.
         Teramoto)
        </para>
       </listitem>
-     </sect3>
+
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>Server Changes</title>
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Improve performance of statistics monitoring, especially
-        <literal>stats_command_string</> (Tom, Bruce)
-       </para>
-
-       <para>
-        This release sets <envar>stats_command_string</> to
-        <literal>on</> by default, now that its overhead is minimal.
-        This means <literal>pg_stat_activity</> now will show all
-        active queries by default.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add support for include directives in <filename>postgresql.conf</>
-        (Joachim Wieland)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add native <acronym>LDAP</> authentication (Magnus Hagander)
-       </para>
-
-       <para>
-        This is particularly useful for platforms that do not
-        support <acronym>PAM</>, such as Win32.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <envar>full_page_writes</> to be turned <literal>off</>
-        again (Tom)
-       </para>
-
-       <para>
-        This flag can now be used even with <acronym>PITR</>. It
-        is turned on automatically between <function>pg_start_backup()</>
-        and <function>pg_stop_backup()</> calls.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add support for <acronym>SSL</> Certificate Revocation List
-        (<acronym>CRL</>) files, <filename>root.crl</> (Libor
-        Hoho&#353;)
-       </para>
-
-       <para>
-        This was added to <application>libpq</> as well.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Remove routine autovacuum server log entries (Bruce)
-       </para>
-
-       <para>
-        <literal>pg_stat_activity</> now shows autovacuum activity.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <literal>GRANT CONNECT ON DATABASE</>, to be used in
-        addition to <filename>pg_hba.conf</> (Gevik Babakhani)
-       </para>
-
-       <para>
-        This gives SQL-control over database access, and works in
-        combination with the existing <filename>pg_hba.conf</>
-        controls.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add last vacuum and analyze timestamp columns to the stats
-        collector (Larry Rosenman)
-       </para>
-
-       <para>
-        These values now appear in the <literal>pg_stat_*_tables</>
-        system views, and are used by autovacuum. ?
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <acronym>GUC</> <envar>update_process_title</> to
-        control whether the <application>ps</> display is updated
-        for every command, default to <literal>on</> (Bruce)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Track tables needing vacuum with more accuracy (Alvaro)
-       </para>
-
-       <para>
-        This reduces the overhead involved in preventing transaction
-        ID wraparound.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow units to be specified in configuration settings
-        (Peter)
-       </para>
-
-       <para>
-        You can now set <envar>shared_buffer</> to <literal>32000kB</>,
-        for example.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve logging of protocol-level prepare/bind/execute
-        messages (Bruce, Tom)
-       </para>
-
-       <para>
-        Such logging now shows statement names, bind parameter
-        values, and the text of the query being executed.
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -669,6 +537,89 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Add native <acronym>LDAP</> authentication (Magnus Hagander)
+       </para>
+
+       <para>
+        This is particularly useful for platforms that do not
+        support <acronym>PAM</>, such as Win32.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <literal>GRANT CONNECT ON DATABASE</>, to be used in
+        addition to <filename>pg_hba.conf</> (Gevik Babakhani)
+       </para>
+
+       <para>
+        This gives SQL-control over database access, and works in
+        combination with the existing <filename>pg_hba.conf</>
+        controls.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for <acronym>SSL</> Certificate Revocation List
+        (<acronym>CRL</>) files, <filename>root.crl</> (Libor
+        Hoho&#353;)
+       </para>
+
+       <para>
+        This was added to <application>libpq</> as well.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove routine autovacuum server log entries (Bruce)
+       </para>
+
+       <para>
+        <literal>pg_stat_activity</> now shows autovacuum activity.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Track tables needing vacuum with more accuracy (Alvaro)
+       </para>
+
+       <para>
+        This reduces the overhead involved in preventing transaction
+        ID wraparound.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add last vacuum and analyze timestamp columns to the stats
+        collector (Larry Rosenman)
+       </para>
+
+       <para>
+        These values now appear in the <literal>pg_stat_*_tables</>
+        system views, and are used by autovacuum. ?
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve performance of statistics monitoring, especially
+        <literal>stats_command_string</> (Tom, Bruce)
+       </para>
+
+       <para>
+        This release sets <envar>stats_command_string</> to
+        <literal>on</> by default, now that its overhead is minimal.
+        This means <literal>pg_stat_activity</> now will show all
+        active queries by default.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add a <literal>waiting</> column to <literal>pg_stat_activity</>
         (Tom)
        </para>
@@ -679,7 +630,48 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+      <listitem>
+       <para>
+        Add <acronym>GUC</> <envar>update_process_title</> to
+        control whether the <application>ps</> display is updated
+        for every command, default to <literal>on</> (Bruce)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow units to be specified in configuration settings
+        (Peter)
+       </para>
+
+       <para>
+        You can now set <envar>shared_buffer</> to <literal>32000kB</>,
+        for example.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for include directives in <filename>postgresql.conf</>
+        (Joachim Wieland)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve logging of protocol-level prepare/bind/execute
+        messages (Bruce, Tom)
+       </para>
+
+       <para>
+        Such logging now shows statement names, bind parameter
+        values, and the text of the query being executed.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>Query Changes</title>
@@ -687,13 +679,85 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Support portal parameters in <command>EXPLAIN</> and
-        <command>EXECUTE</> (Tom)
+        Add <command>INSERT</>/<command>UPDATE</>/<command>DELETE</>
+        <literal>RETURNING</> (Jonah Harris, Tom)
        </para>
 
        <para>
-        This allows, for example, <literal>?</> parameters to work
-        in these commands in <acronym>JDBC</>.
+        This allows these commands to return values, such as the
+        computed serial key for a new row.  In the <command>UPDATE</>
+        case, values from the new state of the row are returned.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for multi-row <literal>VALUES</> clauses as
+        part of <command>INSERT</> and <command>SELECT</> statements
+        (Joe, Tom)
+       </para>
+
+       <para>
+        This allows <command>INSERT</> to insert multiple rows of
+        constants, or queries to generate result sets using constants.
+        For example, <literal>INSERT ...  VALUES (...), (...),
+        ....</>, and <literal>SELECT * FROM (VALUES (...), (...),
+        ....) AS alias(f1, ...)</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <command>UPDATE</> and <command>DELETE</> to use an
+        alias for the target table (Atsushi Ogawa)
+       </para>
+
+       <para>
+        This allows these statements to support self-joins more
+        conveniently.  <command>UPDATE</> already supported as
+        <literal>FROM</> clause, but <command>DELETE</> did not.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <command>UPDATE</> to set multiple columns with a
+        list of values (Susanne Ebrecht)
+       </para>
+
+       <para>
+        This is basically as short-hand for assigning the columns
+        and values in pairs.  The syntax is <literal>UPDATE tab
+        SET (col, ...) = (val, ...)</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow additional row value comparisons (Tom)
+       </para>
+
+       <para>
+        Add &lt;, &lt;=, &gt;, &gt;=.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <literal>CASCADE</> option to <command>TRUNCATE</>
+        (Joachim Wieland)
+       </para>
+
+       <para>
+        This allows <command>TRUNCATE</> also to automatically
+        truncate all foreign-key referencing tables.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support <literal>FOR UPDATE</> and <literal>FOR SHARE</>
+        in the same command (Tom)
        </para>
       </listitem>
 
@@ -712,11 +776,41 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow additional row value comparisons (Tom)
+        Improve the length output used by
+        <literal>UNION</>/<literal>INTERSECT</>/<literal>EXCEPT</>
+        (Tom)
        </para>
 
        <para>
-        Add &lt;, &lt;=, &gt;, &gt;=.
+        When all columns are of the same defined length, that length
+        is used for output, rather than a generic length.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <literal>ILIKE</> to work for multi-byte encodings
+        (Tom)
+       </para>
+
+       <para>
+        Internally, <literal>ILIKE</> now calls <function>lower()</>
+        and then uses <literal>LIKE</>.  Locale-specific regular
+        expression operations still do not work in these encodings.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Enable <envar>standard_conforming_strings</> to be turned
+        <literal>on</> (Kevin Grittner)
+       </para>
+
+       <para>
+        This allow special backslash escaping in strings to be
+        turned off so <productname>PostgreSQL</> is more
+        standards-compliant.  The default is <literal>off</>, but
+        future releases will default this to <literal>on</>.
        </para>
       </listitem>
 
@@ -741,6 +835,18 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Support portal parameters in <command>EXPLAIN</> and
+        <command>EXECUTE</> (Tom)
+       </para>
+
+       <para>
+        This allows, for example, <literal>?</> parameters to work
+        in these commands in <acronym>JDBC</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         If <acronym>SQL</>-level <command>PREPARE</> parameters
         are unknown, infer their types from the context of the
         query (Neil)
@@ -748,127 +854,6 @@ For new features, add links to the documentation sections.
 
        <para>
         Protocol-level <command>PREPARE</> already did this. ?
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <command>UPDATE</> and <command>DELETE</> to use an
-        alias for the target table (Atsushi Ogawa)
-       </para>
-
-       <para>
-        This allows these statements to support self-joins more
-        conveniently.  <command>UPDATE</> already supported as
-        <literal>FROM</> clause, but <command>DELETE</> did not.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <literal>CASCADE</> option to <command>TRUNCATE</>
-        (Joachim Wieland)
-       </para>
-
-       <para>
-        This allows <command>TRUNCATE</> also to automatically
-        truncate all foreign-key referencing tables.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Enable <envar>standard_conforming_strings</> to be turned
-        <literal>on</> (Kevin Grittner)
-       </para>
-
-       <para>
-        This allow special backslash escaping in strings to be
-        turned off so <productname>PostgreSQL</> is more
-        standards-compliant.  The default is <literal>off</>, but
-        future releases will default this to <literal>on</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Support <literal>FOR UPDATE</> and <literal>FOR SHARE</>
-        in the same command (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Change <literal>LIMIT</>/<literal>OFFSET</> to exceed
-        two billion</> (Dhanaraj M)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add support for multi-row <literal>VALUES</> clauses as
-        part of <command>INSERT</> and <command>SELECT</> statements
-        (Joe, Tom)
-       </para>
-
-       <para>
-        This allows <command>INSERT</> to insert multiple rows of
-        constants, or queries to generate result sets using constants.
-        For example, <literal>INSERT ...  VALUES (...), (...),
-        ....</>, and <literal>SELECT * FROM (VALUES (...), (...),
-        ....) AS alias(f1, ...)</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve the length output used by
-        <literal>UNION</>/<literal>INTERSECT</>/<literal>EXCEPT</>
-        (Tom)
-       </para>
-
-       <para>
-        When all columns are of the same defined length, that length
-        is used for output, rather than a generic length.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <command>INSERT</>/<command>UPDATE</>/<command>DELETE</>
-        <literal>RETURNING</> (Jonah Harris, Tom)
-       </para>
-
-       <para>
-        This allows these commands to return values, such as the
-        computed serial key for a new row.  In the <command>UPDATE</>
-        case, values from the new state of the row are returned.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <command>UPDATE</> to set multiple columns with a
-        list of values (Susanne Ebrecht)
-       </para>
-
-       <para>
-        This is basically as short-hand for assigning the columns
-        and values in pairs.  The syntax is <literal>UPDATE tab
-        SET (col, ...) = (val, ...)</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <literal>ILIKE</> to work for multi-byte encodings
-        (Tom)
-       </para>
-
-       <para>
-        Internally, <literal>ILIKE</> now calls <function>lower()</>
-        and then uses <literal>LIKE</>.  Locale-specific regular
-        expression operations still do not work in these encodings.
        </para>
       </listitem>
 
@@ -886,24 +871,95 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Do not flatten subqueries that contain <literal>VOLATILE</>
-        functions in their target lists (Jaime Casanova)
-       </para>
-
-       <para>
-        This prevents surprising behavior due to multiple evaluation
-        of a <literal>volatile</> function (such as <function>random()</>
-        or <function>nextval()</>).  It may cause performance
-        degradation in the presence of functions that are unnecessarily
-        marked as <literal>volatile</>.
+        Change <literal>LIMIT</>/<literal>OFFSET</> to exceed
+        two billion (Dhanaraj M)
        </para>
       </listitem>
 
-     </sect3>
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>Object Manipulation Changes</title>
      <itemizedlist>
+
+      <listitem>
+       <para>
+        Add <literal>TABLESPACE</> and <literal>ON COMMIT</> clauses
+        to <command>CREATE TABLE AS</> (Neil)
+       </para>
+
+       <para>
+        This allows the tablespace to be specified for the new
+        table.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <literal>ON COMMIT</> clauses to <command>CREATE TABLE
+        AS</> (Neil)
+       </para>
+
+       <para>
+        This allows temporary tables to be truncated or dropped on
+        transaction commit.  The default behavior is for the table
+        to remain until the session ends.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <literal>INCLUDING CONSTRAINTS</> to <command>CREATE
+        TABLE LIKE</> (Greg Stark)
+       </para>
+
+       <para>
+        This allows the new table to receive matching constraints.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow the creation of placeholder (shell) types (Martijn van
+        Oosterhout)
+       </para>
+
+       <para>
+        Shell types create a type reference, without specifying
+        any of the aspects of the type.  It is useful for creating
+        types with input/output functions that reference the data
+        type.  The syntax is <command>CREATE TYPE typname</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add new aggregate creation syntax (Tom)
+       </para>
+
+       <para>
+        The new syntax is <command>CREATE AGGREGATE</> aggname
+        (input_type) (parameter_list).  This more naturally supports
+        the new multi-parameter aggregate functionality.  The
+        previous syntax is still supported.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Aggregate functions now support multiple input parameters
+        (Sergey Koposov, Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <command>CREATE</>/<command>ALTER ROLE PASSWORD NULL</>,
+        which removes the role's password (Peter)
+       </para>
+      </listitem>
 
       <listitem>
        <para>
@@ -938,26 +994,6 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <command>CREATE</>/<command>ALTER ROLE PASSWORD NULL</>,
-        which removes the role's password (Peter)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Properly enforce <literal>DOMAIN</> check constraints
-        everywhere (Neil, Tom)
-       </para>
-
-       <para>
-        For example, the result of a user-defined function that is
-        declared to return a domain type is now checked against
-        the constraints.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add <command>GRANT ON SEQUENCE</> syntax (Bruce)
        </para>
 
@@ -985,89 +1021,6 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow comments on global objects to be stored globally
-        (Kris Jurka)
-       </para>
-
-       <para>
-        Previously, global object comments were stored in individual
-        databases, making them ineffective.  This adds a new
-        <literal>pg_shdescription</> table.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <literal>ON COMMIT</> clauses to <command>CREATE TABLE
-        AS</> (Neil)
-       </para>
-
-       <para>
-        This allows temporary tables to be truncated or dropped on
-        transaction commit.  The default behavior is for the table
-        to remain until the session ends.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <literal>TABLESPACE</> and <literal>ON COMMIT</> clauses
-        to <command>CREATE TABLE AS</> (Neil)
-       </para>
-
-       <para>
-        This allows the tablespace to be specified for the new
-        table.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow placeholder (shell) types to be created (Martijn van
-        Oosterhout)
-       </para>
-
-       <para>
-        Shell types create a type reference, without specifying
-        any of the aspects of the type.  It is useful for creating
-        types with input/output functions that reference the data
-        type.  The syntax is <command>CREATE TYPE typname</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add new aggregate creation syntax (Tom)
-       </para>
-
-       <para>
-        The new syntax is <command>CREATE AGGREGATE</> aggname
-        (input_type) (parameter_list).  This more naturally supports
-        the new multi-parameter aggregate functionality.  The
-        previous syntax is still supported.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Aggregate functions now support multiple input parameters
-        (Sergey Koposov, Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <literal>INCLUDING CONSTRAINTS</> to <command>CREATE
-        TABLE LIKE</> (Greg Stark)
-       </para>
-
-       <para>
-        This allows the new table to receive matching constraints.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add <literal>ALTER TABLE ... [NO] INHERIT</> (Greg Stark)
        </para>
 
@@ -1079,52 +1032,26 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+      <listitem>
+       <para>
+        Allow comments on global objects to be stored globally
+        (Kris Jurka)
+       </para>
+
+       <para>
+        Previously, global object comments were stored in individual
+        databases, making them ineffective.  This adds a new
+        <literal>pg_shdescription</> table.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>Utility Command Changes</title>
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Reduce progress messages displayed by initdb (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have initdb detect the operating system locale and set the
-        default <envar>DateStyle</> accordingly (Peter)
-       </para>
-
-       <para>
-        This make it more likely that the installed
-        <filename>postgresql.conf</> <envar>DateStyle</> value will
-        be correct.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Have the <command>COPY</> command return a command tag that
-        includes the number of rows copied (Volkan Yaz&#305;c&#305;)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <command>VACUUM</> to expire rows without being
-        affected by other concurrent <command>VACUUM</>s (Hannu
-        Krossing, Alvaro, Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Avoid extra scan of tables without indexes during <command>VACUUM</>
-        (Greg Stark)
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -1151,121 +1078,54 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+      <listitem>
+       <para>
+        Have the <command>COPY</> command return a command tag that
+        includes the number of rows copied (Volkan Yaz&#305;c&#305;)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <command>VACUUM</> to expire rows without being
+        affected by other concurrent <command>VACUUM</>s (Hannu
+        Krossing, Alvaro, Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Have initdb detect the operating system locale and set the
+        default <envar>DateStyle</> accordingly (Peter)
+       </para>
+
+       <para>
+        This make it more likely that the installed
+        <filename>postgresql.conf</> <envar>DateStyle</> value will
+        be correct.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Avoid extra scan of tables without indexes during <command>VACUUM</>
+        (Greg Stark)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reduce progress messages displayed by initdb (Tom)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
-     <title>Data Type and Function Changes</title>
+     <title>Date/Time Changes</title>
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Allow arrays to contain <literal>NULL</> elements (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <function>to_char(time)</> and <function>to_char(interval)</>
-        to output <acronym>AM</>/<acronym>PM</> specifications
-        (Bruce)
-       </para>
-
-       <para>
-        Intervals and times are treated as 24-hour periods, e.g.
-        <literal>25 hours</> is <acronym>AM</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add a server-side sleep function <function>pg_sleep()</>
-        (Joachim Wieland)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add convenient arithmetic operations on <type>INET</>/<type>CIDR</>
-        values (Stephen R. van den Berg)
-       </para>
-
-       <para>
-        The new operators are <literal>&</> (and), <literal>|</>
-        (or), <literal>~</> (not), <literal>+</> <type>int8</>,
-        <literal>-</> <type>int8</>, and <type>inet</> <literal>-</>
-        <type>inet</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <function>to_char()</> to print localized month and
-        day names (Euler Taveira de Oliveira)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add all comparison operators for the <type>tid</> data type
-        (Mark Kirkwood, Greg Stark, Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add new function <function>justify_interval()</> to adjust
-        interval units (Mark Dilger)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add new aggregate functions from SQL2003 (Neil)
-       </para>
-
-       <para>
-        The new functions are <function>var_pop()</>,
-        <function>var_samp()</>, <function>stddev_pop()</>, and
-        <function>stddev_samp()</>.  <function>var_samp()</> and
-        <function>stddev_samp()</> are merely renamings of the
-        existing aggregates <function>variance()</> and
-        <function>stddev()</>.  The latter names have been kept
-        for backward compatibility.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        New operators for array-subset comparisons (<literal>@&gt;</>,
-        <literal>&lt;@</>, <literal>&amp;&amp;</>) (Teodor, Tom)
-       </para>
-
-       <para>
-        The old operators were kept for backward compatibility.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow domains to be created using other domains (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <function>clock_timestamp()</>,
-        <function>statement_timestamp()</>, and
-        <function>transaction_timestamp()</> (Bruce)
-       </para>
-
-       <para>
-        <function>clock_timestamp()</> is the true current time,
-        and <function>statement_timestamp()</> is the time the
-        current command arrived at the server.
-        <function>transaction_timestamp()</> is the same as
-        <function>now()</>.
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -1300,6 +1160,111 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Add <function>clock_timestamp()</>,
+        <function>statement_timestamp()</>, and
+        <function>transaction_timestamp()</> (Bruce)
+       </para>
+
+       <para>
+        <function>clock_timestamp()</> is the true current time,
+        and <function>statement_timestamp()</> is the time the
+        current command arrived at the server.
+        <function>transaction_timestamp()</> is the same as
+        <function>now()</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <function>to_char()</> to print localized month and
+        day names (Euler Taveira de Oliveira)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <function>to_char(time)</> and <function>to_char(interval)</>
+        to output <acronym>AM</>/<acronym>PM</> specifications
+        (Bruce)
+       </para>
+
+       <para>
+        Intervals and times are treated as 24-hour periods, e.g.
+        <literal>25 hours</> is <acronym>AM</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add new function <function>justify_interval()</> to adjust
+        interval units (Mark Dilger)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Interval computation improvements (Michael Glaesemann,
+        Bruce)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Other Data Type and Function Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Allow arrays to contain <literal>NULL</> elements (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        New operators for array-subset comparisons (<literal>@&gt;</>,
+        <literal>&lt;@</>, <literal>&amp;&amp;</>) (Teodor, Tom)
+       </para>
+
+       <para>
+        The old operators were kept for backward compatibility.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add convenient arithmetic operations on <type>INET</>/<type>CIDR</>
+        values (Stephen R. van den Berg)
+       </para>
+
+       <para>
+        The new operators are <literal>&</> (and), <literal>|</>
+        (or), <literal>~</> (not), <literal>+</> <type>int8</>,
+        <literal>-</> <type>int8</>, and <type>inet</> <literal>-</>
+        <type>inet</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add new aggregate functions from SQL2003 (Neil)
+       </para>
+
+       <para>
+        The new functions are <function>var_pop()</>,
+        <function>var_samp()</>, <function>stddev_pop()</>, and
+        <function>stddev_samp()</>.  <function>var_samp()</> and
+        <function>stddev_samp()</> are merely renamings of the
+        existing aggregates <function>variance()</> and
+        <function>stddev()</>.  The latter names have been kept
+        for backward compatibility.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add SQL2003-standard statistical aggregates (Sergey Koposov)
        </para>
 
@@ -1311,6 +1276,25 @@ For new features, add links to the documentation sections.
         <function>regr_avgy()</>, <function>regr_sxy()</>,
         <function>regr_sxx()</>, <function>regr_syy()</>,
         <function>regr_count()</>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow domains to be created using other domains (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Properly enforce <literal>DOMAIN</> check constraints
+        everywhere (Neil, Tom)
+       </para>
+
+       <para>
+        For example, the result of a user-defined function that is
+        declared to return a domain type is now checked against
+        the constraints.
        </para>
       </listitem>
 
@@ -1332,16 +1316,47 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Interval computation improvements (Michael Glaesemann,
-        Bruce)
+        Add a server-side sleep function <function>pg_sleep()</>
+        (Joachim Wieland)
        </para>
       </listitem>
 
-     </sect3>
+      <listitem>
+       <para>
+        Add all comparison operators for the <type>tid</> (tuple id)
+        data type (Mark Kirkwood, Greg Stark, Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Do not flatten subqueries that contain <literal>VOLATILE</>
+        functions in their target lists (Jaime Casanova) ?
+       </para>
+
+       <para>
+        This prevents surprising behavior due to multiple evaluation
+        of a <literal>volatile</> function (such as <function>random()</>
+        or <function>nextval()</>).  It may cause performance
+        degradation in the presence of functions that are unnecessarily
+        marked as <literal>volatile</>.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>PL/PgSQL Server-Side Language Changes</title>
      <itemizedlist>
+
+      <listitem>
+       <para>
+        Add <literal>table_name</> and <literal>table_schema</> as
+        trigger data (Andrew)
+       </para>
+      </listitem>
 
       <listitem>
        <para>
@@ -1359,13 +1374,6 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <literal>table_name</> and <literal>table_schema</> as
-        trigger data (Andrew)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add <literal>STRICT</> to <command>SELECT INTO</> (Matt
         Miller)
        </para>
@@ -1377,23 +1385,13 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>PL/Perl Server-Side Language Changes</title>
      <itemizedlist>
-
-      <listitem>
-       <para>
-        Honor <envar>check_function_bodies</> (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add prepared queries (Dmitry Karasik)
-       </para>
-      </listitem>
 
       <listitem>
        <para>
@@ -1408,6 +1406,12 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Add prepared queries (Dmitry Karasik)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Make <literal>$_TD</> trigger data a global variable (Andrew)
        </para>
 
@@ -1417,11 +1421,46 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+      <listitem>
+       <para>
+        Honor <envar>check_function_bodies</> (Tom)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>PL/Python Server-Side Language Changes</title>
      <itemizedlist>
+
+      <listitem>
+       <para>
+        Add <literal>table_name</> and <literal>table_schema</> as
+        trigger data (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow returning of <literal>composite types</> and
+        <literal>result sets</> (Sven Suursoho)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Return result-set as <literal>list</>, <literal>iterator</>,
+        or <literal>generator </>(Sven Suursoho)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Return composite-types as dictionary (Sven Suursoho)
+       </para>
+      </listitem>
 
       <listitem>
        <para>
@@ -1436,34 +1475,9 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Return composite-types as dictionary (Sven Suursoho)
-       </para>
-      </listitem>
+     </itemizedlist>
 
-      <listitem>
-       <para>
-        Return result-set as <literal>list</>, <literal>iterator</>,
-        or <literal>generator </>(Sven Suursoho)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow returning of <literal>composite types</> and
-        <literal>result sets</> (Sven Suursoho)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <literal>table_name</> and <literal>table_schema</> as
-        trigger data (Andrew)
-       </para>
-      </listitem>
-
-     </sect3>
+    </sect3>
 
     <sect3>
      <title><application>psql</> Changes</title>
@@ -1473,6 +1487,55 @@ For new features, add links to the documentation sections.
        <para>
         Add new command <literal>\password</> for changing role
         password with client-side password encryption (Peter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <literal>\c</> to connect to a new host and port
+        number (David, Volkan Yaz&#305;c&#305;)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add tablespace display to <literal>\l+</> (Philip Yarra)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve <literal>\df</> slash command to include the argument
+        names and modes (<literal>OUT</> or <literal>INOUT</>) of
+        the function (David Fetter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support binary <command>COPY</> (Andreas Pflug)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add option to run the entire session in a single transaction
+        (Simon)
+       </para>
+
+       <para>
+        Use options <literal>-1</> or <literal>--single-transaction</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support retrieving <command>SELECT</> results in batches
+        using a cursor (Chris Mair)
+       </para>
+
+       <para>
+        This is accomplished using <command>\set FETCH_COUNT</>.
        </para>
       </listitem>
 
@@ -1496,46 +1559,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow <literal>\c</> to connect to a new host and port
-        number (David, Volkan Yaz&#305;c&#305;)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add option to run the entire session in a single transaction
-        (Simon)
-       </para>
-
-       <para>
-        Use options <literal>-1</> or <literal>--single-transaction</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Improve highlighting of error location in query in more
         cases (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add tablespace display to <literal>\l+</> (Philip Yarra)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Support binary <command>COPY</> (Andreas Pflug)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve <literal>\df</> slash command to include the argument
-        names and modes (<literal>OUT</> or <literal>INOUT</>) of
-        the function (David Fetter)
        </para>
       </listitem>
 
@@ -1554,18 +1579,9 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Support retrieving <command>SELECT</> results in batches
-        using a cursor (Chris Mair)
-       </para>
+     </itemizedlist>
 
-       <para>
-        This is accomplished using <command>\set FETCH_COUNT</>.
-       </para>
-      </listitem>
-
-     </sect3>
+    </sect3>
 
     <sect3>
      <title><application>pg_dump</> Changes</title>
@@ -1606,7 +1622,9 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title><application>libpq</> Changes</title>
@@ -1626,27 +1644,12 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow the <filename>.pgpass</> hostname to match the default
-        socket directory, as well as a blank <literal>pghost</>
-        (Bruce)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add function <function>PQisthreadsafe()</> (Bruce)
        </para>
 
        <para>
         This allows applications to query the thread-safety status
         of the library.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <acronym>LDAP</> lookups from <filename>pg_service.conf</>
-        (Albe Laurenz)
        </para>
       </listitem>
 
@@ -1659,7 +1662,24 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+      <listitem>
+       <para>
+        Allow <acronym>LDAP</> lookups from <filename>pg_service.conf</>
+        (Albe Laurenz)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow the <filename>.pgpass</> hostname to match the default
+        socket directory, as well as a blank <literal>pghost</>
+        (Bruce)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title><application>ecpg</> Changes</title>
@@ -1690,11 +1710,35 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title><application>Win32</> Port</title>
      <itemizedlist>
+
+      <listitem>
+       <para>
+        Allow <acronym>MSVC</> to compile the <productname>PostgreSQL</>
+        server (Magnus, Hiroshi Saito)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <acronym>MSVC</> support for utility commands and
+        <application>pg_dump </>(Hiroshi Saito)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for Windows code pages <literal>1253</>,
+        <literal>1254</>, <literal>1255</>, and <literal>1257</>
+        (Kris Jurka)
+       </para>
+      </listitem>
 
       <listitem>
        <para>
@@ -1716,28 +1760,6 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add support for Windows code pages <literal>1253</>,
-        <literal>1254</>, <literal>1255</>, and <literal>1257</>
-        (Kris Jurka)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <acronym>MSVC</> to compile the <productname>PostgreSQL</>
-        server (Magnus, Hiroshi Saito)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <acronym>MSVC</> support for utility commands and
-        <application>pg_dump </>(Hiroshi Saito)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add native semaphore implementation (Qingqing Zhou)
        </para>
 
@@ -1746,11 +1768,20 @@ For new features, add links to the documentation sections.
        </para>
       </listitem>
 
-     </sect3>
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>Source Code Changes</title>
      <itemizedlist>
+
+      <listitem>
+       <para>
+        Add <acronym>GIN</> (Generalized Inverted iNdex) index
+        access method (Teodor) ?
+       </para>
+      </listitem>
 
       <listitem>
        <para>
@@ -1766,14 +1797,6 @@ For new features, add links to the documentation sections.
        <para>
         Reduce libraries linked into the backend needlessly (Martijn
         van Oosterhout, Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        New macro <literal>PG_VERSION_NUM</> for use by third-party
-        applications wanting to test the backend version in C using
-        &gt; and &lt; comparisons (Bruce)
        </para>
       </listitem>
 
@@ -1812,6 +1835,20 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Add <application>DTrace</> support (Robert Lor)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <literal>PG_VERSION_NUM</> for use by third-party
+        applications wanting to test the backend version in C using &gt;
+        and &lt; comparisons (Bruce)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add <literal>XLOG_BLCKSZ</> as independent from <literal>BLCKSZ</>
         (Mark Wong)
        </para>
@@ -1826,13 +1863,6 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <acronym>GIN</> (Generalized Inverted iNdex) index
-        access method (Teodor)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Emit warnings for unknown <application>configure</> options
         (Martijn van Oosterhout)
        </para>
@@ -1840,13 +1870,22 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <literal>PG_MODULE_MAGIC</> header block to all shared
-        object files (Martijn van Oosterhout)
+        Rename existing <acronym>GUC</> variable
+        <envar>preload_libraries</> to <envar>shared_preload_libraries</>
+        (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add new GUC variable <envar>server_version_num</> (Greg Sabino
+        Mullane)
        </para>
 
        <para>
-        The magic blocks prevent version mismatches between object
-        files and servers.
+        This is like server_version, but is an integer, e.g.
+        <literal>80200</>. It allows easy applications version
+        checks.
        </para>
       </listitem>
 
@@ -1861,12 +1900,6 @@ For new features, add links to the documentation sections.
        <para>
         Re-implement the regression test script as a C program
         (Magnus, Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add <application>DTrace</> support (Robert Lor)
        </para>
       </listitem>
 
@@ -1894,6 +1927,18 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Add <literal>PG_MODULE_MAGIC</> header block to all shared
+        object files (Martijn van Oosterhout)
+       </para>
+
+       <para>
+        The magic blocks prevent version mismatches between object
+        files and servers.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add support for libraries that enhance server-side languages
         (Korry Douglas)
        </para>
@@ -1906,32 +1951,13 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Rename existing <acronym>GUC</> variable
-        <envar>preload_libraries</> to <envar>shared_preload_libraries</>
-        (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add new variable <envar>server_version_num</> (Greg Sabino
-        Mullane)
-       </para>
-
-       <para>
-        This is like server_version, but is an integer, e.g.
-        <literal>80200</>. It allows easy applications version
-        checks.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         New <acronym>XML</> documentation section (Bruce)
        </para>
       </listitem>
 
-     </sect3>
+     </itemizedlist>
+
+    </sect3>
 
     <sect3>
      <title>Contrib Changes</title>
@@ -1982,29 +2008,6 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add pg_freespacemap to display free space map information
-        (Mark Kirkwood)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        New uninstall scripts (David)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add pgrowlocks (Tatsuo)
-       </para>
-
-       <para>
-        This shows row locking information for a specified table.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add <application>Pgadmin</> administration functions to
         adminpack (Dave)
        </para>
@@ -2018,44 +2021,22 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add index information to pgstattuple (ITAGAKI Takahiro,
-        Satoshi Nagayasu)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        pgcrypto now has all planned functionality (Marko Kreen)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Update cube (Joshua Reich)
-       </para>
-
-       <para>
-        New functions are <function>cube(float[])</>,
-        <function>cube(float[], float[])</>, and
-        <function>cube_subset(cube, int4[])</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Added async query capability to dblink (Kai Londenberg,
-        Joe Conway)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Add sslinfo (Victor Wagner)
        </para>
 
        <para>
         Reports information about the current <acronym>SSL</>
         certificate.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add pgrowlocks (Tatsuo)
+       </para>
+
+       <para>
+        This shows row locking information for a specified table.
        </para>
       </listitem>
 
@@ -2079,12 +2060,58 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
+        Add index information to pgstattuple (ITAGAKI Takahiro,
+        Satoshi Nagayasu)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add pg_freespacemap to display free space map information
+        (Mark Kirkwood)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        pgcrypto now has all planned functionality (Marko Kreen)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Update cube (Joshua Reich)
+       </para>
+
+       <para>
+        New functions are <function>cube(float[])</>,
+        <function>cube(float[], float[])</>, and
+        <function>cube_subset(cube, int4[])</>.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add async query capability to dblink (Kai Londenberg,
+        Joe Conway)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         New operators for array-subset comparisons (<literal>@&gt;</>,
         <literal>&lt;@</>, <literal>&amp;&amp;</>) (Tom)
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        New uninstall scripts (David)
+       </para>
+      </listitem>
+
      </itemizedlist>
+
     </sect3>
 
    </sect2>
