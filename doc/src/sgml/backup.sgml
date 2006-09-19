@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.87 2006/09/19 15:18:41 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.88 2006/09/19 19:04:51 neilc Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -84,7 +84,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
 
   <important>
    <para>
-    When your database schema relies on OIDs (for instance as foreign
+    If your database schema relies on OIDs (for instance as foreign
     keys) you must instruct <application>pg_dump</> to dump the OIDs
     as well. To do this, use the <option>-o</option> command line
     option.
@@ -105,30 +105,42 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     you used as <replaceable class="parameter">outfile</replaceable>
     for the <application>pg_dump</> command. The database <replaceable
     class="parameter">dbname</replaceable> will not be created by this
-    command, you must create it yourself from <literal>template0</> before executing
-    <application>psql</> (e.g., with <literal>createdb -T template0
-    <replaceable class="parameter">dbname</></literal>).
-    <application>psql</> supports options similar to <application>pg_dump</> 
-    for controlling the database server location and the user name. See
-    <xref linkend="app-psql">'s reference page for more information.
+    command, so you must create it yourself from <literal>template0</>
+    before executing <application>psql</> (e.g., with
+    <literal>createdb -T template0 <replaceable
+    class="parameter">dbname</></literal>).  <application>psql</>
+    supports similar options to <application>pg_dump</> for specifying
+    the database server to connect to and the user name to use. See
+    the <xref linkend="app-psql"> reference page for more information.
    </para>
 
    <para>
-    Not only must the target database already exist before starting to
-    run the restore, but so must all the users who own objects in the
-    dumped database or were granted permissions on the objects.  If they
-    do not, then the restore will fail to recreate the objects with the
-    original ownership and/or permissions.  (Sometimes this is what you want,
-    but usually it is not.)
+    Before restoring a SQL dump, all the users who own objects or were
+    granted permissions on objects in the dumped database must already
+    exist. If they do not, then the restore will fail to recreate the
+    objects with the original ownership and/or permissions.
+    (Sometimes this is what you want, but usually it is not.)
    </para>
 
    <para>
-    Once restored, it is wise to run <xref linkend="sql-analyze"
-    endterm="sql-analyze-title"> on each database so the optimizer has
-    useful statistics. An easy way to do this is to run
-    <command>vacuumdb -a -z</> to
-    <command>VACUUM ANALYZE</> all databases; this is equivalent to
-    running <command>VACUUM ANALYZE</command> manually.
+    By default, the <application>psql</> script will continue to
+    execute after an SQL error is encountered. You may wish to use the
+    following command at the top of the script to alter that
+    behaviour and have <application>psql</application> exit with an
+    exit status of 3 if an SQL error occurs:
+<programlisting>
+\set ON_ERROR_STOP
+</programlisting>
+    Either way, you will only have a partially restored
+    dump. Alternatively, you can specify that the whole dump should be
+    restored as a single transaction, so the restore is either fully
+    completed or fully rolled back. This mode can be specified by
+    passing the <option>-1</> or <option>--single-transaction</>
+    command-line options to <application>psql</>. When using this
+    mode, be aware that even the smallest of errors can rollback a
+    restore that has already run for many hours. However, that may
+    still be preferable to manually cleaning up a complex database
+    after a partially restored dump.
    </para>
 
    <para>
@@ -153,8 +165,13 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
    </important>
 
    <para>
-    For advice on how to load large amounts of data into
-    <productname>PostgreSQL</productname> efficiently, refer to <xref
+    After restoring a backup, it is wise to run <xref
+    linkend="sql-analyze" endterm="sql-analyze-title"> on each
+    database so the query optimizer has useful statistics. An easy way
+    to do this is to run <command>vacuumdb -a -z</>; this is
+    equivalent to running <command>VACUUM ANALYZE</> on each database
+    manually.  For more advice on how to load large amounts of data
+    into <productname>PostgreSQL</> efficiently, refer to <xref
     linkend="populate">.
    </para>
   </sect2>
