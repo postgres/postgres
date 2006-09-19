@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.442 2006/09/19 17:22:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.443 2006/09/19 19:54:05 neilc Exp $ -->
 <!--
 
 Typical markup:
@@ -37,16 +37,16 @@ For new features, add links to the documentation sections.
  
     <para>
      This release adds many improvements to commands and database
-     facilities that were requested by users.  Rather add a few
-     new features, this release makes many features from previous
-     releases easier to use.  For example, it is now much easier
-     to create standby point-in-time-recovery (PITR) servers.  Many
+     facilities that were requested by users.  Rather than adding a
+     few new features, this release makes many features from previous
+     releases easier to use.  For example, it is now much easier to
+     create standby point-in-time-recovery (PITR) servers.  Many
      performance bottlenecks have been eliminated, allowing more
-     functionality to be enabled by default.  Various additions
-     will make porting from other databases easier.  The changes
-     in this release continue the <productname>PostgreSQL</>
-     tradition of being not only the most advanced open source
-     database, but also the easiest to use.
+     functionality to be enabled by default.  Various additions will
+     make porting from other databases easier.  The changes in this
+     release continue the <productname>PostgreSQL</> tradition of
+     being not only the most advanced open source database, but also
+     the easiest to use.
     </para>
 
    </sect2>
@@ -68,7 +68,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Set <envar>escape_string_warning</> to <literal>on</> by
+        Set <varname>escape_string_warning</> to <literal>on</> by
         default (Bruce)
        </para>
 
@@ -198,12 +198,12 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Change <envar>log_duration</> to output even if the query
+        Change <varname>log_duration</> to output even if the query
         is not output (Tom)
        </para>
 
        <para>
-        In prior releases, <envar>log_duration</> only printed if
+        In prior releases, <varname>log_duration</> only printed if
         the query appeared earlier in the logs.
        </para>
       </listitem>
@@ -230,7 +230,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Remove <envar>australian_timezones</> configuration variable
+        Remove <varname>australian_timezones</> configuration variable
         (Joachim Wieland)
        </para>
 
@@ -247,8 +247,8 @@ For new features, add links to the documentation sections.
 
        <para>
         This may eliminate the need to set unrealistically small
-        values of <envar>random_page_cost</>.  If you have been
-        using a very small <envar>random_page_cost</>, please
+        values of <varname>random_page_cost</>.  If you have been
+        using a very small <varname>random_page_cost</>, please
         recheck your test cases.
        </para>
       </listitem>
@@ -280,7 +280,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        <function>xml_valid()</> will remain for backward compability,
+        <function>xml_valid()</> will remain for backward compatibility,
         but its behavior will change to do schema checks in future
         releases.
        </para>
@@ -302,7 +302,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Remove contrib abandoned modules:  mSQL-interface, ips
+        Remove abandoned contrib modules:  mSQL-interface, ips
        </para>
       </listitem>
 
@@ -341,8 +341,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Increase default values for <envar>shared_buffers</> and
-        <envar>max_fsm_pages</>(Andrew)
+        Increase default values for <varname>shared_buffers</> and
+        <varname>max_fsm_pages</> (Andrew)
        </para>
       </listitem>
 
@@ -406,12 +406,17 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow the planner to re-order <literal>OUTER JOIN</>s when
-        possible (Tom)
+        Allow the planner to reorder outer joins in some circumstances
+        (Tom)
        </para>
 
        <para>
-        This makes a considerable difference for queries involving
+        In previous releases, outer joins would always be evaluated in
+        the order specified by the query. This change means that the
+        query optimizer will consider reordering outer joins in some
+        cases, provided that the join order can be changed without
+        altering the meaning of the query.  This can make a
+        considerable performance difference for queries involving
         multiple outer joins.
        </para>
       </listitem>
@@ -433,7 +438,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Allow constraint exclusion to be applied to inherited
-        <command>UPDATE</>/<command>DELETE</> queries (Tom)
+        <command>UPDATE</> and <command>DELETE</> queries (Tom)
        </para>
 
        <para>
@@ -443,7 +448,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        <function>MIN()</>/<function>MAX()</> can now use indexes
+        <function>MIN()</> and <function>MAX()</> can now use indexes
         in more cases (Tom)
        </para>
       </listitem>
@@ -526,7 +531,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <envar>archive_timeout</> to force xlog file switches
+        Add <varname>archive_timeout</> to force xlog file switches
         at a given interval (Simon Riggs)
        </para>
 
@@ -612,7 +617,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        This release sets <envar>stats_command_string</> to
+        This release sets <varname>stats_command_string</> to
         <literal>on</> by default, now that its overhead is minimal.
         This means <literal>pg_stat_activity</> now will show all
         active queries by default.
@@ -633,7 +638,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <acronym>GUC</> <envar>update_process_title</> to
+        Add <acronym>GUC</> variable <varname>update_process_title</> to
         control whether the <application>ps</> display is updated
         for every command, default to <literal>on</> (Bruce)
        </para>
@@ -646,7 +651,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        You can now set <envar>shared_buffer</> to <literal>32000kB</>,
+        You can now set <varname>shared_buffer</> to <literal>32000kB</>,
         for example.
        </para>
       </listitem>
@@ -687,15 +692,15 @@ For new features, add links to the documentation sections.
        <para>
         This allows these commands to return values, such as the
         computed serial key for a new row.  In the <command>UPDATE</>
-        case, values from the new state of the row are returned.
+        case, values from the updated version of the row are returned.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add support for multi-row <literal>VALUES</> clauses as
-        part of <command>INSERT</> and <command>SELECT</> statements
-        (Joe, Tom)
+        part of <command>INSERT</> and <command>SELECT</> statements,
+        per SQL standard (Joe, Tom)
        </para>
 
        <para>
@@ -750,8 +755,8 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        This allows <command>TRUNCATE</> also to automatically
-        truncate all foreign-key referencing tables.
+        This allows <command>TRUNCATE</> to automatically truncate all
+        foreign-key referencing tables.
        </para>
       </listitem>
 
@@ -768,10 +773,10 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        It is similar to equals (<literal>=</>), but is true when
-        both left and right arguments are <literal>NULL</>, and
-        false when just one is, rather than yielding <literal>NULL</>
-        in these cases.
+        This operator is similar to equality (<literal>=</>), but
+        evaluates to true when both left and right operands are
+        <literal>NULL</>, and to false when just one is, rather than
+        yielding <literal>NULL</> in these cases.
        </para>
       </listitem>
 
@@ -803,7 +808,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Enable <envar>standard_conforming_strings</> to be turned
+        Enable <varname>standard_conforming_strings</> to be turned
         <literal>on</> (Kevin Grittner)
        </para>
 
@@ -818,14 +823,14 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Add system view <literal>pg_prepared_statements</> to show
-        prepared statements (Joachim Wieland)
+        prepared statements (Joachim Wieland, Neil)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add system view <literal>pg_cursors</> to show open cursors
-        (Joachim Wieland)
+        (Joachim Wieland, Neil)
        </para>
 
        <para>
@@ -849,12 +854,12 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         If <acronym>SQL</>-level <command>PREPARE</> parameters
-        are unknown, infer their types from the context of the
+        are unspecified, infer their types from the context of the
         query (Neil)
        </para>
 
        <para>
-        Protocol-level <command>PREPARE</> already did this. ?
+        Protocol-level <command>PREPARE</> already did this.
        </para>
       </listitem>
 
@@ -872,7 +877,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Change <literal>LIMIT</>/<literal>OFFSET</> to exceed
+        Allow <literal>LIMIT</> and <literal>OFFSET</> to exceed
         two billion (Dhanaraj M)
        </para>
       </listitem>
@@ -887,8 +892,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <literal>TABLESPACE</> and <literal>ON COMMIT</> clauses
-        to <command>CREATE TABLE AS</> (Neil)
+        Add <literal>TABLESPACE</> clause to <command>CREATE TABLE
+        AS</> (Neil)
        </para>
 
        <para>
@@ -899,7 +904,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <literal>ON COMMIT</> clauses to <command>CREATE TABLE
+        Add <literal>ON COMMIT</> clause to <command>CREATE TABLE
         AS</> (Neil)
        </para>
 
@@ -931,7 +936,7 @@ For new features, add links to the documentation sections.
         Shell types create a type reference, without specifying
         any of the aspects of the type.  It is useful for creating
         types with input/output functions that reference the data
-        type.  The syntax is <command>CREATE TYPE typname</>.
+        type.  The syntax is <command>CREATE TYPE <replaceable class="parameter">typename</replaceable></>.
        </para>
       </listitem>
 
@@ -941,10 +946,11 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        The new syntax is <command>CREATE AGGREGATE</> aggname
-        (input_type) (parameter_list).  This more naturally supports
-        the new multi-parameter aggregate functionality.  The
-        previous syntax is still supported.
+        The new syntax is <command>CREATE AGGREGATE
+        <replaceable>aggname</> (<replaceable>input_type</>)
+        (<replaceable>parameter_list</>)</command>.  This more
+        naturally supports the new multi-parameter aggregate
+        functionality.  The previous syntax is still supported.
        </para>
       </listitem>
 
@@ -1000,7 +1006,7 @@ For new features, add links to the documentation sections.
 
        <para>
         This was added for setting sequence-specific permissions.
-        <literal>GRANT ON [TABLE]</> for sequences is still supported
+        <literal>GRANT ON TABLE</> for sequences is still supported
         for backward compatibility.
        </para>
       </listitem>
@@ -1022,7 +1028,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <literal>ALTER TABLE ... [NO] INHERIT</> (Greg Stark)
+        Add <literal>ALTER TABLE ... [ NO ] INHERIT</> (Greg Stark)
        </para>
 
        <para>
@@ -1042,7 +1048,7 @@ For new features, add links to the documentation sections.
        <para>
         Previously, global object comments were stored in individual
         databases, making them ineffective.  This adds a new
-        <literal>pg_shdescription</> table.
+        <literal>pg_shdescription</> system catalog.
        </para>
       </listitem>
 
@@ -1057,7 +1063,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Add option to allow indexes to be created without blocking
-        concurrent writes to the table (Greg Stark)
+        concurrent writes to the table (Greg Stark, Tom)
        </para>
 
        <para>
@@ -1096,13 +1102,14 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Have initdb detect the operating system locale and set the
-        default <envar>DateStyle</> accordingly (Peter)
+        Have <application>initdb</> detect the operating system
+        locale and set the default <varname>DateStyle</> accordingly
+        (Peter)
        </para>
 
        <para>
-        This make it more likely that the installed
-        <filename>postgresql.conf</> <envar>DateStyle</> value will
+        This makes it more likely that the installed
+        <filename>postgresql.conf</> <varname>DateStyle</> value will
         be correct.
        </para>
       </listitem>
@@ -1116,7 +1123,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Reduce progress messages displayed by initdb (Tom)
+        Reduce progress messages displayed by <application>initdb</> (Tom)
        </para>
       </listitem>
 
@@ -1148,13 +1155,13 @@ For new features, add links to the documentation sections.
 
        <para>
         The file name is controlled by GUC variable
-        <envar>timezone_abbreviations</>.
+        <varname>timezone_abbreviations</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <envar>pg_timezone_abbrevs</> and <envar>pg_timezone_names</>
+        Add <varname>pg_timezone_abbrevs</> and <varname>pg_timezone_names</>
         views to show supported timezones (Magnus Hagander)
        </para>
       </listitem>
@@ -1167,10 +1174,10 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        <function>clock_timestamp()</> is the true current time,
-        and <function>statement_timestamp()</> is the time the
-        current command arrived at the server.
-        <function>transaction_timestamp()</> is the same as
+        <function>clock_timestamp()</> is the current wall-clock time,
+        <function>statement_timestamp()</> is the time the current
+        statement arrived at the server, and
+        <function>transaction_timestamp()</> is an alias for
         <function>now()</>.
        </para>
       </listitem>
@@ -1294,8 +1301,9 @@ For new features, add links to the documentation sections.
 
        <para>
         For example, the result of a user-defined function that is
-        declared to return a domain type is now checked against
-        the constraints.
+        declared to return a domain type is now checked against the
+        constraints. This closes a significant hole in the domain
+        implementation.
        </para>
       </listitem>
 
@@ -1424,7 +1432,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Honor <envar>check_function_bodies</> (Tom)
+        Honor <varname>check_function_bodies</> (Tom)
        </para>
       </listitem>
 
@@ -1872,27 +1880,27 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Rename existing <acronym>GUC</> variable
-        <envar>preload_libraries</> to <envar>shared_preload_libraries</>
+        <varname>preload_libraries</> to <varname>shared_preload_libraries</>
         (Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add new GUC variable <envar>server_version_num</> (Greg Sabino
+        Add new GUC variable <varname>server_version_num</> (Greg Sabino
         Mullane)
        </para>
 
        <para>
-        This is like server_version, but is an integer, e.g.
-        <literal>80200</>. It allows easy applications version
-        checks.
+        This is like <varname>server_version</varname>, but is an
+        integer, e.g.  <literal>80200</>. This allows applications to
+        make version checks more easily.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add a <acronym>GUC</> parameter <envar>seq_page_cost</>
+        Add a <acronym>GUC</> variable <varname>seq_page_cost</>
         (Tom)
        </para>
       </listitem>
@@ -1921,7 +1929,7 @@ For new features, add links to the documentation sections.
         New functions <function>_PG_init()</> and <function>_PG_fini()</>
         are called if the library defines such symbols.  Hence we
         no longer need to specify an initialization function in
-        <envar>shared_preload_libraries</>; we can assume that the
+        <varname>shared_preload_libraries</>; we can assume that the
         library used the <function>_PG_init()</> convention instead.
        </para>
       </listitem>
@@ -2081,7 +2089,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Update cube (Joshua Reich)
+        Improvements to cube (Joshua Reich)
        </para>
 
        <para>
@@ -2107,7 +2115,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        New uninstall scripts (David)
+        New uninstall scripts for many contrib packages (David)
        </para>
       </listitem>
 
