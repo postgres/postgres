@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.79 2006/08/02 01:59:48 joe Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.80 2006/09/19 22:49:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ extern bool constraint_exclusion;
 
 extern double clamp_row_est(double nrows);
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
-								  BlockNumber other_pages);
+								  double index_pages, PlannerInfo *root);
 extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel);
 extern void cost_index(IndexPath *path, PlannerInfo *root, IndexOptInfo *index,
 		   List *indexQuals, RelOptInfo *outer_rel);

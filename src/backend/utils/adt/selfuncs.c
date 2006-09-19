@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.211 2006/07/26 17:17:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.212 2006/09/19 22:49:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4647,7 +4647,8 @@ genericcostestimate(PlannerInfo *root,
 		/* use Mackert and Lohman formula to adjust for cache effects */
 		pages_fetched = index_pages_fetched(pages_fetched,
 											index->pages,
-											index->rel->pages);
+											(double) index->pages,
+											root);
 
 		/*
 		 * Now compute the total disk access cost, and then report a

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.126 2006/07/01 18:38:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.127 2006/09/19 22:49:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,8 @@ typedef struct PlannerInfo
 
 	List	   *group_pathkeys; /* groupClause pathkeys, if any */
 	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
+
+	double		total_table_pages;	/* # of pages in all tables of query */
 
 	double		tuple_fraction; /* tuple_fraction passed to query_planner */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.152 2006/08/19 02:48:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.153 2006/09/19 22:49:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,13 +280,6 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 errmsg("SELECT FOR UPDATE/SHARE is not supported for inheritance queries")));
 
 	/*
-	 * We might have looked up indexes for the parent rel, but they're
-	 * really not relevant to the appendrel.  Reset the pointer to avoid
-	 * any confusion.
-	 */
-	rel->indexlist = NIL;
-
-	/*
 	 * Initialize to compute size estimates for whole append relation
 	 */
 	rel->rows = 0;
@@ -312,11 +305,11 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		childRTindex = appinfo->child_relid;
 
 		/*
-		 * Make a RelOptInfo for the child so we can do planning. Mark it as
-		 * an "other rel" since it will not be part of the main join tree.
+		 * The child rel's RelOptInfo was already created during
+		 * add_base_rels_to_query.
 		 */
-		childrel = build_simple_rel(root, childRTindex,
-									RELOPT_OTHER_MEMBER_REL);
+		childrel = find_base_rel(root, childRTindex);
+		Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
 
 		/*
 		 * Copy the parent's targetlist and quals to the child, with

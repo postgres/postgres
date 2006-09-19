@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.125 2006/08/25 04:06:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.126 2006/09/19 22:49:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,9 +62,15 @@ static List *get_relation_constraints(Oid relationObjectId, RelOptInfo *rel);
  * Also, initialize the attr_needed[] and attr_widths[] arrays.  In most
  * cases these are left as zeroes, but sometimes we need to compute attr
  * widths here, and we may as well cache the results for costsize.c.
+ *
+ * If inhparent is true, all we need to do is set up the attr arrays:
+ * the RelOptInfo actually represents the appendrel formed by an inheritance
+ * tree, and so the parent rel's physical size and index information isn't
+ * important for it.
  */
 void
-get_relation_info(PlannerInfo *root, Oid relationObjectId, RelOptInfo *rel)
+get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
+				  RelOptInfo *rel)
 {
 	Index		varno = rel->relid;
 	Relation	relation;
@@ -88,15 +94,21 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, RelOptInfo *rel)
 		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
 
 	/*
-	 * Estimate relation size.
+	 * Estimate relation size --- unless it's an inheritance parent, in which
+	 * case the size will be computed later in set_append_rel_pathlist, and
+	 * we must leave it zero for now to avoid bollixing the total_table_pages
+	 * calculation.
 	 */
-	estimate_rel_size(relation, rel->attr_widths - rel->min_attr,
-					  &rel->pages, &rel->tuples);
+	if (!inhparent)
+		estimate_rel_size(relation, rel->attr_widths - rel->min_attr,
+						  &rel->pages, &rel->tuples);
 
 	/*
 	 * Make list of indexes.  Ignore indexes on system catalogs if told to.
+	 * Don't bother with indexes for an inheritance parent, either.
 	 */
-	if (IgnoreSystemIndexes && IsSystemClass(relation->rd_rel))
+	if (inhparent ||
+		(IgnoreSystemIndexes && IsSystemClass(relation->rd_rel)))
 		hasindex = false;
 	else
 		hasindex = relation->rd_rel->relhasindex;

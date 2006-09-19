@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.95 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.96 2006/09/19 22:49:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,8 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	RelOptInfo *final_rel;
 	Path	   *cheapestpath;
 	Path	   *sortedpath;
+	Index		rti;
+	double		total_pages;
 
 	/* Make tuple_fraction accessible to lower-level routines */
 	root->tuple_fraction = tuple_fraction;
@@ -122,9 +124,42 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	root->oj_info_list = NIL;
 
 	/*
-	 * Construct RelOptInfo nodes for all base relations in query.
+	 * Construct RelOptInfo nodes for all base relations in query, and
+	 * indirectly for all appendrel member relations ("other rels").  This
+	 * will give us a RelOptInfo for every "simple" (non-join) rel involved
+	 * in the query.
+	 *
+	 * Note: the reason we find the rels by searching the jointree and
+	 * appendrel list, rather than just scanning the rangetable, is that the
+	 * rangetable may contain RTEs for rels not actively part of the query,
+	 * for example views.  We don't want to make RelOptInfos for them.
 	 */
 	add_base_rels_to_query(root, (Node *) parse->jointree);
+
+	/*
+	 * We should now have size estimates for every actual table involved
+	 * in the query, so we can compute total_table_pages.  Note that
+	 * appendrels are not double-counted here, even though we don't bother
+	 * to distinguish RelOptInfos for appendrel parents, because the parents
+	 * will still have size zero.
+	 *
+	 * XXX if a table is self-joined, we will count it once per appearance,
+	 * which perhaps is the wrong thing ... but that's not completely clear,
+	 * and detecting self-joins here is difficult, so ignore it for now.
+	 */
+	total_pages = 0;
+	for (rti = 1; rti < root->simple_rel_array_size; rti++)
+	{
+		RelOptInfo *brel = root->simple_rel_array[rti];
+
+		if (brel == NULL)
+			continue;
+
+		Assert(brel->relid == rti); /* sanity check on array */
+
+		total_pages += (double) brel->pages;
+	}
+	root->total_table_pages = total_pages;
 
 	/*
 	 * Examine the targetlist and qualifications, adding entries to baserel

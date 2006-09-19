@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.165 2006/08/02 01:59:45 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.166 2006/09/19 22:49:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 
 		pages_fetched = index_pages_fetched(tuples_fetched * num_scans,
 											baserel->pages,
-											index->pages);
+											(double) index->pages,
+											root);
 
 		run_cost += (pages_fetched * random_page_cost) / num_scans;
 	}
@@ -300,7 +301,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 		 */
 		pages_fetched = index_pages_fetched(tuples_fetched,
 											baserel->pages,
-											index->pages);
+											(double) index->pages,
+											root);
 
 		/* max_IO_cost is for the perfectly uncorrelated case (csquared=0) */
 		max_IO_cost = pages_fetched * random_page_cost;
@@ -369,13 +371,18 @@ cost_index(IndexPath *path, PlannerInfo *root,
  *		b = # buffer pages available (we include kernel space here)
  *
  * We assume that effective_cache_size is the total number of buffer pages
- * available for both table and index, and pro-rate that space between the
- * table and index.  (Ideally other_pages should include all the other
- * tables and indexes used by the query too; but we don't have a good way
- * to get that number here.)
+ * available for the whole query, and pro-rate that space across all the
+ * tables in the query and the index currently under consideration.  (This
+ * ignores space needed for other indexes used by the query, but since we
+ * don't know which indexes will get used, we can't estimate that very well;
+ * and in any case counting all the tables may well be an overestimate, since
+ * depending on the join plan not all the tables may be scanned concurrently.)
  *
  * The product Ns is the number of tuples fetched; we pass in that
- * product rather than calculating it here.
+ * product rather than calculating it here.  "pages" is the number of pages
+ * in the object under consideration (either an index or a table).
+ * "index_pages" is the amount to add to the total table space, which was
+ * computed for us by query_planner.
  *
  * Caller is expected to have ensured that tuples_fetched is greater than zero
  * and rounded to integer (see clamp_row_est).  The result will likewise be
@@ -383,17 +390,23 @@ cost_index(IndexPath *path, PlannerInfo *root,
  */
 double
 index_pages_fetched(double tuples_fetched, BlockNumber pages,
-					BlockNumber other_pages)
+					double index_pages, PlannerInfo *root)
 {
 	double		pages_fetched;
+	double		total_pages;
 	double		T,
 				b;
 
 	/* T is # pages in table, but don't allow it to be zero */
 	T = (pages > 1) ? (double) pages : 1.0;
 
+	/* Compute number of pages assumed to be competing for cache space */
+	total_pages = root->total_table_pages + index_pages;
+	total_pages = Max(total_pages, 1.0);
+	Assert(T <= total_pages);
+
 	/* b is pro-rated share of effective_cache_size */
-	b = (double) effective_cache_size * T / (T + (double) other_pages);
+	b = (double) effective_cache_size * T / total_pages;
 	/* force it positive and integral */
 	if (b <= 1.0)
 		b = 1.0;
@@ -428,6 +441,51 @@ index_pages_fetched(double tuples_fetched, BlockNumber pages,
 		pages_fetched = ceil(pages_fetched);
 	}
 	return pages_fetched;
+}
+
+/*
+ * get_indexpath_pages
+ *		Determine the total size of the indexes used in a bitmap index path.
+ *
+ * Note: if the same index is used more than once in a bitmap tree, we will
+ * count it multiple times, which perhaps is the wrong thing ... but it's
+ * not completely clear, and detecting duplicates is difficult, so ignore it
+ * for now.
+ */
+static double
+get_indexpath_pages(Path *bitmapqual)
+{
+	double		result = 0;
+	ListCell   *l;
+
+	if (IsA(bitmapqual, BitmapAndPath))
+	{
+		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
+
+		foreach(l, apath->bitmapquals)
+		{
+			result += get_indexpath_pages((Path *) lfirst(l));
+		}
+	}
+	else if (IsA(bitmapqual, BitmapOrPath))
+	{
+		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
+
+		foreach(l, opath->bitmapquals)
+		{
+			result += get_indexpath_pages((Path *) lfirst(l));
+		}
+	}
+	else if (IsA(bitmapqual, IndexPath))
+	{
+		IndexPath  *ipath = (IndexPath *) bitmapqual;
+
+		result = (double) ipath->indexinfo->pages;
+	}
+	else
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+
+	return result;
 }
 
 /*
@@ -494,7 +552,8 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 
 		pages_fetched = index_pages_fetched(tuples_fetched * num_scans,
 											baserel->pages,
-											0 /* XXX total index size? */);
+											get_indexpath_pages(bitmapqual),
+											root);
 		pages_fetched /= num_scans;
 	}
 	else

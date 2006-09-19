@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.81 2006/08/02 01:59:46 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.82 2006/09/19 22:49:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	{
 		case RTE_RELATION:
 			/* Table --- retrieve statistics from the system catalogs */
-			get_relation_info(root, rte->relid, rel);
+			get_relation_info(root, rte->relid, rte->inh, rel);
 			break;
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
@@ -118,6 +118,29 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 
 	/* Save the finished struct in the query's simple_rel_array */
 	root->simple_rel_array[relid] = rel;
+
+	/*
+	 * If this rel is an appendrel parent, recurse to build "other rel"
+	 * RelOptInfos for its children.  They are "other rels" because they are
+	 * not in the main join tree, but we will need RelOptInfos to plan access
+	 * to them.
+	 */
+	if (rte->inh)
+	{
+		ListCell   *l;
+
+		foreach(l, root->append_rel_list)
+		{
+			AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
+
+			/* append_rel_list contains all append rels; ignore others */
+			if (appinfo->parent_relid != relid)
+				continue;
+
+			(void) build_simple_rel(root, appinfo->child_relid,
+									RELOPT_OTHER_MEMBER_REL);
+		}
+	}
 
 	return rel;
 }
