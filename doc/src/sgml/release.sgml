@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.441 2006/09/19 02:25:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.442 2006/09/19 17:22:42 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -213,6 +213,7 @@ For new features, add links to the documentation sections.
         Have <function>to_char(time)</> and <function>to_char(interval)</>
         treat <literal>'HH'</> and <literal>'HH12'</> as 12-hour
         intervals.
+       </para>
 
        <para>
         Most applications should use <literal>'HH24'</> unless they
