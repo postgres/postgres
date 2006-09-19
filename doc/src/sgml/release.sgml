@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.440 2006/09/19 02:08:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.441 2006/09/19 02:25:13 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -340,71 +340,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Reduce locking requirements of sequential scans (Qingqing
-        Zhou)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve subtransaction performance (Alvaro, Itagaki Takahiro,
-        Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve locking performance by breaking locks into sections
-        (Tom)
-       </para>
-
-       <para>
-        This allows locking to be more fine-grained, reducing
-        contention.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow the planner to re-order <literal>OUTER JOIN</>s when
-        possible (Tom)
-       </para>
-
-       <para>
-        This makes a considerable difference for queries involving
-        multiple outer joins.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve planning of joins to inherited tables and <literal>UNION
-        ALL</> views (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Increase default values for <envar>shared_buffers</> and
         <envar>max_fsm_pages</>(Andrew)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve the optimizer statistics used by <literal>LIKE</>,
-        <literal>ILIKE</>, and regular expression operations (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow constraint exclusion to be applied to inherited
-        <command>UPDATE</>/<command>DELETE</> queries (Tom)
-       </para>
-
-       <para>
-        <command>SELECT</> already honored constraint exclusion.
        </para>
       </listitem>
 
@@ -416,21 +353,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        <function>MIN()</>/<function>MAX()</> can now use indexes
-        in more cases (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve concurrency for database creation and destruction
-        (Tom)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Speed up vacuuming of btree indexes (Heikki Linnakangas,
+        Improve subtransaction performance (Alvaro, Itagaki Takahiro,
         Tom)
        </para>
       </listitem>
@@ -451,6 +374,83 @@ For new features, add links to the documentation sections.
         This adds extra free space to each heap or index page,
         allowing improved performance as the database grows.  This
         is particularly valuable to maintain <command>CLUSTER</>ing.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve locking performance by breaking locks into sections
+        (Tom)
+       </para>
+
+       <para>
+        This allows locking to be more fine-grained, reducing
+        contention.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reduce locking requirements of sequential scans (Qingqing
+        Zhou)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reduce locking required for database creation and destruction
+        (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow the planner to re-order <literal>OUTER JOIN</>s when
+        possible (Tom)
+       </para>
+
+       <para>
+        This makes a considerable difference for queries involving
+        multiple outer joins.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve the optimizer statistics used by <literal>LIKE</>,
+        <literal>ILIKE</>, and regular expression operations (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve planning of joins to inherited tables and <literal>UNION
+        ALL</> views (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow constraint exclusion to be applied to inherited
+        <command>UPDATE</>/<command>DELETE</> queries (Tom)
+       </para>
+
+       <para>
+        <command>SELECT</> already honored constraint exclusion.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        <function>MIN()</>/<function>MAX()</> can now use indexes
+        in more cases (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Speed up vacuuming of btree indexes (Heikki Linnakangas,
+        Tom)
        </para>
       </listitem>
 
