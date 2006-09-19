@@ -3,11 +3,12 @@ top_builddir = ../../../../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/$(subdir)/../Makefile.regress
 
-# special informix compatiblity switches
+# special informix compatibility switches
 ECPG += -C INFORMIX
 ECPG_NOIND  = $(ECPG) -r no_indicator
-override LDFLAGS += -L../../compatlib
-override LIBS += $(LIBS) -lecpg_compat
+
+override LDFLAGS := -L../../compatlib $(LDFLAGS)
+override LIBS := -lecpg_compat $(LIBS)
 
 TESTS = test_informix test_informix.c \
         test_informix2 test_informix2.c \

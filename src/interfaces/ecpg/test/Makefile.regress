@@ -2,8 +2,8 @@ override CPPFLAGS := -I../../include -I$(top_srcdir)/src/interfaces/ecpg/include
 	-I$(libpq_srcdir) $(CPPFLAGS) 
 override CFLAGS += $(PTHREAD_CFLAGS) 
 
-override LDFLAGS := -L../../ecpglib -L../../pgtypeslib -L../../../libpq $(LDFLAGS)
-override LIBS := -lpgtypes -lecpg -lpq $(LIBS) $(PTHREAD_LIBS)
+override LDFLAGS := -L../../ecpglib -L../../pgtypeslib $(LDFLAGS)
+override LIBS := -lecpg -lpgtypes $(libpq) $(LIBS) $(PTHREAD_LIBS)
 
 ECPG = ../../preproc/ecpg -I$(srcdir)/../../include
 

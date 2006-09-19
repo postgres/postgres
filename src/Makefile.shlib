@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.104 2006/04/28 02:53:20 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.105 2006/09/19 15:36:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -96,8 +96,8 @@ override CFLAGS += $(CFLAGS_SL)
 soname = lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
 
 ifeq ($(PORTNAME), aix)
-  shlib			= lib$(NAME)$(DLSUFFIX)
-#   SHLIB_LINK		+= -lc
+  shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  haslibarule   = yes
 endif
 
 ifeq ($(PORTNAME), darwin)
@@ -295,9 +295,13 @@ endif
 else # PORTNAME == aix
 
 # AIX case
-$(shlib): lib$(NAME).a
+$(shlib) lib$(NAME).a: $(OBJS)
+	$(LINK.static) lib$(NAME).a $^
+	$(RANLIB) lib$(NAME).a
 	$(MKLDEXPORT) lib$(NAME).a > lib$(NAME)$(EXPSUFF)
-	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $@ $< -Wl,-bE:lib$(NAME)$(EXPSUFF) $(SHLIB_LINK)
+	$(COMPILER) $(LDFLAGS_NO_L) $(LDFLAGS_SL) -o $(shlib) lib$(NAME).a -Wl,-bE:lib$(NAME)$(EXPSUFF) $(SHLIB_LINK)
+	rm -f lib$(NAME).a
+	$(AR) $(AROPT) lib$(NAME).a $(shlib)
 	
 endif # PORTNAME == aix
 
@@ -350,6 +354,7 @@ endif
 
 ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib)
+ifneq ($(PORTNAME), aix)		# we don't install $(shlib) on AIX
 	$(INSTALL_SHLIB) $< '$(DESTDIR)$(libdir)/$(shlib)'
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
@@ -365,6 +370,7 @@ ifneq ($(shlib), $(shlib_bare))
 endif
 endif # not win32
 endif # not cygwin
+endif # not aix
 endif # enable_shared
 
 

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.13 2006/09/08 13:32:27 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.14 2006/09/19 15:36:08 tgl Exp $
 
 me=`basename $0`
 
@@ -322,6 +322,7 @@ do_temp_install(){
     # Set up shared library paths, needed by psql and pg_encoding
     # (if you run multibyte).  LD_LIBRARY_PATH covers many platforms.
     # DYLD_LIBRARY_PATH works on Darwin, and maybe other Mach-based systems.
+    # LIBPATH is for AIX.
     # Feel free to account for others as well.
     # ----------
 
@@ -338,6 +339,13 @@ do_temp_install(){
         DYLD_LIBRARY_PATH=$libdir
     fi
     export DYLD_LIBRARY_PATH
+
+    if [ -n "$LIBPATH" ]; then
+        LIBPATH="$libdir:$LIBPATH"
+    else
+        LIBPATH=$libdir
+    fi
+    export LIBPATH
 
     # ----------
     # Windows needs shared libraries in PATH. (Only those linked into
