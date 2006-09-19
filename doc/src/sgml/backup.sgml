@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.86 2006/09/16 00:30:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.87 2006/09/19 15:18:41 neilc Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -614,10 +614,10 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
 
    <para>
     Also, you can force a segment switch manually with
-    <function>pg_switch_xlog()</>,
-    if you want to ensure that a just-finished transaction is archived
-    immediately.  Other utility functions related to WAL management are
-    listed in <xref linkend="functions-admin-backup-table">.
+    <function>pg_switch_xlog</>, if you want to ensure that a
+    just-finished transaction is archived immediately.  Other utility
+    functions related to WAL management are listed in <xref
+    linkend="functions-admin-backup-table">.
    </para>
   </sect2>
 
@@ -666,15 +666,22 @@ SELECT pg_start_backup('label');
 <programlisting>
 SELECT pg_stop_backup();
 </programlisting>
-     This should return successfully.
+     This should return successfully; however, the backup is not yet fully
+     valid.  An automatic switch to the next WAL segment occurs, so all
+     WAL segment files that relate to the backup will now be marked ready for
+     archiving.
     </para>
    </listitem>
    <listitem>
     <para>
-     Once the WAL segment files used during the backup are archived as part
-     of normal database activity, you are done.  The file identified by
-     <function>pg_stop_backup</>'s result is the last segment that needs
-     to be archived to complete the backup.
+     Once the WAL segment files used during the backup are archived, you are
+     done.  The file identified by <function>pg_stop_backup</>'s result is
+     the last segment that needs to be archived to complete the backup.  
+     Archival of these files will happen automatically, since you have
+     already configured <varname>archive_command</>. In many cases, this
+     happens fairly quickly, but you are advised to monitor your archival
+     system to ensure this has taken place so that you can be certain you
+     have a valid backup.  
     </para>
    </listitem>
   </orderedlist>
@@ -701,9 +708,15 @@ SELECT pg_stop_backup();
     It is not necessary to be very concerned about the amount of time elapsed
     between <function>pg_start_backup</> and the start of the actual backup,
     nor between the end of the backup and <function>pg_stop_backup</>; a
-    few minutes' delay won't hurt anything.  You
-    must however be quite sure that these operations are carried out in
-    sequence and do not overlap.
+    few minutes' delay won't hurt anything.  However, if you normally run the
+    server with <varname>full_page_writes</> disabled, you may notice a drop
+    in performance between <function>pg_start_backup</> and 
+    <function>pg_stop_backup</>.  You must ensure that these backup operations
+    are carried out in sequence without any possible overlap, or you will
+    invalidate the backup.
+   </para>
+
+   <para>
    </para>
 
    <para>
@@ -1437,20 +1450,22 @@ if (!triggered)
    <title>Failover</title>
 
    <para>
-    If the Primary Server fails then the Standby Server should take begin
+    If the Primary Server fails then the Standby Server should begin
     failover procedures.
    </para>
 
    <para>
     If the Standby Server fails then no failover need take place. If the
-    Standby Server can be restarted, then the recovery process can also be
-    immediately restarted, taking advantage of Restartable Recovery.
+    Standby Server can be restarted, even some time later, then the recovery
+    process can also be immediately restarted, taking advantage of 
+    Restartable Recovery. If the Standby Server cannot be restarted, then a
+    full new Standby Server should be created.
    </para>
 
    <para>
     If the Primary Server fails and then immediately restarts, you must have
     a mechanism for informing it that it is no longer the Primary. This is
-    sometimes known as STONITH (Should the Other Node In The Head), which is
+    sometimes known as STONITH (Shoot the Other Node In The Head), which is
     necessary to avoid situations where both systems think they are the
     Primary, which can lead to confusion and ultimately data loss.
    </para>
@@ -1479,12 +1494,12 @@ if (!triggered)
    </para>
 
    <para>
-    So, switching from Primary to Standby Server can be fast, but requires
+    So, switching from Primary to Standby Server can be fast but requires
     some time to re-prepare the failover cluster. Regular switching from
     Primary to Standby is encouraged, since it allows the regular downtime
-    one each system required to maintain HA. This also acts as a test of the
-    failover so that it definitely works when you really need it. Written
-    administration procedures are advised.
+    that each system requires to maintain HA. This also acts as a test of the
+    failover mechanism so that it definitely works when you really need it. 
+    Written administration procedures are advised.
    </para>
   </sect2>
 
@@ -1492,10 +1507,12 @@ if (!triggered)
    <title>Implementing Record-based Log Shipping</title>
 
    <para>
-    The main features for Log Shipping in this release are based around the
-    file-based Log Shipping described above. It is also possible to
-    implement record-based Log Shipping using the pg_xlogfile_name_offset()
-    function, though this requires custom development.
+    The main features for Log Shipping in this release are based
+    around the file-based Log Shipping described above. It is also
+    possible to implement record-based Log Shipping using the
+    <function>pg_xlogfile_name_offset</function> function (see <xref
+    linkend="functions-admin">), though this requires custom
+    development.
    </para>
 
    <para>
