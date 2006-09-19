@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Sep 18 12:23:58 EDT 2006
+Last updated:		Tue Sep 19 15:19:50 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -19,13 +19,6 @@ first.
 
 Administration
 ==============
-
-* -Make postmater and postgres options distinct so the postmaster -o
-  option is no longer needed
-* -Allow pooled connections to list all prepared statements
-
-  This would allow an application inheriting a pooled connection to know
-  the statements prepared in the current session.
 
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade 
   [pg_upgrade]
@@ -62,8 +55,6 @@ Administration
   Another idea is to allow separate configuration files for each module,
   or allow arbitrary SET commands to be passed to them.
 
-* -Re-enable the GUC full_page_writes in 8.2 when reliability issues have
-  been addressed
 * Simplify ability to create partitioned tables
 
   This would allow creation of partitioned tables without requiring
@@ -87,18 +78,12 @@ Administration
 
 * Configuration files
 
-	o -Add "include file" functionality in postgresql.conf
 	o Allow commenting of variables in postgresql.conf to restore them
 	  to defaults
 
 	  Currently, if a variable is commented out, it keeps the
 	  previous uncommented value until a server restarted.
 	  http://archives.postgresql.org/pgsql-hackers/2006-09/msg01481.php
-
-	o -Allow per-database permissions to be set via GRANT
-
-	  Allow database connection checks based on GRANT rules in
-	  addition to the existing access checks in pg_hba.conf.
 
 	o Allow pg_hba.conf to specify host names along with IP addresses
 
@@ -112,7 +97,7 @@ Administration
 	o %Allow postgresql.conf file values to be changed via an SQL
 	  API, perhaps using SET GLOBAL
 	o Allow the server to be stopped/restarted via an SQL API
-	o -Issue a warning if a change-on-restart-only postgresql.conf value
+	o Issue a warning if a change-on-restart-only postgresql.conf value
 	  is modified  and the server config files are reloaded
 	o Mark change-on-restart-only values in postgresql.conf
 
@@ -160,10 +145,6 @@ Administration
 	    most recent transactions aren't available for recovery in case
 	    of a disk failure.
 
-	  o -Automatically force archiving of partially-filled WAL files when
-	    pg_stop_backup() is called or the server is stopped
-	  o -Add reporting of the current WAL file and offset, perhaps as
-	    part of partial log file archiving
 	  o %Create dump tool for write-ahead logs for use in determining
 	    transaction id for point-in-time recovery
 	  o Allow a warm standby system to also allow read-only statements
@@ -183,8 +164,6 @@ Monitoring
   a database for analysis.
 
 * %Add ability to monitor the use of temporary sort files
-* -Allow server logs to be remotely read and removed using SQL commands
-* -Allow protocol-level BIND parameter values to be logged
 
 
 Data Types
@@ -209,11 +188,6 @@ Data Types
   inaccurate, in one sense.
 
 * Fix data types where equality comparison isn't intuitive, e.g. box
-* -Zero umasked bits in conversion from INET cast to CIDR
-* -Prevent INET cast to CIDR from dropping netmask, SELECT '1.1.1.1'::inet::cidr
-* -Allow INET + INT8 to increment the host part of the address or
-  throw an error on overflow
-* -Add 'tid != tid ' operator for use in corruption recovery
 * Allow user-defined types to specify a type modifier at table creation
   time
 * Allow user-defined types to accept 'typmod' parameters
@@ -251,16 +225,12 @@ Data Types
 	o Allow infinite dates and intervals just like infinite timestamps
 	o Merge hardwired timezone names with the TZ database; allow either 
 	  kind everywhere a TZ name is currently taken
-	o -Allow customization of the known set of TZ names (generalize the
-	  present australian_timezones hack)
 	o Allow TIMESTAMP WITH TIME ZONE to store the original timezone
 	  information, either zone name or offset from UTC [timezone]
 
 	  If the TIMESTAMP value is stored with a time zone name, interval 
 	  computations should adjust based on the time zone rules.
 
-	o -Allow timezone names in SQL strings, '2006-05-24 21:11
-	   Americas/New_York'::timestamptz
 	o Fix SELECT '0.01 years'::interval, '0.01 months'::interval
 	o Add a GUC variable to allow output of interval values in ISO8601 
 	  format
@@ -280,8 +250,6 @@ Data Types
 		  http://archives.postgresql.org/pgsql-hackers/2006-01/msg00250.php
 		  http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php
 
-		o -Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO 
-		  SECOND
 		o Support ISO INTERVAL syntax if units cannot be determined from
 		  the string, and are supplied after the string
 
@@ -314,7 +282,6 @@ Data Types
 
 * Arrays
 
-	o -Allow NULLs in arrays
 	o Delay resolution of array expression's data type so assignment
 	  coercion can be performed on empty array expressions
 	o Add support for arrays of domains
@@ -342,20 +309,11 @@ Functions
 =========
 
 * Allow INET subnet tests using non-constants to be indexed
-* -Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
-  functionality
-
-  Current CURRENT_TIMESTAMP returns the start time of the current
-  transaction, and gettimeofday() returns the wallclock time. This will
-  make time reporting more consistent and will allow reporting of
-  the statement start time.
-
 * %Add pg_get_acldef(), pg_get_typedefault(), pg_get_attrdef(),
   pg_get_tabledef(), pg_get_domaindef(), pg_get_functiondef()
 
   These would be for application use, not for use by pg_dump.
 
-* -Allow to_char() to print localized month names
 * Allow to_date() and to_timestamp() accept localized month names
 * Add missing parameter handling in to_char()
 
@@ -376,9 +334,6 @@ Functions
 	o to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') => 0:1:19:20
 	o to_char(INTERVAL '3 years 5 months','MM') => 41
 
-* -Add sleep() function, remove from regress.c
-* -Allow user-defined functions retuning a domain value to enforce domain
-  constraints
 * Add SPI_gettypmod() to return the typemod for a TupleDesc
 * Allow inlining of set-returning functions
 
@@ -448,10 +403,6 @@ SQL Commands
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * %Allow SET CONSTRAINTS to be qualified by schema/table name
-* -Allow TRUNCATE ... CASCADE/RESTRICT
-
-  This is like DELETE CASCADE, but truncates.
-
 * %Add a separate TRUNCATE permission
 
   Currently only the owner can TRUNCATE a table because triggers are not
@@ -497,14 +448,6 @@ SQL Commands
 
 * Add NOVICE output level for helpful messages like automatic sequence/index
   creation
-* -Add COMMENT ON for all cluster global objects (roles, databases
-  and tablespaces)
-* -Make row-wise comparisons work per SQL spec
-
-  Right now, '(a, b) < (1, 2)' is processed as 'a < 1 and b < 2', but
-  the SQL standard requires it to be processed as a column-by-column
-  comparison, so the proper comparison is '(a < 1) OR (a = 1 AND b < 2)'.
-
 * Add RESET CONNECTION command to reset all session state
 
   This would include resetting of all variables (RESET ALL), dropping of
@@ -521,7 +464,7 @@ SQL Commands
 * Allow EXPLAIN to identify tables that were skipped because of 
   constraint_exclusion
 * Allow EXPLAIN output to be more easily processed by scripts
-* -Enable escape_string_warning and standard_conforming_strings
+* Enable standard_conforming_strings
 * Make standard_conforming_strings the default in 8.3?
 
   When this is done, backslash-quote should be prohibited in non-E''
@@ -556,14 +499,9 @@ SQL Commands
 	  expressions like SELECT col1 || col2
 	o Use more reliable method for CREATE DATABASE to get a consistent
 	  copy of db?
-	o -Add ON COMMIT capability to CREATE TABLE AS ... SELECT
 
 
 * UPDATE
-	o -Allow an alias to be provided for the target table in
-	  UPDATE/DELETE (Neil)
-	o -Allow UPDATE tab SET ROW (col, ...) = (val, ...) for updating
-	  multiple columns
 	o Allow UPDATE tab SET ROW (col, ...) = (SELECT...)
 
 	  http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php
@@ -591,7 +529,6 @@ SQL Commands
 	  is used
 	o %Prevent child tables from altering or dropping constraints
           like CHECK that were inherited from the parent table
-	o -Add ALTER TABLE tab INHERIT / NO INHERIT  parent
 	o Have ALTER INDEX update the name of a constraint using that index
 	o Add ALTER TABLE RENAME CONSTRAINT, update index name also
 
@@ -622,7 +559,6 @@ SQL Commands
 	  This requires the use of a savepoint before each COPY line is
 	  processed, with ROLLBACK on COPY failure.
 
-	o -Have COPY return the number of rows loaded/unloaded?
 	o Allow COPY on a newly-created table to skip WAL logging
 
 	  On crash recovery, the table involved in the COPY would
@@ -630,8 +566,6 @@ SQL Commands
 	  issue is that no other backend should be able to add to 
 	  the table at the same time, which is something that is 
 	  currently allowed.
-
-	o -Allow COPY (SELECT ...) TO 'filename'
 
 
 * GRANT/REVOKE
@@ -662,17 +596,10 @@ SQL Commands
 	o Prevent DROP TABLE from dropping a row referenced by its own open
 	  cursor?
 
-	o -Allow pooled connections to list all open WITH HOLD cursors
-
-	  Because WITH HOLD cursors exist outside transactions, this allows
-	  them to be listed so they can be closed.
-
 
 * INSERT
 
 	o Allow INSERT/UPDATE of the system-generated oid value for a row
-	o -Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
-	o -Allow INSERT/UPDATE ... RETURNING new.col or old.col
 	o In rules, allow VALUES() to contain a mixture of 'old' and 'new'
 	  references
 
@@ -763,13 +690,10 @@ SQL Commands
 
 		  http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php
 
-		o -Allow PL/python to return composite types and result sets
-
 
 Clients
 =======
 
-* -Have initdb set the input DateStyle (MDY or DMY) based on locale
 * Have pg_ctl look at PGHOST in case it is a socket directory?
 * Allow pg_ctl to work properly with configuration files located outside
   the PGDATA directory
@@ -797,19 +721,6 @@ Clients
 	o Allow psql \pset boolean variables to set to fixed values, rather
 	  than toggle
 	o Consistently display privilege information for all objects in psql
-	o -Improve psql's handling of multi-line statements
-
-	  Currently, while \e saves a single statement as one entry, interactive
-	  statements are saved one line at a time.  Ideally all statements
-	  would be saved like \e does.
-
-	o -Allow multi-line column values to align in the proper columns
-
-	  If the second output column value is 'a\nb', the 'b' should appear
-	  in the second display column, rather than the first column as it
-	  does now.
-
-	o -Display IN, INOUT, and OUT parameters in \df
 	o Add auto-expanded mode so expanded output is used if the row
 	  length is wider than the screen width.  
 
@@ -827,13 +738,10 @@ Clients
 
 * pg_dump
 
-	o -Allow pg_dump to use multiple -t and -n switches, exclusion
-	   ability, and regular expression object matching
 	o %Add dumping of comments on index columns and composite type columns
 	o %Add full object name to the tag field.  eg. for operators we need
 	  '=(integer, integer)', instead of just '='.
 	o Add pg_dumpall custom format dumps?
-	o -Update pg_dump and psql to use the new COPY libpq API (Christopher)
 	o Remove unnecessary function pointer abstractions in pg_dump source
 	  code
 	o Allow selection of individual object(s) of all types, not just
@@ -869,7 +777,6 @@ Clients
 
 * libpq
 
-	o -Add a function to support Parse/DescribeStatement capability
 	o Add PQescapeIdentifierConn()
 	o Prevent PQfnumber() from lowercasing unquoted the column name
 
@@ -1001,7 +908,6 @@ Indexes
 
 * Allow accurate statistics to be collected on indexes with more than
   one column or expression indexes, perhaps using per-index statistics
-* -Add fillfactor to control reserved free space during index creation
 * Allow the creation of indexes with mixed ascending/descending
   specifiers
 
@@ -1151,7 +1057,6 @@ Vacuum
   index entry) might be slow and unreliable, especially for user-defined
   index functions.
 
-* -Add system view to show free space map contents
 * Allow FSM to return free space toward the beginning of the heap file,
   in hopes that empty pages at the end can be truncated by VACUUM
 * Allow FSM page return free space based on table clustering, to assist
@@ -1402,19 +1307,10 @@ Source Code
   This is probably not possible because 'gmake' and other compiler tools
   do not fully support quoting of paths with spaces.
 
-* -Allow installing to directories containing spaces
-
-  This is possible if proper quoting is added to the makefiles for the
-  install targets.  Because PostgreSQL supports relocatable installs, it
-  is already possible to install into a directory that doesn't contain 
-  spaces and then copy the install to a directory with spaces.
-
 * Fix sgmltools so PDFs can be generated with bookmarks
-* -%Clean up compiler warnings (especially with gcc version 4)
 * Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
 * Update Bonjour to work with newer cross-platform SDK
-* -Remove BeOS and QNX-specific code
 * Split out libpq pgpass and environment documentation sections to make
   it easier for non-developers to find
 * Improve port/qsort() to handle sorts with 50% unique and 50% duplicate
@@ -1452,7 +1348,6 @@ Source Code
 	  option is to wait for the MinGW project to fix it, or use the
 	  code from the LibGW32C project as a guide.
 
-	o -Port contrib/xml2
 	o Check WSACancelBlockingCall() for interrupts [win32intr]
 
 

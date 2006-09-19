@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Sep 18 12:23:58 EDT 2006
+Last updated:           Tue Sep 19 15:19:50 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -25,13 +25,7 @@ first.
 <h1><a name="section_2">Administration</a></h1>
 
 <ul>
-  <li>-<em>Make postmater and postgres options distinct so the postmaster -o</em>
-  option is no longer needed
-  </li><li>-<em>Allow pooled connections to list all prepared statements</em>
-<p>  This would allow an application inheriting a pooled connection to know
-  the statements prepared in the current session.
-</p>
-  </li><li>Allow major upgrades without dump/reload, perhaps using pg_upgrade 
+  <li>Allow major upgrades without dump/reload, perhaps using pg_upgrade 
   [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pg_upgrade">pg_upgrade</a>]
   </li><li>Check for unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
@@ -62,8 +56,6 @@ first.
   Another idea is to allow separate configuration files for each module,
   or allow arbitrary SET commands to be passed to them.
 </p>
-  </li><li>-<em>Re-enable the GUC full_page_writes in 8.2 when reliability issues have</em>
-  been addressed
   </li><li>Simplify ability to create partitioned tables
 <p>  This would allow creation of partitioned tables without requiring
   creation of rules for INSERT/UPDATE/DELETE, and constraints for
@@ -82,16 +74,11 @@ first.
   </li></ul>
   </li><li>Configuration files
   <ul>
-    <li>-<em>Add "include file" functionality in postgresql.conf</em>
-    </li><li>Allow commenting of variables in postgresql.conf to restore them
+    <li>Allow commenting of variables in postgresql.conf to restore them
           to defaults
 <p>          Currently, if a variable is commented out, it keeps the
           previous uncommented value until a server restarted.
           <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg01481.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg01481.php</a>
-</p>
-    </li><li>-<em>Allow per-database permissions to be set via GRANT</em>
-<p>          Allow database connection checks based on GRANT rules in
-          addition to the existing access checks in pg_hba.conf.
 </p>
     </li><li>Allow pg_hba.conf to specify host names along with IP addresses
 <p>          Host name lookup could occur when the postmaster reads the
@@ -104,7 +91,7 @@ first.
     </li><li>%Allow postgresql.conf file values to be changed via an SQL
           API, perhaps using SET GLOBAL
     </li><li>Allow the server to be stopped/restarted via an SQL API
-    </li><li>-<em>Issue a warning if a change-on-restart-only postgresql.conf value</em>
+    </li><li>Issue a warning if a change-on-restart-only postgresql.conf value
           is modified  and the server config files are reloaded
     </li><li>Mark change-on-restart-only values in postgresql.conf
   </li></ul>
@@ -145,10 +132,6 @@ first.
             most recent transactions aren't available for recovery in case
             of a disk failure.
 </p>
-    </li><li>-Automatically force archiving of partially-filled WAL files when
-            pg_stop_backup() is called or the server is stopped
-    </li><li>-Add reporting of the current WAL file and offset, perhaps as
-            part of partial log file archiving
     </li><li>%Create dump tool for write-ahead logs for use in determining
             transaction id for point-in-time recovery
     </li><li>Allow a warm standby system to also allow read-only statements
@@ -166,8 +149,6 @@ first.
   a database for analysis.
 </p>
   </li><li>%Add ability to monitor the use of temporary sort files
-  </li><li>-<em>Allow server logs to be remotely read and removed using SQL commands</em>
-  </li><li>-<em>Allow protocol-level BIND parameter values to be logged</em>
 </li></ul>
 <h1><a name="section_4">Data Types</a></h1>
 
@@ -191,11 +172,6 @@ first.
 </p>
 <ul>
   <li>Fix data types where equality comparison isn't intuitive, e.g. box
-  </li><li>-<em>Zero umasked bits in conversion from INET cast to CIDR</em>
-  </li><li>-<em>Prevent INET cast to CIDR from dropping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr</em>
-  </li><li>-<em>Allow INET + INT8 to increment the host part of the address or</em>
-  throw an error on overflow
-  </li><li>-<em>Add 'tid != tid ' operator for use in corruption recovery</em>
   </li><li>Allow user-defined types to specify a type modifier at table creation
   time
   </li><li>Allow user-defined types to accept 'typmod' parameters
@@ -226,15 +202,11 @@ first.
     <li>Allow infinite dates and intervals just like infinite timestamps
     </li><li>Merge hardwired timezone names with the TZ database; allow either 
           kind everywhere a TZ name is currently taken
-    </li><li>-<em>Allow customization of the known set of TZ names (generalize the</em>
-          present australian_timezones hack)
     </li><li>Allow TIMESTAMP WITH TIME ZONE to store the original timezone
           information, either zone name or offset from UTC [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?timezone">timezone</a>]
 <p>          If the TIMESTAMP value is stored with a time zone name, interval 
           computations should adjust based on the time zone rules.
 </p>
-    </li><li>-<em>Allow timezone names in SQL strings, '2006-05-24 21:11</em>
-           Americas/New_York'::timestamptz
     </li><li>Fix SELECT '0.01 years'::interval, '0.01 months'::interval
     </li><li>Add a GUC variable to allow output of interval values in ISO8601 
           format
@@ -255,9 +227,7 @@ first.
                   <a href="http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php">http://archives.postgresql.org/pgsql-bugs/2006-04/msg00248.php</a>
 </p>
 <ul>
-  <li>-<em>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO </em>
-                  SECOND
-  </li><li>Support ISO INTERVAL syntax if units cannot be determined from
+  <li>Support ISO INTERVAL syntax if units cannot be determined from
                   the string, and are supplied after the string
 <p>                  The SQL standard states that the units after the string
                   specify the units of the string, e.g. INTERVAL '2' MINUTE
@@ -287,8 +257,7 @@ first.
   <ul>
     <li>Arrays
     <ul>
-      <li>-<em>Allow NULLs in arrays</em>
-      </li><li>Delay resolution of array expression's data type so assignment
+      <li>Delay resolution of array expression's data type so assignment
           coercion can be performed on empty array expressions
       </li><li>Add support for arrays of domains
       </li><li>Add support for arrays of complex types
@@ -313,18 +282,10 @@ first.
 
 <ul>
   <li>Allow INET subnet tests using non-constants to be indexed
-  </li><li>-<em>Add transaction_timestamp(), statement_timestamp(), clock_timestamp()</em>
-  functionality
-<p>  Current CURRENT_TIMESTAMP returns the start time of the current
-  transaction, and gettimeofday() returns the wallclock time. This will
-  make time reporting more consistent and will allow reporting of
-  the statement start time.
-</p>
   </li><li>%Add pg_get_acldef(), pg_get_typedefault(), pg_get_attrdef(),
   pg_get_tabledef(), pg_get_domaindef(), pg_get_functiondef()
 <p>  These would be for application use, not for use by pg_dump.
 </p>
-  </li><li>-<em>Allow to_char() to print localized month names</em>
   </li><li>Allow to_date() and to_timestamp() accept localized month names
   </li><li>Add missing parameter handling in to_char()
 </li></ul>
@@ -346,9 +307,6 @@ first.
     </li><li>to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') =&gt; 0:1:19:20
     </li><li>to_char(INTERVAL '3 years 5 months','MM') =&gt; 41
   </li></ul>
-  </li><li>-<em>Add sleep() function, remove from regress.c</em>
-  </li><li>-<em>Allow user-defined functions retuning a domain value to enforce domain</em>
-  constraints
   </li><li>Add SPI_gettypmod() to return the typemod for a TupleDesc
   </li><li>Allow inlining of set-returning functions
 </li></ul>
@@ -410,9 +368,6 @@ first.
   <li>Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
   </li><li>Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
   </li><li>%Allow SET CONSTRAINTS to be qualified by schema/table name
-  </li><li>-<em>Allow TRUNCATE ... CASCADE/RESTRICT</em>
-<p>  This is like DELETE CASCADE, but truncates.
-</p>
   </li><li>%Add a separate TRUNCATE permission
 <p>  Currently only the owner can TRUNCATE a table because triggers are not
   called, and the table is locked in exclusive mode.
@@ -452,13 +407,6 @@ first.
 </p>
   </li><li>Add NOVICE output level for helpful messages like automatic sequence/index
   creation
-  </li><li>-<em>Add COMMENT ON for all cluster global objects (roles, databases</em>
-  and tablespaces)
-  </li><li>-<em>Make row-wise comparisons work per SQL spec</em>
-<p>  Right now, '(a, b) &lt; (1, 2)' is processed as 'a &lt; 1 and b &lt; 2', but
-  the SQL standard requires it to be processed as a column-by-column
-  comparison, so the proper comparison is '(a &lt; 1) OR (a = 1 AND b &lt; 2)'.
-</p>
   </li><li>Add RESET CONNECTION command to reset all session state
 <p>  This would include resetting of all variables (RESET ALL), dropping of
   temporary tables, removing any NOTIFYs, cursors, open transactions,
@@ -474,7 +422,7 @@ first.
   </li><li>Allow EXPLAIN to identify tables that were skipped because of 
   constraint_exclusion
   </li><li>Allow EXPLAIN output to be more easily processed by scripts
-  </li><li>-<em>Enable escape_string<u>warning and standard</u>conforming_strings</em>
+  </li><li>Enable standard_conforming_strings
   </li><li>Make standard_conforming_strings the default in 8.3?
 <p>  When this is done, backslash-quote should be prohibited in non-E''
   strings because of possible confusion over how such strings treat
@@ -505,15 +453,10 @@ first.
           expressions like SELECT col1 || col2
     </li><li>Use more reliable method for CREATE DATABASE to get a consistent
           copy of db?
-    </li><li>-<em>Add ON COMMIT capability to CREATE TABLE AS ... SELECT</em>
   </li></ul>
   </li><li>UPDATE
   <ul>
-    <li>-<em>Allow an alias to be provided for the target table in</em>
-          UPDATE/DELETE (Neil)
-    </li><li>-<em>Allow UPDATE tab SET ROW (col, ...) = (val, ...) for updating</em>
-          multiple columns
-    </li><li>Allow UPDATE tab SET ROW (col, ...) = (SELECT...)
+    <li>Allow UPDATE tab SET ROW (col, ...) = (SELECT...)
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php">http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php</a>
 </p>
   </li></ul>
@@ -537,7 +480,6 @@ first.
           is used
     </li><li>%Prevent child tables from altering or dropping constraints
           like CHECK that were inherited from the parent table
-    </li><li>-<em>Add ALTER TABLE tab INHERIT / NO INHERIT  parent</em>
     </li><li>Have ALTER INDEX update the name of a constraint using that index
     </li><li>Add ALTER TABLE RENAME CONSTRAINT, update index name also
   </li></ul>
@@ -564,7 +506,6 @@ first.
 <p>          This requires the use of a savepoint before each COPY line is
           processed, with ROLLBACK on COPY failure.
 </p>
-    </li><li>-<em>Have COPY return the number of rows loaded/unloaded?</em>
     </li><li>Allow COPY on a newly-created table to skip WAL logging
 <p>          On crash recovery, the table involved in the COPY would
           be removed or have its heap and index files truncated.  One
@@ -572,7 +513,6 @@ first.
           the table at the same time, which is something that is 
           currently allowed.
 </p>
-    </li><li>-<em>Allow COPY (SELECT ...) TO 'filename'</em>
   </li></ul>
   </li><li>GRANT/REVOKE
   <ul>
@@ -597,16 +537,10 @@ first.
 </p>
     </li><li>Prevent DROP TABLE from dropping a row referenced by its own open
           cursor?
-    </li><li>-<em>Allow pooled connections to list all open WITH HOLD cursors</em>
-<p>          Because WITH HOLD cursors exist outside transactions, this allows
-          them to be listed so they can be closed.
-</p>
   </li></ul>
   </li><li>INSERT
   <ul>
     <li>Allow INSERT/UPDATE of the system-generated oid value for a row
-    </li><li>-<em>Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)</em>
-    </li><li>-<em>Allow INSERT/UPDATE ... RETURNING new.col or old.col</em>
     </li><li>In rules, allow VALUES() to contain a mixture of 'old' and 'new'
           references
   </li></ul>
@@ -689,15 +623,13 @@ first.
       </li><li>Add PL/Python tracebacks
 <p>                  <a href="http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php">http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php</a>
 </p>
-      </li><li>-<em>Allow PL/python to return composite types and result sets</em>
     </li></ul>
   </li></ul>
 </li></ul>
 <h1><a name="section_9">Clients</a></h1>
 
 <ul>
-  <li>-<em>Have initdb set the input DateStyle (MDY or DMY) based on locale</em>
-  </li><li>Have pg_ctl look at PGHOST in case it is a socket directory?
+  <li>Have pg_ctl look at PGHOST in case it is a socket directory?
   </li><li>Allow pg_ctl to work properly with configuration files located outside
   the PGDATA directory
 <p>  pg_ctl can not read the pid file because it isn't located in the
@@ -720,17 +652,6 @@ first.
     </li><li>Allow psql \pset boolean variables to set to fixed values, rather
           than toggle
     </li><li>Consistently display privilege information for all objects in psql
-    </li><li>-<em>Improve psql's handling of multi-line statements</em>
-<p>          Currently, while \e saves a single statement as one entry, interactive
-          statements are saved one line at a time.  Ideally all statements
-          would be saved like \e does.
-</p>
-    </li><li>-<em>Allow multi-line column values to align in the proper columns</em>
-<p>          If the second output column value is 'a\nb', the 'b' should appear
-          in the second display column, rather than the first column as it
-          does now.
-</p>
-    </li><li>-<em>Display IN, INOUT, and OUT parameters in \df</em>
     </li><li>Add auto-expanded mode so expanded output is used if the row
           length is wider than the screen width.  
 <p>          Consider using auto-expanded mode for backslash commands like \df+.
@@ -746,13 +667,10 @@ first.
   </li></ul>
   </li><li>pg_dump
   <ul>
-    <li>-<em>Allow pg_dump to use multiple -t and -n switches, exclusion</em>
-           ability, and regular expression object matching
-    </li><li>%Add dumping of comments on index columns and composite type columns
+    <li>%Add dumping of comments on index columns and composite type columns
     </li><li>%Add full object name to the tag field.  eg. for operators we need
           '=(integer, integer)', instead of just '='.
     </li><li>Add pg_dumpall custom format dumps?
-    </li><li>-<em>Update pg_dump and psql to use the new COPY libpq API (Christopher)</em>
     </li><li>Remove unnecessary function pointer abstractions in pg_dump source
           code
     </li><li>Allow selection of individual object(s) of all types, not just
@@ -785,8 +703,7 @@ first.
   </li></ul>
   </li><li>libpq
   <ul>
-    <li>-<em>Add a function to support Parse/DescribeStatement capability</em>
-    </li><li>Add PQescapeIdentifierConn()
+    <li>Add PQescapeIdentifierConn()
     </li><li>Prevent PQfnumber() from lowercasing unquoted the column name
 <p>          PQfnumber() should never have been doing lowercasing, but 
           historically it has so we need a way to prevent it
@@ -903,7 +820,6 @@ first.
 </p>
   </li><li>Allow accurate statistics to be collected on indexes with more than
   one column or expression indexes, perhaps using per-index statistics
-  </li><li>-<em>Add fillfactor to control reserved free space during index creation</em>
   </li><li>Allow the creation of indexes with mixed ascending/descending
   specifiers
 <p>  This is possible now by creating an operator class with reversed sort
@@ -1035,7 +951,6 @@ first.
   index entry) might be slow and unreliable, especially for user-defined
   index functions.
 </p>
-  </li><li>-<em>Add system view to show free space map contents</em>
   </li><li>Allow FSM to return free space toward the beginning of the heap file,
   in hopes that empty pages at the end can be truncated by VACUUM
   </li><li>Allow FSM page return free space based on table clustering, to assist
@@ -1264,18 +1179,10 @@ first.
 <p>  This is probably not possible because 'gmake' and other compiler tools
   do not fully support quoting of paths with spaces.
 </p>
-  </li><li>-<em>Allow installing to directories containing spaces</em>
-<p>  This is possible if proper quoting is added to the makefiles for the
-  install targets.  Because PostgreSQL supports relocatable installs, it
-  is already possible to install into a directory that doesn't contain 
-  spaces and then copy the install to a directory with spaces.
-</p>
   </li><li>Fix sgmltools so PDFs can be generated with bookmarks
-  </li><li>-*%Clean up compiler warnings (especially with gcc version 4)*
   </li><li>Use UTF8 encoding for NLS messages so all server encodings can
   read them properly
   </li><li>Update Bonjour to work with newer cross-platform SDK
-  </li><li>-<em>Remove BeOS and QNX-specific code</em>
   </li><li>Split out libpq pgpass and environment documentation sections to make
   it easier for non-developers to find
   </li><li>Improve port/qsort() to handle sorts with 50% unique and 50% duplicate
@@ -1308,7 +1215,6 @@ first.
           option is to wait for the MinGW project to fix it, or use the
           code from the LibGW32C project as a guide.
 </p>
-    </li><li>-<em>Port contrib/xml2</em>
     </li><li>Check WSACancelBlockingCall() for interrupts [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?win32intr">win32intr</a>]
   </li></ul>
   </li><li>Wire Protocol Changes
