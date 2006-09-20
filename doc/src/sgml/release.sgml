@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.443 2006/09/19 19:54:05 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.444 2006/09/20 11:54:23 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -834,7 +834,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        Both this and <literal>pg_prepared_statements</> are very
+        This, and <literal>pg_prepared_statements</> above, are very
         useful for pooled connection setups.
        </para>
       </listitem>
