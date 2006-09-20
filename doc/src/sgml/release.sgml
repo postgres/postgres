@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.445 2006/09/20 19:55:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.446 2006/09/20 22:48:47 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -569,7 +569,7 @@ For new features, add links to the documentation sections.
        <para>
         Add support for <acronym>SSL</> Certificate Revocation List
         (<acronym>CRL</>) files, <filename>root.crl</> (Libor
-        Hoho&#353;)
+        Hoho&scaron;)
        </para>
 
        <para>
