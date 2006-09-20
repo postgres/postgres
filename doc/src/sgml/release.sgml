@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.444 2006/09/20 11:54:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.445 2006/09/20 19:55:42 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1955,6 +1955,12 @@ For new features, add links to the documentation sections.
        <para>
         Such libraries can be used for debugging or performance
         measurement.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+         Add shared library support for AIX (Albe Laurenz)
        </para>
       </listitem>
 
