@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.61 2006/09/05 21:08:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.62 2006/09/20 01:20:38 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2081,13 +2081,17 @@ VALUES ('New York', NULL, NULL, 'NY');
   </para>
 
   <para>
-   One convenient way to create a compatible table to be a new child is using
-   the <command>LIKE</command> option of <command>CREATE TABLE</command>. This
-   creates a table with the same columns with the same type (however note the
-   caveat below regarding constraints). Alternatively a compatible table can
+   One convenient way to create a compatible table to be a new child
+   is specify the <command>LIKE</command> clause in <command>CREATE
+   TABLE</command>. This creates a new table with the same columns as
+   the source table. If there are any <command>CHECK</command>
+   constraints defined on the parent table, the <command>INCLUDING
+   CONSTRAINTS</command> option to <command>LIKE</command> may be
+   useful, as the new child must have constraints matching the parent
+   to be considered compatible. Alternatively a compatible table can
    be created by first creating a new child using <command>CREATE
-   TABLE</command> then removing the inheritance link with <command>ALTER
-   TABLE</command>.
+   TABLE</command> then removing the inheritance link with
+   <command>ALTER TABLE</command>.
   </para>
 
   <para>
@@ -2156,19 +2160,6 @@ VALUES ('New York', NULL, NULL, 'NY');
       Specifying that another table's column <literal>REFERENCES
       cities(name)</> would allow the other table to contain city names, but
       not capital names.  There is no good workaround for this case.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      There is no convenient way to define a table compatible with a specific
-      parent including columns and constraints. The <command>LIKE</command>
-      option for <command>CREATE TABLE</command> does not copy constraints
-      which makes the tables it creates ineligible for being added using
-      <command>ALTER TABLE</command>. Matching check constraints must be added 
-      manually or the table must be created as a child immediately, then if
-      needed removed from the inheritance structure temporarily to be added
-      again later.
      </para>
     </listitem>
 
@@ -2577,44 +2568,6 @@ DO INSTEAD
         constraint for its partition.
        </para>
       </listitem>
-
-      <listitem>
-       <para>
-        When the time comes to archive and remove the old data we first remove
-        it from the production table using:
-
-<programlisting>
-ALTER TABLE measurement_y2003mm02 NO INHERIT measurement
-</programlisting>
-
-        Then we can perform any sort of data modification necessary prior to
-        archiving without impacting the data viewed by the production system.
-        This could include, for example, deleting or compressing out redundant
-        data.
-       </para>
-      </listitem>
-      <listitem>
-      <para>
-
-       Similarly we can a new partition to handle new data. We can either
-       create an empty partition as the original partitions were created
-       above, or for some applications it's necessary to bulk load and clean
-       data for the new partition. If that operation involves multiple steps
-       by different processes it can be helpful to work with it in a fresh
-       table outside of the master partitioned table until it's ready to be
-       loaded:
-
-<programlisting>
-CREATE TABLE measurement_y2006m02 (LIKE measurement WITH DEFAULTS);
-\COPY measurement_y2006m02 FROM 'measurement_y2006m02'
-UPDATE ...
-ALTER TABLE measurement_y2006m02 ADD CONSTRAINT y2006m02 CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt DATE '2006-03-01' );
-ALTER TABLE measurement_y2006m02 INHERIT MEASUREMENT;
-</programlisting>
-
-      </para>
-      </listitem>
-
      </orderedlist>
     </para>
 
@@ -2625,8 +2578,76 @@ ALTER TABLE measurement_y2006m02 INHERIT MEASUREMENT;
      script that generates the required DDL automatically.
     </para>
 
+   <sect2 id="ddl-partitioning-managing-partitions">
+   <title>Managing Partitions</title>
+
    <para>
-    The following caveats apply:
+     Normally the set of partitions established when initially
+     defining the table are not intended to remain static. It is
+     common to want to remove old partitions of data and periodically
+     add new partitions for new data. One of the most important
+     advantages of partitioning is precisely that it allows this
+     otherwise painful task to be executed nearly instantaneously by
+     manipulating the partition structure, rather than moving large
+     amounts of data around physically.
+   </para>
+
+   <para>
+     The simplest option for removing old data is to simply drop the partition
+     that is no longer necessary:
+<programlisting>
+DROP TABLE measurement_y2003mm02;
+</programlisting>
+     This can very quickly delete millions of records because it doesn't have
+     to individually delete every record.
+   </para>
+
+   <para>
+     Another option that is often preferable is to remove the partition from
+     the partitioned table but retain access to it as a table in its own
+     right:
+<programlisting>
+ALTER TABLE measurement_y2003mm02 NO INHERIT measurement;
+</programlisting>
+     This allows further operations to be performed on the data before
+     it is dropped. For example, this is often a useful time to backup
+     the data using <command>COPY</>, <application>pg_dump</>, or
+     similar tools. It can also be a useful time to aggregate data
+     into smaller formats, perform other data manipulations, or run
+     reports.
+   </para>
+
+   <para>
+     Similarly we can add a new partition to handle new data. We can create an
+     empty partition in the partitioned table just as the original partitions
+     were created above. 
+
+<programlisting>
+CREATE TABLE measurement_y2006m02 (
+    CHECK ( logdate >= DATE '2006-02-01' AND logdate < DATE '2006-03-01' )
+) INHERITS (measurement);
+</programlisting>
+
+     As an alternative, it is sometimes more convenient to create the
+     new table outside the partition structure, and make it a proper
+     partition later. This allows the data to be loaded, checked, and
+     transformed prior to it appearing in the partitioned table.
+
+<programlisting>
+CREATE TABLE measurement_y2006m02 (LIKE measurement INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
+\COPY measurement_y2006m02 FROM 'measurement_y2006m02'
+UPDATE ... ;
+ALTER TABLE measurement_y2006m02 ADD CONSTRAINT y2006m02 CHECK ( logdate >= DATE '2006-02-01' AND logdate < DATE '2006-03-01' );
+ALTER TABLE measurement_y2006m02 INHERIT measurement;
+</programlisting>
+    </para>
+   </sect2>
+
+   <sect2 id="ddl-partitioning-caveats">
+   <title>Caveats</title>
+ 
+   <para>
+    The following caveats apply to partitioned tables:
    <itemizedlist>
     <listitem>
      <para>
@@ -2651,11 +2672,12 @@ ALTER TABLE measurement_y2006m02 INHERIT MEASUREMENT;
 
     <listitem>
      <para>
-      When using the <literal>LIKE</> option above to create new partitions
-      check constraints are not copied from the parent. If there are any check
-      constraints defined for the parent they must be manually created in new
-      partitions before <command>ALTER TABLE</command> will allow them to be
-      added.
+      When using the <literal>LIKE</> option above to create new
+      partitions, <literal>CHECK</> constraints are not copied from
+      the parent. If there are any <literal>CHECK</> constraints
+      defined for the parent, they must be manually created in new
+      partitions before <command>ALTER TABLE</command> will allow them
+      to be added.
      </para>
     </listitem>
    </itemizedlist>
