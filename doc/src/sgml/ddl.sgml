@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.62 2006/09/20 01:20:38 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.63 2006/09/20 21:30:20 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2478,20 +2478,20 @@ CREATE TABLE measurement_y2006m01 ( ) INHERITS (measurement);
 
  <programlisting>
 CREATE TABLE measurement_y2004m02 (
-    CHECK ( logdate >= DATE '2004-02-01' AND logdate < DATE '2004-03-01' )
+    CHECK ( logdate &gt;= DATE '2004-02-01' AND logdate &lt; DATE '2004-03-01' )
 ) INHERITS (measurement);
 CREATE TABLE measurement_y2004m03 (
-    CHECK ( logdate >= DATE '2004-03-01' AND logdate < DATE '2004-04-01' )
+    CHECK ( logdate &gt;= DATE '2004-03-01' AND logdate &lt; DATE '2004-04-01' )
 ) INHERITS (measurement);
 ...
 CREATE TABLE measurement_y2005m11 (
-    CHECK ( logdate >= DATE '2005-11-01' AND logdate < DATE '2005-12-01' )
+    CHECK ( logdate &gt;= DATE '2005-11-01' AND logdate &lt; DATE '2005-12-01' )
 ) INHERITS (measurement);
 CREATE TABLE measurement_y2005m12 (
-    CHECK ( logdate >= DATE '2005-12-01' AND logdate < DATE '2006-01-01' )
+    CHECK ( logdate &gt;= DATE '2005-12-01' AND logdate &lt; DATE '2006-01-01' )
 ) INHERITS (measurement);
 CREATE TABLE measurement_y2006m01 (
-    CHECK ( logdate >= DATE '2006-01-01' AND logdate < DATE '2006-02-01' )
+    CHECK ( logdate &gt;= DATE '2006-01-01' AND logdate &lt; DATE '2006-02-01' )
 ) INHERITS (measurement);
 </programlisting>
        </para>
@@ -2538,7 +2538,7 @@ DO INSTEAD
 <programlisting>
 CREATE RULE measurement_insert_y2004m02 AS
 ON INSERT TO measurement WHERE
-    ( logdate >= DATE '2004-02-01' AND logdate < DATE '2004-03-01' )
+    ( logdate &gt;= DATE '2004-02-01' AND logdate &lt; DATE '2004-03-01' )
 DO INSTEAD
     INSERT INTO measurement_y2004m02 VALUES ( NEW.city_id,
                                               NEW.logdate,
@@ -2547,7 +2547,7 @@ DO INSTEAD
 ...
 CREATE RULE measurement_insert_y2005m12 AS
 ON INSERT TO measurement WHERE
-    ( logdate >= DATE '2005-12-01' AND logdate < DATE '2006-01-01' )
+    ( logdate &gt;= DATE '2005-12-01' AND logdate &lt; DATE '2006-01-01' )
 DO INSTEAD
     INSERT INTO measurement_y2005m12 VALUES ( NEW.city_id,
                                               NEW.logdate,
@@ -2555,7 +2555,7 @@ DO INSTEAD
                                               NEW.unitsales );
 CREATE RULE measurement_insert_y2006m01 AS
 ON INSERT TO measurement WHERE
-    ( logdate >= DATE '2006-01-01' AND logdate < DATE '2006-02-01' )
+    ( logdate &gt;= DATE '2006-01-01' AND logdate &lt; DATE '2006-02-01' )
 DO INSTEAD
     INSERT INTO measurement_y2006m01 VALUES ( NEW.city_id,
                                               NEW.logdate,
@@ -2577,6 +2577,7 @@ DO INSTEAD
      creating a new partition each month, so it may be wise to write a
      script that generates the required DDL automatically.
     </para>
+   </sect2>
 
    <sect2 id="ddl-partitioning-managing-partitions">
    <title>Managing Partitions</title>
@@ -2624,7 +2625,7 @@ ALTER TABLE measurement_y2003mm02 NO INHERIT measurement;
 
 <programlisting>
 CREATE TABLE measurement_y2006m02 (
-    CHECK ( logdate >= DATE '2006-02-01' AND logdate < DATE '2006-03-01' )
+    CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' )
 ) INHERITS (measurement);
 </programlisting>
 
@@ -2637,7 +2638,7 @@ CREATE TABLE measurement_y2006m02 (
 CREATE TABLE measurement_y2006m02 (LIKE measurement INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
 \COPY measurement_y2006m02 FROM 'measurement_y2006m02'
 UPDATE ... ;
-ALTER TABLE measurement_y2006m02 ADD CONSTRAINT y2006m02 CHECK ( logdate >= DATE '2006-02-01' AND logdate < DATE '2006-03-01' );
+ALTER TABLE measurement_y2006m02 ADD CONSTRAINT y2006m02 CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' );
 ALTER TABLE measurement_y2006m02 INHERIT measurement;
 </programlisting>
     </para>
@@ -2717,7 +2718,7 @@ UNION ALL SELECT * FROM measurement_y2006m01;
 
 <programlisting>
 SET constraint_exclusion = on;
-SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
+SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
 </programlisting>
 
     Without constraint exclusion, the above query would scan each of
@@ -2736,23 +2737,23 @@ SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
 
 <programlisting>
 SET constraint_exclusion = off;
-EXPLAIN SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
+EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
 
                                           QUERY PLAN
 -----------------------------------------------------------------------------------------------
  Aggregate  (cost=158.66..158.68 rows=1 width=0)
-   ->  Append  (cost=0.00..151.88 rows=2715 width=0)
-         ->  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate >= '2006-01-01'::date)
-         ->  Seq Scan on measurement_y2004m02 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate >= '2006-01-01'::date)
-         ->  Seq Scan on measurement_y2004m03 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate >= '2006-01-01'::date)
+   -&gt;  Append  (cost=0.00..151.88 rows=2715 width=0)
+         -&gt;  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2006-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2004m02 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2006-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2004m03 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2006-01-01'::date)
 ...
-         ->  Seq Scan on measurement_y2005m12 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate >= '2006-01-01'::date)
-         ->  Seq Scan on measurement_y2006m01 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate >= '2006-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2005m12 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2006-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2006m01 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2006-01-01'::date)
 </programlisting>
 
     Some or all of the partitions might use index scans instead of
@@ -2763,15 +2764,15 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
 
 <programlisting>
 SET constraint_exclusion = on;
-EXPLAIN SELECT count(*) FROM measurement WHERE logdate >= DATE '2006-01-01';
+EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
                                           QUERY PLAN
 -----------------------------------------------------------------------------------------------
  Aggregate  (cost=63.47..63.48 rows=1 width=0)
-   ->  Append  (cost=0.00..60.75 rows=1086 width=0)
-         ->  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate >= '2006-01-01'::date)
-         ->  Seq Scan on measurement_y2006m01 measurement  (cost=0.00..30.38 rows=543 width=0)
-               Filter: (logdate >= '2006-01-01'::date)
+   -&gt;  Append  (cost=0.00..60.75 rows=1086 width=0)
+         -&gt;  Seq Scan on measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2006-01-01'::date)
+         -&gt;  Seq Scan on measurement_y2006m01 measurement  (cost=0.00..30.38 rows=543 width=0)
+               Filter: (logdate &gt;= '2006-01-01'::date)
 </programlisting>
    </para>
 
