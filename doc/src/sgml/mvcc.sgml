@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.62 2006/09/18 12:11:36 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.63 2006/09/20 23:43:22 tgl Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -25,10 +25,10 @@
    </indexterm>
 
    <para>
-    Unlike traditional database systems which use locks for concurrency control,
-    <productname>PostgreSQL</productname>
-    maintains data consistency by using a multiversion model
-    (Multiversion Concurrency Control, <acronym>MVCC</acronym>). 
+    <productname>PostgreSQL</productname> provides a rich set of tools 
+    for developers to manage concurrent access to data.  Internally,
+    data consistency is maintained by using a multiversion 
+    model (Multiversion Concurrency Control, <acronym>MVCC</acronym>). 
     This means that while querying a database each transaction sees
     a snapshot of data (a <firstterm>database version</firstterm>)
     as it was some
@@ -36,7 +36,10 @@
     This protects the transaction from viewing inconsistent data that
     could be caused by (other) concurrent transaction updates on the same
     data rows, providing <firstterm>transaction isolation</firstterm>
-    for each database session.
+    for each database session.  <acronym>MVCC</acronym>, by eschewing
+    explicit locking methodologies of traditional database systems,
+    minimizes lock contention in order to allow for reasonable 
+    performance in multiuser environments.
    </para>
 
    <para>
@@ -52,7 +55,9 @@
     <productname>PostgreSQL</productname> for applications that cannot
     adapt easily to <acronym>MVCC</acronym> behavior.  However, proper
     use of <acronym>MVCC</acronym> will generally provide better
-    performance than locks.
+    performance than locks.  In addition, application-defined advisory
+    locks provide a mechanism for acquiring locks that are not tied
+    to a single transaction.
    </para>
   </sect1>
 
@@ -859,6 +864,83 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
      (e.g., while waiting for user input).
     </para>
    </sect2>
+
+   <sect2 id="advisory-locks">
+    <title>Advisory Locks</title>
+
+    <indexterm zone="advisory-locks">
+     <primary>lock</primary>
+     <secondary>advisory</secondary>
+    </indexterm>
+
+    <para>
+     <productname>PostgreSQL</productname> provides a means for
+     creating locks that have application-defined meanings.  These are
+     called <firstterm>advisory locks</>, because the system does not
+     enforce their use &mdash; it is up to the application to use them
+     correctly.  Advisory locks can be useful for locking strategies
+     that are an awkward fit for the MVCC model.  Once acquired, an
+     advisory lock is held until explicitly released or the session ends.
+     Unlike standard locks, advisory locks do not
+     honor transaction semantics.  For example, a lock acquired during a
+     transaction that is later rolled back will still be held following the
+     rollback.  The same lock can be acquired multiple times by its
+     owning process: for each lock request there must be a corresponding
+     unlock request before the lock is actually released.  (If a session
+     already holds a given lock, additional requests will always succeed, even
+     if other sessions are awaiting the lock.)  Like all locks in
+     <productname>PostgreSQL</productname>, a complete list of advisory
+     locks currently held by any session can be found in the system view
+     <structname>pg_locks</structname>.
+    </para>
+
+    <para>
+     Advisory locks are allocated out of a shared memory pool whose size
+     is defined by the configuration variables
+     <xref linkend="guc-max-locks-per-transaction"> and
+     <xref linkend="guc-max-connections">.
+     Care must be taken not to exhaust this
+     memory or the server will not be able to grant any locks at all.
+     This imposes an upper limit on the number of advisory locks
+     grantable by the server, typically in the tens to hundreds of thousands
+     depending on how the server is configured.
+    </para>
+
+    <para>
+     A common use of advisory locks is to emulate pessimistic locking
+     strategies typical of so called <quote>flat file</> data management
+     systems.
+     While a flag stored in a table could be used for the same purpose,
+     advisory locks are faster, avoid MVCC bloat, and are automatically
+     cleaned up by the server at the end of the session.
+     In certain cases using this method, especially in queries
+     involving explicit ordering and <literal>LIMIT</> clauses, care must be
+     taken to control the locks acquired because of the order in which SQL
+     expressions are evaluated.  For example:
+<screen>
+SELECT pg_advisory_lock(id) FROM foo WHERE id = 12345; -- ok
+SELECT pg_advisory_lock(id) FROM foo WHERE id &gt; 12345 LIMIT 100; -- danger!
+SELECT pg_advisory_lock(q.id) FROM
+(
+  SELECT id FROM foo WHERE id &gt; 12345 LIMIT 100;
+) q; -- ok
+</screen>
+     In the above queries, the second form is dangerous because the
+     <literal>LIMIT</> is not guaranteed to be applied before the locking
+     function is executed.  This might cause some locks to be acquired
+     that the application was not expecting, and hence would fail to release
+     (until it ends the session).
+     From the point of view of the application, such locks
+     would be dangling, although still viewable in
+     <structname>pg_locks</structname>.
+    </para>
+
+    <para>
+     The functions provided to manipulate advisory locks are described in
+     <xref linkend="functions-advisory-locks">.
+    </para>
+   </sect2>
+
   </sect1>
 
   <sect1 id="applevel-consistency">
@@ -993,12 +1075,12 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
       </term>
       <listitem>
        <para>
-		Short-term share/exclusive page-level locks are used for 
-		read/write access. Locks are released immediately after each
-		index row is fetched or inserted. But note that a GIN-indexed
-		value insertion usually produces several index key insertions
-		per row, so GIN may do substantial work for a single value's
-		insertion.
+        Short-term share/exclusive page-level locks are used for
+        read/write access. Locks are released immediately after each
+        index row is fetched or inserted. But note that a GIN-indexed
+        value insertion usually produces several index key insertions
+        per row, so GIN may do substantial work for a single value's
+        insertion.
        </para>
       </listitem>
      </varlistentry>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.338 2006/09/16 00:30:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.339 2006/09/20 23:43:21 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10577,14 +10577,204 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
    </indexterm>
    <para>
     <function>pg_stat_file</> returns a record containing the file
-    size, last accessed time stamp, last modified time stamp, 
-    last file status change time stamp (Unix platforms only), 
-    file creation timestamp (Windows only), and a <type>boolean</type> indicating 
-    if it is a directory.  Typical usages include:
+    size, last accessed time stamp, last modified time stamp,
+    last file status change time stamp (Unix platforms only),
+    file creation timestamp (Windows only), and a <type>boolean</type>
+    indicating if it is a directory.  Typical usages include:
 <programlisting>
 SELECT * FROM pg_stat_file('filename');
 SELECT (pg_stat_file('filename')).modification;
 </programlisting>
+   </para>
+
+   <para>
+    The functions shown in <xref linkend="functions-advisory-locks"> manage
+    advisory locks.  For details about proper usage of these functions, see
+    <xref linkend="advisory-locks">.
+   </para>
+
+   <table id="functions-advisory-locks">
+    <title>Advisory Lock Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_lock</function>(<parameter>key</> <type>bigint</>)</literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Obtain exclusive advisory lock</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_lock</function>(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Obtain exclusive advisory lock</entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>pg_advisory_lock_shared</function>(<parameter>key</> <type>bigint</>)</literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Obtain shared advisory lock</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_lock_shared</function>(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Obtain shared advisory lock</entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>pg_try_advisory_lock</function>(<parameter>key</> <type>bigint</>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Obtain exclusive advisory lock if available</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_try_advisory_lock</function>(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Obtain exclusive advisory lock if available</entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>pg_try_advisory_lock_shared</function>(<parameter>key</> <type>bigint</>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Obtain shared advisory lock if available</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_try_advisory_lock_shared</function>(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Obtain shared advisory lock if available</entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>pg_advisory_unlock</function>(<parameter>key</> <type>bigint</>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Release an exclusive advisory lock</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_unlock</function>(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Release an exclusive advisory lock</entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>pg_advisory_unlock_shared</function>(<parameter>key</> <type>bigint</>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Release a shared advisory lock</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_advisory_unlock_shared</function>(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>Release a shared advisory lock</entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>pg_advisory_unlock_all</function>()</literal>
+       </entry>
+       <entry><type>void</type></entry>
+       <entry>Release all advisory locks held by the current session</entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_advisory_lock</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_lock</> locks an application-defined resource,
+    which may be identified either by a single 64-bit key value or two
+    32-bit key values (note that these two key spaces do not overlap).  If
+    another session already holds a lock on the same resource, the
+    function will wait until the resource becomes available.  The lock
+    is exclusive.  Multiple lock requests stack, so that if the same resource
+    is locked three times it must be also unlocked three times to be
+    released for other sessions' use.
+   </para>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_advisory_lock_shared</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_lock_shared</> works the same as
+    <function>pg_advisory_lock</>,
+    except the lock can be shared with other sessions requesting shared locks.
+    Only would-be exclusive lockers are locked out.
+   </para>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_try_advisory_lock</primary>
+   </indexterm>
+   <para>
+    <function>pg_try_advisory_lock</> is similar to
+    <function>pg_advisory_lock</>, except the function will not wait for the
+    lock to become available.  It will either obtain the lock immediately and
+    return <literal>true</>, or return <literal>false</> if the lock cannot be
+    acquired now.
+   </para>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_try_advisory_lock_shared</primary>
+   </indexterm>
+   <para>
+    <function>pg_try_advisory_lock_shared</> works the same as
+    <function>pg_try_advisory_lock</>, except it attempts to acquire
+    shared rather than exclusive lock.
+   </para>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_advisory_unlock</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_unlock</> will release a previously-acquired
+    exclusive advisory lock.  It
+    will return <literal>true</> if the lock is successfully released.
+    If the lock was in fact not held, it will return <literal>false</>,
+    and in addition, an SQL warning will be raised by the server.
+   </para>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_advisory_unlock_shared</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_unlock_shared</> works the same as
+    <function>pg_advisory_unlock</>, 
+    except to release a shared advisory lock.
+   </para>
+
+   <indexterm zone="functions-admin">
+    <primary>pg_advisory_unlock_all</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_unlock_all</> will release all advisory locks
+    held by the current session.  (This function is implicitly invoked
+    at session end, even if the client disconnects ungracefully.)
    </para>
 
   </sect1>
