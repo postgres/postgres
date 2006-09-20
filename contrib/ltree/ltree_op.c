@@ -1,13 +1,14 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.12 2006/05/30 22:12:13 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.13 2006/09/20 19:50:21 tgl Exp $
  */
 
 #include "ltree.h"
 
 #include <ctype.h>
 
+#include "catalog/pg_statistic.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
@@ -606,6 +607,7 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 		FmgrInfo	contproc;
 		double		mcvsum;
 		double		mcvsel;
+		double		nullfrac;
 
 		fmgr_info(get_opcode(operator), &contproc);
 
@@ -616,10 +618,40 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 								 &mcvsum);
 
 		/*
-		 * We have the exact selectivity for values appearing in the MCV list;
-		 * use the default selectivity for the rest of the population.
+		 * If the histogram is large enough, see what fraction of it the
+		 * constant is "<@" to, and assume that's representative of the
+		 * non-MCV population.  Otherwise use the default selectivity for
+		 * the non-MCV population.
 		 */
-		selec = mcvsel + DEFAULT_PARENT_SEL * (1.0 - mcvsum);
+		selec = histogram_selectivity(&vardata, &contproc,
+									  constval, varonleft,
+									  100, 1);
+		if (selec < 0)
+		{
+			/* Nope, fall back on default */
+			selec = DEFAULT_PARENT_SEL;
+		}
+		else
+		{
+			/* Yes, but don't believe extremely small or large estimates. */
+			if (selec < 0.0001)
+				selec = 0.0001;
+			else if (selec > 0.9999)
+				selec = 0.9999;
+		}
+
+		if (HeapTupleIsValid(vardata.statsTuple))
+			nullfrac = ((Form_pg_statistic) GETSTRUCT(vardata.statsTuple))->stanullfrac;
+		else
+			nullfrac = 0.0;
+
+		/*
+		 * Now merge the results from the MCV and histogram calculations,
+		 * realizing that the histogram covers only the non-null values that
+		 * are not listed in MCV.
+		 */
+		selec *= 1.0 - nullfrac - mcvsum;
+		selec += mcvsel;
 	}
 	else
 		selec = DEFAULT_PARENT_SEL;

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.212 2006/09/19 22:49:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.213 2006/09/20 19:50:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,7 @@ eqsel(PG_FUNCTION_ARGS)
 			{
 				/*
 				 * Constant is "=" to this common value.  We know selectivity
-				 * exactly (or as exactly as VACUUM could calculate it,
+				 * exactly (or as exactly as ANALYZE could calculate it,
 				 * anyway).
 				 */
 				selec = numbers[i];
@@ -315,7 +315,7 @@ eqsel(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * No VACUUM ANALYZE stats available, so make a guess using estimated
+		 * No ANALYZE stats available, so make a guess using estimated
 		 * number of distinct values and assuming they are equally common.
 		 * (The guess is unlikely to be very good, but we do know a few
 		 * special cases.)
@@ -446,7 +446,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 }
 
 /*
- *	mcv_selectivity				- Examine the MCV list for scalarineqsel
+ *	mcv_selectivity			- Examine the MCV list for selectivity estimates
  *
  * Determine the fraction of the variable's MCV population that satisfies
  * the predicate (VAR OP CONST), or (CONST OP VAR) if !varonleft.  Also
@@ -501,6 +501,80 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 }
 
 /*
+ *	histogram_selectivity	- Examine the histogram for selectivity estimates
+ *
+ * Determine the fraction of the variable's histogram entries that satisfy
+ * the predicate (VAR OP CONST), or (CONST OP VAR) if !varonleft.
+ *
+ * This code will work for any boolean-returning predicate operator, whether
+ * or not it has anything to do with the histogram sort operator.  We are
+ * essentially using the histogram just as a representative sample.  However,
+ * small histograms are unlikely to be all that representative, so the caller
+ * should specify a minimum histogram size to use, and fall back on some
+ * other approach if this routine fails.
+ *
+ * The caller also specifies n_skip, which causes us to ignore the first and
+ * last n_skip histogram elements, on the grounds that they are outliers and
+ * hence not very representative.  If in doubt, min_hist_size = 100 and
+ * n_skip = 1 are reasonable values.
+ *
+ * The function result is the selectivity, or -1 if there is no histogram
+ * or it's smaller than min_hist_size.
+ *
+ * Note that the result disregards both the most-common-values (if any) and
+ * null entries.  The caller is expected to combine this result with
+ * statistics for those portions of the column population.  It may also be
+ * prudent to clamp the result range, ie, disbelieve exact 0 or 1 outputs.
+ */
+double
+histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
+					  Datum constval, bool varonleft,
+					  int min_hist_size, int n_skip)
+{
+	double		result;
+	Datum	   *values;
+	int			nvalues;
+
+	/* check sanity of parameters */
+	Assert(n_skip >= 0);
+	Assert(min_hist_size > 2 * n_skip);
+
+	if (HeapTupleIsValid(vardata->statsTuple) &&
+		get_attstatsslot(vardata->statsTuple,
+						 vardata->atttype, vardata->atttypmod,
+						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
+						 &values, &nvalues,
+						 NULL, NULL))
+	{
+		if (nvalues >= min_hist_size)
+		{
+			int			nmatch = 0;
+			int			i;
+
+			for (i = n_skip; i < nvalues - n_skip; i++)
+			{
+				if (varonleft ?
+					DatumGetBool(FunctionCall2(opproc,
+											   values[i],
+											   constval)) :
+					DatumGetBool(FunctionCall2(opproc,
+											   constval,
+											   values[i])))
+					nmatch++;
+			}
+			result = ((double) nmatch) / ((double) (nvalues - 2 * n_skip));
+		}
+		else
+			result = -1;
+		free_attstatsslot(vardata->atttype, values, nvalues, NULL, 0);
+	}
+	else
+		result = -1;
+
+	return result;
+}
+
+/*
  *	ineq_histogram_selectivity	- Examine the histogram for scalarineqsel
  *
  * Determine the fraction of the variable's histogram population that
@@ -521,12 +595,11 @@ ineq_histogram_selectivity(VariableStatData *vardata,
 	double		hist_selec;
 	Datum	   *values;
 	int			nvalues;
-	int			i;
 
 	hist_selec = 0.0;
 
 	/*
-	 * Someday, VACUUM might store more than one histogram per rel/att,
+	 * Someday, ANALYZE might store more than one histogram per rel/att,
 	 * corresponding to more than one possible sort ordering defined for the
 	 * column type.  However, to make that work we will need to figure out
 	 * which staop to search for --- it's not necessarily the one we have at
@@ -544,105 +617,107 @@ ineq_histogram_selectivity(VariableStatData *vardata,
 	{
 		if (nvalues > 1)
 		{
-			double		histfrac;
-			bool		ltcmp;
+			/*
+			 * Use binary search to find proper location, ie, the first
+			 * slot at which the comparison fails.  (If the given operator
+			 * isn't actually sort-compatible with the histogram, you'll
+			 * get garbage results ... but probably not any more garbage-y
+			 * than you would from the old linear search.)
+			 */
+			double	histfrac;
+			int		lobound = 0;		/* first possible slot to search */
+			int		hibound = nvalues;	/* last+1 slot to search */
 
-			ltcmp = DatumGetBool(FunctionCall2(opproc,
-											   values[0],
-											   constval));
-			if (isgt)
-				ltcmp = !ltcmp;
-			if (!ltcmp)
+			while (lobound < hibound)
+			{
+				int		probe = (lobound + hibound) / 2;
+				bool	ltcmp;
+
+				ltcmp = DatumGetBool(FunctionCall2(opproc,
+												   values[probe],
+												   constval));
+				if (isgt)
+					ltcmp = !ltcmp;
+				if (ltcmp)
+					lobound = probe + 1;
+				else
+					hibound = probe;
+			}
+
+			if (lobound <= 0)
 			{
 				/* Constant is below lower histogram boundary. */
 				histfrac = 0.0;
 			}
+			else if (lobound >= nvalues)
+			{
+				/* Constant is above upper histogram boundary. */
+				histfrac = 1.0;
+			}
 			else
 			{
+				int			i = lobound;
+				double		val,
+							high,
+							low;
+				double		binfrac;
+
 				/*
-				 * Scan to find proper location.  This could be made faster by
-				 * using a binary-search method, but it's probably not worth
-				 * the trouble for typical histogram sizes.
+				 * We have values[i-1] < constant < values[i].
+				 *
+				 * Convert the constant and the two nearest bin boundary
+				 * values to a uniform comparison scale, and do a linear
+				 * interpolation within this bin.
 				 */
-				for (i = 1; i < nvalues; i++)
+				if (convert_to_scalar(constval, consttype, &val,
+									  values[i - 1], values[i],
+									  vardata->vartype,
+									  &low, &high))
 				{
-					ltcmp = DatumGetBool(FunctionCall2(opproc,
-													   values[i],
-													   constval));
-					if (isgt)
-						ltcmp = !ltcmp;
-					if (!ltcmp)
-						break;
-				}
-				if (i >= nvalues)
-				{
-					/* Constant is above upper histogram boundary. */
-					histfrac = 1.0;
+					if (high <= low)
+					{
+						/* cope if bin boundaries appear identical */
+						binfrac = 0.5;
+					}
+					else if (val <= low)
+						binfrac = 0.0;
+					else if (val >= high)
+						binfrac = 1.0;
+					else
+					{
+						binfrac = (val - low) / (high - low);
+
+						/*
+						 * Watch out for the possibility that we got a NaN
+						 * or Infinity from the division.  This can happen
+						 * despite the previous checks, if for example
+						 * "low" is -Infinity.
+						 */
+						if (isnan(binfrac) ||
+							binfrac < 0.0 || binfrac > 1.0)
+							binfrac = 0.5;
+					}
 				}
 				else
 				{
-					double		val,
-								high,
-								low;
-					double		binfrac;
-
 					/*
-					 * We have values[i-1] < constant < values[i].
-					 *
-					 * Convert the constant and the two nearest bin boundary
-					 * values to a uniform comparison scale, and do a linear
-					 * interpolation within this bin.
+					 * Ideally we'd produce an error here, on the grounds
+					 * that the given operator shouldn't have scalarXXsel
+					 * registered as its selectivity func unless we can
+					 * deal with its operand types.  But currently, all
+					 * manner of stuff is invoking scalarXXsel, so give a
+					 * default estimate until that can be fixed.
 					 */
-					if (convert_to_scalar(constval, consttype, &val,
-										  values[i - 1], values[i],
-										  vardata->vartype,
-										  &low, &high))
-					{
-						if (high <= low)
-						{
-							/* cope if bin boundaries appear identical */
-							binfrac = 0.5;
-						}
-						else if (val <= low)
-							binfrac = 0.0;
-						else if (val >= high)
-							binfrac = 1.0;
-						else
-						{
-							binfrac = (val - low) / (high - low);
-
-							/*
-							 * Watch out for the possibility that we got a NaN
-							 * or Infinity from the division.  This can happen
-							 * despite the previous checks, if for example
-							 * "low" is -Infinity.
-							 */
-							if (isnan(binfrac) ||
-								binfrac < 0.0 || binfrac > 1.0)
-								binfrac = 0.5;
-						}
-					}
-					else
-					{
-						/*
-						 * Ideally we'd produce an error here, on the grounds
-						 * that the given operator shouldn't have scalarXXsel
-						 * registered as its selectivity func unless we can
-						 * deal with its operand types.  But currently, all
-						 * manner of stuff is invoking scalarXXsel, so give a
-						 * default estimate until that can be fixed.
-						 */
-						binfrac = 0.5;
-					}
-
-					/*
-					 * Now, compute the overall selectivity across the values
-					 * represented by the histogram.  We have i-1 full bins
-					 * and binfrac partial bin below the constant.
-					 */
-					histfrac = (double) (i - 1) + binfrac;
-					histfrac /= (double) (nvalues - 1);
+					binfrac = 0.5;
 				}
+
+				/*
+				 * Now, compute the overall selectivity across the values
+				 * represented by the histogram.  We have i-1 full bins
+				 * and binfrac partial bin below the constant.
+				 */
+				histfrac = (double) (i - 1) + binfrac;
+				histfrac /= (double) (nvalues - 1);
 			}
 
 			/*
@@ -970,35 +1045,50 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	else
 	{
 		/*
-		 * Not exact-match pattern.  We estimate selectivity of the fixed
-		 * prefix and remainder of pattern separately, then combine the two
-		 * to get an estimate of the selectivity for the part of the column
-		 * population represented by the histogram.  We then add up data for
-		 * any most-common-values values; these are not in the histogram
-		 * population, and we can get exact answers for them by applying
-		 * the pattern operator, so there's no reason to approximate.
-		 * (If the MCVs cover a significant part of the total population,
-		 * this gives us a big leg up in accuracy.)
+		 * Not exact-match pattern.  If we have a sufficiently large
+		 * histogram, estimate selectivity for the histogram part of the
+		 * population by counting matches in the histogram.  If not, estimate
+		 * selectivity of the fixed prefix and remainder of pattern
+		 * separately, then combine the two to get an estimate of the
+		 * selectivity for the part of the column population represented by
+		 * the histogram.  We then add up data for any most-common-values
+		 * values; these are not in the histogram population, and we can get
+		 * exact answers for them by applying the pattern operator, so there's
+		 * no reason to approximate.  (If the MCVs cover a significant part of
+		 * the total population, this gives us a big leg up in accuracy.)
 		 */
-		Selectivity prefixsel;
-		Selectivity restsel;
 		Selectivity selec;
 		FmgrInfo	opproc;
 		double		nullfrac,
 					mcv_selec,
 					sumcommon;
 
-		if (HeapTupleIsValid(vardata.statsTuple))
-			nullfrac = ((Form_pg_statistic) GETSTRUCT(vardata.statsTuple))->stanullfrac;
-		else
-			nullfrac = 0.0;
+		/* Try to use the histogram entries to get selectivity */
+		fmgr_info(get_opcode(operator), &opproc);
 
-		if (pstatus == Pattern_Prefix_Partial)
-			prefixsel = prefix_selectivity(&vardata, opclass, prefix);
+		selec = histogram_selectivity(&vardata, &opproc, constval, true,
+									  100, 1);
+		if (selec < 0)
+		{
+			/* Nope, so fake it with the heuristic method */
+			Selectivity prefixsel;
+			Selectivity restsel;
+
+			if (pstatus == Pattern_Prefix_Partial)
+				prefixsel = prefix_selectivity(&vardata, opclass, prefix);
+			else
+				prefixsel = 1.0;
+			restsel = pattern_selectivity(rest, ptype);
+			selec = prefixsel * restsel;
+		}
 		else
-			prefixsel = 1.0;
-		restsel = pattern_selectivity(rest, ptype);
-		selec = prefixsel * restsel;
+		{
+			/* Yes, but don't believe extremely small or large estimates. */
+			if (selec < 0.0001)
+				selec = 0.0001;
+			else if (selec > 0.9999)
+				selec = 0.9999;
+		}
 
 		/*
 		 * If we have most-common-values info, add up the fractions of the MCV
@@ -1006,9 +1096,13 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		 * directly to the result selectivity.  Also add up the total fraction
 		 * represented by MCV entries.
 		 */
-		fmgr_info(get_opcode(operator), &opproc);
 		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
 									&sumcommon);
+
+		if (HeapTupleIsValid(vardata.statsTuple))
+			nullfrac = ((Form_pg_statistic) GETSTRUCT(vardata.statsTuple))->stanullfrac;
+		else
+			nullfrac = 0.0;
 
 		/*
 		 * Now merge the results from the MCV and histogram calculations,
@@ -1332,7 +1426,7 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
 	else
 	{
 		/*
-		 * No VACUUM ANALYZE stats available, so make a guess
+		 * No ANALYZE stats available, so make a guess
 		 */
 		switch (nulltesttype)
 		{
