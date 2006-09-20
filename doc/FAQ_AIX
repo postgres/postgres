@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2006/05/26 19:48:32 $
+$Date: 2006/09/20 02:10:11 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
@@ -397,3 +397,80 @@ Replace this with:
   hosts=local4,bind4
 
 to deactivate searching for IPv6 addresses.
+
+
+Shared Linking
+--------------
+
+Shared libraries in AIX are different from shared libraries in Linux.
+
+A shared library on AIX is an 'ar' archive containing shared objects. A
+shared object is produced by the linker when invoked appropriately (e.g.
+with -G), it is what we call a shared library on Linux.
+
+-> On AIX, you can do a static as well as a dynamic
+-> link against a shared library, it depends on how you
+-> invoke the linker.
+
+When you link statically, the shared objects from the library are added
+to your executable as required; when you link dynamically, only
+references to the shared objects are included in the executable.
+
+Consequently you do not need a separate static library on AIX if you
+have a dynamic library.
+
+However, you CAN have static libraries (ar archives containing *.o
+files), and the linker will link against them. This will of course
+always be a static link.
+
+When the AIX linker searches for libraries to link, it will look for a
+library libxy.a as well as for a single shared object libxy.so when you
+tell it to -lyx. When it finds both in the same directory, it will
+prefer libpq.a unless invoked with -brtl.
+
+This is where the problem occurs:
+
+By default, PostgreSQL will (in the Linux way) create a shared object
+libpq.so and a static library libpq.a in the same directory.
+
+Up to now, since the linker was invoked without the -brtl flag, linking
+on AIX was always static, as the linker preferred libpq.a over libpq.so.
+
+We could have solved the problem by linking with -brtl on AIX, but we
+chose to go a more AIX-conforming way so that third party programs
+linking against PostgreSQL libraries will not be fooled into linking
+statically by default.
+
+The 'new way' on AIX is:
+- Create libxy.so.n as before from the static library
+  libxy.a with the linker.
+- Remove libxy.a
+- Recreate libxy.a as a dynamic library with
+  ar -cr libxy.a libxy.so.n
+- Only install libxy.a, do not install libxy.so
+
+Since linking is dynamic on AIX now, we have a new problem:
+
+We must make sure that the executable finds its library even if the
+library is not installed in one of the standard library paths (/usr/lib
+or /lib).
+
+On Linux this is done with an RPATH, on AIX the equivalent is LIBPATH
+that can be specified at link time with -blibpath:<colon separated path>
+. If you do not specify the LIBPATH, it is automatically computed from
+the -L arguments given to the linker. The LIBPATH, when set, must
+contain ALL directories where shared libraries should be searched,
+including the standard library directories.
+
+Makefile.aix has been changed to link executables with a LIBPATH that
+contains --libdir when PostgreSQL is configured with --enable-rpath (the
+default).
+
+The AIX equivalent for the Linux environment variable LD_LIBRARY_PATH is
+LIBPATH.
+
+The regression tests rely on LD_LIBRARY_PATH and have to be changed to
+set LIBPATH as well.
+
+Laurenz Albe
+
