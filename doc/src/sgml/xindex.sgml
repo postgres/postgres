@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.49 2006/09/18 12:11:36 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.50 2006/09/21 15:03:53 teodor Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -251,7 +251,7 @@
   </para>
 
    <table tocentry="1" id="xindex-gin-array-strat-table">
-    <title>GiST Two-Dimensional <quote>R-tree</> Strategies</title>
+    <title>GIN Array's Strategies</title>
     <tgroup cols="2">
      <thead>
       <row>
