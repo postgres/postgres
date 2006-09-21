@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.150 2006/08/24 01:18:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.151 2006/09/21 20:31:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,9 @@ typedef struct
 	void	   *callback_state;
 	BTCycleId	cycleid;
 	BlockNumber *freePages;
-	int			nFreePages;
-	int			maxFreePages;
+	int			nFreePages;		/* number of entries in freePages[] */
+	int			maxFreePages;	/* allocated size of freePages[] */
+	BlockNumber	totFreePages;	/* true total # of free pages */
 	MemoryContext pagedelcontext;
 } BTVacState;
 
@@ -636,6 +637,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	vstate.freePages = NULL;	/* temporarily */
 	vstate.nFreePages = 0;
 	vstate.maxFreePages = 0;
+	vstate.totFreePages = 0;
 
 	/* Create a temporary memory context to run _bt_pagedel in */
 	vstate.pagedelcontext = AllocSetContextCreate(CurrentMemoryContext,
@@ -716,6 +718,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			new_pages--;
 			stats->pages_deleted--;
 			vstate.nFreePages--;
+			vstate.totFreePages = vstate.nFreePages;	/* can't be more */
 		}
 		if (new_pages != num_pages)
 		{
@@ -736,7 +739,8 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * pages in the index, discarding any old info the map may have. We do not
 	 * need to sort the page numbers; they're in order already.
 	 */
-	RecordIndexFreeSpace(&rel->rd_node, vstate.nFreePages, vstate.freePages);
+	RecordIndexFreeSpace(&rel->rd_node, vstate.totFreePages,
+						 vstate.nFreePages, vstate.freePages);
 
 	pfree(vstate.freePages);
 
@@ -744,7 +748,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 	/* update statistics */
 	stats->num_pages = num_pages;
-	stats->pages_free = vstate.nFreePages;
+	stats->pages_free = vstate.totFreePages;
 }
 
 /*
@@ -816,6 +820,7 @@ restart:
 		/* Okay to recycle this page */
 		if (vstate->nFreePages < vstate->maxFreePages)
 			vstate->freePages[vstate->nFreePages++] = blkno;
+		vstate->totFreePages++;
 		stats->pages_deleted++;
 	}
 	else if (P_ISDELETED(opaque))
@@ -954,6 +959,7 @@ restart:
 		{
 			if (vstate->nFreePages < vstate->maxFreePages)
 				vstate->freePages[vstate->nFreePages++] = blkno;
+			vstate->totFreePages++;
 		}
 
 		MemoryContextSwitchTo(oldcontext);

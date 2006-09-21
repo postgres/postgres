@@ -36,19 +36,19 @@ Notes
 
    pg_freespacemap_relations
 
-       Column     |  references          | Description
-  ----------------+----------------------+------------------------------------
-   reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
-   reldatabase    | pg_database.oid      | Database oid of the relation.
-   relfilenode    | pg_class.relfilenode | Relfilenode of the relation.
-   avgrequest     |                      | Moving average of free space 
-                  |                      | requests (NULL for indexes)
-   lastpagecount  |                      | Count of pages last reported as
-                  |                      | containing useful free space.
-   storedpages    |                      | Count of pages actually stored
-                  |                      | in free space map.
-   nextpage       |                      | Page index (from 0) to start next 
-                  |                      | search at.
+       Column       |  references          | Description
+  ------------------+----------------------+----------------------------------
+   reltablespace    | pg_tablespace.oid    | Tablespace oid of the relation.
+   reldatabase      | pg_database.oid      | Database oid of the relation.
+   relfilenode      | pg_class.relfilenode | Relfilenode of the relation.
+   avgrequest       |                      | Moving average of free space 
+                    |                      | requests (NULL for indexes)
+   interestingpages |                      | Count of pages last reported as
+                    |                      | containing useful free space.
+   storedpages      |                      | Count of pages actually stored
+                    |                      | in free space map.
+   nextpage         |                      | Page index (from 0) to start next 
+                    |                      | search at.
 
 
    pg_freespacemap_pages
@@ -65,11 +65,11 @@ Notes
 
   For pg_freespacemap_relations, there is one row for each relation in the free
   space map.  storedpages is the number of pages actually stored in the map,
-  while lastpagecount is the number of pages VACUUM last tried to store
-  (ie, the number that VACUUM thought had useful amounts of free space).
+  while interestingpages is the number of pages the last VACUUM thought had
+  useful amounts of free space.
 
-  If storedpages is consistently less than lastpagecount then it'd be a good
-  idea to increase max_fsm_pages.  Also, if the number of rows in
+  If storedpages is consistently less than interestingpages then it'd be a
+  good idea to increase max_fsm_pages.  Also, if the number of rows in
   pg_freespacemap_relations is close to max_fsm_relations, then you should
   consider increasing max_fsm_relations.
 
@@ -96,36 +96,36 @@ Sample output - pg_freespacemap_relations
 
 regression=# \d pg_freespacemap_relations
 View "public.pg_freespacemap_relations"
-    Column     |  Type   | Modifiers
----------------+---------+-----------
- reltablespace | oid     |
- reldatabase   | oid     |
- relfilenode   | oid     |
- avgrequest    | integer |
- lastpagecount | integer |
- storedpages   | integer |
- nextpage      | integer |
+    Column        |  Type   | Modifiers
+------------------+---------+-----------
+ reltablespace    | oid     |
+ reldatabase      | oid     |
+ relfilenode      | oid     |
+ avgrequest       | integer |
+ interestingpages | integer |
+ storedpages      | integer |
+ nextpage         | integer |
 View definition:
- SELECT p.reltablespace, p.reldatabase, p.relfilenode, p.avgrequest, p.lastpagecount, p.storedpages, p.nextpage
-   FROM pg_freespacemap_relations() p(reltablespace oid, reldatabase oid, relfilenode oid, avgrequest integer, lastpagecount integer, storedpages integer, nextpage integer);
+ SELECT p.reltablespace, p.reldatabase, p.relfilenode, p.avgrequest, p.interestingpages, p.storedpages, p.nextpage
+   FROM pg_freespacemap_relations() p(reltablespace oid, reldatabase oid, relfilenode oid, avgrequest integer, interestingpages integer, storedpages integer, nextpage integer);
 
-regression=# SELECT c.relname, r.avgrequest, r.lastpagecount, r.storedpages
+regression=# SELECT c.relname, r.avgrequest, r.interestingpages, r.storedpages
              FROM pg_freespacemap_relations r INNER JOIN pg_class c
              ON c.relfilenode = r.relfilenode INNER JOIN pg_database d
              ON r.reldatabase = d.oid AND (d.datname = current_database()) 
              ORDER BY r.storedpages DESC LIMIT 10;
-             relname             | avgrequest | lastpagecount | storedpages
----------------------------------+------------+---------------+-------------
- onek                            |        256 |           109 |         109
- pg_attribute                    |        167 |            93 |          93
- pg_class                        |        191 |            49 |          49
- pg_attribute_relid_attnam_index |            |            48 |          48
- onek2                           |        256 |            37 |          37
- pg_depend                       |         95 |            26 |          26
- pg_type                         |        199 |            16 |          16
- pg_rewrite                      |       1011 |            13 |          13
- pg_class_relname_nsp_index      |            |            10 |          10
- pg_proc                         |        302 |             8 |           8
+             relname             | avgrequest | interestingpages | storedpages
+---------------------------------+------------+------------------+-------------
+ onek                            |        256 |              109 |         109
+ pg_attribute                    |        167 |               93 |          93
+ pg_class                        |        191 |               49 |          49
+ pg_attribute_relid_attnam_index |            |               48 |          48
+ onek2                           |        256 |               37 |          37
+ pg_depend                       |         95 |               26 |          26
+ pg_type                         |        199 |               16 |          16
+ pg_rewrite                      |       1011 |               13 |          13
+ pg_class_relname_nsp_index      |            |               10 |          10
+ pg_proc                         |        302 |                8 |           8
 (10 rows)
 
 

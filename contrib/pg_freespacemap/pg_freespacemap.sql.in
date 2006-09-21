@@ -30,7 +30,7 @@ CREATE VIEW pg_freespacemap_relations AS
 	 reldatabase oid,
 	 relfilenode oid,
 	 avgrequest integer,
-	 lastpagecount integer,
+	 interestingpages integer,
 	 storedpages integer,
 	 nextpage integer);
 

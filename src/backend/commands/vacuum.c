@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.339 2006/09/17 22:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.340 2006/09/21 20:31:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3314,7 +3314,7 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 		}
 	}
 
-	RecordRelationFreeSpace(&onerel->rd_node, outPages, pageSpaces);
+	RecordRelationFreeSpace(&onerel->rd_node, outPages, outPages, pageSpaces);
 
 	pfree(pageSpaces);
 }

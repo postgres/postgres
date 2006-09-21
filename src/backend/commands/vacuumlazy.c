@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.78 2006/09/13 17:47:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.79 2006/09/21 20:31:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@ typedef struct LVRelStats
 	int			num_free_pages; /* current # of entries */
 	int			max_free_pages; /* # slots allocated in array */
 	PageFreeSpaceInfo *free_pages;		/* array or heap of blkno/avail */
+	BlockNumber	tot_free_pages;	/* total pages with >= threshold space */
 } LVRelStats;
 
 
@@ -523,12 +524,21 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					tups_vacuumed, num_tuples, nblocks),
 			 errdetail("%.0f dead row versions cannot be removed yet.\n"
 					   "There were %.0f unused item pointers.\n"
+					   "%u pages contain useful free space.\n"
 					   "%u pages are entirely empty.\n"
 					   "%s.",
 					   nkeep,
 					   nunused,
+					   vacrelstats->tot_free_pages,
 					   empty_pages,
 					   pg_rusage_show(&ru0))));
+
+	if (vacrelstats->tot_free_pages > MaxFSMPages)
+		ereport(WARNING,
+				(errmsg("relation \"%s.%s\" contains more than \"max_fsm_pages\" pages with useful free space",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						relname),
+				 errhint("Consider compacting this relation or increasing the configuration parameter \"max_fsm_pages\".")));
 }
 
 
@@ -793,6 +803,14 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats,
 		}
 	}
 	vacrelstats->num_free_pages = j;
+	/*
+	 * If tot_free_pages was more than num_free_pages, we can't tell for sure
+	 * what its correct value is now, because we don't know which of the
+	 * forgotten pages are getting truncated.  Conservatively set it equal
+	 * to num_free_pages.
+	 */
+	vacrelstats->tot_free_pages = j;
+
 	/* We destroyed the heap ordering, so mark array unordered */
 	vacrelstats->fs_is_heap = false;
 
@@ -960,6 +978,7 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 	vacrelstats->max_free_pages = maxpages;
 	vacrelstats->free_pages = (PageFreeSpaceInfo *)
 		palloc(maxpages * sizeof(PageFreeSpaceInfo));
+	vacrelstats->tot_free_pages = 0;
 }
 
 /*
@@ -1008,6 +1027,9 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 	 */
 	if (avail < vacrelstats->threshold)
 		return;
+
+	/* Count all pages over threshold, even if not enough space in array */
+	vacrelstats->tot_free_pages++;
 
 	/* Copy pointers to local variables for notational simplicity */
 	pageSpaces = vacrelstats->free_pages;
@@ -1138,7 +1160,8 @@ lazy_update_fsm(Relation onerel, LVRelStats *vacrelstats)
 		qsort(pageSpaces, nPages, sizeof(PageFreeSpaceInfo),
 			  vac_cmp_page_spaces);
 
-	RecordRelationFreeSpace(&onerel->rd_node, nPages, pageSpaces);
+	RecordRelationFreeSpace(&onerel->rd_node, vacrelstats->tot_free_pages,
+							nPages, pageSpaces);
 }
 
 /*

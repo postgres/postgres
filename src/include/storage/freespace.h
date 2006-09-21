@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/freespace.h,v 1.21 2006/07/13 16:49:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/freespace.h,v 1.22 2006/09/21 20:31:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ struct FSMRelation
 	FSMRelation *priorPhysical; /* prior rel in arena-storage order */
 	bool		isIndex;		/* if true, we store only page numbers */
 	Size		avgRequest;		/* moving average of space requests */
-	int			lastPageCount;	/* pages passed to RecordRelationFreeSpace */
+	BlockNumber	interestingPages;	/* # of pages with useful free space */
 	int			firstChunk;		/* chunk # of my first chunk in arena */
 	int			storedPages;	/* # of pages stored in arena */
 	int			nextPage;		/* index (from 0) to start next search at */
@@ -133,6 +133,7 @@ extern int	MaxFSMPages;
  */
 extern void InitFreeSpaceMap(void);
 extern Size FreeSpaceShmemSize(void);
+extern FSMHeader *GetFreeSpaceMap(void);
 
 extern BlockNumber GetPageWithFreeSpace(RelFileNode *rel, Size spaceNeeded);
 extern BlockNumber RecordAndGetPageWithFreeSpace(RelFileNode *rel,
@@ -141,13 +142,15 @@ extern BlockNumber RecordAndGetPageWithFreeSpace(RelFileNode *rel,
 							  Size spaceNeeded);
 extern Size GetAvgFSMRequestSize(RelFileNode *rel);
 extern void RecordRelationFreeSpace(RelFileNode *rel,
-						int nPages,
-						PageFreeSpaceInfo *pageSpaces);
+									BlockNumber interestingPages,
+									int nPages,
+									PageFreeSpaceInfo *pageSpaces);
 
 extern BlockNumber GetFreeIndexPage(RelFileNode *rel);
 extern void RecordIndexFreeSpace(RelFileNode *rel,
-					 int nPages,
-					 BlockNumber *pages);
+								 BlockNumber interestingPages,
+								 int nPages,
+								 BlockNumber *pages);
 
 extern void FreeSpaceMapTruncateRel(RelFileNode *rel, BlockNumber nblocks);
 extern void FreeSpaceMapForgetRel(RelFileNode *rel);
@@ -157,7 +160,6 @@ extern void PrintFreeSpaceMapStatistics(int elevel);
 
 extern void DumpFreeSpaceMap(int code, Datum arg);
 extern void LoadFreeSpaceMap(void);
-extern FSMHeader *GetFreeSpaceMap(void);
 
 #ifdef FREESPACE_DEBUG
 extern void DumpFreeSpace(void);

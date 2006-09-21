@@ -3,7 +3,7 @@
  * pg_freespacemap.c
  *	  display some contents of the free space relation and page maps.
  *
- *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.6 2006/05/30 22:12:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.7 2006/09/21 20:31:21 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -53,7 +53,7 @@ typedef struct
 	Oid				reldatabase;
 	Oid				relfilenode;
 	Size			avgrequest;
-	int				lastpagecount;
+	BlockNumber		interestingpages;
 	int				storedpages;
 	int				nextpage;
 	bool			isindex;
@@ -303,7 +303,7 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 4, "avgrequest",
 						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "lastpagecount",
+		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "interestingpages",
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "storedpages",
 						   INT4OID, -1, 0);
@@ -334,7 +334,7 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 			fctx->record[i].reldatabase = fsmrel->key.dbNode;
 			fctx->record[i].relfilenode = fsmrel->key.relNode;
 			fctx->record[i].avgrequest = (int64)fsmrel->avgRequest;
-			fctx->record[i].lastpagecount = fsmrel->lastPageCount;
+			fctx->record[i].interestingpages = fsmrel->interestingPages;
 			fctx->record[i].storedpages = fsmrel->storedPages;
 			fctx->record[i].nextpage = fsmrel->nextPage;
 			fctx->record[i].isindex = fsmrel->isIndex;
@@ -380,7 +380,7 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 			values[3] = UInt32GetDatum(record->avgrequest);
 			nulls[3] = false;
 		}
-		values[4] = Int32GetDatum(record->lastpagecount);
+		values[4] = Int32GetDatum(record->interestingpages);
 		nulls[4] = false;
 		values[5] = Int32GetDatum(record->storedpages);
 		nulls[5] = false;

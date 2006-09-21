@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.26 2006/07/31 20:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.27 2006/09/21 20:31:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,7 +491,8 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	Relation	rel = info->index;
 	BlockNumber npages,
 				blkno;
-	BlockNumber nFreePages,
+	BlockNumber totFreePages,
+				nFreePages,
 			   *freePages,
 				maxFreePages;
 	BlockNumber lastBlock = GIST_ROOT_BLKNO,
@@ -563,8 +564,9 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 	if (maxFreePages > MaxFSMPages)
 		maxFreePages = MaxFSMPages;
 
-	nFreePages = 0;
+	totFreePages = nFreePages = 0;
 	freePages = (BlockNumber *) palloc(sizeof(BlockNumber) * maxFreePages);
+
 	for (blkno = GIST_ROOT_BLKNO + 1; blkno < npages; blkno++)
 	{
 		Buffer		buffer;
@@ -579,10 +581,8 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		if (PageIsNew(page) || GistPageIsDeleted(page))
 		{
 			if (nFreePages < maxFreePages)
-			{
-				freePages[nFreePages] = blkno;
-				nFreePages++;
-			}
+				freePages[nFreePages++] = blkno;
+			totFreePages++;
 		}
 		else
 			lastFilledBlock = blkno;
@@ -597,7 +597,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		for (i = 0; i < nFreePages; i++)
 			if (freePages[i] >= lastFilledBlock)
 			{
-				nFreePages = i;
+				totFreePages = nFreePages = i;
 				break;
 			}
 
@@ -606,11 +606,11 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		stats->std.pages_removed = lastBlock - lastFilledBlock;
 	}
 
-	RecordIndexFreeSpace(&rel->rd_node, nFreePages, freePages);
+	RecordIndexFreeSpace(&rel->rd_node, totFreePages, nFreePages, freePages);
 	pfree(freePages);
 
 	/* return statistics */
-	stats->std.pages_free = nFreePages;
+	stats->std.pages_free = totFreePages;
 	if (needLock)
 		LockRelationForExtension(rel, ExclusiveLock);
 	stats->std.num_pages = RelationGetNumberOfBlocks(rel);
