@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.74 2006/09/16 00:30:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.75 2006/09/21 09:10:27 meskes Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -384,7 +384,11 @@ EXEC SQL SET CONNECTION <replaceable>connection-name</replaceable>;
    not really useful in real applications.  This section explains in
    detail how you can pass data between your C program and the
    embedded SQL statements using a simple mechanism called
-   <firstterm>host variables</firstterm>.
+   <firstterm>host variables</firstterm>. In an embedded SQL program  we
+   consider the SQL statements to be <firstterm>guests</firstterm> in the C
+   program code which is the <firstterm>host language</firstterm>. Therefore
+   the variables of the C program are called <firstterm>host
+   variables</firstterm>.
   </para>
 
   <sect2>
@@ -408,9 +412,7 @@ EXEC SQL INSERT INTO sometable VALUES (:v1, 'foo', :v2);
 
    <para>
     This style of inserting C variables in SQL statements works
-    anywhere a value expression is expected in an SQL statement.  In
-    the SQL environment we call the references to C variables
-    <firstterm>host variables</firstterm>.
+    anywhere a value expression is expected in an SQL statement.
    </para>
   </sect2>
 
@@ -437,8 +439,16 @@ EXEC SQL END DECLARE SECTION;
     Between those lines, there must be normal C variable declarations,
     such as
 <programlisting>
-int   x;
+int   x = 4;
 char  foo[16], bar[16];
+</programlisting>
+    As you can see, you can optionally assign an initial value to the variable.
+    The variable's scope is determined by the location of its declaring
+    section within the program.
+    You can also declare variables with the following syntax which implicitly
+    creates a declare section:
+<programlisting>
+EXEC SQL int i = 4;
 </programlisting>
     You can have as many declare sections in a program as you like.
    </para>
@@ -455,20 +465,104 @@ char  foo[16], bar[16];
     a <literal>DECLARE</> section. Otherwise the preprocessor cannot
     handle these types since it does not know the definition.
    </para>
+  </sect2>
+
+  <sect2>
+   <title>Different types of host variables</title>
+   <para>
+    As a host variable you can also use arrays, typedefs, structs and
+    pointers. Moreover there are special types of host variables that exist
+    only in ecpg.
+   </para>
 
    <para>
-    The special type <type>VARCHAR</type> 
-    is converted into a named <type>struct</> for every variable. A
-    declaration like
+    A few examples on host variables:
+    <variablelist>
+     <varlistentry>
+      <term>Arrays</term>
+      <listitem>
+      <para>
+       One of the most common uses of an array declaration is probably the
+       allocation of a char array as in
+<programlisting>
+EXEC SQL BEGIN DECLARE SECTION;
+    char str[50];
+EXEC SQL END DECLARE SECTION;
+</programlisting>
+       Note that you have to take care of the length for yourself. If you use
+       this host variable as the target variable of a query which returns a
+       string with more than 49 characters, a buffer overflow occurs.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Typedefs</term>
+      <listitem>
+      <para>
+      Use the <literal>typedef</literal> keyword to map new types to already
+      existing types.
+<programlisting>
+EXEC SQL BEGIN DECLARE SECTION;
+    typedef char mychartype[40];
+    typedef long serial_t;
+EXEC SQL END DECLARE SECTION;
+</programlisting>
+       Note that you could also use
+<programlisting>
+EXEC SQL TYPE serial_t IS long;
+</programlisting>
+       This declaration does not need to be part of a declare section.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Pointers</term>
+      <listitem>
+      <para>
+       You can declare pointers to the most common types. Note however that
+       you can not use pointers as target variables of queries without
+       auto-allocation. See <xref linkend="ecpg-descriptors"> for more
+       information on auto-allocation.
+      </para>
+<programlisting>
+EXEC SQL BEGIN DECLARE SECTION;
+    int   *intp;
+    char **charp;
+EXEC SQL END DECLARE SECTION;
+</programlisting>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Special types of variables</term>
+      <listitem>
+       <para>
+        ecpg contains some special types that help you to interact easily with
+        data from the SQL server. For example it has implemented support for
+        the varchar, numeric, date, timestamp and interval types.
+        <xref linkend="ecpg-pgtypes"> contains basic functions to deal with
+        those types, such that you do not need to send a query to the SQL
+        server just for adding an interval to a timestamp for example.
+       </para>
+       <para>
+        The special type <type>VARCHAR</type> 
+        is converted into a named <type>struct</> for every variable. A
+        declaration like
 <programlisting>
 VARCHAR var[180];
 </programlisting>
-    is converted into
+         is converted into
 <programlisting>
 struct varchar_var { int len; char arr[180]; } var;
 </programlisting>
-    This structure is suitable for interfacing with SQL datums of type
-    <type>varchar</type>.
+        This structure is suitable for interfacing with SQL datums of type
+        <type>varchar</type>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
   </sect2>
 
@@ -646,6 +740,2925 @@ EXEC SQL EXECUTE mystmt INTO v1, v2, v3 USING 37;
 EXEC SQL DEALLOCATE PREPARE <replaceable>name</replaceable>;
 </programlisting>
   </para>
+ </sect1>
+
+
+ <sect1 id="ecpg-pgtypes">
+  <title>pgtypes library</title>
+
+  <para>
+   The pgtypes library maps <productname>PostgreSQL</productname> database
+   types to C equivalents that can be used in C programs. It also offers
+   functions to do basic calculations with those types within C, i.e. without
+   the help of the <productname>PostgreSQL</productname> server. See the
+   following example:
+<programlisting>
+EXEC SQL BEGIN DECLARE SECTION;
+   date date1;
+   timestamp ts1, tsout;
+   interval iv1;
+   char *out;
+EXEC SQL END DECLARE SECTION;
+
+PGTYPESdate_today(&amp;date1);
+EXEC SQL SELECT started, duration INTO :ts1, :iv1 FROM datetbl WHERE d=:date1;
+PGTYPEStimestamp_add_interval(&amp;ts1, &amp;iv1, &amp;tsout);
+out = PGTYPEStimestamp_to_asc(&amp;tsout);
+printf("Started + duration: %s\n", out);
+free(out);
+</programlisting>
+  </para>
+
+  <sect2>
+   <title>The numeric type</title>
+   <para>
+    The numeric type offers to do calculations with arbitrary precision. See
+    <xref linkend="datatype-numeric"> for the equivalent type in the
+    <productname>PostgreSQL</> server. Because of the arbitrary precision this
+    variable needs to be able to expand and shrink dynamically. That's why you
+    can only create variables on the heap by means of the
+    <function>PGTYPESnumeric_new</> and <function>PGTYPESnumeric_free</>
+    functions. The decimal type, which is similar but limited in the precision,
+    can be created on the stack as well as on the heap.
+   </para>
+   <para>
+   The following functions can be used to work with the numeric type:
+   <variablelist>
+    <varlistentry>
+     <term><function>PGTYPESnumeric_new</function></term>
+     <listitem>
+      <para>
+      Request a pointer to a newly allocated numeric variable.
+<synopsis>
+numeric *PGTYPESnumeric_new(void);
+</synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_free</function></term>
+     <listitem>
+      <para>
+      Free a numeric type, release all of its memory.
+<synopsis>
+void PGTYPESnumeric_free(numeric *var);
+</synopsis>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_from_asc</function></term>
+     <listitem>
+      <para>
+       Parse a numeric type from its string notation.
+<synopsis>
+numeric *PGTYPESnumeric_from_asc(char *str, char **endptr);
+</synopsis>
+       Valid formats are for example:
+        <literal>-2</literal>,
+        <literal>.794</literal>,
+        <literal>+3.44</literal>,
+        <literal>592.49E07</literal> or
+        <literal>-32.84e-4</literal>.
+       If the value could be parsed successfully, a valid pointer is returned,
+       else the NULL pointer. At the moment ecpg always parses the complete
+       string and so it currently does not support to store the address of the
+       first invalid character in <literal>*endptr</literal>. You can safely
+       set <literal>endptr</literal> to NULL.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_to_asc</function></term>
+     <listitem>
+      <para>
+       Returns a pointer to a malloced string that contains the string
+       representation of the numeric type <literal>num</literal>.
+<synopsis>
+char *PGTYPESnumeric_to_asc(numeric *num, int dscale);
+</synopsis>
+       The numeric value will be printed with <literal>dscale</literal> decimal
+       digits, with rounding applied if necessary.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_add</function></term>
+     <listitem>
+      <para>
+       Add two numeric variables into a third one.
+<synopsis>
+int PGTYPESnumeric_add(numeric *var1, numeric *var2, numeric *result);
+</synopsis>
+       The function adds the variables <literal>var1</literal> and
+       <literal>var2</literal> into the result variable
+       <literal>result</literal>.
+       The function returns 0 on success and -1 in case of error.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_sub</function></term>
+     <listitem>
+      <para>
+       Subtract two numeric variables and return the result in a third one.
+<synopsis>
+int PGTYPESnumeric_sub(numeric *var1, numeric *var2, numeric *result);
+</synopsis>
+       The function subtracts the variable <literal>var2</literal> from
+       the variable <literal>var1</literal>. The result of the operation is
+       stored in the variable <literal>result</literal>.
+       The function returns 0 on success and -1 in case of error.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_mul</function></term>
+     <listitem>
+      <para>
+       Multiply two numeric variables and return the result in a third one.
+<synopsis>
+int PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result);
+</synopsis>
+       The function multiplies the variables <literal>var1</literal> and
+       <literal>var2</literal>. The result of the operation is stored in the
+       variable <literal>result</literal>.
+       The function returns 0 on success and -1 in case of error.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_div</function></term>
+     <listitem>
+      <para>
+       Divide two numeric variables and return the result in a third one.
+<synopsis>
+int PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result);
+</synopsis>
+       The function divides the variables <literal>var1</literal> by
+       <literal>var2</literal>. The result of the operation is stored in the
+       variable <literal>result</literal>.
+       The function returns 0 on success and -1 in case of error.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_cmp</function></term>
+     <listitem>
+      <para>
+       Compare two numeric variables.
+<synopsis>
+int PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
+</synopsis>
+       This function compares two numeric variables. In case of error,
+       <literal>INT_MAX</literal> is returned. On success, the function
+       returns one of three possible results:
+       <itemizedlist>
+        <listitem>
+         <para>
+          1, if <literal>var1</> is bigger than <literal>var2</>
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          -1, if <literal>var1</> is smaller than <literal>var2</>
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          0, if <literal>var1</> and <literal>var2</> are equal
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_from_int</function></term>
+     <listitem>
+      <para>
+       Convert an int variable to a numeric variable.
+<synopsis>
+int PGTYPESnumeric_from_int(signed int int_val, numeric *var);
+</synopsis>
+       This function accepts a variable of type signed int and stores it
+       in the numeric variable <literal>var</>. Upon success, 0 is returned and
+       -1 in case of a failure.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_from_long</function></term>
+     <listitem>
+      <para>
+       Convert a long int variable to a numeric variable.
+<synopsis>
+int PGTYPESnumeric_from_long(signed long int long_val, numeric *var);
+</synopsis>
+       This function accepts a variable of type signed long int and stores it
+       in the numeric variable <literal>var</>. Upon success, 0 is returned and
+       -1 in case of a failure.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_copy</function></term>
+     <listitem>
+      <para>
+       Copy over one numeric variable into another one.
+<synopsis>
+int PGTYPESnumeric_copy(numeric *src, numeric *dst);
+</synopsis>
+       This function copies over the value of the variable that
+       <literal>src</literal> points to into the variable that <literal>dst</>
+       points to. It returns 0 on success and -1 if an error occurs.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_from_double</function></term>
+     <listitem>
+      <para>
+       Convert a variable of type double to a numeric.
+<synopsis>
+int  PGTYPESnumeric_from_double(double d, numeric *dst);
+</synopsis>
+       This function accepts a variable of type double and stores the result
+       in the variable that <literal>dst</> points to. It returns 0 on success
+       and -1 if an error occurs.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_to_double</function></term>
+     <listitem>
+      <para>
+       Convert a variable of type numeric to double.
+<synopsis>
+int PGTYPESnumeric_to_double(numeric *nv, double *dp)
+</synopsis>
+       The function converts the numeric value from the variable that
+       <literal>nv</> points to into the double variable that <literal>dp</> points
+       to. It retuns 0 on success and -1 if an error occurs, including
+       overflow. On overflow, the global variable <literal>errno</> will be set
+       to <literal>PGTYPES_NUM_OVERFLOW</> additionally.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_to_int</function></term>
+     <listitem>
+      <para>
+       Convert a variable of type numeric to int.
+<synopsis>
+int PGTYPESnumeric_to_int(numeric *nv, int *ip);
+</synopsis>
+       The function converts the numeric value from the variable that
+       <literal>nv</> points to into the integer variable that <literal>ip</>
+       points to. It retuns 0 on success and -1 if an error occurs, including
+       overflow. On overflow, the global variable <literal>errno</> will be set
+       to <literal>PGTYPES_NUM_OVERFLOW</> additionally.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_to_long</function></term>
+     <listitem>
+      <para>
+       Convert a variable of type numeric to long.
+<synopsis>
+int PGTYPESnumeric_to_long(numeric *nv, long *lp);
+</synopsis>
+       The function converts the numeric value from the variable that
+       <literal>nv</> points to into the long integer variable that
+       <literal>lp</> points to. It retuns 0 on success and -1 if an error
+       occurs, including overflow. On overflow, the global variable
+       <literal>errno</> will be set to <literal>PGTYPES_NUM_OVERFLOW</>
+       additionally.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_to_decimal</function></term>
+     <listitem>
+      <para>
+       Convert a variable of type numeric to decimal.
+<synopsis>
+int PGTYPESnumeric_to_decimal(numeric *src, decimal *dst);
+</synopsis>
+       The function converts the numeric value from the variable that
+       <literal>src</> points to into the decimal variable that
+       <literal>dst</> points to. It retuns 0 on success and -1 if an error
+       occurs, including overflow. On overflow, the global variable
+       <literal>errno</> will be set to <literal>PGTYPES_NUM_OVERFLOW</>
+       additionally.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PGTYPESnumeric_from_decimal</function></term>
+     <listitem>
+      <para>
+       Convert a variable of type decimal to numeric.
+<synopsis>
+int PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);
+</synopsis>
+       The function converts the decimal value from the variable that
+       <literal>src</> points to into the numeric variable that
+       <literal>dst</> points to. It retuns 0 on success and -1 if an error
+       occurs. Since the decimal type is implemented as a limited version of
+       the numeric type, overflow can not occur with this conversion.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>The date type</title>
+   <para>
+    The date type in C enables your programs to deal with data of the SQL type
+    date. See <xref linkend="datatype-datetime"> for the equivalent type in the
+    <productname>PostgreSQL</> server.
+   </para>
+   <para>
+    The following functions can be used to work with the date type:
+    <variablelist>
+     <varlistentry id="PGTYPESdatefromtimestamp">
+      <term><function>PGTYPESdate_from_timestamp</function></term>
+      <listitem>
+       <para>
+        Extract the date part from a timestamp.
+<synopsis>
+date PGTYPESdate_from_timestamp(timestamp dt);
+</synopsis>
+	The function receives a timestamp as its only argument and returns the
+	extracted date part from this timestamp.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESdatefromasc">
+      <term><function>PGTYPESdate_from_asc</function></term>
+      <listitem>
+       <para>
+       Parse a date from its textual representation.
+<synopsis>
+date PGTYPESdate_from_asc(char *str, char **endptr);
+</synopsis>
+	The function receives a C char* string <literal>str</> and a pointer to
+	a C char* string <literal>endptr</>. At the moment ecpg always parses
+	the complete string and so it currently does not support to store the
+	address of the first invalid character in <literal>*endptr</literal>.
+	You can safely set <literal>endptr</literal> to NULL.
+       </para>
+       <para>
+	Note that the function always assumes MDY-formatted dates and there is
+	currently no variable to change that within ecpg.
+       </para>
+       <para>
+        The following input formats are allowed:
+        <table>
+	 <title>Valid input formats for <function>PGTYPESdate_from_asc</function>.
+	 <tgroup cols="2">
+	  <thead>
+	   <row>
+	    <entry>Input</entry>
+	    <entry>Result</entry>
+	   </row>
+	  </thead>
+	  <tbody>
+	   <row>
+	    <entry><literal>January 8, 1999</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>1999-01-08</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>1/8/1999</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>1/18/1999</literal></entry>
+	    <entry><literal>January 18, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>01/02/03</literal></entry>
+	    <entry><literal>February 1, 2003</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>1999-Jan-08</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>Jan-08-1999</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>08-Jan-1999</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>99-Jan-08</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>08-Jan-99</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>08-Jan-06</literal></entry>
+	    <entry><literal>January 8, 2006</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>Jan-08-99</literal></entry>
+	    <entry><literal>January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>19990108</literal></entry>
+	    <entry><literal>ISO 8601; January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>990108</literal></entry>
+	    <entry><literal>ISO 8601; January 8, 1999</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>1999.008</literal></entry>
+	    <entry><literal>year and day of year</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>J2451187</literal></entry>
+	    <entry><literal>Julian day</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>January 8, 99 BC</literal></entry>
+	    <entry><literal>year 99 before the Common Era</literal></entry>
+	   </row>
+          </tbody>
+         </tgroup>
+        </table>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESdatetoasc">
+      <term><function>PGTYPESdate_to_asc</function></term>
+      <listitem>
+       <para>
+        Return the textual representation of a date variable.
+<synopsis>
+char *PGTYPESdate_to_asc(date dDate);
+</synopsis>
+	The function receives the date <literal>dDate</> as its only parameter.
+	It will output the date in the form <literal>1999-01-18</>, i.e. in the
+	<literal>YYYY-MM-DD</> format.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESdatejulmdy">
+      <term><function>PGTYPESdate_julmdy</function></term>
+      <listitem>
+       <para>
+	Extract the values for the day, the month and the year from a variable
+	of type date.
+<synopsis>
+void PGTYPESdate_julmdy(date d, int *mdy);
+</synopsis>
+       <!-- almost same description as for rjulmdy() -->
+	The function receives the date <literal>d</> and a pointer to an array
+	of 3 integer values <literal>mdy</>. The variable name indicates
+	the sequential order: <literal>mdy[0]</> will be set to contain the
+	number of the month, <literal>mdy[1]</> will be set to the value of the
+	day and <literal>mdy[2]</> will contain the year.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESdatemdyjul">
+      <term><function>PGTYPESdate_mdyjul</function></term>
+      <listitem>
+       <para>
+	Create a date value from an array of 3 integers that specify the
+	day, the month and the year of the date.
+<synopsis>
+void PGTYPESdate_mdyjul(int *mdy, date *jdate);
+</synopsis>
+	The function receives the array of the 3 integers (<literal>mdy</>) as
+	its first argument and as its second argument a pointer to a variable
+	of type date that should hold the result of the operation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESdatedayofweek">
+      <term><function>PGTYPESdate_dayofweek</function></term>
+      <listitem>
+       <para>
+        Return a number representing the day of the week for a date value.
+<synopsis>
+int PGTYPESdate_dayofweek(date d);
+</synopsis>
+	The function receives the date variable <literal>d</> as its only
+	argument and returns an integer that indicates the day of the week for
+	this date.
+        <itemizedlist>
+         <listitem>
+          <para>
+	   0 - Sunday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   1 - Monday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   2 - Tuesday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   3 - Wednesday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   4 - Thursday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   5 - Friday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   6 - Saturday
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESdatetoday">
+      <term><function>PGTYPESdate_today</function></term>
+      <listitem>
+       <para>
+        Get the current date.
+<synopsis>
+void PGTYPESdate_today(date *d);
+</synopsis>
+	The function receives a pointer to a date variable (<literal>d</>)
+	that it sets to the current date.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESdatefmtasc">
+      <term><function>PGTYPESdate_fmt_asc</function></term>
+      <listitem>
+       <para>
+	Convert a variable of type date to its textual representation using a
+	format mask.
+<synopsis>
+int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
+</synopsis>
+	The function receives the date to convert (<literal>dDate</>), the
+	format mask (<literal>fmtstring</>) and the string that will hold the
+	textual representation of the date (<literal>outbuf</>).
+       </para>
+       <para>
+        On success, 0 is returned and a negative value if an error occurred.
+       </para>
+       <para>
+        The following literals are the field specifiers you can use:
+        <itemizedlist>
+         <listitem>
+          <para>
+           <literal>dd</literal> - The number of the day of the month.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>mm</literal> - The number of the month of the year.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>yy</literal> - The number of the year as a two digit number.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>yyyy</literal> - The number of the year as a four digit number.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>ddd</literal> - The name of the day (abbreviated).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>mmm</literal> - The name of the month (abbreviated).
+          </para>
+         </listitem>
+        </itemizedlist>
+	All other characters are copied 1:1 to the output string.
+       </para>
+       <para>
+	The following table indicates a few possible formats. This will give
+	you an idea of how to use this function. All output lines are based on
+	the same date: November, 23rd, 1959.
+        <table>
+	 <title>Valid input formats for <function>PGTYPESdate_fmt_asc</function>.
+	 <tgroup cols="2">
+	  <thead>
+	   <row>
+	    <entry>fmt</entry>
+	    <entry>result</entry>
+	   </row>
+	  </thead>
+	  <tbody>
+	   <row>
+	    <entry><literal>mmddyy</literal></entry>
+	    <entry><literal>112359</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>ddmmyy</literal></entry>
+	    <entry><literal>231159</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>yymmdd</literal></entry>
+	    <entry><literal>591123</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>yy/mm/dd</literal></entry>
+	    <entry><literal>59/11/23</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>yy mm dd</literal></entry>
+	    <entry><literal>59 11 23</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>yy.mm.dd</literal></entry>
+	    <entry><literal>59.11.23</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>.mm.yyyy.dd.</literal></entry>
+	    <entry><literal>.11.1959.23.</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>mmm. dd, yyyy</literal></entry>
+	    <entry><literal>Nov. 23, 1959</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>mmm dd yyyy</literal></entry>
+	    <entry><literal>Nov 23 1959</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>yyyy dd mm</literal></entry>
+	    <entry><literal>1959 23 11</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>ddd, mmm. dd, yyyy</literal></entry>
+	    <entry><literal>Mon, Nov. 23, 1959</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>(ddd) mmm. dd, yyyy</literal></entry>
+	    <entry><literal>(Mon) Nov. 23, 1959</literal></entry>
+	   </row>
+          </tbody>
+         </tgroup>
+        </table>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESdatedefmtasc">
+      <term><function>PGTYPESdate_defmt_asc</function></term>
+      <listitem>
+       <para>
+	Use a format mask to convert a C char* string to a value of type
+	date.
+<synopsis>
+int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
+</synopsis>
+	<!-- same description as rdefmtdate -->
+	The function receives a pointer to the date value that should hold the
+	result of the operation (<literal>d</>), the format mask to use for
+	parsing the date (<literal>fmt</>) and the C char* string containing
+	the textual representation of the date (<literal>str</>). The textual
+	representation is expected to match the format mask. However you do not
+	need to have a 1:1 mapping of the string to the format mask. The
+	function only analyzes the sequential order and looks for the literals
+	<literal>yy</literal> or <literal>yyyy</literal> that indicate the
+	position of the year, <literal>mm</literal> to indicate the position of
+	the month and <literal>dd</literal> to indicate the position of the
+	day.
+       </para>
+       <para>
+	The following table indicates a few possible formats. This will give
+	you an idea of how to use this function.
+        <table>
+	 <title>Valid input formats for <function>rdefmtdate</function>.
+	 <tgroup cols="2">
+	  <thead>
+	   <row>
+	    <entry>fmt</entry>
+	    <entry>str</entry>
+	    <entry>result</entry>
+	   </row>
+	  </thead>
+	  <tbody>
+	   <row>
+	    <entry><literal>ddmmyy</literal></entry>
+	    <entry><literal>21-2-54</literal></entry>
+	    <entry><literal>1954-02-21</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>ddmmyy</literal></entry>
+	    <entry><literal>2-12-54</literal></entry>
+	    <entry><literal>1954-12-02</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>ddmmyy</literal></entry>
+	    <entry><literal>20111954</literal></entry>
+	    <entry><literal>1954-11-20</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>ddmmyy</literal></entry>
+	    <entry><literal>130464</literal></entry>
+	    <entry><literal>1964-04-13</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>mmm.dd.yyyy</literal></entry>
+	    <entry><literal>MAR-12-1967</literal></entry>
+	    <entry><literal>1967-03-12</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>yy/mm/dd</literal></entry>
+	    <entry><literal>1954, February 3rd</literal></entry>
+	    <entry><literal>1954-02-03</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>mmm.dd.yyyy</literal></entry>
+	    <entry><literal>041269</literal></entry>
+	    <entry><literal>1969-04-12</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>yy/mm/dd</literal></entry>
+	    <entry><literal>In the year 2525, in the month of July, mankind will be alive on the 28th day</literal></entry>
+	    <entry><literal>2525-07-28</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>dd-mm-yy</literal></entry>
+	    <entry><literal>I said on the 28th of July in the year 2525</literal></entry>
+	    <entry><literal>2525-07-28</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>mmm.dd.yyyy</literal></entry>
+	    <entry><literal>9/14/58</literal></entry>
+	    <entry><literal>1958-09-14</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>yy/mm/dd</literal></entry>
+	    <entry><literal>47/03/29</literal></entry>
+	    <entry><literal>1947-03-29</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>mmm.dd.yyyy</literal></entry>
+	    <entry><literal>oct 28 1975</literal></entry>
+	    <entry><literal>1975-10-28</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>mmddyy</literal></entry>
+	    <entry><literal>Nov 14th, 1985</literal></entry>
+	    <entry><literal>1985-11-14</literal></entry>
+	   </row>
+          </tbody>
+         </tgroup>
+        </table>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+ 
+  <sect2>
+   <title>The timestamp type</title>
+   <para>
+    The timestamp type in C enables your programs to deal with data of the SQL
+    type timestamp. See <xref linkend="datatype-datetime"> for the equivalent
+    type in the <productname>PostgreSQL</> server.
+   </para>
+   <para>
+    The following functions can be used to work with the timestamp type:
+    <variablelist>
+     <varlistentry id="PGTYPEStimestampfromasc">
+      <term><function>PGTYPEStimestamp_from_asc</function></term>
+      <listitem>
+       <para>
+	Parse a timestamp from its textual representation into a timestamp
+	variable.
+<synopsis>
+timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
+</synopsis>
+	The function receives the string to parse (<literal>str</>) and a
+	pointer to a C char* (<literal>endptr</>).
+	At the moment ecpg always parses
+	the complete string and so it currently does not support to store the
+	address of the first invalid character in <literal>*endptr</literal>.
+	You can safely set <literal>endptr</literal> to NULL.
+       </para>
+       <para>
+	The function returns the parsed timestamp on success. On error,
+	<literal>PGTYPESInvalidTimestamp</literal> is returned and errno is
+	set to <literal>PGTYPES_TS_BAD_TIMESTAMP</>. See <xref linkend="PGTYPESInvalidTimestamp"> for important notes on this value.
+	
+       </para>
+       <para>
+	In general, the input string can contain any combination of an allowed
+	date specification, a whitespace character and an allowed time
+	specification. Note that timezones are not supported by ecpg. It can
+	parse them but does not apply any calculation as the
+	<productname>PostgreSQL</> server does for example. Timezone
+	specificiers are silently discarded.
+       </para>
+       <para>
+        The following table contains a few examples for input strings:
+        <table>
+	 <title>Valid input formats for <function>PGTYPEStimestamp_from_asc</function>.
+	 <tgroup cols="2">
+	  <thead>
+	   <row>
+	    <entry>Input</entry>
+	    <entry>Result</entry>
+	   </row>
+	  </thead>
+	  <tbody>
+	   <row>
+	    <entry><literal>1999-01-08 04:05:06</literal></entry>
+	    <entry><literal>1999-01-08 04:05:06</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>January 8 04:05:06 1999 PST</literal></entry>
+	    <entry><literal>1999-01-08 04:05:06</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>1999-Jan-08 04:05:06.789-8</literal></entry>
+	    <entry><literal>1999-01-08 04:05:06.789 (time zone specifier ignored)</literal></entry>
+	   </row>
+	   <row>
+	    <entry><literal>J2451187 04:05-08:00</literal></entry>
+	    <entry><literal>1999-01-08 04:05:00 (time zone specifier ignored)</literal></entry>
+	   </row>
+          </tbody>
+         </tgroup>
+        </table>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPEStimestamptoasc">
+      <term><function>PGTYPEStimestamp_to_asc</function></term>
+      <listitem>
+       <para>
+        Converts a date to a C char* string.
+<synopsis>
+char *PGTYPEStimestamp_to_asc(timestamp tstamp);
+</synopsis>
+	The function receives the timestamp <literal>tstamp</> as
+	its only argument and returns an allocated string that contains the
+	textual representation of the timestamp.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPEStimestampcurrent">
+      <term><function>PGTYPEStimestamp_current</function></term>
+      <listitem>
+       <para>
+        Retrieve the current timestamp.
+<synopsis>
+void PGTYPEStimestamp_current(timestamp *ts);
+</synopsis>
+	The function retrieves the current timestamp and saves it into the
+	timestamp variable that <literal>ts</> points to.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPEStimestampfmtasc">
+      <term><function>PGTYPEStimestamp_fmt_asc</function></term>
+      <listitem>
+       <para>
+        Convert a timestamp variable to a C char* using a format mask.
+<synopsis>
+int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmtstr);
+</synopsis>
+	The function receives a pointer to the timestamp to convert as its
+	first argument (<literal>ts</>), a pointer to the output buffer
+	(<literal>output</>), the maximal length that has been allocated for
+	the output buffer (<literal>str_len</literal>) and the format mask to
+	use for the conversion (<literal>fmtstr</literal>).
+       </para>
+       <para>
+	Upon success, the function returns 0 and a negative value if an
+	error occurred.
+       </para>
+       <para>
+	You can use the following format specifiers for the format mask. The
+	format specifiers are the same ones that are used in the
+	<function>strftime</> function in <productname>libc</productname>. Any
+	non-format specifier will be copied into the output buffer. 
+	<!-- This is from the FreeBSD man page:
+	     http://www.freebsd.org/cgi/man.cgi?query=strftime&apropos=0&sektion=3&manpath=FreeBSD+7.0-current&format=html
+	-->
+        <itemizedlist>
+         <listitem>
+          <para>
+	   <literal>%A</literal> - is replaced by national representation of
+	   the full weekday name.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%a</literal> - is replaced by national representation of
+	   the abbreviated weekday name.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%B</literal> - is replaced by national representation of
+	   the full month name.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%b</literal> - is replaced by national representation of
+	   the abbreviated month name.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%C</literal> - is replaced by (year / 100) as decimal
+	   number; single digits are preceded by a zero.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%c</literal> - is replaced by national representation of
+	   time and date.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%D</literal> - is equivalent to
+	   <literal>%m/%d/%y</literal>.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%d</literal> - is replaced by the day of the month as a
+	   decimal number (01-31).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%E*</literal> <literal>%O*</literal> -  POSIX locale
+	   extensions. The sequences
+	   <literal>%Ec</literal>
+	   <literal>%EC</literal> 
+	   <literal>%Ex</literal> 
+	   <literal>%EX</literal> 
+	   <literal>%Ey</literal> 
+	   <literal>%EY</literal> 
+	   <literal>%Od</literal> 
+	   <literal>%Oe</literal>
+	   <literal>%OH</literal> 
+	   <literal>%OI</literal> 
+	   <literal>%Om</literal> 
+	   <literal>%OM</literal> 
+	   <literal>%OS</literal> 
+	   <literal>%Ou</literal> 
+	   <literal>%OU</literal> 
+	   <literal>%OV</literal> 
+	   <literal>%Ow</literal> 
+	   <literal>%OW</literal> 
+	   <literal>%Oy</literal> 
+	   are supposed to provide alternate representations.
+          </para>
+          <para>
+	   Additionally <literal>%OB</literal> implemented to represent
+	   alternative months names (used standalone, without day mentioned).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%e</literal> - is replaced by the day of month as a decimal
+	   number (1-31); single digits are preceded by a blank.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%F</literal> - is equivalent to <literal>%Y-%m-%d</literal>.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%G</literal> - is replaced by a year as a decimal number
+	   with century. This year is the one that contains the greater part of
+	   the week (Monday as the first day of the week).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%g</literal> - is replaced by the same year as in
+	   <literal>%G</literal>, but as a decimal number without century
+	   (00-99).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%H</literal> - is replaced by the hour (24-hour clock) as a
+	   decimal number (00-23).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%h</literal> - the same as <literal>%b</literal>.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%I</literal> - is replaced by the hour (12-hour clock) as a
+	   decimal number (01-12).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%j</literal> - is replaced by the day of the year as a
+	   decimal number (001-366).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%k</literal> - is replaced by the hour (24-hour clock) as a
+	   decimal number (0-23); single digits are preceded by a blank.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%l</literal> - is replaced by the hour (12-hour clock) as a
+	   decimal number (1-12); single digits are preceded by a blank.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%M</literal> - is replaced by the minute as a decimal
+	   number (00-59).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%m</literal> - is replaced by the month as a decimal number
+	   (01-12).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	  <literal>%n</literal> - is replaced by a newline.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%O*</literal> - the same as <literal>%E*</literal>.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%p</literal> - is replaced by national representation of
+	   either "ante meridiem" or "post meridiem" as appropriate.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%R</literal> - is equivalent to <literal>%H:%M</literal>.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%r</literal> - is equivalent to <literal>%I:%M:%S
+	   %p</literal>.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%S</literal> - is replaced by the second as a decimal
+	   number (00-60).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%s</literal> - is replaced by the number of seconds since
+	   the Epoch, UTC.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%T</literal> - is equivalent to <literal>%H:%M:%S</literal>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%t</literal> - is replaced by a tab.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%U</literal> - is replaced by the week number of the year
+	   (Sunday as the first day of the week) as a decimal number (00-53).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%u</literal> - is replaced by the weekday (Monday as the
+	   first day of the week) as a decimal number (1-7).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%V</literal> - is replaced by the week number of the year
+	   (Monday as the first day of the week) as a decimal number (01-53).
+	   If the week containing January 1 has four or more days in the new
+	   year, then it is week 1; otherwise it is the last week of the
+	   previous year, and the next week is week 1.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%v</literal> - is equivalent to
+	   <literal>%e-%b-%Y</literal>.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%W</literal> - is replaced by the week number of the year
+	   (Monday as the first day of the week) as a decimal number (00-53).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%w</literal> - is replaced by the weekday (Sunday as the
+	   first day of the week) as a decimal number (0-6).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%X</literal> - is replaced by national representation of
+	   the time.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%x</literal> - is replaced by national representation of
+	   the date.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%Y</literal> - is replaced by the year with century as a
+	   decimal number.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%y</literal> - is replaced by the year without century as a
+	   decimal number (00-99).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%Z</literal> - is replaced by the time zone name.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%z</literal> - is replaced by the time zone offset from
+	   UTC; a leading plus sign stands for east of UTC, a minus sign for
+	   west of UTC, hours and minutes follow with two digits each and no
+	   delimiter between them (common form for RFC 822 date headers).
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%+</literal> - is replaced by national representation of
+	   the date and time.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%-*</literal> - GNU libc extension.	Do not do any padding
+	   when performing numerical outputs.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   $_* - GNU libc extension.	Explicitly specify space for padding.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%0*</literal> - GNU libc extension.	Explicitly specify zero
+	   for padding.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>%%</literal> - is replaced by <literal>%</literal>.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPEStimestampsub">
+      <term><function>PGTYPEStimestamp_sub</function></term>
+      <listitem>
+       <para>
+	Subtract one timestamp from another one and save the result in a
+	variable of type interval.
+<synopsis>
+int PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv);
+</synopsis>
+	The function will subtract the timestamp variable that <literal>ts2</>
+	points to from the timestamp variable that <literal>ts1</> points to
+	and will store the result in the interval variable that <literal>iv</>
+	points to.
+       </para>
+       <para>
+	Upon success, the function returns 0 and a negative value if an
+	error occurred.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPEStimestampdefmtasc">
+      <term><function>PGTYPEStimestamp_defmt_asc</function></term>
+      <listitem>
+       <para>
+	Parse a timestamp value from its textual representation using a
+	formatting mask.
+<synopsis>
+int PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d);
+</synopsis>
+	The function receives the textual representation of a timestamp in the
+	variable <literal>str</> as well as the formatting mask to use in the
+	variable <literal>fmt</>. The result will be stored in the variable
+	that <literal>d</> points to.
+       </para>
+       <para>
+	If the formatting mask <literal>fmt</> is NULL, the function will fall
+	back to the default formatting mask which is <literal>%Y-%m-%d
+	%H:%M:%S</literal>.
+       </para>
+       <para>
+	This is the reverse function to <xref
+	linkend="PGTYPEStimestampfmtasc">.  See the documentation there in
+	order to find out about the possible formatting mask entries.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPEStimestampaddinterval">
+      <term><function>PGTYPEStimestamp_add_interval</function></term>
+      <listitem>
+       <para>
+        Add an interval variable to a timestamp variable.
+<synopsis>
+int PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tout);
+</synopsis>
+	The function receives a pointer to a timestamp variable <literal>tin</>
+	and a pointer to an interval variable <literal>span</>. It adds the
+	interval to the timestamp and saves the resulting timestamp in the
+	variable that <literal>tout</> points to.
+       </para>
+       <para>
+	Upon success, the function returns 0 and a negative value if an
+	error occurred.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPEStimestampsubinterval">
+      <term><function>PGTYPEStimestamp_sub_interval</function></term>
+      <listitem>
+       <para>
+        Subtract an interval variable from a timestamp variable.
+<synopsis>
+int PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tout);
+</synopsis>
+	The function subtracts the interval variable that <literal>span</>
+	points to from the timestamp variable that <literal>tin</> points to
+	and saves the result into the variable that <literal>tout</> points
+	to.
+       </para>
+       <para>
+	Upon success, the function returns 0 and a negative value if an
+	error occurred.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>The interval type</title>
+   <para>
+    The interval type in C enables your programs to deal with data of the SQL
+    type interval. See <xref linkend="datatype-datetime"> for the equivalent
+    type in the <productname>PostgreSQL</> server.
+   </para>
+   <para>
+    The following functions can be used to work with the interval type:
+    <variablelist>
+
+     <varlistentry id="PGTYPESintervalnew">
+      <term><function>PGTYPESinterval_new</function></term>
+      <listitem>
+       <para>
+        Return a pointer to a newly allocated interval variable.
+<synopsis>
+interval *PGTYPESinterval_new(void);
+</synopsis>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESintervalfree">
+      <term><function>PGTYPESinterval_free</function></term>
+      <listitem>
+       <para>
+        Release the memory of a previously allocated interval variable.
+<synopsis>
+void PGTYPESinterval_new(interval *intvl);
+</synopsis>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESintervalfromasc">
+      <term><function>PGTYPESinterval_from_asc</function></term>
+      <listitem>
+       <para>
+        Parse an interval from its textual representation.
+<synopsis>
+interval *PGTYPESinterval_from_asc(char *str, char **endptr);
+</synopsis>
+	The function parses the input string <literal>str</> and returns a
+	pointer to an allocated interval variable.
+	At the moment ecpg always parses
+	the complete string and so it currently does not support to store the
+	address of the first invalid character in <literal>*endptr</literal>.
+	You can safely set <literal>endptr</literal> to NULL.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESintervaltoasc">
+      <term><function>PGTYPESinterval_to_asc</function></term>
+      <listitem>
+       <para>
+        Convert a variable of type interval to its textual representation.
+<synopsis>
+char *PGTYPESinterval_to_asc(interval *span);
+</synopsis>
+	The function converts the interval variable that <literal>span</>
+	points to into a C char*. The output looks like this example:
+	<literal>@ 1 day 12 hours 59 mins 10 secs</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="PGTYPESintervalcopy">
+      <term><function>PGTYPESinterval_copy</function></term>
+      <listitem>
+       <para>
+        Copy a variable of type interval.
+<synopsis>
+int PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);
+</synopsis>
+	The function copies the interval variable that <literal>intvlsrc</>
+	points to into the variable that <literal>intvldest</> points to. Note
+	that you need to allocate the memory for the destination variable
+	before.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>The decimal type</title>
+   <para>
+     The decimal type is similar to the numeric type. However it is limited to
+     a maximal precision of 30 significant digits. In contrast to the numeric
+     type which can be created on the heap only, the decimal type can be
+     created either on the stack or on the heap (by means of the functions
+     PGTYPESdecimal_new() and PGTYPESdecimal_free(). There are a lot of other
+     functions that deal with the decimal type in the Informix compatibility
+     mode described in <xref linkend="ecpg-informix-compat">.
+   </para>
+   <para>
+    The following functions can be used to work with the decimal type and are
+    not only contained in the <literal>libcompat</> library.
+    <variablelist>
+     <varlistentry>
+      <term><function>PGTYPESdecimal_new</function></term>
+      <listitem>
+       <para>
+       Request a pointer to a newly allocated decimal variable.
+<synopsis>
+decimal *PGTYPESdecimal_new(void);
+</synopsis>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>PGTYPESdecimal_free</function></term>
+      <listitem>
+       <para>
+       Free a decimal type, release all of its memory.
+<synopsis>
+void PGTYPESdecimal_free(decimal *var);
+</synopsis>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+ 
+   <sect2>
+    <title>errno values of pgtypeslib </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><literal>PGTYPES_NUM_BAD_NUMERIC</literal></term>
+      <listitem>
+       <para>
+	An argument should contain a numeric variable (or point to a numeric
+	variable) but in fact its in-memory representation was invalid.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>PGTYPES_NUM_OVERFLOW</literal></term>
+      <listitem>
+       <para>
+	An overflow occurred. Since the numeric type can deal with almost
+	arbitrary precision, converting a numeric variable into other types
+	might cause overflow.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>PGTYPES_NUM_OVERFLOW</literal></term>
+      <listitem>
+       <para>
+	An underflow occurred. Since the numeric type can deal with almost
+	arbitrary precision, converting a numeric variable into other types
+	might cause underflow.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>PGTYPES_NUM_DIVIDE_ZERO</literal></term>
+      <listitem>
+       <para>
+        A division by zero has been attempted.
+       </para>
+      </listitem>
+     </varlistentry>
+    <variablelist>
+
+     <varlistentry>
+      <term><literal>PGTYPES_DATE_BAD_DATE</literal></term>
+      <listitem>
+       <para>
+        
+       </para>
+      </listitem>
+     </varlistentry>
+    <variablelist>
+
+     <varlistentry>
+      <term><literal>PGTYPES_DATE_ERR_EARGS</literal></term>
+      <listitem>
+       <para>
+        
+       </para>
+      </listitem>
+     </varlistentry>
+    <variablelist>
+
+     <varlistentry>
+      <term><literal>PGTYPES_DATE_ERR_ENOSHORTDATE</literal></term>
+      <listitem>
+       <para>
+        
+       </para>
+      </listitem>
+     </varlistentry>
+    <variablelist>
+
+     <varlistentry>
+      <term><literal>PGTYPES_INTVL_BAD_INTERVAL</literal></term>
+      <listitem>
+       <para>
+        
+       </para>
+      </listitem>
+     </varlistentry>
+    <variablelist>
+
+     <varlistentry>
+      <term><literal>PGTYPES_DATE_ERR_ENOTDMY</literal></term>
+      <listitem>
+       <para>
+        
+       </para>
+      </listitem>
+     </varlistentry>
+    <variablelist>
+
+     <varlistentry>
+      <term><literal>PGTYPES_DATE_BAD_DAY</literal></term>
+      <listitem>
+       <para>
+        
+       </para>
+      </listitem>
+     </varlistentry>
+    <variablelist>
+
+     <varlistentry>
+      <term><literal>PGTYPES_DATE_BAD_MONTH</literal></term>
+      <listitem>
+       <para>
+        
+       </para>
+      </listitem>
+     </varlistentry>
+    <variablelist>
+
+     <varlistentry>
+      <term><literal>PGTYPES_TS_BAD_TIMESTAMP</literal></term>
+      <listitem>
+       <para>
+        
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+
+   <sect2>
+    <title>Special constants of pgtypeslib </title>
+   <para>
+    <variablelist>
+     <varlistentry id="PGTYPESInvalidTimestamp">
+      <term><literal>PGTYPESInvalidTimestamp</literal></term>
+      <listitem>
+       <para>
+	A value of type timestamp representing an invalid time stamp. This is
+	returned by the function <function>PGTYPEStimestamp_from_asc</> on
+	parse error.
+	Note that due to the internal representation of the timestamp datatype,
+	<literal>PGTYPESInvalidTimestamp</literal> is also a valid timestamp at
+	the same time. It is set to <literal>1899-12-31 23:59:59</>. In order
+	to detect errors, make sure that your application does not only test
+	for <literal>PGTYPESInvalidTimestamp</literal> but also for
+	<literal>errno != 0</> after each call to
+	<function>PGTYPEStimestamp_from_asc</>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 id="ecpg-informix-compat">
+  <title>Informix compatibility mode</title>
+  <para>
+   ecpg can be run in a so-called <firstterm>Informix compatibility mode</>. If
+   this mode is active, it tries to behave as if it were the Informix
+   precompiler for Informix E/SQL. Generally spoken this will allow you to use
+   the dollar sign instead of the <literal>EXEC SQL</> primitive to introduce
+   embedded SQL commands.
+<programlisting>
+   $int j = 3;
+   $CONNECT TO :dbname;
+   $CREATE TABLE test(i INT PRIMARY KEY, j INT);
+   $INSERT INTO test(i, j) VALUES (7, :j);
+   $COMMIT;
+</programlisting>
+  </para>
+  <para>
+   There are two compatiblity modes: INFORMIX, INFORMIX_SE
+  </para>
+  <para>
+   When linking programs that use this compatibility mode, remember to link
+   against <literal>libcompat</> that is shipped with ecpg.
+  </para>
+  <para>
+   Besides the previously explained syntactic sugar, the Informix compatibility
+   mode ports some functions for input, output and transformation of data as
+   well as embedded SQL statements known from E/SQL to ecpg.
+  </para>
+  <para>
+   Informix compatibility mode is closely connected to the pgtypeslib library
+   of ecpg. pgtypeslib maps SQL data types to data types within the C host
+   program and most of the additional functions of the Informix compatibility
+   mode allow you to operate on those C host program types. Note however that
+   the extend of the compatibility is limited. It does not try to copy Informix
+   behaviour but it allows you to do more or less the same operations and gives
+   you functions that have the same name and the same basic behavior but it is
+   no drop-in replacement if you are using Informix at the moment. Moreover,
+   some of the data types are different. For example,
+   <productname>PostgreSQL's<productname> datetime and interval types do not
+   know about ranges like for example <literal>YEAR TO MINUTE</> so you won't
+   find support in ecpg for that either.
+  </para>
+
+  <sect2>
+   <title>Additional embedded SQL statements</title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><literal>CLOSE DATABASE</></term>
+      <listitem>
+       <para>
+	This statement closes the current connection. In fact, this is a
+	synonym for ecpg's <literal>DISCONNECT CURRENT</>.
+<programlisting>
+    $CLOSE DATABASE;                /* close the current connection */
+    EXEC SQL ClOSE DATABASE;
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Additional functions</title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><function>decadd</></term>
+      <listitem>
+       <para>
+        Add two decimal type values.
+<synopsis>
+int decadd(decimal *arg1, decimal *arg2, decimal *sum);
+</synopsis>
+	The function receives a pointer to the first operand of type decimal
+	(<literal>arg1</>), a pointer to the second operand of type decimal
+	(<literal>arg2</>) and a pointer to a value of type decimal that will
+	contain the sum (<literal>sum</>). On success, the function returns 0.
+	ECPG_INFORMIX_NUM_OVERFLOW is returned in case of overflow and 
+	ECPG_INFORMIX_NUM_UNDERFLOW in case of underflow. -1 is returned for
+	other failures and errno is set to the respective errno number of the
+	pgtypeslib.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>deccmp</></term>
+      <listitem>
+       <para>
+        Compare two variables of type decimal.
+<synopsis>
+int deccmp(decimal *arg1, decimal *arg2);
+</synopsis>
+	The function receives a pointer to the first decimal value
+	(<literal>arg1</>), a pointer to the second decimal value
+	(<literal>arg2</>) and returns an integer value that indicates which is
+	the bigger value.
+        <itemizedlist>
+         <listitem>
+          <para>
+	   1, if the value that <literal>arg1</> points to is bigger than the
+	   value that <literal>var2</> points to
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   -1, if the value that <literal>arg1</> points to is smaller than the
+	   value that <literal>arg2</> points to </para>
+         </listitem>
+         <listitem>
+          <para>
+	   0, if the value that <literal>arg1</> points to and the value that
+	   <literal>arg2</> points to are equal
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>deccopy</></term>
+      <listitem>
+       <para>
+        Copy a decimal value.
+<synopsis>
+void deccopy(decimal *src, decimal *target);
+</synopsis>
+	The function receives a pointer to the decimal value that should be
+	copied as the first argument (<literal>src</>) and a pointer to the
+	target structure of type decimal (<literal>target</>) as the second
+	argument.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>deccvasc</></term>
+      <listitem>
+       <para>
+        Convert a value from its ASCII representation into a decimal type.
+<synopsis>
+int deccvasc(char *cp, int len, decimal *np);
+</synopsis>
+	The function receives a pointer to string that contains the string
+	representation of the number to be converted (<literal>cp</>) as well
+	as its length <literal>len</>. <literal>np</> is a pointer to the
+	decimal value that saves the result of the operation.
+       </para>
+       <para>
+        Valid formats are for example:
+         <literal>-2</literal>,
+         <literal>.794</literal>,
+         <literal>+3.44</literal>,
+         <literal>592.49E07</literal> or
+         <literal>-32.84e-4</literal>.
+       </para>
+       <para>
+	The function returns 0 on success. If overflow or underflow occurred,
+	<literal>ECPG_INFORMIX_NUM_OVERFLOW</> or
+	<literal>ECPG_INFORMIX_NUM_UNDERFLOW</> is returned. If the ASCII
+	representation could not be parsed,
+	<literal>ECPG_INFORMIX_BAD_NUMERIC</> is returned or
+	<literal>ECPG_INFORMIX_BAD_EXPONENT</> if this problem ocurred while
+	parsing the exponent.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>deccvdbl</></term>
+      <listitem>
+       <para>
+        Convert a value of type double to a value of type decimal.
+<synopsis>
+int deccvdbl(double dbl, decimal *np);
+</synopsis>
+	The function receives the variable of type double that should be
+	converted as its first argument (<literal>dbl</>). As the second
+	argument (<literal>np</>), the function receives a pointer to the
+	decimal variable that should hold the result of the operation.
+       </para>
+       <para>
+	The function returns 0 on success and a negative value if the
+	conversion failed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>deccvint</></term>
+      <listitem>
+       <para>
+        Convert a value of type int to a value of type decimal.
+<synopsis>
+int deccvint(int in, decimal *np);
+</synopsis>
+	The function receives the variable of type int that should be
+	converted as its first argument (<literal>in</>). As the second
+	argument (<literal>np</>), the function receives a pointer to the
+	decimal variable that should hold the result of the operation.
+       </para>
+       <para>
+	The function returns 0 on success and a negative value if the
+	conversion failed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>deccvlong</></term>
+      <listitem>
+       <para>
+        Convert a value of type long to a value of type decimal.
+<synopsis>
+int deccvlong(long lng, decimal *np);
+</synopsis>
+	The function receives the variable of type long that should be
+	converted as its first argument (<literal>lng</>). As the second
+	argument (<literal>np</>), the function receives a pointer to the
+	decimal variable that should hold the result of the operation.
+       </para>
+       <para>
+	The function returns 0 on success and a negative value if the
+	conversion failed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>decdiv</></term>
+      <listitem>
+       <para>
+        Divide two variables of type decimal.
+<synopsis>
+int decdiv(decimal *n1, decimal *n2, decimal *result);
+</synopsis>
+	The function receives pointers to the variables that are the first
+	(<literal>n1</>) and the second (<literal>n2</>) operands and
+	calculates <literal>n1</>/<literal>n2</>. <literal>result</> is a
+	pointer to the variable that should hold the result of the operation.
+       </para>
+       <para>
+	On success, 0 is returned and a negative value if the division fails.
+	If overflow or underflow occurred, the function returns
+	<literal>ECPG_INFORMIX_NUM_OVERFLOW</> or
+	<literal>ECPG_INFORMIX_NUM_UNDERFLOW</> respectively. If an attempt to
+	divide by zero is observed, the function returns
+	<literal>ECPG_INFORMIX_DIVIDE_ZERO</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>decmul</></term>
+      <listitem>
+       <para>
+        Multiply two decimal values.
+<synopsis>
+int decmul(decimal *n1, decimal *n2, decimal *result);
+</synopsis>
+	The function receives pointers to the variables that are the first
+	(<literal>n1</>) and the second (<literal>n2</>) operands and
+	calculates <literal>n1</>*<literal>n2</>. <literal>result</> is a
+	pointer to the variable that should hold the result of the operation.
+       </para>
+       <para>
+	On success, 0 is returned and a negative value if the multiplication
+	fails. If overflow or underflow occurred, the function returns
+	<literal>ECPG_INFORMIX_NUM_OVERFLOW</> or
+	<literal>ECPG_INFORMIX_NUM_UNDERFLOW</> respectively.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>decsub</></term>
+      <listitem>
+       <para>
+        Subtract one decimal value from another.
+<synopsis>
+int decsub(decimal *n1, decimal *n2, decimal *result);
+</synopsis>
+	The function receives pointers to the variables that are the first
+	(<literal>n1</>) and the second (<literal>n2</>) operands and
+	calculates <literal>n1</>-<literal>n2</>. <literal>result</> is a
+	pointer to the variable that should hold the result of the operation.
+       </para>
+       <para>
+	On success, 0 is returned and a negative value if the subtraction
+	fails. If overflow or underflow occurred, the function returns
+	<literal>ECPG_INFORMIX_NUM_OVERFLOW</> or
+	<literal>ECPG_INFORMIX_NUM_UNDERFLOW</> respectively.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dectoasc</></term>
+      <listitem>
+       <para>
+	Convert a variable of type decimal to its ASCII representation in a C
+	char* string.
+<synopsis>
+int dectoasc(decimal *np, char *cp, int len, int right)
+</synopsis>
+	The function receives a pointer to a variable of type decimal
+	(<literal>np</>) that it converts to its textual representation.
+	<literal>cp</> is the buffer that should hold the result of the
+	operation. The parameter <literal>right</> specifies, how many digits
+	right of the decimal point should be included in the output. The result
+	will be rounded to this number of decimal digits. Setting
+	<literal>right</> to -1 indicates that all available decimal digits
+	should be included in the output. If the length of the output buffer,
+	which is indicated by <literal>len</> is not sufficient to hold the
+	textual representation including the trailing NUL character, only a
+	single <literal>*</> character is stored in the result and -1 is
+	returned.
+       </para>
+       <para>
+	The function returns either -1 if the buffer <literal>cp</> was too
+	small or <literal>ECPG_INFORMIX_OUT_OF_MEMORY</> if memory was
+	exhausted. 
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dectodbl</></term>
+      <listitem>
+       <para>
+        Convert a variable of type decimal to a double.
+<synopsis>
+int dectodbl(decimal *np, double *dblp);
+</synopsis>
+	The function receives a pointer to the decimal value to convert
+	(<literal>np</>) and a pointer to the double variable that
+	should hold the result of the operation (<literal>dblp</>).
+       </para>
+       <para>
+	On success, 0 is returned and a negative value if the conversion
+	failed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dectoint</></term>
+      <listitem>
+       <para>
+        Convert a variable to type decimal to an integer.
+<synopsis>
+int dectoint(decimal *np, int *ip);
+</synopsis>
+	The function receives a pointer to the decimal value to convert
+	(<literal>np</>) and a pointer to the integer variable that
+	should hold the result of the operation (<literal>ip</>).
+       </para>
+       <para>
+	On success, 0 is returned and a negative value if the conversion
+	failed. If an overflow occurred, <literal>ECPG_INFORMIX_NUM_OVERFLOW</>
+	is returned.
+       </para>
+       <para>
+	Note that the ecpg implementation differs from the Informix
+	implementation. Informix limits an integer to the range from -32767 to
+	32767, while the limits in the ecpg implementation depend on the
+	architecture (<literal>-INT_MAX .. INT_MAX</>).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dectolong</></term>
+      <listitem>
+       <para>
+        Convert a variable to type decimal to a long integer.
+<synopsis>
+int dectolong(decimal *np, long *lngp);
+</synopsis>
+	The function receives a pointer to the decimal value to convert
+	(<literal>np</>) and a pointer to the long variable that
+	should hold the result of the operation (<literal>lngp</>).
+       </para>
+       <para>
+	On success, 0 is returned and a negative value if the conversion
+	failed. If an overflow occurred, <literal>ECPG_INFORMIX_NUM_OVERFLOW</>
+	is returned.
+       </para>
+       <para>
+	Note that the ecpg implementation differs from the Informix
+	implementation. Informix limits a long integer to the range from
+	-2,147,483,647 to 2,147,483,647, while the limits in the ecpg
+	implementation depend on the architecture (<literal>-LONG_MAX ..
+	LONG_MAX</>).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rdatestr</></term>
+      <listitem>
+       <para>
+        Converts a date to a C char* string.
+<synopsis>
+int rdatestr(date d, char *str);
+</synopsis>
+	The function receives two arguments, the first one is the date to
+	convert (<literal>d</> and the second one is a pointer to the target
+	string. The output format is always <literal>yyyy-mm-dd</>, so you need
+	to allocate at least 11 bytes (including the NUL-terminator) for the
+	string.
+       </para>
+       <para>
+	The function returns 0 on success and a negative value in case of
+	error.
+       </para>
+       <para>
+	Note that ecpg's implementation differs from the Informix
+	implementation. In Informix the format can be influenced by setting
+	environment variables. In ecpg however, you cannot change the output
+	format.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rstrdate</></term>
+      <listitem>
+       <para>
+        Parse the textual representation of a date.
+<synopsis>
+int rstrdate(char *str, date *d);
+</synopsis>
+	The function receives the textual representation of the date to convert
+	(<literal>str</>) and a pointer to a variable of type date
+	(<literal>d</>). This function does not allow you to specify a format
+	mask. It uses the default format mask of Informix which is
+	<literal>mm/dd/yyyy</>. Internally, this function is implemented by
+	means of <function>rdefmtdate</>. Therefore, <function>rstrdate</> is
+	not faster and if you have the choice you should opt for
+	<function>rdefmtdate</> which allows you to specify the format mask
+	explicitly.
+       </para>
+       <para>
+        The function returns the same values as <function>rdefmtdate</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rtoday</></term>
+      <listitem>
+       <para>
+        Get the current date.
+<synopsis>
+void rtoday(date *d);
+</synopsis>
+	The function receives a pointer to a date variable (<literal>d</>)
+	that it sets to the current date.
+       </para>
+       <para>
+	Internally this function uses the <xref linkend="PGTYPESdatetoday">
+	function.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rjulmdy</></term>
+      <listitem>
+       <para>
+	Extract the values for the day, the month and the year from a variable
+	of type date.
+<synopsis>
+int rjulmdy(date d, short mdy[3]);
+</synopsis>
+	The function receives the date <literal>d</> and a pointer to an array
+	of 3 short integer values <literal>mdy</>. The variable name indicates
+	the sequential order: <literal>mdy[0]</> will be set to contain the
+	number of the month, <literal>mdy[1]</> will be set to the value of the
+	day and <literal>mdy[2]</> will contain the year.
+       </para>
+       <para>
+        The function always returns 0 at the moment.
+       </para>
+       <para>
+	Internally the function uses the <xref linkend="PGTYPESdatejulmdy">
+	function.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rdefmtdate</></term>
+      <listitem>
+       <para>
+	Use a format mask to convert a character string to a value of type
+	date.
+<synopsis>
+int rdefmtdate(date *d, char *fmt, char *str);
+</synopsis>
+	The function receives a pointer to the date value that should hold the
+	result of the operation (<literal>d</>), the format mask to use for
+	parsing the date (<literal>fmt</>) and the C char* string containing
+	the textual representation of the date (<literal>str</>). The textual
+	representation is expected to match the format mask. However you do not
+	need to have a 1:1 mapping of the string to the format mask. The
+	function only analyzes the sequential order and looks for the literals
+	<literal>yy</literal> or <literal>yyyy</literal> that indicate the
+	position of the year, <literal>mm</literal> to indicate the position of
+	the month and <literal>dd</literal> to indicate the position of the
+	day.
+       </para>
+       <para>
+        The function returns the following values:
+        <itemizedlist>
+         <listitem>
+          <para>
+           0 - The function terminated successfully.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>ECPG_INFORMIX_ENOSHORTDATE</> - The date does not contain
+	   delimiters between day, month and year. In this case the input
+	   string must be exactly 6 or 8 bytes long but isn't.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>ECPG_INFORMIX_ENOTDMY</> - The format string did not
+	   correctly indicate the sequential order of year, month and day.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>ECPG_INFORMIX_BAD_DAY</> - The input string does not
+	   contain a valid day.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>ECPG_INFORMIX_BAD_MONTH</> - The input string does not
+	   contain a valid month.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>ECPG_INFORMIX_BAD_YEAR</> - The input string does not
+	   contain a valid year.
+          </para>
+         </listitem>
+	</itemizedlist>
+       </para>
+       <para>
+	Internally this function is implemented to use the <xref
+	linkend="PGTYPESdatedefmtasc"> function. See the reference there for a
+	table of example input.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rfmtdate</></term>
+      <listitem>
+       <para>
+	Convert a variable of type date to its textual representation using a
+	format mask.
+<synopsis>
+int rfmtdate(date d, char *fmt, char *str);
+</synopsis>
+	The function receives the date to convert (<literal>d</>), the format
+	mask (<literal>fmt</>) and the string that will hold the textual
+	representation of the date (<literal>str</>).
+       </para>
+       <para>
+        On success, 0 is returned and a negative value if an error occurred.
+       </para>
+       <para>
+	Internally this function uses the <xref linkend="PGTYPESdatefmtasc">
+	function, see the reference there for examples.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rmdyjul</></term>
+      <listitem>
+       <para>
+	Create a date value from an array of 3 short integers that specify the
+	day, the month and the year of the date.
+<synopsis>
+int rmdyjul(short mdy[3], date *d);
+</synopsis>
+	The function receives the array of the 3 short integers
+	(<literal>mdy</>) and a pointer to a variable of type date that should
+	hold the result of the operation.
+       </para>
+       <para>
+        Currently the function returns always 0.
+       </para>
+       <para>
+	Internally the function is implemented to use the function <xref
+	linkend="PGTYPESdatemdyjul">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rdayofweek</></term>
+      <listitem>
+       <para>
+        Return a number representing the day of the week for a date value.
+<synopsis>
+int rdayofweek(date d);
+</synopsis>
+	The function receives the date variable <literal>d</> as its only
+	argument and returns an integer that indicates the day of the week for
+	this date.
+        <itemizedlist>
+         <listitem>
+          <para>
+	   0 - Sunday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   1 - Monday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   2 - Tuesday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   3 - Wednesday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   4 - Thursday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   5 - Friday
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   6 - Saturday
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+       <para>
+	Internally the function is implemented to use the function <xref
+	linkend="PGTYPESdatedayofweek">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dtcurrent</></term>
+      <listitem>
+       <para>
+        Retrieve the current timestamp.
+<synopsis>
+void dtcurrent(timestamp *ts);
+</synopsis>
+	The function retrieves the current timestamp and saves it into the
+	timestamp variable that <literal>ts</> points to.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dtcvasc</></term>
+      <listitem>
+       <para>
+	Parses a timestamp from its textual representation in ANSI standard
+	into a timestamp variable.
+<synopsis>
+int dtcvasc(char *str, timestamp *ts);
+</synopsis>
+	The function receives the string to parse (<literal>str</>) and a
+	pointer to the timestamp variable that should hold the result of the
+	operation (<literal>ts</>).
+       </para>
+       <para>
+	The function returns 0 on success and a negative value in case of
+	error.
+       </para>
+       <para>
+	Internally this function uses the <xref
+	linkend="PGTYPEStimestampfromasc"> function. See the reference there
+	for a table with example inputs.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dtcvfmtasc</></term>
+      <listitem>
+       <para>
+	Parses a timestamp from its textual representation in ANSI standard
+	using a format mask into a timestamp variable.
+<synopsis>
+dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)
+</synopsis>
+	The function receives the string to parse (<literal>inbuf</>), the
+	format mask to use (<literal>fmtstr</>) and a pointer to the timestamp
+	variable that should hold the result of the operation (<literal>ts</>).
+       </para>
+       <para>
+	This functions is implemented by means of the <xref
+	linkend="PGTYPEStimestampdefmtasc">. See the documentation
+	there for a list of format specifiers that can be used.
+       </para>
+       <para>
+	The function returns 0 on success and a negative value in case of
+	error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dtsub</></term>
+      <listitem>
+       <para>
+	Subtract one timestamp from another and return a variable of type
+	interval.
+<synopsis>
+int dtsub(timestamp *ts1, timestamp *ts2, interval *iv);
+</synopsis>
+	The function will subtract the timestamp variable that <literal>ts2</>
+	points to from the timestamp variable that <literal>ts1</> points to
+	and will store the result in the interval variable that <literal>iv</>
+	points to.
+       </para>
+       <para>
+	Upon success, the function returns 0 and a negative value if an
+	error occurred.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dttoasc</></term>
+      <listitem>
+       <para>
+        Convert a timestamp variable to a C char* string.
+<synopsis>
+int dttoasc(timestamp *ts, char *output);
+</synopsis>
+	The function receives a pointer to the timestamp variable to convert
+	(<literal>ts</>) and the string that should hold the result of the
+	operation <literal>output</>). It converts <literal>ts</> to its
+	textual representation in the ANSI SQL standard which is defined to
+	be <literal>YYYY-MM-DD HH:MM:SS</literal>.
+       </para>
+       <para>
+	Upon success, the function returns 0 and a negative value if an
+	error occurred.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>dttofmtasc</></term>
+      <listitem>
+       <para>
+        Convert a timestamp variable to a C char* using a format mask.
+<synopsis>
+int dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr);
+</synopsis>
+	The function receives a pointer to the timestamp to convert as its
+	first argument (<literal>ts</>), a pointer to the output buffer
+	(<literal>output</>), the maximal length that has been allocated for
+	the output buffer (<literal>str_len</literal>) and the format mask to
+	use for the conversion (<literal>fmtstr</literal>).
+       </para>
+       <para>
+	Upon success, the function returns 0 and a negative value if an
+	error occurred.
+       </para>
+       <para>
+	Internally this function uses the <xref
+	linkend="PGTYPEStimestampfmtasc"> function. See the reference there for
+	informations on what format mask specifiers can be used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>intoasc</></term>
+      <listitem>
+       <para>
+        Convert an interval variable to a C char* string.
+<synopsis>
+int intoasc(interval *i, char *str);
+</synopsis>
+	The function receives a pointer to the interval variable to convert
+	(<literal>i</>) and the string that should hold the result of the
+	operation <literal>str</>). It converts <literal>i</> to its
+	textual representation in the ANSI SQL standard which is defined to
+	be <literal>YYYY-MM-DD HH:MM:SS</literal>.
+       </para>
+       <para>
+	Upon success, the function returns 0 and a negative value if an
+	error occurred.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rfmtlong</></term>
+      <listitem>
+       <para>
+	Convert a long integer value to its textual representation using a
+	format mask.
+<synopsis>
+int rfmtlong(long lng_val, char *fmt, char *outbuf);
+</synopsis>
+	The function receives the long value <literal>lng_val</>, the format
+	mask <literal>fmt</> and a pointer to the output buffer
+	<literal>outbuf</>. It converts the long value according to the format
+	mask to its textual representation.
+       </para>
+       <para>
+	The format mask can be composed of the following format specifying
+	characters:
+        <itemizedlist>
+         <listitem>
+          <para>
+	   <literal>*</literal> (asterisk) - if this position would be blank
+	   otherwise, fill it with an asterisk.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>&amp;</literal> (ampersand) - if this position would be
+	   blank otherwise, fill it with a zero.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>#</literal> - turn leading zeroes into blanks.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>&lt;</literal> - left-justify the number in the string.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>,</literal> (comma) - group numbers of four or more digits
+	   into groups of three digits separated by a comma.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>.</literal> (period) - this character separates the
+	   whole-number part of the number from the fractional part.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>-</literal> (minus) - the minus sign appears if the number
+	   is a negative value.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>+</literal> (plus) - the plus sign appears if the number is
+	   a positive value.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>(</literal> - this replaces the minus sign in front of the
+	   negative number. The minus sign will not appear.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>)</literal> - this character replaces the minus and is
+	   printed behind the negative value.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>$</literal> - the currency symbol.
+          </para>
+         </listitem>
+	</itemizedlist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rupshift</></term>
+      <listitem>
+       <para>
+        Convert a string to upper case.
+<synopsis>
+void rupshift(char *str);
+</synopsis>
+	The function receives a pointer to the string and transforms every
+	lower case character to upper case.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>byleng</></term>
+      <listitem>
+       <para>
+	Return the number of characters in a string without counting trailing
+	blanks.
+<synopsis>
+int byleng(char *str, int len);
+</synopsis>
+	The function expects a fixed-length string as its first argument
+	(<literal>str</>) and its length as its second argument
+	(<literal>len</>). It returns the number of significant characters,
+	that is the length of the string without trailing blanks.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>ldchar</></term>
+      <listitem>
+       <para>
+        Copy a fixed-length string into a null-terminated string.
+<synopsis>
+void ldchar(char *src, int len, char *dest);
+</synopsis>
+	The function receives the fixed-length string to copy
+	(<literal>src</>), its length (<literal>len</>) and a pointer to the
+	destination memory (<literal>dest</>). Note that you need to reserve at
+	least <literal>len+1</> bytes for the string that <literal>dest</>
+	points to. The function copies at most <literal>len</> bytes to the new
+	location (less if the source string has trailing blanks) and adds the
+	null-terminator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rgetmsg</></term>
+      <listitem>
+       <para>
+<synopsis>
+int rgetmsg(int msgnum, char *s, int maxsize);
+</synopsis>
+        This function exists but is not implemented at the moment!
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rtypalign</></term>
+      <listitem>
+       <para>
+<synopsis>
+int rtypalign(int offset, int type);
+</synopsis>
+        This function exists but is not implemented at the moment!
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rtypmsize</></term>
+      <listitem>
+       <para>
+<synopsis>
+int rtypmsize(int type, int len);
+</synopsis>
+        This function exists but is not implemented at the moment!
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>rtypwidth</></term>
+      <listitem>
+       <para>
+<synopsis>
+int rtypwidth(int sqltype, int sqllen);
+</synopsis>
+        This function exists but is not implemented at the moment!
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="rsetnull">
+      <term><function>rsetnull</></term>
+      <listitem>
+       <para>
+        Set a variable to NULL.
+<synopsis>
+int rsetnull(int t, char *ptr);
+</synopsis>
+	The function receives an integer that indicates the type of the
+	variable and a pointer to the variable itself that is casted to a C
+	char* pointer.
+       </para>
+       <para>
+        The following types exist:
+        <itemizedlist>
+         <listitem>
+          <para>
+	   <literal>CCHARTYPE</literal> - For a variable of type char or char*
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CSHORTTYPE</literal> - For a variable of type short int
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CINTTYPE</literal> - For a variable of type int
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CBOOLTYPE</literal> - For a variable of type boolean
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CFLOATTYPE</literal> - For a variable of type float
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CLONGTYPE</literal> - For a variable of type long
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CDOUBLETYPE</literal> - For a variable of type double
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CDECIMALTYPE</literal> - For a variable of type decimal
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CDATETYPE</literal> - For a variable of type date
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <literal>CDTIMETYPE</literal> - For a variable of type timestamp
+          </para>
+         </listitem>
+        </itemizedlist>
+       <para>
+        Here is an example of a call to this function:
+<programlisting>
+$char c[] = "abc       ";
+$short s = 17;
+$int i = -74874;
+
+rsetnull(CCHARTYPE, (char *) c);
+rsetnull(CSHORTTYPE, (char *) &amp;s);
+rsetnull(CINTTYPE, (char *) &amp;i);
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>risnull</></term>
+      <listitem>
+       <para>
+        Test if a variable is NULL.
+<synopsis>
+int risnull(int t, char *ptr);
+</synopsis>
+	The function receives the type of the variable to test (<literal>t</>)
+	as well a pointer to this variable (<literal>ptr</>). Note that the
+	latter needs to be casted to a char*. See the function <xref
+	linkend="rsetnull"> for a list of possible variable types.
+       </para>
+       <para>
+        Here is an example of how to use this function:
+<programlisting>
+$char c[] = "abc       ";
+$short s = 17;
+$int i = -74874;
+
+risnull(CCHARTYPE, (char *) c);
+risnull(CSHORTTYPE, (char *) &amp;s);
+risnull(CINTTYPE, (char *) &amp;i);
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Additional constants</title>
+   <para>
+    Note that all constants here describe errors and all of them are defined
+    to represent negative values. In the descriptions of the different
+    constants you can also find the value that the constants represent in the
+    current implementation. However you should not rely on this number. You can
+    however rely on the fact all of them are defined to represent negative
+    values.
+    <variablelist>
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_NUM_OVERFLOW</></term>
+      <listitem>
+       <para>
+	Functions return this value if an overflow occurred in a
+	calculation. Internally it is defined to -1200 (the Informix
+	definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_NUM_UNDERFLOW</></term>
+      <listitem>
+       <para>
+	Functions return this value if an underflow occurred in a calculation.
+	Internally it is defined to -1201 (the Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_DIVIDE_ZERO</></term>
+      <listitem>
+       <para>
+	Functions return this value if an attempt to divide by zero is
+	observed. Internally it is defined to -1202 (the Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_BAD_YEAR</></term>
+      <listitem>
+       <para>
+	Functions return this value if a bad value for a year was found while
+	parsing a date. Internally it is defined to -1204 (the Informix
+	definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_BAD_MONTH</></term>
+      <listitem>
+       <para>
+	Functions return this value if a bad value for a month was found while
+	parsing a date. Internally it is defined to -1205 (the Informix
+	definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_BAD_DAY</></term>
+      <listitem>
+       <para>
+	Functions return this value if a bad value for a day was found while
+	parsing a date. Internally it is defined to -1206 (the Informix
+	definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_ENOSHORTDATE</></term>
+      <listitem>
+       <para>
+	Functions return this value if a parsing routine needs a short date
+	representation but did not get the date string in the right length.
+	Internally it is defined to -1209 (the Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_DATE_CONVERT</></term>
+      <listitem>
+       <para>
+	Functions return this value if Internally it is defined to -1210 (the
+	Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_OUT_OF_MEMORY</></term>
+      <listitem>
+       <para>
+	Functions return this value if Internally it is defined to -1211 (the
+	Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_ENOTDMY</></term>
+      <listitem>
+       <para>
+	Functions return this value if a parsing routine was supposed to get a
+	format mask (like <literal>mmddyy</>) but not all fields were listed
+	correctly. Internally it is defined to -1212 (the Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_BAD_NUMERIC</></term>
+      <listitem>
+       <para>
+	Functions return this value either if a parsing routine cannot parse
+	the textual representation for a numeric value because it contains
+	errors or if a routine cannot complete a calculation involving numeric
+	variables because at least one of the numeric variables is invalid.
+	Internally it is defined to -1213 (the Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_BAD_EXPONENT</></term>
+      <listitem>
+       <para>
+	Functions return this value if Internally it is defined to -1216 (the
+	Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_BAD_DATE</></term>
+      <listitem>
+       <para>
+	Functions return this value if Internally it is defined to -1218 (the
+	Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ECPG_INFORMIX_EXTRA_CHARS</></term>
+      <listitem>
+       <para>
+	Functions return this value if Internally it is defined to -1264 (the
+	Informix definition).
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="ecpg-descriptors">
@@ -955,7 +3968,7 @@ EXEC SQL WHENEVER <replaceable>condition</replaceable> <replaceable>action</repl
      </varlistentry>
 
      <varlistentry>
-      <term><literal>BREAK</literal></term>
+      <term><literal>DO BREAK</literal></term>
       <listitem>
        <para>
         Execute the C statement <literal>break</literal>.  This should
@@ -1467,41 +4480,163 @@ struct
   </sect2>
  </sect1>
 
- <sect1 id="ecpg-include">
-  <title>Including Files</title>
+ <sect1 id="ecpg-preproc">
+  <title>Preprocessor directives</title>
 
-  <para>
-   To include an external file into your embedded SQL program, use:
+  <sect2>
+   <title>Including files</title>
+
+   <para>
+    To include an external file into your embedded SQL program, use:
 <programlisting>
 EXEC SQL INCLUDE <replaceable>filename</replaceable>;
 </programlisting>
-   The embedded SQL preprocessor will look for a file named
-   <literal><replaceable>filename</replaceable>.h</literal>,
-   preprocess it, and include it in the resulting C output.  Thus,
-   embedded SQL statements in the included file are handled correctly.
-  </para>
+    The embedded SQL preprocessor will look for a file named
+    <literal><replaceable>filename</replaceable>.h</literal>,
+    preprocess it, and include it in the resulting C output.  Thus,
+    embedded SQL statements in the included file are handled correctly.
+   </para>
 
-  <para>
-   Note that this is <emphasis>not</emphasis> the same as
+   <para>
+    Note that this is <emphasis>not</emphasis> the same as
 <programlisting>
 #include &lt;<replaceable>filename</replaceable>.h&gt;
 </programlisting>
-   because this file would not be subject to SQL command preprocessing.
-   Naturally, you can continue to use the C
-   <literal>#include</literal> directive to include other header
-   files.
-  </para>
-
-  <note>
-   <para>
-    The include file name is case-sensitive, even though the rest of
-    the <literal>EXEC SQL INCLUDE</literal> command follows the normal
-    SQL case-sensitivity rules.
+    because this file would not be subject to SQL command preprocessing.
+    Naturally, you can continue to use the C
+    <literal>#include</literal> directive to include other header
+    files.
    </para>
-  </note>
- </sect1>
 
- <sect1 id="ecpg-process">
+   <note>
+    <para>
+     The include file name is case-sensitive, even though the rest of
+     the <literal>EXEC SQL INCLUDE</literal> command follows the normal
+     SQL case-sensitivity rules.
+    </para>
+   </note>
+  </sect2>
+
+  <sect2>
+   <title>The #define and #undef directives</title>
+   <para>
+    Similar to the directive <literal>#define</literal> that is known from C,
+    embedded SQL has a similar concept:
+<programlisting>
+EXEC SQL DEFINE <replaceable>name</>;
+EXEC SQL DEFINE <replaceable>name</> <replaceable>value</>;
+</programlisting>
+    So you can define a name:
+<programlisting>
+EXEC SQL DEFINE HAVE_FEATURE;
+</programlisting>
+    And you can also define constants:
+<programlisting>
+EXEC SQL DEFINE MYNUMBER 12;
+EXEC SQL DEFINE MYSTRING 'abc';
+</programlisting>
+    Use <literal>undef</> to remove a previous definition:
+<programlisting>
+EXEC SQL UNDEF MYNUMBER;
+</programlisting>
+   </para>
+
+   <para>
+    Of course you can continue to use the C versions <literal>#define</literal>
+    and <literal>#undef</literal> in your embedded SQL program. The difference
+    is where your defined values get evaluated. If you use <literal>EXEC SQL
+    DEFINE</> then the ecpg preprocessor evaluates the defines and substitutes
+    the values. For example if you write:
+<programlisting>
+EXEC SQL DEFINE MYNUMBER 12;
+...
+EXEC SQL UPDATE Tbl SET col = MYNUMBER;
+</programlisting>
+    then ecpg will already do the substitution and your C compiler will never
+    see any name or identifier <literal>MYNUMBER</>. Note that you can not use
+    <literal>#define</literal> for a constant that you are going to use in an
+    embedded SQL query because in this case the embedded SQL precompiler is not
+    able to see this declaration.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>ifdef, ifndef, else, elif and endif directives</title>
+   <para>
+   You can use the following directives to compile code sections conditionally:
+
+   <variablelist>
+    <varlistentry>
+     <term><literal>EXEC SQL ifdef <replaceable>name</>;</literal></term>
+     <listitem>
+     <para>
+      Checks a <replaceable>name</> and processes subsequent lines if
+      <replaceable>name</> has been created with <literal>EXEC SQL define
+      <replaceable>name</></literal>.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>EXEC SQL ifndef <replaceable>name</>;</literal></term>
+     <listitem>
+     <para>
+      Checks a <replaceable>name</> and processes subsequent lines if
+      <replaceable>name</> has <emphasis>not</emphasis> been created with
+      <literal>EXEC SQL define <replaceable>name</></literal>.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>EXEC SQL else;</literal></term>
+     <listitem>
+     <para>
+      Starts processing an alternative section to a section introduced by
+      either <literal>EXEC SQL ifdef <replaceable>name</></literal> or
+      <literal>EXEC SQL ifndef <replaceable>name</></literal>.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>EXEC SQL elif <replaceable>name</>;</literal></term>
+     <listitem>
+     <para>
+      Checks <replaceable>name</> and starts an alternative section if
+      <replaceable>name</> has been created with <literal>EXEC SQL define
+      <replaceable>name</></literal>.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>EXEC SQL endif;</literal></term>
+     <listitem>
+     <para>
+      Ends an alternative section.
+     </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   <para>
+    Example:
+<programlisting>
+   exec sql ifndef TZVAR;
+   exec sql SET TIMEZONE TO 'GMT';
+   exec sql elif TZNAME;
+   exec sql SET TIMEZONE TO TZNAME;
+   exec sql else;
+   exec sql SET TIMEZONE TO TZVAR;
+   exec sql endif;
+</programlisting>
+   </para>
+
+  </sect2>
+ </sect1>
+ 
+  <sect1 id="ecpg-process">
   <title>Processing Embedded SQL Programs</title>
 
   <para>
