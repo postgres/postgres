@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.446 2006/09/20 22:48:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.447 2006/09/21 03:12:58 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -37,16 +37,16 @@ For new features, add links to the documentation sections.
  
     <para>
      This release adds many improvements to commands and database
-     facilities that were requested by users.  Rather than adding a
-     few new features, this release makes many features from previous
-     releases easier to use.  For example, it is now much easier to
-     create standby point-in-time-recovery (PITR) servers.  Many
+     facilities that were requested by users.  Rather than adding
+     a few new features, this release makes many features from
+     previous releases easier to use.  For example, there are now
+     additional controls for continuous archiving.  Many
      performance bottlenecks have been eliminated, allowing more
-     functionality to be enabled by default.  Various additions will
-     make porting from other databases easier.  The changes in this
-     release continue the <productname>PostgreSQL</> tradition of
-     being not only the most advanced open source database, but also
-     the easiest to use.
+     functionality to be enabled by default.  Various additions
+     will make porting from other databases easier.  The changes
+     in this release continue the <productname>PostgreSQL</>
+     tradition of being not only the most advanced open source
+     database, but also the easiest to use.
     </para>
 
    </sect2>
@@ -489,21 +489,21 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow a forced switch to a new xlog file (Simon Riggs, Tom)
+        Allow a forced switch to a new xlog file (Simon, Tom)
        </para>
 
        <para>
-        This is valuable for keeping <acronym>PITR</> standby
-        servers in sync with the master.  xlog file switching also
-        happens automatically during <function>pg_stop_backup()</>.
-        This ensures that <acronym>PITR</> servers have all xlog
+        This is valuable for keeping continuous archiving servers
+        in sync with the master.  xlog file switching also happens
+        automatically during <function>pg_stop_backup()</>.  This
+        ensures that continuous archiving servers have all xlog
         files needed for recovery.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <acronym>WAL</> informational functions (Simon Riggs)
+        Add <acronym>WAL</> informational functions (Simon)
        </para>
 
        <para>
@@ -517,27 +517,26 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Allow <acronym>WAL</> replay to be restored quicker in case
-        of a crash (Simon Riggs)
+        of a crash (Simon)
        </para>
 
        <para>
         The server now does periodic checkpoints during <acronym>WAL</>
         recovery, so if there is a crash, future <acronym>WAL</>
         recovery is shortened.  This also eliminates the need for
-        <acronym>PITR</> standby servers to replay the entire log
-        since the base backup if they crash.
+        continuous archive servers to replay the entire log since the
+        base backup if they crash.
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add <varname>archive_timeout</> to force xlog file switches
-        at a given interval (Simon Riggs)
+        at a given interval (Simon)
        </para>
 
        <para>
-        This enforces a maximum delay for <acronym>PITR</> standby
-        servers.
+        This enforces a maximum delay for continuous archive servers.
        </para>
       </listitem>
 
