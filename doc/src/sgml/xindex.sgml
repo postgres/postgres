@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.50 2006/09/21 15:03:53 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.51 2006/09/21 15:09:38 teodor Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -822,11 +822,12 @@ CREATE OPERATOR CLASS polygon_ops
         STORAGE box;
 </programlisting>
 
-   At present, only the GiST index method supports a
+   At present, only the GiST and GIN index method supports a
    <literal>STORAGE</> type that's different from the column data type.
    The GiST <literal>compress</> and <literal>decompress</> support
    routines must deal with data-type conversion when <literal>STORAGE</>
-   is used.
+   is used. Functions named <literal>extractValue</> and <literal>extractQuery</>
+   do conversation into internally used types for GIN.
   </para>
  </sect2>
 
