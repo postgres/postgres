@@ -1,7 +1,7 @@
 /*
  * txtquery io
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.11 2006/03/11 04:38:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.12 2006/09/22 21:39:57 tgl Exp $
  */
 
 #include "ltree.h"
@@ -81,7 +81,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 					*lenval = 1;
 					*flag = 0;
 				}
-				else if (!isspace((unsigned int) *(state->buf)))
+				else if (!isspace((unsigned char) *(state->buf)))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("operand syntax error")));

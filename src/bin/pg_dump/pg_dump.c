@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.447 2006/08/21 00:57:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.448 2006/09/22 21:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,10 +367,10 @@ main(int argc, char **argv)
 
 					new_obj_name->next = NULL;
 					new_obj_name->name = strdup(optarg);
-					new_obj_name->is_include = islower(c) ? true : false;
+					new_obj_name->is_include = islower((unsigned char) c) ? true : false;
 
 					/* add new entry to the proper list */
-					if (tolower(c) == 'n')
+					if (tolower((unsigned char) c) == 'n')
 					{
 						if (!schemaList_tail)
 							schemaList_tail = schemaList = new_obj_name;

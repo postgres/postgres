@@ -1,6 +1,6 @@
 /* Both POSIX and CRC32 checksums */
 
-/* $PostgreSQL: pgsql/contrib/ltree/crc32.c,v 1.6 2006/03/11 04:38:29 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/ltree/crc32.c,v 1.7 2006/09/22 21:39:57 tgl Exp $ */
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -8,7 +8,7 @@
 
 #ifdef LOWER_NODE
 #include <ctype.h>
-#define TOLOWER(x)	tolower(x)
+#define TOLOWER(x)	tolower((unsigned char) (x))
 #else
 #define TOLOWER(x)	(x)
 #endif

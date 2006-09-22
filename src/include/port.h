@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.98 2006/09/11 20:10:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.99 2006/09/22 21:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ extern void get_parent_directory(char *path);
 ( \
 	((filename)[0] == '/') || \
 	(filename)[0] == '\\' || \
-	(isalpha((filename)[0]) && (filename)[1] == ':' && \
+	(isalpha((unsigned char) ((filename)[0])) && (filename)[1] == ':' && \
 	((filename)[2] == '\\' || (filename)[2] == '/')) \
 )
 #endif

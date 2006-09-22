@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.154 2006/07/14 14:52:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.155 2006/09/22 21:39:57 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1090,8 +1090,8 @@ psql_completion(char *text, int start, int end)
 	/* Complete "AS ON <sth with a 'T' :)>" with a "TO" */
 	else if (pg_strcasecmp(prev3_wd, "AS") == 0 &&
 			 pg_strcasecmp(prev2_wd, "ON") == 0 &&
-			 (toupper((unsigned char) prev_wd[4]) == 'T' ||
-			  toupper((unsigned char) prev_wd[5]) == 'T'))
+			 (pg_toupper((unsigned char) prev_wd[4]) == 'T' ||
+			  pg_toupper((unsigned char) prev_wd[5]) == 'T'))
 		COMPLETE_WITH_CONST("TO");
 	/* Complete "AS ON <sth> TO" with a table name */
 	else if (pg_strcasecmp(prev4_wd, "AS") == 0 &&

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.149 2006/08/18 15:59:35 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.150 2006/09/22 21:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ static void addlit(char *ytext, int yleng);
 static void addlitchar (unsigned char);
 static void parse_include (void);
 static void check_escape_warning(void);
+static bool ecpg_isspace(char ch);
 
 char *token_start;
 int state_before;
@@ -245,6 +246,9 @@ param			\${integer}
  * did not end with a newline.
  *
  * XXX perhaps \f (formfeed) should be treated as a newline as well?
+ *
+ * XXX if you change the set of whitespace characters, fix ecpg_isspace()
+ * to agree.
  */
 
 ccomment		"//".*\n
@@ -872,7 +876,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 					 *	contains at least one non-space character plus the ";"
 					 */
 					for (i = strlen(yytext)-2;
-						 i > 0 && isspace((unsigned char) yytext[i]);
+						 i > 0 && ecpg_isspace(yytext[i]);
 						 i-- )
 						;
 					yytext[i+1] = '\0';
@@ -1060,7 +1064,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						 *	contains at least one non-space character plus the ";"
 						 */
 						for (i = strlen(yytext)-2;
-							 i > 0 && isspace((unsigned char) yytext[i]);
+							 i > 0 && ecpg_isspace(yytext[i]);
 							 i-- )
 							;
 						yytext[i+1] = '\0';
@@ -1252,7 +1256,7 @@ parse_include(void)
 	 * yytext contains at least one non-space character plus the ";" 
 	 */
   	for (i = strlen(yytext)-2;
-		 i > 0 && isspace((unsigned char) yytext[i]);
+		 i > 0 && ecpg_isspace(yytext[i]);
 		 i--)
 		;
 
@@ -1327,4 +1331,19 @@ check_escape_warning(void)
 	if (warn_on_first_escape && escape_string_warning)
 	       	mmerror (PARSE_ERROR, ET_WARNING, "nonstandard use of escape in a string literal");
 	warn_on_first_escape = false;   /* warn only once per string */
+}
+
+/*
+ * ecpg_isspace() --- return TRUE if flex scanner considers char whitespace
+ */
+static bool
+ecpg_isspace(char ch)
+{
+	if (ch == ' ' ||
+		ch == '\t' ||
+		ch == '\n' ||
+		ch == '\r' ||
+		ch == '\f')
+		return true;
+	return false;
 }

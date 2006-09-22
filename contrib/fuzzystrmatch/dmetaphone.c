@@ -1,7 +1,7 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.9 2006/07/16 02:44:00 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.10 2006/09/22 21:39:56 tgl Exp $
  *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
@@ -318,7 +318,7 @@ MakeUpper(metastring * s)
 	char	   *i;
 
 	for (i = s->str; *i; i++)
-		*i = toupper(*i);
+		*i = toupper((unsigned char) *i);
 }
 
 

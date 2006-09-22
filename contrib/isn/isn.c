@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.2 2006/09/10 20:45:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.3 2006/09/22 21:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,13 +72,16 @@ bool check_table(const char *(*TABLE)[2], const unsigned TABLE_index[10][2])
 		aux2 = TABLE[i][1];
 
 		/* must always start with a digit: */
-		if(!isdigit(*aux1) || !isdigit(*aux2)) goto invalidtable;
+		if (!isdigit((unsigned char) *aux1) || !isdigit((unsigned char) *aux2))
+			goto invalidtable;
 		a = *aux1 - '0';
 		b = *aux2 - '0';
 
 		/* must always have the same format and length: */
 		while(*aux1 && *aux2) {
-			if(!(isdigit(*aux1) && isdigit(*aux2)) && (*aux1!=*aux2 || *aux1 != '-')) 
+			if (!(isdigit((unsigned char) *aux1) &&
+				  isdigit((unsigned char) *aux2)) &&
+				(*aux1 != *aux2 || *aux1 != '-')) 
 				goto invalidtable;
 			aux1++;
 			aux2++;
@@ -124,7 +127,7 @@ unsigned dehyphenate(char *bufO, char *bufI)
 {
 	unsigned ret = 0;
 	while(*bufI) {
-		if(isdigit(*bufI)) {
+		if(isdigit((unsigned char) *bufI)) {
 			*bufO++ = *bufI;
 			ret++;
 		}
@@ -183,7 +186,7 @@ unsigned hyphenate(char *bufO, char *bufI, const char *(*TABLE)[2], const unsign
 
 			firstdig++, ean_aux1++, ean_aux2++;
 			if(!(*ean_aux1 && *ean_aux2 && *firstdig)) break;
-			if(!isdigit(*ean_aux1)) ean_aux1++, ean_aux2++;
+			if(!isdigit((unsigned char) *ean_aux1)) ean_aux1++, ean_aux2++;
 		} else {
 			/* check in what direction we should go and move the pointer accordingly */
 			if(*firstdig < *ean_aux1 && !ean_in1) upper = search;
@@ -227,7 +230,7 @@ unsigned weight_checkdig(char *isn, unsigned size)
 {
 	unsigned weight = 0;
 	while(*isn && size>1) {
-		if(isdigit(*isn)) {
+		if(isdigit((unsigned char) *isn)) {
 			weight += size-- * (*isn - '0');
 		}
 		isn++;
@@ -254,7 +257,7 @@ unsigned checkdig(char *num, unsigned size)
 		pos = 1;
 	}
 	while(*num && size>1) {
-		if(isdigit(*num)) {
+		if(isdigit((unsigned char) *num)) {
 			if(pos++%2) check3 += *num - '0';
 			else check += *num - '0';
 			size--;
@@ -366,7 +369,7 @@ void ean2ISBN(char *isn)
 	hyphenate(isn, isn+4, NULL, NULL);
 	check = weight_checkdig(isn, 10);
 	aux = strchr(isn, '\0');
-	while(!isdigit(*--aux));
+	while(!isdigit((unsigned char) *--aux));
 	if(check == 10) *aux = 'X';
 	else *aux = check + '0';
 }
@@ -411,7 +414,7 @@ ean13 str2ean(const char *num)
 {
 	ean13 ean = 0;	/* current ean */
 	while(*num) {
-		if(isdigit(*num)) ean = 10 * ean + (*num - '0');
+		if(isdigit((unsigned char) *num)) ean = 10 * ean + (*num - '0');
 		num++;
 	}
     return (ean<<1); /* also give room to a flag */
@@ -570,7 +573,7 @@ bool string2ean(const char *str, bool errorOK, ean13 *result,
 	/* recognize and validate the number: */
 	while(*aux2 && length <= 13) {
 		last = (*(aux2+1) == '!' || *(aux2+1) == '\0'); /* is the last character */
-		digit = (isdigit(*aux2)!=0); /* is current character a digit? */
+		digit = (isdigit((unsigned char) *aux2)!=0); /* is current character a digit? */
 		if(*aux2=='?' && last) /* automagically calculate check digit if it's '?' */
 			magic = digit = true;
 		if(length == 0 &&  (*aux2=='M' || *aux2=='m')) {
@@ -583,13 +586,13 @@ bool string2ean(const char *str, bool errorOK, ean13 *result,
 			/* only ISSN can be here */
 			if(type != INVALID) goto eaninvalid;
 			type = ISSN;
-			*aux1++ = toupper(*aux2);
+			*aux1++ = toupper((unsigned char) *aux2);
 			length++;
 		} else if(length == 9 && (digit || *aux2=='X' || *aux2=='x') && last) {
 			/* only ISBN and ISMN can be here */
 			if(type != INVALID && type != ISMN) goto eaninvalid;
 			if(type == INVALID) type = ISBN; /* ISMN must start with 'M' */
-			*aux1++ = toupper(*aux2);
+			*aux1++ = toupper((unsigned char) *aux2);
 			length++;
 		} else if(length == 11 && digit && last) {
 			/* only UPC can be here */

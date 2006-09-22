@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.119 2006/07/14 14:52:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.120 2006/09/22 21:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ pg_an_to_ln(char *aname)
 		*p = '\0';
 #ifdef WIN32
 	for (p = aname; *p; p++)
-		*p = pg_tolower(*p);
+		*p = pg_tolower((unsigned char) *p);
 #endif
 
 	return aname;

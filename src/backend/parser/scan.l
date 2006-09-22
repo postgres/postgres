@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.137 2006/09/03 03:19:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.138 2006/09/22 21:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,9 @@ static unsigned char unescape_single_char(unsigned char c);
  * did not end with a newline.
  *
  * XXX perhaps \f (formfeed) should be treated as a newline as well?
+ *
+ * XXX if you change the set of whitespace characters, fix scanner_isspace()
+ * to agree, and see also the plpgsql lexer.
  */
 
 space			[ \t\n\r\f]

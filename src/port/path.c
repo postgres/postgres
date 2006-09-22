@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.67 2006/09/11 20:10:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.68 2006/09/22 21:39:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ skip_drive(const char *path)
 		while (*path && !IS_DIR_SEP(*path))
 			path++;
 	}
-	else if (isalpha(path[0]) && path[1] == ':')
+	else if (isalpha((unsigned char) path[0]) && path[1] == ':')
 	{
 		path += 2;
 	}

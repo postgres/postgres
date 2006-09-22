@@ -51,7 +51,7 @@ get_val( HSParser *state, bool ignoreeq, bool *escaped ) {
 				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), (int4)(state->ptr-state->begin));
 			} else if ( *(state->ptr) == '\\' ) {
 				st = GV_WAITESCIN;
-			} else if ( !isspace(*(state->ptr)) ) {
+			} else if ( !isspace((unsigned char) *(state->ptr)) ) {
 				*(state->cur) = *(state->ptr);
 				state->cur++;
 				st = GV_INVAL;
@@ -65,7 +65,7 @@ get_val( HSParser *state, bool ignoreeq, bool *escaped ) {
 			} else if ( *(state->ptr) == ',' && ignoreeq ) {
 				state->ptr--;
 				return true;
-			} else if ( isspace(*(state->ptr)) ) {
+			} else if ( isspace((unsigned char) *(state->ptr)) ) {
 				return true;
 			} else if ( *(state->ptr) == '\0' ) {
 				state->ptr--;
@@ -146,7 +146,7 @@ parse_hstore( HSParser *state ) {
 				st = WGT;
 			} else if ( *(state->ptr) == '\0' ) {
 				elog(ERROR,"Unexpectd end of string");
-			} else if (!isspace(*(state->ptr))) {
+			} else if (!isspace((unsigned char) *(state->ptr))) {
 				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), (int4)(state->ptr-state->begin));
 			}
 		} else if ( st == WGT ) {
@@ -177,7 +177,7 @@ parse_hstore( HSParser *state ) {
 				st = WKEY;
 			} else if ( *(state->ptr) == '\0' ) {
 				return;
-			} else if (!isspace(*(state->ptr))) {
+			} else if (!isspace((unsigned char) *(state->ptr))) {
 				elog(ERROR,"Syntax error near '%c' at postion %d", *(state->ptr), (int4)(state->ptr-state->begin));
 			}
 		} else 
