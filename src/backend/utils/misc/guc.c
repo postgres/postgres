@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.350 2006/09/02 23:12:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.351 2006/09/22 17:41:21 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1404,7 +1404,8 @@ static struct config_int ConfigureNamesInt[] =
 						 "frequently than this (in seconds)."),
 			gettext_noop("Write a message to the server log if checkpoints "
 			"caused by the filling of checkpoint segment files happens more "
-						 "frequently than this number of seconds. Zero turns off the warning.")
+						 "frequently than this number of seconds. Zero turns off the warning."),
+			GUC_UNIT_S
 		},
 		&CheckPointWarning,
 		30, 0, INT_MAX, NULL, NULL

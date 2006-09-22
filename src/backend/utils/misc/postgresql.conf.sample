@@ -69,7 +69,7 @@
 
 # - Security & Authentication -
 
-#authentication_timeout = 60		# 1-600, in seconds
+#authentication_timeout = 1min		# 1s-600s
 #ssl = off				# (change requires restart)
 #password_encryption = on
 #db_user_namespace = off
@@ -98,16 +98,16 @@
 
 # - Memory -
 
-#shared_buffers = 32000kB		# min 16 or max_connections*2, 8kB each
+#shared_buffers = 32000kB		# min 128kB or max_connections*16kB
 					# (change requires restart)
-#temp_buffers = 1000			# min 100, 8kB each
+#temp_buffers = 8000kB			# min 800kB
 #max_prepared_transactions = 5		# can be 0 or more
 					# (change requires restart)
 # Note: increasing max_prepared_transactions costs ~600 bytes of shared memory
 # per transaction slot, plus lock space (see max_locks_per_transaction).
-#work_mem = 1024			# min 64, size in kB
-#maintenance_work_mem = 16384		# min 1024, size in kB
-#max_stack_depth = 2048			# min 100, size in kB
+#work_mem = 1MB				# min 64kB
+#maintenance_work_mem = 16MB		# min 1MB
+#max_stack_depth = 2MB			# min 100kB
 
 # - Free Space Map -
 
@@ -132,7 +132,7 @@
 
 # - Background writer -
 
-#bgwriter_delay = 200			# 10-10000 milliseconds between rounds
+#bgwriter_delay = 200ms			# 10-10000ms between rounds
 #bgwriter_lru_percent = 1.0		# 0-100% of LRU buffers scanned/round
 #bgwriter_lru_maxpages = 5		# 0-1000 buffers max written/round
 #bgwriter_all_percent = 0.333		# 0-100% of all buffers scanned/round
@@ -162,8 +162,8 @@
 # - Checkpoints -
 
 #checkpoint_segments = 3		# in logfile segments, min 1, 16MB each
-#checkpoint_timeout = 300		# range 30-3600, in seconds
-#checkpoint_warning = 30		# in seconds, 0 is off
+#checkpoint_timeout = 5min		# range 30s-1h
+#checkpoint_warning = 30s		# 0 is off
 
 # - Archiving -
 
@@ -195,7 +195,7 @@
 #cpu_tuple_cost = 0.01			# same scale as above
 #cpu_index_tuple_cost = 0.005		# same scale as above
 #cpu_operator_cost = 0.0025		# same scale as above
-#effective_cache_size = 1000		# typically 8kB each
+#effective_cache_size = 8000kB
 
 # - Genetic Query Optimizer -
 
@@ -243,11 +243,11 @@
 					# or size-driven rotation. Default is
 					# off, meaning append to existing files
 					# in all cases.
-#log_rotation_age = 1440		# Automatic rotation of logfiles will 
-					# happen after so many minutes.  0 to 
+#log_rotation_age = 1d			# Automatic rotation of logfiles will 
+					# happen after that time.  0 to 
 					# disable.
-#log_rotation_size = 10240		# Automatic rotation of logfiles will 
-					# happen after so many kilobytes of log
+#log_rotation_size = 10MB		# Automatic rotation of logfiles will 
+					# happen after that much log
 					# output.  0 to disable.
 
 # These are relevant when logging to syslog:
@@ -297,7 +297,7 @@
 					#   panic(off)
 
 #log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
-					# and their durations, in milliseconds.
+					# and their durations.
 
 #silent_mode = off			# DO NOT USE without syslog or 
 					# redirect_stderr
@@ -362,7 +362,7 @@
 #---------------------------------------------------------------------------
 
 #autovacuum = off			# enable autovacuum subprocess?
-#autovacuum_naptime = 60		# time between autovacuum runs, in secs
+#autovacuum_naptime = 1min		# time between autovacuum runs
 #autovacuum_vacuum_threshold = 500	# min # of tuple updates before
 					# vacuum
 #autovacuum_analyze_threshold = 250	# min # of tuple updates before 
@@ -372,10 +372,10 @@
 #autovacuum_analyze_scale_factor = 0.1	# fraction of rel size before 
 					# analyze
 #autovacuum_vacuum_cost_delay = -1	# default vacuum cost delay for 
-					# autovac, -1 means use 
+					# autovacuum, -1 means use 
 					# vacuum_cost_delay
 #autovacuum_vacuum_cost_limit = -1	# default vacuum cost limit for 
-					# autovac, -1 means use
+					# autovacuum, -1 means use
 					# vacuum_cost_limit
 
 
@@ -391,7 +391,7 @@
 #check_function_bodies = on
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
-#statement_timeout = 0			# 0 is disabled, in milliseconds
+#statement_timeout = 0			# 0 is disabled
 
 # - Locale and Formatting -
 
@@ -427,7 +427,7 @@
 # LOCK MANAGEMENT
 #---------------------------------------------------------------------------
 
-#deadlock_timeout = 1000		# in milliseconds
+#deadlock_timeout = 1s
 #max_locks_per_transaction = 64		# min 10
 					# (change requires restart)
 # Note: each lock table slot uses ~270 bytes of shared memory, and there are
