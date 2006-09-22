@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.450 2006/09/22 03:04:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.451 2006/09/22 15:29:04 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -11,9 +11,7 @@ PostgreSQL                      <productname>
 pg_[A-Za-z0-9_]                 <application>
 [A-Z][A-Z]                      <type>, <envar>, <literal>
 non-ascii                       convert to & escapes
-                                  http://www.mountaindragon.com/html/iso.htm
-                                encode multibytes as UTF8
-                                  http://www.pemberley.com/janeinfo/latin1.html#latexta
+                                  http://www.w3.org/TR/html4/sgml/entities.html
 wrap long lines
 
 For new features, add links to the documentation sections.
@@ -55,19 +53,19 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	New FILLFACTOR support for tables and indexes
+        New FILLFACTOR support for tables and indexes
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Many query optimization improvements
+        Many query optimization improvements
        </para>
       </listitem>
 
       <listitem>
        <para>
-	More efficient vacuuming
+        More efficient vacuuming
        </para>
       </listitem>
 
@@ -86,7 +84,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Query enhancements including RETURNING values, multi-VALUES,
-	support, and self-joins for DELETE
+        support, and self-joins for DELETE
        </para>
       </listitem>
 
@@ -110,7 +108,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Array and aggregate improvements
+        Array and aggregate improvements
        </para>
       </listitem>
 
@@ -1173,7 +1171,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Have the <command>COPY</> command return a command tag that
-        includes the number of rows copied (Volkan Yaz&#305;c&#305;)
+        includes the number of rows copied (Volkan Yazici)
        </para>
       </listitem>
 
@@ -1587,7 +1585,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Allow <literal>\c</> to connect to a new host and port
-        number (David, Volkan Yaz&#305;c&#305;)
+        number (David, Volkan Yazici)
        </para>
       </listitem>
 
@@ -1752,7 +1750,7 @@ For new features, add links to the documentation sections.
         Add <function>PQdescribePrepared()</>,
         <function>PQdescribePortal()</>, and related functions
         return information about previously prepared statements
-        and open cursors (Volkan Yaz&#305;c&#305;)
+        and open cursors (Volkan Yazici)
        </para>
       </listitem>
 
