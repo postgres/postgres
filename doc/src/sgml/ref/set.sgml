@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.89 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.90 2006/09/22 16:20:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -207,9 +207,8 @@ SELECT setseed(<replaceable>value</replaceable>);
         </varlistentry>
        </variablelist>
 
-       See <xref linkend="datatype-datetime"> for more information
-       about time zones.  Also, <xref linkend="datetime-appendix">
-       has a list of the recognized names for time zones.
+       See <xref linkend="datatype-timezones"> for more information
+       about time zones.
       </para>
      </listitem>
     </varlistentry>

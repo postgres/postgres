@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.175 2006/09/16 16:18:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.176 2006/09/22 16:20:00 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1706,8 +1706,8 @@ SELECT b, char_length(b) FROM test2;
       </table>
 
      <para>
-     Refer to <xref linkend="datetime-appendix"> for a list of
-     time zone names that are recognized for input.
+     Refer to <xref linkend="datatype-timezones"> for more information on how
+     to specify time zones.
     </para>
     </sect3>
 
@@ -2152,6 +2152,83 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
+     <productname>PostgreSQL</productname> allows you to specify time zones in
+     three different forms:
+     <itemizedlist>
+      <listitem>
+       <para>
+        A full time zone name, for example <literal>America/New_York</>.
+        The recognized time zone names are listed in the
+        <literal>pg_timezone_names</literal> view (see <xref
+        linkend="view-pg-timezone-names">).
+        <productname>PostgreSQL</productname> uses the widely-used
+        <literal>zic</> time zone data for this purpose, so the same
+        names are also recognized by much other software.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        A time zone abbreviation, for example <literal>PST</>.  Such a
+        specification merely defines a particular offset from UTC, in
+        contrast to full time zone names which may imply a set of daylight
+        savings transition-date rules as well.  The recognized abbreviations
+        are listed in the <literal>pg_timezone_abbrevs</> view (see <xref
+        linkend="view-pg-timezone-abbrevs">).  You cannot set the
+        configuration parameter <xref linkend="guc-timezone"> using a time
+        zone abbreviation, but you can use abbreviations in
+        date/time input values and with the <literal>AT TIME ZONE</>
+        operator.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        In addition to the timezone names and abbreviations,
+        <productname>PostgreSQL</productname> will accept time zone
+        specifications of the form <replaceable>STD</><replaceable>offset</> or
+        <replaceable>STD</><replaceable>offset</><replaceable>DST</>, where
+        <replaceable>STD</> is a zone abbreviation, <replaceable>offset</> is a
+        numeric offset in hours west from UTC, and <replaceable>DST</> is an
+        optional daylight-savings zone abbreviation, assumed to stand for one
+        hour ahead of the given offset. For example, if <literal>EST5EDT</>
+        were not already a recognized zone name, it would be accepted and would
+        be functionally equivalent to USA East Coast time.  When a
+        daylight-savings zone name is present, it is assumed to be used
+        according to USA time zone rules, so this feature is of limited use
+        outside North America.  One should also be wary that this provision can
+        lead to silently accepting bogus input, since there is no check on the
+        reasonableness of the zone abbreviations.  For example, <literal>SET
+        TIMEZONE TO FOOBAR0</> will work, leaving the system effectively using
+        a rather peculiar abbreviation for GMT.
+       </para>
+      </listitem>
+     </itemizedlist>
+
+     There is a conceptual and practical difference between the abbreviations
+     and the full names: abbreviations always represent a fixed offset from
+     UTC, whereas most of the full names imply a local daylight-savings time
+     rule and so have two possible UTC offsets. That's why you always have to
+     specify a date if you want to use full time zone names in <type>timetz</>
+     values. This is also the reason why you should set <xref
+     linkend="guc-timezone"> to a full time zone name: this way,
+     <productname>PostgreSQL</productname>
+     will always know the correct UTC offset for your region.
+    </para>
+
+    <para>
+     Note that timezone names are <emphasis>not</> used for date/time output
+     &mdash; all supported output formats use numeric timezone displays to
+     avoid ambiguity.
+    </para>
+
+    <para>
+     Neither full names nor abbreviations are hard-wired into the server;
+     they are obtained from configuration files stored under
+     <filename>.../share/timezone/</> and <filename>.../share/timezonesets/</>
+     of the installation directory
+     (see <xref linkend="datetime-config-files">).
+    </para>
+
+    <para>
      The <xref linkend="guc-timezone"> configuration parameter can
      be set in the file <filename>postgresql.conf</>, or in any of the
      other standard ways described in <xref linkend="runtime-config">.
@@ -2191,12 +2268,6 @@ January 8 04:05:06 1999 PST
       </listitem>
      </itemizedlist>
     </para>
-
-   <para>
-    Refer to <xref linkend="datetime-appendix"> for a list of
-    available time zones.
-   </para>
-
    </sect2>
 
    <sect2 id="datatype-datetime-internals">
@@ -3424,10 +3495,9 @@ SELECT * FROM pg_attribute
     <listitem>
 
      <para>
-	Missing features include XQuery, SQL/XML syntax (ISO/IEC
-	9075-14), and an <acronym>XML</> data type optimized for
-	<acronym>XML</> storage.
-	
+      Missing features include XQuery, SQL/XML syntax (ISO/IEC
+      9075-14), and an <acronym>XML</> data type optimized for
+      <acronym>XML</> storage.
      </para>
     </listitem>
    </varlistentry>

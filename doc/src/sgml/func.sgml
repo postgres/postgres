@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.339 2006/09/20 23:43:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.340 2006/09/22 16:20:00 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -6095,9 +6095,8 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
     In these expressions, the desired time zone <replaceable>zone</> can be
     specified either as a text string (e.g., <literal>'PST'</literal>)
     or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
-    In the text case, the available zone names are those shown in either
-    <xref linkend="datetime-timezone-full-names-table"> or
-    <xref linkend="datetime-timezone-input-table">.
+    In the text case, a time zone name may be specified in any of the ways
+    described in <xref linkend="datatype-timezones">.
    </para>
 
    <para>
