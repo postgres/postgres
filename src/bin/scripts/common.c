@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.20 2006/03/05 15:58:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.21 2006/09/22 18:50:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,18 +198,29 @@ executeCommand(PGconn *conn, const char *query,
  * Check yes/no answer in a localized way.	1=yes, 0=no, -1=neither.
  */
 
-/* translator: Make sure the (y/n) prompts match the translation of this. */
+/* translator: abbreviation for "yes" */
 #define PG_YESLETTER gettext_noop("y")
-/* translator: Make sure the (y/n) prompts match the translation of this. */
+/* translator: abbreviation for "no" */
 #define PG_NOLETTER gettext_noop("n")
 
-int
-check_yesno_response(const char *string)
+bool
+yesno_prompt(const char *question)
 {
-	if (strcmp(string, _(PG_YESLETTER)) == 0)
-		return 1;
-	else if (strcmp(string, _(PG_NOLETTER)) == 0)
-		return 0;
-	else
-		return -1;
+	static char prompt[128];
+
+	for (;;)
+	{
+		char *resp;
+
+		/* translator: This is a question followed by the translated options for "yes" and "no". */
+		snprintf(prompt, sizeof(prompt), _("%s (%s/%s) "), _(question), _(PG_YESLETTER), _(PG_NOLETTER));
+		resp = simple_prompt(prompt, 1, true);
+
+		if (strcmp(resp, _(PG_YESLETTER)) == 0)
+			return true;
+		else if (strcmp(resp, _(PG_NOLETTER)) == 0)
+			return false;
+
+		printf(_("Please answer \"%s\" or \"%s\".\n"), _(PG_YESLETTER), _(PG_NOLETTER));
+	}
 }

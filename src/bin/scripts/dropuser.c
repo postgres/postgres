@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.18 2006/05/29 19:52:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.19 2006/09/22 18:50:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,11 +105,8 @@ main(int argc, char *argv[])
 
 	if (interactive)
 	{
-		char	   *reply;
-
 		printf(_("Role \"%s\" will be permanently removed.\n"), dropuser);
-		reply = simple_prompt("Are you sure? (y/n) ", 1, true);
-		if (check_yesno_response(reply) != 1)
+		if (!yesno_prompt("Are you sure?"))
 			exit(0);
 	}
 

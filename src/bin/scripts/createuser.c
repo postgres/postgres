@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.32 2006/06/01 00:15:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.33 2006/09/22 18:50:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,10 +192,7 @@ main(int argc, char *argv[])
 
 	if (superuser == 0)
 	{
-		char	   *reply;
-
-		reply = simple_prompt("Shall the new role be a superuser? (y/n) ", 1, true);
-		if (check_yesno_response(reply) == 1)
+		if (yesno_prompt("Shall the new role be a superuser?"))
 			superuser = TRI_YES;
 		else
 			superuser = TRI_NO;
@@ -210,10 +207,7 @@ main(int argc, char *argv[])
 
 	if (createdb == 0)
 	{
-		char	   *reply;
-
-		reply = simple_prompt("Shall the new role be allowed to create databases? (y/n) ", 1, true);
-		if (check_yesno_response(reply) == 1)
+		if (yesno_prompt("Shall the new role be allowed to create databases?"))
 			createdb = TRI_YES;
 		else
 			createdb = TRI_NO;
@@ -221,10 +215,7 @@ main(int argc, char *argv[])
 
 	if (createrole == 0)
 	{
-		char	   *reply;
-
-		reply = simple_prompt("Shall the new role be allowed to create more new roles? (y/n) ", 1, true);
-		if (check_yesno_response(reply) == 1)
+		if (yesno_prompt("Shall the new role be allowed to create more new roles?"))
 			createrole = TRI_YES;
 		else
 			createrole = TRI_NO;
