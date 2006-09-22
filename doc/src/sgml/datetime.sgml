@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.53 2006/09/22 16:20:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.54 2006/09/22 16:35:55 tgl Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -354,15 +354,15 @@
     longer the case however and this key word will likely be dropped in
     a future release.
    </para>
+  </sect1>
+
+  <sect1 id="datetime-config-files">
+  <title>Date/Time Configuration Files</title>
 
    <indexterm>
     <primary>time zone</primary>
     <secondary>input abbreviations</secondary>
    </indexterm>
-  </sect1>
-
-  <sect1 id="datetime-config-files">
-  <title>Date/Time Configuration Files</title>
 
    <para>
     Since timezone abbreviations are not well standardized,
