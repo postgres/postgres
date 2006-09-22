@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.99 2006/09/18 22:40:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.100 2006/09/22 23:20:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,8 @@ typedef enum LockTagType
 	 * pg_description, but notice that we are constraining SUBID to 16 bits.
 	 * Also, we use DB OID = 0 for shared objects such as tablespaces.
 	 */
-	LOCKTAG_USERLOCK			/* advisory "user" locks */
+	LOCKTAG_USERLOCK,			/* reserved for old contrib/userlock code */
+	LOCKTAG_ADVISORY			/* advisory user locks */
 } LockTagType;
 
 /*
@@ -220,12 +221,12 @@ typedef struct LOCKTAG
 	 (locktag).locktag_type = LOCKTAG_OBJECT, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
-#define SET_LOCKTAG_USERLOCK(locktag,id1,id2,id3,id4) \
+#define SET_LOCKTAG_ADVISORY(locktag,id1,id2,id3,id4) \
 	((locktag).locktag_field1 = (id1), \
 	 (locktag).locktag_field2 = (id2), \
 	 (locktag).locktag_field3 = (id3), \
 	 (locktag).locktag_field4 = (id4), \
-	 (locktag).locktag_type = LOCKTAG_USERLOCK, \
+	 (locktag).locktag_type = LOCKTAG_ADVISORY, \
 	 (locktag).locktag_lockmethodid = USER_LOCKMETHOD)
 
 

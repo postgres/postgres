@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.87 2006/08/18 16:09:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.88 2006/09/22 23:20:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,6 +629,7 @@ LockTagIsTemp(const LOCKTAG *tag)
 			/* there are currently no non-table temp objects */
 			break;
 		case LOCKTAG_USERLOCK:
+		case LOCKTAG_ADVISORY:
 			/* assume these aren't temp */
 			break;
 	}

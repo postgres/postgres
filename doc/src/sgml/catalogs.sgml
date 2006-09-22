@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.133 2006/09/18 22:40:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.134 2006/09/22 23:20:13 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4890,8 +4890,9 @@
        <literal>page</>,
        <literal>tuple</>,
        <literal>transactionid</>,
-       <literal>object</>, or
-       <literal>userlock</>
+       <literal>object</>,
+       <literal>userlock</>, or
+       <literal>advisory</>
       </entry>
      </row>
      <row>
@@ -5029,14 +5030,15 @@
   </para>
 
   <para>
-   User-defined locks can be acquired on keys consisting of either a single
+   Advisory locks can be acquired on keys consisting of either a single
    bigint value or two integer values.  A bigint key is displayed with its
    high-order half in the <structfield>classid</> column, its low-order half
    in the <structfield>objid</> column, and <structfield>objsubid</> equal
    to 1.  Integer keys are displayed with the first key in the
    <structfield>classid</> column, the second key in the <structfield>objid</>
    column, and <structfield>objsubid</> equal to 2.  The actual meaning of
-   the keys is up to the user.
+   the keys is up to the user.  Advisory locks are local to each database,
+   so the <structfield>database</> column is meaningful for an advisory lock.
   </para>
 
   <para>

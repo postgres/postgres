@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.42 2006/09/18 22:40:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.43 2006/09/22 23:20:13 tgl Exp $
  *
  *	Interface:
  *
@@ -872,8 +872,16 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *lock)
 							 lock->locktag_field1);
 			break;
 		case LOCKTAG_USERLOCK:
+			/* reserved for old contrib code, now on pgfoundry */
 			appendStringInfo(buf,
-							 _("user lock [%u,%u,%u,%u]"),
+							 _("user lock [%u,%u,%u]"),
+							 lock->locktag_field1,
+							 lock->locktag_field2,
+							 lock->locktag_field3);
+			break;
+		case LOCKTAG_ADVISORY:
+			appendStringInfo(buf,
+							 _("advisory lock [%u,%u,%u,%u]"),
 							 lock->locktag_field1,
 							 lock->locktag_field2,
 							 lock->locktag_field3,

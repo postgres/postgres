@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.25 2006/09/18 22:40:37 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.26 2006/09/22 23:20:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@ static const char *const LockTagTypeNames[] = {
 	"tuple",
 	"transactionid",
 	"object",
-	"userlock"
+	"userlock",
+	"advisory"
 };
 
 /* Working status for pg_lock_status */
@@ -181,7 +182,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, ' ', sizeof(nulls));
 
-		if (lock->tag.locktag_type <= LOCKTAG_USERLOCK)
+		if (lock->tag.locktag_type <= LOCKTAG_ADVISORY)
 			locktypename = LockTagTypeNames[lock->tag.locktag_type];
 		else
 		{
@@ -238,6 +239,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				break;
 			case LOCKTAG_OBJECT:
 			case LOCKTAG_USERLOCK:
+			case LOCKTAG_ADVISORY:
 			default:			/* treat unknown locktags like OBJECT */
 				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
 				values[6] = ObjectIdGetDatum(lock->tag.locktag_field2);
@@ -270,7 +272,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 
 /*
- * Functions for manipulating USERLOCK locks
+ * Functions for manipulating advisory locks
  *
  * We make use of the locktag fields as follows:
  *
@@ -280,13 +282,13 @@ pg_lock_status(PG_FUNCTION_ARGS)
  *	field4: 1 if using an int8 key, 2 if using 2 int4 keys
  */
 #define SET_LOCKTAG_INT64(tag, key64) \
-	SET_LOCKTAG_USERLOCK(tag, \
+	SET_LOCKTAG_ADVISORY(tag, \
 						 MyDatabaseId, \
 						 (uint32) ((key64) >> 32), \
 						 (uint32) (key64), \
 						 1)
 #define SET_LOCKTAG_INT32(tag, key1, key2) \
-	SET_LOCKTAG_USERLOCK(tag, MyDatabaseId, key1, key2, 2)
+	SET_LOCKTAG_ADVISORY(tag, MyDatabaseId, key1, key2, 2)
 
 /*
  * pg_advisory_lock(int8) - acquire exclusive lock on an int8 key
@@ -511,7 +513,7 @@ pg_advisory_unlock_shared_int4(PG_FUNCTION_ARGS)
 }
 
 /*
- * pg_advisory_unlock_all() - release all userlocks
+ * pg_advisory_unlock_all() - release all advisory locks
  */
 Datum
 pg_advisory_unlock_all(PG_FUNCTION_ARGS)
