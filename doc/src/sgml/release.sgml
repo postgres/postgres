@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.451 2006/09/22 15:29:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.452 2006/09/22 15:41:12 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -10,8 +10,19 @@ Typical markup:
 PostgreSQL                      <productname>
 pg_[A-Za-z0-9_]                 <application>
 [A-Z][A-Z]                      <type>, <envar>, <literal>
-non-ascii                       convert to & escapes
-                                  http://www.w3.org/TR/html4/sgml/entities.html
+
+non-ASCII characters            convert to HTML4 entity (&) escapes
+
+        official:      http://www.w3.org/TR/html4/sgml/entities.html
+        one page:      http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
+        other lists:   http://www.zipcon.net/~swhite/docs/computers/browsers/entities.html
+                       http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
+                       http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
+
+        we cannot use UTF8 because SGML Docbook 
+        does not support it
+          http://www.pemberley.com/janeinfo/latin1.html#latexta
+
 wrap long lines
 
 For new features, add links to the documentation sections.
@@ -36,7 +47,7 @@ For new features, add links to the documentation sections.
     <para>
      This release adds many improvements to commands and database
      facilities that were requested by users, including:
-     
+
     <itemizedlist>
 
       <listitem>
@@ -1171,7 +1182,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Have the <command>COPY</> command return a command tag that
-        includes the number of rows copied (Volkan Yazici)
+        includes the number of rows copied (Volkan YAZICI)
        </para>
       </listitem>
 
@@ -1585,7 +1596,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Allow <literal>\c</> to connect to a new host and port
-        number (David, Volkan Yazici)
+        number (David, Volkan YAZICI)
        </para>
       </listitem>
 
@@ -1750,7 +1761,7 @@ For new features, add links to the documentation sections.
         Add <function>PQdescribePrepared()</>,
         <function>PQdescribePortal()</>, and related functions
         return information about previously prepared statements
-        and open cursors (Volkan Yazici)
+        and open cursors (Volkan YAZICI)
        </para>
       </listitem>
 
