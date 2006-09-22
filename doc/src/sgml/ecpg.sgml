@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.75 2006/09/21 09:10:27 meskes Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.76 2006/09/22 15:22:04 tgl Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -1137,7 +1137,7 @@ date PGTYPESdate_from_asc(char *str, char **endptr);
        <para>
         The following input formats are allowed:
         <table>
-	 <title>Valid input formats for <function>PGTYPESdate_from_asc</function>.
+	 <title>Valid input formats for <function>PGTYPESdate_from_asc</function></title>
 	 <tgroup cols="2">
 	  <thead>
 	   <row>
@@ -1394,7 +1394,7 @@ int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
 	you an idea of how to use this function. All output lines are based on
 	the same date: November, 23rd, 1959.
         <table>
-	 <title>Valid input formats for <function>PGTYPESdate_fmt_asc</function>.
+	 <title>Valid input formats for <function>PGTYPESdate_fmt_asc</function></title>
 	 <tgroup cols="2">
 	  <thead>
 	   <row>
@@ -1484,7 +1484,7 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
 	The following table indicates a few possible formats. This will give
 	you an idea of how to use this function.
         <table>
-	 <title>Valid input formats for <function>rdefmtdate</function>.
+	 <title>Valid input formats for <function>rdefmtdate</function></title>
 	 <tgroup cols="2">
 	  <thead>
 	   <row>
@@ -1612,7 +1612,7 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
        <para>
         The following table contains a few examples for input strings:
         <table>
-	 <title>Valid input formats for <function>PGTYPEStimestamp_from_asc</function>.
+	 <title>Valid input formats for <function>PGTYPEStimestamp_from_asc</function></title>
 	 <tgroup cols="2">
 	  <thead>
 	   <row>
@@ -2272,7 +2272,6 @@ void PGTYPESdecimal_free(decimal *var);
        </para>
       </listitem>
      </varlistentry>
-    <variablelist>
 
      <varlistentry>
       <term><literal>PGTYPES_DATE_BAD_DATE</literal></term>
@@ -2282,7 +2281,6 @@ void PGTYPESdecimal_free(decimal *var);
        </para>
       </listitem>
      </varlistentry>
-    <variablelist>
 
      <varlistentry>
       <term><literal>PGTYPES_DATE_ERR_EARGS</literal></term>
@@ -2292,7 +2290,6 @@ void PGTYPESdecimal_free(decimal *var);
        </para>
       </listitem>
      </varlistentry>
-    <variablelist>
 
      <varlistentry>
       <term><literal>PGTYPES_DATE_ERR_ENOSHORTDATE</literal></term>
@@ -2302,7 +2299,6 @@ void PGTYPESdecimal_free(decimal *var);
        </para>
       </listitem>
      </varlistentry>
-    <variablelist>
 
      <varlistentry>
       <term><literal>PGTYPES_INTVL_BAD_INTERVAL</literal></term>
@@ -2312,7 +2308,6 @@ void PGTYPESdecimal_free(decimal *var);
        </para>
       </listitem>
      </varlistentry>
-    <variablelist>
 
      <varlistentry>
       <term><literal>PGTYPES_DATE_ERR_ENOTDMY</literal></term>
@@ -2322,7 +2317,6 @@ void PGTYPESdecimal_free(decimal *var);
        </para>
       </listitem>
      </varlistentry>
-    <variablelist>
 
      <varlistentry>
       <term><literal>PGTYPES_DATE_BAD_DAY</literal></term>
@@ -2332,7 +2326,6 @@ void PGTYPESdecimal_free(decimal *var);
        </para>
       </listitem>
      </varlistentry>
-    <variablelist>
 
      <varlistentry>
       <term><literal>PGTYPES_DATE_BAD_MONTH</literal></term>
@@ -2342,7 +2335,6 @@ void PGTYPESdecimal_free(decimal *var);
        </para>
       </listitem>
      </varlistentry>
-    <variablelist>
 
      <varlistentry>
       <term><literal>PGTYPES_TS_BAD_TIMESTAMP</literal></term>
@@ -2415,12 +2407,12 @@ void PGTYPESdecimal_free(decimal *var);
    of ecpg. pgtypeslib maps SQL data types to data types within the C host
    program and most of the additional functions of the Informix compatibility
    mode allow you to operate on those C host program types. Note however that
-   the extend of the compatibility is limited. It does not try to copy Informix
-   behaviour but it allows you to do more or less the same operations and gives
+   the extent of the compatibility is limited. It does not try to copy Informix
+   behaviour; it allows you to do more or less the same operations and gives
    you functions that have the same name and the same basic behavior but it is
    no drop-in replacement if you are using Informix at the moment. Moreover,
    some of the data types are different. For example,
-   <productname>PostgreSQL's<productname> datetime and interval types do not
+   <productname>PostgreSQL's</productname> datetime and interval types do not
    know about ranges like for example <literal>YEAR TO MINUTE</> so you won't
    find support in ecpg for that either.
   </para>
@@ -2437,11 +2429,12 @@ void PGTYPESdecimal_free(decimal *var);
 	synonym for ecpg's <literal>DISCONNECT CURRENT</>.
 <programlisting>
     $CLOSE DATABASE;                /* close the current connection */
-    EXEC SQL ClOSE DATABASE;
+    EXEC SQL CLOSE DATABASE;
 </programlisting>
        </para>
       </listitem>
      </varlistentry>
+    </variablelist>
    </para>
   </sect2>
 
@@ -3452,6 +3445,8 @@ int rsetnull(int t, char *ptr);
           </para>
          </listitem>
         </itemizedlist>
+       </para>
+
        <para>
         Here is an example of a call to this function:
 <programlisting>
@@ -4619,6 +4614,7 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
      </listitem>
     </varlistentry>
    </variablelist>
+   </para>
 
    <para>
     Example:
