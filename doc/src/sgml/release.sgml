@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.448 2006/09/22 01:39:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.449 2006/09/22 01:52:27 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -43,9 +43,31 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Improved sort performance, memory usage,
-	locking/concurency, FILLFACTOR support, query 
-	optimization, and vacuuming
+        Improved sort performance with lower memory usage
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        More efficient locking with better concurency
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	New FILLFACTOR support for tables and indexes
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Many query optimization improvements
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	More efficient vacuuming
        </para>
       </listitem>
 
@@ -425,7 +447,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        This adds extra free space to each heap or index page,
+        This adds extra free space to each table or index page,
         allowing improved performance as the database grows.  This
         is particularly valuable to maintain <command>CLUSTER</>ing.
        </para>
