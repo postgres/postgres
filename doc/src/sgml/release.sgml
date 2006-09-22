@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.452 2006/09/22 15:41:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.453 2006/09/22 18:09:40 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -82,13 +82,13 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Continuous archiving enhancements
+        Warm standby server enhancements
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Monitoring and logging additions
+        Monitoring, logging, and performance tuning additions
        </para>
       </listitem>
 
@@ -113,13 +113,14 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        COPY support for SELECT statements
+        COPY TO support for SELECT statements
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Array and aggregate improvements
+        Array and aggregate improvements, including SQL:2003 
+        statistical functions
        </para>
       </listitem>
 
