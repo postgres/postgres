@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.447 2006/09/21 03:12:58 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.448 2006/09/22 01:39:33 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -37,16 +37,69 @@ For new features, add links to the documentation sections.
  
     <para>
      This release adds many improvements to commands and database
-     facilities that were requested by users.  Rather than adding
-     a few new features, this release makes many features from
-     previous releases easier to use.  For example, there are now
-     additional controls for continuous archiving.  Many
-     performance bottlenecks have been eliminated, allowing more
-     functionality to be enabled by default.  Various additions
-     will make porting from other databases easier.  The changes
-     in this release continue the <productname>PostgreSQL</>
-     tradition of being not only the most advanced open source
-     database, but also the easiest to use.
+     facilities that were requested by users, including:
+     
+    <itemizedlist>
+
+      <listitem>
+       <para>
+        Improved sort performance, memory usage,
+	locking/concurency, FILLFACTOR support, query 
+	optimization, and vacuuming
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Continuous archiving enhancements
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Monitoring and logging additions
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Query enhancements including RETURNING values, multi-VALUES,
+	support, and self-joins for DELETE
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        More control over creating/dropping objects and inheritance
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Index creation without blocking INSERT/UPDATE/DELETE
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        COPY support for SELECT statements
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+	Array and aggregate improvements
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Many /contrib improvements
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
     </para>
 
    </sect2>
