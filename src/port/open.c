@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.14 2006/08/30 18:06:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.15 2006/09/24 17:19:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ pgwin32_fopen(const char *fileName, const char *mode)
 	else if (strchr(mode, 'w'))
 		openmode |= O_WRONLY | O_CREAT | O_TRUNC;
 	if (strchr(mode, 'a'))
-		openmode |= O_WRONLY | O_APPEND;
+		openmode |= O_WRONLY | O_CREAT | O_APPEND;
 
 	if (strchr(mode, 'b'))
 		openmode |= O_BINARY;
