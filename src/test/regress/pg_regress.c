@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.21 2006/09/19 15:36:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.22 2006/09/24 17:10:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -615,7 +615,7 @@ psql_command(const char *database, const char *query, ...)
 /*
  * Spawn a process to execute the given shell command; don't wait for it
  *
- * Returns the process ID so we can wait for it later
+ * Returns the process ID (or HANDLE) so we can wait for it later
  */
 static PID_TYPE
 spawn_process(const char *cmdline)
@@ -1512,7 +1512,7 @@ main(int argc, char *argv[])
 		 */
 		header(_("starting postmaster"));
 		snprintf(buf, sizeof(buf),
-				 SYSTEMQUOTE "\"%s/postmaster\" -D \"%s/data\" -F%s -c \"listen_addresses=%s\" > \"%s/log/postmaster.log\" 2>&1" SYSTEMQUOTE,
+				 SYSTEMQUOTE "\"%s/postgres\" -D \"%s/data\" -F%s -c \"listen_addresses=%s\" > \"%s/log/postmaster.log\" 2>&1" SYSTEMQUOTE,
 				 bindir, temp_install,
 				 debug ? " -d 5" : "",
 				 hostname ? hostname : "",
@@ -1541,16 +1541,16 @@ main(int argc, char *argv[])
 
 			/*
 			 * Fail immediately if postmaster has exited
-			 *
-			 * XXX is there a way to do this on Windows?
 			 */
 #ifndef WIN32
 			if (kill(postmaster_pid, 0) != 0)
+#else
+			if (WaitForSingleObject(postmaster_pid, 0) == WAIT_OBJECT_0)
+#endif
 			{
 				fprintf(stderr, _("\n%s: postmaster failed\nExamine %s/log/postmaster.log for the reason\n"), progname, outputdir);
 				exit_nicely(2);
 			}
-#endif
 
 			pg_usleep(1000000L);
 		}
@@ -1563,14 +1563,16 @@ main(int argc, char *argv[])
 			 * in startup.  Try to kill it ungracefully rather than leaving
 			 * a stuck postmaster that might interfere with subsequent test
 			 * attempts.
-			 *
-			 * XXX is there a way to do this on Windows?
 			 */
 #ifndef WIN32
 			if (kill(postmaster_pid, SIGKILL) != 0 &&
 				errno != ESRCH)
 				fprintf(stderr, _("\n%s: could not kill failed postmaster: %s\n"),
 						progname, strerror(errno));
+#else
+			if (TerminateProcess(postmaster_pid, 255) == 0)
+				fprintf(stderr, _("\n%s: could not kill failed postmaster: %lu\n"),
+						progname, GetLastError());
 #endif
 
 			exit_nicely(2);
