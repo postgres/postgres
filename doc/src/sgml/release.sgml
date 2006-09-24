@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.453 2006/09/22 18:09:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.454 2006/09/24 18:47:56 neilc Exp $ -->
 <!--
 
 Typical markup:
@@ -64,13 +64,14 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        New FILLFACTOR support for tables and indexes
+        New <literal>FILLFACTOR</literal> support for tables and indexes
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Many query optimization improvements
+        Many query optimization improvements, including support for
+        reordering outer joins
        </para>
       </listitem>
 
@@ -94,8 +95,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Query enhancements including RETURNING values, multi-VALUES,
-        support, and self-joins for DELETE
+        Query enhancements including <literal>RETURNING</literal>
+        values, multi-<literal>VALUES</literal>, support, and
+        self-joins for <command>DELETE</command>
        </para>
       </listitem>
 
@@ -107,13 +109,15 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Index creation without blocking INSERT/UPDATE/DELETE
+        Index creation without blocking concurrent
+        <command>INSERT</>/<command>UPDATE</>/<command>DELETE</>
+        commands
        </para>
       </listitem>
 
       <listitem>
        <para>
-        COPY TO support for SELECT statements
+        <command>COPY TO</command> support for <command>SELECT</command> statements
        </para>
       </listitem>
 
@@ -697,14 +701,14 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Improve performance of statistics monitoring, especially
-        <literal>stats_command_string</> (Tom, Bruce)
+        <varname>stats_command_string</> (Tom, Bruce)
        </para>
 
        <para>
-        This release sets <varname>stats_command_string</> to
-        <literal>on</> by default, now that its overhead is minimal.
-        This means <literal>pg_stat_activity</> now will show all
-        active queries by default.
+        This release enables <varname>stats_command_string</> by
+        default, now that its overhead is minimal.  This means
+        <literal>pg_stat_activity</> will now show all active queries
+        by default.
        </para>
       </listitem>
 
@@ -1116,10 +1120,9 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        This allow inheritance to be added and removed dynamically,
-        rather than just at table creation and destruction.  This
-        is very valuable for table partitioning using constraint
-        exclusion.
+        This allow inheritance to be adjusted dynamically, rather than
+        just at table creation and destruction.  This is very valuable
+        for table partitioning using constraint exclusion.
        </para>
       </listitem>
 
@@ -1306,8 +1309,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Interval computation improvements (Michael Glaesemann,
-        Bruce)
+        Interval computation improvements (Michael Glaesemann, Bruce)
        </para>
       </listitem>
 
@@ -1390,7 +1392,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Properly enforce <literal>DOMAIN</> check constraints
+        Properly enforce domain <literal>CHECK</literal> constraints
         everywhere (Neil, Tom)
        </para>
 
@@ -1893,7 +1895,9 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        Rtree has been re-implemented using <acronym>GIST</>.
+        Rtree has been re-implemented using <acronym>GIST</>. Among
+        other differences, this means that rtree indexes now have
+        support for crash recovery via write-ahead logging (WAL).
        </para>
       </listitem>
 
