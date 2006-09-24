@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.71 2006/08/21 10:48:21 meskes Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.72 2006/09/24 16:59:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1277,7 +1277,15 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
     /* Verify that we found all functions */
     if (_IsProcessInJob == NULL || _CreateJobObject == NULL || _SetInformationJobObject == NULL || _AssignProcessToJobObject == NULL || _QueryInformationJobObject == NULL)
     {
-        write_stderr("WARNING: Unable to locate all job object functions in system API!\n");
+		/* IsProcessInJob() is not available on < WinXP, so there is no need to log the error every time in that case */
+		OSVERSIONINFO osv;
+
+		osv.dwOSVersionInfoSize = sizeof(osv);
+		if (!GetVersionEx(&osv) || /* could not get version */
+			(osv.dwMajorVersion == 5 && osv.dwMinorVersion > 0) || /* 5.1=xp, 5.2=2003, etc */
+			osv.dwMajorVersion > 5) /* anything newer should have the API */
+			/* Log error if we can't get version, or if we're on WinXP/2003 or newer */
+			write_stderr("WARNING: Unable to locate all job object functions in system API!\n");
     } 
     else
     { 
