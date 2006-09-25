@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.455 2006/09/25 15:04:37 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.456 2006/09/25 15:31:50 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -1710,7 +1710,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add <application>pg_dump</> <literal>-X
+        Add <application>pg_restore</> <literal>-X
         no-data-for-failed-tables</> option to suppress loading
         data if table creation failed (the table already exists)
         (Martin Pitt)
