@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.88 2006/09/18 12:11:36 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.89 2006/09/25 22:12:24 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1905,7 +1905,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       <listitem>
        <para>
         Sets the planner's assumption about the effective size of the
-        disk cache that is available to a single index scan.  This is
+        disk cache that is available to a single query.  This is
         factored into estimates of the cost of using an index; a
         higher value makes it more likely index scans will be used, a
         lower value makes it more likely sequential scans will be
@@ -1913,13 +1913,13 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         <productname>PostgreSQL</productname>'s shared buffers and the
         portion of the kernel's disk cache that will be used for
         <productname>PostgreSQL</productname> data files.  Also, take
-        into account the expected number of concurrent queries using
-        different indexes, since they will have to share the available
+        into account the expected number of concurrent queries on different
+        tables, since they will have to share the available
         space.  This parameter has no effect on the size of shared
         memory allocated by <productname>PostgreSQL</productname>, nor
         does it reserve kernel disk cache; it is used only for
         estimation purposes.  The value is measured in disk pages,
-        which are normally 8192 bytes each. The default is 1000.
+        which are normally 8192 bytes each. The default is 16384 (128 MB).
        </para>
       </listitem>
      </varlistentry>

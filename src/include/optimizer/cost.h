@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.80 2006/09/19 22:49:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.81 2006/09/25 22:12:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #define DEFAULT_CPU_INDEX_TUPLE_COST 0.005
 #define DEFAULT_CPU_OPERATOR_COST  0.0025
 
-#define DEFAULT_EFFECTIVE_CACHE_SIZE  1000	/* measured in pages */
+#define DEFAULT_EFFECTIVE_CACHE_SIZE  16384	/* measured in pages */
 
 
 /*
