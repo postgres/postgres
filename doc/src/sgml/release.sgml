@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.454 2006/09/24 18:47:56 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.455 2006/09/25 15:04:37 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1771,7 +1771,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Allow <acronym>LDAP</> lookups from <filename>pg_service.conf</>
-        (Albe Laurenz)
+        (Laurenz Albe)
        </para>
       </listitem>
 
@@ -2059,7 +2059,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-         Add shared library support for AIX (Albe Laurenz)
+         Add shared library support for AIX (Laurenz Albe)
        </para>
       </listitem>
 
