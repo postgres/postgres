@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.76 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.77 2006/09/25 15:17:34 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -686,15 +686,15 @@ RemoveFunction(RemoveFuncStmt *stmt)
 	 * Find the function, do permissions and validity checks
 	 */
 	funcOid = LookupFuncNameTypeNames(functionName, argTypes, stmt->missing_ok);
-	if (stmt->missing_ok &&!OidIsValid(funcOid)) 
+	if (!OidIsValid(funcOid)) 
 	{
+		/* can only get here if stmt->missing_ok */
 		ereport(NOTICE,
 				(errmsg("function %s(%s) does not exist ... skipping",
 						NameListToString(functionName),
-						NameListToString(argTypes))));
+						TypeNameListToString(argTypes))));
 		return;
 	}
-
 
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(funcOid),
@@ -1408,8 +1408,6 @@ DropCast(DropCastStmt *stmt)
 
 		return;
 	}
-
-			
 
 	/* Permission check */
 	if (!pg_type_ownercheck(sourcetypeid, GetUserId())

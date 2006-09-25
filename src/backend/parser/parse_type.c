@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.83 2006/08/02 01:59:47 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.84 2006/09/25 15:17:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,6 +141,46 @@ LookupTypeName(ParseState *pstate, const TypeName *typename)
 }
 
 /*
+ * appendTypeNameToBuffer
+ *		Append a string representing the name of a TypeName to a StringInfo.
+ *		This is the shared guts of TypeNameToString and TypeNameListToString.
+ *
+ * NB: this must work on TypeNames that do not describe any actual type;
+ * it is mostly used for reporting lookup errors.
+ */
+static void
+appendTypeNameToBuffer(const TypeName *typename, StringInfo string)
+{
+	if (typename->names != NIL)
+	{
+		/* Emit possibly-qualified name as-is */
+		ListCell   *l;
+
+		foreach(l, typename->names)
+		{
+			if (l != list_head(typename->names))
+				appendStringInfoChar(string, '.');
+			appendStringInfoString(string, strVal(lfirst(l)));
+		}
+	}
+	else
+	{
+		/* Look up internally-specified type */
+		appendStringInfoString(string, format_type_be(typename->typeid));
+	}
+
+	/*
+	 * Add decoration as needed, but only for fields considered by
+	 * LookupTypeName
+	 */
+	if (typename->pct_type)
+		appendStringInfoString(string, "%TYPE");
+
+	if (typename->arrayBounds != NIL)
+		appendStringInfoString(string, "[]");
+}
+
+/*
  * TypeNameToString
  *		Produce a string representing the name of a TypeName.
  *
@@ -153,35 +193,30 @@ TypeNameToString(const TypeName *typename)
 	StringInfoData string;
 
 	initStringInfo(&string);
+	appendTypeNameToBuffer(typename, &string);
+	return string.data;
+}
 
-	if (typename->names != NIL)
+/*
+ * TypeNameListToString
+ *		Produce a string representing the name(s) of a List of TypeNames
+ */
+char *
+TypeNameListToString(List *typenames)
+{
+	StringInfoData string;
+	ListCell   *l;
+
+	initStringInfo(&string);
+	foreach(l, typenames)
 	{
-		/* Emit possibly-qualified name as-is */
-		ListCell   *l;
+		TypeName *typename = (TypeName *) lfirst(l);
 
-		foreach(l, typename->names)
-		{
-			if (l != list_head(typename->names))
-				appendStringInfoChar(&string, '.');
-			appendStringInfoString(&string, strVal(lfirst(l)));
-		}
+		Assert(IsA(typename, TypeName));
+		if (l != list_head(typenames))
+			appendStringInfoChar(&string, ',');
+		appendTypeNameToBuffer(typename, &string);
 	}
-	else
-	{
-		/* Look up internally-specified type */
-		appendStringInfoString(&string, format_type_be(typename->typeid));
-	}
-
-	/*
-	 * Add decoration as needed, but only for fields considered by
-	 * LookupTypeName
-	 */
-	if (typename->pct_type)
-		appendStringInfoString(&string, "%TYPE");
-
-	if (typename->arrayBounds != NIL)
-		appendStringInfoString(&string, "[]");
-
 	return string.data;
 }
 
