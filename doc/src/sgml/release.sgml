@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.456 2006/09/25 15:31:50 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.457 2006/09/25 15:35:28 neilc Exp $ -->
 <!--
 
 Typical markup:
@@ -95,7 +95,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Query enhancements including <literal>RETURNING</literal>
+        Query language enhancements including <literal>RETURNING</literal>
         values, multi-<literal>VALUES</literal>, support, and
         self-joins for <command>DELETE</command>
        </para>
@@ -111,7 +111,7 @@ For new features, add links to the documentation sections.
        <para>
         Index creation without blocking concurrent
         <command>INSERT</>/<command>UPDATE</>/<command>DELETE</>
-        commands
+        operations
        </para>
       </listitem>
 
@@ -123,7 +123,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Array and aggregate improvements, including SQL:2003 
+        Array and aggregate improvements, including SQL:2003
         statistical functions
        </para>
       </listitem>
@@ -262,8 +262,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Make command-line options of postmaster and postgres
-        identical (Peter)
+        Make command-line options of <application>postmaster</> and
+        <application>postgres</> identical (Peter)
        </para>
 
        <para>
@@ -352,13 +352,13 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Change <application>libpq</> <function>PQgetssl()</> to
-        return a <literal>void*</>, rather than <literal>SSL*</>
+        return a <literal>void *</>, rather than <literal>SSL *</>
         (Martijn van Oosterhout)
        </para>
 
        <para>
-        This allows applications to use the function without
-        <acronym>SSL</> headers.
+        This allows applications to use the function without including
+        the OpenSSL headers.
        </para>
       </listitem>
 
@@ -786,7 +786,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Add support for multi-row <literal>VALUES</> clauses as
+        Add support for multiple-row <literal>VALUES</> clauses as
         part of <command>INSERT</> and <command>SELECT</> statements,
         per SQL standard (Joe, Tom)
        </para>
@@ -985,8 +985,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        This allows the tablespace to be specified for the new
-        table.
+        This allows a tablespace to be specified for the new table.
        </para>
       </listitem>
 
@@ -1166,8 +1165,8 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        This is a new locking API compared to what used to be in /contrib.
-        The /contrib code is now on pgfoundry.
+        This is a new locking API that is similar to what used to be
+        in /contrib.  The /contrib code is now on pgfoundry.
        </para>
       </listitem>
 
@@ -1192,8 +1191,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow <command>VACUUM</> to expire rows without being
-        affected by other concurrent <command>VACUUM</>s (Hannu
+        Allow <command>VACUUM</> to expire rows without being affected
+        by other concurrent <command>VACUUM</> operations (Hannu
         Krossing, Alvaro, Tom)
        </para>
       </listitem>
@@ -1252,7 +1251,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        The file name is controlled by GUC variable
+        The file name is controlled by the GUC variable
         <varname>timezone_abbreviations</>.
        </para>
       </listitem>
@@ -1380,7 +1379,7 @@ For new features, add links to the documentation sections.
         <function>covar_pop()</>, <function>regr_avgx()</>,
         <function>regr_avgy()</>, <function>regr_sxy()</>,
         <function>regr_sxx()</>, <function>regr_syy()</>,
-        <function>regr_count()</>
+        <function>regr_count()</>.
        </para>
       </listitem>
 
@@ -1506,7 +1505,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        <literal>relname</> is kept but now deprecated
+        <literal>relname</> is kept but now deprecated.
        </para>
       </listitem>
 
@@ -1636,12 +1635,15 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Support retrieving <command>SELECT</> results in batches
-        using a cursor (Chris Mair)
+        Support for automatically retrieving <command>SELECT</>
+        results in batches using a cursor (Chris Mair)
        </para>
 
        <para>
-        This is accomplished using <command>\set FETCH_COUNT</>.
+        This is accomplished using <command>\set FETCH_COUNT</>. This
+        feature allows large result sets to be manipulated in
+        <application>psql</> without needing to buffer the entire
+        result set in memory.
        </para>
       </listitem>
 
@@ -1672,8 +1674,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Make the line counter 64-bit so it can handle files over
-        two billion lines (David Fetter)
+        Make the line counter 64-bit so it can handle files with more
+        than two billion lines (David Fetter)
        </para>
       </listitem>
 
