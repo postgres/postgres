@@ -5,6 +5,14 @@
 
 exec sql include ../regression;
 
+
+/*
+
+NOTE: This file has a different expect file for regression tests on MinGW32
+
+*/
+
+
 int
 main(void)
 {

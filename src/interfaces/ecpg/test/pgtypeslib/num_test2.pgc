@@ -6,6 +6,14 @@
 
 exec sql include ../regression;
 
+
+/*
+
+NOTE: This file has a different expect file for regression tests on MinGW32
+
+*/
+
+
 char* nums[] = { "2E394", "-2", ".794", "3.44", "592.49E21", "-32.84e4",
 				 "2E-394", ".1E-2", "+.0", "-592.49E-07", "+32.84e-4",
 				 ".500001", "-.5000001",

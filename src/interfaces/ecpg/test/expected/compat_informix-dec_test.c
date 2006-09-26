@@ -27,6 +27,16 @@
 #line 8 "dec_test.pgc"
 
 
+
+/*
+
+NOTE: This file has a different expect file for regression tests on MinGW32
+
+*/
+
+
+
+
 /*
 TODO:
 	deccmp => DECUNKNOWN

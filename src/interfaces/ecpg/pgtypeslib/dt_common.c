@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.35 2006/06/21 10:24:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.36 2006/09/26 07:56:56 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -1165,6 +1165,11 @@ DetermineLocalTimeZone(struct tm * tm)
 			 * reassemble to get a representation of local time.
 			 */
 			tmp = localtime(&mytime);
+			if (!tmp)
+			{
+				tm->tm_isdst = 0;
+				return 0;
+			}
 			day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
 				   date2j(1970, 1, 1));
 			locsec = tmp->tm_sec + (tmp->tm_min + (day * HOURS_PER_DAY + tmp->tm_hour) * MINS_PER_HOUR) * SECS_PER_MINUTE;
@@ -1194,6 +1199,11 @@ DetermineLocalTimeZone(struct tm * tm)
 			mysec += delta1;
 			mytime = (time_t) mysec;
 			tmp = localtime(&mytime);
+			if (!tmp)
+			{
+				tm->tm_isdst = 0;
+				return 0;
+			}
 			day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
 				   date2j(1970, 1, 1));
 			locsec = tmp->tm_sec + (tmp->tm_min + (day * HOURS_PER_DAY + tmp->tm_hour) * MINS_PER_HOUR) * SECS_PER_MINUTE;
@@ -1203,6 +1213,11 @@ DetermineLocalTimeZone(struct tm * tm)
 				mysec += (delta2 - delta1);
 				mytime = (time_t) mysec;
 				tmp = localtime(&mytime);
+				if (!tmp)
+				{
+					tm->tm_isdst = 0;
+					return 0;
+				}
 				day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
 					   date2j(1970, 1, 1));
 				locsec = tmp->tm_sec + (tmp->tm_min + (day * HOURS_PER_DAY + tmp->tm_hour) * MINS_PER_HOUR) * SECS_PER_MINUTE;

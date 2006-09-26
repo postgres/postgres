@@ -42,6 +42,9 @@ exec sql end declare section;
 	strcpy(msg, "connect");
 	exec sql connect to REGRESSDB1;
 
+	strcpy(msg, "set");
+	exec sql set datestyle to iso;
+
 	strcpy(msg, "create");
 	exec sql create table family(name char(8), born integer, age smallint, married date, children integer);
 

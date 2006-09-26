@@ -23,6 +23,14 @@
 #line 6 "num_test.pgc"
 
 
+
+/*
+
+NOTE: This file has a different expect file for regression tests on MinGW32
+
+*/
+
+
 int
 main(void)
 {
@@ -32,10 +40,10 @@ main(void)
 		 
 		/* = {0, 0, 0, 0, 0, NULL, NULL} ; */
 	
-#line 14 "num_test.pgc"
+#line 22 "num_test.pgc"
  numeric * des    ;
 /* exec sql end declare section */
-#line 16 "num_test.pgc"
+#line 24 "num_test.pgc"
 
 	double d;
 	long l1, l2;
@@ -43,27 +51,27 @@ main(void)
 
 	ECPGdebug(1, stderr);
 	/* exec sql whenever sqlerror  do sqlprint (  ) ; */
-#line 22 "num_test.pgc"
+#line 30 "num_test.pgc"
 
 
 	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
-#line 24 "num_test.pgc"
+#line 32 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 24 "num_test.pgc"
+#line 32 "num_test.pgc"
 
 
 	{ ECPGsetcommit(__LINE__, "off", NULL);
-#line 26 "num_test.pgc"
+#line 34 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 26 "num_test.pgc"
+#line 34 "num_test.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( text char  ( 5 )    , num numeric ( 14 , 7 )   )    ", ECPGt_EOIT, ECPGt_EORT);
-#line 27 "num_test.pgc"
+#line 35 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 27 "num_test.pgc"
+#line 35 "num_test.pgc"
 
 
 	value1 = PGTYPESnumeric_new();
@@ -92,10 +100,10 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	{ ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( text  , num  ) values( 'test' ,  ? ) ", 
 	ECPGt_numeric,&(des),(long)1,(long)0,sizeof(numeric), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 52 "num_test.pgc"
+#line 60 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 52 "num_test.pgc"
+#line 60 "num_test.pgc"
 
 
 	value2 = PGTYPESnumeric_from_asc("2369.7", NULL);
@@ -105,10 +113,10 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	{ ECPGdo(__LINE__, 0, 1, NULL, "select  num  from test where text = 'test'  ", ECPGt_EOIT, 
 	ECPGt_numeric,&(des),(long)1,(long)0,sizeof(numeric), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
-#line 58 "num_test.pgc"
+#line 66 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 58 "num_test.pgc"
+#line 66 "num_test.pgc"
 
 
 	PGTYPESnumeric_mul(res, des, res);
@@ -134,16 +142,16 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	PGTYPESnumeric_free(res);
 
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 82 "num_test.pgc"
+#line 90 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 82 "num_test.pgc"
+#line 90 "num_test.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");
-#line 83 "num_test.pgc"
+#line 91 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
-#line 83 "num_test.pgc"
+#line 91 "num_test.pgc"
 
 
 	return (0);

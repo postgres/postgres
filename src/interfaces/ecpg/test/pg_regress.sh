@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.14 2006/09/19 15:36:08 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.15 2006/09/26 07:56:56 meskes Exp $
 
 me=`basename $0`
 
@@ -735,6 +735,13 @@ for i in \
 
 	runprg=`echo $i | sed -e 's,\.pgc$,,'`
 	outprg=`echo $runprg | sed -e's/\//-/'`
+
+	case $host_platform in
+	    *-*-mingw32*)
+		PLATFORM_TAG="-MinGW32"
+		;;
+	esac
+
 	outfile_stderr="$outputdir/$outprg.stderr"
 	outfile_stdout="$outputdir/$outprg.stdout"
 	outfile_source="$outputdir/$outprg.c"
@@ -753,7 +760,9 @@ for i in \
 			echo >> $f
 			echo "THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT" >> $f
 			echo >> $f
-			cat $f.tmp | sed -e s,$PGPORT,55432,g >> $f
+			# MinGW could return such a line:
+			# "could not connect to server: Connection refused (0x0000274D/10061)"
+			cat $f.tmp | sed -e s,$PGPORT,55432,g | sed -e "s,could not connect to server: Connection refused (0x.*/.*),could not connect to server: Connection refused,g" >> $f
 			rm $f.tmp
 		done
 	fi
@@ -762,23 +771,34 @@ for i in \
 	cat "$outfile_source.tmp" | sed -e 's,^\(#line [0-9]*\) ".*/\([^/]*\)",\1 "\2",' > "$outfile_source"
 	rm "$outfile_source.tmp"
 
+	expected_stderr="expected/$outprg$PLATFORM_TAG.stderr"
+	if [ ! -f "$expected_stderr" ]; then
+		expected_stderr="expected/$outprg.stderr"
+	fi
+	expected_stdout="expected/$outprg$PLATFORM_TAG.stdout"
+	if [ ! -f "$expected_stdout" ]; then
+		expected_stdout="expected/$outprg.stdout"
+	fi
+	# the source should be identical on all platforms
+	expected_source="expected/$outprg.c"
+
 	DIFFER=""
-	diff $DIFFFLAGS expected/$outprg.stderr "$outfile_stderr" > /dev/null 2>&1
+	diff $DIFFFLAGS "$expected_stderr" "$outfile_stderr" > /dev/null 2>&1
 	if [ $? != 0 ]; then
 		DIFFER="$DIFFER, log"
-		diff $DIFFPRETTYFLAGS expected/$outprg.stderr "$outfile_stderr" >> regression.diffs 2>&1
+		diff $DIFFPRETTYFLAGS "$expected_stderr" "$outfile_stderr" >> regression.diffs 2>&1
 	fi
 
-	diff $DIFFFLAGS expected/$outprg.stdout "$outfile_stdout" > /dev/null 2>&1
+	diff $DIFFFLAGS "$expected_stdout" "$outfile_stdout" > /dev/null 2>&1
 	if [ $? != 0 ]; then
 		DIFFER="$DIFFER, output"
-		diff $DIFFPRETTYFLAGS expected/$outprg.stdout "$outfile_stdout" >> regression.diffs 2>&1
+		diff $DIFFPRETTYFLAGS "$expected_stdout" "$outfile_stdout" >> regression.diffs 2>&1
 	fi
 
-	diff $DIFFFLAGS expected/$outprg.c "$outputdir"/$outprg.c > /dev/null 2>&1
+	diff $DIFFFLAGS "$expected_source" "$outputdir"/$outprg.c > /dev/null 2>&1
 	if [ $? != 0 ]; then
 		DIFFER="$DIFFER, source"
-		diff $DIFFPRETTYFLAGS expected/$outprg.c "$outputdir"/$outprg.c >> regression.diffs 2>&1
+		diff $DIFFPRETTYFLAGS "$expected_source" "$outputdir"/$outprg.c >> regression.diffs 2>&1
 	fi
 
 	DIFFER=`echo $DIFFER | sed -e 's/^, //'`
