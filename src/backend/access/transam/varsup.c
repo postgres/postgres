@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.73 2006/09/03 15:59:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.74 2006/09/26 17:21:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,7 +239,7 @@ SetTransactionIdLimit(TransactionId oldest_datminxid,
 	LWLockRelease(XidGenLock);
 
 	/* Log the info */
-	ereport(LOG,
+	ereport(DEBUG1,
 	   (errmsg("transaction ID wrap limit is %u, limited by database \"%s\"",
 			   xidWrapLimit, NameStr(*oldest_datname))));
 	/* Give an immediate warning if past the wrap warn point */
