@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.458 2006/09/26 11:45:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.459 2006/09/26 12:31:48 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -109,7 +109,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow inheritance to be removed from tables
+        Allow table inheritance to be added and removed from pre-existing tables
        </para>
       </listitem>
 
