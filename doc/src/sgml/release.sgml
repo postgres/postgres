@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.457 2006/09/25 15:35:28 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.458 2006/09/26 11:45:33 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -103,7 +103,13 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        More control over creating/dropping objects and inheritance
+        More control over creating and dropping objects
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow inheritance to be removed from tables
        </para>
       </listitem>
 
