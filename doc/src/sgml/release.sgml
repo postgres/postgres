@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.459 2006/09/26 12:31:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.460 2006/09/27 06:37:28 neilc Exp $ -->
 <!--
 
 Typical markup:
@@ -557,13 +557,13 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Improve multicolumn <acronym>GIST</> indexing (Oleg, Teodor)
+        Improve multicolumn <acronym>GiST</> indexing (Oleg, Teodor)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        <acronym>GIST</> indexes now are clusterable (Teodor)
+        <acronym>GiST</> indexes now are clusterable (Teodor)
        </para>
       </listitem>
 
@@ -1903,7 +1903,7 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        Rtree has been re-implemented using <acronym>GIST</>. Among
+        Rtree has been re-implemented using <acronym>GiST</>. Among
         other differences, this means that rtree indexes now have
         support for crash recovery via write-ahead logging (WAL).
        </para>
@@ -3308,7 +3308,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Allow concurrent GIST index access (Teodor, Oleg)
+        Allow concurrent GiST index access (Teodor, Oleg)
        </para>
       </listitem>
 
@@ -3458,10 +3458,10 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <listitem>
        <para>
-        Add WAL logging for GIST indexes (Teodor, Oleg)
+        Add WAL logging for GiST indexes (Teodor, Oleg)
        </para>
        <para>
-        GIST indexes are now safe for crash and point-in-time recovery.
+        GiST indexes are now safe for crash and point-in-time recovery.
        </para>
       </listitem>
 
