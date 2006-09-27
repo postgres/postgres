@@ -69,6 +69,7 @@ CLEAN :
 	-@erase "$(INTDIR)\encnames.obj"
 	-@erase "$(INTDIR)\pthread-win32.obj"
 	-@erase "$(INTDIR)\snprintf.obj"
+	-@erase "$(INTDIR)\strlcpy.obj"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(OUTDIR)\libpq.res"
@@ -105,6 +106,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\wchar.obj" \
 	"$(INTDIR)\encnames.obj" \
 	"$(INTDIR)\snprintf.obj" \
+	"$(INTDIR)\strlcpy.obj" \
 	"$(INTDIR)\pthread-win32.obj"
 
 
@@ -218,6 +220,11 @@ LINK32_OBJS= \
 "$(INTDIR)\snprintf.obj" : ..\..\port\snprintf.c
 	$(CPP) @<<
 	$(CPP_PROJ) /I"." ..\..\port\snprintf.c
+<<
+
+"$(INTDIR)\strlcpy.obj" : ..\..\port\strlcpy.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\strlcpy.c
 <<
 
 .c{$(CPP_OBJS)}.obj:

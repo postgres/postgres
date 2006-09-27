@@ -76,6 +76,7 @@ ALL : config "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
 CLEAN :
 	-@erase "$(INTDIR)\getaddrinfo.obj"
 	-@erase "$(INTDIR)\pgstrcasecmp.obj"
+	-@erase "$(INTDIR)\strlcpy.obj"
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
@@ -112,6 +113,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
+	"$(INTDIR)\strlcpy.obj" \
 	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\crypt.obj" \
@@ -183,6 +185,11 @@ LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
 "$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
 	$(CPP) @<<
 	$(CPP_PROJ) ..\..\port\pgstrcasecmp.c
+<<
+
+"$(INTDIR)\strlcpy.obj" : ..\..\port\strlcpy.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\strlcpy.c
 <<
 
 "$(INTDIR)\thread.obj" : ..\..\port\thread.c
