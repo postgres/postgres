@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.94 2006/09/07 22:52:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.95 2006/09/27 18:40:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,12 +54,10 @@ static HTAB *PortalHashTable = NULL;
 
 #define PortalHashTableLookup(NAME, PORTAL) \
 do { \
-	PortalHashEnt *hentry; char key[MAX_PORTALNAME_LEN]; \
+	PortalHashEnt *hentry; \
 	\
-	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	StrNCpy(key, NAME, MAX_PORTALNAME_LEN); \
 	hentry = (PortalHashEnt *) hash_search(PortalHashTable, \
-										   key, HASH_FIND, NULL);	\
+										   (NAME), HASH_FIND, NULL); \
 	if (hentry) \
 		PORTAL = hentry->portal; \
 	else \
@@ -68,12 +66,10 @@ do { \
 
 #define PortalHashTableInsert(PORTAL, NAME) \
 do { \
-	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
+	PortalHashEnt *hentry; bool found; \
 	\
-	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	StrNCpy(key, NAME, MAX_PORTALNAME_LEN); \
 	hentry = (PortalHashEnt *) hash_search(PortalHashTable, \
-										   key, HASH_ENTER, &found);	\
+										   (NAME), HASH_ENTER, &found);	\
 	if (found) \
 		elog(ERROR, "duplicate portal name"); \
 	hentry->portal = PORTAL; \
@@ -83,12 +79,10 @@ do { \
 
 #define PortalHashTableDelete(PORTAL) \
 do { \
-	PortalHashEnt *hentry; char key[MAX_PORTALNAME_LEN]; \
+	PortalHashEnt *hentry; \
 	\
-	MemSet(key, 0, MAX_PORTALNAME_LEN); \
-	StrNCpy(key, PORTAL->name, MAX_PORTALNAME_LEN); \
 	hentry = (PortalHashEnt *) hash_search(PortalHashTable, \
-										   key, HASH_REMOVE, NULL); \
+										   PORTAL->name, HASH_REMOVE, NULL); \
 	if (hentry == NULL) \
 		elog(WARNING, "trying to delete portal name that does not exist"); \
 } while(0)

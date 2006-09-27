@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.173 2006/07/14 14:52:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.174 2006/09/27 18:40:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1225,6 +1225,7 @@ write_syslog(int level, const char *line)
 		while (len > 0)
 		{
 			char		buf[PG_SYSLOG_LIMIT + 1];
+			const char *nlpos;
 			int			buflen;
 			int			i;
 
@@ -1236,12 +1237,15 @@ write_syslog(int level, const char *line)
 				continue;
 			}
 
-			strncpy(buf, line, PG_SYSLOG_LIMIT);
-			buf[PG_SYSLOG_LIMIT] = '\0';
-			if (strchr(buf, '\n') != NULL)
-				*strchr(buf, '\n') = '\0';
-
-			buflen = strlen(buf);
+			/* copy one line, or as much as will fit, to buf */
+			nlpos = strchr(line, '\n');
+			if (nlpos != NULL)
+				buflen = nlpos - line;
+			else
+				buflen = len;
+			buflen = Min(buflen, PG_SYSLOG_LIMIT);
+			memcpy(buf, line, buflen);
+			buf[buflen] = '\0';
 
 			/* trim to multibyte letter boundary */
 			buflen = pg_mbcliplen(buf, buflen, buflen);

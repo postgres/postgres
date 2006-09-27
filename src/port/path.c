@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.68 2006/09/22 21:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.69 2006/09/27 18:40:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ join_path_components(char *ret_path,
 					 const char *head, const char *tail)
 {
 	if (ret_path != head)
-		StrNCpy(ret_path, head, MAXPGPATH);
+		strlcpy(ret_path, head, MAXPGPATH);
 
 	/*
 	 * Remove any leading "." and ".." in the tail component, adjusting head
@@ -493,7 +493,7 @@ make_relative_path(char *ret_path, const char *target_path,
 	 * Set up my_exec_path without the actual executable name, and
 	 * canonicalize to simplify comparison to bin_path.
 	 */
-	StrNCpy(ret_path, my_exec_path, MAXPGPATH);
+	strlcpy(ret_path, my_exec_path, MAXPGPATH);
 	trim_directory(ret_path);	/* remove my executable name */
 	canonicalize_path(ret_path);
 
@@ -513,7 +513,7 @@ make_relative_path(char *ret_path, const char *target_path,
 	}
 
 no_match:
-	StrNCpy(ret_path, target_path, MAXPGPATH);
+	strlcpy(ret_path, target_path, MAXPGPATH);
 	canonicalize_path(ret_path);
 }
 
@@ -625,7 +625,7 @@ get_home_path(char *ret_path)
 
 	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
 		return false;
-	StrNCpy(ret_path, pwd->pw_dir, MAXPGPATH);
+	strlcpy(ret_path, pwd->pw_dir, MAXPGPATH);
 	return true;
 #else
 	char		tmppath[MAX_PATH];

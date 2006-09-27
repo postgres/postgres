@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.48 2006/03/05 15:58:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.49 2006/09/27 18:40:09 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -408,7 +408,7 @@ nodeRead(char *token, int tok_len)
 				char	   *val = palloc(tok_len);
 
 				/* skip leading 'b' */
-				strncpy(val, token + 1, tok_len - 1);
+				memcpy(val, token + 1, tok_len - 1);
 				val[tok_len - 1] = '\0';
 				result = (Node *) makeBitString(val);
 				break;

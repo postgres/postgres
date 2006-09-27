@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.95 2006/08/01 19:03:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.96 2006/09/27 18:40:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,12 +456,8 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
 void *
 ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 {
-	ShmemIndexEnt *result,
-				item;
+	ShmemIndexEnt *result;
 	void	   *structPtr;
-
-	strncpy(item.key, name, SHMEM_INDEX_KEYSIZE);
-	item.location = BAD_LOCATION;
 
 	LWLockAcquire(ShmemIndexLock, LW_EXCLUSIVE);
 
@@ -498,7 +494,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 	/* look it up in the shmem index */
 	result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, (void *) &item, HASH_ENTER_NULL, foundPtr);
+		hash_search(ShmemIndex, name, HASH_ENTER_NULL, foundPtr);
 
 	if (!result)
 	{
@@ -533,12 +529,13 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		{
 			/* out of memory */
 			Assert(ShmemIndex);
-			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, NULL);
+			hash_search(ShmemIndex, name, HASH_REMOVE, NULL);
 			LWLockRelease(ShmemIndexLock);
 
 			ereport(WARNING,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
-			errmsg("could not allocate shared memory segment \"%s\"", name)));
+					 errmsg("could not allocate shared memory segment \"%s\"",
+							name)));
 			*foundPtr = FALSE;
 			return NULL;
 		}

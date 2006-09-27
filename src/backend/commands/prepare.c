@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.64 2006/09/07 22:52:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.65 2006/09/27 18:40:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,7 +314,6 @@ StorePreparedStatement(const char *stmt_name,
 	MemoryContext oldcxt,
 				entrycxt;
 	char	   *qstring;
-	char		key[NAMEDATALEN];
 	bool		found;
 
 	/* Initialize the hash table, if necessary */
@@ -322,10 +321,7 @@ StorePreparedStatement(const char *stmt_name,
 		InitQueryHashTable();
 
 	/* Check for pre-existing entry of same name */
-	/* See notes in FetchPreparedStatement */
-	StrNCpy(key, stmt_name, sizeof(key));
-
-	hash_search(prepared_queries, key, HASH_FIND, &found);
+	hash_search(prepared_queries, stmt_name, HASH_FIND, &found);
 
 	if (found)
 		ereport(ERROR,
@@ -355,7 +351,7 @@ StorePreparedStatement(const char *stmt_name,
 
 	/* Now we can add entry to hash table */
 	entry = (PreparedStatement *) hash_search(prepared_queries,
-											  key,
+											  stmt_name,
 											  HASH_ENTER,
 											  &found);
 
@@ -384,7 +380,6 @@ StorePreparedStatement(const char *stmt_name,
 PreparedStatement *
 FetchPreparedStatement(const char *stmt_name, bool throwError)
 {
-	char		key[NAMEDATALEN];
 	PreparedStatement *entry;
 
 	/*
@@ -392,19 +387,10 @@ FetchPreparedStatement(const char *stmt_name, bool throwError)
 	 * anything, therefore it couldn't possibly store our plan.
 	 */
 	if (prepared_queries)
-	{
-		/*
-		 * We can't just use the statement name as supplied by the user: the
-		 * hash package is picky enough that it needs to be NUL-padded out to
-		 * the appropriate length to work correctly.
-		 */
-		StrNCpy(key, stmt_name, sizeof(key));
-
 		entry = (PreparedStatement *) hash_search(prepared_queries,
-												  key,
+												  stmt_name,
 												  HASH_FIND,
 												  NULL);
-	}
 	else
 		entry = NULL;
 

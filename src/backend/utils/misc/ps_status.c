@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.31 2006/06/27 22:16:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.32 2006/09/27 18:40:10 tgl Exp $
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -300,7 +300,7 @@ set_ps_display(const char *activity, bool force)
 #endif
 
 	/* Update ps_buffer to contain both fixed part and activity */
-	StrNCpy(ps_buffer + ps_buffer_fixed_size, activity,
+	strlcpy(ps_buffer + ps_buffer_fixed_size, activity,
 			ps_buffer_size - ps_buffer_fixed_size);
 
 	/* Transmit new setting to kernel, if necessary */

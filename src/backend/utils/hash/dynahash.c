@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.71 2006/08/14 12:39:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.72 2006/09/27 18:40:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,20 @@ DynaHashAlloc(Size size)
 }
 
 
+/*
+ * HashCompareFunc for string keys
+ *
+ * Because we copy keys with strlcpy(), they will be truncated at keysize-1
+ * bytes, so we can only compare that many ... hence strncmp is almost but
+ * not quite the right thing.
+ */
+static int
+string_compare(const char *key1, const char *key2, Size keysize)
+{
+	return strncmp(key1, key2, keysize - 1);
+}
+
+
 /************************** CREATE ROUTINES **********************/
 
 /*
@@ -273,24 +287,24 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		hashp->hash = string_hash;		/* default hash function */
 
 	/*
-	 * If you don't specify a match function, it defaults to strncmp() if you
-	 * used string_hash (either explicitly or by default) and to memcmp()
-	 * otherwise.  (Prior to PostgreSQL 7.4, memcmp() was always used.)
+	 * If you don't specify a match function, it defaults to string_compare
+	 * if you used string_hash (either explicitly or by default) and to memcmp
+	 * otherwise.  (Prior to PostgreSQL 7.4, memcmp was always used.)
 	 */
 	if (flags & HASH_COMPARE)
 		hashp->match = info->match;
 	else if (hashp->hash == string_hash)
-		hashp->match = (HashCompareFunc) strncmp;
+		hashp->match = (HashCompareFunc) string_compare;
 	else
 		hashp->match = memcmp;
 
 	/*
-	 * Similarly, the key-copying function defaults to strncpy() or memcpy().
+	 * Similarly, the key-copying function defaults to strlcpy or memcpy.
 	 */
 	if (flags & HASH_KEYCOPY)
 		hashp->keycopy = info->keycopy;
 	else if (hashp->hash == string_hash)
-		hashp->keycopy = (HashCopyFunc) strncpy;
+		hashp->keycopy = (HashCopyFunc) strlcpy;
 	else
 		hashp->keycopy = memcpy;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.89 2006/08/16 04:32:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.90 2006/09/27 18:40:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,7 +594,6 @@ find_rendezvous_variable(const char *varName)
 {
 	static HTAB         *rendezvousHash = NULL;
 
-	char			     key[NAMEDATALEN];
 	rendezvousHashEntry *hentry;
 	bool				 found;
 
@@ -612,12 +611,9 @@ find_rendezvous_variable(const char *varName)
 									 HASH_ELEM);
 	}
 
-	/* Turn the varName into a fixed-size string */
-	StrNCpy(key, varName, sizeof(key));
-
 	/* Find or create the hashtable entry for this varName */
 	hentry = (rendezvousHashEntry *) hash_search(rendezvousHash,
-												 key,
+												 varName,
 												 HASH_ENTER,
 												 &found);
 
