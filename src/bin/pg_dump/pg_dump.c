@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.448 2006/09/22 21:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.449 2006/09/27 15:41:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,6 @@
 #endif
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
-#endif
-
-#ifndef HAVE_STRDUP
-#include "strdup.h"
 #endif
 
 #include "getopt_long.h"

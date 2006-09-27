@@ -3,15 +3,12 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.128 2006/08/29 22:48:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.129 2006/09/27 15:41:23 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
 
 #include <ctype.h>
-#ifndef HAVE_STRDUP
-#include <strdup.h>
-#endif
 #include <signal.h>
 #ifndef WIN32
 #include <sys/time.h>

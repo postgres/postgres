@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.92 2006/08/01 18:05:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.93 2006/09/27 15:41:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,10 +23,6 @@
 #include "catalog/pg_class.h"
 
 #include <ctype.h>
-
-#ifndef HAVE_STRDUP
-#include "strdup.h"
-#endif
 
 
 /*

@@ -8,14 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/strdup.c,v 1.11 2006/07/14 04:59:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/strdup.c,v 1.12 2006/09/27 15:41:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
-
-#include "strdup.h"
 
 
 char *

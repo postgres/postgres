@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.80 2006/08/01 18:21:44 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.81 2006/09/27 15:41:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +42,6 @@
 #include "pg_backup_archiver.h"
 
 #include <ctype.h>
-
-#ifndef HAVE_STRDUP
-#include "strdup.h"
-#endif
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>

@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.73 2006/07/18 17:42:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.74 2006/09/27 15:41:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,6 @@
 #include <termios.h>
 #endif
 
-#ifndef HAVE_STRDUP
-#include "strdup.h"
-#endif
 
 static const char *modulename = gettext_noop("archiver (db)");
 

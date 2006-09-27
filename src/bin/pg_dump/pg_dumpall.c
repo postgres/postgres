@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.81 2006/07/14 14:52:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.82 2006/09/27 15:41:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,6 @@
 
 #ifdef ENABLE_NLS
 #include <locale.h>
-#endif
-#ifndef HAVE_STRDUP
-#include "strdup.h"
 #endif
 
 #include "getopt_long.h"
