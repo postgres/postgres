@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.115 2006/07/27 19:52:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.116 2006/09/28 20:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -717,9 +717,12 @@ typedef OpExpr NullIfExpr;
  * NullTest
  *
  * NullTest represents the operation of testing a value for NULLness.
- * Currently, we only support scalar input values, but eventually a
- * row-constructor input should be supported.
  * The appropriate test is performed and returned as a boolean Datum.
+ *
+ * NOTE: the semantics of this for rowtype inputs are noticeably different
+ * from the scalar case.  It would probably be a good idea to include an
+ * "argisrow" flag in the struct to reflect that, but for the moment,
+ * we do not do so to avoid forcing an initdb during 8.2beta.
  * ----------------
  */
 

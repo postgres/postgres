@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.136 2006/08/15 22:36:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.137 2006/09/28 20:51:42 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1714,6 +1714,18 @@ get_typtype(Oid typid)
 	}
 	else
 		return '\0';
+}
+
+/*
+ * type_is_rowtype
+ *
+ *		Convenience function to determine whether a type OID represents
+ *		a "rowtype" type --- either RECORD or a named composite type.
+ */
+bool
+type_is_rowtype(Oid typid)
+{
+	return (typid == RECORDOID || get_typtype(typid) == 'c');
 }
 
 /*

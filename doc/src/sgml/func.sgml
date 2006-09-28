@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.340 2006/09/22 16:20:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.341 2006/09/28 20:51:41 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -337,6 +337,19 @@
     releases 6.5 through 7.1.
    </para>
   </tip>
+
+  <note>
+   <para>
+    If the <replaceable>expression</replaceable> is row-valued, then
+    <literal>IS NULL</> is true when the row expression itself is null
+    or when all the row's fields are null, while
+    <literal>IS NOT NULL</> is true when the row expression itself is non-null
+    and all the row's fields are non-null.
+    This definition conforms to the SQL standard, and is a change from the
+    inconsistent behavior exhibited by <productname>PostgreSQL</productname>
+    versions prior to 8.2.
+   </para>
+  </note>
 
    <para>
     <indexterm>

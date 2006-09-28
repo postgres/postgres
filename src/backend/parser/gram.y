@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.565 2006/09/03 22:37:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.566 2006/09/28 20:51:42 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -94,7 +94,6 @@ static Node *makeStringConst(char *str, TypeName *typename);
 static Node *makeIntConst(int val);
 static Node *makeFloatConst(char *str);
 static Node *makeAConst(Value *v);
-static Node *makeRowNullTest(NullTestType test, RowExpr *row);
 static A_Const *makeBoolAConst(bool state);
 static FuncCall *makeOverlaps(List *largs, List *rargs, int location);
 static void check_qualified_name(List *names);
@@ -7037,53 +7036,33 @@ a_expr:		c_expr									{ $$ = $1; }
 			 *	a ISNULL
 			 *	a NOTNULL
 			 */
-			| a_expr ISNULL
-				{
-					if (IsA($1, RowExpr))
-						$$ = makeRowNullTest(IS_NULL, (RowExpr *) $1);
-					else
-					{
-						NullTest *n = makeNode(NullTest);
-						n->arg = (Expr *) $1;
-						n->nulltesttype = IS_NULL;
-						$$ = (Node *)n;
-					}
-				}
 			| a_expr IS NULL_P
 				{
-					if (IsA($1, RowExpr))
-						$$ = makeRowNullTest(IS_NULL, (RowExpr *) $1);
-					else
-					{
-						NullTest *n = makeNode(NullTest);
-						n->arg = (Expr *) $1;
-						n->nulltesttype = IS_NULL;
-						$$ = (Node *)n;
-					}
+					NullTest *n = makeNode(NullTest);
+					n->arg = (Expr *) $1;
+					n->nulltesttype = IS_NULL;
+					$$ = (Node *)n;
 				}
-			| a_expr NOTNULL
+			| a_expr ISNULL
 				{
-					if (IsA($1, RowExpr))
-						$$ = makeRowNullTest(IS_NOT_NULL, (RowExpr *) $1);
-					else
-					{
-						NullTest *n = makeNode(NullTest);
-						n->arg = (Expr *) $1;
-						n->nulltesttype = IS_NOT_NULL;
-						$$ = (Node *)n;
-					}
+					NullTest *n = makeNode(NullTest);
+					n->arg = (Expr *) $1;
+					n->nulltesttype = IS_NULL;
+					$$ = (Node *)n;
 				}
 			| a_expr IS NOT NULL_P
 				{
-					if (IsA($1, RowExpr))
-						$$ = makeRowNullTest(IS_NOT_NULL, (RowExpr *) $1);
-					else
-					{
-						NullTest *n = makeNode(NullTest);
-						n->arg = (Expr *) $1;
-						n->nulltesttype = IS_NOT_NULL;
-						$$ = (Node *)n;
-					}
+					NullTest *n = makeNode(NullTest);
+					n->arg = (Expr *) $1;
+					n->nulltesttype = IS_NOT_NULL;
+					$$ = (Node *)n;
+				}
+			| a_expr NOTNULL
+				{
+					NullTest *n = makeNode(NullTest);
+					n->arg = (Expr *) $1;
+					n->nulltesttype = IS_NOT_NULL;
+					$$ = (Node *)n;
 				}
 			| row OVERLAPS row
 				{
@@ -9080,43 +9059,6 @@ makeBoolAConst(bool state)
 	n->val.val.str = (state? "t": "f");
 	n->typename = SystemTypeName("bool");
 	return n;
-}
-
-/* makeRowNullTest()
- * Generate separate operator nodes for a single row descriptor test.
- *
- * Eventually this should be eliminated in favor of making the NullTest
- * node type capable of handling it directly.
- */
-static Node *
-makeRowNullTest(NullTestType test, RowExpr *row)
-{
-	Node		*result = NULL;
-	ListCell	*arg;
-
-	foreach(arg, row->args)
-	{
-		NullTest *n;
-
-		n = makeNode(NullTest);
-		n->arg = (Expr *) lfirst(arg);
-		n->nulltesttype = test;
-
-		if (result == NULL)
-			result = (Node *) n;
-		else if (test == IS_NOT_NULL)
-			result = (Node *) makeA_Expr(AEXPR_OR, NIL, result, (Node *)n, -1);
-		else
-			result = (Node *) makeA_Expr(AEXPR_AND, NIL, result, (Node *)n, -1);
-	}
-
-	if (result == NULL)
-	{
-		/* zero-length rows?  Generate constant TRUE or FALSE */
-		result = (Node *) makeBoolAConst(test == IS_NULL);
-	}
-
-	return result;
 }
 
 /* makeOverlaps()

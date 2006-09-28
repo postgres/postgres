@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.193 2006/07/27 19:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.194 2006/09/28 20:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ static Datum ExecEvalMinMax(MinMaxExprState *minmaxExpr,
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalNullTest(GenericExprState *nstate,
+static Datum ExecEvalNullTest(NullTestState *nstate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalBooleanTest(GenericExprState *bstate,
@@ -1247,8 +1247,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 
 	funcrettype = exprType((Node *) funcexpr->expr);
 
-	returnsTuple = (funcrettype == RECORDOID ||
-					get_typtype(funcrettype) == 'c');
+	returnsTuple = type_is_rowtype(funcrettype);
 
 	/*
 	 * Prepare a resultinfo node for communication.  We always do this even if
@@ -2683,7 +2682,7 @@ ExecEvalNullIf(FuncExprState *nullIfExpr,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalNullTest(GenericExprState *nstate,
+ExecEvalNullTest(NullTestState *nstate,
 				 ExprContext *econtext,
 				 bool *isNull,
 				 ExprDoneCond *isDone)
@@ -2696,28 +2695,77 @@ ExecEvalNullTest(GenericExprState *nstate,
 	if (isDone && *isDone == ExprEndResult)
 		return result;			/* nothing to check */
 
-	switch (ntest->nulltesttype)
+	if (nstate->argisrow && !(*isNull))
 	{
-		case IS_NULL:
-			if (*isNull)
+		HeapTupleHeader tuple;
+		Oid			tupType;
+		int32		tupTypmod;
+		TupleDesc	tupDesc;
+		HeapTupleData tmptup;
+		int			att;
+
+		tuple = DatumGetHeapTupleHeader(result);
+
+		tupType = HeapTupleHeaderGetTypeId(tuple);
+		tupTypmod = HeapTupleHeaderGetTypMod(tuple);
+
+		/* Lookup tupdesc if first time through or if type changes */
+		tupDesc = get_cached_rowtype(tupType, tupTypmod,
+									 &nstate->argdesc, econtext);
+
+		/*
+		 * heap_attisnull needs a HeapTuple not a bare HeapTupleHeader.
+		 */
+		tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
+		tmptup.t_data = tuple;
+
+		for (att = 1; att <= tupDesc->natts; att++)
+		{
+			/* ignore dropped columns */
+			if (tupDesc->attrs[att-1]->attisdropped)
+				continue;
+			if (heap_attisnull(&tmptup, att))
 			{
-				*isNull = false;
-				return BoolGetDatum(true);
+				/* null field disproves IS NOT NULL */
+				if (ntest->nulltesttype == IS_NOT_NULL)
+					return BoolGetDatum(false);
 			}
 			else
-				return BoolGetDatum(false);
-		case IS_NOT_NULL:
-			if (*isNull)
 			{
-				*isNull = false;
-				return BoolGetDatum(false);
+				/* non-null field disproves IS NULL */
+				if (ntest->nulltesttype == IS_NULL)
+					return BoolGetDatum(false);
 			}
-			else
-				return BoolGetDatum(true);
-		default:
-			elog(ERROR, "unrecognized nulltesttype: %d",
-				 (int) ntest->nulltesttype);
-			return (Datum) 0;	/* keep compiler quiet */
+		}
+
+		return BoolGetDatum(true);
+	}
+	else
+	{
+		/* Simple scalar-argument case, or a null rowtype datum */
+		switch (ntest->nulltesttype)
+		{
+			case IS_NULL:
+				if (*isNull)
+				{
+					*isNull = false;
+					return BoolGetDatum(true);
+				}
+				else
+					return BoolGetDatum(false);
+			case IS_NOT_NULL:
+				if (*isNull)
+				{
+					*isNull = false;
+					return BoolGetDatum(false);
+				}
+				else
+					return BoolGetDatum(true);
+			default:
+				elog(ERROR, "unrecognized nulltesttype: %d",
+					 (int) ntest->nulltesttype);
+				return (Datum) 0;	/* keep compiler quiet */
+		}
 	}
 }
 
@@ -3609,11 +3657,13 @@ ExecInitExpr(Expr *node, PlanState *parent)
 		case T_NullTest:
 			{
 				NullTest   *ntest = (NullTest *) node;
-				GenericExprState *gstate = makeNode(GenericExprState);
+				NullTestState *nstate = makeNode(NullTestState);
 
-				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalNullTest;
-				gstate->arg = ExecInitExpr(ntest->arg, parent);
-				state = (ExprState *) gstate;
+				nstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalNullTest;
+				nstate->arg = ExecInitExpr(ntest->arg, parent);
+				nstate->argisrow = type_is_rowtype(exprType((Node *) ntest->arg));
+				nstate->argdesc = NULL;
+				state = (ExprState *) nstate;
 			}
 			break;
 		case T_BooleanTest:

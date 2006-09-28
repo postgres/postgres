@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.220 2006/09/06 20:40:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.221 2006/09/28 20:51:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2098,6 +2098,85 @@ eval_const_expressions_mutator(Node *node,
 		newfselect->resulttype = fselect->resulttype;
 		newfselect->resulttypmod = fselect->resulttypmod;
 		return (Node *) newfselect;
+	}
+	if (IsA(node, NullTest))
+	{
+		NullTest   *ntest = (NullTest *) node;
+		NullTest   *newntest;
+		Node	   *arg;
+
+		arg = eval_const_expressions_mutator((Node *) ntest->arg,
+											 context);
+		if (arg && IsA(arg, RowExpr))
+		{
+			RowExpr  *rarg = (RowExpr *) arg;
+			List	*newargs = NIL;
+			ListCell *l;
+
+			/*
+			 * We break ROW(...) IS [NOT] NULL into separate tests on its
+			 * component fields.  This form is usually more efficient to
+			 * evaluate, as well as being more amenable to optimization.
+			 */
+			foreach(l, rarg->args)
+			{
+				Node *relem = (Node *) lfirst(l);
+
+				/*
+				 * A constant field refutes the whole NullTest if it's of
+				 * the wrong nullness; else we can discard it.
+				 */
+				if (relem && IsA(relem, Const))
+				{
+					Const  *carg = (Const *) relem;
+
+					if (carg->constisnull ?
+						(ntest->nulltesttype == IS_NOT_NULL) :
+						(ntest->nulltesttype == IS_NULL))
+						return makeBoolConst(false, false);
+					continue;
+				}
+				newntest = makeNode(NullTest);
+				newntest->arg = (Expr *) relem;
+				newntest->nulltesttype = ntest->nulltesttype;
+				newargs = lappend(newargs, newntest);
+			}
+			/* If all the inputs were constants, result is TRUE */
+			if (newargs == NIL)
+				return makeBoolConst(true, false);
+			/* If only one nonconst input, it's the result */
+			if (list_length(newargs) == 1)
+				return (Node *) linitial(newargs);
+			/* Else we need an AND node */
+			return (Node *) make_andclause(newargs);
+		}
+		if (arg && IsA(arg, Const))
+		{
+			Const  *carg = (Const *) arg;
+			bool	result;
+
+			switch (ntest->nulltesttype)
+			{
+				case IS_NULL:
+					result = carg->constisnull;
+					break;
+				case IS_NOT_NULL:
+					result = !carg->constisnull;
+					break;
+				default:
+					elog(ERROR, "unrecognized nulltesttype: %d",
+						 (int) ntest->nulltesttype);
+					result = false;	/* keep compiler quiet */
+					break;
+			}
+
+			return makeBoolConst(result, false);
+		}
+
+		newntest = makeNode(NullTest);
+		newntest->arg = (Expr *) arg;
+		newntest->nulltesttype = ntest->nulltesttype;
+		return (Node *) newntest;
 	}
 	if (IsA(node, BooleanTest))
 	{

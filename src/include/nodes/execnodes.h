@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.160 2006/08/25 04:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.161 2006/09/28 20:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -704,6 +704,19 @@ typedef struct MinMaxExprState
 	List	   *args;			/* the arguments */
 	FmgrInfo	cfunc;			/* lookup info for comparison func */
 } MinMaxExprState;
+
+/* ----------------
+ *		NullTestState node
+ * ----------------
+ */
+typedef struct NullTestState
+{
+	ExprState	xprstate;
+	ExprState  *arg;			/* input expression */
+	bool		argisrow;		/* T if input is of a composite type */
+	/* used only if argisrow: */
+	TupleDesc	argdesc;		/* tupdesc for most recent input */
+} NullTestState;
 
 /* ----------------
  *		CoerceToDomainState node

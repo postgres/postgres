@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.8 2006/08/05 00:21:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.9 2006/09/28 20:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "executor/executor.h"
 #include "optimizer/clauses.h"
 #include "optimizer/predtest.h"
+#include "parser/parse_expr.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -931,14 +932,18 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 	{
 		Expr	   *nonnullarg = ((NullTest *) predicate)->arg;
 
-		if (is_opclause(clause) &&
-			list_member(((OpExpr *) clause)->args, nonnullarg) &&
-			op_strict(((OpExpr *) clause)->opno))
-			return true;
-		if (is_funcclause(clause) &&
-			list_member(((FuncExpr *) clause)->args, nonnullarg) &&
-			func_strict(((FuncExpr *) clause)->funcid))
-			return true;
+		/* row IS NOT NULL does not act in the simple way we have in mind */
+		if (!type_is_rowtype(exprType((Node *) nonnullarg)))
+		{
+			if (is_opclause(clause) &&
+				list_member(((OpExpr *) clause)->args, nonnullarg) &&
+				op_strict(((OpExpr *) clause)->opno))
+				return true;
+			if (is_funcclause(clause) &&
+				list_member(((FuncExpr *) clause)->args, nonnullarg) &&
+				func_strict(((FuncExpr *) clause)->funcid))
+				return true;
+		}
 		return false;			/* we can't succeed below... */
 	}
 
@@ -978,14 +983,18 @@ predicate_refuted_by_simple_clause(Expr *predicate, Node *clause)
 	{
 		Expr	   *isnullarg = ((NullTest *) predicate)->arg;
 
-		if (is_opclause(clause) &&
-			list_member(((OpExpr *) clause)->args, isnullarg) &&
-			op_strict(((OpExpr *) clause)->opno))
-			return true;
-		if (is_funcclause(clause) &&
-			list_member(((FuncExpr *) clause)->args, isnullarg) &&
-			func_strict(((FuncExpr *) clause)->funcid))
-			return true;
+		/* row IS NULL does not act in the simple way we have in mind */
+		if (!type_is_rowtype(exprType((Node *) isnullarg)))
+		{
+			if (is_opclause(clause) &&
+				list_member(((OpExpr *) clause)->args, isnullarg) &&
+				op_strict(((OpExpr *) clause)->opno))
+				return true;
+			if (is_funcclause(clause) &&
+				list_member(((FuncExpr *) clause)->args, isnullarg) &&
+				func_strict(((FuncExpr *) clause)->funcid))
+				return true;
+		}
 		return false;			/* we can't succeed below... */
 	}
 
