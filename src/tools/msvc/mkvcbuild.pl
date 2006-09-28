@@ -17,7 +17,7 @@ my $solution = new Solution($config);
 our @pgportfiles = qw(
    crypt.c fseeko.c getrusage.c inet_aton.c random.c srandom.c
    unsetenv.c getaddrinfo.c gettimeofday.c kill.c open.c rand.c
-   snprintf.c copydir.c dirmod.c exec.c noblock.c path.c pipe.c
+   snprintf.c strlcpy.c copydir.c dirmod.c exec.c noblock.c path.c pipe.c
    pgsleep.c pgstrcasecmp.c sprompt.c thread.c getopt.c getopt_long.c
    dirent.c rint.c win32error.c);
 
