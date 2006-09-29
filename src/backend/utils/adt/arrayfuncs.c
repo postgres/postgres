@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.131 2006/09/10 20:14:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.132 2006/09/29 21:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1925,8 +1925,9 @@ array_get_slice(ArrayType *array,
  *		  modified entry.  The original array object is not changed.
  *
  * For one-dimensional arrays only, we allow the array to be extended
- * by assigning to the position one above or one below the existing range.
- * (XXX we could be more flexible: perhaps allow NULL fill?)
+ * by assigning to a position outside the existing subscript range; any
+ * positions between the existing elements and the new one are set to NULLs.
+ * (XXX TODO: allow a corresponding behavior for multidimensional arrays)
  *
  * NOTE: For assignments, we throw an error for invalid subscripts etc,
  * rather than returning a NULL as the fetch operations do.
@@ -1949,17 +1950,18 @@ array_set(ArrayType *array,
 				lb[MAXDIM],
 				offset;
 	char	   *elt_ptr;
-	bool		extendbefore = false;
-	bool		extendafter = false;
 	bool		newhasnulls;
 	bits8	   *oldnullbitmap;
 	int			oldnitems,
+				newnitems,
 				olddatasize,
 				newsize,
 				olditemlen,
 				newitemlen,
 				overheadlen,
 				oldoverheadlen,
+				addedbefore,
+				addedafter,
 				lenbefore,
 				lenafter;
 
@@ -1972,12 +1974,12 @@ array_set(ArrayType *array,
 		if (nSubscripts != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					 errmsg("invalid array subscripts")));
+					 errmsg("wrong number of array subscripts")));
 
 		if (indx[0] < 0 || indx[0] * elmlen >= arraytyplen)
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					 errmsg("invalid array subscripts")));
+					 errmsg("array subscript out of range")));
 
 		if (isNull)
 			ereport(ERROR,
@@ -1994,7 +1996,7 @@ array_set(ArrayType *array,
 	if (nSubscripts <= 0 || nSubscripts > MAXDIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("invalid array subscripts")));
+				 errmsg("wrong number of array subscripts")));
 
 	/* make sure item to be inserted is not toasted */
 	if (elmlen == -1 && !isNull)
@@ -2028,70 +2030,72 @@ array_set(ArrayType *array,
 	if (ndim != nSubscripts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("invalid array subscripts")));
+				 errmsg("wrong number of array subscripts")));
 
 	/* copy dim/lb since we may modify them */
 	memcpy(dim, ARR_DIMS(array), ndim * sizeof(int));
 	memcpy(lb, ARR_LBOUND(array), ndim * sizeof(int));
 
+	newhasnulls = (ARR_HASNULL(array) || isNull);
+	addedbefore = addedafter = 0;
+
 	/*
 	 * Check subscripts
 	 */
-	for (i = 0; i < ndim; i++)
+	if (ndim == 1)
 	{
-		if (indx[i] < lb[i])
+		if (indx[0] < lb[0])
 		{
-			if (ndim == 1 && indx[i] == lb[i] - 1)
-			{
-				dim[i]++;
-				lb[i]--;
-				extendbefore = true;
-			}
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-						 errmsg("invalid array subscripts")));
+			addedbefore = lb[0] - indx[0];
+			dim[0] += addedbefore;
+			lb[0] = indx[0];
+			if (addedbefore > 1)
+				newhasnulls = true;				/* will insert nulls */
 		}
-		if (indx[i] >= (dim[i] + lb[i]))
+		if (indx[0] >= (dim[0] + lb[0]))
 		{
-			if (ndim == 1 && indx[i] == (dim[i] + lb[i]))
-			{
-				dim[i]++;
-				extendafter = true;
-			}
-			else
+			addedafter = indx[0] - (dim[0] + lb[0]) + 1;
+			dim[0] += addedafter;
+			if (addedafter > 1)
+				newhasnulls = true;				/* will insert nulls */
+		}
+	}
+	else
+	{
+		/*
+		 * XXX currently we do not support extending multi-dimensional
+		 * arrays during assignment
+		 */
+		for (i = 0; i < ndim; i++)
+		{
+			if (indx[i] < lb[i] ||
+				indx[i] >= (dim[i] + lb[i]))
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-						 errmsg("invalid array subscripts")));
+						 errmsg("array subscript out of range")));
 		}
 	}
 
 	/*
 	 * Compute sizes of items and areas to copy
 	 */
-	if (ARR_HASNULL(array) || isNull)
-	{
-		newhasnulls = true;
-		overheadlen = ARR_OVERHEAD_WITHNULLS(ndim,
-											 ArrayGetNItems(ndim, dim));
-	}
+	newnitems = ArrayGetNItems(ndim, dim);
+	if (newhasnulls)
+		overheadlen = ARR_OVERHEAD_WITHNULLS(ndim, newnitems);
 	else
-	{
-		newhasnulls = false;
 		overheadlen = ARR_OVERHEAD_NONULLS(ndim);
-	}
 	oldnitems = ArrayGetNItems(ndim, ARR_DIMS(array));
 	oldnullbitmap = ARR_NULLBITMAP(array);
 	oldoverheadlen = ARR_DATA_OFFSET(array);
 	olddatasize = ARR_SIZE(array) - oldoverheadlen;
-	if (extendbefore)
+	if (addedbefore)
 	{
 		offset = 0;
 		lenbefore = 0;
 		olditemlen = 0;
 		lenafter = olddatasize;
 	}
-	else if (extendafter)
+	else if (addedafter)
 	{
 		offset = oldnitems;
 		lenbefore = olddatasize;
@@ -2158,9 +2162,16 @@ array_set(ArrayType *array,
 	{
 		bits8	   *newnullbitmap = ARR_NULLBITMAP(newarray);
 
-		array_set_isnull(newnullbitmap, offset, isNull);
-		if (extendbefore)
-			array_bitmap_copy(newnullbitmap, 1,
+		/* Zero the bitmap to take care of marking inserted positions null */
+		MemSet(newnullbitmap, 0, (newnitems + 7) / 8);
+		/* Fix the inserted value */
+		if (addedafter)
+			array_set_isnull(newnullbitmap, newnitems - 1, isNull);
+		else
+			array_set_isnull(newnullbitmap, offset, isNull);
+		/* Fix the copied range(s) */
+		if (addedbefore)
+			array_bitmap_copy(newnullbitmap, addedbefore,
 							  oldnullbitmap, 0,
 							  oldnitems);
 		else
@@ -2168,7 +2179,7 @@ array_set(ArrayType *array,
 			array_bitmap_copy(newnullbitmap, 0,
 							  oldnullbitmap, 0,
 							  offset);
-			if (!extendafter)
+			if (addedafter == 0)
 				array_bitmap_copy(newnullbitmap, offset + 1,
 								  oldnullbitmap, offset + 1,
 								  oldnitems - offset - 1);
@@ -2201,6 +2212,11 @@ array_set(ArrayType *array,
  * Result:
  *		  A new array is returned, just like the old except for the
  *		  modified range.  The original array object is not changed.
+ *
+ * For one-dimensional arrays only, we allow the array to be extended
+ * by assigning to positions outside the existing subscript range; any
+ * positions between the existing elements and the new ones are set to NULLs.
+ * (XXX TODO: allow a corresponding behavior for multidimensional arrays)
  *
  * NOTE: we assume it is OK to scribble on the provided index arrays
  * lowerIndx[] and upperIndx[].  These are generally just temporaries.
@@ -2235,6 +2251,8 @@ array_set_slice(ArrayType *array,
 				newitemsize,
 				overheadlen,
 				oldoverheadlen,
+				addedbefore,
+				addedafter,
 				lenbefore,
 				lenafter,
 				itemsbefore,
@@ -2298,54 +2316,69 @@ array_set_slice(ArrayType *array,
 	if (ndim < nSubscripts || ndim <= 0 || ndim > MAXDIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("invalid array subscripts")));
+				 errmsg("wrong number of array subscripts")));
 
 	/* copy dim/lb since we may modify them */
 	memcpy(dim, ARR_DIMS(array), ndim * sizeof(int));
 	memcpy(lb, ARR_LBOUND(array), ndim * sizeof(int));
 
+	newhasnulls = (ARR_HASNULL(array) || ARR_HASNULL(srcArray));
+	addedbefore = addedafter = 0;
+
 	/*
-	 * Check provided subscripts.  A slice exceeding the current array limits
-	 * throws an error, *except* in the 1-D case where we will extend the
-	 * array as long as no hole is created. An empty slice is an error, too.
+	 * Check subscripts
 	 */
-	for (i = 0; i < nSubscripts; i++)
+	if (ndim == 1)
 	{
-		if (lowerIndx[i] > upperIndx[i])
+		Assert(nSubscripts == 1);
+		if (lowerIndx[0] > upperIndx[0])
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					 errmsg("invalid array subscripts")));
-		if (lowerIndx[i] < lb[i])
+					 errmsg("upper bound cannot be less than lower bound")));
+		if (lowerIndx[0] < lb[0])
 		{
-			if (ndim == 1 && upperIndx[i] >= lb[i] - 1)
-			{
-				dim[i] += lb[i] - lowerIndx[i];
-				lb[i] = lowerIndx[i];
-			}
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-						 errmsg("invalid array subscripts")));
+			if (upperIndx[0] < lb[0] - 1)
+				newhasnulls = true;				/* will insert nulls */
+			addedbefore = lb[0] - lowerIndx[0];
+			dim[0] += addedbefore;
+			lb[0] = lowerIndx[0];
 		}
-		if (upperIndx[i] >= (dim[i] + lb[i]))
+		if (upperIndx[0] >= (dim[0] + lb[0]))
 		{
-			if (ndim == 1 && lowerIndx[i] <= (dim[i] + lb[i]))
-				dim[i] = upperIndx[i] - lb[i] + 1;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-						 errmsg("invalid array subscripts")));
+			if (lowerIndx[0] > (dim[0] + lb[0]))
+				newhasnulls = true;				/* will insert nulls */
+			addedafter = upperIndx[0] - (dim[0] + lb[0]) + 1;
+			dim[0] += addedafter;
 		}
 	}
-	/* fill any missing subscript positions with full array range */
-	for (; i < ndim; i++)
+	else
 	{
-		lowerIndx[i] = lb[i];
-		upperIndx[i] = dim[i] + lb[i] - 1;
-		if (lowerIndx[i] > upperIndx[i])
-			ereport(ERROR,
-					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					 errmsg("invalid array subscripts")));
+		/*
+		 * XXX currently we do not support extending multi-dimensional
+		 * arrays during assignment
+		 */
+		for (i = 0; i < nSubscripts; i++)
+		{
+			if (lowerIndx[i] > upperIndx[i])
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("upper bound cannot be less than lower bound")));
+			if (lowerIndx[i] < lb[i] ||
+				upperIndx[i] >= (dim[i] + lb[i]))
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("array subscript out of range")));
+		}
+		/* fill any missing subscript positions with full array range */
+		for (; i < ndim; i++)
+		{
+			lowerIndx[i] = lb[i];
+			upperIndx[i] = dim[i] + lb[i] - 1;
+			if (lowerIndx[i] > upperIndx[i])
+				ereport(ERROR,
+						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+						 errmsg("upper bound cannot be less than lower bound")));
+		}
 	}
 
 	/* Do this mainly to check for overflow */
@@ -2366,16 +2399,10 @@ array_set_slice(ArrayType *array,
 	 * Compute space occupied by new entries, space occupied by replaced
 	 * entries, and required space for new array.
 	 */
-	if (ARR_HASNULL(array) || ARR_HASNULL(srcArray))
-	{
-		newhasnulls = true;
+	if (newhasnulls)
 		overheadlen = ARR_OVERHEAD_WITHNULLS(ndim, nitems);
-	}
 	else
-	{
-		newhasnulls = false;
 		overheadlen = ARR_OVERHEAD_NONULLS(ndim);
-	}
 	newitemsize = array_nelems_size(ARR_DATA_PTR(srcArray), 0,
 									ARR_NULLBITMAP(srcArray), nsrcitems,
 									elmlen, elmbyval, elmalign);
@@ -2407,7 +2434,7 @@ array_set_slice(ArrayType *array,
 		char	   *oldarraydata = ARR_DATA_PTR(array);
 		bits8	   *oldarraybitmap = ARR_NULLBITMAP(array);
 
-		itemsbefore = slicelb - oldlb;
+		itemsbefore = Min(slicelb, oldub + 1) - oldlb;
 		lenbefore = array_nelems_size(oldarraydata, 0, oldarraybitmap,
 									  itemsbefore,
 									  elmlen, elmbyval, elmalign);
@@ -2467,13 +2494,15 @@ array_set_slice(ArrayType *array,
 			bits8	   *newnullbitmap = ARR_NULLBITMAP(newarray);
 			bits8	   *oldnullbitmap = ARR_NULLBITMAP(array);
 
-			array_bitmap_copy(newnullbitmap, 0,
+			/* Zero the bitmap to handle marking inserted positions null */
+			MemSet(newnullbitmap, 0, (nitems + 7) / 8);
+			array_bitmap_copy(newnullbitmap, addedbefore,
 							  oldnullbitmap, 0,
 							  itemsbefore);
-			array_bitmap_copy(newnullbitmap, itemsbefore,
+			array_bitmap_copy(newnullbitmap, lowerIndx[0] - lb[0],
 							  ARR_NULLBITMAP(srcArray), 0,
 							  nsrcitems);
-			array_bitmap_copy(newnullbitmap, itemsbefore + nsrcitems,
+			array_bitmap_copy(newnullbitmap, addedbefore + itemsbefore + nolditems,
 							  oldnullbitmap, itemsbefore + nolditems,
 							  itemsafter);
 		}

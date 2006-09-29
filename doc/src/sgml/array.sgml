@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.51 2006/05/09 23:12:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.52 2006/09/29 21:22:21 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -350,11 +350,12 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
  </para>
 
  <para>
-  A stored array value can be enlarged by assigning to an element adjacent to
-  those already present, or by assigning to a slice that is adjacent
-  to or overlaps the data already present.  For example, if array
-  <literal>myarray</> currently has 4 elements, it will have five
-  elements after an update that assigns to <literal>myarray[5]</>.
+  A stored array value can be enlarged by assigning to element(s) not already
+  present.  Any positions between those previously present and the newly
+  assigned element(s) will be filled with nulls.  For example, if array
+  <literal>myarray</> currently has 4 elements, it will have six
+  elements after an update that assigns to <literal>myarray[6]</>,
+  and <literal>myarray[5]</> will contain a null.
   Currently, enlargement in this fashion is only allowed for one-dimensional
   arrays, not multidimensional arrays.
  </para>

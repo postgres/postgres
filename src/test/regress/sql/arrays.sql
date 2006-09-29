@@ -91,6 +91,42 @@ DELETE FROM arrtest WHERE a[2] IS NULL AND b IS NULL;
 SELECT a,b,c FROM arrtest;
 
 --
+-- test array extension
+--
+CREATE TEMP TABLE arrtest1 (i int[], t text[]);
+insert into arrtest1 values(array[1,2,null,4], array['one','two',null,'four']);
+select * from arrtest1;
+update arrtest1 set i[2] = 22, t[2] = 'twenty-two';
+select * from arrtest1;
+update arrtest1 set i[5] = 5, t[5] = 'five';
+select * from arrtest1;
+update arrtest1 set i[8] = 8, t[8] = 'eight';
+select * from arrtest1;
+update arrtest1 set i[0] = 0, t[0] = 'zero';
+select * from arrtest1;
+update arrtest1 set i[-3] = -3, t[-3] = 'minus-three';
+select * from arrtest1;
+update arrtest1 set i[0:2] = array[10,11,12], t[0:2] = array['ten','eleven','twelve'];
+select * from arrtest1;
+update arrtest1 set i[8:10] = array[18,null,20], t[8:10] = array['p18',null,'p20'];
+select * from arrtest1;
+update arrtest1 set i[11:12] = array[null,22], t[11:12] = array[null,'p22'];
+select * from arrtest1;
+update arrtest1 set i[15:16] = array[null,26], t[15:16] = array[null,'p26'];
+select * from arrtest1;
+update arrtest1 set i[-5:-3] = array[-15,-14,-13], t[-5:-3] = array['m15','m14','m13'];
+select * from arrtest1;
+update arrtest1 set i[-7:-6] = array[-17,null], t[-7:-6] = array['m17',null];
+select * from arrtest1;
+update arrtest1 set i[-12:-10] = array[-22,null,-20], t[-12:-10] = array['m22',null,'m20'];
+select * from arrtest1;
+delete from arrtest1;
+insert into arrtest1 values(array[1,2,null,4], array['one','two',null,'four']);
+select * from arrtest1;
+update arrtest1 set i[0:5] = array[0,1,2,null,4,5], t[0:5] = array['z','p1','p2',null,'p4','p5'];
+select * from arrtest1;
+
+--
 -- array expressions and operators
 --
 

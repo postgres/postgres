@@ -144,6 +144,116 @@ SELECT a,b,c FROM arrtest;
 (3 rows)
 
 --
+-- test array extension
+--
+CREATE TEMP TABLE arrtest1 (i int[], t text[]);
+insert into arrtest1 values(array[1,2,null,4], array['one','two',null,'four']);
+select * from arrtest1;
+      i       |          t          
+--------------+---------------------
+ {1,2,NULL,4} | {one,two,NULL,four}
+(1 row)
+
+update arrtest1 set i[2] = 22, t[2] = 'twenty-two';
+select * from arrtest1;
+       i       |             t              
+---------------+----------------------------
+ {1,22,NULL,4} | {one,twenty-two,NULL,four}
+(1 row)
+
+update arrtest1 set i[5] = 5, t[5] = 'five';
+select * from arrtest1;
+        i        |                t                
+-----------------+---------------------------------
+ {1,22,NULL,4,5} | {one,twenty-two,NULL,four,five}
+(1 row)
+
+update arrtest1 set i[8] = 8, t[8] = 'eight';
+select * from arrtest1;
+              i              |                        t                        
+-----------------------------+-------------------------------------------------
+ {1,22,NULL,4,5,NULL,NULL,8} | {one,twenty-two,NULL,four,five,NULL,NULL,eight}
+(1 row)
+
+update arrtest1 set i[0] = 0, t[0] = 'zero';
+select * from arrtest1;
+                  i                  |                             t                              
+-------------------------------------+------------------------------------------------------------
+ [0:8]={0,1,22,NULL,4,5,NULL,NULL,8} | [0:8]={zero,one,twenty-two,NULL,four,five,NULL,NULL,eight}
+(1 row)
+
+update arrtest1 set i[-3] = -3, t[-3] = 'minus-three';
+select * from arrtest1;
+                         i                         |                                         t                                         
+---------------------------------------------------+-----------------------------------------------------------------------------------
+ [-3:8]={-3,NULL,NULL,0,1,22,NULL,4,5,NULL,NULL,8} | [-3:8]={minus-three,NULL,NULL,zero,one,twenty-two,NULL,four,five,NULL,NULL,eight}
+(1 row)
+
+update arrtest1 set i[0:2] = array[10,11,12], t[0:2] = array['ten','eleven','twelve'];
+select * from arrtest1;
+                          i                          |                                        t                                        
+-----------------------------------------------------+---------------------------------------------------------------------------------
+ [-3:8]={-3,NULL,NULL,10,11,12,NULL,4,5,NULL,NULL,8} | [-3:8]={minus-three,NULL,NULL,ten,eleven,twelve,NULL,four,five,NULL,NULL,eight}
+(1 row)
+
+update arrtest1 set i[8:10] = array[18,null,20], t[8:10] = array['p18',null,'p20'];
+select * from arrtest1;
+                               i                               |                                            t                                            
+---------------------------------------------------------------+-----------------------------------------------------------------------------------------
+ [-3:10]={-3,NULL,NULL,10,11,12,NULL,4,5,NULL,NULL,18,NULL,20} | [-3:10]={minus-three,NULL,NULL,ten,eleven,twelve,NULL,four,five,NULL,NULL,p18,NULL,p20}
+(1 row)
+
+update arrtest1 set i[11:12] = array[null,22], t[11:12] = array[null,'p22'];
+select * from arrtest1;
+                                   i                                   |                                                t                                                 
+-----------------------------------------------------------------------+--------------------------------------------------------------------------------------------------
+ [-3:12]={-3,NULL,NULL,10,11,12,NULL,4,5,NULL,NULL,18,NULL,20,NULL,22} | [-3:12]={minus-three,NULL,NULL,ten,eleven,twelve,NULL,four,five,NULL,NULL,p18,NULL,p20,NULL,p22}
+(1 row)
+
+update arrtest1 set i[15:16] = array[null,26], t[15:16] = array[null,'p26'];
+select * from arrtest1;
+                                            i                                            |                                                          t                                                          
+-----------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------
+ [-3:16]={-3,NULL,NULL,10,11,12,NULL,4,5,NULL,NULL,18,NULL,20,NULL,22,NULL,NULL,NULL,26} | [-3:16]={minus-three,NULL,NULL,ten,eleven,twelve,NULL,four,five,NULL,NULL,p18,NULL,p20,NULL,p22,NULL,NULL,NULL,p26}
+(1 row)
+
+update arrtest1 set i[-5:-3] = array[-15,-14,-13], t[-5:-3] = array['m15','m14','m13'];
+select * from arrtest1;
+                                                i                                                 |                                                          t                                                          
+--------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------
+ [-5:16]={-15,-14,-13,NULL,NULL,10,11,12,NULL,4,5,NULL,NULL,18,NULL,20,NULL,22,NULL,NULL,NULL,26} | [-5:16]={m15,m14,m13,NULL,NULL,ten,eleven,twelve,NULL,four,five,NULL,NULL,p18,NULL,p20,NULL,p22,NULL,NULL,NULL,p26}
+(1 row)
+
+update arrtest1 set i[-7:-6] = array[-17,null], t[-7:-6] = array['m17',null];
+select * from arrtest1;
+                                                     i                                                     |                                                              t                                                               
+-----------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------
+ [-7:16]={-17,NULL,-15,-14,-13,NULL,NULL,10,11,12,NULL,4,5,NULL,NULL,18,NULL,20,NULL,22,NULL,NULL,NULL,26} | [-7:16]={m17,NULL,m15,m14,m13,NULL,NULL,ten,eleven,twelve,NULL,four,five,NULL,NULL,p18,NULL,p20,NULL,p22,NULL,NULL,NULL,p26}
+(1 row)
+
+update arrtest1 set i[-12:-10] = array[-22,null,-20], t[-12:-10] = array['m22',null,'m20'];
+select * from arrtest1;
+                                                                 i                                                                 |                                                                          t                                                                           
+-----------------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------
+ [-12:16]={-22,NULL,-20,NULL,NULL,-17,NULL,-15,-14,-13,NULL,NULL,10,11,12,NULL,4,5,NULL,NULL,18,NULL,20,NULL,22,NULL,NULL,NULL,26} | [-12:16]={m22,NULL,m20,NULL,NULL,m17,NULL,m15,m14,m13,NULL,NULL,ten,eleven,twelve,NULL,four,five,NULL,NULL,p18,NULL,p20,NULL,p22,NULL,NULL,NULL,p26}
+(1 row)
+
+delete from arrtest1;
+insert into arrtest1 values(array[1,2,null,4], array['one','two',null,'four']);
+select * from arrtest1;
+      i       |          t          
+--------------+---------------------
+ {1,2,NULL,4} | {one,two,NULL,four}
+(1 row)
+
+update arrtest1 set i[0:5] = array[0,1,2,null,4,5], t[0:5] = array['z','p1','p2',null,'p4','p5'];
+select * from arrtest1;
+           i            |             t              
+------------------------+----------------------------
+ [0:5]={0,1,2,NULL,4,5} | [0:5]={z,p1,p2,NULL,p4,p5}
+(1 row)
+
+--
 -- array expressions and operators
 --
 -- table creation and INSERTs
