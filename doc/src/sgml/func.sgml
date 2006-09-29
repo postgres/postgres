@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.341 2006/09/28 20:51:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.342 2006/09/29 18:36:45 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8829,14 +8829,6 @@ SELECT col1 FROM tab1
    <primary>IS NOT DISTINCT FROM</primary>
   </indexterm>
 
-  <indexterm>
-   <primary>IS NULL</primary>
-  </indexterm>
-
-  <indexterm>
-   <primary>IS NOT NULL</primary>
-  </indexterm>
-
   <para>
    This section describes several specialized constructs for making
    multiple comparisons between groups of values.  These forms are
@@ -9070,16 +9062,6 @@ AND
    considered unequal to (distinct from) any non-null value, and any two
    nulls are considered equal (not distinct).  Thus the result will always
    be either true or false, never null.
-  </para>
-
-<synopsis>
-<replaceable>row_constructor</replaceable> IS NULL
-<replaceable>row_constructor</replaceable> IS NOT NULL
-</synopsis>
-
-  <para>
-   These constructs test a row value for null or not null.  A row value
-   is considered not null if it has at least one field that is not null.
   </para>
 
   </sect2>
