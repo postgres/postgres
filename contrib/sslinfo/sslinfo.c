@@ -3,6 +3,8 @@
  *
  * Written by Victor B. Wagner <vitus@cryptocom.ru>, Cryptocom LTD
  * This file is distributed under BSD-style license.
+ *
+ * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.4 2006/09/30 18:44:37 tgl Exp $
  */
 
 #include "postgres.h"
@@ -113,7 +115,7 @@ Datum ASN1_STRING_to_text(ASN1_STRING *str)
 	text *result;
 
 	membuf = BIO_new(BIO_s_mem());
-	BIO_set_close(membuf, BIO_CLOSE);
+	(void) BIO_set_close(membuf, BIO_CLOSE);
 	ASN1_STRING_print_ex(membuf,str,
 						 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
 						  | ASN1_STRFLGS_UTF8_CONVERT));
@@ -271,7 +273,7 @@ Datum X509_NAME_to_text(X509_NAME *name)
 	char *dp;
 	text *result;
 
-	BIO_set_close(membuf, BIO_CLOSE);
+	(void) BIO_set_close(membuf, BIO_CLOSE);
 	for (i=0; i<count; i++)
 	{
 		e = X509_NAME_get_entry(name, i);
