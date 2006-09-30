@@ -1,6 +1,7 @@
 MODULE_big = adminpack
 PG_CPPFLAGS = -I$(libpq_srcdir)
 DATA_built = adminpack.sql
+DATA = uninstall_adminpack.sql
 DOCS = README.adminpack
 OBJS = adminpack.o
 
