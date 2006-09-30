@@ -1,6 +1,7 @@
 MODULE_big = sslinfo
 OBJS = sslinfo.o
 DATA_built = sslinfo.sql
+DATA = uninstall_sslinfo.sql
 DOCS = README.sslinfo
 
 ifdef USE_PGXS
