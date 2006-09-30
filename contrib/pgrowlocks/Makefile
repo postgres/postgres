@@ -2,7 +2,7 @@
 #
 # pgrowlocks Makefile
 #
-# $PostgreSQL: pgsql/contrib/pgrowlocks/Makefile,v 1.1 2006/04/23 01:12:58 ishii Exp $
+# $PostgreSQL: pgsql/contrib/pgrowlocks/Makefile,v 1.2 2006/09/30 18:08:32 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,7 @@ MODULE_big	= pgrowlocks
 OBJS		= $(SRCS:.c=.o)
 DOCS		= README.pgrowlocks README.pgrowlocks.euc_jp
 DATA_built	= pgrowlocks.sql
+DATA		= uninstall_pgrowlocks.sql
 
 ifdef USE_PGXS
 PGXS = $(shell pg_config --pgxs)
