@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.5 2006/01/26 17:08:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.207.2.6 2006/10/01 17:23:51 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3458,14 +3458,18 @@ get_rule_expr(Node *node, deparse_context *context,
 						 * the optimizer's simplify_boolean_equality() may
 						 * have reduced this to just "CaseTestExpr" or
 						 * "NOT CaseTestExpr", for which we have to show
-						 * "TRUE" or "FALSE".
+						 * "TRUE" or "FALSE".  Also, depending on context
+						 * the original CaseTestExpr might have been reduced
+						 * to a Const (but we won't see "WHEN Const").
 						 */
 						if (IsA(w, OpExpr))
 						{
 							Node	   *rhs;
 
 							Assert(IsA(linitial(((OpExpr *) w)->args),
-									   CaseTestExpr));
+									   CaseTestExpr) ||
+								   IsA(linitial(((OpExpr *) w)->args),
+									   Const));
 							rhs = (Node *) lsecond(((OpExpr *) w)->args);
 							get_rule_expr(rhs, context, false);
 						}
