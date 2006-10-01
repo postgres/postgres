@@ -892,8 +892,8 @@ Optional Packages:
   --with-ldap             build with LDAP support
   --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support
+  --without-readline      do not use GNU Readline nor BSD Libedit for editing
   --with-libedit-preferred  prefer BSD Libedit over GNU Readline
-  --without-readline      do not use GNU Readline / BSD Libedit line editing
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
 
@@ -4087,38 +4087,6 @@ echo "${ECHO_T}$with_openssl" >&6
 
 
 #
-# Prefer libedit
-#
-
-
-
-
-# Check whether --with-libedit-preferred or --without-libedit-preferred was given.
-if test "${with_libedit_preferred+set}" = set; then
-  withval="$with_libedit_preferred"
-
-  case $withval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --with-libedit-preferred option" >&5
-echo "$as_me: error: no argument expected for --with-libedit-preferred option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  with_libedit_preferred=no
-
-fi;
-
-
-
-#
 # Readline
 #
 
@@ -4158,6 +4126,38 @@ echo "$as_me: WARNING: *** Readline does not work on MinGW --- disabling" >&2;}
     with_readline=no
   fi
 fi
+
+
+#
+# Prefer libedit
+#
+
+
+
+
+# Check whether --with-libedit-preferred or --without-libedit-preferred was given.
+if test "${with_libedit_preferred+set}" = set; then
+  withval="$with_libedit_preferred"
+
+  case $withval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-libedit-preferred option" >&5
+echo "$as_me: error: no argument expected for --with-libedit-preferred option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_libedit_preferred=no
+
+fi;
+
 
 
 #
@@ -22955,8 +22955,8 @@ with_pam) ;;
 with_ldap) ;;
 with_bonjour) ;;
 with_openssl) ;;
-with_libedit_preferred) ;;
 with_readline) ;;
+with_libedit_preferred) ;;
 with_zlib) ;;
 
        with_gnu_ld) ;;

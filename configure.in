@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.476 2006/09/27 16:29:45 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.477 2006/10/01 23:47:16 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -509,17 +509,10 @@ AC_SUBST(with_openssl)
 
 
 #
-# Prefer libedit
-#
-PGAC_ARG_BOOL(with, libedit-preferred, no,
-              [  --with-libedit-preferred  prefer BSD Libedit over GNU Readline])
-
-
-#
 # Readline
 #
 PGAC_ARG_BOOL(with, readline, yes,
-              [  --without-readline      do not use GNU Readline / BSD Libedit line editing])
+              [  --without-readline      do not use GNU Readline nor BSD Libedit for editing])
 # readline on MinGW has problems with backslashes in psql and other bugs.
 # This is particularly a problem with non-US code pages.
 # Therefore disable its use until we understand the cause. 2004-07-20
@@ -529,6 +522,13 @@ if test "$PORTNAME" = "win32"; then
     with_readline=no
   fi
 fi
+
+
+#
+# Prefer libedit
+#
+PGAC_ARG_BOOL(with, libedit-preferred, no,
+              [  --with-libedit-preferred  prefer BSD Libedit over GNU Readline])
 
 
 #
