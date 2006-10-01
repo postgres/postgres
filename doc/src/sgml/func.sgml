@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.342 2006/09/29 18:36:45 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.343 2006/10/01 18:54:31 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -6027,6 +6027,7 @@ date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>
      <member><literal>day</literal></member>
      <member><literal>week</literal></member>
      <member><literal>month</literal></member>
+     <member><literal>quarter</literal></member>
      <member><literal>year</literal></member>
      <member><literal>decade</literal></member>
      <member><literal>century</literal></member>
