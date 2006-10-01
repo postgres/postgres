@@ -1,8 +1,8 @@
 --
 --	PostgreSQL code for ISNs (ISBN, ISMN, ISSN, EAN13, UPC)
---  Copyright (c) 2004-2006, Germán Méndez Bravo (Kronuz)
+--  Copyright (c) 2004-2006, German Mendez Bravo (Kronuz)
 --
---	$PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.2 2006/09/10 20:45:17 tgl Exp $
+--	$PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.3 2006/10/01 18:37:53 tgl Exp $
 --
 -- Example:
 --   create table test ( id isbn );
