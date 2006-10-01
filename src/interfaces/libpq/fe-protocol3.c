@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.27 2006/08/18 19:52:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.28 2006/10/01 22:25:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -883,10 +883,9 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 #define MIN_RIGHT_CUT	10		/* try to keep this far away from EOL */
 
 	char	   *wquery;
-	int			clen,
-				slen,
+	int			slen,
+				cno,
 				i,
-				w,
 			   *qidx,
 			   *scridx,
 				qoffset,
@@ -894,8 +893,14 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 				ibeg,
 				iend,
 				loc_line;
-	bool		beg_trunc,
+	bool		mb_encoding,
+				beg_trunc,
 				end_trunc;
+
+	/* Convert loc from 1-based to 0-based; no-op if out of range */
+	loc--;
+	if (loc < 0)
+		return;
 
 	/* Need a writable copy of the query */
 	wquery = strdup(query);
@@ -905,13 +910,13 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 	/*
 	 * Each character might occupy multiple physical bytes in the string, and
 	 * in some Far Eastern character sets it might take more than one screen
-	 * column as well.	We compute the starting byte offset and starting
+	 * column as well.  We compute the starting byte offset and starting
 	 * screen column of each logical character, and store these in qidx[] and
 	 * scridx[] respectively.
 	 */
 
 	/* we need a safe allocation size... */
-	slen = strlen(query) + 1;
+	slen = strlen(wquery) + 1;
 
 	qidx = (int *) malloc(slen * sizeof(int));
 	if (qidx == NULL)
@@ -927,79 +932,93 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 		return;
 	}
 
+	/* We can optimize a bit if it's a single-byte encoding */
+	mb_encoding = (pg_encoding_max_length(encoding) != 1);
+
+	/*
+	 * Within the scanning loop, cno is the current character's logical number,
+	 * qoffset is its offset in wquery, and scroffset is its starting logical
+	 * screen column (all indexed from 0).  "loc" is the logical character
+	 * number of the error location.  We scan to determine loc_line (the
+	 * 1-based line number containing loc) and ibeg/iend (first character
+	 * number and last+1 character number of the line containing loc).
+	 * Note that qidx[] and scridx[] are filled only as far as iend.
+	 */
 	qoffset = 0;
 	scroffset = 0;
-	for (i = 0; query[qoffset] != '\0'; i++)
-	{
-		qidx[i] = qoffset;
-		scridx[i] = scroffset;
-		w = pg_encoding_dsplen(encoding, &query[qoffset]);
-		/* treat control chars as width 1; see tab hack below */
-		if (w <= 0)
-			w = 1;
-		scroffset += w;
-		qoffset += pg_encoding_mblen(encoding, &query[qoffset]);
-	}
-	qidx[i] = qoffset;
-	scridx[i] = scroffset;
-	clen = i;
+	loc_line = 1;
+	ibeg = 0;
+	iend = -1;					/* -1 means not set yet */
 
-	/* convert loc to zero-based offset in qidx/scridx arrays */
-	loc--;
-
-	/* do we have something to show? */
-	if (loc >= 0 && loc <= clen)
+	for (cno = 0; wquery[qoffset] != '\0'; cno++)
 	{
-		/* input line number of our syntax error. */
-		loc_line = 1;
-		/* first included char of extract. */
-		ibeg = 0;
-		/* last-plus-1 included char of extract. */
-		iend = clen;
+		char	ch = wquery[qoffset];
+
+		qidx[cno] = qoffset;
+		scridx[cno] = scroffset;
 
 		/*
 		 * Replace tabs with spaces in the writable copy.  (Later we might
 		 * want to think about coping with their variable screen width, but
 		 * not today.)
-		 *
-		 * Extract line number and begin and end indexes of line containing
-		 * error location.	There will not be any newlines or carriage returns
-		 * in the selected extract.
 		 */
-		for (i = 0; i < clen; i++)
+		if (ch == '\t')
+			wquery[qoffset] = ' ';
+
+		/*
+		 * If end-of-line, count lines and mark positions. Each \r or \n counts
+		 * as a line except when \r \n appear together.
+		 */
+		else if (ch == '\r' || ch == '\n')
 		{
-			/* character length must be 1 or it's not ASCII */
-			if ((qidx[i + 1] - qidx[i]) == 1)
+			if (cno < loc)
 			{
-				if (wquery[qidx[i]] == '\t')
-					wquery[qidx[i]] = ' ';
-				else if (wquery[qidx[i]] == '\r' || wquery[qidx[i]] == '\n')
-				{
-					if (i < loc)
-					{
-						/*
-						 * count lines before loc. Each \r or \n counts
-						 * as a line except when \r \n appear together.
-						 */
-						if (wquery[qidx[i]] == '\r' ||
-							i == 0 ||
-							(qidx[i] - qidx[i - 1]) != 1 ||
-							wquery[qidx[i - 1]] != '\r')
-							loc_line++;
-						/* extract beginning = last line start before loc. */
-						ibeg = i + 1;
-					}
-					else
-					{
-						/* set extract end. */
-						iend = i;
-						/* done scanning. */
-						break;
-					}
-				}
+				if (ch == '\r' ||
+					cno == 0 ||
+					wquery[qidx[cno - 1]] != '\r')
+					loc_line++;
+				/* extract beginning = last line start before loc. */
+				ibeg = cno + 1;
+			}
+			else
+			{
+				/* set extract end. */
+				iend = cno;
+				/* done scanning. */
+				break;
 			}
 		}
 
+		/* Advance */
+		if (mb_encoding)
+		{
+			int		w;
+
+			w = pg_encoding_dsplen(encoding, &wquery[qoffset]);
+			/* treat any non-tab control chars as width 1 */
+			if (w <= 0)
+				w = 1;
+			scroffset += w;
+			qoffset += pg_encoding_mblen(encoding, &wquery[qoffset]);
+		}
+		else
+		{
+			/* We assume wide chars only exist in multibyte encodings */
+			scroffset++;
+			qoffset++;
+		}
+	}
+	/* Fix up if we didn't find an end-of-line after loc */
+	if (iend < 0)
+	{
+		iend = cno;				/* query length in chars, +1 */
+		qidx[iend] = qoffset;
+		scridx[iend] = scroffset;
+	}
+
+	/* Print only if loc is within computed query length */
+	if (loc <= cno)
+	{
 		/* If the line extracted is too long, we truncate it. */
 		beg_trunc = false;
 		end_trunc = false;
@@ -1050,7 +1069,8 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 		scroffset = 0;
 		for (; i < msg->len; i += pg_encoding_mblen(encoding, &msg->data[i]))
 		{
-			w = pg_encoding_dsplen(encoding, &msg->data[i]);
+			int		w = pg_encoding_dsplen(encoding, &msg->data[i]);
+
 			if (w <= 0)
 				w = 1;
 			scroffset += w;
