@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.101 2006/09/30 12:06:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.102 2006/10/02 00:06:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ extern int	inet_aton(const char *cp, struct in_addr * addr);
 extern char *strdup(const char *str);
 #endif
 
-#if !defined(HAVE_STRLCPY) || defined(bsdi) /* bsdi doesn't have the prototype */
+#if !HAVE_DECL_STRLCPY
 extern size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif
 
