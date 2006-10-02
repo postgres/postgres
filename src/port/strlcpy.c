@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/strlcpy.c,v 1.1 2006/09/27 16:29:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/strlcpy.c,v 1.2 2006/10/02 23:58:59 momjian Exp $
  *
  * This file was taken from OpenBSD and is used on platforms that don't
  * provide strlcpy().  The OpenBSD copyright terms follow.
@@ -39,6 +39,7 @@
  * Copy src to string dst of size siz.  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
+ * Function creation history:  http://www.gratisoft.us/todd/papers/strlcpy.html
  */
 size_t
 strlcpy(char *dst, const char *src, size_t siz)
