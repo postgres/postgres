@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.88 2006/09/19 19:04:51 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.89 2006/10/02 22:33:02 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1167,6 +1167,48 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    </para>
   </sect2>
 
+  <sect2 id="backup-incremental-updated">
+   <title>Incrementally Updated Backups</title>
+
+  <indexterm zone="backup">
+   <primary>incrementally updated backups</primary>
+  </indexterm>
+
+  <indexterm zone="backup">
+   <primary>change accumulation</primary>
+  </indexterm>
+
+   <para>
+    Restartable Recovery can also be utilised to offload the expense of
+    taking periodic base backups from a main server, by instead backing
+    up a Standby server's files.  This concept is also generally known as 
+    incrementally updated backups, log change accumulation or more simply,
+    change accumulation.
+   </para>
+
+   <para>
+    If we take a backup of the server files whilst a recovery is in progress,
+    we will be able to restart the recovery from the last restartpoint. 
+    That backup now has many of the changes from previous WAL archive files,
+    so this version is now an updated version of the original base backup.
+    If we need to recover, it will be faster to recover from the 
+    incrementally updated backup than from the base backup.
+   </para>
+
+   <para>
+    To make use of this capability you will need to set up a Standby database
+    on a second system, as described in <xref linkend="warm-standby">. By
+    taking a backup of the Standby server while it is running you will
+    have produced an incrementally updated backup. Once this configuration
+    has been implemented you will no longer need to produce regular base 
+    backups of the Primary server: all base backups can be performed on the 
+    Standby server. If you wish to do this, it is not a requirement that you
+    also implement the failover features of a Warm Standby configuration,
+    though you may find it desirable to do both.
+   </para>
+
+  </sect2>
+
   <sect2 id="continuous-archiving-caveats">
    <title>Caveats</title>
 
@@ -1316,6 +1358,14 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    rollforward can take considerably longer and so that technique only
    really offers a solution for Disaster Recovery, not HA.
   </para>
+
+   <para>
+    When running a Standby Server, backups can be performed on the Standby
+    rather than the Primary, thereby offloading the expense of
+    taking periodic base backups. (See 
+    <xref linkend="backup-incremental-updated">)
+   </para>
+
 
   <para>
    Other mechanisms for High Availability replication are available, both
