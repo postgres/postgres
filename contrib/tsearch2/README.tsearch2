@@ -5,8 +5,7 @@ Tsearch2 - full text search extension for PostgreSQL
    This module is sponsored by Delta-Soft Ltd., Moscow, Russia.
    
    Notice: This version is fully incompatible with old tsearch (V1),
-   which is considered as deprecated in upcoming 7.4 release and
-   obsoleted in 8.0.
+   which was deprecated in 7.4 and obsoleted in 8.0.
    
    The Tsearch2 contrib module contains an implementation of a new data
    type tsvector - a searchable data type with indexed access. In a
@@ -56,7 +55,7 @@ Contributors
      * Brandon Craig Rhodes wrote "Tsearch2 Guide" and "Tsearch2
        Reference" and proposed new naming convention for tsearch V2
        
-New features
+Features Added with Tsearch2
 
      * Relevance ranking of search results
      * Table driven configuration
