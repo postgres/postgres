@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.460 2006/09/27 06:37:28 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.461 2006/10/02 15:32:03 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1851,6 +1851,13 @@ For new features, add links to the documentation sections.
         Add support for Windows code pages <literal>1253</>,
         <literal>1254</>, <literal>1255</>, and <literal>1257</>
         (Kris Jurka)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Drop privileges on startup so servers can be started from 
+        an administrative account (Magnus)
        </para>
       </listitem>
 
