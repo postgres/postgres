@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2003/10/09 17:11:13 $
+last updated:        $Date: 2006/10/02 23:01:17 $
 
 current maintainer:  Peter Eisentraut <peter_e@gmx.net>
 
@@ -88,14 +88,3 @@ to read
 does not matter.)
 
 Then build as usual.
-
-
-5) How can I compile for optimum performance?
-
-Try using the "-fast" compile flag.  The binaries might not be portable to
-other Solaris systems, and you might need to compile everything that links
-to PostgreSQL with "-fast", but PostgreSQL will run significantly faster,
-50% faster on some tests.
-
-
-
