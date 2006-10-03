@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.39 2006/09/25 15:17:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.40 2006/10/03 21:21:36 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -219,7 +219,7 @@ RemoveAggregate(RemoveFuncStmt *stmt)
 	{
 		/* we only get here if stmt->missing_ok is true */
 		ereport(NOTICE,
-				(errmsg("aggregate %s(%s) does not exist ... skipping",
+				(errmsg("aggregate %s(%s) does not exist, skipping",
 						NameListToString(aggName),
 						TypeNameListToString(aggArgs))));
 		return;

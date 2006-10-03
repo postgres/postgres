@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.67 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.68 2006/10/03 21:21:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,7 +401,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 					 errmsg("language \"%s\" does not exist", languageName)));
 		else 
 			ereport(NOTICE,
-					(errmsg("language \"%s\" does not exist ... skipping", 
+					(errmsg("language \"%s\" does not exist, skipping", 
 							languageName)));
  
 		return;

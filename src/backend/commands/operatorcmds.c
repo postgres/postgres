@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.31 2006/06/16 20:23:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.32 2006/10/03 21:21:36 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -218,7 +218,7 @@ RemoveOperator(RemoveFuncStmt *stmt)
    if (stmt->missing_ok &&!OidIsValid(operOid) )
    {
        ereport(NOTICE,
-               (errmsg("operator %s does not exist ... skipping",
+               (errmsg("operator %s does not exist, skipping",
                        NameListToString(operatorName))));
        return;
    }

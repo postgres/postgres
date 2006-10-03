@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.207 2006/09/04 21:15:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.208 2006/10/03 21:21:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,7 +487,7 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior,
 							trigname, get_rel_name(relid))));
 		else
 			ereport(NOTICE,
-					(errmsg("trigger \"%s\" for table \"%s\" does not exist ...skipping",
+					(errmsg("trigger \"%s\" for table \"%s\" does not exist, skipping",
 							trigname, get_rel_name(relid))));
 		/* cleanup */
 		systable_endscan(tgscan);

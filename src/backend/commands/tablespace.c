@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.37 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.38 2006/10/03 21:21:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,7 +412,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		else
 		{
 			ereport(NOTICE,
-					(errmsg("tablespace \"%s\" does not exist ... skipping",
+					(errmsg("tablespace \"%s\" does not exist, skipping",
 							tablespacename)));
 			/* XXX I assume I need one or both of these next two calls */
 			heap_endscan(scandesc);

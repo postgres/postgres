@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.142 2006/09/15 21:28:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.143 2006/10/03 21:21:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -784,11 +784,11 @@ CheckLDAPAuth(Port *port)
     {
 #ifndef WIN32
         ereport(LOG,
-                (errmsg("could not initialize LDAP: error %d", 
+                (errmsg("could not initialize LDAP: error code %d", 
                         errno)));
 #else
         ereport(LOG,
-                (errmsg("could not initialize LDAP: error %d", 
+                (errmsg("could not initialize LDAP: error code %d", 
                         (int) LdapGetLastError())));
 #endif
         return STATUS_ERROR;
@@ -797,7 +797,7 @@ CheckLDAPAuth(Port *port)
     if ((r = ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
     {
         ereport(LOG,
-                (errmsg("could not set LDAP protocol version: error %d", r)));
+                (errmsg("could not set LDAP protocol version: error code %d", r)));
         return STATUS_ERROR;
     }
     
@@ -843,7 +843,7 @@ CheckLDAPAuth(Port *port)
 #endif
         {
             ereport(LOG,
-                    (errmsg("could not start LDAP TLS session: error %d", r)));
+                    (errmsg("could not start LDAP TLS session: error code %d", r)));
             return STATUS_ERROR;
         }
     }
@@ -858,7 +858,7 @@ CheckLDAPAuth(Port *port)
     if (r != LDAP_SUCCESS)
     {
         ereport(LOG,
-                (errmsg("LDAP login failed for user \"%s\" on server \"%s\": error %d",
+                (errmsg("LDAP login failed for user \"%s\" on server \"%s\": error code %d",
 						fulluser, server, r)));
         return STATUS_ERROR;
     }

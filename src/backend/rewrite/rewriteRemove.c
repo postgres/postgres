@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.66 2006/09/05 21:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.67 2006/10/03 21:21:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior,
 							ruleName, get_rel_name(owningRel))));
 		else
 			ereport(NOTICE,
-					(errmsg("rule \"%s\" for relation \"%s\" does not exist ... skipping",
+					(errmsg("rule \"%s\" for relation \"%s\" does not exist, skipping",
 							ruleName, get_rel_name(owningRel))));
 		return;
 	}

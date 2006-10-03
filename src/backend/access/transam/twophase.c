@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.22 2006/07/30 02:07:18 alvherre Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.23 2006/10/03 21:21:35 momjian Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -1250,7 +1250,7 @@ RemoveTwoPhaseFile(TransactionId xid, bool giveWarning)
 		if (errno != ENOENT || giveWarning)
 			ereport(WARNING,
 					(errcode_for_file_access(),
-				   errmsg("could not remove two-phase state file \"%s\": %m",
+				   errmsg("could not remove twophase state file \"%s\": %m",
 						  path)));
 }
 
