@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.169 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.170 2006/10/03 21:14:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2491,7 +2491,7 @@ testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" -e 's/\\/\\\\/g' &lt
          <literal>%]</literal>. Multiple pairs of these may occur within
          the prompt.  For example,
 <programlisting>
-testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%#%] '
+testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%]%# '
 </programlisting>
          results in a boldfaced (<literal>1;</literal>) yellow-on-black
          (<literal>33;40</literal>) prompt on VT100-compatible, color-capable
