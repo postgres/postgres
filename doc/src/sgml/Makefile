@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.76 2006/04/06 18:54:36 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.77 2006/10/03 21:13:17 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -212,7 +212,7 @@ XSLTPROC = xsltproc
 
 postgres.xml: postgres.sgml $(GENERATED_SGML)
 	$(OSX) -x lower $< | \
-	  sed -e 's/\[\(lt\|gt\|amp\|nbsp\|copy\|quot\|ouml\|uuml\|egrave\) *\]/\&\1;/g' \
+	  sed -e 's/\[\(amp\|copy\|egrave\|gt\|lt\|mdash\|nbsp\|ouml\|pi\|quot\|uuml\) *\]/\&\1;/g' \
 	      -e '1a\' -e '<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">' \
 	  >$@
 
@@ -222,6 +222,24 @@ testxml: stylesheet.xsl postgres.xml
 htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam pg.version '$(VERSION)' $^
 
+##
+## Experimental Texinfo targets
+##
+
+DB2X_TEXIXML = db2x_texixml
+DB2X_XSLTPROC = db2x_xsltproc
+MAKEINFO = makeinfo
+
+postgres.texixml: postgres.xml
+	$(DB2X_XSLTPROC) -s texi $< -o $@
+
+postgres.texi: postgres.texixml
+	$(DB2X_TEXIXML) --encoding=iso-8859-1//TRANSLIT $< \
+			--to-stdout > $@
+
+postgres.info: postgres.texi
+	$(MAKEINFO) --enable-encoding --no-split \
+		    --no-validate $< -o $@
 
 ##
 ## Check
@@ -249,3 +267,5 @@ clean distclean maintainer-clean:
 	rm -f INSTALL HISTORY regress_README
 # XML
 	rm -f postgres.xml htmlhelp.hhp toc.hhc index.hhk
+# Texinfo
+	rm -f *.texixml *.texi *.info db2texi.refs
