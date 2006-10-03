@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.352 2006/09/22 21:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.353 2006/10/03 21:11:54 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1149,7 +1149,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS
 		},
 		&NBuffers,
-		1000, 16, INT_MAX / 2, NULL, NULL
+		1024, 16, INT_MAX / 2, NULL, NULL
 	},
 
 	{
@@ -1159,7 +1159,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_BLOCKS
 		},
 		&num_temp_buffers,
-		1000, 100, INT_MAX / 2, NULL, show_num_temp_buffers
+		1024, 100, INT_MAX / 2, NULL, show_num_temp_buffers
 	},
 
 	{
@@ -1414,7 +1414,8 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wal_buffers", PGC_POSTMASTER, WAL_SETTINGS,
 			gettext_noop("Sets the number of disk-page buffers in shared memory for WAL."),
-			NULL
+			NULL,
+			GUC_UNIT_XBLOCKS
 		},
 		&XLOGbuffers,
 		8, 4, INT_MAX, NULL, NULL
@@ -3606,8 +3607,18 @@ parse_int(const char *value, int *result, int flags)
 			endptr += 2;
 		}
 
-		if (used && (flags & GUC_UNIT_BLOCKS))
-			val /= (BLCKSZ/1024);
+		if (used)
+		{
+			switch (flags & GUC_UNIT_MEMORY)
+			{
+				case GUC_UNIT_BLOCKS:
+					val /= (BLCKSZ/1024);
+					break;
+				case GUC_UNIT_XBLOCKS:
+					val /= (XLOG_BLCKSZ/1024);
+					break;
+			}
+		}
 	}
 
 	if ((flags & GUC_UNIT_TIME) && endptr != value)
@@ -3647,10 +3658,18 @@ parse_int(const char *value, int *result, int flags)
 			endptr += 1;
 		}
 
-		if (used && (flags & GUC_UNIT_S))
-			val /= MS_PER_S;
-		else if (used && (flags & GUC_UNIT_MIN))
-			val /= MS_PER_MIN;
+		if (used)
+		{
+			switch (flags & GUC_UNIT_TIME)
+			{
+			case GUC_UNIT_S:
+				val /= MS_PER_S;
+				break;
+			case GUC_UNIT_MIN:
+				val /= MS_PER_MIN;
+				break;
+			}
+		}
 	}
 
 	if (endptr == value || *endptr != '\0' || errno == ERANGE
@@ -4961,23 +4980,34 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	/* unit */
 	if (conf->vartype == PGC_INT)
 	{
-		if (conf->flags & GUC_UNIT_KB)
-			values[2] = "kB";
-		else if (conf->flags & GUC_UNIT_BLOCKS)
-		{
-			static char buf[8];
+		static char buf[8];
 
-			snprintf(buf, sizeof(buf), "%dkB", BLCKSZ/1024);
-			values[2] = buf;
+		switch (conf->flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME))
+		{
+			case GUC_UNIT_KB:
+				values[2] = "kB";
+				break;
+			case GUC_UNIT_BLOCKS:
+				snprintf(buf, sizeof(buf), "%dkB", BLCKSZ/1024);
+				values[2] = buf;
+				break;
+			case GUC_UNIT_XBLOCKS:
+				snprintf(buf, sizeof(buf), "%dkB", XLOG_BLCKSZ/1024);
+				values[2] = buf;
+				break;
+			case GUC_UNIT_MS:
+				values[2] = "ms";
+				break;
+			case GUC_UNIT_S:
+				values[2] = "s";
+				break;
+			case GUC_UNIT_MIN:
+				values[2] = "min";
+				break;
+			default:
+				values[2] = "";
+				break;
 		}
-		else if (conf->flags & GUC_UNIT_MS)
-			values[2] = "ms";
-		else if (conf->flags & GUC_UNIT_S)
-			values[2] = "s";
-		else if (conf->flags & GUC_UNIT_MIN)
-			values[2] = "min";
-		else
-			values[2] = "";
 	}
 	else
 		values[2] = NULL;
@@ -5246,8 +5276,15 @@ _ShowOption(struct config_generic * record, bool use_units)
 
 					if (use_units && result > 0 && (record->flags & GUC_UNIT_MEMORY))
 					{
-						if (record->flags & GUC_UNIT_BLOCKS)
-							result *= BLCKSZ/1024;
+						switch (record->flags & GUC_UNIT_MEMORY)
+						{
+							case GUC_UNIT_BLOCKS:
+								result *= BLCKSZ/1024;
+								break;
+							case GUC_UNIT_XBLOCKS:
+								result *= XLOG_BLCKSZ/1024;
+								break;
+						}
 
 						if (result % KB_PER_GB == 0)
 						{
@@ -5266,10 +5303,15 @@ _ShowOption(struct config_generic * record, bool use_units)
 					}
 					else if (use_units && result > 0 && (record->flags & GUC_UNIT_TIME))
 					{
-						if (record->flags & GUC_UNIT_S)
-							result = result * MS_PER_S;
-						else if (record->flags & GUC_UNIT_MIN)
-							result = result * MS_PER_MIN;
+						switch (record->flags & GUC_UNIT_TIME)
+						{
+							case GUC_UNIT_S:
+								result *= MS_PER_S;
+								break;
+							case GUC_UNIT_MIN:
+								result *= MS_PER_MIN;
+								break;
+						}
 
 						if (result % MS_PER_D == 0)
 						{

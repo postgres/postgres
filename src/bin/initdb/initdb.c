@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.122 2006/09/14 23:21:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.123 2006/10/03 21:11:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1113,10 +1113,14 @@ test_config_settings(void)
 	static const int trial_conns[] = {
 		100, 50, 40, 30, 20, 10
 	};
+
+	/*
+	 * Candidate values for shared_buffers in kB. When the value is
+	 * divisible by 1024, we write it in MB-unit to configuration files.
+	 */
 	static const int trial_bufs[] = {
-		32000, 28000, 24000, 20000, 16000, 12000,
-		8000, 7200, 6400, 5600, 4800, 4000,
-		3200, 2400, 1600, 800, 400
+		32768, 28672, 24576, 20480, 16384, 12288,
+		8192, 7200, 6400, 5600, 4800, 4000,
 	};
 
 	char		cmd[MAXPGPATH];
@@ -1190,7 +1194,10 @@ test_config_settings(void)
 	n_buffers = test_buffs;
 	n_fsm_pages = FSM_FOR_BUFS(n_buffers);
 
-	printf("%dkB/%d\n", n_buffers, n_fsm_pages);
+	if (n_buffers % 1024 == 0)
+		printf("%dMB/%d\n", n_buffers/1024, n_fsm_pages);
+	else
+		printf("%dkB/%d\n", n_buffers, n_fsm_pages);
 }
 
 /*
@@ -1213,11 +1220,14 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "max_connections = %d", n_connections);
 	conflines = replace_token(conflines, "#max_connections = 100", repltok);
 
-	snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB", n_buffers);
-	conflines = replace_token(conflines, "#shared_buffers = 32000kB", repltok);
+	if (n_buffers % 1024 == 0)
+		snprintf(repltok, sizeof(repltok), "shared_buffers = %dMB", n_buffers/1024);
+	else
+		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB", n_buffers);
+	conflines = replace_token(conflines, "#shared_buffers = 32MB", repltok);
 
 	snprintf(repltok, sizeof(repltok), "max_fsm_pages = %d", n_fsm_pages);
-	conflines = replace_token(conflines, "#max_fsm_pages = 1600000", repltok);
+	conflines = replace_token(conflines, "#max_fsm_pages = 1638400", repltok);
 
 #if DEF_PGPORT != 5432
 	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
