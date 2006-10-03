@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.15 2006/09/24 17:19:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.16 2006/10/03 20:44:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,9 +105,15 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 	}
 
 	/* _open_osfhandle will, on error, set errno accordingly */
-	if ((fd = _open_osfhandle((long) h, fileFlags & O_APPEND)) < 0 ||
-		(fileFlags & (O_TEXT | O_BINARY) && (_setmode(fd, fileFlags & (O_TEXT | O_BINARY)) < 0)))
+	if ((fd = _open_osfhandle((long) h, fileFlags & O_APPEND)) < 0)
 		CloseHandle(h);			/* will not affect errno */
+	else if (fileFlags & (O_TEXT | O_BINARY) &&
+		_setmode(fd, fileFlags & (O_TEXT | O_BINARY)) < 0)
+	{
+		_close(fd);
+		return -1;
+	}
+
 	return fd;
 }
 
