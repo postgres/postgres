@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.22 2006/09/22 19:51:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.23 2006/10/03 21:45:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,20 +208,28 @@ yesno_prompt(const char *question)
 {
 	char prompt[256];
 
+	/* translator: This is a question followed by the translated options for "yes" and "no". */
+	snprintf(prompt, sizeof(prompt), _("%s (%s/%s) "),
+			 _(question), _(PG_YESLETTER), _(PG_NOLETTER));
+
 	for (;;)
 	{
 		char *resp;
 
-		/* translator: This is a question followed by the translated options for "yes" and "no". */
-		snprintf(prompt, sizeof(prompt), _("%s (%s/%s) "),
-				 _(question), _(PG_YESLETTER), _(PG_NOLETTER));
 		resp = simple_prompt(prompt, 1, true);
 
 		if (strcmp(resp, _(PG_YESLETTER)) == 0)
+		{
+			free(resp);
 			return true;
+		}
 		else if (strcmp(resp, _(PG_NOLETTER)) == 0)
+		{
+			free(resp);
 			return false;
+		}
 
+		free(resp);
 		printf(_("Please answer \"%s\" or \"%s\".\n"),
 			   _(PG_YESLETTER), _(PG_NOLETTER));
 	}
