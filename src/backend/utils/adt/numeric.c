@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.94 2006/07/14 05:28:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.95 2006/10/03 21:25:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3217,11 +3217,12 @@ apply_typmod(NumericVar *var, int32 typmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 							 errmsg("numeric field overflow"),
-							 errdetail("A field with precision %d, scale %d must have an absolute value less than %s%d.",
+							 errdetail("A field with precision %d, scale %d must round to an absolute value less than %s%d.",
 									   precision, scale,
 									   /* Display 10^0 as 1 */
 									   maxdigits ? "10^" : "",
-									   maxdigits ? maxdigits : 1)));
+									   maxdigits ? maxdigits : 1
+									   )));
 				break;
 			}
 			ddigits -= DEC_DIGITS;
