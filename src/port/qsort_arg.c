@@ -1,5 +1,5 @@
 /*
- *	qsort.c: standard quicksort algorithm
+ *	qsort_arg.c: qsort with a passthrough "void *" argument
  *
  *	Modifications from vanilla NetBSD source:
  *	  Add do ... while() macro fix
@@ -7,9 +7,9 @@
  *	  Remove ill-considered "swap_cnt" switch to insertion sort,
  *	  in favor of a simple check for presorted input.
  *
- *	CAUTION: if you change this file, see also qsort_arg.c
+ *	CAUTION: if you change this file, see also qsort.c
  *
- *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.10 2006/10/03 22:18:23 tgl Exp $
+ *	$PostgreSQL: pgsql/src/port/qsort_arg.c,v 1.1 2006/10/03 22:18:23 tgl Exp $
  */
 
 /*	$NetBSD: qsort.c,v 1.13 2003/08/07 16:43:42 agc Exp $	*/
@@ -46,8 +46,8 @@
 #include "c.h"
 
 
-static char *med3(char *, char *, char *,
-	 int (*) (const void *, const void *));
+static char *med3(char *a, char *b, char *c,
+				  qsort_arg_comparator cmp, void *arg);
 static void swapfunc(char *, char *, size_t, int);
 
 #define min(a, b)	((a) < (b) ? (a) : (b))
@@ -98,23 +98,15 @@ int			swaptype;
 #define vecswap(a, b, n) if ((n) > 0) swapfunc((a), (b), (size_t)(n), swaptype)
 
 static char *
-med3(a, b, c, cmp)
-char	   *a,
-		   *b,
-		   *c;
-int			(*cmp) (const void *, const void *);
+med3(char *a, char *b, char *c, qsort_arg_comparator cmp, void *arg)
 {
-	return cmp(a, b) < 0 ?
-		(cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a))
-		: (cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c));
+	return cmp(a, b, arg) < 0 ?
+		(cmp(b, c, arg) < 0 ? b : (cmp(a, c, arg) < 0 ? c : a))
+		: (cmp(b, c, arg) > 0 ? b : (cmp(a, c, arg) < 0 ? a : c));
 }
 
 void
-qsort(a, n, es, cmp)
-void	   *a;
-size_t		n,
-			es;
-int			(*cmp) (const void *, const void *);
+qsort_arg(void *a, size_t n, size_t es, qsort_arg_comparator cmp, void *arg)
 {
 	char	   *pa,
 			   *pb,
@@ -132,7 +124,7 @@ loop:SWAPINIT(a, es);
 	if (n < 7)
 	{
 		for (pm = (char *) a + es; pm < (char *) a + n * es; pm += es)
-			for (pl = pm; pl > (char *) a && cmp(pl - es, pl) > 0;
+			for (pl = pm; pl > (char *) a && cmp(pl - es, pl, arg) > 0;
 				 pl -= es)
 				swap(pl, pl - es);
 		return;
@@ -140,7 +132,7 @@ loop:SWAPINIT(a, es);
 	presorted = 1;
 	for (pm = (char *) a + es; pm < (char *) a + n * es; pm += es)
 	{
-		if (cmp(pm - es, pm) > 0)
+		if (cmp(pm - es, pm, arg) > 0)
 		{
 			presorted = 0;
 			break;
@@ -156,18 +148,18 @@ loop:SWAPINIT(a, es);
 		if (n > 40)
 		{
 			d = (n / 8) * es;
-			pl = med3(pl, pl + d, pl + 2 * d, cmp);
-			pm = med3(pm - d, pm, pm + d, cmp);
-			pn = med3(pn - 2 * d, pn - d, pn, cmp);
+			pl = med3(pl, pl + d, pl + 2 * d, cmp, arg);
+			pm = med3(pm - d, pm, pm + d, cmp, arg);
+			pn = med3(pn - 2 * d, pn - d, pn, cmp, arg);
 		}
-		pm = med3(pl, pm, pn, cmp);
+		pm = med3(pl, pm, pn, cmp, arg);
 	}
 	swap(a, pm);
 	pa = pb = (char *) a + es;
 	pc = pd = (char *) a + (n - 1) * es;
 	for (;;)
 	{
-		while (pb <= pc && (r = cmp(pb, a)) <= 0)
+		while (pb <= pc && (r = cmp(pb, a, arg)) <= 0)
 		{
 			if (r == 0)
 			{
@@ -176,7 +168,7 @@ loop:SWAPINIT(a, es);
 			}
 			pb += es;
 		}
-		while (pb <= pc && (r = cmp(pc, a)) >= 0)
+		while (pb <= pc && (r = cmp(pc, a, arg)) >= 0)
 		{
 			if (r == 0)
 			{
@@ -197,7 +189,7 @@ loop:SWAPINIT(a, es);
 	r = min(pd - pc, pn - pd - es);
 	vecswap(pb, pn - r, r);
 	if ((r = pb - pa) > es)
-		qsort(a, r / es, es, cmp);
+		qsort_arg(a, r / es, es, cmp, arg);
 	if ((r = pd - pc) > es)
 	{
 		/* Iterate rather than recurse to save stack space */
@@ -205,5 +197,5 @@ loop:SWAPINIT(a, es);
 		n = r / es;
 		goto loop;
 	}
-/*		qsort(pn - r, r / es, es, cmp);*/
+/*		qsort_arg(pn - r, r / es, es, cmp, arg);*/
 }

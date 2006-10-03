@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.230 2006/09/19 15:36:07 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.231 2006/10/03 22:18:22 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -413,7 +413,7 @@ endif
 #
 # substitute implementations of C library routines (see src/port/)
 
-LIBOBJS = @LIBOBJS@ copydir.o dirmod.o exec.o noblock.o path.o pipe.o pgsleep.o pgstrcasecmp.o sprompt.o thread.o
+LIBOBJS = @LIBOBJS@ copydir.o dirmod.o exec.o noblock.o path.o pipe.o pgsleep.o pgstrcasecmp.o qsort.o qsort_arg.o sprompt.o thread.o
 
 LIBS := -lpgport $(LIBS)
 # add location of libpgport.a to LDFLAGS

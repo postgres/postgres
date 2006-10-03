@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.68 2006/07/14 14:52:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.69 2006/10/03 22:18:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,11 +201,11 @@ struct Tuplesortstate
 	 * They are set up by the tuplesort_begin_xxx routines.
 	 *
 	 * Function to compare two tuples; result is per qsort() convention, ie:
-	 *
-	 * <0, 0, >0 according as a<b, a=b, a>b.
+	 * <0, 0, >0 according as a<b, a=b, a>b.  The API must match
+	 * qsort_arg_comparator.
 	 */
-	int			(*comparetup) (Tuplesortstate *state,
-							   const SortTuple *a, const SortTuple *b);
+	int			(*comparetup) (const SortTuple *a, const SortTuple *b,
+							   Tuplesortstate *state);
 
 	/*
 	 * Function to copy a supplied input tuple into palloc'd space and set up
@@ -345,7 +345,7 @@ struct Tuplesortstate
 #endif
 };
 
-#define COMPARETUP(state,a,b)	((*(state)->comparetup) (state, a, b))
+#define COMPARETUP(state,a,b)	((*(state)->comparetup) (a, b, state))
 #define COPYTUP(state,stup,tup)	((*(state)->copytup) (state, stup, tup))
 #define WRITETUP(state,tape,stup)	((*(state)->writetup) (state, tape, stup))
 #define READTUP(state,stup,tape,len) ((*(state)->readtup) (state, stup, tape, len))
@@ -410,36 +410,27 @@ static void tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
 static void tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex);
 static unsigned int getlen(Tuplesortstate *state, int tapenum, bool eofOK);
 static void markrunend(Tuplesortstate *state, int tapenum);
-static int	qsort_comparetup(const void *a, const void *b);
-static int comparetup_heap(Tuplesortstate *state,
-				const SortTuple *a, const SortTuple *b);
+static int comparetup_heap(const SortTuple *a, const SortTuple *b,
+						   Tuplesortstate *state);
 static void copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_heap(Tuplesortstate *state, int tapenum,
 						  SortTuple *stup);
 static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
 						 int tapenum, unsigned int len);
-static int comparetup_index(Tuplesortstate *state,
-				 const SortTuple *a, const SortTuple *b);
+static int comparetup_index(const SortTuple *a, const SortTuple *b,
+							Tuplesortstate *state);
 static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_index(Tuplesortstate *state, int tapenum,
 						   SortTuple *stup);
 static void readtup_index(Tuplesortstate *state, SortTuple *stup,
 						  int tapenum, unsigned int len);
-static int comparetup_datum(Tuplesortstate *state,
-				 const SortTuple *a, const SortTuple *b);
+static int comparetup_datum(const SortTuple *a, const SortTuple *b,
+							Tuplesortstate *state);
 static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_datum(Tuplesortstate *state, int tapenum,
 						   SortTuple *stup);
 static void readtup_datum(Tuplesortstate *state, SortTuple *stup,
 						  int tapenum, unsigned int len);
-
-/*
- * Since qsort(3) will not pass any context info to qsort_comparetup(),
- * we have to use this ugly static variable.  It is set to point to the
- * active Tuplesortstate object just before calling qsort.	It should
- * not be used directly by anything except qsort_comparetup().
- */
-static Tuplesortstate *qsort_tuplesortstate;
 
 
 /*
@@ -930,11 +921,11 @@ tuplesort_performsort(Tuplesortstate *state)
 			 * amount of memory.  Just qsort 'em and we're done.
 			 */
 			if (state->memtupcount > 1)
-			{
-				qsort_tuplesortstate = state;
-				qsort((void *) state->memtuples, state->memtupcount,
-					  sizeof(SortTuple), qsort_comparetup);
-			}
+				qsort_arg((void *) state->memtuples,
+						  state->memtupcount,
+						  sizeof(SortTuple),
+						  (qsort_arg_comparator) state->comparetup,
+						  (void *) state);
 			state->current = 0;
 			state->eof_reached = false;
 			state->markpos_offset = 0;
@@ -1587,7 +1578,6 @@ mergeonerun(Tuplesortstate *state)
 	 */
 	while (state->memtupcount > 0)
 	{
-		CHECK_FOR_INTERRUPTS();
 		/* write the tuple to destTape */
 		priorAvail = state->availMem;
 		srcTape = state->memtuples[0].tupindex;
@@ -2092,20 +2082,6 @@ markrunend(Tuplesortstate *state, int tapenum)
 
 
 /*
- * qsort interface
- */
-
-static int
-qsort_comparetup(const void *a, const void *b)
-{
-	/* The passed pointers are pointers to SortTuple ... */
-	return COMPARETUP(qsort_tuplesortstate,
-					  (const SortTuple *) a,
-					  (const SortTuple *) b);
-}
-
-
-/*
  * This routine selects an appropriate sorting function to implement
  * a sort operator as efficiently as possible.	The straightforward
  * method is to use the operator's implementation proc --- ie, "<"
@@ -2319,7 +2295,7 @@ ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
  */
 
 static int
-comparetup_heap(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
+comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 {
 	ScanKey		scanKey = state->scanKeys;
 	HeapTupleData ltup;
@@ -2327,6 +2303,9 @@ comparetup_heap(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
 	TupleDesc	tupDesc;
 	int			nkey;
 	int32		compare;
+
+	/* Allow interrupting long sorts */
+	CHECK_FOR_INTERRUPTS();
 
 	/* Compare the leading sort key */
 	compare = inlineApplySortFunction(&scanKey->sk_func,
@@ -2449,7 +2428,7 @@ readtup_heap(Tuplesortstate *state, SortTuple *stup,
  */
 
 static int
-comparetup_index(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
+comparetup_index(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 {
 	/*
 	 * This is similar to _bt_tuplecompare(), but we have already done the
@@ -2465,6 +2444,9 @@ comparetup_index(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
 	bool		equal_hasnull = false;
 	int			nkey;
 	int32		compare;
+
+	/* Allow interrupting long sorts */
+	CHECK_FOR_INTERRUPTS();
 
 	/* Compare the leading sort key */
 	compare = inlineApplySortFunction(&scanKey->sk_func,
@@ -2622,8 +2604,11 @@ readtup_index(Tuplesortstate *state, SortTuple *stup,
  */
 
 static int
-comparetup_datum(Tuplesortstate *state, const SortTuple *a, const SortTuple *b)
+comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 {
+	/* Allow interrupting long sorts */
+	CHECK_FOR_INTERRUPTS();
+
 	return inlineApplySortFunction(&state->sortOpFn, state->sortFnKind,
 								   a->datum1, a->isnull1,
 								   b->datum1, b->isnull1);
