@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Oct  2 19:25:57 EDT 2006
+Last updated:           Mon Oct  2 20:00:14 EDT 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -720,7 +720,10 @@ first.
           held on the server waiting for them to be requested by libpq.
           One complexity is that a statement like SELECT 1/col could error
           out mid-way through the result set.
-</p>
+    </p><ul>
+      <li>Fix SSL retry to avoid useless repeated connection attempts and
+          ensuing misleading error messages
+    </li></ul>
   </li></ul>
 </li></ul>
 <h1><a name="section_10">Triggers</a></h1>
