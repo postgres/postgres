@@ -123,6 +123,10 @@ my $pgctl = AddSimpleFrontend('pg_ctl', 1);
 
 my $pgreset = AddSimpleFrontend('pg_resetxlog');
 
+my $pgevent = $solution->AddProject('pgevent','dll','bin');
+$pgevent->AddFiles('src\bin\pgevent','pgevent.c','pgmsgevent.rc');
+$pgevent->UseDef('src\bin\pgevent\pgevent.def');
+
 my $psql = AddSimpleFrontend('psql', 1);
 $psql->AddIncludeDir('src\bin\pg_dump');
 $psql->AddFile('src\bin\psql\psqlscan.l');
