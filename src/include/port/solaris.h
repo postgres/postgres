@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.12 2004/08/11 17:20:50 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.13 2006/10/04 22:48:41 momjian Exp $ */
 
 /*
  * Sort this out for all operating systems some time.  The __xxx
@@ -38,7 +38,12 @@
 
 /*
  * Many versions of Solaris have broken strtod() --- see bug #4751182.
- * For the moment we just assume they all do; it's probably not worth
+ * This has been fixed in current versions of Solaris:
+ *
+ * http://sunsolve.sun.com/search/document.do?assetkey=1-21-108993-62-1&searchclause=108993-62
+ * http://sunsolve.sun.com/search/document.do?assetkey=1-21-112874-34-1&searchclause=112874-34
+ * 
+ * HoweveFor the moment we just assume they all do; it's probably not worth
  * the trouble to add a configure test for this.
  */
 #define HAVE_BUGGY_SOLARIS_STRTOD
