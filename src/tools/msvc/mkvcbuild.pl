@@ -18,8 +18,8 @@ our @pgportfiles = qw(
    crypt.c fseeko.c getrusage.c inet_aton.c random.c srandom.c
    unsetenv.c getaddrinfo.c gettimeofday.c kill.c open.c rand.c
    snprintf.c strlcpy.c copydir.c dirmod.c exec.c noblock.c path.c pipe.c
-   pgsleep.c pgstrcasecmp.c sprompt.c thread.c getopt.c getopt_long.c
-   dirent.c rint.c win32error.c);
+   pgsleep.c pgstrcasecmp.c qsort.c qsort_arg.c sprompt.c thread.c
+   getopt.c getopt_long.c dirent.c rint.c win32error.c);
 
 my $libpgport = $solution->AddProject('libpgport','lib','misc');
 $libpgport->AddDefine('FRONTEND');
