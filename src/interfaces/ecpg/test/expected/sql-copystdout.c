@@ -75,6 +75,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #ifdef __cplusplus
 }
 #endif
+
 #endif
 
 #line 3 "copystdout.pgc"
@@ -95,7 +96,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 
 int
-main()
+main ()
 {
 /*
   EXEC SQL BEGIN DECLARE SECTION;
@@ -103,78 +104,57 @@ main()
   EXEC SQL END DECLARE SECTION;
 */
 
-	ECPGdebug(1, stderr);
+  ECPGdebug (1, stderr);
 
-	{
-		ECPGconnect(__LINE__, 0, "regress1", NULL, NULL, NULL, 0);
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
 #line 19 "copystdout.pgc"
 
-		if (sqlca.sqlcode < 0)
-			sqlprint();
-	}
+if (sqlca.sqlcode < 0) sqlprint();}
 #line 19 "copystdout.pgc"
 
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "create  table foo ( a int   , b varchar    )    ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "create  table foo ( a int   , b varchar    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 20 "copystdout.pgc"
 
-		if (sqlca.sqlcode < 0)
-			sqlprint();
-	}
+if (sqlca.sqlcode < 0) sqlprint();}
 #line 20 "copystdout.pgc"
 
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 5 , 'abc' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values ( 5 , 'abc' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 21 "copystdout.pgc"
 
-		if (sqlca.sqlcode < 0)
-			sqlprint();
-	}
+if (sqlca.sqlcode < 0) sqlprint();}
 #line 21 "copystdout.pgc"
 
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 6 , 'def' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values ( 6 , 'def' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 22 "copystdout.pgc"
 
-		if (sqlca.sqlcode < 0)
-			sqlprint();
-	}
+if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "copystdout.pgc"
 
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values( 7 , 'ghi' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values ( 7 , 'ghi' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 23 "copystdout.pgc"
 
-		if (sqlca.sqlcode < 0)
-			sqlprint();
-	}
+if (sqlca.sqlcode < 0) sqlprint();}
 #line 23 "copystdout.pgc"
 
 
-	/* produces expected file "/tmp/foo" */
-	/* EXEC SQL COPY foo TO:fname WITH DELIMITER ','; */
-	/* printf ("copy to /tmp/foo : sqlca.sqlcode = %ld", sqlca.sqlcode); */
+  /* produces expected file "/tmp/foo" */
+  /* EXEC SQL COPY foo TO:fname WITH DELIMITER ','; */
+  /* printf ("copy to /tmp/foo : sqlca.sqlcode = %ld", sqlca.sqlcode); */
 
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "copy  foo  to stdout  with  delimiter  ','", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "copy  foo  to stdout  with  delimiter  ','", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "copystdout.pgc"
 
-		if (sqlca.sqlcode < 0)
-			sqlprint();
-	}
+if (sqlca.sqlcode < 0) sqlprint();}
 #line 29 "copystdout.pgc"
 
-	printf("copy to STDOUT : sqlca.sqlcode = %ld\n", sqlca.sqlcode);
+  printf ("copy to STDOUT : sqlca.sqlcode = %ld\n", sqlca.sqlcode);
 
-	{
-		ECPGdisconnect(__LINE__, "CURRENT");
+  { ECPGdisconnect(__LINE__, "CURRENT");
 #line 32 "copystdout.pgc"
 
-		if (sqlca.sqlcode < 0)
-			sqlprint();
-	}
+if (sqlca.sqlcode < 0) sqlprint();}
 #line 32 "copystdout.pgc"
 
 
-	return 0;
+  return 0;
 }

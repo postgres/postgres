@@ -20,29 +20,24 @@
 #line 3 "comment.pgc"
 
 
- /* just a test comment */ int i;
-
- /* just a test comment int j*/ ;
+/* just a test comment */ int i;
+/* just a test comment int j*/;
 
 /****************************************************************************/
-/* Test comment																*/
+/* Test comment                                                             */
 /*--------------------------------------------------------------------------*/
 
-int
-main(void)
+int main(void)
 {
-	ECPGdebug(1, stderr);
+  ECPGdebug(1, stderr);
 
-	{
-		ECPGconnect(__LINE__, 0, "regress1", NULL, NULL, NULL, 0);
-	}
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
 #line 17 "comment.pgc"
 
 
-	{
-		ECPGdisconnect(__LINE__, "CURRENT");
-	}
+  { ECPGdisconnect(__LINE__, "CURRENT");}
 #line 19 "comment.pgc"
 
-	exit(0);
+  exit (0);
 }
+

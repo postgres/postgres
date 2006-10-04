@@ -73,6 +73,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #ifdef __cplusplus
 }
 #endif
+
 #endif
 
 #line 1 "code100.pgc"
@@ -91,109 +92,73 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 
 
-int
-main(int argc, char **argv)
-{								/* exec sql begin declare section */
-
-
+int main(int argc, char **argv)
+{  /* exec sql begin declare section */
+    
+   
 #line 9 "code100.pgc"
-	int			index;
-
+ int  index    ;
 /* exec sql end declare section */
 #line 10 "code100.pgc"
 
 
 
-	ECPGdebug(1, stderr);
-
-	{
-		ECPGconnect(__LINE__, 0, "regress1", NULL, NULL, NULL, 0);
-	}
+   ECPGdebug(1,stderr);
+   
+   { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
 #line 15 "code100.pgc"
 
-	if (sqlca.sqlcode)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
 
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( \"index\" numeric ( 3 )   primary key   , \"payload\" int4   not null )    ", ECPGt_EOIT, ECPGt_EORT);
-	}
+   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( \"index\" numeric ( 3 )   primary key   , \"payload\" int4   not null )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 20 "code100.pgc"
 
-	if (sqlca.sqlcode)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	{
-		ECPGtrans(__LINE__, NULL, "commit");
-	}
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   { ECPGtrans(__LINE__, NULL, "commit");}
 #line 22 "code100.pgc"
 
-	if (sqlca.sqlcode)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-
-	for (index = 0; index < 10; ++index)
-	{
-		{
-			ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( payload  , index  ) values( 0 ,  ? ) ",
-				   ECPGt_int, &(index), (long) 1, (long) 1, sizeof(int),
-			   ECPGt_NO_INDICATOR, NULL, 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-		}
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   for (index=0;index<10;++index)
+   {  { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( payload  , index  ) values ( 0 ,  ? ) ", 
+	ECPGt_int,&(index),(long)1,(long)1,sizeof(int), 
+	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);}
 #line 28 "code100.pgc"
 
-		if (sqlca.sqlcode)
-			printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	}
-	{
-		ECPGtrans(__LINE__, NULL, "commit");
-	}
+      if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   }
+   { ECPGtrans(__LINE__, NULL, "commit");}
 #line 31 "code100.pgc"
 
-	if (sqlca.sqlcode)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "update test set payload  = payload + 1  where index = - 1 ", ECPGt_EOIT, ECPGt_EORT);
-	}
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   { ECPGdo(__LINE__, 0, 1, NULL, "update test set payload  = payload + 1  where index = - 1 ", ECPGt_EOIT, ECPGt_EORT);}
 #line 35 "code100.pgc"
 
-	if (sqlca.sqlcode != 100)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "delete from test  where index = - 1 ", ECPGt_EOIT, ECPGt_EORT);
-	}
+   if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   { ECPGdo(__LINE__, 0, 1, NULL, "delete from test  where index = - 1 ", ECPGt_EOIT, ECPGt_EORT);}
 #line 38 "code100.pgc"
 
-	if (sqlca.sqlcode != 100)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+   if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
 
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( select  *  from test where index = - 1   ) ", ECPGt_EOIT, ECPGt_EORT);
-	}
+   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( select  *  from test where index = - 1   ) ", ECPGt_EOIT, ECPGt_EORT);}
 #line 41 "code100.pgc"
 
-	if (sqlca.sqlcode != 100)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+   if (sqlca.sqlcode!=100) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
 
-	{
-		ECPGdo(__LINE__, 0, 1, NULL, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
-	}
+   { ECPGdo(__LINE__, 0, 1, NULL, "drop table test ", ECPGt_EOIT, ECPGt_EORT);}
 #line 44 "code100.pgc"
 
-	if (sqlca.sqlcode)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	{
-		ECPGtrans(__LINE__, NULL, "commit");
-	}
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   { ECPGtrans(__LINE__, NULL, "commit");}
 #line 46 "code100.pgc"
 
-	if (sqlca.sqlcode)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-
-	{
-		ECPGdisconnect(__LINE__, "CURRENT");
-	}
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   
+   { ECPGdisconnect(__LINE__, "CURRENT");}
 #line 49 "code100.pgc"
 
-	if (sqlca.sqlcode)
-		printf("%ld:%s\n", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-	return 0;
+   if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+   return 0;
 }
