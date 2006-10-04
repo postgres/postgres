@@ -101,9 +101,6 @@
 /* Define to 1 if you have the `dlopen' function. */
 #undef HAVE_DLOPEN
 
-/* Define to 1 if you have the <editline/history.h> header file. */
-#undef HAVE_EDITLINE_HISTORY_H
-
 /* Define to 1 if you have the <editline/readline.h> header file. */
 #undef HAVE_EDITLINE_READLINE_H
 
