@@ -82,7 +82,8 @@ typedef struct NODE
 
 typedef struct
 {
-	char	   *buf;
+	char	   *buffer;			/* entire string we are scanning */
+	char	   *buf;			/* current scan point */
 	int4		state;
 	int4		count;
 	/* reverse polish notation in list (for temprorary usage) */
@@ -170,7 +171,8 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("error at start of operand")));
+							 errmsg("error at start of operand in tsearch query: \"%s\"",
+									state->buffer)));
 				}
 				else if (!t_isspace(state->buf))
 				{
@@ -188,7 +190,8 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("no operand")));
+								 errmsg("no operand in tsearch query: \"%s\"",
+										state->buffer)));
 				}
 				break;
 			case WAITOPERATOR:
@@ -241,11 +244,13 @@ pushquery(QPRS_STATE * state, int4 type, int4 val, int4 distance, int4 lenval, i
 	if (distance >= MAXSTRPOS)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("value is too big")));
+				 errmsg("value is too big in tsearch query: \"%s\"",
+						state->buffer)));
 	if (lenval >= MAXSTRLEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("operand is too long")));
+				 errmsg("operand is too long in tsearch query: \"%s\"",
+						state->buffer)));
 	tmp->distance = distance;
 	tmp->length = lenval;
 	tmp->next = state->str;
@@ -262,7 +267,8 @@ pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval, int2 weight
 	if (lenval >= MAXSTRLEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("word is too long")));
+				 errmsg("word is too long in tsearch query: \"%s\"",
+						state->buffer)));
 
 	pushquery(state, type, crc32_sz(strval, lenval),
 			  state->curop - state->op, lenval, weight);
@@ -407,7 +413,8 @@ makepol(QPRS_STATE * state, void (*pushval) (QPRS_STATE *, int, char *, int, int
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error")));
+						 errmsg("syntax error in tsearch query: \"%s\"",
+								state->buffer)));
 				return ERR;
 
 		}
@@ -621,6 +628,7 @@ static QUERYTYPE *
 #endif
 
 	/* init state */
+	state.buffer = buf;
 	state.buf = buf;
 	state.state = (isplain) ? WAITSINGLEOPERAND : WAITFIRSTOPERAND;
 	state.count = 0;
@@ -644,7 +652,9 @@ static QUERYTYPE *
 	pfree(state.valstate.word);
 	if (!state.num)
 	{
-		elog(NOTICE, "query doesn't contain lexeme(s)");
+		ereport(NOTICE,
+				(errmsg("tsearch query doesn't contain lexeme(s): \"%s\"",
+						state.buffer)));
 		query = (QUERYTYPE *) palloc(HDRSIZEQT);
 		query->len = HDRSIZEQT;
 		query->size = 0;
