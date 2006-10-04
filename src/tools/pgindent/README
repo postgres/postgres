@@ -11,7 +11,9 @@ symbols.
 
 From the top directory, run:
 
-  find . -name '*.[ch]' -type f -print | grep -v 's_lock.h' | xargs -n100 pgindent
+	find . -name '*.[ch]' -type f -print |
+	egrep -v '/s_lock.h|src/interfaces/ecpg/test/expected/' |
+	xargs -n100 pgindent
 
 We have standardized on NetBSD's indent.  We have fixed a few bugs which 
 requre the NetBSD source to be patched with indent.bsd.patch patch.  A 
