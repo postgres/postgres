@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.13 2006/10/04 22:48:41 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.14 2006/10/04 22:49:44 momjian Exp $ */
 
 /*
  * Sort this out for all operating systems some time.  The __xxx
@@ -43,7 +43,7 @@
  * http://sunsolve.sun.com/search/document.do?assetkey=1-21-108993-62-1&searchclause=108993-62
  * http://sunsolve.sun.com/search/document.do?assetkey=1-21-112874-34-1&searchclause=112874-34
  * 
- * HoweveFor the moment we just assume they all do; it's probably not worth
- * the trouble to add a configure test for this.
+ * However, many people might not have patched versions, so
+ * still use our own fix for the buggy version.
  */
 #define HAVE_BUGGY_SOLARIS_STRTOD
