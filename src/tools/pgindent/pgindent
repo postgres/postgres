@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.88 2006/10/03 22:09:42 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.89 2006/10/04 00:02:10 momjian Exp $
 
 # Known bugs:
 #
@@ -1748,6 +1748,7 @@ do
 -Tpvcontents \
 -Tq128_t \
 -Tqaddr_t \
+-Tqsort_arg_comparator \
 -Tquad_t \
 -TrangeTableEntry_used_context \
 -Treduce_outer_joins_state \
