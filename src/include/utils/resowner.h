@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.8 2006/07/13 18:01:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.9 2006/10/04 00:30:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,8 @@ extern void ResourceOwnerForgetRelationRef(ResourceOwner owner,
 /* support for tupledesc refcount management */
 extern void ResourceOwnerEnlargeTupleDescs(ResourceOwner owner);
 extern void ResourceOwnerRememberTupleDesc(ResourceOwner owner,
-										   TupleDesc tupdesc);
+							   TupleDesc tupdesc);
 extern void ResourceOwnerForgetTupleDesc(ResourceOwner owner,
-										 TupleDesc tupdesc);
+							 TupleDesc tupdesc);
 
 #endif   /* RESOWNER_H */

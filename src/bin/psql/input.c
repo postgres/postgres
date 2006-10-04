@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.59 2006/08/29 15:19:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.60 2006/10/04 00:30:06 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -29,7 +29,7 @@ char	   *psql_history;
  *	Preserve newlines in saved queries by mapping '\n' to NL_IN_HISTORY
  *
  *	It is assumed NL_IN_HISTORY will never be entered by the user
- *	nor appear inside a multi-byte string.  0x00 is not properly
+ *	nor appear inside a multi-byte string.	0x00 is not properly
  *	handled by the readline routines so it can not be used
  *	for this purpose.
  */
@@ -58,7 +58,7 @@ gets_interactive(const char *prompt)
 #ifdef USE_READLINE
 	if (useReadline)
 	{
-		char   *result;
+		char	   *result;
 
 		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
 		sigint_interrupt_enabled = true;
@@ -91,8 +91,8 @@ pg_append_history(const char *s, PQExpBuffer history_buf)
 		appendPQExpBufferStr(history_buf, s);
 		if (s[strlen(s) - 1] != '\n')
 			appendPQExpBufferChar(history_buf, '\n');
-	}	
-#endif	
+	}
+#endif
 }
 
 
@@ -110,7 +110,7 @@ pg_send_history(PQExpBuffer history_buf)
 #ifdef USE_READLINE
 	static char *prev_hist = NULL;
 
-	char   *s = history_buf->data;
+	char	   *s = history_buf->data;
 
 	if (useHistory && s[0])
 	{
@@ -123,10 +123,10 @@ pg_send_history(PQExpBuffer history_buf)
 		}
 		else
 		{
-			int		i;
+			int			i;
 
 			/* Trim any trailing \n's (OK to scribble on history_buf) */
-			for (i = strlen(s)-1; i >= 0 && s[i] == '\n'; i--)
+			for (i = strlen(s) - 1; i >= 0 && s[i] == '\n'; i--)
 				;
 			s[i + 1] = '\0';
 			/* Save each previous line for ignoredups processing */
@@ -151,7 +151,7 @@ pg_send_history(PQExpBuffer history_buf)
  *
  * Caller *must* have set up sigint_interrupt_jmp before calling.
  *
- * Note: we re-use a static PQExpBuffer for each call.  This is to avoid
+ * Note: we re-use a static PQExpBuffer for each call.	This is to avoid
  * leaking memory if interrupted by SIGINT.
  */
 char *
@@ -168,7 +168,7 @@ gets_fromFile(FILE *source)
 
 	for (;;)
 	{
-		char   *result;
+		char	   *result;
 
 		/* Enable SIGINT to longjmp to sigint_interrupt_jmp */
 		sigint_interrupt_enabled = true;
@@ -209,7 +209,7 @@ static void
 encode_history(void)
 {
 	HIST_ENTRY *cur_hist;
-	char *cur_ptr;
+	char	   *cur_ptr;
 
 	history_set_pos(0);
 	for (cur_hist = current_history(); cur_hist; cur_hist = next_history())
@@ -228,7 +228,7 @@ static void
 decode_history(void)
 {
 	HIST_ENTRY *cur_hist;
-	char *cur_ptr;
+	char	   *cur_ptr;
 
 	history_set_pos(0);
 	for (cur_hist = current_history(); cur_hist; cur_hist = next_history())
@@ -239,7 +239,7 @@ decode_history(void)
 				*cur_ptr = '\n';
 	}
 }
-#endif /* USE_READLINE */
+#endif   /* USE_READLINE */
 
 
 /*
@@ -296,8 +296,8 @@ initializeInput(int flags)
 
 
 /*
- * This function is for saving the readline history when user 
- * runs \s command or when psql finishes. 
+ * This function is for saving the readline history when user
+ * runs \s command or when psql finishes.
  *
  * We have an argument named encodeFlag to handle the cases differently.
  * In case of call via \s we don't really need to encode \n as \x01,
@@ -307,11 +307,12 @@ bool
 saveHistory(char *fname, bool encodeFlag)
 {
 #ifdef USE_READLINE
+
 	/*
-	 * Suppressing the write attempt when HISTFILE is set to /dev/null
-	 * may look like a negligible optimization, but it's necessary on e.g.
-	 * Darwin, where write_history will fail because it tries to chmod
-	 * the target file.
+	 * Suppressing the write attempt when HISTFILE is set to /dev/null may
+	 * look like a negligible optimization, but it's necessary on e.g. Darwin,
+	 * where write_history will fail because it tries to chmod the target
+	 * file.
 	 */
 	if (useHistory && fname &&
 		strcmp(fname, DEVNULL) != 0)
@@ -321,8 +322,8 @@ saveHistory(char *fname, bool encodeFlag)
 
 		/*
 		 * return value of write_history is not standardized across GNU
-		 * readline and libedit.  Therefore, check for errno becoming set
-		 * to see if the write failed.
+		 * readline and libedit.  Therefore, check for errno becoming set to
+		 * see if the write failed.
 		 */
 		errno = 0;
 		(void) write_history(fname);

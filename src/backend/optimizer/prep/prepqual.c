@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.55 2006/07/14 14:52:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.56 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,7 +212,7 @@ push_nots(Expr *qual)
 
 		if (negator)
 		{
-			OpExpr *newopexpr = makeNode(OpExpr);
+			OpExpr	   *newopexpr = makeNode(OpExpr);
 
 			newopexpr->opno = negator;
 			newopexpr->opfuncid = InvalidOid;
@@ -228,9 +228,9 @@ push_nots(Expr *qual)
 	{
 		/*
 		 * Negate a ScalarArrayOpExpr if there is a negator for its operator;
-		 * for example x = ANY (list) becomes x <> ALL (list).
-		 * Otherwise, retain the clause as it is (the NOT can't be pushed down
-		 * any farther).
+		 * for example x = ANY (list) becomes x <> ALL (list). Otherwise,
+		 * retain the clause as it is (the NOT can't be pushed down any
+		 * farther).
 		 */
 		ScalarArrayOpExpr *saopexpr = (ScalarArrayOpExpr *) qual;
 		Oid			negator = get_negator(saopexpr->opno);

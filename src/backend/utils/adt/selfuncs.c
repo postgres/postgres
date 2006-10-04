@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.213 2006/09/20 19:50:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.214 2006/10/04 00:29:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,8 @@
 
 
 static double ineq_histogram_selectivity(VariableStatData *vardata,
-										 FmgrInfo *opproc, bool isgt,
-										 Datum constval, Oid consttype);
+						   FmgrInfo *opproc, bool isgt,
+						   Datum constval, Oid consttype);
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
@@ -128,7 +128,7 @@ static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 					 Oid sortop, Datum *max);
 static Selectivity prefix_selectivity(VariableStatData *vardata,
-									  Oid opclass, Const *prefixcon);
+				   Oid opclass, Const *prefixcon);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -315,10 +315,9 @@ eqsel(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * No ANALYZE stats available, so make a guess using estimated
-		 * number of distinct values and assuming they are equally common.
-		 * (The guess is unlikely to be very good, but we do know a few
-		 * special cases.)
+		 * No ANALYZE stats available, so make a guess using estimated number
+		 * of distinct values and assuming they are equally common. (The guess
+		 * is unlikely to be very good, but we do know a few special cases.)
 		 */
 		selec = 1.0 / get_variable_numdistinct(&vardata);
 	}
@@ -523,7 +522,7 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  *
  * Note that the result disregards both the most-common-values (if any) and
  * null entries.  The caller is expected to combine this result with
- * statistics for those portions of the column population.  It may also be
+ * statistics for those portions of the column population.	It may also be
  * prudent to clamp the result range, ie, disbelieve exact 0 or 1 outputs.
  */
 double
@@ -618,20 +617,20 @@ ineq_histogram_selectivity(VariableStatData *vardata,
 		if (nvalues > 1)
 		{
 			/*
-			 * Use binary search to find proper location, ie, the first
-			 * slot at which the comparison fails.  (If the given operator
-			 * isn't actually sort-compatible with the histogram, you'll
-			 * get garbage results ... but probably not any more garbage-y
-			 * than you would from the old linear search.)
+			 * Use binary search to find proper location, ie, the first slot
+			 * at which the comparison fails.  (If the given operator isn't
+			 * actually sort-compatible with the histogram, you'll get garbage
+			 * results ... but probably not any more garbage-y than you would
+			 * from the old linear search.)
 			 */
-			double	histfrac;
-			int		lobound = 0;		/* first possible slot to search */
-			int		hibound = nvalues;	/* last+1 slot to search */
+			double		histfrac;
+			int			lobound = 0;	/* first possible slot to search */
+			int			hibound = nvalues;		/* last+1 slot to search */
 
 			while (lobound < hibound)
 			{
-				int		probe = (lobound + hibound) / 2;
-				bool	ltcmp;
+				int			probe = (lobound + hibound) / 2;
+				bool		ltcmp;
 
 				ltcmp = DatumGetBool(FunctionCall2(opproc,
 												   values[probe],
@@ -688,10 +687,10 @@ ineq_histogram_selectivity(VariableStatData *vardata,
 						binfrac = (val - low) / (high - low);
 
 						/*
-						 * Watch out for the possibility that we got a NaN
-						 * or Infinity from the division.  This can happen
-						 * despite the previous checks, if for example
-						 * "low" is -Infinity.
+						 * Watch out for the possibility that we got a NaN or
+						 * Infinity from the division.	This can happen
+						 * despite the previous checks, if for example "low"
+						 * is -Infinity.
 						 */
 						if (isnan(binfrac) ||
 							binfrac < 0.0 || binfrac > 1.0)
@@ -701,20 +700,20 @@ ineq_histogram_selectivity(VariableStatData *vardata,
 				else
 				{
 					/*
-					 * Ideally we'd produce an error here, on the grounds
-					 * that the given operator shouldn't have scalarXXsel
-					 * registered as its selectivity func unless we can
-					 * deal with its operand types.  But currently, all
-					 * manner of stuff is invoking scalarXXsel, so give a
-					 * default estimate until that can be fixed.
+					 * Ideally we'd produce an error here, on the grounds that
+					 * the given operator shouldn't have scalarXXsel
+					 * registered as its selectivity func unless we can deal
+					 * with its operand types.	But currently, all manner of
+					 * stuff is invoking scalarXXsel, so give a default
+					 * estimate until that can be fixed.
 					 */
 					binfrac = 0.5;
 				}
 
 				/*
 				 * Now, compute the overall selectivity across the values
-				 * represented by the histogram.  We have i-1 full bins
-				 * and binfrac partial bin below the constant.
+				 * represented by the histogram.  We have i-1 full bins and
+				 * binfrac partial bin below the constant.
 				 */
 				histfrac = (double) (i - 1) + binfrac;
 				histfrac /= (double) (nvalues - 1);
@@ -1093,7 +1092,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		/*
 		 * If we have most-common-values info, add up the fractions of the MCV
 		 * entries that satisfy MCV OP PATTERN.  These fractions contribute
-		 * directly to the result selectivity.  Also add up the total fraction
+		 * directly to the result selectivity.	Also add up the total fraction
 		 * represented by MCV entries.
 		 */
 		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
@@ -1467,11 +1466,11 @@ scalararraysel(PlannerInfo *root,
 	RegProcedure oprsel;
 	FmgrInfo	oprselproc;
 	Datum		selarg4;
-	Selectivity	s1;
+	Selectivity s1;
 
 	/*
-	 * First, look up the underlying operator's selectivity estimator.
-	 * Punt if it hasn't got one.
+	 * First, look up the underlying operator's selectivity estimator. Punt if
+	 * it hasn't got one.
 	 */
 	if (is_join_clause)
 	{
@@ -1491,9 +1490,8 @@ scalararraysel(PlannerInfo *root,
 	 * We consider three cases:
 	 *
 	 * 1. rightop is an Array constant: deconstruct the array, apply the
-	 * operator's selectivity function for each array element, and merge
-	 * the results in the same way that clausesel.c does for AND/OR
-	 * combinations.
+	 * operator's selectivity function for each array element, and merge the
+	 * results in the same way that clausesel.c does for AND/OR combinations.
 	 *
 	 * 2. rightop is an ARRAY[] construct: apply the operator's selectivity
 	 * function for each element of the ARRAY[] construct, and merge.
@@ -1529,7 +1527,7 @@ scalararraysel(PlannerInfo *root,
 		s1 = useOr ? 0.0 : 1.0;
 		for (i = 0; i < num_elems; i++)
 		{
-			List	*args;
+			List	   *args;
 			Selectivity s2;
 
 			args = list_make2(leftop,
@@ -1562,7 +1560,7 @@ scalararraysel(PlannerInfo *root,
 		s1 = useOr ? 0.0 : 1.0;
 		foreach(l, arrayexpr->elements)
 		{
-			List	*args;
+			List	   *args;
 			Selectivity s2;
 
 			args = list_make2(leftop, lfirst(l));
@@ -1580,14 +1578,14 @@ scalararraysel(PlannerInfo *root,
 	else
 	{
 		CaseTestExpr *dummyexpr;
-		List	*args;
+		List	   *args;
 		Selectivity s2;
-		int		i;
+		int			i;
 
 		/*
 		 * We need a dummy rightop to pass to the operator selectivity
-		 * routine.  It can be pretty much anything that doesn't look like
-		 * a constant; CaseTestExpr is a convenient choice.
+		 * routine.  It can be pretty much anything that doesn't look like a
+		 * constant; CaseTestExpr is a convenient choice.
 		 */
 		dummyexpr = makeNode(CaseTestExpr);
 		dummyexpr->typeId = get_element_type(exprType(rightop));
@@ -1599,9 +1597,10 @@ scalararraysel(PlannerInfo *root,
 										  PointerGetDatum(args),
 										  selarg4));
 		s1 = useOr ? 0.0 : 1.0;
+
 		/*
-		 * Arbitrarily assume 10 elements in the eventual array value
-		 * (see also estimate_array_length)
+		 * Arbitrarily assume 10 elements in the eventual array value (see
+		 * also estimate_array_length)
 		 */
 		for (i = 0; i < 10; i++)
 		{
@@ -3050,14 +3049,19 @@ convert_string_datum(Datum value, Oid typid)
 		 * == as you'd expect.  Can't any of these people program their way
 		 * out of a paper bag?
 		 */
-#if _MSC_VER == 1400	/* VS.Net 2005 */
-		/* http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx?FeedbackID=99694 */
+#if _MSC_VER == 1400			/* VS.Net 2005 */
+
+		/*
+		 * http://connect.microsoft.com/VisualStudio/feedback/ViewFeedback.aspx
+		 * ?FeedbackID=99694
+		 */
 		{
-			char x[1];
+			char		x[1];
+
 			xfrmlen = strxfrm(x, val, 0);
 		}
 #else
-	    xfrmlen = strxfrm(NULL, val, 0);
+		xfrmlen = strxfrm(NULL, val, 0);
 #endif
 		xfrmstr = (char *) palloc(xfrmlen + 1);
 		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
@@ -3399,9 +3403,9 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		if (rte->inh)
 		{
 			/*
-			 * XXX This means the Var represents a column of an append relation.
-			 * Later add code to look at the member relations and try to derive
-			 * some kind of combined statistics?
+			 * XXX This means the Var represents a column of an append
+			 * relation. Later add code to look at the member relations and
+			 * try to derive some kind of combined statistics?
 			 */
 		}
 		else if (rte->rtekind == RTE_RELATION)
@@ -4154,7 +4158,7 @@ prefix_selectivity(VariableStatData *vardata, Oid opclass, Const *prefixcon)
 
 		/*
 		 * Merge the two selectivities in the same way as for a range query
-		 * (see clauselist_selectivity()).  Note that we don't need to worry
+		 * (see clauselist_selectivity()).	Note that we don't need to worry
 		 * about double-exclusion of nulls, since ineq_histogram_selectivity
 		 * doesn't count those anyway.
 		 */
@@ -4162,8 +4166,8 @@ prefix_selectivity(VariableStatData *vardata, Oid opclass, Const *prefixcon)
 
 		/*
 		 * A zero or negative prefixsel should be converted into a small
-		 * positive value; we probably are dealing with a very tight range
-		 * and got a bogus result due to roundoff errors.
+		 * positive value; we probably are dealing with a very tight range and
+		 * got a bogus result due to roundoff errors.
 		 */
 		if (prefixsel <= 0.0)
 			prefixsel = 1.0e-10;
@@ -4640,8 +4644,8 @@ genericcostestimate(PlannerInfo *root,
 		selectivityQuals = indexQuals;
 
 	/*
-	 * Check for ScalarArrayOpExpr index quals, and estimate the number
-	 * of index scans that will be performed.
+	 * Check for ScalarArrayOpExpr index quals, and estimate the number of
+	 * index scans that will be performed.
 	 */
 	num_sa_scans = 1;
 	foreach(l, indexQuals)
@@ -4651,7 +4655,7 @@ genericcostestimate(PlannerInfo *root,
 		if (IsA(rinfo->clause, ScalarArrayOpExpr))
 		{
 			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) rinfo->clause;
-			int		alength = estimate_array_length(lsecond(saop->args));
+			int			alength = estimate_array_length(lsecond(saop->args));
 
 			if (alength > 1)
 				num_sa_scans *= alength;
@@ -4679,8 +4683,8 @@ genericcostestimate(PlannerInfo *root,
 	numIndexTuples = rint(numIndexTuples / num_sa_scans);
 
 	/*
-	 * We can bound the number of tuples by the index size in any case.
-	 * Also, always estimate at least one tuple is touched, even when
+	 * We can bound the number of tuples by the index size in any case. Also,
+	 * always estimate at least one tuple is touched, even when
 	 * indexSelectivity estimate is tiny.
 	 */
 	if (numIndexTuples > index->tuples)
@@ -4691,12 +4695,11 @@ genericcostestimate(PlannerInfo *root,
 	/*
 	 * Estimate the number of index pages that will be retrieved.
 	 *
-	 * We use the simplistic method of taking a pro-rata fraction of the
-	 * total number of index pages.  In effect, this counts only leaf pages
-	 * and not any overhead such as index metapage or upper tree levels.
-	 * In practice this seems a better approximation than charging for
-	 * access to the upper levels, perhaps because those tend to stay in
-	 * cache under load.
+	 * We use the simplistic method of taking a pro-rata fraction of the total
+	 * number of index pages.  In effect, this counts only leaf pages and not
+	 * any overhead such as index metapage or upper tree levels. In practice
+	 * this seems a better approximation than charging for access to the upper
+	 * levels, perhaps because those tend to stay in cache under load.
 	 */
 	if (index->pages > 1 && index->tuples > 1)
 		numIndexPages = ceil(numIndexTuples * index->pages / index->tuples);
@@ -4706,19 +4709,19 @@ genericcostestimate(PlannerInfo *root,
 	/*
 	 * Now compute the disk access costs.
 	 *
-	 * The above calculations are all per-index-scan.  However, if we are
-	 * in a nestloop inner scan, we can expect the scan to be repeated (with
+	 * The above calculations are all per-index-scan.  However, if we are in a
+	 * nestloop inner scan, we can expect the scan to be repeated (with
 	 * different search keys) for each row of the outer relation.  Likewise,
-	 * ScalarArrayOpExpr quals result in multiple index scans.  This
-	 * creates the potential for cache effects to reduce the number of
-	 * disk page fetches needed.  We want to estimate the average per-scan
-	 * I/O cost in the presence of caching.
+	 * ScalarArrayOpExpr quals result in multiple index scans.	This creates
+	 * the potential for cache effects to reduce the number of disk page
+	 * fetches needed.	We want to estimate the average per-scan I/O cost in
+	 * the presence of caching.
 	 *
 	 * We use the Mackert-Lohman formula (see costsize.c for details) to
 	 * estimate the total number of page fetches that occur.  While this
 	 * wasn't what it was designed for, it seems a reasonable model anyway.
-	 * Note that we are counting pages not tuples anymore, so we take
-	 * N = T = index size, as if there were one "tuple" per page.
+	 * Note that we are counting pages not tuples anymore, so we take N = T =
+	 * index size, as if there were one "tuple" per page.
 	 */
 	if (outer_rel != NULL && outer_rel->rows > 1)
 	{
@@ -4745,9 +4748,9 @@ genericcostestimate(PlannerInfo *root,
 											root);
 
 		/*
-		 * Now compute the total disk access cost, and then report a
-		 * pro-rated share for each outer scan.  (Don't pro-rate for
-		 * ScalarArrayOpExpr, since that's internal to the indexscan.)
+		 * Now compute the total disk access cost, and then report a pro-rated
+		 * share for each outer scan.  (Don't pro-rate for ScalarArrayOpExpr,
+		 * since that's internal to the indexscan.)
 		 */
 		*indexTotalCost = (pages_fetched * random_page_cost) / num_outer_scans;
 	}
@@ -4761,20 +4764,20 @@ genericcostestimate(PlannerInfo *root,
 	}
 
 	/*
-	 * A difficulty with the leaf-pages-only cost approach is that for
-	 * small selectivities (eg, single index tuple fetched) all indexes
-	 * will look equally attractive because we will estimate exactly 1
-	 * leaf page to be fetched.  All else being equal, we should prefer
-	 * physically smaller indexes over larger ones.  (An index might be
-	 * smaller because it is partial or because it contains fewer columns;
-	 * presumably the other columns in the larger index aren't useful to
-	 * the query, or the larger index would have better selectivity.)
+	 * A difficulty with the leaf-pages-only cost approach is that for small
+	 * selectivities (eg, single index tuple fetched) all indexes will look
+	 * equally attractive because we will estimate exactly 1 leaf page to be
+	 * fetched.  All else being equal, we should prefer physically smaller
+	 * indexes over larger ones.  (An index might be smaller because it is
+	 * partial or because it contains fewer columns; presumably the other
+	 * columns in the larger index aren't useful to the query, or the larger
+	 * index would have better selectivity.)
 	 *
 	 * We can deal with this by adding a very small "fudge factor" that
 	 * depends on the index size.  The fudge factor used here is one
-	 * random_page_cost per 100000 index pages, which should be small
-	 * enough to not alter index-vs-seqscan decisions, but will prevent
-	 * indexes of different sizes from looking exactly equally attractive.
+	 * random_page_cost per 100000 index pages, which should be small enough
+	 * to not alter index-vs-seqscan decisions, but will prevent indexes of
+	 * different sizes from looking exactly equally attractive.
 	 */
 	*indexTotalCost += index->pages * random_page_cost / 100000.0;
 
@@ -4841,8 +4844,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * For a RowCompareExpr, we consider only the first column, just as
 	 * rowcomparesel() does.
 	 *
-	 * If there's a ScalarArrayOpExpr in the quals, we'll actually perform
-	 * N index scans not one, but the ScalarArrayOpExpr's operator can be
+	 * If there's a ScalarArrayOpExpr in the quals, we'll actually perform N
+	 * index scans not one, but the ScalarArrayOpExpr's operator can be
 	 * considered to act the same as it normally does.
 	 */
 	indexBoundQuals = NIL;
@@ -4960,9 +4963,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * ordering, but don't negate it entirely.  Before 8.0 we divided the
 	 * correlation by the number of columns, but that seems too strong.)
 	 *
-	 * We can skip all this if we found a ScalarArrayOpExpr, because then
-	 * the call must be for a bitmap index scan, and the caller isn't going
-	 * to care what the index correlation is.
+	 * We can skip all this if we found a ScalarArrayOpExpr, because then the
+	 * call must be for a bitmap index scan, and the caller isn't going to
+	 * care what the index correlation is.
 	 */
 	if (found_saop)
 		PG_RETURN_VOID();

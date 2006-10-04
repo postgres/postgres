@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.98 2006/05/02 11:28:55 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.99 2006/10/04 00:30:02 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -108,4 +108,4 @@ int			VacuumCostDelay = 0;
 int			VacuumCostBalance = 0;		/* working state for vacuum */
 bool		VacuumCostActive = false;
 
-int 		GinFuzzySearchLimit = 0;
+int			GinFuzzySearchLimit = 0;

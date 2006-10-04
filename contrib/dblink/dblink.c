@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.58 2006/09/02 21:11:15 joe Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.59 2006/10/04 00:29:44 momjian Exp $
  * Copyright (c) 2001-2006, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -362,11 +362,11 @@ dblink_open(PG_FUNCTION_ARGS)
 			DBLINK_RES_INTERNALERROR("begin error");
 		PQclear(res);
 		rconn->newXactForCursor = TRUE;
+
 		/*
 		 * Since transaction state was IDLE, we force cursor count to
-		 * initially be 0. This is needed as a previous ABORT might
-		 * have wiped out our transaction without maintaining the
-		 * cursor count for us.
+		 * initially be 0. This is needed as a previous ABORT might have wiped
+		 * out our transaction without maintaining the cursor count for us.
 		 */
 		rconn->openCursorCount = 0;
 	}
@@ -621,8 +621,8 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		if (PQnfields(res) != tupdesc->natts)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				errmsg("remote query result rowtype does not match "
-						"the specified FROM clause rowtype")));
+					 errmsg("remote query result rowtype does not match "
+							"the specified FROM clause rowtype")));
 
 		/* fast track when no results */
 		if (funcctx->max_calls < 1)
@@ -827,7 +827,7 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 
 			if (!res ||
 				(PQresultStatus(res) != PGRES_COMMAND_OK &&
-				PQresultStatus(res) != PGRES_TUPLES_OK))
+				 PQresultStatus(res) != PGRES_TUPLES_OK))
 			{
 				if (fail)
 					DBLINK_RES_ERROR("sql error");
@@ -839,33 +839,33 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 					SRF_RETURN_DONE(funcctx);
 				}
 			}
-	
+
 			if (PQresultStatus(res) == PGRES_COMMAND_OK)
 			{
 				is_sql_cmd = true;
-	
+
 				/* need a tuple descriptor representing one TEXT column */
 				tupdesc = CreateTemplateTupleDesc(1, false);
 				TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-								TEXTOID, -1, 0);
-	
+								   TEXTOID, -1, 0);
+
 				/*
-				* and save a copy of the command status string to return as our
-				* result tuple
-				*/
+				 * and save a copy of the command status string to return as
+				 * our result tuple
+				 */
 				sql_cmd_status = PQcmdStatus(res);
 				funcctx->max_calls = 1;
 			}
 			else
 				funcctx->max_calls = PQntuples(res);
-	
+
 			/* got results, keep track of them */
 			funcctx->user_fctx = res;
-	
+
 			/* if needed, close the connection to the database and cleanup */
 			if (freeconn)
 				PQfinish(conn);
-	
+
 			if (!is_sql_cmd)
 			{
 				/* get a tuple descriptor for our result type */
@@ -878,26 +878,29 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 						/* failed to determine actual type of RECORD */
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("function returning record called in context "
-								"that cannot accept type record")));
+						errmsg("function returning record called in context "
+							   "that cannot accept type record")));
 						break;
 					default:
 						/* result type isn't composite */
 						elog(ERROR, "return type must be a row type");
 						break;
 				}
-	
+
 				/* make sure we have a persistent copy of the tupdesc */
 				tupdesc = CreateTupleDescCopy(tupdesc);
 			}
-	
-			/* check result and tuple descriptor have the same number of columns */
+
+			/*
+			 * check result and tuple descriptor have the same number of
+			 * columns
+			 */
 			if (PQnfields(res) != tupdesc->natts)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-					errmsg("remote query result rowtype does not match "
-							"the specified FROM clause rowtype")));
-	
+						 errmsg("remote query result rowtype does not match "
+								"the specified FROM clause rowtype")));
+
 			/* fast track when no results */
 			if (funcctx->max_calls < 1)
 			{
@@ -905,11 +908,11 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async, bool do_get)
 					PQclear(res);
 				SRF_RETURN_DONE(funcctx);
 			}
-	
+
 			/* store needed metadata for subsequent calls */
 			attinmeta = TupleDescGetAttInMetadata(tupdesc);
 			funcctx->attinmeta = attinmeta;
-	
+
 			MemoryContextSwitchTo(oldcontext);
 		}
 		else
@@ -991,9 +994,9 @@ PG_FUNCTION_INFO_V1(dblink_get_connections);
 Datum
 dblink_get_connections(PG_FUNCTION_ARGS)
 {
-	HASH_SEQ_STATUS			status;
-	remoteConnHashEnt	   *hentry;
-	ArrayBuildState		   *astate = NULL;
+	HASH_SEQ_STATUS status;
+	remoteConnHashEnt *hentry;
+	ArrayBuildState *astate = NULL;
 
 	if (remoteConnHash)
 	{
@@ -1019,19 +1022,19 @@ dblink_get_connections(PG_FUNCTION_ARGS)
  *
  * Returns 1 if the connection is busy, 0 otherwise
  * Params:
- * 	text connection_name - name of the connection to check
- * 
+ *	text connection_name - name of the connection to check
+ *
  */
 PG_FUNCTION_INFO_V1(dblink_is_busy);
 Datum
 dblink_is_busy(PG_FUNCTION_ARGS)
 {
-	char		   *msg;
-	PGconn		   *conn = NULL;
-	char		   *conname = NULL;
-	char		   *connstr = NULL;
-	remoteConn	   *rconn = NULL;
-	bool			freeconn = false;
+	char	   *msg;
+	PGconn	   *conn = NULL;
+	char	   *conname = NULL;
+	char	   *connstr = NULL;
+	remoteConn *rconn = NULL;
+	bool		freeconn = false;
 
 	DBLINK_INIT;
 	DBLINK_GET_CONN;
@@ -1045,27 +1048,27 @@ dblink_is_busy(PG_FUNCTION_ARGS)
 /*
  * Cancels a running request on a connection
  *
- * Returns text: 
+ * Returns text:
  *	"OK" if the cancel request has been sent correctly,
- *      an error message otherwise
- * 
+ *		an error message otherwise
+ *
  * Params:
- * 	text connection_name - name of the connection to check
- * 
+ *	text connection_name - name of the connection to check
+ *
  */
 PG_FUNCTION_INFO_V1(dblink_cancel_query);
 Datum
 dblink_cancel_query(PG_FUNCTION_ARGS)
 {
-	char		   *msg;
-	int				res = 0;
-	PGconn		   *conn = NULL;
-	char		   *conname = NULL;
-	char		   *connstr = NULL;
-	remoteConn	   *rconn = NULL;
-	bool			freeconn = false;
-	PGcancel	   *cancel;
-	char			errbuf[256];
+	char	   *msg;
+	int			res = 0;
+	PGconn	   *conn = NULL;
+	char	   *conname = NULL;
+	char	   *connstr = NULL;
+	remoteConn *rconn = NULL;
+	bool		freeconn = false;
+	PGcancel   *cancel;
+	char		errbuf[256];
 
 	DBLINK_INIT;
 	DBLINK_GET_CONN;
@@ -1077,7 +1080,7 @@ dblink_cancel_query(PG_FUNCTION_ARGS)
 	PQfreeCancel(cancel);
 
 	if (res == 0)
-		PG_RETURN_TEXT_P(GET_TEXT("OK"));	
+		PG_RETURN_TEXT_P(GET_TEXT("OK"));
 	else
 		PG_RETURN_TEXT_P(GET_TEXT(errbuf));
 }
@@ -1086,23 +1089,23 @@ dblink_cancel_query(PG_FUNCTION_ARGS)
 /*
  * Get error message from a connection
  *
- * Returns text: 
+ * Returns text:
  *	"OK" if no error, an error message otherwise
- * 
+ *
  * Params:
- * 	text connection_name - name of the connection to check
- * 
+ *	text connection_name - name of the connection to check
+ *
  */
 PG_FUNCTION_INFO_V1(dblink_error_message);
 Datum
 dblink_error_message(PG_FUNCTION_ARGS)
 {
-	char		   *msg;
-	PGconn		   *conn = NULL;
-	char		   *conname = NULL;
-	char		   *connstr = NULL;
-	remoteConn	   *rconn = NULL;
-	bool			freeconn = false;
+	char	   *msg;
+	PGconn	   *conn = NULL;
+	char	   *conname = NULL;
+	char	   *connstr = NULL;
+	remoteConn *rconn = NULL;
+	bool		freeconn = false;
 
 	DBLINK_INIT;
 	DBLINK_GET_CONN;
@@ -1859,7 +1862,7 @@ get_sql_delete(Oid relid, int2vector *pkattnums, int16 pknumatts, char **tgt_pka
 	char	   *relname;
 	TupleDesc	tupdesc;
 	int			natts;
-	StringInfoData	buf;
+	StringInfoData buf;
 	int			i;
 
 	initStringInfo(&buf);

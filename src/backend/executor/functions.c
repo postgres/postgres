@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.106 2006/09/06 20:40:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.107 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -433,7 +433,7 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 
 		/* sizeof(ParamListInfoData) includes the first array element */
 		paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-									 (nargs - 1) * sizeof(ParamExternData));
+									   (nargs - 1) *sizeof(ParamExternData));
 		paramLI->numParams = nargs;
 
 		for (i = 0; i < nargs; i++)
@@ -897,8 +897,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	parse = (Query *) lfirst(list_tail(queryTreeList));
 
 	/*
-	 * Note: eventually replace this with QueryReturnsTuples?  We'd need
-	 * a more general method of determining the output type, though.
+	 * Note: eventually replace this with QueryReturnsTuples?  We'd need a
+	 * more general method of determining the output type, though.
 	 */
 	isSelect = (parse->commandType == CMD_SELECT && parse->into == NULL);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.157 2006/08/14 23:39:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.158 2006/10/04 00:29:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -544,8 +544,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	/*
 	 * If a coldeflist was supplied, ensure it defines a legal set of names
 	 * (no duplicates) and datatypes (no pseudo-types, for instance).
-	 * addRangeTableEntryForFunction looked up the type names but didn't
-	 * check them further than that.
+	 * addRangeTableEntryForFunction looked up the type names but didn't check
+	 * them further than that.
 	 */
 	if (r->coldeflist)
 	{
@@ -1338,10 +1338,10 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 	ListCell   *l;
 
 	/* Preprocess the grouping clause, lookup TLEs */
-	foreach (l, grouplist)
+	foreach(l, grouplist)
 	{
 		TargetEntry *tle;
-		Oid			 restype;
+		Oid			restype;
 
 		tle = findTargetlistEntry(pstate, lfirst(l),
 								  targetlist, GROUP_CLAUSE);
@@ -1359,21 +1359,20 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 	}
 
 	/*
-	 * Now iterate through the ORDER BY clause. If we find a grouping
-	 * element that matches the ORDER BY element, append the grouping
-	 * element to the result set immediately. Otherwise, stop
-	 * iterating. The effect of this is to look for a prefix of the
-	 * ORDER BY list in the grouping clauses, and to move that prefix
-	 * to the front of the GROUP BY.
+	 * Now iterate through the ORDER BY clause. If we find a grouping element
+	 * that matches the ORDER BY element, append the grouping element to the
+	 * result set immediately. Otherwise, stop iterating. The effect of this
+	 * is to look for a prefix of the ORDER BY list in the grouping clauses,
+	 * and to move that prefix to the front of the GROUP BY.
 	 */
-	foreach (l, sortClause)
+	foreach(l, sortClause)
 	{
-		SortClause	*sc = (SortClause *) lfirst(l);
-		ListCell	*prev = NULL;
-		ListCell	*tl;
-		bool		 found = false;
+		SortClause *sc = (SortClause *) lfirst(l);
+		ListCell   *prev = NULL;
+		ListCell   *tl;
+		bool		found = false;
 
-		foreach (tl, tle_list)
+		foreach(tl, tle_list)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
@@ -1399,17 +1398,17 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 	}
 
 	/*
-	 * Now add any remaining elements of the GROUP BY list in the
-	 * order we received them.
+	 * Now add any remaining elements of the GROUP BY list in the order we
+	 * received them.
 	 *
-	 * XXX: are there any additional criteria to consider when
-	 * ordering grouping clauses?
+	 * XXX: are there any additional criteria to consider when ordering
+	 * grouping clauses?
 	 */
 	foreach(l, tle_list)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		GroupClause *gc;
-		Oid			 sort_op;
+		Oid			sort_op;
 
 		/* avoid making duplicate grouplist entries */
 		if (targetIsInSortList(tle, result))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.98 2006/09/17 22:50:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.99 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,12 +129,11 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	CHECK_FOR_INTERRUPTS();
 
 	/*
-	 * Open the relation, getting ShareUpdateExclusiveLock to ensure that
-	 * two ANALYZEs don't run on it concurrently.  (This also locks out
-	 * a concurrent VACUUM, which doesn't matter much at the moment but
-	 * might matter if we ever try to accumulate stats on dead tuples.)
-	 * If the rel has been dropped since we last saw it, we don't need
-	 * to process it.
+	 * Open the relation, getting ShareUpdateExclusiveLock to ensure that two
+	 * ANALYZEs don't run on it concurrently.  (This also locks out a
+	 * concurrent VACUUM, which doesn't matter much at the moment but might
+	 * matter if we ever try to accumulate stats on dead tuples.) If the rel
+	 * has been dropped since we last saw it, we don't need to process it.
 	 */
 	onerel = try_relation_open(relid, ShareUpdateExclusiveLock);
 	if (!onerel)
@@ -216,8 +215,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			if (i == InvalidAttrNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" does not exist",
-								col, RelationGetRelationName(onerel))));
+					errmsg("column \"%s\" of relation \"%s\" does not exist",
+						   col, RelationGetRelationName(onerel))));
 			vacattrstats[tcnt] = examine_attribute(onerel, i);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;

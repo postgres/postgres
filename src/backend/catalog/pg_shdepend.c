@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.14 2006/08/21 00:57:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.15 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1101,9 +1101,9 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 
 		while ((tuple = systable_getnext(scan)) != NULL)
 		{
-			ObjectAddress	obj;
-			GrantObjectType	objtype;
-			InternalGrant	istmt;
+			ObjectAddress obj;
+			GrantObjectType objtype;
+			InternalGrant istmt;
 			Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
 
 			/* We only operate on objects in the current database */
@@ -1112,7 +1112,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 
 			switch (sdepForm->deptype)
 			{
-				/* Shouldn't happen */
+					/* Shouldn't happen */
 				case SHARED_DEPENDENCY_PIN:
 				case SHARED_DEPENDENCY_INVALID:
 					elog(ERROR, "unexpected dependency type");
@@ -1267,10 +1267,11 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					break;
 
 				case RelationRelationId:
+
 					/*
-					 * Pass recursing = true so that we don't fail on
-					 * indexes, owned sequences, etc when we happen
-					 * to visit them before their parent table.
+					 * Pass recursing = true so that we don't fail on indexes,
+					 * owned sequences, etc when we happen to visit them
+					 * before their parent table.
 					 */
 					ATExecChangeOwner(sdepForm->objid, newrole, true);
 					break;

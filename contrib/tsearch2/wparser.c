@@ -347,8 +347,8 @@ typedef struct
 
 typedef struct
 {
-	int			 cur;
-	int			 len;
+	int			cur;
+	int			len;
 	LexemeEntry *list;
 }	PrsStorage;
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.56 2006/07/23 18:34:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.57 2006/10/04 00:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,12 +237,12 @@ StrategyInitialize(bool init)
 	/*
 	 * Initialize the shared buffer lookup hashtable.
 	 *
-	 * Since we can't tolerate running out of lookup table entries, we
-	 * must be sure to specify an adequate table size here.  The maximum
-	 * steady-state usage is of course NBuffers entries, but BufferAlloc()
-	 * tries to insert a new entry before deleting the old.  In principle
-	 * this could be happening in each partition concurrently, so we
-	 * could need as many as NBuffers + NUM_BUFFER_PARTITIONS entries.
+	 * Since we can't tolerate running out of lookup table entries, we must be
+	 * sure to specify an adequate table size here.  The maximum steady-state
+	 * usage is of course NBuffers entries, but BufferAlloc() tries to insert
+	 * a new entry before deleting the old.  In principle this could be
+	 * happening in each partition concurrently, so we could need as many as
+	 * NBuffers + NUM_BUFFER_PARTITIONS entries.
 	 */
 	InitBufTable(NBuffers + NUM_BUFFER_PARTITIONS);
 

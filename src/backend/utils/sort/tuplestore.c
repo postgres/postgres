@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.28 2006/06/27 02:51:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplestore.c,v 1.29 2006/10/04 00:30:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,6 +347,7 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 	switch (state->status)
 	{
 		case TSS_INMEM:
+
 			/*
 			 * Grow the array as needed.  Note that we try to grow the array
 			 * when there is still one free slot remaining --- if we fail,

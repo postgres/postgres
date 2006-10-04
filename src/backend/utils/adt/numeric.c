@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.95 2006/10/03 21:25:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.96 2006/10/04 00:29:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,10 +253,10 @@ static double numericvar_to_double_no_overflow(NumericVar *var);
 
 static int	cmp_numerics(Numeric num1, Numeric num2);
 static int	cmp_var(NumericVar *var1, NumericVar *var2);
-static int	cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
-						   int var1weight, int var1sign,
-						   const NumericDigit *var2digits, int var2ndigits,
-						   int var2weight, int var2sign);
+static int cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
+			   int var1weight, int var1sign,
+			   const NumericDigit *var2digits, int var2ndigits,
+			   int var2weight, int var2sign);
 static void add_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
@@ -278,10 +278,10 @@ static void power_var_int(NumericVar *base, int exp, NumericVar *result,
 			  int rscale);
 
 static int	cmp_abs(NumericVar *var1, NumericVar *var2);
-static int	cmp_abs_common(const NumericDigit *var1digits, int var1ndigits,
-						   int var1weight,
-						   const NumericDigit *var2digits, int var2ndigits,
-						   int var2weight);
+static int cmp_abs_common(const NumericDigit *var1digits, int var1ndigits,
+			   int var1weight,
+			   const NumericDigit *var2digits, int var2ndigits,
+			   int var2weight);
 static void add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void round_var(NumericVar *var, int rscale);
@@ -2228,9 +2228,8 @@ numeric_stddev_internal(ArrayType *transarray,
 	set_var_from_num(N, &vN);
 
 	/*
-	 * Sample stddev and variance are undefined when N <= 1;
-	 * population stddev is undefined when N == 0. Return NULL in
-	 * either case.
+	 * Sample stddev and variance are undefined when N <= 1; population stddev
+	 * is undefined when N == 0. Return NULL in either case.
 	 */
 	if (sample)
 		comp = &const_one;
@@ -2257,7 +2256,7 @@ numeric_stddev_internal(ArrayType *transarray,
 
 	mul_var(&vsumX, &vsumX, &vsumX, rscale);	/* vsumX = sumX * sumX */
 	mul_var(&vN, &vsumX2, &vsumX2, rscale);		/* vsumX2 = N * sumX2 */
-	sub_var(&vsumX2, &vsumX, &vsumX2);			/* N * sumX2 - sumX * sumX */
+	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
 
 	if (cmp_var(&vsumX2, &const_zero) <= 0)
 	{
@@ -2266,11 +2265,11 @@ numeric_stddev_internal(ArrayType *transarray,
 	}
 	else
 	{
-		mul_var(&vN, &vNminus1, &vNminus1, 0);				/* N * (N - 1) */
+		mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
 		rscale = select_div_scale(&vsumX2, &vNminus1);
-		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);	/* variance */
+		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);		/* variance */
 		if (!variance)
-			sqrt_var(&vsumX, &vsumX, rscale);				/* stddev */
+			sqrt_var(&vsumX, &vsumX, rscale);	/* stddev */
 
 		res = make_result(&vsumX);
 	}
@@ -2286,8 +2285,8 @@ numeric_stddev_internal(ArrayType *transarray,
 Datum
 numeric_var_samp(PG_FUNCTION_ARGS)
 {
-	Numeric res;
-	bool is_null;
+	Numeric		res;
+	bool		is_null;
 
 	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
 								  true, true, &is_null);
@@ -2301,8 +2300,8 @@ numeric_var_samp(PG_FUNCTION_ARGS)
 Datum
 numeric_stddev_samp(PG_FUNCTION_ARGS)
 {
-	Numeric res;
-	bool is_null;
+	Numeric		res;
+	bool		is_null;
 
 	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
 								  false, true, &is_null);
@@ -2316,8 +2315,8 @@ numeric_stddev_samp(PG_FUNCTION_ARGS)
 Datum
 numeric_var_pop(PG_FUNCTION_ARGS)
 {
-	Numeric res;
-	bool is_null;
+	Numeric		res;
+	bool		is_null;
 
 	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
 								  true, false, &is_null);
@@ -2331,8 +2330,8 @@ numeric_var_pop(PG_FUNCTION_ARGS)
 Datum
 numeric_stddev_pop(PG_FUNCTION_ARGS)
 {
-	Numeric res;
-	bool is_null;
+	Numeric		res;
+	bool		is_null;
 
 	res = numeric_stddev_internal(PG_GETARG_ARRAYTYPE_P(0),
 								  false, false, &is_null);
@@ -3219,7 +3218,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 							 errmsg("numeric field overflow"),
 							 errdetail("A field with precision %d, scale %d must round to an absolute value less than %s%d.",
 									   precision, scale,
-									   /* Display 10^0 as 1 */
+					/* Display 10^0 as 1 */
 									   maxdigits ? "10^" : "",
 									   maxdigits ? maxdigits : 1
 									   )));
@@ -3415,8 +3414,8 @@ cmp_var(NumericVar *var1, NumericVar *var2)
 /*
  * cmp_var_common() -
  *
- *  Main routine of cmp_var(). This function can be used by both
- *  NumericVar and Numeric. 
+ *	Main routine of cmp_var(). This function can be used by both
+ *	NumericVar and Numeric.
  */
 static int
 cmp_var_common(const NumericDigit *var1digits, int var1ndigits,
@@ -4853,13 +4852,13 @@ cmp_abs(NumericVar *var1, NumericVar *var2)
 /* ----------
  * cmp_abs_common() -
  *
- *  Main routine of cmp_abs(). This function can be used by both
- *  NumericVar and Numeric. 
+ *	Main routine of cmp_abs(). This function can be used by both
+ *	NumericVar and Numeric.
  * ----------
  */
 static int
 cmp_abs_common(const NumericDigit *var1digits, int var1ndigits, int var1weight,
-			   const NumericDigit *var2digits, int var2ndigits, int var2weight)
+			 const NumericDigit *var2digits, int var2ndigits, int var2weight)
 {
 	int			i1 = 0;
 	int			i2 = 0;

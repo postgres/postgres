@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.18 2006/08/15 06:40:19 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.19 2006/10/04 00:30:12 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -9,8 +9,8 @@ static void output_escaped_str(char *cmd);
 void
 output_line_number(void)
 {
-	char *line = hashline_number();
-	
+	char	   *line = hashline_number();
+
 	/* output_escaped_str(line); */
 	fprintf(yyout, "%s", line);
 	free(line);
@@ -130,7 +130,8 @@ output_statement(char *stmt, int mode, char *con)
 static void
 output_escaped_str(char *str)
 {
-	int			i, len = strlen(str);
+	int			i,
+				len = strlen(str);
 
 	/* output this char by char as we have to filter " and \n */
 	for (i = 0; i < len; i++)
@@ -139,7 +140,7 @@ output_escaped_str(char *str)
 			fputs("\\\"", yyout);
 		else if (str[i] == '\n')
 			fputs("\\\n", yyout);
-		else if (str[i] == '\r' && str[i+1] == '\n')
+		else if (str[i] == '\r' && str[i + 1] == '\n')
 		{
 			fputs("\\\r\n", yyout);
 			i++;

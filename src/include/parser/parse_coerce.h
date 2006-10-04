@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.65 2006/07/26 19:31:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.66 2006/10/04 00:30:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ extern Node *coerce_to_boolean(ParseState *pstate, Node *node,
 extern Node *coerce_to_integer(ParseState *pstate, Node *node,
 				  const char *constructName);
 extern Node *coerce_to_bigint(ParseState *pstate, Node *node,
-							  const char *constructName);
+				 const char *constructName);
 
 extern Oid	select_common_type(List *typeids, const char *context);
 extern Node *coerce_to_common_type(ParseState *pstate, Node *node,

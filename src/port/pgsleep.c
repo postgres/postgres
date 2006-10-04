@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/pgsleep.c,v 1.8 2006/07/16 20:17:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/port/pgsleep.c,v 1.9 2006/10/04 00:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,4 +47,4 @@ pg_usleep(long microsec)
 	}
 }
 
-#endif /* defined(FRONTEND) || !defined(WIN32) */
+#endif   /* defined(FRONTEND) || !defined(WIN32) */

@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.233 2006/10/01 17:23:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.234 2006/10/04 00:29:59 momjian Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -141,7 +141,7 @@ static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context,
 					   TupleDesc resultDesc);
 static void get_target_list(List *targetList, deparse_context *context,
-							TupleDesc resultDesc);
+				TupleDesc resultDesc);
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context,
 				TupleDesc resultDesc);
@@ -176,7 +176,7 @@ static void get_from_clause_coldeflist(List *names, List *types, List *typmods,
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
 static Node *processIndirection(Node *node, deparse_context *context,
-								bool printit);
+				   bool printit);
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
@@ -530,10 +530,11 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 		{
 			if (i > 0)
 				appendStringInfo(&buf, ", ");
+
 			/*
 			 * We form the string literal according to the prevailing setting
-			 * of standard_conforming_strings; we never use E''.
-			 * User is responsible for making sure result is used correctly.
+			 * of standard_conforming_strings; we never use E''. User is
+			 * responsible for making sure result is used correctly.
 			 */
 			appendStringInfoChar(&buf, '\'');
 			while (*p)
@@ -1017,7 +1018,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 
 				if (fullCommand && OidIsValid(conForm->conrelid))
 				{
-					char   *options = flatten_reloptions(conForm->conrelid);
+					char	   *options = flatten_reloptions(conForm->conrelid);
 
 					if (options)
 					{
@@ -1467,9 +1468,9 @@ deparse_context_for_subplan(const char *name, Node *subplan)
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 
 	/*
-	 * We create an RTE_SPECIAL RangeTblEntry, and store the subplan in
-	 * its funcexpr field.  RTE_SPECIAL nodes shouldn't appear in
-	 * deparse contexts otherwise.
+	 * We create an RTE_SPECIAL RangeTblEntry, and store the subplan in its
+	 * funcexpr field.	RTE_SPECIAL nodes shouldn't appear in deparse contexts
+	 * otherwise.
 	 */
 	rte->rtekind = RTE_SPECIAL;
 	rte->relid = InvalidOid;
@@ -1831,7 +1832,7 @@ get_values_def(List *values_lists, deparse_context *context)
 		appendStringInfoChar(buf, '(');
 		foreach(lc, sublist)
 		{
-			Node   *col = (Node *) lfirst(lc);
+			Node	   *col = (Node *) lfirst(lc);
 
 			if (first_col)
 				first_col = false;
@@ -1964,10 +1965,10 @@ get_basic_select_query(Query *query, deparse_context *context,
 	}
 
 	/*
-	 * If the query looks like SELECT * FROM (VALUES ...), then print just
-	 * the VALUES part.  This reverses what transformValuesClause() did at
-	 * parse time.  If the jointree contains just a single VALUES RTE,
-	 * we assume this case applies (without looking at the targetlist...)
+	 * If the query looks like SELECT * FROM (VALUES ...), then print just the
+	 * VALUES part.  This reverses what transformValuesClause() did at parse
+	 * time.  If the jointree contains just a single VALUES RTE, we assume
+	 * this case applies (without looking at the targetlist...)
 	 */
 	if (list_length(query->jointree->fromlist) == 1)
 	{
@@ -2083,10 +2084,10 @@ get_target_list(List *targetList, deparse_context *context,
 		colno++;
 
 		/*
-		 * We special-case Var nodes rather than using get_rule_expr.
-		 * This is needed because get_rule_expr will display a whole-row Var
-		 * as "foo.*", which is the preferred notation in most contexts, but
-		 * at the top level of a SELECT list it's not right (the parser will
+		 * We special-case Var nodes rather than using get_rule_expr. This is
+		 * needed because get_rule_expr will display a whole-row Var as
+		 * "foo.*", which is the preferred notation in most contexts, but at
+		 * the top level of a SELECT list it's not right (the parser will
 		 * expand that notation into multiple columns, yielding behavior
 		 * different from a whole-row Var).  We want just "foo", instead.
 		 */
@@ -2287,8 +2288,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 	List	   *strippedexprs;
 
 	/*
-	 * If it's an INSERT ... SELECT or VALUES (...), (...), ...
-	 * there will be a single RTE for the SELECT or VALUES.
+	 * If it's an INSERT ... SELECT or VALUES (...), (...), ... there will be
+	 * a single RTE for the SELECT or VALUES.
 	 */
 	foreach(l, query->rtable)
 	{
@@ -2300,7 +2301,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 				elog(ERROR, "too many subquery RTEs in INSERT");
 			select_rte = rte;
 		}
-		
+
 		if (rte->rtekind == RTE_VALUES)
 		{
 			if (values_rte)
@@ -2326,12 +2327,12 @@ get_insert_query_def(Query *query, deparse_context *context)
 					 generate_relation_name(rte->relid));
 
 	/*
-	 * Add the insert-column-names list.  To handle indirection properly,
-	 * we need to look for indirection nodes in the top targetlist (if it's
+	 * Add the insert-column-names list.  To handle indirection properly, we
+	 * need to look for indirection nodes in the top targetlist (if it's
 	 * INSERT ... SELECT or INSERT ... single VALUES), or in the first
-	 * expression list of the VALUES RTE (if it's INSERT ... multi VALUES).
-	 * We assume that all the expression lists will have similar indirection
-	 * in the latter case.
+	 * expression list of the VALUES RTE (if it's INSERT ... multi VALUES). We
+	 * assume that all the expression lists will have similar indirection in
+	 * the latter case.
 	 */
 	if (values_rte)
 		values_cell = list_head((List *) linitial(values_rte->values_lists));
@@ -2589,10 +2590,10 @@ get_rte_for_var(Var *var, int levelsup, deparse_context *context,
 
 	/*
 	 * Try to find the relevant RTE in this rtable.  In a plan tree, it's
-	 * likely that varno is OUTER, INNER, or 0, in which case we try to
-	 * use varnoold instead.  If the Var references an expression computed
-	 * by a subplan, varnoold will be 0, and we fall back to looking at the
-	 * special subplan RTEs.
+	 * likely that varno is OUTER, INNER, or 0, in which case we try to use
+	 * varnoold instead.  If the Var references an expression computed by a
+	 * subplan, varnoold will be 0, and we fall back to looking at the special
+	 * subplan RTEs.
 	 */
 	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
 		rte = rt_fetch(var->varno, dpns->rtable);
@@ -2692,10 +2693,10 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
 			/*
 			 * This case occurs during EXPLAIN when we are looking at a
 			 * deparse context node set up by deparse_context_for_subplan().
-			 * If the subplan tlist provides a name, use it, but usually
-			 * we'll end up with "?columnN?".
+			 * If the subplan tlist provides a name, use it, but usually we'll
+			 * end up with "?columnN?".
 			 */
-			List   *tlist = ((Plan *) rte->funcexpr)->targetlist;
+			List	   *tlist = ((Plan *) rte->funcexpr)->targetlist;
 			TargetEntry *tle = get_tle_by_resno(tlist, attnum);
 
 			if (tle && tle->resname)
@@ -2704,7 +2705,7 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
 			}
 			else
 			{
-				char	buf[32];
+				char		buf[32];
 
 				snprintf(buf, sizeof(buf), "?column%d?", attnum);
 				*attname = pstrdup(buf);
@@ -2767,8 +2768,8 @@ get_name_for_var_field(Var *var, int fieldno,
 
 			/*
 			 * This case should not occur: a column of a table or values list
-			 * shouldn't have type RECORD.  Fall through and fail
-			 * (most likely) at the bottom.
+			 * shouldn't have type RECORD.  Fall through and fail (most
+			 * likely) at the bottom.
 			 */
 			break;
 		case RTE_SUBQUERY:
@@ -2836,7 +2837,7 @@ get_name_for_var_field(Var *var, int fieldno,
 				 * that's not a Var, and then pass it to
 				 * get_expr_result_type().
 				 */
-				Plan *subplan = (Plan *) rte->funcexpr;
+				Plan	   *subplan = (Plan *) rte->funcexpr;
 
 				for (;;)
 				{
@@ -3484,7 +3485,7 @@ get_rule_expr(Node *node, deparse_context *context,
 
 					if (get_expr_result_type(arg, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 						tupdesc = lookup_rowtype_tupdesc_copy(exprType(arg),
-															  exprTypmod(arg));
+															exprTypmod(arg));
 					Assert(tupdesc);
 					/* Got the tupdesc, so we can extract the field name */
 					Assert(fno >= 1 && fno <= tupdesc->natts);
@@ -3577,16 +3578,16 @@ get_rule_expr(Node *node, deparse_context *context,
 					if (caseexpr->arg)
 					{
 						/*
-						 * The parser should have produced WHEN clauses of
-						 * the form "CaseTestExpr = RHS"; we want to show
-						 * just the RHS.  If the user wrote something silly
-						 * like "CASE boolexpr WHEN TRUE THEN ...", then
-						 * the optimizer's simplify_boolean_equality() may
-						 * have reduced this to just "CaseTestExpr" or
-						 * "NOT CaseTestExpr", for which we have to show
-						 * "TRUE" or "FALSE".  Also, depending on context
-						 * the original CaseTestExpr might have been reduced
-						 * to a Const (but we won't see "WHEN Const").
+						 * The parser should have produced WHEN clauses of the
+						 * form "CaseTestExpr = RHS"; we want to show just the
+						 * RHS.  If the user wrote something silly like "CASE
+						 * boolexpr WHEN TRUE THEN ...", then the optimizer's
+						 * simplify_boolean_equality() may have reduced this
+						 * to just "CaseTestExpr" or "NOT CaseTestExpr", for
+						 * which we have to show "TRUE" or "FALSE".  Also,
+						 * depending on context the original CaseTestExpr
+						 * might have been reduced to a Const (but we won't
+						 * see "WHEN Const").
 						 */
 						if (IsA(w, OpExpr))
 						{
@@ -3719,17 +3720,18 @@ get_rule_expr(Node *node, deparse_context *context,
 					get_rule_expr(e, context, true);
 					sep = ", ";
 				}
+
 				/*
-				 * We assume that the name of the first-column operator
-				 * will do for all the rest too.  This is definitely
-				 * open to failure, eg if some but not all operators
-				 * were renamed since the construct was parsed, but there
-				 * seems no way to be perfect.
+				 * We assume that the name of the first-column operator will
+				 * do for all the rest too.  This is definitely open to
+				 * failure, eg if some but not all operators were renamed
+				 * since the construct was parsed, but there seems no way to
+				 * be perfect.
 				 */
 				appendStringInfo(buf, ") %s ROW(",
-						 generate_operator_name(linitial_oid(rcexpr->opnos),
-										exprType(linitial(rcexpr->largs)),
-										exprType(linitial(rcexpr->rargs))));
+						  generate_operator_name(linitial_oid(rcexpr->opnos),
+										   exprType(linitial(rcexpr->largs)),
+										 exprType(linitial(rcexpr->rargs))));
 				sep = "";
 				foreach(arg, rcexpr->rargs)
 				{
@@ -4052,7 +4054,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	}
 
 	appendStringInfo(buf, "%s(%s",
-					 generate_function_name(aggref->aggfnoid, nargs, argtypes),
+				   generate_function_name(aggref->aggfnoid, nargs, argtypes),
 					 aggref->aggdistinct ? "DISTINCT " : "");
 	/* aggstar can be set only in zero-argument aggregates */
 	if (aggref->aggstar)
@@ -4142,8 +4144,8 @@ get_const_expr(Const *constval, deparse_context *context)
 
 			/*
 			 * We form the string literal according to the prevailing setting
-			 * of standard_conforming_strings; we never use E''.
-			 * User is responsible for making sure result is used correctly.
+			 * of standard_conforming_strings; we never use E''. User is
+			 * responsible for making sure result is used correctly.
 			 */
 			appendStringInfoChar(buf, '\'');
 			for (valptr = extval; *valptr; valptr++)
@@ -4205,18 +4207,18 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 		appendStringInfoChar(buf, '(');
 
 	/*
-	 * Note that we print the name of only the first operator, when there
-	 * are multiple combining operators.  This is an approximation that
-	 * could go wrong in various scenarios (operators in different schemas,
-	 * renamed operators, etc) but there is not a whole lot we can do about
-	 * it, since the syntax allows only one operator to be shown.
+	 * Note that we print the name of only the first operator, when there are
+	 * multiple combining operators.  This is an approximation that could go
+	 * wrong in various scenarios (operators in different schemas, renamed
+	 * operators, etc) but there is not a whole lot we can do about it, since
+	 * the syntax allows only one operator to be shown.
 	 */
 	if (sublink->testexpr)
 	{
 		if (IsA(sublink->testexpr, OpExpr))
 		{
 			/* single combining operator */
-			OpExpr   *opexpr = (OpExpr *) sublink->testexpr;
+			OpExpr	   *opexpr = (OpExpr *) sublink->testexpr;
 
 			get_rule_expr(linitial(opexpr->args), context, true);
 			opname = generate_operator_name(opexpr->opno,
@@ -4233,7 +4235,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			sep = "";
 			foreach(l, ((BoolExpr *) sublink->testexpr)->args)
 			{
-				OpExpr   *opexpr = (OpExpr *) lfirst(l);
+				OpExpr	   *opexpr = (OpExpr *) lfirst(l);
 
 				Assert(IsA(opexpr, OpExpr));
 				appendStringInfoString(buf, sep);
@@ -4255,7 +4257,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			get_rule_expr((Node *) rcexpr->largs, context, true);
 			opname = generate_operator_name(linitial_oid(rcexpr->opnos),
 											exprType(linitial(rcexpr->largs)),
-											exprType(linitial(rcexpr->rargs)));
+										  exprType(linitial(rcexpr->rargs)));
 			appendStringInfoChar(buf, ')');
 		}
 		else
@@ -5129,8 +5131,8 @@ flatten_reloptions(Oid relid)
 								 Anum_pg_class_reloptions, &isnull);
 	if (!isnull)
 	{
-		Datum	sep,
-				txt;
+		Datum		sep,
+					txt;
 
 		/*
 		 * We want to use array_to_text(reloptions, ', ') --- but

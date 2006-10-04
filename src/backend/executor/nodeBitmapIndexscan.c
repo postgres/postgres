@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.20 2006/07/31 20:09:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.21 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	/*
 	 * If we have runtime keys and they've not already been set up, do it now.
 	 * Array keys are also treated as runtime keys; note that if ExecReScan
-	 * returns with biss_RuntimeKeysReady still false, then there is an
-	 * empty array key so we should do nothing.
+	 * returns with biss_RuntimeKeysReady still false, then there is an empty
+	 * array key so we should do nothing.
 	 */
 	if (!node->biss_RuntimeKeysReady &&
 		(node->biss_NumRuntimeKeys != 0 || node->biss_NumArrayKeys != 0))
@@ -152,9 +152,9 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 	 * If we are doing runtime key calculations (ie, the index keys depend on
 	 * data from an outer scan), compute the new key values.
 	 *
-	 * Array keys are also treated as runtime keys; note that if we
-	 * return with biss_RuntimeKeysReady still false, then there is an
-	 * empty array key so no index scan is needed.
+	 * Array keys are also treated as runtime keys; note that if we return
+	 * with biss_RuntimeKeysReady still false, then there is an empty array
+	 * key so no index scan is needed.
 	 */
 	if (node->biss_NumRuntimeKeys != 0)
 		ExecIndexEvalRuntimeKeys(econtext,
@@ -249,8 +249,8 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 
 	/*
 	 * We do not open or lock the base relation here.  We assume that an
-	 * ancestor BitmapHeapScan node is holding AccessShareLock (or better)
-	 * on the heap relation throughout the execution of the plan tree.
+	 * ancestor BitmapHeapScan node is holding AccessShareLock (or better) on
+	 * the heap relation throughout the execution of the plan tree.
 	 */
 
 	indexstate->ss.ss_currentRelation = NULL;
@@ -265,7 +265,7 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate, int eflags)
 	 */
 	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
 	indexstate->biss_RelationDesc = index_open(node->indexid,
-									relistarget ? NoLock : AccessShareLock);
+									 relistarget ? NoLock : AccessShareLock);
 
 	/*
 	 * Initialize index-specific scan state

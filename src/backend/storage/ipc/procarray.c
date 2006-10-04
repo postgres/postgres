@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.17 2006/09/03 15:59:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.18 2006/10/04 00:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -393,7 +393,7 @@ TransactionIdIsActive(TransactionId xid)
  * This is used by VACUUM to decide which deleted tuples must be preserved
  * in a table.	allDbs = TRUE is needed for shared relations, but allDbs =
  * FALSE is sufficient for non-shared relations, since only backends in my
- * own database could ever see the tuples in them.  Also, we can ignore
+ * own database could ever see the tuples in them.	Also, we can ignore
  * concurrently running lazy VACUUMs because (a) they must be working on other
  * tables, and (b) they don't need to do snapshot-based lookups.
  *
@@ -545,13 +545,13 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	globalxmin = xmin = GetTopTransactionId();
 
 	/*
-	 * It is sufficient to get shared lock on ProcArrayLock, even if we
-	 * are computing a serializable snapshot and therefore will be setting
+	 * It is sufficient to get shared lock on ProcArrayLock, even if we are
+	 * computing a serializable snapshot and therefore will be setting
 	 * MyProc->xmin.  This is because any two backends that have overlapping
 	 * shared holds on ProcArrayLock will certainly compute the same xmin
 	 * (since no xact, in particular not the oldest, can exit the set of
 	 * running transactions while we hold ProcArrayLock --- see further
-	 * discussion just below).  So it doesn't matter whether another backend
+	 * discussion just below).	So it doesn't matter whether another backend
 	 * concurrently doing GetSnapshotData or GetOldestXmin sees our xmin as
 	 * set or not; he'd compute the same xmin for himself either way.
 	 */
@@ -595,8 +595,8 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 
 		/*
 		 * Ignore my own proc (dealt with my xid above), procs not running a
-		 * transaction, xacts started since we read the next transaction
-		 * ID, and xacts executing LAZY VACUUM.	There's no need to store XIDs
+		 * transaction, xacts started since we read the next transaction ID,
+		 * and xacts executing LAZY VACUUM. There's no need to store XIDs
 		 * above what we got from ReadNewTransactionId, since we'll treat them
 		 * as running anyway.  We also assume that such xacts can't compute an
 		 * xmin older than ours, so they needn't be considered in computing
@@ -625,18 +625,17 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		 * their parent, so no need to check them against xmin.
 		 *
 		 * The other backend can add more subxids concurrently, but cannot
-		 * remove any.  Hence it's important to fetch nxids just once.
-		 * Should be safe to use memcpy, though.  (We needn't worry about
-		 * missing any xids added concurrently, because they must postdate
-		 * xmax.)
+		 * remove any.	Hence it's important to fetch nxids just once. Should
+		 * be safe to use memcpy, though.  (We needn't worry about missing any
+		 * xids added concurrently, because they must postdate xmax.)
 		 */
 		if (subcount >= 0)
 		{
 			if (proc->subxids.overflowed)
-				subcount = -1;					/* overflowed */
+				subcount = -1;	/* overflowed */
 			else
 			{
-				int		nxids = proc->subxids.nxids;
+				int			nxids = proc->subxids.nxids;
 
 				if (nxids > 0)
 				{

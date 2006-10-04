@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.94 2006/08/02 01:59:47 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.95 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,15 +61,15 @@ make_parsestate(ParseState *parentParseState)
  * is a dummy (always 0, in fact).
  *
  * The locations stored in raw parsetrees are byte offsets into the source
- * string.  We have to convert them to 1-based character indexes for reporting
- * to clients.  (We do things this way to avoid unnecessary overhead in the
+ * string.	We have to convert them to 1-based character indexes for reporting
+ * to clients.	(We do things this way to avoid unnecessary overhead in the
  * normal non-error case: computing character indexes would be much more
  * expensive than storing token offsets.)
  */
 int
 parser_errposition(ParseState *pstate, int location)
 {
-	int		pos;
+	int			pos;
 
 	/* No-op if location was not provided */
 	if (location < 0)

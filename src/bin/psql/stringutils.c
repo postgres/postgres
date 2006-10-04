@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/stringutils.c,v 1.44 2006/07/14 14:52:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/stringutils.c,v 1.45 2006/10/04 00:30:06 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -31,7 +31,7 @@ static void strip_quotes(char *source, char quote, char escape, int encoding);
  * quote -		set of characters that can quote a token (NULL if none)
  * escape -		character that can quote quotes (0 if none)
  * e_strings -	if TRUE, treat E'...' syntax as a valid token
- * del_quotes -	if TRUE, strip quotes from the returned token, else return
+ * del_quotes - if TRUE, strip quotes from the returned token, else return
  *				it exactly as found in the string
  * encoding -	the active character-set encoding
  *

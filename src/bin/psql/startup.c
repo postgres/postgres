@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.137 2006/08/29 22:25:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.138 2006/10/04 00:30:06 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -75,7 +75,7 @@ struct adhoc_opts
 	char	   *action_string;
 	bool		no_readline;
 	bool		no_psqlrc;
-    bool        single_txn;
+	bool		single_txn;
 };
 
 static int	parse_version(const char *versionString);
@@ -760,7 +760,6 @@ checkWin32Codepage(void)
 			   concp, wincp);
 	}
 }
-
 #endif
 
 

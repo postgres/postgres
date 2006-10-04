@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.83 2006/08/29 15:19:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.84 2006/10/04 00:30:06 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -29,8 +29,8 @@ MainLoop(FILE *source)
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
 	PQExpBuffer previous_buf;	/* if there isn't anything in the new buffer
 								 * yet, use this one for \e, etc. */
-	PQExpBuffer history_buf;	/* earlier lines of a multi-line command,
-								 * not yet saved to readline history */
+	PQExpBuffer history_buf;	/* earlier lines of a multi-line command, not
+								 * yet saved to readline history */
 	char	   *line;			/* current line of input */
 	int			added_nl_pos;
 	bool		success;
@@ -89,9 +89,9 @@ MainLoop(FILE *source)
 		}
 
 		/*
-		 * Establish longjmp destination for exiting from wait-for-input.
-		 * We must re-do this each time through the loop for safety, since
-		 * the jmpbuf might get changed during command execution.
+		 * Establish longjmp destination for exiting from wait-for-input. We
+		 * must re-do this each time through the loop for safety, since the
+		 * jmpbuf might get changed during command execution.
 		 */
 		if (sigsetjmp(sigint_interrupt_jmp, 1) != 0)
 		{
@@ -235,7 +235,7 @@ MainLoop(FILE *source)
 				 * If we added a newline to query_buf, and nothing else has
 				 * been inserted in query_buf by the lexer, then strip off the
 				 * newline again.  This avoids any change to query_buf when a
-				 * line contains only a backslash command.  Also, in this
+				 * line contains only a backslash command.	Also, in this
 				 * situation we force out any previous lines as a separate
 				 * history entry; we don't want SQL and backslash commands
 				 * intermixed in history if at all possible.

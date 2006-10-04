@@ -1,7 +1,7 @@
 /*
  * op function for ltree and lquery
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/lquery_op.c,v 1.10 2006/03/11 04:38:29 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/lquery_op.c,v 1.11 2006/10/04 00:29:45 momjian Exp $
  */
 
 #include "ltree.h"
@@ -46,7 +46,7 @@ getlexeme(char *start, char *end, int *len)
 }
 
 bool
-compare_subnode(ltree_level * t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
+			compare_subnode(ltree_level * t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
 {
 	char	   *endt = t->name + t->len;
 	char	   *endq = qn + len;

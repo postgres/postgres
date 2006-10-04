@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.29 2006/09/10 17:36:50 tgl Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.30 2006/10/04 00:29:44 momjian Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -159,7 +159,7 @@ Datum
 cube_in(PG_FUNCTION_ARGS)
 {
 	void	   *result;
-	char		*str;
+	char	   *str;
 
 	str = PG_GETARG_CSTRING(0);
 
@@ -170,7 +170,7 @@ cube_in(PG_FUNCTION_ARGS)
 
 	cube_scanner_finish();
 
-	PG_RETURN_POINTER (result);
+	PG_RETURN_POINTER(result);
 }
 
 /* Allow conversion from text to cube to allow input of computed strings */
@@ -178,11 +178,11 @@ cube_in(PG_FUNCTION_ARGS)
 Datum
 cube(PG_FUNCTION_ARGS)
 {
-	char	*cstring;
+	char	   *cstring;
 
 	cstring = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(0))));
 
-	PG_RETURN_DATUM (DirectFunctionCall1 (cube_in, PointerGetDatum(cstring)));
+	PG_RETURN_DATUM(DirectFunctionCall1(cube_in, PointerGetDatum(cstring)));
 }
 
 
@@ -192,12 +192,14 @@ cube(PG_FUNCTION_ARGS)
 Datum
 cube_a_f8_f8(PG_FUNCTION_ARGS)
 {
-	int		i;
-	int		dim;
-	int		size;
-	NDBOX	*result;
-	ArrayType	*ur, *ll;
-	double	*dur, *dll;
+	int			i;
+	int			dim;
+	int			size;
+	NDBOX	   *result;
+	ArrayType  *ur,
+			   *ll;
+	double	   *dur,
+			   *dll;
 
 	ur = (ArrayType *) PG_GETARG_VARLENA_P(0);
 	ll = (ArrayType *) PG_GETARG_VARLENA_P(1);
@@ -205,31 +207,31 @@ cube_a_f8_f8(PG_FUNCTION_ARGS)
 	if (ARR_HASNULL(ur) || ARR_HASNULL(ll))
 	{
 		ereport(ERROR,
-			(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
-			errmsg("Cannot work with NULL arrays")));
+				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
+				 errmsg("Cannot work with NULL arrays")));
 	}
 
 	dim = ARRNELEMS(ur);
 	if (ARRNELEMS(ll) != dim)
 	{
 		ereport(ERROR,
-			(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
-			errmsg("UR and LL arrays must be of same length")));
+				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
+				 errmsg("UR and LL arrays must be of same length")));
 	}
 
 	dur = ARRPTR(ur);
 	dll = ARRPTR(ll);
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
-	result = (NDBOX *) palloc (size);
-	memset (result, 0, size);
+	result = (NDBOX *) palloc(size);
+	memset(result, 0, size);
 	result->size = size;
 	result->dim = dim;
 
-	for (i=0; i<dim; i++)
+	for (i = 0; i < dim; i++)
 	{
 		result->x[i] = dur[i];
-		result->x[i+dim] = dll[i];
+		result->x[i + dim] = dll[i];
 	}
 
 	PG_RETURN_POINTER(result);
@@ -241,20 +243,20 @@ cube_a_f8_f8(PG_FUNCTION_ARGS)
 Datum
 cube_a_f8(PG_FUNCTION_ARGS)
 {
-	int		i;
-	int		dim;
-	int		size;
-	NDBOX	*result;
-	ArrayType	*ur;
-	double	*dur;
+	int			i;
+	int			dim;
+	int			size;
+	NDBOX	   *result;
+	ArrayType  *ur;
+	double	   *dur;
 
 	ur = (ArrayType *) PG_GETARG_VARLENA_P(0);
 
 	if (ARR_HASNULL(ur))
 	{
 		ereport(ERROR,
-			(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
-			errmsg("Cannot work with NULL arrays")));
+				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
+				 errmsg("Cannot work with NULL arrays")));
 	}
 
 	dim = ARRNELEMS(ur);
@@ -262,15 +264,15 @@ cube_a_f8(PG_FUNCTION_ARGS)
 	dur = ARRPTR(ur);
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
-	result = (NDBOX *) palloc (size);
-	memset (result, 0, size);
+	result = (NDBOX *) palloc(size);
+	memset(result, 0, size);
 	result->size = size;
 	result->dim = dim;
 
-	for (i=0; i<dim; i++)
+	for (i = 0; i < dim; i++)
 	{
 		result->x[i] = dur[i];
-		result->x[i+dim] = dur[i];
+		result->x[i + dim] = dur[i];
 	}
 
 	PG_RETURN_POINTER(result);
@@ -279,10 +281,13 @@ cube_a_f8(PG_FUNCTION_ARGS)
 Datum
 cube_subset(PG_FUNCTION_ARGS)
 {
-	NDBOX	    *c, *result;
-	ArrayType   *idx;
-	int          size, dim, i;
-	int         *dx;
+	NDBOX	   *c,
+			   *result;
+	ArrayType  *idx;
+	int			size,
+				dim,
+				i;
+	int		   *dx;
 
 	c = (NDBOX *) PG_GETARG_POINTER(0);
 	idx = (ArrayType *) PG_GETARG_VARLENA_P(1);
@@ -290,30 +295,30 @@ cube_subset(PG_FUNCTION_ARGS)
 	if (ARR_HASNULL(idx))
 	{
 		ereport(ERROR,
-			(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
-			errmsg("Cannot work with NULL arrays")));
+				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
+				 errmsg("Cannot work with NULL arrays")));
 	}
 
-	dx = (int4 *) ARR_DATA_PTR (idx);
+	dx = (int4 *) ARR_DATA_PTR(idx);
 
 	dim = ARRNELEMS(idx);
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
-	result = (NDBOX *) palloc (size);
-	memset (result, 0, size);
+	result = (NDBOX *) palloc(size);
+	memset(result, 0, size);
 	result->size = size;
 	result->dim = dim;
 
-	for (i=0; i<dim; i++)
+	for (i = 0; i < dim; i++)
 	{
 		if ((dx[i] <= 0) || (dx[i] > c->dim))
 		{
-			pfree (result);
+			pfree(result);
 			ereport(ERROR,
-				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
-				errmsg("Index out of bounds")));
+					(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
+					 errmsg("Index out of bounds")));
 		}
-		result->x[i] = c->x[dx[i]-1];
-		result->x[i+dim] = c->x[dx[i]+c->dim-1];
+		result->x[i] = c->x[dx[i] - 1];
+		result->x[i + dim] = c->x[dx[i] + c->dim - 1];
 	}
 
 	PG_RETURN_POINTER(result);
@@ -327,11 +332,11 @@ cube_out(PG_FUNCTION_ARGS)
 	int			dim;
 	int			i;
 	int			ndig;
-	NDBOX		*cube;
+	NDBOX	   *cube;
 
 	initStringInfo(&buf);
 
-	cube = (NDBOX *) PG_GETARG_POINTER (0);
+	cube = (NDBOX *) PG_GETARG_POINTER(0);
 
 	dim = cube->dim;
 
@@ -369,7 +374,7 @@ cube_out(PG_FUNCTION_ARGS)
 		appendStringInfoChar(&buf, ')');
 	}
 
-	PG_RETURN_CSTRING (buf.data);
+	PG_RETURN_CSTRING(buf.data);
 }
 
 
@@ -383,11 +388,11 @@ cube_out(PG_FUNCTION_ARGS)
 ** the predicate x op query == FALSE, where op is the oper
 ** corresponding to strategy in the pg_amop table.
 */
-Datum	
+Datum
 g_cube_consistent(PG_FUNCTION_ARGS)
 {
-	GISTENTRY *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	NDBOX *query = (NDBOX *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	NDBOX	   *query = (NDBOX *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 
 	/*
@@ -414,7 +419,7 @@ g_cube_union(PG_FUNCTION_ARGS)
 	NDBOX	   *out = (NDBOX *) NULL;
 	NDBOX	   *tmp;
 	int		   *sizep;
-	GistEntryVector	*entryvec;
+	GistEntryVector *entryvec;
 
 	entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	sizep = (int *) PG_GETARG_POINTER(1);
@@ -446,15 +451,15 @@ g_cube_union(PG_FUNCTION_ARGS)
 */
 
 Datum
-g_cube_compress (PG_FUNCTION_ARGS)
+g_cube_compress(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
 }
 
 Datum
-g_cube_decompress (PG_FUNCTION_ARGS)
+g_cube_decompress(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
 }
 
 
@@ -463,17 +468,17 @@ g_cube_decompress (PG_FUNCTION_ARGS)
 ** As in the R-tree paper, we use change in area as our penalty metric
 */
 Datum
-g_cube_penalty (PG_FUNCTION_ARGS)
+g_cube_penalty(PG_FUNCTION_ARGS)
 {
-	GISTENTRY *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
-	float	  *result = (float *) PG_GETARG_POINTER(2);
+	GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+	float	   *result = (float *) PG_GETARG_POINTER(2);
 	NDBOX	   *ud;
 	double		tmp1,
 				tmp2;
 
 	ud = cube_union_v0((NDBOX *) DatumGetPointer(origentry->key),
-					(NDBOX *) DatumGetPointer(newentry->key));
+					   (NDBOX *) DatumGetPointer(newentry->key));
 	rt_cube_size(ud, &tmp1);
 	rt_cube_size((NDBOX *) DatumGetPointer(origentry->key), &tmp2);
 	*result = (float) (tmp1 - tmp2);
@@ -481,7 +486,7 @@ g_cube_penalty (PG_FUNCTION_ARGS)
 	/*
 	 * fprintf(stderr, "penalty\n"); fprintf(stderr, "\t%g\n", *result);
 	 */
-	PG_RETURN_FLOAT8 (*result);
+	PG_RETURN_FLOAT8(*result);
 }
 
 
@@ -493,8 +498,8 @@ g_cube_penalty (PG_FUNCTION_ARGS)
 Datum
 g_cube_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector	*entryvec;
-	GIST_SPLITVEC	*v;
+	GistEntryVector *entryvec;
+	GIST_SPLITVEC *v;
 	OffsetNumber i,
 				j;
 	NDBOX	   *datum_alpha,
@@ -546,9 +551,9 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 			/* size_waste = size_union - size_inter; */
 			union_d = cube_union_v0(datum_alpha, datum_beta);
 			rt_cube_size(union_d, &size_union);
-			inter_d = (NDBOX *) DatumGetPointer (DirectFunctionCall2 
-			                     (cube_inter, 
-			                      entryvec->vector[i].key, entryvec->vector[j].key));
+			inter_d = (NDBOX *) DatumGetPointer(DirectFunctionCall2
+												(cube_inter,
+						  entryvec->vector[i].key, entryvec->vector[j].key));
 			rt_cube_size(inter_d, &size_inter);
 			size_waste = size_union - size_inter;
 
@@ -649,12 +654,13 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 Datum
 g_cube_same(PG_FUNCTION_ARGS)
 {
-	NDBOX	*b1, *b2;
-	bool	*result;
-	
-	b1 = (NDBOX *) PG_GETARG_POINTER (0);
-	b2 = (NDBOX *) PG_GETARG_POINTER (1);
-	result = (bool *) PG_GETARG_POINTER (2);
+	NDBOX	   *b1,
+			   *b2;
+	bool	   *result;
+
+	b1 = (NDBOX *) PG_GETARG_POINTER(0);
+	b2 = (NDBOX *) PG_GETARG_POINTER(1);
+	result = (bool *) PG_GETARG_POINTER(2);
 
 	if (cube_cmp_v0(b1, b2) == 0)
 		*result = TRUE;
@@ -664,7 +670,7 @@ g_cube_same(PG_FUNCTION_ARGS)
 	/*
 	 * fprintf(stderr, "same: %s\n", (*result ? "TRUE" : "FALSE" ));
 	 */
-	PG_RETURN_POINTER (result);
+	PG_RETURN_POINTER(result);
 }
 
 /*
@@ -803,14 +809,15 @@ cube_union_v0(NDBOX * a, NDBOX * b)
 }
 
 Datum
-cube_union (PG_FUNCTION_ARGS)
+cube_union(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_POINTER(cube_union_v0(a,b));
+	PG_RETURN_POINTER(cube_union_v0(a, b));
 }
 
 /* cube_inter */
@@ -818,7 +825,9 @@ Datum
 cube_inter(PG_FUNCTION_ARGS)
 {
 	int			i;
-	NDBOX	   *result, *a, *b;
+	NDBOX	   *result,
+			   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -874,17 +883,17 @@ cube_inter(PG_FUNCTION_ARGS)
 	/*
 	 * Is it OK to return a non-null intersection for non-overlapping boxes?
 	 */
-	PG_RETURN_POINTER (result);
+	PG_RETURN_POINTER(result);
 }
 
 /* cube_size */
 Datum
 cube_size(PG_FUNCTION_ARGS)
 {
-	NDBOX		*a;
+	NDBOX	   *a;
 	int			i,
 				j;
-	double	   	result;
+	double		result;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 
@@ -892,7 +901,7 @@ cube_size(PG_FUNCTION_ARGS)
 	for (i = 0, j = a->dim; i < a->dim; i++, j++)
 		result = result * Abs((a->x[j] - a->x[i]));
 
-	PG_RETURN_FLOAT8 (result);
+	PG_RETURN_FLOAT8(result);
 }
 
 void
@@ -994,10 +1003,11 @@ cube_cmp_v0(NDBOX * a, NDBOX * b)
 	return 0;
 }
 
-Datum 
+Datum
 cube_cmp(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1009,7 +1019,8 @@ cube_cmp(PG_FUNCTION_ARGS)
 Datum
 cube_eq(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1021,7 +1032,8 @@ cube_eq(PG_FUNCTION_ARGS)
 Datum
 cube_ne(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1033,7 +1045,8 @@ cube_ne(PG_FUNCTION_ARGS)
 Datum
 cube_lt(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1045,7 +1058,8 @@ cube_lt(PG_FUNCTION_ARGS)
 Datum
 cube_gt(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1057,7 +1071,8 @@ cube_gt(PG_FUNCTION_ARGS)
 Datum
 cube_le(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1069,7 +1084,8 @@ cube_le(PG_FUNCTION_ARGS)
 Datum
 cube_ge(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1122,7 +1138,8 @@ cube_contains_v0(NDBOX * a, NDBOX * b)
 Datum
 cube_contains(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1135,12 +1152,13 @@ cube_contains(PG_FUNCTION_ARGS)
 Datum
 cube_contained(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL (cube_contains_v0(b, a));
+	PG_RETURN_BOOL(cube_contains_v0(b, a));
 }
 
 /* Overlap */
@@ -1193,12 +1211,13 @@ cube_overlap_v0(NDBOX * a, NDBOX * b)
 Datum
 cube_overlap(PG_FUNCTION_ARGS)
 {
-	NDBOX	*a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
 
-	PG_RETURN_BOOL (cube_overlap_v0(a, b));
+	PG_RETURN_BOOL(cube_overlap_v0(a, b));
 }
 
 
@@ -1213,7 +1232,8 @@ cube_distance(PG_FUNCTION_ARGS)
 	int			i;
 	double		d,
 				distance;
-	NDBOX	   *a, *b;
+	NDBOX	   *a,
+			   *b;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 	b = (NDBOX *) PG_GETARG_POINTER(1);
@@ -1266,7 +1286,7 @@ cube_is_point(PG_FUNCTION_ARGS)
 {
 	int			i,
 				j;
-	NDBOX		*a;
+	NDBOX	   *a;
 
 	a = (NDBOX *) PG_GETARG_POINTER(0);
 
@@ -1283,7 +1303,7 @@ cube_is_point(PG_FUNCTION_ARGS)
 Datum
 cube_dim(PG_FUNCTION_ARGS)
 {
-	NDBOX	*c;
+	NDBOX	   *c;
 
 	c = (NDBOX *) PG_GETARG_POINTER(0);
 
@@ -1397,8 +1417,8 @@ cube_f8(PG_FUNCTION_ARGS)
 	result->dim = 1;
 	result->x[0] = PG_GETARG_FLOAT8(0);
 	result->x[1] = result->x[0];
-	
-	PG_RETURN_POINTER (result);
+
+	PG_RETURN_POINTER(result);
 }
 
 /* Create a one dimensional box */
@@ -1416,7 +1436,7 @@ cube_f8_f8(PG_FUNCTION_ARGS)
 	result->x[0] = PG_GETARG_FLOAT8(0);
 	result->x[1] = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_POINTER (result);
+	PG_RETURN_POINTER(result);
 }
 
 /* Add a dimension to an existing cube with the same values for the new
@@ -1431,7 +1451,7 @@ cube_c_f8(PG_FUNCTION_ARGS)
 	int			i;
 
 	c = (NDBOX *) PG_GETARG_POINTER(0);
-	x = PG_GETARG_FLOAT8 (1);
+	x = PG_GETARG_FLOAT8(1);
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) *2;
 	result = (NDBOX *) palloc(size);
@@ -1446,7 +1466,7 @@ cube_c_f8(PG_FUNCTION_ARGS)
 	result->x[result->dim - 1] = x;
 	result->x[2 * result->dim - 1] = x;
 
-	PG_RETURN_POINTER(result);	
+	PG_RETURN_POINTER(result);
 }
 
 /* Add a dimension to an existing cube */
@@ -1455,13 +1475,14 @@ cube_c_f8_f8(PG_FUNCTION_ARGS)
 {
 	NDBOX	   *c;
 	NDBOX	   *result;
-	double		x1, x2;
+	double		x1,
+				x2;
 	int			size;
 	int			i;
 
 	c = (NDBOX *) PG_GETARG_POINTER(0);
-	x1 = PG_GETARG_FLOAT8 (1);
-	x2 = PG_GETARG_FLOAT8 (2);
+	x1 = PG_GETARG_FLOAT8(1);
+	x2 = PG_GETARG_FLOAT8(2);
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) *2;
 	result = (NDBOX *) palloc(size);
@@ -1476,7 +1497,5 @@ cube_c_f8_f8(PG_FUNCTION_ARGS)
 	result->x[result->dim - 1] = x1;
 	result->x[2 * result->dim - 1] = x2;
 
-	PG_RETURN_POINTER(result);	
+	PG_RETURN_POINTER(result);
 }
-
-

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.57 2006/07/28 18:33:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.58 2006/10/04 00:30:07 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -145,9 +145,9 @@ DATA(insert ( 2147	int8inc_any		-				0		20		"0" ));
 DATA(insert ( 2803	int8inc			-				0		20		"0" ));
 
 /* var_pop */
-DATA(insert ( 2718	int8_accum	numeric_var_pop	0	1231	"{0,0,0}" ));
-DATA(insert ( 2719	int4_accum	numeric_var_pop	0	1231	"{0,0,0}" ));
-DATA(insert ( 2720	int2_accum	numeric_var_pop	0	1231	"{0,0,0}" ));
+DATA(insert ( 2718	int8_accum	numeric_var_pop 0	1231	"{0,0,0}" ));
+DATA(insert ( 2719	int4_accum	numeric_var_pop 0	1231	"{0,0,0}" ));
+DATA(insert ( 2720	int2_accum	numeric_var_pop 0	1231	"{0,0,0}" ));
 DATA(insert ( 2721	float4_accum	float8_var_pop 0	1022	"{0,0,0}" ));
 DATA(insert ( 2722	float8_accum	float8_var_pop 0	1022	"{0,0,0}" ));
 DATA(insert ( 2723	numeric_accum  numeric_var_pop 0	1231	"{0,0,0}" ));
@@ -182,7 +182,7 @@ DATA(insert ( 2713	int4_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
 DATA(insert ( 2714	int2_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
 DATA(insert ( 2715	float4_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
 DATA(insert ( 2716	float8_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
-DATA(insert ( 2717	numeric_accum	numeric_stddev_samp	0	1231	"{0,0,0}" ));
+DATA(insert ( 2717	numeric_accum	numeric_stddev_samp 0	1231	"{0,0,0}" ));
 
 /* stddev: historical Postgres syntax for stddev_samp */
 DATA(insert ( 2154	int8_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
@@ -190,7 +190,7 @@ DATA(insert ( 2155	int4_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
 DATA(insert ( 2156	int2_accum	numeric_stddev_samp		0	1231	"{0,0,0}" ));
 DATA(insert ( 2157	float4_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
 DATA(insert ( 2158	float8_accum	float8_stddev_samp	0	1022	"{0,0,0}" ));
-DATA(insert ( 2159	numeric_accum	numeric_stddev_samp	0	1231	"{0,0,0}" ));
+DATA(insert ( 2159	numeric_accum	numeric_stddev_samp 0	1231	"{0,0,0}" ));
 
 /* SQL2003 binary regression aggregates */
 DATA(insert ( 2818	int8inc_float8_float8		-				0	20		"0" ));

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.95 2006/09/27 18:40:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.96 2006/10/04 00:30:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ do { \
 	PortalHashEnt *hentry; bool found; \
 	\
 	hentry = (PortalHashEnt *) hash_search(PortalHashTable, \
-										   (NAME), HASH_ENTER, &found);	\
+										   (NAME), HASH_ENTER, &found); \
 	if (found) \
 		elog(ERROR, "duplicate portal name"); \
 	hentry->portal = PORTAL; \
@@ -145,11 +145,11 @@ GetPortalByName(const char *name)
  *		Get the "primary" Query within a portal, ie, the one marked canSetTag.
  *
  * Returns NULL if no such Query.  If multiple Query structs within the
- * portal are marked canSetTag, returns the first one.  Neither of these
+ * portal are marked canSetTag, returns the first one.	Neither of these
  * cases should occur in present usages of this function.
  *
  * Note: the reason this is just handed a List is so that prepared statements
- * can share the code.  For use with a portal, use PortalGetPrimaryQuery
+ * can share the code.	For use with a portal, use PortalGetPrimaryQuery
  * rather than calling this directly.
  */
 Query *
@@ -790,22 +790,21 @@ AtSubCleanup_Portals(SubTransactionId mySubid)
 Datum
 pg_cursor(PG_FUNCTION_ARGS)
 {
-	FuncCallContext	   *funcctx;
-	HASH_SEQ_STATUS    *hash_seq;
-	PortalHashEnt	   *hentry;
+	FuncCallContext *funcctx;
+	HASH_SEQ_STATUS *hash_seq;
+	PortalHashEnt *hentry;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext		oldcontext;
-		TupleDesc			tupdesc;
+		MemoryContext oldcontext;
+		TupleDesc	tupdesc;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -819,8 +818,8 @@ pg_cursor(PG_FUNCTION_ARGS)
 			funcctx->user_fctx = NULL;
 
 		/*
-		 * build tupdesc for result tuples. This must match the
-		 * definition of the pg_cursors view in system_views.sql
+		 * build tupdesc for result tuples. This must match the definition of
+		 * the pg_cursors view in system_views.sql
 		 */
 		tupdesc = CreateTemplateTupleDesc(6, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
@@ -871,7 +870,7 @@ pg_cursor(PG_FUNCTION_ARGS)
 			nulls[1] = true;
 		else
 			values[1] = DirectFunctionCall1(textin,
-											CStringGetDatum(portal->sourceText));
+										CStringGetDatum(portal->sourceText));
 		values[2] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_HOLD);
 		values[3] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_BINARY);
 		values[4] = BoolGetDatum(portal->cursorOptions & CURSOR_OPT_SCROLL);
@@ -884,4 +883,3 @@ pg_cursor(PG_FUNCTION_ARGS)
 
 	SRF_RETURN_DONE(funcctx);
 }
-

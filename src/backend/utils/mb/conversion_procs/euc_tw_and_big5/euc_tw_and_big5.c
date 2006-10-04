@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.15 2006/05/30 22:12:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/euc_tw_and_big5.c,v 1.16 2006/10/04 00:30:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ euc_tw2mic(const unsigned char *euc, unsigned char *p, int len)
 										(const char *) euc, len);
 			if (c1 == SS2)
 			{
-				c1 = euc[1];		/* plane No. */
+				c1 = euc[1];	/* plane No. */
 				if (c1 == 0xa1)
 					*p++ = LC_CNS11643_1;
 				else if (c1 == 0xa2)
@@ -187,7 +187,7 @@ euc_tw2mic(const unsigned char *euc, unsigned char *p, int len)
 				*p++ = euc[3];
 			}
 			else
-			{						/* CNS11643-1 */
+			{					/* CNS11643-1 */
 				*p++ = LC_CNS11643_1;
 				*p++ = c1;
 				*p++ = euc[1];
@@ -302,7 +302,7 @@ big52mic(const unsigned char *big5, unsigned char *p, int len)
 			{
 				*p++ = 0x9d;	/* LCPRV2 */
 			}
-			*p++ = lc;		/* Plane No. */
+			*p++ = lc;			/* Plane No. */
 			*p++ = (cnsBuf >> 8) & 0x00ff;
 			*p++ = cnsBuf & 0x00ff;
 		}

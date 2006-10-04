@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.74 2006/06/12 16:28:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.75 2006/10/04 00:29:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,10 +209,10 @@ int2vectorrecv(PG_FUNCTION_ARGS)
 	int2vector *result;
 
 	/*
-	 * Normally one would call array_recv() using DirectFunctionCall3,
-	 * but that does not work since array_recv wants to cache some data
-	 * using fcinfo->flinfo->fn_extra.  So we need to pass it our own
-	 * flinfo parameter.
+	 * Normally one would call array_recv() using DirectFunctionCall3, but
+	 * that does not work since array_recv wants to cache some data using
+	 * fcinfo->flinfo->fn_extra.  So we need to pass it our own flinfo
+	 * parameter.
 	 */
 	InitFunctionCallInfoData(locfcinfo, fcinfo->flinfo, 3, NULL, NULL);
 
@@ -736,9 +736,10 @@ int4mul(PG_FUNCTION_ARGS)
 	int32		result;
 
 #ifdef WIN32
+
 	/*
-	 *	Win32 doesn't throw a catchable exception for
-	 *	SELECT -2147483648 * (-1);  -- INT_MIN
+	 * Win32 doesn't throw a catchable exception for SELECT -2147483648 *
+	 * (-1);  -- INT_MIN
 	 */
 	if (arg2 == -1 && arg1 == INT_MIN)
 		ereport(ERROR,
@@ -782,9 +783,10 @@ int4div(PG_FUNCTION_ARGS)
 				 errmsg("division by zero")));
 
 #ifdef WIN32
+
 	/*
-	 *	Win32 doesn't throw a catchable exception for
-	 *	SELECT -2147483648 / (-1); -- INT_MIN
+	 * Win32 doesn't throw a catchable exception for SELECT -2147483648 /
+	 * (-1); -- INT_MIN
 	 */
 	if (arg2 == -1 && arg1 == INT_MIN)
 		ereport(ERROR,

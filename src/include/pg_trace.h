@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pg_trace.h,v 1.1 2006/07/24 16:32:45 petere Exp $
+ *	$PostgreSQL: pgsql/src/include/pg_trace.h,v 1.2 2006/10/04 00:30:06 momjian Exp $
  * ----------
  */
 
@@ -21,7 +21,7 @@
  *
  * Only one DTrace provider called "postgresql" will be used for PostgreSQL,
  * so the name is hard-coded here to avoid having to specify it in the
- * source code. 
+ * source code.
  */
 
 #define PG_TRACE(name) \
@@ -36,8 +36,7 @@
 	DTRACE_PROBE4(postgresql, name, arg1, arg2, arg3, arg4)
 #define PG_TRACE5(name, arg1, arg2, arg3, arg4, arg5) \
 	DTRACE_PROBE5(postgresql, name, arg1, arg2, arg3, arg4, arg5)
-
-#else /* not ENABLE_DTRACE */
+#else							/* not ENABLE_DTRACE */
 
 /*
  * Unless DTrace is explicitly enabled with --enable-dtrace, the PG_TRACE
@@ -50,7 +49,6 @@
 #define PG_TRACE3(name, arg1, arg2, arg3)
 #define PG_TRACE4(name, arg1, arg2, arg3, arg4)
 #define PG_TRACE5(name, arg1, arg2, arg3, arg4, arg5)
+#endif   /* not ENABLE_DTRACE */
 
-#endif /* not ENABLE_DTRACE */
-
-#endif /* PG_TRACE_H */
+#endif   /* PG_TRACE_H */

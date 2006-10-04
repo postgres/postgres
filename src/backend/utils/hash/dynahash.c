@@ -5,19 +5,19 @@
  *
  * dynahash.c supports both local-to-a-backend hash tables and hash tables in
  * shared memory.  For shared hash tables, it is the caller's responsibility
- * to provide appropriate access interlocking.  The simplest convention is
- * that a single LWLock protects the whole hash table.  Searches (HASH_FIND or
+ * to provide appropriate access interlocking.	The simplest convention is
+ * that a single LWLock protects the whole hash table.	Searches (HASH_FIND or
  * hash_seq_search) need only shared lock, but any update requires exclusive
  * lock.  For heavily-used shared tables, the single-lock approach creates a
  * concurrency bottleneck, so we also support "partitioned" locking wherein
  * there are multiple LWLocks guarding distinct subsets of the table.  To use
  * a hash table in partitioned mode, the HASH_PARTITION flag must be given
- * to hash_create.  This prevents any attempt to split buckets on-the-fly.
+ * to hash_create.	This prevents any attempt to split buckets on-the-fly.
  * Therefore, each hash bucket chain operates independently, and no fields
  * of the hash header change after init except nentries and freeList.
  * A partitioned table uses a spinlock to guard changes of those two fields.
  * This lets any subset of the hash buckets be treated as a separately
- * lockable partition.  We expect callers to use the low-order bits of a
+ * lockable partition.	We expect callers to use the low-order bits of a
  * lookup key's hash value as a partition number --- this will work because
  * of the way calc_bucket() maps hash values to bucket numbers.
  *
@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.72 2006/09/27 18:40:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.73 2006/10/04 00:30:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ struct HASHHDR
 	/* These fields are fixed at hashtable creation */
 	Size		keysize;		/* hash key length in bytes */
 	Size		entrysize;		/* total user element size in bytes */
-	long		num_partitions;	/* # partitions (must be power of 2), or 0 */
+	long		num_partitions; /* # partitions (must be power of 2), or 0 */
 	long		ffactor;		/* target fill factor */
 	long		max_dsize;		/* 'dsize' limit if directory is fixed size */
 	long		ssize;			/* segment size --- must be power of 2 */
@@ -132,9 +132,10 @@ struct HASHHDR
 	int			nelem_alloc;	/* number of entries to allocate at once */
 
 #ifdef HASH_STATISTICS
+
 	/*
-	 * Count statistics here.  NB: stats code doesn't bother with mutex,
-	 * so counts could be corrupted a bit in a partitioned table.
+	 * Count statistics here.  NB: stats code doesn't bother with mutex, so
+	 * counts could be corrupted a bit in a partitioned table.
 	 */
 	long		accesses;
 	long		collisions;
@@ -287,8 +288,8 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		hashp->hash = string_hash;		/* default hash function */
 
 	/*
-	 * If you don't specify a match function, it defaults to string_compare
-	 * if you used string_hash (either explicitly or by default) and to memcmp
+	 * If you don't specify a match function, it defaults to string_compare if
+	 * you used string_hash (either explicitly or by default) and to memcmp
 	 * otherwise.  (Prior to PostgreSQL 7.4, memcmp was always used.)
 	 */
 	if (flags & HASH_COMPARE)
@@ -317,8 +318,8 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	{
 		/*
 		 * ctl structure and directory are preallocated for shared memory
-		 * tables.  Note that HASH_DIRSIZE and HASH_ALLOC had better be set
-		 * as well.
+		 * tables.	Note that HASH_DIRSIZE and HASH_ALLOC had better be set as
+		 * well.
 		 */
 		hashp->hctl = info->hctl;
 		hashp->dir = (HASHSEGMENT *) (((char *) info->hctl) + sizeof(HASHHDR));
@@ -413,8 +414,8 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	 * This reduces problems with run-time out-of-shared-memory conditions.
 	 *
 	 * For a non-shared hash table, preallocate the requested number of
-	 * elements if it's less than our chosen nelem_alloc.  This avoids
-	 * wasting space if the caller correctly estimates a small table size.
+	 * elements if it's less than our chosen nelem_alloc.  This avoids wasting
+	 * space if the caller correctly estimates a small table size.
 	 */
 	if ((flags & HASH_SHARED_MEM) ||
 		nelem < hctl->nelem_alloc)
@@ -479,15 +480,16 @@ choose_nelem_alloc(Size entrysize)
 	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
 
 	/*
-	 * The idea here is to choose nelem_alloc at least 32, but round up
-	 * so that the allocation request will be a power of 2 or just less.
-	 * This makes little difference for hash tables in shared memory,
-	 * but for hash tables managed by palloc, the allocation request
-	 * will be rounded up to a power of 2 anyway.  If we fail to take
-	 * this into account, we'll waste as much as half the allocated space.
+	 * The idea here is to choose nelem_alloc at least 32, but round up so
+	 * that the allocation request will be a power of 2 or just less. This
+	 * makes little difference for hash tables in shared memory, but for hash
+	 * tables managed by palloc, the allocation request will be rounded up to
+	 * a power of 2 anyway.  If we fail to take this into account, we'll waste
+	 * as much as half the allocated space.
 	 */
 	allocSize = 32 * 4;			/* assume elementSize at least 8 */
-	do {
+	do
+	{
 		allocSize <<= 1;
 		nelem_alloc = allocSize / elementSize;
 	} while (nelem_alloc < 32);
@@ -926,7 +928,7 @@ hash_search_with_hash_value(HTAB *hashp,
 			/* Check if it is time to split a bucket */
 			/* Can't split if running in partitioned mode */
 			if (!IS_PARTITIONED(hctl) &&
-				hctl->nentries / (long) (hctl->max_bucket + 1) >= hctl->ffactor)
+			 hctl->nentries / (long) (hctl->max_bucket + 1) >= hctl->ffactor)
 			{
 				/*
 				 * NOTE: failure to expand table is not a fatal error, it just

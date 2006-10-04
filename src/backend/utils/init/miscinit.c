@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.158 2006/08/16 04:32:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.159 2006/10/04 00:30:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static char socketLockFile[MAXPGPATH];
  * ----------------------------------------------------------------
  */
 
-bool IgnoreSystemIndexes = false;
+bool		IgnoreSystemIndexes = false;
 
 /* ----------------------------------------------------------------
  *		system index reindexing support
@@ -1097,7 +1097,7 @@ ValidatePgVersion(const char *path)
  *-------------------------------------------------------------------------
  */
 
-/* 
+/*
  * GUC variables: lists of library names to be preloaded at postmaster
  * start and at backend start
  */
@@ -1146,7 +1146,7 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 		/* If restricting, insert $libdir/plugins if not mentioned already */
 		if (restricted && first_dir_separator(filename) == NULL)
 		{
-			char   *expanded;
+			char	   *expanded;
 
 			expanded = palloc(strlen("$libdir/plugins/") + strlen(filename) + 1);
 			strcpy(expanded, "$libdir/plugins/");

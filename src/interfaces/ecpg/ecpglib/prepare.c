@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.17 2006/09/05 10:00:52 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.18 2006/10/04 00:30:11 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -53,8 +53,9 @@ replace_variables(char *text)
 				*ptr = '?';
 				for (++ptr; *ptr && isvarchar(*ptr); ptr++)
 					*ptr = ' ';
-				if (*ptr == '\0') /* we reached the end */
-					ptr--; /* since we will ptr++ in the top level for loop */
+				if (*ptr == '\0')		/* we reached the end */
+					ptr--;		/* since we will ptr++ in the top level for
+								 * loop */
 			}
 		}
 	}
@@ -103,7 +104,7 @@ ECPGprepare(int lineno, const char *name, const char *variable)
 	this->name = ECPGstrdup(name, lineno);
 	this->stmt = stmt;
 	ECPGlog("ECPGprepare line %d: QUERY: %s\n", stmt->lineno, stmt->command);
-		
+
 
 	if (prep_stmts == NULL)
 		this->next = NULL;

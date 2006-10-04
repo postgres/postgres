@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeValuesscan.h,v 1.1 2006/08/02 01:59:47 joe Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeValuesscan.h,v 1.2 2006/10/04 00:30:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include "nodes/execnodes.h"
 
-extern int ExecCountSlotsValuesScan(ValuesScan *node);
+extern int	ExecCountSlotsValuesScan(ValuesScan *node);
 extern ValuesScanState *ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags);
 extern TupleTableSlot *ExecValuesScan(ValuesScanState *node);
 extern void ExecEndValuesScan(ValuesScanState *node);

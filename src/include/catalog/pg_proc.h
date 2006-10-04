@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.426 2006/09/18 22:40:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.427 2006/10/04 00:30:07 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1534,7 +1534,7 @@ DESCR("truncate interval to specified units");
 
 DATA(insert OID = 1219 (  int8inc		   PGNSP PGUID 12 f f t f i 1 20 "20" _null_ _null_ _null_	int8inc - _null_ ));
 DESCR("increment");
-DATA(insert OID = 2804 (  int8inc_any	   PGNSP PGUID 12 f f t f i 2 20 "20 2276" _null_ _null_ _null_	int8inc_any - _null_ ));
+DATA(insert OID = 2804 (  int8inc_any	   PGNSP PGUID 12 f f t f i 2 20 "20 2276" _null_ _null_ _null_ int8inc_any - _null_ ));
 DESCR("increment, ignores second argument");
 DATA(insert OID = 1230 (  int8abs		   PGNSP PGUID 12 f f t f i 1 20 "20" _null_ _null_ _null_	int8abs - _null_ ));
 DESCR("absolute value");
@@ -1628,11 +1628,11 @@ DATA(insert OID = 1298 (  timetzdate_pl    PGNSP PGUID 14 f f t f i 2 1184 "1266
 DESCR("convert time with time zone and date to timestamp with time zone");
 DATA(insert OID = 1299 (  now			   PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_	now - _null_ ));
 DESCR("current transaction time");
-DATA(insert OID = 2647 (  transaction_timestamp	PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_	now - _null_ ));
+DATA(insert OID = 2647 (  transaction_timestamp PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_ now - _null_ ));
 DESCR("current transaction time");
-DATA(insert OID = 2648 (  statement_timestamp	PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_	statement_timestamp - _null_ ));
+DATA(insert OID = 2648 (  statement_timestamp	PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_ statement_timestamp - _null_ ));
 DESCR("current statement time");
-DATA(insert OID = 2649 (  clock_timestamp	PGNSP PGUID 12 f f t f v 0 1184 "" _null_ _null_ _null_	clock_timestamp - _null_ ));
+DATA(insert OID = 2649 (  clock_timestamp	PGNSP PGUID 12 f f t f v 0 1184 "" _null_ _null_ _null_ clock_timestamp - _null_ ));
 DESCR("current clock time");
 
 /* OIDS 1300 - 1399 */
@@ -2694,7 +2694,7 @@ DATA(insert OID = 1831 (  float8_var_samp  PGNSP PGUID 12 f f t f i 1 701 "1022"
 DESCR("VAR_SAMP aggregate final function");
 DATA(insert OID = 2513 (  float8_stddev_pop PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_stddev_pop - _null_ ));
 DESCR("STDDEV_POP aggregate final function");
-DATA(insert OID = 1832 (  float8_stddev_samp    PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_stddev_samp - _null_ ));
+DATA(insert OID = 1832 (  float8_stddev_samp	PGNSP PGUID 12 f f t f i 1 701 "1022" _null_ _null_ _null_ float8_stddev_samp - _null_ ));
 DESCR("STDDEV_SAMP aggregate final function");
 DATA(insert OID = 1833 (  numeric_accum    PGNSP PGUID 12 f f t f i 2 1231 "1231 1700" _null_ _null_ _null_ numeric_accum - _null_ ));
 DESCR("aggregate transition function");
@@ -2712,7 +2712,7 @@ DATA(insert OID = 1838 (  numeric_var_samp PGNSP PGUID 12 f f t f i 1 1700 "1231
 DESCR("VAR_SAMP aggregate final function");
 DATA(insert OID = 2596 (  numeric_stddev_pop PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_stddev_pop - _null_ ));
 DESCR("STDDEV_POP aggregate final function");
-DATA(insert OID = 1839 (  numeric_stddev_samp   PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_stddev_samp - _null_ ));
+DATA(insert OID = 1839 (  numeric_stddev_samp	PGNSP PGUID 12 f f t f i 1 1700 "1231" _null_ _null_ _null_ numeric_stddev_samp - _null_ ));
 DESCR("STDDEV_SAMP aggregate final function");
 DATA(insert OID = 1840 (  int2_sum		   PGNSP PGUID 12 f f f f i 2 20 "20 21" _null_ _null_ _null_ int2_sum - _null_ ));
 DESCR("SUM(int2) transition function");
@@ -3933,7 +3933,7 @@ DATA(insert OID = 2788 (  ginoptions	   PGNSP PGUID 12 f f t f s 2 17 "1009 16" 
 DESCR("gin(internal)");
 
 /* GIN array support */
-DATA(insert OID = 2743 (  ginarrayextract    PGNSP PGUID 12 f f t f i 2 2281 "2277 2281" _null_ _null_ _null_	ginarrayextract - _null_ ));
+DATA(insert OID = 2743 (  ginarrayextract	 PGNSP PGUID 12 f f t f i 2 2281 "2277 2281" _null_ _null_ _null_	ginarrayextract - _null_ ));
 DESCR("GIN array support");
 DATA(insert OID = 2744 (  ginarrayconsistent PGNSP PGUID 12 f f t f i 3 16 "2281 21 2281" _null_ _null_ _null_	ginarrayconsistent - _null_ ));
 DESCR("GIN array support");

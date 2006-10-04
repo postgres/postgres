@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.90 2006/09/27 18:40:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.91 2006/10/04 00:30:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,14 +27,14 @@
 
 
 /* signatures for PostgreSQL-specific library init/fini functions */
-typedef void (*PG_init_t)(void);
-typedef void (*PG_fini_t)(void);
+typedef void (*PG_init_t) (void);
+typedef void (*PG_fini_t) (void);
 
 /* hashtable entry for rendezvous variables */
 typedef struct
-{ 
-	char	varName[NAMEDATALEN];	/* hash key (must be first) */
-	void   *varValue;
+{
+	char		varName[NAMEDATALEN];	/* hash key (must be first) */
+	void	   *varValue;
 } rendezvousHashEntry;
 
 /*
@@ -168,7 +168,7 @@ lookup_external_function(void *filehandle, char *funcname)
 
 /*
  * Load the specified dynamic-link library file, unless it already is
- * loaded.  Return the pg_dl* handle for the file.
+ * loaded.	Return the pg_dl* handle for the file.
  *
  * Note: libname is expected to be an exact name for the library file.
  */
@@ -248,7 +248,7 @@ internal_load_library(const char *libname)
 			const Pg_magic_struct *magic_data_ptr = (*magic_func) ();
 
 			if (magic_data_ptr->len != magic_data.len ||
-			    memcmp(magic_data_ptr, &magic_data, magic_data.len) != 0)
+				memcmp(magic_data_ptr, &magic_data, magic_data.len) != 0)
 			{
 				/* copy data block before unlinking library */
 				Pg_magic_struct module_magic_data = *magic_data_ptr;
@@ -258,22 +258,22 @@ internal_load_library(const char *libname)
 				free((char *) file_scanner);
 
 				/*
-				 * Report suitable error.  It's probably not worth writing
-				 * a separate error message for each field; only the most
-				 * common case of wrong major version gets its own message.
+				 * Report suitable error.  It's probably not worth writing a
+				 * separate error message for each field; only the most common
+				 * case of wrong major version gets its own message.
 				 */
 				if (module_magic_data.version != magic_data.version)
 					ereport(ERROR,
-							(errmsg("incompatible library \"%s\": version mismatch",
-									libname),
-							 errdetail("Server is version %d.%d, library is version %d.%d.",
-									   magic_data.version/100,
-									   magic_data.version % 100,
-									   module_magic_data.version/100,
-									   module_magic_data.version % 100)));
+					 (errmsg("incompatible library \"%s\": version mismatch",
+							 libname),
+					  errdetail("Server is version %d.%d, library is version %d.%d.",
+								magic_data.version / 100,
+								magic_data.version % 100,
+								module_magic_data.version / 100,
+								module_magic_data.version % 100)));
 				ereport(ERROR,
-						(errmsg("incompatible library \"%s\": magic block mismatch",
-								libname)));
+				 (errmsg("incompatible library \"%s\": magic block mismatch",
+						 libname)));
 			}
 		}
 		else
@@ -283,9 +283,9 @@ internal_load_library(const char *libname)
 			free((char *) file_scanner);
 			/* complain */
 			ereport(ERROR,
-					(errmsg("incompatible library \"%s\": missing magic block",
-							libname),
-					 errhint("Extension libraries are now required to use the PG_MODULE_MAGIC macro.")));
+				  (errmsg("incompatible library \"%s\": missing magic block",
+						  libname),
+				   errhint("Extension libraries are now required to use the PG_MODULE_MAGIC macro.")));
 		}
 
 		/*
@@ -293,7 +293,7 @@ internal_load_library(const char *libname)
 		 */
 		PG_init = (PG_init_t) pg_dlsym(file_scanner->handle, "_PG_init");
 		if (PG_init)
-			(*PG_init)();
+			(*PG_init) ();
 
 		/* OK to link it into list */
 		if (file_list == NULL)
@@ -351,7 +351,7 @@ internal_unload_library(const char *libname)
 			 */
 			PG_fini = (PG_fini_t) pg_dlsym(file_scanner->handle, "_PG_fini");
 			if (PG_fini)
-				(*PG_fini)();
+				(*PG_fini) ();
 
 			clear_external_function_hash(file_scanner->handle);
 			pg_dlclose(file_scanner->handle);
@@ -441,8 +441,8 @@ expand_dynamic_library_name(const char *name)
 	}
 
 	/*
-	 * If we can't find the file, just return the string as-is.
-	 * The ensuing load attempt will fail and report a suitable message.
+	 * If we can't find the file, just return the string as-is. The ensuing
+	 * load attempt will fail and report a suitable message.
 	 */
 	return pstrdup(name);
 }
@@ -575,7 +575,7 @@ find_in_dynamic_libpath(const char *basename)
 
 
 /*
- * Find (or create) a rendezvous variable that one dynamically 
+ * Find (or create) a rendezvous variable that one dynamically
  * loaded library can use to meet up with another.
  *
  * On the first call of this function for a particular varName,
@@ -589,22 +589,22 @@ find_in_dynamic_libpath(const char *basename)
  * to find each other and share information: they just need to agree
  * on the variable name and the data it will point to.
  */
-void **
+void	  **
 find_rendezvous_variable(const char *varName)
 {
-	static HTAB         *rendezvousHash = NULL;
+	static HTAB *rendezvousHash = NULL;
 
 	rendezvousHashEntry *hentry;
-	bool				 found;
+	bool		found;
 
 	/* Create a hashtable if we haven't already done so in this process */
 	if (rendezvousHash == NULL)
 	{
-		HASHCTL ctl;
+		HASHCTL		ctl;
 
 		MemSet(&ctl, 0, sizeof(ctl));
-		ctl.keysize    = NAMEDATALEN;
-		ctl.entrysize  = sizeof(rendezvousHashEntry);
+		ctl.keysize = NAMEDATALEN;
+		ctl.entrysize = sizeof(rendezvousHashEntry);
 		rendezvousHash = hash_create("Rendezvous variable hash",
 									 16,
 									 &ctl,

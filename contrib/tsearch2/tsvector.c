@@ -165,13 +165,13 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 }
 
 #define WAITWORD		1
-#define WAITENDWORD 	2
+#define WAITENDWORD		2
 #define WAITNEXTCHAR	3
 #define WAITENDCMPLX	4
-#define WAITPOSINFO 	5
+#define WAITPOSINFO		5
 #define INPOSINFO		6
 #define WAITPOSDELIM	7
-#define	WAITCHARCMPLX	8
+#define WAITCHARCMPLX	8
 
 #define RESIZEPRSBUF \
 do { \
@@ -200,9 +200,9 @@ gettoken_tsvector(TI_IN_STATE * state)
 		{
 			if (*(state->prsbuf) == '\0')
 				return 0;
-			else if ( t_iseq(state->prsbuf, '\'') )
+			else if (t_iseq(state->prsbuf, '\''))
 				state->state = WAITENDCMPLX;
-			else if ( t_iseq(state->prsbuf, '\\') )
+			else if (t_iseq(state->prsbuf, '\\'))
 			{
 				state->state = WAITNEXTCHAR;
 				oldstate = WAITENDWORD;
@@ -214,7 +214,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 			else if (!t_isspace(state->prsbuf))
 			{
 				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos+=pg_mblen(state->prsbuf);
+				state->curpos += pg_mblen(state->prsbuf);
 				state->state = WAITENDWORD;
 			}
 		}
@@ -228,18 +228,18 @@ gettoken_tsvector(TI_IN_STATE * state)
 			{
 				RESIZEPRSBUF;
 				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos+=pg_mblen(state->prsbuf);
+				state->curpos += pg_mblen(state->prsbuf);
 				state->state = oldstate;
 			}
 		}
 		else if (state->state == WAITENDWORD)
 		{
-			if ( t_iseq(state->prsbuf, '\\') )
+			if (t_iseq(state->prsbuf, '\\'))
 			{
 				state->state = WAITNEXTCHAR;
 				oldstate = WAITENDWORD;
 			}
-			else if ( t_isspace(state->prsbuf) || *(state->prsbuf) == '\0' ||
+			else if (t_isspace(state->prsbuf) || *(state->prsbuf) == '\0' ||
 					 (state->oprisdelim && ISOPERATOR(state->prsbuf)))
 			{
 				RESIZEPRSBUF;
@@ -250,7 +250,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 				*(state->curpos) = '\0';
 				return 1;
 			}
-			else if ( t_iseq(state->prsbuf,':') )
+			else if (t_iseq(state->prsbuf, ':'))
 			{
 				if (state->curpos == state->word)
 					ereport(ERROR,
@@ -266,15 +266,16 @@ gettoken_tsvector(TI_IN_STATE * state)
 			{
 				RESIZEPRSBUF;
 				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos+=pg_mblen(state->prsbuf);
+				state->curpos += pg_mblen(state->prsbuf);
 			}
 		}
 		else if (state->state == WAITENDCMPLX)
 		{
-			if ( t_iseq(state->prsbuf, '\'') ) {
-				state->state = WAITCHARCMPLX; 
+			if (t_iseq(state->prsbuf, '\''))
+			{
+				state->state = WAITCHARCMPLX;
 			}
-			else if ( t_iseq(state->prsbuf, '\\') )
+			else if (t_iseq(state->prsbuf, '\\'))
 			{
 				state->state = WAITNEXTCHAR;
 				oldstate = WAITENDCMPLX;
@@ -287,18 +288,20 @@ gettoken_tsvector(TI_IN_STATE * state)
 			{
 				RESIZEPRSBUF;
 				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos+=pg_mblen(state->prsbuf);
+				state->curpos += pg_mblen(state->prsbuf);
 			}
 		}
 		else if (state->state == WAITCHARCMPLX)
 		{
-			if ( t_iseq(state->prsbuf, '\'') ) 
+			if (t_iseq(state->prsbuf, '\''))
 			{
 				RESIZEPRSBUF;
 				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos+=pg_mblen(state->prsbuf);
+				state->curpos += pg_mblen(state->prsbuf);
 				state->state = WAITENDCMPLX;
-			} else {
+			}
+			else
+			{
 				RESIZEPRSBUF;
 				*(state->curpos) = '\0';
 				if (state->curpos == state->word)
@@ -312,12 +315,12 @@ gettoken_tsvector(TI_IN_STATE * state)
 				}
 				else
 					state->state = WAITPOSINFO;
-				continue; /* recheck current character */
+				continue;		/* recheck current character */
 			}
 		}
 		else if (state->state == WAITPOSINFO)
 		{
-			if ( t_iseq(state->prsbuf, ':') )
+			if (t_iseq(state->prsbuf, ':'))
 				state->state = INPOSINFO;
 			else
 				return 1;
@@ -353,9 +356,9 @@ gettoken_tsvector(TI_IN_STATE * state)
 		}
 		else if (state->state == WAITPOSDELIM)
 		{
-			if ( t_iseq(state->prsbuf, ',') )
+			if (t_iseq(state->prsbuf, ','))
 				state->state = INPOSINFO;
-			else if ( t_iseq(state->prsbuf, 'a') || t_iseq(state->prsbuf, 'A') || t_iseq(state->prsbuf, '*') )
+			else if (t_iseq(state->prsbuf, 'a') || t_iseq(state->prsbuf, 'A') || t_iseq(state->prsbuf, '*'))
 			{
 				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
@@ -363,7 +366,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 3);
 			}
-			else if ( t_iseq(state->prsbuf, 'b') || t_iseq(state->prsbuf, 'B') )
+			else if (t_iseq(state->prsbuf, 'b') || t_iseq(state->prsbuf, 'B'))
 			{
 				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
@@ -371,7 +374,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 2);
 			}
-			else if ( t_iseq(state->prsbuf, 'c') || t_iseq(state->prsbuf, 'C') )
+			else if (t_iseq(state->prsbuf, 'c') || t_iseq(state->prsbuf, 'C'))
 			{
 				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
@@ -379,7 +382,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 							 errmsg("syntax error")));
 				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 1);
 			}
-			else if ( t_iseq(state->prsbuf, 'd') || t_iseq(state->prsbuf, 'D') )
+			else if (t_iseq(state->prsbuf, 'd') || t_iseq(state->prsbuf, 'D'))
 			{
 				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
 					ereport(ERROR,
@@ -400,7 +403,7 @@ gettoken_tsvector(TI_IN_STATE * state)
 			elog(ERROR, "internal error");
 
 		/* get next char */
-		state->prsbuf+=pg_mblen(state->prsbuf);
+		state->prsbuf += pg_mblen(state->prsbuf);
 	}
 
 	return 0;
@@ -423,7 +426,7 @@ tsvector_in(PG_FUNCTION_ARGS)
 
 	SET_FUNCOID();
 
-	pg_verifymbstr( buf, strlen(buf), false );
+	pg_verifymbstr(buf, strlen(buf), false);
 	state.prsbuf = buf;
 	state.len = 32;
 	state.word = (char *) palloc(state.len);
@@ -517,13 +520,14 @@ tsvector_out(PG_FUNCTION_ARGS)
 				lenbuf = 0,
 				pp;
 	WordEntry  *ptr = ARRPTR(out);
-	char	   *curbegin, *curin,
+	char	   *curbegin,
+			   *curin,
 			   *curout;
 
 	lenbuf = out->size * 2 /* '' */ + out->size - 1 /* space */ + 2 /* \0 */ ;
 	for (i = 0; i < out->size; i++)
 	{
-		lenbuf += ptr[i].len * 2 * pg_database_encoding_max_length()/* for escape */ ;
+		lenbuf += ptr[i].len * 2 * pg_database_encoding_max_length() /* for escape */ ;
 		if (ptr[i].haspos)
 			lenbuf += 7 * POSDATALEN(out, &(ptr[i]));
 	}
@@ -535,10 +539,11 @@ tsvector_out(PG_FUNCTION_ARGS)
 		if (i != 0)
 			*curout++ = ' ';
 		*curout++ = '\'';
-		while ( curin-curbegin < ptr->len )
+		while (curin - curbegin < ptr->len)
 		{
-			int len = pg_mblen(curin);
-			if ( t_iseq(curin, '\'') )
+			int			len = pg_mblen(curin);
+
+			if (t_iseq(curin, '\''))
 			{
 				int4		pos = curout - outbuf;
 
@@ -546,7 +551,7 @@ tsvector_out(PG_FUNCTION_ARGS)
 				curout = outbuf + pos;
 				*curout++ = '\'';
 			}
-			while(len--)
+			while (len--)
 				*curout++ = *curin++;
 		}
 		*curout++ = '\'';
@@ -983,36 +988,49 @@ silly_cmp_tsvector(const tsvector * a, const tsvector * b)
 	{
 		WordEntry  *aptr = ARRPTR(a);
 		WordEntry  *bptr = ARRPTR(b);
-		int 		i	= 0;
-		int 		res;
+		int			i = 0;
+		int			res;
 
 
-		for(i=0;i<a->size;i++) {
-			if ( aptr->haspos != bptr->haspos ) {
-				return ( aptr->haspos > bptr->haspos ) ? -1 : 1;
-			} else if ( aptr->len != bptr->len ) {
-				return ( aptr->len > bptr->len ) ? -1 : 1;
-			} else if ( (res=strncmp(STRPTR(a) + aptr->pos, STRPTR(b) + bptr->pos, bptr->len))!= 0 ) {
+		for (i = 0; i < a->size; i++)
+		{
+			if (aptr->haspos != bptr->haspos)
+			{
+				return (aptr->haspos > bptr->haspos) ? -1 : 1;
+			}
+			else if (aptr->len != bptr->len)
+			{
+				return (aptr->len > bptr->len) ? -1 : 1;
+			}
+			else if ((res = strncmp(STRPTR(a) + aptr->pos, STRPTR(b) + bptr->pos, bptr->len)) != 0)
+			{
 				return res;
-			} else if ( aptr->haspos ) {
-				WordEntryPos	*ap = POSDATAPTR(a, aptr);
-				WordEntryPos	*bp = POSDATAPTR(b, bptr);
-				int				j;
+			}
+			else if (aptr->haspos)
+			{
+				WordEntryPos *ap = POSDATAPTR(a, aptr);
+				WordEntryPos *bp = POSDATAPTR(b, bptr);
+				int			j;
 
-				if ( POSDATALEN(a, aptr) != POSDATALEN(b, bptr) )
-					return ( POSDATALEN(a, aptr) > POSDATALEN(b, bptr) ) ? -1 : 1;
+				if (POSDATALEN(a, aptr) != POSDATALEN(b, bptr))
+					return (POSDATALEN(a, aptr) > POSDATALEN(b, bptr)) ? -1 : 1;
 
-				for(j=0;j<POSDATALEN(a, aptr);j++) {
-					if ( WEP_GETPOS(*ap) != WEP_GETPOS(*bp) ) {
-						return ( WEP_GETPOS(*ap) > WEP_GETPOS(*bp) ) ? -1 : 1;
-					} else if ( WEP_GETWEIGHT(*ap) != WEP_GETWEIGHT(*bp) ) {
-						return ( WEP_GETWEIGHT(*ap) > WEP_GETWEIGHT(*bp) ) ? -1 : 1;
+				for (j = 0; j < POSDATALEN(a, aptr); j++)
+				{
+					if (WEP_GETPOS(*ap) != WEP_GETPOS(*bp))
+					{
+						return (WEP_GETPOS(*ap) > WEP_GETPOS(*bp)) ? -1 : 1;
+					}
+					else if (WEP_GETWEIGHT(*ap) != WEP_GETWEIGHT(*bp))
+					{
+						return (WEP_GETWEIGHT(*ap) > WEP_GETWEIGHT(*bp)) ? -1 : 1;
 					}
 					ap++, bp++;
 				}
 			}
 
-			aptr++; bptr++;
+			aptr++;
+			bptr++;
 		}
 	}
 

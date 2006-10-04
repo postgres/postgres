@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_sema.c,v 1.2 2006/07/16 02:44:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_sema.c,v 1.3 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,10 @@ static void ReleaseSemaphores(int code, Datum arg);
  * so the semaphores are automatically freed when the last referencing
  * process exits.
  */
-void PGReserveSemaphores(int maxSemas, int port)
+void
+PGReserveSemaphores(int maxSemas, int port)
 {
-	mySemSet = (HANDLE *)malloc(maxSemas * sizeof(HANDLE));
+	mySemSet = (HANDLE *) malloc(maxSemas * sizeof(HANDLE));
 	if (mySemSet == NULL)
 		elog(PANIC, "out of memory");
 	numSems = 0;
@@ -63,7 +64,8 @@ ReleaseSemaphores(int code, Datum arg)
  *
  * Initialize a PGSemaphore structure to represent a sema with count 1
  */
-void PGSemaphoreCreate(PGSemaphore sema)
+void
+PGSemaphoreCreate(PGSemaphore sema)
 {
 	HANDLE		cur_handle;
 	SECURITY_ATTRIBUTES sec_attrs;
@@ -89,7 +91,7 @@ void PGSemaphoreCreate(PGSemaphore sema)
 	}
 	else
 		ereport(PANIC,
-				(errmsg("could not create semaphore: error code %d", (int)GetLastError())));
+				(errmsg("could not create semaphore: error code %d", (int) GetLastError())));
 }
 
 /*
@@ -97,7 +99,8 @@ void PGSemaphoreCreate(PGSemaphore sema)
  *
  * Reset a previously-initialized PGSemaphore to have count 0
  */
-void PGSemaphoreReset(PGSemaphore sema)
+void
+PGSemaphoreReset(PGSemaphore sema)
 {
 	/*
 	 * There's no direct API for this in Win32, so we have to ratchet the
@@ -112,7 +115,8 @@ void PGSemaphoreReset(PGSemaphore sema)
  * Lock a semaphore (decrement count), blocking if count would be < 0.
  * Serve the interrupt if interruptOK is true.
  */
-void PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
+void
+PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 {
 	DWORD		ret;
 	HANDLE		wh[2];
@@ -156,7 +160,8 @@ void PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
  *
  * Unlock a semaphore (increment count)
  */
-void PGSemaphoreUnlock(PGSemaphore sema)
+void
+PGSemaphoreUnlock(PGSemaphore sema)
 {
 	if (!ReleaseSemaphore(*sema, 1, NULL))
 		ereport(FATAL,
@@ -168,7 +173,8 @@ void PGSemaphoreUnlock(PGSemaphore sema)
  *
  * Lock a semaphore only if able to do so without blocking
  */
-bool PGSemaphoreTryLock(PGSemaphore sema)
+bool
+PGSemaphoreTryLock(PGSemaphore sema)
 {
 	DWORD		ret;
 
@@ -189,7 +195,7 @@ bool PGSemaphoreTryLock(PGSemaphore sema)
 	/* Otherwise we are in trouble */
 	ereport(FATAL,
 			(errmsg("could not try-lock semaphore: error code %d", (int) GetLastError())));
-	
+
 	/* keep compiler quiet */
 	return false;
 }

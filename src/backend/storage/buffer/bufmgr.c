@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.211 2006/09/25 22:01:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.212 2006/10/04 00:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,10 +178,10 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
 		 * This can happen because mdread doesn't complain about reads beyond
 		 * EOF --- which is arguably bogus, but changing it seems tricky ---
 		 * and so a previous attempt to read a block just beyond EOF could
-		 * have left a "valid" zero-filled buffer.  Unfortunately, we have
+		 * have left a "valid" zero-filled buffer.	Unfortunately, we have
 		 * also seen this case occurring because of buggy Linux kernels that
 		 * sometimes return an lseek(SEEK_END) result that doesn't account for
-		 * a recent write.  In that situation, the pre-existing buffer would
+		 * a recent write.	In that situation, the pre-existing buffer would
 		 * contain valid data that we don't want to overwrite.  Since the
 		 * legitimate cases should always have left a zero-filled buffer,
 		 * complain if not PageIsNew.
@@ -194,10 +194,10 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
-		 * We *must* do smgrextend before succeeding, else the
-		 * page will not be reserved by the kernel, and the next P_NEW call
-		 * will decide to return the same page.  Clear the BM_VALID bit,
-		 * do the StartBufferIO call that BufferAlloc didn't, and proceed.
+		 * We *must* do smgrextend before succeeding, else the page will not
+		 * be reserved by the kernel, and the next P_NEW call will decide to
+		 * return the same page.  Clear the BM_VALID bit, do the StartBufferIO
+		 * call that BufferAlloc didn't, and proceed.
 		 */
 		if (isLocalBuf)
 		{
@@ -208,11 +208,12 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
 		else
 		{
 			/*
-			 * Loop to handle the very small possibility that someone
-			 * re-sets BM_VALID between our clearing it and StartBufferIO
-			 * inspecting it.
+			 * Loop to handle the very small possibility that someone re-sets
+			 * BM_VALID between our clearing it and StartBufferIO inspecting
+			 * it.
 			 */
-			do {
+			do
+			{
 				LockBufHdr(bufHdr);
 				Assert(bufHdr->flags & BM_VALID);
 				bufHdr->flags &= ~BM_VALID;
@@ -311,10 +312,10 @@ BufferAlloc(Relation reln,
 {
 	BufferTag	newTag;			/* identity of requested block */
 	uint32		newHash;		/* hash value for newTag */
-	LWLockId	newPartitionLock;	/* buffer partition lock for it */
+	LWLockId	newPartitionLock;		/* buffer partition lock for it */
 	BufferTag	oldTag;			/* previous identity of selected buffer */
 	uint32		oldHash;		/* hash value for oldTag */
-	LWLockId	oldPartitionLock;	/* buffer partition lock for it */
+	LWLockId	oldPartitionLock;		/* buffer partition lock for it */
 	BufFlags	oldFlags;
 	int			buf_id;
 	volatile BufferDesc *buf;
@@ -620,7 +621,7 @@ InvalidateBuffer(volatile BufferDesc *buf)
 {
 	BufferTag	oldTag;
 	uint32		oldHash;		/* hash value for oldTag */
-	LWLockId	oldPartitionLock;	/* buffer partition lock for it */
+	LWLockId	oldPartitionLock;		/* buffer partition lock for it */
 	BufFlags	oldFlags;
 
 	/* Save the original buffer tag before dropping the spinlock */
@@ -629,9 +630,9 @@ InvalidateBuffer(volatile BufferDesc *buf)
 	UnlockBufHdr(buf);
 
 	/*
-	 * Need to compute the old tag's hashcode and partition lock ID.
-	 * XXX is it worth storing the hashcode in BufferDesc so we need
-	 * not recompute it here?  Probably not.
+	 * Need to compute the old tag's hashcode and partition lock ID. XXX is it
+	 * worth storing the hashcode in BufferDesc so we need not recompute it
+	 * here?  Probably not.
 	 */
 	oldHash = BufTableHashCode(&oldTag);
 	oldPartitionLock = BufMappingPartitionLock(oldHash);
@@ -715,7 +716,7 @@ retry:
  *
  *		Marks buffer contents as dirty (actual write happens later).
  *
- * Buffer must be pinned and exclusive-locked.  (If caller does not hold
+ * Buffer must be pinned and exclusive-locked.	(If caller does not hold
  * exclusive lock, then somebody could be in process of writing the buffer,
  * leading to risk of bad data written to disk.)
  */
@@ -972,9 +973,9 @@ BufferSync(void)
 		{
 			/*
 			 * If in bgwriter, absorb pending fsync requests after each
-			 * WRITES_PER_ABSORB write operations, to prevent overflow of
-			 * the fsync request queue.  If not in bgwriter process, this is
-			 * a no-op.
+			 * WRITES_PER_ABSORB write operations, to prevent overflow of the
+			 * fsync request queue.  If not in bgwriter process, this is a
+			 * no-op.
 			 */
 			if (--absorb_counter <= 0)
 			{
@@ -1770,9 +1771,9 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 	/*
 	 * This routine might get called many times on the same page, if we are
 	 * making the first scan after commit of an xact that added/deleted many
-	 * tuples.  So, be as quick as we can if the buffer is already dirty.  We
+	 * tuples.	So, be as quick as we can if the buffer is already dirty.  We
 	 * do this by not acquiring spinlock if it looks like the status bits are
-	 * already OK.  (Note it is okay if someone else clears BM_JUST_DIRTIED
+	 * already OK.	(Note it is okay if someone else clears BM_JUST_DIRTIED
 	 * immediately after we look, because the buffer content update is already
 	 * done and will be reflected in the I/O.)
 	 */

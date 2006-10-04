@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.88 2006/09/22 23:20:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.89 2006/10/04 00:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ RelationInitLockInfo(Relation relation)
 static inline void
 SetLocktagRelationOid(LOCKTAG *tag, Oid relid)
 {
-	Oid		dbid;
+	Oid			dbid;
 
 	if (IsSharedRelation(relid))
 		dbid = InvalidOid;
@@ -67,7 +67,7 @@ SetLocktagRelationOid(LOCKTAG *tag, Oid relid)
 /*
  *		LockRelationOid
  *
- * Lock a relation given only its OID.  This should generally be used
+ * Lock a relation given only its OID.	This should generally be used
  * before attempting to open the relation's relcache entry.
  */
 void
@@ -81,13 +81,13 @@ LockRelationOid(Oid relid, LOCKMODE lockmode)
 	res = LockAcquire(&tag, lockmode, false, false);
 
 	/*
-	 * Now that we have the lock, check for invalidation messages, so that
-	 * we will update or flush any stale relcache entry before we try to use
-	 * it.  We can skip this in the not-uncommon case that we already had
-	 * the same type of lock being requested, since then no one else could
-	 * have modified the relcache entry in an undesirable way.  (In the
-	 * case where our own xact modifies the rel, the relcache update happens
-	 * via CommandCounterIncrement, not here.)
+	 * Now that we have the lock, check for invalidation messages, so that we
+	 * will update or flush any stale relcache entry before we try to use it.
+	 * We can skip this in the not-uncommon case that we already had the same
+	 * type of lock being requested, since then no one else could have
+	 * modified the relcache entry in an undesirable way.  (In the case where
+	 * our own xact modifies the rel, the relcache update happens via
+	 * CommandCounterIncrement, not here.)
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
 		AcceptInvalidationMessages();
@@ -116,8 +116,8 @@ ConditionalLockRelationOid(Oid relid, LOCKMODE lockmode)
 		return false;
 
 	/*
-	 * Now that we have the lock, check for invalidation messages; see
-	 * notes in LockRelationOid.
+	 * Now that we have the lock, check for invalidation messages; see notes
+	 * in LockRelationOid.
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
 		AcceptInvalidationMessages();
@@ -176,8 +176,8 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 	res = LockAcquire(&tag, lockmode, false, false);
 
 	/*
-	 * Now that we have the lock, check for invalidation messages; see
-	 * notes in LockRelationOid.
+	 * Now that we have the lock, check for invalidation messages; see notes
+	 * in LockRelationOid.
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
 		AcceptInvalidationMessages();
@@ -206,8 +206,8 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 		return false;
 
 	/*
-	 * Now that we have the lock, check for invalidation messages; see
-	 * notes in LockRelationOid.
+	 * Now that we have the lock, check for invalidation messages; see notes
+	 * in LockRelationOid.
 	 */
 	if (res != LOCKACQUIRE_ALREADY_HELD)
 		AcceptInvalidationMessages();

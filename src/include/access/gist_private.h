@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.23 2006/08/07 16:57:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.24 2006/10/04 00:30:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ typedef struct SplitedPageLayout
 	gistxlogPage block;
 	IndexTupleData *list;
 	int			lenlist;
-	IndexTuple	itup;  /* union key for page */
+	IndexTuple	itup;			/* union key for page */
 	Page		page;			/* to operate */
 	Buffer		buffer;			/* to write after all proceed */
 
@@ -180,19 +180,22 @@ typedef struct GISTInsertStack
 	struct GISTInsertStack *next;
 } GISTInsertStack;
 
-typedef struct GistSplitVector {
-	GIST_SPLITVEC	splitVector;  /* to/from PickSplit method */
+typedef struct GistSplitVector
+{
+	GIST_SPLITVEC splitVector;	/* to/from PickSplit method */
 
-	Datum       spl_lattr[INDEX_MAX_KEYS];      /* Union of subkeys in spl_left */
-	bool        spl_lisnull[INDEX_MAX_KEYS];
-	bool        spl_leftvalid;
+	Datum		spl_lattr[INDEX_MAX_KEYS];		/* Union of subkeys in
+												 * spl_left */
+	bool		spl_lisnull[INDEX_MAX_KEYS];
+	bool		spl_leftvalid;
 
-	Datum       spl_rattr[INDEX_MAX_KEYS];      /* Union of subkeys in spl_right */
-	bool        spl_risnull[INDEX_MAX_KEYS];
-	bool        spl_rightvalid;
+	Datum		spl_rattr[INDEX_MAX_KEYS];		/* Union of subkeys in
+												 * spl_right */
+	bool		spl_risnull[INDEX_MAX_KEYS];
+	bool		spl_rightvalid;
 
-	bool        *spl_equiv; /* equivalent tuples which can be freely 
-							 * distributed between left and right pages */ 
+	bool	   *spl_equiv;		/* equivalent tuples which can be freely
+								 * distributed between left and right pages */
 } GistSplitVector;
 
 #define XLogRecPtrIsInvalid( r )	( (r).xlogid == 0 && (r).xrecoff == 0 )
@@ -255,7 +258,7 @@ extern bool gist_safe_restartpoint(void);
 extern IndexTuple gist_form_invalid_tuple(BlockNumber blkno);
 
 extern XLogRecData *formUpdateRdata(RelFileNode node, Buffer buffer,
-				OffsetNumber *todelete, int ntodelete, 
+				OffsetNumber *todelete, int ntodelete,
 				IndexTuple *itup, int ituplen, ItemPointer key);
 
 extern XLogRecData *formSplitRdata(RelFileNode node,
@@ -271,7 +274,7 @@ extern Datum gistgetmulti(PG_FUNCTION_ARGS);
 /* gistutil.c */
 
 #define GiSTPageSize   \
-    ( BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(GISTPageOpaqueData)) ) 
+	( BLCKSZ - SizeOfPageHeaderData - MAXALIGN(sizeof(GISTPageOpaqueData)) )
 
 #define GIST_MIN_FILLFACTOR			10
 #define GIST_DEFAULT_FILLFACTOR		90
@@ -287,7 +290,7 @@ extern IndexTuple *gistextractpage(Page page, int *len /* out */ );
 extern IndexTuple *gistjoinvector(
 			   IndexTuple *itvec, int *len,
 			   IndexTuple *additvec, int addlen);
-extern IndexTupleData* gistfillitupvec(IndexTuple *vec, int veclen, int *memlen);
+extern IndexTupleData *gistfillitupvec(IndexTuple *vec, int veclen, int *memlen);
 
 extern IndexTuple gistunion(Relation r, IndexTuple *itvec,
 		  int len, GISTSTATE *giststate);
@@ -312,27 +315,27 @@ extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   bool l, bool isNull);
 
 extern float gistpenalty(GISTSTATE *giststate, int attno,
-            			GISTENTRY *key1, bool isNull1,
-						GISTENTRY *key2, bool isNull2);
+			GISTENTRY *key1, bool isNull1,
+			GISTENTRY *key2, bool isNull2);
 extern bool gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey,
-                    Datum *attr, bool *isnull );
+				   Datum *attr, bool *isnull);
 extern bool gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b);
 extern void gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
-				OffsetNumber o, GISTENTRY *attdata, bool *isnull);
+				  OffsetNumber o, GISTENTRY *attdata, bool *isnull);
 
-extern void gistMakeUnionKey( GISTSTATE *giststate, int attno,
-                    GISTENTRY   *entry1, bool isnull1,
-					GISTENTRY   *entry2, bool isnull2,
-					Datum   *dst, bool *dstisnull );
+extern void gistMakeUnionKey(GISTSTATE *giststate, int attno,
+				 GISTENTRY *entry1, bool isnull1,
+				 GISTENTRY *entry2, bool isnull2,
+				 Datum *dst, bool *dstisnull);
 
 /* gistvacuum.c */
 extern Datum gistbulkdelete(PG_FUNCTION_ARGS);
 extern Datum gistvacuumcleanup(PG_FUNCTION_ARGS);
 
 /* gistsplit.c */
-extern void gistSplitByKey(Relation r, Page page, IndexTuple *itup, 
-							int len, GISTSTATE *giststate,
-							GistSplitVector *v, GistEntryVector *entryvec, 
-							int attno);
+extern void gistSplitByKey(Relation r, Page page, IndexTuple *itup,
+			   int len, GISTSTATE *giststate,
+			   GistSplitVector *v, GistEntryVector *entryvec,
+			   int attno);
 
 #endif   /* GIST_PRIVATE_H */

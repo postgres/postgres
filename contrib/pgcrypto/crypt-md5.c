@@ -8,7 +8,7 @@
  *
  * $FreeBSD: src/lib/libcrypt/crypt-md5.c,v 1.5 1999/12/17 20:21:45 peter Exp $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-md5.c,v 1.7 2006/07/13 04:15:24 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-md5.c,v 1.8 2006/10/04 00:29:46 momjian Exp $
  */
 
 #include "postgres.h"
@@ -24,7 +24,7 @@ static const char _crypt_a64[] =
 static void
 _crypt_to64(char *s, unsigned long v, int n)
 {
-   	while (--n >= 0)
+	while (--n >= 0)
 	{
 		*s++ = _crypt_a64[v & 0x3f];
 		v >>= 6;

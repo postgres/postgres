@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.74 2006/09/26 17:21:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.75 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,10 +133,10 @@ GetNewTransactionId(bool isSubXact)
 	{
 		/*
 		 * Use volatile pointer to prevent code rearrangement; other backends
-		 * could be examining my subxids info concurrently, and we don't
-		 * want them to see an invalid intermediate state, such as
-		 * incrementing nxids before filling the array entry.  Note we are
-		 * assuming that TransactionId and int fetch/store are atomic.
+		 * could be examining my subxids info concurrently, and we don't want
+		 * them to see an invalid intermediate state, such as incrementing
+		 * nxids before filling the array entry.  Note we are assuming that
+		 * TransactionId and int fetch/store are atomic.
 		 */
 		volatile PGPROC *myproc = MyProc;
 
@@ -144,7 +144,7 @@ GetNewTransactionId(bool isSubXact)
 			myproc->xid = xid;
 		else
 		{
-			int		nxids = myproc->subxids.nxids;
+			int			nxids = myproc->subxids.nxids;
 
 			if (nxids < PGPROC_MAX_CACHED_SUBXIDS)
 			{
@@ -196,7 +196,7 @@ SetTransactionIdLimit(TransactionId oldest_datminxid,
 	 * The place where we actually get into deep trouble is halfway around
 	 * from the oldest existing XID.  (This calculation is probably off by one
 	 * or two counts, because the special XIDs reduce the size of the loop a
-	 * little bit.  But we throw in plenty of slop below, so it doesn't
+	 * little bit.	But we throw in plenty of slop below, so it doesn't
 	 * matter.)
 	 */
 	xidWrapLimit = oldest_datminxid + (MaxTransactionId >> 1);

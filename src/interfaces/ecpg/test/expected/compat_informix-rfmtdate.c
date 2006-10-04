@@ -21,15 +21,16 @@
 
 
 static void
-check_return(int ret);
+			check_return(int ret);
 
 static void
 date_test_strdate(char *input)
 {
-	static int i;
-	date d;
-	int r, q;
-	char dbuf[11];
+	static int	i;
+	date		d;
+	int			r,
+				q;
+	char		dbuf[11];
 
 	r = rstrdate(input, &d);
 	printf("r: %d ", r);
@@ -51,10 +52,11 @@ date_test_strdate(char *input)
 static void
 date_test_defmt(char *fmt, char *input)
 {
-	static int i;
-	char dbuf[11];
-	date d;
-	int q, r;
+	static int	i;
+	char		dbuf[11];
+	date		d;
+	int			q,
+				r;
 
 	r = rdefmtdate(&d, fmt, input);
 	printf("r: %d ", r);
@@ -76,9 +78,9 @@ date_test_defmt(char *fmt, char *input)
 static void
 date_test_fmt(date d, char *fmt)
 {
-	static int i;
-	char buf[200];
-	int r;
+	static int	i;
+	char		buf[200];
+	int			r;
 
 	r = rfmtdate(d, fmt, buf);
 	printf("r: %d ", r);
@@ -92,10 +94,10 @@ date_test_fmt(date d, char *fmt)
 int
 main(void)
 {
-	short mdy[3] = { 11, 23, 1959 };
-	char dbuf[11];
-	date d;
-	int r;
+	short		mdy[3] = {11, 23, 1959};
+	char		dbuf[11];
+	date		d;
+	int			r;
 
 	ECPGdebug(1, stderr);
 
@@ -164,7 +166,7 @@ main(void)
 static void
 check_return(int ret)
 {
-	switch(ret)
+	switch (ret)
 	{
 		case ECPG_INFORMIX_ENOTDMY:
 			printf("(ECPG_INFORMIX_ENOTDMY)");

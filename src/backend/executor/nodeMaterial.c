@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.56 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.57 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,16 +124,16 @@ ExecMaterial(MaterialState *node)
 		}
 
 		/*
-		 * Append returned tuple to tuplestore.  NOTE: because the
-		 * tuplestore is certainly in EOF state, its read position will move
-		 * forward over the added tuple.  This is what we want.
+		 * Append returned tuple to tuplestore.  NOTE: because the tuplestore
+		 * is certainly in EOF state, its read position will move forward over
+		 * the added tuple.  This is what we want.
 		 */
 		if (tuplestorestate)
 			tuplestore_puttupleslot(tuplestorestate, outerslot);
 
 		/*
-		 * And return a copy of the tuple.  (XXX couldn't we just return
-		 * the outerslot?)
+		 * And return a copy of the tuple.	(XXX couldn't we just return the
+		 * outerslot?)
 		 */
 		return ExecCopySlot(slot, outerslot);
 	}
@@ -162,10 +162,10 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->ss.ps.state = estate;
 
 	/*
-	 * We must have random access to the subplan output to do backward scan
-	 * or mark/restore.  We also prefer to materialize the subplan output
-	 * if we might be called on to rewind and replay it many times.
-	 * However, if none of these cases apply, we can skip storing the data.
+	 * We must have random access to the subplan output to do backward scan or
+	 * mark/restore.  We also prefer to materialize the subplan output if we
+	 * might be called on to rewind and replay it many times. However, if none
+	 * of these cases apply, we can skip storing the data.
 	 */
 	matstate->randomAccess = (eflags & (EXEC_FLAG_REWIND |
 										EXEC_FLAG_BACKWARD |
@@ -194,8 +194,8 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	/*
 	 * initialize child nodes
 	 *
-	 * We shield the child node from the need to support REWIND, BACKWARD,
-	 * or MARK/RESTORE.
+	 * We shield the child node from the need to support REWIND, BACKWARD, or
+	 * MARK/RESTORE.
 	 */
 	eflags &= ~(EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK);
 

@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.88 2006/09/16 13:35:49 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.89 2006/10/04 00:30:14 momjian Exp $
  *
  *********************************************************************
  */
@@ -122,9 +122,9 @@ typedef struct PLyProcedure
 	bool		fn_readonly;
 	PLyTypeInfo result;			/* also used to store info for trigger tuple
 								 * type */
-	bool	    is_setof;		/* true, if procedure returns result set */
-	PyObject    *setof;		/* contents of result set. */
-	char	    **argnames;		/* Argument names */
+	bool		is_setof;		/* true, if procedure returns result set */
+	PyObject   *setof;			/* contents of result set. */
+	char	  **argnames;		/* Argument names */
 	PLyTypeInfo args[FUNC_MAX_ARGS];
 	int			nargs;
 	PyObject   *code;			/* compiled procedure code */
@@ -150,7 +150,7 @@ typedef struct PLyResultObject
 {
 	PyObject_HEAD
 	/* HeapTuple *tuples; */
-	PyObject   *nrows;			/* number of rows returned by query */
+	PyObject * nrows;			/* number of rows returned by query */
 	PyObject   *rows;			/* data rows, or None if no data returned */
 	PyObject   *status;			/* query status, SPI_OK_*, or SPI_ERR_* */
 }	PLyResultObject;
@@ -391,7 +391,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			if (!PyString_Check(plrv))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_EXCEPTION),
-						 errmsg("unexpected return value from trigger procedure"),
+					errmsg("unexpected return value from trigger procedure"),
 						 errdetail("Expected None or a String.")));
 
 			srv = PyString_AsString(plrv);
@@ -410,12 +410,12 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			else if (pg_strcasecmp(srv, "OK") != 0)
 			{
 				/*
-				 * accept "OK" as an alternative to None; otherwise,
-				 * raise an error
+				 * accept "OK" as an alternative to None; otherwise, raise an
+				 * error
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_EXCEPTION),
-						 errmsg("unexpected return value from trigger procedure"),
+					errmsg("unexpected return value from trigger procedure"),
 						 errdetail("Expected None, \"OK\", \"SKIP\", or \"MODIFY\".")));
 			}
 		}
@@ -513,7 +513,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 				modvalues[i] =
 					InputFunctionCall(&proc->result.out.r.atts[atti].typfunc,
 									  src,
-									  proc->result.out.r.atts[atti].typioparam,
+									proc->result.out.r.atts[atti].typioparam,
 									  tupdesc->attrs[atti]->atttypmod);
 				modnulls[i] = ' ';
 
@@ -525,7 +525,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 				modvalues[i] =
 					InputFunctionCall(&proc->result.out.r.atts[atti].typfunc,
 									  NULL,
-									  proc->result.out.r.atts[atti].typioparam,
+									proc->result.out.r.atts[atti].typioparam,
 									  tupdesc->attrs[atti]->atttypmod);
 				modnulls[i] = 'n';
 			}
@@ -575,9 +575,9 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *
 			   *pltevent,
 			   *pltwhen,
 			   *pltlevel,
-		       *pltrelid,
-		       *plttablename,
-		       *plttableschema;
+			   *pltrelid,
+			   *plttablename,
+			   *plttableschema;
 	PyObject   *pltargs,
 			   *pytnew,
 			   *pytold;
@@ -606,13 +606,13 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc, HeapTuple *
 		PyDict_SetItemString(pltdata, "table_name", plttablename);
 		Py_DECREF(plttablename);
 		pfree(stroid);
-		
+
 		stroid = SPI_getnspname(tdata->tg_relation);
 		plttableschema = PyString_FromString(stroid);
 		PyDict_SetItemString(pltdata, "table_schema", plttableschema);
 		Py_DECREF(plttableschema);
 		pfree(stroid);
-		
+
 
 		if (TRIGGER_FIRED_BEFORE(tdata->tg_event))
 			pltwhen = PyString_FromString("BEFORE");
@@ -762,7 +762,11 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			plargs = PLy_function_build_args(fcinfo, proc);
 			plrv = PLy_procedure_call(proc, "args", plargs);
 			if (!proc->is_setof)
-				/* SETOF function parameters will be deleted when last row is returned */
+
+				/*
+				 * SETOF function parameters will be deleted when last row is
+				 * returned
+				 */
 				PLy_function_delete_args(proc);
 			Assert(plrv != NULL);
 			Assert(!PLy_error_in_progress);
@@ -779,14 +783,14 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 
 		if (proc->is_setof)
 		{
-			bool has_error = false;
-			ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
+			bool		has_error = false;
+			ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 			if (proc->setof == NULL)
 			{
 				/* first time -- do checks and setup */
 				if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-						(rsi->allowedModes & SFRM_ValuePerCall) == 0)
+					(rsi->allowedModes & SFRM_ValuePerCall) == 0)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -803,7 +807,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("returned object can not be iterated"),
-							 errdetail("SETOF must be returned as iterable object")));
+					errdetail("SETOF must be returned as iterable object")));
 			}
 
 			/* Fetch next from iterator */
@@ -831,26 +835,25 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				if (has_error)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATA_EXCEPTION),
-							 errmsg("error fetching next item from iterator")));
+						  errmsg("error fetching next item from iterator")));
 
 				fcinfo->isnull = true;
-				return (Datum)NULL;
+				return (Datum) NULL;
 			}
 		}
 
 		/*
-		 * If the function is declared to return void, the Python
-		 * return value must be None. For void-returning functions, we
-		 * also treat a None return value as a special "void datum"
-		 * rather than NULL (as is the case for non-void-returning
-		 * functions).
+		 * If the function is declared to return void, the Python return value
+		 * must be None. For void-returning functions, we also treat a None
+		 * return value as a special "void datum" rather than NULL (as is the
+		 * case for non-void-returning functions).
 		 */
 		if (proc->result.out.d.typoid == VOIDOID)
 		{
 			if (plrv != Py_None)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("invalid return value from plpython function"),
+					   errmsg("invalid return value from plpython function"),
 						 errdetail("Functions returning type \"void\" must return None.")));
 
 			fcinfo->isnull = false;
@@ -861,16 +864,16 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			fcinfo->isnull = true;
 			if (proc->result.is_rowtype < 1)
 				rv = InputFunctionCall(&proc->result.out.d.typfunc,
-						NULL,
-						proc->result.out.d.typioparam,
-						-1);
+									   NULL,
+									   proc->result.out.d.typioparam,
+									   -1);
 			else
 				/* Tuple as None */
 				rv = (Datum) NULL;
 		}
 		else if (proc->result.is_rowtype >= 1)
 		{
-			HeapTuple   tuple = NULL;
+			HeapTuple	tuple = NULL;
 
 			if (PySequence_Check(plrv))
 				/* composite type as sequence (tuple, list etc) */
@@ -1017,8 +1020,8 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			}
 
 			if (PyList_SetItem(args, i, arg) == -1 ||
-					(proc->argnames &&
-					 PyDict_SetItemString(proc->globals, proc->argnames[i], arg) == -1))
+				(proc->argnames &&
+				 PyDict_SetItemString(proc->globals, proc->argnames[i], arg) == -1))
 				PLy_elog(ERROR, "problem setting up arguments for \"%s\"", proc->proname);
 			arg = NULL;
 		}
@@ -1037,14 +1040,14 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 
 
 static void
-PLy_function_delete_args(PLyProcedure *proc)
+PLy_function_delete_args(PLyProcedure * proc)
 {
-	int	i;
+	int			i;
 
 	if (!proc->argnames)
 		return;
 
-	for (i = 0;  i < proc->nargs;  i++)
+	for (i = 0; i < proc->nargs; i++)
 		PyDict_DelItemString(proc->globals, proc->argnames[i]);
 }
 
@@ -1120,8 +1123,8 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 	int			i,
 				rv;
 	Datum		argnames;
-	Datum	    	*elems;
-	int		nelems;
+	Datum	   *elems;
+	int			nelems;
 
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
@@ -1193,7 +1196,10 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 
 			if (rvTypeStruct->typtype == 'c')
 			{
-				/* Tuple: set up later, during first call to PLy_function_handler */
+				/*
+				 * Tuple: set up later, during first call to
+				 * PLy_function_handler
+				 */
 				proc->result.out.d.typoid = procStruct->prorettype;
 				proc->result.is_rowtype = 2;
 			}
@@ -1215,8 +1221,8 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 		}
 
 		/*
-		 * now get information required for input conversion of the procedure's
-		 * arguments.
+		 * now get information required for input conversion of the
+		 * procedure's arguments.
 		 */
 		proc->nargs = fcinfo->nargs;
 		if (proc->nargs)
@@ -1225,12 +1231,12 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 			if (!isnull)
 			{
 				deconstruct_array(DatumGetArrayTypeP(argnames), TEXTOID, -1, false, 'i',
-						&elems, NULL, &nelems);
+								  &elems, NULL, &nelems);
 				if (nelems != proc->nargs)
 					elog(ERROR,
-							"proargnames must have the same number of elements "
-							"as the function has arguments");
-				proc->argnames = (char **) PLy_malloc(sizeof(char *)*proc->nargs);
+						 "proargnames must have the same number of elements "
+						 "as the function has arguments");
+				proc->argnames = (char **) PLy_malloc(sizeof(char *) * proc->nargs);
 			}
 		}
 		for (i = 0; i < fcinfo->nargs; i++)
@@ -1306,8 +1312,8 @@ PLy_procedure_compile(PLyProcedure * proc, const char *src)
 	proc->globals = PyDict_Copy(PLy_interp_globals);
 
 	/*
-	 * SD is private preserved data between calls. GD is global data
-	 * shared by all functions
+	 * SD is private preserved data between calls. GD is global data shared by
+	 * all functions
 	 */
 	proc->statics = PyDict_New();
 	PyDict_SetItemString(proc->globals, "SD", proc->statics);
@@ -1674,13 +1680,13 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 
 
 static HeapTuple
-PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
+PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 {
 	TupleDesc	desc;
 	HeapTuple	tuple;
-	Datum		*values;
-	char		*nulls;
-	int		i;
+	Datum	   *values;
+	char	   *nulls;
+	int			i;
 
 	Assert(PyMapping_Check(mapping));
 
@@ -1690,13 +1696,13 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 	Assert(info->is_rowtype == 1);
 
 	/* Build tuple */
-	values = palloc(sizeof(Datum)*desc->natts);
-	nulls = palloc(sizeof(char)*desc->natts);
-	for (i = 0;  i < desc->natts;  ++i)
+	values = palloc(sizeof(Datum) * desc->natts);
+	nulls = palloc(sizeof(char) * desc->natts);
+	for (i = 0; i < desc->natts; ++i)
 	{
-		char		*key;
-		PyObject	*value,
-				*so;
+		char	   *key;
+		PyObject   *value,
+				   *so;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = so = NULL;
@@ -1710,7 +1716,7 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 			}
 			else if (value)
 			{
-				char *valuestr;
+				char	   *valuestr;
 
 				so = PyObject_Str(value);
 				if (so == NULL)
@@ -1718,9 +1724,9 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 				valuestr = PyString_AsString(so);
 
 				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
-						, valuestr
-						, info->out.r.atts[i].typioparam
-						, -1);
+											  ,valuestr
+											  ,info->out.r.atts[i].typioparam
+											  ,-1);
 				Py_DECREF(so);
 				so = NULL;
 				nulls[i] = ' ';
@@ -1730,7 +1736,7 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("no mapping found with key \"%s\"", key),
 						 errhint("to return null in specific column, "
-							 "add value None to map with key named after column")));
+					  "add value None to map with key named after column")));
 
 			Py_XDECREF(value);
 			value = NULL;
@@ -1754,38 +1760,38 @@ PLyMapping_ToTuple(PLyTypeInfo *info, PyObject *mapping)
 
 
 static HeapTuple
-PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
+PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 {
 	TupleDesc	desc;
 	HeapTuple	tuple;
-	Datum		*values;
-	char		*nulls;
-	int		i;
+	Datum	   *values;
+	char	   *nulls;
+	int			i;
 
 	Assert(PySequence_Check(sequence));
 
 	/*
 	 * Check that sequence length is exactly same as PG tuple's. We actually
-	 * can ignore exceeding items or assume missing ones as null but to
-	 * avoid plpython developer's errors we are strict here
+	 * can ignore exceeding items or assume missing ones as null but to avoid
+	 * plpython developer's errors we are strict here
 	 */
 	desc = lookup_rowtype_tupdesc(info->out.d.typoid, -1);
 	if (PySequence_Length(sequence) != desc->natts)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("returned sequence's length must be same as tuple's length")));
+		errmsg("returned sequence's length must be same as tuple's length")));
 
 	if (info->is_rowtype == 2)
 		PLy_output_tuple_funcs(info, desc);
 	Assert(info->is_rowtype == 1);
 
 	/* Build tuple */
-	values = palloc(sizeof(Datum)*desc->natts);
-	nulls = palloc(sizeof(char)*desc->natts);
-	for (i = 0;  i < desc->natts;  ++i)
+	values = palloc(sizeof(Datum) * desc->natts);
+	nulls = palloc(sizeof(char) * desc->natts);
+	for (i = 0; i < desc->natts; ++i)
 	{
-		PyObject	*value,
-				*so;
+		PyObject   *value,
+				   *so;
 
 		value = so = NULL;
 		PG_TRY();
@@ -1799,16 +1805,16 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 			}
 			else if (value)
 			{
-				char *valuestr;
+				char	   *valuestr;
 
 				so = PyObject_Str(value);
 				if (so == NULL)
 					PLy_elog(ERROR, "can't convert sequence type");
 				valuestr = PyString_AsString(so);
 				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
-						, valuestr
-						, info->out.r.atts[i].typioparam
-						, -1);
+											  ,valuestr
+											  ,info->out.r.atts[i].typioparam
+											  ,-1);
 				Py_DECREF(so);
 				so = NULL;
 				nulls[i] = ' ';
@@ -1836,13 +1842,13 @@ PLySequence_ToTuple(PLyTypeInfo *info, PyObject *sequence)
 
 
 static HeapTuple
-PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
+PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 {
 	TupleDesc	desc;
 	HeapTuple	tuple;
-	Datum		*values;
-	char		*nulls;
-	int		i;
+	Datum	   *values;
+	char	   *nulls;
+	int			i;
 
 	desc = lookup_rowtype_tupdesc(info->out.d.typoid, -1);
 	if (info->is_rowtype == 2)
@@ -1850,13 +1856,13 @@ PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
 	Assert(info->is_rowtype == 1);
 
 	/* Build tuple */
-	values = palloc(sizeof(Datum)*desc->natts);
-	nulls = palloc(sizeof(char)*desc->natts);
-	for (i = 0;  i < desc->natts;  ++i)
+	values = palloc(sizeof(Datum) * desc->natts);
+	nulls = palloc(sizeof(char) * desc->natts);
+	for (i = 0; i < desc->natts; ++i)
 	{
-		char		*key;
-		PyObject	*value,
-				*so;
+		char	   *key;
+		PyObject   *value,
+				   *so;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = so = NULL;
@@ -1870,16 +1876,16 @@ PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
 			}
 			else if (value)
 			{
-				char *valuestr;
+				char	   *valuestr;
 
 				so = PyObject_Str(value);
 				if (so == NULL)
 					PLy_elog(ERROR, "can't convert object type");
 				valuestr = PyString_AsString(so);
 				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
-						, valuestr
-						, info->out.r.atts[i].typioparam
-						, -1);
+											  ,valuestr
+											  ,info->out.r.atts[i].typioparam
+											  ,-1);
 				Py_DECREF(so);
 				so = NULL;
 				nulls[i] = ' ';
@@ -1889,8 +1895,8 @@ PLyObject_ToTuple(PLyTypeInfo *info, PyObject *object)
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("no attribute named \"%s\"", key),
 						 errhint("to return null in specific column, "
-							 "let returned object to have attribute named "
-							 "after column with value None")));
+							   "let returned object to have attribute named "
+								 "after column with value None")));
 
 			Py_XDECREF(value);
 			value = NULL;
@@ -2450,7 +2456,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 
 				PG_TRY();
 				{
-					char *sv = PyString_AsString(so);
+					char	   *sv = PyString_AsString(so);
 
 					plan->values[i] =
 						InputFunctionCall(&(plan->args[i].out.d.typfunc),

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.115 2006/08/18 16:09:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.116 2006/10/04 00:30:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,7 @@ extern void heap_deformtuple(HeapTuple tuple, TupleDesc tupleDesc,
 				 Datum *values, char *nulls);
 extern void heap_freetuple(HeapTuple htup);
 extern MinimalTuple heap_form_minimal_tuple(TupleDesc tupleDescriptor,
-				Datum *values, bool *isnull);
+						Datum *values, bool *isnull);
 extern void heap_free_minimal_tuple(MinimalTuple mtup);
 extern MinimalTuple heap_copy_minimal_tuple(MinimalTuple mtup);
 extern HeapTuple heap_tuple_from_minimal_tuple(MinimalTuple mtup);

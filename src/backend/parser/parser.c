@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.67 2006/07/15 03:35:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.68 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ raw_parser(const char *str)
  * Intermediate filter between parser and base lexer (base_yylex in scan.l).
  *
  * The filter is needed because in some cases the standard SQL grammar
- * requires more than one token lookahead.  We reduce these cases to one-token
+ * requires more than one token lookahead.	We reduce these cases to one-token
  * lookahead by combining tokens here, in order to keep the grammar LALR(1).
  *
  * Using a filter is simpler than trying to recognize multiword tokens
@@ -91,15 +91,16 @@ filtered_base_yylex(void)
 	switch (cur_token)
 	{
 		case WITH:
+
 			/*
 			 * WITH CASCADED, LOCAL, or CHECK must be reduced to one token
 			 *
-			 * XXX an alternative way is to recognize just WITH_TIME and
-			 * put the ugliness into the datetime datatype productions
-			 * instead of WITH CHECK OPTION.  However that requires promoting
-			 * WITH to a fully reserved word.  If we ever have to do that
-			 * anyway (perhaps for SQL99 recursive queries), come back and
-			 * simplify this code.
+			 * XXX an alternative way is to recognize just WITH_TIME and put
+			 * the ugliness into the datetime datatype productions instead of
+			 * WITH CHECK OPTION.  However that requires promoting WITH to a
+			 * fully reserved word.  If we ever have to do that anyway
+			 * (perhaps for SQL99 recursive queries), come back and simplify
+			 * this code.
 			 */
 			lookahead_token = base_yylex();
 			switch (lookahead_token)

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.47 2006/08/16 04:32:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.48 2006/10/04 00:30:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 
 /* We don't want to include primnodes.h here, so make a stub reference */
 typedef struct Node *fmNodePtr;
+
 /* Likewise, avoid including stringinfo.h here */
 typedef struct StringInfoData *fmStringInfo;
 
@@ -322,7 +323,7 @@ extern int no_such_variable
  * To compile with versions of PostgreSQL that do not support this,
  * you may put an #ifdef/#endif test around it.  Note that in a multiple-
  * source-file module, the macro call should only appear once.
- * 
+ *
  * The specific items included in the magic block are intended to be ones that
  * are custom-configurable and especially likely to break dynamically loaded
  * modules if they were compiled with other values.  Also, the length field
@@ -333,11 +334,11 @@ extern int no_such_variable
 /* Definition of the magic block structure */
 typedef struct
 {
-	int		len;				/* sizeof(this struct) */
-	int		version;			/* PostgreSQL major version */
-	int		funcmaxargs;		/* FUNC_MAX_ARGS */
-	int		indexmaxkeys;		/* INDEX_MAX_KEYS */
-	int		namedatalen;		/* NAMEDATALEN */
+	int			len;			/* sizeof(this struct) */
+	int			version;		/* PostgreSQL major version */
+	int			funcmaxargs;	/* FUNC_MAX_ARGS */
+	int			indexmaxkeys;	/* INDEX_MAX_KEYS */
+	int			namedatalen;	/* NAMEDATALEN */
 } Pg_magic_struct;
 
 /* The actual data block contents */
@@ -457,15 +458,15 @@ extern Datum OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 
 /* Special cases for convenient invocation of datatype I/O functions. */
 extern Datum InputFunctionCall(FmgrInfo *flinfo, char *str,
-							   Oid typioparam, int32 typmod);
+				  Oid typioparam, int32 typmod);
 extern Datum OidInputFunctionCall(Oid functionId, char *str,
-								  Oid typioparam, int32 typmod);
+					 Oid typioparam, int32 typmod);
 extern char *OutputFunctionCall(FmgrInfo *flinfo, Datum val);
 extern char *OidOutputFunctionCall(Oid functionId, Datum val);
 extern Datum ReceiveFunctionCall(FmgrInfo *flinfo, fmStringInfo buf,
-								 Oid typioparam, int32 typmod);
+					Oid typioparam, int32 typmod);
 extern Datum OidReceiveFunctionCall(Oid functionId, fmStringInfo buf,
-									Oid typioparam, int32 typmod);
+					   Oid typioparam, int32 typmod);
 extern bytea *SendFunctionCall(FmgrInfo *flinfo, Datum val);
 extern bytea *OidSendFunctionCall(Oid functionId, Datum val);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.1 2006/07/03 22:45:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.2 2006/10/04 00:29:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ transformRelOptions(Datum oldOptions, List *defList,
 	/* Copy any oldOptions that aren't to be replaced */
 	if (oldOptions != (Datum) 0)
 	{
-		ArrayType *array = DatumGetArrayTypeP(oldOptions);
+		ArrayType  *array = DatumGetArrayTypeP(oldOptions);
 		Datum	   *oldoptions;
 		int			noldoptions;
 		int			i;
@@ -71,15 +71,15 @@ transformRelOptions(Datum oldOptions, List *defList,
 
 		for (i = 0; i < noldoptions; i++)
 		{
-			text   *oldoption = DatumGetTextP(oldoptions[i]);
-			char   *text_str = (char *) VARATT_DATA(oldoption);
-			int		text_len = VARATT_SIZE(oldoption) - VARHDRSZ;
+			text	   *oldoption = DatumGetTextP(oldoptions[i]);
+			char	   *text_str = (char *) VARATT_DATA(oldoption);
+			int			text_len = VARATT_SIZE(oldoption) - VARHDRSZ;
 
 			/* Search for a match in defList */
 			foreach(cell, defList)
 			{
-				DefElem	   *def = lfirst(cell);
-				int		kw_len = strlen(def->defname);
+				DefElem    *def = lfirst(cell);
+				int			kw_len = strlen(def->defname);
 
 				if (text_len > kw_len && text_str[kw_len] == '=' &&
 					pg_strncasecmp(text_str, def->defname, kw_len) == 0)
@@ -96,33 +96,33 @@ transformRelOptions(Datum oldOptions, List *defList,
 	}
 
 	/*
-	 * If CREATE/SET, add new options to array; if RESET, just check that
-	 * the user didn't say RESET (option=val).  (Must do this because the
-	 * grammar doesn't enforce it.)
+	 * If CREATE/SET, add new options to array; if RESET, just check that the
+	 * user didn't say RESET (option=val).  (Must do this because the grammar
+	 * doesn't enforce it.)
 	 */
 	foreach(cell, defList)
 	{
-		DefElem	   *def = lfirst(cell);
+		DefElem    *def = lfirst(cell);
 
 		if (isReset)
 		{
 			if (def->arg != NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("RESET must not include values for parameters")));
+					errmsg("RESET must not include values for parameters")));
 		}
 		else
 		{
-			text   *t;
+			text	   *t;
 			const char *value;
-			Size	len;
+			Size		len;
 
 			if (ignoreOids && pg_strcasecmp(def->defname, "oids") == 0)
 				continue;
 
 			/*
-			 * Flatten the DefElem into a text string like "name=arg".
-			 * If we have just "name", assume "name=true" is meant.
+			 * Flatten the DefElem into a text string like "name=arg". If we
+			 * have just "name", assume "name=true" is meant.
 			 */
 			if (def->arg != NULL)
 				value = defGetString(def);
@@ -163,10 +163,10 @@ transformRelOptions(Datum oldOptions, List *defList,
  * containing the corresponding value, or NULL if the keyword does not appear.
  */
 void
-parseRelOptions(Datum options, int numkeywords, const char * const *keywords,
+parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
 				char **values, bool validate)
 {
-	ArrayType *array;
+	ArrayType  *array;
 	Datum	   *optiondatums;
 	int			noptions;
 	int			i;
@@ -187,21 +187,21 @@ parseRelOptions(Datum options, int numkeywords, const char * const *keywords,
 
 	for (i = 0; i < noptions; i++)
 	{
-		text   *optiontext = DatumGetTextP(optiondatums[i]);
-		char   *text_str = (char *) VARATT_DATA(optiontext);
-		int		text_len = VARATT_SIZE(optiontext) - VARHDRSZ;
-		int		j;
+		text	   *optiontext = DatumGetTextP(optiondatums[i]);
+		char	   *text_str = (char *) VARATT_DATA(optiontext);
+		int			text_len = VARATT_SIZE(optiontext) - VARHDRSZ;
+		int			j;
 
 		/* Search for a match in keywords */
 		for (j = 0; j < numkeywords; j++)
 		{
-			int		kw_len = strlen(keywords[j]);
+			int			kw_len = strlen(keywords[j]);
 
 			if (text_len > kw_len && text_str[kw_len] == '=' &&
 				pg_strncasecmp(text_str, keywords[j], kw_len) == 0)
 			{
-				char   *value;
-				int		value_len;
+				char	   *value;
+				int			value_len;
 
 				if (values[j] && validate)
 					ereport(ERROR,
@@ -218,8 +218,8 @@ parseRelOptions(Datum options, int numkeywords, const char * const *keywords,
 		}
 		if (j >= numkeywords && validate)
 		{
-			char *s;
-			char *p;
+			char	   *s;
+			char	   *p;
 
 			s = DatumGetCString(DirectFunctionCall1(textout, optiondatums[i]));
 			p = strchr(s, '=');
@@ -240,17 +240,17 @@ bytea *
 default_reloptions(Datum reloptions, bool validate,
 				   int minFillfactor, int defaultFillfactor)
 {
-	static const char * const default_keywords[1] = { "fillfactor" };
-	char   *values[1];
-	int32	fillfactor;
+	static const char *const default_keywords[1] = {"fillfactor"};
+	char	   *values[1];
+	int32		fillfactor;
 	StdRdOptions *result;
 
 	parseRelOptions(reloptions, 1, default_keywords, values, validate);
 
 	/*
 	 * If no options, we can just return NULL rather than doing anything.
-	 * (defaultFillfactor is thus not used, but we require callers to pass
-	 * it anyway since we would need it if more options were added.)
+	 * (defaultFillfactor is thus not used, but we require callers to pass it
+	 * anyway since we would need it if more options were added.)
 	 */
 	if (values[0] == NULL)
 		return NULL;

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.279 2006/08/12 20:05:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.280 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,17 +76,17 @@ static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			ScanDirection direction,
 			DestReceiver *dest);
 static void ExecSelect(TupleTableSlot *slot,
-					   DestReceiver *dest, EState *estate);
+		   DestReceiver *dest, EState *estate);
 static void ExecInsert(TupleTableSlot *slot, ItemPointer tupleid,
-					   TupleTableSlot *planSlot,
-					   DestReceiver *dest, EState *estate);
+		   TupleTableSlot *planSlot,
+		   DestReceiver *dest, EState *estate);
 static void ExecDelete(ItemPointer tupleid,
-					   TupleTableSlot *planSlot,
-					   DestReceiver *dest, EState *estate);
+		   TupleTableSlot *planSlot,
+		   DestReceiver *dest, EState *estate);
 static void ExecUpdate(TupleTableSlot *slot, ItemPointer tupleid,
-					   TupleTableSlot *planSlot,
-					   DestReceiver *dest, EState *estate);
-static void ExecProcessReturning(ProjectionInfo	*projectReturning,
+		   TupleTableSlot *planSlot,
+		   DestReceiver *dest, EState *estate);
+static void ExecProcessReturning(ProjectionInfo *projectReturning,
 					 TupleTableSlot *tupleSlot,
 					 TupleTableSlot *planSlot,
 					 DestReceiver *dest);
@@ -758,32 +758,33 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		econtext = CreateExprContext(estate);
 
 		/*
-		 * Build a projection for each result rel.  Note that any SubPlans
-		 * in the RETURNING lists get attached to the topmost plan node.
+		 * Build a projection for each result rel.	Note that any SubPlans in
+		 * the RETURNING lists get attached to the topmost plan node.
 		 */
 		Assert(list_length(parseTree->returningLists) == estate->es_num_result_relations);
 		resultRelInfo = estate->es_result_relations;
 		foreach(l, parseTree->returningLists)
 		{
-			List   *rlist = (List *) lfirst(l);
-			List   *rliststate;
+			List	   *rlist = (List *) lfirst(l);
+			List	   *rliststate;
 
 			rliststate = (List *) ExecInitExpr((Expr *) rlist, planstate);
 			resultRelInfo->ri_projectReturning =
 				ExecBuildProjectionInfo(rliststate, econtext, slot);
 			resultRelInfo++;
 		}
+
 		/*
-		 * Because we already ran ExecInitNode() for the top plan node,
-		 * any subplans we just attached to it won't have been initialized;
-		 * so we have to do it here.  (Ugly, but the alternatives seem worse.)
+		 * Because we already ran ExecInitNode() for the top plan node, any
+		 * subplans we just attached to it won't have been initialized; so we
+		 * have to do it here.	(Ugly, but the alternatives seem worse.)
 		 */
 		foreach(l, planstate->subPlan)
 		{
 			SubPlanState *sstate = (SubPlanState *) lfirst(l);
 
 			Assert(IsA(sstate, SubPlanState));
-			if (sstate->planstate == NULL)			/* already inited? */
+			if (sstate->planstate == NULL)		/* already inited? */
 				ExecInitSubPlan(sstate, estate, eflags);
 		}
 	}
@@ -1191,7 +1192,7 @@ lnext:	;
 													   erm->rti,
 													   &update_ctid,
 													   update_xmax,
-													   estate->es_snapshot->curcid);
+												estate->es_snapshot->curcid);
 								if (!TupIsNull(newSlot))
 								{
 									slot = planSlot = newSlot;
@@ -1215,9 +1216,9 @@ lnext:	;
 			}
 
 			/*
-			 * Create a new "clean" tuple with all junk attributes removed.
-			 * We don't need to do this for DELETE, however (there will
-			 * in fact be no non-junk attributes in a DELETE!)
+			 * Create a new "clean" tuple with all junk attributes removed. We
+			 * don't need to do this for DELETE, however (there will in fact
+			 * be no non-junk attributes in a DELETE!)
 			 */
 			if (operation != CMD_DELETE)
 				slot = ExecFilterJunk(junkfilter, slot);
@@ -1515,8 +1516,8 @@ ldelete:;
 	if (resultRelInfo->ri_projectReturning)
 	{
 		/*
-		 * We have to put the target tuple into a slot, which means
-		 * first we gotta fetch it.  We can use the trigger tuple slot.
+		 * We have to put the target tuple into a slot, which means first we
+		 * gotta fetch it.	We can use the trigger tuple slot.
 		 */
 		TupleTableSlot *slot = estate->es_trig_tuple_slot;
 		HeapTupleData deltuple;
@@ -1815,13 +1816,13 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
  * dest: where to send the output
  */
 static void
-ExecProcessReturning(ProjectionInfo	*projectReturning,
+ExecProcessReturning(ProjectionInfo *projectReturning,
 					 TupleTableSlot *tupleSlot,
 					 TupleTableSlot *planSlot,
 					 DestReceiver *dest)
 {
-	ExprContext		*econtext = projectReturning->pi_exprContext;
-	TupleTableSlot	*retSlot;
+	ExprContext *econtext = projectReturning->pi_exprContext;
+	TupleTableSlot *retSlot;
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
@@ -1942,12 +1943,12 @@ EvalPlanQual(EState *estate, Index rti,
 			 * If tuple was inserted by our own transaction, we have to check
 			 * cmin against curCid: cmin >= curCid means our command cannot
 			 * see the tuple, so we should ignore it.  Without this we are
-			 * open to the "Halloween problem" of indefinitely re-updating
-			 * the same tuple.  (We need not check cmax because
-			 * HeapTupleSatisfiesDirty will consider a tuple deleted by
-			 * our transaction dead, regardless of cmax.)  We just checked
-			 * that priorXmax == xmin, so we can test that variable instead
-			 * of doing HeapTupleHeaderGetXmin again.
+			 * open to the "Halloween problem" of indefinitely re-updating the
+			 * same tuple.	(We need not check cmax because
+			 * HeapTupleSatisfiesDirty will consider a tuple deleted by our
+			 * transaction dead, regardless of cmax.)  We just checked that
+			 * priorXmax == xmin, so we can test that variable instead of
+			 * doing HeapTupleHeaderGetXmin again.
 			 */
 			if (TransactionIdIsCurrentTransactionId(priorXmax) &&
 				HeapTupleHeaderGetCmin(tuple.t_data) >= curCid)
@@ -2379,7 +2380,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("tablespace \"%s\" does not exist",
 							parseTree->intoTableSpaceName)));
-	} else
+	}
+	else
 	{
 		tablespaceId = GetDefaultTablespace();
 		/* note InvalidOid is OK in this case */
@@ -2426,15 +2428,15 @@ OpenIntoRel(QueryDesc *queryDesc)
 	FreeTupleDesc(tupdesc);
 
 	/*
-	 * Advance command counter so that the newly-created relation's
-	 * catalog tuples will be visible to heap_open.
+	 * Advance command counter so that the newly-created relation's catalog
+	 * tuples will be visible to heap_open.
 	 */
 	CommandCounterIncrement();
 
 	/*
 	 * If necessary, create a TOAST table for the INTO relation. Note that
-	 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so
-	 * that the TOAST table will be visible for insertion.
+	 * AlterTableCreateToastTable ends with CommandCounterIncrement(), so that
+	 * the TOAST table will be visible for insertion.
 	 */
 	AlterTableCreateToastTable(intoRelationId);
 
@@ -2449,11 +2451,11 @@ OpenIntoRel(QueryDesc *queryDesc)
 	/*
 	 * We can skip WAL-logging the insertions, unless PITR is in use.
 	 *
-	 * Note that for a non-temp INTO table, this is safe only because we
-	 * know that the catalog changes above will have been WAL-logged, and
-	 * so RecordTransactionCommit will think it needs to WAL-log the
-	 * eventual transaction commit.  Else the commit might be lost, even
-	 * though all the data is safely fsync'd ...
+	 * Note that for a non-temp INTO table, this is safe only because we know
+	 * that the catalog changes above will have been WAL-logged, and so
+	 * RecordTransactionCommit will think it needs to WAL-log the eventual
+	 * transaction commit.	Else the commit might be lost, even though all the
+	 * data is safely fsync'd ...
 	 */
 	estate->es_into_relation_use_wal = XLogArchivingActive();
 	estate->es_into_relation_descriptor = intoRelationDesc;

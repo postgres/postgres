@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.54 2006/06/27 02:56:41 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.55 2006/10/04 00:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,16 +363,17 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 #ifndef WIN32
 		tm->tmpFH = tmpfile();
 #else
+
 		/*
-		 *	On WIN32, tmpfile() generates a filename in the root directory,
-		 *	which requires administrative permissions on certain systems.
-		 *	Loop until we find a unique file name we can create.
+		 * On WIN32, tmpfile() generates a filename in the root directory,
+		 * which requires administrative permissions on certain systems. Loop
+		 * until we find a unique file name we can create.
 		 */
 		while (1)
 		{
-			char *name;
-			int fd;
-			
+			char	   *name;
+			int			fd;
+
 			name = _tempnam(NULL, "pg_temp_");
 			if (name == NULL)
 				break;
@@ -380,7 +381,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 					  O_TEMPORARY, S_IRUSR | S_IWUSR);
 			free(name);
 
-			if (fd != -1)	/* created a file */
+			if (fd != -1)		/* created a file */
 			{
 				tm->tmpFH = fdopen(fd, "w+b");
 				break;
@@ -1060,7 +1061,7 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 		res = fwrite(&buf[0], 1, cnt, th->tarFH);
 		if (res != cnt)
 			die_horribly(AH, modulename,
-						 "could not write to output file: %s\n", strerror(errno));
+					"could not write to output file: %s\n", strerror(errno));
 		len += res;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.4 2006/07/13 16:57:31 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.5 2006/10/04 00:29:46 momjian Exp $
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -63,11 +63,12 @@ extern Datum pgrowlocks(PG_FUNCTION_ARGS);
  */
 #undef MAKERANGEVARFROMNAMELIST_HAS_TWO_ARGS
 
-typedef struct {
+typedef struct
+{
 	Relation	rel;
 	HeapScanDesc scan;
-	int ncolumns;
-} MyData;
+	int			ncolumns;
+}	MyData;
 
 Datum
 pgrowlocks(PG_FUNCTION_ARGS)
@@ -78,7 +79,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	AttInMetadata *attinmeta;
 	Datum		result;
-	MyData *mydata;
+	MyData	   *mydata;
 	Relation	rel;
 
 	if (SRF_IS_FIRSTCALL())
@@ -96,8 +97,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 		relname = PG_GETARG_TEXT_P(0);
 #ifdef MAKERANGEVARFROMNAMELIST_HAS_TWO_ARGS
-		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,												 "pgrowlocks"));
-
+		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname, "pgrowlocks"));
 #else
 		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 #endif
@@ -114,7 +114,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 	attinmeta = funcctx->attinmeta;
-	mydata = (MyData *)funcctx->user_fctx;
+	mydata = (MyData *) funcctx->user_fctx;
 	scan = mydata->scan;
 
 	/* scan the relation */
@@ -124,16 +124,16 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
 		if (HeapTupleSatisfiesUpdate(tuple->t_data, GetCurrentCommandId(), scan->rs_cbuf)
-		    == HeapTupleBeingUpdated)
+			== HeapTupleBeingUpdated)
 		{
 
-			char **values;
-			int i;
+			char	  **values;
+			int			i;
 
 			values = (char **) palloc(mydata->ncolumns * sizeof(char *));
 
 			i = 0;
-			values[i++] = (char *)DirectFunctionCall1(tidout, PointerGetDatum(&tuple->t_self));
+			values[i++] = (char *) DirectFunctionCall1(tidout, PointerGetDatum(&tuple->t_self));
 
 #ifdef HEAP_XMAX_SHARED_LOCK
 			if (tuple->t_data->t_infomask & HEAP_XMAX_SHARED_LOCK)
@@ -143,15 +143,15 @@ pgrowlocks(PG_FUNCTION_ARGS)
 #else
 			values[i++] = pstrdup("Exclusive");
 #endif
-			values[i] = palloc(NCHARS*sizeof(char));
+			values[i] = palloc(NCHARS * sizeof(char));
 			snprintf(values[i++], NCHARS, "%d", HeapTupleHeaderGetXmax(tuple->t_data));
 #ifdef HEAP_XMAX_SHARED_LOCK
 			if (tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI)
 			{
 				TransactionId *xids;
-				int nxids;
-				int j;
-				int isValidXid = 0;		/* any valid xid ever exists? */
+				int			nxids;
+				int			j;
+				int			isValidXid = 0;		/* any valid xid ever exists? */
 
 				values[i++] = pstrdup("true");
 				nxids = GetMultiXactIdMembers(HeapTupleHeaderGetXmax(tuple->t_data), &xids);
@@ -160,45 +160,44 @@ pgrowlocks(PG_FUNCTION_ARGS)
 					elog(ERROR, "GetMultiXactIdMembers returns error");
 				}
 
-				values[i] = palloc(NCHARS*nxids);
-				values[i+1] = palloc(NCHARS*nxids);
+				values[i] = palloc(NCHARS * nxids);
+				values[i + 1] = palloc(NCHARS * nxids);
 				strcpy(values[i], "{");
-				strcpy(values[i+1], "{");
+				strcpy(values[i + 1], "{");
 
-				for (j=0;j<nxids;j++)
+				for (j = 0; j < nxids; j++)
 				{
-					char buf[NCHARS];
+					char		buf[NCHARS];
 
 					if (TransactionIdIsInProgress(xids[j]))
 					{
 						if (isValidXid)
 						{
 							strcat(values[i], ",");
-							strcat(values[i+1], ",");
+							strcat(values[i + 1], ",");
 						}
 						snprintf(buf, NCHARS, "%d", xids[j]);
 						strcat(values[i], buf);
 						snprintf(buf, NCHARS, "%d", BackendXidGetPid(xids[j]));
-						strcat(values[i+1], buf);
+						strcat(values[i + 1], buf);
 
 						isValidXid = 1;
 					}
 				}
 
 				strcat(values[i], "}");
-				strcat(values[i+1], "}");
+				strcat(values[i + 1], "}");
 				i++;
 			}
 			else
 			{
 				values[i++] = pstrdup("false");
-				values[i] = palloc(NCHARS*sizeof(char));
+				values[i] = palloc(NCHARS * sizeof(char));
 				snprintf(values[i++], NCHARS, "{%d}", HeapTupleHeaderGetXmax(tuple->t_data));
 
-				values[i] = palloc(NCHARS*sizeof(char));
+				values[i] = palloc(NCHARS * sizeof(char));
 				snprintf(values[i++], NCHARS, "{%d}", BackendXidGetPid(HeapTupleHeaderGetXmax(tuple->t_data)));
 			}
-
 #else
 			values[i++] = pstrdup("false");
 			values[i++] = pstrdup("{}");

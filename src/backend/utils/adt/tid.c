@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.55 2006/08/25 04:06:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.56 2006/10/04 00:29:59 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -164,7 +164,7 @@ tideq(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) == 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1, arg2) == 0);
 }
 
 Datum
@@ -173,7 +173,7 @@ tidne(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) != 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1, arg2) != 0);
 }
 
 Datum
@@ -182,7 +182,7 @@ tidlt(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) < 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1, arg2) < 0);
 }
 
 Datum
@@ -191,7 +191,7 @@ tidle(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) <= 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1, arg2) <= 0);
 }
 
 Datum
@@ -200,7 +200,7 @@ tidgt(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) > 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1, arg2) > 0);
 }
 
 Datum
@@ -209,7 +209,7 @@ tidge(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_BOOL(ItemPointerCompare(arg1,arg2) >= 0);
+	PG_RETURN_BOOL(ItemPointerCompare(arg1, arg2) >= 0);
 }
 
 Datum
@@ -227,7 +227,7 @@ tidlarger(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_ITEMPOINTER(ItemPointerCompare(arg1,arg2) >= 0 ? arg1 : arg2);
+	PG_RETURN_ITEMPOINTER(ItemPointerCompare(arg1, arg2) >= 0 ? arg1 : arg2);
 }
 
 Datum
@@ -236,7 +236,7 @@ tidsmaller(PG_FUNCTION_ARGS)
 	ItemPointer arg1 = PG_GETARG_ITEMPOINTER(0);
 	ItemPointer arg2 = PG_GETARG_ITEMPOINTER(1);
 
-	PG_RETURN_ITEMPOINTER(ItemPointerCompare(arg1,arg2) <= 0 ? arg1 : arg2);
+	PG_RETURN_ITEMPOINTER(ItemPointerCompare(arg1, arg2) <= 0 ? arg1 : arg2);
 }
 
 

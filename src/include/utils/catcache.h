@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.61 2006/07/13 18:01:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.62 2006/10/04 00:30:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ typedef struct catctup
 
 	/*
 	 * Each tuple in a cache is a member of a Dllist that stores the elements
-	 * of its hash bucket.  We keep each Dllist in LRU order to speed repeated
+	 * of its hash bucket.	We keep each Dllist in LRU order to speed repeated
 	 * lookups.
 	 */
 	Dlelem		cache_elem;		/* list member of per-bucket list */

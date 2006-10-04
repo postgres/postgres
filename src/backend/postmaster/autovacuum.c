@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.26 2006/07/31 20:09:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.27 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,10 +269,10 @@ AutoVacMain(int argc, char *argv[])
 	BaseInit();
 
 	/*
-	 * Create a per-backend PGPROC struct in shared memory, except in
-	 * the EXEC_BACKEND case where this was done in SubPostmasterMain.
-	 * We must do this before we can use LWLocks (and in the EXEC_BACKEND
-	 * case we already had to do some stuff with LWLocks).
+	 * Create a per-backend PGPROC struct in shared memory, except in the
+	 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must do
+	 * this before we can use LWLocks (and in the EXEC_BACKEND case we already
+	 * had to do some stuff with LWLocks).
 	 */
 #ifndef EXEC_BACKEND
 	InitProcess();
@@ -305,9 +305,9 @@ AutoVacMain(int argc, char *argv[])
 	PG_SETMASK(&UnBlockSig);
 
 	/*
-	 * Force zero_damaged_pages OFF in the autovac process, even if it is
-	 * set in postgresql.conf.  We don't really want such a dangerous option
-	 * being applied non-interactively.
+	 * Force zero_damaged_pages OFF in the autovac process, even if it is set
+	 * in postgresql.conf.	We don't really want such a dangerous option being
+	 * applied non-interactively.
 	 */
 	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_OVERRIDE);
 
@@ -387,8 +387,8 @@ AutoVacMain(int argc, char *argv[])
 			}
 
 			/*
-			 * Otherwise, skip a database with no pgstat entry; it means it hasn't
-			 * seen any activity.
+			 * Otherwise, skip a database with no pgstat entry; it means it
+			 * hasn't seen any activity.
 			 */
 			tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
 			if (!tmp->entry)
@@ -409,7 +409,7 @@ AutoVacMain(int argc, char *argv[])
 		 * backend signalled the postmaster.  Pick up the database with the
 		 * greatest age, and apply a database-wide vacuum on it.
 		 */
-		int32			oldest = 0;
+		int32		oldest = 0;
 
 		whole_db = true;
 		foreach(cell, dblist)
@@ -535,7 +535,7 @@ process_whole_db(void)
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
 
-	 /* functions in indexes may want a snapshot set */
+	/* functions in indexes may want a snapshot set */
 	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 	/*
@@ -593,13 +593,13 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
 
-	 /* functions in indexes may want a snapshot set */
+	/* functions in indexes may want a snapshot set */
 	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 	/*
-	 * Clean up any dead statistics collector entries for this DB.
-	 * We always want to do this exactly once per DB-processing cycle,
-	 * even if we find nothing worth vacuuming in the database.
+	 * Clean up any dead statistics collector entries for this DB. We always
+	 * want to do this exactly once per DB-processing cycle, even if we find
+	 * nothing worth vacuuming in the database.
 	 */
 	pgstat_vacuum_tabstat();
 
@@ -948,7 +948,7 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
 
 /*
  * autovac_report_activity
- * 		Report to pgstat what autovacuum is doing
+ *		Report to pgstat what autovacuum is doing
  *
  * We send a SQL string corresponding to what the user would see if the
  * equivalent command was to be issued manually.
@@ -989,13 +989,13 @@ autovac_report_activity(VacuumStmt *vacstmt, List *relids)
 		char	   *nspname = get_namespace_name(get_rel_namespace(relid));
 
 		/*
-		 * Paranoia is appropriate here in case relation was recently
-		 * dropped --- the lsyscache routines we just invoked will return
-		 * NULL rather than failing.
+		 * Paranoia is appropriate here in case relation was recently dropped
+		 * --- the lsyscache routines we just invoked will return NULL rather
+		 * than failing.
 		 */
 		if (relname && nspname)
 		{
-			int		len = strlen(activity);
+			int			len = strlen(activity);
 
 			snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
 					 " %s.%s", nspname, relname);

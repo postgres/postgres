@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.50 2006/06/14 16:49:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.51 2006/10/04 00:30:05 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -45,6 +45,7 @@ extern volatile bool sigint_interrupt_enabled;
 extern sigjmp_buf sigint_interrupt_jmp;
 
 extern volatile bool cancel_pressed;
+
 /* Note: cancel_pressed is defined in print.c, see that file for reasons */
 
 extern void setup_cancel_handler(void);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.96 2006/09/27 18:40:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.97 2006/10/04 00:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,14 +62,14 @@
  *	hash bucket garbage collector if need be.  Right now, it seems
  *	unnecessary.
  *
- *      (e) Add-ins can request their own logical shared memory segments
- *  by calling RegisterAddinContext() from the preload-libraries hook.
- *  Each call establishes a uniquely named add-in shared memopry
- *  context which will be set up as part of postgres intialisation.
- *  Memory can be allocated from these contexts using
- *  ShmemAllocFromContext(), and can be reset to its initial condition
- *  using ShmemResetContext().  Also, RegisterAddinLWLock(LWLockid *lock_ptr)
- *  can be used to request that a LWLock be allocated, placed into *lock_ptr.
+ *		(e) Add-ins can request their own logical shared memory segments
+ *	by calling RegisterAddinContext() from the preload-libraries hook.
+ *	Each call establishes a uniquely named add-in shared memopry
+ *	context which will be set up as part of postgres intialisation.
+ *	Memory can be allocated from these contexts using
+ *	ShmemAllocFromContext(), and can be reset to its initial condition
+ *	using ShmemResetContext().	Also, RegisterAddinLWLock(LWLockid *lock_ptr)
+ *	can be used to request that a LWLock be allocated, placed into *lock_ptr.
  */
 
 #include "postgres.h"
@@ -98,9 +98,9 @@ static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 /* Structures and globals for managing add-in shared memory contexts */
 typedef struct context
 {
-	char           *name;
-	Size            size;
-	PGShmemHeader  *seg_hdr;
+	char	   *name;
+	Size		size;
+	PGShmemHeader *seg_hdr;
 	struct context *next;
 } ContextNode;
 
@@ -138,9 +138,9 @@ InitShmemAllocation(void)
 	Assert(shmhdr != NULL);
 
 	/*
-	 * Initialize the spinlock used by ShmemAlloc.  We have to do the
-	 * space allocation the hard way, since obviously ShmemAlloc can't
-	 * be called yet.
+	 * Initialize the spinlock used by ShmemAlloc.	We have to do the space
+	 * allocation the hard way, since obviously ShmemAlloc can't be called
+	 * yet.
 	 */
 	ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
 	shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
@@ -153,22 +153,22 @@ InitShmemAllocation(void)
 	ShmemIndex = (HTAB *) NULL;
 
 	/*
-	 * Initialize ShmemVariableCache for transaction manager.
-	 * (This doesn't really belong here, but not worth moving.)
+	 * Initialize ShmemVariableCache for transaction manager. (This doesn't
+	 * really belong here, but not worth moving.)
 	 */
 	ShmemVariableCache = (VariableCache)
-	ShmemAlloc(sizeof(*ShmemVariableCache));
+		ShmemAlloc(sizeof(*ShmemVariableCache));
 	memset(ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
 }
 
 /*
  * RegisterAddinContext -- Register the requirement for a named shared
- *                         memory context.
+ *						   memory context.
  */
 void
 RegisterAddinContext(const char *name, Size size)
 {
-	char *newstr = malloc(strlen(name) + 1);
+	char	   *newstr = malloc(strlen(name) + 1);
 	ContextNode *node = malloc(sizeof(ContextNode));
 
 	strcpy(newstr, name);
@@ -185,7 +185,7 @@ RegisterAddinContext(const char *name, Size size)
 
 /*
  * ContextFromName -- Return the ContextNode for the given named
- *                    context, or NULL if not found.
+ *					  context, or NULL if not found.
  */
 static ContextNode *
 ContextFromName(const char *name)
@@ -203,7 +203,7 @@ ContextFromName(const char *name)
 
 /*
  * InitAddinContexts -- Initialise the registered addin shared memory
- *                      contexts. 
+ *						contexts.
  */
 void
 InitAddinContexts(void *start)
@@ -218,7 +218,7 @@ InitAddinContexts(void *start)
 		next_segment->totalsize = context->size;
 		next_segment->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
 
-		next_segment = (PGShmemHeader *) 
+		next_segment = (PGShmemHeader *)
 			((char *) next_segment + context->size);
 		context = context->next;
 	}
@@ -245,7 +245,7 @@ ShmemResetContext(const char *name)
 
 /*
  * AddinShmemSize -- Report how much shared memory has been registered
- *  for add-ins.
+ *	for add-ins.
  */
 Size
 AddinShmemSize(void)
@@ -265,15 +265,15 @@ AddinShmemSize(void)
 void *
 ShmemAllocFromContext(Size size, const char *context_name)
 {
-	Size		  newStart;
-	Size	 	  newFree;
-	void	     *newSpace;
-	ContextNode  *context;
+	Size		newStart;
+	Size		newFree;
+	void	   *newSpace;
+	ContextNode *context;
 
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PGShmemHeader *shmemseghdr = ShmemSegHdr;
 
-	/* 
+	/*
 	 * if context_name is provided, allocate from the named context
 	 */
 	if (context_name)
@@ -480,8 +480,8 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			 * be trying to init the shmem index itself.
 			 *
 			 * Notice that the ShmemIndexLock is released before the shmem
-			 * index has been initialized.  This should be OK because no
-			 * other process can be accessing shared memory yet.
+			 * index has been initialized.	This should be OK because no other
+			 * process can be accessing shared memory yet.
 			 */
 			Assert(shmemseghdr->indexoffset == 0);
 			structPtr = ShmemAlloc(size);

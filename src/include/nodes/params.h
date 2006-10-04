@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/params.h,v 1.32 2006/09/06 20:40:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/params.h,v 1.33 2006/10/04 00:30:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
  * ----------------
  */
 
-#define PARAM_FLAG_CONST	0x0001			/* parameter is constant */
+#define PARAM_FLAG_CONST	0x0001		/* parameter is constant */
 
 typedef struct ParamExternData
 {

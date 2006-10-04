@@ -89,22 +89,27 @@ inner_int_union(ArrayType *a, ArrayType *b)
 
 	if (!r)
 	{
-		int 	na = ARRNELEMS(a),
-				nb = ARRNELEMS(b);
-		int		*da = ARRPTR(a),
-				*db = ARRPTR(b);
-		int		i,j, *dr;
+		int			na = ARRNELEMS(a),
+					nb = ARRNELEMS(b);
+		int		   *da = ARRPTR(a),
+				   *db = ARRPTR(b);
+		int			i,
+					j,
+				   *dr;
 
 		r = new_intArrayType(na + nb);
 		dr = ARRPTR(r);
 
 		/* union */
 		i = j = 0;
-		while (i < na && j < nb) {
-			if (da[i] == db[j]) {
+		while (i < na && j < nb)
+		{
+			if (da[i] == db[j])
+			{
 				*dr++ = da[i++];
 				j++;
-			} else if (da[i] < db[j])
+			}
+			else if (da[i] < db[j])
 				*dr++ = da[i++];
 			else
 				*dr++ = db[j++];
@@ -115,7 +120,7 @@ inner_int_union(ArrayType *a, ArrayType *b)
 		while (j < nb)
 			*dr++ = db[j++];
 
-		r = resize_intArrayType(r, dr-ARRPTR(r));
+		r = resize_intArrayType(r, dr - ARRPTR(r));
 	}
 
 	if (ARRNELEMS(r) > 1)

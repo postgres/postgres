@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.89 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.90 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "utils/typcache.h"
 
 
-static Oid binary_oper_exact(List *opname, Oid arg1, Oid arg2);
+static Oid	binary_oper_exact(List *opname, Oid arg1, Oid arg2);
 static FuncDetailCode oper_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  FuncCandidateList candidates,
@@ -37,8 +37,8 @@ static FuncDetailCode oper_select_candidate(int nargs,
 static const char *op_signature_string(List *op, char oprkind,
 					Oid arg1, Oid arg2);
 static void op_error(ParseState *pstate, List *op, char oprkind,
-					 Oid arg1, Oid arg2,
-					 FuncDetailCode fdresult, int location);
+		 Oid arg1, Oid arg2,
+		 FuncDetailCode fdresult, int location);
 static Expr *make_op_expr(ParseState *pstate, Operator op,
 			 Node *ltree, Node *rtree,
 			 Oid ltypeId, Oid rtypeId);
@@ -701,10 +701,9 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 		if (clist != NULL)
 		{
 			/*
-			 * The returned list has args in the form (0, oprright).
-			 * Move the useful data into args[0] to keep oper_select_candidate
-			 * simple.  XXX we are assuming here that we may scribble on the
-			 * list!
+			 * The returned list has args in the form (0, oprright). Move the
+			 * useful data into args[0] to keep oper_select_candidate simple.
+			 * XXX we are assuming here that we may scribble on the list!
 			 */
 			FuncCandidateList clisti;
 
@@ -872,7 +871,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 		if (!OidIsValid(rtypeId))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("op ANY/ALL (array) requires array on right side"),
+				   errmsg("op ANY/ALL (array) requires array on right side"),
 					 parser_errposition(pstate, location)));
 	}
 
@@ -902,12 +901,12 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	if (rettype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("op ANY/ALL (array) requires operator to yield boolean"),
+			 errmsg("op ANY/ALL (array) requires operator to yield boolean"),
 				 parser_errposition(pstate, location)));
 	if (get_func_retset(opform->oprcode))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("op ANY/ALL (array) requires operator not to return a set"),
+		  errmsg("op ANY/ALL (array) requires operator not to return a set"),
 				 parser_errposition(pstate, location)));
 
 	/*

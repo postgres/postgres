@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.127 2006/09/19 22:49:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.128 2006/10/04 00:30:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef struct QualCost
  *
  * This struct is conventionally called "root" in all the planner routines.
  * It holds links to all of the planner's working state, in addition to the
- * original Query.  Note that at present the planner extensively modifies
+ * original Query.	Note that at present the planner extensively modifies
  * the passed-in Query data structure; someday that should stop.
  *----------
  */
@@ -69,8 +69,8 @@ typedef struct PlannerInfo
 	 * does not correspond to a base relation, such as a join RTE or an
 	 * unreferenced view RTE; or if the RelOptInfo hasn't been made yet.
 	 */
-	struct RelOptInfo **simple_rel_array;	/* All 1-relation RelOptInfos */
-	int			simple_rel_array_size;		/* allocated size of array */
+	struct RelOptInfo **simple_rel_array;		/* All 1-relation RelOptInfos */
+	int			simple_rel_array_size;	/* allocated size of array */
 
 	/*
 	 * join_rel_list is a list of all join-relation RelOptInfos we have
@@ -101,7 +101,7 @@ typedef struct PlannerInfo
 
 	List	   *in_info_list;	/* list of InClauseInfos */
 
-	List	   *append_rel_list;		/* list of AppendRelInfos */
+	List	   *append_rel_list;	/* list of AppendRelInfos */
 
 	List	   *query_pathkeys; /* desired pathkeys for query_planner(), and
 								 * actual pathkeys afterwards */
@@ -109,14 +109,14 @@ typedef struct PlannerInfo
 	List	   *group_pathkeys; /* groupClause pathkeys, if any */
 	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
 
-	double		total_table_pages;	/* # of pages in all tables of query */
+	double		total_table_pages;		/* # of pages in all tables of query */
 
 	double		tuple_fraction; /* tuple_fraction passed to query_planner */
 
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
 	bool		hasOuterJoins;	/* true if any RTEs are outer joins */
 	bool		hasHavingQual;	/* true if havingQual was non-null */
-	bool		hasPseudoConstantQuals;	/* true if any RestrictInfo has
+	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
 										 * pseudoconstant = true */
 } PlannerInfo;
 
@@ -144,7 +144,7 @@ typedef struct PlannerInfo
  * Currently the only kind of otherrels are those made for member relations
  * of an "append relation", that is an inheritance set or UNION ALL subquery.
  * An append relation has a parent RTE that is a base rel, which represents
- * the entire append relation.  The member RTEs are otherrels.  The parent
+ * the entire append relation.	The member RTEs are otherrels.	The parent
  * is present in the query join tree but the members are not.  The member
  * RTEs and otherrels are used to plan the scans of the individual tables or
  * subqueries of the append set; then the parent baserel is given an Append
@@ -736,7 +736,7 @@ typedef struct HashPath
  *
  * The pseudoconstant flag is set true if the clause contains no Vars of
  * the current query level and no volatile functions.  Such a clause can be
- * pulled out and used as a one-time qual in a gating Result node.  We keep
+ * pulled out and used as a one-time qual in a gating Result node.	We keep
  * pseudoconstant clauses in the same lists as other RestrictInfos so that
  * the regular clause-pushing machinery can assign them to the correct join
  * level, but they need to be treated specially for cost and selectivity
@@ -757,7 +757,7 @@ typedef struct RestrictInfo
 
 	bool		can_join;		/* see comment above */
 
-	bool		pseudoconstant;	/* see comment above */
+	bool		pseudoconstant; /* see comment above */
 
 	/* The set of relids (varnos) actually referenced in the clause: */
 	Relids		clause_relids;
@@ -836,7 +836,7 @@ typedef struct InnerIndexscanInfo
  * Outer join info.
  *
  * One-sided outer joins constrain the order of joining partially but not
- * completely.  We flatten such joins into the planner's top-level list of
+ * completely.	We flatten such joins into the planner's top-level list of
  * relations to join, but record information about each outer join in an
  * OuterJoinInfo struct.  These structs are kept in the PlannerInfo node's
  * oj_info_list.
@@ -925,57 +925,60 @@ typedef struct InClauseInfo
 typedef struct AppendRelInfo
 {
 	NodeTag		type;
+
 	/*
-	 * These fields uniquely identify this append relationship.  There
-	 * can be (in fact, always should be) multiple AppendRelInfos for the
-	 * same parent_relid, but never more than one per child_relid, since
-	 * a given RTE cannot be a child of more than one append parent.
+	 * These fields uniquely identify this append relationship.  There can be
+	 * (in fact, always should be) multiple AppendRelInfos for the same
+	 * parent_relid, but never more than one per child_relid, since a given
+	 * RTE cannot be a child of more than one append parent.
 	 */
 	Index		parent_relid;	/* RT index of append parent rel */
 	Index		child_relid;	/* RT index of append child rel */
+
 	/*
 	 * For an inheritance appendrel, the parent and child are both regular
 	 * relations, and we store their rowtype OIDs here for use in translating
-	 * whole-row Vars.  For a UNION-ALL appendrel, the parent and child are
+	 * whole-row Vars.	For a UNION-ALL appendrel, the parent and child are
 	 * both subqueries with no named rowtype, and we store InvalidOid here.
 	 */
-	Oid			parent_reltype;	/* OID of parent's composite type */
+	Oid			parent_reltype; /* OID of parent's composite type */
 	Oid			child_reltype;	/* OID of child's composite type */
 
 	/*
-	 * The N'th element of this list is the integer column number of
-	 * the child column corresponding to the N'th column of the parent.
-	 * A list element is zero if it corresponds to a dropped column of the
-	 * parent (this is only possible for inheritance cases, not UNION ALL).
+	 * The N'th element of this list is the integer column number of the child
+	 * column corresponding to the N'th column of the parent. A list element
+	 * is zero if it corresponds to a dropped column of the parent (this is
+	 * only possible for inheritance cases, not UNION ALL).
 	 */
 	List	   *col_mappings;	/* list of child attribute numbers */
 
 	/*
-	 * The N'th element of this list is a Var or expression representing
-	 * the child column corresponding to the N'th column of the parent.
-	 * This is used to translate Vars referencing the parent rel into
-	 * references to the child.  A list element is NULL if it corresponds
-	 * to a dropped column of the parent (this is only possible for
-	 * inheritance cases, not UNION ALL).
+	 * The N'th element of this list is a Var or expression representing the
+	 * child column corresponding to the N'th column of the parent. This is
+	 * used to translate Vars referencing the parent rel into references to
+	 * the child.  A list element is NULL if it corresponds to a dropped
+	 * column of the parent (this is only possible for inheritance cases, not
+	 * UNION ALL).
 	 *
 	 * This might seem redundant with the col_mappings data, but it is handy
-	 * because flattening of sub-SELECTs that are members of a UNION ALL
-	 * will cause changes in the expressions that need to be substituted
-	 * for a parent Var.  Adjusting this data structure lets us track what
-	 * really needs to be substituted.
+	 * because flattening of sub-SELECTs that are members of a UNION ALL will
+	 * cause changes in the expressions that need to be substituted for a
+	 * parent Var.	Adjusting this data structure lets us track what really
+	 * needs to be substituted.
 	 *
 	 * Notice we only store entries for user columns (attno > 0).  Whole-row
-	 * Vars are special-cased, and system columns (attno < 0) need no
-	 * special translation since their attnos are the same for all tables.
+	 * Vars are special-cased, and system columns (attno < 0) need no special
+	 * translation since their attnos are the same for all tables.
 	 *
-	 * Caution: the Vars have varlevelsup = 0.  Be careful to adjust
-	 * as needed when copying into a subquery.
+	 * Caution: the Vars have varlevelsup = 0.	Be careful to adjust as needed
+	 * when copying into a subquery.
 	 */
-	List	   *translated_vars; /* Expressions in the child's Vars */
+	List	   *translated_vars;	/* Expressions in the child's Vars */
+
 	/*
-	 * We store the parent table's OID here for inheritance, or InvalidOid
-	 * for UNION ALL.  This is only needed to help in generating error
-	 * messages if an attempt is made to reference a dropped parent column.
+	 * We store the parent table's OID here for inheritance, or InvalidOid for
+	 * UNION ALL.  This is only needed to help in generating error messages if
+	 * an attempt is made to reference a dropped parent column.
 	 */
 	Oid			parent_reloid;	/* OID of parent relation */
 } AppendRelInfo;

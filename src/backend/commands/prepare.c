@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.65 2006/09/27 18:40:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.66 2006/10/04 00:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 	portal = CreateNewPortal();
 	/* Don't display the portal in pg_cursors, it is for internal use only */
 	portal->visible = false;
-	
+
 	/*
 	 * For CREATE TABLE / AS EXECUTE, make a copy of the stored query so that
 	 * we can modify its destination (yech, but this has always been ugly).
@@ -251,7 +251,7 @@ EvaluateParams(EState *estate, List *params, List *argtypes)
 
 	/* sizeof(ParamListInfoData) includes the first array element */
 	paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-									 (nargs - 1) * sizeof(ParamExternData));
+									 (nargs - 1) *sizeof(ParamExternData));
 	paramLI->numParams = nargs;
 
 	forboth(le, exprstates, la, argtypes)
@@ -674,22 +674,21 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 Datum
 pg_prepared_statement(PG_FUNCTION_ARGS)
 {
-	FuncCallContext	   *funcctx;
-	HASH_SEQ_STATUS    *hash_seq;
-	PreparedStatement  *prep_stmt;
+	FuncCallContext *funcctx;
+	HASH_SEQ_STATUS *hash_seq;
+	PreparedStatement *prep_stmt;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		TupleDesc		tupdesc;
-		MemoryContext	oldcontext;
+		TupleDesc	tupdesc;
+		MemoryContext oldcontext;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -704,9 +703,8 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 			funcctx->user_fctx = NULL;
 
 		/*
-		 * build tupdesc for result tuples. This must match the
-		 * definition of the pg_prepared_statements view in
-		 * system_views.sql
+		 * build tupdesc for result tuples. This must match the definition of
+		 * the pg_prepared_statements view in system_views.sql
 		 */
 		tupdesc = CreateTemplateTupleDesc(5, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
@@ -735,21 +733,21 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 	prep_stmt = hash_seq_search(hash_seq);
 	if (prep_stmt)
 	{
-		Datum			result;
-		HeapTuple		tuple;
-		Datum			values[5];
-		bool			nulls[5];
+		Datum		result;
+		HeapTuple	tuple;
+		Datum		values[5];
+		bool		nulls[5];
 
 		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = DirectFunctionCall1(textin,
-										CStringGetDatum(prep_stmt->stmt_name));
+									  CStringGetDatum(prep_stmt->stmt_name));
 
 		if (prep_stmt->query_string == NULL)
 			nulls[1] = true;
 		else
 			values[1] = DirectFunctionCall1(textin,
-									CStringGetDatum(prep_stmt->query_string));
+								   CStringGetDatum(prep_stmt->query_string));
 
 		values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
 		values[3] = build_regtype_array(prep_stmt->argtype_list);
@@ -783,8 +781,8 @@ build_regtype_array(List *oid_list)
 	i = 0;
 	foreach(lc, oid_list)
 	{
-		Oid		oid;
-		Datum	oid_str;
+		Oid			oid;
+		Datum		oid_str;
 
 		oid = lfirst_oid(lc);
 		oid_str = DirectFunctionCall1(oidout, ObjectIdGetDatum(oid));

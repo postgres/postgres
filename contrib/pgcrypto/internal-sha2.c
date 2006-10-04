@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal-sha2.c,v 1.1 2006/07/13 04:15:24 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal-sha2.c,v 1.2 2006/10/04 00:29:46 momjian Exp $
  */
 
 #include "postgres.h"
@@ -36,10 +36,10 @@
 #include "px.h"
 #include "sha2.h"
 
-void init_sha224(PX_MD * h);
-void init_sha256(PX_MD * h);
-void init_sha384(PX_MD * h);
-void init_sha512(PX_MD * h);
+void		init_sha224(PX_MD * h);
+void		init_sha256(PX_MD * h);
+void		init_sha384(PX_MD * h);
+void		init_sha512(PX_MD * h);
 
 /* SHA224 */
 
@@ -314,4 +314,3 @@ init_sha512(PX_MD * md)
 
 	md->reset(md);
 }
-

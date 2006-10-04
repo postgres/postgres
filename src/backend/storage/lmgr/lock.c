@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.173 2006/09/18 22:40:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.174 2006/10/04 00:29:57 momjian Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -112,7 +112,7 @@ static const char *const lock_mode_names[] =
 };
 
 #ifndef LOCK_DEBUG
-static bool		Dummy_trace = false;
+static bool Dummy_trace = false;
 #endif
 
 static const LockMethodData default_lockmethod = {
@@ -290,8 +290,8 @@ InitLocks(void)
 	init_table_size = max_table_size / 2;
 
 	/*
-	 * Allocate hash table for LOCK structs.  This stores
-	 * per-locked-object information.
+	 * Allocate hash table for LOCK structs.  This stores per-locked-object
+	 * information.
 	 */
 	MemSet(&info, 0, sizeof(info));
 	info.keysize = sizeof(LOCKTAG);
@@ -331,8 +331,8 @@ InitLocks(void)
 		elog(FATAL, "could not initialize proclock hash table");
 
 	/*
-	 * Allocate non-shared hash table for LOCALLOCK structs.  This stores
-	 * lock counts and resource owner information.
+	 * Allocate non-shared hash table for LOCALLOCK structs.  This stores lock
+	 * counts and resource owner information.
 	 *
 	 * The non-shared table could already exist in this process (this occurs
 	 * when the postmaster is recreating shared memory after a backend crash).
@@ -396,8 +396,8 @@ static uint32
 proclock_hash(const void *key, Size keysize)
 {
 	const PROCLOCKTAG *proclocktag = (const PROCLOCKTAG *) key;
-	uint32	lockhash;
-	Datum	procptr;
+	uint32		lockhash;
+	Datum		procptr;
 
 	Assert(keysize == sizeof(PROCLOCKTAG));
 
@@ -407,9 +407,9 @@ proclock_hash(const void *key, Size keysize)
 	/*
 	 * To make the hash code also depend on the PGPROC, we xor the proc
 	 * struct's address into the hash code, left-shifted so that the
-	 * partition-number bits don't change.  Since this is only a hash,
-	 * we don't care if we lose high-order bits of the address; use
-	 * an intermediate variable to suppress cast-pointer-to-int warnings.
+	 * partition-number bits don't change.  Since this is only a hash, we
+	 * don't care if we lose high-order bits of the address; use an
+	 * intermediate variable to suppress cast-pointer-to-int warnings.
 	 */
 	procptr = PointerGetDatum(proclocktag->myProc);
 	lockhash ^= ((uint32) procptr) << LOG2_NUM_LOCK_PARTITIONS;
@@ -426,8 +426,8 @@ proclock_hash(const void *key, Size keysize)
 static inline uint32
 ProcLockHashCode(const PROCLOCKTAG *proclocktag, uint32 hashcode)
 {
-	uint32	lockhash = hashcode;
-	Datum	procptr;
+	uint32		lockhash = hashcode;
+	Datum		procptr;
 
 	/*
 	 * This must match proclock_hash()!
@@ -1117,7 +1117,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 		memcpy(new_status, old_status, len);
 		strcpy(new_status + len, " waiting");
 		set_ps_display(new_status, false);
-		new_status[len] = '\0';		/* truncate off " waiting" */
+		new_status[len] = '\0'; /* truncate off " waiting" */
 	}
 	pgstat_report_waiting(true);
 
@@ -1549,12 +1549,12 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 						LockTagHashCode(&lock->tag),
 						wakeupNeeded);
 
-		next_item:
+	next_item:
 			proclock = nextplock;
-		} /* loop over PROCLOCKs within this partition */
+		}						/* loop over PROCLOCKs within this partition */
 
 		LWLockRelease(partitionLock);
-	} /* loop over partitions */
+	}							/* loop over partitions */
 
 #ifdef LOCK_DEBUG
 	if (*(lockMethodTable->trace_flag))
@@ -1726,8 +1726,8 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 	if (!lock)
 	{
 		/*
-		 * If the lock object doesn't exist, there is nothing holding a
-		 * lock on this lockable object.
+		 * If the lock object doesn't exist, there is nothing holding a lock
+		 * on this lockable object.
 		 */
 		LWLockRelease(partitionLock);
 		return NIL;
@@ -1747,7 +1747,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 	{
 		if (conflictMask & proclock->holdMask)
 		{
-			PGPROC *proc = proclock->tag.myProc;
+			PGPROC	   *proc = proclock->tag.myProc;
 
 			/* A backend never blocks itself */
 			if (proc != MyProc)
@@ -1963,7 +1963,7 @@ PostPrepare_Locks(TransactionId xid)
 			/*
 			 * We cannot simply modify proclock->tag.myProc to reassign
 			 * ownership of the lock, because that's part of the hash key and
-			 * the proclock would then be in the wrong hash chain.  So, unlink
+			 * the proclock would then be in the wrong hash chain.	So, unlink
 			 * and delete the old proclock; create a new one with the right
 			 * contents; and link it into place.  We do it in this order to be
 			 * certain we won't run out of shared memory (the way dynahash.c
@@ -1987,7 +1987,7 @@ PostPrepare_Locks(TransactionId xid)
 												   (void *) &proclocktag,
 												   HASH_ENTER_NULL, &found);
 			if (!newproclock)
-				ereport(PANIC,		/* should not happen */
+				ereport(PANIC,	/* should not happen */
 						(errcode(ERRCODE_OUT_OF_MEMORY),
 						 errmsg("out of shared memory"),
 						 errdetail("Not enough memory for reassigning the prepared transaction's locks.")));
@@ -2017,12 +2017,12 @@ PostPrepare_Locks(TransactionId xid)
 			Assert((newproclock->holdMask & holdMask) == 0);
 			newproclock->holdMask |= holdMask;
 
-		next_item:
+	next_item:
 			proclock = nextplock;
-		} /* loop over PROCLOCKs within this partition */
+		}						/* loop over PROCLOCKs within this partition */
 
 		LWLockRelease(partitionLock);
-	} /* loop over partitions */
+	}							/* loop over partitions */
 
 	END_CRIT_SECTION();
 }
@@ -2084,10 +2084,11 @@ GetLockStatusData(void)
 	 * operate one partition at a time if we want to deliver a self-consistent
 	 * view of the state.
 	 *
-	 * Since this is a read-only operation, we take shared instead of exclusive
-	 * lock.  There's not a whole lot of point to this, because all the normal
-	 * operations require exclusive lock, but it doesn't hurt anything either.
-	 * It will at least allow two backends to do GetLockStatusData in parallel.
+	 * Since this is a read-only operation, we take shared instead of
+	 * exclusive lock.	There's not a whole lot of point to this, because all
+	 * the normal operations require exclusive lock, but it doesn't hurt
+	 * anything either. It will at least allow two backends to do
+	 * GetLockStatusData in parallel.
 	 *
 	 * Must grab LWLocks in partition-number order to avoid LWLock deadlock.
 	 */
@@ -2119,7 +2120,7 @@ GetLockStatusData(void)
 	}
 
 	/* And release locks */
-	for (i = NUM_LOCK_PARTITIONS; --i >= 0; )
+	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
 		LWLockRelease(FirstLockMgrLock + i);
 
 	Assert(el == data->nelements);

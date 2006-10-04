@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.35 2006/07/14 14:52:26 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.36 2006/10/04 00:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -545,7 +545,7 @@ _PrintData(ArchiveHandle *AH)
 							 "could not read from input file: end of file\n");
 			else
 				die_horribly(AH, modulename,
-							 "could not read from input file: %s\n", strerror(errno));
+					"could not read from input file: %s\n", strerror(errno));
 		}
 
 		ctx->filePos += blkLen;
@@ -673,7 +673,7 @@ _skipData(ArchiveHandle *AH)
 							 "could not read from input file: end of file\n");
 			else
 				die_horribly(AH, modulename,
-							 "could not read from input file: %s\n", strerror(errno));
+					"could not read from input file: %s\n", strerror(errno));
 		}
 
 		ctx->filePos += blkLen;

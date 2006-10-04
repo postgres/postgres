@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.55 2006/09/07 22:52:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.56 2006/10/04 00:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,8 +108,8 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 	plan = copyObject(plan);
 
 	/*
-	 * XXX: debug_query_string is wrong here: the user might have
-	 * submitted multiple semicolon delimited queries.
+	 * XXX: debug_query_string is wrong here: the user might have submitted
+	 * multiple semicolon delimited queries.
 	 */
 	PortalDefineQuery(portal,
 					  NULL,

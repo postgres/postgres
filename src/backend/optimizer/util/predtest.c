@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.9 2006/09/28 20:51:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.10 2006/10/04 00:29:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,6 +208,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 			switch (pclass)
 			{
 				case CLASS_AND:
+
 					/*
 					 * AND-clause => AND-clause if A implies each of B's items
 					 */
@@ -224,6 +225,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_OR:
+
 					/*
 					 * AND-clause => OR-clause if A implies any of B's items
 					 *
@@ -241,6 +243,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 					iterate_end(pred_info);
 					if (result)
 						return result;
+
 					/*
 					 * Also check if any of A's items implies B
 					 *
@@ -258,6 +261,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_ATOM:
+
 					/*
 					 * AND-clause => atom if any of A's items implies B
 					 */
@@ -279,6 +283,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 			switch (pclass)
 			{
 				case CLASS_OR:
+
 					/*
 					 * OR-clause => OR-clause if each of A's items implies any
 					 * of B's items.  Messy but can't do it any more simply.
@@ -286,7 +291,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 					result = true;
 					iterate_begin(citem, clause, clause_info)
 					{
-						bool	presult = false;
+						bool		presult = false;
 
 						iterate_begin(pitem, predicate, pred_info)
 						{
@@ -308,6 +313,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 
 				case CLASS_AND:
 				case CLASS_ATOM:
+
 					/*
 					 * OR-clause => AND-clause if each of A's items implies B
 					 *
@@ -331,6 +337,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 			switch (pclass)
 			{
 				case CLASS_AND:
+
 					/*
 					 * atom => AND-clause if A implies each of B's items
 					 */
@@ -347,6 +354,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_OR:
+
 					/*
 					 * atom => OR-clause if A implies any of B's items
 					 */
@@ -363,6 +371,7 @@ predicate_implied_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_ATOM:
+
 					/*
 					 * atom => atom is the base case
 					 */
@@ -427,6 +436,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			switch (pclass)
 			{
 				case CLASS_AND:
+
 					/*
 					 * AND-clause R=> AND-clause if A refutes any of B's items
 					 *
@@ -444,6 +454,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					iterate_end(pred_info);
 					if (result)
 						return result;
+
 					/*
 					 * Also check if any of A's items refutes B
 					 *
@@ -461,6 +472,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_OR:
+
 					/*
 					 * AND-clause R=> OR-clause if A refutes each of B's items
 					 */
@@ -477,6 +489,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_ATOM:
+
 					/*
 					 * If B is a NOT-clause, A R=> B if A => B's arg
 					 */
@@ -484,6 +497,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					if (not_arg &&
 						predicate_implied_by_recurse(clause, not_arg))
 						return true;
+
 					/*
 					 * AND-clause R=> atom if any of A's items refutes B
 					 */
@@ -505,6 +519,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			switch (pclass)
 			{
 				case CLASS_OR:
+
 					/*
 					 * OR-clause R=> OR-clause if A refutes each of B's items
 					 */
@@ -521,6 +536,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_AND:
+
 					/*
 					 * OR-clause R=> AND-clause if each of A's items refutes
 					 * any of B's items.
@@ -528,7 +544,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					result = true;
 					iterate_begin(citem, clause, clause_info)
 					{
-						bool	presult = false;
+						bool		presult = false;
 
 						iterate_begin(pitem, predicate, pred_info)
 						{
@@ -549,6 +565,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_ATOM:
+
 					/*
 					 * If B is a NOT-clause, A R=> B if A => B's arg
 					 */
@@ -556,6 +573,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					if (not_arg &&
 						predicate_implied_by_recurse(clause, not_arg))
 						return true;
+
 					/*
 					 * OR-clause R=> atom if each of A's items refutes B
 					 */
@@ -574,6 +592,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			break;
 
 		case CLASS_ATOM:
+
 			/*
 			 * If A is a NOT-clause, A R=> B if B => A's arg
 			 */
@@ -584,6 +603,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 			switch (pclass)
 			{
 				case CLASS_AND:
+
 					/*
 					 * atom R=> AND-clause if A refutes any of B's items
 					 */
@@ -600,6 +620,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_OR:
+
 					/*
 					 * atom R=> OR-clause if A refutes each of B's items
 					 */
@@ -616,6 +637,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					return result;
 
 				case CLASS_ATOM:
+
 					/*
 					 * If B is a NOT-clause, A R=> B if A => B's arg
 					 */
@@ -623,6 +645,7 @@ predicate_refuted_by_recurse(Node *clause, Node *predicate)
 					if (not_arg &&
 						predicate_implied_by_recurse(clause, not_arg))
 						return true;
+
 					/*
 					 * atom R=> atom is the base case
 					 */
@@ -654,8 +677,8 @@ predicate_classify(Node *clause, PredIterInfo info)
 	Assert(!IsA(clause, RestrictInfo));
 
 	/*
-	 * If we see a List, assume it's an implicit-AND list; this is the
-	 * correct semantics for lists of RestrictInfo nodes.
+	 * If we see a List, assume it's an implicit-AND list; this is the correct
+	 * semantics for lists of RestrictInfo nodes.
 	 */
 	if (IsA(clause, List))
 	{
@@ -685,13 +708,13 @@ predicate_classify(Node *clause, PredIterInfo info)
 	if (IsA(clause, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
-		Node   *arraynode = (Node *) lsecond(saop->args);
+		Node	   *arraynode = (Node *) lsecond(saop->args);
 
 		/*
-		 * We can break this down into an AND or OR structure, but only if
-		 * we know how to iterate through expressions for the array's
-		 * elements.  We can do that if the array operand is a non-null
-		 * constant or a simple ArrayExpr.
+		 * We can break this down into an AND or OR structure, but only if we
+		 * know how to iterate through expressions for the array's elements.
+		 * We can do that if the array operand is a non-null constant or a
+		 * simple ArrayExpr.
 		 */
 		if (arraynode && IsA(arraynode, Const) &&
 			!((Const *) arraynode)->constisnull)
@@ -716,7 +739,7 @@ predicate_classify(Node *clause, PredIterInfo info)
 }
 
 /*
- * PredIterInfo routines for iterating over regular Lists.  The iteration
+ * PredIterInfo routines for iterating over regular Lists.	The iteration
  * state variable is the next ListCell to visit.
  */
 static void
@@ -852,7 +875,7 @@ arrayexpr_startup_fn(Node *clause, PredIterInfo info)
 {
 	ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
 	ArrayExprIterState *state;
-	ArrayExpr *arrayexpr;
+	ArrayExpr  *arrayexpr;
 
 	/* Create working state struct */
 	state = (ArrayExprIterState *) palloc(sizeof(ArrayExprIterState));

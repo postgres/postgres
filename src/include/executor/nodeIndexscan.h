@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/nodeIndexscan.h,v 1.28 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/nodeIndexscan.h,v 1.29 2006/10/04 00:30:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@ extern void ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 					   IndexRuntimeKeyInfo **runtimeKeys, int *numRuntimeKeys,
 					   IndexArrayKeyInfo **arrayKeys, int *numArrayKeys);
 extern void ExecIndexEvalRuntimeKeys(ExprContext *econtext,
-						 IndexRuntimeKeyInfo *runtimeKeys, int numRuntimeKeys);
+					   IndexRuntimeKeyInfo *runtimeKeys, int numRuntimeKeys);
 extern bool ExecIndexEvalArrayKeys(ExprContext *econtext,
-						 IndexArrayKeyInfo *arrayKeys, int numArrayKeys);
+					   IndexArrayKeyInfo *arrayKeys, int numArrayKeys);
 extern bool ExecIndexAdvanceArrayKeys(IndexArrayKeyInfo *arrayKeys, int numArrayKeys);
 
 #endif   /* NODEINDEXSCAN_H */

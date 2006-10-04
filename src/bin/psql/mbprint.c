@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.22 2006/07/14 14:52:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.23 2006/10/04 00:30:06 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -151,18 +151,19 @@ mb_utf_validate(unsigned char *pwcs)
 int
 pg_wcswidth(const unsigned char *pwcs, size_t len, int encoding)
 {
-	int width = 0;
+	int			width = 0;
 
 	while (len > 0)
 	{
-		int chlen, chwidth;
+		int			chlen,
+					chwidth;
 
-		chlen = PQmblen((const char*) pwcs, encoding);
+		chlen = PQmblen((const char *) pwcs, encoding);
 		if (chlen > len)
-			break;     /* Invalid string */
-			
+			break;				/* Invalid string */
+
 		chwidth = PQdsplen((const char *) pwcs, encoding);
-		
+
 		if (chwidth > 0)
 			width += chwidth;
 		pwcs += chlen;
@@ -173,60 +174,62 @@ pg_wcswidth(const unsigned char *pwcs, size_t len, int encoding)
 /*
  * pg_wcssize takes the given string in the given encoding and returns three
  * values:
- *    result_width: Width in display character of longest line in string
- *    result_hieght: Number of lines in display output
- *    result_format_size: Number of bytes required to store formatted representation of string
+ *	  result_width: Width in display character of longest line in string
+ *	  result_hieght: Number of lines in display output
+ *	  result_format_size: Number of bytes required to store formatted representation of string
  */
 int
 pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
-			int *result_height, int *result_format_size)
+		   int *result_height, int *result_format_size)
 {
-	int	w,
-		chlen = 0,
-		linewidth = 0;
-	int width = 0;
-	int height = 1;
-	int format_size = 0;
+	int			w,
+				chlen = 0,
+				linewidth = 0;
+	int			width = 0;
+	int			height = 1;
+	int			format_size = 0;
 
 	for (; *pwcs && len > 0; pwcs += chlen)
 	{
 		chlen = PQmblen((char *) pwcs, encoding);
-		if (len < (size_t)chlen)
+		if (len < (size_t) chlen)
 			break;
 		w = PQdsplen((char *) pwcs, encoding);
 
-		if (chlen == 1)   /* ASCII char */
+		if (chlen == 1)			/* ASCII char */
 		{
-			if (*pwcs == '\n') /* Newline */
+			if (*pwcs == '\n')	/* Newline */
 			{
 				if (linewidth > width)
 					width = linewidth;
 				linewidth = 0;
 				height += 1;
-				format_size += 1;  /* For NUL char */
+				format_size += 1;		/* For NUL char */
 			}
-			else if (*pwcs == '\r')   /* Linefeed */
+			else if (*pwcs == '\r')		/* Linefeed */
 			{
 				linewidth += 2;
 				format_size += 2;
 			}
-			else if (w <= 0)  /* Other control char */
+			else if (w <= 0)	/* Other control char */
 			{
 				linewidth += 4;
 				format_size += 4;
 			}
-			else  /* Output itself */
+			else
+				/* Output itself */
 			{
 				linewidth++;
 				format_size += 1;
 			}
 		}
-		else if (w <= 0)  /* Non-ascii control char */
+		else if (w <= 0)		/* Non-ascii control char */
 		{
-			linewidth += 6;   /* \u0000 */
+			linewidth += 6;		/* \u0000 */
 			format_size += 6;
 		}
-		else  /* All other chars */
+		else
+			/* All other chars */
 		{
 			linewidth += w;
 			format_size += chlen;
@@ -236,7 +239,7 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 	if (linewidth > width)
 		width = linewidth;
 	format_size += 1;
-	
+
 	/* Set results */
 	if (result_width)
 		*result_width = width;
@@ -244,76 +247,81 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 		*result_height = height;
 	if (result_format_size)
 		*result_format_size = format_size;
-		
+
 	return width;
 }
 
 void
 pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
-			 struct lineptr *lines, int count)
+			 struct lineptr * lines, int count)
 {
 	int			w,
 				chlen = 0;
-	int linewidth = 0;
-	unsigned char *ptr = lines->ptr;   /* Pointer to data area */
+	int			linewidth = 0;
+	unsigned char *ptr = lines->ptr;	/* Pointer to data area */
 
 	for (; *pwcs && len > 0; pwcs += chlen)
 	{
-		chlen = PQmblen((char *) pwcs,encoding);
-		if (len < (size_t)chlen)
+		chlen = PQmblen((char *) pwcs, encoding);
+		if (len < (size_t) chlen)
 			break;
-		w = PQdsplen((char *) pwcs,encoding);
+		w = PQdsplen((char *) pwcs, encoding);
 
-		if (chlen == 1)   /* single byte char char */
+		if (chlen == 1)			/* single byte char char */
 		{
-			if (*pwcs == '\n') /* Newline */
+			if (*pwcs == '\n')	/* Newline */
 			{
-				*ptr++ = 0;   /* NULL char */
+				*ptr++ = 0;		/* NULL char */
 				lines->width = linewidth;
 				linewidth = 0;
 				lines++;
 				count--;
 				if (count == 0)
-					exit(1);   /* Screwup */	
-					
+					exit(1);	/* Screwup */
+
 				lines->ptr = ptr;
 			}
-			else if (*pwcs == '\r')   /* Linefeed */
+			else if (*pwcs == '\r')		/* Linefeed */
 			{
 				strcpy((char *) ptr, "\\r");
 				linewidth += 2;
 				ptr += 2;
 			}
-			else if (w <= 0)  /* Other control char */
+			else if (w <= 0)	/* Other control char */
 			{
 				sprintf((char *) ptr, "\\x%02X", *pwcs);
 				linewidth += 4;
 				ptr += 4;
 			}
-			else  /* Output itself */
+			else
+				/* Output itself */
 			{
 				linewidth++;
 				*ptr++ = *pwcs;
 			}
 		}
-		else if (w <= 0)  /* Non-ascii control char */
+		else if (w <= 0)		/* Non-ascii control char */
 		{
 			if (encoding == PG_UTF8)
 				sprintf((char *) ptr, "\\u%04X", utf2ucs(pwcs));
 			else
-				/* This case cannot happen in the current
-				 * code because only UTF-8 signals multibyte
-				 * control characters. But we may need to
-				 * support it at some stage */
+
+				/*
+				 * This case cannot happen in the current code because only
+				 * UTF-8 signals multibyte control characters. But we may need
+				 * to support it at some stage
+				 */
 				sprintf((char *) ptr, "\\u????");
-				
+
 			ptr += 6;
 			linewidth += 6;
 		}
-		else  /* All other chars */
+		else
+			/* All other chars */
 		{
-			int i;
-			for (i=0; i < chlen; i++)
+			int			i;
+
+			for (i = 0; i < chlen; i++)
 				*ptr++ = pwcs[i];
 			linewidth += w;
 		}

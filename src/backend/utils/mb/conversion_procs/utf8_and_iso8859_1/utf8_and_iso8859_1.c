@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.17 2006/05/30 22:12:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859_1/utf8_and_iso8859_1.c,v 1.18 2006/10/04 00:30:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ utf8_to_iso8859_1(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			int		l = pg_utf_mblen(src);
+			int			l = pg_utf_mblen(src);
 
 			if (l > len || !pg_utf8_islegal(src, l))
 				report_invalid_encoding(PG_UTF8, (const char *) src, len);

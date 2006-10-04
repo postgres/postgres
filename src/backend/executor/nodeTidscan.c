@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.50 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.51 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,9 @@ TidListCreate(TidScanState *tidstate)
 	ListCell   *l;
 
 	/*
-	 * We initialize the array with enough slots for the case that all
-	 * quals are simple OpExprs.  If there's any ScalarArrayOpExprs,
-	 * we may have to enlarge the array.
+	 * We initialize the array with enough slots for the case that all quals
+	 * are simple OpExprs.	If there's any ScalarArrayOpExprs, we may have to
+	 * enlarge the array.
 	 */
 	numAllocTids = list_length(evalList);
 	tidList = (ItemPointerData *)
@@ -78,9 +78,9 @@ TidListCreate(TidScanState *tidstate)
 
 		if (is_opclause(expr))
 		{
-			FuncExprState  *fexstate = (FuncExprState *) exstate;
-			Node *arg1;
-			Node *arg2;
+			FuncExprState *fexstate = (FuncExprState *) exstate;
+			Node	   *arg1;
+			Node	   *arg2;
 
 			arg1 = get_leftop(expr);
 			arg2 = get_rightop(expr);
@@ -154,15 +154,14 @@ TidListCreate(TidScanState *tidstate)
 
 	/*
 	 * Sort the array of TIDs into order, and eliminate duplicates.
-	 * Eliminating duplicates is necessary since we want OR semantics
-	 * across the list.  Sorting makes it easier to detect duplicates,
-	 * and as a bonus ensures that we will visit the heap in the most
-	 * efficient way.
+	 * Eliminating duplicates is necessary since we want OR semantics across
+	 * the list.  Sorting makes it easier to detect duplicates, and as a bonus
+	 * ensures that we will visit the heap in the most efficient way.
 	 */
 	if (numTids > 1)
 	{
-		int		lastTid;
-		int		i;
+		int			lastTid;
+		int			i;
 
 		qsort((void *) tidList, numTids, sizeof(ItemPointerData),
 			  itemptr_comparator);
@@ -188,8 +187,8 @@ itemptr_comparator(const void *a, const void *b)
 {
 	const ItemPointerData *ipa = (const ItemPointerData *) a;
 	const ItemPointerData *ipb = (const ItemPointerData *) b;
-	BlockNumber	ba = ItemPointerGetBlockNumber(ipa);
-	BlockNumber	bb = ItemPointerGetBlockNumber(ipb);
+	BlockNumber ba = ItemPointerGetBlockNumber(ipa);
+	BlockNumber bb = ItemPointerGetBlockNumber(ipb);
 	OffsetNumber oa = ItemPointerGetOffsetNumber(ipa);
 	OffsetNumber ob = ItemPointerGetOffsetNumber(ipb);
 

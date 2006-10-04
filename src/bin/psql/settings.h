@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.30 2006/08/29 22:25:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/settings.h,v 1.31 2006/10/04 00:30:06 momjian Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -87,9 +87,9 @@ typedef struct _psqlSettings
 	VariableSpace vars;			/* "shell variable" repository */
 
 	/*
-	 * The remaining fields are set by assign hooks associated with
-	 * entries in "vars".  They should not be set directly except by
-	 * those hook functions.
+	 * The remaining fields are set by assign hooks associated with entries in
+	 * "vars".	They should not be set directly except by those hook
+	 * functions.
 	 */
 	bool		autocommit;
 	bool		on_error_stop;

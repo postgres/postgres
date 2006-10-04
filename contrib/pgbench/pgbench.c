@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.55 2006/09/16 13:31:40 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.56 2006/10/04 00:29:45 momjian Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -136,7 +136,7 @@ int			num_files;			/* its number */
 static char *tpc_b = {
 	"\\set nbranches :scale\n"
 	"\\set ntellers 10 * :scale\n"
-    "\\set naccounts 100000 * :scale\n"
+	"\\set naccounts 100000 * :scale\n"
 	"\\setrandom aid 1 :naccounts\n"
 	"\\setrandom bid 1 :nbranches\n"
 	"\\setrandom tid 1 :ntellers\n"
@@ -154,7 +154,7 @@ static char *tpc_b = {
 static char *simple_update = {
 	"\\set nbranches :scale\n"
 	"\\set ntellers 10 * :scale\n"
-    "\\set naccounts 100000 * :scale\n"
+	"\\set naccounts 100000 * :scale\n"
 	"\\setrandom aid 1 :naccounts\n"
 	"\\setrandom bid 1 :nbranches\n"
 	"\\setrandom tid 1 :ntellers\n"
@@ -168,7 +168,7 @@ static char *simple_update = {
 
 /* -S case */
 static char *select_only = {
-    "\\set naccounts 100000 * :scale\n"
+	"\\set naccounts 100000 * :scale\n"
 	"\\setrandom aid 1 :naccounts\n"
 	"SELECT abalance FROM accounts WHERE aid = :aid;\n"
 };
@@ -338,7 +338,7 @@ putVariable(CState * st, char *name, char *value)
 	}
 	else
 	{
-		char *val;
+		char	   *val;
 
 		if ((val = strdup(value)) == NULL)
 			return false;
@@ -1009,14 +1009,16 @@ process_file(char *filename)
 		while (isspace((unsigned char) buf[i]))
 			i++;
 
- 		if (buf[i] != '\0' && strncmp(&buf[i], "--", 2) != 0) {
+		if (buf[i] != '\0' && strncmp(&buf[i], "--", 2) != 0)
+		{
 			commands = process_commands(&buf[i]);
 			if (commands == NULL)
 			{
 				fclose(fd);
 				return false;
 			}
-		} else
+		}
+		else
 			continue;
 
 		my_commands[lineno] = commands;
@@ -1530,7 +1532,7 @@ main(int argc, char **argv)
 		if (state[i].ecnt > prev_ecnt && commands[state[i].state]->type == META_COMMAND)
 		{
 			fprintf(stderr, "Client %d aborted in state %d. Execution meta-command failed.\n", i, state[i].state);
-			remains--;				/* I've aborted */
+			remains--;			/* I've aborted */
 			PQfinish(state[i].con);
 			state[i].con = NULL;
 		}
@@ -1610,7 +1612,7 @@ main(int argc, char **argv)
 			if (state[i].ecnt > prev_ecnt && commands[state[i].state]->type == META_COMMAND)
 			{
 				fprintf(stderr, "Client %d aborted in state %d. Execution meta-command failed.\n", i, state[i].state);
-				remains--;				/* I've aborted */
+				remains--;		/* I've aborted */
 				PQfinish(state[i].con);
 				state[i].con = NULL;
 			}

@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.145 2006/07/27 19:52:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.146 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,16 +331,16 @@ advance_transition_function(AggState *aggstate,
 							AggStatePerGroup pergroupstate,
 							FunctionCallInfoData *fcinfo)
 {
-	int		numArguments = peraggstate->numArguments;
+	int			numArguments = peraggstate->numArguments;
 	MemoryContext oldContext;
-	Datum newVal;
-	int i;
+	Datum		newVal;
+	int			i;
 
 	if (peraggstate->transfn.fn_strict)
 	{
 		/*
-		 * For a strict transfn, nothing happens when there's a NULL input;
-		 * we just keep the prior transValue.
+		 * For a strict transfn, nothing happens when there's a NULL input; we
+		 * just keep the prior transValue.
 		 */
 		for (i = 1; i <= numArguments; i++)
 		{
@@ -434,14 +434,14 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 
 	for (aggno = 0; aggno < aggstate->numaggs; aggno++)
 	{
-		AggStatePerAgg		peraggstate = &aggstate->peragg[aggno];
-		AggStatePerGroup	pergroupstate = &pergroup[aggno];
-		AggrefExprState		*aggrefstate = peraggstate->aggrefstate;
-		Aggref				*aggref = peraggstate->aggref;
+		AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
+		AggStatePerGroup pergroupstate = &pergroup[aggno];
+		AggrefExprState *aggrefstate = peraggstate->aggrefstate;
+		Aggref	   *aggref = peraggstate->aggref;
 		FunctionCallInfoData fcinfo;
-		int					i;
-		ListCell			*arg;
-		MemoryContext		oldContext;
+		int			i;
+		ListCell   *arg;
+		MemoryContext oldContext;
 
 		/* Switch memory context just once for all args */
 		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
@@ -495,8 +495,8 @@ process_sorted_aggregate(AggState *aggstate,
 	bool		haveOldVal = false;
 	MemoryContext workcontext = aggstate->tmpcontext->ecxt_per_tuple_memory;
 	MemoryContext oldContext;
-	Datum		*newVal;
-	bool		*isNull;
+	Datum	   *newVal;
+	bool	   *isNull;
 	FunctionCallInfoData fcinfo;
 
 	tuplesort_performsort(peraggstate->sortstate);
@@ -624,7 +624,7 @@ static Bitmapset *
 find_unaggregated_cols(AggState *aggstate)
 {
 	Agg		   *node = (Agg *) aggstate->ss.ps.plan;
-	Bitmapset *colnos;
+	Bitmapset  *colnos;
 
 	colnos = NULL;
 	(void) find_unaggregated_cols_walker((Node *) node->plan.targetlist,
@@ -686,20 +686,20 @@ build_hash_table(AggState *aggstate)
 											  tmpmem);
 
 	/*
-	 * Create a list of the tuple columns that actually need to be stored
-	 * in hashtable entries.  The incoming tuples from the child plan node
-	 * will contain grouping columns, other columns referenced in our
-	 * targetlist and qual, columns used to compute the aggregate functions,
-	 * and perhaps just junk columns we don't use at all.  Only columns of the
-	 * first two types need to be stored in the hashtable, and getting rid of
-	 * the others can make the table entries significantly smaller.  To avoid
-	 * messing up Var numbering, we keep the same tuple descriptor for
-	 * hashtable entries as the incoming tuples have, but set unwanted columns
-	 * to NULL in the tuples that go into the table.
+	 * Create a list of the tuple columns that actually need to be stored in
+	 * hashtable entries.  The incoming tuples from the child plan node will
+	 * contain grouping columns, other columns referenced in our targetlist
+	 * and qual, columns used to compute the aggregate functions, and perhaps
+	 * just junk columns we don't use at all.  Only columns of the first two
+	 * types need to be stored in the hashtable, and getting rid of the others
+	 * can make the table entries significantly smaller.  To avoid messing up
+	 * Var numbering, we keep the same tuple descriptor for hashtable entries
+	 * as the incoming tuples have, but set unwanted columns to NULL in the
+	 * tuples that go into the table.
 	 *
 	 * To eliminate duplicates, we build a bitmapset of the needed columns,
-	 * then convert it to an integer list (cheaper to scan at runtime).
-	 * The list is in decreasing order so that the first entry is the largest;
+	 * then convert it to an integer list (cheaper to scan at runtime). The
+	 * list is in decreasing order so that the first entry is the largest;
 	 * lookup_hash_entry depends on this to use slot_getsomeattrs correctly.
 	 *
 	 * Note: at present, searching the tlist/qual is not really necessary
@@ -767,7 +767,7 @@ lookup_hash_entry(AggState *aggstate, TupleTableSlot *inputslot)
 	slot_getsomeattrs(inputslot, linitial_int(aggstate->hash_needed));
 	foreach(l, aggstate->hash_needed)
 	{
-		int		varNumber = lfirst_int(l) - 1;
+		int			varNumber = lfirst_int(l) - 1;
 
 		hashslot->tts_values[varNumber] = inputslot->tts_values[varNumber];
 		hashslot->tts_isnull[varNumber] = inputslot->tts_isnull[varNumber];
@@ -968,10 +968,10 @@ agg_retrieve_direct(AggState *aggstate)
 
 		/*
 		 * Use the representative input tuple for any references to
-		 * non-aggregated input columns in the qual and tlist.  (If we are
-		 * not grouping, and there are no input rows at all, we will come
-		 * here with an empty firstSlot ... but if not grouping, there can't
-		 * be any references to non-aggregated input columns, so no problem.)
+		 * non-aggregated input columns in the qual and tlist.	(If we are not
+		 * grouping, and there are no input rows at all, we will come here
+		 * with an empty firstSlot ... but if not grouping, there can't be any
+		 * references to non-aggregated input columns, so no problem.)
 		 */
 		econtext->ecxt_scantuple = firstSlot;
 
@@ -1226,8 +1226,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	/*
 	 * initialize child nodes
 	 *
-	 * If we are doing a hashed aggregation then the child plan does not
-	 * need to handle REWIND efficiently; see ExecReScanAgg.
+	 * If we are doing a hashed aggregation then the child plan does not need
+	 * to handle REWIND efficiently; see ExecReScanAgg.
 	 */
 	if (node->aggstrategy == AGG_HASHED)
 		eflags &= ~EXEC_FLAG_REWIND;
@@ -1321,7 +1321,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		Aggref	   *aggref = (Aggref *) aggrefstate->xprstate.expr;
 		AggStatePerAgg peraggstate;
 		Oid			inputTypes[FUNC_MAX_ARGS];
-		int         numArguments;
+		int			numArguments;
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		Oid			aggtranstype;
@@ -1332,7 +1332,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 				   *finalfnexpr;
 		Datum		textInitVal;
 		int			i;
-		ListCell    *lc;
+		ListCell   *lc;
 
 		/* Planner should have assigned aggregate to correct level */
 		Assert(aggref->agglevelsup == 0);
@@ -1364,9 +1364,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		peraggstate->numArguments = numArguments;
 
 		/*
-		 * Get actual datatypes of the inputs.  These could be different
-		 * from the agg's declared input types, when the agg accepts ANY,
-		 * ANYARRAY or ANYELEMENT.
+		 * Get actual datatypes of the inputs.	These could be different from
+		 * the agg's declared input types, when the agg accepts ANY, ANYARRAY
+		 * or ANYELEMENT.
 		 */
 		i = 0;
 		foreach(lc, aggref->args)
@@ -1481,8 +1481,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		/*
 		 * If the transfn is strict and the initval is NULL, make sure input
-		 * type and transtype are the same (or at least binary-compatible),
-		 * so that it's OK to use the first input value as the initial
+		 * type and transtype are the same (or at least binary-compatible), so
+		 * that it's OK to use the first input value as the initial
 		 * transValue.	This should have been checked at agg definition time,
 		 * but just in case...
 		 */
@@ -1504,9 +1504,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			Assert(node->aggstrategy != AGG_HASHED);
 
 			/*
-			 * We don't currently implement DISTINCT aggs for aggs having
-			 * more than one argument.  This isn't required for anything
-			 * in the SQL spec, but really it ought to be implemented for
+			 * We don't currently implement DISTINCT aggs for aggs having more
+			 * than one argument.  This isn't required for anything in the SQL
+			 * spec, but really it ought to be implemented for
 			 * feature-completeness.  FIXME someday.
 			 */
 			if (numArguments != 1)

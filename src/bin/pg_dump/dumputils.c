@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.31 2006/09/08 18:05:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.32 2006/10/04 00:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ fmtId(const char *rawid)
  * standard_conforming_strings settings.
  *
  * This is essentially equivalent to libpq's PQescapeStringInternal,
- * except for the output buffer structure.  We need it in situations
+ * except for the output buffer structure.	We need it in situations
  * where we do not have a PGconn available.  Where we do,
  * appendStringLiteralConn is a better choice.
  */
@@ -124,9 +124,9 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 
 	while (*source != '\0')
 	{
-		char	c = *source;
-		int		len;
-		int		i;
+		char		c = *source;
+		int			len;
+		int			i;
 
 		/* Fast path for plain ASCII */
 		if (!IS_HIGHBIT_SET(c))
@@ -153,15 +153,15 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 
 		/*
 		 * If we hit premature end of string (ie, incomplete multibyte
-		 * character), try to pad out to the correct length with spaces.
-		 * We may not be able to pad completely, but we will always be able
-		 * to insert at least one pad space (since we'd not have quoted a
+		 * character), try to pad out to the correct length with spaces. We
+		 * may not be able to pad completely, but we will always be able to
+		 * insert at least one pad space (since we'd not have quoted a
 		 * multibyte character).  This should be enough to make a string that
 		 * the server will error out on.
 		 */
 		if (i < len)
 		{
-			char   *stop = buf->data + buf->maxlen - 2;
+			char	   *stop = buf->data + buf->maxlen - 2;
 
 			for (; i < len; i++)
 			{
@@ -189,7 +189,7 @@ appendStringLiteral(PQExpBuffer buf, const char *str,
 void
 appendStringLiteralConn(PQExpBuffer buf, const char *str, PGconn *conn)
 {
-	size_t	length = strlen(str);
+	size_t		length = strlen(str);
 
 	/*
 	 * XXX This is a kluge to silence escape_string_warning in our utility
@@ -198,7 +198,7 @@ appendStringLiteralConn(PQExpBuffer buf, const char *str, PGconn *conn)
 	if (strchr(str, '\\') != NULL && PQserverVersion(conn) >= 80100)
 	{
 		/* ensure we are not adjacent to an identifier */
-		if (buf->len > 0 && buf->data[buf->len-1] != ' ')
+		if (buf->len > 0 && buf->data[buf->len - 1] != ' ')
 			appendPQExpBufferChar(buf, ' ');
 		appendPQExpBufferChar(buf, ESCAPE_STRING_SYNTAX);
 		appendStringLiteral(buf, str, PQclientEncoding(conn), false);
@@ -614,7 +614,7 @@ do { \
 	if (strcmp(type, "TABLE") == 0 || strcmp(type, "SEQUENCE") == 0)
 	{
 		CONVERT_PRIV('r', "SELECT");
-		
+
 		if (strcmp(type, "SEQUENCE") == 0)
 			/* sequence only */
 			CONVERT_PRIV('U', "USAGE");

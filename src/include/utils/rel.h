@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.91 2006/07/03 22:45:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.92 2006/10/04 00:30:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,8 +156,8 @@ typedef struct RelationData
 
 	/*
 	 * rd_options is set whenever rd_rel is loaded into the relcache entry.
-	 * Note that you can NOT look into rd_rel for this data.  NULL means
-	 * "use defaults".
+	 * Note that you can NOT look into rd_rel for this data.  NULL means "use
+	 * defaults".
 	 */
 	bytea	   *rd_options;		/* parsed pg_class.reloptions */
 
@@ -179,7 +179,7 @@ typedef struct RelationData
 	 * Note: rd_amcache is available for index AMs to cache private data about
 	 * an index.  This must be just a cache since it may get reset at any time
 	 * (in particular, it will get reset by a relcache inval message for the
-	 * index).  If used, it must point to a single memory chunk palloc'd in
+	 * index).	If used, it must point to a single memory chunk palloc'd in
 	 * rd_indexcxt.  A relcache reset will include freeing that chunk and
 	 * setting rd_amcache = NULL.
 	 */
@@ -218,8 +218,8 @@ typedef Relation *RelationPtr;
  */
 typedef struct StdRdOptions
 {
-	int32	vl_len;				/* required to be a bytea */
-	int		fillfactor;			/* page fill factor in percent (0..100) */
+	int32		vl_len;			/* required to be a bytea */
+	int			fillfactor;		/* page fill factor in percent (0..100) */
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10

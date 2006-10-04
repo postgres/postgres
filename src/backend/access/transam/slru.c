@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.38 2006/07/14 14:52:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.39 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,8 +92,8 @@
 
 typedef struct SlruFlushData
 {
-	int			num_files;						/* # files actually open */
-	int			fd[MAX_FLUSH_BUFFERS];			/* their FD's */
+	int			num_files;		/* # files actually open */
+	int			fd[MAX_FLUSH_BUFFERS];	/* their FD's */
 	int			segno[MAX_FLUSH_BUFFERS];		/* their log seg#s */
 } SlruFlushData;
 
@@ -113,7 +113,7 @@ typedef struct SlruFlushData
  * page_lru_count entries to be "reset" to lower values than they should have,
  * in case a process is delayed while it executes this macro.  With care in
  * SlruSelectLRUPage(), this does little harm, and in any case the absolute
- * worst possible consequence is a nonoptimal choice of page to evict.  The
+ * worst possible consequence is a nonoptimal choice of page to evict.	The
  * gain from allowing concurrent reads of SLRU pages seems worth it.
  */
 #define SlruRecentlyUsed(shared, slotno)	\
@@ -158,13 +158,13 @@ SimpleLruShmemSize(int nslots)
 
 	/* we assume nslots isn't so large as to risk overflow */
 	sz = MAXALIGN(sizeof(SlruSharedData));
-	sz += MAXALIGN(nslots * sizeof(char *));			/* page_buffer[] */
+	sz += MAXALIGN(nslots * sizeof(char *));	/* page_buffer[] */
 	sz += MAXALIGN(nslots * sizeof(SlruPageStatus));	/* page_status[] */
-	sz += MAXALIGN(nslots * sizeof(bool));				/* page_dirty[] */
-	sz += MAXALIGN(nslots * sizeof(int));				/* page_number[] */
-	sz += MAXALIGN(nslots * sizeof(int));				/* page_lru_count[] */
-	sz += MAXALIGN(nslots * sizeof(LWLockId));			/* buffer_locks[] */
-	
+	sz += MAXALIGN(nslots * sizeof(bool));		/* page_dirty[] */
+	sz += MAXALIGN(nslots * sizeof(int));		/* page_number[] */
+	sz += MAXALIGN(nslots * sizeof(int));		/* page_lru_count[] */
+	sz += MAXALIGN(nslots * sizeof(LWLockId));	/* buffer_locks[] */
+
 	return BUFFERALIGN(sz) + BLCKSZ * nslots;
 }
 
@@ -653,9 +653,9 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		 * Easiest way to deal with that is to accept references to
 		 * nonexistent files here and in SlruPhysicalReadPage.)
 		 *
-		 * Note: it is possible for more than one backend to be executing
-		 * this code simultaneously for different pages of the same file.
-		 * Hence, don't use O_EXCL or O_TRUNC or anything like that.
+		 * Note: it is possible for more than one backend to be executing this
+		 * code simultaneously for different pages of the same file. Hence,
+		 * don't use O_EXCL or O_TRUNC or anything like that.
 		 */
 		SlruFileName(ctl, path, segno);
 		fd = BasicOpenFile(path, O_RDWR | O_CREAT | PG_BINARY,
@@ -759,22 +759,22 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-				  errdetail("Could not seek in file \"%s\" to offset %u: %m.",
-							path, offset)));
+				 errdetail("Could not seek in file \"%s\" to offset %u: %m.",
+						   path, offset)));
 			break;
 		case SLRU_READ_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-				errdetail("Could not read from file \"%s\" at offset %u: %m.",
-						  path, offset)));
+			   errdetail("Could not read from file \"%s\" at offset %u: %m.",
+						 path, offset)));
 			break;
 		case SLRU_WRITE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not access status of transaction %u", xid),
-				 errdetail("Could not write to file \"%s\" at offset %u: %m.",
-						   path, offset)));
+				errdetail("Could not write to file \"%s\" at offset %u: %m.",
+						  path, offset)));
 			break;
 		case SLRU_FSYNC_FAILED:
 			ereport(ERROR,

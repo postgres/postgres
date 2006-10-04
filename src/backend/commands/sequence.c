@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.139 2006/08/21 00:57:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.140 2006/10/04 00:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ static Relation open_share_lock(SeqTable seq);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
 static void init_params(List *options, bool isInit,
-						Form_pg_sequence new, List **owned_by);
+			Form_pg_sequence new, List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
 static void process_owned_by(Relation seqrel, List *owned_by);
 
@@ -862,7 +862,7 @@ open_share_lock(SeqTable seq)
 static void
 init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 {
-	SeqTable elm;
+	SeqTable	elm;
 	Relation	seqrel;
 
 	/* Look to see if we already have a seqtable entry for relation */
@@ -1180,7 +1180,7 @@ process_owned_by(Relation seqrel, List *owned_by)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid OWNED BY option"),
-					 errhint("Specify OWNED BY table.column or OWNED BY NONE.")));
+				errhint("Specify OWNED BY table.column or OWNED BY NONE.")));
 		tablerel = NULL;
 		attnum = 0;
 	}
@@ -1209,7 +1209,7 @@ process_owned_by(Relation seqrel, List *owned_by)
 		if (seqrel->rd_rel->relowner != tablerel->rd_rel->relowner)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("sequence must have same owner as table it is owned by")));
+			errmsg("sequence must have same owner as table it is owned by")));
 		if (RelationGetNamespace(seqrel) != RelationGetNamespace(tablerel))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -1225,8 +1225,8 @@ process_owned_by(Relation seqrel, List *owned_by)
 	}
 
 	/*
-	 * OK, we are ready to update pg_depend.  First remove any existing
-	 * AUTO dependencies for the sequence, then optionally add a new one.
+	 * OK, we are ready to update pg_depend.  First remove any existing AUTO
+	 * dependencies for the sequence, then optionally add a new one.
 	 */
 	markSequenceUnowned(RelationGetRelid(seqrel));
 
@@ -1304,5 +1304,5 @@ seq_desc(StringInfo buf, uint8 xl_info, char *rec)
 	}
 
 	appendStringInfo(buf, "rel %u/%u/%u",
-			xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
+			   xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode);
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.60 2006/05/21 20:05:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conv.c,v 1.61 2006/10/04 00:30:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ mic2latin(const unsigned char *mic, unsigned char *p, int len,
 		}
 		else
 		{
-			int		l = pg_mic_mblen(mic);
+			int			l = pg_mic_mblen(mic);
 
 			if (len < l)
 				report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic,
@@ -217,7 +217,7 @@ mic2latin_with_table(const unsigned char *mic,
 		}
 		else
 		{
-			int		l = pg_mic_mblen(mic);
+			int			l = pg_mic_mblen(mic);
 
 			if (len < l)
 				report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic,

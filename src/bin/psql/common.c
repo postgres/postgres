@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.129 2006/09/27 15:41:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.130 2006/10/04 00:30:05 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -236,7 +236,7 @@ volatile bool sigint_interrupt_enabled = false;
 
 sigjmp_buf	sigint_interrupt_jmp;
 
-static PGcancel * volatile cancelConn = NULL;
+static PGcancel *volatile cancelConn = NULL;
 
 #ifdef WIN32
 static CRITICAL_SECTION cancelConnLock;
@@ -283,7 +283,6 @@ setup_cancel_handler(void)
 {
 	pqsignal(SIGINT, handle_sigint);
 }
-
 #else							/* WIN32 */
 
 static BOOL WINAPI
@@ -329,7 +328,6 @@ setup_cancel_handler(void)
 
 	SetConsoleCtrlHandler(consoleHandler, TRUE);
 }
-
 #endif   /* WIN32 */
 
 
@@ -397,7 +395,7 @@ CheckConnection(void)
 void
 SetCancelConn(void)
 {
-	PGcancel *oldCancelConn;
+	PGcancel   *oldCancelConn;
 
 #ifdef WIN32
 	EnterCriticalSection(&cancelConnLock);
@@ -427,7 +425,7 @@ SetCancelConn(void)
 void
 ResetCancelConn(void)
 {
-	PGcancel *oldCancelConn;
+	PGcancel   *oldCancelConn;
 
 #ifdef WIN32
 	EnterCriticalSection(&cancelConnLock);
@@ -872,7 +870,7 @@ SendQuery(const char *query)
 	{
 		/* Default fetch-it-all-and-print mode */
 		TimevalStruct before,
-				after;
+					after;
 
 		if (pset.timing)
 			GETTIMEOFDAY(&before);
@@ -979,17 +977,17 @@ static bool
 ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 {
 	bool		OK = true;
-	PGresult		*results;
-	PQExpBufferData	buf;
+	PGresult   *results;
+	PQExpBufferData buf;
 	printQueryOpt my_popt = pset.popt;
 	FILE	   *queryFout_copy = pset.queryFout;
 	bool		queryFoutPipe_copy = pset.queryFoutPipe;
-	bool			started_txn = false;
-	bool			did_pager = false;
-	int				ntuples;
-	char			fetch_cmd[64];
+	bool		started_txn = false;
+	bool		did_pager = false;
+	int			ntuples;
+	char		fetch_cmd[64];
 	TimevalStruct before,
-					after;
+				after;
 
 	*elapsed_msec = 0;
 
@@ -1040,7 +1038,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 	if (pset.gfname)
 	{
 		/* keep this code in sync with PrintQueryTuples */
-		pset.queryFout = stdout;    /* so it doesn't get closed */
+		pset.queryFout = stdout;	/* so it doesn't get closed */
 
 		/* open file/pipe */
 		if (!setQFout(pset.gfname))
@@ -1136,9 +1134,9 @@ cleanup:
 		GETTIMEOFDAY(&before);
 
 	/*
-	 * We try to close the cursor on either success or failure, but on
-	 * failure ignore the result (it's probably just a bleat about
-	 * being in an aborted transaction)
+	 * We try to close the cursor on either success or failure, but on failure
+	 * ignore the result (it's probably just a bleat about being in an aborted
+	 * transaction)
 	 */
 	results = PQexec(pset.db, "CLOSE _psql_cursor");
 	if (OK)
@@ -1350,9 +1348,9 @@ command_no_begin(const char *query)
 	}
 
 	/*
-	 * Note: these tests will match DROP SYSTEM and REINDEX TABLESPACE,
-	 * which aren't really valid commands so we don't care much.
-	 * The other four possible matches are correct.
+	 * Note: these tests will match DROP SYSTEM and REINDEX TABLESPACE, which
+	 * aren't really valid commands so we don't care much. The other four
+	 * possible matches are correct.
 	 */
 	if ((wordlen == 4 && pg_strncasecmp(query, "drop", 4) == 0) ||
 		(wordlen == 7 && pg_strncasecmp(query, "reindex", 7) == 0))
@@ -1406,7 +1404,7 @@ is_select_command(const char *query)
 
 	if (wordlen == 6 && pg_strncasecmp(query, "select", 6) == 0)
 		return true;
-	
+
 	if (wordlen == 6 && pg_strncasecmp(query, "values", 6) == 0)
 		return true;
 

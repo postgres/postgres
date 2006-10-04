@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.97 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.98 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -722,7 +722,7 @@ ExecFetchSlotTuple(TupleTableSlot *slot)
  *			Fetch the slot's minimal physical tuple.
  *
  *		If the slot contains a virtual tuple, we convert it to minimal
- *		physical form.  The slot retains ownership of the physical tuple.
+ *		physical form.	The slot retains ownership of the physical tuple.
  *		Likewise, if it contains a regular tuple we convert to minimal form.
  *
  * As above, the result must be treated as read-only.
@@ -792,8 +792,8 @@ ExecMaterializeSlot(TupleTableSlot *slot)
 	Assert(!slot->tts_isempty);
 
 	/*
-	 * If we have a regular physical tuple, and it's locally palloc'd,
-	 * we have nothing to do.
+	 * If we have a regular physical tuple, and it's locally palloc'd, we have
+	 * nothing to do.
 	 */
 	if (slot->tts_tuple && slot->tts_shouldFree && slot->tts_mintuple == NULL)
 		return slot->tts_tuple;

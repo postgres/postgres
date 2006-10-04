@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.27 2006/08/17 23:04:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.28 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,14 +207,13 @@ BackgroundWriterMain(void)
 #endif
 
 	/*
-	 * Initialize so that first time-driven event happens at the correct
-	 * time.
+	 * Initialize so that first time-driven event happens at the correct time.
 	 */
 	last_checkpoint_time = last_xlog_switch_time = time(NULL);
 
 	/*
-	 * Create a resource owner to keep track of our resources (currently
-	 * only buffer pins).
+	 * Create a resource owner to keep track of our resources (currently only
+	 * buffer pins).
 	 */
 	CurrentResourceOwner = ResourceOwnerCreate(NULL, "Background Writer");
 
@@ -406,17 +405,17 @@ BackgroundWriterMain(void)
 			BgBufferSync();
 
 		/*
-		 * Check for archive_timeout, if so, switch xlog files.  First
-		 * we do a quick check using possibly-stale local state.
+		 * Check for archive_timeout, if so, switch xlog files.  First we do a
+		 * quick check using possibly-stale local state.
 		 */
 		if (XLogArchiveTimeout > 0 &&
 			(int) (now - last_xlog_switch_time) >= XLogArchiveTimeout)
 		{
 			/*
-			 * Update local state ... note that last_xlog_switch_time is
-			 * the last time a switch was performed *or requested*.
+			 * Update local state ... note that last_xlog_switch_time is the
+			 * last time a switch was performed *or requested*.
 			 */
-			time_t	last_time = GetLastSegSwitchTime();
+			time_t		last_time = GetLastSegSwitchTime();
 
 			last_xlog_switch_time = Max(last_xlog_switch_time, last_time);
 
@@ -427,7 +426,7 @@ BackgroundWriterMain(void)
 			/* Now we can do the real check */
 			if ((int) (now - last_xlog_switch_time) >= XLogArchiveTimeout)
 			{
-				XLogRecPtr switchpoint;
+				XLogRecPtr	switchpoint;
 
 				/* OK, it's time to switch */
 				switchpoint = RequestXLogSwitch();
@@ -440,9 +439,10 @@ BackgroundWriterMain(void)
 					ereport(DEBUG1,
 							(errmsg("xlog switch forced (archive_timeout=%d)",
 									XLogArchiveTimeout)));
+
 				/*
-				 * Update state in any case, so we don't retry constantly
-				 * when the system is idle.
+				 * Update state in any case, so we don't retry constantly when
+				 * the system is idle.
 				 */
 				last_xlog_switch_time = now;
 			}
@@ -463,9 +463,9 @@ BackgroundWriterMain(void)
 			(bgwriter_lru_percent > 0.0 && bgwriter_lru_maxpages > 0))
 			udelay = BgWriterDelay * 1000L;
 		else if (XLogArchiveTimeout > 0)
-			udelay = 1000000L;   /* One second */
+			udelay = 1000000L;	/* One second */
 		else
-			udelay = 10000000L;  /* Ten seconds */
+			udelay = 10000000L; /* Ten seconds */
 
 		while (udelay > 999999L)
 		{

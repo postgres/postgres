@@ -301,14 +301,15 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 
 	LexizeInit(&ldata, cfg);
 
-	do {
+	do
+	{
 		type = DatumGetInt32(FunctionCall3(
-											   &(prsobj->getlexeme_info),
-											   PointerGetDatum(prsobj->prs),
-											   PointerGetDatum(&lemm),
+										   &(prsobj->getlexeme_info),
+										   PointerGetDatum(prsobj->prs),
+										   PointerGetDatum(&lemm),
 										   PointerGetDatum(&lenlemm)));
 
-		if (type>0 && lenlemm >= MAXSTRLEN)
+		if (type > 0 && lenlemm >= MAXSTRLEN)
 		{
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
@@ -324,9 +325,9 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 
 		LexizeAddLemm(&ldata, type, lemm, lenlemm);
 
-		while(  (norms = LexizeExec(&ldata, NULL)) != NULL )
+		while ((norms = LexizeExec(&ldata, NULL)) != NULL)
 		{
-			TSLexeme *ptr = norms;
+			TSLexeme   *ptr = norms;
 
 			prs->pos++;			/* set pos */
 
@@ -338,7 +339,7 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 					prs->words = (TSWORD *) repalloc((void *) prs->words, prs->lenwords * sizeof(TSWORD));
 				}
 
-				if ( ptr->flags & TSL_ADDPOS )
+				if (ptr->flags & TSL_ADDPOS)
 					prs->pos++;
 				prs->words[prs->curwords].len = strlen(ptr->lexeme);
 				prs->words[prs->curwords].word = ptr->lexeme;
@@ -349,8 +350,8 @@ parsetext_v2(TSCfgInfo * cfg, PRSTEXT * prs, char *buf, int4 buflen)
 				prs->curwords++;
 			}
 			pfree(norms);
-	}
-	} while(type>0);
+		}
+	} while (type > 0);
 
 	FunctionCall1(
 				  &(prsobj->end_info),
@@ -407,30 +408,35 @@ hlfinditem(HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int buflen)
 }
 
 static void
-addHLParsedLex(HLPRSTEXT *prs, QUERYTYPE * query, ParsedLex *lexs, TSLexeme *norms) {
-	ParsedLex	*tmplexs;
-	TSLexeme *ptr;
+addHLParsedLex(HLPRSTEXT * prs, QUERYTYPE * query, ParsedLex * lexs, TSLexeme * norms)
+{
+	ParsedLex  *tmplexs;
+	TSLexeme   *ptr;
 
-	while( lexs ) {
-		
-		if ( lexs->type > 0 ) 
+	while (lexs)
+	{
+
+		if (lexs->type > 0)
 			hladdword(prs, lexs->lemm, lexs->lenlemm, lexs->type);
 
 		ptr = norms;
-		while( ptr && ptr->lexeme ) {
+		while (ptr && ptr->lexeme)
+		{
 			hlfinditem(prs, query, ptr->lexeme, strlen(ptr->lexeme));
 			ptr++;
 		}
 
 		tmplexs = lexs->next;
-		pfree( lexs );
+		pfree(lexs);
 		lexs = tmplexs;
 	}
 
-	if ( norms ) {
+	if (norms)
+	{
 		ptr = norms;
-		while( ptr->lexeme ) {
-			pfree( ptr->lexeme );
+		while (ptr->lexeme)
+		{
+			pfree(ptr->lexeme);
 			ptr++;
 		}
 		pfree(norms);
@@ -445,8 +451,8 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 	char	   *lemm = NULL;
 	WParserInfo *prsobj = findprs(cfg->prs_id);
 	LexizeData	ldata;
-	TSLexeme	*norms;
-	ParsedLex	*lexs;
+	TSLexeme   *norms;
+	ParsedLex  *lexs;
 
 	prsobj->prs = (void *) DatumGetPointer(
 										   FunctionCall2(
@@ -458,14 +464,15 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 
 	LexizeInit(&ldata, cfg);
 
-	do {
+	do
+	{
 		type = DatumGetInt32(FunctionCall3(
-											   &(prsobj->getlexeme_info),
-											   PointerGetDatum(prsobj->prs),
-											   PointerGetDatum(&lemm),
-									PointerGetDatum(&lenlemm)));
+										   &(prsobj->getlexeme_info),
+										   PointerGetDatum(prsobj->prs),
+										   PointerGetDatum(&lemm),
+										   PointerGetDatum(&lenlemm)));
 
-		if (type>0 && lenlemm >= MAXSTRLEN)
+		if (type > 0 && lenlemm >= MAXSTRLEN)
 		{
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
@@ -481,14 +488,15 @@ hlparsetext(TSCfgInfo * cfg, HLPRSTEXT * prs, QUERYTYPE * query, char *buf, int4
 
 		LexizeAddLemm(&ldata, type, lemm, lenlemm);
 
-		do {
-			if ( (norms = LexizeExec(&ldata,&lexs)) != NULL ) 
+		do
+		{
+			if ((norms = LexizeExec(&ldata, &lexs)) != NULL)
 				addHLParsedLex(prs, query, lexs, norms);
-			else 
+			else
 				addHLParsedLex(prs, query, lexs, NULL);
-		} while( norms );
+		} while (norms);
 
-	} while( type>0 );
+	} while (type > 0);
 
 	FunctionCall1(
 				  &(prsobj->end_info),

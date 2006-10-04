@@ -214,7 +214,7 @@ sizebitvec(BITVECP sign)
 				i;
 
 	LOOPBYTE(
-		size += number_of_ones[(unsigned char) sign[i]];
+			 size += number_of_ones[(unsigned char) sign[i]];
 	);
 	return size;
 }
@@ -227,8 +227,8 @@ hemdistsign(BITVECP a, BITVECP b)
 				dist = 0;
 
 	LOOPBYTE(
-		diff = (unsigned char) (a[i] ^ b[i]);
-		dist += number_of_ones[diff];
+			 diff = (unsigned char) (a[i] ^ b[i]);
+	dist += number_of_ones[diff];
 	);
 	return dist;
 }
@@ -318,7 +318,7 @@ typedef struct
 {
 	OffsetNumber pos;
 	int4		cost;
-} SPLITCOST;
+}	SPLITCOST;
 
 static int
 comparecost(const void *a, const void *b)
@@ -506,16 +506,17 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 
 	if (strategy == BooleanSearchStrategy)
 	{
-		retval =signconsistent((QUERYTYPE *) query,
-									  GETSIGN(DatumGetPointer(entry->key)),
-									  false);
-		PG_FREE_IF_COPY( query, 1 );
+		retval = signconsistent((QUERYTYPE *) query,
+								GETSIGN(DatumGetPointer(entry->key)),
+								false);
+		PG_FREE_IF_COPY(query, 1);
 		PG_RETURN_BOOL(retval);
 	}
 
 	CHECKARRVALID(query);
-	if (ARRISVOID(query)) {
-		PG_FREE_IF_COPY( query, 1 );
+	if (ARRISVOID(query))
+	{
+		PG_FREE_IF_COPY(query, 1);
 		PG_RETURN_BOOL(FALSE);
 	}
 
@@ -602,6 +603,6 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 		default:
 			retval = FALSE;
 	}
-	PG_FREE_IF_COPY( query, 1 );
+	PG_FREE_IF_COPY(query, 1);
 	PG_RETURN_BOOL(retval);
 }

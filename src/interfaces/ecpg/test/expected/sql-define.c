@@ -73,7 +73,6 @@ struct sqlca_t *ECPGget_sqlca(void);
 #ifdef __cplusplus
 }
 #endif
-
 #endif
 
 #line 1 "define.pgc"
@@ -92,114 +91,143 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 
 
-int main(void)
+int
+main(void)
 {
-   /* exec sql begin declare section */
-      
-      
-   
+	/* exec sql begin declare section */
+
+
+
 #line 10 "define.pgc"
- int  i    ;
- 
+	int			i;
+
 #line 11 "define.pgc"
- char  s [ 200 ]    ;
+	char		s[200];
+
 /* exec sql end declare section */
 #line 12 "define.pgc"
 
 
-   ECPGdebug(1, stderr);
+	ECPGdebug(1, stderr);
 
-   /* exec sql whenever sqlerror  do sqlprint (  ) ; */
+	/* exec sql whenever sqlerror  do sqlprint (  ) ; */
 #line 16 "define.pgc"
 
-   { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
+	{
+		ECPGconnect(__LINE__, 0, "regress1", NULL, NULL, NULL, 0);
 #line 17 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 17 "define.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text   )    ", ECPGt_EOIT, ECPGt_EORT);
+	{
+		ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text   )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 19 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 19 "define.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 29 , 'abcdef' ) ", ECPGt_EOIT, ECPGt_EORT);
+	{
+		ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 29 , 'abcdef' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 20 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 20 "define.pgc"
 
 
-   
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , 'defined' ) ", ECPGt_EOIT, ECPGt_EORT);
+
+	{
+		ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , 'defined' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 23 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 23 "define.pgc"
 
-   
 
-   
-           
-   
-           
-   
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , 'someothervar not defined' ) ", ECPGt_EOIT, ECPGt_EORT);
+
+
+
+
+
+
+	{
+		ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( null , 'someothervar not defined' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 31 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 31 "define.pgc"
 
-   
 
-   
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "select  1 , 29 :: text  || '-' || 'abcdef'     ", ECPGt_EOIT, 
-	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
-	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_char,(s),(long)200,(long)1,(200)*sizeof(char), 
-	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
+
+
+	{
+		ECPGdo(__LINE__, 0, 1, NULL, "select  1 , 29 :: text  || '-' || 'abcdef'     ", ECPGt_EOIT,
+			   ECPGt_int, &(i), (long) 1, (long) 1, sizeof(int),
+			   ECPGt_NO_INDICATOR, NULL, 0L, 0L, 0L,
+			   ECPGt_char, (s), (long) 200, (long) 1, (200) * sizeof(char),
+			   ECPGt_NO_INDICATOR, NULL, 0L, 0L, 0L, ECPGt_EORT);
 #line 36 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 36 "define.pgc"
 
 
-   printf("i: %d, s: %s\n", i, s);
+	printf("i: %d, s: %s\n", i, s);
 
-   
-   
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 29 , 'no string' ) ", ECPGt_EOIT, ECPGt_EORT);
+
+
+	{
+		ECPGdo(__LINE__, 0, 1, NULL, "insert into test values( 29 , 'no string' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 42 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 42 "define.pgc"
 
-   
 
-     /* no value */
-   
 
-   
-        
-   
-        
-   
-   { ECPGdo(__LINE__, 0, 1, NULL, "set TIMEZONE to 'UTC'", ECPGt_EOIT, ECPGt_EORT);
+	/* no value */
+
+
+
+
+
+
+
+	{
+		ECPGdo(__LINE__, 0, 1, NULL, "set TIMEZONE to 'UTC'", ECPGt_EOIT, ECPGt_EORT);
 #line 53 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 53 "define.pgc"
 
-   
 
-   { ECPGdisconnect(__LINE__, "CURRENT");
+
+	{
+		ECPGdisconnect(__LINE__, "CURRENT");
 #line 56 "define.pgc"
 
-if (sqlca.sqlcode < 0) sqlprint (  );}
+		if (sqlca.sqlcode < 0)
+			sqlprint();
+	}
 #line 56 "define.pgc"
 
-   return 0;
+	return 0;
 }

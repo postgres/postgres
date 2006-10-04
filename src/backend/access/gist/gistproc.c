@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.8 2006/09/10 00:29:34 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/access/gist/gistproc.c,v 1.9 2006/10/04 00:29:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,8 @@ gist_box_consistent(PG_FUNCTION_ARGS)
 }
 
 static void
-adjustBox( BOX *b, BOX *addon ) {
+adjustBox(BOX *b, BOX *addon)
+{
 	if (b->high.x < addon->high.x)
 		b->high.x = addon->high.x;
 	if (b->low.x > addon->low.x)
@@ -146,7 +147,7 @@ gist_box_union(PG_FUNCTION_ARGS)
 	for (i = 1; i < numranges; i++)
 	{
 		cur = DatumGetBoxP(entryvec->vector[i].key);
-		adjustBox( pageunion, cur );
+		adjustBox(pageunion, cur);
 	}
 	*sizep = sizeof(BOX);
 
@@ -210,67 +211,79 @@ compare_KB(const void *a, const void *b)
 }
 
 static void
-chooseLR( GIST_SPLITVEC *v, 
-	OffsetNumber *list1, int nlist1, BOX *union1, 
-	OffsetNumber *list2, int nlist2, BOX *union2 )
+chooseLR(GIST_SPLITVEC *v,
+		 OffsetNumber *list1, int nlist1, BOX *union1,
+		 OffsetNumber *list2, int nlist2, BOX *union2)
 {
-	bool	firstToLeft = true;
+	bool		firstToLeft = true;
 
-	if ( v->spl_ldatum_exists || v->spl_rdatum_exists ) {
-		if (  v->spl_ldatum_exists && v->spl_rdatum_exists ) {
-			BOX	LRl = *union1, LRr = *union2; 
-			BOX	RLl = *union2, RLr = *union1;
-			double sizeLR, sizeRL;
+	if (v->spl_ldatum_exists || v->spl_rdatum_exists)
+	{
+		if (v->spl_ldatum_exists && v->spl_rdatum_exists)
+		{
+			BOX			LRl = *union1,
+						LRr = *union2;
+			BOX			RLl = *union2,
+						RLr = *union1;
+			double		sizeLR,
+						sizeRL;
 
-			adjustBox( &LRl, DatumGetBoxP( v->spl_ldatum ) );
-			adjustBox( &LRr, DatumGetBoxP( v->spl_rdatum ) );
-			adjustBox( &RLl, DatumGetBoxP( v->spl_ldatum ) );
-			adjustBox( &RLr, DatumGetBoxP( v->spl_rdatum ) );
+			adjustBox(&LRl, DatumGetBoxP(v->spl_ldatum));
+			adjustBox(&LRr, DatumGetBoxP(v->spl_rdatum));
+			adjustBox(&RLl, DatumGetBoxP(v->spl_ldatum));
+			adjustBox(&RLr, DatumGetBoxP(v->spl_rdatum));
 
-			sizeLR = size_box( DirectFunctionCall2(rt_box_inter, BoxPGetDatum(&LRl), BoxPGetDatum(&LRr)) );
-			sizeRL = size_box( DirectFunctionCall2(rt_box_inter, BoxPGetDatum(&RLl), BoxPGetDatum(&RLr)) );
+			sizeLR = size_box(DirectFunctionCall2(rt_box_inter, BoxPGetDatum(&LRl), BoxPGetDatum(&LRr)));
+			sizeRL = size_box(DirectFunctionCall2(rt_box_inter, BoxPGetDatum(&RLl), BoxPGetDatum(&RLr)));
 
-			if ( sizeLR > sizeRL ) 
+			if (sizeLR > sizeRL)
 				firstToLeft = false;
 
-		} else {
-			float p1, p2;
-			GISTENTRY	oldUnion, addon;
+		}
+		else
+		{
+			float		p1,
+						p2;
+			GISTENTRY	oldUnion,
+						addon;
 
-			gistentryinit(oldUnion, ( v->spl_ldatum_exists ) ? v->spl_ldatum : v->spl_rdatum,
+			gistentryinit(oldUnion, (v->spl_ldatum_exists) ? v->spl_ldatum : v->spl_rdatum,
 						  NULL, NULL, InvalidOffsetNumber, FALSE);
-		
+
 			gistentryinit(addon, BoxPGetDatum(union1), NULL, NULL, InvalidOffsetNumber, FALSE);
-			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&union1), PointerGetDatum(&p1)); 
+			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&union1), PointerGetDatum(&p1));
 			gistentryinit(addon, BoxPGetDatum(union2), NULL, NULL, InvalidOffsetNumber, FALSE);
 			DirectFunctionCall3(gist_box_penalty, PointerGetDatum(&oldUnion), PointerGetDatum(&union2), PointerGetDatum(&p2));
 
-			if (  (v->spl_ldatum_exists && p1 > p2) || (v->spl_rdatum_exists && p1 < p2)  ) 
-				firstToLeft = false;	
+			if ((v->spl_ldatum_exists && p1 > p2) || (v->spl_rdatum_exists && p1 < p2))
+				firstToLeft = false;
 		}
 	}
 
-	if ( firstToLeft ) {	
+	if (firstToLeft)
+	{
 		v->spl_left = list1;
 		v->spl_right = list2;
 		v->spl_nleft = nlist1;
 		v->spl_nright = nlist2;
-		if ( v->spl_ldatum_exists )
-			adjustBox(union1, DatumGetBoxP( v->spl_ldatum ) );
+		if (v->spl_ldatum_exists)
+			adjustBox(union1, DatumGetBoxP(v->spl_ldatum));
 		v->spl_ldatum = BoxPGetDatum(union1);
-		if ( v->spl_rdatum_exists )
-			adjustBox(union2, DatumGetBoxP( v->spl_rdatum ) );
+		if (v->spl_rdatum_exists)
+			adjustBox(union2, DatumGetBoxP(v->spl_rdatum));
 		v->spl_rdatum = BoxPGetDatum(union2);
-	} else {
+	}
+	else
+	{
 		v->spl_left = list2;
 		v->spl_right = list1;
 		v->spl_nleft = nlist2;
 		v->spl_nright = nlist1;
-		if ( v->spl_ldatum_exists )
-			adjustBox(union2, DatumGetBoxP( v->spl_ldatum ) );
+		if (v->spl_ldatum_exists)
+			adjustBox(union2, DatumGetBoxP(v->spl_ldatum));
 		v->spl_ldatum = BoxPGetDatum(union2);
-		if ( v->spl_rdatum_exists )
-			adjustBox(union1, DatumGetBoxP( v->spl_rdatum ) );
+		if (v->spl_rdatum_exists)
+			adjustBox(union1, DatumGetBoxP(v->spl_rdatum));
 		v->spl_rdatum = BoxPGetDatum(union1);
 	}
 
@@ -326,7 +339,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 								   ))
 			allisequal = false;
 
-		adjustBox( &pageunion, cur );
+		adjustBox(&pageunion, cur);
 	}
 
 	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
@@ -359,12 +372,12 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 				}
 			}
 
-			if ( v->spl_ldatum_exists ) 
-				adjustBox( unionL, DatumGetBoxP( v->spl_ldatum ) );
+			if (v->spl_ldatum_exists)
+				adjustBox(unionL, DatumGetBoxP(v->spl_ldatum));
 			v->spl_ldatum = BoxPGetDatum(unionL);
 
-			if ( v->spl_rdatum_exists ) 
-				adjustBox( unionR, DatumGetBoxP( v->spl_rdatum ) );
+			if (v->spl_rdatum_exists)
+				adjustBox(unionR, DatumGetBoxP(v->spl_rdatum));
 			v->spl_rdatum = BoxPGetDatum(unionR);
 
 			v->spl_ldatum_exists = v->spl_rdatum_exists = false;
@@ -471,13 +484,13 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	if (direction == 'x')
-		chooseLR( v,
-					listL, posL, unionL,
-					listR, posR, unionR );
-	else 
-		chooseLR( v,
-					listB, posB, unionB,
-					listT, posT, unionT );
+		chooseLR(v,
+				 listL, posL, unionL,
+				 listR, posR, unionR);
+	else
+		chooseLR(v,
+				 listB, posB, unionB,
+				 listT, posT, unionT);
 
 	PG_RETURN_POINTER(v);
 }

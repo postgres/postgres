@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.96 2006/07/31 20:09:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.97 2006/10/04 00:29:51 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -343,12 +343,12 @@ DefineType(List *names, List *parameters)
 		analyzeOid = findTypeAnalyzeFunction(analyzeName, typoid);
 
 	/*
-	 * Check permissions on functions.  We choose to require the creator/owner
-	 * of a type to also own the underlying functions.  Since creating a type
+	 * Check permissions on functions.	We choose to require the creator/owner
+	 * of a type to also own the underlying functions.	Since creating a type
 	 * is tantamount to granting public execute access on the functions, the
-	 * minimum sane check would be for execute-with-grant-option.  But we don't
-	 * have a way to make the type go away if the grant option is revoked, so
-	 * ownership seems better.
+	 * minimum sane check would be for execute-with-grant-option.  But we
+	 * don't have a way to make the type go away if the grant option is
+	 * revoked, so ownership seems better.
 	 */
 	if (inputOid && !pg_proc_ownercheck(inputOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
@@ -587,8 +587,8 @@ DefineDomain(CreateDomainStmt *stmt)
 
 	/*
 	 * Base type must be a plain base type or another domain.  Domains over
-	 * pseudotypes would create a security hole.  Domains over composite
-	 * types might be made to work in the future, but not today.
+	 * pseudotypes would create a security hole.  Domains over composite types
+	 * might be made to work in the future, but not today.
 	 */
 	typtype = baseType->typtype;
 	if (typtype != 'b' && typtype != 'd')
@@ -1840,7 +1840,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	if (pstate->p_hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate function in check constraint")));
+			   errmsg("cannot use aggregate function in check constraint")));
 
 	/*
 	 * Convert to string form for storage.

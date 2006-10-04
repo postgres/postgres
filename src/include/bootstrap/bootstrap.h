@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.43 2006/08/15 22:36:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.44 2006/10/04 00:30:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,13 +51,13 @@ extern int	EnterString(char *str);
 extern void build_indices(void);
 
 extern void boot_get_type_io_data(Oid typid,
-								  int16 *typlen,
-								  bool *typbyval,
-								  char *typalign,
-								  char *typdelim,
-								  Oid *typioparam,
-								  Oid *typinput,
-								  Oid *typoutput);
+					  int16 *typlen,
+					  bool *typbyval,
+					  char *typalign,
+					  char *typdelim,
+					  Oid *typioparam,
+					  Oid *typinput,
+					  Oid *typoutput);
 
 extern int	boot_yyparse(void);
 

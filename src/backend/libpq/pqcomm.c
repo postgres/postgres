@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.187 2006/08/11 20:44:20 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.188 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,13 +594,14 @@ StreamConnection(int server_fd, Port *port)
 		}
 
 #ifdef WIN32
+
 		/*
-		 *	This is a Win32 socket optimization.  The ideal size is 32k.
-		 *	http://support.microsoft.com/kb/823764/EN-US/
+		 * This is a Win32 socket optimization.  The ideal size is 32k.
+		 * http://support.microsoft.com/kb/823764/EN-US/
 		 */
 		on = PQ_BUFFER_SIZE * 4;
 		if (setsockopt(port->sock, SOL_SOCKET, SO_SNDBUF, (char *) &on,
-			sizeof(on)) < 0)
+					   sizeof(on)) < 0)
 		{
 			elog(LOG, "setsockopt(SO_SNDBUF) failed: %m");
 			return STATUS_ERROR;

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-internal.c,v 1.6 2006/07/13 04:52:51 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-mpi-internal.c,v 1.7 2006/10/04 00:29:46 momjian Exp $
  */
 #include "postgres.h"
 
@@ -36,14 +36,17 @@
 #include "mbuf.h"
 #include "pgp.h"
 
-static mpz_t *mp_new()
+static mpz_t *
+mp_new()
 {
-	mpz_t *mp = mp_int_alloc();
+	mpz_t	   *mp = mp_int_alloc();
+
 	mp_int_init_size(mp, 256);
 	return mp;
 }
 
-static void mp_clear_free(mpz_t *a)
+static void
+mp_clear_free(mpz_t * a)
 {
 	if (!a)
 		return;
@@ -52,25 +55,29 @@ static void mp_clear_free(mpz_t *a)
 }
 
 
-static int mp_px_rand(uint32 bits, mpz_t *res)
+static int
+mp_px_rand(uint32 bits, mpz_t * res)
 {
-	int err;
-	unsigned bytes = (bits + 7) / 8;
-	int last_bits = bits & 7;
-	uint8 *buf;
+	int			err;
+	unsigned	bytes = (bits + 7) / 8;
+	int			last_bits = bits & 7;
+	uint8	   *buf;
 
 	buf = px_alloc(bytes);
 	err = px_get_random_bytes(buf, bytes);
-	if (err < 0) {
+	if (err < 0)
+	{
 		px_free(buf);
 		return err;
 	}
 
 	/* clear unnecessary bits and set last bit to one */
-	if (last_bits) {
+	if (last_bits)
+	{
 		buf[0] >>= 8 - last_bits;
 		buf[0] |= 1 << (last_bits - 1);
-	} else
+	}
+	else
 		buf[0] |= 1 << 7;
 
 	mp_int_read_unsigned(res, buf, bytes);
@@ -80,9 +87,11 @@ static int mp_px_rand(uint32 bits, mpz_t *res)
 	return 0;
 }
 
-static void mp_modmul(mpz_t *a, mpz_t *b, mpz_t *p, mpz_t *res)
+static void
+mp_modmul(mpz_t * a, mpz_t * b, mpz_t * p, mpz_t * res)
 {
-	mpz_t *tmp = mp_new();
+	mpz_t	   *tmp = mp_new();
+
 	mp_int_mul(a, b, tmp);
 	mp_int_mod(tmp, p, res);
 	mp_clear_free(tmp);
@@ -92,6 +101,7 @@ static mpz_t *
 mpi_to_bn(PGP_MPI * n)
 {
 	mpz_t	   *bn = mp_new();
+
 	mp_int_read_unsigned(bn, n->data, n->bytes);
 
 	if (!bn)
@@ -107,11 +117,11 @@ mpi_to_bn(PGP_MPI * n)
 }
 
 static PGP_MPI *
-bn_to_mpi(mpz_t *bn)
+bn_to_mpi(mpz_t * bn)
 {
 	int			res;
 	PGP_MPI    *n;
-	int bytes;
+	int			bytes;
 
 	res = pgp_mpi_alloc(mp_int_count_bits(bn), &n);
 	if (res < 0)

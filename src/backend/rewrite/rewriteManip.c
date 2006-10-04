@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.101 2006/07/14 14:52:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.102 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -984,10 +984,11 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 	{
 		if (IsA(result, Query))
 			((Query *) result)->hasSubLinks = true;
+
 		/*
 		 * Note: if we're called on a non-Query node then it's the caller's
-		 * responsibility to update hasSubLinks in the ancestor Query.
-		 * This is pretty fragile and perhaps should be rethought ...
+		 * responsibility to update hasSubLinks in the ancestor Query. This is
+		 * pretty fragile and perhaps should be rethought ...
 		 */
 	}
 

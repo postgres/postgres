@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.97 2006/07/03 22:45:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.98 2006/10/04 00:29:51 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -131,6 +131,7 @@ defGetBoolean(DefElem *def)
 	 */
 	if (def->arg == NULL)
 		return true;
+
 	/*
 	 * Allow 0, 1, "true", "false"
 	 */
@@ -150,7 +151,7 @@ defGetBoolean(DefElem *def)
 			break;
 		default:
 			{
-				char   *sval = defGetString(def);
+				char	   *sval = defGetString(def);
 
 				if (pg_strcasecmp(sval, "true") == 0)
 					return true;
@@ -310,9 +311,9 @@ defGetTypeLength(DefElem *def)
 DefElem *
 defWithOids(bool value)
 {
-	DefElem *f = makeNode(DefElem);
+	DefElem    *f = makeNode(DefElem);
 
 	f->defname = "oids";
-	f->arg = (Node *)makeInteger(value);
+	f->arg = (Node *) makeInteger(value);
 	return f;
 }

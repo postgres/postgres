@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.104 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.105 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@ main(int argc, char *argv[])
 	set_pglocale_pgservice(argv[0], "postgres");
 
 #ifdef WIN32
+
 	/*
 	 * Windows uses codepages rather than the environment, so we work around
 	 * that by querying the environment explicitly first for LC_COLLATE and
@@ -156,8 +157,7 @@ main(int argc, char *argv[])
 	check_root(progname);
 
 	/*
-	 * Dispatch to one of various subprograms depending on first
-	 * argument.
+	 * Dispatch to one of various subprograms depending on first argument.
 	 */
 
 #ifdef EXEC_BACKEND
@@ -166,6 +166,7 @@ main(int argc, char *argv[])
 #endif
 
 #ifdef WIN32
+
 	/*
 	 * Start our win32 signal implementation
 	 *
@@ -190,7 +191,7 @@ main(int argc, char *argv[])
 
 
 /*
- * Place platform-specific startup hacks here.  This is the right
+ * Place platform-specific startup hacks here.	This is the right
  * place to put code that must be executed early in launch of either a
  * postmaster, a standalone backend, or a standalone bootstrap run.
  * Note that this code will NOT be executed when a backend or
@@ -211,12 +212,11 @@ startup_hacks(const char *progname)
 
 
 	/*
-	 * On some platforms, unaligned memory accesses result in a kernel
-	 * trap; the default kernel behavior is to emulate the memory
-	 * access, but this results in a significant performance penalty.
-	 * We ought to fix PG not to make such unaligned memory accesses,
-	 * so this code disables the kernel emulation: unaligned accesses
-	 * will result in SIGBUS instead.
+	 * On some platforms, unaligned memory accesses result in a kernel trap;
+	 * the default kernel behavior is to emulate the memory access, but this
+	 * results in a significant performance penalty. We ought to fix PG not to
+	 * make such unaligned memory accesses, so this code disables the kernel
+	 * emulation: unaligned accesses will result in SIGBUS instead.
 	 */
 #ifdef NOFIXADE
 
@@ -230,8 +230,7 @@ startup_hacks(const char *progname)
 		write_stderr("%s: setsysinfo failed: %s\n",
 					 progname, strerror(errno));
 #endif
-
-#endif /* NOFIXADE */
+#endif   /* NOFIXADE */
 
 
 #ifdef WIN32
@@ -253,9 +252,9 @@ startup_hacks(const char *progname)
 		}
 
 		/* In case of general protection fault, don't show GUI popup box */
-        SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+		SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 	}
-#endif /* WIN32 */
+#endif   /* WIN32 */
 }
 
 
@@ -315,7 +314,7 @@ help(const char *progname)
 	printf(_("  -x NUM          internal use\n"));
 
 	printf(_("\nPlease read the documentation for the complete list of run-time\n"
-			 "configuration settings and how to set them on the command line or in\n"
+	 "configuration settings and how to set them on the command line or in\n"
 			 "the configuration file.\n\n"
 			 "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
@@ -330,19 +329,18 @@ check_root(const char *progname)
 	{
 		write_stderr("\"root\" execution of the PostgreSQL server is not permitted.\n"
 					 "The server must be started under an unprivileged user ID to prevent\n"
-					 "possible system security compromise.  See the documentation for\n"
-					 "more information on how to properly start the server.\n");
+		  "possible system security compromise.  See the documentation for\n"
+				  "more information on how to properly start the server.\n");
 		exit(1);
 	}
 
 	/*
-	 * Also make sure that real and effective uids are the same.
-	 * Executing as a setuid program from a root shell is a security
-	 * hole, since on many platforms a nefarious subroutine could
-	 * setuid back to root if real uid is root.  (Since nobody
-	 * actually uses postgres as a setuid program, trying to
-	 * actively fix this situation seems more trouble than it's worth;
-	 * we'll just expend the effort to check for it.)
+	 * Also make sure that real and effective uids are the same. Executing as
+	 * a setuid program from a root shell is a security hole, since on many
+	 * platforms a nefarious subroutine could setuid back to root if real uid
+	 * is root.  (Since nobody actually uses postgres as a setuid program,
+	 * trying to actively fix this situation seems more trouble than it's
+	 * worth; we'll just expend the effort to check for it.)
 	 */
 	if (getuid() != geteuid())
 	{
@@ -350,17 +348,17 @@ check_root(const char *progname)
 					 progname);
 		exit(1);
 	}
-#else /* WIN32 */
+#else							/* WIN32 */
 	if (pgwin32_is_admin())
 	{
 		write_stderr("Execution of PostgreSQL by a user with administrative permissions is not\n"
 					 "permitted.\n"
 					 "The server must be started under an unprivileged user ID to prevent\n"
-					 "possible system security compromises.  See the documentation for\n"
-					 "more information on how to properly start the server.\n");
+		 "possible system security compromises.  See the documentation for\n"
+				  "more information on how to properly start the server.\n");
 		exit(1);
 	}
-#endif /* WIN32 */
+#endif   /* WIN32 */
 }
 
 

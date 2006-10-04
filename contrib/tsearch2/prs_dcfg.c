@@ -33,9 +33,9 @@ nstrdup(char *ptr, int len)
 	{
 		if (t_iseq(ptr, '\\'))
 			ptr++;
-		COPYCHAR( cptr, ptr );
-		cptr+=pg_mblen(ptr);
-		ptr+=pg_mblen(ptr);
+		COPYCHAR(cptr, ptr);
+		cptr += pg_mblen(ptr);
+		ptr += pg_mblen(ptr);
 	}
 	*cptr = '\0';
 
@@ -53,9 +53,9 @@ parse_cfgdict(text *in, Map ** m)
 
 	while (ptr - VARDATA(in) < VARSIZE(in) - VARHDRSZ)
 	{
-		if ( t_iseq(ptr, ',') )
+		if (t_iseq(ptr, ','))
 			num++;
-		ptr+=pg_mblen(ptr);
+		ptr += pg_mblen(ptr);
 	}
 
 	*m = mptr = (Map *) palloc(sizeof(Map) * (num + 2));
@@ -84,7 +84,7 @@ parse_cfgdict(text *in, Map ** m)
 				mptr->key = nstrdup(begin, ptr - begin);
 				state = CS_WAITEQ;
 			}
-			else if (t_iseq(ptr,'='))
+			else if (t_iseq(ptr, '='))
 			{
 				mptr->key = nstrdup(begin, ptr - begin);
 				state = CS_WAITVALUE;
@@ -163,7 +163,7 @@ parse_cfgdict(text *in, Map ** m)
 					 errmsg("bad parser state"),
 					 errdetail("%d at position %d.",
 							   state, (int) (ptr - VARDATA(in)))));
-		ptr+=pg_mblen(ptr);
+		ptr += pg_mblen(ptr);
 	}
 
 	if (state == CS_IN2VALUE)

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.103 2006/10/03 22:18:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.104 2006/10/04 00:30:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,22 +97,22 @@ extern int find_other_exec(const char *argv0, const char *target,
  *
  *	Generated using Win32 "CMD /?":
  *
- *  1. If all of the following conditions are met, then quote characters
- *  on the command line are preserved:
+ *	1. If all of the following conditions are met, then quote characters
+ *	on the command line are preserved:
  *
- *   - no /S switch
- *   - exactly two quote characters
- *   - no special characters between the two quote characters, where special
- *     is one of: &<>()@^|
- *   - there are one or more whitespace characters between the the two quote
- *     characters
- *   - the string between the two quote characters is the name of an
- *     executable file.
+ *	 - no /S switch
+ *	 - exactly two quote characters
+ *	 - no special characters between the two quote characters, where special
+ *	   is one of: &<>()@^|
+ *	 - there are one or more whitespace characters between the the two quote
+ *	   characters
+ *	 - the string between the two quote characters is the name of an
+ *	   executable file.
  *
- *   2. Otherwise, old behavior is to see if the first character is a quote
- *   character and if so, strip the leading character and remove the last
- *   quote character on the command line, preserving any text after the last
- *   quote character.
+ *	 2. Otherwise, old behavior is to see if the first character is a quote
+ *	 character and if so, strip the leading character and remove the last
+ *	 quote character on the command line, preserving any text after the last
+ *	 quote character.
  */
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define SYSTEMQUOTE "\""
@@ -133,7 +133,7 @@ extern unsigned char pg_tolower(unsigned char ch);
 
 /*
  * Versions of libintl >= 0.13 try to replace printf() and friends with
- * macros to their own versions that understand the %$ format.  We do the
+ * macros to their own versions that understand the %$ format.	We do the
  * same, so disable their macros, if they exist.
  */
 #ifdef vsnprintf
@@ -188,8 +188,7 @@ __attribute__((format(printf, 1, 2)));
 #define fprintf			pg_fprintf
 #define printf			pg_printf
 #endif
-
-#endif /* USE_REPL_SNPRINTF */
+#endif   /* USE_REPL_SNPRINTF */
 
 /* Portable prompt handling */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
@@ -272,7 +271,7 @@ extern int	pgwin32_open(const char *, int,...);
 extern FILE *pgwin32_fopen(const char *, const char *);
 
 #ifndef FRONTEND
-#define		open(a,b,c)	pgwin32_open(a,b,c)
+#define		open(a,b,c) pgwin32_open(a,b,c)
 #define		fopen(a,b) pgwin32_fopen(a,b)
 #endif
 
@@ -367,6 +366,6 @@ extern int pqGethostbyname(const char *name,
 typedef int (*qsort_arg_comparator) (const void *a, const void *b, void *arg);
 
 extern void qsort_arg(void *base, size_t nel, size_t elsize,
-					  qsort_arg_comparator cmp, void *arg);
+		  qsort_arg_comparator cmp, void *arg);
 
-#endif /* PG_PORT_H */
+#endif   /* PG_PORT_H */

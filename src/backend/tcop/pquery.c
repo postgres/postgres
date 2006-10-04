@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.110 2006/09/03 03:19:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.111 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,8 +218,8 @@ ChoosePortalStrategy(List *parseTrees)
 
 	/*
 	 * PORTAL_ONE_SELECT and PORTAL_UTIL_SELECT need only consider the
-	 * single-Query-struct case, since there are no rewrite rules that
-	 * can add auxiliary queries to a SELECT or a utility command.
+	 * single-Query-struct case, since there are no rewrite rules that can add
+	 * auxiliary queries to a SELECT or a utility command.
 	 */
 	if (list_length(parseTrees) == 1)
 	{
@@ -244,8 +244,8 @@ ChoosePortalStrategy(List *parseTrees)
 
 	/*
 	 * PORTAL_ONE_RETURNING has to allow auxiliary queries added by rewrite.
-	 * Choose PORTAL_ONE_RETURNING if there is exactly one canSetTag query
-	 * and it has a RETURNING list.
+	 * Choose PORTAL_ONE_RETURNING if there is exactly one canSetTag query and
+	 * it has a RETURNING list.
 	 */
 	nSetTag = 0;
 	foreach(lc, parseTrees)
@@ -256,9 +256,9 @@ ChoosePortalStrategy(List *parseTrees)
 		if (query->canSetTag)
 		{
 			if (++nSetTag > 1)
-				return PORTAL_MULTI_QUERY;	/* no need to look further */
+				return PORTAL_MULTI_QUERY;		/* no need to look further */
 			if (query->returningList == NIL)
-				return PORTAL_MULTI_QUERY;	/* no need to look further */
+				return PORTAL_MULTI_QUERY;		/* no need to look further */
 		}
 	}
 	if (nSetTag == 1)
@@ -418,7 +418,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				if (portal->cursorOptions & CURSOR_OPT_SCROLL)
 					eflags = EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD;
 				else
-					eflags = 0;		/* default run-to-completion flags */
+					eflags = 0; /* default run-to-completion flags */
 
 				/*
 				 * Call ExecutorStart to prepare the plan for execution
@@ -447,8 +447,8 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 			case PORTAL_ONE_RETURNING:
 
 				/*
-				 * We don't start the executor until we are told to run
-				 * the portal.  We do need to set up the result tupdesc.
+				 * We don't start the executor until we are told to run the
+				 * portal.	We do need to set up the result tupdesc.
 				 */
 				portal->tupDesc =
 					ExecCleanTypeFromTL((PortalGetPrimaryQuery(portal))->returningList, false);
@@ -672,8 +672,8 @@ PortalRun(Portal portal, long count,
 			case PORTAL_UTIL_SELECT:
 
 				/*
-				 * If we have not yet run the command, do so,
-				 * storing its results in the portal's tuplestore.
+				 * If we have not yet run the command, do so, storing its
+				 * results in the portal's tuplestore.
 				 */
 				if (!portal->holdStore)
 					FillPortalStore(portal);
@@ -922,10 +922,11 @@ FillPortalStore(Portal portal)
 	switch (portal->strategy)
 	{
 		case PORTAL_ONE_RETURNING:
+
 			/*
-			 * Run the portal to completion just as for the default MULTI_QUERY
-			 * case, but send the primary query's output to the tuplestore.
-			 * Auxiliary query outputs are discarded.
+			 * Run the portal to completion just as for the default
+			 * MULTI_QUERY case, but send the primary query's output to the
+			 * tuplestore. Auxiliary query outputs are discarded.
 			 */
 			PortalRunMulti(portal, treceiver, None_Receiver, completionTag);
 			/* Override default completion tag with actual command result */
@@ -1253,8 +1254,8 @@ PortalRunFetch(Portal portal,
 			case PORTAL_UTIL_SELECT:
 
 				/*
-				 * If we have not yet run the command, do so,
-				 * storing its results in the portal's tuplestore.
+				 * If we have not yet run the command, do so, storing its
+				 * results in the portal's tuplestore.
 				 */
 				if (!portal->holdStore)
 					FillPortalStore(portal);

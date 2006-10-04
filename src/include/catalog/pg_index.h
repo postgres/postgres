@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_index.h,v 1.40 2006/08/25 04:06:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_index.h,v 1.41 2006/10/04 00:30:07 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -41,7 +41,7 @@ CATALOG(pg_index,2610) BKI_WITHOUT_OIDS
 	bool		indisunique;	/* is this a unique index? */
 	bool		indisprimary;	/* is this index for primary key? */
 	bool		indisclustered; /* is this the index last clustered by? */
-	bool		indisvalid; 	/* is this index valid for use by queries? */
+	bool		indisvalid;		/* is this index valid for use by queries? */
 
 	/* VARIABLE LENGTH FIELDS: */
 	int2vector	indkey;			/* column numbers of indexed cols, or 0 */

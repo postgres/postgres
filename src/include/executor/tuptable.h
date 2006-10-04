@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.35 2006/07/13 17:47:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/tuptable.h,v 1.36 2006/10/04 00:30:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  *
  * A "minimal" tuple is handled similarly to a palloc'd regular tuple.
  * At present, minimal tuples never are stored in buffers, so there is no
- * parallel to case 1.  Note that a minimal tuple has no "system columns".
+ * parallel to case 1.	Note that a minimal tuple has no "system columns".
  * (Actually, it could have an OID, but we have no need to access the OID.)
  *
  * A "virtual" tuple is an optimization used to minimize physical data
@@ -94,7 +94,7 @@
  * object (the thing to be pfree'd if tts_shouldFree is true).  In this case
  * tts_tuple points at tts_minhdr and the fields of that are set correctly
  * for access to the minimal tuple; in particular, tts_minhdr.t_data points
- * MINIMAL_TUPLE_OFFSET bytes before tts_mintuple.  (tts_mintuple is therefore
+ * MINIMAL_TUPLE_OFFSET bytes before tts_mintuple.	(tts_mintuple is therefore
  * redundant, but for code simplicity we store it explicitly anyway.)  This
  * case otherwise behaves identically to the regular-physical-tuple case.
  *
@@ -151,8 +151,8 @@ extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
 			   Buffer buffer,
 			   bool shouldFree);
 extern TupleTableSlot *ExecStoreMinimalTuple(MinimalTuple mtup,
-			   TupleTableSlot *slot,
-			   bool shouldFree);
+					  TupleTableSlot *slot,
+					  bool shouldFree);
 extern TupleTableSlot *ExecClearTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreVirtualTuple(TupleTableSlot *slot);
 extern TupleTableSlot *ExecStoreAllNullTuple(TupleTableSlot *slot);

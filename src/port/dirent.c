@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirent.c,v 1.2 2006/06/26 12:58:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirent.c,v 1.3 2006/10/04 00:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,20 +17,22 @@
 #include <dirent.h>
 
 
-struct DIR {
-	char *dirname;
-	struct dirent ret; /* Used to return to caller */
-	HANDLE handle;
+struct DIR
+{
+	char	   *dirname;
+	struct dirent ret;			/* Used to return to caller */
+	HANDLE		handle;
 };
 
-DIR* opendir(const char *dirname)
+DIR *
+opendir(const char *dirname)
 {
-	DWORD attr;
-	DIR *d;
+	DWORD		attr;
+	DIR		   *d;
 
 	/* Make sure it is a directory */
 	attr = GetFileAttributes(dirname);
-	if (attr == INVALID_FILE_ATTRIBUTES) 
+	if (attr == INVALID_FILE_ATTRIBUTES)
 	{
 		errno = ENOENT;
 		return NULL;
@@ -47,7 +49,7 @@ DIR* opendir(const char *dirname)
 		errno = ENOMEM;
 		return NULL;
 	}
-	d->dirname = malloc(strlen(dirname)+4);
+	d->dirname = malloc(strlen(dirname) + 4);
 	if (!d->dirname)
 	{
 		errno = ENOMEM;
@@ -55,18 +57,20 @@ DIR* opendir(const char *dirname)
 		return NULL;
 	}
 	strcpy(d->dirname, dirname);
-	if (d->dirname[strlen(d->dirname)-1] != '/' &&
-	    d->dirname[strlen(d->dirname)-1] != '\\')
-		strcat(d->dirname,"\\"); /* Append backslash if not already there */
-	strcat(d->dirname,"*");          /* Search for entries named anything */
+	if (d->dirname[strlen(d->dirname) - 1] != '/' &&
+		d->dirname[strlen(d->dirname) - 1] != '\\')
+		strcat(d->dirname, "\\");		/* Append backslash if not already
+										 * there */
+	strcat(d->dirname, "*");	/* Search for entries named anything */
 	d->handle = INVALID_HANDLE_VALUE;
-	d->ret.d_ino = 0; /* no inodes on win32 */
-	d->ret.d_reclen =  0; /* not used on win32 */
+	d->ret.d_ino = 0;			/* no inodes on win32 */
+	d->ret.d_reclen = 0;		/* not used on win32 */
 
 	return d;
 }
 
-struct dirent* readdir(DIR * d)
+struct dirent *
+readdir(DIR *d)
 {
 	WIN32_FIND_DATA fd;
 
@@ -79,7 +83,7 @@ struct dirent* readdir(DIR * d)
 			return NULL;
 		}
 	}
-	else 
+	else
 	{
 		if (!FindNextFile(d->handle, &fd))
 		{
@@ -93,12 +97,14 @@ struct dirent* readdir(DIR * d)
 			return NULL;
 		}
 	}
-	strcpy(d->ret.d_name, fd.cFileName); /* Both strings are MAX_PATH long */
+	strcpy(d->ret.d_name, fd.cFileName);		/* Both strings are MAX_PATH
+												 * long */
 	d->ret.d_namlen = strlen(d->ret.d_name);
 	return &d->ret;
 }
 
-int closedir(DIR *d)
+int
+closedir(DIR *d)
 {
 	if (d->handle != INVALID_HANDLE_VALUE)
 		FindClose(d->handle);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.142 2006/07/14 14:52:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.143 2006/10/04 00:29:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,7 +185,7 @@ gistbuildCallback(Relation index,
 
 	/* form an index tuple and point it at the heap tuple */
 	itup = gistFormTuple(&buildstate->giststate, index,
-		values, isnull, true /* size is currently bogus */);
+						 values, isnull, true /* size is currently bogus */ );
 	itup->t_tid = htup->t_self;
 
 	/*
@@ -199,7 +199,7 @@ gistbuildCallback(Relation index,
 	 * after initial build do not.
 	 */
 	gistdoinsert(index, itup,
-				 RelationGetTargetPageFreeSpace(index, GIST_DEFAULT_FILLFACTOR),
+			  RelationGetTargetPageFreeSpace(index, GIST_DEFAULT_FILLFACTOR),
 				 &buildstate->giststate);
 
 	buildstate->indtuples += 1;
@@ -236,7 +236,7 @@ gistinsert(PG_FUNCTION_ARGS)
 	initGISTstate(&giststate, r);
 
 	itup = gistFormTuple(&giststate, r,
-		values, isnull, true /* size is currently bogus */);
+						 values, isnull, true /* size is currently bogus */ );
 	itup->t_tid = *ht_ctid;
 
 	gistdoinsert(r, itup, 0, &giststate);
@@ -285,18 +285,17 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 	bool		is_leaf = (GistPageIsLeaf(state->stack->page)) ? true : false;
 
 	/*
-	 * if (!is_leaf) remove old key:
-	 * This node's key has been modified, either because a child split
-	 * occurred or because we needed to adjust our key for an insert in a
-	 * child node. Therefore, remove the old version of this node's key.
+	 * if (!is_leaf) remove old key: This node's key has been modified, either
+	 * because a child split occurred or because we needed to adjust our key
+	 * for an insert in a child node. Therefore, remove the old version of
+	 * this node's key.
 	 *
-	 * for WAL replay, in the non-split case we handle this by
-	 * setting up a one-element todelete array; in the split case, it's
-	 * handled implicitly because the tuple vector passed to gistSplit
-	 * won't include this tuple.
+	 * for WAL replay, in the non-split case we handle this by setting up a
+	 * one-element todelete array; in the split case, it's handled implicitly
+	 * because the tuple vector passed to gistSplit won't include this tuple.
 	 *
-	 * XXX: If we want to change fillfactors between node and leaf,
-	 * fillfactor = (is_leaf ? state->leaf_fillfactor : state->node_fillfactor)
+	 * XXX: If we want to change fillfactors between node and leaf, fillfactor
+	 * = (is_leaf ? state->leaf_fillfactor : state->node_fillfactor)
 	 */
 	if (gistnospace(state->stack->page, state->itup, state->ituplen,
 					is_leaf ? InvalidOffsetNumber : state->stack->childoffnum,
@@ -307,80 +306,88 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 		int			tlen;
 		SplitedPageLayout *dist = NULL,
 				   *ptr;
-		BlockNumber	rrlink = InvalidBlockNumber;
+		BlockNumber rrlink = InvalidBlockNumber;
 		GistNSN		oldnsn;
 
 		is_splitted = true;
 
 		/*
-		 * Form index tuples vector to split:
-		 * remove old tuple if t's needed and add new tuples to vector
+		 * Form index tuples vector to split: remove old tuple if t's needed
+		 * and add new tuples to vector
 		 */
 		itvec = gistextractpage(state->stack->page, &tlen);
-		if ( !is_leaf ) {
+		if (!is_leaf)
+		{
 			/* on inner page we should remove old tuple */
-			int pos = state->stack->childoffnum - FirstOffsetNumber;
+			int			pos = state->stack->childoffnum - FirstOffsetNumber;
 
-			tlen--;	
-			if ( pos != tlen ) 
-				memmove( itvec+pos, itvec + pos + 1, sizeof( IndexTuple ) * (tlen-pos) );
+			tlen--;
+			if (pos != tlen)
+				memmove(itvec + pos, itvec + pos + 1, sizeof(IndexTuple) * (tlen - pos));
 		}
 		itvec = gistjoinvector(itvec, &tlen, state->itup, state->ituplen);
 		dist = gistSplit(state->r, state->stack->page, itvec, tlen, giststate);
 
-		state->itup = (IndexTuple*)palloc( sizeof(IndexTuple) * tlen);
+		state->itup = (IndexTuple *) palloc(sizeof(IndexTuple) * tlen);
 		state->ituplen = 0;
 
-		if (state->stack->blkno != GIST_ROOT_BLKNO) {
-			/* if non-root split then we should not allocate new buffer,
-			   but we must create temporary page to operate */ 
+		if (state->stack->blkno != GIST_ROOT_BLKNO)
+		{
+			/*
+			 * if non-root split then we should not allocate new buffer, but
+			 * we must create temporary page to operate
+			 */
 			dist->buffer = state->stack->buffer;
-			dist->page = PageGetTempPage( BufferGetPage(dist->buffer), sizeof(GISTPageOpaqueData) );
+			dist->page = PageGetTempPage(BufferGetPage(dist->buffer), sizeof(GISTPageOpaqueData));
 
-			/*clean all flags except F_LEAF */ 
+			/* clean all flags except F_LEAF */
 			GistPageGetOpaque(dist->page)->flags = (is_leaf) ? F_LEAF : 0;
 		}
 
 		/* make new pages and fills them */
-		for (ptr = dist; ptr; ptr = ptr->next) {
-			int i;
-			char *data;
+		for (ptr = dist; ptr; ptr = ptr->next)
+		{
+			int			i;
+			char	   *data;
 
 			/* get new page */
-			if ( ptr->buffer == InvalidBuffer ) {
-				ptr->buffer = gistNewBuffer( state->r );
-				GISTInitBuffer( ptr->buffer, (is_leaf) ? F_LEAF : 0 );
+			if (ptr->buffer == InvalidBuffer)
+			{
+				ptr->buffer = gistNewBuffer(state->r);
+				GISTInitBuffer(ptr->buffer, (is_leaf) ? F_LEAF : 0);
 				ptr->page = BufferGetPage(ptr->buffer);
 			}
-			ptr->block.blkno = BufferGetBlockNumber( ptr->buffer );
+			ptr->block.blkno = BufferGetBlockNumber(ptr->buffer);
 
-			/* fill page, we can do it becouse all this pages are new (ie not linked in tree
-			   or masked by temp page */
-			data = (char*)(ptr->list); 
-			for(i=0;i<ptr->block.num;i++) {
-				if ( PageAddItem(ptr->page, (Item)data, IndexTupleSize((IndexTuple)data), i+FirstOffsetNumber, LP_USED) == InvalidOffsetNumber )
+			/*
+			 * fill page, we can do it becouse all this pages are new (ie not
+			 * linked in tree or masked by temp page
+			 */
+			data = (char *) (ptr->list);
+			for (i = 0; i < ptr->block.num; i++)
+			{
+				if (PageAddItem(ptr->page, (Item) data, IndexTupleSize((IndexTuple) data), i + FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add item to index page in \"%s\"", RelationGetRelationName(state->r));
-				data += IndexTupleSize((IndexTuple)data);
+				data += IndexTupleSize((IndexTuple) data);
 			}
 
 			/* set up ItemPointer and remmeber it for parent */
 			ItemPointerSetBlockNumber(&(ptr->itup->t_tid), ptr->block.blkno);
-			state->itup[ state->ituplen ] = ptr->itup;
+			state->itup[state->ituplen] = ptr->itup;
 			state->ituplen++;
 		}
 
 		/* saves old rightlink */
-		if ( state->stack->blkno != GIST_ROOT_BLKNO )
-			rrlink =  GistPageGetOpaque(dist->page)->rightlink;
+		if (state->stack->blkno != GIST_ROOT_BLKNO)
+			rrlink = GistPageGetOpaque(dist->page)->rightlink;
 
 		START_CRIT_SECTION();
 
 		/*
-		 * must mark buffers dirty before XLogInsert, even though we'll
-		 * still be changing their opaque fields below.
-		 * set up right links.
+		 * must mark buffers dirty before XLogInsert, even though we'll still
+		 * be changing their opaque fields below. set up right links.
 		 */
-		for (ptr = dist; ptr; ptr = ptr->next) 
+		for (ptr = dist; ptr; ptr = ptr->next)
 		{
 			MarkBufferDirty(ptr->buffer);
 			GistPageGetOpaque(ptr->page)->rightlink = (ptr->next) ?
@@ -388,9 +395,10 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 		}
 
 		/* restore splitted non-root page */
-		if ( state->stack->blkno != GIST_ROOT_BLKNO ) {
-			PageRestoreTempPage( dist->page, BufferGetPage( dist->buffer ) );
-			dist->page = BufferGetPage( dist->buffer );
+		if (state->stack->blkno != GIST_ROOT_BLKNO)
+		{
+			PageRestoreTempPage(dist->page, BufferGetPage(dist->buffer));
+			dist->page = BufferGetPage(dist->buffer);
 		}
 
 		if (!state->r->rd_istemp)
@@ -419,25 +427,27 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 
 		/* set up NSN */
 		oldnsn = GistPageGetOpaque(dist->page)->nsn;
-		if ( state->stack->blkno == GIST_ROOT_BLKNO )
+		if (state->stack->blkno == GIST_ROOT_BLKNO)
 			/* if root split we should put initial value */
 			oldnsn = PageGetLSN(dist->page);
 
-		for (ptr = dist; ptr; ptr = ptr->next) {
+		for (ptr = dist; ptr; ptr = ptr->next)
+		{
 			/* only for last set oldnsn */
 			GistPageGetOpaque(ptr->page)->nsn = (ptr->next) ?
 				PageGetLSN(ptr->page) : oldnsn;
 		}
 
-		/* 
-		 * release buffers, if it was a root split then
-		 * release all buffers because we create all buffers 
+		/*
+		 * release buffers, if it was a root split then release all buffers
+		 * because we create all buffers
 		 */
-		ptr = ( state->stack->blkno == GIST_ROOT_BLKNO ) ? dist : dist->next;
-		for(; ptr; ptr = ptr->next)
+		ptr = (state->stack->blkno == GIST_ROOT_BLKNO) ? dist : dist->next;
+		for (; ptr; ptr = ptr->next)
 			UnlockReleaseBuffer(ptr->buffer);
 
-		if (state->stack->blkno == GIST_ROOT_BLKNO) {
+		if (state->stack->blkno == GIST_ROOT_BLKNO)
+		{
 			gistnewroot(state->r, state->stack->buffer, state->itup, state->ituplen, &(state->key));
 			state->needInsertComplete = false;
 		}
@@ -470,7 +480,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			}
 
 			rdata = formUpdateRdata(state->r->rd_node, state->stack->buffer,
-									offs, noffs, 
+									offs, noffs,
 									state->itup, state->ituplen,
 									&(state->key));
 
@@ -922,16 +932,16 @@ gistSplit(Relation r,
 	GistSplitVector v;
 	GistEntryVector *entryvec;
 	int			i;
-	SplitedPageLayout	*res = NULL;
+	SplitedPageLayout *res = NULL;
 
 	/* generate the item array */
 	entryvec = palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY));
 	entryvec->n = len + 1;
 
-	memset( v.spl_lisnull, TRUE, sizeof(bool) * giststate->tupdesc->natts ); 
-	memset( v.spl_risnull, TRUE, sizeof(bool) * giststate->tupdesc->natts ); 
-	gistSplitByKey(r, page, itup, len, giststate, 
-		&v, entryvec, 0);
+	memset(v.spl_lisnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
+	memset(v.spl_risnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
+	gistSplitByKey(r, page, itup, len, giststate,
+				   &v, entryvec, 0);
 
 	/* form left and right vector */
 	lvectup = (IndexTuple *) palloc(sizeof(IndexTuple) * (len + 1));
@@ -952,19 +962,20 @@ gistSplit(Relation r,
 	{
 		ROTATEDIST(res);
 		res->block.num = v.splitVector.spl_nright;
-		res->list = gistfillitupvec(rvectup, v.splitVector.spl_nright, &( res->lenlist ) );
+		res->list = gistfillitupvec(rvectup, v.splitVector.spl_nright, &(res->lenlist));
 		res->itup = (v.spl_rightvalid) ? gistFormTuple(giststate, r, v.spl_rattr, v.spl_risnull, false)
 			: gist_form_invalid_tuple(GIST_ROOT_BLKNO);
 	}
 
 	if (!gistfitpage(lvectup, v.splitVector.spl_nleft))
 	{
-		SplitedPageLayout *resptr, *subres;
+		SplitedPageLayout *resptr,
+				   *subres;
 
 		resptr = subres = gistSplit(r, page, lvectup, v.splitVector.spl_nleft, giststate);
 
-		/* install on list's tail */ 
-		while( resptr->next )
+		/* install on list's tail */
+		while (resptr->next)
 			resptr = resptr->next;
 
 		resptr->next = res;
@@ -974,7 +985,7 @@ gistSplit(Relation r,
 	{
 		ROTATEDIST(res);
 		res->block.num = v.splitVector.spl_nleft;
-		res->list = gistfillitupvec(lvectup, v.splitVector.spl_nleft, &( res->lenlist ) );
+		res->list = gistfillitupvec(lvectup, v.splitVector.spl_nleft, &(res->lenlist));
 		res->itup = (v.spl_leftvalid) ? gistFormTuple(giststate, r, v.spl_lattr, v.spl_lisnull, false)
 			: gist_form_invalid_tuple(GIST_ROOT_BLKNO);
 	}

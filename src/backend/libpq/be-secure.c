@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.72 2006/09/04 14:57:27 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.73 2006/10/04 00:29:53 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -110,7 +110,7 @@ static DH  *load_dh_buffer(const char *, size_t);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	verify_cb(int, X509_STORE_CTX *);
 static void info_cb(const SSL *ssl, int type, int args);
-static void	initialize_SSL(void);
+static void initialize_SSL(void);
 static void destroy_SSL(void);
 static int	open_server_SSL(Port *);
 static void close_SSL(Port *);
@@ -795,8 +795,9 @@ initialize_SSL(void)
 	else
 	{
 		/*
-		 *	Check the Certificate Revocation List (CRL) if file exists.
-		 *	http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
+		 * Check the Certificate Revocation List (CRL) if file exists.
+		 * http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,
+		 * 00.html
 		 */
 		X509_STORE *cvstore = SSL_CTX_get_cert_store(SSL_context);
 
@@ -807,19 +808,19 @@ initialize_SSL(void)
 /* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
-							X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL);
+						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 #else
 				ereport(LOG,
-					(errmsg("SSL Certificate Revocation List (CRL) file \"%s\" ignored",
-							ROOT_CRL_FILE),
-					 errdetail("Installed SSL library does not support CRL.")));
+						(errmsg("SSL Certificate Revocation List (CRL) file \"%s\" ignored",
+								ROOT_CRL_FILE),
+				  errdetail("Installed SSL library does not support CRL.")));
 #endif
 			else
 			{
 				/* Not fatal - we do not require CRL */
 				ereport(LOG,
-					(errmsg("SSL Certificate Revocation List (CRL) file \"%s\" not found, skipping: %s",
-							ROOT_CRL_FILE, SSLerrmessage()),
+						(errmsg("SSL Certificate Revocation List (CRL) file \"%s\" not found, skipping: %s",
+								ROOT_CRL_FILE, SSLerrmessage()),
 					 errdetail("Will not check certificates against CRL.")));
 			}
 		}

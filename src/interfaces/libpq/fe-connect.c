@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.336 2006/09/27 15:41:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.337 2006/10/04 00:30:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@
 typedef struct timeval LDAP_TIMEVAL;
 #endif
 static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
-							 PQExpBuffer errorMessage);
+				  PQExpBuffer errorMessage);
 #endif
 
 #include "libpq/ip.h"
@@ -513,9 +513,9 @@ connectOptions2(PGconn *conn)
 		conn->sslmode = strdup(DefaultSSLMode);
 
 	/*
-	 * Only if we get this far is it appropriate to try to connect.
-	 * (We need a state flag, rather than just the boolean result of
-	 * this function, in case someone tries to PQreset() the PGconn.)
+	 * Only if we get this far is it appropriate to try to connect. (We need a
+	 * state flag, rather than just the boolean result of this function, in
+	 * case someone tries to PQreset() the PGconn.)
 	 */
 	conn->options_valid = true;
 
@@ -2385,13 +2385,31 @@ static int
 ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				  PQExpBuffer errorMessage)
 {
-	int			port = LDAP_DEF_PORT, scope, rc, msgid, size, state, oldstate, i;
+	int			port = LDAP_DEF_PORT,
+				scope,
+				rc,
+				msgid,
+				size,
+				state,
+				oldstate,
+				i;
 	bool		found_keyword;
-	char	   *url, *hostname, *portstr, *endptr, *dn, *scopestr, *filter,
-			   *result, *p, *p1 = NULL, *optname = NULL, *optval = NULL;
+	char	   *url,
+			   *hostname,
+			   *portstr,
+			   *endptr,
+			   *dn,
+			   *scopestr,
+			   *filter,
+			   *result,
+			   *p,
+			   *p1 = NULL,
+			   *optname = NULL,
+			   *optval = NULL;
 	char	   *attrs[2] = {NULL, NULL};
 	LDAP	   *ld = NULL;
-	LDAPMessage *res, *entry;
+	LDAPMessage *res,
+			   *entry;
 	struct berval **values;
 	LDAP_TIMEVAL time = {PGLDAP_TIMEOUT, 0};
 
@@ -2402,9 +2420,9 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	}
 
 	/*
-	 *	Parse URL components, check for correctness.  Basically, url has
-	 *	'\0' placed at component boundaries and variables are pointed
-	 *	at each component.
+	 * Parse URL components, check for correctness.  Basically, url has '\0'
+	 * placed at component boundaries and variables are pointed at each
+	 * component.
 	 */
 
 	if (pg_strncasecmp(url, LDAP_URL, strlen(LDAP_URL)) != 0)
@@ -2417,26 +2435,26 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 
 	/* hostname */
 	hostname = url + strlen(LDAP_URL);
-	if (*hostname == '/')	/* no hostname? */
-		hostname = "localhost";	/* the default */
+	if (*hostname == '/')		/* no hostname? */
+		hostname = "localhost"; /* the default */
 
 	/* dn, "distinguished name" */
-	p = strchr(url +  strlen(LDAP_URL), '/');
+	p = strchr(url + strlen(LDAP_URL), '/');
 	if (p == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-						"bad LDAP URL \"%s\": missing distinguished name\n"), purl);
+				 "bad LDAP URL \"%s\": missing distinguished name\n"), purl);
 		free(url);
 		return 3;
 	}
-	*p = '\0';	/* terminate hostname */
+	*p = '\0';					/* terminate hostname */
 	dn = p + 1;
 
 	/* attribute */
 	if ((p = strchr(dn, '?')) == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-							"bad LDAP URL \"%s\": must have exactly one attribute\n"), purl);
+			"bad LDAP URL \"%s\": must have exactly one attribute\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2447,7 +2465,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if ((p = strchr(attrs[0], '?')) == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-							"bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"), purl);
+													  "bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2479,7 +2497,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		if (*portstr == '\0' || *endptr != '\0' || errno || lport < 0 || lport > 65535)
 		{
 			printfPQExpBuffer(errorMessage, libpq_gettext(
-							"bad LDAP URL \"%s\": invalid port number\n"), purl);
+						"bad LDAP URL \"%s\": invalid port number\n"), purl);
 			free(url);
 			return 3;
 		}
@@ -2490,7 +2508,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if (strchr(attrs[0], ',') != NULL)
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-							"bad LDAP URL \"%s\": must have exactly one attribute\n"), purl);
+			"bad LDAP URL \"%s\": must have exactly one attribute\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2505,7 +2523,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	else
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-					"bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"), purl);
+													  "bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2520,8 +2538,8 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	}
 
 	/*
-	 *	Initialize connection to the server.  We do an explicit bind because
-	 *	we want to return 2 if the bind fails.
+	 * Initialize connection to the server.  We do an explicit bind because we
+	 * want to return 2 if the bind fails.
 	 */
 	if ((msgid = ldap_simple_bind(ld, NULL, NULL)) == -1)
 	{
@@ -2655,8 +2673,8 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				else if (ld_is_nl_cr(*p))
 				{
 					printfPQExpBuffer(errorMessage, libpq_gettext(
-								"missing \"=\" after \"%s\" in connection info string\n"),
-								  optname);
+					"missing \"=\" after \"%s\" in connection info string\n"),
+									  optname);
 					return 3;
 				}
 				else if (*p == '=')
@@ -2673,8 +2691,8 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				else if (!ld_is_sp_tab(*p))
 				{
 					printfPQExpBuffer(errorMessage, libpq_gettext(
-								"missing \"=\" after \"%s\" in connection info string\n"),
-								  optname);
+					"missing \"=\" after \"%s\" in connection info string\n"),
+									  optname);
 					return 3;
 				}
 				break;
@@ -2737,7 +2755,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 			{
 				printfPQExpBuffer(errorMessage,
 						 libpq_gettext("invalid connection option \"%s\"\n"),
-						  optname);
+								  optname);
 				return 1;
 			}
 			optname = NULL;
@@ -2749,7 +2767,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if (state == 5 || state == 6)
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-						"unterminated quoted string in connection info string\n"));
+				  "unterminated quoted string in connection info string\n"));
 		return 3;
 	}
 
@@ -2854,7 +2872,8 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 #ifdef USE_LDAP
 					if (strncmp(line, "ldap", 4) == 0)
 					{
-						int rc = ldapServiceLookup(line, options, errorMessage);
+						int			rc = ldapServiceLookup(line, options, errorMessage);
+
 						/* if rc = 2, go on reading for fallback */
 						switch (rc)
 						{
@@ -3376,10 +3395,10 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	else
 	{
 		/*
-		 * In protocol 2 we have to assume the setting will stick, and
-		 * adjust our state immediately.  In protocol 3 and up we can
-		 * rely on the backend to report the parameter value, and we'll
-		 * change state at that time.
+		 * In protocol 2 we have to assume the setting will stick, and adjust
+		 * our state immediately.  In protocol 3 and up we can rely on the
+		 * backend to report the parameter value, and we'll change state at
+		 * that time.
 		 */
 		if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
 			pqSaveParameterStatus(conn, "client_encoding", encoding);
@@ -3547,14 +3566,14 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (hostname == NULL)
 		hostname = DefaultHost;
 	else if (is_absolute_path(hostname))
+
 		/*
-		 *	We should probably use canonicalize_path(), but then
-		 *	we have to bring path.c into libpq, and it doesn't
-		 *	seem worth it.
+		 * We should probably use canonicalize_path(), but then we have to
+		 * bring path.c into libpq, and it doesn't seem worth it.
 		 */
 		if (strcmp(hostname, DEFAULT_PGSOCKET_DIR) == 0)
 			hostname = DefaultHost;
-	
+
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
 

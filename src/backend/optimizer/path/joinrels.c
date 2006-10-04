@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.79 2006/03/05 15:58:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.80 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,11 +87,11 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 
 			/*
 			 * An exception occurs when there is a clauseless join inside a
-			 * construct that restricts join order, i.e., an outer join RHS
-			 * or an IN (sub-SELECT) construct.  Here, the rel may well have
-			 * join clauses against stuff outside the OJ RHS or IN sub-SELECT,
-			 * but the clauseless join *must* be done before we can make use
-			 * of those join clauses.	So do the clauseless join bit.
+			 * construct that restricts join order, i.e., an outer join RHS or
+			 * an IN (sub-SELECT) construct.  Here, the rel may well have join
+			 * clauses against stuff outside the OJ RHS or IN sub-SELECT, but
+			 * the clauseless join *must* be done before we can make use of
+			 * those join clauses.	 So do the clauseless join bit.
 			 *
 			 * See also the last-ditch case below.
 			 */
@@ -386,9 +386,9 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	joinrelids = bms_union(rel1->relids, rel2->relids);
 
 	/*
-	 * If we have any outer joins, the proposed join might be illegal; and
-	 * in any case we have to determine its join type.  Scan the OJ list
-	 * for conflicts.
+	 * If we have any outer joins, the proposed join might be illegal; and in
+	 * any case we have to determine its join type.  Scan the OJ list for
+	 * conflicts.
 	 */
 	jointype = JOIN_INNER;		/* default if no match to an OJ */
 	is_valid_inner = true;
@@ -485,16 +485,16 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
 
 		/*
-		 * This IN clause is not relevant unless its RHS overlaps the
-		 * proposed join.  (Check this first as a fast path for dismissing
-		 * most irrelevant INs quickly.)
+		 * This IN clause is not relevant unless its RHS overlaps the proposed
+		 * join.  (Check this first as a fast path for dismissing most
+		 * irrelevant INs quickly.)
 		 */
 		if (!bms_overlap(ininfo->righthand, joinrelids))
 			continue;
 
 		/*
-		 * If we are still building the IN clause's RHS, then this IN
-		 * clause isn't relevant yet.
+		 * If we are still building the IN clause's RHS, then this IN clause
+		 * isn't relevant yet.
 		 */
 		if (bms_is_subset(joinrelids, ininfo->righthand))
 			continue;

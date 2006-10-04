@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.84 2006/09/25 15:17:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.85 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ TypeNameListToString(List *typenames)
 	initStringInfo(&string);
 	foreach(l, typenames)
 	{
-		TypeName *typename = (TypeName *) lfirst(l);
+		TypeName   *typename = (TypeName *) lfirst(l);
 
 		Assert(IsA(typename, TypeName));
 		if (l != list_head(typenames))
@@ -358,7 +358,7 @@ typeTypeRelid(Type typ)
 
 /*
  * Given a type structure and a string, returns the internal representation
- * of that string.  The "string" can be NULL to perform conversion of a NULL
+ * of that string.	The "string" can be NULL to perform conversion of a NULL
  * (which might result in failure, if the input function rejects NULLs).
  */
 Datum

@@ -232,7 +232,7 @@ typedef struct
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_arr(void *checkval, ITEM *item)
+checkcondition_arr(void *checkval, ITEM * item)
 {
 	int4	   *StopLow = ((CHKVAL *) checkval)->arrb;
 	int4	   *StopHigh = ((CHKVAL *) checkval)->arre;
@@ -254,7 +254,7 @@ checkcondition_arr(void *checkval, ITEM *item)
 }
 
 static bool
-checkcondition_bit(void *checkval, ITEM *item)
+checkcondition_bit(void *checkval, ITEM * item)
 {
 	return GETBIT(checkval, HASHVAL(item->val));
 }
@@ -263,7 +263,7 @@ checkcondition_bit(void *checkval, ITEM *item)
  * check for boolean condition
  */
 static bool
-execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM *item))
+execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM * item))
 {
 
 	if (curitem->type == VAL)
@@ -319,38 +319,42 @@ execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot)
 		);
 }
 
-typedef struct {
-	ITEM	*first;
-	bool	*mapped_check;
-} GinChkVal;
+typedef struct
+{
+	ITEM	   *first;
+	bool	   *mapped_check;
+}	GinChkVal;
 
 static bool
-checkcondition_gin(void *checkval, ITEM *item) {
-	GinChkVal   *gcv = (GinChkVal*)checkval;
+checkcondition_gin(void *checkval, ITEM * item)
+{
+	GinChkVal  *gcv = (GinChkVal *) checkval;
 
-	return gcv->mapped_check[ item - gcv->first ];
+	return gcv->mapped_check[item - gcv->first];
 }
 
 bool
-ginconsistent(QUERYTYPE * query, bool *check) {
-	GinChkVal   gcv;
-	ITEM    *items = GETQUERY(query);
-	int i, j=0;
+ginconsistent(QUERYTYPE * query, bool *check)
+{
+	GinChkVal	gcv;
+	ITEM	   *items = GETQUERY(query);
+	int			i,
+				j = 0;
 
-	if ( query->size < 0 )
+	if (query->size < 0)
 		return FALSE;
 
 	gcv.first = items;
-	gcv.mapped_check = (bool*)palloc( sizeof(bool)*query->size );
-	for(i=0; i<query->size; i++)
-		if ( items[i].type == VAL ) 
-			gcv.mapped_check[ i ] = check[ j++ ];
+	gcv.mapped_check = (bool *) palloc(sizeof(bool) * query->size);
+	for (i = 0; i < query->size; i++)
+		if (items[i].type == VAL)
+			gcv.mapped_check[i] = check[j++];
 
-	return execute( 
-		GETQUERY(query) + query->size - 1,
-		(void *) &gcv, true,
-		checkcondition_gin
-	);
+	return execute(
+				   GETQUERY(query) + query->size - 1,
+				   (void *) &gcv, true,
+				   checkcondition_gin
+		);
 }
 
 /*

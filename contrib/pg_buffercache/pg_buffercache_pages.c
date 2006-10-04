@@ -3,7 +3,7 @@
  * pg_buffercache_pages.c
  *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.8 2006/07/23 03:07:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.9 2006/10/04 00:29:45 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -74,7 +74,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		int		i;
+		int			i;
 		volatile BufferDesc *bufHdr;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -123,9 +123,9 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldcontext);
 
 		/*
-		 * To get a consistent picture of the buffer state, we must lock
-		 * all partitions of the buffer map.  Needless to say, this is
-		 * horrible for concurrency...
+		 * To get a consistent picture of the buffer state, we must lock all
+		 * partitions of the buffer map.  Needless to say, this is horrible
+		 * for concurrency...
 		 */
 		for (i = 0; i < NUM_BUFFER_PARTITIONS; i++)
 			LWLockAcquire(FirstBufMappingLock + i, LW_SHARED);

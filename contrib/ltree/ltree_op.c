@@ -1,7 +1,7 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.13 2006/09/20 19:50:21 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.14 2006/10/04 00:29:45 momjian Exp $
  */
 
 #include "ltree.h"
@@ -620,8 +620,8 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 		/*
 		 * If the histogram is large enough, see what fraction of it the
 		 * constant is "<@" to, and assume that's representative of the
-		 * non-MCV population.  Otherwise use the default selectivity for
-		 * the non-MCV population.
+		 * non-MCV population.	Otherwise use the default selectivity for the
+		 * non-MCV population.
 		 */
 		selec = histogram_selectivity(&vardata, &contproc,
 									  constval, varonleft,

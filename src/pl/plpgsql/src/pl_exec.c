@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.179 2006/09/22 21:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180 2006/10/04 00:30:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	 * Let the instrumentation plugin peek at this function
 	 */
 	if (*plugin_ptr && (*plugin_ptr)->func_beg)
-		((*plugin_ptr)->func_beg)(&estate, func);
+		((*plugin_ptr)->func_beg) (&estate, func);
 
 	/*
 	 * Now call the toplevel block of statements
@@ -325,9 +325,9 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 		if (estate.retistuple)
 		{
 			/*
-			 * We have to check that the returned tuple actually matches
-			 * the expected result type.  XXX would be better to cache the
-			 * tupdesc instead of repeating get_call_result_type()
+			 * We have to check that the returned tuple actually matches the
+			 * expected result type.  XXX would be better to cache the tupdesc
+			 * instead of repeating get_call_result_type()
 			 */
 			TupleDesc	tupdesc;
 
@@ -342,12 +342,13 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 								 errmsg("returned record type does not match expected record type")));
 					break;
 				case TYPEFUNC_RECORD:
+
 					/*
 					 * Failed to determine actual type of RECORD.  We could
-					 * raise an error here, but what this means in practice
-					 * is that the caller is expecting any old generic
-					 * rowtype, so we don't really need to be restrictive.
-					 * Pass back the generated result type, instead.
+					 * raise an error here, but what this means in practice is
+					 * that the caller is expecting any old generic rowtype,
+					 * so we don't really need to be restrictive. Pass back
+					 * the generated result type, instead.
 					 */
 					tupdesc = estate.rettupdesc;
 					if (tupdesc == NULL)		/* shouldn't happen */
@@ -360,8 +361,8 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 			}
 
 			/*
-			 * Copy tuple to upper executor memory, as a tuple Datum.
-			 * Make sure it is labeled with the caller-supplied tuple type.
+			 * Copy tuple to upper executor memory, as a tuple Datum. Make
+			 * sure it is labeled with the caller-supplied tuple type.
 			 */
 			estate.retval =
 				PointerGetDatum(SPI_returntuple((HeapTuple) (estate.retval),
@@ -398,7 +399,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	 * Let the instrumentation plugin peek at this function
 	 */
 	if (*plugin_ptr && (*plugin_ptr)->func_end)
-		((*plugin_ptr)->func_end)(&estate, func);
+		((*plugin_ptr)->func_end) (&estate, func);
 
 	/* Clean up any leftover temporary memory */
 	FreeExprContext(estate.eval_econtext);
@@ -561,9 +562,9 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	var = (PLpgSQL_var *) (estate.datums[func->tg_table_schema_varno]);
 	var->value = DirectFunctionCall1(namein,
 									 CStringGetDatum(
-										 get_namespace_name(
-											 RelationGetNamespace(
-												 trigdata->tg_relation))));
+													 get_namespace_name(
+														RelationGetNamespace(
+												   trigdata->tg_relation))));
 	var->isnull = false;
 	var->freeval = true;
 
@@ -597,7 +598,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 * Let the instrumentation plugin peek at this function
 	 */
 	if (*plugin_ptr && (*plugin_ptr)->func_beg)
-		((*plugin_ptr)->func_beg)(&estate, func);
+		((*plugin_ptr)->func_beg) (&estate, func);
 
 	/*
 	 * Now call the toplevel block of statements
@@ -656,7 +657,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 * Let the instrumentation plugin peek at this function
 	 */
 	if (*plugin_ptr && (*plugin_ptr)->func_end)
-		((*plugin_ptr)->func_end)(&estate, func);
+		((*plugin_ptr)->func_end) (&estate, func);
 
 	/* Clean up any leftover temporary memory */
 	FreeExprContext(estate.eval_econtext);
@@ -1064,7 +1065,7 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 
 	/* Let the plugin know that we are about to execute this statement */
 	if (*plugin_ptr && (*plugin_ptr)->stmt_beg)
-		((*plugin_ptr)->stmt_beg)(estate, stmt);
+		((*plugin_ptr)->stmt_beg) (estate, stmt);
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -1153,7 +1154,7 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 
 	/* Let the plugin know that we have finished executing this statement */
 	if (*plugin_ptr && (*plugin_ptr)->stmt_end)
-		((*plugin_ptr)->stmt_end)(estate, stmt);
+		((*plugin_ptr)->stmt_end) (estate, stmt);
 
 	estate->err_stmt = save_estmt;
 
@@ -1439,7 +1440,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	exec_eval_cleanup(estate);
 
 	/*
-	 * Get the by value 
+	 * Get the by value
 	 */
 	by_value = exec_eval_expr(estate, stmt->by, &isnull, &valtype);
 	by_value = exec_cast_value(by_value, valtype, var->datatype->typoid,
@@ -2158,10 +2159,10 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->eval_econtext = CreateExprContext(simple_eval_estate);
 
 	/*
-	 * Let the plugin see this function before we initialize any
-	 * local PL/pgSQL variables - note that we also give the plugin
-	 * a few function pointers so it can call back into PL/pgSQL
-	 * for doing things like variable assignments and stack traces
+	 * Let the plugin see this function before we initialize any local
+	 * PL/pgSQL variables - note that we also give the plugin a few function
+	 * pointers so it can call back into PL/pgSQL for doing things like
+	 * variable assignments and stack traces
 	 */
 	if (*plugin_ptr)
 	{
@@ -2169,7 +2170,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 		(*plugin_ptr)->assign_expr = exec_assign_expr;
 
 		if ((*plugin_ptr)->func_setup)
-			((*plugin_ptr)->func_setup)(estate, func);
+			((*plugin_ptr)->func_setup) (estate, func);
 	}
 }
 
@@ -2278,8 +2279,8 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	PLpgSQL_expr *expr = stmt->sqlstmt;
 
 	/*
-	 * On the first call for this statement generate the plan, and
-	 * detect whether the statement is INSERT/UPDATE/DELETE
+	 * On the first call for this statement generate the plan, and detect
+	 * whether the statement is INSERT/UPDATE/DELETE
 	 */
 	if (expr->plan == NULL)
 	{
@@ -2295,7 +2296,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 			foreach(l2, (List *) lfirst(l))
 			{
-				Query *q = (Query *) lfirst(l2);
+				Query	   *q = (Query *) lfirst(l2);
 
 				Assert(IsA(q, Query));
 				if (q->canSetTag)
@@ -2330,15 +2331,15 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	}
 
 	/*
-	 * If we have INTO, then we only need one row back ... but if we have
-	 * INTO STRICT, ask for two rows, so that we can verify the statement
-	 * returns only one.  INSERT/UPDATE/DELETE are always treated strictly.
-	 * Without INTO, just run the statement to completion (tcount = 0).
+	 * If we have INTO, then we only need one row back ... but if we have INTO
+	 * STRICT, ask for two rows, so that we can verify the statement returns
+	 * only one.  INSERT/UPDATE/DELETE are always treated strictly. Without
+	 * INTO, just run the statement to completion (tcount = 0).
 	 *
-	 * We could just ask for two rows always when using INTO, but there
-	 * are some cases where demanding the extra row costs significant time,
-	 * eg by forcing completion of a sequential scan.  So don't do it unless
-	 * we need to enforce strictness.
+	 * We could just ask for two rows always when using INTO, but there are
+	 * some cases where demanding the extra row costs significant time, eg by
+	 * forcing completion of a sequential scan.  So don't do it unless we need
+	 * to enforce strictness.
 	 */
 	if (stmt->into)
 	{
@@ -2358,7 +2359,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 	/*
 	 * Check for error, and set FOUND if appropriate (for historical reasons
-	 * we set FOUND only for certain query types).  Also Assert that we
+	 * we set FOUND only for certain query types).	Also Assert that we
 	 * identified the statement type the same as SPI did.
 	 */
 	switch (rc)
@@ -2404,7 +2405,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		if (tuptab == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("INTO used with a command that cannot return data")));
+				errmsg("INTO used with a command that cannot return data")));
 
 		/* Determine if we assign to a record or a row */
 		if (stmt->rec != NULL)
@@ -2415,9 +2416,9 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			elog(ERROR, "unsupported target");
 
 		/*
-		 * If SELECT ... INTO specified STRICT, and the query didn't
-		 * find exactly one row, throw an error.  If STRICT was not specified,
-		 * then allow the query to find any number of rows.
+		 * If SELECT ... INTO specified STRICT, and the query didn't find
+		 * exactly one row, throw an error.  If STRICT was not specified, then
+		 * allow the query to find any number of rows.
 		 */
 		if (n == 0)
 		{
@@ -2474,8 +2475,8 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	int			exec_res;
 
 	/*
-	 * First we evaluate the string expression after the EXECUTE keyword.
-	 * Its result is the querystring we have to execute.
+	 * First we evaluate the string expression after the EXECUTE keyword. Its
+	 * result is the querystring we have to execute.
 	 */
 	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
 	if (isnull)
@@ -2575,7 +2576,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		if (tuptab == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("INTO used with a command that cannot return data")));
+				errmsg("INTO used with a command that cannot return data")));
 
 		/* Determine if we assign to a record or a row */
 		if (stmt->rec != NULL)
@@ -2586,9 +2587,9 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 			elog(ERROR, "unsupported target");
 
 		/*
-		 * If SELECT ... INTO specified STRICT, and the query didn't
-		 * find exactly one row, throw an error.  If STRICT was not specified,
-		 * then allow the query to find any number of rows.
+		 * If SELECT ... INTO specified STRICT, and the query didn't find
+		 * exactly one row, throw an error.  If STRICT was not specified, then
+		 * allow the query to find any number of rows.
 		 */
 		if (n == 0)
 		{
@@ -3951,7 +3952,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 		paramLI = (ParamListInfo)
 			MemoryContextAlloc(econtext->ecxt_per_tuple_memory,
 							   sizeof(ParamListInfoData) +
-							   (expr->nparams - 1) * sizeof(ParamExternData));
+							   (expr->nparams - 1) *sizeof(ParamExternData));
 		paramLI->numParams = expr->nparams;
 
 		for (i = 0; i < expr->nparams; i++)
@@ -4462,7 +4463,7 @@ exec_simple_check_node(Node *node)
 
 		case T_RowCompareExpr:
 			{
-				RowCompareExpr    *expr = (RowCompareExpr *) node;
+				RowCompareExpr *expr = (RowCompareExpr *) node;
 
 				if (!exec_simple_check_node((Node *) expr->largs))
 					return FALSE;

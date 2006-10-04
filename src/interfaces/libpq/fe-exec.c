@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.190 2006/08/18 19:52:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.191 2006/10/04 00:30:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ char	   *const pgresStatus[] = {
  * values that result in backward-compatible behavior
  */
 static int	static_client_encoding = PG_SQL_ASCII;
-static bool	static_std_strings = false;
+static bool static_std_strings = false;
 
 
 static bool PQsendQueryStart(PGconn *conn);
@@ -61,8 +61,8 @@ static int PQsendQueryGuts(PGconn *conn,
 static void parseInput(PGconn *conn);
 static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
-static int	PQsendDescribe(PGconn *conn, char desc_type,
-						   const char *desc_target);
+static int PQsendDescribe(PGconn *conn, char desc_type,
+			   const char *desc_target);
 
 
 /* ----------------
@@ -626,11 +626,11 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	}
 
 	/*
-	 * Special hacks: remember client_encoding and standard_conforming_strings,
-	 * and convert server version to a numeric form.  We keep the first two of
-	 * these in static variables as well, so that PQescapeString and
-	 * PQescapeBytea can behave somewhat sanely (at least in single-
-	 * connection-using programs).
+	 * Special hacks: remember client_encoding and
+	 * standard_conforming_strings, and convert server version to a numeric
+	 * form.  We keep the first two of these in static variables as well, so
+	 * that PQescapeString and PQescapeBytea can behave somewhat sanely (at
+	 * least in single- connection-using programs).
 	 */
 	if (strcmp(name, "client_encoding") == 0)
 	{
@@ -1483,7 +1483,7 @@ PQexecFinish(PGconn *conn)
  * If the query was not even sent, return NULL; conn->errorMessage is set to
  * a relevant message.
  * If the query was sent, a new PGresult is returned (which could indicate
- * either success or failure).  On success, the PGresult contains status
+ * either success or failure).	On success, the PGresult contains status
  * PGRES_COMMAND_OK, and its parameter and column-heading fields describe
  * the statement's inputs and outputs respectively.
  * The user is responsible for freeing the PGresult via PQclear()
@@ -1549,8 +1549,8 @@ PQsendDescribePortal(PGconn *conn, const char *portal)
  *	 Common code to send a Describe command
  *
  * Available options for desc_type are
- *   'S' to describe a prepared statement; or
- *   'P' to describe a portal.
+ *	 'S' to describe a prepared statement; or
+ *	 'P' to describe a portal.
  * Returns 1 on success and 0 on failure.
  */
 static int
@@ -1661,11 +1661,11 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
 
 	/*
 	 * Process any NOTICE or NOTIFY messages that might be pending in the
-	 * input buffer.  Since the server might generate many notices during
-	 * the COPY, we want to clean those out reasonably promptly to prevent
-	 * indefinite expansion of the input buffer.  (Note: the actual read
-	 * of input data into the input buffer happens down inside pqSendSome,
-	 * but it's not authorized to get rid of the data again.)
+	 * input buffer.  Since the server might generate many notices during the
+	 * COPY, we want to clean those out reasonably promptly to prevent
+	 * indefinite expansion of the input buffer.  (Note: the actual read of
+	 * input data into the input buffer happens down inside pqSendSome, but
+	 * it's not authorized to get rid of the data again.)
 	 */
 	parseInput(conn);
 
@@ -2134,7 +2134,7 @@ check_param_number(const PGresult *res, int param_num)
 						 param_num, res->numParameters - 1);
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -2377,7 +2377,8 @@ PQoidValue(const PGresult *res)
 char *
 PQcmdTuples(PGresult *res)
 {
-	char	   *p, *c;
+	char	   *p,
+			   *c;
 
 	if (!res)
 		return "";
@@ -2389,7 +2390,7 @@ PQcmdTuples(PGresult *res)
 		while (*p && *p != ' ')
 			p++;
 		if (*p == 0)
-			goto interpret_error;				/* no space? */
+			goto interpret_error;		/* no space? */
 		p++;
 	}
 	else if (strncmp(res->cmdStatus, "DELETE ", 7) == 0 ||
@@ -2413,7 +2414,7 @@ PQcmdTuples(PGresult *res)
 		goto interpret_error;
 
 	return p;
-	
+
 interpret_error:
 	pqInternalNotice(&res->noticeHooks,
 					 "could not interpret result from server: %s",
@@ -2462,7 +2463,7 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 }
 
 /* PQnparams:
- * 	returns the number of input parameters of a prepared statement.
+ *	returns the number of input parameters of a prepared statement.
  */
 int
 PQnparams(const PGresult *res)
@@ -2473,7 +2474,7 @@ PQnparams(const PGresult *res)
 }
 
 /* PQparamtype:
- * 	returns type Oid of the specified statement parameter.
+ *	returns type Oid of the specified statement parameter.
  */
 Oid
 PQparamtype(const PGresult *res, int param_num)
@@ -2612,9 +2613,9 @@ PQescapeStringInternal(PGconn *conn,
 
 	while (remaining > 0 && *source != '\0')
 	{
-		char	c = *source;
-		int		len;
-		int		i;
+		char		c = *source;
+		int			len;
+		int			i;
 
 		/* Fast path for plain ASCII */
 		if (!IS_HIGHBIT_SET(c))
@@ -2643,9 +2644,9 @@ PQescapeStringInternal(PGconn *conn,
 
 		/*
 		 * If we hit premature end of string (ie, incomplete multibyte
-		 * character), try to pad out to the correct length with spaces.
-		 * We may not be able to pad completely, but we will always be able
-		 * to insert at least one pad space (since we'd not have quoted a
+		 * character), try to pad out to the correct length with spaces. We
+		 * may not be able to pad completely, but we will always be able to
+		 * insert at least one pad space (since we'd not have quoted a
 		 * multibyte character).  This should be enough to make a string that
 		 * the server will error out on.
 		 */
@@ -2655,7 +2656,7 @@ PQescapeStringInternal(PGconn *conn,
 				*error = 1;
 			if (conn)
 				printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("incomplete multibyte character\n"));
+						  libpq_gettext("incomplete multibyte character\n"));
 			for (; i < len; i++)
 			{
 				if (((size_t) (target - to)) / 2 >= length)

@@ -1259,7 +1259,7 @@ build_tuplestore_recursively(char *key_fld,
 	int			ret;
 	int			proc;
 	int			serial_column;
-	StringInfoData	sql;
+	StringInfoData sql;
 	char	  **values;
 	char	   *current_key;
 	char	   *current_key_parent;
@@ -1357,9 +1357,9 @@ build_tuplestore_recursively(char *key_fld,
 		SPITupleTable *tuptable = SPI_tuptable;
 		TupleDesc	spi_tupdesc = tuptable->tupdesc;
 		int			i;
-		StringInfoData	branchstr;
-		StringInfoData	chk_branchstr;
-		StringInfoData	chk_current_key;
+		StringInfoData branchstr;
+		StringInfoData chk_branchstr;
+		StringInfoData chk_current_key;
 
 		/* First time through, do a little more setup */
 		if (level == 0)

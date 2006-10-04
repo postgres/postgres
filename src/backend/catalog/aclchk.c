@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.131 2006/09/05 21:08:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.132 2006/10/04 00:29:50 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -53,9 +53,9 @@ static List *objectNamesToOids(GrantObjectType objtype, List *objnames);
 static AclMode string_to_privilege(const char *privname);
 static const char *privilege_to_string(AclMode privilege);
 static AclMode restrict_and_check_grant(bool is_grant, AclMode avail_goptions,
-										bool all_privs, AclMode privileges,
-										Oid objectId, Oid grantorId,
-										AclObjectKind objkind, char *objname);
+						 bool all_privs, AclMode privileges,
+						 Oid objectId, Oid grantorId,
+						 AclObjectKind objkind, char *objname);
 static AclMode pg_aclmask(AclObjectKind objkind, Oid table_oid, Oid roleid,
 		   AclMode mask, AclMaskHow how);
 
@@ -156,8 +156,8 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 						 AclMode privileges, Oid objectId, Oid grantorId,
 						 AclObjectKind objkind, char *objname)
 {
-	AclMode	this_privileges;
-	AclMode whole_mask;
+	AclMode		this_privileges;
+	AclMode		whole_mask;
 
 	switch (objkind)
 	{
@@ -189,9 +189,9 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 	}
 
 	/*
-	 * If we found no grant options, consider whether to issue a hard
-	 * error.  Per spec, having any privilege at all on the object will
-	 * get you by here.
+	 * If we found no grant options, consider whether to issue a hard error.
+	 * Per spec, having any privilege at all on the object will get you by
+	 * here.
 	 */
 	if (avail_goptions == ACL_NO_RIGHTS)
 	{
@@ -203,11 +203,10 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 
 	/*
 	 * Restrict the operation to what we can actually grant or revoke, and
-	 * issue a warning if appropriate.	(For REVOKE this isn't quite what
-	 * the spec says to do: the spec seems to want a warning only if no
-	 * privilege bits actually change in the ACL. In practice that
-	 * behavior seems much too noisy, as well as inconsistent with the
-	 * GRANT case.)
+	 * issue a warning if appropriate.	(For REVOKE this isn't quite what the
+	 * spec says to do: the spec seems to want a warning only if no privilege
+	 * bits actually change in the ACL. In practice that behavior seems much
+	 * too noisy, as well as inconsistent with the GRANT case.)
 	 */
 	this_privileges = privileges & ACL_OPTION_TO_PRIVS(avail_goptions);
 	if (is_grant)
@@ -215,18 +214,18 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		if (this_privileges == 0)
 			ereport(WARNING,
 					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-					 errmsg("no privileges were granted for \"%s\"", objname)));
+				  errmsg("no privileges were granted for \"%s\"", objname)));
 		else if (!all_privs && this_privileges != privileges)
 			ereport(WARNING,
 					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_GRANTED),
-					 errmsg("not all privileges were granted for \"%s\"", objname)));
+			 errmsg("not all privileges were granted for \"%s\"", objname)));
 	}
 	else
 	{
 		if (this_privileges == 0)
 			ereport(WARNING,
 					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
-					 errmsg("no privileges could be revoked for \"%s\"", objname)));
+			  errmsg("no privileges could be revoked for \"%s\"", objname)));
 		else if (!all_privs && this_privileges != privileges)
 			ereport(WARNING,
 					(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
@@ -285,11 +284,11 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	 */
 	switch (stmt->objtype)
 	{
-		/*
-		 *	Because this might be a sequence, we test both relation
-		 *	and sequence bits, and later do a more limited test
-		 *	when we know the object type.
-		 */
+			/*
+			 * Because this might be a sequence, we test both relation and
+			 * sequence bits, and later do a more limited test when we know
+			 * the object type.
+			 */
 		case ACL_OBJECT_RELATION:
 			all_privileges = ACL_ALL_RIGHTS_RELATION | ACL_ALL_RIGHTS_SEQUENCE;
 			errormsg = _("invalid privilege type %s for relation");
@@ -329,6 +328,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 	if (stmt->privileges == NIL)
 	{
 		istmt.all_privs = true;
+
 		/*
 		 * will be turned into ACL_ALL_RIGHTS_* by the internal routines
 		 * depending on the object type
@@ -595,28 +595,28 @@ ExecGrant_Relation(InternalGrant *istmt)
 		}
 		else
 			this_privileges = istmt->privileges;
-		
+
 		/*
-		 *	The GRANT TABLE syntax can be used for sequences and
-		 *	non-sequences, so we have to look at the relkind to
-		 *	determine the supported permissions.  The OR of
-		 *	table and sequence permissions were already checked.
+		 * The GRANT TABLE syntax can be used for sequences and non-sequences,
+		 * so we have to look at the relkind to determine the supported
+		 * permissions.  The OR of table and sequence permissions were already
+		 * checked.
 		 */
 		if (istmt->objtype == ACL_OBJECT_RELATION)
 		{
 			if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
 			{
 				/*
-				 *	For backward compatibility, throw just a warning
-				 *	for invalid sequence permissions when using the
-				 *	non-sequence GRANT syntax is used.
+				 * For backward compatibility, throw just a warning for
+				 * invalid sequence permissions when using the non-sequence
+				 * GRANT syntax is used.
 				 */
 				if (this_privileges & ~((AclMode) ACL_ALL_RIGHTS_SEQUENCE))
 				{
 					/*
-					 *	Mention the object name because the user needs to
-					 *	know which operations succeeded.  This is required
-					 *	because WARNING allows the command to continue.
+					 * Mention the object name because the user needs to know
+					 * which operations succeeded.	This is required because
+					 * WARNING allows the command to continue.
 					 */
 					ereport(WARNING,
 							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
@@ -628,15 +628,16 @@ ExecGrant_Relation(InternalGrant *istmt)
 			else
 			{
 				if (this_privileges & ~((AclMode) ACL_ALL_RIGHTS_RELATION))
+
 					/*
-					 *	USAGE is the only permission supported by sequences
-					 *	but not by non-sequences.  Don't mention the object
-					 *	name because we didn't in the combined TABLE |
-					 *	SEQUENCE check.
+					 * USAGE is the only permission supported by sequences but
+					 * not by non-sequences.  Don't mention the object name
+					 * because we didn't in the combined TABLE | SEQUENCE
+					 * check.
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-							 errmsg("invalid privilege type USAGE for table")));
+						  errmsg("invalid privilege type USAGE for table")));
 			}
 		}
 
@@ -660,15 +661,15 @@ ExecGrant_Relation(InternalGrant *istmt)
 							&grantorId, &avail_goptions);
 
 		/*
-		 * Restrict the privileges to what we can actually grant, and emit
-		 * the standards-mandated warning and error messages.
+		 * Restrict the privileges to what we can actually grant, and emit the
+		 * standards-mandated warning and error messages.
 		 */
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
 									 istmt->all_privs, this_privileges,
 									 relOid, grantorId,
-									 pg_class_tuple->relkind == RELKIND_SEQUENCE
-										? ACL_KIND_SEQUENCE : ACL_KIND_CLASS,
+								  pg_class_tuple->relkind == RELKIND_SEQUENCE
+									 ? ACL_KIND_SEQUENCE : ACL_KIND_CLASS,
 									 NameStr(pg_class_tuple->relname));
 
 		/*
@@ -777,8 +778,8 @@ ExecGrant_Database(InternalGrant *istmt)
 							&grantorId, &avail_goptions);
 
 		/*
-		 * Restrict the privileges to what we can actually grant, and emit
-		 * the standards-mandated warning and error messages.
+		 * Restrict the privileges to what we can actually grant, and emit the
+		 * standards-mandated warning and error messages.
 		 */
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
@@ -893,8 +894,8 @@ ExecGrant_Function(InternalGrant *istmt)
 							&grantorId, &avail_goptions);
 
 		/*
-		 * Restrict the privileges to what we can actually grant, and emit
-		 * the standards-mandated warning and error messages.
+		 * Restrict the privileges to what we can actually grant, and emit the
+		 * standards-mandated warning and error messages.
 		 */
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
@@ -1019,8 +1020,8 @@ ExecGrant_Language(InternalGrant *istmt)
 							&grantorId, &avail_goptions);
 
 		/*
-		 * Restrict the privileges to what we can actually grant, and emit
-		 * the standards-mandated warning and error messages.
+		 * Restrict the privileges to what we can actually grant, and emit the
+		 * standards-mandated warning and error messages.
 		 */
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
@@ -1136,8 +1137,8 @@ ExecGrant_Namespace(InternalGrant *istmt)
 							&grantorId, &avail_goptions);
 
 		/*
-		 * Restrict the privileges to what we can actually grant, and emit
-		 * the standards-mandated warning and error messages.
+		 * Restrict the privileges to what we can actually grant, and emit the
+		 * standards-mandated warning and error messages.
 		 */
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
@@ -1259,8 +1260,8 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 							&grantorId, &avail_goptions);
 
 		/*
-		 * Restrict the privileges to what we can actually grant, and emit
-		 * the standards-mandated warning and error messages.
+		 * Restrict the privileges to what we can actually grant, and emit the
+		 * standards-mandated warning and error messages.
 		 */
 		this_privileges =
 			restrict_and_check_grant(istmt->is_grant, avail_goptions,
@@ -1565,7 +1566,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	 *
 	 * As of 7.4 we have some updatable system views; those shouldn't be
 	 * protected in this way.  Assume the view rules can take care of
-	 * themselves.  ACL_USAGE is if we ever have system sequences.
+	 * themselves.	ACL_USAGE is if we ever have system sequences.
 	 */
 	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE | ACL_USAGE)) &&
 		IsSystemClass(classForm) &&
@@ -1602,7 +1603,7 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 	{
 		/* No ACL, so build default ACL */
 		acl = acldefault(classForm->relkind == RELKIND_SEQUENCE ?
-							ACL_OBJECT_SEQUENCE : ACL_OBJECT_RELATION,
+						 ACL_OBJECT_SEQUENCE : ACL_OBJECT_RELATION,
 						 ownerId);
 		aclDatum = (Datum) 0;
 	}

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.35 2006/09/20 19:50:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.36 2006/10/04 00:30:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,21 +98,21 @@ typedef enum
 /* selfuncs.c */
 
 extern void examine_variable(PlannerInfo *root, Node *node, int varRelid,
-							 VariableStatData *vardata);
+				 VariableStatData *vardata);
 extern bool get_restriction_variable(PlannerInfo *root, List *args,
-									 int varRelid,
-									 VariableStatData *vardata, Node **other,
-									 bool *varonleft);
+						 int varRelid,
+						 VariableStatData *vardata, Node **other,
+						 bool *varonleft);
 extern void get_join_variables(PlannerInfo *root, List *args,
-							   VariableStatData *vardata1,
-							   VariableStatData *vardata2);
+				   VariableStatData *vardata1,
+				   VariableStatData *vardata2);
 extern double get_variable_numdistinct(VariableStatData *vardata);
 extern double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
-							  Datum constval, bool varonleft,
-							  double *sumcommonp);
+				Datum constval, bool varonleft,
+				double *sumcommonp);
 extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
-									Datum constval, bool varonleft,
-									int min_hist_size, int n_skip);
+					  Datum constval, bool varonleft,
+					  int min_hist_size, int n_skip);
 
 extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,
@@ -151,13 +151,13 @@ extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
 extern Selectivity nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
 			Node *arg, int varRelid);
 extern Selectivity scalararraysel(PlannerInfo *root,
-								  ScalarArrayOpExpr *clause,
-								  bool is_join_clause,
-								  int varRelid, JoinType jointype);
+			   ScalarArrayOpExpr *clause,
+			   bool is_join_clause,
+			   int varRelid, JoinType jointype);
 extern int	estimate_array_length(Node *arrayexpr);
 extern Selectivity rowcomparesel(PlannerInfo *root,
-								 RowCompareExpr *clause,
-								 int varRelid, JoinType jointype);
+			  RowCompareExpr *clause,
+			  int varRelid, JoinType jointype);
 
 extern void mergejoinscansel(PlannerInfo *root, Node *clause,
 				 Selectivity *leftscan,

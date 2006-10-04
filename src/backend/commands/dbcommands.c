@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.184 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.185 2006/10/04 00:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,9 +326,9 @@ createdb(const CreatedbStmt *stmt)
 	}
 
 	/*
-	 * Check for db name conflict.	This is just to give a more friendly
-	 * error message than "unique index violation".  There's a race condition
-	 * but we're willing to accept the less friendly message in that case.
+	 * Check for db name conflict.	This is just to give a more friendly error
+	 * message than "unique index violation".  There's a race condition but
+	 * we're willing to accept the less friendly message in that case.
 	 */
 	if (OidIsValid(get_database_oid(dbname)))
 		ereport(ERROR,
@@ -336,10 +336,10 @@ createdb(const CreatedbStmt *stmt)
 				 errmsg("database \"%s\" already exists", dbname)));
 
 	/*
-	 * Insert a new tuple into pg_database.  This establishes our ownership
-	 * of the new database name (anyone else trying to insert the same name
-	 * will block on the unique index, and fail after we commit).  It also
-	 * assigns the OID that the new database will have.
+	 * Insert a new tuple into pg_database.  This establishes our ownership of
+	 * the new database name (anyone else trying to insert the same name will
+	 * block on the unique index, and fail after we commit).  It also assigns
+	 * the OID that the new database will have.
 	 */
 	pg_database_rel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
@@ -361,9 +361,9 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * We deliberately set datconfig and datacl to defaults (NULL), rather
-	 * than copying them from the template database.  Copying datacl would
-	 * be a bad idea when the owner is not the same as the template's
-	 * owner. It's more debatable whether datconfig should be copied.
+	 * than copying them from the template database.  Copying datacl would be
+	 * a bad idea when the owner is not the same as the template's owner. It's
+	 * more debatable whether datconfig should be copied.
 	 */
 	new_record_nulls[Anum_pg_database_datconfig - 1] = 'n';
 	new_record_nulls[Anum_pg_database_datacl - 1] = 'n';
@@ -497,8 +497,8 @@ createdb(const CreatedbStmt *stmt)
 		RequestCheckpoint(true, false);
 
 		/*
-		 * Close pg_database, but keep lock till commit (this is important
-		 * to prevent any risk of deadlock failure while updating flat file)
+		 * Close pg_database, but keep lock till commit (this is important to
+		 * prevent any risk of deadlock failure while updating flat file)
 		 */
 		heap_close(pg_database_rel, NoLock);
 
@@ -543,8 +543,8 @@ dropdb(const char *dbname, bool missing_ok)
 				 errmsg("cannot drop the currently open database")));
 
 	/*
-	 * Look up the target database's OID, and get exclusive lock on it.
-	 * We need this to ensure that no new backend starts up in the target
+	 * Look up the target database's OID, and get exclusive lock on it. We
+	 * need this to ensure that no new backend starts up in the target
 	 * database while we are deleting it (see postinit.c), and that no one is
 	 * using it as a CREATE DATABASE template or trying to delete it for
 	 * themselves.
@@ -589,8 +589,8 @@ dropdb(const char *dbname, bool missing_ok)
 				 errmsg("cannot drop a template database")));
 
 	/*
-	 * Check for active backends in the target database.  (Because we hold
-	 * the database lock, no new ones can start after this.)
+	 * Check for active backends in the target database.  (Because we hold the
+	 * database lock, no new ones can start after this.)
 	 */
 	if (DatabaseHasActiveBackends(db_id, false))
 		ereport(ERROR,
@@ -647,8 +647,8 @@ dropdb(const char *dbname, bool missing_ok)
 	remove_dbtablespaces(db_id);
 
 	/*
-	 * Close pg_database, but keep lock till commit (this is important
-	 * to prevent any risk of deadlock failure while updating flat file)
+	 * Close pg_database, but keep lock till commit (this is important to
+	 * prevent any risk of deadlock failure while updating flat file)
 	 */
 	heap_close(pgdbrel, NoLock);
 
@@ -670,8 +670,8 @@ RenameDatabase(const char *oldname, const char *newname)
 	Relation	rel;
 
 	/*
-	 * Look up the target database's OID, and get exclusive lock on it.
-	 * We need this for the same reasons as DROP DATABASE.
+	 * Look up the target database's OID, and get exclusive lock on it. We
+	 * need this for the same reasons as DROP DATABASE.
 	 */
 	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
@@ -693,8 +693,8 @@ RenameDatabase(const char *oldname, const char *newname)
 				 errmsg("current database may not be renamed")));
 
 	/*
-	 * Make sure the database does not have active sessions.  This is the
-	 * same concern as above, but applied to other sessions.
+	 * Make sure the database does not have active sessions.  This is the same
+	 * concern as above, but applied to other sessions.
 	 */
 	if (DatabaseHasActiveBackends(db_id, false))
 		ereport(ERROR,
@@ -730,8 +730,8 @@ RenameDatabase(const char *oldname, const char *newname)
 	CatalogUpdateIndexes(rel, newtup);
 
 	/*
-	 * Close pg_database, but keep lock till commit (this is important
-	 * to prevent any risk of deadlock failure while updating flat file)
+	 * Close pg_database, but keep lock till commit (this is important to
+	 * prevent any risk of deadlock failure while updating flat file)
 	 */
 	heap_close(rel, NoLock);
 
@@ -1067,9 +1067,9 @@ get_db_info(const char *name, LOCKMODE lockmode,
 	relation = heap_open(DatabaseRelationId, AccessShareLock);
 
 	/*
-	 * Loop covers the rare case where the database is renamed before we
-	 * can lock it.  We try again just in case we can find a new one of
-	 * the same name.
+	 * Loop covers the rare case where the database is renamed before we can
+	 * lock it.  We try again just in case we can find a new one of the same
+	 * name.
 	 */
 	for (;;)
 	{
@@ -1079,8 +1079,8 @@ get_db_info(const char *name, LOCKMODE lockmode,
 		Oid			dbOid;
 
 		/*
-		 * there's no syscache for database-indexed-by-name,
-		 * so must do it the hard way
+		 * there's no syscache for database-indexed-by-name, so must do it the
+		 * hard way
 		 */
 		ScanKeyInit(&scanKey,
 					Anum_pg_database_datname,
@@ -1110,9 +1110,9 @@ get_db_info(const char *name, LOCKMODE lockmode,
 			LockSharedObject(DatabaseRelationId, dbOid, 0, lockmode);
 
 		/*
-		 * And now, re-fetch the tuple by OID.  If it's still there and
-		 * still the same name, we win; else, drop the lock and loop
-		 * back to try again.
+		 * And now, re-fetch the tuple by OID.	If it's still there and still
+		 * the same name, we win; else, drop the lock and loop back to try
+		 * again.
 		 */
 		tuple = SearchSysCache(DATABASEOID,
 							   ObjectIdGetDatum(dbOid),
@@ -1267,8 +1267,8 @@ get_database_oid(const char *dbname)
 	Oid			oid;
 
 	/*
-	 * There's no syscache for pg_database indexed by name,
-	 * so we must look the hard way.
+	 * There's no syscache for pg_database indexed by name, so we must look
+	 * the hard way.
 	 */
 	pg_database = heap_open(DatabaseRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
@@ -1399,15 +1399,15 @@ dbase_desc(StringInfo buf, uint8 xl_info, char *rec)
 		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) rec;
 
 		appendStringInfo(buf, "create db: copy dir %u/%u to %u/%u",
-				xlrec->src_db_id, xlrec->src_tablespace_id,
-				xlrec->db_id, xlrec->tablespace_id);
+						 xlrec->src_db_id, xlrec->src_tablespace_id,
+						 xlrec->db_id, xlrec->tablespace_id);
 	}
 	else if (info == XLOG_DBASE_DROP)
 	{
 		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) rec;
 
 		appendStringInfo(buf, "drop db: dir %u/%u",
-				xlrec->db_id, xlrec->tablespace_id);
+						 xlrec->db_id, xlrec->tablespace_id);
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");

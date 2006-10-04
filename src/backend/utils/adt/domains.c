@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/domains.c,v 1.3 2006/08/04 21:33:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/domains.c,v 1.4 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,8 +146,8 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 					/*
 					 * Set up value to be returned by CoerceToDomainValue
 					 * nodes.  Unlike ExecEvalCoerceToDomain, this econtext
-					 * couldn't be shared with anything else, so no need
-					 * to save and restore fields.
+					 * couldn't be shared with anything else, so no need to
+					 * save and restore fields.
 					 */
 					econtext->domainValue_datum = value;
 					econtext->domainValue_isNull = isnull;
@@ -174,8 +174,8 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 
 	/*
 	 * Before exiting, call any shutdown callbacks and reset econtext's
-	 * per-tuple memory.  This avoids leaking non-memory resources,
-	 * if anything in the expression(s) has any.
+	 * per-tuple memory.  This avoids leaking non-memory resources, if
+	 * anything in the expression(s) has any.
 	 */
 	if (econtext)
 		ReScanExprContext(econtext);
@@ -194,9 +194,9 @@ domain_in(PG_FUNCTION_ARGS)
 	Datum		value;
 
 	/*
-	 * Since domain_in is not strict, we have to check for null inputs.
-	 * The typioparam argument should never be null in normal system usage,
-	 * but it could be null in a manual invocation --- if so, just return null.
+	 * Since domain_in is not strict, we have to check for null inputs. The
+	 * typioparam argument should never be null in normal system usage, but it
+	 * could be null in a manual invocation --- if so, just return null.
 	 */
 	if (PG_ARGISNULL(0))
 		string = NULL;
@@ -207,8 +207,8 @@ domain_in(PG_FUNCTION_ARGS)
 	domainType = PG_GETARG_OID(1);
 
 	/*
-	 * We arrange to look up the needed info just once per series of
-	 * calls, assuming the domain type doesn't change underneath us.
+	 * We arrange to look up the needed info just once per series of calls,
+	 * assuming the domain type doesn't change underneath us.
 	 */
 	my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)
@@ -254,9 +254,9 @@ domain_recv(PG_FUNCTION_ARGS)
 	Datum		value;
 
 	/*
-	 * Since domain_recv is not strict, we have to check for null inputs.
-	 * The typioparam argument should never be null in normal system usage,
-	 * but it could be null in a manual invocation --- if so, just return null.
+	 * Since domain_recv is not strict, we have to check for null inputs. The
+	 * typioparam argument should never be null in normal system usage, but it
+	 * could be null in a manual invocation --- if so, just return null.
 	 */
 	if (PG_ARGISNULL(0))
 		buf = NULL;
@@ -267,8 +267,8 @@ domain_recv(PG_FUNCTION_ARGS)
 	domainType = PG_GETARG_OID(1);
 
 	/*
-	 * We arrange to look up the needed info just once per series of
-	 * calls, assuming the domain type doesn't change underneath us.
+	 * We arrange to look up the needed info just once per series of calls,
+	 * assuming the domain type doesn't change underneath us.
 	 */
 	my_extra = (DomainIOData *) fcinfo->flinfo->fn_extra;
 	if (my_extra == NULL)

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.65 2006/02/11 20:39:58 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.66 2006/10/04 00:29:59 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -181,7 +181,7 @@ cidr_out(PG_FUNCTION_ARGS)
  * family, bits, is_cidr, address length, address in network byte order.
  *
  * Presence of is_cidr is largely for historical reasons, though it might
- * allow some code-sharing on the client side.  We send it correctly on
+ * allow some code-sharing on the client side.	We send it correctly on
  * output, but ignore the value on input.
  */
 static inet *
@@ -201,14 +201,14 @@ network_recv(StringInfo buf, bool is_cidr)
 		ip_family(addr) != PGSQL_AF_INET6)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 /* translator: %s is inet or cidr */
+		/* translator: %s is inet or cidr */
 				 errmsg("invalid address family in external \"%s\" value",
 						is_cidr ? "cidr" : "inet")));
 	bits = pq_getmsgbyte(buf);
 	if (bits < 0 || bits > ip_maxbits(addr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 /* translator: %s is inet or cidr */
+		/* translator: %s is inet or cidr */
 				 errmsg("invalid bits in external \"%s\" value",
 						is_cidr ? "cidr" : "inet")));
 	ip_bits(addr) = bits;
@@ -217,7 +217,7 @@ network_recv(StringInfo buf, bool is_cidr)
 	if (nb != ip_addrsize(addr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 /* translator: %s is inet or cidr */
+		/* translator: %s is inet or cidr */
 				 errmsg("invalid length in external \"%s\" value",
 						is_cidr ? "cidr" : "inet")));
 	VARATT_SIZEP(addr) = VARHDRSZ +
@@ -1262,9 +1262,9 @@ inetnot(PG_FUNCTION_ARGS)
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	{
-		int nb = ip_addrsize(ip);
-		unsigned char	*pip = ip_addr(ip);
-		unsigned char	*pdst = ip_addr(dst);
+		int			nb = ip_addrsize(ip);
+		unsigned char *pip = ip_addr(ip);
+		unsigned char *pdst = ip_addr(dst);
 
 		while (nb-- > 0)
 			pdst[nb] = ~pip[nb];
@@ -1295,10 +1295,10 @@ inetand(PG_FUNCTION_ARGS)
 				 errmsg("cannot AND inet values of different sizes")));
 	else
 	{
-		int nb = ip_addrsize(ip);
-		unsigned char	*pip = ip_addr(ip);
-		unsigned char	*pip2 = ip_addr(ip2);
-		unsigned char	*pdst = ip_addr(dst);
+		int			nb = ip_addrsize(ip);
+		unsigned char *pip = ip_addr(ip);
+		unsigned char *pip2 = ip_addr(ip2);
+		unsigned char *pdst = ip_addr(dst);
 
 		while (nb-- > 0)
 			pdst[nb] = pip[nb] & pip2[nb];
@@ -1329,10 +1329,10 @@ inetor(PG_FUNCTION_ARGS)
 				 errmsg("cannot OR inet values of different sizes")));
 	else
 	{
-		int nb = ip_addrsize(ip);
-		unsigned char	*pip = ip_addr(ip);
-		unsigned char	*pip2 = ip_addr(ip2);
-		unsigned char	*pdst = ip_addr(dst);
+		int			nb = ip_addrsize(ip);
+		unsigned char *pip = ip_addr(ip);
+		unsigned char *pip2 = ip_addr(ip2);
+		unsigned char *pdst = ip_addr(dst);
 
 		while (nb-- > 0)
 			pdst[nb] = pip[nb] | pip2[nb];
@@ -1356,32 +1356,34 @@ internal_inetpl(inet *ip, int64 addend)
 	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	{
-		int nb = ip_addrsize(ip);
-		unsigned char	*pip = ip_addr(ip);
-		unsigned char	*pdst = ip_addr(dst);
-		int carry = 0;
+		int			nb = ip_addrsize(ip);
+		unsigned char *pip = ip_addr(ip);
+		unsigned char *pdst = ip_addr(dst);
+		int			carry = 0;
 
 		while (nb-- > 0)
 		{
 			carry = pip[nb] + (int) (addend & 0xFF) + carry;
 			pdst[nb] = (unsigned char) (carry & 0xFF);
 			carry >>= 8;
+
 			/*
 			 * We have to be careful about right-shifting addend because
-			 * right-shift isn't portable for negative values, while
-			 * simply dividing by 256 doesn't work (the standard rounding
-			 * is in the wrong direction, besides which there may be machines
-			 * out there that round the wrong way).  So, explicitly clear
-			 * the low-order byte to remove any doubt about the correct
-			 * result of the division, and then divide rather than shift.
+			 * right-shift isn't portable for negative values, while simply
+			 * dividing by 256 doesn't work (the standard rounding is in the
+			 * wrong direction, besides which there may be machines out there
+			 * that round the wrong way).  So, explicitly clear the low-order
+			 * byte to remove any doubt about the correct result of the
+			 * division, and then divide rather than shift.
 			 */
 			addend &= ~((int64) 0xFF);
 			addend /= 0x100;
 		}
+
 		/*
-		 * At this point we should have addend and carry both zero if
-		 * original addend was >= 0, or addend -1 and carry 1 if original
-		 * addend was < 0.  Anything else means overflow.
+		 * At this point we should have addend and carry both zero if original
+		 * addend was >= 0, or addend -1 and carry 1 if original addend was <
+		 * 0.  Anything else means overflow.
 		 */
 		if (!((addend == 0 && carry == 0) ||
 			  (addend == -1 && carry == 1)))
@@ -1403,8 +1405,8 @@ internal_inetpl(inet *ip, int64 addend)
 Datum
 inetpl(PG_FUNCTION_ARGS)
 {
-	inet   *ip = PG_GETARG_INET_P(0);
-	int64	addend = PG_GETARG_INT64(1);
+	inet	   *ip = PG_GETARG_INET_P(0);
+	int64		addend = PG_GETARG_INT64(1);
 
 	PG_RETURN_INET_P(internal_inetpl(ip, addend));
 }
@@ -1413,8 +1415,8 @@ inetpl(PG_FUNCTION_ARGS)
 Datum
 inetmi_int8(PG_FUNCTION_ARGS)
 {
-	inet   *ip = PG_GETARG_INET_P(0);
-	int64	addend = PG_GETARG_INT64(1);
+	inet	   *ip = PG_GETARG_INET_P(0);
+	int64		addend = PG_GETARG_INT64(1);
 
 	PG_RETURN_INET_P(internal_inetpl(ip, -addend));
 }
@@ -1434,20 +1436,20 @@ inetmi(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * We form the difference using the traditional complement,
-		 * increment, and add rule, with the increment part being handled
-		 * by starting the carry off at 1.  If you don't think integer
-		 * arithmetic is done in two's complement, too bad.
+		 * We form the difference using the traditional complement, increment,
+		 * and add rule, with the increment part being handled by starting the
+		 * carry off at 1.	If you don't think integer arithmetic is done in
+		 * two's complement, too bad.
 		 */
-		int nb = ip_addrsize(ip);
-		int	byte = 0;
-		unsigned char	*pip = ip_addr(ip);
-		unsigned char	*pip2 = ip_addr(ip2);
-		int carry = 1;
+		int			nb = ip_addrsize(ip);
+		int			byte = 0;
+		unsigned char *pip = ip_addr(ip);
+		unsigned char *pip2 = ip_addr(ip2);
+		int			carry = 1;
 
 		while (nb-- > 0)
 		{
-			int		lobyte;
+			int			lobyte;
 
 			carry = pip[nb] + (~pip2[nb] & 0xFF) + carry;
 			lobyte = carry & 0xFF;
@@ -1458,9 +1460,9 @@ inetmi(PG_FUNCTION_ARGS)
 			else
 			{
 				/*
-				 * Input wider than int64: check for overflow.  All bytes
-				 * to the left of what will fit should be 0 or 0xFF,
-				 * depending on sign of the now-complete result.
+				 * Input wider than int64: check for overflow.	All bytes to
+				 * the left of what will fit should be 0 or 0xFF, depending on
+				 * sign of the now-complete result.
 				 */
 				if ((res < 0) ? (lobyte != 0xFF) : (lobyte != 0))
 					ereport(ERROR,
@@ -1472,8 +1474,8 @@ inetmi(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * If input is narrower than int64, overflow is not possible, but
-		 * we have to do proper sign extension.
+		 * If input is narrower than int64, overflow is not possible, but we
+		 * have to do proper sign extension.
 		 */
 		if (carry == 0 && byte < sizeof(int64))
 			res |= ((int64) -1) << (byte * 8);

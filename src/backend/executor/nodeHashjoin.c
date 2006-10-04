@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.84 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.85 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,11 +119,11 @@ ExecHashJoin(HashJoinState *node)
 		 * since we aren't going to be able to skip the join on the strength
 		 * of an empty inner relation anyway.)
 		 *
-		 * If we are rescanning the join, we make use of information gained
-		 * on the previous scan: don't bother to try the prefetch if the
-		 * previous scan found the outer relation nonempty.  This is not
-		 * 100% reliable since with new parameters the outer relation might
-		 * yield different results, but it's a good heuristic.
+		 * If we are rescanning the join, we make use of information gained on
+		 * the previous scan: don't bother to try the prefetch if the previous
+		 * scan found the outer relation nonempty.	This is not 100% reliable
+		 * since with new parameters the outer relation might yield different
+		 * results, but it's a good heuristic.
 		 *
 		 * The only way to make the check is to try to fetch a tuple from the
 		 * outer plan node.  If we succeed, we have to stash it away for later
@@ -173,8 +173,8 @@ ExecHashJoin(HashJoinState *node)
 
 		/*
 		 * Reset OuterNotEmpty for scan.  (It's OK if we fetched a tuple
-		 * above, because ExecHashJoinOuterGetTuple will immediately
-		 * set it again.)
+		 * above, because ExecHashJoinOuterGetTuple will immediately set it
+		 * again.)
 		 */
 		node->hj_OuterNotEmpty = false;
 	}
@@ -788,12 +788,12 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	MinimalTuple tuple;
 
 	/*
-	 * Since both the hash value and the MinimalTuple length word are
-	 * uint32, we can read them both in one BufFileRead() call without
-	 * any type cheating.
+	 * Since both the hash value and the MinimalTuple length word are uint32,
+	 * we can read them both in one BufFileRead() call without any type
+	 * cheating.
 	 */
 	nread = BufFileRead(file, (void *) header, sizeof(header));
-	if (nread == 0)			/* end of file */
+	if (nread == 0)				/* end of file */
 	{
 		ExecClearTuple(tupleSlot);
 		return NULL;
@@ -834,8 +834,8 @@ ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)
 			/*
 			 * okay to reuse the hash table; needn't rescan inner, either.
 			 *
-			 * What we do need to do is reset our state about the emptiness
-			 * of the outer relation, so that the new scan of the outer will
+			 * What we do need to do is reset our state about the emptiness of
+			 * the outer relation, so that the new scan of the outer will
 			 * update it correctly if it turns out to be empty this time.
 			 * (There's no harm in clearing it now because ExecHashJoin won't
 			 * need the info.  In the other cases, where the hash table

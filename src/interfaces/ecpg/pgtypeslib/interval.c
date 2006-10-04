@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.35 2006/09/14 08:02:38 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/interval.c,v 1.36 2006/10/04 00:30:11 momjian Exp $ */
 
 #include "postgres_fe.h"
 #include <time.h>
@@ -307,7 +307,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						tm->tm_mday += val * 7;
 						if (fval != 0)
 						{
-							int extra_days;
+							int			extra_days;
+
 							fval *= 7;
 							extra_days = (int32) fval;
 							tm->tm_mday += extra_days;
@@ -315,6 +316,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 							if (fval != 0)
 							{
 								int			sec;
+
 								fval *= SECS_PER_DAY;
 								sec = fval;
 								tm->tm_sec += sec;
@@ -332,7 +334,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						tm->tm_mon += val;
 						if (fval != 0)
 						{
-							int         day;
+							int			day;
+
 							fval *= DAYS_PER_MONTH;
 							day = fval;
 							tm->tm_mday += day;
@@ -340,6 +343,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 							if (fval != 0)
 							{
 								int			sec;
+
 								fval *= SECS_PER_DAY;
 								sec = fval;
 								tm->tm_sec += sec;
@@ -756,14 +760,15 @@ tm2interval(struct tm * tm, fsec_t fsec, interval * span)
 interval *
 PGTYPESinterval_new(void)
 {
-	interval *result;
+	interval   *result;
+
 	result = (interval *) pgtypes_alloc(sizeof(interval));
 	/* result can be NULL if we run out of memory */
 	return result;
 }
 
 void
-PGTYPESinterval_free(interval *intvl)
+PGTYPESinterval_free(interval * intvl)
 {
 	free(intvl);
 }

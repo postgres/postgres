@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.219 2006/08/18 16:09:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.220 2006/10/04 00:29:48 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -133,9 +133,9 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	snapshot = scan->rs_snapshot;
 
 	/*
-	 * We must hold share lock on the buffer content while examining
-	 * tuple visibility.  Afterwards, however, the tuples we have found
-	 * to be visible are guaranteed good as long as we hold the buffer pin.
+	 * We must hold share lock on the buffer content while examining tuple
+	 * visibility.	Afterwards, however, the tuples we have found to be
+	 * visible are guaranteed good as long as we hold the buffer pin.
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
@@ -223,7 +223,7 @@ heapgettup(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
-			page = 0;							/* first page */
+			page = 0;			/* first page */
 			heapgetpage(scan, page);
 			lineoff = FirstOffsetNumber;		/* first offnum */
 			scan->rs_inited = true;
@@ -231,8 +231,8 @@ heapgettup(HeapScanDesc scan,
 		else
 		{
 			/* continue from previously returned page/tuple */
-			page = scan->rs_cblock;				/* current page */
-			lineoff =							/* next offnum */
+			page = scan->rs_cblock;		/* current page */
+			lineoff =			/* next offnum */
 				OffsetNumberNext(ItemPointerGetOffsetNumber(&(tuple->t_self)));
 		}
 
@@ -263,7 +263,7 @@ heapgettup(HeapScanDesc scan,
 		else
 		{
 			/* continue from previously returned page/tuple */
-			page = scan->rs_cblock;				/* current page */
+			page = scan->rs_cblock;		/* current page */
 		}
 
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
@@ -273,12 +273,12 @@ heapgettup(HeapScanDesc scan,
 
 		if (!scan->rs_inited)
 		{
-			lineoff = lines;					/* final offnum */
+			lineoff = lines;	/* final offnum */
 			scan->rs_inited = true;
 		}
 		else
 		{
-			lineoff =							/* previous offnum */
+			lineoff =			/* previous offnum */
 				OffsetNumberPrev(ItemPointerGetOffsetNumber(&(tuple->t_self)));
 		}
 		/* page and lineoff now reference the physically previous tid */
@@ -450,7 +450,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
-			page = 0;							/* first page */
+			page = 0;			/* first page */
 			heapgetpage(scan, page);
 			lineindex = 0;
 			scan->rs_inited = true;
@@ -458,7 +458,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		else
 		{
 			/* continue from previously returned page/tuple */
-			page = scan->rs_cblock;				/* current page */
+			page = scan->rs_cblock;		/* current page */
 			lineindex = scan->rs_cindex + 1;
 		}
 
@@ -487,7 +487,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		else
 		{
 			/* continue from previously returned page/tuple */
-			page = scan->rs_cblock;				/* current page */
+			page = scan->rs_cblock;		/* current page */
 		}
 
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
@@ -721,8 +721,8 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 		LockRelationOid(relationId, lockmode);
 
 	/*
-	 * Now that we have the lock, probe to see if the relation really
-	 * exists or not.
+	 * Now that we have the lock, probe to see if the relation really exists
+	 * or not.
 	 */
 	if (!SearchSysCacheExists(RELOID,
 							  ObjectIdGetDatum(relationId),
@@ -764,7 +764,7 @@ relation_open_nowait(Oid relationId, LOCKMODE lockmode)
 		if (!ConditionalLockRelationOid(relationId, lockmode))
 		{
 			/* try to throw error by name; relation could be deleted... */
-			char   *relname = get_rel_name(relationId);
+			char	   *relname = get_rel_name(relationId);
 
 			if (relname)
 				ereport(ERROR,
@@ -774,8 +774,8 @@ relation_open_nowait(Oid relationId, LOCKMODE lockmode)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-						 errmsg("could not obtain lock on relation with OID %u",
-								relationId)));
+					  errmsg("could not obtain lock on relation with OID %u",
+							 relationId)));
 		}
 	}
 
@@ -801,8 +801,8 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 
 	/*
 	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  This is needed to cover the case where the name identifies
-	 * a rel that has been dropped and recreated since the start of our
+	 * relation.  This is needed to cover the case where the name identifies a
+	 * rel that has been dropped and recreated since the start of our
 	 * transaction: if we don't flush the old syscache entry then we'll latch
 	 * onto that entry and suffer an error when we do RelationIdGetRelation.
 	 * Note that relation_open does not need to do this, since a relation's
@@ -2723,7 +2723,7 @@ l3:
  * heap_inplace_update - update a tuple "in place" (ie, overwrite it)
  *
  * Overwriting violates both MVCC and transactional safety, so the uses
- * of this function in Postgres are extremely limited.  Nonetheless we
+ * of this function in Postgres are extremely limited.	Nonetheless we
  * find some places to use it.
  *
  * The tuple cannot change size, and therefore it's reasonable to assume
@@ -2840,6 +2840,7 @@ heap_restrpos(HeapScanDesc scan)
 	if (!ItemPointerIsValid(&scan->rs_mctid))
 	{
 		scan->rs_ctup.t_data = NULL;
+
 		/*
 		 * unpin scan buffers
 		 */
@@ -2852,7 +2853,7 @@ heap_restrpos(HeapScanDesc scan)
 	else
 	{
 		/*
-		 * If we reached end of scan, rs_inited will now be false.  We must
+		 * If we reached end of scan, rs_inited will now be false.	We must
 		 * reset it to true to keep heapgettup from doing the wrong thing.
 		 */
 		scan->rs_inited = true;
@@ -2862,13 +2863,13 @@ heap_restrpos(HeapScanDesc scan)
 			scan->rs_cindex = scan->rs_mindex;
 			heapgettup_pagemode(scan,
 								NoMovementScanDirection,
-								0,			/* needn't recheck scan keys */
+								0,		/* needn't recheck scan keys */
 								NULL);
 		}
 		else
 			heapgettup(scan,
 					   NoMovementScanDirection,
-					   0,					/* needn't recheck scan keys */
+					   0,		/* needn't recheck scan keys */
 					   NULL);
 	}
 }
@@ -2920,7 +2921,7 @@ log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 }
 
 /*
- * Perform XLogInsert for a heap-update operation.  Caller must already
+ * Perform XLogInsert for a heap-update operation.	Caller must already
  * have modified the buffer(s) and marked them dirty.
  */
 static XLogRecPtr
@@ -3173,8 +3174,8 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	if (record->xl_info & XLOG_HEAP_INIT_PAGE)
 	{
 		buffer = XLogReadBuffer(reln,
-							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
-							true);
+							 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+								true);
 		Assert(BufferIsValid(buffer));
 		page = (Page) BufferGetPage(buffer);
 
@@ -3183,13 +3184,13 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	else
 	{
 		buffer = XLogReadBuffer(reln,
-							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
-							false);
+							 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+								false);
 		if (!BufferIsValid(buffer))
 			return;
 		page = (Page) BufferGetPage(buffer);
 
-		if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
+		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
 			UnlockReleaseBuffer(buffer);
 			return;
@@ -3308,6 +3309,7 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 		/* Set forward chain link in t_ctid */
 		htup->t_ctid = xlrec->newtid;
 	}
+
 	/*
 	 * this test is ugly, but necessary to avoid thinking that insert change
 	 * is already applied
@@ -3345,7 +3347,7 @@ newt:;
 			return;
 		page = (Page) BufferGetPage(buffer);
 
-		if (XLByteLE(lsn, PageGetLSN(page)))		/* changes are applied */
+		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
 			UnlockReleaseBuffer(buffer);
 			return;
@@ -3548,9 +3550,9 @@ static void
 out_target(StringInfo buf, xl_heaptid *target)
 {
 	appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
-			target->node.spcNode, target->node.dbNode, target->node.relNode,
-			ItemPointerGetBlockNumber(&(target->tid)),
-			ItemPointerGetOffsetNumber(&(target->tid)));
+			 target->node.spcNode, target->node.dbNode, target->node.relNode,
+					 ItemPointerGetBlockNumber(&(target->tid)),
+					 ItemPointerGetOffsetNumber(&(target->tid)));
 }
 
 void
@@ -3586,8 +3588,8 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 			appendStringInfo(buf, "update: ");
 		out_target(buf, &(xlrec->target));
 		appendStringInfo(buf, "; new %u/%u",
-				ItemPointerGetBlockNumber(&(xlrec->newtid)),
-				ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+						 ItemPointerGetBlockNumber(&(xlrec->newtid)),
+						 ItemPointerGetOffsetNumber(&(xlrec->newtid)));
 	}
 	else if (info == XLOG_HEAP_MOVE)
 	{
@@ -3599,24 +3601,24 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 			appendStringInfo(buf, "move: ");
 		out_target(buf, &(xlrec->target));
 		appendStringInfo(buf, "; new %u/%u",
-				ItemPointerGetBlockNumber(&(xlrec->newtid)),
-				ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+						 ItemPointerGetBlockNumber(&(xlrec->newtid)),
+						 ItemPointerGetOffsetNumber(&(xlrec->newtid)));
 	}
 	else if (info == XLOG_HEAP_CLEAN)
 	{
 		xl_heap_clean *xlrec = (xl_heap_clean *) rec;
 
 		appendStringInfo(buf, "clean: rel %u/%u/%u; blk %u",
-				xlrec->node.spcNode, xlrec->node.dbNode,
-				xlrec->node.relNode, xlrec->block);
+						 xlrec->node.spcNode, xlrec->node.dbNode,
+						 xlrec->node.relNode, xlrec->block);
 	}
 	else if (info == XLOG_HEAP_NEWPAGE)
 	{
 		xl_heap_newpage *xlrec = (xl_heap_newpage *) rec;
 
 		appendStringInfo(buf, "newpage: rel %u/%u/%u; blk %u",
-				xlrec->node.spcNode, xlrec->node.dbNode,
-				xlrec->node.relNode, xlrec->blkno);
+						 xlrec->node.spcNode, xlrec->node.dbNode,
+						 xlrec->node.relNode, xlrec->blkno);
 	}
 	else if (info == XLOG_HEAP_LOCK)
 	{

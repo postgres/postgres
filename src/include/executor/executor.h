@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.129 2006/08/12 02:52:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.130 2006/10/04 00:30:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
  * REWIND indicates that the plan node should try to efficiently support
  * rescans without parameter changes.  (Nodes must support ExecReScan calls
  * in any case, but if this flag was not given, they are at liberty to do it
- * through complete recalculation.  Note that a parameter change forces a
+ * through complete recalculation.	Note that a parameter change forces a
  * full recalculation in any case.)
  *
  * BACKWARD indicates that the plan node must respect the es_direction flag.
@@ -44,10 +44,10 @@
  * MARK indicates that the plan node must support Mark/Restore calls.
  * When this is not passed, no Mark/Restore will occur.
  */
-#define EXEC_FLAG_EXPLAIN_ONLY	0x0001		/* EXPLAIN, no ANALYZE */
-#define EXEC_FLAG_REWIND		0x0002		/* need efficient rescan */
-#define EXEC_FLAG_BACKWARD		0x0004		/* need backward scan */
-#define EXEC_FLAG_MARK			0x0008		/* need mark/restore */
+#define EXEC_FLAG_EXPLAIN_ONLY	0x0001	/* EXPLAIN, no ANALYZE */
+#define EXEC_FLAG_REWIND		0x0002	/* need efficient rescan */
+#define EXEC_FLAG_BACKWARD		0x0004	/* need backward scan */
+#define EXEC_FLAG_MARK			0x0008	/* need mark/restore */
 
 
 /*

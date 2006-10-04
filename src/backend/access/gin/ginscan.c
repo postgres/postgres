@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * ginscan.c
- *    routines to manage scans inverted index relations
+ *	  routines to manage scans inverted index relations
  *
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.5 2006/09/14 11:26:49 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginscan.c,v 1.6 2006/10/04 00:29:48 momjian Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -19,11 +19,12 @@
 #include "utils/memutils.h"
 
 
-Datum 
-ginbeginscan(PG_FUNCTION_ARGS) {
-	Relation    rel = (Relation) PG_GETARG_POINTER(0);
-	int         keysz = PG_GETARG_INT32(1);
-	ScanKey     scankey = (ScanKey) PG_GETARG_POINTER(2);
+Datum
+ginbeginscan(PG_FUNCTION_ARGS)
+{
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+	int			keysz = PG_GETARG_INT32(1);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
 	IndexScanDesc scan;
 
 	scan = RelationGetIndexScan(rel, keysz, scankey);
@@ -32,22 +33,25 @@ ginbeginscan(PG_FUNCTION_ARGS) {
 }
 
 static void
-fillScanKey( GinState *ginstate, GinScanKey key, Datum query, 
-				Datum *entryValues, uint32 nEntryValues, StrategyNumber strategy ) {
-	uint32 i,j;
+fillScanKey(GinState *ginstate, GinScanKey key, Datum query,
+			Datum *entryValues, uint32 nEntryValues, StrategyNumber strategy)
+{
+	uint32		i,
+				j;
 
 	key->nentries = nEntryValues;
-	key->entryRes = (bool*)palloc0( sizeof(bool) * nEntryValues ); 
-	key->scanEntry = (GinScanEntry) palloc( sizeof(GinScanEntryData) * nEntryValues );
+	key->entryRes = (bool *) palloc0(sizeof(bool) * nEntryValues);
+	key->scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData) * nEntryValues);
 	key->strategy = strategy;
 	key->query = query;
-	key->firstCall= TRUE;
-	ItemPointerSet( &(key->curItem), InvalidBlockNumber, InvalidOffsetNumber );
+	key->firstCall = TRUE;
+	ItemPointerSet(&(key->curItem), InvalidBlockNumber, InvalidOffsetNumber);
 
-	for(i=0; i<nEntryValues; i++) {
+	for (i = 0; i < nEntryValues; i++)
+	{
 		key->scanEntry[i].pval = key->entryRes + i;
 		key->scanEntry[i].entry = entryValues[i];
-		ItemPointerSet( &(key->scanEntry[i].curItem), InvalidBlockNumber, InvalidOffsetNumber );
+		ItemPointerSet(&(key->scanEntry[i].curItem), InvalidBlockNumber, InvalidOffsetNumber);
 		key->scanEntry[i].offset = InvalidOffsetNumber;
 		key->scanEntry[i].buffer = InvalidBuffer;
 		key->scanEntry[i].list = NULL;
@@ -55,8 +59,9 @@ fillScanKey( GinState *ginstate, GinScanKey key, Datum query,
 
 		/* link to the equals entry in current scan key */
 		key->scanEntry[i].master = NULL;
-		for( j=0; j<i; j++)
-			if ( compareEntries( ginstate, entryValues[i], entryValues[j] ) == 0 ) {
+		for (j = 0; j < i; j++)
+			if (compareEntries(ginstate, entryValues[i], entryValues[j]) == 0)
+			{
 				key->scanEntry[i].master = key->scanEntry + j;
 				break;
 			}
@@ -66,23 +71,27 @@ fillScanKey( GinState *ginstate, GinScanKey key, Datum query,
 #ifdef NOT_USED
 
 static void
-resetScanKeys(GinScanKey keys, uint32 nkeys) {
-	uint32	i, j;
+resetScanKeys(GinScanKey keys, uint32 nkeys)
+{
+	uint32		i,
+				j;
 
-	if ( keys == NULL )
+	if (keys == NULL)
 		return;
 
-	for(i=0;i<nkeys;i++) {
-		GinScanKey key = keys + i;
+	for (i = 0; i < nkeys; i++)
+	{
+		GinScanKey	key = keys + i;
 
 		key->firstCall = TRUE;
-		ItemPointerSet( &(key->curItem), InvalidBlockNumber, InvalidOffsetNumber );
+		ItemPointerSet(&(key->curItem), InvalidBlockNumber, InvalidOffsetNumber);
 
-		for(j=0;j<key->nentries;j++) {
-			if ( key->scanEntry[j].buffer != InvalidBuffer )
-				ReleaseBuffer( key->scanEntry[i].buffer );
+		for (j = 0; j < key->nentries; j++)
+		{
+			if (key->scanEntry[j].buffer != InvalidBuffer)
+				ReleaseBuffer(key->scanEntry[i].buffer);
 
-			ItemPointerSet( &(key->scanEntry[j].curItem), InvalidBlockNumber, InvalidOffsetNumber );
+			ItemPointerSet(&(key->scanEntry[j].curItem), InvalidBlockNumber, InvalidOffsetNumber);
 			key->scanEntry[j].offset = InvalidOffsetNumber;
 			key->scanEntry[j].buffer = InvalidBuffer;
 			key->scanEntry[j].list = NULL;
@@ -90,111 +99,121 @@ resetScanKeys(GinScanKey keys, uint32 nkeys) {
 		}
 	}
 }
-
 #endif
 
 static void
-freeScanKeys(GinScanKey keys, uint32 nkeys, bool removeRes) {
-	uint32	i, j;
+freeScanKeys(GinScanKey keys, uint32 nkeys, bool removeRes)
+{
+	uint32		i,
+				j;
 
-	if ( keys == NULL )
+	if (keys == NULL)
 		return;
 
-	for(i=0;i<nkeys;i++) {
-		GinScanKey key = keys + i;
+	for (i = 0; i < nkeys; i++)
+	{
+		GinScanKey	key = keys + i;
 
-		for(j=0;j<key->nentries;j++) {
-			if ( key->scanEntry[j].buffer != InvalidBuffer )
-				ReleaseBuffer( key->scanEntry[j].buffer );
-			if ( removeRes && key->scanEntry[j].list ) 
+		for (j = 0; j < key->nentries; j++)
+		{
+			if (key->scanEntry[j].buffer != InvalidBuffer)
+				ReleaseBuffer(key->scanEntry[j].buffer);
+			if (removeRes && key->scanEntry[j].list)
 				pfree(key->scanEntry[j].list);
 		}
 
-		if ( removeRes )
+		if (removeRes)
 			pfree(key->entryRes);
 		pfree(key->scanEntry);
 	}
-	
+
 	pfree(keys);
 }
 
 void
-newScanKey( IndexScanDesc scan ) {
-	ScanKey     scankey = scan->keyData;
+newScanKey(IndexScanDesc scan)
+{
+	ScanKey		scankey = scan->keyData;
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
-	int i;
-	uint32 nkeys = 0;
+	int			i;
+	uint32		nkeys = 0;
 
-	so->keys = (GinScanKey) palloc( scan->numberOfKeys * sizeof(GinScanKeyData) );
+	so->keys = (GinScanKey) palloc(scan->numberOfKeys * sizeof(GinScanKeyData));
 
 	if (scan->numberOfKeys < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("GIN indexes do not support whole-index scans")));
+				 errmsg("GIN indexes do not support whole-index scans")));
 
-	for(i=0; i<scan->numberOfKeys; i++) {
-		Datum*	entryValues;
-		uint32	nEntryValues;
+	for (i = 0; i < scan->numberOfKeys; i++)
+	{
+		Datum	   *entryValues;
+		uint32		nEntryValues;
 
-		if ( scankey[i].sk_flags & SK_ISNULL )
+		if (scankey[i].sk_flags & SK_ISNULL)
 			elog(ERROR, "Gin doesn't support NULL as scan key");
-		Assert( scankey[i].sk_attno == 1 );
+		Assert(scankey[i].sk_attno == 1);
 
-		entryValues = (Datum*)DatumGetPointer(
-							FunctionCall3(
-								&so->ginstate.extractQueryFn,
-								scankey[i].sk_argument,
-								PointerGetDatum( &nEntryValues ),
-								UInt16GetDatum(scankey[i].sk_strategy)
-							)
-						);
-		if ( entryValues==NULL || nEntryValues == 0 )
+		entryValues = (Datum *) DatumGetPointer(
+												FunctionCall3(
+												&so->ginstate.extractQueryFn,
+													  scankey[i].sk_argument,
+											  PointerGetDatum(&nEntryValues),
+									   UInt16GetDatum(scankey[i].sk_strategy)
+															  )
+			);
+		if (entryValues == NULL || nEntryValues == 0)
 			/* full scan... */
 			continue;
 
-		fillScanKey( &so->ginstate, &(so->keys[nkeys]), scankey[i].sk_argument,
-				entryValues, nEntryValues, scankey[i].sk_strategy );
+		fillScanKey(&so->ginstate, &(so->keys[nkeys]), scankey[i].sk_argument,
+					entryValues, nEntryValues, scankey[i].sk_strategy);
 		nkeys++;
 	}
 
 	so->nkeys = nkeys;
 
-	if ( so->nkeys == 0 )
+	if (so->nkeys == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("GIN index doesn't support search with void query")));
+				 errmsg("GIN index doesn't support search with void query")));
 
 	pgstat_count_index_scan(&scan->xs_pgstat_info);
 }
 
 Datum
-ginrescan(PG_FUNCTION_ARGS) {
+ginrescan(PG_FUNCTION_ARGS)
+{
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	ScanKey     scankey = (ScanKey) PG_GETARG_POINTER(1);
-	GinScanOpaque	so;
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
+	GinScanOpaque so;
 
 	so = (GinScanOpaque) scan->opaque;
 
-	if ( so == NULL ) {
+	if (so == NULL)
+	{
 		/* if called from ginbeginscan */
-		so = (GinScanOpaque)palloc( sizeof(GinScanOpaqueData) );
+		so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
 		so->tempCtx = AllocSetContextCreate(CurrentMemoryContext,
-								"Gin scan temporary context",
-								ALLOCSET_DEFAULT_MINSIZE,
-								ALLOCSET_DEFAULT_INITSIZE,
-								ALLOCSET_DEFAULT_MAXSIZE);
+											"Gin scan temporary context",
+											ALLOCSET_DEFAULT_MINSIZE,
+											ALLOCSET_DEFAULT_INITSIZE,
+											ALLOCSET_DEFAULT_MAXSIZE);
 		initGinState(&so->ginstate, scan->indexRelation);
 		scan->opaque = so;
-	} else {
+	}
+	else
+	{
 		freeScanKeys(so->keys, so->nkeys, TRUE);
 		freeScanKeys(so->markPos, so->nkeys, FALSE);
 	}
 
-	so->markPos=so->keys=NULL;
+	so->markPos = so->keys = NULL;
 
-	if ( scankey && scan->numberOfKeys > 0 ) {
+	if (scankey && scan->numberOfKeys > 0)
+	{
 		memmove(scan->keyData, scankey,
-			scan->numberOfKeys * sizeof(ScanKeyData));
+				scan->numberOfKeys * sizeof(ScanKeyData));
 	}
 
 	PG_RETURN_VOID();
@@ -202,13 +221,15 @@ ginrescan(PG_FUNCTION_ARGS) {
 
 
 Datum
-ginendscan(PG_FUNCTION_ARGS) {
+ginendscan(PG_FUNCTION_ARGS)
+{
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-    GinScanOpaque   so = (GinScanOpaque) scan->opaque;
+	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
-	if ( so != NULL ) {
-		freeScanKeys(so->keys, so->nkeys, TRUE); 
-		freeScanKeys(so->markPos, so->nkeys, FALSE); 
+	if (so != NULL)
+	{
+		freeScanKeys(so->keys, so->nkeys, TRUE);
+		freeScanKeys(so->markPos, so->nkeys, FALSE);
 
 		MemoryContextDelete(so->tempCtx);
 
@@ -219,22 +240,28 @@ ginendscan(PG_FUNCTION_ARGS) {
 }
 
 static GinScanKey
-copyScanKeys( GinScanKey keys, uint32 nkeys ) {
+copyScanKeys(GinScanKey keys, uint32 nkeys)
+{
 	GinScanKey	newkeys;
-	uint32 i, j;
+	uint32		i,
+				j;
 
-	newkeys = (GinScanKey)palloc( sizeof(GinScanKeyData) * nkeys );
-	memcpy( newkeys, keys, sizeof(GinScanKeyData) * nkeys );
+	newkeys = (GinScanKey) palloc(sizeof(GinScanKeyData) * nkeys);
+	memcpy(newkeys, keys, sizeof(GinScanKeyData) * nkeys);
 
-	for(i=0;i<nkeys;i++) {
-		newkeys[i].scanEntry = (GinScanEntry)palloc(sizeof(GinScanEntryData) * keys[i].nentries );
-		memcpy( newkeys[i].scanEntry, keys[i].scanEntry, sizeof(GinScanEntryData) * keys[i].nentries );
+	for (i = 0; i < nkeys; i++)
+	{
+		newkeys[i].scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData) * keys[i].nentries);
+		memcpy(newkeys[i].scanEntry, keys[i].scanEntry, sizeof(GinScanEntryData) * keys[i].nentries);
 
-		for(j=0;j<keys[i].nentries; j++) { 
-			if ( keys[i].scanEntry[j].buffer != InvalidBuffer )
-				IncrBufferRefCount( keys[i].scanEntry[j].buffer );
-			if ( keys[i].scanEntry[j].master ) {
-				int masterN = keys[i].scanEntry[j].master - keys[i].scanEntry;
+		for (j = 0; j < keys[i].nentries; j++)
+		{
+			if (keys[i].scanEntry[j].buffer != InvalidBuffer)
+				IncrBufferRefCount(keys[i].scanEntry[j].buffer);
+			if (keys[i].scanEntry[j].master)
+			{
+				int			masterN = keys[i].scanEntry[j].master - keys[i].scanEntry;
+
 				newkeys[i].scanEntry[j].master = newkeys[i].scanEntry + masterN;
 			}
 		}
@@ -243,24 +270,26 @@ copyScanKeys( GinScanKey keys, uint32 nkeys ) {
 	return newkeys;
 }
 
-Datum 
-ginmarkpos(PG_FUNCTION_ARGS) {
+Datum
+ginmarkpos(PG_FUNCTION_ARGS)
+{
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GinScanOpaque   so = (GinScanOpaque) scan->opaque;
+	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
 	freeScanKeys(so->markPos, so->nkeys, FALSE);
-	so->markPos = copyScanKeys( so->keys, so->nkeys );
+	so->markPos = copyScanKeys(so->keys, so->nkeys);
 
 	PG_RETURN_VOID();
 }
 
-Datum 
-ginrestrpos(PG_FUNCTION_ARGS) {
+Datum
+ginrestrpos(PG_FUNCTION_ARGS)
+{
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GinScanOpaque   so = (GinScanOpaque) scan->opaque;
+	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 
 	freeScanKeys(so->keys, so->nkeys, FALSE);
-	so->keys = copyScanKeys( so->markPos, so->nkeys );
+	so->keys = copyScanKeys(so->markPos, so->nkeys);
 
 	PG_RETURN_VOID();
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.226 2006/08/27 19:11:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.227 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1376,12 +1376,12 @@ StartTransaction(void)
 
 	XactLockTableInsert(s->transactionId);
 
-	PG_TRACE1 (transaction__start, s->transactionId);
+	PG_TRACE1(transaction__start, s->transactionId);
 
 	/*
-	 * set transaction_timestamp() (a/k/a now()).  We want this to be the
-	 * same as the first command's statement_timestamp(), so don't do a
-	 * fresh GetCurrentTimestamp() call (which'd be expensive anyway).
+	 * set transaction_timestamp() (a/k/a now()).  We want this to be the same
+	 * as the first command's statement_timestamp(), so don't do a fresh
+	 * GetCurrentTimestamp() call (which'd be expensive anyway).
 	 */
 	xactStartTimestamp = stmtStartTimestamp;
 
@@ -1521,7 +1521,7 @@ CommitTransaction(void)
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
-		MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
+		MyProc->inVacuum = false;		/* must be cleared with xid/xmin */
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
 		MyProc->subxids.nxids = 0;
@@ -1530,7 +1530,7 @@ CommitTransaction(void)
 		LWLockRelease(ProcArrayLock);
 	}
 
-	PG_TRACE1 (transaction__commit, s->transactionId);
+	PG_TRACE1(transaction__commit, s->transactionId);
 
 	/*
 	 * This is all post-commit cleanup.  Note that if an error is raised here,
@@ -1921,7 +1921,7 @@ AbortTransaction(void)
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
-		MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
+		MyProc->inVacuum = false;		/* must be cleared with xid/xmin */
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
 		MyProc->subxids.nxids = 0;
@@ -1930,7 +1930,7 @@ AbortTransaction(void)
 		LWLockRelease(ProcArrayLock);
 	}
 
-	PG_TRACE1 (transaction__abort, s->transactionId);
+	PG_TRACE1(transaction__abort, s->transactionId);
 
 	/*
 	 * Post-abort cleanup.	See notes in CommitTransaction() concerning
@@ -4206,8 +4206,8 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 	int			i;
 
 	appendStringInfo(buf, "%04u-%02u-%02u %02u:%02u:%02u",
-			tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-			tm->tm_hour, tm->tm_min, tm->tm_sec);
+					 tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+					 tm->tm_hour, tm->tm_min, tm->tm_sec);
 	if (xlrec->nrels > 0)
 	{
 		appendStringInfo(buf, "; rels:");
@@ -4216,7 +4216,7 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 			RelFileNode rnode = xlrec->xnodes[i];
 
 			appendStringInfo(buf, " %u/%u/%u",
-					rnode.spcNode, rnode.dbNode, rnode.relNode);
+							 rnode.spcNode, rnode.dbNode, rnode.relNode);
 		}
 	}
 	if (xlrec->nsubxacts > 0)
@@ -4237,8 +4237,8 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 	int			i;
 
 	appendStringInfo(buf, "%04u-%02u-%02u %02u:%02u:%02u",
-			tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-			tm->tm_hour, tm->tm_min, tm->tm_sec);
+					 tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+					 tm->tm_hour, tm->tm_min, tm->tm_sec);
 	if (xlrec->nrels > 0)
 	{
 		appendStringInfo(buf, "; rels:");
@@ -4247,7 +4247,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 			RelFileNode rnode = xlrec->xnodes[i];
 
 			appendStringInfo(buf, " %u/%u/%u",
-					rnode.spcNode, rnode.dbNode, rnode.relNode);
+							 rnode.spcNode, rnode.dbNode, rnode.relNode);
 		}
 	}
 	if (xlrec->nsubxacts > 0)
@@ -4264,7 +4264,7 @@ xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 void
 xact_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
-	uint8			info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = xl_info & ~XLR_INFO_MASK;
 
 	if (info == XLOG_XACT_COMMIT)
 	{

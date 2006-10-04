@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.143 2006/08/25 04:06:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.144 2006/10/04 00:29:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					 */
 					htup.t_self = itup->t_tid;
 					if (heap_fetch(heapRel, SnapshotSelf, &htup, &hbuffer,
-									false, NULL))
+								   false, NULL))
 					{
 						/* Normal case --- it's still live */
 						ReleaseBuffer(hbuffer);
@@ -355,7 +355,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
  *			+  updates the metapage if a true root or fast root is split.
  *
  *		On entry, we must have the right buffer in which to do the
- *		insertion, and the buffer must be pinned and write-locked.  On return,
+ *		insertion, and the buffer must be pinned and write-locked.	On return,
  *		we will have dropped both the pin and the lock on the buffer.
  *
  *		If 'afteritem' is >0 then the new tuple must be inserted after the
@@ -608,7 +608,7 @@ _bt_insertonpg(Relation rel,
 		if (!rel->rd_istemp)
 		{
 			xl_btree_insert xlrec;
-			BlockNumber	xldownlink;
+			BlockNumber xldownlink;
 			xl_btree_metadata xlmeta;
 			uint8		xlinfo;
 			XLogRecPtr	recptr;
@@ -888,16 +888,17 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
 		if (sopaque->btpo_prev != ropaque->btpo_prev)
 			elog(PANIC, "right sibling's left-link doesn't match");
+
 		/*
 		 * Check to see if we can set the SPLIT_END flag in the right-hand
 		 * split page; this can save some I/O for vacuum since it need not
 		 * proceed to the right sibling.  We can set the flag if the right
-		 * sibling has a different cycleid: that means it could not be part
-		 * of a group of pages that were all split off from the same ancestor
+		 * sibling has a different cycleid: that means it could not be part of
+		 * a group of pages that were all split off from the same ancestor
 		 * page.  If you're confused, imagine that page A splits to A B and
 		 * then again, yielding A C B, while vacuum is in progress.  Tuples
 		 * originally in A could now be in either B or C, hence vacuum must
-		 * examine both pages.  But if D, our right sibling, has a different
+		 * examine both pages.	But if D, our right sibling, has a different
 		 * cycleid then it could not contain any tuples that were in A when
 		 * the vacuum started.
 		 */
@@ -911,8 +912,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 *
 	 * NO EREPORT(ERROR) till right sibling is updated.  We can get away with
 	 * not starting the critical section till here because we haven't been
-	 * scribbling on the original page yet, and we don't care about the
-	 * new sibling until it's linked into the btree.
+	 * scribbling on the original page yet, and we don't care about the new
+	 * sibling until it's linked into the btree.
 	 */
 	START_CRIT_SECTION();
 
@@ -947,8 +948,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		 * Direct access to page is not good but faster - we should implement
 		 * some new func in page API.  Note we only store the tuples
 		 * themselves, knowing that the item pointers are in the same order
-		 * and can be reconstructed by scanning the tuples.  See comments
-		 * for _bt_restore_page().
+		 * and can be reconstructed by scanning the tuples.  See comments for
+		 * _bt_restore_page().
 		 */
 		xlrec.leftlen = ((PageHeader) leftpage)->pd_special -
 			((PageHeader) leftpage)->pd_upper;
@@ -1708,17 +1709,17 @@ _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 static void
 _bt_vacuum_one_page(Relation rel, Buffer buffer)
 {
-	OffsetNumber	deletable[MaxOffsetNumber];
-	int				ndeletable = 0;
-	OffsetNumber	offnum,
-					minoff,
-					maxoff;
-	Page			page = BufferGetPage(buffer);
-	BTPageOpaque	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	OffsetNumber deletable[MaxOffsetNumber];
+	int			ndeletable = 0;
+	OffsetNumber offnum,
+				minoff,
+				maxoff;
+	Page		page = BufferGetPage(buffer);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/*
-	 * Scan over all items to see which ones need deleted
-	 * according to LP_DELETE flags.
+	 * Scan over all items to see which ones need deleted according to
+	 * LP_DELETE flags.
 	 */
 	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -1726,7 +1727,7 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer)
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
 	{
-		ItemId itemId = PageGetItemId(page, offnum);
+		ItemId		itemId = PageGetItemId(page, offnum);
 
 		if (ItemIdDeleted(itemId))
 			deletable[ndeletable++] = offnum;
@@ -1734,10 +1735,11 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer)
 
 	if (ndeletable > 0)
 		_bt_delitems(rel, buffer, deletable, ndeletable);
+
 	/*
 	 * Note: if we didn't find any LP_DELETE items, then the page's
-	 * BTP_HAS_GARBAGE hint bit is falsely set.  We do not bother
-	 * expending a separate write to clear it, however.  We will clear
-	 * it when we split the page.
+	 * BTP_HAS_GARBAGE hint bit is falsely set.  We do not bother expending a
+	 * separate write to clear it, however.  We will clear it when we split
+	 * the page.
 	 */
 }

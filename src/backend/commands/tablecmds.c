@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.202 2006/09/04 21:15:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.203 2006/10/04 00:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 static bool change_varattnos_walker(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-					int16 seqNumber, Relation catalogRelation);
+						 int16 seqNumber, Relation catalogRelation);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static void AlterIndexNamespaces(Relation classRel, Relation rel,
@@ -566,18 +566,18 @@ ExecuteTruncate(TruncateStmt *stmt)
 	}
 
 	/*
-	 * In CASCADE mode, suck in all referencing relations as well.  This
-	 * requires multiple iterations to find indirectly-dependent relations.
-	 * At each phase, we need to exclusive-lock new rels before looking
-	 * for their dependencies, else we might miss something.  Also, we
-	 * check each rel as soon as we open it, to avoid a faux pas such as
-	 * holding lock for a long time on a rel we have no permissions for.
+	 * In CASCADE mode, suck in all referencing relations as well.	This
+	 * requires multiple iterations to find indirectly-dependent relations. At
+	 * each phase, we need to exclusive-lock new rels before looking for their
+	 * dependencies, else we might miss something.	Also, we check each rel as
+	 * soon as we open it, to avoid a faux pas such as holding lock for a long
+	 * time on a rel we have no permissions for.
 	 */
 	if (stmt->behavior == DROP_CASCADE)
 	{
 		for (;;)
 		{
-			List   *newrelids;
+			List	   *newrelids;
 
 			newrelids = heap_truncate_find_FKs(relids);
 			if (newrelids == NIL)
@@ -585,7 +585,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 			foreach(cell, newrelids)
 			{
-				Oid		relid = lfirst_oid(cell);
+				Oid			relid = lfirst_oid(cell);
 				Relation	rel;
 
 				rel = heap_open(relid, AccessExclusiveLock);
@@ -601,8 +601,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 
 	/*
 	 * Check foreign key references.  In CASCADE mode, this should be
-	 * unnecessary since we just pulled in all the references; but as
-	 * a cross-check, do it anyway if in an Assert-enabled build.
+	 * unnecessary since we just pulled in all the references; but as a
+	 * cross-check, do it anyway if in an Assert-enabled build.
 	 */
 #ifdef USE_ASSERT_CHECKING
 	heap_truncate_check_FKs(rels, false);
@@ -612,9 +612,9 @@ ExecuteTruncate(TruncateStmt *stmt)
 #endif
 
 	/*
-	 * Also check for pending AFTER trigger events on the target relations.
-	 * We can't just leave those be, since they will try to fetch tuples
-	 * that the TRUNCATE removes.
+	 * Also check for pending AFTER trigger events on the target relations. We
+	 * can't just leave those be, since they will try to fetch tuples that the
+	 * TRUNCATE removes.
 	 */
 	AfterTriggerCheckTruncate(relids);
 
@@ -657,7 +657,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 }
 
 /*
- * Check that a given rel is safe to truncate.  Subroutine for ExecuteTruncate
+ * Check that a given rel is safe to truncate.	Subroutine for ExecuteTruncate
  */
 static void
 truncate_check_rel(Relation rel)
@@ -681,9 +681,8 @@ truncate_check_rel(Relation rel)
 						RelationGetRelationName(rel))));
 
 	/*
-	 * We can never allow truncation of shared or nailed-in-cache
-	 * relations, because we can't support changing their relfilenode
-	 * values.
+	 * We can never allow truncation of shared or nailed-in-cache relations,
+	 * because we can't support changing their relfilenode values.
 	 */
 	if (rel->rd_rel->relisshared || rel->rd_isnailed)
 		ereport(ERROR,
@@ -692,13 +691,13 @@ truncate_check_rel(Relation rel)
 						RelationGetRelationName(rel))));
 
 	/*
-	 * Don't allow truncate on temp tables of other backends ... their
-	 * local buffer manager is not going to cope.
+	 * Don't allow truncate on temp tables of other backends ... their local
+	 * buffer manager is not going to cope.
 	 */
 	if (isOtherTempNamespace(RelationGetNamespace(rel)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot truncate temporary tables of other sessions")));
+			  errmsg("cannot truncate temporary tables of other sessions")));
 }
 
 /*----------
@@ -1141,16 +1140,20 @@ change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
 AttrNumber *
 varattnos_map(TupleDesc old, TupleDesc new)
 {
-	int i,j;
-	AttrNumber *attmap = palloc0(sizeof(AttrNumber)*old->natts);
-	for (i=1; i <= old->natts; i++) {
-		if (old->attrs[i-1]->attisdropped) {
-			attmap[i-1] = 0;
+	int			i,
+				j;
+	AttrNumber *attmap = palloc0(sizeof(AttrNumber) * old->natts);
+
+	for (i = 1; i <= old->natts; i++)
+	{
+		if (old->attrs[i - 1]->attisdropped)
+		{
+			attmap[i - 1] = 0;
 			continue;
 		}
-		for (j=1; j<= new->natts; j++)
-			if (!strcmp(NameStr(old->attrs[i-1]->attname), NameStr(new->attrs[j-1]->attname)))
-				attmap[i-1] = j;
+		for (j = 1; j <= new->natts; j++)
+			if (!strcmp(NameStr(old->attrs[i - 1]->attname), NameStr(new->attrs[j - 1]->attname)))
+				attmap[i - 1] = j;
 	}
 	return attmap;
 }
@@ -1160,16 +1163,19 @@ varattnos_map(TupleDesc old, TupleDesc new)
  * ColumnDefs
  */
 AttrNumber *
-varattnos_map_schema(TupleDesc old, List *schema) 
+varattnos_map_schema(TupleDesc old, List *schema)
 {
-	int i;
-	AttrNumber *attmap = palloc0(sizeof(AttrNumber)*old->natts);
-	for (i=1; i <= old->natts; i++) {
-		if (old->attrs[i-1]->attisdropped) {
-			attmap[i-1] = 0;
+	int			i;
+	AttrNumber *attmap = palloc0(sizeof(AttrNumber) * old->natts);
+
+	for (i = 1; i <= old->natts; i++)
+	{
+		if (old->attrs[i - 1]->attisdropped)
+		{
+			attmap[i - 1] = 0;
 			continue;
 		}
-		attmap[i-1] = findAttrByName(NameStr(old->attrs[i-1]->attname), schema);
+		attmap[i - 1] = findAttrByName(NameStr(old->attrs[i - 1]->attname), schema);
 	}
 	return attmap;
 }
@@ -1244,14 +1250,14 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 
 static void
 StoreCatalogInheritance1(Oid relationId, Oid parentOid,
-						 int16 seqNumber, Relation relation) 
+						 int16 seqNumber, Relation relation)
 {
-	Datum			datum[Natts_pg_inherits];
-	char			nullarr[Natts_pg_inherits];
-	ObjectAddress 	childobject,
-					parentobject;
-	HeapTuple		tuple;
-	TupleDesc 		desc = RelationGetDescr(relation);
+	Datum		datum[Natts_pg_inherits];
+	char		nullarr[Natts_pg_inherits];
+	ObjectAddress childobject,
+				parentobject;
+	HeapTuple	tuple;
+	TupleDesc	desc = RelationGetDescr(relation);
 
 	datum[0] = ObjectIdGetDatum(relationId);	/* inhrel */
 	datum[1] = ObjectIdGetDatum(parentOid);		/* inhparent */
@@ -2100,8 +2106,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATPrepSetTableSpace(tab, rel, cmd->name);
 			pass = AT_PASS_MISC;	/* doesn't actually matter */
 			break;
-		case AT_SetRelOptions:		/* SET (...) */
-		case AT_ResetRelOptions:	/* RESET (...) */
+		case AT_SetRelOptions:	/* SET (...) */
+		case AT_ResetRelOptions:		/* RESET (...) */
 			ATSimplePermissionsRelationOrIndex(rel);
 			/* This command never recurses */
 			/* No command-specific prep needed */
@@ -2274,10 +2280,10 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 			 * Nothing to do here; Phase 3 does the work
 			 */
 			break;
-		case AT_SetRelOptions:		/* SET (...) */
+		case AT_SetRelOptions:	/* SET (...) */
 			ATExecSetRelOptions(rel, (List *) cmd->def, false);
 			break;
-		case AT_ResetRelOptions:	/* RESET (...) */
+		case AT_ResetRelOptions:		/* RESET (...) */
 			ATExecSetRelOptions(rel, (List *) cmd->def, true);
 			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER name */
@@ -2564,8 +2570,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		/*
 		 * If we are rebuilding the tuples OR if we added any new NOT NULL
 		 * constraints, check all not-null constraints.  This is a bit of
-		 * overkill but it minimizes risk of bugs, and heap_attisnull is
-		 * a pretty cheap test anyway.
+		 * overkill but it minimizes risk of bugs, and heap_attisnull is a
+		 * pretty cheap test anyway.
 		 */
 		for (i = 0; i < newTupDesc->natts; i++)
 		{
@@ -2679,13 +2685,13 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 
 			foreach(l, notnull_attrs)
 			{
-				int		attn = lfirst_int(l);
+				int			attn = lfirst_int(l);
 
-				if (heap_attisnull(tuple, attn+1))
+				if (heap_attisnull(tuple, attn + 1))
 					ereport(ERROR,
 							(errcode(ERRCODE_NOT_NULL_VIOLATION),
 							 errmsg("column \"%s\" contains null values",
-									NameStr(newTupDesc->attrs[attn]->attname))));
+								NameStr(newTupDesc->attrs[attn]->attname))));
 			}
 
 			foreach(l, tab->constraints)
@@ -5105,7 +5111,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				if (!list_member_oid(tab->changedConstraintOids,
 									 foundObject.objectId))
 				{
-					char *defstring = pg_get_constraintdef_string(foundObject.objectId);
+					char	   *defstring = pg_get_constraintdef_string(foundObject.objectId);
 
 					/*
 					 * Put NORMAL dependencies at the front of the list and
@@ -5302,10 +5308,10 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab)
 	/*
 	 * Now we can drop the existing constraints and indexes --- constraints
 	 * first, since some of them might depend on the indexes.  In fact, we
-	 * have to delete FOREIGN KEY constraints before UNIQUE constraints,
-	 * but we already ordered the constraint list to ensure that would happen.
-	 * It should be okay to use DROP_RESTRICT here, since nothing else should
-	 * be depending on these objects.
+	 * have to delete FOREIGN KEY constraints before UNIQUE constraints, but
+	 * we already ordered the constraint list to ensure that would happen. It
+	 * should be okay to use DROP_RESTRICT here, since nothing else should be
+	 * depending on these objects.
 	 */
 	foreach(l, tab->changedConstraintOids)
 	{
@@ -5482,17 +5488,17 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 				tuple_class->relowner != newOwnerId)
 			{
 				/* if it's an owned sequence, disallow changing it by itself */
-				Oid		tableId;
-				int32	colId;
+				Oid			tableId;
+				int32		colId;
 
 				if (sequenceIsOwned(relationOid, &tableId, &colId))
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("cannot change owner of sequence \"%s\"",
 									NameStr(tuple_class->relname)),
-							 errdetail("Sequence \"%s\" is linked to table \"%s\".",
-									   NameStr(tuple_class->relname),
-									   get_rel_name(tableId))));
+					  errdetail("Sequence \"%s\" is linked to table \"%s\".",
+								NameStr(tuple_class->relname),
+								get_rel_name(tableId))));
 			}
 			break;
 		case RELKIND_TOASTVALUE:
@@ -6051,12 +6057,12 @@ ATExecEnableDisableTrigger(Relation rel, char *trigname,
 }
 
 static char *
-decompile_conbin(HeapTuple contup, TupleDesc tupdesc) 
+decompile_conbin(HeapTuple contup, TupleDesc tupdesc)
 {
-	Form_pg_constraint 	con;
-	bool 				isnull;
-	Datum 				attr;
-	Datum 				expr;
+	Form_pg_constraint con;
+	bool		isnull;
+	Datum		attr;
+	Datum		expr;
 
 	con = (Form_pg_constraint) GETSTRUCT(contup);
 	attr = heap_getattr(contup, Anum_pg_constraint_conbin, tupdesc, &isnull);
@@ -6107,7 +6113,7 @@ ATExecAddInherits(Relation child_rel, RangeVar *parent)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs",
-						RelationGetRelationName(child_rel), parent->relname)));
+					  RelationGetRelationName(child_rel), parent->relname)));
 
 	/*
 	 * Don't allow any duplicates in the list of parents. We scan through the
@@ -6140,8 +6146,8 @@ ATExecAddInherits(Relation child_rel, RangeVar *parent)
 	heap_close(catalogRelation, RowExclusiveLock);
 
 	/*
-	 * If the new parent is found in our list of inheritors, we have a circular
-	 * structure
+	 * If the new parent is found in our list of inheritors, we have a
+	 * circular structure
 	 */
 	children = find_all_inheritors(RelationGetRelid(child_rel));
 
@@ -6183,12 +6189,12 @@ ATExecAddInherits(Relation child_rel, RangeVar *parent)
 static void
 MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 {
-	Relation	 attrdesc;
-	AttrNumber	 parent_attno;
-	int			 parent_natts;
-	TupleDesc	 tupleDesc;
+	Relation	attrdesc;
+	AttrNumber	parent_attno;
+	int			parent_natts;
+	TupleDesc	tupleDesc;
 	TupleConstr *constr;
-	HeapTuple	 tuple;
+	HeapTuple	tuple;
 
 	tupleDesc = RelationGetDescr(parent_rel);
 	parent_natts = tupleDesc->natts;
@@ -6221,13 +6227,13 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("child table \"%s\" has different type for column \"%s\"",
-				RelationGetRelationName(child_rel), NameStr(attribute->attname))));
+								RelationGetRelationName(child_rel), NameStr(attribute->attname))));
 
 			if (attribute->attnotnull && !childatt->attnotnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("column \"%s\" in child table must be NOT NULL",
-								NameStr(attribute->attname))));
+					  errmsg("column \"%s\" in child table must be NOT NULL",
+							 NameStr(attribute->attname))));
 
 			childatt->attinhcount++;
 			simple_heap_update(attrdesc, &tuple->t_self, tuple);
@@ -6555,13 +6561,13 @@ AlterTableNamespace(RangeVar *relation, const char *newschema)
 	/* if it's an owned sequence, disallow moving it by itself */
 	if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
 	{
-		Oid		tableId;
-		int32	colId;
+		Oid			tableId;
+		int32		colId;
 
 		if (sequenceIsOwned(relid, &tableId, &colId))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot move an owned sequence into another schema"),
+				 errmsg("cannot move an owned sequence into another schema"),
 					 errdetail("Sequence \"%s\" is linked to table \"%s\".",
 							   RelationGetRelationName(rel),
 							   get_rel_name(tableId))));

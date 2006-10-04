@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.45 2006/09/16 20:14:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.46 2006/10/04 00:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -787,7 +787,7 @@ static const struct
 		"Australia/Perth"
 	},							/* (GMT+08:00) Perth */
 /*	{"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
-	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
+	 *	 *	 *	 *	 *	""}, Could not find a match for this one. Excluded for now. *//* (
 	 * G MT+01:00) West Central Africa */
 	{
 		"W. Europe Standard Time", "W. Europe Daylight Time",
@@ -1148,26 +1148,28 @@ pg_timezone_initialize(void)
  */
 #define MAX_TZDIR_DEPTH 10
 
-struct pg_tzenum {
-   int baselen;
-   int depth;
-   DIR *dirdesc[MAX_TZDIR_DEPTH];
-   char *dirname[MAX_TZDIR_DEPTH];
-   struct pg_tz tz;
+struct pg_tzenum
+{
+	int			baselen;
+	int			depth;
+	DIR		   *dirdesc[MAX_TZDIR_DEPTH];
+	char	   *dirname[MAX_TZDIR_DEPTH];
+	struct pg_tz tz;
 };
+
 /* typedef pg_tzenum is declared in pgtime.h */
 
 pg_tzenum *
-pg_tzenumerate_start(void) 
+pg_tzenumerate_start(void)
 {
-	pg_tzenum *ret = (pg_tzenum *) palloc0(sizeof(pg_tzenum));
-	char *startdir = pstrdup(pg_TZDIR());
+	pg_tzenum  *ret = (pg_tzenum *) palloc0(sizeof(pg_tzenum));
+	char	   *startdir = pstrdup(pg_TZDIR());
 
 	ret->baselen = strlen(startdir) + 1;
 	ret->depth = 0;
 	ret->dirname[0] = startdir;
 	ret->dirdesc[0] = AllocateDir(startdir);
-	if (!ret->dirdesc[0]) 
+	if (!ret->dirdesc[0])
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open directory \"%s\": %m", startdir)));
@@ -1192,7 +1194,7 @@ pg_tzenumerate_next(pg_tzenum *dir)
 	while (dir->depth >= 0)
 	{
 		struct dirent *direntry;
-		char fullname[MAXPGPATH];
+		char		fullname[MAXPGPATH];
 		struct stat statbuf;
 
 		direntry = ReadDir(dir->dirdesc[dir->depth], dir->dirname[dir->depth]);
@@ -1219,13 +1221,13 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		if (S_ISDIR(statbuf.st_mode))
 		{
 			/* Step into the subdirectory */
-			if (dir->depth >= MAX_TZDIR_DEPTH-1)
+			if (dir->depth >= MAX_TZDIR_DEPTH - 1)
 				ereport(ERROR,
 						(errmsg("timezone directory stack overflow")));
 			dir->depth++;
 			dir->dirname[dir->depth] = pstrdup(fullname);
 			dir->dirdesc[dir->depth] = AllocateDir(fullname);
-			if (!dir->dirdesc[dir->depth]) 
+			if (!dir->dirdesc[dir->depth])
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not open directory \"%s\": %m",
@@ -1236,8 +1238,8 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		}
 
 		/*
-		 * Load this timezone using tzload() not pg_tzset(),
-		 * so we don't fill the cache
+		 * Load this timezone using tzload() not pg_tzset(), so we don't fill
+		 * the cache
 		 */
 		if (tzload(fullname + dir->baselen, &dir->tz.state) != 0)
 		{

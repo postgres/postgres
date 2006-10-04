@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.153 2006/09/19 22:49:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.154 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,13 +43,13 @@ static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, Index rti);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
-									Index rti, RangeTblEntry *rte);
+						Index rti, RangeTblEntry *rte);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  RangeTblEntry *rte);
 static void set_values_pathlist(PlannerInfo *root, RelOptInfo *rel,
-					  RangeTblEntry *rte);
+					RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
 static RelOptInfo *make_one_rel_by_joins(PlannerInfo *root, int levels_needed,
 					  List *initial_rels);
@@ -253,7 +253,7 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  * set_append_rel_pathlist
  *	  Build access paths for an "append relation"
  *
- * The passed-in rel and RTE represent the entire append relation.  The
+ * The passed-in rel and RTE represent the entire append relation.	The
  * relation's contents are computed by appending together the output of
  * the individual member relations.  Note that in the inheritance case,
  * the first member relation is actually the same table as is mentioned in
@@ -271,8 +271,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	/*
 	 * XXX for now, can't handle inherited expansion of FOR UPDATE/SHARE; can
 	 * we do better?  (This will take some redesign because the executor
-	 * currently supposes that every rowMark relation is involved in every
-	 * row returned by the query.)
+	 * currently supposes that every rowMark relation is involved in every row
+	 * returned by the query.)
 	 */
 	if (get_rowmark(root->parse, parentRTindex))
 		ereport(ERROR,
@@ -336,16 +336,16 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 										 childrel->max_attr);
 
 		/*
-		 * Compute the child's access paths, and add the cheapest one
-		 * to the Append path we are constructing for the parent.
+		 * Compute the child's access paths, and add the cheapest one to the
+		 * Append path we are constructing for the parent.
 		 *
-		 * It's possible that the child is itself an appendrel, in which
-		 * case we can "cut out the middleman" and just add its child
-		 * paths to our own list.  (We don't try to do this earlier because
-		 * we need to apply both levels of transformation to the quals.)
-		 * This test also handles the case where the child rel need not
-		 * be scanned because of constraint exclusion: it'll have an
-		 * Append path with no subpaths, and will vanish from our list.
+		 * It's possible that the child is itself an appendrel, in which case
+		 * we can "cut out the middleman" and just add its child paths to our
+		 * own list.  (We don't try to do this earlier because we need to
+		 * apply both levels of transformation to the quals.) This test also
+		 * handles the case where the child rel need not be scanned because of
+		 * constraint exclusion: it'll have an Append path with no subpaths,
+		 * and will vanish from our list.
 		 */
 		set_rel_pathlist(root, childrel, childRTindex);
 

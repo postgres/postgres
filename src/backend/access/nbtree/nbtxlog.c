@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.37 2006/08/07 16:57:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.38 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ forget_matching_split(RelFileNode node, BlockNumber downlink, bool is_root)
  * in correct itemno sequence, but physically the opposite order from the
  * original, because we insert them in the opposite of itemno order.  This
  * does not matter in any current btree code, but it's something to keep an
- * eye on.  Is it worth changing just on general principles?
+ * eye on.	Is it worth changing just on general principles?
  */
 static void
 _bt_restore_page(Page page, char *from, int len)
@@ -155,7 +155,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 	char	   *datapos;
 	int			datalen;
 	xl_btree_metadata md;
-	BlockNumber	downlink = 0;
+	BlockNumber downlink = 0;
 
 	datapos = (char *) xlrec + SizeOfBtreeInsert;
 	datalen = record->xl_len - SizeOfBtreeInsert;
@@ -180,7 +180,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 	if (!(record->xl_info & XLR_BKP_BLOCK_1))
 	{
 		buffer = XLogReadBuffer(reln,
-							ItemPointerGetBlockNumber(&(xlrec->target.tid)),
+							 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
 								false);
 		if (BufferIsValid(buffer))
 		{
@@ -193,7 +193,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 			else
 			{
 				if (PageAddItem(page, (Item) datapos, datalen,
-								ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
+							ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
 								LP_USED) == InvalidOffsetNumber)
 					elog(PANIC, "btree_insert_redo: failed to add item");
 
@@ -225,7 +225,7 @@ btree_xlog_split(bool onleft, bool isroot,
 	OffsetNumber targetoff;
 	BlockNumber leftsib;
 	BlockNumber rightsib;
-	BlockNumber	downlink = 0;
+	BlockNumber downlink = 0;
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque pageop;
@@ -376,8 +376,8 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/*
-	 * Mark the page as not containing any LP_DELETE items --- see comments
-	 * in _bt_delitems().
+	 * Mark the page as not containing any LP_DELETE items --- see comments in
+	 * _bt_delitems().
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
@@ -543,7 +543,7 @@ btree_xlog_newroot(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque pageop;
-	BlockNumber	downlink = 0;
+	BlockNumber downlink = 0;
 
 	reln = XLogOpenRelation(xlrec->node);
 	buffer = XLogReadBuffer(reln, xlrec->rootblk, true);
@@ -637,9 +637,9 @@ static void
 out_target(StringInfo buf, xl_btreetid *target)
 {
 	appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
-			target->node.spcNode, target->node.dbNode, target->node.relNode,
-			ItemPointerGetBlockNumber(&(target->tid)),
-			ItemPointerGetOffsetNumber(&(target->tid)));
+			 target->node.spcNode, target->node.dbNode, target->node.relNode,
+					 ItemPointerGetBlockNumber(&(target->tid)),
+					 ItemPointerGetOffsetNumber(&(target->tid)));
 }
 
 void
@@ -680,7 +680,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				appendStringInfo(buf, "split_l: ");
 				out_target(buf, &(xlrec->target));
 				appendStringInfo(buf, "; oth %u; rgh %u",
-						xlrec->otherblk, xlrec->rightblk);
+								 xlrec->otherblk, xlrec->rightblk);
 				break;
 			}
 		case XLOG_BTREE_SPLIT_R:
@@ -690,7 +690,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				appendStringInfo(buf, "split_r: ");
 				out_target(buf, &(xlrec->target));
 				appendStringInfo(buf, "; oth %u; rgh %u",
-						xlrec->otherblk, xlrec->rightblk);
+								 xlrec->otherblk, xlrec->rightblk);
 				break;
 			}
 		case XLOG_BTREE_SPLIT_L_ROOT:
@@ -700,7 +700,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				appendStringInfo(buf, "split_l_root: ");
 				out_target(buf, &(xlrec->target));
 				appendStringInfo(buf, "; oth %u; rgh %u",
-						xlrec->otherblk, xlrec->rightblk);
+								 xlrec->otherblk, xlrec->rightblk);
 				break;
 			}
 		case XLOG_BTREE_SPLIT_R_ROOT:
@@ -710,7 +710,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				appendStringInfo(buf, "split_r_root: ");
 				out_target(buf, &(xlrec->target));
 				appendStringInfo(buf, "; oth %u; rgh %u",
-						xlrec->otherblk, xlrec->rightblk);
+								 xlrec->otherblk, xlrec->rightblk);
 				break;
 			}
 		case XLOG_BTREE_DELETE:
@@ -718,8 +718,8 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
 				appendStringInfo(buf, "delete: rel %u/%u/%u; blk %u",
-						xlrec->node.spcNode, xlrec->node.dbNode,
-						xlrec->node.relNode, xlrec->block);
+								 xlrec->node.spcNode, xlrec->node.dbNode,
+								 xlrec->node.relNode, xlrec->block);
 				break;
 			}
 		case XLOG_BTREE_DELETE_PAGE:
@@ -730,7 +730,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				appendStringInfo(buf, "delete_page: ");
 				out_target(buf, &(xlrec->target));
 				appendStringInfo(buf, "; dead %u; left %u; right %u",
-						xlrec->deadblk, xlrec->leftblk, xlrec->rightblk);
+							xlrec->deadblk, xlrec->leftblk, xlrec->rightblk);
 				break;
 			}
 		case XLOG_BTREE_NEWROOT:
@@ -738,9 +738,9 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 				xl_btree_newroot *xlrec = (xl_btree_newroot *) rec;
 
 				appendStringInfo(buf, "newroot: rel %u/%u/%u; root %u lev %u",
-						xlrec->node.spcNode, xlrec->node.dbNode,
-						xlrec->node.relNode,
-						xlrec->rootblk, xlrec->level);
+								 xlrec->node.spcNode, xlrec->node.dbNode,
+								 xlrec->node.relNode,
+								 xlrec->rootblk, xlrec->level);
 				break;
 			}
 		default:

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.155 2006/09/22 21:39:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.156 2006/10/04 00:30:06 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -480,7 +480,7 @@ static PGresult *exec_query(const char *query);
 
 static char *previous_word(int point, int skip);
 
-static int find_open_parenthesis(int end);
+static int	find_open_parenthesis(int end);
 
 #if 0
 static char *quote_file_name(char *text, int match_type, char *quote_pointer);
@@ -767,13 +767,16 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev_wd, "RENAME") == 0))
 		COMPLETE_WITH_ATTR(prev2_wd, " UNION SELECT 'COLUMN'");
 
-	/* If we have TABLE <sth> ALTER COLUMN|RENAME COLUMN, provide list of columns */
+	/*
+	 * If we have TABLE <sth> ALTER COLUMN|RENAME COLUMN, provide list of
+	 * columns
+	 */
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
 			 (pg_strcasecmp(prev2_wd, "ALTER") == 0 ||
 			  pg_strcasecmp(prev2_wd, "RENAME") == 0) &&
 			 pg_strcasecmp(prev_wd, "COLUMN") == 0)
 		COMPLETE_WITH_ATTR(prev3_wd, "");
-  
+
 	/* ALTER TABLE xxx RENAME yyy */
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "RENAME") == 0 &&
@@ -951,7 +954,7 @@ psql_completion(char *text, int start, int end)
 		{"CAST", "CONVERSION", "DATABASE", "INDEX", "LANGUAGE", "RULE", "SCHEMA",
 			"SEQUENCE", "TABLE", "TYPE", "VIEW", "COLUMN", "AGGREGATE", "FUNCTION",
 			"OPERATOR", "TRIGGER", "CONSTRAINT", "DOMAIN", "LARGE OBJECT",
-			"TABLESPACE", "ROLE", NULL};
+		"TABLESPACE", "ROLE", NULL};
 
 		COMPLETE_WITH_LIST(list_COMMENT);
 	}
@@ -1048,11 +1051,11 @@ psql_completion(char *text, int start, int end)
 		if (find_open_parenthesis(end))
 			COMPLETE_WITH_ATTR(prev_wd, "");
 		else
-			COMPLETE_WITH_CONST("(");      
+			COMPLETE_WITH_CONST("(");
 	}
 	else if (pg_strcasecmp(prev5_wd, "INDEX") == 0 &&
-			pg_strcasecmp(prev3_wd, "ON") == 0 &&
-			pg_strcasecmp(prev_wd, "(") == 0)
+			 pg_strcasecmp(prev3_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev_wd, "(") == 0)
 		COMPLETE_WITH_ATTR(prev2_wd, "");
 	/* same if you put in USING */
 	else if (pg_strcasecmp(prev4_wd, "ON") == 0 &&
@@ -1264,7 +1267,8 @@ psql_completion(char *text, int start, int end)
 			if (find_open_parenthesis(end))
 			{
 				static const char func_args_query[] = "select pg_catalog.oidvectortypes(proargtypes)||')' from pg_proc where proname='%s'";
-				char *tmp_buf = malloc(strlen(func_args_query) + strlen(prev_wd));
+				char	   *tmp_buf = malloc(strlen(func_args_query) + strlen(prev_wd));
+
 				sprintf(tmp_buf, func_args_query, prev_wd);
 				COMPLETE_WITH_QUERY(tmp_buf);
 				free(tmp_buf);
@@ -1278,16 +1282,17 @@ psql_completion(char *text, int start, int end)
 		{
 			static const char *const list_DROPCR[] =
 			{"CASCADE", "RESTRICT", NULL};
-		
+
 			COMPLETE_WITH_LIST(list_DROPCR);
 		}
 	}
 	else if (pg_strcasecmp(prev4_wd, "DROP") == 0 &&
-			pg_strcasecmp(prev3_wd, "FUNCTION") == 0 &&
-			pg_strcasecmp(prev_wd, "(") == 0)
+			 pg_strcasecmp(prev3_wd, "FUNCTION") == 0 &&
+			 pg_strcasecmp(prev_wd, "(") == 0)
 	{
 		static const char func_args_query[] = "select pg_catalog.oidvectortypes(proargtypes)||')' from pg_proc where proname='%s'";
-		char *tmp_buf = malloc(strlen(func_args_query) + strlen(prev2_wd));
+		char	   *tmp_buf = malloc(strlen(func_args_query) + strlen(prev2_wd));
+
 		sprintf(tmp_buf, func_args_query, prev2_wd);
 		COMPLETE_WITH_QUERY(tmp_buf);
 		free(tmp_buf);
@@ -1376,8 +1381,8 @@ psql_completion(char *text, int start, int end)
 	{
 		static const char *const list_privileg[] =
 		{"SELECT", "INSERT", "UPDATE", "DELETE", "RULE", "REFERENCES",
-		 "TRIGGER", "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE",
-		 "ALL", NULL};
+			"TRIGGER", "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE",
+		"ALL", NULL};
 
 		COMPLETE_WITH_LIST(list_privileg);
 	}
@@ -2394,22 +2399,24 @@ previous_word(int point, int skip)
 /* Find the parenthesis after the last word */
 
 
-static int find_open_parenthesis(int end)
+static int
+find_open_parenthesis(int end)
 {
-	int i = end-1;
-	
-	while((rl_line_buffer[i]!=' ')&&(i>=0))
+	int			i = end - 1;
+
+	while ((rl_line_buffer[i] != ' ') && (i >= 0))
 	{
-		if (rl_line_buffer[i]=='(') return 1;
+		if (rl_line_buffer[i] == '(')
+			return 1;
 		i--;
 	}
-	while((rl_line_buffer[i]==' ')&&(i>=0))
+	while ((rl_line_buffer[i] == ' ') && (i >= 0))
 	{
 		i--;
 	}
-	if (rl_line_buffer[i]=='(')
+	if (rl_line_buffer[i] == '(')
 	{
-		return 1;       
+		return 1;
 	}
 	return 0;
 

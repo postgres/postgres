@@ -108,11 +108,11 @@ get_weight(char *buf, int2 *weight)
 {
 	*weight = 0;
 
-	if ( !t_iseq(buf, ':') )
+	if (!t_iseq(buf, ':'))
 		return buf;
 
 	buf++;
-	while ( *buf && pg_mblen(buf) == 1 )
+	while (*buf && pg_mblen(buf) == 1)
 	{
 		switch (*buf)
 		{
@@ -153,25 +153,26 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 		{
 			case WAITFIRSTOPERAND:
 			case WAITOPERAND:
-				if ( t_iseq(state->buf, '!') )
+				if (t_iseq(state->buf, '!'))
 				{
-					(state->buf)++; /* can safely ++, t_iseq guarantee that pg_mblen()==1 */
+					(state->buf)++;		/* can safely ++, t_iseq guarantee
+										 * that pg_mblen()==1 */
 					*val = (int4) '!';
 					return OPR;
 				}
-				else if ( t_iseq(state->buf, '(') )
+				else if (t_iseq(state->buf, '('))
 				{
 					state->count++;
 					(state->buf)++;
 					return OPEN;
 				}
-				else if ( t_iseq(state->buf, ':') )
+				else if (t_iseq(state->buf, ':'))
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("error at start of operand")));
 				}
-				else if ( !t_isspace(state->buf) )
+				else if (!t_isspace(state->buf))
 				{
 					state->valstate.prsbuf = state->buf;
 					if (gettoken_tsvector(&(state->valstate)))
@@ -191,14 +192,14 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 				}
 				break;
 			case WAITOPERATOR:
-				if ( t_iseq(state->buf, '&') || t_iseq(state->buf, '|') )
+				if (t_iseq(state->buf, '&') || t_iseq(state->buf, '|'))
 				{
 					state->state = WAITOPERAND;
 					*val = (int4) *(state->buf);
 					(state->buf)++;
 					return OPR;
 				}
-				else if ( t_iseq(state->buf, ')') )
+				else if (t_iseq(state->buf, ')'))
 				{
 					(state->buf)++;
 					state->count--;
@@ -206,7 +207,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 				}
 				else if (*(state->buf) == '\0')
 					return (state->count) ? ERR : END;
-				else if ( !t_isspace(state->buf) )
+				else if (!t_isspace(state->buf))
 					return ERR;
 				break;
 			case WAITSINGLEOPERAND:
@@ -221,7 +222,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 				return ERR;
 				break;
 		}
-		state->buf+=pg_mblen(state->buf);
+		state->buf += pg_mblen(state->buf);
 	}
 	return END;
 }
@@ -604,7 +605,7 @@ findoprnd(ITEM * ptr, int4 *pos)
  * input
  */
 static QUERYTYPE *
-queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id, bool isplain)
+			queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int cfg_id, bool isplain)
 {
 	QPRS_STATE	state;
 	int4		i;
@@ -701,8 +702,9 @@ queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int, int2), int c
 Datum
 tsquery_in(PG_FUNCTION_ARGS)
 {
-	char * in = (char*)PG_GETARG_POINTER(0);
-	pg_verifymbstr( in, strlen(in), false);
+	char	   *in = (char *) PG_GETARG_POINTER(0);
+
+	pg_verifymbstr(in, strlen(in), false);
 
 	SET_FUNCOID();
 	PG_RETURN_POINTER(queryin((char *) in, pushval_asis, 0, false));
@@ -739,23 +741,23 @@ infix(INFIX * in, bool first)
 	if (in->curpol->type == VAL)
 	{
 		char	   *op = in->op + in->curpol->distance;
-		int		clen;
+		int			clen;
 
-		RESIZEBUF(in, in->curpol->length * (pg_database_encoding_max_length()+1) + 2 + 5);
+		RESIZEBUF(in, in->curpol->length * (pg_database_encoding_max_length() + 1) + 2 + 5);
 		*(in->cur) = '\'';
 		in->cur++;
 		while (*op)
 		{
-			if ( t_iseq(op, '\'') )
+			if (t_iseq(op, '\''))
 			{
 				*(in->cur) = '\'';
 				in->cur++;
 			}
-			COPYCHAR(in->cur,op);
+			COPYCHAR(in->cur, op);
 
 			clen = pg_mblen(op);
-			op+=clen;
-			in->cur+=clen;
+			op += clen;
+			in->cur += clen;
 		}
 		*(in->cur) = '\'';
 		in->cur++;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.21 2006/08/12 02:52:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.22 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ find_minmax_aggs_walker(Node *node, List **context)
 	{
 		Aggref	   *aggref = (Aggref *) node;
 		Oid			aggsortop;
-		Expr		*curTarget;
+		Expr	   *curTarget;
 		MinMaxAggInfo *info;
 		ListCell   *l;
 
@@ -464,7 +464,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	subparse->limitOffset = NULL;
 	subparse->limitCount = (Node *) makeConst(INT8OID, sizeof(int64),
 											  Int64GetDatum(1),
-											  false, false /* not by val */);
+											  false, false /* not by val */ );
 
 	/*
 	 * Generate the plan for the subquery.	We already have a Path for the
@@ -478,9 +478,9 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	 * in our cost estimates.  But that looks painful, and in most cases the
 	 * fraction of NULLs isn't high enough to change the decision.
 	 *
-	 * The NOT NULL qual has to go on the actual indexscan; create_plan
-	 * might have stuck a gating Result atop that, if there were any
-	 * pseudoconstant quals.
+	 * The NOT NULL qual has to go on the actual indexscan; create_plan might
+	 * have stuck a gating Result atop that, if there were any pseudoconstant
+	 * quals.
 	 */
 	plan = create_plan(&subroot, (Path *) info->path);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.104 2006/08/24 01:18:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.105 2006/10/04 00:30:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,10 +35,10 @@ typedef uint16 BTCycleId;
  *	and status.  If the page is deleted, we replace the level with the
  *	next-transaction-ID value indicating when it is safe to reclaim the page.
  *
- *	We also store a "vacuum cycle ID".  When a page is split while VACUUM is
+ *	We also store a "vacuum cycle ID".	When a page is split while VACUUM is
  *	processing the index, a nonzero value associated with the VACUUM run is
- *	stored into both halves of the split page.  (If VACUUM is not running,
- *	both pages receive zero cycleids.)  This allows VACUUM to detect whether
+ *	stored into both halves of the split page.	(If VACUUM is not running,
+ *	both pages receive zero cycleids.)	This allows VACUUM to detect whether
  *	a page was split since it started, with a small probability of false match
  *	if the page was last split some exact multiple of 65536 VACUUMs ago.
  *	Also, during a split, the BTP_SPLIT_END flag is cleared in the left
@@ -71,7 +71,7 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_META		(1 << 3)	/* meta-page */
 #define BTP_HALF_DEAD	(1 << 4)	/* empty, but still in tree */
 #define BTP_SPLIT_END	(1 << 5)	/* rightmost page of split group */
-#define BTP_HAS_GARBAGE	(1 << 6)	/* page has LP_DELETEd tuples */
+#define BTP_HAS_GARBAGE (1 << 6)	/* page has LP_DELETEd tuples */
 
 
 /*
@@ -140,7 +140,7 @@ typedef struct BTMetaPageData
 	( (i1).ip_blkid.bi_hi == (i2).ip_blkid.bi_hi && \
 	  (i1).ip_blkid.bi_lo == (i2).ip_blkid.bi_lo && \
 	  (i1).ip_posid == (i2).ip_posid )
-#define BTEntrySame(i1, i2)	\
+#define BTEntrySame(i1, i2) \
 	BTTidSame((i1)->t_tid, (i2)->t_tid)
 
 
@@ -203,7 +203,7 @@ typedef struct BTMetaPageData
 #define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, new item on right */
 #define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuple */
 #define XLOG_BTREE_DELETE_PAGE	0x80	/* delete an entire page */
-#define XLOG_BTREE_DELETE_PAGE_META 0x90	/* same, plus update metapage */
+#define XLOG_BTREE_DELETE_PAGE_META 0x90		/* same, plus update metapage */
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
 
 /*
@@ -368,17 +368,17 @@ typedef BTStackData *BTStack;
  * BTScanOpaqueData is the btree-private state needed for an indexscan.
  * This consists of preprocessed scan keys (see _bt_preprocess_keys() for
  * details of the preprocessing), information about the current location
- * of the scan, and information about the marked location, if any.  (We use
+ * of the scan, and information about the marked location, if any.	(We use
  * BTScanPosData to represent the data needed for each of current and marked
- * locations.)  In addition we can remember some known-killed index entries
+ * locations.)	In addition we can remember some known-killed index entries
  * that must be marked before we can move off the current page.
  *
  * Index scans work a page at a time: we pin and read-lock the page, identify
  * all the matching items on the page and save them in BTScanPosData, then
  * release the read-lock while returning the items to the caller for
- * processing.  This approach minimizes lock/unlock traffic.  Note that we
+ * processing.	This approach minimizes lock/unlock traffic.  Note that we
  * keep the pin on the index page until the caller is done with all the items
- * (this is needed for VACUUM synchronization, see nbtree/README).  When we
+ * (this is needed for VACUUM synchronization, see nbtree/README).	When we
  * are ready to step to the next page, if the caller has told us any of the
  * items were killed, we re-lock the page to mark them killed, then unlock.
  * Finally we drop the pin and step to the next page in the appropriate
@@ -420,7 +420,7 @@ typedef struct BTScanPosData
 	int			lastItem;		/* last valid index in items[] */
 	int			itemIndex;		/* current index in items[] */
 
-	BTScanPosItem items[MaxIndexTuplesPerPage];		/* MUST BE LAST */
+	BTScanPosItem items[MaxIndexTuplesPerPage]; /* MUST BE LAST */
 } BTScanPosData;
 
 typedef BTScanPosData *BTScanPos;
@@ -439,11 +439,11 @@ typedef struct BTScanOpaqueData
 	int			numKilled;		/* number of currently stored items */
 
 	/*
-	 * If the marked position is on the same page as current position,
-	 * we don't use markPos, but just keep the marked itemIndex in
-	 * markItemIndex (all the rest of currPos is valid for the mark position).
-	 * Hence, to determine if there is a mark, first look at markItemIndex,
-	 * then at markPos.
+	 * If the marked position is on the same page as current position, we
+	 * don't use markPos, but just keep the marked itemIndex in markItemIndex
+	 * (all the rest of currPos is valid for the mark position). Hence, to
+	 * determine if there is a mark, first look at markItemIndex, then at
+	 * markPos.
 	 */
 	int			markItemIndex;	/* itemIndex, or -1 if not valid */
 
@@ -457,8 +457,8 @@ typedef BTScanOpaqueData *BTScanOpaque;
 /*
  * We use these private sk_flags bits in preprocessed scan keys
  */
-#define SK_BT_REQFWD	0x00010000	/* required to continue forward scan */
-#define SK_BT_REQBKWD	0x00020000	/* required to continue backward scan */
+#define SK_BT_REQFWD	0x00010000		/* required to continue forward scan */
+#define SK_BT_REQBKWD	0x00020000		/* required to continue backward scan */
 
 
 /*
@@ -528,8 +528,8 @@ extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_preprocess_keys(IndexScanDesc scan);
 extern bool _bt_checkkeys(IndexScanDesc scan,
-						  Page page, OffsetNumber offnum,
-						  ScanDirection dir, bool *continuescan);
+			  Page page, OffsetNumber offnum,
+			  ScanDirection dir, bool *continuescan);
 extern void _bt_killitems(IndexScanDesc scan, bool haveLock);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);

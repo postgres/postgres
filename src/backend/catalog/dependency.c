@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.59 2006/08/20 21:56:16 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.60 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ struct ObjectAddresses
 	int			numrefs;		/* current number of references */
 	int			maxrefs;		/* current size of palloc'd array */
 };
+
 /* typedef ObjectAddresses appears in dependency.h */
 
 /* for find_expr_references_walker */
@@ -244,8 +245,8 @@ performMultipleDeletions(const ObjectAddresses *objects,
 {
 	ObjectAddresses *implicit;
 	ObjectAddresses *alreadyDeleted;
-	Relation		depRel;
-	int				i;
+	Relation	depRel;
+	int			i;
 
 	implicit = new_object_addresses();
 	alreadyDeleted = new_object_addresses();
@@ -271,8 +272,8 @@ performMultipleDeletions(const ObjectAddresses *objects,
 			continue;
 
 		/*
-		 * Add the objects dependent on this one to the global list of implicit
-		 * objects.
+		 * Add the objects dependent on this one to the global list of
+		 * implicit objects.
 		 */
 		findAutoDeletableObjects(&obj, implicit, depRel, false);
 	}
@@ -707,8 +708,8 @@ recursiveDeletion(const ObjectAddress *object,
 	 */
 
 	/*
-	 * Step 3: delete the object itself, and save it to the list of
-	 * deleted objects if appropiate.
+	 * Step 3: delete the object itself, and save it to the list of deleted
+	 * objects if appropiate.
 	 */
 	doDeletion(object);
 	if (alreadyDeleted != NULL)
@@ -1284,7 +1285,7 @@ find_expr_references_walker(Node *node,
 	}
 	if (IsA(node, RelabelType))
 	{
-		RelabelType	   *relab = (RelabelType *) node;
+		RelabelType *relab = (RelabelType *) node;
 
 		/* since there is no function dependency, need to depend on type */
 		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
@@ -1300,7 +1301,7 @@ find_expr_references_walker(Node *node,
 	}
 	if (IsA(node, RowExpr))
 	{
-		RowExpr	   *rowexpr = (RowExpr *) node;
+		RowExpr    *rowexpr = (RowExpr *) node;
 
 		add_object_address(OCLASS_TYPE, rowexpr->row_typeid, 0,
 						   context->addrs);
@@ -1471,7 +1472,7 @@ object_address_comparator(const void *a, const void *b)
 ObjectAddresses *
 new_object_addresses(void)
 {
-	ObjectAddresses   *addrs;
+	ObjectAddresses *addrs;
 
 	addrs = palloc(sizeof(ObjectAddresses));
 

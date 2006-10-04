@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.208 2006/10/03 21:21:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.209 2006/10/04 00:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,7 +480,7 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior,
 
 	if (!HeapTupleIsValid(tup))
 	{
-		if (! missing_ok)
+		if (!missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("trigger \"%s\" for table \"%s\" does not exist",
@@ -856,8 +856,8 @@ RelationBuildTriggers(Relation relation)
 	/*
 	 * Note: since we scan the triggers using TriggerRelidNameIndexId, we will
 	 * be reading the triggers in name order, except possibly during
-	 * emergency-recovery operations (ie, IgnoreSystemIndexes). This in
-	 * turn ensures that triggers will be fired in name order.
+	 * emergency-recovery operations (ie, IgnoreSystemIndexes). This in turn
+	 * ensures that triggers will be fired in name order.
 	 */
 	ScanKeyInit(&skey,
 				Anum_pg_trigger_tgrelid,
@@ -2940,26 +2940,30 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
-									constraint->catalogname, constraint->schemaname,
+							 constraint->catalogname, constraint->schemaname,
 									constraint->relname)));
 			}
 
-			/* 
+			/*
 			 * If we're given the schema name with the constraint, look only
-			 * in that schema.  If given a bare constraint name, use the
+			 * in that schema.	If given a bare constraint name, use the
 			 * search path to find the first matching constraint.
 			 */
-			if (constraint->schemaname) {
-				Oid namespaceId = LookupExplicitNamespace(constraint->schemaname);
+			if (constraint->schemaname)
+			{
+				Oid			namespaceId = LookupExplicitNamespace(constraint->schemaname);
+
 				namespaceSearchList = list_make1_oid(namespaceId);
-			} else {
+			}
+			else
+			{
 				namespaceSearchList = fetch_search_path(true);
 			}
 
 			found = false;
 			foreach(namespaceSearchCell, namespaceSearchList)
 			{
-				Oid searchNamespaceId = lfirst_oid(namespaceSearchCell);
+				Oid			searchNamespaceId = lfirst_oid(namespaceSearchCell);
 
 				/*
 				 * Setup to scan pg_trigger by tgconstrname ...
@@ -2978,18 +2982,18 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 				while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
 				{
 					Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
-					Oid constraintNamespaceId;
+					Oid			constraintNamespaceId;
 
 					/*
 					 * Foreign key constraints have triggers on both the
-					 * parent and child tables.  Since these tables may be
-					 * in different schemas we must pick the child table
-					 * because that table "owns" the constraint.
+					 * parent and child tables.  Since these tables may be in
+					 * different schemas we must pick the child table because
+					 * that table "owns" the constraint.
 					 *
 					 * Referential triggers on the parent table other than
-					 * NOACTION_DEL and NOACTION_UPD are ignored below, so
-					 * it is possible to not check them here, but it seems
-					 * safer to always check.
+					 * NOACTION_DEL and NOACTION_UPD are ignored below, so it
+					 * is possible to not check them here, but it seems safer
+					 * to always check.
 					 */
 					if (pg_trigger->tgfoid == F_RI_FKEY_NOACTION_DEL ||
 						pg_trigger->tgfoid == F_RI_FKEY_NOACTION_UPD ||
@@ -3006,16 +3010,16 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 						constraintNamespaceId = get_rel_namespace(pg_trigger->tgrelid);
 
 					/*
-					 * If this constraint is not in the schema we're
-					 * currently searching for, keep looking.
+					 * If this constraint is not in the schema we're currently
+					 * searching for, keep looking.
 					 */
 					if (constraintNamespaceId != searchNamespaceId)
 						continue;
 
 					/*
-					 * If we found some, check that they fit the deferrability but
-					 * skip referential action ones, since they are silently never
-					 * deferrable.
+					 * If we found some, check that they fit the deferrability
+					 * but skip referential action ones, since they are
+					 * silently never deferrable.
 					 */
 					if (pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
 						pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL &&
@@ -3029,8 +3033,8 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 						if (stmt->deferred && !pg_trigger->tgdeferrable)
 							ereport(ERROR,
 									(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-									 errmsg("constraint \"%s\" is not deferrable",
-											constraint->relname)));
+								errmsg("constraint \"%s\" is not deferrable",
+									   constraint->relname)));
 						oidlist = lappend_oid(oidlist, HeapTupleGetOid(htup));
 					}
 					found = true;
@@ -3147,9 +3151,9 @@ AfterTriggerCheckTruncate(List *relids)
 		 event = event->ate_next)
 	{
 		/*
-		 * We can ignore completed events.  (Even if a DONE flag is rolled
-		 * back by subxact abort, it's OK because the effects of the
-		 * TRUNCATE must get rolled back too.)
+		 * We can ignore completed events.	(Even if a DONE flag is rolled
+		 * back by subxact abort, it's OK because the effects of the TRUNCATE
+		 * must get rolled back too.)
 		 */
 		if (event->ate_event & AFTER_TRIGGER_DONE)
 			continue;
@@ -3162,10 +3166,9 @@ AfterTriggerCheckTruncate(List *relids)
 	}
 
 	/*
-	 * Also scan events queued by incomplete queries.  This could only
-	 * matter if a TRUNCATE is executed by a function or trigger within
-	 * an updating query on the same relation, which is pretty perverse,
-	 * but let's check.
+	 * Also scan events queued by incomplete queries.  This could only matter
+	 * if a TRUNCATE is executed by a function or trigger within an updating
+	 * query on the same relation, which is pretty perverse, but let's check.
 	 */
 	for (depth = 0; depth <= afterTriggers->query_depth; depth++)
 	{

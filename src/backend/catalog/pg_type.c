@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.107 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.108 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,34 +73,34 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	/*
 	 * initialize *values with the type name and dummy values
 	 *
-	 * The representational details are the same as int4 ... it doesn't
-	 * really matter what they are so long as they are consistent.  Also
-	 * note that we give it typtype = 'p' (pseudotype) as extra insurance
-	 * that it won't be mistaken for a usable type.
+	 * The representational details are the same as int4 ... it doesn't really
+	 * matter what they are so long as they are consistent.  Also note that we
+	 * give it typtype = 'p' (pseudotype) as extra insurance that it won't be
+	 * mistaken for a usable type.
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
 	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
 	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
-	values[i++] = Int16GetDatum(sizeof(int4));			/* typlen */
-	values[i++] = BoolGetDatum(true);					/* typbyval */
-	values[i++] = CharGetDatum('p');					/* typtype */
-	values[i++] = BoolGetDatum(false);					/* typisdefined */
+	values[i++] = Int16GetDatum(sizeof(int4));	/* typlen */
+	values[i++] = BoolGetDatum(true);	/* typbyval */
+	values[i++] = CharGetDatum('p');	/* typtype */
+	values[i++] = BoolGetDatum(false);	/* typisdefined */
 	values[i++] = CharGetDatum(DEFAULT_TYPDELIM);		/* typdelim */
-	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typrelid */
-	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typelem */
-	values[i++] = ObjectIdGetDatum(F_SHELL_IN);			/* typinput */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typrelid */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typelem */
+	values[i++] = ObjectIdGetDatum(F_SHELL_IN); /* typinput */
 	values[i++] = ObjectIdGetDatum(F_SHELL_OUT);		/* typoutput */
-	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typreceive */
-	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typsend */
-	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typanalyze */
-	values[i++] = CharGetDatum('i');					/* typalign */
-	values[i++] = CharGetDatum('p');					/* typstorage */
-	values[i++] = BoolGetDatum(false);					/* typnotnull */
-	values[i++] = ObjectIdGetDatum(InvalidOid);			/* typbasetype */
-	values[i++] = Int32GetDatum(-1);					/* typtypmod */
-	values[i++] = Int32GetDatum(0);						/* typndims */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typreceive */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typsend */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typanalyze */
+	values[i++] = CharGetDatum('i');	/* typalign */
+	values[i++] = CharGetDatum('p');	/* typstorage */
+	values[i++] = BoolGetDatum(false);	/* typnotnull */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typbasetype */
+	values[i++] = Int32GetDatum(-1);	/* typtypmod */
+	values[i++] = Int32GetDatum(0);		/* typndims */
 	nulls[i++] = 'n';			/* typdefaultbin */
 	nulls[i++] = 'n';			/* typdefault */
 

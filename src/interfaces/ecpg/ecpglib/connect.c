@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.35 2006/08/29 12:24:51 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.36 2006/10/04 00:30:11 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -27,7 +27,8 @@ ecpg_actual_connection_init(void)
 	pthread_key_create(&actual_connection_key, NULL);
 }
 
-void ecpg_pthreads_init(void)
+void
+ecpg_pthreads_init(void)
 {
 	pthread_once(&actual_connection_key_once, ecpg_actual_connection_init);
 }
@@ -226,7 +227,7 @@ ECPGnoticeReceiver(void *arg, const PGresult *result)
 	if (sqlstate == NULL)
 		sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
 
-	if (message == NULL)  /* Shouldn't happen, but need to be sure */
+	if (message == NULL)		/* Shouldn't happen, but need to be sure */
 		message = "No message received";
 
 	/* these are not warnings */
@@ -369,9 +370,10 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 							ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
 							if (host)
 								ECPGfree(host);
-							/* port not set yet
-							 * if (port)
-							 * 	ECPGfree(port); */
+
+							/*
+							 * port not set yet if (port) ECPGfree(port);
+							 */
 							if (options)
 								ECPGfree(options);
 							if (realname)

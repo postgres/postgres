@@ -1,4 +1,4 @@
-/* 
+/*
  * ISBN.h
  *	  PostgreSQL type definitions for ISNs (ISBN, ISMN, ISSN, EAN13, UPC)
  *
@@ -7,39 +7,39 @@
  * http://www.isbn.org/
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/ISBN.h,v 1.1 2006/09/09 04:07:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/ISBN.h,v 1.2 2006/10/04 00:29:45 momjian Exp $
  *
  * 0-393-04002-X => 039304002(X) <=> 039304002 <=> (978)039304002 <=> 978039304002(9) <=> 978-0-393-04002-9
  *
  *
- * ISBN         0   3    9    3    0   4    0   0   2
- * Weight       10  9    8    7    6   5    4   3   2
- * Product      0 + 27 + 72 + 21 + 0 + 20 + 0 + 0 + 4 = 144
- *              144 / 11 = 13 remainder 1
- * Check digit  11 - 1 = 10 = X
+ * ISBN			0	3	 9	  3    0   4	0	0	2
+ * Weight		10	9	 8	  7    6   5	4	3	2
+ * Product		0 + 27 + 72 + 21 + 0 + 20 + 0 + 0 + 4 = 144
+ *				144 / 11 = 13 remainder 1
+ * Check digit	11 - 1 = 10 = X
  * => 0-393-04002-X
  *
- * ISBN         9   7    8   0   3   9    3   0   4   0   0   2
- * Weight       1   3    1   3   1   3    1   3   1   3   1   3
- * Product      9 + 21 + 8 + 0 + 3 + 27 + 3 + 0 + 4 + 0 + 0 + 6 = 81
- *              81 / 10 = 8 remainder 1
- * Check digit  10 - 1 = 9
+ * ISBN			9	7	 8	 0	 3	 9	  3   0   4   0   0   2
+ * Weight		1	3	 1	 3	 1	 3	  1   3   1   3   1   3
+ * Product		9 + 21 + 8 + 0 + 3 + 27 + 3 + 0 + 4 + 0 + 0 + 6 = 81
+ *				81 / 10 = 8 remainder 1
+ * Check digit	10 - 1 = 9
  * => 978-0-393-04002-9
  *
  */
 
 /* where the digit set begins, and how many of them are in the table */
 const unsigned ISBN_index[10][2] = {
-	{0,		6},
-	{6,		6},
-	{12,	8},
-	{20,	10},
-	{30,	6},
-	{36,	12},
-	{48,	0},
-	{48,	5},
-	{53,	59},
-	{112,	573},
+	{0, 6},
+	{6, 6},
+	{12, 8},
+	{20, 10},
+	{30, 6},
+	{36, 12},
+	{48, 0},
+	{48, 5},
+	{53, 59},
+	{112, 573},
 };
 
 const char *ISBN_range[][2] = {

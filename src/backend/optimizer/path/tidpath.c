@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.27 2006/03/05 15:58:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.28 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ IsTidEqualAnyClause(ScalarArrayOpExpr *node, int varno)
 	/* CTID must be first argument */
 	if (arg1 && IsA(arg1, Var))
 	{
-		Var	   *var = (Var *) arg1;
+		Var		   *var = (Var *) arg1;
 
 		if (var->varattno == SelfItemPointerAttributeNumber &&
 			var->vartype == TIDOID &&
@@ -187,7 +187,7 @@ TidQualFromExpr(Node *expr, int varno)
 	{
 		foreach(l, ((BoolExpr *) expr)->args)
 		{
-			List   *frtn = TidQualFromExpr((Node *) lfirst(l), varno);
+			List	   *frtn = TidQualFromExpr((Node *) lfirst(l), varno);
 
 			if (frtn)
 				rlst = list_concat(rlst, frtn);

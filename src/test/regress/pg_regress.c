@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.22 2006/09/24 17:10:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.23 2006/10/04 00:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,17 +39,17 @@
 /* simple list of strings */
 typedef struct _stringlist
 {
-	char *str;
+	char	   *str;
 	struct _stringlist *next;
-} _stringlist;
+}	_stringlist;
 
 /* for resultmap we need a list of pairs of strings */
 typedef struct _resultmap
 {
-	char *test;
-	char *resultfile;
+	char	   *test;
+	char	   *resultfile;
 	struct _resultmap *next;
-} _resultmap;
+}	_resultmap;
 
 /*
  * Values obtained from pg_config_paths.h and Makefile.  The PG installation
@@ -63,6 +63,7 @@ static char *libdir = LIBDIR;
 static char *datadir = PGSHAREDIR;
 static char *host_platform = HOST_TUPLE;
 static char *makeprog = MAKEPROG;
+
 #ifndef WIN32					/* not used in WIN32 case */
 static char *shellprog = SHELLPROG;
 #endif
@@ -77,17 +78,17 @@ static bool debug = false;
 static char *inputdir = ".";
 static char *outputdir = ".";
 static _stringlist *loadlanguage = NULL;
-static int max_connections = 0;
+static int	max_connections = 0;
 static char *encoding = NULL;
 static _stringlist *schedulelist = NULL;
 static _stringlist *extra_tests = NULL;
 static char *temp_install = NULL;
 static char *top_builddir = NULL;
-static int temp_port = 65432;
+static int	temp_port = 65432;
 static bool nolocale = false;
 static char *psqldir = NULL;
 static char *hostname = NULL;
-static int port = -1;
+static int	port = -1;
 static char *user = NULL;
 
 /* internal variables */
@@ -101,9 +102,9 @@ static _resultmap *resultmap = NULL;
 static PID_TYPE postmaster_pid = INVALID_PID;
 static bool postmaster_running = false;
 
-static int success_count = 0;
-static int fail_count = 0;
-static int fail_ignore_count = 0;
+static int	success_count = 0;
+static int	fail_count = 0;
+static int	fail_ignore_count = 0;
 
 static void
 header(const char *fmt,...)
@@ -116,7 +117,7 @@ status(const char *fmt,...)
    the supplied arguments. */
 __attribute__((format(printf, 1, 2)));
 static void
-psql_command(const char *database, const char *query, ...)
+psql_command(const char *database, const char *query,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 2, 3)));
@@ -126,7 +127,7 @@ __attribute__((format(printf, 2, 3)));
  * Add an item at the end of a stringlist.
  */
 static void
-add_stringlist_item(_stringlist **listhead, const char *str)
+add_stringlist_item(_stringlist ** listhead, const char *str)
 {
 	_stringlist *newentry = malloc(sizeof(_stringlist));
 	_stringlist *oldentry;
@@ -138,7 +139,7 @@ add_stringlist_item(_stringlist **listhead, const char *str)
 	else
 	{
 		for (oldentry = *listhead; oldentry->next; oldentry = oldentry->next)
-			/*skip*/;
+			 /* skip */ ;
 		oldentry->next = newentry;
 	}
 }
@@ -202,7 +203,7 @@ stop_postmaster(void)
 	if (postmaster_running)
 	{
 		/* We use pg_ctl to issue the kill and wait for stop */
-		char buf[MAXPGPATH * 2];
+		char		buf[MAXPGPATH * 2];
 
 		/* On Windows, system() seems not to force fflush, so... */
 		fflush(stdout);
@@ -304,24 +305,24 @@ string_matches_pattern(const char *str, const char *pattern)
  * Scan resultmap file to find which platform-specific expected files to use.
  *
  * The format of each line of the file is
- *         testname/hostplatformpattern=substitutefile
+ *		   testname/hostplatformpattern=substitutefile
  * where the hostplatformpattern is evaluated per the rules of expr(1),
  * namely, it is a standard regular expression with an implicit ^ at the start.
  * (We currently support only a very limited subset of regular expressions,
  * see string_matches_pattern() above.)  What hostplatformpattern will be
- * matched against is the config.guess output.  (In the shell-script version,
+ * matched against is the config.guess output.	(In the shell-script version,
  * we also provided an indication of whether gcc or another compiler was in
  * use, but that facility isn't used anymore.)
  */
 static void
 load_resultmap(void)
 {
-	char buf[MAXPGPATH];
-	FILE *f;
+	char		buf[MAXPGPATH];
+	FILE	   *f;
 
 	/* scan the file ... */
 	snprintf(buf, sizeof(buf), "%s/resultmap", inputdir);
-	f = fopen(buf,"r");
+	f = fopen(buf, "r");
 	if (!f)
 	{
 		/* OK if it doesn't exist, else complain */
@@ -334,13 +335,13 @@ load_resultmap(void)
 
 	while (fgets(buf, sizeof(buf), f))
 	{
-		char *platform;
-		char *expected;
-		int i;
+		char	   *platform;
+		char	   *expected;
+		int			i;
 
 		/* strip trailing whitespace, especially the newline */
 		i = strlen(buf);
-		while (i > 0 && isspace((unsigned char) buf[i-1]))
+		while (i > 0 && isspace((unsigned char) buf[i - 1]))
 			buf[--i] = '\0';
 
 		/* parse out the line fields */
@@ -362,10 +363,10 @@ load_resultmap(void)
 		*expected++ = '\0';
 
 		/*
-		 * if it's for current platform, save it in resultmap list.
-		 * Note: by adding at the front of the list, we ensure that in
-		 * ambiguous cases, the last match in the resultmap file is used.
-		 * This mimics the behavior of the old shell script.
+		 * if it's for current platform, save it in resultmap list. Note: by
+		 * adding at the front of the list, we ensure that in ambiguous cases,
+		 * the last match in the resultmap file is used. This mimics the
+		 * behavior of the old shell script.
 		 */
 		if (string_matches_pattern(host_platform, platform))
 		{
@@ -386,7 +387,7 @@ load_resultmap(void)
 static void
 doputenv(const char *var, const char *val)
 {
-	char *s = malloc(strlen(var)+strlen(val)+2);
+	char	   *s = malloc(strlen(var) + strlen(val) + 2);
 
 	sprintf(s, "%s=%s", var, val);
 	putenv(s);
@@ -399,8 +400,8 @@ doputenv(const char *var, const char *val)
 static void
 add_to_path(const char *pathname, char separator, const char *addval)
 {
-	char *oldval = getenv(pathname);
-	char *newval;
+	char	   *oldval = getenv(pathname);
+	char	   *newval;
 
 	if (!oldval || !oldval[0])
 	{
@@ -411,7 +412,7 @@ add_to_path(const char *pathname, char separator, const char *addval)
 	else
 	{
 		newval = malloc(strlen(pathname) + strlen(addval) + strlen(oldval) + 3);
-		sprintf(newval,"%s=%s%c%s",pathname,addval,separator,oldval);
+		sprintf(newval, "%s=%s%c%s", pathname, addval, separator, oldval);
 	}
 	putenv(newval);
 }
@@ -422,7 +423,7 @@ add_to_path(const char *pathname, char separator, const char *addval)
 static void
 initialize_environment(void)
 {
-	char *tmp;
+	char	   *tmp;
 
 	/*
 	 * Clear out any non-C locale settings
@@ -458,12 +459,12 @@ initialize_environment(void)
 	if (temp_install)
 	{
 		/*
-		 * Clear out any environment vars that might cause psql to connect
-		 * to the wrong postmaster, or otherwise behave in nondefault ways.
-		 * (Note we also use psql's -X switch consistently, so that ~/.psqlrc
-		 * files won't mess things up.)  Also, set PGPORT to the temp port,
-		 * and set or unset PGHOST depending on whether we are using TCP or
-		 * Unix sockets.
+		 * Clear out any environment vars that might cause psql to connect to
+		 * the wrong postmaster, or otherwise behave in nondefault ways. (Note
+		 * we also use psql's -X switch consistently, so that ~/.psqlrc files
+		 * won't mess things up.)  Also, set PGPORT to the temp port, and set
+		 * or unset PGHOST depending on whether we are using TCP or Unix
+		 * sockets.
 		 */
 		unsetenv("PGDATABASE");
 		unsetenv("PGUSER");
@@ -479,10 +480,10 @@ initialize_environment(void)
 		unsetenv("PGHOSTADDR");
 		if (port != -1)
 		{
-			char s[16];
+			char		s[16];
 
-			sprintf(s,"%d",port);
-			doputenv("PGPORT",s);
+			sprintf(s, "%d", port);
+			doputenv("PGPORT", s);
 		}
 
 		/*
@@ -507,10 +508,10 @@ initialize_environment(void)
 		 * Set up shared library paths to include the temp install.
 		 *
 		 * LD_LIBRARY_PATH covers many platforms.  DYLD_LIBRARY_PATH works on
-		 * Darwin, and maybe other Mach-based systems.  LIBPATH is for AIX.
+		 * Darwin, and maybe other Mach-based systems.	LIBPATH is for AIX.
 		 * Windows needs shared libraries in PATH (only those linked into
-		 * executables, not dlopen'ed ones).
-		 * Feel free to account for others as well.
+		 * executables, not dlopen'ed ones). Feel free to account for others
+		 * as well.
 		 */
 		add_to_path("LD_LIBRARY_PATH", ':', libdir);
 		add_to_path("DYLD_LIBRARY_PATH", ':', libdir);
@@ -535,10 +536,10 @@ initialize_environment(void)
 		}
 		if (port != -1)
 		{
-			char s[16];
+			char		s[16];
 
-			sprintf(s,"%d",port);
-			doputenv("PGPORT",s);
+			sprintf(s, "%d", port);
+			doputenv("PGPORT", s);
 		}
 		if (user != NULL)
 			doputenv("PGUSER", user);
@@ -572,14 +573,14 @@ initialize_environment(void)
  * Since we use system(), this doesn't return until the operation finishes
  */
 static void
-psql_command(const char *database, const char *query, ...)
+psql_command(const char *database, const char *query,...)
 {
-	char query_formatted[1024];
-	char query_escaped[2048];
-	char psql_cmd[MAXPGPATH + 2048];
-	va_list args;
-	char *s;
-	char *d;
+	char		query_formatted[1024];
+	char		query_escaped[2048];
+	char		psql_cmd[MAXPGPATH + 2048];
+	va_list		args;
+	char	   *s;
+	char	   *d;
 
 	/* Generate the query with insertion of sprintf arguments */
 	va_start(args, query);
@@ -621,10 +622,10 @@ static PID_TYPE
 spawn_process(const char *cmdline)
 {
 #ifndef WIN32
-	pid_t pid;
+	pid_t		pid;
 
 	/*
-	 * Must flush I/O buffers before fork.  Ideally we'd use fflush(NULL) here
+	 * Must flush I/O buffers before fork.	Ideally we'd use fflush(NULL) here
 	 * ... does anyone still care about systems where that doesn't work?
 	 */
 	fflush(stdout);
@@ -644,11 +645,11 @@ spawn_process(const char *cmdline)
 		/*
 		 * In child
 		 *
-		 * Instead of using system(), exec the shell directly, and tell it
-		 * to "exec" the command too.  This saves two useless processes
-		 * per parallel test case.
+		 * Instead of using system(), exec the shell directly, and tell it to
+		 * "exec" the command too.	This saves two useless processes per
+		 * parallel test case.
 		 */
-		char *cmdline2 = malloc(strlen(cmdline) + 6);
+		char	   *cmdline2 = malloc(strlen(cmdline) + 6);
 
 		sprintf(cmdline2, "exec %s", cmdline);
 		execl(shellprog, shellprog, "-c", cmdline2, NULL);
@@ -659,7 +660,7 @@ spawn_process(const char *cmdline)
 	/* in parent */
 	return pid;
 #else
-	char *cmdline2;
+	char	   *cmdline2;
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 
@@ -689,10 +690,10 @@ spawn_process(const char *cmdline)
 static PID_TYPE
 psql_start_test(const char *testname)
 {
-	PID_TYPE pid;
-	char infile[MAXPGPATH];
-	char outfile[MAXPGPATH];
-	char psql_cmd[MAXPGPATH * 3];
+	PID_TYPE	pid;
+	char		infile[MAXPGPATH];
+	char		outfile[MAXPGPATH];
+	char		psql_cmd[MAXPGPATH * 3];
 
 	snprintf(infile, sizeof(infile), "%s/sql/%s.sql",
 			 inputdir, testname);
@@ -725,8 +726,8 @@ psql_start_test(const char *testname)
 static long
 file_size(const char *file)
 {
-	long r;
-	FILE *f = fopen(file,"r");
+	long		r;
+	FILE	   *f = fopen(file, "r");
 
 	if (!f)
 	{
@@ -746,9 +747,9 @@ file_size(const char *file)
 static int
 file_line_count(const char *file)
 {
-	int c;
-	int l = 0;
-	FILE *f = fopen(file,"r");
+	int			c;
+	int			l = 0;
+	FILE	   *f = fopen(file, "r");
 
 	if (!f)
 	{
@@ -768,7 +769,7 @@ file_line_count(const char *file)
 static bool
 file_exists(const char *file)
 {
-	FILE *f = fopen(file, "r");
+	FILE	   *f = fopen(file, "r");
 
 	if (!f)
 		return false;
@@ -806,7 +807,7 @@ make_directory(const char *dir)
 static int
 run_diff(const char *cmd, const char *filename)
 {
-	int r;
+	int			r;
 
 	r = system(cmd);
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
@@ -815,9 +816,10 @@ run_diff(const char *cmd, const char *filename)
 		exit_nicely(2);
 	}
 #ifdef WIN32
+
 	/*
-	 *	On WIN32, if the 'diff' command cannot be found, system() returns
-	 *	1, but produces nothing to stdout, so we check for that here.
+	 * On WIN32, if the 'diff' command cannot be found, system() returns 1,
+	 * but produces nothing to stdout, so we check for that here.
 	 */
 	if (WEXITSTATUS(r) == 1 && file_size(filename) <= 0)
 	{
@@ -825,7 +827,7 @@ run_diff(const char *cmd, const char *filename)
 		exit_nicely(2);
 	}
 #endif
-	
+
 	return WEXITSTATUS(r);
 }
 
@@ -839,17 +841,17 @@ static bool
 results_differ(const char *testname)
 {
 	const char *expectname;
-	char resultsfile[MAXPGPATH];
-	char expectfile[MAXPGPATH];
-	char diff[MAXPGPATH];
-	char cmd[MAXPGPATH * 3];
-	char best_expect_file[MAXPGPATH];
+	char		resultsfile[MAXPGPATH];
+	char		expectfile[MAXPGPATH];
+	char		diff[MAXPGPATH];
+	char		cmd[MAXPGPATH * 3];
+	char		best_expect_file[MAXPGPATH];
 	_resultmap *rm;
-	FILE *difffile;
-	int best_line_count;
-	int i;
-	int l;
-	
+	FILE	   *difffile;
+	int			best_line_count;
+	int			i;
+	int			l;
+
 	/* Check in resultmap if we should be looking at a different file */
 	expectname = testname;
 	for (rm = resultmap; rm != NULL; rm = rm->next)
@@ -915,9 +917,9 @@ results_differ(const char *testname)
 		}
 	}
 
-	/* 
-	 * fall back on the canonical results file if we haven't tried it yet
-	 * and haven't found a complete match yet.
+	/*
+	 * fall back on the canonical results file if we haven't tried it yet and
+	 * haven't found a complete match yet.
 	 */
 
 	if (strcmp(expectname, testname) != 0)
@@ -946,8 +948,8 @@ results_differ(const char *testname)
 	}
 
 	/*
-	 * Use the best comparison file to generate the "pretty" diff, which
-	 * we append to the diffs summary file.
+	 * Use the best comparison file to generate the "pretty" diff, which we
+	 * append to the diffs summary file.
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "diff %s \"%s\" \"%s\" >> \"%s\"" SYSTEMQUOTE,
@@ -975,13 +977,13 @@ results_differ(const char *testname)
  * Note: it's OK to scribble on the pids array, but not on the names array
  */
 static void
-wait_for_tests(PID_TYPE *pids, char **names, int num_tests)
+wait_for_tests(PID_TYPE * pids, char **names, int num_tests)
 {
-	int tests_left;
-	int i;
+	int			tests_left;
+	int			i;
 
 #ifdef WIN32
-	PID_TYPE *active_pids = malloc(num_tests * sizeof(PID_TYPE));
+	PID_TYPE   *active_pids = malloc(num_tests * sizeof(PID_TYPE));
 
 	memcpy(active_pids, pids, num_tests * sizeof(PID_TYPE));
 #endif
@@ -989,7 +991,7 @@ wait_for_tests(PID_TYPE *pids, char **names, int num_tests)
 	tests_left = num_tests;
 	while (tests_left > 0)
 	{
-		PID_TYPE p;
+		PID_TYPE	p;
 
 #ifndef WIN32
 		p = wait(NULL);
@@ -1001,7 +1003,7 @@ wait_for_tests(PID_TYPE *pids, char **names, int num_tests)
 			exit_nicely(2);
 		}
 #else
-		int r;
+		int			r;
 
 		r = WaitForMultipleObjects(tests_left, active_pids, FALSE, INFINITE);
 		if (r < WAIT_OBJECT_0 || r >= WAIT_OBJECT_0 + tests_left)
@@ -1013,9 +1015,9 @@ wait_for_tests(PID_TYPE *pids, char **names, int num_tests)
 		p = active_pids[r - WAIT_OBJECT_0];
 		/* compact the active_pids array */
 		active_pids[r - WAIT_OBJECT_0] = active_pids[tests_left - 1];
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
-		for (i=0; i < num_tests; i++)
+		for (i = 0; i < num_tests; i++)
 		{
 			if (p == pids[i])
 			{
@@ -1043,12 +1045,12 @@ static void
 run_schedule(const char *schedule)
 {
 #define MAX_PARALLEL_TESTS 100
-	char *tests[MAX_PARALLEL_TESTS];
-	PID_TYPE pids[MAX_PARALLEL_TESTS];
+	char	   *tests[MAX_PARALLEL_TESTS];
+	PID_TYPE	pids[MAX_PARALLEL_TESTS];
 	_stringlist *ignorelist = NULL;
-	char scbuf[1024];
-	FILE *scf;
-	int line_num = 0;
+	char		scbuf[1024];
+	FILE	   *scf;
+	int			line_num = 0;
 
 	scf = fopen(schedule, "r");
 	if (!scf)
@@ -1060,17 +1062,17 @@ run_schedule(const char *schedule)
 
 	while (fgets(scbuf, sizeof(scbuf), scf))
 	{
-		char *test = NULL;
-		char *c;
-		int num_tests;
-		bool inword;
-		int i;
+		char	   *test = NULL;
+		char	   *c;
+		int			num_tests;
+		bool		inword;
+		int			i;
 
 		line_num++;
 
 		/* strip trailing whitespace, especially the newline */
 		i = strlen(scbuf);
-		while (i > 0 && isspace((unsigned char) scbuf[i-1]))
+		while (i > 0 && isspace((unsigned char) scbuf[i - 1]))
 			scbuf[--i] = '\0';
 
 		if (scbuf[0] == '\0' || scbuf[0] == '#')
@@ -1083,10 +1085,11 @@ run_schedule(const char *schedule)
 			while (*c && isspace((unsigned char) *c))
 				c++;
 			add_stringlist_item(&ignorelist, c);
+
 			/*
 			 * Note: ignore: lines do not run the test, they just say that
-			 * failure of this test when run later on is to be ignored.
-			 * A bit odd but that's how the shell-script version did it.
+			 * failure of this test when run later on is to be ignored. A bit
+			 * odd but that's how the shell-script version did it.
 			 */
 			continue;
 		}
@@ -1137,7 +1140,7 @@ run_schedule(const char *schedule)
 		}
 		else if (max_connections > 0 && max_connections < num_tests)
 		{
-			int oldest = 0;
+			int			oldest = 0;
 
 			status(_("parallel group (%d tests, in groups of %d): "),
 				   num_tests, max_connections);
@@ -1172,7 +1175,7 @@ run_schedule(const char *schedule)
 
 			if (results_differ(tests[i]))
 			{
-				bool ignore = false;
+				bool		ignore = false;
 				_stringlist *sl;
 
 				for (sl = ignorelist; sl != NULL; sl = sl->next)
@@ -1213,7 +1216,7 @@ run_schedule(const char *schedule)
 static void
 run_single_test(const char *test)
 {
-	PID_TYPE pid;
+	PID_TYPE	pid;
 
 	status(_("test %-20s ... "), test);
 	pid = psql_start_test(test);
@@ -1238,8 +1241,8 @@ run_single_test(const char *test)
 static void
 open_result_files(void)
 {
-	char file[MAXPGPATH];
-	FILE *difffile;
+	char		file[MAXPGPATH];
+	FILE	   *difffile;
 
 	/* create the log file (copy of running status output) */
 	snprintf(file, sizeof(file), "%s/regression.out", outputdir);
@@ -1313,10 +1316,10 @@ int
 main(int argc, char *argv[])
 {
 	_stringlist *sl;
-	int c;
-	int i;
-	int option_index;
-	char buf[MAXPGPATH * 4];
+	int			c;
+	int			i;
+	int			option_index;
+	char		buf[MAXPGPATH * 4];
 
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
@@ -1388,7 +1391,7 @@ main(int argc, char *argv[])
 					temp_install = strdup(optarg);
 				else
 				{
-					char cwdbuf[MAXPGPATH];
+					char		cwdbuf[MAXPGPATH];
 
 					if (!getcwd(cwdbuf, sizeof(cwdbuf)))
 					{
@@ -1396,7 +1399,7 @@ main(int argc, char *argv[])
 						exit_nicely(2);
 					}
 					temp_install = malloc(strlen(cwdbuf) + strlen(optarg) + 2);
-					sprintf(temp_install,"%s/%s", cwdbuf, optarg);
+					sprintf(temp_install, "%s/%s", cwdbuf, optarg);
 				}
 				canonicalize_path(temp_install);
 				break;
@@ -1408,7 +1411,7 @@ main(int argc, char *argv[])
 				break;
 			case 12:
 				{
-					int p = atoi(optarg);
+					int			p = atoi(optarg);
 
 					/* Since Makefile isn't very bright, check port range */
 					if (p >= 1024 && p <= 65535)
@@ -1470,7 +1473,7 @@ main(int argc, char *argv[])
 		if (directory_exists(temp_install))
 		{
 			header(_("removing existing temp installation"));
-			rmtree(temp_install,true);
+			rmtree(temp_install, true);
 		}
 
 		header(_("creating temporary installation"));
@@ -1526,9 +1529,9 @@ main(int argc, char *argv[])
 		}
 
 		/*
-		 * Wait till postmaster is able to accept connections (normally only
-		 * a second or so, but Cygwin is reportedly *much* slower).  Don't
-		 * wait forever, however.
+		 * Wait till postmaster is able to accept connections (normally only a
+		 * second or so, but Cygwin is reportedly *much* slower).  Don't wait
+		 * forever, however.
 		 */
 		snprintf(buf, sizeof(buf),
 				 SYSTEMQUOTE "\"%s/psql\" -X postgres <%s 2>%s" SYSTEMQUOTE,
@@ -1559,9 +1562,9 @@ main(int argc, char *argv[])
 			fprintf(stderr, _("\n%s: postmaster did not respond within 60 seconds\nExamine %s/log/postmaster.log for the reason\n"), progname, outputdir);
 
 			/*
-			 * If we get here, the postmaster is probably wedged somewhere
-			 * in startup.  Try to kill it ungracefully rather than leaving
-			 * a stuck postmaster that might interfere with subsequent test
+			 * If we get here, the postmaster is probably wedged somewhere in
+			 * startup.  Try to kill it ungracefully rather than leaving a
+			 * stuck postmaster that might interfere with subsequent test
 			 * attempts.
 			 */
 #ifndef WIN32
@@ -1590,21 +1593,22 @@ main(int argc, char *argv[])
 		 * pre-existing database.
 		 */
 		header(_("dropping database \"%s\""), dbname);
-		psql_command("postgres","DROP DATABASE IF EXISTS \"%s\"", dbname);
+		psql_command("postgres", "DROP DATABASE IF EXISTS \"%s\"", dbname);
 	}
 
 	/*
 	 * Create the test database
 	 *
-	 * We use template0 so that any installation-local cruft in template1
-	 * will not mess up the tests.
+	 * We use template0 so that any installation-local cruft in template1 will
+	 * not mess up the tests.
 	 */
 	header(_("creating database \"%s\""), dbname);
 	if (encoding)
 		psql_command("postgres",
-					 "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'",
+				   "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'",
 					 dbname, encoding);
-	else						/* use installation default */
+	else
+		/* use installation default */
 		psql_command("postgres",
 					 "CREATE DATABASE \"%s\" TEMPLATE=template0",
 					 dbname);
@@ -1614,7 +1618,7 @@ main(int argc, char *argv[])
 				 "ALTER DATABASE \"%s\" SET lc_monetary TO 'C';"
 				 "ALTER DATABASE \"%s\" SET lc_numeric TO 'C';"
 				 "ALTER DATABASE \"%s\" SET lc_time TO 'C';"
-				 "ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
+			"ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
 				 dbname, dbname, dbname, dbname, dbname);
 
 	/*
@@ -1659,22 +1663,23 @@ main(int argc, char *argv[])
 		snprintf(buf, sizeof(buf),
 				 _(" All %d tests passed. "),
 				 success_count);
-	else if (fail_count == 0) /* fail_count=0, fail_ignore_count>0 */
+	else if (fail_count == 0)	/* fail_count=0, fail_ignore_count>0 */
 		snprintf(buf, sizeof(buf),
 				 _(" %d of %d tests passed, %d failed test(s) ignored. "),
 				 success_count,
 				 success_count + fail_ignore_count,
 				 fail_ignore_count);
-	else if (fail_ignore_count == 0) /* fail_count>0 && fail_ignore_count=0 */
+	else if (fail_ignore_count == 0)	/* fail_count>0 && fail_ignore_count=0 */
 		snprintf(buf, sizeof(buf),
 				 _(" %d of %d tests failed. "),
 				 fail_count,
-				 success_count+fail_count);
-	else /* fail_count>0 && fail_ignore_count>0 */
+				 success_count + fail_count);
+	else
+		/* fail_count>0 && fail_ignore_count>0 */
 		snprintf(buf, sizeof(buf),
 				 _(" %d of %d tests failed, %d of these failures ignored. "),
-				 fail_count+fail_ignore_count,
-				 success_count + fail_count+fail_ignore_count,
+				 fail_count + fail_ignore_count,
+				 success_count + fail_count + fail_ignore_count,
 				 fail_ignore_count);
 
 	putchar('\n');

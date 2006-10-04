@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.123 2006/10/03 21:11:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.124 2006/10/04 00:30:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ static int	output_errno = 0;
 /* defaults */
 static int	n_connections = 10;
 static int	n_buffers = 50;
-static int  n_fsm_pages = 20000; 
+static int	n_fsm_pages = 20000;
 
 /*
  * Warning messages for authentication methods
@@ -191,8 +191,9 @@ static int	locale_date_order(const char *locale);
 static bool chklocale(const char *locale);
 static void setlocales(void);
 static void usage(const char *progname);
+
 #ifdef WIN32
-static int CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo);
+static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo);
 #endif
 
 
@@ -1102,21 +1103,21 @@ test_config_settings(void)
 {
 	/*
 	 * These macros define the minimum shared_buffers we want for a given
-	 * max_connections value, and the max_fsm_pages setting to be used for
-	 * a given shared_buffers value.  The arrays show the settings to try.
+	 * max_connections value, and the max_fsm_pages setting to be used for a
+	 * given shared_buffers value.	The arrays show the settings to try.
 	 *
 	 */
 
-#define MIN_BUFS_FOR_CONNS(nconns)  ((nconns) * 10 * (BLCKSZ/1024))
-#define FSM_FOR_BUFS(nbuffers)  ((nbuffers) > 1000 ? 50 * (nbuffers) : 20000)
+#define MIN_BUFS_FOR_CONNS(nconns)	((nconns) * 10 * (BLCKSZ/1024))
+#define FSM_FOR_BUFS(nbuffers)	((nbuffers) > 1000 ? 50 * (nbuffers) : 20000)
 
 	static const int trial_conns[] = {
 		100, 50, 40, 30, 20, 10
 	};
 
 	/*
-	 * Candidate values for shared_buffers in kB. When the value is
-	 * divisible by 1024, we write it in MB-unit to configuration files.
+	 * Candidate values for shared_buffers in kB. When the value is divisible
+	 * by 1024, we write it in MB-unit to configuration files.
 	 */
 	static const int trial_bufs[] = {
 		32768, 28672, 24576, 20480, 16384, 12288,
@@ -1124,15 +1125,15 @@ test_config_settings(void)
 	};
 
 	char		cmd[MAXPGPATH];
-	const int connslen = sizeof(trial_conns) / sizeof(int);
-	const int bufslen = sizeof(trial_bufs) / sizeof(int);
+	const int	connslen = sizeof(trial_conns) / sizeof(int);
+	const int	bufslen = sizeof(trial_bufs) / sizeof(int);
 	int			i,
 				status,
 				test_conns,
 				test_buffs,
-		        test_max_fsm,
-        		ok_buffers = 0;
-	  
+				test_max_fsm,
+				ok_buffers = 0;
+
 
 	printf(_("selecting default max_connections ... "));
 	fflush(stdout);
@@ -1195,7 +1196,7 @@ test_config_settings(void)
 	n_fsm_pages = FSM_FOR_BUFS(n_buffers);
 
 	if (n_buffers % 1024 == 0)
-		printf("%dMB/%d\n", n_buffers/1024, n_fsm_pages);
+		printf("%dMB/%d\n", n_buffers / 1024, n_fsm_pages);
 	else
 		printf("%dkB/%d\n", n_buffers, n_fsm_pages);
 }
@@ -1221,7 +1222,7 @@ setup_config(void)
 	conflines = replace_token(conflines, "#max_connections = 100", repltok);
 
 	if (n_buffers % 1024 == 0)
-		snprintf(repltok, sizeof(repltok), "shared_buffers = %dMB", n_buffers/1024);
+		snprintf(repltok, sizeof(repltok), "shared_buffers = %dMB", n_buffers / 1024);
 	else
 		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB", n_buffers);
 	conflines = replace_token(conflines, "#shared_buffers = 32MB", repltok);
@@ -1250,7 +1251,8 @@ setup_config(void)
 			 escape_quotes(lc_time));
 	conflines = replace_token(conflines, "#lc_time = 'C'", repltok);
 
-	switch (locale_date_order(lc_time)) {
+	switch (locale_date_order(lc_time))
+	{
 		case DATEORDER_YMD:
 			strcpy(repltok, "datestyle = 'iso, ymd'");
 			break;
@@ -2083,7 +2085,7 @@ check_ok(void)
  *
  * Note: this is used to process both postgresql.conf entries and SQL
  * string literals.  Since postgresql.conf strings are defined to treat
- * backslashes as escapes, we have to double backslashes here.  Hence,
+ * backslashes as escapes, we have to double backslashes here.	Hence,
  * when using this for a SQL string literal, use E'' syntax.
  *
  * We do not need to worry about encoding considerations because all
@@ -2245,8 +2247,9 @@ setlocales(void)
 }
 
 #ifdef WIN32
-typedef BOOL (WINAPI *__CreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-#define DISABLE_MAX_PRIVILEGE   0x1 
+typedef		BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+
+#define DISABLE_MAX_PRIVILEGE	0x1
 
 /*
  * Create a restricted token and execute the specified process with it.
@@ -2256,75 +2259,75 @@ typedef BOOL (WINAPI *__CreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_AT
  * On NT4, or any other system not containing the required functions, will
  * NOT execute anything.
  */
-static int 
-CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
+static int
+CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 {
-    BOOL b;
-    STARTUPINFO si;
-    HANDLE origToken;
-    HANDLE restrictedToken;
-    SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
-    SID_AND_ATTRIBUTES dropSids[2];
-    __CreateRestrictedToken _CreateRestrictedToken = NULL;
-    HANDLE Advapi32Handle;
-    
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
+	BOOL		b;
+	STARTUPINFO si;
+	HANDLE		origToken;
+	HANDLE		restrictedToken;
+	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+	SID_AND_ATTRIBUTES dropSids[2];
+	__CreateRestrictedToken _CreateRestrictedToken = NULL;
+	HANDLE		Advapi32Handle;
 
-    Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
-    if (Advapi32Handle != NULL)
-    {
-        _CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
-    }
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
 
-    if (_CreateRestrictedToken == NULL)
-    {
-        fprintf(stderr,"WARNING: Unable to create restricted tokens on this platform\n");
-        if (Advapi32Handle != NULL)
-            FreeLibrary(Advapi32Handle);
-        return 0;
-    }
+	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+	if (Advapi32Handle != NULL)
+	{
+		_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+	}
 
-    /* Open the current token to use as a base for the restricted one */
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
-    {
-        fprintf(stderr, "Failed to open process token: %lu\n", GetLastError());
-        return 0;
-    }
+	if (_CreateRestrictedToken == NULL)
+	{
+		fprintf(stderr, "WARNING: Unable to create restricted tokens on this platform\n");
+		if (Advapi32Handle != NULL)
+			FreeLibrary(Advapi32Handle);
+		return 0;
+	}
 
-    /* Allocate list of SIDs to remove */
-    ZeroMemory(&dropSids, sizeof(dropSids));
-    if (!AllocateAndInitializeSid(&NtAuthority, 2,
-            SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0,0,0,0,0,
-            0, &dropSids[0].Sid) ||
-        !AllocateAndInitializeSid(&NtAuthority, 2, 
-            SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0,0,0,0,0,
-            0, &dropSids[1].Sid))
-    {
-        fprintf(stderr,"Failed to allocate SIDs: %lu\n", GetLastError());
-        return 0;
-    }
+	/* Open the current token to use as a base for the restricted one */
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
+	{
+		fprintf(stderr, "Failed to open process token: %lu\n", GetLastError());
+		return 0;
+	}
 
-    b = _CreateRestrictedToken(origToken,
-            DISABLE_MAX_PRIVILEGE,
-            sizeof(dropSids)/sizeof(dropSids[0]),
-            dropSids,
-            0, NULL,
-            0, NULL,
-            &restrictedToken);
-    
-    FreeSid(dropSids[1].Sid);
-    FreeSid(dropSids[0].Sid);
-    CloseHandle(origToken);
-    FreeLibrary(Advapi32Handle);
+	/* Allocate list of SIDs to remove */
+	ZeroMemory(&dropSids, sizeof(dropSids));
+	if (!AllocateAndInitializeSid(&NtAuthority, 2,
+		 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
+								  0, &dropSids[0].Sid) ||
+		!AllocateAndInitializeSid(&NtAuthority, 2,
+	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
+								  0, &dropSids[1].Sid))
+	{
+		fprintf(stderr, "Failed to allocate SIDs: %lu\n", GetLastError());
+		return 0;
+	}
 
-    if (!b)
-    {
-        fprintf(stderr,"Failed to create restricted token: %lu\n", GetLastError());
-        return 0;
-    }
+	b = _CreateRestrictedToken(origToken,
+							   DISABLE_MAX_PRIVILEGE,
+							   sizeof(dropSids) / sizeof(dropSids[0]),
+							   dropSids,
+							   0, NULL,
+							   0, NULL,
+							   &restrictedToken);
 
-    return CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, processInfo);
+	FreeSid(dropSids[1].Sid);
+	FreeSid(dropSids[0].Sid);
+	CloseHandle(origToken);
+	FreeLibrary(Advapi32Handle);
+
+	if (!b)
+	{
+		fprintf(stderr, "Failed to create restricted token: %lu\n", GetLastError());
+		return 0;
+	}
+
+	return CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &si, processInfo);
 }
 #endif
 
@@ -2382,7 +2385,7 @@ main(int argc, char *argv[])
 		{"lc-messages", required_argument, NULL, 7},
 		{"no-locale", no_argument, NULL, 8},
 		{"auth", required_argument, NULL, 'A'},
-		{"pwprompt", no_argument, NULL, 'W'},  
+		{"pwprompt", no_argument, NULL, 'W'},
 		{"pwfile", required_argument, NULL, 9},
 		{"username", required_argument, NULL, 'U'},
 		{"help", no_argument, NULL, '?'},
@@ -2398,13 +2401,14 @@ main(int argc, char *argv[])
 				ret;
 	int			option_index;
 	char	   *short_version;
-    char       *effective_user;
+	char	   *effective_user;
 	char	   *pgdenv;			/* PGDATA value gotten from and sent to
 								 * environment */
 	char		bin_dir[MAXPGPATH];
 	char	   *pg_data_native;
+
 #ifdef WIN32
-	char       *restrict_env;
+	char	   *restrict_env;
 #endif
 	static const char *subdirs[] = {
 		"global",
@@ -2592,43 +2596,47 @@ main(int argc, char *argv[])
 	canonicalize_path(pg_data);
 
 #ifdef WIN32
-    /* 
-     * Before we execute another program, make sure that we are running with a 
-     * restricted token. If not, re-execute ourselves with one.
-     */
 
-	if ((restrict_env = getenv("PG_RESTRICT_EXEC")) == NULL 
-		|| strcmp(restrict_env,"1") != 0)
-    {
-        PROCESS_INFORMATION pi;
-        char *cmdline;
-        
-        ZeroMemory(&pi, sizeof(pi));
+	/*
+	 * Before we execute another program, make sure that we are running with a
+	 * restricted token. If not, re-execute ourselves with one.
+	 */
 
-        cmdline = xstrdup(GetCommandLine());
+	if ((restrict_env = getenv("PG_RESTRICT_EXEC")) == NULL
+		|| strcmp(restrict_env, "1") != 0)
+	{
+		PROCESS_INFORMATION pi;
+		char	   *cmdline;
+
+		ZeroMemory(&pi, sizeof(pi));
+
+		cmdline = xstrdup(GetCommandLine());
 
 		putenv("PG_RESTRICT_EXEC=1");
-        
-        if (!CreateRestrictedProcess(cmdline, &pi))
-        {
-            fprintf(stderr,"Failed to re-exec with restricted token: %lu.\n", GetLastError());
-        }
-        else
-        {
-            /* Successfully re-execed. Now wait for child process to capture exitcode. */
-            DWORD x;
-            
-            CloseHandle(pi.hThread);
-            WaitForSingleObject(pi.hProcess, INFINITE);
 
-            if (!GetExitCodeProcess(pi.hProcess, &x))
-            {
-                fprintf(stderr,"Failed to get exit code from subprocess: %lu\n", GetLastError());
-                exit(1);
-            }
-            exit(x);
-        }
-    }
+		if (!CreateRestrictedProcess(cmdline, &pi))
+		{
+			fprintf(stderr, "Failed to re-exec with restricted token: %lu.\n", GetLastError());
+		}
+		else
+		{
+			/*
+			 * Successfully re-execed. Now wait for child process to capture
+			 * exitcode.
+			 */
+			DWORD		x;
+
+			CloseHandle(pi.hThread);
+			WaitForSingleObject(pi.hProcess, INFINITE);
+
+			if (!GetExitCodeProcess(pi.hProcess, &x))
+			{
+				fprintf(stderr, "Failed to get exit code from subprocess: %lu\n", GetLastError());
+				exit(1);
+			}
+			exit(x);
+		}
+	}
 #endif
 
 	/*

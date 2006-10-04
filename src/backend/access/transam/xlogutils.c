@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.47 2006/07/14 14:52:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.48 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,8 +172,8 @@ XLogCheckInvalidPages(void)
 	hash_seq_init(&status, invalid_page_tab);
 
 	/*
-	 * Our strategy is to emit WARNING messages for all remaining entries
-	 * and only PANIC after we've dumped all the available info.
+	 * Our strategy is to emit WARNING messages for all remaining entries and
+	 * only PANIC after we've dumped all the available info.
 	 */
 	while ((hentry = (xl_invalid_page *) hash_seq_search(&status)) != NULL)
 	{
@@ -255,7 +255,7 @@ XLogReadBuffer(Relation reln, BlockNumber blkno, bool init)
 	if (!init)
 	{
 		/* check that page has been initialized */
-		Page	page = (Page) BufferGetPage(buffer);
+		Page		page = (Page) BufferGetPage(buffer);
 
 		if (PageIsNew((PageHeader) page))
 		{

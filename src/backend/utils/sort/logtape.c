@@ -55,7 +55,7 @@
  * To support the above policy of writing to the lowest free block,
  * ltsGetFreeBlock sorts the list of free block numbers into decreasing
  * order each time it is asked for a block and the list isn't currently
- * sorted.  This is an efficient way to handle it because we expect cycles
+ * sorted.	This is an efficient way to handle it because we expect cycles
  * of releasing many blocks followed by re-using many blocks, due to
  * tuplesort.c's "preread" behavior.
  *
@@ -70,7 +70,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.21 2006/03/07 23:46:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.22 2006/10/04 00:30:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ struct LogicalTapeSet
 	 *
 	 * If blocksSorted is true then the block numbers in freeBlocks are in
 	 * *decreasing* order, so that removing the last entry gives us the lowest
-	 * free block.  We re-sort the blocks whenever a block is demanded; this
+	 * free block.	We re-sort the blocks whenever a block is demanded; this
 	 * should be reasonably efficient given the expected usage pattern.
 	 */
 	bool		forgetFreeSpace;	/* are we remembering free blocks? */
@@ -171,7 +171,7 @@ struct LogicalTapeSet
 	 * is of length nTapes.
 	 */
 	int			nTapes;			/* # of logical tapes in set */
-	LogicalTape	tapes[1];		/* must be last in struct! */
+	LogicalTape tapes[1];		/* must be last in struct! */
 };
 
 static void ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
@@ -303,12 +303,12 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 	}
 
 	/*
-	 * Add blocknum to array, and mark the array unsorted if it's no longer
-	 * in decreasing order.
+	 * Add blocknum to array, and mark the array unsorted if it's no longer in
+	 * decreasing order.
 	 */
 	ndx = lts->nFreeBlocks++;
 	lts->freeBlocks[ndx] = blocknum;
-	if (ndx > 0 && lts->freeBlocks[ndx-1] < blocknum)
+	if (ndx > 0 && lts->freeBlocks[ndx - 1] < blocknum)
 		lts->blocksSorted = false;
 }
 
@@ -522,12 +522,12 @@ LogicalTapeSetCreate(int ntapes)
 	int			i;
 
 	/*
-	 * Create top-level struct including per-tape LogicalTape structs.
-	 * First LogicalTape struct is already counted in sizeof(LogicalTapeSet).
+	 * Create top-level struct including per-tape LogicalTape structs. First
+	 * LogicalTape struct is already counted in sizeof(LogicalTapeSet).
 	 */
 	Assert(ntapes > 0);
 	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet) +
-									(ntapes - 1) * sizeof(LogicalTape));
+									(ntapes - 1) *sizeof(LogicalTape));
 	lts->pfile = BufFileCreateTemp(false);
 	lts->nFileBlocks = 0L;
 	lts->forgetFreeSpace = false;
@@ -540,7 +540,7 @@ LogicalTapeSetCreate(int ntapes)
 	/*
 	 * Initialize per-tape structs.  Note we allocate the I/O buffer and
 	 * first-level indirect block for a tape only when it is first actually
-	 * written to.  This avoids wasting memory space when tuplesort.c
+	 * written to.	This avoids wasting memory space when tuplesort.c
 	 * overestimates the number of tapes needed.
 	 */
 	for (i = 0; i < ntapes; i++)
@@ -591,7 +591,7 @@ LogicalTapeSetClose(LogicalTapeSet *lts)
  * Mark a logical tape set as not needing management of free space anymore.
  *
  * This should be called if the caller does not intend to write any more data
- * into the tape set, but is reading from un-frozen tapes.  Since no more
+ * into the tape set, but is reading from un-frozen tapes.	Since no more
  * writes are planned, remembering free blocks is no longer useful.  Setting
  * this flag lets us avoid wasting time and space in ltsReleaseBlock(), which
  * is not designed to handle large numbers of free blocks.

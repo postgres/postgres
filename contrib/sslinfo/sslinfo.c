@@ -4,7 +4,7 @@
  * Written by Victor B. Wagner <vitus@cryptocom.ru>, Cryptocom LTD
  * This file is distributed under BSD-style license.
  *
- * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.4 2006/09/30 18:44:37 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/sslinfo/sslinfo.c,v 1.5 2006/10/04 00:29:46 momjian Exp $
  */
 
 #include "postgres.h"
@@ -22,28 +22,29 @@
 PG_MODULE_MAGIC;
 
 
-Datum ssl_is_used(PG_FUNCTION_ARGS);
-Datum ssl_client_cert_present(PG_FUNCTION_ARGS);
-Datum ssl_client_serial(PG_FUNCTION_ARGS);
-Datum ssl_client_dn_field(PG_FUNCTION_ARGS);
-Datum ssl_issuer_field(PG_FUNCTION_ARGS);
-Datum ssl_client_dn(PG_FUNCTION_ARGS);
-Datum ssl_issuer_dn(PG_FUNCTION_ARGS);
-Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName);
-Datum X509_NAME_to_text(X509_NAME *name);
-Datum ASN1_STRING_to_text(ASN1_STRING *str);
+Datum		ssl_is_used(PG_FUNCTION_ARGS);
+Datum		ssl_client_cert_present(PG_FUNCTION_ARGS);
+Datum		ssl_client_serial(PG_FUNCTION_ARGS);
+Datum		ssl_client_dn_field(PG_FUNCTION_ARGS);
+Datum		ssl_issuer_field(PG_FUNCTION_ARGS);
+Datum		ssl_client_dn(PG_FUNCTION_ARGS);
+Datum		ssl_issuer_dn(PG_FUNCTION_ARGS);
+Datum		X509_NAME_field_to_text(X509_NAME *name, text *fieldName);
+Datum		X509_NAME_to_text(X509_NAME *name);
+Datum		ASN1_STRING_to_text(ASN1_STRING *str);
 
 
-/* 
+/*
  * Indicates whether current session uses SSL
  *
  * Function has no arguments.  Returns bool.  True if current session
  * is SSL session and false if it is local or non-ssl session.
  */
 PG_FUNCTION_INFO_V1(ssl_is_used);
-Datum ssl_is_used(PG_FUNCTION_ARGS)
+Datum
+ssl_is_used(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BOOL(MyProcPort->ssl !=NULL);
+	PG_RETURN_BOOL(MyProcPort->ssl != NULL);
 }
 
 
@@ -54,7 +55,8 @@ Datum ssl_is_used(PG_FUNCTION_ARGS)
  * is SSL session and client certificate is verified, otherwise false.
  */
 PG_FUNCTION_INFO_V1(ssl_client_cert_present);
-Datum ssl_client_cert_present(PG_FUNCTION_ARGS)
+Datum
+ssl_client_cert_present(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_BOOL(MyProcPort->peer != NULL);
 }
@@ -69,20 +71,22 @@ Datum ssl_client_cert_present(PG_FUNCTION_ARGS)
  * SSL connection is established without sending client certificate.
  */
 PG_FUNCTION_INFO_V1(ssl_client_serial);
-Datum ssl_client_serial(PG_FUNCTION_ARGS)
+Datum
+ssl_client_serial(PG_FUNCTION_ARGS)
 {
-	Datum result;
-	Port *port = MyProcPort;
-	X509 *peer = port->peer;
+	Datum		result;
+	Port	   *port = MyProcPort;
+	X509	   *peer = port->peer;
 	ASN1_INTEGER *serial = NULL;
-	BIGNUM *b;
-	char *decimal;
+	BIGNUM	   *b;
+	char	   *decimal;
 
 	if (!peer)
 		PG_RETURN_NULL();
 	serial = X509_get_serialNumber(peer);
 	b = ASN1_INTEGER_to_BN(serial, NULL);
 	decimal = BN_bn2dec(b);
+
 	BN_free(b);
 	result = DirectFunctionCall3(numeric_in,
 								 CStringGetDatum(decimal),
@@ -100,23 +104,25 @@ Datum ssl_client_serial(PG_FUNCTION_ARGS)
  * current database encoding if possible.  Any invalid characters are
  * replaced by question marks.
  *
- * Parameter: str - OpenSSL ASN1_STRING structure.  Memory managment
+ * Parameter: str - OpenSSL ASN1_STRING structure.	Memory managment
  * of this structure is responsibility of caller.
  *
  * Returns Datum, which can be directly returned from a C language SQL
  * function.
  */
-Datum ASN1_STRING_to_text(ASN1_STRING *str)
+Datum
+ASN1_STRING_to_text(ASN1_STRING *str)
 {
-	BIO *membuf = NULL;
-	size_t size, outlen;
-	char *sp;
-	char *dp;
-	text *result;
+	BIO		   *membuf = NULL;
+	size_t		size,
+				outlen;
+	char	   *sp;
+	char	   *dp;
+	text	   *result;
 
 	membuf = BIO_new(BIO_s_mem());
 	(void) BIO_set_close(membuf, BIO_CLOSE);
-	ASN1_STRING_print_ex(membuf,str,
+	ASN1_STRING_print_ex(membuf, str,
 						 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
 						  | ASN1_STRFLGS_UTF8_CONVERT));
 
@@ -124,7 +130,7 @@ Datum ASN1_STRING_to_text(ASN1_STRING *str)
 	BIO_write(membuf, &outlen, 1);
 	size = BIO_get_mem_data(membuf, &sp);
 	dp = (char *) pg_do_encoding_conversion((unsigned char *) sp,
-											size-1,
+											size - 1,
 											PG_UTF8,
 											GetDatabaseEncoding());
 	outlen = strlen(dp);
@@ -146,18 +152,21 @@ Datum ASN1_STRING_to_text(ASN1_STRING *str)
  *
  * Parameter: X509_NAME *name - either subject or issuer of certificate
  * Parameter: text fieldName  - field name string like 'CN' or commonName
- *            to be looked up in the OpenSSL ASN1 OID database
+ *			  to be looked up in the OpenSSL ASN1 OID database
  *
  * Returns result of ASN1_STRING_to_text applied to appropriate
  * part of name
  */
-Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
+Datum
+X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 {
-	char *sp;
-	char *string_fieldname;
-	char *dp;
-	size_t name_len = VARSIZE(fieldName) - VARHDRSZ;
-	int nid, index, i;
+	char	   *sp;
+	char	   *string_fieldname;
+	char	   *dp;
+	size_t		name_len = VARSIZE(fieldName) - VARHDRSZ;
+	int			nid,
+				index,
+				i;
 	ASN1_STRING *data;
 
 	string_fieldname = palloc(name_len + 1);
@@ -175,7 +184,7 @@ Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
 	pfree(string_fieldname);
 	index = X509_NAME_get_index_by_NID(name, nid, -1);
 	if (index < 0)
-		return (Datum)0;
+		return (Datum) 0;
 	data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, index));
 	return ASN1_STRING_to_text(data);
 }
@@ -198,10 +207,11 @@ Datum X509_NAME_field_to_text(X509_NAME *name, text *fieldName)
  * there is no field with such name in the certificate.
  */
 PG_FUNCTION_INFO_V1(ssl_client_dn_field);
-Datum ssl_client_dn_field(PG_FUNCTION_ARGS)
+Datum
+ssl_client_dn_field(PG_FUNCTION_ARGS)
 {
-	text *fieldname = PG_GETARG_TEXT_P(0);
-	Datum result;
+	text	   *fieldname = PG_GETARG_TEXT_P(0);
+	Datum		result;
 
 	if (!(MyProcPort->peer))
 		PG_RETURN_NULL();
@@ -232,10 +242,11 @@ Datum ssl_client_dn_field(PG_FUNCTION_ARGS)
  * there is no field with such name in the certificate.
  */
 PG_FUNCTION_INFO_V1(ssl_issuer_field);
-Datum ssl_issuer_field(PG_FUNCTION_ARGS)
+Datum
+ssl_issuer_field(PG_FUNCTION_ARGS)
 {
-	text *fieldname = PG_GETARG_TEXT_P(0);
-	Datum result;
+	text	   *fieldname = PG_GETARG_TEXT_P(0);
+	Datum		result;
 
 	if (!(MyProcPort->peer))
 		PG_RETURN_NULL();
@@ -260,21 +271,25 @@ Datum ssl_issuer_field(PG_FUNCTION_ARGS)
  * Returns: text datum which contains string representation of
  * X509_NAME
  */
-Datum X509_NAME_to_text(X509_NAME *name)
+Datum
+X509_NAME_to_text(X509_NAME *name)
 {
-	BIO *membuf = BIO_new(BIO_s_mem());
-	int i,nid,count = X509_NAME_entry_count(name);
+	BIO		   *membuf = BIO_new(BIO_s_mem());
+	int			i,
+				nid,
+				count = X509_NAME_entry_count(name);
 	X509_NAME_ENTRY *e;
 	ASN1_STRING *v;
 
 	const char *field_name;
-	size_t size,outlen;
-	char *sp;
-	char *dp;
-	text *result;
+	size_t		size,
+				outlen;
+	char	   *sp;
+	char	   *dp;
+	text	   *result;
 
 	(void) BIO_set_close(membuf, BIO_CLOSE);
-	for (i=0; i<count; i++)
+	for (i = 0; i < count; i++)
 	{
 		e = X509_NAME_get_entry(name, i);
 		nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(e));
@@ -283,17 +298,17 @@ Datum X509_NAME_to_text(X509_NAME *name)
 		if (!field_name)
 			field_name = OBJ_nid2ln(nid);
 		BIO_printf(membuf, "/%s=", field_name);
-		ASN1_STRING_print_ex(membuf,v,
+		ASN1_STRING_print_ex(membuf, v,
 							 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
 							  | ASN1_STRFLGS_UTF8_CONVERT));
 	}
 
-	i=0;
+	i = 0;
 	BIO_write(membuf, &i, 1);
 	size = BIO_get_mem_data(membuf, &sp);
 
 	dp = (char *) pg_do_encoding_conversion((unsigned char *) sp,
-											size-1,
+											size - 1,
 											PG_UTF8,
 											GetDatabaseEncoding());
 	BIO_free(membuf);
@@ -301,8 +316,10 @@ Datum X509_NAME_to_text(X509_NAME *name)
 	result = palloc(VARHDRSZ + outlen);
 	memcpy(VARDATA(result), dp, outlen);
 
-	/* pg_do_encoding_conversion has annoying habit of returning
-	 * source pointer */
+	/*
+	 * pg_do_encoding_conversion has annoying habit of returning source
+	 * pointer
+	 */
 	if (dp != sp)
 		pfree(dp);
 	VARATT_SIZEP(result) = outlen + VARHDRSZ;
@@ -320,7 +337,8 @@ Datum X509_NAME_to_text(X509_NAME *name)
  * Returns text datum.
  */
 PG_FUNCTION_INFO_V1(ssl_client_dn);
-Datum ssl_client_dn(PG_FUNCTION_ARGS)
+Datum
+ssl_client_dn(PG_FUNCTION_ARGS)
 {
 	if (!(MyProcPort->peer))
 		PG_RETURN_NULL();
@@ -338,7 +356,8 @@ Datum ssl_client_dn(PG_FUNCTION_ARGS)
  * Returns text datum.
  */
 PG_FUNCTION_INFO_V1(ssl_issuer_dn);
-Datum ssl_issuer_dn(PG_FUNCTION_ARGS)
+Datum
+ssl_issuer_dn(PG_FUNCTION_ARGS)
 {
 	if (!(MyProcPort->peer))
 		PG_RETURN_NULL();

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.28 2006/09/27 18:40:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.29 2006/10/04 00:30:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,9 @@ string_hash(const void *key, Size keysize)
 	 * because when it is copied into the hash table it will be truncated at
 	 * that length.
 	 */
-	Size	s_len = strlen((const char *) key);
+	Size		s_len = strlen((const char *) key);
 
-	s_len = Min(s_len, keysize-1);
+	s_len = Min(s_len, keysize - 1);
 	return DatumGetUInt32(hash_any((const unsigned char *) key,
 								   (int) s_len));
 }

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.13 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.14 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,8 +192,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		pgstat_count_heap_fetch(&scan->rs_pgstat_info);
 
 		/*
-		 * Set up the result slot to point to this tuple. Note that the
-		 * slot acquires a pin on the buffer.
+		 * Set up the result slot to point to this tuple. Note that the slot
+		 * acquires a pin on the buffer.
 		 */
 		ExecStoreTuple(&scan->rs_ctup,
 					   slot,
@@ -201,8 +201,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 					   false);
 
 		/*
-		 * If we are using lossy info, we have to recheck the qual
-		 * conditions at every tuple.
+		 * If we are using lossy info, we have to recheck the qual conditions
+		 * at every tuple.
 		 */
 		if (tbmres->ntuples < 0)
 		{
@@ -237,7 +237,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 static void
 bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 {
-	BlockNumber	page = tbmres->blockno;
+	BlockNumber page = tbmres->blockno;
 	Buffer		buffer;
 	Snapshot	snapshot;
 	Page		dp;
@@ -259,9 +259,9 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	snapshot = scan->rs_snapshot;
 
 	/*
-	 * We must hold share lock on the buffer content while examining
-	 * tuple visibility.  Afterwards, however, the tuples we have found
-	 * to be visible are guaranteed good as long as we hold the buffer pin.
+	 * We must hold share lock on the buffer content while examining tuple
+	 * visibility.	Afterwards, however, the tuples we have found to be
+	 * visible are guaranteed good as long as we hold the buffer pin.
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
@@ -269,10 +269,9 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	maxoff = PageGetMaxOffsetNumber(dp);
 
 	/*
-	 * Determine how many entries we need to look at on this page. If
-	 * the bitmap is lossy then we need to look at each physical item
-	 * pointer; otherwise we just look through the offsets listed in
-	 * tbmres.
+	 * Determine how many entries we need to look at on this page. If the
+	 * bitmap is lossy then we need to look at each physical item pointer;
+	 * otherwise we just look through the offsets listed in tbmres.
 	 */
 	if (tbmres->ntuples >= 0)
 	{
@@ -467,8 +466,8 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
-	 * Assert caller didn't ask for an unsafe snapshot --- see comments
-	 * at head of file.
+	 * Assert caller didn't ask for an unsafe snapshot --- see comments at
+	 * head of file.
 	 */
 	Assert(IsMVCCSnapshot(estate->es_snapshot));
 
@@ -549,8 +548,8 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	 * initialize child nodes
 	 *
 	 * We do this last because the child nodes will open indexscans on our
-	 * relation's indexes, and we want to be sure we have acquired a lock
-	 * on the relation first.
+	 * relation's indexes, and we want to be sure we have acquired a lock on
+	 * the relation first.
 	 */
 	outerPlanState(scanstate) = ExecInitNode(outerPlan(node), estate, eflags);
 

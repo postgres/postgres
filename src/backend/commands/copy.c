@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.271 2006/08/31 03:17:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.272 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,8 @@ typedef struct CopyStateData
 	/* low-level state data */
 	CopyDest	copy_dest;		/* type of copy source/destination */
 	FILE	   *copy_file;		/* used if copy_dest == COPY_FILE */
-	StringInfo	fe_msgbuf;		/* used for all dests during COPY TO, only
-								 * for dest == COPY_NEW_FE in COPY FROM */
+	StringInfo	fe_msgbuf;		/* used for all dests during COPY TO, only for
+								 * dest == COPY_NEW_FE in COPY FROM */
 	bool		fe_copy;		/* true for all FE copy dests */
 	bool		fe_eof;			/* true if detected end of copy data */
 	EolType		eol_type;		/* EOL type of input */
@@ -109,7 +109,7 @@ typedef struct CopyStateData
 	bool		header_line;	/* CSV header line? */
 	char	   *null_print;		/* NULL marker string (server encoding!) */
 	int			null_print_len; /* length of same */
-	char	   *null_print_client; /* same converted to client encoding */
+	char	   *null_print_client;		/* same converted to client encoding */
 	char	   *delim;			/* column delimiter (must be 1 byte) */
 	char	   *quote;			/* CSV quote char (must be 1 byte) */
 	char	   *escape;			/* CSV escape char (must be 1 byte) */
@@ -125,8 +125,8 @@ typedef struct CopyStateData
 	/*
 	 * Working state for COPY TO
 	 */
-	FmgrInfo   *out_functions;		/* lookup info for output functions */
-	MemoryContext rowcontext;		/* per-row evaluation context */
+	FmgrInfo   *out_functions;	/* lookup info for output functions */
+	MemoryContext rowcontext;	/* per-row evaluation context */
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -177,7 +177,7 @@ typedef struct
  * function call overhead in tight COPY loops.
  *
  * We must use "if (1)" because "do {} while(0)" overrides the continue/break
- * processing.  See http://www.cit.gu.edu.au/~anthony/info/C/C.macros.
+ * processing.	See http://www.cit.gu.edu.au/~anthony/info/C/C.macros.
  */
 
 /*
@@ -243,7 +243,7 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 static void DoCopyTo(CopyState cstate);
 static void CopyTo(CopyState cstate);
 static void CopyOneRowTo(CopyState cstate, Oid tupleOid,
-						 Datum *values, bool *nulls);
+			 Datum *values, bool *nulls);
 static void CopyFrom(CopyState cstate);
 static bool CopyReadLine(CopyState cstate);
 static bool CopyReadLineText(CopyState cstate);
@@ -259,7 +259,7 @@ static void CopyAttributeOutText(CopyState cstate, char *string);
 static void CopyAttributeOutCSV(CopyState cstate, char *string,
 					bool use_quote, bool single_attr);
 static List *CopyGetAttnums(TupleDesc tupDesc, Relation rel,
-							List *attnamelist);
+			   List *attnamelist);
 static char *limit_printout_length(const char *str);
 
 /* Low-level communications functions */
@@ -863,10 +863,10 @@ DoCopy(const CopyStmt *stmt)
 
 	/* Disallow end-of-line characters */
 	if (strchr(cstate->delim, '\r') != NULL ||
-	    strchr(cstate->delim, '\n') != NULL)
+		strchr(cstate->delim, '\n') != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("COPY delimiter cannot be newline or carriage return")));
+			 errmsg("COPY delimiter cannot be newline or carriage return")));
 
 	if (strchr(cstate->null_print, '\r') != NULL ||
 		strchr(cstate->null_print, '\n') != NULL)
@@ -956,7 +956,7 @@ DoCopy(const CopyStmt *stmt)
 
 		/* Open and lock the relation, using the appropriate lock type. */
 		cstate->rel = heap_openrv(stmt->relation,
-								  (is_from ? RowExclusiveLock : AccessShareLock));
+							 (is_from ? RowExclusiveLock : AccessShareLock));
 
 		/* Check relation permissions. */
 		aclresult = pg_class_aclcheck(RelationGetRelid(cstate->rel),
@@ -1009,7 +1009,7 @@ DoCopy(const CopyStmt *stmt)
 		 * rewriting or planning.  Do that now.
 		 *
 		 * Because the planner is not cool about not scribbling on its input,
-		 * we make a preliminary copy of the source querytree.  This prevents
+		 * we make a preliminary copy of the source querytree.	This prevents
 		 * problems in the case that the COPY is in a portal or plpgsql
 		 * function and is executed repeatedly.  (See also the same hack in
 		 * EXPLAIN, DECLARE CURSOR and PREPARE.)  XXX the planner really
@@ -1124,8 +1124,8 @@ DoCopy(const CopyStmt *stmt)
 
 	/*
 	 * Set up encoding conversion info.  Even if the client and server
-	 * encodings are the same, we must apply pg_client_to_server() to
-	 * validate data in multibyte encodings.
+	 * encodings are the same, we must apply pg_client_to_server() to validate
+	 * data in multibyte encodings.
 	 */
 	cstate->client_encoding = pg_get_client_encoding();
 	cstate->need_transcoding =
@@ -1139,7 +1139,8 @@ DoCopy(const CopyStmt *stmt)
 
 	if (is_from)				/* copy from file to database */
 		CopyFrom(cstate);
-	else						/* copy from database to file */
+	else
+		/* copy from database to file */
 		DoCopyTo(cstate);
 
 	/*
@@ -1210,12 +1211,12 @@ DoCopyTo(CopyState cstate)
 	}
 	else
 	{
-		mode_t		oumask; /* Pre-existing umask value */
+		mode_t		oumask;		/* Pre-existing umask value */
 		struct stat st;
 
 		/*
-		 * Prevent write to relative path ... too easy to shoot oneself in
-		 * the foot by overwriting a database file ...
+		 * Prevent write to relative path ... too easy to shoot oneself in the
+		 * foot by overwriting a database file ...
 		 */
 		if (!is_absolute_path(cstate->filename))
 			ereport(ERROR,
@@ -1351,7 +1352,7 @@ CopyTo(CopyState cstate)
 		 */
 		if (cstate->need_transcoding)
 			cstate->null_print_client = pg_server_to_client(cstate->null_print,
-													cstate->null_print_len);
+													 cstate->null_print_len);
 
 		/* if a header has been requested send the line */
 		if (cstate->header_line)
@@ -1508,7 +1509,7 @@ CopyOneRowTo(CopyState cstate, Oid tupleOid, Datum *values, bool *nulls)
 	CopySendEndOfRow(cstate);
 
 	MemoryContextSwitchTo(oldcontext);
-		
+
 	cstate->processed++;
 }
 
@@ -2237,6 +2238,7 @@ CopyReadLineText(CopyState cstate)
 	bool		hit_eof = false;
 	bool		result = false;
 	char		mblen_str[2];
+
 	/* CSV variables */
 	bool		first_char_in_line = true;
 	bool		in_quote = false,
@@ -2268,10 +2270,10 @@ CopyReadLineText(CopyState cstate)
 	 * assumed the same in frontend and backend encodings.
 	 *
 	 * For speed, we try to move data from raw_buf to line_buf in chunks
-     * rather than one character at a time.  raw_buf_ptr points to the next
+	 * rather than one character at a time.  raw_buf_ptr points to the next
 	 * character to examine; any characters from raw_buf_index to raw_buf_ptr
-	 * have been determined to be part of the line, but not yet transferred
-	 * to line_buf.
+	 * have been determined to be part of the line, but not yet transferred to
+	 * line_buf.
 	 *
 	 * For a little extra speed within the loop, we copy raw_buf and
 	 * raw_buf_len into local variables.
@@ -2286,14 +2288,14 @@ CopyReadLineText(CopyState cstate)
 		char		c;
 
 		/*
-		 *	Load more data if needed.  Ideally we would just force four bytes
-		 *	of read-ahead and avoid the many calls to
-		 *	IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(), but the COPY_OLD_FE
-		 *	protocol does not allow us to read too far ahead or we might
-		 *	read into the next data, so we read-ahead only as far we know
-		 *	we can.  One optimization would be to read-ahead four byte here
-		 *	if cstate->copy_dest != COPY_OLD_FE, but it hardly seems worth it,
-		 *	considering the size of the buffer.
+		 * Load more data if needed.  Ideally we would just force four bytes
+		 * of read-ahead and avoid the many calls to
+		 * IF_NEED_REFILL_AND_NOT_EOF_CONTINUE(), but the COPY_OLD_FE protocol
+		 * does not allow us to read too far ahead or we might read into the
+		 * next data, so we read-ahead only as far we know we can.	One
+		 * optimization would be to read-ahead four byte here if
+		 * cstate->copy_dest != COPY_OLD_FE, but it hardly seems worth it,
+		 * considering the size of the buffer.
 		 */
 		if (raw_buf_ptr >= copy_buf_len || need_data)
 		{
@@ -2328,12 +2330,12 @@ CopyReadLineText(CopyState cstate)
 		{
 			/*
 			 * If character is '\\' or '\r', we may need to look ahead below.
-			 * Force fetch of the next character if we don't already have it. We
-			 * need to do this before changing CSV state, in case one of these
-			 * characters is also the quote or escape character.
+			 * Force fetch of the next character if we don't already have it.
+			 * We need to do this before changing CSV state, in case one of
+			 * these characters is also the quote or escape character.
 			 *
-			 * Note: old-protocol does not like forced prefetch, but it's OK here
-			 * since we cannot validly be at EOF.
+			 * Note: old-protocol does not like forced prefetch, but it's OK
+			 * here since we cannot validly be at EOF.
 			 */
 			if (c == '\\' || c == '\r')
 			{
@@ -2341,12 +2343,12 @@ CopyReadLineText(CopyState cstate)
 			}
 
 			/*
-			 * Dealing with quotes and escapes here is mildly tricky. If the quote
-			 * char is also the escape char, there's no problem - we  just use the
-			 * char as a toggle. If they are different, we need to ensure that we
-			 * only take account of an escape inside a quoted field and
-			 * immediately preceding a quote char, and not the second in a
-			 * escape-escape sequence.
+			 * Dealing with quotes and escapes here is mildly tricky. If the
+			 * quote char is also the escape char, there's no problem - we
+			 * just use the char as a toggle. If they are different, we need
+			 * to ensure that we only take account of an escape inside a
+			 * quoted field and immediately preceding a quote char, and not
+			 * the second in a escape-escape sequence.
 			 */
 			if (in_quote && c == escapec)
 				last_was_esc = !last_was_esc;
@@ -2357,9 +2359,9 @@ CopyReadLineText(CopyState cstate)
 
 			/*
 			 * Updating the line count for embedded CR and/or LF chars is
-			 * necessarily a little fragile - this test is probably about the best
-			 * we can do.  (XXX it's arguable whether we should do this at all ---
-			 * is cur_lineno a physical or logical count?)
+			 * necessarily a little fragile - this test is probably about the
+			 * best we can do.	(XXX it's arguable whether we should do this
+			 * at all --- is cur_lineno a physical or logical count?)
 			 */
 			if (in_quote && c == (cstate->eol_type == EOL_NL ? '\n' : '\r'))
 				cstate->cur_lineno++;
@@ -2394,12 +2396,13 @@ CopyReadLineText(CopyState cstate)
 					if (cstate->eol_type == EOL_CRNL)
 						ereport(ERROR,
 								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-							 errmsg(!cstate->csv_mode ?
+								 errmsg(!cstate->csv_mode ?
 									"literal carriage return found in data" :
-									"unquoted carriage return found in data"),
+								   "unquoted carriage return found in data"),
 								 errhint(!cstate->csv_mode ?
-										"Use \"\\r\" to represent carriage return." :
-										"Use quoted CSV field to represent carriage return.")));
+								"Use \"\\r\" to represent carriage return." :
+										 "Use quoted CSV field to represent carriage return.")));
+
 					/*
 					 * if we got here, it is the first line and we didn't find
 					 * \n, so don't consume the peeked character
@@ -2410,12 +2413,12 @@ CopyReadLineText(CopyState cstate)
 			else if (cstate->eol_type == EOL_NL)
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					 errmsg(!cstate->csv_mode ?
+						 errmsg(!cstate->csv_mode ?
 								"literal carriage return found in data" :
 								"unquoted carriage return found in data"),
 						 errhint(!cstate->csv_mode ?
-								"Use \"\\r\" to represent carriage return." :
-								"Use quoted CSV field to represent carriage return.")));
+								 "Use \"\\r\" to represent carriage return." :
+					 "Use quoted CSV field to represent carriage return.")));
 			/* If reach here, we have found the line terminator */
 			break;
 		}
@@ -2431,15 +2434,15 @@ CopyReadLineText(CopyState cstate)
 								"unquoted newline found in data"),
 						 errhint(!cstate->csv_mode ?
 								 "Use \"\\n\" to represent newline." :
-								 "Use quoted CSV field to represent newline.")));
+							 "Use quoted CSV field to represent newline.")));
 			cstate->eol_type = EOL_NL;	/* in case not set yet */
 			/* If reach here, we have found the line terminator */
 			break;
 		}
 
 		/*
-		 *	In CSV mode, we only recognize \. alone on a line.  This is
-		 *	because \. is a valid CSV data value.
+		 * In CSV mode, we only recognize \. alone on a line.  This is because
+		 * \. is a valid CSV data value.
 		 */
 		if (c == '\\' && (!cstate->csv_mode || first_char_in_line))
 		{
@@ -2529,23 +2532,24 @@ CopyReadLineText(CopyState cstate)
 				break;
 			}
 			else if (!cstate->csv_mode)
+
 				/*
-				 *	If we are here, it means we found a backslash followed by
-				 *	something other than a period.  In non-CSV mode, anything
-				 *	after a backslash is special, so we skip over that second
-				 *	character too.  If we didn't do that \\. would be
-				 *	considered an eof-of copy, while in non-CVS mode it is a
-				 *	literal backslash followed by a period.  In CSV mode,
-				 *	backslashes are not special, so we want to process the
-				 *	character after the backslash just like a normal character,
-				 *	so we don't increment in those cases.
+				 * If we are here, it means we found a backslash followed by
+				 * something other than a period.  In non-CSV mode, anything
+				 * after a backslash is special, so we skip over that second
+				 * character too.  If we didn't do that \\. would be
+				 * considered an eof-of copy, while in non-CVS mode it is a
+				 * literal backslash followed by a period.	In CSV mode,
+				 * backslashes are not special, so we want to process the
+				 * character after the backslash just like a normal character,
+				 * so we don't increment in those cases.
 				 */
 				raw_buf_ptr++;
 		}
 
 		/*
-		 * This label is for CSV cases where \. appears at the start of a line,
-		 * but there is more text after it, meaning it was a data value.
+		 * This label is for CSV cases where \. appears at the start of a
+		 * line, but there is more text after it, meaning it was a data value.
 		 * We are more strict for \. in CSV mode because \. could be a data
 		 * value, while in non-CSV mode, \. cannot be a data value.
 		 */
@@ -2554,9 +2558,9 @@ not_end_of_copy:
 		/*
 		 * Process all bytes of a multi-byte character as a group.
 		 *
-		 * We only support multi-byte sequences where the first byte
-		 * has the high-bit set, so as an optimization we can avoid
-		 * this block entirely if it is not set.
+		 * We only support multi-byte sequences where the first byte has the
+		 * high-bit set, so as an optimization we can avoid this block
+		 * entirely if it is not set.
 		 */
 		if (cstate->encoding_embeds_ascii && IS_HIGHBIT_SET(c))
 		{
@@ -3040,10 +3044,10 @@ CopyAttributeOutText(CopyState cstate, char *string)
 	/*
 	 * We have to grovel through the string searching for control characters
 	 * and instances of the delimiter character.  In most cases, though, these
-	 * are infrequent.  To avoid overhead from calling CopySendData once per
-	 * character, we dump out all characters between replaceable characters
-	 * in a single call.  The loop invariant is that the data from "start"
-	 * to "ptr" can be sent literally, but hasn't yet been.
+	 * are infrequent.	To avoid overhead from calling CopySendData once per
+	 * character, we dump out all characters between replaceable characters in
+	 * a single call.  The loop invariant is that the data from "start" to
+	 * "ptr" can be sent literally, but hasn't yet been.
 	 */
 	start = ptr;
 	while ((c = *ptr) != '\0')
@@ -3090,7 +3094,7 @@ CopyAttributeOutText(CopyState cstate, char *string)
 				{
 					DUMPSOFAR();
 					CopySendChar(cstate, '\\');
-					start = ptr; /* we include char in next run */
+					start = ptr;	/* we include char in next run */
 				}
 
 				/*
@@ -3139,14 +3143,13 @@ CopyAttributeOutCSV(CopyState cstate, char *string,
 	if (!use_quote)
 	{
 		/*
-		 *	Because '\.' can be a data value, quote it if it appears
-		 *	alone on a line so it is not interpreted as the end-of-data
-		 *	marker.
+		 * Because '\.' can be a data value, quote it if it appears alone on a
+		 * line so it is not interpreted as the end-of-data marker.
 		 */
 		if (single_attr && strcmp(ptr, "\\.") == 0)
- 			use_quote = true;
- 		else
- 		{
+			use_quote = true;
+		else
+		{
 			char	   *tptr = ptr;
 
 			while ((c = *tptr) != '\0')
@@ -3251,14 +3254,14 @@ CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 			{
 				if (rel != NULL)
 					ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" does not exist",
-						 		name, RelationGetRelationName(rel))));
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+					errmsg("column \"%s\" of relation \"%s\" does not exist",
+						   name, RelationGetRelationName(rel))));
 				else
 					ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" does not exist",
-								name)));
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("column \"%s\" does not exist",
+									name)));
 			}
 			/* Check for duplicates */
 			if (list_member_int(attnums, attnum))
@@ -3289,7 +3292,7 @@ copy_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 static void
 copy_dest_receive(TupleTableSlot *slot, DestReceiver *self)
 {
-	DR_copy	   *myState = (DR_copy *) self;
+	DR_copy    *myState = (DR_copy *) self;
 	CopyState	cstate = myState->cstate;
 
 	/* Make sure the tuple is fully deconstructed */
@@ -3323,7 +3326,7 @@ copy_dest_destroy(DestReceiver *self)
 DestReceiver *
 CreateCopyDestReceiver(void)
 {
-	DR_copy *self = (DR_copy *) palloc(sizeof(DR_copy));
+	DR_copy    *self = (DR_copy *) palloc(sizeof(DR_copy));
 
 	self->pub.receiveSlot = copy_dest_receive;
 	self->pub.rStartup = copy_dest_startup;

@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.70 2006/09/07 22:52:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.71 2006/10/04 00:30:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ typedef struct PortalData
 	long		portalPos;
 
 	/* Presentation data, primarily used by the pg_cursors system view */
-	TimestampTz	creation_time;	/* time at which this portal was defined */
+	TimestampTz creation_time;	/* time at which this portal was defined */
 	bool		visible;		/* include this portal in pg_cursors? */
 } PortalData;
 

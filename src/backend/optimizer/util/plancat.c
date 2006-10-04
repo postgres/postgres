@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.126 2006/09/19 22:49:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.127 2006/10/04 00:29:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,9 +78,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	List	   *indexinfos = NIL;
 
 	/*
-	 * We need not lock the relation since it was already locked, either
-	 * by the rewriter or when expand_inherited_rtentry() added it to the
-	 * query's rangetable.
+	 * We need not lock the relation since it was already locked, either by
+	 * the rewriter or when expand_inherited_rtentry() added it to the query's
+	 * rangetable.
 	 */
 	relation = heap_open(relationObjectId, NoLock);
 
@@ -95,8 +95,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 	/*
 	 * Estimate relation size --- unless it's an inheritance parent, in which
-	 * case the size will be computed later in set_append_rel_pathlist, and
-	 * we must leave it zero for now to avoid bollixing the total_table_pages
+	 * case the size will be computed later in set_append_rel_pathlist, and we
+	 * must leave it zero for now to avoid bollixing the total_table_pages
 	 * calculation.
 	 */
 	if (!inhparent)
@@ -152,9 +152,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 			/*
 			 * Ignore invalid indexes, since they can't safely be used for
-			 * queries.  Note that this is OK because the data structure
-			 * we are constructing is only used by the planner --- the
-			 * executor still needs to insert into "invalid" indexes!
+			 * queries.  Note that this is OK because the data structure we
+			 * are constructing is only used by the planner --- the executor
+			 * still needs to insert into "invalid" indexes!
 			 */
 			if (!index->indisvalid)
 			{
@@ -508,14 +508,14 @@ relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
 	/*
 	 * We do not currently enforce that CHECK constraints contain only
 	 * immutable functions, so it's necessary to check here. We daren't draw
-	 * conclusions from plan-time evaluation of non-immutable functions.
-	 * Since they're ANDed, we can just ignore any mutable constraints in
-	 * the list, and reason about the rest.
+	 * conclusions from plan-time evaluation of non-immutable functions. Since
+	 * they're ANDed, we can just ignore any mutable constraints in the list,
+	 * and reason about the rest.
 	 */
 	safe_constraints = NIL;
 	foreach(lc, constraint_pred)
 	{
-		Node *pred = (Node *) lfirst(lc);
+		Node	   *pred = (Node *) lfirst(lc);
 
 		if (!contain_mutable_functions(pred))
 			safe_constraints = lappend(safe_constraints, pred);
@@ -526,9 +526,9 @@ relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
 	 * refute the entire collection at once.  This may allow us to make proofs
 	 * that would fail if we took them individually.
 	 *
-	 * Note: we use rel->baserestrictinfo, not safe_restrictions as might
-	 * seem an obvious optimization.  Some of the clauses might be OR clauses
-	 * that have volatile and nonvolatile subclauses, and it's OK to make
+	 * Note: we use rel->baserestrictinfo, not safe_restrictions as might seem
+	 * an obvious optimization.  Some of the clauses might be OR clauses that
+	 * have volatile and nonvolatile subclauses, and it's OK to make
 	 * deductions with the nonvolatile parts.
 	 */
 	if (predicate_refuted_by(safe_constraints, rel->baserestrictinfo))

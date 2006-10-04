@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.150 2006/07/14 14:52:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.151 2006/10/04 00:30:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -985,8 +985,8 @@ texteq(PG_FUNCTION_ARGS)
 	bool		result;
 
 	/*
-	 * Since we only care about equality or not-equality, we can avoid all
-	 * the expense of strcoll() here, and just do bitwise comparison.
+	 * Since we only care about equality or not-equality, we can avoid all the
+	 * expense of strcoll() here, and just do bitwise comparison.
 	 */
 	if (VARSIZE(arg1) != VARSIZE(arg2))
 		result = false;
@@ -1008,8 +1008,8 @@ textne(PG_FUNCTION_ARGS)
 	bool		result;
 
 	/*
-	 * Since we only care about equality or not-equality, we can avoid all
-	 * the expense of strcoll() here, and just do bitwise comparison.
+	 * Since we only care about equality or not-equality, we can avoid all the
+	 * expense of strcoll() here, and just do bitwise comparison.
 	 */
 	if (VARSIZE(arg1) != VARSIZE(arg2))
 		result = true;
@@ -2217,7 +2217,7 @@ replace_text_regexp(text *src_text, void *regexp,
 	text	   *ret_text;
 	regex_t    *re = (regex_t *) regexp;
 	int			src_text_len = VARSIZE(src_text) - VARHDRSZ;
-	StringInfoData	buf;
+	StringInfoData buf;
 	regmatch_t	pmatch[REGEXP_REPLACE_BACKREF_CNT];
 	pg_wchar   *data;
 	size_t		data_len;
@@ -2236,7 +2236,7 @@ replace_text_regexp(text *src_text, void *regexp,
 
 	for (search_start = data_pos = 0; search_start <= data_len;)
 	{
-		int regexec_result;
+		int			regexec_result;
 
 		regexec_result = pg_regexec(re,
 									data,
@@ -2503,7 +2503,7 @@ array_to_text(PG_FUNCTION_ARGS)
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
-	StringInfoData	buf;
+	StringInfoData buf;
 	bool		printed = false;
 	char	   *p;
 	bits8	   *bitmap;

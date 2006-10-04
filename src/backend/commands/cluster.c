@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.153 2006/08/18 16:09:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.154 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 		tuple = SearchSysCache(INDEXRELID,
 							   ObjectIdGetDatum(rvtc->indexOid),
 							   0, 0, 0);
-		if (!HeapTupleIsValid(tuple))		/* probably can't happen */
+		if (!HeapTupleIsValid(tuple))	/* probably can't happen */
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
 			return;
@@ -350,7 +350,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 				 errmsg("cannot cluster on partial index \"%s\"",
 						RelationGetRelationName(OldIndex))));
 
-	if (!OldIndex->rd_am->amclusterable) 
+	if (!OldIndex->rd_am->amclusterable)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on index \"%s\" because access method does not support clustering",

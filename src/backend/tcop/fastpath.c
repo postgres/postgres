@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.92 2006/09/08 15:55:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.93 2006/10/04 00:29:58 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -303,8 +303,8 @@ HandleFunctionRequest(StringInfo msgBuf)
 						"commands ignored until end of transaction block")));
 
 	/*
-	 * Now that we know we are in a valid transaction, set snapshot in
-	 * case needed by function itself or one of the datatype I/O routines.
+	 * Now that we know we are in a valid transaction, set snapshot in case
+	 * needed by function itself or one of the datatype I/O routines.
 	 */
 	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
@@ -312,7 +312,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 * Begin parsing the buffer contents.
 	 */
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
-		(void) pq_getmsgstring(msgBuf);			/* dummy string */
+		(void) pq_getmsgstring(msgBuf); /* dummy string */
 
 	fid = (Oid) pq_getmsgint(msgBuf, 4);		/* function oid */
 
@@ -474,8 +474,8 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info * fip,
 			if (argsize < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("invalid argument size %d in function call message",
-								argsize)));
+				  errmsg("invalid argument size %d in function call message",
+						 argsize)));
 
 			/* Reset abuf to empty, and insert raw data into it */
 			abuf.len = 0;
@@ -607,8 +607,8 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info * fip,
 		if (argsize < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("invalid argument size %d in function call message",
-							argsize)));
+				  errmsg("invalid argument size %d in function call message",
+						 argsize)));
 
 		/* Reset abuf to empty, and insert raw data into it */
 		abuf.len = 0;

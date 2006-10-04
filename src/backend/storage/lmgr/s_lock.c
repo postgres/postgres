@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.46 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.47 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 
 			/* increase delay by a random fraction between 1X and 2X */
 			cur_delay += (int) (cur_delay *
-				  ((double) random() / (double) MAX_RANDOM_VALUE) + 0.5);
+					  ((double) random() / (double) MAX_RANDOM_VALUE) + 0.5);
 			/* wrap back to minimum delay when max is exceeded */
 			if (cur_delay > MAX_DELAY_MSEC)
 				cur_delay = MIN_DELAY_MSEC;
@@ -280,7 +280,6 @@ tas_dummy()						/* really means: extern int tas(slock_t
 	asm("   .data");
 }
 #endif   /* sun3 */
-
 #endif   /* not __GNUC__ */
 #endif   /* HAVE_SPINLOCKS */
 

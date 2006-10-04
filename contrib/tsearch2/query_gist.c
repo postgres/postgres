@@ -29,7 +29,7 @@ makesign(QUERYTYPE * a)
 	for (i = 0; i < a->size; i++)
 	{
 		if (ptr->type == VAL)
-			sign |= ((TPQTGist)1) << (ptr->val % SIGLEN);
+			sign |= ((TPQTGist) 1) << (ptr->val % SIGLEN);
 		ptr++;
 	}
 
@@ -104,7 +104,7 @@ tsq_mcontained(PG_FUNCTION_ARGS)
 										PG_GETARG_DATUM(1),
 										PG_GETARG_DATUM(0)
 										)
-	);
+		);
 }
 
 PG_FUNCTION_INFO_V1(gtsq_in);
@@ -272,7 +272,7 @@ typedef struct
 {
 	OffsetNumber pos;
 	int4		cost;
-} SPLITCOST;
+}	SPLITCOST;
 
 static int
 comparecost(const void *a, const void *b)

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.135 2006/08/01 18:21:44 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.136 2006/10/04 00:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,19 +278,25 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			_printTocEntry(AH, te, ropt, false, false);
 			defnDumped = true;
 
-			/* If we could not create a table, ignore the respective TABLE DATA if 
-			 * -X no-data-for-failed-tables is given */
-			if (ropt->noDataForFailedTables && AH->lastErrorTE == te && strcmp (te->desc, "TABLE") == 0) {
-				TocEntry *tes, *last;
-                                
-				ahlog (AH, 1, "table %s could not be created, will not restore its data\n", te->tag);
+			/*
+			 * If we could not create a table, ignore the respective TABLE
+			 * DATA if -X no-data-for-failed-tables is given
+			 */
+			if (ropt->noDataForFailedTables && AH->lastErrorTE == te && strcmp(te->desc, "TABLE") == 0)
+			{
+				TocEntry   *tes,
+						   *last;
 
-				for (last = te, tes = te->next; tes != AH->toc; last = tes, tes = tes->next) {
-					if (strcmp (tes->desc, "TABLE DATA") == 0 && strcmp (tes->tag, te->tag) == 0 &&
-					    strcmp (tes->namespace ? tes->namespace : "", te->namespace ? te->namespace : "") == 0) {
-					    /* remove this node */
-					    last->next = tes->next;
-                                            break;
+				ahlog(AH, 1, "table %s could not be created, will not restore its data\n", te->tag);
+
+				for (last = te, tes = te->next; tes != AH->toc; last = tes, tes = tes->next)
+				{
+					if (strcmp(tes->desc, "TABLE DATA") == 0 && strcmp(tes->tag, te->tag) == 0 &&
+						strcmp(tes->namespace ? tes->namespace : "", te->namespace ? te->namespace : "") == 0)
+					{
+						/* remove this node */
+						last->next = tes->next;
+						break;
 					}
 				}
 			}

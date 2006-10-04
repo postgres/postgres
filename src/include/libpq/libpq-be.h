@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.56 2006/06/20 22:52:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.57 2006/10/04 00:30:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,8 +81,8 @@ typedef struct Port
 	 * but since it gets used by elog.c in the same way as database_name and
 	 * other members of this struct, we may as well keep it here.
 	 */
-	TimestampTz	SessionStartTime;	/* backend start time */
-	time_t		session_start;		/* same, in time_t format */
+	TimestampTz SessionStartTime;		/* backend start time */
+	time_t		session_start;	/* same, in time_t format */
 
 	/*
 	 * TCP keepalive settings.

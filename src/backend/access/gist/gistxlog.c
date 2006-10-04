@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.23 2006/08/07 16:57:56 tgl Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.24 2006/10/04 00:29:48 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -55,11 +55,11 @@ typedef struct gistIncompleteInsert
 
 
 static MemoryContext opCtx;		/* working memory for operations */
-static MemoryContext insertCtx;	/* holds incomplete_inserts list */
+static MemoryContext insertCtx; /* holds incomplete_inserts list */
 static List *incomplete_inserts;
 
 
-#define ItemPointerEQ(a, b)	\
+#define ItemPointerEQ(a, b) \
 	( ItemPointerGetOffsetNumber(a) == ItemPointerGetOffsetNumber(b) && \
 	  ItemPointerGetBlockNumber (a) == ItemPointerGetBlockNumber(b) )
 
@@ -72,8 +72,9 @@ pushIncompleteInsert(RelFileNode node, XLogRecPtr lsn, ItemPointerData key,
 	MemoryContext oldCxt;
 	gistIncompleteInsert *ninsert;
 
-	if ( !ItemPointerIsValid(&key) )
-		/* 
+	if (!ItemPointerIsValid(&key))
+
+		/*
 		 * if key is null then we should not store insertion as incomplete,
 		 * because it's a vacuum operation..
 		 */
@@ -108,8 +109,8 @@ pushIncompleteInsert(RelFileNode node, XLogRecPtr lsn, ItemPointerData key,
 
 	/*
 	 * Stick the new incomplete insert onto the front of the list, not the
-	 * back.  This is so that gist_xlog_cleanup will process incompletions
-	 * in last-in-first-out order.
+	 * back.  This is so that gist_xlog_cleanup will process incompletions in
+	 * last-in-first-out order.
 	 */
 	incomplete_inserts = lcons(ninsert, incomplete_inserts);
 
@@ -121,10 +122,10 @@ forgetIncompleteInsert(RelFileNode node, ItemPointerData key)
 {
 	ListCell   *l;
 
-	if ( !ItemPointerIsValid(&key) )
+	if (!ItemPointerIsValid(&key))
 		return;
 
-	if (incomplete_inserts==NIL)
+	if (incomplete_inserts == NIL)
 		return;
 
 	foreach(l, incomplete_inserts)
@@ -241,9 +242,12 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 	if (GistPageIsLeaf(page) && xlrec.len == 0 && xlrec.data->ntodelete == 0)
 		GistClearTuplesDeleted(page);
 
-	if ( !GistPageIsLeaf(page) && PageGetMaxOffsetNumber(page) == InvalidOffsetNumber && xldata->blkno == GIST_ROOT_BLKNO )
-		/* all links on non-leaf root page was deleted by vacuum full,
-		   so root page becomes a leaf */
+	if (!GistPageIsLeaf(page) && PageGetMaxOffsetNumber(page) == InvalidOffsetNumber && xldata->blkno == GIST_ROOT_BLKNO)
+
+		/*
+		 * all links on non-leaf root page was deleted by vacuum full, so root
+		 * page becomes a leaf
+		 */
 		GistPageSetLeaf(page);
 
 	GistPageGetOpaque(page)->rightlink = InvalidBlockNumber;
@@ -432,11 +436,11 @@ static void
 out_target(StringInfo buf, RelFileNode node, ItemPointerData key)
 {
 	appendStringInfo(buf, "rel %u/%u/%u",
-			node.spcNode, node.dbNode, node.relNode);
-	if ( ItemPointerIsValid( &key ) )
+					 node.spcNode, node.dbNode, node.relNode);
+	if (ItemPointerIsValid(&key))
 		appendStringInfo(buf, "; tid %u/%u",
-			ItemPointerGetBlockNumber(&key),
-			ItemPointerGetOffsetNumber(&key));
+						 ItemPointerGetBlockNumber(&key),
+						 ItemPointerGetOffsetNumber(&key));
 }
 
 static void
@@ -450,8 +454,8 @@ static void
 out_gistxlogPageDelete(StringInfo buf, gistxlogPageDelete *xlrec)
 {
 	appendStringInfo(buf, "page_delete: rel %u/%u/%u; blkno %u",
-			xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
-			xlrec->blkno);
+				xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
+					 xlrec->blkno);
 }
 
 static void
@@ -460,7 +464,7 @@ out_gistxlogPageSplit(StringInfo buf, gistxlogPageSplit *xlrec)
 	appendStringInfo(buf, "page_split: ");
 	out_target(buf, xlrec->node, xlrec->key);
 	appendStringInfo(buf, "; block number %u splits to %d pages",
-			xlrec->origblkno, xlrec->npage);
+					 xlrec->origblkno, xlrec->npage);
 }
 
 void
@@ -486,15 +490,15 @@ gist_desc(StringInfo buf, uint8 xl_info, char *rec)
 			break;
 		case XLOG_GIST_CREATE_INDEX:
 			appendStringInfo(buf, "create_index: rel %u/%u/%u",
-					((RelFileNode *) rec)->spcNode,
-					((RelFileNode *) rec)->dbNode,
-					((RelFileNode *) rec)->relNode);
+							 ((RelFileNode *) rec)->spcNode,
+							 ((RelFileNode *) rec)->dbNode,
+							 ((RelFileNode *) rec)->relNode);
 			break;
 		case XLOG_GIST_INSERT_COMPLETE:
 			appendStringInfo(buf, "complete_insert: rel %u/%u/%u",
-					((gistxlogInsertComplete *) rec)->node.spcNode,
-					((gistxlogInsertComplete *) rec)->node.dbNode,
-					((gistxlogInsertComplete *) rec)->node.relNode);
+							 ((gistxlogInsertComplete *) rec)->node.spcNode,
+							 ((gistxlogInsertComplete *) rec)->node.dbNode,
+							 ((gistxlogInsertComplete *) rec)->node.relNode);
 			break;
 		default:
 			appendStringInfo(buf, "unknown gist op code %u", info);
@@ -547,22 +551,25 @@ gistxlogFindPath(Relation index, gistIncompleteInsert *insert)
 		elog(ERROR, "lost parent for block %u", insert->origblkno);
 }
 
-static SplitedPageLayout*
-gistMakePageLayout(Buffer *buffers, int nbuffers) {
-	SplitedPageLayout	*res=NULL, *resptr;
+static SplitedPageLayout *
+gistMakePageLayout(Buffer *buffers, int nbuffers)
+{
+	SplitedPageLayout *res = NULL,
+			   *resptr;
 
-	while( nbuffers-- > 0 ) {
-		Page page = BufferGetPage( buffers[ nbuffers ] );
-		IndexTuple*	vec;
-		int	veclen;
+	while (nbuffers-- > 0)
+	{
+		Page		page = BufferGetPage(buffers[nbuffers]);
+		IndexTuple *vec;
+		int			veclen;
 
-		resptr = (SplitedPageLayout*)palloc0( sizeof(SplitedPageLayout) );
+		resptr = (SplitedPageLayout *) palloc0(sizeof(SplitedPageLayout));
 
-		resptr->block.blkno = BufferGetBlockNumber( buffers[ nbuffers ] );
-		resptr->block.num = PageGetMaxOffsetNumber( page );
+		resptr->block.blkno = BufferGetBlockNumber(buffers[nbuffers]);
+		resptr->block.num = PageGetMaxOffsetNumber(page);
 
-		vec = gistextractpage( page, &veclen ); 
-		resptr->list = gistfillitupvec( vec, veclen, &(resptr->lenlist) );
+		vec = gistextractpage(page, &veclen);
+		resptr->list = gistfillitupvec(vec, veclen, &(resptr->lenlist));
 
 		resptr->next = res;
 		res = resptr;
@@ -580,7 +587,7 @@ gistMakePageLayout(Buffer *buffers, int nbuffers) {
  * Note that we assume the index is now in a valid state, except for the
  * unfinished insertion.  In particular it's safe to invoke gistFindPath();
  * there shouldn't be any garbage pages for it to run into.
- * 
+ *
  * To complete insert we can't use basic insertion algorithm because
  * during insertion we can't call user-defined support functions of opclass.
  * So, we insert 'invalid' tuples without real key and do it by separate algorithm.
@@ -607,7 +614,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 		itup[i] = gist_form_invalid_tuple(insert->blkno[i]);
 
 	/*
-	 * any insertion of itup[] should make LOG message about 
+	 * any insertion of itup[] should make LOG message about
 	 */
 
 	if (insert->origblkno == GIST_ROOT_BLKNO)
@@ -626,7 +633,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 		Buffer	   *buffers;
 		Page	   *pages;
 		int			numbuffer;
-		OffsetNumber	*todelete;
+		OffsetNumber *todelete;
 
 		/* construct path */
 		gistxlogFindPath(index, insert);
@@ -642,21 +649,22 @@ gistContinueInsert(gistIncompleteInsert *insert)
 			int			j,
 						k,
 						pituplen = 0;
-			XLogRecData		*rdata;
-			XLogRecPtr		recptr;
-			Buffer	tempbuffer = InvalidBuffer;
-			int 	ntodelete = 0;
+			XLogRecData *rdata;
+			XLogRecPtr	recptr;
+			Buffer		tempbuffer = InvalidBuffer;
+			int			ntodelete = 0;
 
 			numbuffer = 1;
 			buffers[0] = ReadBuffer(index, insert->path[i]);
 			LockBuffer(buffers[0], GIST_EXCLUSIVE);
+
 			/*
 			 * we check buffer, because we restored page earlier
 			 */
 			gistcheckpage(index, buffers[0]);
 
 			pages[0] = BufferGetPage(buffers[0]);
-			Assert( !GistPageIsLeaf(pages[0]) );
+			Assert(!GistPageIsLeaf(pages[0]));
 
 			pituplen = PageGetMaxOffsetNumber(pages[0]);
 
@@ -678,12 +686,12 @@ gistContinueInsert(gistIncompleteInsert *insert)
 					}
 			}
 
-			if ( ntodelete == 0 ) 
-				elog(PANIC,"gistContinueInsert: can't find pointer to page(s)");
+			if (ntodelete == 0)
+				elog(PANIC, "gistContinueInsert: can't find pointer to page(s)");
 
 			/*
-			 * we check space with subtraction only first tuple to delete, hope,
-			 * that wiil be enough space....
+			 * we check space with subtraction only first tuple to delete,
+			 * hope, that wiil be enough space....
 			 */
 
 			if (gistnospace(pages[0], itup, lenitup, *todelete, 0))
@@ -699,7 +707,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 
 				if (BufferGetBlockNumber(buffers[0]) == GIST_ROOT_BLKNO)
 				{
-					Buffer tmp;
+					Buffer		tmp;
 
 					/*
 					 * we split root, just copy content from root to new page
@@ -713,44 +721,48 @@ gistContinueInsert(gistIncompleteInsert *insert)
 					/* fill new page, root will be changed later */
 					tempbuffer = ReadBuffer(index, P_NEW);
 					LockBuffer(tempbuffer, GIST_EXCLUSIVE);
-					memcpy( BufferGetPage(tempbuffer), pages[0], BufferGetPageSize(tempbuffer) );
+					memcpy(BufferGetPage(tempbuffer), pages[0], BufferGetPageSize(tempbuffer));
 
 					/* swap buffers[0] (was root) and temp buffer */
 					tmp = buffers[0];
 					buffers[0] = tempbuffer;
-					tempbuffer = tmp; /* now in tempbuffer GIST_ROOT_BLKNO, it is still unchanged */
+					tempbuffer = tmp;	/* now in tempbuffer GIST_ROOT_BLKNO,
+										 * it is still unchanged */
 
 					pages[0] = BufferGetPage(buffers[0]);
 				}
 
 				START_CRIT_SECTION();
 
-				for(j=0;j<ntodelete;j++)
+				for (j = 0; j < ntodelete; j++)
 					PageIndexTupleDelete(pages[0], todelete[j]);
 
 				rdata = formSplitRdata(index->rd_node, insert->path[i],
-										false, &(insert->key), 
-										gistMakePageLayout( buffers, numbuffer ) );
+									   false, &(insert->key),
+									 gistMakePageLayout(buffers, numbuffer));
 
-			} else {
+			}
+			else
+			{
 				START_CRIT_SECTION();
 
-				for(j=0;j<ntodelete;j++)
+				for (j = 0; j < ntodelete; j++)
 					PageIndexTupleDelete(pages[0], todelete[j]);
 				gistfillbuffer(index, pages[0], itup, lenitup, InvalidOffsetNumber);
 
-				rdata = formUpdateRdata(index->rd_node, buffers[0], 
-							todelete, ntodelete,
-							itup, lenitup, &(insert->key)); 
+				rdata = formUpdateRdata(index->rd_node, buffers[0],
+										todelete, ntodelete,
+										itup, lenitup, &(insert->key));
 			}
 
-			/* 
-			 * use insert->key as mark for completion of insert (form*Rdata() above)
-			 * for following possible replays
+			/*
+			 * use insert->key as mark for completion of insert (form*Rdata()
+			 * above) for following possible replays
 			 */
 
 			/* write pages, we should mark it dirty befor XLogInsert() */
-			for (j = 0; j < numbuffer; j++) {
+			for (j = 0; j < numbuffer; j++)
+			{
 				GistPageGetOpaque(pages[j])->rightlink = InvalidBlockNumber;
 				MarkBufferDirty(buffers[j]);
 			}
@@ -764,12 +776,14 @@ gistContinueInsert(gistIncompleteInsert *insert)
 			END_CRIT_SECTION();
 
 			lenitup = numbuffer;
-			for (j = 0; j < numbuffer; j++) {
+			for (j = 0; j < numbuffer; j++)
+			{
 				itup[j] = gist_form_invalid_tuple(BufferGetBlockNumber(buffers[j]));
 				UnlockReleaseBuffer(buffers[j]);
 			}
 
-			if ( tempbuffer != InvalidBuffer ) {
+			if (tempbuffer != InvalidBuffer)
+			{
 				/*
 				 * it was a root split, so fill it by new values
 				 */
@@ -780,9 +794,9 @@ gistContinueInsert(gistIncompleteInsert *insert)
 	}
 
 	ereport(LOG,
-	(errmsg("index %u/%u/%u needs VACUUM FULL or REINDEX to finish crash recovery",
+			(errmsg("index %u/%u/%u needs VACUUM FULL or REINDEX to finish crash recovery",
 			insert->node.spcNode, insert->node.dbNode, insert->node.relNode),
-	 errdetail("Incomplete insertion detected during crash replay.")));
+		   errdetail("Incomplete insertion detected during crash replay.")));
 }
 
 void

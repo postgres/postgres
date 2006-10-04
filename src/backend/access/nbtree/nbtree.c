@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.151 2006/09/21 20:31:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.152 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef struct
 	BlockNumber *freePages;
 	int			nFreePages;		/* number of entries in freePages[] */
 	int			maxFreePages;	/* allocated size of freePages[] */
-	BlockNumber	totFreePages;	/* true total # of free pages */
+	BlockNumber totFreePages;	/* true total # of free pages */
 	MemoryContext pagedelcontext;
 } BTVacState;
 
@@ -70,7 +70,7 @@ static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			 IndexBulkDeleteCallback callback, void *callback_state,
 			 BTCycleId cycleid);
 static void btvacuumpage(BTVacState *vstate, BlockNumber blkno,
-						 BlockNumber orig_blkno);
+			 BlockNumber orig_blkno);
 
 
 /*
@@ -109,8 +109,8 @@ btbuild(PG_FUNCTION_ARGS)
 	buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique, false);
 
 	/*
-	 * If building a unique index, put dead tuples in a second spool to
-	 * keep them out of the uniqueness check.
+	 * If building a unique index, put dead tuples in a second spool to keep
+	 * them out of the uniqueness check.
 	 */
 	if (indexInfo->ii_Unique)
 		buildstate.spool2 = _bt_spoolinit(index, false, true);
@@ -146,11 +146,11 @@ btbuild(PG_FUNCTION_ARGS)
 #endif   /* BTREE_BUILD_STATS */
 
 	/*
-	 * If we are reindexing a pre-existing index, it is critical to send out
-	 * a relcache invalidation SI message to ensure all backends re-read the
-	 * index metapage.  We expect that the caller will ensure that happens
-	 * (typically as a side effect of updating index stats, but it must
-	 * happen even if the stats don't change!)
+	 * If we are reindexing a pre-existing index, it is critical to send out a
+	 * relcache invalidation SI message to ensure all backends re-read the
+	 * index metapage.	We expect that the caller will ensure that happens
+	 * (typically as a side effect of updating index stats, but it must happen
+	 * even if the stats don't change!)
 	 */
 
 	/*
@@ -252,11 +252,11 @@ btgettuple(PG_FUNCTION_ARGS)
 		if (scan->kill_prior_tuple)
 		{
 			/*
-			 * Yes, remember it for later.  (We'll deal with all such tuples
+			 * Yes, remember it for later.	(We'll deal with all such tuples
 			 * at once right before leaving the index page.)  The test for
 			 * numKilled overrun is not just paranoia: if the caller reverses
 			 * direction in the indexscan then the same item might get entered
-			 * multiple times.  It's not worth trying to optimize that, so we
+			 * multiple times.	It's not worth trying to optimize that, so we
 			 * don't detect it, but instead just forget any excess entries.
 			 */
 			if (so->killedItems == NULL)
@@ -316,8 +316,8 @@ btgetmulti(PG_FUNCTION_ARGS)
 	while (ntids < max_tids)
 	{
 		/*
-		 * Advance to next tuple within page.  This is the same as the
-		 * easy case in _bt_next().
+		 * Advance to next tuple within page.  This is the same as the easy
+		 * case in _bt_next().
 		 */
 		if (++so->currPos.itemIndex > so->currPos.lastItem)
 		{
@@ -373,7 +373,7 @@ btrescan(PG_FUNCTION_ARGS)
 			so->keyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
 		else
 			so->keyData = NULL;
-		so->killedItems = NULL;					/* until needed */
+		so->killedItems = NULL; /* until needed */
 		so->numKilled = 0;
 		scan->opaque = so;
 	}
@@ -461,9 +461,9 @@ btmarkpos(PG_FUNCTION_ARGS)
 
 	/*
 	 * Just record the current itemIndex.  If we later step to next page
-	 * before releasing the marked position, _bt_steppage makes a full copy
-	 * of the currPos struct in markPos.  If (as often happens) the mark is
-	 * moved before we leave the page, we don't have to do that work.
+	 * before releasing the marked position, _bt_steppage makes a full copy of
+	 * the currPos struct in markPos.  If (as often happens) the mark is moved
+	 * before we leave the page, we don't have to do that work.
 	 */
 	if (BTScanPosIsValid(so->currPos))
 		so->markItemIndex = so->currPos.itemIndex;
@@ -485,11 +485,11 @@ btrestrpos(PG_FUNCTION_ARGS)
 	if (so->markItemIndex >= 0)
 	{
 		/*
-		 * The mark position is on the same page we are currently on.
-		 * Just restore the itemIndex.
+		 * The mark position is on the same page we are currently on. Just
+		 * restore the itemIndex.
 		 */
 		so->currPos.itemIndex = so->markItemIndex;
-	} 
+	}
 	else
 	{
 		/* we aren't holding any read locks, but gotta drop the pin */
@@ -527,7 +527,7 @@ Datum
 btbulkdelete(PG_FUNCTION_ARGS)
 {
 	IndexVacuumInfo *info = (IndexVacuumInfo *) PG_GETARG_POINTER(0);
-	IndexBulkDeleteResult * volatile stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
+	IndexBulkDeleteResult *volatile stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(2);
 	void	   *callback_state = (void *) PG_GETARG_POINTER(3);
 	Relation	rel = info->index;
@@ -569,10 +569,10 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(1);
 
 	/*
-	 * If btbulkdelete was called, we need not do anything, just return
-	 * the stats from the latest btbulkdelete call.  If it wasn't called,
-	 * we must still do a pass over the index, to recycle any newly-recyclable
-	 * pages and to obtain index statistics.
+	 * If btbulkdelete was called, we need not do anything, just return the
+	 * stats from the latest btbulkdelete call.  If it wasn't called, we must
+	 * still do a pass over the index, to recycle any newly-recyclable pages
+	 * and to obtain index statistics.
 	 *
 	 * Since we aren't going to actually delete any leaf items, there's no
 	 * need to go through all the vacuum-cycle-ID pushups.
@@ -586,8 +586,8 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	/*
 	 * During a non-FULL vacuum it's quite possible for us to be fooled by
 	 * concurrent page splits into double-counting some index tuples, so
-	 * disbelieve any total that exceeds the underlying heap's count.
-	 * (We can't check this during btbulkdelete.)
+	 * disbelieve any total that exceeds the underlying heap's count. (We
+	 * can't check this during btbulkdelete.)
 	 */
 	if (!info->vacuum_full)
 	{
@@ -622,8 +622,8 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	bool		needLock;
 
 	/*
-	 * Reset counts that will be incremented during the scan; needed in
-	 * case of multiple scans during a single VACUUM command
+	 * Reset counts that will be incremented during the scan; needed in case
+	 * of multiple scans during a single VACUUM command
 	 */
 	stats->num_index_tuples = 0;
 	stats->pages_deleted = 0;
@@ -647,24 +647,24 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 												  ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * The outer loop iterates over all index pages except the metapage,
-	 * in physical order (we hope the kernel will cooperate in providing
+	 * The outer loop iterates over all index pages except the metapage, in
+	 * physical order (we hope the kernel will cooperate in providing
 	 * read-ahead for speed).  It is critical that we visit all leaf pages,
 	 * including ones added after we start the scan, else we might fail to
 	 * delete some deletable tuples.  Hence, we must repeatedly check the
 	 * relation length.  We must acquire the relation-extension lock while
 	 * doing so to avoid a race condition: if someone else is extending the
 	 * relation, there is a window where bufmgr/smgr have created a new
-	 * all-zero page but it hasn't yet been write-locked by _bt_getbuf().
-	 * If we manage to scan such a page here, we'll improperly assume it can
-	 * be recycled.  Taking the lock synchronizes things enough to prevent a
+	 * all-zero page but it hasn't yet been write-locked by _bt_getbuf(). If
+	 * we manage to scan such a page here, we'll improperly assume it can be
+	 * recycled.  Taking the lock synchronizes things enough to prevent a
 	 * problem: either num_pages won't include the new page, or _bt_getbuf
 	 * already has write lock on the buffer and it will be fully initialized
 	 * before we can examine it.  (See also vacuumlazy.c, which has the same
-	 * issue.)  Also, we need not worry if a page is added immediately after
+	 * issue.)	Also, we need not worry if a page is added immediately after
 	 * we look; the page splitting code already has write-lock on the left
-	 * page before it adds a right page, so we must already have processed
-	 * any tuples due to be moved into such a page.
+	 * page before it adds a right page, so we must already have processed any
+	 * tuples due to be moved into such a page.
 	 *
 	 * We can skip locking for new or temp relations, however, since no one
 	 * else could be accessing them.
@@ -771,7 +771,7 @@ btvacuumpage(BTVacState *vstate, BlockNumber blkno, BlockNumber orig_blkno)
 	void	   *callback_state = vstate->callback_state;
 	Relation	rel = info->index;
 	bool		delete_now;
-	BlockNumber	recurse_to;
+	BlockNumber recurse_to;
 	Buffer		buf;
 	Page		page;
 	BTPageOpaque opaque;
@@ -796,10 +796,10 @@ restart:
 		_bt_checkpage(rel, buf);
 
 	/*
-	 * If we are recursing, the only case we want to do anything with is
-	 * a live leaf page having the current vacuum cycle ID.  Any other state
-	 * implies we already saw the page (eg, deleted it as being empty).
-	 * In particular, we don't want to risk adding it to freePages twice.
+	 * If we are recursing, the only case we want to do anything with is a
+	 * live leaf page having the current vacuum cycle ID.  Any other state
+	 * implies we already saw the page (eg, deleted it as being empty). In
+	 * particular, we don't want to risk adding it to freePages twice.
 	 */
 	if (blkno != orig_blkno)
 	{
@@ -838,25 +838,24 @@ restart:
 		OffsetNumber deletable[MaxOffsetNumber];
 		int			ndeletable;
 		OffsetNumber offnum,
-			minoff,
-			maxoff;
+					minoff,
+					maxoff;
 
 		/*
-		 * Trade in the initial read lock for a super-exclusive write
-		 * lock on this page.  We must get such a lock on every leaf page
-		 * over the course of the vacuum scan, whether or not it actually
-		 * contains any deletable tuples --- see nbtree/README.
+		 * Trade in the initial read lock for a super-exclusive write lock on
+		 * this page.  We must get such a lock on every leaf page over the
+		 * course of the vacuum scan, whether or not it actually contains any
+		 * deletable tuples --- see nbtree/README.
 		 */
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 		LockBufferForCleanup(buf);
 
 		/*
-		 * Check whether we need to recurse back to earlier pages.  What
-		 * we are concerned about is a page split that happened since we
-		 * started the vacuum scan.  If the split moved some tuples to a
-		 * lower page then we might have missed 'em.  If so, set up for
-		 * tail recursion.  (Must do this before possibly clearing
-		 * btpo_cycleid below!)
+		 * Check whether we need to recurse back to earlier pages.	What we
+		 * are concerned about is a page split that happened since we started
+		 * the vacuum scan.  If the split moved some tuples to a lower page
+		 * then we might have missed 'em.  If so, set up for tail recursion.
+		 * (Must do this before possibly clearing btpo_cycleid below!)
 		 */
 		if (vstate->cycleid != 0 &&
 			opaque->btpo_cycleid == vstate->cycleid &&
@@ -866,8 +865,8 @@ restart:
 			recurse_to = opaque->btpo_next;
 
 		/*
-		 * Scan over all items to see which ones need deleted
-		 * according to the callback function.
+		 * Scan over all items to see which ones need deleted according to the
+		 * callback function.
 		 */
 		ndeletable = 0;
 		minoff = P_FIRSTDATAKEY(opaque);
@@ -890,8 +889,8 @@ restart:
 		}
 
 		/*
-		 * Apply any needed deletes.  We issue just one _bt_delitems()
-		 * call per page, so as to minimize WAL traffic.
+		 * Apply any needed deletes.  We issue just one _bt_delitems() call
+		 * per page, so as to minimize WAL traffic.
 		 */
 		if (ndeletable > 0)
 		{
@@ -908,8 +907,8 @@ restart:
 			 * have any deletions to do.  (If we do, _bt_delitems takes care
 			 * of this.)  This ensures we won't process the page again.
 			 *
-			 * We treat this like a hint-bit update because there's no need
-			 * to WAL-log it.
+			 * We treat this like a hint-bit update because there's no need to
+			 * WAL-log it.
 			 */
 			if (vstate->cycleid != 0 &&
 				opaque->btpo_cycleid == vstate->cycleid)
@@ -920,10 +919,10 @@ restart:
 		}
 
 		/*
-		 * If it's now empty, try to delete; else count the live tuples.
-		 * We don't delete when recursing, though, to avoid putting entries
-		 * into freePages out-of-order (doesn't seem worth any extra code to
-		 * handle the case).
+		 * If it's now empty, try to delete; else count the live tuples. We
+		 * don't delete when recursing, though, to avoid putting entries into
+		 * freePages out-of-order (doesn't seem worth any extra code to handle
+		 * the case).
 		 */
 		if (minoff > maxoff)
 			delete_now = (blkno == orig_blkno);
@@ -947,13 +946,12 @@ restart:
 			stats->pages_deleted++;
 
 		/*
-		 * During VACUUM FULL it's okay to recycle deleted pages
-		 * immediately, since there can be no other transactions scanning
-		 * the index.  Note that we will only recycle the current page and
-		 * not any parent pages that _bt_pagedel might have recursed to;
-		 * this seems reasonable in the name of simplicity.  (Trying to do
-		 * otherwise would mean we'd have to sort the list of recyclable
-		 * pages we're building.)
+		 * During VACUUM FULL it's okay to recycle deleted pages immediately,
+		 * since there can be no other transactions scanning the index.  Note
+		 * that we will only recycle the current page and not any parent pages
+		 * that _bt_pagedel might have recursed to; this seems reasonable in
+		 * the name of simplicity.	(Trying to do otherwise would mean we'd
+		 * have to sort the list of recyclable pages we're building.)
 		 */
 		if (ndel && info->vacuum_full)
 		{
@@ -969,11 +967,11 @@ restart:
 		_bt_relbuf(rel, buf);
 
 	/*
-	 * This is really tail recursion, but if the compiler is too stupid
-	 * to optimize it as such, we'd eat an uncomfortably large amount of
-	 * stack space per recursion level (due to the deletable[] array).
-	 * A failure is improbable since the number of levels isn't likely to be
-	 * large ... but just in case, let's hand-optimize into a loop.
+	 * This is really tail recursion, but if the compiler is too stupid to
+	 * optimize it as such, we'd eat an uncomfortably large amount of stack
+	 * space per recursion level (due to the deletable[] array). A failure is
+	 * improbable since the number of levels isn't likely to be large ... but
+	 * just in case, let's hand-optimize into a loop.
 	 */
 	if (recurse_to != P_NONE)
 	{

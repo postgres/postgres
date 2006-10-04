@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.19 2006/08/23 13:57:27 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.20 2006/10/04 00:30:11 momjian Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -351,7 +351,8 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 				/* allocate storage if needed */
 				if (arrsize == 0 && *(void **) var == NULL)
 				{
-					void *mem = (void *) ECPGalloc(offset * ntuples, lineno);
+					void	   *mem = (void *) ECPGalloc(offset * ntuples, lineno);
+
 					if (!mem)
 						return false;
 					*(void **) var = mem;
@@ -398,7 +399,12 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		ECPGfree(oldlocale);
 	}
 	else if (data_var.ind_type != ECPGt_NO_INDICATOR && data_var.ind_pointer != NULL)
-	/* ind_type != NO_INDICATOR should always have ind_pointer != NULL but since this might be changed manually in the .c file let's play it safe */
+
+		/*
+		 * ind_type != NO_INDICATOR should always have ind_pointer != NULL but
+		 * since this might be changed manually in the .c file let's play it
+		 * safe
+		 */
 	{
 		/*
 		 * this is like ECPGstore_result but since we don't have a data
@@ -415,7 +421,8 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		/* allocate storage if needed */
 		if (data_var.ind_arrsize == 0 && data_var.ind_value == NULL)
 		{
-			void *mem = (void *) ECPGalloc(data_var.ind_offset * ntuples, lineno);
+			void	   *mem = (void *) ECPGalloc(data_var.ind_offset * ntuples, lineno);
+
 			if (!mem)
 				return false;
 			*(void **) data_var.ind_pointer = mem;

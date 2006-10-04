@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.118 2006/08/27 23:47:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.119 2006/10/04 00:30:13 momjian Exp $
  *
  **********************************************************************/
 
@@ -64,11 +64,11 @@ typedef struct plperl_proc_desc
 typedef struct plperl_call_data
 {
 	plperl_proc_desc *prodesc;
-	FunctionCallInfo  fcinfo;
-	Tuplestorestate  *tuple_store;
-	TupleDesc		  ret_tdesc;
-	AttInMetadata	 *attinmeta;
-	MemoryContext	  tmp_cxt;
+	FunctionCallInfo fcinfo;
+	Tuplestorestate *tuple_store;
+	TupleDesc	ret_tdesc;
+	AttInMetadata *attinmeta;
+	MemoryContext tmp_cxt;
 } plperl_call_data;
 
 /**********************************************************************
@@ -244,13 +244,13 @@ plperl_init_interp(void)
 
 #ifdef WIN32
 
-	/* 
+	/*
 	 * The perl library on startup does horrible things like call
-	 * setlocale(LC_ALL,""). We have protected against that on most
-	 * platforms by setting the environment appropriately. However, on
-	 * Windows, setlocale() does not consult the environment, so we need
-	 * to save the existing locale settings before perl has a chance to 
-	 * mangle them and restore them after its dirty deeds are done.
+	 * setlocale(LC_ALL,""). We have protected against that on most platforms
+	 * by setting the environment appropriately. However, on Windows,
+	 * setlocale() does not consult the environment, so we need to save the
+	 * existing locale settings before perl has a chance to mangle them and
+	 * restore them after its dirty deeds are done.
 	 *
 	 * MSDN ref:
 	 * http://msdn.microsoft.com/library/en-us/vclib/html/_crt_locale.asp
@@ -259,26 +259,29 @@ plperl_init_interp(void)
 	 * subsequent calls to the interpreter don't mess with the locale
 	 * settings.
 	 *
-	 * We restore them using Perl's POSIX::setlocale() function so that
-	 * Perl doesn't have a different idea of the locale from Postgres.
+	 * We restore them using Perl's POSIX::setlocale() function so that Perl
+	 * doesn't have a different idea of the locale from Postgres.
 	 *
 	 */
 
-	char *loc;
-	char *save_collate, *save_ctype, *save_monetary, *save_numeric, *save_time;
-	char buf[1024];
+	char	   *loc;
+	char	   *save_collate,
+			   *save_ctype,
+			   *save_monetary,
+			   *save_numeric,
+			   *save_time;
+	char		buf[1024];
 
-	loc = setlocale(LC_COLLATE,NULL);
+	loc = setlocale(LC_COLLATE, NULL);
 	save_collate = loc ? pstrdup(loc) : NULL;
-	loc = setlocale(LC_CTYPE,NULL);
+	loc = setlocale(LC_CTYPE, NULL);
 	save_ctype = loc ? pstrdup(loc) : NULL;
-	loc = setlocale(LC_MONETARY,NULL);
+	loc = setlocale(LC_MONETARY, NULL);
 	save_monetary = loc ? pstrdup(loc) : NULL;
-	loc = setlocale(LC_NUMERIC,NULL);
+	loc = setlocale(LC_NUMERIC, NULL);
 	save_numeric = loc ? pstrdup(loc) : NULL;
-	loc = setlocale(LC_TIME,NULL);
+	loc = setlocale(LC_TIME, NULL);
 	save_time = loc ? pstrdup(loc) : NULL;
-
 #endif
 
 	plperl_interp = perl_alloc();
@@ -294,44 +297,43 @@ plperl_init_interp(void)
 
 #ifdef WIN32
 
-	eval_pv("use POSIX qw(locale_h);", TRUE); /* croak on failure */
+	eval_pv("use POSIX qw(locale_h);", TRUE);	/* croak on failure */
 
 	if (save_collate != NULL)
 	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_COLLATE",save_collate);
-		eval_pv(buf,TRUE);
+		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
+				 "LC_COLLATE", save_collate);
+		eval_pv(buf, TRUE);
 		pfree(save_collate);
 	}
 	if (save_ctype != NULL)
 	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_CTYPE",save_ctype);
-		eval_pv(buf,TRUE);
+		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
+				 "LC_CTYPE", save_ctype);
+		eval_pv(buf, TRUE);
 		pfree(save_ctype);
 	}
 	if (save_monetary != NULL)
 	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_MONETARY",save_monetary);
-		eval_pv(buf,TRUE);
+		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
+				 "LC_MONETARY", save_monetary);
+		eval_pv(buf, TRUE);
 		pfree(save_monetary);
 	}
 	if (save_numeric != NULL)
 	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_NUMERIC",save_numeric);
-		eval_pv(buf,TRUE);
+		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
+				 "LC_NUMERIC", save_numeric);
+		eval_pv(buf, TRUE);
 		pfree(save_numeric);
 	}
 	if (save_time != NULL)
 	{
-		snprintf(buf, sizeof(buf),"setlocale(%s,'%s');",
-				 "LC_TIME",save_time);
-		eval_pv(buf,TRUE);
+		snprintf(buf, sizeof(buf), "setlocale(%s,'%s');",
+				 "LC_TIME", save_time);
+		eval_pv(buf, TRUE);
 		pfree(save_time);
 	}
-
 #endif
 
 }
@@ -1011,8 +1013,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	SV		   *array_ret = NULL;
 
 	/*
-	 * Create the call_data beforing connecting to SPI, so that it is
-	 * not allocated in the SPI memory context
+	 * Create the call_data beforing connecting to SPI, so that it is not
+	 * allocated in the SPI memory context
 	 */
 	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
 	current_call_data->fcinfo = fcinfo;
@@ -1160,8 +1162,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	HV		   *hvTD;
 
 	/*
-	 * Create the call_data beforing connecting to SPI, so that it is
-	 * not allocated in the SPI memory context
+	 * Create the call_data beforing connecting to SPI, so that it is not
+	 * allocated in the SPI memory context
 	 */
 	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
 	current_call_data->fcinfo = fcinfo;
@@ -1285,7 +1287,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	{
 		bool		uptodate;
 
-		prodesc = INT2PTR( plperl_proc_desc *, SvUV(*svp));
+		prodesc = INT2PTR(plperl_proc_desc *, SvUV(*svp));
 
 		/************************************************************
 		 * If it's present, must check whether it's still up to date.
@@ -1483,7 +1485,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		}
 
 		hv_store(plperl_proc_hash, internal_proname, proname_len,
-				 newSVuv( PTR2UV( prodesc)), 0);
+				 newSVuv(PTR2UV(prodesc)), 0);
 	}
 
 	ReleaseSysCache(procTup);
@@ -1690,14 +1692,14 @@ plperl_return_next(SV *sv)
 
 	if (!current_call_data->ret_tdesc)
 	{
-		TupleDesc tupdesc;
+		TupleDesc	tupdesc;
 
 		Assert(!current_call_data->tuple_store);
 		Assert(!current_call_data->attinmeta);
 
 		/*
-		 * This is the first call to return_next in the current
-		 * PL/Perl function call, so memoize some lookups
+		 * This is the first call to return_next in the current PL/Perl
+		 * function call, so memoize some lookups
 		 */
 		if (prodesc->fn_retistuple)
 			(void) get_call_result_type(fcinfo, NULL, &tupdesc);
@@ -1720,14 +1722,13 @@ plperl_return_next(SV *sv)
 		}
 
 		MemoryContextSwitchTo(old_cxt);
-	}		
+	}
 
 	/*
 	 * Producing the tuple we want to return requires making plenty of
-	 * palloc() allocations that are not cleaned up. Since this
-	 * function can be called many times before the current memory
-	 * context is reset, we need to do those allocations in a
-	 * temporary context.
+	 * palloc() allocations that are not cleaned up. Since this function can
+	 * be called many times before the current memory context is reset, we
+	 * need to do those allocations in a temporary context.
 	 */
 	if (!current_call_data->tmp_cxt)
 	{
@@ -1801,15 +1802,15 @@ plperl_spi_query(char *query)
 
 		/* Create a cursor for the query */
 		plan = SPI_prepare(query, 0, NULL);
-		if ( plan == NULL)
+		if (plan == NULL)
 			elog(ERROR, "SPI_prepare() failed:%s",
-				SPI_result_code_string(SPI_result));
+				 SPI_result_code_string(SPI_result));
 
 		portal = SPI_cursor_open(NULL, plan, NULL, NULL, false);
-		SPI_freeplan( plan);
-		if ( portal == NULL) 
+		SPI_freeplan(plan);
+		if (portal == NULL)
 			elog(ERROR, "SPI_cursor_open() failed:%s",
-				SPI_result_code_string(SPI_result));
+				 SPI_result_code_string(SPI_result));
 		cursor = newSVpv(portal->name, 0);
 
 		/* Commit the inner transaction, return to outer xact context */
@@ -1942,13 +1943,14 @@ plperl_spi_fetchrow(char *cursor)
 void
 plperl_spi_cursor_close(char *cursor)
 {
-	Portal p = SPI_cursor_find(cursor);
+	Portal		p = SPI_cursor_find(cursor);
+
 	if (p)
 		SPI_cursor_close(p);
 }
 
 SV *
-plperl_spi_prepare(char* query, int argc, SV ** argv)
+plperl_spi_prepare(char *query, int argc, SV **argv)
 {
 	plperl_query_desc *qdesc;
 	void	   *plan;
@@ -1965,11 +1967,11 @@ plperl_spi_prepare(char* query, int argc, SV ** argv)
 	 ************************************************************/
 	qdesc = (plperl_query_desc *) malloc(sizeof(plperl_query_desc));
 	MemSet(qdesc, 0, sizeof(plperl_query_desc));
-	snprintf(qdesc-> qname, sizeof(qdesc-> qname), "%lx", (long) qdesc);
-	qdesc-> nargs = argc;
-	qdesc-> argtypes = (Oid *) malloc(argc * sizeof(Oid));
-	qdesc-> arginfuncs = (FmgrInfo *) malloc(argc * sizeof(FmgrInfo));
-	qdesc-> argtypioparams = (Oid *) malloc(argc * sizeof(Oid));
+	snprintf(qdesc->qname, sizeof(qdesc->qname), "%lx", (long) qdesc);
+	qdesc->nargs = argc;
+	qdesc->argtypes = (Oid *) malloc(argc * sizeof(Oid));
+	qdesc->arginfuncs = (FmgrInfo *) malloc(argc * sizeof(FmgrInfo));
+	qdesc->argtypioparams = (Oid *) malloc(argc * sizeof(Oid));
 
 	PG_TRY();
 	{
@@ -2000,7 +2002,7 @@ plperl_spi_prepare(char* query, int argc, SV ** argv)
 
 		if (plan == NULL)
 			elog(ERROR, "SPI_prepare() failed:%s",
-				SPI_result_code_string(SPI_result));
+				 SPI_result_code_string(SPI_result));
 
 		/************************************************************
 		 * Save the plan into permanent memory (right now it's in the
@@ -2008,8 +2010,8 @@ plperl_spi_prepare(char* query, int argc, SV ** argv)
 		 ************************************************************/
 		qdesc->plan = SPI_saveplan(plan);
 		if (qdesc->plan == NULL)
-			elog(ERROR, "SPI_saveplan() failed: %s", 
-				SPI_result_code_string(SPI_result));
+			elog(ERROR, "SPI_saveplan() failed: %s",
+				 SPI_result_code_string(SPI_result));
 
 		/* Release the procCxt copy to avoid within-function memory leak */
 		SPI_freeplan(plan);
@@ -2018,19 +2020,20 @@ plperl_spi_prepare(char* query, int argc, SV ** argv)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
+
 		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context,
-		 * but just in case it did, make sure we remain connected.
+		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
+		 * in case it did, make sure we remain connected.
 		 */
 		SPI_restore_connection();
 	}
 	PG_CATCH();
 	{
 		ErrorData  *edata;
-		
-		free(qdesc-> argtypes);
-		free(qdesc-> arginfuncs);
-		free(qdesc-> argtypioparams);
+
+		free(qdesc->argtypes);
+		free(qdesc->arginfuncs);
+		free(qdesc->argtypioparams);
 		free(qdesc);
 
 		/* Save error info */
@@ -2044,9 +2047,9 @@ plperl_spi_prepare(char* query, int argc, SV ** argv)
 		CurrentResourceOwner = oldowner;
 
 		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact,
-		 * it will have left us in a disconnected state.  We need this
-		 * hack to return to connected state.
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
 		 */
 		SPI_restore_connection();
 
@@ -2062,24 +2065,26 @@ plperl_spi_prepare(char* query, int argc, SV ** argv)
 	 * Insert a hashtable entry for the plan and return
 	 * the key to the caller.
 	 ************************************************************/
-	hv_store( plperl_query_hash, qdesc->qname, strlen(qdesc->qname), newSVuv( PTR2UV( qdesc)), 0);
+	hv_store(plperl_query_hash, qdesc->qname, strlen(qdesc->qname), newSVuv(PTR2UV(qdesc)), 0);
 
-	return newSVpv( qdesc->qname, strlen(qdesc->qname));
-}	
+	return newSVpv(qdesc->qname, strlen(qdesc->qname));
+}
 
 HV *
-plperl_spi_exec_prepared(char* query, HV * attr, int argc, SV ** argv)
+plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 {
 	HV		   *ret_hv;
-	SV **sv;
-	int i, limit, spi_rv;
-	char * nulls;
+	SV		  **sv;
+	int			i,
+				limit,
+				spi_rv;
+	char	   *nulls;
 	Datum	   *argvalues;
 	plperl_query_desc *qdesc;
 
 	/*
-	 * Execute the query inside a sub-transaction, so we can cope with
-	 * errors sanely
+	 * Execute the query inside a sub-transaction, so we can cope with errors
+	 * sanely
 	 */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
@@ -2094,54 +2099,54 @@ plperl_spi_exec_prepared(char* query, HV * attr, int argc, SV ** argv)
 		 * Fetch the saved plan descriptor, see if it's o.k.
 		 ************************************************************/
 		sv = hv_fetch(plperl_query_hash, query, strlen(query), 0);
-		if ( sv == NULL) 
+		if (sv == NULL)
 			elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
-		if ( *sv == NULL || !SvOK( *sv))
+		if (*sv == NULL || !SvOK(*sv))
 			elog(ERROR, "spi_exec_prepared: panic - plperl_query_hash value corrupted");
 
-		qdesc = INT2PTR( plperl_query_desc *, SvUV(*sv));
-		if ( qdesc == NULL)
+		qdesc = INT2PTR(plperl_query_desc *, SvUV(*sv));
+		if (qdesc == NULL)
 			elog(ERROR, "spi_exec_prepared: panic - plperl_query_hash value vanished");
 
-		if ( qdesc-> nargs != argc) 
-			elog(ERROR, "spi_exec_prepared: expected %d argument(s), %d passed", 
-				qdesc-> nargs, argc);
-		
+		if (qdesc->nargs != argc)
+			elog(ERROR, "spi_exec_prepared: expected %d argument(s), %d passed",
+				 qdesc->nargs, argc);
+
 		/************************************************************
 		 * Parse eventual attributes
 		 ************************************************************/
 		limit = 0;
-		if ( attr != NULL) 
+		if (attr != NULL)
 		{
-			sv = hv_fetch( attr, "limit", 5, 0);
-			if ( *sv && SvIOK( *sv))
-				limit = SvIV( *sv);
+			sv = hv_fetch(attr, "limit", 5, 0);
+			if (*sv && SvIOK(*sv))
+				limit = SvIV(*sv);
 		}
 		/************************************************************
 		 * Set up arguments
 		 ************************************************************/
-		if (argc > 0) 
+		if (argc > 0)
 		{
 			nulls = (char *) palloc(argc);
 			argvalues = (Datum *) palloc(argc * sizeof(Datum));
-		} 
-		else 
+		}
+		else
 		{
 			nulls = NULL;
 			argvalues = NULL;
 		}
 
-		for (i = 0; i < argc; i++) 
+		for (i = 0; i < argc; i++)
 		{
-			if (SvTYPE(argv[i]) != SVt_NULL) 
+			if (SvTYPE(argv[i]) != SVt_NULL)
 			{
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
 												 SvPV(argv[i], PL_na),
 												 qdesc->argtypioparams[i],
 												 -1);
 				nulls[i] = ' ';
-			} 
-			else 
+			}
+			else
 			{
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
 												 NULL,
@@ -2154,23 +2159,24 @@ plperl_spi_exec_prepared(char* query, HV * attr, int argc, SV ** argv)
 		/************************************************************
 		 * go
 		 ************************************************************/
-		spi_rv = SPI_execute_plan(qdesc-> plan, argvalues, nulls, 
+		spi_rv = SPI_execute_plan(qdesc->plan, argvalues, nulls,
 							 current_call_data->prodesc->fn_readonly, limit);
 		ret_hv = plperl_spi_execute_fetch_result(SPI_tuptable, SPI_processed,
 												 spi_rv);
-		if ( argc > 0) 
+		if (argc > 0)
 		{
-			pfree( argvalues);
-			pfree( nulls);
+			pfree(argvalues);
+			pfree(nulls);
 		}
 
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
+
 		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context,
-		 * but just in case it did, make sure we remain connected.
+		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
+		 * in case it did, make sure we remain connected.
 		 */
 		SPI_restore_connection();
 	}
@@ -2189,9 +2195,9 @@ plperl_spi_exec_prepared(char* query, HV * attr, int argc, SV ** argv)
 		CurrentResourceOwner = oldowner;
 
 		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact,
-		 * it will have left us in a disconnected state.  We need this
-		 * hack to return to connected state.
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
 		 */
 		SPI_restore_connection();
 
@@ -2207,19 +2213,19 @@ plperl_spi_exec_prepared(char* query, HV * attr, int argc, SV ** argv)
 }
 
 SV *
-plperl_spi_query_prepared(char* query, int argc, SV ** argv)
+plperl_spi_query_prepared(char *query, int argc, SV **argv)
 {
-	SV **sv;
-	int i;
-	char * nulls;
+	SV		  **sv;
+	int			i;
+	char	   *nulls;
 	Datum	   *argvalues;
 	plperl_query_desc *qdesc;
-	SV *cursor;
-	Portal portal = NULL;
+	SV		   *cursor;
+	Portal		portal = NULL;
 
 	/*
-	 * Execute the query inside a sub-transaction, so we can cope with
-	 * errors sanely
+	 * Execute the query inside a sub-transaction, so we can cope with errors
+	 * sanely
 	 */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
@@ -2234,44 +2240,44 @@ plperl_spi_query_prepared(char* query, int argc, SV ** argv)
 		 * Fetch the saved plan descriptor, see if it's o.k.
 		 ************************************************************/
 		sv = hv_fetch(plperl_query_hash, query, strlen(query), 0);
-		if ( sv == NULL) 
+		if (sv == NULL)
 			elog(ERROR, "spi_query_prepared: Invalid prepared query passed");
-		if ( *sv == NULL || !SvOK( *sv))
+		if (*sv == NULL || !SvOK(*sv))
 			elog(ERROR, "spi_query_prepared: panic - plperl_query_hash value corrupted");
 
-		qdesc = INT2PTR( plperl_query_desc *, SvUV(*sv));
-		if ( qdesc == NULL)
+		qdesc = INT2PTR(plperl_query_desc *, SvUV(*sv));
+		if (qdesc == NULL)
 			elog(ERROR, "spi_query_prepared: panic - plperl_query_hash value vanished");
 
-		if ( qdesc-> nargs != argc) 
-			elog(ERROR, "spi_query_prepared: expected %d argument(s), %d passed", 
-				qdesc-> nargs, argc);
-		
+		if (qdesc->nargs != argc)
+			elog(ERROR, "spi_query_prepared: expected %d argument(s), %d passed",
+				 qdesc->nargs, argc);
+
 		/************************************************************
 		 * Set up arguments
 		 ************************************************************/
-		if (argc > 0) 
+		if (argc > 0)
 		{
 			nulls = (char *) palloc(argc);
 			argvalues = (Datum *) palloc(argc * sizeof(Datum));
-		} 
-		else 
+		}
+		else
 		{
 			nulls = NULL;
 			argvalues = NULL;
 		}
 
-		for (i = 0; i < argc; i++) 
+		for (i = 0; i < argc; i++)
 		{
-			if (SvTYPE(argv[i]) != SVt_NULL) 
+			if (SvTYPE(argv[i]) != SVt_NULL)
 			{
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
 												 SvPV(argv[i], PL_na),
 												 qdesc->argtypioparams[i],
 												 -1);
 				nulls[i] = ' ';
-			} 
-			else 
+			}
+			else
 			{
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
 												 NULL,
@@ -2284,16 +2290,16 @@ plperl_spi_query_prepared(char* query, int argc, SV ** argv)
 		/************************************************************
 		 * go
 		 ************************************************************/
-		portal = SPI_cursor_open(NULL, qdesc-> plan, argvalues, nulls, 
-							current_call_data->prodesc->fn_readonly);
-		if ( argc > 0) 
+		portal = SPI_cursor_open(NULL, qdesc->plan, argvalues, nulls,
+								 current_call_data->prodesc->fn_readonly);
+		if (argc > 0)
 		{
-			pfree( argvalues);
-			pfree( nulls);
+			pfree(argvalues);
+			pfree(nulls);
 		}
-		if ( portal == NULL) 
+		if (portal == NULL)
 			elog(ERROR, "SPI_cursor_open() failed:%s",
-				SPI_result_code_string(SPI_result));
+				 SPI_result_code_string(SPI_result));
 
 		cursor = newSVpv(portal->name, 0);
 
@@ -2301,9 +2307,10 @@ plperl_spi_query_prepared(char* query, int argc, SV ** argv)
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
+
 		/*
-		 * AtEOSubXact_SPI() should not have popped any SPI context,
-		 * but just in case it did, make sure we remain connected.
+		 * AtEOSubXact_SPI() should not have popped any SPI context, but just
+		 * in case it did, make sure we remain connected.
 		 */
 		SPI_restore_connection();
 	}
@@ -2322,9 +2329,9 @@ plperl_spi_query_prepared(char* query, int argc, SV ** argv)
 		CurrentResourceOwner = oldowner;
 
 		/*
-		 * If AtEOSubXact_SPI() popped any SPI context of the subxact,
-		 * it will have left us in a disconnected state.  We need this
-		 * hack to return to connected state.
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
+		 * have left us in a disconnected state.  We need this hack to return
+		 * to connected state.
 		 */
 		SPI_restore_connection();
 
@@ -2342,29 +2349,30 @@ plperl_spi_query_prepared(char* query, int argc, SV ** argv)
 void
 plperl_spi_freeplan(char *query)
 {
-	SV ** sv;
-	void * plan;
+	SV		  **sv;
+	void	   *plan;
 	plperl_query_desc *qdesc;
 
 	sv = hv_fetch(plperl_query_hash, query, strlen(query), 0);
-	if ( sv == NULL) 
+	if (sv == NULL)
 		elog(ERROR, "spi_exec_freeplan: Invalid prepared query passed");
-	if ( *sv == NULL || !SvOK( *sv))
+	if (*sv == NULL || !SvOK(*sv))
 		elog(ERROR, "spi_exec_freeplan: panic - plperl_query_hash value corrupted");
 
-	qdesc = INT2PTR( plperl_query_desc *, SvUV(*sv));
-	if ( qdesc == NULL)
+	qdesc = INT2PTR(plperl_query_desc *, SvUV(*sv));
+	if (qdesc == NULL)
 		elog(ERROR, "spi_exec_freeplan: panic - plperl_query_hash value vanished");
 
 	/*
-	*	free all memory before SPI_freeplan, so if it dies, nothing will be left over
-	*/
+	 * free all memory before SPI_freeplan, so if it dies, nothing will be
+	 * left over
+	 */
 	hv_delete(plperl_query_hash, query, strlen(query), G_DISCARD);
-	plan = qdesc-> plan;
-	free(qdesc-> argtypes);
-	free(qdesc-> arginfuncs);
-	free(qdesc-> argtypioparams);
+	plan = qdesc->plan;
+	free(qdesc->argtypes);
+	free(qdesc->arginfuncs);
+	free(qdesc->argtypioparams);
 	free(qdesc);
 
-	SPI_freeplan( plan);
+	SPI_freeplan(plan);
 }

@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.72 2006/09/24 16:59:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.73 2006/10/04 00:30:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ static void pgwin32_SetServiceStatus(DWORD);
 static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
-static int CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo);
+static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo);
 #endif
 static pgpid_t get_pgpid(void);
 static char **readfile(const char *path);
@@ -336,7 +336,9 @@ static int
 start_postmaster(void)
 {
 	char		cmd[MAXPGPATH];
+
 #ifndef WIN32
+
 	/*
 	 * Since there might be quotes to handle here, it is easier simply to pass
 	 * everything to a shell to process them.
@@ -345,36 +347,36 @@ start_postmaster(void)
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &%s",
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file, SYSTEMQUOTE);
-    else
+	else
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" 2>&1 &%s",
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, SYSTEMQUOTE);
 
 	return system(cmd);
-    
-#else /* WIN32 */
-    /*
-     * On win32 we don't use system(). So we don't need to use &
-     * (which would be START /B on win32). However, we still call the shell
-     * (CMD.EXE) with it to handle redirection etc. 
-     */
-    PROCESS_INFORMATION pi;
+#else							/* WIN32 */
 
-    if (log_file != NULL)
-        snprintf(cmd, MAXPGPATH, "CMD /C %s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
+	/*
+	 * On win32 we don't use system(). So we don't need to use & (which would
+	 * be START /B on win32). However, we still call the shell (CMD.EXE) with
+	 * it to handle redirection etc.
+	 */
+	PROCESS_INFORMATION pi;
+
+	if (log_file != NULL)
+		snprintf(cmd, MAXPGPATH, "CMD /C %s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file, SYSTEMQUOTE);
-    else
-        snprintf(cmd, MAXPGPATH, "CMD /C %s\"%s\" %s%s < \"%s\" 2>&1%s",
+	else
+		snprintf(cmd, MAXPGPATH, "CMD /C %s\"%s\" %s%s < \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, SYSTEMQUOTE);
 
-    if (!CreateRestrictedProcess(cmd, &pi))
-        return GetLastError();
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    return 0;
-#endif /* WIN32 */
+	if (!CreateRestrictedProcess(cmd, &pi))
+		return GetLastError();
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+	return 0;
+#endif   /* WIN32 */
 }
 
 
@@ -1162,15 +1164,15 @@ pgwin32_doRunAsService(void)
  * also load the couple of functions that *do* exist in minwg headers but not
  * on NT4. That way, we don't break on NT4.
  */
-typedef BOOL (WINAPI *__CreateRestrictedToken)(HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
-typedef BOOL (WINAPI *__IsProcessInJob)(HANDLE, HANDLE, PBOOL);
-typedef HANDLE (WINAPI *__CreateJobObject)(LPSECURITY_ATTRIBUTES, LPCTSTR);
-typedef BOOL (WINAPI *__SetInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD);
-typedef BOOL (WINAPI *__AssignProcessToJobObject)(HANDLE, HANDLE);
-typedef BOOL (WINAPI *__QueryInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD, LPDWORD);
+typedef		BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+typedef		BOOL(WINAPI * __IsProcessInJob) (HANDLE, HANDLE, PBOOL);
+typedef		HANDLE(WINAPI * __CreateJobObject) (LPSECURITY_ATTRIBUTES, LPCTSTR);
+typedef		BOOL(WINAPI * __SetInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD);
+typedef		BOOL(WINAPI * __AssignProcessToJobObject) (HANDLE, HANDLE);
+typedef		BOOL(WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS, LPVOID, DWORD, LPDWORD);
 
 /* Windows API define missing from MingW headers */
-#define DISABLE_MAX_PRIVILEGE   0x1 
+#define DISABLE_MAX_PRIVILEGE	0x1
 
 /*
  * Create a restricted token, a job object sandbox, and execute the specified
@@ -1185,165 +1187,178 @@ typedef BOOL (WINAPI *__QueryInformationJobObject)(HANDLE, JOBOBJECTINFOCLASS, L
  * automatically destroyed when pg_ctl exits.
  */
 static int
-CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
+CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 {
-    int r;
-    BOOL b;
-    STARTUPINFO si;
-    HANDLE origToken;
-    HANDLE restrictedToken;
-    SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
-    SID_AND_ATTRIBUTES dropSids[2];
+	int			r;
+	BOOL		b;
+	STARTUPINFO si;
+	HANDLE		origToken;
+	HANDLE		restrictedToken;
+	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+	SID_AND_ATTRIBUTES dropSids[2];
 
-    /* Functions loaded dynamically */
-    __CreateRestrictedToken _CreateRestrictedToken = NULL;
-    __IsProcessInJob _IsProcessInJob = NULL;
-    __CreateJobObject _CreateJobObject = NULL;
-    __SetInformationJobObject _SetInformationJobObject = NULL;
-    __AssignProcessToJobObject _AssignProcessToJobObject = NULL;
-    __QueryInformationJobObject _QueryInformationJobObject = NULL;
-    HANDLE Kernel32Handle;
-    HANDLE Advapi32Handle;
-    
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
+	/* Functions loaded dynamically */
+	__CreateRestrictedToken _CreateRestrictedToken = NULL;
+	__IsProcessInJob _IsProcessInJob = NULL;
+	__CreateJobObject _CreateJobObject = NULL;
+	__SetInformationJobObject _SetInformationJobObject = NULL;
+	__AssignProcessToJobObject _AssignProcessToJobObject = NULL;
+	__QueryInformationJobObject _QueryInformationJobObject = NULL;
+	HANDLE		Kernel32Handle;
+	HANDLE		Advapi32Handle;
 
-    Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
-    if (Advapi32Handle != NULL)
-    {
-        _CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
-    }
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
 
-    if (_CreateRestrictedToken == NULL)
-    {
-        /* NT4 doesn't have CreateRestrictedToken, so just call ordinary CreateProcess */
-        write_stderr("WARNING: Unable to create restricted tokens on this platform\n");
-        if (Advapi32Handle != NULL)
-            FreeLibrary(Advapi32Handle);
-        return CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, processInfo);
-    }
+	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+	if (Advapi32Handle != NULL)
+	{
+		_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+	}
 
-    /* Open the current token to use as a base for the restricted one */
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
-    {
-        write_stderr("Failed to open process token: %lu\n", GetLastError());
-        return 0;
-    }
+	if (_CreateRestrictedToken == NULL)
+	{
+		/*
+		 * NT4 doesn't have CreateRestrictedToken, so just call ordinary
+		 * CreateProcess
+		 */
+		write_stderr("WARNING: Unable to create restricted tokens on this platform\n");
+		if (Advapi32Handle != NULL)
+			FreeLibrary(Advapi32Handle);
+		return CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, processInfo);
+	}
 
-    /* Allocate list of SIDs to remove */
-    ZeroMemory(&dropSids, sizeof(dropSids));
-    if (!AllocateAndInitializeSid(&NtAuthority, 2,
-            SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0,0,0,0,0,
-            0, &dropSids[0].Sid) ||
-        !AllocateAndInitializeSid(&NtAuthority, 2, 
-            SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0,0,0,0,0,
-            0, &dropSids[1].Sid))
-    {
-        write_stderr("Failed to allocate SIDs: %lu\n", GetLastError());
-        return 0;
-    }
+	/* Open the current token to use as a base for the restricted one */
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
+	{
+		write_stderr("Failed to open process token: %lu\n", GetLastError());
+		return 0;
+	}
 
-    b = _CreateRestrictedToken(origToken,
-            DISABLE_MAX_PRIVILEGE,
-            sizeof(dropSids)/sizeof(dropSids[0]),
-            dropSids,
-            0, NULL,
-            0, NULL,
-            &restrictedToken);
-    
-    FreeSid(dropSids[1].Sid);
-    FreeSid(dropSids[0].Sid);
-    CloseHandle(origToken);
-    FreeLibrary(Advapi32Handle);
+	/* Allocate list of SIDs to remove */
+	ZeroMemory(&dropSids, sizeof(dropSids));
+	if (!AllocateAndInitializeSid(&NtAuthority, 2,
+		 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
+								  0, &dropSids[0].Sid) ||
+		!AllocateAndInitializeSid(&NtAuthority, 2,
+	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
+								  0, &dropSids[1].Sid))
+	{
+		write_stderr("Failed to allocate SIDs: %lu\n", GetLastError());
+		return 0;
+	}
 
-    if (!b)
-    {
-        write_stderr("Failed to create restricted token: %lu\n", GetLastError());
-        return 0;
-    }
+	b = _CreateRestrictedToken(origToken,
+							   DISABLE_MAX_PRIVILEGE,
+							   sizeof(dropSids) / sizeof(dropSids[0]),
+							   dropSids,
+							   0, NULL,
+							   0, NULL,
+							   &restrictedToken);
 
-    r = CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, processInfo);
-    
-    Kernel32Handle = LoadLibrary("KERNEL32.DLL");
-    if (Kernel32Handle != NULL)
-    {
-        _IsProcessInJob = (__IsProcessInJob) GetProcAddress(Kernel32Handle, "IsProcessInJob");
-        _CreateJobObject = (__CreateJobObject) GetProcAddress(Kernel32Handle, "CreateJobObjectA");
-        _SetInformationJobObject = (__SetInformationJobObject) GetProcAddress(Kernel32Handle, "SetInformationJobObject");
-        _AssignProcessToJobObject = (__AssignProcessToJobObject) GetProcAddress(Kernel32Handle, "AssignProcessToJobObject");
-        _QueryInformationJobObject = (__QueryInformationJobObject) GetProcAddress(Kernel32Handle, "QueryInformationJobObject");
-    }
+	FreeSid(dropSids[1].Sid);
+	FreeSid(dropSids[0].Sid);
+	CloseHandle(origToken);
+	FreeLibrary(Advapi32Handle);
 
-    /* Verify that we found all functions */
-    if (_IsProcessInJob == NULL || _CreateJobObject == NULL || _SetInformationJobObject == NULL || _AssignProcessToJobObject == NULL || _QueryInformationJobObject == NULL)
-    {
-		/* IsProcessInJob() is not available on < WinXP, so there is no need to log the error every time in that case */
+	if (!b)
+	{
+		write_stderr("Failed to create restricted token: %lu\n", GetLastError());
+		return 0;
+	}
+
+	r = CreateProcessAsUser(restrictedToken, NULL, cmd, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, processInfo);
+
+	Kernel32Handle = LoadLibrary("KERNEL32.DLL");
+	if (Kernel32Handle != NULL)
+	{
+		_IsProcessInJob = (__IsProcessInJob) GetProcAddress(Kernel32Handle, "IsProcessInJob");
+		_CreateJobObject = (__CreateJobObject) GetProcAddress(Kernel32Handle, "CreateJobObjectA");
+		_SetInformationJobObject = (__SetInformationJobObject) GetProcAddress(Kernel32Handle, "SetInformationJobObject");
+		_AssignProcessToJobObject = (__AssignProcessToJobObject) GetProcAddress(Kernel32Handle, "AssignProcessToJobObject");
+		_QueryInformationJobObject = (__QueryInformationJobObject) GetProcAddress(Kernel32Handle, "QueryInformationJobObject");
+	}
+
+	/* Verify that we found all functions */
+	if (_IsProcessInJob == NULL || _CreateJobObject == NULL || _SetInformationJobObject == NULL || _AssignProcessToJobObject == NULL || _QueryInformationJobObject == NULL)
+	{
+		/*
+		 * IsProcessInJob() is not available on < WinXP, so there is no need
+		 * to log the error every time in that case
+		 */
 		OSVERSIONINFO osv;
 
 		osv.dwOSVersionInfoSize = sizeof(osv);
-		if (!GetVersionEx(&osv) || /* could not get version */
-			(osv.dwMajorVersion == 5 && osv.dwMinorVersion > 0) || /* 5.1=xp, 5.2=2003, etc */
-			osv.dwMajorVersion > 5) /* anything newer should have the API */
-			/* Log error if we can't get version, or if we're on WinXP/2003 or newer */
+		if (!GetVersionEx(&osv) ||		/* could not get version */
+			(osv.dwMajorVersion == 5 && osv.dwMinorVersion > 0) ||		/* 5.1=xp, 5.2=2003, etc */
+			osv.dwMajorVersion > 5)		/* anything newer should have the API */
+
+			/*
+			 * Log error if we can't get version, or if we're on WinXP/2003 or
+			 * newer
+			 */
 			write_stderr("WARNING: Unable to locate all job object functions in system API!\n");
-    } 
-    else
-    { 
-        BOOL inJob;
-        if (_IsProcessInJob(processInfo->hProcess, NULL, &inJob))
-        {
-            if (!inJob)
-            {
-                /* Job objects are working, and the new process isn't in one, so we can create one safely.
-                   If any problems show up when setting it, we're going to ignore them. */
-                HANDLE job;
-                char jobname[128];
+	}
+	else
+	{
+		BOOL		inJob;
 
-                sprintf(jobname,"PostgreSQL_%lu", processInfo->dwProcessId);
+		if (_IsProcessInJob(processInfo->hProcess, NULL, &inJob))
+		{
+			if (!inJob)
+			{
+				/*
+				 * Job objects are working, and the new process isn't in one,
+				 * so we can create one safely. If any problems show up when
+				 * setting it, we're going to ignore them.
+				 */
+				HANDLE		job;
+				char		jobname[128];
 
-                job = _CreateJobObject(NULL, jobname);
-                if (job)
-                {
-                    JOBOBJECT_BASIC_LIMIT_INFORMATION basicLimit;
-                    JOBOBJECT_BASIC_UI_RESTRICTIONS uiRestrictions;
-                    JOBOBJECT_SECURITY_LIMIT_INFORMATION securityLimit;
+				sprintf(jobname, "PostgreSQL_%lu", processInfo->dwProcessId);
 
-                    ZeroMemory(&basicLimit, sizeof(basicLimit));
-                    ZeroMemory(&uiRestrictions, sizeof(uiRestrictions));
-                    ZeroMemory(&securityLimit, sizeof(securityLimit));
+				job = _CreateJobObject(NULL, jobname);
+				if (job)
+				{
+					JOBOBJECT_BASIC_LIMIT_INFORMATION basicLimit;
+					JOBOBJECT_BASIC_UI_RESTRICTIONS uiRestrictions;
+					JOBOBJECT_SECURITY_LIMIT_INFORMATION securityLimit;
 
-                    basicLimit.LimitFlags = JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION | JOB_OBJECT_LIMIT_PRIORITY_CLASS;
-                    basicLimit.PriorityClass = NORMAL_PRIORITY_CLASS;
-                    _SetInformationJobObject(job, JobObjectBasicLimitInformation, &basicLimit, sizeof(basicLimit));
+					ZeroMemory(&basicLimit, sizeof(basicLimit));
+					ZeroMemory(&uiRestrictions, sizeof(uiRestrictions));
+					ZeroMemory(&securityLimit, sizeof(securityLimit));
 
-                    uiRestrictions.UIRestrictionsClass = JOB_OBJECT_UILIMIT_DESKTOP | JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
-                        JOB_OBJECT_UILIMIT_EXITWINDOWS | JOB_OBJECT_UILIMIT_HANDLES | JOB_OBJECT_UILIMIT_READCLIPBOARD |
-                        JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS | JOB_OBJECT_UILIMIT_WRITECLIPBOARD;
-                    _SetInformationJobObject(job, JobObjectBasicUIRestrictions, &uiRestrictions, sizeof(uiRestrictions));
+					basicLimit.LimitFlags = JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION | JOB_OBJECT_LIMIT_PRIORITY_CLASS;
+					basicLimit.PriorityClass = NORMAL_PRIORITY_CLASS;
+					_SetInformationJobObject(job, JobObjectBasicLimitInformation, &basicLimit, sizeof(basicLimit));
 
-                    securityLimit.SecurityLimitFlags = JOB_OBJECT_SECURITY_NO_ADMIN | JOB_OBJECT_SECURITY_ONLY_TOKEN;
-                    securityLimit.JobToken = restrictedToken;
-                    _SetInformationJobObject(job, JobObjectSecurityLimitInformation, &securityLimit, sizeof(securityLimit));
+					uiRestrictions.UIRestrictionsClass = JOB_OBJECT_UILIMIT_DESKTOP | JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
+						JOB_OBJECT_UILIMIT_EXITWINDOWS | JOB_OBJECT_UILIMIT_HANDLES | JOB_OBJECT_UILIMIT_READCLIPBOARD |
+						JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS | JOB_OBJECT_UILIMIT_WRITECLIPBOARD;
+					_SetInformationJobObject(job, JobObjectBasicUIRestrictions, &uiRestrictions, sizeof(uiRestrictions));
 
-                    _AssignProcessToJobObject(job, processInfo->hProcess);
-                }
-            }
-        }
-    }
-    
-    CloseHandle(restrictedToken);
+					securityLimit.SecurityLimitFlags = JOB_OBJECT_SECURITY_NO_ADMIN | JOB_OBJECT_SECURITY_ONLY_TOKEN;
+					securityLimit.JobToken = restrictedToken;
+					_SetInformationJobObject(job, JobObjectSecurityLimitInformation, &securityLimit, sizeof(securityLimit));
 
-    ResumeThread(processInfo->hThread);
+					_AssignProcessToJobObject(job, processInfo->hProcess);
+				}
+			}
+		}
+	}
 
-    FreeLibrary(Kernel32Handle);
+	CloseHandle(restrictedToken);
 
-    /*
+	ResumeThread(processInfo->hThread);
+
+	FreeLibrary(Kernel32Handle);
+
+	/*
 	 * We intentionally don't close the job object handle, because we want the
 	 * object to live on until pg_ctl shuts down.
 	 */
-    return r;
+	return r;
 }
-
 #endif
 
 static void
@@ -1722,13 +1737,13 @@ main(int argc, char **argv)
 		do_wait = false;
 	}
 
-    if (pg_data)
-    {
-        snprintf(def_postopts_file, MAXPGPATH, "%s/postmaster.opts.default", pg_data);
-        snprintf(postopts_file, MAXPGPATH, "%s/postmaster.opts", pg_data);
-        snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
-        snprintf(conf_file, MAXPGPATH, "%s/postgresql.conf", pg_data);
-    }
+	if (pg_data)
+	{
+		snprintf(def_postopts_file, MAXPGPATH, "%s/postmaster.opts.default", pg_data);
+		snprintf(postopts_file, MAXPGPATH, "%s/postmaster.opts", pg_data);
+		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
+		snprintf(conf_file, MAXPGPATH, "%s/postgresql.conf", pg_data);
+	}
 
 	switch (ctl_command)
 	{

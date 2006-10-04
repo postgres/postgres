@@ -1,1 +1,1 @@
-/* $PostgreSQL: pgsql/src/include/port/win32_msvc/sys/param.h,v 1.2 2006/06/26 12:52:12 momjian Exp $ */ 
+/* $PostgreSQL: pgsql/src/include/port/win32_msvc/sys/param.h,v 1.3 2006/10/04 00:30:10 momjian Exp $ */

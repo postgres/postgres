@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.139 2006/08/04 21:33:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.140 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -898,8 +898,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 	resultRelInfo->ri_IndexRelationInfo = indexInfoArray;
 
 	/*
-	 * For each index, open the index relation and save pg_index info.
-	 * We acquire RowExclusiveLock, signifying we will update the index.
+	 * For each index, open the index relation and save pg_index info. We
+	 * acquire RowExclusiveLock, signifying we will update the index.
 	 */
 	i = 0;
 	foreach(l, indexoidlist)

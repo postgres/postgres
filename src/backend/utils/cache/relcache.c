@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.248 2006/09/05 21:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.249 2006/10/04 00:30:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ static void RelationReloadClassinfo(Relation relation);
 static void RelationFlushRelation(Relation relation);
 static bool load_relcache_init_file(void);
 static void write_relcache_init_file(void);
-static void	write_item(const void *data, Size len, FILE *fp);
+static void write_item(const void *data, Size len, FILE *fp);
 
 static void formrdesc(const char *relationName, Oid relationReltype,
 		  bool hasoids, int natts, FormData_pg_attribute *att);
@@ -298,14 +298,14 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	/*
 	 * Copy the relation tuple form
 	 *
-	 * We only allocate space for the fixed fields, ie, CLASS_TUPLE_SIZE.
-	 * The variable-length fields (relacl, reloptions) are NOT stored in the
+	 * We only allocate space for the fixed fields, ie, CLASS_TUPLE_SIZE. The
+	 * variable-length fields (relacl, reloptions) are NOT stored in the
 	 * relcache --- there'd be little point in it, since we don't copy the
 	 * tuple's nulls bitmap and hence wouldn't know if the values are valid.
-	 * Bottom line is that relacl *cannot* be retrieved from the relcache.
-	 * Get it from the syscache if you need it.  The same goes for the
-	 * original form of reloptions (however, we do store the parsed form
-	 * of reloptions in rd_options).
+	 * Bottom line is that relacl *cannot* be retrieved from the relcache. Get
+	 * it from the syscache if you need it.  The same goes for the original
+	 * form of reloptions (however, we do store the parsed form of reloptions
+	 * in rd_options).
 	 */
 	relationForm = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 
@@ -355,9 +355,9 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	}
 
 	/*
-	 * Fetch reloptions from tuple; have to use a hardwired descriptor
-	 * because we might not have any other for pg_class yet (consider
-	 * executing this code for pg_class itself)
+	 * Fetch reloptions from tuple; have to use a hardwired descriptor because
+	 * we might not have any other for pg_class yet (consider executing this
+	 * code for pg_class itself)
 	 */
 	datum = fastgetattr(tuple,
 						Anum_pg_class_reloptions,
@@ -620,8 +620,8 @@ RelationBuildRuleLock(Relation relation)
 	 *
 	 * Note: since we scan the rules using RewriteRelRulenameIndexId, we will
 	 * be reading the rules in name order, except possibly during
-	 * emergency-recovery operations (ie, IgnoreSystemIndexes). This in
-	 * turn ensures that rules will be fired in name order.
+	 * emergency-recovery operations (ie, IgnoreSystemIndexes). This in turn
+	 * ensures that rules will be fired in name order.
 	 */
 	rewrite_desc = heap_open(RewriteRelationId, AccessShareLock);
 	rewrite_tupdesc = RelationGetDescr(rewrite_desc);
@@ -649,10 +649,10 @@ RelationBuildRuleLock(Relation relation)
 		rule->isInstead = rewrite_form->is_instead;
 
 		/*
-		 * Must use heap_getattr to fetch ev_action and ev_qual.  Also,
-		 * the rule strings are often large enough to be toasted.  To avoid
-		 * leaking memory in the caller's context, do the detoasting here
-		 * so we can free the detoasted version.
+		 * Must use heap_getattr to fetch ev_action and ev_qual.  Also, the
+		 * rule strings are often large enough to be toasted.  To avoid
+		 * leaking memory in the caller's context, do the detoasting here so
+		 * we can free the detoasted version.
 		 */
 		rule_datum = heap_getattr(rewrite_tuple,
 								  Anum_pg_rewrite_ev_action,
@@ -686,16 +686,16 @@ RelationBuildRuleLock(Relation relation)
 
 		/*
 		 * We want the rule's table references to be checked as though by the
-		 * table owner, not the user referencing the rule.  Therefore, scan
+		 * table owner, not the user referencing the rule.	Therefore, scan
 		 * through the rule's actions and set the checkAsUser field on all
-		 * rtable entries.  We have to look at the qual as well, in case it
+		 * rtable entries.	We have to look at the qual as well, in case it
 		 * contains sublinks.
 		 *
-		 * The reason for doing this when the rule is loaded, rather than
-		 * when it is stored, is that otherwise ALTER TABLE OWNER would have
-		 * to grovel through stored rules to update checkAsUser fields.
-		 * Scanning the rule tree during load is relatively cheap (compared
-		 * to constructing it in the first place), so we do it here.
+		 * The reason for doing this when the rule is loaded, rather than when
+		 * it is stored, is that otherwise ALTER TABLE OWNER would have to
+		 * grovel through stored rules to update checkAsUser fields. Scanning
+		 * the rule tree during load is relatively cheap (compared to
+		 * constructing it in the first place), so we do it here.
 		 */
 		setRuleCheckAsUser((Node *) rule->actions, relation->rd_rel->relowner);
 		setRuleCheckAsUser(rule->qual, relation->rd_rel->relowner);
@@ -1626,14 +1626,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * Even non-system indexes should not be blown away if they are open and
 	 * have valid index support information.  This avoids problems with active
 	 * use of the index support information.  As with nailed indexes, we
-	 * re-read the pg_class row to handle possible physical relocation of
-	 * the index.
+	 * re-read the pg_class row to handle possible physical relocation of the
+	 * index.
 	 */
 	if (relation->rd_rel->relkind == RELKIND_INDEX &&
 		relation->rd_refcnt > 0 &&
 		relation->rd_indexcxt != NULL)
 	{
-		relation->rd_isvalid = false;			/* needs to be revalidated */
+		relation->rd_isvalid = false;	/* needs to be revalidated */
 		RelationReloadClassinfo(relation);
 		return;
 	}
@@ -2140,9 +2140,9 @@ RelationBuildLocalRelation(const char *relname,
 
 	/*
 	 * check that hardwired list of shared rels matches what's in the
-	 * bootstrap .bki file.  If you get a failure here during initdb,
-	 * you probably need to fix IsSharedRelation() to match whatever
-	 * you've done to the set of shared relations.
+	 * bootstrap .bki file.  If you get a failure here during initdb, you
+	 * probably need to fix IsSharedRelation() to match whatever you've done
+	 * to the set of shared relations.
 	 */
 	if (shared_relation != IsSharedRelation(relid))
 		elog(ERROR, "shared_relation flag for \"%s\" does not match IsSharedRelation(%u)",
@@ -2308,7 +2308,7 @@ RelationCacheInitialize(void)
  *		the system catalogs.  We first try to read pre-computed relcache
  *		entries from the pg_internal.init file.  If that's missing or
  *		broken, make phony entries for the minimum set of nailed-in-cache
- *		relations.  Then (unless bootstrapping) make sure we have entries
+ *		relations.	Then (unless bootstrapping) make sure we have entries
  *		for the critical system indexes.  Once we've done all this, we
  *		have enough infrastructure to open any system catalog or use any
  *		catcache.  The last step is to rewrite pg_internal.init if needed.
@@ -2319,7 +2319,7 @@ RelationCacheInitializePhase2(void)
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
 	MemoryContext oldcxt;
-	bool needNewCacheFile = false;
+	bool		needNewCacheFile = false;
 
 	/*
 	 * switch to cache memory context
@@ -2375,7 +2375,7 @@ RelationCacheInitializePhase2(void)
 	 * RewriteRelRulenameIndexId and TriggerRelidNameIndexId are not critical
 	 * in the same way as the others, because the critical catalogs don't
 	 * (currently) have any rules or triggers, and so these indexes can be
-	 * rebuilt without inducing recursion.  However they are used during
+	 * rebuilt without inducing recursion.	However they are used during
 	 * relcache load when a rel does have rules or triggers, so we choose to
 	 * nail them for performance reasons.
 	 */
@@ -2505,7 +2505,7 @@ BuildHardcodedDescriptor(int natts, Form_pg_attribute attrs, bool hasoids)
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	result = CreateTemplateTupleDesc(natts, hasoids);
-	result->tdtypeid = RECORDOID;	/* not right, but we don't care */
+	result->tdtypeid = RECORDOID;		/* not right, but we don't care */
 	result->tdtypmod = -1;
 
 	for (i = 0; i < natts; i++)
@@ -3166,7 +3166,7 @@ load_relcache_init_file(void)
 			if ((nread = fread(rel->rd_options, 1, len, fp)) != len)
 				goto read_failed;
 			if (len != VARATT_SIZE(rel->rd_options))
-				goto read_failed;				/* sanity check */
+				goto read_failed;		/* sanity check */
 		}
 		else
 		{
@@ -3457,7 +3457,7 @@ write_relcache_init_file(void)
 
 			/* finally, write the vector of support procedures */
 			write_item(rel->rd_support,
-					   relform->relnatts * (am->amsupport * sizeof(RegProcedure)),
+				  relform->relnatts * (am->amsupport * sizeof(RegProcedure)),
 					   fp);
 		}
 

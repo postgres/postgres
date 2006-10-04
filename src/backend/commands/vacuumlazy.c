@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.79 2006/09/21 20:31:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.80 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ typedef struct LVRelStats
 	int			num_free_pages; /* current # of entries */
 	int			max_free_pages; /* # slots allocated in array */
 	PageFreeSpaceInfo *free_pages;		/* array or heap of blkno/avail */
-	BlockNumber	tot_free_pages;	/* total pages with >= threshold space */
+	BlockNumber tot_free_pages; /* total pages with >= threshold space */
 } LVRelStats;
 
 
@@ -103,15 +103,15 @@ static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			   TransactionId OldestXmin);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
 static void lazy_vacuum_index(Relation indrel,
-							  IndexBulkDeleteResult **stats,
-							  LVRelStats *vacrelstats);
+				  IndexBulkDeleteResult **stats,
+				  LVRelStats *vacrelstats);
 static void lazy_cleanup_index(Relation indrel,
-							   IndexBulkDeleteResult *stats,
-							   LVRelStats *vacrelstats);
+				   IndexBulkDeleteResult *stats,
+				   LVRelStats *vacrelstats);
 static int lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats);
 static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats,
-							   TransactionId OldestXmin);
+				   TransactionId OldestXmin);
 static BlockNumber count_nondeletable_pages(Relation onerel,
 						 LVRelStats *vacrelstats, TransactionId OldestXmin);
 static void lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks);
@@ -143,7 +143,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	int			nindexes;
 	BlockNumber possibly_freeable;
 	TransactionId OldestXmin,
-				  FreezeLimit;
+				FreezeLimit;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -160,8 +160,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vacrelstats->threshold = GetAvgFSMRequestSize(&onerel->rd_node);
 
 	/*
-	 * Set initial minimum Xid, which will be updated if a smaller Xid is found
-	 * in the relation by lazy_scan_heap.
+	 * Set initial minimum Xid, which will be updated if a smaller Xid is
+	 * found in the relation by lazy_scan_heap.
 	 *
 	 * We use RecentXmin here (the minimum Xid that belongs to a transaction
 	 * that is still open according to our snapshot), because it is the
@@ -440,7 +440,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				num_tuples += 1;
 				hastup = true;
 
-				/* 
+				/*
 				 * If the tuple is alive, we consider it for the "minxid"
 				 * calculations.
 				 */
@@ -472,8 +472,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		 * If we remembered any tuples for deletion, then the page will be
 		 * visited again by lazy_vacuum_heap, which will compute and record
 		 * its post-compaction free space.	If not, then we're done with this
-		 * page, so remember its free space as-is.  (This path will always
-		 * be taken if there are no indexes.)
+		 * page, so remember its free space as-is.	(This path will always be
+		 * taken if there are no indexes.)
 		 */
 		if (vacrelstats->num_dead_tuples == prev_dead_count)
 		{
@@ -803,11 +803,12 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats,
 		}
 	}
 	vacrelstats->num_free_pages = j;
+
 	/*
 	 * If tot_free_pages was more than num_free_pages, we can't tell for sure
 	 * what its correct value is now, because we don't know which of the
-	 * forgotten pages are getting truncated.  Conservatively set it equal
-	 * to num_free_pages.
+	 * forgotten pages are getting truncated.  Conservatively set it equal to
+	 * num_free_pages.
 	 */
 	vacrelstats->tot_free_pages = j;
 

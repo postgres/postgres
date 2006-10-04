@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.224 2006/08/15 22:36:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.225 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,8 +381,8 @@ BootstrapMain(int argc, char *argv[])
 
 	/*
 	 * When we are a dummy process, we aren't going to do the full
-	 * InitPostgres pushups, but there are a couple of things that need
-	 * to get lit up even in a dummy process.
+	 * InitPostgres pushups, but there are a couple of things that need to get
+	 * lit up even in a dummy process.
 	 */
 	if (IsUnderPostmaster)
 	{
@@ -421,6 +421,7 @@ BootstrapMain(int argc, char *argv[])
 		case BS_XLOG_STARTUP:
 			bootstrap_signals();
 			StartupXLOG();
+
 			/*
 			 * These next two functions don't consider themselves critical,
 			 * but we'd best PANIC anyway if they fail.
@@ -1229,7 +1230,7 @@ AddStr(char *str, int strlength, int mderef)
  *		We postpone actually building the indexes until just before we're
  *		finished with initialization, however.	This is because the indexes
  *		themselves have catalog entries, and those have to be included in the
- *		indexes on those catalogs.  Doing it in two phases is the simplest
+ *		indexes on those catalogs.	Doing it in two phases is the simplest
  *		way of making sure the indexes have the right contents at the end.
  */
 void

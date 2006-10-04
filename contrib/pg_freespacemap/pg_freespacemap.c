@@ -3,7 +3,7 @@
  * pg_freespacemap.c
  *	  display some contents of the free space relation and page maps.
  *
- *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.7 2006/09/21 20:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_freespacemap/pg_freespacemap.c,v 1.8 2006/10/04 00:29:45 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -14,13 +14,13 @@
 #include "storage/freespace.h"
 
 
-#define		NUM_FREESPACE_PAGES_ELEM 	5
-#define		NUM_FREESPACE_RELATIONS_ELEM 	7
+#define		NUM_FREESPACE_PAGES_ELEM	5
+#define		NUM_FREESPACE_RELATIONS_ELEM	7
 
 #if defined(WIN32) || defined(__CYGWIN__)
 /* Need DLLIMPORT for some things that are not so marked in main headers */
-extern DLLIMPORT int	MaxFSMPages;
-extern DLLIMPORT int	MaxFSMRelations;
+extern DLLIMPORT int MaxFSMPages;
+extern DLLIMPORT int MaxFSMRelations;
 extern DLLIMPORT volatile uint32 InterruptHoldoffCount;
 #endif
 
@@ -35,12 +35,12 @@ Datum		pg_freespacemap_relations(PG_FUNCTION_ARGS);
  */
 typedef struct
 {
-	Oid				reltablespace;
-	Oid				reldatabase;
-	Oid				relfilenode;
-	BlockNumber		relblocknumber;
-	Size			bytes;
-	bool			isindex;
+	Oid			reltablespace;
+	Oid			reldatabase;
+	Oid			relfilenode;
+	BlockNumber relblocknumber;
+	Size		bytes;
+	bool		isindex;
 }	FreeSpacePagesRec;
 
 
@@ -49,14 +49,14 @@ typedef struct
  */
 typedef struct
 {
-	Oid				reltablespace;
-	Oid				reldatabase;
-	Oid				relfilenode;
-	Size			avgrequest;
-	BlockNumber		interestingpages;
-	int				storedpages;
-	int				nextpage;
-	bool			isindex;
+	Oid			reltablespace;
+	Oid			reldatabase;
+	Oid			relfilenode;
+	Size		avgrequest;
+	BlockNumber interestingpages;
+	int			storedpages;
+	int			nextpage;
+	bool		isindex;
 }	FreeSpaceRelationsRec;
 
 
@@ -66,8 +66,8 @@ typedef struct
  */
 typedef struct
 {
-	TupleDesc			tupdesc;
-	FreeSpacePagesRec	*record;
+	TupleDesc	tupdesc;
+	FreeSpacePagesRec *record;
 }	FreeSpacePagesContext;
 
 
@@ -76,8 +76,8 @@ typedef struct
  */
 typedef struct
 {
-	TupleDesc			tupdesc;
-	FreeSpaceRelationsRec	*record;
+	TupleDesc	tupdesc;
+	FreeSpaceRelationsRec *record;
 }	FreeSpaceRelationsContext;
 
 
@@ -89,21 +89,21 @@ PG_FUNCTION_INFO_V1(pg_freespacemap_pages);
 Datum
 pg_freespacemap_pages(PG_FUNCTION_ARGS)
 {
-	FuncCallContext			*funcctx;
-	Datum					result;
-	MemoryContext 			oldcontext;
-	FreeSpacePagesContext	*fctx;				/* User function context. */
-	TupleDesc				tupledesc;
-	HeapTuple				tuple;
-	FSMHeader				*FreeSpaceMap; 		/* FSM main structure. */
-	FSMRelation				*fsmrel;			/* Individual relation. */
+	FuncCallContext *funcctx;
+	Datum		result;
+	MemoryContext oldcontext;
+	FreeSpacePagesContext *fctx;	/* User function context. */
+	TupleDesc	tupledesc;
+	HeapTuple	tuple;
+	FSMHeader  *FreeSpaceMap;	/* FSM main structure. */
+	FSMRelation *fsmrel;		/* Individual relation. */
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		int				i;
-		int				numPages;	/* Max possible no. of pages in map. */
-		int				nPages;		/* Mapped pages for a relation. */
-		
+		int			i;
+		int			numPages;	/* Max possible no. of pages in map. */
+		int			nPages;		/* Mapped pages for a relation. */
+
 		/*
 		 * Get the free space map data structure.
 		 */
@@ -138,8 +138,8 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 		fctx->tupdesc = BlessTupleDesc(tupledesc);
 
 		/*
-		 * Allocate numPages worth of FreeSpacePagesRec records, this is
-		 * an upper bound.
+		 * Allocate numPages worth of FreeSpacePagesRec records, this is an
+		 * upper bound.
 		 */
 		fctx->record = (FreeSpacePagesRec *) palloc(sizeof(FreeSpacePagesRec) * numPages);
 
@@ -147,16 +147,16 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldcontext);
 
 		/*
-		 * Lock free space map and scan though all the relations.
-		 * For each relation, gets all its mapped pages.
+		 * Lock free space map and scan though all the relations. For each
+		 * relation, gets all its mapped pages.
 		 */
 		LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
 
 		i = 0;
 
-		for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = fsmrel->nextUsage) 
+		for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = fsmrel->nextUsage)
 		{
-			if (fsmrel->isIndex)	
+			if (fsmrel->isIndex)
 			{
 				/* Index relation. */
 				IndexFSMPageData *page;
@@ -169,9 +169,9 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 					fctx->record[i].reltablespace = fsmrel->key.spcNode;
 					fctx->record[i].reldatabase = fsmrel->key.dbNode;
 					fctx->record[i].relfilenode = fsmrel->key.relNode;
-					fctx->record[i].relblocknumber = IndexFSMPageGetPageNum(page);	
-					fctx->record[i].bytes = 0;	
-					fctx->record[i].isindex = true;	
+					fctx->record[i].relblocknumber = IndexFSMPageGetPageNum(page);
+					fctx->record[i].bytes = 0;
+					fctx->record[i].isindex = true;
 
 					page++;
 					i++;
@@ -191,9 +191,9 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 					fctx->record[i].reldatabase = fsmrel->key.dbNode;
 					fctx->record[i].relfilenode = fsmrel->key.relNode;
 					fctx->record[i].relblocknumber = FSMPageGetPageNum(page);
-					fctx->record[i].bytes = FSMPageGetSpace(page);	
-					fctx->record[i].isindex = false;	
-					
+					fctx->record[i].bytes = FSMPageGetSpace(page);
+					fctx->record[i].isindex = false;
+
 					page++;
 					i++;
 				}
@@ -216,7 +216,7 @@ pg_freespacemap_pages(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		int			i = funcctx->call_cntr;
-		FreeSpacePagesRec	*record = &fctx->record[i];
+		FreeSpacePagesRec *record = &fctx->record[i];
 		Datum		values[NUM_FREESPACE_PAGES_ELEM];
 		bool		nulls[NUM_FREESPACE_PAGES_ELEM];
 
@@ -261,20 +261,20 @@ PG_FUNCTION_INFO_V1(pg_freespacemap_relations);
 Datum
 pg_freespacemap_relations(PG_FUNCTION_ARGS)
 {
-	FuncCallContext			*funcctx;
-	Datum					result;
-	MemoryContext 			oldcontext;
-	FreeSpaceRelationsContext	*fctx;			/* User function context. */
-	TupleDesc				tupledesc;
-	HeapTuple				tuple;
-	FSMHeader				*FreeSpaceMap; 		/* FSM main structure. */
-	FSMRelation				*fsmrel;			/* Individual relation. */
+	FuncCallContext *funcctx;
+	Datum		result;
+	MemoryContext oldcontext;
+	FreeSpaceRelationsContext *fctx;	/* User function context. */
+	TupleDesc	tupledesc;
+	HeapTuple	tuple;
+	FSMHeader  *FreeSpaceMap;	/* FSM main structure. */
+	FSMRelation *fsmrel;		/* Individual relation. */
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		int				i;
-		int				numRelations;	/* Max no. of Relations in map. */
-		
+		int			i;
+		int			numRelations;		/* Max no. of Relations in map. */
+
 		/*
 		 * Get the free space map data structure.
 		 */
@@ -313,8 +313,8 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 		fctx->tupdesc = BlessTupleDesc(tupledesc);
 
 		/*
-		 * Allocate numRelations worth of FreeSpaceRelationsRec records, 
-		 * this is also an upper bound.
+		 * Allocate numRelations worth of FreeSpaceRelationsRec records, this
+		 * is also an upper bound.
 		 */
 		fctx->record = (FreeSpaceRelationsRec *) palloc(sizeof(FreeSpaceRelationsRec) * numRelations);
 
@@ -328,12 +328,12 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 
 		i = 0;
 
-		for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = fsmrel->nextUsage) 
+		for (fsmrel = FreeSpaceMap->usageList; fsmrel; fsmrel = fsmrel->nextUsage)
 		{
 			fctx->record[i].reltablespace = fsmrel->key.spcNode;
 			fctx->record[i].reldatabase = fsmrel->key.dbNode;
 			fctx->record[i].relfilenode = fsmrel->key.relNode;
-			fctx->record[i].avgrequest = (int64)fsmrel->avgRequest;
+			fctx->record[i].avgrequest = (int64) fsmrel->avgRequest;
 			fctx->record[i].interestingpages = fsmrel->interestingPages;
 			fctx->record[i].storedpages = fsmrel->storedPages;
 			fctx->record[i].nextpage = fsmrel->nextPage;
@@ -358,7 +358,7 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		int			i = funcctx->call_cntr;
-		FreeSpaceRelationsRec	*record = &fctx->record[i];
+		FreeSpaceRelationsRec *record = &fctx->record[i];
 		Datum		values[NUM_FREESPACE_RELATIONS_ELEM];
 		bool		nulls[NUM_FREESPACE_RELATIONS_ELEM];
 
@@ -368,6 +368,7 @@ pg_freespacemap_relations(PG_FUNCTION_ARGS)
 		nulls[1] = false;
 		values[2] = ObjectIdGetDatum(record->relfilenode);
 		nulls[2] = false;
+
 		/*
 		 * avgrequest isn't meaningful for an index
 		 */

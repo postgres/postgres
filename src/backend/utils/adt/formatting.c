@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.112 2006/09/10 22:54:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.113 2006/10/04 00:29:59 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2006, PostgreSQL Global Development Group
@@ -83,7 +83,7 @@
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
 
-#define	_(x)	gettext((x))
+#define _(x)	gettext((x))
 
 /* ----------
  * Routines type
@@ -1708,7 +1708,7 @@ strdigits_len(char *str)
 
 	len = strspace_len(str);
 	p += len;
-	
+
 	while (*p && isdigit((unsigned char) *p) && len <= DCH_MAX_ITEM_SIZ)
 	{
 		len++;
@@ -1828,7 +1828,7 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			{
 				sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2,
 						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? 12 :
-					    tm->tm_hour % (HOURS_PER_DAY / 2));
+						tm->tm_hour % (HOURS_PER_DAY / 2));
 				if (S_THth(suf))
 					str_numth(p_inout, inout, 0);
 				return strlen(p_inout);
@@ -2084,8 +2084,8 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		tmfc = (TmFromChar *) data;
 
 	/*
-	 * In the FROM-char there is no difference between "January" or "JANUARY" or
-	 * "january", all is before search convert to "first-upper". This
+	 * In the FROM-char there is no difference between "January" or "JANUARY"
+	 * or "january", all is before search convert to "first-upper". This
 	 * convention is used for MONTH, MON, DAY, DY
 	 */
 	if (!is_to_char)
@@ -2863,7 +2863,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 static char *
 localize_month_full(int index)
 {
-	char	*m	= NULL;
+	char	   *m = NULL;
 
 	switch (index)
 	{
@@ -2911,7 +2911,7 @@ localize_month_full(int index)
 static char *
 localize_month(int index)
 {
-	char	*m	= NULL;
+	char	   *m = NULL;
 
 	switch (index)
 	{
@@ -2959,7 +2959,7 @@ localize_month(int index)
 static char *
 localize_day_full(int index)
 {
-	char	*d	= NULL;
+	char	   *d = NULL;
 
 	switch (index)
 	{
@@ -2992,7 +2992,7 @@ localize_day_full(int index)
 static char *
 localize_day(int index)
 {
-	char	*d	= NULL;
+	char	   *d = NULL;
 
 	switch (index)
 	{

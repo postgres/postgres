@@ -671,7 +671,7 @@ xpath_table(PG_FUNCTION_ARGS)
 								 * document */
 	int			had_values;		/* To determine end of nodeset results */
 
-	StringInfoData	query_buf;
+	StringInfoData query_buf;
 
 	/* We only have a valid tuple description in table function mode */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))

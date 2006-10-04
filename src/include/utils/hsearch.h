@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.44 2006/07/22 23:04:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.45 2006/10/04 00:30:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ typedef struct HTAB HTAB;
 /* Only those fields indicated by hash_flags need be set */
 typedef struct HASHCTL
 {
-	long		num_partitions;	/* # partitions (must be power of 2) */
+	long		num_partitions; /* # partitions (must be power of 2) */
 	long		ssize;			/* segment size */
 	long		dsize;			/* (initial) directory size */
 	long		max_dsize;		/* limit to dsize if dir size is limited */
@@ -125,8 +125,8 @@ extern void *hash_search(HTAB *hashp, const void *keyPtr, HASHACTION action,
 			bool *foundPtr);
 extern uint32 get_hash_value(HTAB *hashp, const void *keyPtr);
 extern void *hash_search_with_hash_value(HTAB *hashp, const void *keyPtr,
-			uint32 hashvalue, HASHACTION action,
-			bool *foundPtr);
+							uint32 hashvalue, HASHACTION action,
+							bool *foundPtr);
 extern long hash_get_num_entries(HTAB *hashp);
 extern void hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp);
 extern void *hash_seq_search(HASH_SEQ_STATUS *status);

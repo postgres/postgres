@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.179 2006/07/30 02:07:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.180 2006/10/04 00:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,8 +149,8 @@ InitProcGlobal(void)
 	Assert(!found);
 
 	/*
-	 * Create the PGPROC structures for dummy (bgwriter) processes, too.
-	 * These do not get linked into the freeProcs list.
+	 * Create the PGPROC structures for dummy (bgwriter) processes, too. These
+	 * do not get linked into the freeProcs list.
 	 */
 	DummyProcs = (PGPROC *)
 		ShmemInitStruct("DummyProcs", NUM_DUMMY_PROCS * sizeof(PGPROC),
@@ -183,7 +183,7 @@ InitProcGlobal(void)
 	MemSet(DummyProcs, 0, NUM_DUMMY_PROCS * sizeof(PGPROC));
 	for (i = 0; i < NUM_DUMMY_PROCS; i++)
 	{
-		DummyProcs[i].pid = 0;		/* marks dummy proc as not in use */
+		DummyProcs[i].pid = 0;	/* marks dummy proc as not in use */
 		PGSemaphoreCreate(&(DummyProcs[i].sem));
 	}
 
@@ -268,7 +268,7 @@ InitProcess(void)
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
-	 * be careful and reinitialize its value here.  (This is not strictly
+	 * be careful and reinitialize its value here.	(This is not strictly
 	 * necessary anymore, but seems like a good idea for cleanliness.)
 	 */
 	PGSemaphoreReset(&MyProc->sem);
@@ -298,9 +298,9 @@ InitProcessPhase2(void)
 	Assert(MyProc != NULL);
 
 	/*
-	 * We should now know what database we're in, so advertise that.  (We
-	 * need not do any locking here, since no other backend can yet see
-	 * our PGPROC.)
+	 * We should now know what database we're in, so advertise that.  (We need
+	 * not do any locking here, since no other backend can yet see our
+	 * PGPROC.)
 	 */
 	Assert(OidIsValid(MyDatabaseId));
 	MyProc->databaseId = MyDatabaseId;
@@ -400,7 +400,7 @@ InitDummyProcess(void)
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process. So
-	 * be careful and reinitialize its value here.  (This is not strictly
+	 * be careful and reinitialize its value here.	(This is not strictly
 	 * necessary anymore, but seems like a good idea for cleanliness.)
 	 */
 	PGSemaphoreReset(&MyProc->sem);
@@ -489,12 +489,12 @@ LockWaitCancel(void)
 
 	/*
 	 * We used to do PGSemaphoreReset() here to ensure that our proc's wait
-	 * semaphore is reset to zero.  This prevented a leftover wakeup signal
-	 * from remaining in the semaphore if someone else had granted us the
-	 * lock we wanted before we were able to remove ourselves from the
-	 * wait-list.  However, now that ProcSleep loops until waitStatus changes,
-	 * a leftover wakeup signal isn't harmful, and it seems not worth
-	 * expending cycles to get rid of a signal that most likely isn't there.
+	 * semaphore is reset to zero.	This prevented a leftover wakeup signal
+	 * from remaining in the semaphore if someone else had granted us the lock
+	 * we wanted before we were able to remove ourselves from the wait-list.
+	 * However, now that ProcSleep loops until waitStatus changes, a leftover
+	 * wakeup signal isn't harmful, and it seems not worth expending cycles to
+	 * get rid of a signal that most likely isn't there.
 	 */
 
 	/*
@@ -810,11 +810,11 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	/*
 	 * If someone wakes us between LWLockRelease and PGSemaphoreLock,
 	 * PGSemaphoreLock will not block.	The wakeup is "saved" by the semaphore
-	 * implementation.  While this is normally good, there are cases where
-	 * a saved wakeup might be leftover from a previous operation (for
-	 * example, we aborted ProcWaitForSignal just before someone did
-	 * ProcSendSignal).  So, loop to wait again if the waitStatus shows
-	 * we haven't been granted nor denied the lock yet.
+	 * implementation.	While this is normally good, there are cases where a
+	 * saved wakeup might be leftover from a previous operation (for example,
+	 * we aborted ProcWaitForSignal just before someone did ProcSendSignal).
+	 * So, loop to wait again if the waitStatus shows we haven't been granted
+	 * nor denied the lock yet.
 	 *
 	 * We pass interruptOK = true, which eliminates a window in which
 	 * cancel/die interrupts would be held off undesirably.  This is a promise
@@ -824,7 +824,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 * updating the locallock table, but if we lose control to an error,
 	 * LockWaitCancel will fix that up.
 	 */
-	do {
+	do
+	{
 		PGSemaphoreLock(&MyProc->sem, true);
 	} while (MyProc->waitStatus == STATUS_WAITING);
 
@@ -835,9 +836,9 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		elog(FATAL, "could not disable timer for process wakeup");
 
 	/*
-	 * Re-acquire the lock table's partition lock.  We have to do this to
-	 * hold off cancel/die interrupts before we can mess with lockAwaited
-	 * (else we might have a missed or duplicated locallock update).
+	 * Re-acquire the lock table's partition lock.  We have to do this to hold
+	 * off cancel/die interrupts before we can mess with lockAwaited (else we
+	 * might have a missed or duplicated locallock update).
 	 */
 	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
@@ -977,8 +978,8 @@ CheckDeadLock(void)
 	int			i;
 
 	/*
-	 * Acquire exclusive lock on the entire shared lock data structures.
-	 * Must grab LWLocks in partition-number order to avoid LWLock deadlock.
+	 * Acquire exclusive lock on the entire shared lock data structures. Must
+	 * grab LWLocks in partition-number order to avoid LWLock deadlock.
 	 *
 	 * Note that the deadlock check interrupt had better not be enabled
 	 * anywhere that this process itself holds lock partition locks, else this
@@ -1018,7 +1019,7 @@ CheckDeadLock(void)
 	/*
 	 * Oops.  We have a deadlock.
 	 *
-	 * Get this process out of wait state.  (Note: we could do this more
+	 * Get this process out of wait state.	(Note: we could do this more
 	 * efficiently by relying on lockAwaited, but use this coding to preserve
 	 * the flexibility to kill some other transaction than the one detecting
 	 * the deadlock.)
@@ -1047,12 +1048,12 @@ CheckDeadLock(void)
 	 */
 
 	/*
-	 * Release locks acquired at head of routine.  Order is not critical,
-	 * so do it back-to-front to avoid waking another CheckDeadLock instance
+	 * Release locks acquired at head of routine.  Order is not critical, so
+	 * do it back-to-front to avoid waking another CheckDeadLock instance
 	 * before it can get all the locks.
 	 */
 check_done:
-	for (i = NUM_LOCK_PARTITIONS; --i >= 0; )
+	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
 		LWLockRelease(FirstLockMgrLock + i);
 }
 
@@ -1063,10 +1064,10 @@ check_done:
  * This can share the semaphore normally used for waiting for locks,
  * since a backend could never be waiting for a lock and a signal at
  * the same time.  As with locks, it's OK if the signal arrives just
- * before we actually reach the waiting state.  Also as with locks,
+ * before we actually reach the waiting state.	Also as with locks,
  * it's necessary that the caller be robust against bogus wakeups:
  * always check that the desired state has occurred, and wait again
- * if not.  This copes with possible "leftover" wakeups.
+ * if not.	This copes with possible "leftover" wakeups.
  */
 void
 ProcWaitForSignal(void)
@@ -1122,10 +1123,10 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 		 * interval will have elapsed and so this doesn't matter, but there
 		 * are corner cases (involving multi-statement query strings with
 		 * embedded COMMIT or ROLLBACK) where we might re-initialize the
-		 * statement timeout long after initial receipt of the message.
-		 * In such cases the enforcement of the statement timeout will be
-		 * a bit inconsistent.  This annoyance is judged not worth the cost
-		 * of performing an additional gettimeofday() here.
+		 * statement timeout long after initial receipt of the message. In
+		 * such cases the enforcement of the statement timeout will be a bit
+		 * inconsistent.  This annoyance is judged not worth the cost of
+		 * performing an additional gettimeofday() here.
 		 */
 		Assert(!deadlock_timeout_active);
 		fin_time = GetCurrentStatementStartTimestamp();
@@ -1253,6 +1254,7 @@ CheckStatementTimeout(void)
 
 		TimestampDifference(now, statement_fin_time,
 							&secs, &usecs);
+
 		/*
 		 * It's possible that the difference is less than a microsecond;
 		 * ensure we don't cancel, rather than set, the interrupt.

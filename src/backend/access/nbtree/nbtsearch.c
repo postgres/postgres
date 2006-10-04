@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.106 2006/08/24 01:18:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.107 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 static bool _bt_readpage(IndexScanDesc scan, ScanDirection dir,
-						 OffsetNumber offnum);
+			 OffsetNumber offnum);
 static bool _bt_steppage(IndexScanDesc scan, ScanDirection dir);
 static Buffer _bt_walk_left(Relation rel, Buffer buf);
 static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
@@ -417,7 +417,7 @@ _bt_compare(Relation rel,
  *	_bt_first() -- Find the first item in a scan.
  *
  *		We need to be clever about the direction of scan, the search
- *		conditions, and the tree ordering.  We find the first item (or,
+ *		conditions, and the tree ordering.	We find the first item (or,
  *		if backwards scan, the last item) in the tree that satisfies the
  *		qualifications in the scan key.  On success exit, the page containing
  *		the current index tuple is pinned but not locked, and data about
@@ -604,7 +604,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	{
 		ScanKey		cur = startKeys[i];
 
-		Assert(cur->sk_attno == i+1);
+		Assert(cur->sk_attno == i + 1);
 
 		if (cur->sk_flags & SK_ROW_HEADER)
 		{
@@ -612,16 +612,17 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * Row comparison header: look to the first row member instead.
 			 *
 			 * The member scankeys are already in insertion format (ie, they
-			 * have sk_func = 3-way-comparison function), but we have to
-			 * watch out for nulls, which _bt_preprocess_keys didn't check.
-			 * A null in the first row member makes the condition unmatchable,
-			 * just like qual_ok = false.
+			 * have sk_func = 3-way-comparison function), but we have to watch
+			 * out for nulls, which _bt_preprocess_keys didn't check. A null
+			 * in the first row member makes the condition unmatchable, just
+			 * like qual_ok = false.
 			 */
 			cur = (ScanKey) DatumGetPointer(cur->sk_argument);
 			Assert(cur->sk_flags & SK_ROW_MEMBER);
 			if (cur->sk_flags & SK_ISNULL)
 				return false;
 			memcpy(scankeys + i, cur, sizeof(ScanKeyData));
+
 			/*
 			 * If the row comparison is the last positioning key we accepted,
 			 * try to add additional keys from the lower-order row members.
@@ -833,10 +834,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 *
 	 * The actually desired starting point is either this item or the prior
 	 * one, or in the end-of-page case it's the first item on the next page or
-	 * the last item on this page.	Adjust the starting offset if needed.
-	 * (If this results in an offset before the first item or after the last
-	 * one, _bt_readpage will report no items found, and then we'll step to
-	 * the next page as needed.)
+	 * the last item on this page.	Adjust the starting offset if needed. (If
+	 * this results in an offset before the first item or after the last one,
+	 * _bt_readpage will report no items found, and then we'll step to the
+	 * next page as needed.)
 	 */
 	if (goback)
 		offnum = OffsetNumberPrev(offnum);
@@ -882,8 +883,8 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 
 	/*
-	 * Advance to next tuple on current page; or if there's no more,
-	 * try to step to the next page with data.
+	 * Advance to next tuple on current page; or if there's no more, try to
+	 * step to the next page with data.
 	 */
 	if (ScanDirectionIsForward(dir))
 	{
@@ -954,8 +955,8 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum)
 
 	/*
 	 * we must save the page's right-link while scanning it; this tells us
-	 * where to step right to after we're done with these items.  There is
-	 * no corresponding need for the left-link, since splits always go right.
+	 * where to step right to after we're done with these items.  There is no
+	 * corresponding need for the left-link, since splits always go right.
 	 */
 	so->currPos.nextPage = opaque->btpo_next;
 
@@ -1055,8 +1056,8 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 		_bt_killitems(scan, true);
 
 	/*
-	 * Before we modify currPos, make a copy of the page data if there
-	 * was a mark position that needs it.
+	 * Before we modify currPos, make a copy of the page data if there was a
+	 * mark position that needs it.
 	 */
 	if (so->markItemIndex >= 0)
 	{
@@ -1112,11 +1113,11 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 		so->currPos.moreRight = true;
 
 		/*
-		 * Walk left to the next page with data.  This is much more
-		 * complex than the walk-right case because of the possibility
-		 * that the page to our left splits while we are in flight to it,
-		 * plus the possibility that the page we were on gets deleted
-		 * after we leave it.  See nbtree/README for details.
+		 * Walk left to the next page with data.  This is much more complex
+		 * than the walk-right case because of the possibility that the page
+		 * to our left splits while we are in flight to it, plus the
+		 * possibility that the page we were on gets deleted after we leave
+		 * it.	See nbtree/README for details.
 		 */
 		for (;;)
 		{
@@ -1136,9 +1137,9 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
 				return false;
 
 			/*
-			 * Okay, we managed to move left to a non-deleted page.
-			 * Done if it's not half-dead and contains matching tuples.
-			 * Else loop back and do it all again.
+			 * Okay, we managed to move left to a non-deleted page. Done if
+			 * it's not half-dead and contains matching tuples. Else loop back
+			 * and do it all again.
 			 */
 			page = BufferGetPage(so->currPos.buf);
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);

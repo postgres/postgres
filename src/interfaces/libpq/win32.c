@@ -29,7 +29,7 @@
 
 #include "win32.h"
 
-/* Declared here to avoid pulling in all includes, which causes name collissions */ 
+/* Declared here to avoid pulling in all includes, which causes name collissions */
 #ifdef ENABLE_NLS
 extern char *
 libpq_gettext(const char *msgid)

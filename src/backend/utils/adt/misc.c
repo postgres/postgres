@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.53 2006/07/14 14:52:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.54 2006/10/04 00:29:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,16 +272,16 @@ pg_sleep(PG_FUNCTION_ARGS)
 	float8		endtime;
 
 	/*
-	 * We break the requested sleep into segments of no more than 1 second,
-	 * to put an upper bound on how long it will take us to respond to a
-	 * cancel or die interrupt.  (Note that pg_usleep is interruptible by
-	 * signals on some platforms but not others.)  Also, this method avoids
-	 * exposing pg_usleep's upper bound on allowed delays.
+	 * We break the requested sleep into segments of no more than 1 second, to
+	 * put an upper bound on how long it will take us to respond to a cancel
+	 * or die interrupt.  (Note that pg_usleep is interruptible by signals on
+	 * some platforms but not others.)	Also, this method avoids exposing
+	 * pg_usleep's upper bound on allowed delays.
 	 *
-	 * By computing the intended stop time initially, we avoid accumulation
-	 * of extra delay across multiple sleeps.  This also ensures we won't
-	 * delay less than the specified time if pg_usleep is interrupted
-	 * by other signals such as SIGHUP.
+	 * By computing the intended stop time initially, we avoid accumulation of
+	 * extra delay across multiple sleeps.	This also ensures we won't delay
+	 * less than the specified time if pg_usleep is interrupted by other
+	 * signals such as SIGHUP.
 	 */
 
 #ifdef HAVE_INT64_TIMESTAMP

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.353 2006/10/03 21:11:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.354 2006/10/04 00:30:03 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -204,6 +204,7 @@ static char *log_error_verbosity_str;
 static char *log_statement_str;
 static char *log_min_error_statement_str;
 static char *log_destination_string;
+
 #ifdef HAVE_SYSLOG
 static char *syslog_facility_str;
 static char *syslog_ident_str;
@@ -220,7 +221,7 @@ static char *locale_ctype;
 static char *regex_flavor_string;
 static char *server_encoding_string;
 static char *server_version_string;
-static int  server_version_num;
+static int	server_version_num;
 static char *timezone_string;
 static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
@@ -992,9 +993,9 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"allow_system_table_mods", PGC_POSTMASTER, DEVELOPER_OPTIONS,
-		 gettext_noop("Allows modifications of the structure of system tables."),
-		 NULL,
-		 GUC_NOT_IN_SAMPLE
+			gettext_noop("Allows modifications of the structure of system tables."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
 		},
 		&allowSystemTableMods,
 		false, NULL, NULL
@@ -1002,10 +1003,10 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"ignore_system_indexes", PGC_BACKEND, DEVELOPER_OPTIONS,
-		 gettext_noop("Disables reading from system indexes."),
-		 gettext_noop("It does not prevent updating the indexes, so it is safe "
-					  "to use.  The worst consequence is slowness."),
-		 GUC_NOT_IN_SAMPLE
+			gettext_noop("Disables reading from system indexes."),
+			gettext_noop("It does not prevent updating the indexes, so it is safe "
+						 "to use.  The worst consequence is slowness."),
+			GUC_NOT_IN_SAMPLE
 		},
 		&IgnoreSystemIndexes,
 		false, NULL, NULL
@@ -1022,19 +1023,19 @@ static struct config_int ConfigureNamesInt[] =
 {
 	{
 		{"archive_timeout", PGC_SIGHUP, WAL_SETTINGS,
-		 gettext_noop("Forces a switch to the next xlog file if a "
-                      "new file has not been started within N seconds."),
-		 NULL,
-		 GUC_UNIT_S
+			gettext_noop("Forces a switch to the next xlog file if a "
+						 "new file has not been started within N seconds."),
+			NULL,
+			GUC_UNIT_S
 		},
 		&XLogArchiveTimeout,
 		0, 0, INT_MAX, NULL, NULL
 	},
 	{
 		{"post_auth_delay", PGC_BACKEND, DEVELOPER_OPTIONS,
-		 gettext_noop("Waits N seconds on connection startup after authentication."),
-		 gettext_noop("This allows attaching a debugger to the process."),
-		 GUC_NOT_IN_SAMPLE | GUC_UNIT_S
+			gettext_noop("Waits N seconds on connection startup after authentication."),
+			gettext_noop("This allows attaching a debugger to the process."),
+			GUC_NOT_IN_SAMPLE | GUC_UNIT_S
 		},
 		&PostAuthDelay,
 		0, 0, INT_MAX, NULL, NULL
@@ -1863,7 +1864,7 @@ static struct config_string ConfigureNamesString[] =
 		{"default_tablespace", PGC_USERSET, CLIENT_CONN_STATEMENT,
 			gettext_noop("Sets the default tablespace to create tables and indexes in."),
 			gettext_noop("An empty string selects the database's default tablespace."),
-		 	GUC_IS_NAME
+			GUC_IS_NAME
 		},
 		&default_tablespace,
 		"", assign_default_tablespace, NULL
@@ -2295,7 +2296,7 @@ static void ReportGUCOption(struct config_generic * record);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record, bool use_units);
-static bool is_newvalue_equal(struct config_generic *record, const char *newvalue);
+static bool is_newvalue_equal(struct config_generic * record, const char *newvalue);
 
 
 /*
@@ -3584,7 +3585,7 @@ parse_int(const char *value, int *result, int flags)
 
 	if ((flags & GUC_UNIT_MEMORY) && endptr != value)
 	{
-		bool used = false;
+		bool		used = false;
 
 		while (*endptr == ' ')
 			endptr++;
@@ -3612,10 +3613,10 @@ parse_int(const char *value, int *result, int flags)
 			switch (flags & GUC_UNIT_MEMORY)
 			{
 				case GUC_UNIT_BLOCKS:
-					val /= (BLCKSZ/1024);
+					val /= (BLCKSZ / 1024);
 					break;
 				case GUC_UNIT_XBLOCKS:
-					val /= (XLOG_BLCKSZ/1024);
+					val /= (XLOG_BLCKSZ / 1024);
 					break;
 			}
 		}
@@ -3623,7 +3624,7 @@ parse_int(const char *value, int *result, int flags)
 
 	if ((flags & GUC_UNIT_TIME) && endptr != value)
 	{
-		bool used = false;
+		bool		used = false;
 
 		while (*endptr == ' ')
 			endptr++;
@@ -3662,12 +3663,12 @@ parse_int(const char *value, int *result, int flags)
 		{
 			switch (flags & GUC_UNIT_TIME)
 			{
-			case GUC_UNIT_S:
-				val /= MS_PER_S;
-				break;
-			case GUC_UNIT_MIN:
-				val /= MS_PER_MIN;
-				break;
+				case GUC_UNIT_S:
+					val /= MS_PER_S;
+					break;
+				case GUC_UNIT_MIN:
+					val /= MS_PER_MIN;
+					break;
 			}
 		}
 	}
@@ -4173,9 +4174,10 @@ set_config_option(const char *name, const char *value,
 					newval = guc_strdup(elevel, value);
 					if (newval == NULL)
 						return false;
+
 					/*
-					 * The only sort of "parsing" check we need to do is
-					 * apply truncation if GUC_IS_NAME.
+					 * The only sort of "parsing" check we need to do is apply
+					 * truncation if GUC_IS_NAME.
 					 */
 					if (conf->gen.flags & GUC_IS_NAME)
 						truncate_identifier(newval, strlen(newval), true);
@@ -4988,11 +4990,11 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 				values[2] = "kB";
 				break;
 			case GUC_UNIT_BLOCKS:
-				snprintf(buf, sizeof(buf), "%dkB", BLCKSZ/1024);
+				snprintf(buf, sizeof(buf), "%dkB", BLCKSZ / 1024);
 				values[2] = buf;
 				break;
 			case GUC_UNIT_XBLOCKS:
-				snprintf(buf, sizeof(buf), "%dkB", XLOG_BLCKSZ/1024);
+				snprintf(buf, sizeof(buf), "%dkB", XLOG_BLCKSZ / 1024);
 				values[2] = buf;
 				break;
 			case GUC_UNIT_MS:
@@ -5271,18 +5273,18 @@ _ShowOption(struct config_generic * record, bool use_units)
 					val = (*conf->show_hook) ();
 				else
 				{
-					char unit[4];
-					int result = *conf->variable;
+					char		unit[4];
+					int			result = *conf->variable;
 
 					if (use_units && result > 0 && (record->flags & GUC_UNIT_MEMORY))
 					{
 						switch (record->flags & GUC_UNIT_MEMORY)
 						{
 							case GUC_UNIT_BLOCKS:
-								result *= BLCKSZ/1024;
+								result *= BLCKSZ / 1024;
 								break;
 							case GUC_UNIT_XBLOCKS:
-								result *= XLOG_BLCKSZ/1024;
+								result *= XLOG_BLCKSZ / 1024;
 								break;
 						}
 
@@ -5342,7 +5344,7 @@ _ShowOption(struct config_generic * record, bool use_units)
 						strcpy(unit, "");
 
 					snprintf(buffer, sizeof(buffer), "%d%s",
-							 (int)result, unit);
+							 (int) result, unit);
 					val = buffer;
 				}
 			}
@@ -5387,37 +5389,37 @@ _ShowOption(struct config_generic * record, bool use_units)
 
 
 static bool
-is_newvalue_equal(struct config_generic *record, const char *newvalue)
+is_newvalue_equal(struct config_generic * record, const char *newvalue)
 {
 	switch (record->vartype)
 	{
 		case PGC_BOOL:
-		{
-			struct config_bool *conf = (struct config_bool *) record;
-			bool newval;
+			{
+				struct config_bool *conf = (struct config_bool *) record;
+				bool		newval;
 
-			return parse_bool(newvalue, &newval) && *conf->variable == newval;
-		}
+				return parse_bool(newvalue, &newval) && *conf->variable == newval;
+			}
 		case PGC_INT:
-		{
-			struct config_int *conf = (struct config_int *) record;
-			int newval;
+			{
+				struct config_int *conf = (struct config_int *) record;
+				int			newval;
 
-			return parse_int(newvalue, &newval, record->flags) && *conf->variable == newval;
-		}
+				return parse_int(newvalue, &newval, record->flags) && *conf->variable == newval;
+			}
 		case PGC_REAL:
-		{
-			struct config_real *conf = (struct config_real *) record;
-			double newval;
+			{
+				struct config_real *conf = (struct config_real *) record;
+				double		newval;
 
-			return parse_real(newvalue, &newval) && *conf->variable == newval;
-		}
+				return parse_real(newvalue, &newval) && *conf->variable == newval;
+			}
 		case PGC_STRING:
-		{
-			struct config_string *conf = (struct config_string *) record;
+			{
+				struct config_string *conf = (struct config_string *) record;
 
-			return strcmp(*conf->variable, newvalue) == 0;
-		}
+				return strcmp(*conf->variable, newvalue) == 0;
+			}
 	}
 
 	return false;
@@ -6251,7 +6253,7 @@ assign_debug_assertions(bool newval, bool doit, GucSource source)
 	if (newval)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("assertion checking is not supported by this build")));
+			   errmsg("assertion checking is not supported by this build")));
 #endif
 	return true;
 }
@@ -6338,12 +6340,11 @@ static const char *
 assign_backslash_quote(const char *newval, bool doit, GucSource source)
 {
 	BackslashQuoteType bq;
-	bool	bqbool;
+	bool		bqbool;
 
 	/*
-	 * Although only "on", "off", and "safe_encoding" are documented,
-	 * we use parse_bool so we can accept all the likely variants of
-	 * "on" and "off".
+	 * Although only "on", "off", and "safe_encoding" are documented, we use
+	 * parse_bool so we can accept all the likely variants of "on" and "off".
 	 */
 	if (pg_strcasecmp(newval, "safe_encoding") == 0)
 		bq = BACKSLASH_QUOTE_SAFE_ENCODING;
@@ -6367,14 +6368,14 @@ assign_timezone_abbreviations(const char *newval, bool doit, GucSource source)
 	 * The powerup value shown above for timezone_abbreviations is "UNKNOWN".
 	 * When we see this we just do nothing.  If this value isn't overridden
 	 * from the config file then pg_timezone_abbrev_initialize() will
-	 * eventually replace it with "Default".  This hack has two purposes:
-	 * to avoid wasting cycles loading values that might soon be overridden
-	 * from the config file, and to avoid trying to read the timezone abbrev
-	 * files during InitializeGUCOptions().  The latter doesn't work in an
-	 * EXEC_BACKEND subprocess because my_exec_path hasn't been set yet and
-	 * so we can't locate PGSHAREDIR.  (Essentially the same hack is used
-	 * to delay initializing TimeZone ... if we have any more, we should
-	 * try to clean up and centralize this mechanism ...)
+	 * eventually replace it with "Default".  This hack has two purposes: to
+	 * avoid wasting cycles loading values that might soon be overridden from
+	 * the config file, and to avoid trying to read the timezone abbrev files
+	 * during InitializeGUCOptions().  The latter doesn't work in an
+	 * EXEC_BACKEND subprocess because my_exec_path hasn't been set yet and so
+	 * we can't locate PGSHAREDIR.  (Essentially the same hack is used to
+	 * delay initializing TimeZone ... if we have any more, we should try to
+	 * clean up and centralize this mechanism ...)
 	 */
 	if (strcmp(newval, "UNKNOWN") == 0)
 	{
@@ -6385,11 +6386,11 @@ assign_timezone_abbreviations(const char *newval, bool doit, GucSource source)
 	if (timezone_abbreviations_string == NULL ||
 		strcmp(timezone_abbreviations_string, newval) != 0)
 	{
-		int		elevel;
+		int			elevel;
 
 		/*
 		 * If reading config file, only the postmaster should bleat loudly
-		 * about problems.  Otherwise, it's just this one process doing it,
+		 * about problems.	Otherwise, it's just this one process doing it,
 		 * and we use WARNING message level.
 		 */
 		if (source == PGC_S_FILE)

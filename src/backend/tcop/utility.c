@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.268 2006/09/07 22:52:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.269 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -632,7 +632,7 @@ ProcessUtility(Node *parsetree,
 
 		case T_CopyStmt:
 			{
-				uint64	processed = DoCopy((CopyStmt *) parsetree);
+				uint64		processed = DoCopy((CopyStmt *) parsetree);
 
 				if (completionTag)
 					snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
@@ -798,10 +798,10 @@ ProcessUtility(Node *parsetree,
 							stmt->unique,
 							stmt->primary,
 							stmt->isconstraint,
-							false,				/* is_alter_table */
-							true,				/* check_rights */
-							false,				/* skip_build */
-							false,				/* quiet */
+							false,		/* is_alter_table */
+							true,		/* check_rights */
+							false,		/* skip_build */
+							false,		/* quiet */
 							stmt->concurrent);	/* concurrent */
 			}
 			break;
@@ -1883,7 +1883,7 @@ GetCommandLogLevel(Node *parsetree)
 
 		case T_SelectStmt:
 			if (((SelectStmt *) parsetree)->into)
-				lev = LOGSTMT_DDL;			/* CREATE AS, SELECT INTO */
+				lev = LOGSTMT_DDL;		/* CREATE AS, SELECT INTO */
 			else
 				lev = LOGSTMT_ALL;
 			break;
@@ -2053,7 +2053,7 @@ GetCommandLogLevel(Node *parsetree)
 
 		case T_ExplainStmt:
 			{
-				ExplainStmt  *stmt = (ExplainStmt *) parsetree;
+				ExplainStmt *stmt = (ExplainStmt *) parsetree;
 
 				/* Look through an EXPLAIN ANALYZE to the contained stmt */
 				if (stmt->analyze)
@@ -2128,7 +2128,7 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_ReindexStmt:
-			lev = LOGSTMT_ALL;				/* should this be DDL? */
+			lev = LOGSTMT_ALL;	/* should this be DDL? */
 			break;
 
 		case T_CreateConversionStmt:
@@ -2153,7 +2153,7 @@ GetCommandLogLevel(Node *parsetree)
 
 		case T_PrepareStmt:
 			{
-				PrepareStmt  *stmt = (PrepareStmt *) parsetree;
+				PrepareStmt *stmt = (PrepareStmt *) parsetree;
 
 				/* Look through a PREPARE to the contained stmt */
 				return GetCommandLogLevel((Node *) stmt->query);
@@ -2162,9 +2162,9 @@ GetCommandLogLevel(Node *parsetree)
 
 		case T_ExecuteStmt:
 			{
-				ExecuteStmt  *stmt = (ExecuteStmt *) parsetree;
+				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
 				PreparedStatement *pstmt;
-				ListCell *l;
+				ListCell   *l;
 
 				/* Look through an EXECUTE to the referenced stmt(s) */
 				lev = LOGSTMT_ALL;
@@ -2173,7 +2173,7 @@ GetCommandLogLevel(Node *parsetree)
 				{
 					foreach(l, pstmt->query_list)
 					{
-						Query   *query = (Query *) lfirst(l);
+						Query	   *query = (Query *) lfirst(l);
 						LogStmtLevel stmt_lev;
 
 						stmt_lev = GetQueryLogLevel(query);
@@ -2188,10 +2188,11 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_Query:
+
 			/*
 			 * In complicated situations (eg, EXPLAIN ANALYZE in an extended
-			 * Query protocol), we might find an already-analyzed query
-			 * within a utility statement.  Cope.
+			 * Query protocol), we might find an already-analyzed query within
+			 * a utility statement.  Cope.
 			 */
 			lev = GetQueryLogLevel((Query *) parsetree);
 			break;
@@ -2224,7 +2225,7 @@ GetQueryLogLevel(Query *parsetree)
 	{
 		case CMD_SELECT:
 			if (parsetree->into != NULL)
-				lev = LOGSTMT_DDL;			/* CREATE AS, SELECT INTO */
+				lev = LOGSTMT_DDL;		/* CREATE AS, SELECT INTO */
 			else
 				lev = LOGSTMT_ALL;
 			break;

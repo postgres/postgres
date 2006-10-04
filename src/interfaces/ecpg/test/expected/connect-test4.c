@@ -28,15 +28,21 @@ main(void)
 {
 	ECPGdebug(1, stderr);
 
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , "main", 0); }
+	{
+		ECPGconnect(__LINE__, 0, "regress1", NULL, NULL, "main", 0);
+	}
 #line 13 "test4.pgc"
 
 
-	{ ECPGsetconn(__LINE__, "main");}
+	{
+		ECPGsetconn(__LINE__, "main");
+	}
 #line 15 "test4.pgc"
 
 
-	{ ECPGdisconnect(__LINE__, "DEFAULT");}
+	{
+		ECPGdisconnect(__LINE__, "DEFAULT");
+	}
 #line 17 "test4.pgc"
 
 

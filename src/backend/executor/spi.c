@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.163 2006/09/07 22:52:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.164 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -827,8 +827,8 @@ SPI_cursor_open(const char *name, void *plan,
 	int			k;
 
 	/*
-	 * Check that the plan is something the Portal code will special-case
-	 * as returning one tupleset.
+	 * Check that the plan is something the Portal code will special-case as
+	 * returning one tupleset.
 	 */
 	if (!SPI_is_cursor_plan(spiplan))
 	{
@@ -846,7 +846,7 @@ SPI_cursor_open(const char *name, void *plan,
 					 errmsg("cannot open empty query as cursor")));
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-				 /* translator: %s is name of a SQL command, eg INSERT */
+		/* translator: %s is name of a SQL command, eg INSERT */
 				 errmsg("cannot open %s query as cursor",
 						CreateQueryTag(queryTree))));
 	}
@@ -885,7 +885,7 @@ SPI_cursor_open(const char *name, void *plan,
 	{
 		/* sizeof(ParamListInfoData) includes the first array element */
 		paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-							(spiplan->nargs - 1) * sizeof(ParamExternData));
+							  (spiplan->nargs - 1) *sizeof(ParamExternData));
 		paramLI->numParams = spiplan->nargs;
 
 		for (k = 0; k < spiplan->nargs; k++)
@@ -1348,7 +1348,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 
 			/* sizeof(ParamListInfoData) includes the first array element */
 			paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-									 (nargs - 1) * sizeof(ParamExternData));
+									   (nargs - 1) *sizeof(ParamExternData));
 			paramLI->numParams = nargs;
 
 			for (k = 0; k < nargs; k++)
@@ -1482,9 +1482,9 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				ActiveSnapshot = NULL;
 
 				/*
-				 * The last canSetTag query sets the status values returned
-				 * to the caller.  Be careful to free any tuptables not
-				 * returned, to avoid intratransaction memory leak.
+				 * The last canSetTag query sets the status values returned to
+				 * the caller.	Be careful to free any tuptables not returned,
+				 * to avoid intratransaction memory leak.
 				 */
 				if (queryTree->canSetTag)
 				{

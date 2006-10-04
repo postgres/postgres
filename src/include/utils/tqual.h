@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.63 2006/09/03 15:59:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.64 2006/10/04 00:30:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ typedef struct SnapshotData
 	/* note: all ids in xip[] satisfy xmin <= xip[i] < xmax */
 	int32		subxcnt;		/* # of xact ids in subxip[], -1 if overflow */
 	TransactionId *subxip;		/* array of subxact IDs in progress */
+
 	/*
 	 * note: all ids in subxip[] are >= xmin, but we don't bother filtering
 	 * out any that are >= xmax

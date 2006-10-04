@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.132 2006/07/31 20:09:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.133 2006/10/04 00:30:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -786,8 +786,8 @@ InitCatCache(int id,
 
 	/*
 	 * nbuckets is the number of hash buckets to use in this catcache.
-	 * Currently we just use a hard-wired estimate of an appropriate size
-	 * for each cache; maybe later make them dynamically resizable?
+	 * Currently we just use a hard-wired estimate of an appropriate size for
+	 * each cache; maybe later make them dynamically resizable?
 	 *
 	 * nbuckets must be a power of two.  We check this via Assert rather than
 	 * a full runtime check because the values will be coming from constant

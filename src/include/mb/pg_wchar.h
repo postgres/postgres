@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.68 2006/05/21 20:05:21 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.69 2006/10/04 00:30:09 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -92,32 +92,32 @@ typedef unsigned int pg_wchar;
 #define LC_JISX0208_1978	0x90	/* Japanese Kanji, old JIS (not supported) */
 /* #define FREE				0x90	free (unused) */
 #define LC_GB2312_80		0x91	/* Chinese */
-#define LC_JISX0208 		0x92		/* Japanese Kanji (JIS X 0208) */
-#define LC_KS5601			0x93		/* Korean */
-#define LC_JISX0212 		0x94		/* Japanese Kanji (JIS X 0212) */
+#define LC_JISX0208			0x92	/* Japanese Kanji (JIS X 0208) */
+#define LC_KS5601			0x93	/* Korean */
+#define LC_JISX0212			0x94	/* Japanese Kanji (JIS X 0212) */
 #define LC_CNS11643_1		0x95	/* CNS 11643-1992 Plane 1 */
 #define LC_CNS11643_2		0x96	/* CNS 11643-1992 Plane 2 */
 /* #define FREE				0x97	free (unused) */
-#define LC_BIG5_1			0x98		/* Plane 1 Chinese traditional (not supported) */
-#define LC_BIG5_2			0x99		/* Plane 1 Chinese traditional (not supported) */
+#define LC_BIG5_1			0x98	/* Plane 1 Chinese traditional (not supported) */
+#define LC_BIG5_2			0x99	/* Plane 1 Chinese traditional (not supported) */
 
 /*
  * Private single byte encodings (0xa0-0xef)
  */
-#define LC_SISHENG			0xa0		/* Chinese SiSheng characters for
+#define LC_SISHENG			0xa0/* Chinese SiSheng characters for
 								 * PinYin/ZhuYin (not supported) */
-#define LC_IPA				0xa1		/* IPA (International Phonetic Association)
+#define LC_IPA				0xa1/* IPA (International Phonetic Association)
 								 * (not supported) */
-#define LC_VISCII_LOWER 	0xa2	/* Vietnamese VISCII1.1 lower-case (not
+#define LC_VISCII_LOWER		0xa2/* Vietnamese VISCII1.1 lower-case (not
 								 * supported) */
-#define LC_VISCII_UPPER 	0xa3	/* Vietnamese VISCII1.1 upper-case (not
+#define LC_VISCII_UPPER		0xa3/* Vietnamese VISCII1.1 upper-case (not
 								 * supported) */
-#define LC_ARABIC_DIGIT 	0xa4	/* Arabic digit (not supported) */
+#define LC_ARABIC_DIGIT		0xa4	/* Arabic digit (not supported) */
 #define LC_ARABIC_1_COLUMN	0xa5	/* Arabic 1-column (not supported) */
 #define LC_ASCII_RIGHT_TO_LEFT	0xa6	/* ASCII (left half of ISO8859-1) with
 										 * right-to-left direction (not
 										 * supported) */
-#define LC_LAO				0xa7		/* Lao characters (ISO10646 0E80..0EDF) (not
+#define LC_LAO				0xa7/* Lao characters (ISO10646 0E80..0EDF) (not
 								 * supported) */
 #define LC_ARABIC_2_COLUMN	0xa8	/* Arabic 1-column (not supported) */
 
@@ -127,7 +127,7 @@ typedef unsigned int pg_wchar;
 #define LC_INDIAN_1_COLUMN	0xf0/* Indian charset for 1-column width glypps
 								 * (not supported) */
 #define LC_TIBETAN_1_COLUMN 0xf1	/* Tibetan 1 column glyph (not supported) */
-#define LC_ETHIOPIC 		0xf5		/* Ethiopic characters (not supported) */
+#define LC_ETHIOPIC			0xf5	/* Ethiopic characters (not supported) */
 #define LC_CNS11643_3		0xf6	/* CNS 11643-1992 Plane 3 */
 #define LC_CNS11643_4		0xf7	/* CNS 11643-1992 Plane 4 */
 #define LC_CNS11643_5		0xf8	/* CNS 11643-1992 Plane 5 */
@@ -135,7 +135,7 @@ typedef unsigned int pg_wchar;
 #define LC_CNS11643_7		0xfa	/* CNS 11643-1992 Plane 7 */
 #define LC_INDIAN_2_COLUMN	0xfb/* Indian charset for 2-column width glypps
 								 * (not supported) */
-#define LC_TIBETAN			0xfc		/* Tibetan (not supported) */
+#define LC_TIBETAN			0xfc	/* Tibetan (not supported) */
 /* #define FREE				0xfd	free (unused) */
 /* #define FREE				0xfe	free (unused) */
 /* #define FREE				0xff	free (unused) */
@@ -188,7 +188,7 @@ typedef enum pg_enc
 	PG_WIN1255,					/* windows-1255 */
 	PG_WIN1257,					/* windows-1257 */
 	/* PG_ENCODING_BE_LAST points to the above entry */
-	
+
 	/* followings are for client encoding only */
 	PG_SJIS,					/* Shift JIS (Winindows-932) */
 	PG_BIG5,					/* Big5 (Windows-950) */
@@ -343,24 +343,24 @@ extern void UtfToLocal(const unsigned char *utf, unsigned char *iso,
 
 extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);
 extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,
-							bool noError);
+				bool noError);
 
 extern void report_invalid_encoding(int encoding, const char *mbstr, int len);
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,
-									   const char *mbstr, int len);
+						   const char *mbstr, int len);
 
 extern void pg_ascii2mic(const unsigned char *l, unsigned char *p, int len);
 extern void pg_mic2ascii(const unsigned char *mic, unsigned char *p, int len);
 extern void latin2mic(const unsigned char *l, unsigned char *p, int len,
-					  int lc, int encoding);
+		  int lc, int encoding);
 extern void mic2latin(const unsigned char *mic, unsigned char *p, int len,
-					  int lc, int encoding);
+		  int lc, int encoding);
 extern void latin2mic_with_table(const unsigned char *l, unsigned char *p,
-								 int len, int lc, int encoding,
-								 const unsigned char *tab);
+					 int len, int lc, int encoding,
+					 const unsigned char *tab);
 extern void mic2latin_with_table(const unsigned char *mic, unsigned char *p,
-								 int len, int lc, int encoding,
-								 const unsigned char *tab);
+					 int len, int lc, int encoding,
+					 const unsigned char *tab);
 
 extern bool pg_utf8_islegal(const unsigned char *source, int length);
 

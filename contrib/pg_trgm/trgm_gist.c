@@ -307,7 +307,7 @@ sizebitvec(BITVECP sign)
 				i;
 
 	LOOPBYTE(
-		size += number_of_ones[(unsigned char) sign[i]];
+			 size += number_of_ones[(unsigned char) sign[i]];
 	);
 	return size;
 }
@@ -320,8 +320,8 @@ hemdistsign(BITVECP a, BITVECP b)
 				dist = 0;
 
 	LOOPBYTE(
-		diff = (unsigned char) (a[i] ^ b[i]);
-		dist += number_of_ones[diff];
+			 diff = (unsigned char) (a[i] ^ b[i]);
+	dist += number_of_ones[diff];
 	);
 	return dist;
 }
@@ -393,7 +393,7 @@ typedef struct
 {
 	OffsetNumber pos;
 	int4		cost;
-} SPLITCOST;
+}	SPLITCOST;
 
 static int
 comparecost(const void *a, const void *b)

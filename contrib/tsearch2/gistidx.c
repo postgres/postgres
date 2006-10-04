@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.c,v 1.14 2006/06/28 12:00:06 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.c,v 1.15 2006/10/04 00:29:46 momjian Exp $ */
 
 #include "postgres.h"
 
@@ -447,7 +447,7 @@ sizebitvec(BITVECP sign)
 				i;
 
 	LOOPBYTE(
-		size += number_of_ones[(unsigned char) sign[i]];
+			 size += number_of_ones[(unsigned char) sign[i]];
 	);
 	return size;
 }
@@ -460,8 +460,8 @@ hemdistsign(BITVECP a, BITVECP b)
 				dist = 0;
 
 	LOOPBYTE(
-		diff = (unsigned char) (a[i] ^ b[i]);
-		dist += number_of_ones[diff];
+			 diff = (unsigned char) (a[i] ^ b[i]);
+	dist += number_of_ones[diff];
 	);
 	return dist;
 }
@@ -533,7 +533,7 @@ typedef struct
 {
 	OffsetNumber pos;
 	int4		cost;
-} SPLITCOST;
+}	SPLITCOST;
 
 static int
 comparecost(const void *a, const void *b)

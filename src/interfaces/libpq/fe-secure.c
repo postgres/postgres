@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.87 2006/09/27 15:41:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.88 2006/10/04 00:30:13 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -782,7 +782,7 @@ initialize_SSL(PGconn *conn)
 		if (stat(fnbuf, &buf) == 0)
 		{
 			X509_STORE *cvstore;
-			
+
 			if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))
 			{
 				char	   *err = SSLerrmessage();
@@ -800,13 +800,13 @@ initialize_SSL(PGconn *conn)
 				if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) != 0)
 /* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
-				   X509_STORE_set_flags(cvstore,
-								X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL);
+					X509_STORE_set_flags(cvstore,
+						  X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 				/* if not found, silently ignore;  we do not require CRL */
 #else
 				{
 					char	   *err = SSLerrmessage();
-	
+
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("Installed SSL library does not support CRL certificates, file \"%s\"\n"),
 									  fnbuf);
@@ -815,7 +815,7 @@ initialize_SSL(PGconn *conn)
 				}
 #endif
 			}
-	
+
 			SSL_CTX_set_verify(SSL_context, SSL_VERIFY_PEER, verify_cb);
 		}
 	}

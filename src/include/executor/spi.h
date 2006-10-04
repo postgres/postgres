@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.57 2006/09/03 03:19:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.58 2006/10/04 00:30:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,9 +71,9 @@ typedef struct
 #define SPI_OK_DELETE			8
 #define SPI_OK_UPDATE			9
 #define SPI_OK_CURSOR			10
-#define SPI_OK_INSERT_RETURNING	11
-#define SPI_OK_DELETE_RETURNING	12
-#define SPI_OK_UPDATE_RETURNING	13
+#define SPI_OK_INSERT_RETURNING 11
+#define SPI_OK_DELETE_RETURNING 12
+#define SPI_OK_UPDATE_RETURNING 13
 
 extern DLLIMPORT uint32 SPI_processed;
 extern DLLIMPORT Oid SPI_lastoid;

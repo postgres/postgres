@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.19 2006/07/14 14:52:16 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.20 2006/10/04 00:29:48 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -22,8 +22,8 @@
  * static *S used for temrorary storage (saves stack and palloc() call)
  */
 
-static Datum    attrS[INDEX_MAX_KEYS];
-static bool     isnullS[INDEX_MAX_KEYS];
+static Datum attrS[INDEX_MAX_KEYS];
+static bool isnullS[INDEX_MAX_KEYS];
 
 /*
  * Write itup vector to page, has no control of free space
@@ -57,14 +57,17 @@ gistfillbuffer(Relation r, Page page, IndexTuple *itup,
 bool
 gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete, Size freespace)
 {
-	unsigned int size = freespace, deleted = 0;
+	unsigned int size = freespace,
+				deleted = 0;
 	int			i;
 
 	for (i = 0; i < len; i++)
 		size += IndexTupleSize(itvec[i]) + sizeof(ItemIdData);
 
-	if ( todelete != InvalidOffsetNumber ) {
-		IndexTuple itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, todelete));
+	if (todelete != InvalidOffsetNumber)
+	{
+		IndexTuple	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, todelete));
+
 		deleted = IndexTupleSize(itup) + sizeof(ItemIdData);
 	}
 
@@ -72,11 +75,12 @@ gistnospace(Page page, IndexTuple *itvec, int len, OffsetNumber todelete, Size f
 }
 
 bool
-gistfitpage(IndexTuple *itvec, int len) {
-	int i;
-	Size size=0;
+gistfitpage(IndexTuple *itvec, int len)
+{
+	int			i;
+	Size		size = 0;
 
-	for(i=0;i<len;i++)
+	for (i = 0; i < len; i++)
 		size += IndexTupleSize(itvec[i]) + sizeof(ItemIdData);
 
 	/* TODO: Consider fillfactor */
@@ -119,56 +123,64 @@ gistjoinvector(IndexTuple *itvec, int *len, IndexTuple *additvec, int addlen)
  */
 
 IndexTupleData *
-gistfillitupvec(IndexTuple *vec, int veclen, int *memlen) {
-	char *ptr, *ret;
-	int i;
+gistfillitupvec(IndexTuple *vec, int veclen, int *memlen)
+{
+	char	   *ptr,
+			   *ret;
+	int			i;
 
-	*memlen=0;
-					
+	*memlen = 0;
+
 	for (i = 0; i < veclen; i++)
 		*memlen += IndexTupleSize(vec[i]);
 
 	ptr = ret = palloc(*memlen);
 
-	for (i = 0; i < veclen; i++) { 
+	for (i = 0; i < veclen; i++)
+	{
 		memcpy(ptr, vec[i], IndexTupleSize(vec[i]));
 		ptr += IndexTupleSize(vec[i]);
 	}
 
-	return (IndexTupleData*)ret;
+	return (IndexTupleData *) ret;
 }
 
 /*
- * Make unions of keys in IndexTuple vector, return FALSE if itvec contains 
+ * Make unions of keys in IndexTuple vector, return FALSE if itvec contains
  * invalid tuple. Resulting Datums aren't compressed.
  */
 
-bool 
-gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey, 
-					Datum *attr, bool *isnull ) {
+bool
+gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey,
+				   Datum *attr, bool *isnull)
+{
 	int			i;
 	GistEntryVector *evec;
-	int	attrsize;
+	int			attrsize;
 
-	evec = (GistEntryVector *) palloc(  ( len + 2 )  * sizeof(GISTENTRY) + GEVHDRSZ);
+	evec = (GistEntryVector *) palloc((len + 2) * sizeof(GISTENTRY) + GEVHDRSZ);
 
-	for (i = startkey; i < giststate->tupdesc->natts; i++) {
-		int		j;
+	for (i = startkey; i < giststate->tupdesc->natts; i++)
+	{
+		int			j;
 
 		evec->n = 0;
-		if ( !isnull[i] ) {
-			gistentryinit( evec->vector[evec->n], attr[i],
-							NULL, NULL, (OffsetNumber) 0,
-							FALSE);
+		if (!isnull[i])
+		{
+			gistentryinit(evec->vector[evec->n], attr[i],
+						  NULL, NULL, (OffsetNumber) 0,
+						  FALSE);
 			evec->n++;
 		}
 
-		for (j = 0; j < len; j++) {
-			Datum 	datum;
-			bool	IsNull;
+		for (j = 0; j < len; j++)
+		{
+			Datum		datum;
+			bool		IsNull;
 
-			if (GistTupleIsInvalid(itvec[j])) 
-				return FALSE; /* signals that union with invalid tuple => result is invalid */
+			if (GistTupleIsInvalid(itvec[j]))
+				return FALSE;	/* signals that union with invalid tuple =>
+								 * result is invalid */
 
 			datum = index_getattr(itvec[j], i + 1, giststate->tupdesc, &IsNull);
 			if (IsNull)
@@ -183,19 +195,23 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startke
 		}
 
 		/* If this tuple vector was all NULLs, the union is NULL */
-		if ( evec->n == 0 ) {
+		if (evec->n == 0)
+		{
 			attr[i] = (Datum) 0;
 			isnull[i] = TRUE;
-		} else {
-			if (evec->n == 1) {
+		}
+		else
+		{
+			if (evec->n == 1)
+			{
 				evec->n = 2;
 				evec->vector[1] = evec->vector[0];
-			} 
+			}
 
 			/* Make union and store in attr array */
 			attr[i] = FunctionCall2(&giststate->unionFn[i],
-								  PointerGetDatum(evec),
-								  PointerGetDatum(&attrsize));
+									PointerGetDatum(evec),
+									PointerGetDatum(&attrsize));
 
 			isnull[i] = FALSE;
 		}
@@ -213,57 +229,67 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 {
 	memset(isnullS, TRUE, sizeof(bool) * giststate->tupdesc->natts);
 
-	if ( !gistMakeUnionItVec(giststate, itvec, len, 0, attrS, isnullS ) ) 
-			return gist_form_invalid_tuple(InvalidBlockNumber);
+	if (!gistMakeUnionItVec(giststate, itvec, len, 0, attrS, isnullS))
+		return gist_form_invalid_tuple(InvalidBlockNumber);
 
-	return  gistFormTuple(giststate, r, attrS, isnullS, false);
+	return gistFormTuple(giststate, r, attrS, isnullS, false);
 }
 
-/* 
+/*
  * makes union of two key
  */
 void
-gistMakeUnionKey( GISTSTATE *giststate, int attno,
-					GISTENTRY	*entry1, bool isnull1, 	
-					GISTENTRY	*entry2, bool isnull2,
-					Datum	*dst, bool *dstisnull ) {
+gistMakeUnionKey(GISTSTATE *giststate, int attno,
+				 GISTENTRY *entry1, bool isnull1,
+				 GISTENTRY *entry2, bool isnull2,
+				 Datum *dst, bool *dstisnull)
+{
 
-	int dstsize;
+	int			dstsize;
 
-	static char storage[ 2 * sizeof(GISTENTRY) + GEVHDRSZ ];
-	GistEntryVector *evec = (GistEntryVector*)storage;
+	static char storage[2 * sizeof(GISTENTRY) + GEVHDRSZ];
+	GistEntryVector *evec = (GistEntryVector *) storage;
 
 	evec->n = 2;
 
-	if ( isnull1 && isnull2 ) {
+	if (isnull1 && isnull2)
+	{
 		*dstisnull = TRUE;
-		*dst = (Datum)0;
-	} else {
-		if ( isnull1 == FALSE && isnull2 == FALSE ) {
+		*dst = (Datum) 0;
+	}
+	else
+	{
+		if (isnull1 == FALSE && isnull2 == FALSE)
+		{
 			evec->vector[0] = *entry1;
 			evec->vector[1] = *entry2;
-		} else if ( isnull1 == FALSE ) {
+		}
+		else if (isnull1 == FALSE)
+		{
 			evec->vector[0] = *entry1;
 			evec->vector[1] = *entry1;
-		} else {
+		}
+		else
+		{
 			evec->vector[0] = *entry2;
 			evec->vector[1] = *entry2;
 		}
 
 		*dstisnull = FALSE;
 		*dst = FunctionCall2(&giststate->unionFn[attno],
-							  PointerGetDatum(evec),
-							  PointerGetDatum(&dstsize));
+							 PointerGetDatum(evec),
+							 PointerGetDatum(&dstsize));
 	}
 }
 
 bool
-gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b) {
-	bool result;
+gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b)
+{
+	bool		result;
 
 	FunctionCall3(&giststate->equalFn[attno],
-								a, b,
-								PointerGetDatum(&result));
+				  a, b,
+				  PointerGetDatum(&result));
 	return result;
 }
 
@@ -309,22 +335,24 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	gistDeCompressAtt(giststate, r, addtup, NULL,
 					  (OffsetNumber) 0, addentries, addisnull);
 
-	for(i = 0; i < r->rd_att->natts; i++) {
-		gistMakeUnionKey( giststate, i,
-							oldentries + i, oldisnull[i],
-							addentries + i, addisnull[i],
-							attrS + i, isnullS + i );
+	for (i = 0; i < r->rd_att->natts; i++)
+	{
+		gistMakeUnionKey(giststate, i,
+						 oldentries + i, oldisnull[i],
+						 addentries + i, addisnull[i],
+						 attrS + i, isnullS + i);
 
-		if ( neednew )
+		if (neednew)
 			/* we already need new key, so we can skip check */
 			continue;
 
-		if ( isnullS[i] )
+		if (isnullS[i])
 			/* union of key may be NULL if and only if both keys are NULL */
 			continue;
 
-		if ( !addisnull[i] ) {
-			if ( oldisnull[i] || gistKeyIsEQ(giststate, i, oldentries[i].key, attrS[i])==false )
+		if (!addisnull[i])
+		{
+			if (oldisnull[i] || gistKeyIsEQ(giststate, i, oldentries[i].key, attrS[i]) == false)
 				neednew = true;
 		}
 	}
@@ -363,8 +391,8 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 					  it, NULL, (OffsetNumber) 0,
 					  identry, isnull);
 
-	Assert( maxoff >= FirstOffsetNumber );
-	Assert( !GistPageIsLeaf(p) );
+	Assert(maxoff >= FirstOffsetNumber);
+	Assert(!GistPageIsLeaf(p));
 
 	for (i = FirstOffsetNumber; i <= maxoff && sum_grow; i = OffsetNumberNext(i))
 	{
@@ -484,7 +512,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 		{
 			gistcentryinit(giststate, i, &centry[i], attdata[i],
 						   r, NULL, (OffsetNumber) 0,
-						   newValues, 
+						   newValues,
 						   FALSE);
 			compatt[i] = centry[i].key;
 		}
@@ -500,18 +528,19 @@ gistpenalty(GISTSTATE *giststate, int attno,
 			GISTENTRY *orig, bool isNullOrig,
 			GISTENTRY *add, bool isNullAdd)
 {
-	float penalty = 0.0;
+	float		penalty = 0.0;
 
-	if ( giststate->penaltyFn[attno].fn_strict==FALSE || ( isNullOrig == FALSE && isNullAdd == FALSE ) ) 
+	if (giststate->penaltyFn[attno].fn_strict == FALSE || (isNullOrig == FALSE && isNullAdd == FALSE))
 		FunctionCall3(&giststate->penaltyFn[attno],
 					  PointerGetDatum(orig),
 					  PointerGetDatum(add),
 					  PointerGetDatum(&penalty));
-	else if ( isNullOrig && isNullAdd )
+	else if (isNullOrig && isNullAdd)
 		penalty = 0.0;
 	else
-		penalty = 1e10; /* try to prevent to mix null and non-null value */
-	
+		penalty = 1e10;			/* try to prevent to mix null and non-null
+								 * value */
+
 	return penalty;
 }
 

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.33 2006/09/22 18:50:41 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.34 2006/10/04 00:30:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,8 @@
 
 static void help(const char *progname);
 
-enum trivalue {
+enum trivalue
+{
 	TRI_DEFAULT,
 	TRI_NO,
 	TRI_YES
@@ -66,13 +67,14 @@ main(int argc, char *argv[])
 	char	   *conn_limit = NULL;
 	bool		pwprompt = false;
 	char	   *newpassword = NULL;
-	/*	Tri-valued variables.  */
-	enum trivalue	createdb = TRI_DEFAULT,
-					superuser = TRI_DEFAULT,
-					createrole = TRI_DEFAULT,
-					inherit = TRI_DEFAULT,
-					login = TRI_DEFAULT,
-					encrypted = TRI_DEFAULT;
+
+	/* Tri-valued variables.  */
+	enum trivalue createdb = TRI_DEFAULT,
+				superuser = TRI_DEFAULT,
+				createrole = TRI_DEFAULT,
+				inherit = TRI_DEFAULT,
+				login = TRI_DEFAULT,
+				encrypted = TRI_DEFAULT;
 
 	PQExpBufferData sql;
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.2 2006/08/25 04:06:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.3 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ AlterTableCreateToastTable(Oid relOid)
 void
 BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 {
-	Relation rel;
+	Relation	rel;
 
 	rel = heap_openrv(makeRangeVar(NULL, relName), AccessExclusiveLock);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.59 2006/09/07 15:37:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.60 2006/10/04 00:30:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,10 +479,10 @@ lo_import(PGconn *conn, const char *filename)
 		if (tmp != nbytes)
 		{
 			/*
-			 * If lo_write() failed, we are now in an aborted transaction
-			 * so there's no need for lo_close(); furthermore, if we tried
-			 * it we'd overwrite the useful error result with a useless one.
-			 * So just nail the doors shut and get out of town.
+			 * If lo_write() failed, we are now in an aborted transaction so
+			 * there's no need for lo_close(); furthermore, if we tried it
+			 * we'd overwrite the useful error result with a useless one. So
+			 * just nail the doors shut and get out of town.
 			 */
 			(void) close(fd);
 			return InvalidOid;
@@ -492,7 +492,7 @@ lo_import(PGconn *conn, const char *filename)
 	if (nbytes < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not read from file \"%s\": %s\n"),
+					  libpq_gettext("could not read from file \"%s\": %s\n"),
 						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
 		lobjOid = InvalidOid;
 	}
@@ -565,10 +565,10 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	}
 
 	/*
-	 * If lo_read() failed, we are now in an aborted transaction
-	 * so there's no need for lo_close(); furthermore, if we tried
-	 * it we'd overwrite the useful error result with a useless one.
-	 * So skip lo_close() if we got a failure result.
+	 * If lo_read() failed, we are now in an aborted transaction so there's no
+	 * need for lo_close(); furthermore, if we tried it we'd overwrite the
+	 * useful error result with a useless one. So skip lo_close() if we got a
+	 * failure result.
 	 */
 	if (nbytes < 0 ||
 		lo_close(conn, lobj) != 0)

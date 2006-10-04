@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.56 2006/03/05 15:58:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.57 2006/10/04 00:30:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,8 @@ extern void expand_inherited_tables(PlannerInfo *root);
 extern Node *adjust_appendrel_attrs(Node *node, AppendRelInfo *appinfo);
 
 extern Relids *adjust_appendrel_attr_needed(RelOptInfo *oldrel,
-											AppendRelInfo *appinfo,
-											AttrNumber new_min_attr,
-											AttrNumber new_max_attr);
+							 AppendRelInfo *appinfo,
+							 AttrNumber new_min_attr,
+							 AttrNumber new_max_attr);
 
 #endif   /* PREP_H */

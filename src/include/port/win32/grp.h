@@ -1,3 +1,1 @@
-/* $PostgreSQL: pgsql/src/include/port/win32/grp.h,v 1.3 2006/03/11 04:38:38 momjian Exp $ */
-
-
+/* $PostgreSQL: pgsql/src/include/port/win32/grp.h,v 1.4 2006/10/04 00:30:10 momjian Exp $ */

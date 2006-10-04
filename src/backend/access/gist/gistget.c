@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.60 2006/07/14 14:52:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.61 2006/10/04 00:29:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,8 +360,7 @@ gistindex_keytest(IndexTuple tuple,
 	IncrIndexProcessed();
 
 	/*
-	 * Tuple doesn't restore after crash recovery because of incomplete
-	 * insert
+	 * Tuple doesn't restore after crash recovery because of incomplete insert
 	 */
 	if (!GistPageIsLeaf(p) && GistTupleIsInvalid(tuple))
 		return true;
@@ -378,14 +377,18 @@ gistindex_keytest(IndexTuple tuple,
 							  giststate->tupdesc,
 							  &isNull);
 
-		if ( key->sk_flags & SK_ISNULL ) {
-			/* is the compared-to datum NULL? on non-leaf page it's possible
-			   to have nulls in childs :( */
+		if (key->sk_flags & SK_ISNULL)
+		{
+			/*
+			 * is the compared-to datum NULL? on non-leaf page it's possible
+			 * to have nulls in childs :(
+			 */
 
-			if ( isNull || !GistPageIsLeaf(p) )
+			if (isNull || !GistPageIsLeaf(p))
 				return true;
 			return false;
-		} else if ( isNull )
+		}
+		else if (isNull)
 			return false;
 
 		gistdentryinit(giststate, key->sk_attno - 1, &de,

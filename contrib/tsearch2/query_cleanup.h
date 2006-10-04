@@ -3,7 +3,7 @@
 
 #include "query.h"
 
-ITEM	   *clean_NOT_v2(ITEM *ptr, int4 *len);
-ITEM	   *clean_fakeval_v2(ITEM *ptr, int4 *len);
+ITEM	   *clean_NOT_v2(ITEM * ptr, int4 *len);
+ITEM	   *clean_fakeval_v2(ITEM * ptr, int4 *len);
 
 #endif

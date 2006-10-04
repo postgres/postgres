@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/itemptr.c,v 1.18 2006/08/25 04:06:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/itemptr.c,v 1.19 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ ItemPointerCompare(ItemPointer arg1, ItemPointer arg2)
 	 */
 	BlockNumber b1 = BlockIdGetBlockNumber(&(arg1->ip_blkid));
 	BlockNumber b2 = BlockIdGetBlockNumber(&(arg2->ip_blkid));
-	
+
 	if (b1 < b2)
 		return -1;
 	else if (b1 > b2)

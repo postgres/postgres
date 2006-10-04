@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/tzparser.c,v 1.1 2006/07/25 03:51:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/tzparser.c,v 1.2 2006/10/04 00:30:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +35,11 @@ static int	tz_elevel;			/* to avoid passing this around a lot */
 
 static bool validateTzEntry(tzEntry *tzentry);
 static bool splitTzLine(const char *filename, int lineno,
-						char *line, tzEntry *tzentry);
-static int	addToArray(tzEntry **base, int *arraysize, int n,
-					   tzEntry *entry, bool override);
-static int	ParseTzFile(const char *filename, int depth,
-						tzEntry **base, int *arraysize, int n);
+			char *line, tzEntry *tzentry);
+static int addToArray(tzEntry **base, int *arraysize, int n,
+		   tzEntry *entry, bool override);
+static int ParseTzFile(const char *filename, int depth,
+			tzEntry **base, int *arraysize, int n);
 
 
 /*
@@ -53,7 +53,8 @@ validateTzEntry(tzEntry *tzentry)
 	unsigned char *p;
 
 	/*
-	 * Check restrictions imposed by datetkntbl storage format (see datetime.c)
+	 * Check restrictions imposed by datetkntbl storage format (see
+	 * datetime.c)
 	 */
 	if (strlen(tzentry->abbrev) > TOKMAXLEN)
 	{
@@ -77,8 +78,8 @@ validateTzEntry(tzEntry *tzentry)
 	/*
 	 * Sanity-check the offset: shouldn't exceed 14 hours
 	 */
-	if (tzentry->offset > 14*60*60 ||
-		tzentry->offset < -14*60*60)
+	if (tzentry->offset > 14 * 60 * 60 ||
+		tzentry->offset < -14 * 60 * 60)
 	{
 		ereport(tz_elevel,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -105,11 +106,11 @@ validateTzEntry(tzEntry *tzentry)
 static bool
 splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 {
-	char	*abbrev;
-	char	*offset;
-	char	*offset_endptr;
-	char	*remain;
-	char	*is_dst;
+	char	   *abbrev;
+	char	   *offset;
+	char	   *offset_endptr;
+	char	   *remain;
+	char	   *is_dst;
 
 	tzentry->lineno = lineno;
 	tzentry->filename = filename;
@@ -130,8 +131,8 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 	{
 		ereport(tz_elevel,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("missing time zone offset in time zone file \"%s\", line %d",
-						filename, lineno)));
+		 errmsg("missing time zone offset in time zone file \"%s\", line %d",
+				filename, lineno)));
 		return false;
 	}
 	tzentry->offset = strtol(offset, &offset_endptr, 10);
@@ -157,7 +158,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
 		remain = is_dst;
 	}
 
-	if (!remain)		/* no more non-whitespace chars */
+	if (!remain)				/* no more non-whitespace chars */
 		return true;
 
 	if (remain[0] != '#')		/* must be a comment */
@@ -186,23 +187,23 @@ static int
 addToArray(tzEntry **base, int *arraysize, int n,
 		   tzEntry *entry, bool override)
 {
-	tzEntry* arrayptr;
+	tzEntry    *arrayptr;
 	int			low;
 	int			high;
 
 	/*
-	 * Search the array for a duplicate; as a useful side effect, the array
-	 * is maintained in sorted order.  We use strcmp() to ensure we match
-	 * the sort order datetime.c expects.
+	 * Search the array for a duplicate; as a useful side effect, the array is
+	 * maintained in sorted order.	We use strcmp() to ensure we match the
+	 * sort order datetime.c expects.
 	 */
 	arrayptr = *base;
 	low = 0;
-	high = n-1;
+	high = n - 1;
 	while (low <= high)
 	{
-		int		mid = (low + high) >> 1;
-		tzEntry *midptr = arrayptr + mid;
-		int		cmp;
+		int			mid = (low + high) >> 1;
+		tzEntry    *midptr = arrayptr + mid;
+		int			cmp;
 
 		cmp = strcmp(entry->abbrev, midptr->abbrev);
 		if (cmp < 0)
@@ -214,7 +215,7 @@ addToArray(tzEntry **base, int *arraysize, int n,
 			/*
 			 * Found a duplicate entry; complain unless it's the same.
 			 */
-			if (midptr->offset == entry->offset	&&
+			if (midptr->offset == entry->offset &&
 				midptr->is_dst == entry->is_dst)
 			{
 				/* return unchanged array */
@@ -230,8 +231,8 @@ addToArray(tzEntry **base, int *arraysize, int n,
 			/* same abbrev but something is different, complain */
 			ereport(tz_elevel,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("time zone abbreviation \"%s\" is multiply defined",
-							entry->abbrev),
+				  errmsg("time zone abbreviation \"%s\" is multiply defined",
+						 entry->abbrev),
 					 errdetail("Time zone file \"%s\", line %d conflicts with file \"%s\", line %d.",
 							   midptr->filename, midptr->lineno,
 							   entry->filename, entry->lineno)));
@@ -257,7 +258,7 @@ addToArray(tzEntry **base, int *arraysize, int n,
 	/* Must dup the abbrev to ensure it survives */
 	arrayptr->abbrev = pstrdup(entry->abbrev);
 
-	return n+1;
+	return n + 1;
 }
 
 /*
@@ -275,15 +276,15 @@ static int
 ParseTzFile(const char *filename, int depth,
 			tzEntry **base, int *arraysize, int n)
 {
-	char			share_path[MAXPGPATH];
-	char			file_path[MAXPGPATH];
-	FILE		   *tzFile;
-	char			tzbuf[1024];
-	char		   *line;
-	tzEntry			tzentry;
-	int				lineno = 0;
-	bool			override = false;
-	const char	   *p;
+	char		share_path[MAXPGPATH];
+	char		file_path[MAXPGPATH];
+	FILE	   *tzFile;
+	char		tzbuf[1024];
+	char	   *line;
+	tzEntry		tzentry;
+	int			lineno = 0;
+	bool		override = false;
+	const char *p;
 
 	/*
 	 * We enforce that the filename is all alpha characters.  This may be
@@ -299,23 +300,23 @@ ParseTzFile(const char *filename, int depth,
 			if (depth > 0)
 				ereport(tz_elevel,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                          errmsg("invalid time zone file name \"%s\"",
-								 filename)));
+						 errmsg("invalid time zone file name \"%s\"",
+								filename)));
 			return -1;
 		}
 	}
 
 	/*
-	 * The maximal recursion depth is a pretty arbitrary setting.
-	 * It is hard to imagine that someone needs more than 3 levels so stick
-	 * with this conservative setting until someone complains.
+	 * The maximal recursion depth is a pretty arbitrary setting. It is hard
+	 * to imagine that someone needs more than 3 levels so stick with this
+	 * conservative setting until someone complains.
 	 */
 	if (depth > 3)
 	{
 		ereport(tz_elevel,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone file recursion limit exceeded in file \"%s\"",
-						filename)));
+			 errmsg("time zone file recursion limit exceeded in file \"%s\"",
+					filename)));
 		return -1;
 	}
 
@@ -350,13 +351,13 @@ ParseTzFile(const char *filename, int depth,
 			/* else we're at EOF after all */
 			break;
 		}
-		if (strlen(tzbuf) == sizeof(tzbuf)-1) 
+		if (strlen(tzbuf) == sizeof(tzbuf) - 1)
 		{
 			/* the line is too long for tzbuf */
 			ereport(tz_elevel,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("line is too long in time zone file \"%s\", line %d",
-							filename, lineno)));
+				 errmsg("line is too long in time zone file \"%s\", line %d",
+						filename, lineno)));
 			return -1;
 		}
 
@@ -365,15 +366,15 @@ ParseTzFile(const char *filename, int depth,
 		while (*line && isspace((unsigned char) *line))
 			line++;
 
-		if (*line == '\0')				/* empty line */
+		if (*line == '\0')		/* empty line */
 			continue;
-		if (*line == '#')				/* comment line */
+		if (*line == '#')		/* comment line */
 			continue;
 
 		if (pg_strncasecmp(line, "@INCLUDE", strlen("@INCLUDE")) == 0)
 		{
 			/* pstrdup so we can use filename in result data structure */
-			char* includeFile = pstrdup(line + strlen("@INCLUDE"));
+			char	   *includeFile = pstrdup(line + strlen("@INCLUDE"));
 
 			includeFile = strtok(includeFile, WHITESPACE);
 			if (!includeFile || !*includeFile)
@@ -425,15 +426,15 @@ load_tzoffsets(const char *filename, bool doit, int elevel)
 {
 	MemoryContext tmpContext;
 	MemoryContext oldContext;
-	tzEntry	   *array;
+	tzEntry    *array;
 	int			arraysize;
 	int			n;
 
 	tz_elevel = elevel;
 
 	/*
-	 * Create a temp memory context to work in.  This makes it easy to
-	 * clean up afterwards.
+	 * Create a temp memory context to work in.  This makes it easy to clean
+	 * up afterwards.
 	 */
 	tmpContext = AllocSetContextCreate(CurrentMemoryContext,
 									   "TZParserMemory",

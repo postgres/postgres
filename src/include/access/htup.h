@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.85 2006/07/13 17:47:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.86 2006/10/04 00:30:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,7 +356,7 @@ do { \
  * MinimalTuple is an alternate representation that is used for transient
  * tuples inside the executor, in places where transaction status information
  * is not required, the tuple rowtype is known, and shaving off a few bytes
- * is worthwhile because we need to store many tuples.  The representation
+ * is worthwhile because we need to store many tuples.	The representation
  * is chosen so that tuple access routines can work with either full or
  * minimal tuples via a HeapTupleData pointer structure.  The access routines
  * see no difference, except that they must not access the transaction status
@@ -367,7 +367,7 @@ do { \
  * and thereby prevent accidental use of the nonexistent fields.
  *
  * MinimalTupleData contains a length word, some padding, and fields matching
- * HeapTupleHeaderData beginning with t_natts.  The padding is chosen so that
+ * HeapTupleHeaderData beginning with t_natts.	The padding is chosen so that
  * offsetof(t_natts) is the same modulo MAXIMUM_ALIGNOF in both structs.
  * This makes data alignment rules equivalent in both cases.
  *
@@ -431,7 +431,7 @@ typedef MinimalTupleData *MinimalTuple;
  *	 limited contexts where the code knows that case #1 will never apply.)
  *
  * * Separately allocated minimal tuple: t_data points MINIMAL_TUPLE_OFFSET
- *	 bytes before the start of a MinimalTuple.  As with the previous case,
+ *	 bytes before the start of a MinimalTuple.	As with the previous case,
  *	 this can't be told apart from case #1 by inspection; code setting up
  *	 or destroying this representation has to know what it's doing.
  *

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.31 2006/08/15 06:40:19 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.32 2006/10/04 00:30:11 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -247,8 +247,8 @@ ECPGlog(const char *format,...)
 
 	if (simple_debug)
 	{
-		int             bufsize = strlen(format) + 100;
-		char		   *f = (char *) malloc(bufsize);
+		int			bufsize = strlen(format) + 100;
+		char	   *f = (char *) malloc(bufsize);
 
 		if (f == NULL)
 		{

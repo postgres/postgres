@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.107 2006/08/27 23:47:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.108 2006/10/04 00:30:14 momjian Exp $
  *
  **********************************************************************/
 
@@ -652,15 +652,15 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		pfree(stroid);
 
 		/* The name of the table the trigger is acting on: TG_table_name */
-        stroid = SPI_getrelname(trigdata->tg_relation);
+		stroid = SPI_getrelname(trigdata->tg_relation);
 		Tcl_DStringAppendElement(&tcl_cmd, stroid);
-        pfree(stroid);
-		
+		pfree(stroid);
+
 		/* The schema of the table the trigger is acting on: TG_table_schema */
-        stroid = SPI_getnspname(trigdata->tg_relation);
+		stroid = SPI_getnspname(trigdata->tg_relation);
 		Tcl_DStringAppendElement(&tcl_cmd, stroid);
-        pfree(stroid);
-		
+		pfree(stroid);
+
 		/* A list of attribute names for argument TG_relatts */
 		Tcl_DStringAppendElement(&tcl_trigtup, "");
 		for (i = 0; i < tupdesc->natts; i++)
@@ -878,9 +878,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 			fmgr_info(typinput, &finfo);
 			UTF_BEGIN;
 			modvalues[attnum - 1] = InputFunctionCall(&finfo,
-													  (char *) UTF_U2E(ret_value),
+												 (char *) UTF_U2E(ret_value),
 													  typioparam,
-													  tupdesc->attrs[attnum - 1]->atttypmod);
+									  tupdesc->attrs[attnum - 1]->atttypmod);
 			UTF_END;
 		}
 
@@ -2062,7 +2062,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 			{
 				UTF_BEGIN;
 				argvalues[j] = InputFunctionCall(&qdesc->arginfuncs[j],
-												 (char *) UTF_U2E(callargs[j]),
+											   (char *) UTF_U2E(callargs[j]),
 												 qdesc->argtypioparams[j],
 												 -1);
 				UTF_END;

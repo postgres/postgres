@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.24 2006/09/04 02:03:04 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.25 2006/10/04 00:29:46 momjian Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -51,36 +51,36 @@ extern Datum pgstattuplebyid(PG_FUNCTION_ARGS);
  */
 typedef struct pgstattuple_type
 {
-	uint64	table_len;
-	uint64	tuple_count;
-	uint64	tuple_len;
-	uint64	dead_tuple_count;
-	uint64	dead_tuple_len;
-	uint64	free_space;			/* free/reusable space in bytes */
-} pgstattuple_type;
+	uint64		table_len;
+	uint64		tuple_count;
+	uint64		tuple_len;
+	uint64		dead_tuple_count;
+	uint64		dead_tuple_len;
+	uint64		free_space;		/* free/reusable space in bytes */
+}	pgstattuple_type;
 
-typedef void (*pgstat_page)(pgstattuple_type *, Relation, BlockNumber);
+typedef void (*pgstat_page) (pgstattuple_type *, Relation, BlockNumber);
 
-static Datum build_pgstattuple_type(pgstattuple_type *stat,
-	FunctionCallInfo fcinfo);
+static Datum build_pgstattuple_type(pgstattuple_type * stat,
+					   FunctionCallInfo fcinfo);
 static Datum pgstat_relation(Relation rel, FunctionCallInfo fcinfo);
 static Datum pgstat_heap(Relation rel, FunctionCallInfo fcinfo);
-static void pgstat_btree_page(pgstattuple_type *stat,
-	Relation rel, BlockNumber blkno);
-static void pgstat_hash_page(pgstattuple_type *stat,
-	Relation rel, BlockNumber blkno);
-static void pgstat_gist_page(pgstattuple_type *stat,
-	Relation rel, BlockNumber blkno);
+static void pgstat_btree_page(pgstattuple_type * stat,
+				  Relation rel, BlockNumber blkno);
+static void pgstat_hash_page(pgstattuple_type * stat,
+				 Relation rel, BlockNumber blkno);
+static void pgstat_gist_page(pgstattuple_type * stat,
+				 Relation rel, BlockNumber blkno);
 static Datum pgstat_index(Relation rel, BlockNumber start,
-	pgstat_page pagefn, FunctionCallInfo fcinfo);
-static void pgstat_index_page(pgstattuple_type *stat, Page page,
-	OffsetNumber minoff, OffsetNumber maxoff);
+			 pgstat_page pagefn, FunctionCallInfo fcinfo);
+static void pgstat_index_page(pgstattuple_type * stat, Page page,
+				  OffsetNumber minoff, OffsetNumber maxoff);
 
 /*
  * build_pgstattuple_type -- build a pgstattuple_type tuple
  */
 static Datum
-build_pgstattuple_type(pgstattuple_type *stat, FunctionCallInfo fcinfo)
+build_pgstattuple_type(pgstattuple_type * stat, FunctionCallInfo fcinfo)
 {
 #define NCOLUMNS	9
 #define NCHARS		32
@@ -91,7 +91,7 @@ build_pgstattuple_type(pgstattuple_type *stat, FunctionCallInfo fcinfo)
 	int			i;
 	double		tuple_percent;
 	double		dead_tuple_percent;
-	double		free_percent;		/* free/reusable space in % */
+	double		free_percent;	/* free/reusable space in % */
 	TupleDesc	tupdesc;
 	AttInMetadata *attinmeta;
 
@@ -190,49 +190,49 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 {
 	const char *err;
 
-	switch(rel->rd_rel->relkind)
+	switch (rel->rd_rel->relkind)
 	{
-	case RELKIND_RELATION:
-	case RELKIND_TOASTVALUE:
-	case RELKIND_UNCATALOGED:
-	case RELKIND_SEQUENCE:
-		return pgstat_heap(rel, fcinfo);
-	case RELKIND_INDEX:
-		switch(rel->rd_rel->relam)
-		{
-		case BTREE_AM_OID:
-			return pgstat_index(rel, BTREE_METAPAGE + 1,
-				pgstat_btree_page, fcinfo);
-		case HASH_AM_OID:
-			return pgstat_index(rel, HASH_METAPAGE + 1,
-				pgstat_hash_page, fcinfo);
-		case GIST_AM_OID:
-			return pgstat_index(rel, GIST_ROOT_BLKNO + 1,
-				pgstat_gist_page, fcinfo);
-		case GIN_AM_OID:
-			err = "gin index";
+		case RELKIND_RELATION:
+		case RELKIND_TOASTVALUE:
+		case RELKIND_UNCATALOGED:
+		case RELKIND_SEQUENCE:
+			return pgstat_heap(rel, fcinfo);
+		case RELKIND_INDEX:
+			switch (rel->rd_rel->relam)
+			{
+				case BTREE_AM_OID:
+					return pgstat_index(rel, BTREE_METAPAGE + 1,
+										pgstat_btree_page, fcinfo);
+				case HASH_AM_OID:
+					return pgstat_index(rel, HASH_METAPAGE + 1,
+										pgstat_hash_page, fcinfo);
+				case GIST_AM_OID:
+					return pgstat_index(rel, GIST_ROOT_BLKNO + 1,
+										pgstat_gist_page, fcinfo);
+				case GIN_AM_OID:
+					err = "gin index";
+					break;
+				default:
+					err = "unknown index";
+					break;
+			}
+			break;
+		case RELKIND_VIEW:
+			err = "view";
+			break;
+		case RELKIND_COMPOSITE_TYPE:
+			err = "composite type";
 			break;
 		default:
-			err = "unknown index";
+			err = "unknown";
 			break;
-		}
-		break;
-	case RELKIND_VIEW:
-		err = "view";
-		break;
-	case RELKIND_COMPOSITE_TYPE:
-		err = "composite type";
-		break;
-	default:
-		err = "unknown";
-		break;
 	}
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("\"%s\" (%s) is not supported",
-				RelationGetRelationName(rel), err)));
-	return 0;	/* should not happen */
+					RelationGetRelationName(rel), err)));
+	return 0;					/* should not happen */
 }
 
 /*
@@ -241,13 +241,13 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 static Datum
 pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 {
-	HeapScanDesc	scan;
-	HeapTuple		tuple;
-	BlockNumber		nblocks;
-	BlockNumber		block = 0;	/* next block to count free space in */
-	BlockNumber		tupblock;
-	Buffer			buffer;
-	pgstattuple_type	stat = { 0 };
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	BlockNumber nblocks;
+	BlockNumber block = 0;		/* next block to count free space in */
+	BlockNumber tupblock;
+	Buffer		buffer;
+	pgstattuple_type stat = {0};
 
 	scan = heap_beginscan(rel, SnapshotAny, 0, NULL);
 
@@ -302,7 +302,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 
 	relation_close(rel, AccessShareLock);
 
-	stat.table_len = (uint64) nblocks * BLCKSZ;
+	stat.table_len = (uint64) nblocks *BLCKSZ;
 
 	return build_pgstattuple_type(&stat, fcinfo);
 }
@@ -311,10 +311,10 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
  * pgstat_btree_page -- check tuples in a btree page
  */
 static void
-pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
+pgstat_btree_page(pgstattuple_type * stat, Relation rel, BlockNumber blkno)
 {
-	Buffer				buf;
-	Page				page;
+	Buffer		buf;
+	Page		page;
 
 	buf = ReadBuffer(rel, blkno);
 	LockBuffer(buf, BT_READ);
@@ -328,7 +328,8 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
 	}
 	else
 	{
-		BTPageOpaque	opaque;
+		BTPageOpaque opaque;
+
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		if (opaque->btpo_flags & (BTP_DELETED | BTP_HALF_DEAD))
 		{
@@ -338,7 +339,7 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
 		else if (P_ISLEAF(opaque))
 		{
 			pgstat_index_page(stat, page, P_FIRSTDATAKEY(opaque),
-				PageGetMaxOffsetNumber(page));
+							  PageGetMaxOffsetNumber(page));
 		}
 		else
 		{
@@ -353,10 +354,10 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
  * pgstat_hash_page -- check tuples in a hash page
  */
 static void
-pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
+pgstat_hash_page(pgstattuple_type * stat, Relation rel, BlockNumber blkno)
 {
-	Buffer			buf;
-	Page			page;
+	Buffer		buf;
+	Page		page;
 
 	_hash_getlock(rel, blkno, HASH_SHARE);
 	buf = _hash_getbuf(rel, blkno, HASH_READ);
@@ -364,22 +365,23 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
 
 	if (PageGetSpecialSize(page) == MAXALIGN(sizeof(HashPageOpaqueData)))
 	{
-		HashPageOpaque	opaque;
+		HashPageOpaque opaque;
+
 		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 		switch (opaque->hasho_flag)
 		{
-		case LH_UNUSED_PAGE:
-			stat->free_space += BLCKSZ;
-			break;
-		case LH_BUCKET_PAGE:
-		case LH_OVERFLOW_PAGE:
-			pgstat_index_page(stat, page, FirstOffsetNumber,
-				PageGetMaxOffsetNumber(page));
-			break;
-		case LH_BITMAP_PAGE:
-		case LH_META_PAGE:
-		default:
-			break;
+			case LH_UNUSED_PAGE:
+				stat->free_space += BLCKSZ;
+				break;
+			case LH_BUCKET_PAGE:
+			case LH_OVERFLOW_PAGE:
+				pgstat_index_page(stat, page, FirstOffsetNumber,
+								  PageGetMaxOffsetNumber(page));
+				break;
+			case LH_BITMAP_PAGE:
+			case LH_META_PAGE:
+			default:
+				break;
 		}
 	}
 	else
@@ -395,10 +397,10 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
  * pgstat_gist_page -- check tuples in a gist page
  */
 static void
-pgstat_gist_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
+pgstat_gist_page(pgstattuple_type * stat, Relation rel, BlockNumber blkno)
 {
-	Buffer			buf;
-	Page			page;
+	Buffer		buf;
+	Page		page;
 
 	buf = ReadBuffer(rel, blkno);
 	LockBuffer(buf, GIST_SHARE);
@@ -408,7 +410,7 @@ pgstat_gist_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno)
 	if (GistPageIsLeaf(page))
 	{
 		pgstat_index_page(stat, page, FirstOffsetNumber,
-			PageGetMaxOffsetNumber(page));
+						  PageGetMaxOffsetNumber(page));
 	}
 	else
 	{
@@ -427,7 +429,7 @@ pgstat_index(Relation rel, BlockNumber start, pgstat_page pagefn,
 {
 	BlockNumber nblocks;
 	BlockNumber blkno;
-	pgstattuple_type	stat = { 0 };
+	pgstattuple_type stat = {0};
 
 	blkno = start;
 	for (;;)
@@ -440,7 +442,8 @@ pgstat_index(Relation rel, BlockNumber start, pgstat_page pagefn,
 		/* Quit if we've scanned the whole relation */
 		if (blkno >= nblocks)
 		{
-			stat.table_len = (uint64) nblocks * BLCKSZ;
+			stat.table_len = (uint64) nblocks *BLCKSZ;
+
 			break;
 		}
 
@@ -457,16 +460,16 @@ pgstat_index(Relation rel, BlockNumber start, pgstat_page pagefn,
  * pgstat_index_page -- for generic index page
  */
 static void
-pgstat_index_page(pgstattuple_type *stat, Page page,
-	OffsetNumber minoff, OffsetNumber maxoff)
+pgstat_index_page(pgstattuple_type * stat, Page page,
+				  OffsetNumber minoff, OffsetNumber maxoff)
 {
-	OffsetNumber	i;
+	OffsetNumber i;
 
 	stat->free_space += PageGetFreeSpace(page);
 
 	for (i = minoff; i <= maxoff; i = OffsetNumberNext(i))
 	{
-		ItemId	itemid = PageGetItemId(page, i);
+		ItemId		itemid = PageGetItemId(page, i);
 
 		if (ItemIdDeleted(itemid))
 		{

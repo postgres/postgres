@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.124 2006/08/02 01:59:47 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.125 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ static void expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 				List **colnames, List **colvars);
 static int	specialAttNum(const char *attname);
 static void warnAutoRange(ParseState *pstate, RangeVar *relation,
-						  int location);
+			  int location);
 
 
 /*
@@ -970,7 +970,7 @@ addRangeTableEntryForValues(ParseState *pstate,
 	numaliases = list_length(eref->colnames);
 	while (numaliases < numcolumns)
 	{
-		char	attrname[64];
+		char		attrname[64];
 
 		numaliases++;
 		snprintf(attrname, sizeof(attrname), "column%d", numaliases);
@@ -1146,6 +1146,7 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation, int location)
 
 	/* issue warning or error as needed */
 	warnAutoRange(pstate, relation, location);
+
 	/*
 	 * Note that we set inFromCl true, so that the RTE will be listed
 	 * explicitly if the parsetree is ever decompiled by ruleutils.c. This
@@ -1311,7 +1312,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 				varattno = 0;
 				foreach(lc, (List *) linitial(rte->values_lists))
 				{
-					Node *col = (Node *) lfirst(lc);
+					Node	   *col = (Node *) lfirst(lc);
 
 					varattno++;
 					if (colnames)
@@ -1676,13 +1677,13 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		case RTE_VALUES:
 			{
 				/* Values RTE --- get type info from first sublist */
-				List   *collist = (List *) linitial(rte->values_lists);
+				List	   *collist = (List *) linitial(rte->values_lists);
 				Node	   *col;
 
 				if (attnum < 1 || attnum > list_length(collist))
 					elog(ERROR, "values list %s does not have attribute %d",
 						 rte->eref->aliasname, attnum);
-				col = (Node *) list_nth(collist, attnum-1);
+				col = (Node *) list_nth(collist, attnum - 1);
 				*vartype = exprType(col);
 				*vartypmod = exprTypmod(col);
 			}
@@ -1963,15 +1964,15 @@ warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 
 	/*
 	 * Check to see if there are any potential matches in the query's
-	 * rangetable.  This affects the message we provide.
+	 * rangetable.	This affects the message we provide.
 	 */
 	rte = searchRangeTable(pstate, relation);
 
 	/*
-	 * If we found a match that has an alias and the alias is visible in
-	 * the namespace, then the problem is probably use of the relation's
-	 * real name instead of its alias, ie "SELECT foo.* FROM foo f".
-	 * This mistake is common enough to justify a specific hint.
+	 * If we found a match that has an alias and the alias is visible in the
+	 * namespace, then the problem is probably use of the relation's real name
+	 * instead of its alias, ie "SELECT foo.* FROM foo f". This mistake is
+	 * common enough to justify a specific hint.
 	 *
 	 * If we found a match that doesn't meet those criteria, assume the
 	 * problem is illegal use of a relation outside its scope, as in the
@@ -1988,11 +1989,11 @@ warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 		if (rte)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
-							relation->relname),
+			errmsg("invalid reference to FROM-clause entry for table \"%s\"",
+				   relation->relname),
 					 (badAlias ?
-					  errhint("Perhaps you meant to reference the table alias \"%s\".",
-							  badAlias) :
+			errhint("Perhaps you meant to reference the table alias \"%s\".",
+					badAlias) :
 					  errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
 							  rte->eref->aliasname)),
 					 parser_errposition(pstate, location)));
@@ -2000,8 +2001,8 @@ warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
 					 (pstate->parentParseState ?
-					  errmsg("missing FROM-clause entry in subquery for table \"%s\"",
-							 relation->relname) :
+			 errmsg("missing FROM-clause entry in subquery for table \"%s\"",
+					relation->relname) :
 					  errmsg("missing FROM-clause entry for table \"%s\"",
 							 relation->relname)),
 					 parser_errposition(pstate, location)));
@@ -2017,8 +2018,8 @@ warnAutoRange(ParseState *pstate, RangeVar *relation, int location)
 				  errmsg("adding missing FROM-clause entry for table \"%s\"",
 						 relation->relname)),
 				 (badAlias ?
-				  errhint("Perhaps you meant to reference the table alias \"%s\".",
-						  badAlias) :
+			errhint("Perhaps you meant to reference the table alias \"%s\".",
+					badAlias) :
 				  (rte ?
 				   errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
 						   rte->eref->aliasname) : 0)),

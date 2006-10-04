@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.26 2006/09/22 23:20:14 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.27 2006/10/04 00:29:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,8 +258,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		else
 			nulls[10] = 'n';
 		values[11] = DirectFunctionCall1(textin,
-									 CStringGetDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock),
-																	 mode)));
+					  CStringGetDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock),
+													  mode)));
 		values[12] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->tuple_desc, values, nulls);
@@ -361,7 +361,7 @@ pg_try_advisory_lock_shared_int8(PG_FUNCTION_ARGS)
 }
 
 /*
- * pg_advisory_unlock(int8) - release exclusive lock on an int8 key 
+ * pg_advisory_unlock(int8) - release exclusive lock on an int8 key
  *
  * Returns true if successful, false if lock was not held
 */
@@ -473,7 +473,7 @@ pg_try_advisory_lock_shared_int4(PG_FUNCTION_ARGS)
 }
 
 /*
- * pg_advisory_unlock(int4, int4) - release exclusive lock on 2 int4 keys 
+ * pg_advisory_unlock(int4, int4) - release exclusive lock on 2 int4 keys
  *
  * Returns true if successful, false if lock was not held
 */

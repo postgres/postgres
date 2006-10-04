@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.101 2006/05/30 21:21:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.102 2006/10/04 00:30:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1798,7 +1798,7 @@ ReceiveFunctionCall(FmgrInfo *flinfo, StringInfo buf,
  *
  * This is little more than window dressing for FunctionCall1, but its use is
  * recommended anyway so that code invoking output functions can be identified
- * easily.  Note however that it does guarantee a non-toasted result.
+ * easily.	Note however that it does guarantee a non-toasted result.
  */
 bytea *
 SendFunctionCall(FmgrInfo *flinfo, Datum val)

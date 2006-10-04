@@ -16,7 +16,7 @@
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.25 2006/07/16 20:28:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/getaddrinfo.c,v 1.26 2006/10/04 00:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,7 +329,8 @@ gai_strerror(int errcode)
 			return "Not enough memory";
 #endif
 #ifdef EAI_NODATA
-#ifndef WIN32_ONLY_COMPILER	/* MSVC complains because another case has the same value */
+#ifndef WIN32_ONLY_COMPILER		/* MSVC complains because another case has the
+								 * same value */
 		case EAI_NODATA:
 			return "No host data of that type was found";
 #endif

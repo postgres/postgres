@@ -6,14 +6,14 @@
  *
  * There are two code paths in the planner for set-operation queries.
  * If a subquery consists entirely of simple UNION ALL operations, it
- * is converted into an "append relation".  Otherwise, it is handled
+ * is converted into an "append relation".	Otherwise, it is handled
  * by the general code in this module (plan_set_operations and its
  * subroutines).  There is some support code here for the append-relation
  * case, but most of the heavy lifting for that is done elsewhere,
  * notably in prepjointree.c and allpaths.c.
  *
  * There is also some code here to support planning of queries that use
- * inheritance (SELECT FROM foo*).  Inheritance trees are converted into
+ * inheritance (SELECT FROM foo*).	Inheritance trees are converted into
  * append relations, and thenceforth share code with the UNION ALL case.
  *
  *
@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.133 2006/08/10 02:36:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.134 2006/10/04 00:29:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,14 +69,14 @@ static List *generate_append_tlist(List *colTypes, bool flag,
 					  List *input_plans,
 					  List *refnames_tlist);
 static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
-									 Index rti);
+						 Index rti);
 static void make_inh_translation_lists(Relation oldrelation,
-									   Relation newrelation,
-									   Index newvarno,
-									   List **col_mappings,
-									   List **translated_vars);
+						   Relation newrelation,
+						   Index newvarno,
+						   List **col_mappings,
+						   List **translated_vars);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
-											AppendRelInfo *context);
+							   AppendRelInfo *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist,
 					   AppendRelInfo *context);
@@ -713,21 +713,21 @@ find_all_inheritors(Oid parentrel)
 /*
  * expand_inherited_tables
  *		Expand each rangetable entry that represents an inheritance set
- *		into an "append relation".  At the conclusion of this process,
+ *		into an "append relation".	At the conclusion of this process,
  *		the "inh" flag is set in all and only those RTEs that are append
  *		relation parents.
  */
 void
 expand_inherited_tables(PlannerInfo *root)
 {
-	Index	nrtes;
-	Index	rti;
-	ListCell *rl;
+	Index		nrtes;
+	Index		rti;
+	ListCell   *rl;
 
 	/*
-	 * expand_inherited_rtentry may add RTEs to parse->rtable; there is
-	 * no need to scan them since they can't have inh=true.  So just
-	 * scan as far as the original end of the rtable list.
+	 * expand_inherited_rtentry may add RTEs to parse->rtable; there is no
+	 * need to scan them since they can't have inh=true.  So just scan as far
+	 * as the original end of the rtable list.
 	 */
 	nrtes = list_length(root->parse->rtable);
 	rl = list_head(root->parse->rtable);
@@ -745,7 +745,7 @@ expand_inherited_tables(PlannerInfo *root)
  *		Check whether a rangetable entry represents an inheritance set.
  *		If so, add entries for all the child tables to the query's
  *		rangetable, and build AppendRelInfo nodes for all the child tables
- *		and add them to root->append_rel_list.  If not, clear the entry's
+ *		and add them to root->append_rel_list.	If not, clear the entry's
  *		"inh" flag to prevent later code from looking for AppendRelInfos.
  *
  * Note that the original RTE is considered to represent the whole
@@ -801,22 +801,22 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	}
 
 	/*
-	 * Must open the parent relation to examine its tupdesc.  We need not
-	 * lock it since the rewriter already obtained at least AccessShareLock
-	 * on each relation used in the query.
+	 * Must open the parent relation to examine its tupdesc.  We need not lock
+	 * it since the rewriter already obtained at least AccessShareLock on each
+	 * relation used in the query.
 	 */
 	oldrelation = heap_open(parentOID, NoLock);
 
 	/*
-	 * However, for each child relation we add to the query, we must obtain
-	 * an appropriate lock, because this will be the first use of those
-	 * relations in the parse/rewrite/plan pipeline.
+	 * However, for each child relation we add to the query, we must obtain an
+	 * appropriate lock, because this will be the first use of those relations
+	 * in the parse/rewrite/plan pipeline.
 	 *
 	 * If the parent relation is the query's result relation, then we need
 	 * RowExclusiveLock.  Otherwise, check to see if the relation is accessed
 	 * FOR UPDATE/SHARE or not.  We can't just grab AccessShareLock because
 	 * then the executor would be trying to upgrade the lock, leading to
-	 * possible deadlocks.  (This code should match the parser and rewriter.)
+	 * possible deadlocks.	(This code should match the parser and rewriter.)
 	 */
 	if (rti == parse->resultRelation)
 		lockmode = RowExclusiveLock;
@@ -900,8 +900,8 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/*
 	 * The executor will check the parent table's access permissions when it
-	 * examines the parent's added RTE entry.  There's no need to check
-	 * twice, so turn off access check bits in the original RTE.
+	 * examines the parent's added RTE entry.  There's no need to check twice,
+	 * so turn off access check bits in the original RTE.
 	 */
 	rte->requiredPerms = 0;
 }
@@ -948,8 +948,8 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 		atttypmod = att->atttypmod;
 
 		/*
-		 * When we are generating the "translation list" for the parent
-		 * table of an inheritance set, no need to search for matches.
+		 * When we are generating the "translation list" for the parent table
+		 * of an inheritance set, no need to search for matches.
 		 */
 		if (oldrelation == newrelation)
 		{
@@ -964,9 +964,8 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 
 		/*
 		 * Otherwise we have to search for the matching column by name.
-		 * There's no guarantee it'll have the same column position,
-		 * because of cases like ALTER TABLE ADD COLUMN and multiple
-		 * inheritance.
+		 * There's no guarantee it'll have the same column position, because
+		 * of cases like ALTER TABLE ADD COLUMN and multiple inheritance.
 		 */
 		for (new_attno = 0; new_attno < newnatts; new_attno++)
 		{
@@ -979,7 +978,7 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 			if (atttypid != att->atttypid || atttypmod != att->atttypmod)
 				elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
 					 attname, RelationGetRelationName(newrelation));
-			
+
 			numbers = lappend_int(numbers, new_attno + 1);
 			vars = lappend(vars, makeVar(newvarno,
 										 (AttrNumber) (new_attno + 1),
@@ -1060,7 +1059,7 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 			var->varnoold = context->child_relid;
 			if (var->varattno > 0)
 			{
-				Node   *newnode;
+				Node	   *newnode;
 
 				if (var->varattno > list_length(context->translated_vars))
 					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
@@ -1075,10 +1074,10 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 			else if (var->varattno == 0)
 			{
 				/*
-				 * Whole-row Var: if we are dealing with named rowtypes,
-				 * we can use a whole-row Var for the child table plus a
-				 * coercion step to convert the tuple layout to the parent's
-				 * rowtype.  Otherwise we have to generate a RowExpr.
+				 * Whole-row Var: if we are dealing with named rowtypes, we
+				 * can use a whole-row Var for the child table plus a coercion
+				 * step to convert the tuple layout to the parent's rowtype.
+				 * Otherwise we have to generate a RowExpr.
 				 */
 				if (OidIsValid(context->child_reltype))
 				{
@@ -1217,9 +1216,9 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 	 * BUT: although we don't need to recurse into subplans, we do need to
 	 * make sure that they are copied, not just referenced as
 	 * expression_tree_mutator will do by default.	Otherwise we'll have the
-	 * same subplan node referenced from each arm of the finished APPEND
-	 * plan, which will cause trouble in the executor.	This is a kluge that
-	 * should go away when we redesign querytrees.
+	 * same subplan node referenced from each arm of the finished APPEND plan,
+	 * which will cause trouble in the executor.  This is a kluge that should
+	 * go away when we redesign querytrees.
 	 */
 	if (is_subplan(node))
 	{
@@ -1267,7 +1266,7 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
  *
  * The relid sets are adjusted by substituting child_relid for parent_relid.
  * (NOTE: oldrel is not necessarily the parent_relid relation!)  We are also
- * careful to map attribute numbers within the array properly.  User
+ * careful to map attribute numbers within the array properly.	User
  * attributes have to be mapped through col_mappings, but system attributes
  * and whole-row references always have the same attno.
  *
@@ -1353,7 +1352,7 @@ adjust_inherited_tlist(List *tlist, AppendRelInfo *context)
 	foreach(tl, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
-		int		newattno;
+		int			newattno;
 
 		if (tle->resjunk)
 			continue;			/* ignore junk items */

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.144 2006/08/29 15:19:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.145 2006/10/04 00:30:05 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -72,7 +72,7 @@ describeAggregates(const char *pattern, bool verbose)
 					  "    ELSE\n"
 					  "    pg_catalog.array_to_string(ARRAY(\n"
 					  "      SELECT\n"
-					  "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
+				 "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
 					  "      FROM\n"
 					  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
 					  "    ), ', ')\n"
@@ -132,7 +132,7 @@ describeTablespaces(const char *pattern, bool verbose)
 	if (verbose)
 		appendPQExpBuffer(&buf,
 						  ",\n  spcacl as \"%s\""
-						  ",\n  pg_catalog.shobj_description(oid, 'pg_tablespace') AS \"%s\"",
+		 ",\n  pg_catalog.shobj_description(oid, 'pg_tablespace') AS \"%s\"",
 						  _("Access privileges"), _("Description"));
 
 	appendPQExpBuffer(&buf,
@@ -175,20 +175,20 @@ describeFunctions(const char *pattern, bool verbose)
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  p.proname as \"%s\",\n"
 					  "  CASE WHEN p.proretset THEN 'setof ' ELSE '' END ||\n"
-					  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
+				  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
 					  "  CASE WHEN proallargtypes IS NOT NULL THEN\n"
 					  "    pg_catalog.array_to_string(ARRAY(\n"
 					  "      SELECT\n"
 					  "        CASE\n"
 					  "          WHEN p.proargmodes[s.i] = 'i' THEN ''\n"
 					  "          WHEN p.proargmodes[s.i] = 'o' THEN 'OUT '\n"
-					  "          WHEN p.proargmodes[s.i] = 'b' THEN 'INOUT '\n"
+					"          WHEN p.proargmodes[s.i] = 'b' THEN 'INOUT '\n"
 					  "        END ||\n"
 					  "        CASE\n"
-					  "          WHEN COALESCE(p.proargnames[s.i], '') = '' THEN ''\n"
+			 "          WHEN COALESCE(p.proargnames[s.i], '') = '' THEN ''\n"
 					  "          ELSE p.proargnames[s.i] || ' ' \n"
 					  "        END ||\n"
-					  "        pg_catalog.format_type(p.proallargtypes[s.i], NULL)\n"
+			  "        pg_catalog.format_type(p.proallargtypes[s.i], NULL)\n"
 					  "      FROM\n"
 					  "        pg_catalog.generate_series(1, pg_catalog.array_upper(p.proallargtypes, 1)) AS s(i)\n"
 					  "    ), ', ')\n"
@@ -196,10 +196,10 @@ describeFunctions(const char *pattern, bool verbose)
 					  "    pg_catalog.array_to_string(ARRAY(\n"
 					  "      SELECT\n"
 					  "        CASE\n"
-					  "          WHEN COALESCE(p.proargnames[s.i+1], '') = '' THEN ''\n"
+		   "          WHEN COALESCE(p.proargnames[s.i+1], '') = '' THEN ''\n"
 					  "          ELSE p.proargnames[s.i+1] || ' '\n"
 					  "          END ||\n"
-					  "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
+				 "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
 					  "      FROM\n"
 					  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
 					  "    ), ', ')\n"
@@ -225,7 +225,7 @@ describeFunctions(const char *pattern, bool verbose)
 						  "\nFROM pg_catalog.pg_proc p"
 		"\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace"
 			 "\n     LEFT JOIN pg_catalog.pg_language l ON l.oid = p.prolang"
-		   "\n     JOIN pg_catalog.pg_roles r ON r.oid = p.proowner\n");
+				"\n     JOIN pg_catalog.pg_roles r ON r.oid = p.proowner\n");
 
 	/*
 	 * we skip in/out funcs by excluding functions that take or return cstring
@@ -403,11 +403,11 @@ listAllDbs(bool verbose)
 	}
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_database d"
-				  "\n  JOIN pg_catalog.pg_roles r ON d.datdba = r.oid\n");
+					  "\n  JOIN pg_catalog.pg_roles r ON d.datdba = r.oid\n");
 	if (verbose)
 		appendPQExpBuffer(&buf,
-					"  JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid\n");	
-	appendPQExpBuffer(&buf,"ORDER BY 1;");
+		   "  JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid\n");
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
 	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
 	if (!res)
@@ -1460,7 +1460,7 @@ describeRoles(const char *pattern, bool verbose)
 
 	if (verbose)
 		appendPQExpBuffer(&buf, "\n, pg_catalog.shobj_description(r.oid, 'pg_authid') AS \"%s\"",
-						_("Description"));
+						  _("Description"));
 
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_roles r\n");
 
@@ -1540,7 +1540,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_class c"
-			   "\n     JOIN pg_catalog.pg_roles r ON r.oid = c.relowner"
+					"\n     JOIN pg_catalog.pg_roles r ON r.oid = c.relowner"
 	 "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace");
 	if (showIndexes)
 		appendPQExpBuffer(&buf,
@@ -1782,7 +1782,7 @@ listSchemas(const char *pattern, bool verbose)
 						  _("Access privileges"), _("Description"));
 
 	appendPQExpBuffer(&buf,
-		 "\nFROM pg_catalog.pg_namespace n JOIN pg_catalog.pg_roles r\n"
+			  "\nFROM pg_catalog.pg_namespace n JOIN pg_catalog.pg_roles r\n"
 					  "       ON n.nspowner=r.oid\n"
 					  "WHERE	(n.nspname !~ '^pg_temp_' OR\n"
 		   "		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");		/* temp schema is first */
@@ -1859,8 +1859,8 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 	 * we assume this was NOT done by scan_option.	Also, adjust shell-style
 	 * wildcard characters into regexp notation.
 	 *
-	 * Note: the result of this pass is the actual regexp pattern we want
-	 * to execute.  Quoting/escaping it into a SQL literal will be done below.
+	 * Note: the result of this pass is the actual regexp pattern we want to
+	 * execute.  Quoting/escaping it into a SQL literal will be done below.
 	 */
 	appendPQExpBufferChar(&namebuf, '^');
 
@@ -1929,8 +1929,8 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 	}
 
 	/*
-	 * Now decide what we need to emit.  Note there will be a leading '^'
-	 * in the patterns in any case.
+	 * Now decide what we need to emit.  Note there will be a leading '^' in
+	 * the patterns in any case.
 	 */
 	if (namebuf.len > 1)
 	{

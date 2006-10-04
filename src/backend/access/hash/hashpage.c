@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.59 2006/07/03 22:45:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.60 2006/10/04 00:29:48 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -224,7 +224,7 @@ _hash_metapinit(Relation rel)
 	/*
 	 * Determine the target fill factor (in tuples per bucket) for this index.
 	 * The idea is to make the fill factor correspond to pages about as full
-	 * as the user-settable fillfactor parameter says.  We can compute it
+	 * as the user-settable fillfactor parameter says.	We can compute it
 	 * exactly if the index datatype is fixed-width, but for var-width there's
 	 * some guessing involved.
 	 */

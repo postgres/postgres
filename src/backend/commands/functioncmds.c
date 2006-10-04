@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.78 2006/10/03 21:21:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.79 2006/10/04 00:29:51 momjian Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -686,7 +686,7 @@ RemoveFunction(RemoveFuncStmt *stmt)
 	 * Find the function, do permissions and validity checks
 	 */
 	funcOid = LookupFuncNameTypeNames(functionName, argTypes, stmt->missing_ok);
-	if (!OidIsValid(funcOid)) 
+	if (!OidIsValid(funcOid))
 	{
 		/* can only get here if stmt->missing_ok */
 		ereport(NOTICE,
@@ -1394,7 +1394,7 @@ DropCast(DropCastStmt *stmt)
 						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		if (! stmt->missing_ok)
+		if (!stmt->missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("cast from type %s to type %s does not exist",
@@ -1402,7 +1402,7 @@ DropCast(DropCastStmt *stmt)
 							TypeNameToString(stmt->targettype))));
 		else
 			ereport(NOTICE,
-					 (errmsg("cast from type %s to type %s does not exist ... skipping",
+					(errmsg("cast from type %s to type %s does not exist ... skipping",
 							TypeNameToString(stmt->sourcetype),
 							TypeNameToString(stmt->targettype))));
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.28 2006/10/01 22:25:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.29 2006/10/04 00:30:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ static int	getNotify(PGconn *conn);
 static int	getCopyStart(PGconn *conn, ExecStatusType copytype);
 static int	getReadyForQuery(PGconn *conn);
 static void reportErrorPosition(PQExpBuffer msg, const char *query,
-								int loc, int encoding);
+					int loc, int encoding);
 static int build_startup_packet(const PGconn *conn, char *packet,
 					 const PQEnvironmentOption *options);
 
@@ -270,9 +270,10 @@ pqParseInput3(PGconn *conn)
 						/* First 'T' in a query sequence */
 						if (getRowDescriptions(conn))
 							return;
+
 						/*
-						 * If we're doing a Describe, we're ready to pass
-						 * the result back to the client.
+						 * If we're doing a Describe, we're ready to pass the
+						 * result back to the client.
 						 */
 						if (conn->queryclass == PGQUERY_DESCRIBE)
 							conn->asyncStatus = PGASYNC_READY;
@@ -301,9 +302,10 @@ pqParseInput3(PGconn *conn)
 					if (conn->result == NULL)
 						conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_COMMAND_OK);
+
 					/*
-					 * If we're doing a Describe, we're ready to pass
-					 * the result back to the client.
+					 * If we're doing a Describe, we're ready to pass the
+					 * result back to the client.
 					 */
 					if (conn->queryclass == PGQUERY_DESCRIBE)
 						conn->asyncStatus = PGASYNC_READY;
@@ -443,9 +445,9 @@ getRowDescriptions(PGconn *conn)
 	int			i;
 
 	/*
-	 * When doing Describe for a prepared statement, there'll already be
-	 * a PGresult created by getParamDescriptions, and we should fill
-	 * data into that.  Otherwise, create a new, empty PGresult.
+	 * When doing Describe for a prepared statement, there'll already be a
+	 * PGresult created by getParamDescriptions, and we should fill data into
+	 * that.  Otherwise, create a new, empty PGresult.
 	 */
 	if (conn->queryclass == PGQUERY_DESCRIBE)
 	{
@@ -527,14 +529,15 @@ getRowDescriptions(PGconn *conn)
 	return 0;
 
 failure:
+
 	/*
 	 * Discard incomplete result, unless it's from getParamDescriptions.
 	 *
 	 * Note that if we hit a bufferload boundary while handling the
 	 * describe-statement case, we'll forget any PGresult space we just
-	 * allocated, and then reallocate it on next try.  This will bloat
-	 * the PGresult a little bit but the space will be freed at PQclear,
-	 * so it doesn't seem worth trying to be smarter.
+	 * allocated, and then reallocate it on next try.  This will bloat the
+	 * PGresult a little bit but the space will be freed at PQclear, so it
+	 * doesn't seem worth trying to be smarter.
 	 */
 	if (result != conn->result)
 		PQclear(result);
@@ -553,10 +556,10 @@ failure:
 static int
 getParamDescriptions(PGconn *conn)
 {
-	PGresult	*result;
-	int			 nparams;
-	int			 i;
-	
+	PGresult   *result;
+	int			nparams;
+	int			i;
+
 	result = PQmakeEmptyPGresult(conn, PGRES_COMMAND_OK);
 	if (!result)
 		goto failure;
@@ -580,8 +583,8 @@ getParamDescriptions(PGconn *conn)
 	/* get parameter info */
 	for (i = 0; i < nparams; i++)
 	{
-		int		typid;
-		
+		int			typid;
+
 		if (pqGetInt(&typid, 4, conn))
 			goto failure;
 		result->paramDescs[i].typid = typid;
@@ -910,7 +913,7 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 	/*
 	 * Each character might occupy multiple physical bytes in the string, and
 	 * in some Far Eastern character sets it might take more than one screen
-	 * column as well.  We compute the starting byte offset and starting
+	 * column as well.	We compute the starting byte offset and starting
 	 * screen column of each logical character, and store these in qidx[] and
 	 * scridx[] respectively.
 	 */
@@ -936,13 +939,13 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 	mb_encoding = (pg_encoding_max_length(encoding) != 1);
 
 	/*
-	 * Within the scanning loop, cno is the current character's logical number,
-	 * qoffset is its offset in wquery, and scroffset is its starting logical
-	 * screen column (all indexed from 0).  "loc" is the logical character
-	 * number of the error location.  We scan to determine loc_line (the
-	 * 1-based line number containing loc) and ibeg/iend (first character
-	 * number and last+1 character number of the line containing loc).
-	 * Note that qidx[] and scridx[] are filled only as far as iend.
+	 * Within the scanning loop, cno is the current character's logical
+	 * number, qoffset is its offset in wquery, and scroffset is its starting
+	 * logical screen column (all indexed from 0).	"loc" is the logical
+	 * character number of the error location.	We scan to determine loc_line
+	 * (the 1-based line number containing loc) and ibeg/iend (first character
+	 * number and last+1 character number of the line containing loc). Note
+	 * that qidx[] and scridx[] are filled only as far as iend.
 	 */
 	qoffset = 0;
 	scroffset = 0;
@@ -952,7 +955,7 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 
 	for (cno = 0; wquery[qoffset] != '\0'; cno++)
 	{
-		char	ch = wquery[qoffset];
+		char		ch = wquery[qoffset];
 
 		qidx[cno] = qoffset;
 		scridx[cno] = scroffset;
@@ -966,8 +969,8 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 			wquery[qoffset] = ' ';
 
 		/*
-		 * If end-of-line, count lines and mark positions. Each \r or \n counts
-		 * as a line except when \r \n appear together.
+		 * If end-of-line, count lines and mark positions. Each \r or \n
+		 * counts as a line except when \r \n appear together.
 		 */
 		else if (ch == '\r' || ch == '\n')
 		{
@@ -992,7 +995,7 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 		/* Advance */
 		if (mb_encoding)
 		{
-			int		w;
+			int			w;
 
 			w = pg_encoding_dsplen(encoding, &wquery[qoffset]);
 			/* treat any non-tab control chars as width 1 */
@@ -1069,7 +1072,7 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 		scroffset = 0;
 		for (; i < msg->len; i += pg_encoding_mblen(encoding, &msg->data[i]))
 		{
-			int		w = pg_encoding_dsplen(encoding, &msg->data[i]);
+			int			w = pg_encoding_dsplen(encoding, &msg->data[i]);
 
 			if (w <= 0)
 				w = 1;

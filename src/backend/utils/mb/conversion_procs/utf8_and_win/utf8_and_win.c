@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.5 2006/07/11 18:26:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.6 2006/10/04 00:30:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,37 +68,37 @@ typedef struct
 static pg_conv_map maps[] = {
 	{PG_WIN866, LUmapWIN866, ULmapWIN866,
 		sizeof(LUmapWIN866) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN866) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN866) / sizeof(pg_utf_to_local)},
 	{PG_WIN874, LUmapWIN874, ULmapWIN874,
 		sizeof(LUmapWIN874) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN874) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN874) / sizeof(pg_utf_to_local)},
 	{PG_WIN1250, LUmapWIN1250, ULmapWIN1250,
 		sizeof(LUmapWIN1250) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1250) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1250) / sizeof(pg_utf_to_local)},
 	{PG_WIN1251, LUmapWIN1251, ULmapWIN1251,
 		sizeof(LUmapWIN1251) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1251) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1251) / sizeof(pg_utf_to_local)},
 	{PG_WIN1252, LUmapWIN1252, ULmapWIN1252,
 		sizeof(LUmapWIN1252) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1252) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1252) / sizeof(pg_utf_to_local)},
 	{PG_WIN1253, LUmapWIN1253, ULmapWIN1253,
 		sizeof(LUmapWIN1253) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1253) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1253) / sizeof(pg_utf_to_local)},
 	{PG_WIN1254, LUmapWIN1254, ULmapWIN1254,
 		sizeof(LUmapWIN1254) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1254) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1254) / sizeof(pg_utf_to_local)},
 	{PG_WIN1255, LUmapWIN1255, ULmapWIN1255,
 		sizeof(LUmapWIN1255) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1255) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1255) / sizeof(pg_utf_to_local)},
 	{PG_WIN1256, LUmapWIN1256, ULmapWIN1256,
 		sizeof(LUmapWIN1256) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1256) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1256) / sizeof(pg_utf_to_local)},
 	{PG_WIN1257, LUmapWIN1257, ULmapWIN1257,
 		sizeof(LUmapWIN1257) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1257) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1257) / sizeof(pg_utf_to_local)},
 	{PG_WIN1258, LUmapWIN1258, ULmapWIN1258,
 		sizeof(LUmapWIN1258) / sizeof(pg_local_to_utf),
-		sizeof(ULmapWIN1258) / sizeof(pg_utf_to_local)},
+	sizeof(ULmapWIN1258) / sizeof(pg_utf_to_local)},
 };
 
 Datum
@@ -108,12 +108,12 @@ win_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
-	int	i;
+	int			i;
 
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len >= 0);
 
-	for (i=0;i<sizeof(maps)/sizeof(pg_conv_map);i++)
+	for (i = 0; i < sizeof(maps) / sizeof(pg_conv_map); i++)
 	{
 		if (encoding == maps[i].encoding)
 		{
@@ -136,12 +136,12 @@ utf8_to_win(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
-	int	i;
+	int			i;
 
 	Assert(PG_GETARG_INT32(0) == PG_UTF8);
 	Assert(len >= 0);
 
-	for (i=0;i<sizeof(maps)/sizeof(pg_conv_map);i++)
+	for (i = 0; i < sizeof(maps) / sizeof(pg_conv_map); i++)
 	{
 		if (encoding == maps[i].encoding)
 		{

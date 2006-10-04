@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.67 2006/06/28 22:05:37 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.68 2006/10/04 00:30:04 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -883,7 +883,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	if (oldsize > ALLOC_CHUNK_LIMIT)
 	{
 		/*
-		 * The chunk must have been allocated as a single-chunk block.  Find
+		 * The chunk must have been allocated as a single-chunk block.	Find
 		 * the containing block and use realloc() to make it bigger with
 		 * minimum space wastage.
 		 */

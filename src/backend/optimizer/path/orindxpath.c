@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.80 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.81 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,8 +106,8 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 			 * Use the generate_bitmap_or_paths() machinery to estimate the
 			 * value of each OR clause.  We can use regular restriction
 			 * clauses along with the OR clause contents to generate
-			 * indexquals.	We pass outer_rel = NULL so that sub-clauses
-			 * that are actually joins will be ignored.
+			 * indexquals.	We pass outer_rel = NULL so that sub-clauses that
+			 * are actually joins will be ignored.
 			 */
 			List	   *orpaths;
 			ListCell   *k;

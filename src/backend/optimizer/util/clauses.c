@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.221 2006/09/28 20:51:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.222 2006/10/04 00:29:55 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -403,7 +403,7 @@ count_agg_clauses_walker(Node *node, AggClauseCounts *counts)
 		Form_pg_aggregate aggform;
 		Oid			aggtranstype;
 		int			i;
-		ListCell	*l;
+		ListCell   *l;
 
 		Assert(aggref->agglevelsup == 0);
 		counts->numAggs++;
@@ -887,7 +887,7 @@ contain_nonstrict_functions_walker(Node *node, void *context)
  *
  * Returns the set of all Relids that are referenced in the clause in such
  * a way that the clause cannot possibly return TRUE if any of these Relids
- * is an all-NULL row.  (It is OK to err on the side of conservatism; hence
+ * is an all-NULL row.	(It is OK to err on the side of conservatism; hence
  * the analysis here is simplistic.)
  *
  * The semantics here are subtly different from contain_nonstrict_functions:
@@ -1020,7 +1020,7 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 static bool
 is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK)
 {
-	Node   *rightop;
+	Node	   *rightop;
 
 	/* The contained operator must be strict. */
 	if (!op_strict(expr->opno))
@@ -1288,12 +1288,13 @@ CommuteRowCompareExpr(RowCompareExpr *clause)
 	}
 
 	clause->opnos = newops;
+
 	/*
-	 * Note: we don't bother to update the opclasses list, but just set
-	 * it to empty.  This is OK since this routine is currently only used
-	 * for index quals, and the index machinery won't use the opclass
-	 * information.  The original opclass list is NOT valid if we have
-	 * commuted any cross-type comparisons, so don't leave it in place.
+	 * Note: we don't bother to update the opclasses list, but just set it to
+	 * empty.  This is OK since this routine is currently only used for index
+	 * quals, and the index machinery won't use the opclass information.  The
+	 * original opclass list is NOT valid if we have commuted any cross-type
+	 * comparisons, so don't leave it in place.
 	 */
 	clause->opclasses = NIL;	/* XXX */
 
@@ -2109,9 +2110,9 @@ eval_const_expressions_mutator(Node *node,
 											 context);
 		if (arg && IsA(arg, RowExpr))
 		{
-			RowExpr  *rarg = (RowExpr *) arg;
-			List	*newargs = NIL;
-			ListCell *l;
+			RowExpr    *rarg = (RowExpr *) arg;
+			List	   *newargs = NIL;
+			ListCell   *l;
 
 			/*
 			 * We break ROW(...) IS [NOT] NULL into separate tests on its
@@ -2120,15 +2121,15 @@ eval_const_expressions_mutator(Node *node,
 			 */
 			foreach(l, rarg->args)
 			{
-				Node *relem = (Node *) lfirst(l);
+				Node	   *relem = (Node *) lfirst(l);
 
 				/*
-				 * A constant field refutes the whole NullTest if it's of
-				 * the wrong nullness; else we can discard it.
+				 * A constant field refutes the whole NullTest if it's of the
+				 * wrong nullness; else we can discard it.
 				 */
 				if (relem && IsA(relem, Const))
 				{
-					Const  *carg = (Const *) relem;
+					Const	   *carg = (Const *) relem;
 
 					if (carg->constisnull ?
 						(ntest->nulltesttype == IS_NOT_NULL) :
@@ -2152,8 +2153,8 @@ eval_const_expressions_mutator(Node *node,
 		}
 		if (arg && IsA(arg, Const))
 		{
-			Const  *carg = (Const *) arg;
-			bool	result;
+			Const	   *carg = (Const *) arg;
+			bool		result;
 
 			switch (ntest->nulltesttype)
 			{
@@ -2166,7 +2167,7 @@ eval_const_expressions_mutator(Node *node,
 				default:
 					elog(ERROR, "unrecognized nulltesttype: %d",
 						 (int) ntest->nulltesttype);
-					result = false;	/* keep compiler quiet */
+					result = false;		/* keep compiler quiet */
 					break;
 			}
 
@@ -2188,8 +2189,8 @@ eval_const_expressions_mutator(Node *node,
 											 context);
 		if (arg && IsA(arg, Const))
 		{
-			Const  *carg = (Const *) arg;
-			bool	result;
+			Const	   *carg = (Const *) arg;
+			bool		result;
 
 			switch (btest->booltesttype)
 			{
@@ -2218,7 +2219,7 @@ eval_const_expressions_mutator(Node *node,
 				default:
 					elog(ERROR, "unrecognized booltesttype: %d",
 						 (int) btest->booltesttype);
-					result = false;	/* keep compiler quiet */
+					result = false;		/* keep compiler quiet */
 					break;
 			}
 
@@ -3174,7 +3175,7 @@ expression_tree_walker(Node *node,
 			break;
 		case T_Aggref:
 			{
-				Aggref   *expr = (Aggref *) node;
+				Aggref	   *expr = (Aggref *) node;
 
 				if (expression_tree_walker((Node *) expr->args,
 										   walker, context))
@@ -3452,8 +3453,8 @@ query_tree_walker(Query *query,
 	if (query->utilityStmt)
 	{
 		/*
-		 * Certain utility commands contain general-purpose Querys embedded
-		 * in them --- if this is one, invoke the walker on the sub-Query.
+		 * Certain utility commands contain general-purpose Querys embedded in
+		 * them --- if this is one, invoke the walker on the sub-Query.
 		 */
 		if (IsA(query->utilityStmt, CopyStmt))
 		{
@@ -3828,8 +3829,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_RowCompareExpr:
 			{
-				RowCompareExpr    *rcexpr = (RowCompareExpr *) node;
-				RowCompareExpr    *newnode;
+				RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+				RowCompareExpr *newnode;
 
 				FLATCOPY(newnode, rcexpr, RowCompareExpr);
 				MUTATE(newnode->largs, rcexpr->largs, List *);

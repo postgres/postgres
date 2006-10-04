@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.98 2006/08/12 02:52:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.99 2006/10/04 00:29:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,8 +127,8 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	}
 
 	/*
-	 * If we are supposed to emit row descriptions,
-	 * then send the tuple descriptor of the tuples.
+	 * If we are supposed to emit row descriptions, then send the tuple
+	 * descriptor of the tuples.
 	 */
 	if (myState->sendDescrip)
 		SendRowDescriptionMessage(typeinfo,

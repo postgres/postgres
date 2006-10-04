@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.166 2006/09/19 22:49:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.167 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ double		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
 double		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
 double		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 
-int		effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
+int			effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
 
 Cost		disable_cost = 100000000.0;
 
@@ -276,13 +276,13 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	if (outer_rel != NULL && outer_rel->rows > 1)
 	{
 		/*
-		 * For repeated indexscans, scale up the number of tuples fetched
-		 * in the Mackert and Lohman formula by the number of scans, so
-		 * that we estimate the number of pages fetched by all the scans.
-		 * Then pro-rate the costs for one scan.  In this case we assume
-		 * all the fetches are random accesses.  XXX it'd be good to
-		 * include correlation in this model, but it's not clear how to do
-		 * that without double-counting cache effects.
+		 * For repeated indexscans, scale up the number of tuples fetched in
+		 * the Mackert and Lohman formula by the number of scans, so that we
+		 * estimate the number of pages fetched by all the scans. Then
+		 * pro-rate the costs for one scan.  In this case we assume all the
+		 * fetches are random accesses.  XXX it'd be good to include
+		 * correlation in this model, but it's not clear how to do that
+		 * without double-counting cache effects.
 		 */
 		double		num_scans = outer_rel->rows;
 
@@ -385,7 +385,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
  * computed for us by query_planner.
  *
  * Caller is expected to have ensured that tuples_fetched is greater than zero
- * and rounded to integer (see clamp_row_est).  The result will likewise be
+ * and rounded to integer (see clamp_row_est).	The result will likewise be
  * greater than zero and integral.
  */
 double
@@ -406,7 +406,8 @@ index_pages_fetched(double tuples_fetched, BlockNumber pages,
 	Assert(T <= total_pages);
 
 	/* b is pro-rated share of effective_cache_size */
-	b = (double) effective_cache_size * T / total_pages;
+	b = (double) effective_cache_size *T / total_pages;
+
 	/* force it positive and integral */
 	if (b <= 1.0)
 		b = 1.0;
@@ -543,10 +544,10 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	if (outer_rel != NULL && outer_rel->rows > 1)
 	{
 		/*
-		 * For repeated bitmap scans, scale up the number of tuples fetched
-		 * in the Mackert and Lohman formula by the number of scans, so
-		 * that we estimate the number of pages fetched by all the scans.
-		 * Then pro-rate for one scan.
+		 * For repeated bitmap scans, scale up the number of tuples fetched in
+		 * the Mackert and Lohman formula by the number of scans, so that we
+		 * estimate the number of pages fetched by all the scans. Then
+		 * pro-rate for one scan.
 		 */
 		double		num_scans = outer_rel->rows;
 
@@ -573,7 +574,7 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	/*
 	 * For small numbers of pages we should charge random_page_cost apiece,
 	 * while if nearly all the table's pages are being read, it's more
-	 * appropriate to charge seq_page_cost apiece.  The effect is nonlinear,
+	 * appropriate to charge seq_page_cost apiece.	The effect is nonlinear,
 	 * too. For lack of a better idea, interpolate like this to determine the
 	 * cost per page.
 	 */
@@ -748,7 +749,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
 		{
 			/* Each element of the array yields 1 tuple */
 			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) lfirst(l);
-			Node *arraynode = (Node *) lsecond(saop->args);
+			Node	   *arraynode = (Node *) lsecond(saop->args);
 
 			ntuples += estimate_array_length(arraynode);
 		}
@@ -849,8 +850,8 @@ cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	Assert(baserel->rtekind == RTE_VALUES);
 
 	/*
-	 * For now, estimate list evaluation cost at one operator eval per
-	 * list (probably pretty bogus, but is it worth being smarter?)
+	 * For now, estimate list evaluation cost at one operator eval per list
+	 * (probably pretty bogus, but is it worth being smarter?)
 	 */
 	cpu_per_tuple = cpu_operator_cost;
 
@@ -875,7 +876,7 @@ cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
  * If the total volume exceeds work_mem, we switch to a tape-style merge
  * algorithm.  There will still be about t*log2(t) tuple comparisons in
  * total, but we will also need to write and read each tuple once per
- * merge pass.  We expect about ceil(logM(r)) merge passes where r is the
+ * merge pass.	We expect about ceil(logM(r)) merge passes where r is the
  * number of initial runs formed and M is the merge order used by tuplesort.c.
  * Since the average initial run should be about twice work_mem, we have
  *		disk traffic = 2 * relsize * ceil(logM(p / (2*work_mem)))
@@ -1745,7 +1746,7 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		 * array elements before the answer is determined.
 		 */
 		ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) node;
-		Node *arraynode = (Node *) lsecond(saop->args);
+		Node	   *arraynode = (Node *) lsecond(saop->args);
 
 		total->per_tuple +=
 			cpu_operator_cost * estimate_array_length(arraynode) * 0.5;
@@ -1967,7 +1968,7 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	 *
 	 * If we are doing an outer join, take that into account: the output must
 	 * be at least as large as the non-nullable input.	(Is there any chance
-	 * of being even smarter?)  (XXX this is not really right, because it
+	 * of being even smarter?)	(XXX this is not really right, because it
 	 * assumes all the restriction clauses are join clauses; we should figure
 	 * pushed-down clauses separately.)
 	 *
@@ -2132,10 +2133,10 @@ set_values_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	Assert(rte->rtekind == RTE_VALUES);
 
 	/*
-	 * Estimate number of rows the values list will return.
-	 * We know this precisely based on the list length (well,
-	 * barring set-returning functions in list items, but that's
-	 * a refinement not catered for anywhere else either).
+	 * Estimate number of rows the values list will return. We know this
+	 * precisely based on the list length (well, barring set-returning
+	 * functions in list items, but that's a refinement not catered for
+	 * anywhere else either).
 	 */
 	rel->tuples = list_length(rte->values_lists);
 

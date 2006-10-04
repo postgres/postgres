@@ -477,7 +477,8 @@ ts_stat_sql(text *txt, text *ws)
 		buf = VARDATA(ws);
 		while (buf - VARDATA(ws) < VARSIZE(ws) - VARHDRSZ)
 		{
-			if ( pg_mblen(buf) == 1 ) {
+			if (pg_mblen(buf) == 1)
+			{
 				switch (*buf)
 				{
 					case 'A':
@@ -500,7 +501,7 @@ ts_stat_sql(text *txt, text *ws)
 						stat->weight |= 0;
 				}
 			}
-			buf+=pg_mblen(buf);
+			buf += pg_mblen(buf);
 		}
 	}
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.171 2006/04/05 22:11:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.172 2006/10/04 00:30:08 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -516,7 +516,7 @@ DATA(insert OID = 2208 ( _regoper	   PGNSP PGUID -1 f b t \054 0 2203 array_in a
 DATA(insert OID = 2209 ( _regoperator  PGNSP PGUID -1 f b t \054 0 2204 array_in array_out array_recv array_send - i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 2210 ( _regclass	   PGNSP PGUID -1 f b t \054 0 2205 array_in array_out array_recv array_send - i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b t \054 0 2206 array_in array_out array_recv array_send - i x f 0 -1 0 _null_ _null_ ));
-#define REGTYPEARRAYOID	2211
+#define REGTYPEARRAYOID 2211
 
 /*
  * pseudo-types

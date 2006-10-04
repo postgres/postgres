@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.107 2006/07/11 17:26:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.108 2006/10/04 00:30:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,14 +587,14 @@ do_compile(FunctionCallInfo fcinfo,
 										 true);
 			function->tg_table_name_varno = var->dno;
 
-			
+
 			/* add variable tg_table_schema */
 			var = plpgsql_build_variable("tg_table_schema", 0,
 										 plpgsql_build_datatype(NAMEOID, -1),
 										 true);
 			function->tg_table_schema_varno = var->dno;
 
-			
+
 			/* Add the variable tg_nargs */
 			var = plpgsql_build_variable("tg_nargs", 0,
 										 plpgsql_build_datatype(INT4OID, -1),

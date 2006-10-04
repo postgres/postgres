@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.194 2006/09/28 20:51:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.195 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,8 +108,8 @@ static Datum ExecEvalRow(RowExprState *rstate,
 			ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalRowCompare(RowCompareExprState *rstate,
-			ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone);
+				   ExprContext *econtext,
+				   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
@@ -882,7 +882,7 @@ get_cached_rowtype(Oid type_id, int32 typmod,
 static void
 ShutdownTupleDescRef(Datum arg)
 {
-	TupleDesc *cache_field = (TupleDesc *) DatumGetPointer(arg);
+	TupleDesc  *cache_field = (TupleDesc *) DatumGetPointer(arg);
 
 	if (*cache_field)
 		ReleaseTupleDesc(*cache_field);
@@ -2015,8 +2015,8 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 	/* if first time through, initialize */
 	if (cstate->attrMap == NULL)
 	{
-		MemoryContext	old_cxt;
-		int		n;
+		MemoryContext old_cxt;
+		int			n;
 
 		/* allocate state in long-lived memory context */
 		old_cxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
@@ -2502,7 +2502,7 @@ ExecEvalRowCompare(RowCompareExprState *rstate,
 
 	switch (rctype)
 	{
-		/* EQ and NE cases aren't allowed here */
+			/* EQ and NE cases aren't allowed here */
 		case ROWCOMPARE_LT:
 			result = (cmpresult < 0);
 			break;
@@ -2722,7 +2722,7 @@ ExecEvalNullTest(NullTestState *nstate,
 		for (att = 1; att <= tupDesc->natts; att++)
 		{
 			/* ignore dropped columns */
-			if (tupDesc->attrs[att-1]->attisdropped)
+			if (tupDesc->attrs[att - 1]->attisdropped)
 				continue;
 			if (heap_attisnull(&tmptup, att))
 			{
@@ -2764,7 +2764,7 @@ ExecEvalNullTest(NullTestState *nstate,
 			default:
 				elog(ERROR, "unrecognized nulltesttype: %d",
 					 (int) ntest->nulltesttype);
-				return (Datum) 0;	/* keep compiler quiet */
+				return (Datum) 0;		/* keep compiler quiet */
 		}
 	}
 }
@@ -3564,16 +3564,17 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				i = 0;
 				forboth(l, rcexpr->opnos, l2, rcexpr->opclasses)
 				{
-					Oid		opno = lfirst_oid(l);
-					Oid		opclass = lfirst_oid(l2);
-					int		strategy;
-					Oid		subtype;
-					bool	recheck;
-					Oid		proc;
+					Oid			opno = lfirst_oid(l);
+					Oid			opclass = lfirst_oid(l2);
+					int			strategy;
+					Oid			subtype;
+					bool		recheck;
+					Oid			proc;
 
 					get_op_opclass_properties(opno, opclass,
 											  &strategy, &subtype, &recheck);
 					proc = get_opclass_proc(opclass, subtype, BTORDER_PROC);
+
 					/*
 					 * If we enforced permissions checks on index support
 					 * functions, we'd need to make a check here.  But the
@@ -3632,11 +3633,12 @@ ExecInitExpr(Expr *node, PlanState *parent)
 							(errcode(ERRCODE_UNDEFINED_FUNCTION),
 							 errmsg("could not identify a comparison function for type %s",
 									format_type_be(minmaxexpr->minmaxtype))));
+
 				/*
 				 * If we enforced permissions checks on index support
-				 * functions, we'd need to make a check here.  But the
-				 * index support machinery doesn't do that, and neither
-				 * does this code.
+				 * functions, we'd need to make a check here.  But the index
+				 * support machinery doesn't do that, and neither does this
+				 * code.
 				 */
 				fmgr_info(typentry->cmp_proc, &(mstate->cfunc));
 				state = (ExprState *) mstate;

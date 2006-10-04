@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.31 2006/09/14 08:02:38 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/datetime.c,v 1.32 2006/10/04 00:30:11 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -15,14 +15,15 @@
 date *
 PGTYPESdate_new(void)
 {
-	date *result;
+	date	   *result;
+
 	result = (date *) pgtypes_alloc(sizeof(date));
 	/* result can be NULL if we run out of memory */
 	return result;
 }
 
 void
-PGTYPESdate_free(date *d)
+PGTYPESdate_free(date * d)
 {
 	free(d);
 }

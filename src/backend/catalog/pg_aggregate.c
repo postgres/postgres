@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.82 2006/07/27 19:52:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.83 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,15 +89,15 @@ AggregateCreate(const char *aggName,
 	}
 
 	/*
-	 * If transtype is polymorphic, must have polymorphic argument also;
-	 * else we will have no way to deduce the actual transtype.
+	 * If transtype is polymorphic, must have polymorphic argument also; else
+	 * we will have no way to deduce the actual transtype.
 	 */
 	if (!hasPolyArg &&
 		(aggTransType == ANYARRAYOID || aggTransType == ANYELEMENTOID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine transition data type"),
-			errdetail("An aggregate using \"anyarray\" or \"anyelement\" as transition type must have at least one argument of either type.")));
+				 errdetail("An aggregate using \"anyarray\" or \"anyelement\" as transition type must have at least one argument of either type.")));
 
 	/* find the transfn */
 	nargs_transfn = numArgs + 1;
@@ -133,8 +133,8 @@ AggregateCreate(const char *aggName,
 
 	/*
 	 * If the transfn is strict and the initval is NULL, make sure first input
-	 * type and transtype are the same (or at least binary-compatible), so that
-	 * it's OK to use the first input value as the initial transValue.
+	 * type and transtype are the same (or at least binary-compatible), so
+	 * that it's OK to use the first input value as the initial transValue.
 	 */
 	if (proc->proisstrict && agginitval == NULL)
 	{
@@ -211,7 +211,7 @@ AggregateCreate(const char *aggName,
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not
 														 * needed for agg) */
 							  buildoidvector(aggArgTypes,
-							  				 numArgs),	/* paramTypes */
+											 numArgs),	/* paramTypes */
 							  PointerGetDatum(NULL),	/* allParamTypes */
 							  PointerGetDatum(NULL),	/* parameterModes */
 							  PointerGetDatum(NULL));	/* parameterNames */
@@ -355,7 +355,7 @@ lookup_agg_function(List *fnName,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("function %s requires run-time type coercion",
-						 func_signature_string(fnName, nargs, true_oid_array))));
+					 func_signature_string(fnName, nargs, true_oid_array))));
 	}
 
 	/* Check aggregate creator has permission to call the function */

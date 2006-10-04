@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.167 2006/09/05 01:13:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.168 2006/10/04 00:29:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1029,10 +1029,10 @@ timestamptz_to_time_t(TimestampTz t)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result = (time_t) (t / USECS_PER_SEC +
-		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
+				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
 #else
 	result = (time_t) (t +
-		((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
+				 ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY));
 #endif
 
 	return result;
@@ -2015,7 +2015,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	 *	test=> SET timezone = 'EST5EDT';
 	 *	test=> SELECT
 	 *	test-> ('2005-10-30 13:22:00-05'::timestamptz -
-	 *	test(>  '2005-10-29 13:22:00-04'::timestamptz);
+	 *	test(>	'2005-10-29 13:22:00-04'::timestamptz);
 	 *	?column?
 	 *	----------------
 	 *	 1 day 01:00:00
@@ -2027,7 +2027,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	 *	 test-> ('2005-10-29 13:22:00-04'::timestamptz +
 	 *	 test(> ('2005-10-30 13:22:00-05'::timestamptz -
 	 *	 test(>  '2005-10-29 13:22:00-04'::timestamptz)) at time zone 'EST';
-	 *	    timezone
+	 *		timezone
 	 *	--------------------
 	 *	2005-10-30 14:22:00
 	 *	(1 row)
@@ -2040,23 +2040,23 @@ timestamp_mi(PG_FUNCTION_ARGS)
 }
 
 /*
- *  interval_justify_interval()
+ *	interval_justify_interval()
  *
- *  Adjust interval so 'month', 'day', and 'time' portions are within
- *  customary bounds.  Specifically:
+ *	Adjust interval so 'month', 'day', and 'time' portions are within
+ *	customary bounds.  Specifically:
  *
- *  	0 <= abs(time) < 24 hours
- *  	0 <= abs(day)  < 30 days
+ *		0 <= abs(time) < 24 hours
+ *		0 <= abs(day)  < 30 days
  *
- *  Also, the sign bit on all three fields is made equal, so either
- *  all three fields are negative or all are positive.
+ *	Also, the sign bit on all three fields is made equal, so either
+ *	all three fields are negative or all are positive.
  */
 Datum
 interval_justify_interval(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	Interval   *result;
-	
+
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		wholeday;
 #else
@@ -2087,7 +2087,7 @@ interval_justify_interval(PG_FUNCTION_ARGS)
 		result->month--;
 	}
 	else if (result->month < 0 &&
-		(result->day > 0 || (result->day == 0 && result->time > 0)))
+			 (result->day > 0 || (result->day == 0 && result->time > 0)))
 	{
 		result->day -= DAYS_PER_MONTH;
 		result->month++;
@@ -2103,7 +2103,7 @@ interval_justify_interval(PG_FUNCTION_ARGS)
 		result->day--;
 	}
 	else if (result->day < 0 && result->time > 0)
- 	{
+	{
 #ifdef HAVE_INT64_TIMESTAMP
 		result->time -= USECS_PER_DAY;
 #else
@@ -2492,8 +2492,10 @@ interval_mul(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
-	double		month_remainder_days, sec_remainder;
-	int32		orig_month = span->month, orig_day = span->day;
+	double		month_remainder_days,
+				sec_remainder;
+	int32		orig_month = span->month,
+				orig_day = span->day;
 	Interval   *result;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -2512,28 +2514,28 @@ interval_mul(PG_FUNCTION_ARGS)
 	 */
 
 	/*
-	 *	Fractional months full days into days.
+	 * Fractional months full days into days.
 	 *
-	 *	Floating point calculation are inherently inprecise, so these
-	 *	calculations are crafted to produce the most reliable result
-	 *	possible.  TSROUND() is needed to more accurately produce whole
-	 *	numbers where appropriate.
+	 * Floating point calculation are inherently inprecise, so these
+	 * calculations are crafted to produce the most reliable result possible.
+	 * TSROUND() is needed to more accurately produce whole numbers where
+	 * appropriate.
 	 */
 	month_remainder_days = (orig_month * factor - result->month) * DAYS_PER_MONTH;
 	month_remainder_days = TSROUND(month_remainder_days);
 	sec_remainder = (orig_day * factor - result->day +
-			month_remainder_days - (int)month_remainder_days) * SECS_PER_DAY;
+		   month_remainder_days - (int) month_remainder_days) * SECS_PER_DAY;
 	sec_remainder = TSROUND(sec_remainder);
 
 	/*
-	 *	Might have 24:00:00 hours due to rounding, or >24 hours because of
-	 *	time cascade from months and days.  It might still be >24 if the
-	 *	combination of cascade and the seconds factor operation itself.
+	 * Might have 24:00:00 hours due to rounding, or >24 hours because of time
+	 * cascade from months and days.  It might still be >24 if the combination
+	 * of cascade and the seconds factor operation itself.
 	 */
 	if (Abs(sec_remainder) >= SECS_PER_DAY)
 	{
-		result->day += (int)(sec_remainder / SECS_PER_DAY);
-		sec_remainder -= (int)(sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
+		result->day += (int) (sec_remainder / SECS_PER_DAY);
+		sec_remainder -= (int) (sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
 	}
 
 	/* cascade units down */
@@ -2562,10 +2564,12 @@ interval_div(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
-	double		month_remainder_days, sec_remainder;
-	int32		orig_month = span->month, orig_day = span->day;
+	double		month_remainder_days,
+				sec_remainder;
+	int32		orig_month = span->month,
+				orig_day = span->day;
 	Interval   *result;
-	
+
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (factor == 0.0)
@@ -2577,18 +2581,17 @@ interval_div(PG_FUNCTION_ARGS)
 	result->day = (int32) (span->day / factor);
 
 	/*
-	 *	Fractional months full days into days.  See comment in 
-	 *	interval_mul().
+	 * Fractional months full days into days.  See comment in interval_mul().
 	 */
 	month_remainder_days = (orig_month / factor - result->month) * DAYS_PER_MONTH;
 	month_remainder_days = TSROUND(month_remainder_days);
 	sec_remainder = (orig_day / factor - result->day +
-			month_remainder_days - (int)month_remainder_days) * SECS_PER_DAY;
+		   month_remainder_days - (int) month_remainder_days) * SECS_PER_DAY;
 	sec_remainder = TSROUND(sec_remainder);
 	if (Abs(sec_remainder) >= SECS_PER_DAY)
 	{
-		result->day += (int)(sec_remainder / SECS_PER_DAY);
-		sec_remainder -= (int)(sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
+		result->day += (int) (sec_remainder / SECS_PER_DAY);
+		sec_remainder -= (int) (sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
 	}
 
 	/* cascade units down */

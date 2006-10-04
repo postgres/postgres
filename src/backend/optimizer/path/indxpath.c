@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.211 2006/07/22 15:41:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.212 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,10 +54,10 @@ static List *find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
 				List *clauses, List *outer_clauses,
 				bool istoplevel, RelOptInfo *outer_rel);
 static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
-							   List *paths, RelOptInfo *outer_rel);
+				  List *paths, RelOptInfo *outer_rel);
 static int	bitmap_path_comparator(const void *a, const void *b);
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
-								List *paths, RelOptInfo *outer_rel);
+					List *paths, RelOptInfo *outer_rel);
 static List *pull_indexpath_quals(Path *bitmapqual);
 static bool lists_intersect_ptr(List *list1, List *list2);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
@@ -66,7 +66,7 @@ static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 Relids outer_relids,
 						 SaOpControl saop_control);
 static bool is_indexable_operator(Oid expr_op, Oid opclass,
-								  bool indexkey_on_left);
+					  bool indexkey_on_left);
 static bool match_rowcompare_to_indexcol(IndexOptInfo *index,
 							 int indexcol,
 							 Oid opclass,
@@ -324,8 +324,8 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * 1. Match the index against the available restriction clauses.
 		 * found_clause is set true only if at least one of the current
-		 * clauses was used (and, if saop_control is SAOP_REQUIRE, it
-		 * has to have been a ScalarArrayOpExpr clause).
+		 * clauses was used (and, if saop_control is SAOP_REQUIRE, it has to
+		 * have been a ScalarArrayOpExpr clause).
 		 */
 		restrictclauses = group_clauses_by_indexkey(index,
 													clauses,
@@ -422,8 +422,8 @@ find_saop_paths(PlannerInfo *root, RelOptInfo *rel,
 	ListCell   *l;
 
 	/*
-	 * Since find_usable_indexes is relatively expensive, don't bother to
-	 * run it unless there are some top-level ScalarArrayOpExpr clauses.
+	 * Since find_usable_indexes is relatively expensive, don't bother to run
+	 * it unless there are some top-level ScalarArrayOpExpr clauses.
 	 */
 	foreach(l, clauses)
 	{
@@ -588,15 +588,15 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 * In theory we should consider every nonempty subset of the given paths.
 	 * In practice that seems like overkill, given the crude nature of the
 	 * estimates, not to mention the possible effects of higher-level AND and
-	 * OR clauses.	As a compromise, we sort the paths by selectivity.  We
+	 * OR clauses.	As a compromise, we sort the paths by selectivity.	We
 	 * always take the first, and sequentially add on paths that result in a
 	 * lower estimated cost.
 	 *
 	 * We also make some effort to detect directly redundant input paths, as
-	 * can happen if there are multiple possibly usable indexes.  (Another
-	 * way it can happen is that best_inner_indexscan will find the same OR
-	 * join clauses that create_or_index_quals has pulled OR restriction
-	 * clauses out of, and then both versions show up as duplicate paths.)  We
+	 * can happen if there are multiple possibly usable indexes.  (Another way
+	 * it can happen is that best_inner_indexscan will find the same OR join
+	 * clauses that create_or_index_quals has pulled OR restriction clauses
+	 * out of, and then both versions show up as duplicate paths.)	We
 	 * consider an index redundant if any of its index conditions were already
 	 * used by earlier indexes.  (We could use predicate_implied_by to have a
 	 * more intelligent, but much more expensive, check --- but in most cases
@@ -796,7 +796,7 @@ lists_intersect_ptr(List *list1, List *list2)
 
 	foreach(cell1, list1)
 	{
-		void   *datum1 = lfirst(cell1);
+		void	   *datum1 = lfirst(cell1);
 		ListCell   *cell2;
 
 		foreach(cell2, list2)
@@ -963,7 +963,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *	  It is also possible to match RowCompareExpr clauses to indexes (but
  *	  currently, only btree indexes handle this).  In this routine we will
  *	  report a match if the first column of the row comparison matches the
- *	  target index column.  This is sufficient to guarantee that some index
+ *	  target index column.	This is sufficient to guarantee that some index
  *	  condition can be constructed from the RowCompareExpr --- whether the
  *	  remaining columns match the index too is considered in
  *	  expand_indexqual_rowcompare().
@@ -1004,10 +1004,10 @@ match_clause_to_indexcol(IndexOptInfo *index,
 	bool		plain_op;
 
 	/*
-	 * Never match pseudoconstants to indexes.  (Normally this could not
-	 * happen anyway, since a pseudoconstant clause couldn't contain a
-	 * Var, but what if someone builds an expression index on a constant?
-	 * It's not totally unreasonable to do so with a partial index, either.)
+	 * Never match pseudoconstants to indexes.	(Normally this could not
+	 * happen anyway, since a pseudoconstant clause couldn't contain a Var,
+	 * but what if someone builds an expression index on a constant? It's not
+	 * totally unreasonable to do so with a partial index, either.)
 	 */
 	if (rinfo->pseudoconstant)
 		return false;
@@ -1421,9 +1421,9 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 * NOTE: because we cache on outer_relids rather than outer_rel->relids,
 	 * we will report the same path and hence path cost for joins with
 	 * different sets of irrelevant rels on the outside.  Now that cost_index
-	 * is sensitive to outer_rel->rows, this is not really right.  However
-	 * the error is probably not large.  Is it worth establishing a separate
-	 * cache entry for each distinct outer_rel->relids set to get this right?
+	 * is sensitive to outer_rel->rows, this is not really right.  However the
+	 * error is probably not large.  Is it worth establishing a separate cache
+	 * entry for each distinct outer_rel->relids set to get this right?
 	 */
 	foreach(l, rel->index_inner_paths)
 	{
@@ -1442,11 +1442,11 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	 *
 	 * Note: because we include restriction clauses, we will find indexscans
 	 * that could be plain indexscans, ie, they don't require the join context
-	 * at all.  This may seem redundant, but we need to include those scans in
+	 * at all.	This may seem redundant, but we need to include those scans in
 	 * the input given to choose_bitmap_and() to be sure we find optimal AND
-	 * combinations of join and non-join scans.  Also, even if the "best
-	 * inner indexscan" is just a plain indexscan, it will have a different
-	 * cost estimate because of cache effects.
+	 * combinations of join and non-join scans.  Also, even if the "best inner
+	 * indexscan" is just a plain indexscan, it will have a different cost
+	 * estimate because of cache effects.
 	 */
 	clause_list = find_clauses_for_join(root, rel, outer_relids, isouterjoin);
 
@@ -2210,7 +2210,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 		foreach(l, (List *) lfirst(clausegroup_item))
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-			Expr   *clause = rinfo->clause;
+			Expr	   *clause = rinfo->clause;
 
 			/* First check for boolean cases */
 			if (IsBooleanOpclass(curClass))
@@ -2240,7 +2240,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			{
 				resultquals = list_concat(resultquals,
 										  expand_indexqual_opclause(rinfo,
-																	curClass));
+																  curClass));
 			}
 			else if (IsA(clause, ScalarArrayOpExpr))
 			{
@@ -2340,6 +2340,7 @@ static List *
 expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
 {
 	Expr	   *clause = rinfo->clause;
+
 	/* we know these will succeed */
 	Node	   *leftop = get_leftop(clause);
 	Node	   *rightop = get_rightop(clause);
@@ -2421,7 +2422,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
  * column matches) or a simple OpExpr (if the first-column match is all
  * there is).  In these cases the modified clause is always "<=" or ">="
  * even when the original was "<" or ">" --- this is necessary to match all
- * the rows that could match the original.  (We are essentially building a
+ * the rows that could match the original.	(We are essentially building a
  * lossy version of the row comparison when we do this.)
  */
 static RestrictInfo *
@@ -2430,18 +2431,18 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 							int indexcol)
 {
 	RowCompareExpr *clause = (RowCompareExpr *) rinfo->clause;
-	bool	var_on_left;
-	int		op_strategy;
-	Oid		op_subtype;
-	bool	op_recheck;
-	int		matching_cols;
-	Oid		expr_op;
-	List   *opclasses;
-	List   *subtypes;
-	List   *new_ops;
-	ListCell *largs_cell;
-	ListCell *rargs_cell;
-	ListCell *opnos_cell;
+	bool		var_on_left;
+	int			op_strategy;
+	Oid			op_subtype;
+	bool		op_recheck;
+	int			matching_cols;
+	Oid			expr_op;
+	List	   *opclasses;
+	List	   *subtypes;
+	List	   *new_ops;
+	ListCell   *largs_cell;
+	ListCell   *rargs_cell;
+	ListCell   *opnos_cell;
 
 	/* We have to figure out (again) how the first col matches */
 	var_on_left = match_index_to_operand((Node *) linitial(clause->largs),
@@ -2459,12 +2460,12 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	subtypes = list_make1_oid(op_subtype);
 
 	/*
-	 * See how many of the remaining columns match some index column
-	 * in the same way.  A note about rel membership tests: we assume
-	 * that the clause as a whole is already known to use only Vars from
-	 * the indexed relation and possibly some acceptable outer relations.
-	 * So the "other" side of any potential index condition is OK as long
-	 * as it doesn't use Vars from the indexed relation.
+	 * See how many of the remaining columns match some index column in the
+	 * same way.  A note about rel membership tests: we assume that the clause
+	 * as a whole is already known to use only Vars from the indexed relation
+	 * and possibly some acceptable outer relations. So the "other" side of
+	 * any potential index condition is OK as long as it doesn't use Vars from
+	 * the indexed relation.
 	 */
 	matching_cols = 1;
 	largs_cell = lnext(list_head(clause->largs));
@@ -2498,10 +2499,10 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 			break;				/* no good, volatile comparison value */
 
 		/*
-		 * The Var side can match any column of the index.  If the user
-		 * does something weird like having multiple identical index
-		 * columns, we insist the match be on the first such column,
-		 * to avoid confusing the executor.
+		 * The Var side can match any column of the index.	If the user does
+		 * something weird like having multiple identical index columns, we
+		 * insist the match be on the first such column, to avoid confusing
+		 * the executor.
 		 */
 		for (i = 0; i < index->ncolumns; i++)
 		{
@@ -2534,9 +2535,9 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 		return rinfo;
 
 	/*
-	 * We have to generate a subset rowcompare (possibly just one OpExpr).
-	 * The painful part of this is changing < to <= or > to >=, so deal with
-	 * that first.
+	 * We have to generate a subset rowcompare (possibly just one OpExpr). The
+	 * painful part of this is changing < to <= or > to >=, so deal with that
+	 * first.
 	 */
 	if (op_strategy == BTLessEqualStrategyNumber ||
 		op_strategy == BTGreaterEqualStrategyNumber)
@@ -2546,8 +2547,8 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	}
 	else
 	{
-		ListCell *opclasses_cell;
-		ListCell *subtypes_cell;
+		ListCell   *opclasses_cell;
+		ListCell   *subtypes_cell;
 
 		if (op_strategy == BTLessStrategyNumber)
 			op_strategy = BTLessEqualStrategyNumber;
@@ -2561,13 +2562,13 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 			expr_op = get_opclass_member(lfirst_oid(opclasses_cell),
 										 lfirst_oid(subtypes_cell),
 										 op_strategy);
-			if (!OidIsValid(expr_op))				/* should not happen */
+			if (!OidIsValid(expr_op))	/* should not happen */
 				elog(ERROR, "could not find member %d of opclass %u",
 					 op_strategy, lfirst_oid(opclasses_cell));
 			if (!var_on_left)
 			{
 				expr_op = get_commutator(expr_op);
-				if (!OidIsValid(expr_op))			/* should not happen */
+				if (!OidIsValid(expr_op))		/* should not happen */
 					elog(ERROR, "could not find commutator of member %d of opclass %u",
 						 op_strategy, lfirst_oid(opclasses_cell));
 			}
@@ -2596,7 +2597,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	}
 	else
 	{
-		Expr *opexpr;
+		Expr	   *opexpr;
 
 		opexpr = make_opclause(linitial_oid(new_ops), BOOLOID, false,
 							   copyObject(linitial(clause->largs)),

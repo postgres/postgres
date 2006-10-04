@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.45 2006/08/07 21:56:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.46 2006/10/04 00:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include "storage/spin.h"
 
 
-static int NumAddinLWLocks(void);
+static int	NumAddinLWLocks(void);
 static void AssignAddinLWLocks(void);
 
 
@@ -95,23 +95,23 @@ static int *ex_acquire_counts;
 static int *block_counts;
 #endif
 
-/* 
+/*
  * Structures and globals to allow add-ins to register for their own
  * lwlocks from the preload-libraries hook.
  */
 typedef struct LWLockNode
 {
-	LWLockId *lock;
+	LWLockId   *lock;
 	struct LWLockNode *next;
 } LWLockNode;
 
 static LWLockNode *addin_locks = NULL;
-static int num_addin_locks = 0;
+static int	num_addin_locks = 0;
 
 
 /*
  *	RegisterAddinLWLock() --- Allow an andd-in to request a LWLock
- *	                          from the preload-libraries hook.
+ *							  from the preload-libraries hook.
  */
 void
 RegisterAddinLWLock(LWLockId *lock)
@@ -198,8 +198,7 @@ print_lwlock_stats(int code, Datum arg)
 
 	LWLockRelease(0);
 }
-
-#endif /* LWLOCK_STATS */
+#endif   /* LWLOCK_STATS */
 
 
 /*
@@ -306,9 +305,8 @@ CreateLWLocks(void)
 	LWLockCounter[0] = (int) NumFixedLWLocks;
 	LWLockCounter[1] = numLocks;
 
-	/* 
-	 * Allocate LWLocks for those add-ins that have explicitly requested
-	 * them.
+	/*
+	 * Allocate LWLocks for those add-ins that have explicitly requested them.
 	 */
 	AssignAddinLWLocks();
 }
@@ -364,8 +362,8 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	/* Set up local count state first time through in a given process */
 	if (counts_for_pid != MyProcPid)
 	{
-		int	   *LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
-		int		numLocks = LWLockCounter[1];
+		int		   *LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
+		int			numLocks = LWLockCounter[1];
 
 		sh_acquire_counts = calloc(numLocks, sizeof(int));
 		ex_acquire_counts = calloc(numLocks, sizeof(int));
@@ -378,7 +376,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		ex_acquire_counts[lockid]++;
 	else
 		sh_acquire_counts[lockid]++;
-#endif /* LWLOCK_STATS */
+#endif   /* LWLOCK_STATS */
 
 	/*
 	 * We can't wait if we haven't got a PGPROC.  This should only occur

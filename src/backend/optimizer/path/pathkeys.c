@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.78 2006/08/17 17:02:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.79 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -909,7 +909,7 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
  * representing a backwards scan of the index.	Return NIL if can't do it.
  *
  * If 'canonical' is TRUE, we remove duplicate pathkeys (which can occur
- * if two index columns are equijoined, eg WHERE x = 1 AND y = 1).  This
+ * if two index columns are equijoined, eg WHERE x = 1 AND y = 1).	This
  * is required if the result is to be compared directly to a canonical query
  * pathkeys list.  However, some callers want a list with exactly one entry
  * per index column, and they must pass FALSE.
@@ -1106,8 +1106,8 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 					outer_expr = (Node *)
 						makeRelabelType((Expr *) outer_expr,
 										((RelabelType *) sub_key)->resulttype,
-										((RelabelType *) sub_key)->resulttypmod,
-										((RelabelType *) sub_key)->relabelformat);
+									 ((RelabelType *) sub_key)->resulttypmod,
+								   ((RelabelType *) sub_key)->relabelformat);
 				}
 				else
 					continue;

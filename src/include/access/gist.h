@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.55 2006/09/10 00:29:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.56 2006/10/04 00:30:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ typedef GISTPageOpaqueData *GISTPageOpaque;
  * PickSplit should check spl_(r|l)datum_exists. If it is 'true',
  * that corresponding spl_(r|l)datum already defined and
  * PickSplit should use that value. PickSplit should always set
- * spl_(r|l)datum_exists to false: GiST will check value to 
+ * spl_(r|l)datum_exists to false: GiST will check value to
  * control supportng this feature by PickSplit...
  */
 typedef struct GIST_SPLITVEC
@@ -88,12 +88,12 @@ typedef struct GIST_SPLITVEC
 	OffsetNumber *spl_left;		/* array of entries that go left */
 	int			spl_nleft;		/* size of this array */
 	Datum		spl_ldatum;		/* Union of keys in spl_left */
-	bool		spl_ldatum_exists;  /* true, if spl_ldatum already exists. */
+	bool		spl_ldatum_exists;		/* true, if spl_ldatum already exists. */
 
 	OffsetNumber *spl_right;	/* array of entries that go right */
 	int			spl_nright;		/* size of the array */
 	Datum		spl_rdatum;		/* Union of keys in spl_right */
-	bool		spl_rdatum_exists;  /* true, if spl_rdatum already exists. */
+	bool		spl_rdatum_exists;		/* true, if spl_rdatum already exists. */
 } GIST_SPLITVEC;
 
 /*

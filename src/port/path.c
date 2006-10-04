@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.69 2006/09/27 18:40:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.70 2006/10/04 00:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,8 +388,8 @@ path_is_prefix_of_path(const char *path1, const char *path2)
 const char *
 get_progname(const char *argv0)
 {
-	const char  *nodir_name;
-	char		*progname;
+	const char *nodir_name;
+	char	   *progname;
 
 	nodir_name = last_dir_separator(argv0);
 	if (nodir_name)
@@ -398,20 +398,20 @@ get_progname(const char *argv0)
 		nodir_name = skip_drive(argv0);
 
 	/*
-	 *	Make a copy in case argv[0] is modified by ps_status.
-	 *	Leaks memory, but called only once.
+	 * Make a copy in case argv[0] is modified by ps_status. Leaks memory, but
+	 * called only once.
 	 */
 	progname = strdup(nodir_name);
 	if (progname == NULL)
 	{
 		fprintf(stderr, "%s: out of memory\n", nodir_name);
-		exit(1);			/* This could exit the postmaster */
+		exit(1);				/* This could exit the postmaster */
 	}
 
 #if defined(__CYGWIN__) || defined(WIN32)
 	/* strip ".exe" suffix, regardless of case */
 	if (strlen(progname) > sizeof(EXE) - 1 &&
-		pg_strcasecmp(progname + strlen(progname) - (sizeof(EXE) - 1), EXE) == 0)
+	pg_strcasecmp(progname + strlen(progname) - (sizeof(EXE) - 1), EXE) == 0)
 		progname[strlen(progname) - (sizeof(EXE) - 1)] = '\0';
 #endif
 
@@ -502,7 +502,7 @@ make_relative_path(char *ret_path, const char *target_path,
 	 */
 	tail_start = (int) strlen(ret_path) - tail_len;
 	if (tail_start > 0 &&
-		IS_DIR_SEP(ret_path[tail_start-1]) &&
+		IS_DIR_SEP(ret_path[tail_start - 1]) &&
 		dir_strcmp(ret_path + tail_start, bin_path + prefix_len) == 0)
 	{
 		ret_path[tail_start] = '\0';

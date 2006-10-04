@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.125 2006/08/28 14:32:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.126 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,13 +453,13 @@ trivial_subqueryscan(SubqueryScan *plan)
 			return false;		/* tlist doesn't match junk status */
 
 		/*
-		 * We accept either a Var referencing the corresponding element of
-		 * the subplan tlist, or a Const equaling the subplan element.
-		 * See generate_setop_tlist() for motivation.
+		 * We accept either a Var referencing the corresponding element of the
+		 * subplan tlist, or a Const equaling the subplan element. See
+		 * generate_setop_tlist() for motivation.
 		 */
 		if (ptle->expr && IsA(ptle->expr, Var))
 		{
-			Var	   *var = (Var *) ptle->expr;
+			Var		   *var = (Var *) ptle->expr;
 
 			Assert(var->varno == plan->scan.scanrelid);
 			Assert(var->varlevelsup == 0);
@@ -793,7 +793,7 @@ set_join_references(Join *join)
  *
  * To handle bitmap-scan plan trees, we have to be able to recurse down
  * to the bottom BitmapIndexScan nodes; likewise, appendrel indexscans
- * require recursing through Append nodes.  This is split out as a separate
+ * require recursing through Append nodes.	This is split out as a separate
  * function so that it can recurse.
  */
 static void
@@ -1339,7 +1339,7 @@ replace_vars_with_subplan_refs_mutator(Node *node,
  * adjust any Vars that refer to other tables to reference junk tlist
  * entries in the top plan's targetlist.  Vars referencing the result
  * table should be left alone, however (the executor will evaluate them
- * using the actual heap tuple, after firing triggers if any).  In the
+ * using the actual heap tuple, after firing triggers if any).	In the
  * adjusted RETURNING list, result-table Vars will still have their
  * original varno, but Vars for other rels will have varno OUTER.
  *
@@ -1359,8 +1359,8 @@ set_returning_clause_references(List *rlist,
 
 	/*
 	 * We can perform the desired Var fixup by abusing the join_references
-	 * machinery that normally handles inner indexscan fixup.  We search
-	 * the top plan's targetlist for Vars of non-result relations, and use
+	 * machinery that normally handles inner indexscan fixup.  We search the
+	 * top plan's targetlist for Vars of non-result relations, and use
 	 * join_references to convert RETURNING Vars into references to those
 	 * tlist entries, while leaving result-rel Vars as-is.
 	 */

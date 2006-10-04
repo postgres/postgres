@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.40 2006/10/03 21:21:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.41 2006/10/04 00:29:50 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -58,7 +58,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	TypeName   *transType = NULL;
 	char	   *initval = NULL;
 	Oid		   *aggArgTypes;
-	int 		numArgs;
+	int			numArgs;
 	Oid			transTypeId;
 	ListCell   *pl;
 
@@ -122,8 +122,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	if (oldstyle)
 	{
 		/*
-		 * Old style: use basetype parameter.  This supports aggregates
-		 * of zero or one input, with input type ANY meaning zero inputs.
+		 * Old style: use basetype parameter.  This supports aggregates of
+		 * zero or one input, with input type ANY meaning zero inputs.
 		 *
 		 * Historically we allowed the command to look like basetype = 'ANY'
 		 * so we must do a case-insensitive comparison for the name ANY. Ugh.
@@ -150,8 +150,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 		/*
 		 * New style: args is a list of TypeNames (possibly zero of 'em).
 		 */
-		ListCell *lc;
-		int i = 0;
+		ListCell   *lc;
+		int			i = 0;
 
 		if (baseType != NULL)
 			ereport(ERROR,
@@ -162,7 +162,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 		aggArgTypes = (Oid *) palloc(sizeof(Oid) * numArgs);
 		foreach(lc, args)
 		{
-			TypeName *curTypeName = (TypeName *) lfirst(lc);
+			TypeName   *curTypeName = (TypeName *) lfirst(lc);
 
 			aggArgTypes[i++] = typenameTypeId(NULL, curTypeName);
 		}
@@ -171,9 +171,9 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	/*
 	 * look up the aggregate's transtype.
 	 *
-	 * transtype can't be a pseudo-type, since we need to be
-	 * able to store values of the transtype.  However, we can allow
-	 * polymorphic transtype in some cases (AggregateCreate will check).
+	 * transtype can't be a pseudo-type, since we need to be able to store
+	 * values of the transtype.  However, we can allow polymorphic transtype
+	 * in some cases (AggregateCreate will check).
 	 */
 	transTypeId = typenameTypeId(NULL, transType);
 	if (get_typtype(transTypeId) == 'p' &&
@@ -189,7 +189,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	 */
 	AggregateCreate(aggName,	/* aggregate name */
 					aggNamespace,		/* namespace */
-					aggArgTypes,		/* input data type(s) */
+					aggArgTypes,	/* input data type(s) */
 					numArgs,
 					transfuncName,		/* step function name */
 					finalfuncName,		/* final function name */
@@ -289,7 +289,7 @@ RenameAggregate(List *name, List *args, const char *newname)
 				 errmsg("function %s already exists in schema \"%s\"",
 						funcname_signature_string(newname,
 												  procForm->pronargs,
-												  procForm->proargtypes.values),
+											   procForm->proargtypes.values),
 						get_namespace_name(namespaceOid))));
 
 	/* must be owner */

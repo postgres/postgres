@@ -423,47 +423,50 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 			replace_type = PGTYPES_TYPE_NOTHING;
 			switch (*p)
 			{
-				/* the abbreviated name of the day in the week */
-				/* XXX should be locale aware */
+					/* the abbreviated name of the day in the week */
+					/* XXX should be locale aware */
 				case 'a':
 					replace_val.str_val = pgtypes_date_weekdays_short[dow];
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
-				/* the full name of the day in the week */
-				/* XXX should be locale aware */
+					/* the full name of the day in the week */
+					/* XXX should be locale aware */
 				case 'A':
 					replace_val.str_val = days[dow];
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
-				/* the abbreviated name of the month */
-				/* XXX should be locale aware */
+					/* the abbreviated name of the month */
+					/* XXX should be locale aware */
 				case 'b':
 				case 'h':
 					replace_val.str_val = months[tm->tm_mon];
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
-				/* the full name name of the month */
-				/* XXX should be locale aware */
+					/* the full name name of the month */
+					/* XXX should be locale aware */
 				case 'B':
 					replace_val.str_val = pgtypes_date_months[tm->tm_mon];
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
-				/* The  preferred  date  and  time  representation  for the
-				 * current locale. */
+
+					/*
+					 * The	preferred  date  and  time	representation	for
+					 * the current locale.
+					 */
 				case 'c':
 					/* XXX */
 					break;
-				/* the century number with leading zeroes */
+					/* the century number with leading zeroes */
 				case 'C':
 					replace_val.uint_val = tm->tm_year / 100;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
-				/* day with leading zeroes (01 - 31) */
+					/* day with leading zeroes (01 - 31) */
 				case 'd':
 					replace_val.uint_val = tm->tm_mday;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
-				/* the date in the format mm/dd/yy */
+					/* the date in the format mm/dd/yy */
 				case 'D':
 
 					/*
@@ -480,14 +483,15 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					if (i)
 						return i;
 					break;
-				/* day with leading spaces (01 - 31) */
+					/* day with leading spaces (01 - 31) */
 				case 'e':
 					replace_val.uint_val = tm->tm_mday;
 					replace_type = PGTYPES_TYPE_UINT_2_LS;
 					break;
-				/*
-				 * alternative format modifier
-				 */
+
+					/*
+					 * alternative format modifier
+					 */
 				case 'E':
 					{
 						char		tmp[4] = "%Ex";
@@ -496,7 +500,7 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 						if (*p == '\0')
 							return -1;
 						tmp[2] = *p;
-						
+
 						/*
 						 * strftime's month is 0 based, ours is 1 based
 						 */
@@ -513,10 +517,11 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 						replace_type = PGTYPES_TYPE_NOTHING;
 						break;
 					}
-				/*
-				 * The ISO 8601 year with century as a decimal number. The
-				 * 4-digit year corresponding to the ISO week number.
-				 */
+
+					/*
+					 * The ISO 8601 year with century as a decimal number. The
+					 * 4-digit year corresponding to the ISO week number.
+					 */
 				case 'G':
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%G", tm);
@@ -530,10 +535,11 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					tm->tm_mon += 1;
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
-				/*
-				 * Like %G, but without century, i.e., with a 2-digit year
-				 * (00-99).
-				 */
+
+					/*
+					 * Like %G, but without century, i.e., with a 2-digit year
+					 * (00-99).
+					 */
 				case 'g':
 					{
 						char	   *fmt = "%g"; /* Keep compiler quiet about
@@ -552,57 +558,60 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 						replace_type = PGTYPES_TYPE_NOTHING;
 					}
 					break;
-				/* hour (24 hour clock) with leading zeroes */
+					/* hour (24 hour clock) with leading zeroes */
 				case 'H':
 					replace_val.uint_val = tm->tm_hour;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
-				/* hour (12 hour clock) with leading zeroes */
+					/* hour (12 hour clock) with leading zeroes */
 				case 'I':
 					replace_val.uint_val = tm->tm_hour % 12;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
-				/*
-				 * The day of the year as a decimal number with leading zeroes.
-				 * It ranges from 001 to 366.
-				 */
+
+					/*
+					 * The day of the year as a decimal number with leading
+					 * zeroes. It ranges from 001 to 366.
+					 */
 				case 'j':
 					replace_val.uint_val = tm->tm_yday;
 					replace_type = PGTYPES_TYPE_UINT_3_LZ;
 					break;
-				/*
-				 * The hour (24 hour clock). Leading zeroes will be turned into
-				 * spaces.
-				 */
+
+					/*
+					 * The hour (24 hour clock). Leading zeroes will be turned
+					 * into spaces.
+					 */
 				case 'k':
 					replace_val.uint_val = tm->tm_hour;
 					replace_type = PGTYPES_TYPE_UINT_2_LS;
 					break;
-				/*
-				 * The hour (12 hour clock). Leading zeroes will be turned into
-				 * spaces.
-				 */
+
+					/*
+					 * The hour (12 hour clock). Leading zeroes will be turned
+					 * into spaces.
+					 */
 				case 'l':
 					replace_val.uint_val = tm->tm_hour % 12;
 					replace_type = PGTYPES_TYPE_UINT_2_LS;
 					break;
-				/* The month as a decimal number with a leading zero */
+					/* The month as a decimal number with a leading zero */
 				case 'm':
 					replace_val.uint_val = tm->tm_mon;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
-				/* The minute as a decimal number with a leading zero */
+					/* The minute as a decimal number with a leading zero */
 				case 'M':
 					replace_val.uint_val = tm->tm_min;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
-				/* A newline character */
+					/* A newline character */
 				case 'n':
 					replace_val.char_val = '\n';
 					replace_type = PGTYPES_TYPE_CHAR;
 					break;
-				/* the AM/PM specifier (uppercase) */
-				/* XXX should be locale aware */
+					/* the AM/PM specifier (uppercase) */
+					/* XXX should be locale aware */
 				case 'p':
 					if (tm->tm_hour < 12)
 						replace_val.str_val = "AM";
@@ -610,8 +619,8 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 						replace_val.str_val = "PM";
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
-				/* the AM/PM specifier (lowercase) */
-				/* XXX should be locale aware */
+					/* the AM/PM specifier (lowercase) */
+					/* XXX should be locale aware */
 				case 'P':
 					if (tm->tm_hour < 12)
 						replace_val.str_val = "am";
@@ -619,8 +628,8 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 						replace_val.str_val = "pm";
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
-				/* the time in the format %I:%M:%S %p */
-				/* XXX should be locale aware */
+					/* the time in the format %I:%M:%S %p */
+					/* XXX should be locale aware */
 				case 'r':
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
 										   q, pstr_len,
@@ -628,7 +637,7 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					if (i)
 						return i;
 					break;
-				/* The time in 24 hour notation (%H:%M) */
+					/* The time in 24 hour notation (%H:%M) */
 				case 'R':
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
 										   q, pstr_len,
@@ -636,7 +645,7 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					if (i)
 						return i;
 					break;
-				/* The number of seconds since the Epoch (1970-01-01) */
+					/* The number of seconds since the Epoch (1970-01-01) */
 				case 's':
 #ifdef HAVE_INT64_TIMESTAMP
 					replace_val.int64_val = (*ts - SetEpochTimestamp()) / 1000000.0;
@@ -646,17 +655,17 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_DOUBLE_NF;
 #endif
 					break;
-				/* seconds as a decimal number with leading zeroes */
+					/* seconds as a decimal number with leading zeroes */
 				case 'S':
 					replace_val.uint_val = tm->tm_sec;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
-				/* A tabulator */
+					/* A tabulator */
 				case 't':
 					replace_val.char_val = '\t';
 					replace_type = PGTYPES_TYPE_CHAR;
 					break;
-				/* The time in 24 hour notation (%H:%M:%S) */
+					/* The time in 24 hour notation (%H:%M:%S) */
 				case 'T':
 					i = dttofmtasc_replace(ts, dDate, dow, tm,
 										   q, pstr_len,
@@ -664,14 +673,18 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					if (i)
 						return i;
 					break;
-				/* The day of the week as a decimal, Monday = 1, Sunday = 7 */
+
+					/*
+					 * The day of the week as a decimal, Monday = 1, Sunday =
+					 * 7
+					 */
 				case 'u':
 					replace_val.uint_val = dow;
 					if (replace_val.uint_val == 0)
 						replace_val.uint_val = 7;
 					replace_type = PGTYPES_TYPE_UINT;
 					break;
-				/* The week number of the year as a decimal number */
+					/* The week number of the year as a decimal number */
 				case 'U':
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%U", tm);
@@ -685,10 +698,11 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					tm->tm_mon += 1;
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
-				/*
-				 * The ISO 8601:1988 week number of the current year as a
-				 * decimal number.
-				 */
+
+					/*
+					 * The ISO 8601:1988 week number of the current year as a
+					 * decimal number.
+					 */
 				case 'V':
 					i = strftime(q, *pstr_len, "%V", tm);
 					if (i == 0)
@@ -700,15 +714,16 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					}
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
-				/*
-				 * The day of the week as a decimal, Sunday being 0 and
-				 * Monday 1.
-				 */
+
+					/*
+					 * The day of the week as a decimal, Sunday being 0 and
+					 * Monday 1.
+					 */
 				case 'w':
 					replace_val.uint_val = dow;
 					replace_type = PGTYPES_TYPE_UINT;
 					break;
-				/* The week number of the year (another definition) */
+					/* The week number of the year (another definition) */
 				case 'W':
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%U", tm);
@@ -722,10 +737,11 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					tm->tm_mon += 1;
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
-				/*
-				 * The preferred date representation for the current locale
-				 * without the time.
-				 */
+
+					/*
+					 * The preferred date representation for the current
+					 * locale without the time.
+					 */
 				case 'x':
 					{
 						char	   *fmt = "%x"; /* Keep compiler quiet about
@@ -744,10 +760,11 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 						replace_type = PGTYPES_TYPE_NOTHING;
 					}
 					break;
-				/*
-				 * The preferred time representation for the current locale
-				 * without the date.
-				 */
+
+					/*
+					 * The preferred time representation for the current
+					 * locale without the date.
+					 */
 				case 'X':
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%X", tm);
@@ -761,17 +778,17 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					tm->tm_mon += 1;
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
-				/* The year without the century (2 digits, leading zeroes) */
+					/* The year without the century (2 digits, leading zeroes) */
 				case 'y':
 					replace_val.uint_val = tm->tm_year % 100;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
-				/* The year with the century (4 digits) */
+					/* The year with the century (4 digits) */
 				case 'Y':
 					replace_val.uint_val = tm->tm_year;
 					replace_type = PGTYPES_TYPE_UINT;
 					break;
-				/* The time zone offset from GMT */
+					/* The time zone offset from GMT */
 				case 'z':
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%z", tm);
@@ -785,7 +802,7 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					tm->tm_mon += 1;
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
-				/* The name or abbreviation of the time zone */
+					/* The name or abbreviation of the time zone */
 				case 'Z':
 					tm->tm_mon -= 1;
 					i = strftime(q, *pstr_len, "%Z", tm);
@@ -799,18 +816,20 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 					tm->tm_mon += 1;
 					replace_type = PGTYPES_TYPE_NOTHING;
 					break;
-				/* A % sign */
+					/* A % sign */
 				case '%':
 					replace_val.char_val = '%';
 					replace_type = PGTYPES_TYPE_CHAR;
 					break;
 				case '\0':
 					/* fmtstr: foo%' - The string ends with a % sign */
+
 					/*
 					 * this is not compliant to the specification
 					 */
 					return -1;
 				default:
+
 					/*
 					 * if we don't know the pattern, we just copy it
 					 */

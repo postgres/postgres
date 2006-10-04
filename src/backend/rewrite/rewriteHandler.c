@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.166 2006/09/02 17:06:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.167 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,13 +43,13 @@ static Query *rewriteRuleAction(Query *parsetree,
 				  bool *returning_flag);
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void rewriteTargetList(Query *parsetree, Relation target_relation,
-							  List **attrno_list);
+				  List **attrno_list);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 					TargetEntry *prior_tle,
 					const char *attrName);
 static Node *get_assignment_input(Node *node);
 static void rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation,
-							 List *attrnos);
+				 List *attrnos);
 static void markQueryForLocking(Query *qry, bool forUpdate, bool noWait,
 					bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
@@ -431,10 +431,10 @@ rewriteRuleAction(Query *parsetree,
 	}
 
 	/*
-	 * If rule_action has a RETURNING clause, then either throw it away
-	 * if the triggering query has no RETURNING clause, or rewrite it to
-	 * emit what the triggering query's RETURNING clause asks for.  Throw
-	 * an error if more than one rule has a RETURNING clause.
+	 * If rule_action has a RETURNING clause, then either throw it away if the
+	 * triggering query has no RETURNING clause, or rewrite it to emit what
+	 * the triggering query's RETURNING clause asks for.  Throw an error if
+	 * more than one rule has a RETURNING clause.
 	 */
 	if (!parsetree->returningList)
 		rule_action->returningList = NIL;
@@ -443,7 +443,7 @@ rewriteRuleAction(Query *parsetree,
 		if (*returning_flag)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot have RETURNING lists in multiple rules")));
+				   errmsg("cannot have RETURNING lists in multiple rules")));
 		*returning_flag = true;
 		rule_action->returningList = (List *)
 			ResolveNew((Node *) parsetree->returningList,
@@ -907,12 +907,12 @@ searchForDefault(RangeTblEntry *rte)
 
 	foreach(lc, rte->values_lists)
 	{
-		List   *sublist = (List *) lfirst(lc);
-		ListCell *lc2;
+		List	   *sublist = (List *) lfirst(lc);
+		ListCell   *lc2;
 
 		foreach(lc2, sublist)
 		{
-			Node  *col = (Node *) lfirst(lc2);
+			Node	   *col = (Node *) lfirst(lc2);
 
 			if (IsA(col, SetToDefault))
 				return true;
@@ -952,15 +952,15 @@ rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
 	newValues = NIL;
 	foreach(lc, rte->values_lists)
 	{
-		List   *sublist = (List *) lfirst(lc);
-		List   *newList = NIL;
-		ListCell *lc2;
-		ListCell *lc3;
+		List	   *sublist = (List *) lfirst(lc);
+		List	   *newList = NIL;
+		ListCell   *lc2;
+		ListCell   *lc3;
 
 		forboth(lc2, sublist, lc3, attrnos)
 		{
-			Node  *col = (Node *) lfirst(lc2);
-			int		attrno = lfirst_int(lc3);
+			Node	   *col = (Node *) lfirst(lc2);
+			int			attrno = lfirst_int(lc3);
 
 			if (IsA(col, SetToDefault))
 			{
@@ -972,7 +972,7 @@ rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
 				if (!att_tup->attisdropped)
 					new_expr = build_column_default(target_relation, attrno);
 				else
-					new_expr = NULL;		/* force a NULL if dropped */
+					new_expr = NULL;	/* force a NULL if dropped */
 
 				/*
 				 * If there is no default (ie, default is effectively NULL),
@@ -1548,8 +1548,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 			RangeTblEntry *values_rte = NULL;
 
 			/*
-			 * If it's an INSERT ... VALUES (...), (...), ...
-			 * there will be a single RTE for the VALUES targetlists.
+			 * If it's an INSERT ... VALUES (...), (...), ... there will be a
+			 * single RTE for the VALUES targetlists.
 			 */
 			if (list_length(parsetree->jointree->fromlist) == 1)
 			{
@@ -1567,7 +1567,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 
 			if (values_rte)
 			{
-				List   *attrnos;
+				List	   *attrnos;
 
 				/* Process the main targetlist ... */
 				rewriteTargetList(parsetree, rt_entry_relation, &attrnos);
@@ -1638,11 +1638,11 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		}
 
 		/*
-		 * If there is an INSTEAD, and the original query has a RETURNING,
-		 * we have to have found a RETURNING in the rule(s), else fail.
-		 * (Because DefineQueryRewrite only allows RETURNING in unconditional
-		 * INSTEAD rules, there's no need to worry whether the substituted
-		 * RETURNING will actually be executed --- it must be.)
+		 * If there is an INSTEAD, and the original query has a RETURNING, we
+		 * have to have found a RETURNING in the rule(s), else fail. (Because
+		 * DefineQueryRewrite only allows RETURNING in unconditional INSTEAD
+		 * rules, there's no need to worry whether the substituted RETURNING
+		 * will actually be executed --- it must be.)
 		 */
 		if ((instead || qual_product != NULL) &&
 			parsetree->returningList &&
@@ -1653,22 +1653,22 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				case CMD_INSERT:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot INSERT RETURNING on relation \"%s\"",
-									RelationGetRelationName(rt_entry_relation)),
+						 errmsg("cannot INSERT RETURNING on relation \"%s\"",
+								RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause.")));
 					break;
 				case CMD_UPDATE:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot UPDATE RETURNING on relation \"%s\"",
-									RelationGetRelationName(rt_entry_relation)),
+						 errmsg("cannot UPDATE RETURNING on relation \"%s\"",
+								RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON UPDATE DO INSTEAD rule with a RETURNING clause.")));
 					break;
 				case CMD_DELETE:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot DELETE RETURNING on relation \"%s\"",
-									RelationGetRelationName(rt_entry_relation)),
+						 errmsg("cannot DELETE RETURNING on relation \"%s\"",
+								RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON DELETE DO INSTEAD rule with a RETURNING clause.")));
 					break;
 				default:

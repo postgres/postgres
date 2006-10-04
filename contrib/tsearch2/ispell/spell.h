@@ -42,8 +42,8 @@ typedef struct spell_struct
 			int			affix;
 			int			len;
 		}			d;
-	}	p;
-	char	word[1];
+	}			p;
+	char		word[1];
 }	SPELL;
 
 #define SPELLHDRSZ	(offsetof(SPELL, word))
@@ -110,7 +110,7 @@ typedef struct
 
 	int			nspell;
 	int			mspell;
-	SPELL	   **Spell;
+	SPELL	  **Spell;
 
 	AffixNode  *Suffix;
 	AffixNode  *Prefix;

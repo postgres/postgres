@@ -164,16 +164,19 @@ get_oidnamespace(Oid funcoid)
 	return nspoid;
 }
 
-    /* if path is relative, take it as relative to share dir */
+ /* if path is relative, take it as relative to share dir */
 char *
-to_absfilename(char *filename) {
-	if (!is_absolute_path(filename)) {
-		char        sharepath[MAXPGPATH];
-		char       *absfn;
-#ifdef  WIN32
-		char    delim = '\\';
+to_absfilename(char *filename)
+{
+	if (!is_absolute_path(filename))
+	{
+		char		sharepath[MAXPGPATH];
+		char	   *absfn;
+
+#ifdef	WIN32
+		char		delim = '\\';
 #else
-		char    delim = '/';
+		char		delim = '/';
 #endif
 		get_share_path(my_exec_path, sharepath);
 		absfn = palloc(strlen(sharepath) + strlen(filename) + 2);

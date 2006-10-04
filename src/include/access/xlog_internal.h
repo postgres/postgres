@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.16 2006/08/17 23:04:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.17 2006/10/04 00:30:07 momjian Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -239,7 +239,7 @@ typedef struct RmgrData
 
 extern const RmgrData RmgrTable[];
 
-/* 
+/*
  * Exported to support xlog switching from bgwriter
  */
 extern time_t GetLastSegSwitchTime(void);

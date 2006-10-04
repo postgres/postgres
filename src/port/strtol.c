@@ -52,7 +52,7 @@ static char sccsid[] = "@(#)strtol.c	5.4 (Berkeley) 2/23/91";
  *	before calling this function, and then errno != 0 can be tested
  *	after the function completes.
  */
- 
+
 /*
  * Convert a string to a long integer.
  *

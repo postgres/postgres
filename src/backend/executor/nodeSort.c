@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.57 2006/06/27 16:53:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.58 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,9 +158,9 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	sortstate->ss.ps.state = estate;
 
 	/*
-	 * We must have random access to the sort output to do backward scan
-	 * or mark/restore.  We also prefer to materialize the sort output
-	 * if we might be called on to rewind and replay it many times.
+	 * We must have random access to the sort output to do backward scan or
+	 * mark/restore.  We also prefer to materialize the sort output if we
+	 * might be called on to rewind and replay it many times.
 	 */
 	sortstate->randomAccess = (eflags & (EXEC_FLAG_REWIND |
 										 EXEC_FLAG_BACKWARD |
@@ -189,8 +189,8 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	/*
 	 * initialize child nodes
 	 *
-	 * We shield the child node from the need to support REWIND, BACKWARD,
-	 * or MARK/RESTORE.
+	 * We shield the child node from the need to support REWIND, BACKWARD, or
+	 * MARK/RESTORE.
 	 */
 	eflags &= ~(EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK);
 
@@ -316,6 +316,7 @@ ExecReScanSort(SortState *node, ExprContext *exprCtxt)
 		node->sort_Done = false;
 		tuplesort_end((Tuplesortstate *) node->tuplesortstate);
 		node->tuplesortstate = NULL;
+
 		/*
 		 * if chgParam of subnode is not null then plan will be re-scanned by
 		 * first ExecProcNode.

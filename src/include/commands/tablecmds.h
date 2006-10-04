@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.30 2006/07/31 01:16:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablecmds.h,v 1.31 2006/10/04 00:30:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,8 @@ extern void renameatt(Oid myrelid,
 extern void renamerel(Oid myrelid,
 		  const char *newrelname);
 
-extern AttrNumber * varattnos_map(TupleDesc old, TupleDesc new);
-extern AttrNumber * varattnos_map_schema(TupleDesc old, List *schema);
+extern AttrNumber *varattnos_map(TupleDesc old, TupleDesc new);
+extern AttrNumber *varattnos_map_schema(TupleDesc old, List *schema);
 extern void change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
 
 extern void register_on_commit_action(Oid relid, OnCommitAction action);

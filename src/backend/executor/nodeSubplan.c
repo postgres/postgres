@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.79 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.80 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,8 +332,8 @@ ExecScanSubPlan(SubPlanState *node,
 
 		/*
 		 * For ALL, ANY, and ROWCOMPARE sublinks, load up the Params
-		 * representing the columns of the sub-select, and then evaluate
-		 * the combining expression.
+		 * representing the columns of the sub-select, and then evaluate the
+		 * combining expression.
 		 */
 		col = 1;
 		foreach(plst, subplan->paramIds)
@@ -434,8 +434,8 @@ buildSubPlanHash(SubPlanState *node)
 	 * NULL) results of the IN operation, then we have to store subplan output
 	 * rows that are partly or wholly NULL.  We store such rows in a separate
 	 * hash table that we expect will be much smaller than the main table. (We
-	 * can use hashing to eliminate partly-null rows that are not distinct.
-	 * We keep them separate to minimize the cost of the inevitable full-table
+	 * can use hashing to eliminate partly-null rows that are not distinct. We
+	 * keep them separate to minimize the cost of the inevitable full-table
 	 * searches; see findPartialMatch.)
 	 *
 	 * If it's not necessary to distinguish FALSE and UNKNOWN, then we don't
@@ -682,9 +682,9 @@ ExecInitSubPlan(SubPlanState *node, EState *estate, int eflags)
 	/*
 	 * Start up the subplan (this is a very cut-down form of InitPlan())
 	 *
-	 * The subplan will never need to do BACKWARD scan or MARK/RESTORE.
-	 * If it is a parameterless subplan (not initplan), we suggest that it
-	 * be prepared to handle REWIND efficiently; otherwise there is no need.
+	 * The subplan will never need to do BACKWARD scan or MARK/RESTORE. If it
+	 * is a parameterless subplan (not initplan), we suggest that it be
+	 * prepared to handle REWIND efficiently; otherwise there is no need.
 	 */
 	eflags &= EXEC_FLAG_EXPLAIN_ONLY;
 	if (subplan->parParam == NIL && subplan->setParam == NIL)

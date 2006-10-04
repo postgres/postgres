@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.91 2006/09/05 21:08:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.92 2006/10/04 00:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,11 +261,12 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
  * If the comment given is null or an empty string, instead delete any
  * existing comment for the specified key.
  */
-void CreateSharedComments(Oid oid, Oid classoid, char *comment)
+void
+CreateSharedComments(Oid oid, Oid classoid, char *comment)
 {
 	Relation	shdescription;
-	ScanKeyData	skey[2];
-	SysScanDesc	sd;
+	ScanKeyData skey[2];
+	SysScanDesc sd;
 	HeapTuple	oldtuple;
 	HeapTuple	newtuple = NULL;
 	Datum		values[Natts_pg_shdescription];
@@ -294,18 +295,18 @@ void CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	/* Use the index to search for a matching old tuple */
 
 	ScanKeyInit(&skey[0],
-			Anum_pg_shdescription_objoid,
-			BTEqualStrategyNumber, F_OIDEQ,
-			ObjectIdGetDatum(oid));
+				Anum_pg_shdescription_objoid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(oid));
 	ScanKeyInit(&skey[1],
-			Anum_pg_shdescription_classoid,
-			BTEqualStrategyNumber, F_OIDEQ,
-			ObjectIdGetDatum(classoid));
+				Anum_pg_shdescription_classoid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classoid));
 
 	shdescription = heap_open(SharedDescriptionRelationId, RowExclusiveLock);
 
 	sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
-			SnapshotNow, 2, skey);
+							SnapshotNow, 2, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
 	{
@@ -316,11 +317,11 @@ void CreateSharedComments(Oid oid, Oid classoid, char *comment)
 		else
 		{
 			newtuple = heap_modifytuple(oldtuple, RelationGetDescr(shdescription),
-					values, nulls, replaces);
+										values, nulls, replaces);
 			simple_heap_update(shdescription, &oldtuple->t_self, newtuple);
 		}
 
-		break;	/* Assume there can be only one match */
+		break;					/* Assume there can be only one match */
 	}
 
 	systable_endscan(sd);
@@ -330,7 +331,7 @@ void CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	if (newtuple == NULL && comment != NULL)
 	{
 		newtuple = heap_formtuple(RelationGetDescr(shdescription),
-				values, nulls);
+								  values, nulls);
 		simple_heap_insert(shdescription, newtuple);
 	}
 
@@ -405,25 +406,25 @@ void
 DeleteSharedComments(Oid oid, Oid classoid)
 {
 	Relation	shdescription;
-	ScanKeyData	skey[2];
-	SysScanDesc	sd;
+	ScanKeyData skey[2];
+	SysScanDesc sd;
 	HeapTuple	oldtuple;
 
 	/* Use the index to search for all matching old tuples */
 
 	ScanKeyInit(&skey[0],
-			Anum_pg_shdescription_objoid,
-			BTEqualStrategyNumber, F_OIDEQ,
-			ObjectIdGetDatum(oid));
+				Anum_pg_shdescription_objoid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(oid));
 	ScanKeyInit(&skey[1],
-			Anum_pg_shdescription_classoid,
-			BTEqualStrategyNumber, F_OIDEQ,
-			ObjectIdGetDatum(classoid));
+				Anum_pg_shdescription_classoid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classoid));
 
 	shdescription = heap_open(SharedDescriptionRelationId, RowExclusiveLock);
 
 	sd = systable_beginscan(shdescription, SharedDescriptionObjIndexId, true,
-			SnapshotNow, 2, skey);
+							SnapshotNow, 2, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
 		simple_heap_delete(shdescription, &oldtuple->t_self);
@@ -620,8 +621,8 @@ CommentDatabase(List *qualname, char *comment)
 static void
 CommentTablespace(List *qualname, char *comment)
 {
-	char	*tablespace;
-	Oid		oid;
+	char	   *tablespace;
+	Oid			oid;
 
 	if (list_length(qualname) != 1)
 		ereport(ERROR,
@@ -657,8 +658,8 @@ CommentTablespace(List *qualname, char *comment)
 static void
 CommentRole(List *qualname, char *comment)
 {
-	char *role;
-	Oid oid;
+	char	   *role;
+	Oid			oid;
 
 	if (list_length(qualname) != 1)
 		ereport(ERROR,
@@ -672,7 +673,7 @@ CommentRole(List *qualname, char *comment)
 	if (!has_privs_of_role(GetUserId(), oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be member of role \"%s\" to comment upon it", role)));
+		  errmsg("must be member of role \"%s\" to comment upon it", role)));
 
 	/* Call CreateSharedComments() to create/drop the comments */
 	CreateSharedComments(oid, AuthIdRelationId, comment);

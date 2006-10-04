@@ -3,12 +3,12 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.172 2006/08/29 15:19:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.173 2006/10/04 00:30:05 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
 
-#ifdef __BORLANDC__		/* needed for BCC */
+#ifdef __BORLANDC__				/* needed for BCC */
 #undef mkdir
 #endif
 
@@ -157,17 +157,17 @@ HandleSlashCmds(PsqlScanState scan_state,
 static char *
 read_connect_arg(PsqlScanState scan_state)
 {
-	char *result;
-	char  quote;
+	char	   *result;
+	char		quote;
 
 	/*
-	 * Ideally we should treat the arguments as SQL identifiers.  But
-	 * for backwards compatibility with 7.2 and older pg_dump files,
-	 * we have to take unquoted arguments verbatim (don't downcase
-	 * them). For now, double-quoted arguments may be stripped of
-	 * double quotes (as if SQL identifiers).  By 7.4 or so, pg_dump
-	 * files can be expected to double-quote all mixed-case \connect
-	 * arguments, and then we can get rid of OT_SQLIDHACK.
+	 * Ideally we should treat the arguments as SQL identifiers.  But for
+	 * backwards compatibility with 7.2 and older pg_dump files, we have to
+	 * take unquoted arguments verbatim (don't downcase them). For now,
+	 * double-quoted arguments may be stripped of double quotes (as if SQL
+	 * identifiers).  By 7.4 or so, pg_dump files can be expected to
+	 * double-quote all mixed-case \connect arguments, and then we can get rid
+	 * of OT_SQLIDHACK.
 	 */
 	result = psql_scan_slash_option(scan_state, OT_SQLIDHACK, &quote, true);
 
@@ -182,7 +182,7 @@ read_connect_arg(PsqlScanState scan_state)
 
 	return result;
 }
-	
+
 
 /*
  * Subroutine to actually try to execute a backslash command.
@@ -223,17 +223,15 @@ exec_command(const char *cmd,
 	 *
 	 * \c dbname user host port
 	 *
-	 * If any of these parameters are omitted or specified as '-', the
-	 * current value of the parameter will be used instead. If the
-	 * parameter has no current value, the default value for that
-	 * parameter will be used. Some examples:
+	 * If any of these parameters are omitted or specified as '-', the current
+	 * value of the parameter will be used instead. If the parameter has no
+	 * current value, the default value for that parameter will be used. Some
+	 * examples:
 	 *
-	 * \c - - hst		Connect to current database on current port of
-	 *					host "hst" as current user.
-	 * \c - usr - prt	Connect to current database on "prt" port of current
-	 *					host as user "usr".
-	 * \c dbs			Connect to "dbs" database on current port of current
-	 *					host as current user.
+	 * \c - - hst		Connect to current database on current port of host
+	 * "hst" as current user. \c - usr - prt   Connect to current database on
+	 * "prt" port of current host as user "usr". \c dbs			  Connect to
+	 * "dbs" database on current port of current host as current user.
 	 */
 	else if (strcmp(cmd, "c") == 0 || strcmp(cmd, "connect") == 0)
 	{
@@ -970,13 +968,13 @@ exec_command(const char *cmd,
 static char *
 prompt_for_password(const char *username)
 {
-	char *result;
+	char	   *result;
 
 	if (username == NULL)
 		result = simple_prompt("Password: ", 100, false);
 	else
 	{
-		char *prompt_text;
+		char	   *prompt_text;
 
 		prompt_text = malloc(strlen(username) + 32);
 		sprintf(prompt_text, "Password for user \"%s\": ", username);
@@ -1013,9 +1011,9 @@ param_is_newly_set(const char *old_val, const char *new_val)
 static bool
 do_connect(char *dbname, char *user, char *host, char *port)
 {
-	PGconn		*o_conn = pset.db,
-				*n_conn;
-	char		*password = NULL;
+	PGconn	   *o_conn = pset.db,
+			   *n_conn;
+	char	   *password = NULL;
 
 	if (!dbname)
 		dbname = PQdb(o_conn);
@@ -1027,15 +1025,14 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		port = PQport(o_conn);
 
 	/*
-	 * If the user asked to be prompted for a password, ask for one
-	 * now. If not, use the password from the old connection, provided
-	 * the username has not changed. Otherwise, try to connect without
-	 * a password first, and then ask for a password if we got the
-	 * appropriate error message.
+	 * If the user asked to be prompted for a password, ask for one now. If
+	 * not, use the password from the old connection, provided the username
+	 * has not changed. Otherwise, try to connect without a password first,
+	 * and then ask for a password if we got the appropriate error message.
 	 *
-	 * XXX: this behavior is broken. It leads to spurious connection
-	 * attempts in the postmaster's log, and doing a string comparison
-	 * against the returned error message is pretty fragile.
+	 * XXX: this behavior is broken. It leads to spurious connection attempts
+	 * in the postmaster's log, and doing a string comparison against the
+	 * returned error message is pretty fragile.
 	 */
 	if (pset.getPassword)
 	{
@@ -1059,8 +1056,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 			break;
 
 		/*
-		 * Connection attempt failed; either retry the connection
-		 * attempt with a new password, or give up.
+		 * Connection attempt failed; either retry the connection attempt with
+		 * a new password, or give up.
 		 */
 		if (strcmp(PQerrorMessage(n_conn), PQnoPasswordSupplied) == 0)
 		{
@@ -1070,9 +1067,9 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		}
 
 		/*
-		 * Failed to connect to the database. In interactive mode,
-		 * keep the previous connection to the DB; in scripting mode,
-		 * close our previous connection as well.
+		 * Failed to connect to the database. In interactive mode, keep the
+		 * previous connection to the DB; in scripting mode, close our
+		 * previous connection as well.
 		 */
 		if (pset.cur_cmd_interactive)
 		{
@@ -1375,7 +1372,7 @@ process_file(char *filename, bool single_txn)
 	FILE	   *fd;
 	int			result;
 	char	   *oldfilename;
-	PGresult   *res; 
+	PGresult   *res;
 
 	if (!filename)
 		return EXIT_FAILURE;
@@ -1392,11 +1389,11 @@ process_file(char *filename, bool single_txn)
 	oldfilename = pset.inputfile;
 	pset.inputfile = filename;
 
-    if (single_txn)
-        res = PSQLexec("BEGIN", false);
+	if (single_txn)
+		res = PSQLexec("BEGIN", false);
 	result = MainLoop(fd);
-    if (single_txn)
-        res = PSQLexec("COMMIT", false);
+	if (single_txn)
+		res = PSQLexec("COMMIT", false);
 
 	fclose(fd);
 	pset.inputfile = oldfilename;

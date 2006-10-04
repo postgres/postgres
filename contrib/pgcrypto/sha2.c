@@ -33,7 +33,7 @@
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.7 2006/07/13 04:15:25 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.8 2006/10/04 00:29:46 momjian Exp $
  */
 
 #include "postgres.h"
@@ -534,7 +534,7 @@ SHA256_Update(SHA256_CTX * context, const uint8 *data, size_t len)
 }
 
 static void
-SHA256_Last(SHA256_CTX *context)
+SHA256_Last(SHA256_CTX * context)
 {
 	unsigned int usedspace;
 
@@ -1023,4 +1023,3 @@ SHA224_Final(uint8 digest[], SHA224_CTX * context)
 	/* Clean up state data: */
 	memset(context, 0, sizeof(*context));
 }
-

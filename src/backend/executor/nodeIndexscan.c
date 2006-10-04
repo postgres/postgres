@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.116 2006/07/31 20:09:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.117 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,9 +233,9 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 		bool		isNull;
 
 		/*
-		 * For each run-time key, extract the run-time expression and
-		 * evaluate it with respect to the current outer tuple.  We then stick
-		 * the result into the proper scan key.
+		 * For each run-time key, extract the run-time expression and evaluate
+		 * it with respect to the current outer tuple.	We then stick the
+		 * result into the proper scan key.
 		 *
 		 * Note: the result of the eval could be a pass-by-ref value that's
 		 * stored in the outer scan's tuple, not in
@@ -290,8 +290,8 @@ ExecIndexEvalArrayKeys(ExprContext *econtext,
 		bool	   *elem_nulls;
 
 		/*
-		 * Compute and deconstruct the array expression.
-		 * (Notes in ExecIndexEvalRuntimeKeys() apply here too.)
+		 * Compute and deconstruct the array expression. (Notes in
+		 * ExecIndexEvalRuntimeKeys() apply here too.)
 		 */
 		arraydatum = ExecEvalExpr(array_expr,
 								  econtext,
@@ -317,8 +317,9 @@ ExecIndexEvalArrayKeys(ExprContext *econtext,
 		}
 
 		/*
-		 * Note: we expect the previous array data, if any, to be automatically
-		 * freed by resetting the per-tuple context; hence no pfree's here.
+		 * Note: we expect the previous array data, if any, to be
+		 * automatically freed by resetting the per-tuple context; hence no
+		 * pfree's here.
 		 */
 		arrayKeys[j].elem_values = elem_values;
 		arrayKeys[j].elem_nulls = elem_nulls;
@@ -524,7 +525,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 */
 	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
 	indexstate->iss_RelationDesc = index_open(node->indexid,
-									relistarget ? NoLock : AccessShareLock);
+									 relistarget ? NoLock : AccessShareLock);
 
 	/*
 	 * Initialize index-specific scan state
@@ -543,7 +544,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 						   &indexstate->iss_NumScanKeys,
 						   &indexstate->iss_RuntimeKeys,
 						   &indexstate->iss_NumRuntimeKeys,
-						   NULL,				/* no ArrayKeys */
+						   NULL,	/* no ArrayKeys */
 						   NULL);
 
 	/*
@@ -661,7 +662,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 	/*
 	 * If there are any RowCompareExpr quals, we need extra ScanKey entries
 	 * for them, and possibly extra runtime-key entries.  Count up what's
-	 * needed.  (The subsidiary ScanKey arrays for the RowCompareExprs could
+	 * needed.	(The subsidiary ScanKey arrays for the RowCompareExprs could
 	 * be allocated as separate chunks, but we have to count anyway to make
 	 * runtime_keys large enough, so might as well just do one palloc.)
 	 */
@@ -784,9 +785,9 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 		{
 			/* (indexkey, indexkey, ...) op (expression, expression, ...) */
 			RowCompareExpr *rc = (RowCompareExpr *) clause;
-			ListCell *largs_cell = list_head(rc->largs);
-			ListCell *rargs_cell = list_head(rc->rargs);
-			ListCell *opnos_cell = list_head(rc->opnos);
+			ListCell   *largs_cell = list_head(rc->largs);
+			ListCell   *rargs_cell = list_head(rc->rargs);
+			ListCell   *opnos_cell = list_head(rc->opnos);
 			ScanKey		first_sub_key = &scan_keys[extra_scan_keys];
 
 			/* Scan RowCompare columns and generate subsidiary ScanKey items */
@@ -859,7 +860,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				opclass = index->rd_indclass->values[varattno - 1];
 
 				get_op_opclass_properties(opno, opclass,
-									&op_strategy, &op_subtype, &op_recheck);
+									 &op_strategy, &op_subtype, &op_recheck);
 
 				if (op_strategy != rc->rctype)
 					elog(ERROR, "RowCompare index qualification contains wrong operator");
@@ -871,11 +872,11 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				 */
 				ScanKeyEntryInitialize(this_sub_key,
 									   flags,
-									   varattno,	/* attribute number */
-									   op_strategy,	/* op's strategy */
-									   op_subtype,	/* strategy subtype */
-									   opfuncid,	/* reg proc to use */
-									   scanvalue);	/* constant */
+									   varattno,		/* attribute number */
+									   op_strategy,		/* op's strategy */
+									   op_subtype,		/* strategy subtype */
+									   opfuncid,		/* reg proc to use */
+									   scanvalue);		/* constant */
 				extra_scan_keys++;
 			}
 
@@ -883,8 +884,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 			scan_keys[extra_scan_keys - 1].sk_flags |= SK_ROW_END;
 
 			/*
-			 * We don't use ScanKeyEntryInitialize for the header because
-			 * it isn't going to contain a valid sk_func pointer.
+			 * We don't use ScanKeyEntryInitialize for the header because it
+			 * isn't going to contain a valid sk_func pointer.
 			 */
 			MemSet(this_scan_key, 0, sizeof(ScanKeyData));
 			this_scan_key->sk_flags = SK_ROW_HEADER;
@@ -937,7 +938,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 			 * initialize the scan key's fields appropriately
 			 */
 			ScanKeyEntryInitialize(this_scan_key,
-								   0,			/* flags */
+								   0,	/* flags */
 								   varattno,	/* attribute number to scan */
 								   strategy,	/* op's strategy */
 								   subtype,		/* strategy subtype */

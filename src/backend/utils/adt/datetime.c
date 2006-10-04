@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.171 2006/09/16 20:14:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.172 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
  */
 static datetkn *timezonetktbl = NULL;
 
-static int sztimezonetktbl = 0;
+static int	sztimezonetktbl = 0;
 
 static const datetkn datetktbl[] = {
 /*	text, token, lexval */
@@ -176,7 +176,7 @@ static const datetkn datetktbl[] = {
 	{YESTERDAY, RESERV, DTK_YESTERDAY}, /* yesterday midnight */
 };
 
-static int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
+static int	szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
 static datetkn deltatktbl[] = {
 	/* text, token, lexval */
@@ -246,7 +246,7 @@ static datetkn deltatktbl[] = {
 	{"yrs", UNITS, DTK_YEAR},	/* "years" relative */
 };
 
-static int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
+static int	szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
 static const datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
@@ -562,12 +562,19 @@ ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 				if (*cp == '/')
 				{
 					ftype[nf] = DTK_TZ;
-					/* set the first character of the region to upper case
-					 * again*/
+
+					/*
+					 * set the first character of the region to upper case
+					 * again
+					 */
 					field[nf][0] = pg_toupper((unsigned char) field[nf][0]);
-					/* we have seen "Region/" of a POSIX timezone, continue to
-					 * read the City part */
-					do {
+
+					/*
+					 * we have seen "Region/" of a POSIX timezone, continue to
+					 * read the City part
+					 */
+					do
+					{
 						APPEND_CHAR(bufp, bufend, *cp++);
 						/* there is for example America/New_York */
 					} while (isalpha((unsigned char) *cp) || *cp == '_');
@@ -1303,13 +1310,14 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 		if (zicTzFnum != -1)
 		{
-			Datum tsTz;
-			Timestamp timestamp;
+			Datum		tsTz;
+			Timestamp	timestamp;
+
 			tm2timestamp(tm, *fsec, NULL, &timestamp);
 			tsTz = DirectFunctionCall2(timestamp_zone,
-							DirectFunctionCall1(textin,
-											CStringGetDatum(field[zicTzFnum])),
-							TimestampGetDatum(timestamp));
+									   DirectFunctionCall1(textin,
+										  CStringGetDatum(field[zicTzFnum])),
+									   TimestampGetDatum(timestamp));
 			timestamp2tm(DatumGetTimestampTz(tsTz), tzp, tm, fsec, NULL, NULL);
 			fmask &= ~DTK_M(TZ);
 		}
@@ -2920,7 +2928,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						tm->tm_mday += val * 7;
 						if (fval != 0)
 						{
-							int extra_days;
+							int			extra_days;
+
 							fval *= 7;
 							extra_days = (int32) fval;
 							tm->tm_mday += extra_days;
@@ -2928,6 +2937,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 							if (fval != 0)
 							{
 								int			sec;
+
 								fval *= SECS_PER_DAY;
 								sec = fval;
 								tm->tm_sec += sec;
@@ -2945,7 +2955,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						tm->tm_mon += val;
 						if (fval != 0)
 						{
-							int         day;
+							int			day;
+
 							fval *= DAYS_PER_MONTH;
 							day = fval;
 							tm->tm_mday += day;
@@ -2953,6 +2964,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 							if (fval != 0)
 							{
 								int			sec;
+
 								fval *= SECS_PER_DAY;
 								sec = fval;
 								tm->tm_sec += sec;
@@ -3808,7 +3820,7 @@ CheckDateTokenTables(void)
 void
 InstallTimeZoneAbbrevs(tzEntry *abbrevs, int n)
 {
-	datetkn	   *newtbl;
+	datetkn    *newtbl;
 	int			i;
 
 	/*
@@ -3844,29 +3856,28 @@ InstallTimeZoneAbbrevs(tzEntry *abbrevs, int n)
 Datum
 pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 {
-	FuncCallContext	   *funcctx;
-	int				   *pindex;
-	Datum				result;
-	HeapTuple			tuple;
-	Datum				values[3];
-	bool				nulls[3];
-	char				buffer[TOKMAXLEN + 1];
-	unsigned char	   *p;
-	struct pg_tm		tm;
-	Interval		   *resInterval;
+	FuncCallContext *funcctx;
+	int		   *pindex;
+	Datum		result;
+	HeapTuple	tuple;
+	Datum		values[3];
+	bool		nulls[3];
+	char		buffer[TOKMAXLEN + 1];
+	unsigned char *p;
+	struct pg_tm tm;
+	Interval   *resInterval;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		TupleDesc		tupdesc;
-		MemoryContext	oldcontext;
+		TupleDesc	tupdesc;
+		MemoryContext oldcontext;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -3901,8 +3912,8 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 	MemSet(nulls, 0, sizeof(nulls));
 
 	/*
-	 * Convert name to text, using upcasing conversion that is the inverse
-	 * of what ParseDateTime() uses.
+	 * Convert name to text, using upcasing conversion that is the inverse of
+	 * what ParseDateTime() uses.
 	 */
 	strncpy(buffer, timezonetktbl[*pindex].token, TOKMAXLEN);
 	buffer[TOKMAXLEN] = '\0';	/* may not be null-terminated */
@@ -3936,32 +3947,31 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 Datum
 pg_timezone_names(PG_FUNCTION_ARGS)
 {
-	MemoryContext	oldcontext;
-	FuncCallContext	   *funcctx;
-	pg_tzenum          *tzenum;
-	pg_tz              *tz;
-	Datum				result;
-	HeapTuple			tuple;
-	Datum				values[4];
-	bool				nulls[4];
+	MemoryContext oldcontext;
+	FuncCallContext *funcctx;
+	pg_tzenum  *tzenum;
+	pg_tz	   *tz;
+	Datum		result;
+	HeapTuple	tuple;
+	Datum		values[4];
+	bool		nulls[4];
 	int			tzoff;
-	struct pg_tm		tm;
+	struct pg_tm tm;
 	fsec_t		fsec;
 	char	   *tzn;
-	Interval		   *resInterval;
-	struct pg_tm		itm;
+	Interval   *resInterval;
+	struct pg_tm itm;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		TupleDesc		tupdesc;
+		TupleDesc	tupdesc;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		/*
-		 * switch to memory context appropriate for multiple function
-		 * calls
+		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
@@ -4021,7 +4031,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	MemSet(nulls, 0, sizeof(nulls));
 
 	values[0] = DirectFunctionCall1(textin,
-									CStringGetDatum(pg_get_timezone_name(tz)));
+								  CStringGetDatum(pg_get_timezone_name(tz)));
 
 	values[1] = DirectFunctionCall1(textin,
 									CStringGetDatum(tzn ? tzn : ""));

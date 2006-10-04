@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.170 2006/09/18 22:40:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.171 2006/10/04 00:30:02 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -132,9 +132,9 @@ CheckMyDatabase(const char *name, bool am_superuser)
 	/*
 	 * Check permissions to connect to the database.
 	 *
-	 * These checks are not enforced when in standalone mode, so that
-	 * there is a way to recover from disabling all access to all databases,
-	 * for example "UPDATE pg_database SET datallowconn = false;".
+	 * These checks are not enforced when in standalone mode, so that there is
+	 * a way to recover from disabling all access to all databases, for
+	 * example "UPDATE pg_database SET datallowconn = false;".
 	 *
 	 * We do not enforce them for the autovacuum process either.
 	 */
@@ -150,9 +150,9 @@ CheckMyDatabase(const char *name, bool am_superuser)
 					name)));
 
 		/*
-		 * Check privilege to connect to the database.  (The am_superuser
-		 * test is redundant, but since we have the flag, might as well
-		 * check it and save a few cycles.)
+		 * Check privilege to connect to the database.	(The am_superuser test
+		 * is redundant, but since we have the flag, might as well check it
+		 * and save a few cycles.)
 		 */
 		if (!am_superuser &&
 			pg_database_aclcheck(MyDatabaseId, GetUserId(),
@@ -294,8 +294,8 @@ InitPostgres(const char *dbname, const char *username)
 	char	   *fullpath;
 
 	/*
-	 * Set up the global variables holding database id and path.  But note
-	 * we won't actually try to touch the database just yet.
+	 * Set up the global variables holding database id and path.  But note we
+	 * won't actually try to touch the database just yet.
 	 *
 	 * We take a shortcut in the bootstrap case, otherwise we have to look up
 	 * the db name in pg_database.
@@ -324,8 +324,8 @@ InitPostgres(const char *dbname, const char *username)
 	SetDatabasePath(fullpath);
 
 	/*
-	 * Finish filling in the PGPROC struct, and add it to the ProcArray.
-	 * (We need to know MyDatabaseId before we can do this, since it's entered
+	 * Finish filling in the PGPROC struct, and add it to the ProcArray. (We
+	 * need to know MyDatabaseId before we can do this, since it's entered
 	 * into the PGPROC struct.)
 	 *
 	 * Once I have done this, I am visible to other backends!
@@ -360,8 +360,8 @@ InitPostgres(const char *dbname, const char *username)
 	/*
 	 * Initialize the relation cache and the system catalog caches.  Note that
 	 * no catalog access happens here; we only set up the hashtable structure.
-	 * We must do this before starting a transaction because transaction
-	 * abort would try to touch these hashtables.
+	 * We must do this before starting a transaction because transaction abort
+	 * would try to touch these hashtables.
 	 */
 	RelationCacheInitialize();
 	InitCatalogCache();
@@ -388,20 +388,19 @@ InitPostgres(const char *dbname, const char *username)
 
 	/*
 	 * Now that we have a transaction, we can take locks.  Take a writer's
-	 * lock on the database we are trying to connect to.  If there is
-	 * a concurrently running DROP DATABASE on that database, this will
-	 * block us until it finishes (and has updated the flat file copy
-	 * of pg_database).
+	 * lock on the database we are trying to connect to.  If there is a
+	 * concurrently running DROP DATABASE on that database, this will block us
+	 * until it finishes (and has updated the flat file copy of pg_database).
 	 *
-	 * Note that the lock is not held long, only until the end of this
-	 * startup transaction.  This is OK since we are already advertising
-	 * our use of the database in the PGPROC array; anyone trying a DROP
-	 * DATABASE after this point will see us there.
+	 * Note that the lock is not held long, only until the end of this startup
+	 * transaction.  This is OK since we are already advertising our use of
+	 * the database in the PGPROC array; anyone trying a DROP DATABASE after
+	 * this point will see us there.
 	 *
 	 * Note: use of RowExclusiveLock here is reasonable because we envision
-	 * our session as being a concurrent writer of the database.  If we had
-	 * a way of declaring a session as being guaranteed-read-only, we could
-	 * use AccessShareLock for such sessions and thereby not conflict against
+	 * our session as being a concurrent writer of the database.  If we had a
+	 * way of declaring a session as being guaranteed-read-only, we could use
+	 * AccessShareLock for such sessions and thereby not conflict against
 	 * CREATE DATABASE.
 	 */
 	if (!bootstrap)
@@ -415,8 +414,8 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 	if (!bootstrap)
 	{
-		Oid		dbid2;
-		Oid		tsid2;
+		Oid			dbid2;
+		Oid			tsid2;
 
 		if (!FindMyDatabase(dbname, &dbid2, &tsid2) ||
 			dbid2 != MyDatabaseId || tsid2 != MyDatabaseTableSpace)
@@ -424,12 +423,12 @@ InitPostgres(const char *dbname, const char *username)
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist",
 							dbname),
-				errdetail("It seems to have just been dropped or renamed.")));
+			   errdetail("It seems to have just been dropped or renamed.")));
 	}
 
 	/*
-	 * Now we should be able to access the database directory safely.
-	 * Verify it's there and looks reasonable.
+	 * Now we should be able to access the database directory safely. Verify
+	 * it's there and looks reasonable.
 	 */
 	if (!bootstrap)
 	{
@@ -440,8 +439,8 @@ InitPostgres(const char *dbname, const char *username)
 						(errcode(ERRCODE_UNDEFINED_DATABASE),
 						 errmsg("database \"%s\" does not exist",
 								dbname),
-						 errdetail("The database subdirectory \"%s\" is missing.",
-								   fullpath)));
+					errdetail("The database subdirectory \"%s\" is missing.",
+							  fullpath)));
 			else
 				ereport(FATAL,
 						(errcode_for_file_access(),
@@ -493,10 +492,10 @@ InitPostgres(const char *dbname, const char *username)
 	initialize_acl();
 
 	/*
-	 * Read the real pg_database row for our database, check permissions
-	 * and set up database-specific GUC settings.  We can't do this until all
-	 * the database-access infrastructure is up.  (Also, it wants to know if
-	 * the user is a superuser, so the above stuff has to happen first.)
+	 * Read the real pg_database row for our database, check permissions and
+	 * set up database-specific GUC settings.  We can't do this until all the
+	 * database-access infrastructure is up.  (Also, it wants to know if the
+	 * user is a superuser, so the above stuff has to happen first.)
 	 */
 	if (!bootstrap)
 		CheckMyDatabase(dbname, am_superuser);

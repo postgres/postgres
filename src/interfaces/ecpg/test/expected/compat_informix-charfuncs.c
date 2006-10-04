@@ -13,12 +13,14 @@
 #include <stdlib.h>
 #include <sqltypes.h>
 
-int main(void)
+int
+main(void)
 {
-	char t1[] = "abc  def  ghi  ";
-	          /* 123456789012345 */
-	char buf[50];
-	int k;
+	char		t1[] = "abc  def  ghi  ";
+
+	/* 123456789012345 */
+	char		buf[50];
+	int			k;
 
 	printf("t1: _%s_\n", t1);
 	rupshift(t1);

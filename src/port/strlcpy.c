@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/strlcpy.c,v 1.2 2006/10/02 23:58:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/strlcpy.c,v 1.3 2006/10/04 00:30:14 momjian Exp $
  *
  * This file was taken from OpenBSD and is used on platforms that don't
  * provide strlcpy().  The OpenBSD copyright terms follow.
@@ -36,33 +36,36 @@
 
 
 /*
- * Copy src to string dst of size siz.  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless siz == 0).
+ * Copy src to string dst of size siz.	At most siz-1 characters
+ * will be copied.	Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  * Function creation history:  http://www.gratisoft.us/todd/papers/strlcpy.html
  */
 size_t
 strlcpy(char *dst, const char *src, size_t siz)
 {
-	char *d = dst;
+	char	   *d = dst;
 	const char *s = src;
-	size_t n = siz;
+	size_t		n = siz;
 
 	/* Copy as many bytes as will fit */
-	if (n != 0) {
-		while (--n != 0) {
+	if (n != 0)
+	{
+		while (--n != 0)
+		{
 			if ((*d++ = *s++) == '\0')
 				break;
 		}
 	}
 
 	/* Not enough room in dst, add NUL and traverse rest of src */
-	if (n == 0) {
+	if (n == 0)
+	{
 		if (siz != 0)
-			*d = '\0';		/* NUL-terminate dst */
+			*d = '\0';			/* NUL-terminate dst */
 		while (*s++)
 			;
 	}
 
-	return(s - src - 1);	/* count does not include NUL */
+	return (s - src - 1);		/* count does not include NUL */
 }

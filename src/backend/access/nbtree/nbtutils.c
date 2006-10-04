@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.78 2006/07/25 19:13:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.79 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
 
 static void _bt_mark_scankey_required(ScanKey skey);
 static bool _bt_check_rowcompare(ScanKey skey,
-								 IndexTuple tuple, TupleDesc tupdesc,
-								 ScanDirection dir, bool *continuescan);
+					 IndexTuple tuple, TupleDesc tupdesc,
+					 ScanDirection dir, bool *continuescan);
 
 
 /*
@@ -83,7 +83,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
  *		comparison data ultimately used must match the key datatypes.
  *
  *		The result cannot be used with _bt_compare(), unless comparison
- *		data is first stored into the key entries.  Currently this
+ *		data is first stored into the key entries.	Currently this
  *		routine is only called by nbtsort.c and tuplesort.c, which have
  *		their own comparison routines.
  */
@@ -388,7 +388,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 			/*
 			 * Emit the cleaned-up keys into the outkeys[] array, and then
-			 * mark them if they are required.  They are required (possibly
+			 * mark them if they are required.	They are required (possibly
 			 * only in one direction) if all attrs before this one had "=".
 			 */
 			for (j = BTMaxStrategyNumber; --j >= 0;)
@@ -461,7 +461,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
  * Mark a scankey as "required to continue the scan".
  *
  * Depending on the operator type, the key may be required for both scan
- * directions or just one.  Also, if the key is a row comparison header,
+ * directions or just one.	Also, if the key is a row comparison header,
  * we have to mark the appropriate subsidiary ScanKeys as required.  In
  * such cases, the first subsidiary key is required, but subsequent ones
  * are required only as long as they correspond to successive index columns.
@@ -472,12 +472,12 @@ _bt_preprocess_keys(IndexScanDesc scan)
  * scribbling on a data structure belonging to the index AM's caller, not on
  * our private copy.  This should be OK because the marking will not change
  * from scan to scan within a query, and so we'd just re-mark the same way
- * anyway on a rescan.  Something to keep an eye on though.
+ * anyway on a rescan.	Something to keep an eye on though.
  */
 static void
 _bt_mark_scankey_required(ScanKey skey)
 {
-	int		addflags;
+	int			addflags;
 
 	switch (skey->sk_strategy)
 	{
@@ -503,8 +503,8 @@ _bt_mark_scankey_required(ScanKey skey)
 
 	if (skey->sk_flags & SK_ROW_HEADER)
 	{
-		ScanKey subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
-		AttrNumber attno = skey->sk_attno;
+		ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
+		AttrNumber	attno = skey->sk_attno;
 
 		/* First subkey should be same as the header says */
 		Assert(subkey->sk_attno == attno);
@@ -558,12 +558,12 @@ _bt_checkkeys(IndexScanDesc scan,
 	*continuescan = true;		/* default assumption */
 
 	/*
-	 * If the scan specifies not to return killed tuples, then we treat
-	 * a killed tuple as not passing the qual.  Most of the time, it's a
-	 * win to not bother examining the tuple's index keys, but just return
+	 * If the scan specifies not to return killed tuples, then we treat a
+	 * killed tuple as not passing the qual.  Most of the time, it's a win to
+	 * not bother examining the tuple's index keys, but just return
 	 * immediately with continuescan = true to proceed to the next tuple.
-	 * However, if this is the last tuple on the page, we should check
-	 * the index keys to prevent uselessly advancing to the next page.
+	 * However, if this is the last tuple on the page, we should check the
+	 * index keys to prevent uselessly advancing to the next page.
 	 */
 	if (scan->ignore_killed_tuples && ItemIdDeleted(iid))
 	{
@@ -580,9 +580,10 @@ _bt_checkkeys(IndexScanDesc scan,
 			if (offnum > P_FIRSTDATAKEY(opaque))
 				return false;
 		}
+
 		/*
-		 * OK, we want to check the keys, but we'll return FALSE even
-		 * if the tuple passes the key tests.
+		 * OK, we want to check the keys, but we'll return FALSE even if the
+		 * tuple passes the key tests.
 		 */
 		tuple_valid = false;
 	}
@@ -734,10 +735,9 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 		{
 			/*
 			 * Unlike the simple-scankey case, this isn't a disallowed case.
-			 * But it can never match.  If all the earlier row comparison
-			 * columns are required for the scan direction, we can stop
-			 * the scan, because there can't be another tuple that will
-			 * succeed.
+			 * But it can never match.	If all the earlier row comparison
+			 * columns are required for the scan direction, we can stop the
+			 * scan, because there can't be another tuple that will succeed.
 			 */
 			if (subkey != (ScanKey) DatumGetPointer(skey->sk_argument))
 				subkey--;
@@ -771,7 +771,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 	 */
 	switch (subkey->sk_strategy)
 	{
-		/* EQ and NE cases aren't allowed here */
+			/* EQ and NE cases aren't allowed here */
 		case BTLessStrategyNumber:
 			result = (cmpresult < 0);
 			break;
@@ -795,8 +795,8 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 	{
 		/*
 		 * Tuple fails this qual.  If it's a required qual for the current
-		 * scan direction, then we can conclude no further tuples will
-		 * pass, either.  Note we have to look at the deciding column, not
+		 * scan direction, then we can conclude no further tuples will pass,
+		 * either.	Note we have to look at the deciding column, not
 		 * necessarily the first or last column of the row condition.
 		 */
 		if ((subkey->sk_flags & SK_BT_REQFWD) &&
@@ -822,7 +822,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
  * is sufficient for setting LP_DELETE hint bits.
  *
  * We match items by heap TID before assuming they are the right ones to
- * delete.  We cope with cases where items have moved right due to insertions.
+ * delete.	We cope with cases where items have moved right due to insertions.
  * If an item has moved off the current page due to a split, we'll fail to
  * find it and do nothing (this is not an error case --- we assume the item
  * will eventually get marked in a future indexscan).  Note that because we
@@ -856,9 +856,9 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 
 	for (i = 0; i < so->numKilled; i++)
 	{
-		int				itemIndex = so->killedItems[i];
-		BTScanPosItem  *kitem = &so->currPos.items[itemIndex];
-		OffsetNumber	offnum = kitem->indexOffset;
+		int			itemIndex = so->killedItems[i];
+		BTScanPosItem *kitem = &so->currPos.items[itemIndex];
+		OffsetNumber offnum = kitem->indexOffset;
 
 		Assert(itemIndex >= so->currPos.firstItem &&
 			   itemIndex <= so->currPos.lastItem);
@@ -881,9 +881,9 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 	}
 
 	/*
-	 * Since this can be redone later if needed, it's treated the same
-	 * as a commit-hint-bit status update for heap tuples: we mark the
-	 * buffer dirty but don't make a WAL log entry.
+	 * Since this can be redone later if needed, it's treated the same as a
+	 * commit-hint-bit status update for heap tuples: we mark the buffer dirty
+	 * but don't make a WAL log entry.
 	 *
 	 * Whenever we mark anything LP_DELETEd, we also set the page's
 	 * BTP_HAS_GARBAGE flag, which is likewise just a hint.
@@ -898,8 +898,8 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
 
 	/*
-	 * Always reset the scan state, so we don't look for same items
-	 * on other pages.
+	 * Always reset the scan state, so we don't look for same items on other
+	 * pages.
 	 */
 	so->numKilled = 0;
 }
@@ -908,8 +908,8 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 /*
  * The following routines manage a shared-memory area in which we track
  * assignment of "vacuum cycle IDs" to currently-active btree vacuuming
- * operations.  There is a single counter which increments each time we
- * start a vacuum to assign it a cycle ID.  Since multiple vacuums could
+ * operations.	There is a single counter which increments each time we
+ * start a vacuum to assign it a cycle ID.	Since multiple vacuums could
  * be active concurrently, we have to track the cycle ID for each active
  * vacuum; this requires at most MaxBackends entries (usually far fewer).
  * We assume at most one vacuum can be active for a given index.
@@ -987,7 +987,8 @@ _bt_start_vacuum(Relation rel)
 	LWLockAcquire(BtreeVacuumLock, LW_EXCLUSIVE);
 
 	/* Assign the next cycle ID, being careful to avoid zero */
-	do {
+	do
+	{
 		result = ++(btvacinfo->cycle_ctr);
 	} while (result == 0);
 

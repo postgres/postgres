@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.47 2006/03/05 15:58:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.48 2006/10/04 00:29:48 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -138,9 +138,9 @@ hashtext(PG_FUNCTION_ARGS)
 	Datum		result;
 
 	/*
-	 * Note: this is currently identical in behavior to hashvarlena, but
-	 * keep it as a separate function in case we someday want to do something
-	 * different in non-C locales.  (See also hashbpchar, if so.)
+	 * Note: this is currently identical in behavior to hashvarlena, but keep
+	 * it as a separate function in case we someday want to do something
+	 * different in non-C locales.	(See also hashbpchar, if so.)
 	 */
 	result = hash_any((unsigned char *) VARDATA(key),
 					  VARSIZE(key) - VARHDRSZ);

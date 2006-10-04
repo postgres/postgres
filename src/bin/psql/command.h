@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.27 2006/07/18 17:42:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.h,v 1.28 2006/10/04 00:30:05 momjian Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -14,12 +14,12 @@
 
 typedef enum _backslashResult
 {
-	PSQL_CMD_UNKNOWN = 0,			/* not done parsing yet (internal only) */
-	PSQL_CMD_SEND,					/* query complete; send off */
-	PSQL_CMD_SKIP_LINE,				/* keep building query */
-	PSQL_CMD_TERMINATE,				/* quit program */
-	PSQL_CMD_NEWEDIT,				/* query buffer was changed (e.g., via \e) */
-	PSQL_CMD_ERROR					/* the execution of the backslash command
+	PSQL_CMD_UNKNOWN = 0,		/* not done parsing yet (internal only) */
+	PSQL_CMD_SEND,				/* query complete; send off */
+	PSQL_CMD_SKIP_LINE,			/* keep building query */
+	PSQL_CMD_TERMINATE,			/* quit program */
+	PSQL_CMD_NEWEDIT,			/* query buffer was changed (e.g., via \e) */
+	PSQL_CMD_ERROR				/* the execution of the backslash command
 								 * resulted in an error */
 } backslashResult;
 

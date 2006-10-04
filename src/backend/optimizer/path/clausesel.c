@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.81 2006/07/14 14:52:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.82 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,16 +429,16 @@ clause_selectivity(PlannerInfo *root,
 		rinfo = (RestrictInfo *) clause;
 
 		/*
-		 * If the clause is marked pseudoconstant, then it will be used as
-		 * a gating qual and should not affect selectivity estimates; hence
-		 * return 1.0.  The only exception is that a constant FALSE may
-		 * be taken as having selectivity 0.0, since it will surely mean
-		 * no rows out of the plan.  This case is simple enough that we
-		 * need not bother caching the result.
+		 * If the clause is marked pseudoconstant, then it will be used as a
+		 * gating qual and should not affect selectivity estimates; hence
+		 * return 1.0.	The only exception is that a constant FALSE may be
+		 * taken as having selectivity 0.0, since it will surely mean no rows
+		 * out of the plan.  This case is simple enough that we need not
+		 * bother caching the result.
 		 */
 		if (rinfo->pseudoconstant)
 		{
-			if (! IsA(rinfo->clause, Const))
+			if (!IsA(rinfo->clause, Const))
 				return s1;
 		}
 
@@ -529,7 +529,7 @@ clause_selectivity(PlannerInfo *root,
 	else if (IsA(clause, Const))
 	{
 		/* bool constant is pretty easy... */
-		Const  *con = (Const *) clause;
+		Const	   *con = (Const *) clause;
 
 		s1 = con->constisnull ? 0.0 :
 			DatumGetBool(con->constvalue) ? 1.0 : 0.0;
@@ -542,7 +542,7 @@ clause_selectivity(PlannerInfo *root,
 		if (IsA(subst, Const))
 		{
 			/* bool constant is pretty easy... */
-			Const  *con = (Const *) subst;
+			Const	   *con = (Const *) subst;
 
 			s1 = con->constisnull ? 0.0 :
 				DatumGetBool(con->constvalue) ? 1.0 : 0.0;

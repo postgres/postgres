@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.99 2006/07/25 19:13:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.100 2006/10/04 00:29:49 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -124,10 +124,10 @@ _bt_getroot(Relation rel, int access)
 
 		/*
 		 * Since the cache might be stale, we check the page more carefully
-		 * here than normal.  We *must* check that it's not deleted.
-		 * If it's not alone on its level, then we reject too --- this
-		 * may be overly paranoid but better safe than sorry.  Note we
-		 * don't check P_ISROOT, because that's not set in a "fast root".
+		 * here than normal.  We *must* check that it's not deleted. If it's
+		 * not alone on its level, then we reject too --- this may be overly
+		 * paranoid but better safe than sorry.  Note we don't check P_ISROOT,
+		 * because that's not set in a "fast root".
 		 */
 		if (!P_IGNORE(rootopaque) &&
 			rootopaque->btpo.level == rootlevel &&
@@ -662,18 +662,18 @@ _bt_delitems(Relation rel, Buffer buf,
 	PageIndexMultiDelete(page, itemnos, nitems);
 
 	/*
-	 * We can clear the vacuum cycle ID since this page has certainly
-	 * been processed by the current vacuum scan.
+	 * We can clear the vacuum cycle ID since this page has certainly been
+	 * processed by the current vacuum scan.
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_cycleid = 0;
 
 	/*
 	 * Mark the page as not containing any LP_DELETE items.  This is not
-	 * certainly true (there might be some that have recently been marked,
-	 * but weren't included in our target-item list), but it will almost
-	 * always be true and it doesn't seem worth an additional page scan
-	 * to check it.  Remember that BTP_HAS_GARBAGE is only a hint anyway.
+	 * certainly true (there might be some that have recently been marked, but
+	 * weren't included in our target-item list), but it will almost always be
+	 * true and it doesn't seem worth an additional page scan to check it.
+	 * Remember that BTP_HAS_GARBAGE is only a hint anyway.
 	 */
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 

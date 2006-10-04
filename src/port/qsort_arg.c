@@ -9,7 +9,7 @@
  *
  *	CAUTION: if you change this file, see also qsort.c
  *
- *	$PostgreSQL: pgsql/src/port/qsort_arg.c,v 1.1 2006/10/03 22:18:23 tgl Exp $
+ *	$PostgreSQL: pgsql/src/port/qsort_arg.c,v 1.2 2006/10/04 00:30:14 momjian Exp $
  */
 
 /*	$NetBSD: qsort.c,v 1.13 2003/08/07 16:43:42 agc Exp $	*/
@@ -47,7 +47,7 @@
 
 
 static char *med3(char *a, char *b, char *c,
-				  qsort_arg_comparator cmp, void *arg);
+	 qsort_arg_comparator cmp, void *arg);
 static void swapfunc(char *, char *, size_t, int);
 
 #define min(a, b)	((a) < (b) ? (a) : (b))

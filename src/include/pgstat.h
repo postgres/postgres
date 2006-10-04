@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.49 2006/08/19 01:36:34 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.50 2006/10/04 00:30:06 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -205,8 +205,8 @@ typedef struct PgStat_MsgAnalyze
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
 	Oid			m_tableoid;
-	bool		m_autovacuum; 
-	TimestampTz m_analyzetime; 
+	bool		m_autovacuum;
+	TimestampTz m_analyzetime;
 	PgStat_Counter m_live_tuples;
 	PgStat_Counter m_dead_tuples;
 } PgStat_MsgAnalyze;
@@ -285,10 +285,10 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter blocks_fetched;
 	PgStat_Counter blocks_hit;
 
-	TimestampTz vacuum_timestamp; /* user initiated vacuum */
-	TimestampTz autovac_vacuum_timestamp; /* autovacuum initiated */
-	TimestampTz analyze_timestamp; /* user initiated */
-	TimestampTz autovac_analyze_timestamp; /* autovacuum initiated */
+	TimestampTz vacuum_timestamp;		/* user initiated vacuum */
+	TimestampTz autovac_vacuum_timestamp;		/* autovacuum initiated */
+	TimestampTz analyze_timestamp;		/* user initiated */
+	TimestampTz autovac_analyze_timestamp;		/* autovacuum initiated */
 } PgStat_StatTabEntry;
 
 
@@ -314,8 +314,8 @@ typedef struct PgBackendStatus
 	/*
 	 * To avoid locking overhead, we use the following protocol: a backend
 	 * increments st_changecount before modifying its entry, and again after
-	 * finishing a modification.  A would-be reader should note the value
-	 * of st_changecount, copy the entry into private memory, then check
+	 * finishing a modification.  A would-be reader should note the value of
+	 * st_changecount, copy the entry into private memory, then check
 	 * st_changecount again.  If the value hasn't changed, and if it's even,
 	 * the copy is valid; otherwise start over.  This makes updates cheap
 	 * while reads are potentially expensive, but that's the tradeoff we want.

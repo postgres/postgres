@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.208 2006/08/12 02:52:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.209 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,9 +427,9 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	/*
 	 * If the query has any join RTEs, replace join alias variables with
 	 * base-relation variables. We must do this before sublink processing,
-	 * else sublinks expanded out from join aliases wouldn't get processed.
-	 * We can skip it in VALUES lists, however, since they can't contain
-	 * any Vars at all.
+	 * else sublinks expanded out from join aliases wouldn't get processed. We
+	 * can skip it in VALUES lists, however, since they can't contain any Vars
+	 * at all.
 	 */
 	if (root->hasJoinRTEs && kind != EXPRKIND_VALUES)
 		expr = flatten_join_alias_vars(root, expr);
@@ -450,8 +450,8 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 * still must do it for quals (to get AND/OR flatness); and if we are in a
 	 * subquery we should not assume it will be done only once.
 	 *
-	 * For VALUES lists we never do this at all, again on the grounds that
-	 * we should optimize for one-time evaluation.
+	 * For VALUES lists we never do this at all, again on the grounds that we
+	 * should optimize for one-time evaluation.
 	 */
 	if (kind != EXPRKIND_VALUES &&
 		(root->parse->jointree->fromlist != NIL ||
@@ -593,8 +593,8 @@ inheritance_planner(PlannerInfo *root)
 		subplan = grouping_planner(&subroot, 0.0 /* retrieve all tuples */ );
 
 		/*
-		 * If this child rel was excluded by constraint exclusion, exclude
-		 * it from the plan.
+		 * If this child rel was excluded by constraint exclusion, exclude it
+		 * from the plan.
 		 */
 		if (is_dummy_plan(subplan))
 			continue;
@@ -1098,12 +1098,12 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 	/*
 	 * Deal with the RETURNING clause if any.  It's convenient to pass the
-	 * returningList through setrefs.c now rather than at top level (if
-	 * we waited, handling inherited UPDATE/DELETE would be much harder).
+	 * returningList through setrefs.c now rather than at top level (if we
+	 * waited, handling inherited UPDATE/DELETE would be much harder).
 	 */
 	if (parse->returningList)
 	{
-		List   *rlist;
+		List	   *rlist;
 
 		rlist = set_returning_clause_references(parse->returningList,
 												result_plan,
@@ -1132,11 +1132,11 @@ is_dummy_plan(Plan *plan)
 {
 	if (IsA(plan, Result))
 	{
-		List *rcqual = (List *) ((Result *) plan)->resconstantqual;
+		List	   *rcqual = (List *) ((Result *) plan)->resconstantqual;
 
 		if (list_length(rcqual) == 1)
 		{
-			Const *constqual = (Const *) linitial(rcqual);
+			Const	   *constqual = (Const *) linitial(rcqual);
 
 			if (constqual && IsA(constqual, Const))
 			{

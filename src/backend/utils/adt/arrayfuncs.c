@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.132 2006/09/29 21:22:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.133 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2050,21 +2050,21 @@ array_set(ArrayType *array,
 			dim[0] += addedbefore;
 			lb[0] = indx[0];
 			if (addedbefore > 1)
-				newhasnulls = true;				/* will insert nulls */
+				newhasnulls = true;		/* will insert nulls */
 		}
 		if (indx[0] >= (dim[0] + lb[0]))
 		{
 			addedafter = indx[0] - (dim[0] + lb[0]) + 1;
 			dim[0] += addedafter;
 			if (addedafter > 1)
-				newhasnulls = true;				/* will insert nulls */
+				newhasnulls = true;		/* will insert nulls */
 		}
 	}
 	else
 	{
 		/*
-		 * XXX currently we do not support extending multi-dimensional
-		 * arrays during assignment
+		 * XXX currently we do not support extending multi-dimensional arrays
+		 * during assignment
 		 */
 		for (i = 0; i < ndim; i++)
 		{
@@ -2338,7 +2338,7 @@ array_set_slice(ArrayType *array,
 		if (lowerIndx[0] < lb[0])
 		{
 			if (upperIndx[0] < lb[0] - 1)
-				newhasnulls = true;				/* will insert nulls */
+				newhasnulls = true;		/* will insert nulls */
 			addedbefore = lb[0] - lowerIndx[0];
 			dim[0] += addedbefore;
 			lb[0] = lowerIndx[0];
@@ -2346,7 +2346,7 @@ array_set_slice(ArrayType *array,
 		if (upperIndx[0] >= (dim[0] + lb[0]))
 		{
 			if (lowerIndx[0] > (dim[0] + lb[0]))
-				newhasnulls = true;				/* will insert nulls */
+				newhasnulls = true;		/* will insert nulls */
 			addedafter = upperIndx[0] - (dim[0] + lb[0]) + 1;
 			dim[0] += addedafter;
 		}
@@ -2354,15 +2354,15 @@ array_set_slice(ArrayType *array,
 	else
 	{
 		/*
-		 * XXX currently we do not support extending multi-dimensional
-		 * arrays during assignment
+		 * XXX currently we do not support extending multi-dimensional arrays
+		 * during assignment
 		 */
 		for (i = 0; i < nSubscripts; i++)
 		{
 			if (lowerIndx[i] > upperIndx[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-						 errmsg("upper bound cannot be less than lower bound")));
+					 errmsg("upper bound cannot be less than lower bound")));
 			if (lowerIndx[i] < lb[i] ||
 				upperIndx[i] >= (dim[i] + lb[i]))
 				ereport(ERROR,
@@ -2377,7 +2377,7 @@ array_set_slice(ArrayType *array,
 			if (lowerIndx[i] > upperIndx[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-						 errmsg("upper bound cannot be less than lower bound")));
+					 errmsg("upper bound cannot be less than lower bound")));
 		}
 	}
 
@@ -3417,8 +3417,8 @@ array_contain_compare(ArrayType *array1, ArrayType *array2, bool matchall,
 	/*
 	 * We arrange to look up the equality function only once per series of
 	 * calls, assuming the element type doesn't change underneath us.  The
-	 * typcache is used so that we have no memory leakage when being used
-	 * as an index support function.
+	 * typcache is used so that we have no memory leakage when being used as
+	 * an index support function.
 	 */
 	typentry = (TypeCacheEntry *) *fn_extra;
 	if (typentry == NULL ||
@@ -3429,8 +3429,8 @@ array_contain_compare(ArrayType *array1, ArrayType *array2, bool matchall,
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("could not identify an equality operator for type %s",
-							format_type_be(element_type))));
+				errmsg("could not identify an equality operator for type %s",
+					   format_type_be(element_type))));
 		*fn_extra = (void *) typentry;
 	}
 	typlen = typentry->typlen;
@@ -3486,9 +3486,9 @@ array_contain_compare(ArrayType *array1, ArrayType *array2, bool matchall,
 		}
 
 		/*
-		 * We assume that the comparison operator is strict, so a NULL
-		 * can't match anything.  XXX this diverges from the "NULL=NULL"
-		 * behavior of array_eq, should we act like that?
+		 * We assume that the comparison operator is strict, so a NULL can't
+		 * match anything.	XXX this diverges from the "NULL=NULL" behavior of
+		 * array_eq, should we act like that?
 		 */
 		if (isnull1)
 		{

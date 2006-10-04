@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.122 2006/09/19 22:49:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.123 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,10 @@ int			join_collapse_limit;
 static void add_vars_to_targetlist(PlannerInfo *root, List *vars,
 					   Relids where_needed);
 static List *deconstruct_recurse(PlannerInfo *root, Node *jtnode,
-								 bool below_outer_join, Relids *qualscope);
+					bool below_outer_join, Relids *qualscope);
 static OuterJoinInfo *make_outerjoininfo(PlannerInfo *root,
-										 Relids left_rels, Relids right_rels,
-										 bool is_full_join, Node *clause);
+				   Relids left_rels, Relids right_rels,
+				   bool is_full_join, Node *clause);
 static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						bool is_pushed_down,
 						bool is_deduced,
@@ -71,12 +71,12 @@ static void check_hashjoinable(RestrictInfo *restrictinfo);
  *	  appearing in the jointree.
  *
  * The initial invocation must pass root->parse->jointree as the value of
- * jtnode.  Internally, the function recurses through the jointree.
+ * jtnode.	Internally, the function recurses through the jointree.
  *
  * At the end of this process, there should be one baserel RelOptInfo for
  * every non-join RTE that is used in the query.  Therefore, this routine
  * is the only place that should call build_simple_rel with reloptkind
- * RELOPT_BASEREL.  (Note: build_simple_rel recurses internally to build
+ * RELOPT_BASEREL.	(Note: build_simple_rel recurses internally to build
  * "other rel" RelOptInfos for the members of any appendrels we find here.)
  */
 void
@@ -181,7 +181,7 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars, Relids where_needed)
  * deconstruct_jointree
  *	  Recursively scan the query's join tree for WHERE and JOIN/ON qual
  *	  clauses, and add these to the appropriate restrictinfo and joininfo
- *	  lists belonging to base RelOptInfos.  Also, add OuterJoinInfo nodes
+ *	  lists belonging to base RelOptInfos.	Also, add OuterJoinInfo nodes
  *	  to root->oj_info_list for any outer joins appearing in the query tree.
  *	  Return a "joinlist" data structure showing the join order decisions
  *	  that need to be made by make_one_rel().
@@ -198,9 +198,9 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars, Relids where_needed)
  * be evaluated at the lowest level where all the variables it mentions are
  * available.  However, we cannot push a qual down into the nullable side(s)
  * of an outer join since the qual might eliminate matching rows and cause a
- * NULL row to be incorrectly emitted by the join.  Therefore, we artificially
+ * NULL row to be incorrectly emitted by the join.	Therefore, we artificially
  * OR the minimum-relids of such an outer join into the required_relids of
- * clauses appearing above it.  This forces those clauses to be delayed until
+ * clauses appearing above it.	This forces those clauses to be delayed until
  * application of the outer join (or maybe even higher in the join tree).
  */
 List *
@@ -258,20 +258,19 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		ListCell   *l;
 
 		/*
-		 * First, recurse to handle child joins.  We collapse subproblems
-		 * into a single joinlist whenever the resulting joinlist wouldn't
-		 * exceed from_collapse_limit members.  Also, always collapse
-		 * one-element subproblems, since that won't lengthen the joinlist
-		 * anyway.
+		 * First, recurse to handle child joins.  We collapse subproblems into
+		 * a single joinlist whenever the resulting joinlist wouldn't exceed
+		 * from_collapse_limit members.  Also, always collapse one-element
+		 * subproblems, since that won't lengthen the joinlist anyway.
 		 */
 		*qualscope = NULL;
 		joinlist = NIL;
 		remaining = list_length(f->fromlist);
 		foreach(l, f->fromlist)
 		{
-			Relids	sub_qualscope;
-			List   *sub_joinlist;
-			int		sub_members;
+			Relids		sub_qualscope;
+			List	   *sub_joinlist;
+			int			sub_members;
 
 			sub_joinlist = deconstruct_recurse(root, lfirst(l),
 											   below_outer_join,
@@ -407,7 +406,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			(list_length(leftjoinlist) + list_length(rightjoinlist) <=
 			 join_collapse_limit))
 			joinlist = list_concat(leftjoinlist, rightjoinlist);
-		else					/* force the join order at this node */
+		else
+			/* force the join order at this node */
 			joinlist = list_make1(list_make2(leftjoinlist, rightjoinlist));
 	}
 	else
@@ -454,9 +454,9 @@ make_outerjoininfo(PlannerInfo *root,
 	 * any nullable rel is FOR UPDATE/SHARE.
 	 *
 	 * You might be wondering why this test isn't made far upstream in the
-	 * parser.  It's because the parser hasn't got enough info --- consider
-	 * FOR UPDATE applied to a view.  Only after rewriting and flattening
-	 * do we know whether the view contains an outer join.
+	 * parser.	It's because the parser hasn't got enough info --- consider
+	 * FOR UPDATE applied to a view.  Only after rewriting and flattening do
+	 * we know whether the view contains an outer join.
 	 */
 	foreach(l, root->parse->rowMarks)
 	{
@@ -475,7 +475,7 @@ make_outerjoininfo(PlannerInfo *root,
 	{
 		ojinfo->min_lefthand = left_rels;
 		ojinfo->min_righthand = right_rels;
-		ojinfo->lhs_strict = false;			/* don't care about this */
+		ojinfo->lhs_strict = false;		/* don't care about this */
 		return ojinfo;
 	}
 
@@ -494,19 +494,19 @@ make_outerjoininfo(PlannerInfo *root,
 	ojinfo->lhs_strict = bms_overlap(strict_relids, left_rels);
 
 	/*
-	 * Required LHS is basically the LHS rels mentioned in the clause...
-	 * but if there aren't any, punt and make it the full LHS, to avoid
-	 * having an empty min_lefthand which will confuse later processing.
-	 * (We don't try to be smart about such cases, just correct.)
-	 * We may have to add more rels based on lower outer joins; see below.
+	 * Required LHS is basically the LHS rels mentioned in the clause... but
+	 * if there aren't any, punt and make it the full LHS, to avoid having an
+	 * empty min_lefthand which will confuse later processing. (We don't try
+	 * to be smart about such cases, just correct.) We may have to add more
+	 * rels based on lower outer joins; see below.
 	 */
 	ojinfo->min_lefthand = bms_intersect(clause_relids, left_rels);
 	if (bms_is_empty(ojinfo->min_lefthand))
 		ojinfo->min_lefthand = bms_copy(left_rels);
 
 	/*
-	 * Required RHS is normally the full set of RHS rels.  Sometimes we
-	 * can exclude some, see below.
+	 * Required RHS is normally the full set of RHS rels.  Sometimes we can
+	 * exclude some, see below.
 	 */
 	ojinfo->min_righthand = bms_copy(right_rels);
 
@@ -532,6 +532,7 @@ make_outerjoininfo(PlannerInfo *root,
 			ojinfo->min_lefthand = bms_add_members(ojinfo->min_lefthand,
 												   otherinfo->min_righthand);
 		}
+
 		/*
 		 * For a lower OJ in our RHS, if our join condition does not use the
 		 * lower join's RHS and the lower OJ's join condition is strict, we
@@ -630,23 +631,23 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * If the clause is an outer-join clause, we must force it to the OJ's
 	 * semantic level to preserve semantics.
 	 *
-	 * Otherwise, when the clause contains volatile functions, we force it
-	 * to be evaluated at its original syntactic level.  This preserves the
+	 * Otherwise, when the clause contains volatile functions, we force it to
+	 * be evaluated at its original syntactic level.  This preserves the
 	 * expected semantics.
 	 *
-	 * When the clause contains no volatile functions either, it is actually
-	 * a pseudoconstant clause that will not change value during any one
-	 * execution of the plan, and hence can be used as a one-time qual in
-	 * a gating Result plan node.  We put such a clause into the regular
+	 * When the clause contains no volatile functions either, it is actually a
+	 * pseudoconstant clause that will not change value during any one
+	 * execution of the plan, and hence can be used as a one-time qual in a
+	 * gating Result plan node.  We put such a clause into the regular
 	 * RestrictInfo lists for the moment, but eventually createplan.c will
 	 * pull it out and make a gating Result node immediately above whatever
-	 * plan node the pseudoconstant clause is assigned to.  It's usually
-	 * best to put a gating node as high in the plan tree as possible.
-	 * If we are not below an outer join, we can actually push the
-	 * pseudoconstant qual all the way to the top of the tree.  If we are
-	 * below an outer join, we leave the qual at its original syntactic level
-	 * (we could push it up to just below the outer join, but that seems more
-	 * complex than it's worth).
+	 * plan node the pseudoconstant clause is assigned to.	It's usually best
+	 * to put a gating node as high in the plan tree as possible. If we are
+	 * not below an outer join, we can actually push the pseudoconstant qual
+	 * all the way to the top of the tree.	If we are below an outer join, we
+	 * leave the qual at its original syntactic level (we could push it up to
+	 * just below the outer join, but that seems more complex than it's
+	 * worth).
 	 */
 	if (bms_is_empty(relids))
 	{
@@ -793,8 +794,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * Mark the qual as "pushed down" if it can be applied at a level below
 	 * its original syntactic level.  This allows us to distinguish original
 	 * JOIN/ON quals from higher-level quals pushed down to the same joinrel.
-	 * A qual originating from WHERE is always considered "pushed down".
-	 * Note that for an outer-join qual, we have to compare to ojscope not
+	 * A qual originating from WHERE is always considered "pushed down". Note
+	 * that for an outer-join qual, we have to compare to ojscope not
 	 * qualscope.
 	 */
 	if (!is_pushed_down)

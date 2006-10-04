@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.68 2006/08/30 23:34:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.69 2006/10/04 00:30:05 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -148,7 +148,7 @@ parse_slash_copy(const char *args)
 	/* Handle COPY (SELECT) case */
 	if (token[0] == '(')
 	{
-		int	parens = 1;
+		int			parens = 1;
 
 		while (parens > 0)
 		{
@@ -318,7 +318,7 @@ parse_slash_copy(const char *args)
 								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									nonstd_backslash, true, false, pset.encoding);
+							   nonstd_backslash, true, false, pset.encoding);
 				if (token)
 					result->delim = pg_strdup(token);
 				else
@@ -330,7 +330,7 @@ parse_slash_copy(const char *args)
 								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									nonstd_backslash, true, false, pset.encoding);
+							   nonstd_backslash, true, false, pset.encoding);
 				if (token)
 					result->null = pg_strdup(token);
 				else
@@ -342,7 +342,7 @@ parse_slash_copy(const char *args)
 								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									nonstd_backslash, true, false, pset.encoding);
+							   nonstd_backslash, true, false, pset.encoding);
 				if (token)
 					result->quote = pg_strdup(token);
 				else
@@ -354,7 +354,7 @@ parse_slash_copy(const char *args)
 								nonstd_backslash, true, false, pset.encoding);
 				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
-									nonstd_backslash, true, false, pset.encoding);
+							   nonstd_backslash, true, false, pset.encoding);
 				if (token)
 					result->escape = pg_strdup(token);
 				else
@@ -439,7 +439,7 @@ error:
 
 
 /*
- * Handle one of the "string" options of COPY.  If the user gave a quoted
+ * Handle one of the "string" options of COPY.	If the user gave a quoted
  * string, pass it to the backend as-is; if it wasn't quoted then quote
  * and escape it.
  */
@@ -631,10 +631,10 @@ do_copy(const char *args)
 bool
 handleCopyOut(PGconn *conn, FILE *copystream)
 {
-	bool	OK = true;
-	char	*buf;
-	int		 ret;
-	PGresult *res;
+	bool		OK = true;
+	char	   *buf;
+	int			ret;
+	PGresult   *res;
 
 	for (;;)
 	{
@@ -677,7 +677,7 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 		OK = false;
 	}
 	PQclear(res);
-	
+
 	return OK;
 }
 
@@ -702,11 +702,11 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 	bool		OK;
 	const char *prompt;
 	char		buf[COPYBUFSIZ];
-	PGresult *res;
+	PGresult   *res;
 
 	/*
-	 * Establish longjmp destination for exiting from wait-for-input.
-	 * (This is only effective while sigint_interrupt_enabled is TRUE.)
+	 * Establish longjmp destination for exiting from wait-for-input. (This is
+	 * only effective while sigint_interrupt_enabled is TRUE.)
 	 */
 	if (sigsetjmp(sigint_interrupt_jmp, 1) != 0)
 	{
@@ -748,7 +748,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 
 		for (;;)
 		{
-			int buflen;
+			int			buflen;
 
 			/* enable longjmp while waiting for input */
 			sigint_interrupt_enabled = true;
@@ -772,7 +772,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 		bool		copydone = false;
 
 		while (!copydone)
-		{							/* for each input line ... */
+		{						/* for each input line ... */
 			bool		firstload;
 			bool		linedone;
 
@@ -781,14 +781,14 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 				fputs(prompt, stdout);
 				fflush(stdout);
 			}
-		
+
 			firstload = true;
 			linedone = false;
 
 			while (!linedone)
-			{						/* for each bufferload in line ... */
-				int		linelen;
-				char   *fgresult;
+			{					/* for each bufferload in line ... */
+				int			linelen;
+				char	   *fgresult;
 
 				/* enable longjmp while waiting for input */
 				sigint_interrupt_enabled = true;
@@ -806,7 +806,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 				linelen = strlen(buf);
 
 				/* current line is done? */
-				if (linelen > 0 && buf[linelen-1] == '\n')
+				if (linelen > 0 && buf[linelen - 1] == '\n')
 					linedone = true;
 
 				/* check for EOF marker, but not on a partial line */
@@ -818,10 +818,10 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 						copydone = true;
 						break;
 					}
-				
+
 					firstload = false;
 				}
-			
+
 				if (PQputCopyData(conn, buf, linelen) <= 0)
 				{
 					OK = false;
@@ -829,7 +829,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 					break;
 				}
 			}
-		
+
 			pset.lineno++;
 		}
 	}

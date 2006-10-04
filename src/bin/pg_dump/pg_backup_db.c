@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.74 2006/09/27 15:41:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.75 2006/10/04 00:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,9 +378,9 @@ _sendCopyLine(ArchiveHandle *AH, char *qry, char *eos)
 	isEnd = (strcmp(AH->pgCopyBuf->data, "\\.\n") == 0);
 
 	/*
-	 * Note that we drop the data on the floor if libpq has failed to
-	 * enter COPY mode; this allows us to behave reasonably when trying
-	 * to continue after an error in a COPY command.
+	 * Note that we drop the data on the floor if libpq has failed to enter
+	 * COPY mode; this allows us to behave reasonably when trying to continue
+	 * after an error in a COPY command.
 	 */
 	if (AH->pgCopyIn &&
 		PQputCopyData(AH->connection, AH->pgCopyBuf->data,
@@ -619,7 +619,7 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, size_t bufLen)
 	{
 		/*
 		 * If libpq is in CopyIn mode *or* if the archive structure shows we
-		 * are sending COPY data, treat the data as COPY data.  The pgCopyIn
+		 * are sending COPY data, treat the data as COPY data.	The pgCopyIn
 		 * check is only needed for backwards compatibility with ancient
 		 * archive files that might just issue a COPY command without marking
 		 * it properly.  Note that in an archive entry that has a copyStmt,

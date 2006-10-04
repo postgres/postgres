@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.138 2006/08/28 19:38:09 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.139 2006/10/04 00:29:56 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -136,8 +136,8 @@ static TransactionId pgStatLocalStatusXact = InvalidTransactionId;
 static PgBackendStatus *localBackendStatusTable = NULL;
 static int	localNumBackends = 0;
 
-static volatile bool	need_exit = false;
-static volatile bool	need_statwrite = false;
+static volatile bool need_exit = false;
+static volatile bool need_statwrite = false;
 
 
 /* ----------
@@ -199,13 +199,13 @@ pgstat_init(void)
 	char		test_byte;
 	int			sel_res;
 	int			tries = 0;
-	
+
 #define TESTBYTEVAL ((char) 199)
 
 	/*
 	 * Force start of collector daemon if something to collect.  Note that
-	 * pgstat_collect_querystring is now an independent facility that does
-	 * not require the collector daemon.
+	 * pgstat_collect_querystring is now an independent facility that does not
+	 * require the collector daemon.
 	 */
 	if (pgstat_collect_tuplelevel ||
 		pgstat_collect_blocklevel)
@@ -262,8 +262,8 @@ pgstat_init(void)
 
 		if (++tries > 1)
 			ereport(LOG,
-				(errmsg("trying another address for the statistics collector")));
-		
+			(errmsg("trying another address for the statistics collector")));
+
 		/*
 		 * Create the socket.
 		 */
@@ -479,7 +479,6 @@ pgstat_forkexec(void)
 
 	return postmaster_forkexec(ac, av);
 }
-
 #endif   /* EXEC_BACKEND */
 
 
@@ -823,7 +822,7 @@ pgstat_drop_relation(Oid relid)
 	msg.m_tableid[0] = relid;
 	msg.m_nentries = 1;
 
-	len = offsetof(PgStat_MsgTabpurge, m_tableid[0]) + sizeof(Oid);
+	len = offsetof(PgStat_MsgTabpurge, m_tableid[0]) +sizeof(Oid);
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
 	msg.m_databaseid = MyDatabaseId;
@@ -900,7 +899,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = tableoid;
 	msg.m_analyze = analyze;
-	msg.m_autovacuum = IsAutoVacuumProcess(); /* is this autovacuum? */
+	msg.m_autovacuum = IsAutoVacuumProcess();	/* is this autovacuum? */
 	msg.m_vacuumtime = GetCurrentTimestamp();
 	msg.m_tuples = tuples;
 	pgstat_send(&msg, sizeof(msg));
@@ -925,7 +924,7 @@ pgstat_report_analyze(Oid tableoid, bool shared, PgStat_Counter livetuples,
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
 	msg.m_databaseid = shared ? InvalidOid : MyDatabaseId;
 	msg.m_tableoid = tableoid;
-	msg.m_autovacuum = IsAutoVacuumProcess(); /* is this autovacuum? */
+	msg.m_autovacuum = IsAutoVacuumProcess();	/* is this autovacuum? */
 	msg.m_analyzetime = GetCurrentTimestamp();
 	msg.m_live_tuples = livetuples;
 	msg.m_dead_tuples = deadtuples;
@@ -1079,8 +1078,8 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 void
 pgstat_count_xact_commit(void)
 {
-	if	(!pgstat_collect_tuplelevel &&
-		 !pgstat_collect_blocklevel)
+	if (!pgstat_collect_tuplelevel &&
+		!pgstat_collect_blocklevel)
 		return;
 
 	pgStatXactCommit++;
@@ -1110,8 +1109,8 @@ pgstat_count_xact_commit(void)
 void
 pgstat_count_xact_rollback(void)
 {
-	if	(!pgstat_collect_tuplelevel &&
-		 !pgstat_collect_blocklevel)
+	if (!pgstat_collect_tuplelevel &&
+		!pgstat_collect_blocklevel)
 		return;
 
 	pgStatXactRollback++;
@@ -1319,8 +1318,8 @@ pgstat_bestart(void)
 	MyBEEntry = &BackendStatusArray[MyBackendId - 1];
 
 	/*
-	 * To minimize the time spent modifying the entry, fetch all the
-	 * needed data first.
+	 * To minimize the time spent modifying the entry, fetch all the needed
+	 * data first.
 	 *
 	 * If we have a MyProcPort, use its session start time (for consistency,
 	 * and to save a kernel call).
@@ -1343,12 +1342,13 @@ pgstat_bestart(void)
 
 	/*
 	 * Initialize my status entry, following the protocol of bumping
-	 * st_changecount before and after; and make sure it's even afterwards.
-	 * We use a volatile pointer here to ensure the compiler doesn't try to
-	 * get cute.
+	 * st_changecount before and after; and make sure it's even afterwards. We
+	 * use a volatile pointer here to ensure the compiler doesn't try to get
+	 * cute.
 	 */
 	beentry = MyBEEntry;
-	do {
+	do
+	{
 		beentry->st_changecount++;
 	} while ((beentry->st_changecount & 1) == 0);
 
@@ -1389,9 +1389,9 @@ pgstat_beshutdown_hook(int code, Datum arg)
 	pgstat_report_tabstat();
 
 	/*
-	 * Clear my status entry, following the protocol of bumping
-	 * st_changecount before and after.  We use a volatile pointer here
-	 * to ensure the compiler doesn't try to get cute.
+	 * Clear my status entry, following the protocol of bumping st_changecount
+	 * before and after.  We use a volatile pointer here to ensure the
+	 * compiler doesn't try to get cute.
 	 */
 	beentry->st_changecount++;
 
@@ -1420,8 +1420,8 @@ pgstat_report_activity(const char *cmd_str)
 		return;
 
 	/*
-	 * To minimize the time spent modifying the entry, fetch all the
-	 * needed data first.
+	 * To minimize the time spent modifying the entry, fetch all the needed
+	 * data first.
 	 */
 	start_timestamp = GetCurrentStatementStartTimestamp();
 
@@ -1430,8 +1430,8 @@ pgstat_report_activity(const char *cmd_str)
 
 	/*
 	 * Update my status entry, following the protocol of bumping
-	 * st_changecount before and after.  We use a volatile pointer here
-	 * to ensure the compiler doesn't try to get cute.
+	 * st_changecount before and after.  We use a volatile pointer here to
+	 * ensure the compiler doesn't try to get cute.
 	 */
 	beentry->st_changecount++;
 
@@ -1499,20 +1499,19 @@ pgstat_read_current_status(void)
 	for (i = 1; i <= MaxBackends; i++)
 	{
 		/*
-		 * Follow the protocol of retrying if st_changecount changes while
-		 * we copy the entry, or if it's odd.  (The check for odd is needed
-		 * to cover the case where we are able to completely copy the entry
-		 * while the source backend is between increment steps.)  We use a
-		 * volatile pointer here to ensure the compiler doesn't try to get
-		 * cute.
+		 * Follow the protocol of retrying if st_changecount changes while we
+		 * copy the entry, or if it's odd.  (The check for odd is needed to
+		 * cover the case where we are able to completely copy the entry while
+		 * the source backend is between increment steps.)	We use a volatile
+		 * pointer here to ensure the compiler doesn't try to get cute.
 		 */
 		for (;;)
 		{
-			int		save_changecount = beentry->st_changecount;
+			int			save_changecount = beentry->st_changecount;
 
 			/*
-			 * XXX if PGBE_ACTIVITY_SIZE is really large, it might be best
-			 * to use strcpy not memcpy for copying the activity string?
+			 * XXX if PGBE_ACTIVITY_SIZE is really large, it might be best to
+			 * use strcpy not memcpy for copying the activity string?
 			 */
 			memcpy(localentry, (char *) beentry, sizeof(PgBackendStatus));
 
@@ -1589,7 +1588,7 @@ pgstat_send(void *msg, int len)
 /* ----------
  * PgstatCollectorMain() -
  *
- *	Start up the statistics collector process.  This is the body of the
+ *	Start up the statistics collector process.	This is the body of the
  *	postmaster child process.
  *
  *	The argc/argv parameters are valid only in EXEC_BACKEND case.
@@ -1602,6 +1601,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	bool		need_timer = false;
 	int			len;
 	PgStat_Msg	msg;
+
 #ifdef HAVE_POLL
 	struct pollfd input_fd;
 #else
@@ -1655,8 +1655,8 @@ PgstatCollectorMain(int argc, char *argv[])
 	pgstat_read_statsfile(&pgStatDBHash, InvalidOid);
 
 	/*
-	 * Setup the descriptor set for select(2).  Since only one bit in the
-	 * set ever changes, we need not repeat FD_ZERO each time.
+	 * Setup the descriptor set for select(2).	Since only one bit in the set
+	 * ever changes, we need not repeat FD_ZERO each time.
 	 */
 #ifndef HAVE_POLL
 	FD_ZERO(&rfds);
@@ -1666,13 +1666,13 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * Loop to process messages until we get SIGQUIT or detect ungraceful
 	 * death of our parent postmaster.
 	 *
-	 * For performance reasons, we don't want to do a PostmasterIsAlive()
-	 * test after every message; instead, do it at statwrite time and if
+	 * For performance reasons, we don't want to do a PostmasterIsAlive() test
+	 * after every message; instead, do it at statwrite time and if
 	 * select()/poll() is interrupted by timeout.
 	 */
 	for (;;)
 	{
-		int		got_data;
+		int			got_data;
 
 		/*
 		 * Quit if we get SIGQUIT from the postmaster.
@@ -1681,7 +1681,7 @@ PgstatCollectorMain(int argc, char *argv[])
 			break;
 
 		/*
-		 * If time to write the stats file, do so.  Note that the alarm
+		 * If time to write the stats file, do so.	Note that the alarm
 		 * interrupt isn't re-enabled immediately, but only after we next
 		 * receive a stats message; so no cycles are wasted when there is
 		 * nothing going on.
@@ -1701,9 +1701,9 @@ PgstatCollectorMain(int argc, char *argv[])
 		 * Wait for a message to arrive; but not for more than
 		 * PGSTAT_SELECT_TIMEOUT seconds. (This determines how quickly we will
 		 * shut down after an ungraceful postmaster termination; so it needn't
-		 * be very fast.  However, on some systems SIGQUIT won't interrupt
-		 * the poll/select call, so this also limits speed of response to
-		 * SIGQUIT, which is more important.)
+		 * be very fast.  However, on some systems SIGQUIT won't interrupt the
+		 * poll/select call, so this also limits speed of response to SIGQUIT,
+		 * which is more important.)
 		 *
 		 * We use poll(2) if available, otherwise select(2)
 		 */
@@ -1722,7 +1722,6 @@ PgstatCollectorMain(int argc, char *argv[])
 		}
 
 		got_data = (input_fd.revents != 0);
-
 #else							/* !HAVE_POLL */
 
 		FD_SET(pgStatSock, &rfds);
@@ -1744,7 +1743,6 @@ PgstatCollectorMain(int argc, char *argv[])
 		}
 
 		got_data = FD_ISSET(pgStatSock, &rfds);
-
 #endif   /* HAVE_POLL */
 
 		/*
@@ -1826,20 +1824,20 @@ PgstatCollectorMain(int argc, char *argv[])
 			{
 				if (setitimer(ITIMER_REAL, &write_timeout, NULL))
 					ereport(ERROR,
-						  (errmsg("could not set statistics collector timer: %m")));
+					(errmsg("could not set statistics collector timer: %m")));
 				need_timer = false;
 			}
 		}
 		else
 		{
 			/*
-			 * We can only get here if the select/poll timeout elapsed.
-			 * Check for postmaster death.
+			 * We can only get here if the select/poll timeout elapsed. Check
+			 * for postmaster death.
 			 */
 			if (!PostmasterIsAlive(true))
 				break;
 		}
-	} /* end of message-processing loop */
+	}							/* end of message-processing loop */
 
 	/*
 	 * Save the final stats to reuse at next startup.
@@ -1953,9 +1951,9 @@ pgstat_write_statsfile(void)
 	while ((dbentry = (PgStat_StatDBEntry *) hash_seq_search(&hstat)) != NULL)
 	{
 		/*
-		 * Write out the DB entry including the number of live backends.
-		 * We don't write the tables pointer since it's of no use to any
-		 * other process.
+		 * Write out the DB entry including the number of live backends. We
+		 * don't write the tables pointer since it's of no use to any other
+		 * process.
 		 */
 		fputc('D', fpout);
 		fwrite(dbentry, offsetof(PgStat_StatDBEntry, tables), 1, fpout);
@@ -1987,8 +1985,8 @@ pgstat_write_statsfile(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not write temporary statistics file \"%s\": %m",
-						PGSTAT_STAT_TMPFILE)));
+			   errmsg("could not write temporary statistics file \"%s\": %m",
+					  PGSTAT_STAT_TMPFILE)));
 		fclose(fpout);
 		unlink(PGSTAT_STAT_TMPFILE);
 	}
@@ -2491,10 +2489,10 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	if (tabentry == NULL)
 		return;
 
-	if (msg->m_autovacuum) 
+	if (msg->m_autovacuum)
 		tabentry->autovac_vacuum_timestamp = msg->m_vacuumtime;
-	else 
-		tabentry->vacuum_timestamp = msg->m_vacuumtime; 
+	else
+		tabentry->vacuum_timestamp = msg->m_vacuumtime;
 	tabentry->n_live_tuples = msg->m_tuples;
 	tabentry->n_dead_tuples = 0;
 	if (msg->m_analyze)
@@ -2539,9 +2537,9 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	if (tabentry == NULL)
 		return;
 
-	if (msg->m_autovacuum) 
+	if (msg->m_autovacuum)
 		tabentry->autovac_analyze_timestamp = msg->m_analyzetime;
-	else 
+	else
 		tabentry->analyze_timestamp = msg->m_analyzetime;
 	tabentry->n_live_tuples = msg->m_live_tuples;
 	tabentry->n_dead_tuples = msg->m_dead_tuples;

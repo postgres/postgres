@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.32 2006/08/15 06:40:19 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/numeric.c,v 1.33 2006/10/04 00:30:12 momjian Exp $ */
 
 #include "postgres_fe.h"
 #include <ctype.h>
@@ -143,6 +143,7 @@ decimal *
 PGTYPESdecimal_new(void)
 {
 	decimal    *var;
+
 	if ((var = (decimal *) pgtypes_alloc(sizeof(decimal))) == NULL)
 		return NULL;
 
@@ -382,7 +383,7 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 	char	   *realptr;
 	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
 
-	if (!value)	
+	if (!value)
 		return (NULL);
 
 	ret = set_var_from_str(str, ptr, value);
@@ -398,8 +399,8 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 char *
 PGTYPESnumeric_to_asc(numeric *num, int dscale)
 {
-	numeric *numcopy = PGTYPESnumeric_new();
-	char	*s;
+	numeric    *numcopy = PGTYPESnumeric_new();
+	char	   *s;
 
 	if (dscale < 0)
 		dscale = num->dscale;
@@ -1468,7 +1469,7 @@ PGTYPESnumeric_from_double(double d, numeric *dst)
 {
 	char		buffer[100];
 	numeric    *tmp;
-	int i;
+	int			i;
 
 	if (sprintf(buffer, "%f", d) == 0)
 		return -1;
@@ -1490,7 +1491,7 @@ numericvar_to_double(numeric *var, double *dp)
 	char	   *tmp;
 	double		val;
 	char	   *endptr;
-	numeric	   *varcopy = PGTYPESnumeric_new();
+	numeric    *varcopy = PGTYPESnumeric_new();
 
 	if (PGTYPESnumeric_copy(var, varcopy) < 0)
 	{
@@ -1566,8 +1567,8 @@ PGTYPESnumeric_to_int(numeric *nv, int *ip)
 int
 PGTYPESnumeric_to_long(numeric *nv, long *lp)
 {
-	char *s = PGTYPESnumeric_to_asc(nv, 0);
-	char *endptr;
+	char	   *s = PGTYPESnumeric_to_asc(nv, 0);
+	char	   *endptr;
 
 	if (s == NULL)
 		return -1;

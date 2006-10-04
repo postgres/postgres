@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.39 2006/07/13 16:49:12 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.40 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,7 +414,7 @@ clog_redo(XLogRecPtr lsn, XLogRecord *record)
 void
 clog_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
-	uint8			info = xl_info & ~XLR_INFO_MASK;
+	uint8		info = xl_info & ~XLR_INFO_MASK;
 
 	if (info == CLOG_ZEROPAGE)
 	{

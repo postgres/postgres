@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.111 2006/08/02 01:59:46 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.112 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,10 +85,10 @@ typedef struct finalize_primnode_context
 
 
 static Node *convert_testexpr(Node *testexpr,
-							  int rtindex,
-							  List **righthandIds);
+				 int rtindex,
+				 List **righthandIds);
 static Node *convert_testexpr_mutator(Node *node,
-									  convert_testexpr_context *context);
+						 convert_testexpr_context *context);
 static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static bool hash_ok_operator(OpExpr *expr);
 static Node *replace_correlation_vars_mutator(Node *node, void *context);
@@ -498,13 +498,13 @@ convert_testexpr_mutator(Node *node,
 		return NULL;
 	if (IsA(node, Param))
 	{
-		Param  *param = (Param *) node;
+		Param	   *param = (Param *) node;
 
 		if (param->paramkind == PARAM_SUBLINK)
 		{
 			/*
-			 * We expect to encounter the Params in column-number sequence.
-			 * We could handle non-sequential order if necessary, but for now
+			 * We expect to encounter the Params in column-number sequence. We
+			 * could handle non-sequential order if necessary, but for now
 			 * there's no need.  (This is also a useful cross-check that we
 			 * aren't finding any unexpected Params.)
 			 */
@@ -514,13 +514,14 @@ convert_testexpr_mutator(Node *node,
 			if (context->rtindex)
 			{
 				/* Make the Var node representing the subplan's result */
-				Var	   *newvar;
+				Var		   *newvar;
 
 				newvar = makeVar(context->rtindex,
 								 param->paramid,
 								 param->paramtype,
 								 -1,
 								 0);
+
 				/*
 				 * Copy it for caller.	NB: we need a copy to avoid having
 				 * doubly-linked substructure in the modified parse tree.
@@ -584,10 +585,10 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 		return false;
 
 	/*
-	 * The estimated size of the subquery result must fit in work_mem.
-	 * (Note: we use sizeof(HeapTupleHeaderData) here even though the tuples
-	 * will actually be stored as MinimalTuples; this provides some fudge
-	 * factor for hashtable overhead.)
+	 * The estimated size of the subquery result must fit in work_mem. (Note:
+	 * we use sizeof(HeapTupleHeaderData) here even though the tuples will
+	 * actually be stored as MinimalTuples; this provides some fudge factor
+	 * for hashtable overhead.)
 	 */
 	subquery_size = node->plan->plan_rows *
 		(MAXALIGN(node->plan->plan_width) + MAXALIGN(sizeof(HeapTupleHeaderData)));
@@ -616,7 +617,7 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 	{
 		foreach(l, ((BoolExpr *) slink->testexpr)->args)
 		{
-			Node	*andarg = (Node *) lfirst(l);
+			Node	   *andarg = (Node *) lfirst(l);
 
 			if (!IsA(andarg, OpExpr))
 				return false;	/* probably can't happen */
@@ -686,8 +687,8 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 		return NULL;
 	if (sublink->testexpr && IsA(sublink->testexpr, OpExpr))
 	{
-		List	*opclasses;
-		List	*opstrats;
+		List	   *opclasses;
+		List	   *opstrats;
 
 		get_op_btree_interpretation(((OpExpr *) sublink->testexpr)->opno,
 									&opclasses, &opstrats);

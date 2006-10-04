@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.118 2006/07/14 14:52:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.119 2006/10/04 00:30:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -604,8 +604,8 @@ bpchareq(PG_FUNCTION_ARGS)
 	len2 = bcTruelen(arg2);
 
 	/*
-	 * Since we only care about equality or not-equality, we can avoid all
-	 * the expense of strcoll() here, and just do bitwise comparison.
+	 * Since we only care about equality or not-equality, we can avoid all the
+	 * expense of strcoll() here, and just do bitwise comparison.
 	 */
 	if (len1 != len2)
 		result = false;
@@ -631,8 +631,8 @@ bpcharne(PG_FUNCTION_ARGS)
 	len2 = bcTruelen(arg2);
 
 	/*
-	 * Since we only care about equality or not-equality, we can avoid all
-	 * the expense of strcoll() here, and just do bitwise comparison.
+	 * Since we only care about equality or not-equality, we can avoid all the
+	 * expense of strcoll() here, and just do bitwise comparison.
 	 */
 	if (len1 != len2)
 		result = true;

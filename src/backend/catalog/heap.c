@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.312 2006/08/02 01:59:44 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.313 2006/10/04 00:29:50 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -607,8 +607,8 @@ InsertPgClassTuple(Relation pg_class_desc,
 	tup = heap_formtuple(RelationGetDescr(pg_class_desc), values, nulls);
 
 	/*
-	 * The new tuple must have the oid already chosen for the rel.  Sure
-	 * would be embarrassing to do this sort of thing in polite company.
+	 * The new tuple must have the oid already chosen for the rel.	Sure would
+	 * be embarrassing to do this sort of thing in polite company.
 	 */
 	HeapTupleSetOid(tup, new_rel_oid);
 
@@ -666,8 +666,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 	else
 	{
 		/*
-		 * Other relations will not have Xids in them, so set the initial value
-		 * to InvalidTransactionId.
+		 * Other relations will not have Xids in them, so set the initial
+		 * value to InvalidTransactionId.
 		 */
 		new_rel_reltup->relminxid = InvalidTransactionId;
 		new_rel_reltup->relvacuumxid = InvalidTransactionId;
@@ -1975,7 +1975,7 @@ RemoveStatistics(Oid relid, AttrNumber attnum)
  * with the heap relation to zero tuples.
  *
  * The routine will truncate and then reconstruct the indexes on
- * the specified relation.  Caller must hold exclusive lock on rel.
+ * the specified relation.	Caller must hold exclusive lock on rel.
  */
 static void
 RelationTruncateIndexes(Relation heapRelation)
@@ -2103,7 +2103,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 		return;
 
 	/*
-	 * Otherwise, must scan pg_constraint.  We make one pass with all the
+	 * Otherwise, must scan pg_constraint.	We make one pass with all the
 	 * relations considered; if this finds nothing, then all is well.
 	 */
 	dependents = heap_truncate_find_FKs(oids);
@@ -2119,19 +2119,19 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 	 */
 	foreach(cell, oids)
 	{
-		Oid		relid = lfirst_oid(cell);
-		ListCell *cell2;
+		Oid			relid = lfirst_oid(cell);
+		ListCell   *cell2;
 
 		dependents = heap_truncate_find_FKs(list_make1_oid(relid));
 
 		foreach(cell2, dependents)
 		{
-			Oid		relid2 = lfirst_oid(cell2);
+			Oid			relid2 = lfirst_oid(cell2);
 
 			if (!list_member_oid(oids, relid2))
 			{
-				char   *relname = get_rel_name(relid);
-				char   *relname2 = get_rel_name(relid2);
+				char	   *relname = get_rel_name(relid);
+				char	   *relname2 = get_rel_name(relid2);
 
 				if (tempTables)
 					ereport(ERROR,
@@ -2145,9 +2145,9 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 							 errmsg("cannot truncate a table referenced in a foreign key constraint"),
 							 errdetail("Table \"%s\" references \"%s\".",
 									   relname2, relname),
-							 errhint("Truncate table \"%s\" at the same time, "
-									 "or use TRUNCATE ... CASCADE.",
-									 relname2)));
+						   errhint("Truncate table \"%s\" at the same time, "
+								   "or use TRUNCATE ... CASCADE.",
+								   relname2)));
 			}
 		}
 	}
@@ -2164,7 +2164,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
  * behavior to change depending on chance locations of rows in pg_constraint.)
  *
  * Note: caller should already have appropriate lock on all rels mentioned
- * in relationIds.  Since adding or dropping an FK requires exclusive lock
+ * in relationIds.	Since adding or dropping an FK requires exclusive lock
  * on both rels, this ensures that the answer will be stable.
  */
 List *
@@ -2176,8 +2176,8 @@ heap_truncate_find_FKs(List *relationIds)
 	HeapTuple	tuple;
 
 	/*
-	 * Must scan pg_constraint.  Right now, it is a seqscan because
-	 * there is no available index on confrelid.
+	 * Must scan pg_constraint.  Right now, it is a seqscan because there is
+	 * no available index on confrelid.
 	 */
 	fkeyRel = heap_open(ConstraintRelationId, AccessShareLock);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.65 2006/07/14 14:52:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.66 2006/10/04 00:29:59 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -554,7 +554,7 @@ similar_escape(PG_FUNCTION_ARGS)
 	 * which is bizarre enough to require some explanation.  "***:" is a
 	 * director prefix to force the regex to be treated as an ARE regardless
 	 * of the current regex_flavor setting.  We need "^" and "$" to force
-	 * the pattern to match the entire input string as per SQL99 spec.  The
+	 * the pattern to match the entire input string as per SQL99 spec.	The
 	 * "(?:" and ")" are a non-capturing set of parens; we have to have
 	 * parens in case the string contains "|", else the "^" and "$" will
 	 * be bound into the first and last alternatives which is not what we

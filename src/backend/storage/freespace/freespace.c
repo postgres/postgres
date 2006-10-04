@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.55 2006/09/21 20:31:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.56 2006/10/04 00:29:57 momjian Exp $
  *
  *
  * NOTES:
@@ -111,7 +111,7 @@ typedef struct FsmCacheRelHeader
 	RelFileNode key;			/* hash key (must be first) */
 	bool		isIndex;		/* if true, we store only page numbers */
 	uint32		avgRequest;		/* moving average of space requests */
-	BlockNumber	interestingPages;	/* # of pages with useful free space */
+	BlockNumber interestingPages;		/* # of pages with useful free space */
 	int32		storedPages;	/* # of pages stored in arena */
 } FsmCacheRelHeader;
 
@@ -128,8 +128,8 @@ static void CheckFreeSpaceMapStatistics(int elevel, int numRels,
 static FSMRelation *lookup_fsm_rel(RelFileNode *rel);
 static FSMRelation *create_fsm_rel(RelFileNode *rel);
 static void delete_fsm_rel(FSMRelation *fsmrel);
-static int	realloc_fsm_rel(FSMRelation *fsmrel, BlockNumber interestingPages,
-							bool isIndex);
+static int realloc_fsm_rel(FSMRelation *fsmrel, BlockNumber interestingPages,
+				bool isIndex);
 static void link_fsm_rel_usage(FSMRelation *fsmrel);
 static void unlink_fsm_rel_usage(FSMRelation *fsmrel);
 static void link_fsm_rel_storage(FSMRelation *fsmrel);
@@ -601,6 +601,7 @@ PrintFreeSpaceMapStatistics(int elevel)
 	double		needed;
 
 	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
+
 	/*
 	 * Count total space actually used, as well as the unclamped request total
 	 */
@@ -1688,9 +1689,9 @@ fsm_calc_request(FSMRelation *fsmrel)
 	}
 
 	/*
-	 * We clamp the per-relation requests to at most half the arena size;
-	 * this is intended to prevent a single bloated relation from crowding
-	 * out FSM service for every other rel.
+	 * We clamp the per-relation requests to at most half the arena size; this
+	 * is intended to prevent a single bloated relation from crowding out FSM
+	 * service for every other rel.
 	 */
 	req = Min(req, FreeSpaceMap->totalChunks / 2);
 

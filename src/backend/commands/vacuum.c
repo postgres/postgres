@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.340 2006/09/21 20:31:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.341 2006/10/04 00:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ typedef struct VRelStats
 	Size		min_tlen;
 	Size		max_tlen;
 	bool		hasindex;
-	TransactionId minxid;	/* Minimum Xid present anywhere on table */
+	TransactionId minxid;		/* Minimum Xid present anywhere on table */
 	/* vtlinks array for tuple chain following - sorted by new_tid */
 	int			num_vtlinks;
 	VTupleLink	vtlinks;
@@ -238,7 +238,7 @@ static int	vac_cmp_blk(const void *left, const void *right);
 static int	vac_cmp_offno(const void *left, const void *right);
 static int	vac_cmp_vtlinks(const void *left, const void *right);
 static bool enough_space(VacPage vacpage, Size len);
-static Size	PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
+static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
 
 
 /****************************************************************************
@@ -320,8 +320,8 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 				 errhint("Use VACUUM FULL, then VACUUM FREEZE.")));
 
 	/*
-	 * Send info about dead objects to the statistics collector, unless
-	 * we are in autovacuum --- autovacuum.c does this for itself.
+	 * Send info about dead objects to the statistics collector, unless we are
+	 * in autovacuum --- autovacuum.c does this for itself.
 	 */
 	if (vacstmt->vacuum && !IsAutoVacuumProcess())
 		pgstat_vacuum_tabstat();
@@ -481,20 +481,21 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 		 * PostgresMain().
 		 */
 		StartTransactionCommand();
+
 		/*
-		 * Re-establish the transaction snapshot.  This is wasted effort
-		 * when we are called as a normal utility command, because the
-		 * new transaction will be dropped immediately by PostgresMain();
-		 * but it's necessary if we are called from autovacuum because
-		 * autovacuum might continue on to do an ANALYZE-only call.
+		 * Re-establish the transaction snapshot.  This is wasted effort when
+		 * we are called as a normal utility command, because the new
+		 * transaction will be dropped immediately by PostgresMain(); but it's
+		 * necessary if we are called from autovacuum because autovacuum might
+		 * continue on to do an ANALYZE-only call.
 		 */
 		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 	}
 
 	if (vacstmt->vacuum)
 	{
-		TransactionId	minxid,
-						vacuumxid;
+		TransactionId minxid,
+					vacuumxid;
 
 		/*
 		 * If it was a database-wide VACUUM, print FSM usage statistics (we
@@ -593,9 +594,9 @@ vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
 	TransactionId limit;
 
 	/*
-	 * We can always ignore processes running lazy vacuum.  This is because we
+	 * We can always ignore processes running lazy vacuum.	This is because we
 	 * use these values only for deciding which tuples we must keep in the
-	 * tables.  Since lazy vacuum doesn't write its xid to the table, it's
+	 * tables.	Since lazy vacuum doesn't write its xid to the table, it's
 	 * safe to ignore it.  In theory it could be problematic to ignore lazy
 	 * vacuums on a full vacuum, but keep in mind that only one vacuum process
 	 * can be working on a particular table at any time, and that each vacuum
@@ -704,6 +705,7 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 		pgcform->relhasindex = hasindex;
 		dirty = true;
 	}
+
 	/*
 	 * If we have discovered that there are no indexes, then there's no
 	 * primary key either.	This could be done more thoroughly...
@@ -740,11 +742,11 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 /*
  *	vac_update_dbminxid() -- update the minimum Xid present in one database
  *
- * 		Update pg_database's datminxid and datvacuumxid, and the flat-file copy
- * 		of it.  datminxid is updated to the minimum of all relminxid found in
- * 		pg_class.  datvacuumxid is updated to the minimum of all relvacuumxid
- * 		found in pg_class.  The values are also returned in minxid and
- * 		vacuumxid, respectively.
+ *		Update pg_database's datminxid and datvacuumxid, and the flat-file copy
+ *		of it.	datminxid is updated to the minimum of all relminxid found in
+ *		pg_class.  datvacuumxid is updated to the minimum of all relvacuumxid
+ *		found in pg_class.	The values are also returned in minxid and
+ *		vacuumxid, respectively.
  *
  *		We violate transaction semantics here by overwriting the database's
  *		existing pg_database tuple with the new values.  This is reasonably
@@ -760,15 +762,15 @@ vac_update_dbminxid(Oid dbid, TransactionId *minxid, TransactionId *vacuumxid)
 	HeapTuple	tuple;
 	Form_pg_database dbform;
 	Relation	relation;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	classTup;
-	TransactionId	newMinXid = InvalidTransactionId;
-	TransactionId	newVacXid = InvalidTransactionId;
+	TransactionId newMinXid = InvalidTransactionId;
+	TransactionId newVacXid = InvalidTransactionId;
 	bool		dirty = false;
 
-	/* 
-	 * We must seqscan pg_class to find the minimum Xid, because there
-	 * is no index that can help us here.
+	/*
+	 * We must seqscan pg_class to find the minimum Xid, because there is no
+	 * index that can help us here.
 	 */
 	relation = heap_open(RelationRelationId, AccessShareLock);
 
@@ -845,7 +847,7 @@ vac_update_dbminxid(Oid dbid, TransactionId *minxid, TransactionId *vacuumxid)
 	*vacuumxid = newVacXid;
 
 	/* Mark the flat-file copy of pg_database for update at commit */
-   	database_file_update_needed();
+	database_file_update_needed();
 }
 
 
@@ -970,14 +972,14 @@ vac_truncate_clog(TransactionId myminxid, TransactionId myvacxid)
 	 * XXX -- the test we use here is fairly arbitrary.  Note that in the
 	 * autovacuum database-wide code, a template database is always processed
 	 * with VACUUM FREEZE, so we can be sure that it will be truly frozen so
-	 * it won't be need to be processed here again soon.  
+	 * it won't be need to be processed here again soon.
 	 *
 	 * FIXME -- here we could get into a kind of loop if the database being
 	 * chosen is not actually a template database, because we'll not freeze
 	 * it, so its age may not really decrease if there are any live
 	 * non-freezable tuples.  Consider forcing a vacuum freeze if autovacuum
-	 * is invoked by a backend.  On the other hand, forcing a vacuum freeze
-	 * on a user database may not a be a very polite thing to do.
+	 * is invoked by a backend.  On the other hand, forcing a vacuum freeze on
+	 * a user database may not a be a very polite thing to do.
 	 */
 	if (!AutoVacuumingActive() && age > (int32) ((MaxTransactionId >> 3) * 3))
 		SendPostmasterSignal(PMSIGNAL_START_AUTOVAC);
@@ -1022,18 +1024,18 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	else
 	{
 		/*
-		 * During a lazy VACUUM we do not run any user-supplied functions,
-		 * and so it should be safe to not create a transaction snapshot.
+		 * During a lazy VACUUM we do not run any user-supplied functions, and
+		 * so it should be safe to not create a transaction snapshot.
 		 *
 		 * We can furthermore set the inVacuum flag, which lets other
 		 * concurrent VACUUMs know that they can ignore this one while
 		 * determining their OldestXmin.  (The reason we don't set inVacuum
 		 * during a full VACUUM is exactly that we may have to run user-
-		 * defined functions for functional indexes, and we want to make
-		 * sure that if they use the snapshot set above, any tuples it
-		 * requires can't get removed from other tables.  An index function
-		 * that depends on the contents of other tables is arguably broken,
-		 * but we won't break it here by violating transaction semantics.)
+		 * defined functions for functional indexes, and we want to make sure
+		 * that if they use the snapshot set above, any tuples it requires
+		 * can't get removed from other tables.  An index function that
+		 * depends on the contents of other tables is arguably broken, but we
+		 * won't break it here by violating transaction semantics.)
 		 *
 		 * Note: the inVacuum flag remains set until CommitTransaction or
 		 * AbortTransaction.  We don't want to clear it until we reset
@@ -1059,8 +1061,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	/*
 	 * Open the relation and get the appropriate lock on it.
 	 *
-	 * There's a race condition here: the rel may have gone away since
-	 * the last time we saw it.  If so, we don't need to vacuum it.
+	 * There's a race condition here: the rel may have gone away since the
+	 * last time we saw it.  If so, we don't need to vacuum it.
 	 */
 	onerel = try_relation_open(relid, lmode);
 
@@ -1116,7 +1118,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	{
 		relation_close(onerel, lmode);
 		CommitTransactionCommand();
-		return;			/* assume no long-lived data in temp tables */
+		return;					/* assume no long-lived data in temp tables */
 	}
 
 	/*
@@ -1207,7 +1209,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 				i;
 	VRelStats  *vacrelstats;
 	TransactionId FreezeLimit,
-				  OldestXmin;
+				OldestXmin;
 
 	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
@@ -1221,13 +1223,13 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vacrelstats->hasindex = false;
 
 	/*
-	 * Set initial minimum Xid, which will be updated if a smaller Xid is found
-	 * in the relation by scan_heap.
+	 * Set initial minimum Xid, which will be updated if a smaller Xid is
+	 * found in the relation by scan_heap.
 	 *
 	 * We use RecentXmin here (the minimum Xid that belongs to a transaction
 	 * that is still open according to our snapshot), because it is the
-	 * earliest transaction that could insert new tuples in the table after our
-	 * VACUUM is done.
+	 * earliest transaction that could insert new tuples in the table after
+	 * our VACUUM is done.
 	 */
 	vacrelstats->minxid = RecentXmin;
 
@@ -1557,7 +1559,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			}
 			else
 			{
-				TransactionId	min;
+				TransactionId min;
 
 				num_tuples += 1;
 				notup = false;
@@ -1566,7 +1568,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				if (tuple.t_len > max_tlen)
 					max_tlen = tuple.t_len;
 
-				/* 
+				/*
 				 * If the tuple is alive, we consider it for the "minxid"
 				 * calculations.
 				 */
@@ -1710,23 +1712,23 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 TransactionId
 vactuple_get_minxid(HeapTuple tuple)
 {
-	TransactionId	min = InvalidTransactionId;
+	TransactionId min = InvalidTransactionId;
 
-	/* 
-	 * Initialize calculations with Xmin.  NB -- may be FrozenXid and
-	 * we don't want that one.
+	/*
+	 * Initialize calculations with Xmin.  NB -- may be FrozenXid and we don't
+	 * want that one.
 	 */
 	if (TransactionIdIsNormal(HeapTupleHeaderGetXmin(tuple->t_data)))
 		min = HeapTupleHeaderGetXmin(tuple->t_data);
 
 	/*
 	 * If Xmax is not marked INVALID, we assume it's valid without making
-	 * further checks on it --- it must be recently obsoleted or still running,
-	 * else HeapTupleSatisfiesVacuum would have deemed it removable.
+	 * further checks on it --- it must be recently obsoleted or still
+	 * running, else HeapTupleSatisfiesVacuum would have deemed it removable.
 	 */
 	if (!(tuple->t_data->t_infomask | HEAP_XMAX_INVALID))
 	{
-		TransactionId	 xmax = HeapTupleHeaderGetXmax(tuple->t_data);
+		TransactionId xmax = HeapTupleHeaderGetXmax(tuple->t_data);
 
 		/* If xmax is a plain Xid, consider it by itself */
 		if (!(tuple->t_data->t_infomask | HEAP_XMAX_IS_MULTI))

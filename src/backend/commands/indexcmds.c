@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.148 2006/08/27 19:14:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.149 2006/10/04 00:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,8 +125,8 @@ DefineIndex(RangeVar *heapRelation,
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
-	Relation pg_index;
-	HeapTuple indexTuple;
+	Relation	pg_index;
+	HeapTuple	indexTuple;
 	Form_pg_index indexForm;
 
 	/*
@@ -450,18 +450,18 @@ DefineIndex(RangeVar *heapRelation,
 	 * for an overview of how this works)
 	 *
 	 * We must commit our current transaction so that the index becomes
-	 * visible; then start another.  Note that all the data structures
-	 * we just built are lost in the commit.  The only data we keep past
-	 * here are the relation IDs.
+	 * visible; then start another.  Note that all the data structures we just
+	 * built are lost in the commit.  The only data we keep past here are the
+	 * relation IDs.
 	 *
 	 * Before committing, get a session-level lock on the table, to ensure
-	 * that neither it nor the index can be dropped before we finish.
-	 * This cannot block, even if someone else is waiting for access, because
-	 * we already have the same lock within our transaction.
+	 * that neither it nor the index can be dropped before we finish. This
+	 * cannot block, even if someone else is waiting for access, because we
+	 * already have the same lock within our transaction.
 	 *
 	 * Note: we don't currently bother with a session lock on the index,
-	 * because there are no operations that could change its state while
-	 * we hold lock on the parent table.  This might need to change later.
+	 * because there are no operations that could change its state while we
+	 * hold lock on the parent table.  This might need to change later.
 	 */
 	heaprelid = rel->rd_lockInfo.lockRelId;
 	LockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
@@ -471,15 +471,15 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Now we must wait until no running transaction could have the table open
-	 * with the old list of indexes.  To do this, inquire which xacts currently
-	 * would conflict with ShareLock on the table -- ie, which ones have
-	 * a lock that permits writing the table.  Then wait for each of these
-	 * xacts to commit or abort.  Note we do not need to worry about xacts
-	 * that open the table for writing after this point; they will see the
-	 * new index when they open it.
+	 * with the old list of indexes.  To do this, inquire which xacts
+	 * currently would conflict with ShareLock on the table -- ie, which ones
+	 * have a lock that permits writing the table.	Then wait for each of
+	 * these xacts to commit or abort.	Note we do not need to worry about
+	 * xacts that open the table for writing after this point; they will see
+	 * the new index when they open it.
 	 *
-	 * Note: GetLockConflicts() never reports our own xid,
-	 * hence we need not check for that.
+	 * Note: GetLockConflicts() never reports our own xid, hence we need not
+	 * check for that.
 	 */
 	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
 	old_xact_list = GetLockConflicts(&heaplocktag, ShareLock);
@@ -493,12 +493,12 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Now take the "reference snapshot" that will be used by validate_index()
-	 * to filter candidate tuples.  All other transactions running at this
+	 * to filter candidate tuples.	All other transactions running at this
 	 * time will have to be out-waited before we can commit, because we can't
 	 * guarantee that tuples deleted just before this will be in the index.
 	 *
-	 * We also set ActiveSnapshot to this snap, since functions in indexes
-	 * may need a snapshot.
+	 * We also set ActiveSnapshot to this snap, since functions in indexes may
+	 * need a snapshot.
 	 */
 	snapshot = CopySnapshot(GetTransactionSnapshot());
 	ActiveSnapshot = snapshot;
@@ -510,13 +510,13 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * The index is now valid in the sense that it contains all currently
-	 * interesting tuples.  But since it might not contain tuples deleted
-	 * just before the reference snap was taken, we have to wait out any
-	 * transactions older than the reference snap.  We can do this by
-	 * waiting for each xact explicitly listed in the snap.
+	 * interesting tuples.	But since it might not contain tuples deleted just
+	 * before the reference snap was taken, we have to wait out any
+	 * transactions older than the reference snap.	We can do this by waiting
+	 * for each xact explicitly listed in the snap.
 	 *
-	 * Note: GetSnapshotData() never stores our own xid into a snap,
-	 * hence we need not check for that.
+	 * Note: GetSnapshotData() never stores our own xid into a snap, hence we
+	 * need not check for that.
 	 */
 	for (ixcnt = 0; ixcnt < snapshot->xcnt; ixcnt++)
 		XactLockTableWait(snapshot->xip[ixcnt]);

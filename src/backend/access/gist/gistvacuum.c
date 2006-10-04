@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.27 2006/09/21 20:31:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.28 2006/10/04 00:29:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,19 +45,24 @@ typedef struct
 } ArrayTuple;
 
 /*
- * Make union of keys on page 
+ * Make union of keys on page
  */
 static IndexTuple
-PageMakeUnionKey(GistVacuum *gv, Buffer buffer) {
-	Page	page = BufferGetPage( buffer );
+PageMakeUnionKey(GistVacuum *gv, Buffer buffer)
+{
+	Page		page = BufferGetPage(buffer);
 	IndexTuple *vec,
-				tmp, res;
+				tmp,
+				res;
 	int			veclen = 0;
 	MemoryContext oldCtx = MemoryContextSwitchTo(gv->opCtx);
 
 	vec = gistextractpage(page, &veclen);
-	/* we call gistunion() in temprorary context because user-defined functions called in gistunion()
-	   may do not free all memory */
+
+	/*
+	 * we call gistunion() in temprorary context because user-defined
+	 * functions called in gistunion() may do not free all memory
+	 */
 	tmp = gistunion(gv->index, vec, veclen, &(gv->giststate));
 	MemoryContextSwitchTo(oldCtx);
 
@@ -73,21 +78,25 @@ PageMakeUnionKey(GistVacuum *gv, Buffer buffer) {
 }
 
 static void
-gistDeleteSubtree( GistVacuum *gv, BlockNumber blkno ) {
-	Buffer  buffer;
-	Page    page;
+gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
+{
+	Buffer		buffer;
+	Page		page;
 
 	buffer = ReadBuffer(gv->index, blkno);
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
-	if ( !GistPageIsLeaf(page) ) {
-		int     i;
+	if (!GistPageIsLeaf(page))
+	{
+		int			i;
 
-		for (i = FirstOffsetNumber; i <= PageGetMaxOffsetNumber(page); i = OffsetNumberNext(i)) {
-			ItemId iid = PageGetItemId(page, i);
-			IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
-			gistDeleteSubtree(gv, ItemPointerGetBlockNumber(&(idxtuple->t_tid))); 
+		for (i = FirstOffsetNumber; i <= PageGetMaxOffsetNumber(page); i = OffsetNumberNext(i))
+		{
+			ItemId		iid = PageGetItemId(page, i);
+			IndexTuple	idxtuple = (IndexTuple) PageGetItem(page, iid);
+
+			gistDeleteSubtree(gv, ItemPointerGetBlockNumber(&(idxtuple->t_tid)));
 		}
 	}
 
@@ -103,7 +112,7 @@ gistDeleteSubtree( GistVacuum *gv, BlockNumber blkno ) {
 	{
 		XLogRecData rdata[2];
 		XLogRecPtr	recptr;
-		gistxlogPageDelete	xlrec;
+		gistxlogPageDelete xlrec;
 
 		xlrec.node = gv->index->rd_node;
 		xlrec.blkno = blkno;
@@ -125,31 +134,34 @@ gistDeleteSubtree( GistVacuum *gv, BlockNumber blkno ) {
 	}
 	else
 		PageSetLSN(page, XLogRecPtrForTemp);
-	
+
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(buffer);
 }
 
-static Page    
-GistPageGetCopyPage( Page page ) {
-	Size    pageSize = PageGetPageSize( page );
-	Page tmppage;
+static Page
+GistPageGetCopyPage(Page page)
+{
+	Size		pageSize = PageGetPageSize(page);
+	Page		tmppage;
 
-	tmppage=(Page)palloc( pageSize );
-	memcpy( tmppage, page, pageSize );
+	tmppage = (Page) palloc(pageSize);
+	memcpy(tmppage, page, pageSize);
 
 	return tmppage;
 }
 
 static ArrayTuple
-vacuumSplitPage(GistVacuum *gv, Page tempPage, Buffer buffer, IndexTuple *addon, int curlenaddon) {
+vacuumSplitPage(GistVacuum *gv, Page tempPage, Buffer buffer, IndexTuple *addon, int curlenaddon)
+{
 	ArrayTuple	res = {NULL, 0, false};
 	IndexTuple *vec;
 	SplitedPageLayout *dist = NULL,
-				   *ptr;
-	int			i, veclen=0;
-	BlockNumber	blkno = BufferGetBlockNumber(buffer);
+			   *ptr;
+	int			i,
+				veclen = 0;
+	BlockNumber blkno = BufferGetBlockNumber(buffer);
 	MemoryContext oldCtx = MemoryContextSwitchTo(gv->opCtx);
 
 	vec = gistextractpage(tempPage, &veclen);
@@ -158,67 +170,73 @@ vacuumSplitPage(GistVacuum *gv, Page tempPage, Buffer buffer, IndexTuple *addon,
 
 	MemoryContextSwitchTo(oldCtx);
 
-	if (blkno != GIST_ROOT_BLKNO) {
+	if (blkno != GIST_ROOT_BLKNO)
+	{
 		/* if non-root split then we should not allocate new buffer */
 		dist->buffer = buffer;
 		dist->page = tempPage;
 		/* during vacuum we never split leaf page */
 		GistPageGetOpaque(dist->page)->flags = 0;
-	} else
+	}
+	else
 		pfree(tempPage);
 
 	res.itup = (IndexTuple *) palloc(sizeof(IndexTuple) * veclen);
 	res.ituplen = 0;
 
 	/* make new pages and fills them */
-	for (ptr = dist; ptr; ptr = ptr->next) {
-		char *data;
+	for (ptr = dist; ptr; ptr = ptr->next)
+	{
+		char	   *data;
 
-		if ( ptr->buffer == InvalidBuffer ) {
-			ptr->buffer = gistNewBuffer( gv->index );
-			GISTInitBuffer( ptr->buffer, 0 );
+		if (ptr->buffer == InvalidBuffer)
+		{
+			ptr->buffer = gistNewBuffer(gv->index);
+			GISTInitBuffer(ptr->buffer, 0);
 			ptr->page = BufferGetPage(ptr->buffer);
 		}
-		ptr->block.blkno = BufferGetBlockNumber( ptr->buffer );
+		ptr->block.blkno = BufferGetBlockNumber(ptr->buffer);
 
-		data = (char*)(ptr->list);
-		for(i=0;i<ptr->block.num;i++) {
-			if ( PageAddItem(ptr->page, (Item)data, IndexTupleSize((IndexTuple)data), i+FirstOffsetNumber, LP_USED) == InvalidOffsetNumber )
+		data = (char *) (ptr->list);
+		for (i = 0; i < ptr->block.num; i++)
+		{
+			if (PageAddItem(ptr->page, (Item) data, IndexTupleSize((IndexTuple) data), i + FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add item to index page in \"%s\"", RelationGetRelationName(gv->index));
-			data += IndexTupleSize((IndexTuple)data);
+			data += IndexTupleSize((IndexTuple) data);
 		}
 
 		ItemPointerSetBlockNumber(&(ptr->itup->t_tid), ptr->block.blkno);
-		res.itup[ res.ituplen ] = (IndexTuple)palloc(IndexTupleSize(ptr->itup));
-		memcpy( res.itup[ res.ituplen ], ptr->itup, IndexTupleSize(ptr->itup) );
+		res.itup[res.ituplen] = (IndexTuple) palloc(IndexTupleSize(ptr->itup));
+		memcpy(res.itup[res.ituplen], ptr->itup, IndexTupleSize(ptr->itup));
 		res.ituplen++;
 	}
 
 	START_CRIT_SECTION();
 
-	for (ptr = dist; ptr; ptr = ptr->next) {
+	for (ptr = dist; ptr; ptr = ptr->next)
+	{
 		MarkBufferDirty(ptr->buffer);
 		GistPageGetOpaque(ptr->page)->rightlink = InvalidBlockNumber;
 	}
 
 	/* restore splitted non-root page */
-	if (blkno != GIST_ROOT_BLKNO) {
-		PageRestoreTempPage( dist->page, BufferGetPage( dist->buffer ) );
-		dist->page = BufferGetPage( dist->buffer );
+	if (blkno != GIST_ROOT_BLKNO)
+	{
+		PageRestoreTempPage(dist->page, BufferGetPage(dist->buffer));
+		dist->page = BufferGetPage(dist->buffer);
 	}
 
 	if (!gv->index->rd_istemp)
 	{
 		XLogRecPtr	recptr;
 		XLogRecData *rdata;
-		ItemPointerData key;		/* set key for incomplete
-									 * insert */
+		ItemPointerData key;	/* set key for incomplete insert */
 		char	   *xlinfo;
 
 		ItemPointerSet(&key, blkno, TUPLE_IS_VALID);
 
 		rdata = formSplitRdata(gv->index->rd_node, blkno,
-										   false, &key, dist);
+							   false, &key, dist);
 		xlinfo = rdata->data;
 
 		recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT, rdata);
@@ -241,13 +259,12 @@ vacuumSplitPage(GistVacuum *gv, Page tempPage, Buffer buffer, IndexTuple *addon,
 	{
 		/* we must keep the buffer pin on the head page */
 		if (BufferGetBlockNumber(ptr->buffer) != blkno)
-			UnlockReleaseBuffer( ptr->buffer );
+			UnlockReleaseBuffer(ptr->buffer);
 	}
 
 	if (blkno == GIST_ROOT_BLKNO)
 	{
-		ItemPointerData key;		/* set key for incomplete
-									 * insert */
+		ItemPointerData key;	/* set key for incomplete insert */
 
 		ItemPointerSet(&key, blkno, TUPLE_IS_VALID);
 
@@ -266,7 +283,8 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 {
 	ArrayTuple	res = {NULL, 0, false};
 	Buffer		buffer;
-	Page		page, tempPage = NULL;
+	Page		page,
+				tempPage = NULL;
 	OffsetNumber i,
 				maxoff;
 	ItemId		iid;
@@ -278,7 +296,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 			   *addon = NULL;
 	bool		needwrite = false;
 	OffsetNumber offToDelete[MaxOffsetNumber];
-	BlockNumber  blkToDelete[MaxOffsetNumber];
+	BlockNumber blkToDelete[MaxOffsetNumber];
 	ItemPointerData *completed = NULL;
 	int			ncompleted = 0,
 				lencompleted = 16;
@@ -322,7 +340,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 			if (chldtuple.ituplen || chldtuple.emptypage)
 			{
 				/* update tuple or/and inserts new */
-				if ( chldtuple.emptypage )
+				if (chldtuple.emptypage)
 					blkToDelete[nBlkToDelete++] = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
 				offToDelete[nOffToDelete++] = i;
 				PageIndexTupleDelete(tempPage, i);
@@ -333,7 +351,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 				if (chldtuple.ituplen)
 				{
 
-					Assert( chldtuple.emptypage == false );
+					Assert(chldtuple.emptypage == false);
 					while (curlenaddon + chldtuple.ituplen >= lenaddon)
 					{
 						lenaddon *= 2;
@@ -367,56 +385,63 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 				}
 			}
 		}
-		
-		Assert( maxoff == PageGetMaxOffsetNumber(tempPage) );
+
+		Assert(maxoff == PageGetMaxOffsetNumber(tempPage));
 
 		if (curlenaddon)
 		{
 			/* insert updated tuples */
-			if (gistnospace(tempPage, addon, curlenaddon, InvalidOffsetNumber, 0)) {
+			if (gistnospace(tempPage, addon, curlenaddon, InvalidOffsetNumber, 0))
+			{
 				/* there is no space on page to insert tuples */
 				res = vacuumSplitPage(gv, tempPage, buffer, addon, curlenaddon);
-				tempPage=NULL; /* vacuumSplitPage() free tempPage */
-				needwrite = needunion = false;		/* gistSplit already forms unions and writes pages */
-			} else
+				tempPage = NULL;	/* vacuumSplitPage() free tempPage */
+				needwrite = needunion = false;	/* gistSplit already forms
+												 * unions and writes pages */
+			}
+			else
 				/* enough free space */
 				gistfillbuffer(gv->index, tempPage, addon, curlenaddon, InvalidOffsetNumber);
 		}
 	}
 
-	/* 
-	 * If page is empty, we should remove pointer to it before
-	 * deleting page (except root)
+	/*
+	 * If page is empty, we should remove pointer to it before deleting page
+	 * (except root)
 	 */
 
-	if ( blkno != GIST_ROOT_BLKNO && ( PageIsEmpty(page) || (tempPage && PageIsEmpty(tempPage)) ) ) {
+	if (blkno != GIST_ROOT_BLKNO && (PageIsEmpty(page) || (tempPage && PageIsEmpty(tempPage))))
+	{
 		/*
-		 * New version of page is empty, so leave it unchanged,
-		 * upper call will mark our page as deleted.
-		 * In case of page split we never will be here...
+		 * New version of page is empty, so leave it unchanged, upper call
+		 * will mark our page as deleted. In case of page split we never will
+		 * be here...
 		 *
-		 * If page was empty it can't become non-empty during processing 
+		 * If page was empty it can't become non-empty during processing
 		 */
 		res.emptypage = true;
 		UnlockReleaseBuffer(buffer);
-	} else {
+	}
+	else
+	{
 		/* write page and remove its childs if it need */
 
 		START_CRIT_SECTION();
 
-		if ( tempPage && needwrite ) {
+		if (tempPage && needwrite)
+		{
 			PageRestoreTempPage(tempPage, page);
 			tempPage = NULL;
 		}
 
-		/* Empty index */ 
-		if (PageIsEmpty(page) && blkno == GIST_ROOT_BLKNO )
+		/* Empty index */
+		if (PageIsEmpty(page) && blkno == GIST_ROOT_BLKNO)
 		{
 			needwrite = true;
 			GistPageSetLeaf(page);
 		}
 
-	
+
 		if (needwrite)
 		{
 			MarkBufferDirty(buffer);
@@ -446,7 +471,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 		END_CRIT_SECTION();
 
-		if ( needunion && !PageIsEmpty(page) )
+		if (needunion && !PageIsEmpty(page))
 		{
 			res.itup = (IndexTuple *) palloc(sizeof(IndexTuple));
 			res.ituplen = 1;
@@ -456,7 +481,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 		UnlockReleaseBuffer(buffer);
 
 		/* delete empty children, now we havn't any links to pointed subtrees */
-		for(i=0;i<nBlkToDelete;i++) 
+		for (i = 0; i < nBlkToDelete; i++)
 			gistDeleteSubtree(gv, blkToDelete[i]);
 
 		if (ncompleted && !gv->index->rd_istemp)
@@ -506,9 +531,10 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		/* use heap's tuple count */
 		Assert(info->num_heap_tuples >= 0);
 		stats->std.num_index_tuples = info->num_heap_tuples;
+
 		/*
-		 * XXX the above is wrong if index is partial.  Would it be OK to
-		 * just return NULL, or is there work we must do below?
+		 * XXX the above is wrong if index is partial.	Would it be OK to just
+		 * return NULL, or is there work we must do below?
 		 */
 	}
 
@@ -545,8 +571,8 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 						RelationGetRelationName(rel))));
 
 	/*
-	 * If vacuum full, we already have exclusive lock on the index.
-	 * Otherwise, need lock unless it's local to this backend.
+	 * If vacuum full, we already have exclusive lock on the index. Otherwise,
+	 * need lock unless it's local to this backend.
 	 */
 	if (info->vacuum_full)
 		needLock = false;
@@ -725,7 +751,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 				if (callback(&(idxtuple->t_tid), callback_state))
 				{
-					todelete[ntodelete] = i-ntodelete;
+					todelete[ntodelete] = i - ntodelete;
 					ntodelete++;
 					stats->std.tuples_removed += 1;
 				}
@@ -739,7 +765,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 				MarkBufferDirty(buffer);
 
-				for(i=0;i<ntodelete;i++)
+				for (i = 0; i < ntodelete; i++)
 					PageIndexTupleDelete(page, todelete[i]);
 				GistMarkTuplesDeleted(page);
 
@@ -750,7 +776,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 					gistxlogPageUpdate *xlinfo;
 
 					rdata = formUpdateRdata(rel->rd_node, buffer,
-											todelete, ntodelete, 
+											todelete, ntodelete,
 											NULL, 0,
 											NULL);
 					xlinfo = (gistxlogPageUpdate *) rdata->next->data;

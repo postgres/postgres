@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.121 2006/07/14 05:28:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.122 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -735,8 +735,8 @@ mdsync(void)
 			 * If in bgwriter, absorb pending requests every so often to
 			 * prevent overflow of the fsync request queue.  The hashtable
 			 * code does not specify whether entries added by this will be
-			 * visited by our search, but we don't really care: it's OK if
-			 * we do, and OK if we don't.
+			 * visited by our search, but we don't really care: it's OK if we
+			 * do, and OK if we don't.
 			 */
 			if (--absorb_counter <= 0)
 			{

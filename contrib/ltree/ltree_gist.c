@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.18 2006/08/08 15:45:18 teodor Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.19 2006/10/04 00:29:45 momjian Exp $
  */
 
 #include "ltree.h"
@@ -457,8 +457,10 @@ gist_isparent(ltree_gist * key, ltree * query)
 }
 
 static ltree *
-copy_ltree( ltree *src ) {
-	ltree *dst = (ltree*)palloc(src->len);
+copy_ltree(ltree * src)
+{
+	ltree	   *dst = (ltree *) palloc(src->len);
+
 	memcpy(dst, src, src->len);
 	return dst;
 }
@@ -466,9 +468,9 @@ copy_ltree( ltree *src ) {
 static bool
 gist_ischild(ltree_gist * key, ltree * query)
 {
-	ltree      *left = copy_ltree(LTG_GETLNODE(key));
-	ltree      *right = copy_ltree(LTG_GETRNODE(key));
-	bool            res = true;
+	ltree	   *left = copy_ltree(LTG_GETLNODE(key));
+	ltree	   *right = copy_ltree(LTG_GETRNODE(key));
+	bool		res = true;
 
 	if (left->numlevel > query->numlevel)
 		left->numlevel = query->numlevel;
@@ -711,6 +713,6 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			elog(ERROR, "unrecognized StrategyNumber: %d", strategy);
 	}
 
-	PG_FREE_IF_COPY(query,1);
+	PG_FREE_IF_COPY(query, 1);
 	PG_RETURN_BOOL(res);
 }

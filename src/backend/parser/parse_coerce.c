@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.143 2006/07/26 19:31:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.144 2006/10/04 00:29:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,11 +163,11 @@ coerce_type(ParseState *pstate, Node *node,
 
 		/*
 		 * If the target type is a domain, we want to call its base type's
-		 * input routine, not domain_in().  This is to avoid premature
-		 * failure when the domain applies a typmod: existing input
-		 * routines follow implicit-coercion semantics for length checks,
-		 * which is not always what we want here.  The needed check will
-		 * be applied properly inside coerce_to_domain().
+		 * input routine, not domain_in().	This is to avoid premature failure
+		 * when the domain applies a typmod: existing input routines follow
+		 * implicit-coercion semantics for length checks, which is not always
+		 * what we want here.  The needed check will be applied properly
+		 * inside coerce_to_domain().
 		 */
 		baseTypeMod = -1;
 		baseTypeId = getBaseTypeAndTypmod(targetTypeId, &baseTypeMod);
@@ -180,13 +180,13 @@ coerce_type(ParseState *pstate, Node *node,
 		newcon->constisnull = con->constisnull;
 
 		/*
-		 * We pass typmod -1 to the input routine, primarily because
-		 * existing input routines follow implicit-coercion semantics for
-		 * length checks, which is not always what we want here. Any
-		 * length constraint will be applied later by our caller.
+		 * We pass typmod -1 to the input routine, primarily because existing
+		 * input routines follow implicit-coercion semantics for length
+		 * checks, which is not always what we want here. Any length
+		 * constraint will be applied later by our caller.
 		 *
-		 * We assume here that UNKNOWN's internal representation is the
-		 * same as CSTRING.
+		 * We assume here that UNKNOWN's internal representation is the same
+		 * as CSTRING.
 		 */
 		if (!con->constisnull)
 			newcon->constvalue = stringTypeDatum(targetType,
@@ -886,8 +886,8 @@ coerce_to_bigint(ParseState *pstate, Node *node,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 			/* translator: first %s is name of a SQL construct, eg LIMIT */
-				   errmsg("argument of %s must be type bigint, not type %s",
-						  constructName, format_type_be(inputTypeId))));
+					 errmsg("argument of %s must be type bigint, not type %s",
+							constructName, format_type_be(inputTypeId))));
 	}
 
 	if (expression_returns_set(node))

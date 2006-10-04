@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.22 2006/07/13 16:49:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tuplesort.h,v 1.23 2006/10/04 00:30:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
 					  int workMem, bool randomAccess);
 
 extern void tuplesort_puttupleslot(Tuplesortstate *state,
-								   TupleTableSlot *slot);
+					   TupleTableSlot *slot);
 extern void tuplesort_putindextuple(Tuplesortstate *state, IndexTuple tuple);
 extern void tuplesort_putdatum(Tuplesortstate *state, Datum val,
 				   bool isNull);
@@ -64,9 +64,9 @@ extern void tuplesort_putdatum(Tuplesortstate *state, Datum val,
 extern void tuplesort_performsort(Tuplesortstate *state);
 
 extern bool tuplesort_gettupleslot(Tuplesortstate *state, bool forward,
-								   TupleTableSlot *slot);
+					   TupleTableSlot *slot);
 extern IndexTuple tuplesort_getindextuple(Tuplesortstate *state, bool forward,
-										  bool *should_free);
+						bool *should_free);
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward,
 				   Datum *val, bool *isNull);
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.124 2006/08/25 04:06:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.125 2006/10/04 00:30:07 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -404,7 +404,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 1259, {"relhaspkey"},    16, -1,	1, 22, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1259, {"relhasrules"},   16, -1,	1, 23, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
 { 1259, {"relhassubclass"},16, -1,	1, 24, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1259, {"relminxid"},     28, -1,	4, 25, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1259, {"relminxid"},	   28, -1,	4, 25, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"relvacuumxid"},  28, -1,	4, 26, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1259, {"relacl"},		 1034, -1, -1, 27, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1259, {"reloptions"},  1009, -1, -1, 28, 1, -1, -1, false, 'x', 'i', false, false, false, true, 0 }

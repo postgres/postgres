@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.82 2006/09/27 15:41:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.83 2006/10/04 00:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ static void dumpCreateDB(PGconn *conn);
 static void dumpDatabaseConfig(PGconn *conn, const char *dbname);
 static void dumpUserConfig(PGconn *conn, const char *username);
 static void makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
-								   const char *type, const char *name);
+					   const char *type, const char *name);
 static void dumpDatabases(PGconn *conn);
 static void dumpTimestamp(char *msg);
 
@@ -309,8 +309,8 @@ main(int argc, char *argv[])
 							   force_password, true);
 
 	/*
-	 * Get the active encoding and the standard_conforming_strings setting,
-	 * so we know how to escape strings.
+	 * Get the active encoding and the standard_conforming_strings setting, so
+	 * we know how to escape strings.
 	 */
 	encoding = PQclientEncoding(conn);
 	std_strings = PQparameterStatus(conn, "standard_conforming_strings");
@@ -436,7 +436,7 @@ dumpRoles(PGconn *conn)
 						  "rolcreaterole, rolcreatedb, rolcatupdate, "
 						  "rolcanlogin, rolconnlimit, rolpassword, "
 						  "rolvaliduntil, "
-						  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
+			  "pg_catalog.shobj_description(oid, 'pg_authid') as rolcomment "
 						  "FROM pg_authid "
 						  "ORDER BY 1");
 	else if (server_version >= 80100)
@@ -556,7 +556,8 @@ dumpRoles(PGconn *conn)
 
 		appendPQExpBuffer(buf, ";\n");
 
-		if (!PQgetisnull(res, i, i_rolcomment)) {
+		if (!PQgetisnull(res, i, i_rolcomment))
+		{
 			appendPQExpBuffer(buf, "COMMENT ON ROLE %s IS ", fmtId(rolename));
 			appendStringLiteralConn(buf, PQgetvalue(res, i, i_rolcomment), conn);
 			appendPQExpBuffer(buf, ";\n");
@@ -704,15 +705,15 @@ dumpTablespaces(PGconn *conn)
 	 */
 	if (server_version >= 80200)
 		res = executeQuery(conn, "SELECT spcname, "
-						   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 						   "spclocation, spcacl, "
-						   "pg_catalog.shobj_description(oid, 'pg_tablespace') "
+						"pg_catalog.shobj_description(oid, 'pg_tablespace') "
 						   "FROM pg_catalog.pg_tablespace "
 						   "WHERE spcname !~ '^pg_' "
 						   "ORDER BY 1");
-	else 
+	else
 		res = executeQuery(conn, "SELECT spcname, "
-						   "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
+						 "pg_catalog.pg_get_userbyid(spcowner) AS spcowner, "
 						   "spclocation, spcacl, "
 						   "null "
 						   "FROM pg_catalog.pg_tablespace "
@@ -755,7 +756,8 @@ dumpTablespaces(PGconn *conn)
 			exit(1);
 		}
 
-		if (spccomment && strlen(spccomment)) {
+		if (spccomment && strlen(spccomment))
+		{
 			appendPQExpBuffer(buf, "COMMENT ON TABLESPACE %s IS ", fspcname);
 			appendStringLiteralConn(buf, spccomment, conn);
 			appendPQExpBuffer(buf, ";\n");
@@ -883,13 +885,12 @@ dumpCreateDB(PGconn *conn)
 			appendStringLiteralConn(buf, dbencoding, conn);
 
 			/*
-			 *	Output tablespace if it isn't the default.  For default, it
-			 *	uses the default from the template database.  If tablespace
-			 *	is specified and tablespace creation failed earlier,
-			 *	(e.g. no such directory), the database creation will fail
-			 *	too.  One solution would be to use 'SET default_tablespace'
-			 *	like we do in pg_dump for setting non-default database
-			 *	locations.
+			 * Output tablespace if it isn't the default.  For default, it
+			 * uses the default from the template database.  If tablespace is
+			 * specified and tablespace creation failed earlier, (e.g. no such
+			 * directory), the database creation will fail too.  One solution
+			 * would be to use 'SET default_tablespace' like we do in pg_dump
+			 * for setting non-default database locations.
 			 */
 			if (strcmp(dbtablespace, "pg_default") != 0)
 				appendPQExpBuffer(buf, " TABLESPACE = %s",

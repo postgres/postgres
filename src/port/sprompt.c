@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/sprompt.c,v 1.17 2006/06/14 16:49:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/sprompt.c,v 1.18 2006/10/04 00:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	termout = fopen(DEVTTY, "w");
 	if (!termin || !termout
 #ifdef WIN32
-		/* See DEVTTY comment for msys */
+	/* See DEVTTY comment for msys */
 		|| (getenv("OSTYPE") && strcmp(getenv("OSTYPE"), "msys") == 0)
 #endif
 		)

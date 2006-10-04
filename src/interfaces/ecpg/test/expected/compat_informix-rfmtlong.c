@@ -21,14 +21,14 @@
 
 
 static void
-check_return(int ret);
+			check_return(int ret);
 
 static void
 fmtlong(long lng, char *fmt)
 {
-	static int i;
-	int r;
-	char buf[30];
+	static int	i;
+	int			r;
+	char		buf[30];
 
 	r = rfmtlong(lng, fmt, buf);
 	printf("r: %d ", r);
@@ -62,7 +62,7 @@ main(void)
 static void
 check_return(int ret)
 {
-	switch(ret)
+	switch (ret)
 	{
 		case ECPG_INFORMIX_ENOTDMY:
 			printf("(ECPG_INFORMIX_ENOTDMY)");

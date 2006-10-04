@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.330 2006/09/05 21:08:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.331 2006/10/04 00:30:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_USAGE		(1<<8)	/* for languages and namespaces */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
-#define ACL_CONNECT		(1<<11)	/* for databases */
+#define ACL_CONNECT		(1<<11) /* for databases */
 #define N_ACL_RIGHTS	12		/* 1 plus the last 1<<x */
 #define ACL_NO_RIGHTS	0
 /* Currently, SELECT ... FOR UPDATE/FOR SHARE requires UPDATE privileges */
@@ -93,9 +93,9 @@ typedef struct Query
 								 * INSERT/UPDATE/DELETE; 0 for SELECT */
 
 	RangeVar   *into;			/* target relation for SELECT INTO */
-	List	   *intoOptions;		/* options from WITH clause */
+	List	   *intoOptions;	/* options from WITH clause */
 	OnCommitAction intoOnCommit;	/* what do we do at COMMIT? */
-	char	   *intoTableSpaceName;	/* table space to use, or NULL */
+	char	   *intoTableSpaceName;		/* table space to use, or NULL */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
@@ -134,17 +134,17 @@ typedef struct Query
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
 	/*
-	 * If the query has a returningList then the planner will store a list
-	 * of processed targetlists (one per result relation) here.  We must
-	 * have a separate RETURNING targetlist for each result rel because
-	 * column numbers may vary within an inheritance tree.  In the targetlists,
-	 * Vars referencing the result relation will have their original varno
-	 * and varattno, while Vars referencing other rels will be converted
-	 * to have varno OUTER and varattno referencing a resjunk entry in the
-	 * top plan node's targetlist.  XXX This field ought to go in some sort of
-	 * TopPlan plan node, not in the Query.
+	 * If the query has a returningList then the planner will store a list of
+	 * processed targetlists (one per result relation) here.  We must have a
+	 * separate RETURNING targetlist for each result rel because column
+	 * numbers may vary within an inheritance tree.  In the targetlists, Vars
+	 * referencing the result relation will have their original varno and
+	 * varattno, while Vars referencing other rels will be converted to have
+	 * varno OUTER and varattno referencing a resjunk entry in the top plan
+	 * node's targetlist.  XXX This field ought to go in some sort of TopPlan
+	 * plan node, not in the Query.
 	 */
-	List	   *returningLists;		/* list of lists of TargetEntry, or NIL */
+	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
 } Query;
 
 
@@ -375,8 +375,8 @@ typedef struct RangeFunction
 	NodeTag		type;
 	Node	   *funccallnode;	/* untransformed function call tree */
 	Alias	   *alias;			/* table alias & optional column aliases */
-	List	   *coldeflist;		/* list of ColumnDef nodes to describe
-								 * result of function returning RECORD */
+	List	   *coldeflist;		/* list of ColumnDef nodes to describe result
+								 * of function returning RECORD */
 } RangeFunction;
 
 /*
@@ -414,7 +414,7 @@ typedef struct InhRelation
 {
 	NodeTag		type;
 	RangeVar   *relation;
-	List       *options;
+	List	   *options;
 } InhRelation;
 
 /*
@@ -563,7 +563,7 @@ typedef struct RangeTblEntry
 	 */
 	Node	   *funcexpr;		/* expression tree for func call */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
-	List	   *funccoltypmods;	/* integer list of column typmods */
+	List	   *funccoltypmods; /* integer list of column typmods */
 
 	/*
 	 * Fields valid for a values RTE (else NIL):
@@ -717,15 +717,15 @@ typedef struct SelectStmt
 	/*
 	 * These fields are used only in "leaf" SelectStmts.
 	 *
-	 * into, intoColNames, intoOptions, intoOnCommit, and
-	 * intoTableSpaceName are a kluge; they belong somewhere else...
+	 * into, intoColNames, intoOptions, intoOnCommit, and intoTableSpaceName
+	 * are a kluge; they belong somewhere else...
 	 */
 	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
 								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
 	RangeVar   *into;			/* target table (for select into table) */
 	List	   *intoColNames;	/* column names for into table */
 	List	   *intoOptions;	/* options from WITH clause */
-	OnCommitAction	intoOnCommit;		/* what do we do at COMMIT? */
+	OnCommitAction intoOnCommit;	/* what do we do at COMMIT? */
 	char	   *intoTableSpaceName;		/* table space to use, or NULL */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the FROM clause */
@@ -735,11 +735,11 @@ typedef struct SelectStmt
 
 	/*
 	 * In a "leaf" node representing a VALUES list, the above fields are all
-	 * null, and instead this field is set.  Note that the elements of
-	 * the sublists are just expressions, without ResTarget decoration.
-	 * Also note that a list element can be DEFAULT (represented as a
-	 * SetToDefault node), regardless of the context of the VALUES list.
-	 * It's up to parse analysis to reject that where not valid.
+	 * null, and instead this field is set.  Note that the elements of the
+	 * sublists are just expressions, without ResTarget decoration. Also note
+	 * that a list element can be DEFAULT (represented as a SetToDefault
+	 * node), regardless of the context of the VALUES list. It's up to parse
+	 * analysis to reject that where not valid.
 	 */
 	List	   *valuesLists;	/* untransformed list of expression lists */
 
@@ -1014,7 +1014,7 @@ typedef struct GrantRoleStmt
  *		Copy Statement
  *
  * We support "COPY relation FROM file", "COPY relation TO file", and
- * "COPY (query) TO file".  In any given CopyStmt, exactly one of "relation"
+ * "COPY (query) TO file".	In any given CopyStmt, exactly one of "relation"
  * and "query" must be non-NULL.  Note: "query" is a SelectStmt before
  * parse analysis, and a Query afterwards.
  * ----------------------
@@ -1055,7 +1055,8 @@ typedef struct CreateStmt
 	char	   *tablespacename; /* table space to use, or NULL */
 } CreateStmt;
 
-typedef enum CreateStmtLikeOption {
+typedef enum CreateStmtLikeOption
+{
 	CREATE_TABLE_LIKE_INCLUDING_DEFAULTS,
 	CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS,
 	CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS,
@@ -1917,13 +1918,13 @@ typedef struct PrepareStmt
 
 typedef struct ExecuteStmt
 {
-	NodeTag			type;
-	char		   *name;				/* The name of the plan to execute */
-	RangeVar	   *into;				/* Optional table to store results in */
-	List		   *intoOptions;		/* Options from WITH clause */
-	OnCommitAction	into_on_commit;		/* What do we do at COMMIT? */
-	char		   *into_tbl_space;		/* Tablespace to use, or NULL */
-	List		   *params;				/* Values to assign to parameters */
+	NodeTag		type;
+	char	   *name;			/* The name of the plan to execute */
+	RangeVar   *into;			/* Optional table to store results in */
+	List	   *intoOptions;	/* Options from WITH clause */
+	OnCommitAction into_on_commit;		/* What do we do at COMMIT? */
+	char	   *into_tbl_space; /* Tablespace to use, or NULL */
+	List	   *params;			/* Values to assign to parameters */
 } ExecuteStmt;
 
 

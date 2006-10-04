@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.120 2006/09/22 21:39:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.121 2006/10/04 00:30:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ pg_an_to_ln(char *aname)
  * Various krb5 state which is not connection specific, and a flag to
  * indicate whether we have initialised it yet.
  */
-/* 
+/*
 static int	pg_krb5_initialised;
 static krb5_context pg_krb5_context;
 static krb5_ccache pg_krb5_ccache;
@@ -110,16 +110,16 @@ static char *pg_krb5_name;
 
 struct krb5_info
 {
-	int		pg_krb5_initialised;
-	krb5_context	pg_krb5_context;
-	krb5_ccache	pg_krb5_ccache;
-	krb5_principal	pg_krb5_client;
-	char		*pg_krb5_name;
+	int			pg_krb5_initialised;
+	krb5_context pg_krb5_context;
+	krb5_ccache pg_krb5_ccache;
+	krb5_principal pg_krb5_client;
+	char	   *pg_krb5_name;
 };
 
 
 static int
-pg_krb5_init(char *PQerrormsg, struct krb5_info *info)
+pg_krb5_init(char *PQerrormsg, struct krb5_info * info)
 {
 	krb5_error_code retval;
 
@@ -175,8 +175,8 @@ pg_krb5_init(char *PQerrormsg, struct krb5_info *info)
 	return STATUS_OK;
 }
 
-static void 
-pg_krb5_destroy(struct krb5_info *info)
+static void
+pg_krb5_destroy(struct krb5_info * info)
 {
 	krb5_free_principal(info->pg_krb5_context, info->pg_krb5_client);
 	krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
@@ -193,8 +193,9 @@ pg_krb5_destroy(struct krb5_info *info)
 static char *
 pg_krb5_authname(char *PQerrormsg)
 {
-	char *tmp_name;
+	char	   *tmp_name;
 	struct krb5_info info;
+
 	info.pg_krb5_initialised = 0;
 
 	if (pg_krb5_init(PQerrormsg, &info) != STATUS_OK)
@@ -219,6 +220,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 	krb5_auth_context auth_context = NULL;
 	krb5_error *err_ret = NULL;
 	struct krb5_info info;
+
 	info.pg_krb5_initialised = 0;
 
 	if (!hostname)
@@ -519,7 +521,7 @@ char *
 pg_fe_getauthname(char *PQerrormsg)
 {
 #ifdef KRB5
-	char       *krb5_name = NULL;
+	char	   *krb5_name = NULL;
 #endif
 	const char *name = NULL;
 	char	   *authn;
@@ -545,10 +547,12 @@ pg_fe_getauthname(char *PQerrormsg)
 	pglock_thread();
 
 #ifdef KRB5
-	/* pg_krb5_authname gives us a strdup'd value that we need
-	 * to free later, however, we don't want to free 'name' directly
-	 * in case it's *not* a Kerberos login and we fall through to
-	 * name = pw->pw_name; */
+
+	/*
+	 * pg_krb5_authname gives us a strdup'd value that we need to free later,
+	 * however, we don't want to free 'name' directly in case it's *not* a
+	 * Kerberos login and we fall through to name = pw->pw_name;
+	 */
 	krb5_name = pg_krb5_authname(PQerrormsg);
 	name = krb5_name;
 #endif
@@ -583,7 +587,7 @@ pg_fe_getauthname(char *PQerrormsg)
  *
  * This is intended to be used by client applications that wish to send
  * commands like ALTER USER joe PASSWORD 'pwd'.  The password need not
- * be sent in cleartext if it is encrypted on the client side.  This is
+ * be sent in cleartext if it is encrypted on the client side.	This is
  * good because it ensures the cleartext password won't end up in logs,
  * pg_stat displays, etc.  We export the function so that clients won't
  * be dependent on low-level details like whether the enceyption is MD5

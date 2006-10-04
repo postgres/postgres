@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.128 2006/07/28 18:33:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.129 2006/10/04 00:29:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,11 +78,12 @@
 #define HAVE_FINITE 1
 #endif
 
-/* Visual C++ etc lacks NAN, and won't accept 0.0/0.0.  NAN definition from 
+/* Visual C++ etc lacks NAN, and won't accept 0.0/0.0.  NAN definition from
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclang/html/vclrfNotNumberNANItems.asp
  */
 #if defined(WIN32) && !defined(NAN)
 static const uint32 nan[2] = {0xffffffff, 0x7fffffff};
+
 #define NAN (*(const double *) nan)
 #endif
 
@@ -2137,7 +2138,7 @@ float8_stddev_samp(PG_FUNCTION_ARGS)
  * in that order.  Note that Y is the first argument to the aggregates!
  *
  * It might seem attractive to optimize this by having multiple accumulator
- * functions that only calculate the sums actually needed.  But on most
+ * functions that only calculate the sums actually needed.	But on most
  * modern machines, a couple of extra floating-point multiplies will be
  * insignificant compared to the other per-tuple overhead, so I've chosen
  * to minimize code space instead.
@@ -2150,7 +2151,12 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 	float8		newvalY = PG_GETARG_FLOAT8(1);
 	float8		newvalX = PG_GETARG_FLOAT8(2);
 	float8	   *transvalues;
-	float8		N, sumX, sumX2, sumY, sumY2, sumXY;
+	float8		N,
+				sumX,
+				sumX2,
+				sumY,
+				sumY2,
+				sumXY;
 
 	transvalues = check_float8_array(transarray, "float8_regr_accum", 6);
 	N = transvalues[0];
@@ -2265,7 +2271,11 @@ float8_regr_sxy(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
-	float8		N, sumX, sumY, sumXY, numerator;
+	float8		N,
+				sumX,
+				sumY,
+				sumXY,
+				numerator;
 
 	transvalues = check_float8_array(transarray, "float8_regr_sxy", 6);
 	N = transvalues[0];
@@ -2327,7 +2337,11 @@ float8_covar_pop(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
-	float8		N, sumX, sumY, sumXY, numerator;
+	float8		N,
+				sumX,
+				sumY,
+				sumXY,
+				numerator;
 
 	transvalues = check_float8_array(transarray, "float8_covar_pop", 6);
 	N = transvalues[0];
@@ -2349,7 +2363,11 @@ float8_covar_samp(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
-	float8		N, sumX, sumY, sumXY, numerator;
+	float8		N,
+				sumX,
+				sumY,
+				sumXY,
+				numerator;
 
 	transvalues = check_float8_array(transarray, "float8_covar_samp", 6);
 	N = transvalues[0];
@@ -2371,8 +2389,15 @@ float8_corr(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
-	float8		N, sumX, sumX2, sumY, sumY2, sumXY, numeratorX,
-		numeratorY, numeratorXY;
+	float8		N,
+				sumX,
+				sumX2,
+				sumY,
+				sumY2,
+				sumXY,
+				numeratorX,
+				numeratorY,
+				numeratorXY;
 
 	transvalues = check_float8_array(transarray, "float8_corr", 6);
 	N = transvalues[0];
@@ -2391,7 +2416,7 @@ float8_corr(PG_FUNCTION_ARGS)
 	numeratorXY = N * sumXY - sumX * sumY;
 	if (numeratorX <= 0 || numeratorY <= 0)
 		PG_RETURN_NULL();
-	
+
 	PG_RETURN_FLOAT8(sqrt((numeratorXY * numeratorXY) /
 						  (numeratorX * numeratorY)));
 }
@@ -2401,8 +2426,15 @@ float8_regr_r2(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
-	float8		N, sumX, sumX2, sumY, sumY2, sumXY, numeratorX,
-		numeratorY, numeratorXY;
+	float8		N,
+				sumX,
+				sumX2,
+				sumY,
+				sumY2,
+				sumXY,
+				numeratorX,
+				numeratorY,
+				numeratorXY;
 
 	transvalues = check_float8_array(transarray, "float8_regr_r2", 6);
 	N = transvalues[0];
@@ -2434,8 +2466,13 @@ float8_regr_slope(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
-	float8		N, sumX, sumX2, sumY, sumXY, numeratorX,
-		numeratorXY;
+	float8		N,
+				sumX,
+				sumX2,
+				sumY,
+				sumXY,
+				numeratorX,
+				numeratorXY;
 
 	transvalues = check_float8_array(transarray, "float8_regr_slope", 6);
 	N = transvalues[0];
@@ -2452,7 +2489,7 @@ float8_regr_slope(PG_FUNCTION_ARGS)
 	numeratorXY = N * sumXY - sumX * sumY;
 	if (numeratorX <= 0)
 		PG_RETURN_NULL();
-	
+
 	PG_RETURN_FLOAT8(numeratorXY / numeratorX);
 }
 
@@ -2461,8 +2498,13 @@ float8_regr_intercept(PG_FUNCTION_ARGS)
 {
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
-	float8		N, sumX, sumX2, sumY, sumXY, numeratorX,
-		numeratorXXY;
+	float8		N,
+				sumX,
+				sumX2,
+				sumY,
+				sumXY,
+				numeratorX,
+				numeratorXXY;
 
 	transvalues = check_float8_array(transarray, "float8_regr_intercept", 6);
 	N = transvalues[0];
@@ -2479,7 +2521,7 @@ float8_regr_intercept(PG_FUNCTION_ARGS)
 	numeratorXXY = sumY * sumX2 - sumX * sumXY;
 	if (numeratorX <= 0)
 		PG_RETURN_NULL();
-	
+
 	PG_RETURN_FLOAT8(numeratorXXY / numeratorX);
 }
 
@@ -2744,13 +2786,13 @@ cbrt(double x)
 	double		tmpres = pow(absx, (double) 1.0 / (double) 3.0);
 
 	/*
-	 * The result is somewhat inaccurate --- not really pow()'s fault,
-	 * as the exponent it's handed contains roundoff error.  We can improve
-	 * the accuracy by doing one iteration of Newton's formula.  Beware of
-	 * zero input however.
+	 * The result is somewhat inaccurate --- not really pow()'s fault, as the
+	 * exponent it's handed contains roundoff error.  We can improve the
+	 * accuracy by doing one iteration of Newton's formula.  Beware of zero
+	 * input however.
 	 */
 	if (tmpres > 0.0)
-		tmpres -= (tmpres - absx/(tmpres*tmpres)) / (double) 3.0;
+		tmpres -= (tmpres - absx / (tmpres * tmpres)) / (double) 3.0;
 
 	return isneg ? -tmpres : tmpres;
 }

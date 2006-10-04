@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.499 2006/08/15 18:26:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.500 2006/10/04 00:29:56 momjian Exp $
  *
  * NOTES
  *
@@ -141,9 +141,9 @@ typedef struct bkend
 static Dllist *BackendList;
 
 #ifdef EXEC_BACKEND
-/* 
+/*
  * Number of entries in the backend table. Twice the number of backends,
- * plus four other subprocesses (stats, bgwriter, autovac, logger). 
+ * plus four other subprocesses (stats, bgwriter, autovac, logger).
  */
 #define NUM_BACKENDARRAY_ELEMS (2*MaxBackends + 4)
 static Backend *ShmemBackendArray;
@@ -510,6 +510,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'T':
+
 				/*
 				 * In the event that some backend dumps core, send SIGSTOP,
 				 * rather than SIGQUIT, to all its peers.  This lets the wily
@@ -519,21 +520,21 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 't':
-			{
-				const char *tmp = get_stats_option_name(optarg);
+				{
+					const char *tmp = get_stats_option_name(optarg);
 
-				if (tmp)
-				{
-					SetConfigOption(tmp, "true", PGC_POSTMASTER, PGC_S_ARGV);
+					if (tmp)
+					{
+						SetConfigOption(tmp, "true", PGC_POSTMASTER, PGC_S_ARGV);
+					}
+					else
+					{
+						write_stderr("%s: invalid argument for option -t: \"%s\"\n",
+									 progname, optarg);
+						ExitPostmaster(1);
+					}
+					break;
 				}
-				else
-				{
-					write_stderr("%s: invalid argument for option -t: \"%s\"\n",
-								 progname, optarg);
-					ExitPostmaster(1);
-				}
-				break;
-			}
 
 			case 'W':
 				SetConfigOption("post_auth_delay", optarg, PGC_POSTMASTER, PGC_S_ARGV);
@@ -2468,9 +2469,9 @@ BackendStartup(Port *port)
 		 * postmaster's listen sockets.  (In EXEC_BACKEND case this is all
 		 * done in SubPostmasterMain.)
 		 */
-		IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+		IsUnderPostmaster = true;		/* we are a postmaster subprocess now */
 
-		MyProcPid = getpid();		/* reset MyProcPid */
+		MyProcPid = getpid();	/* reset MyProcPid */
 
 		/* We don't want the postmaster's proc_exit() handlers */
 		on_exit_reset();
@@ -2718,8 +2719,8 @@ BackendInitialize(Port *port)
 	 * title for ps.  It's good to do this as early as possible in startup.
 	 */
 	init_ps_display(port->user_name, port->database_name, remote_ps_data,
-		update_process_title ? "authentication" : "");
-	
+					update_process_title ? "authentication" : "");
+
 	/*
 	 * Now perform authentication exchange.
 	 */
@@ -3252,12 +3253,11 @@ SubPostmasterMain(int argc, char *argv[])
 		/*
 		 * Perform additional initialization and client authentication.
 		 *
-		 * We want to do this before InitProcess() for a couple of reasons:
-		 * 1. so that we aren't eating up a PGPROC slot while waiting on the 
-		 * client.
-		 * 2. so that if InitProcess() fails due to being out of PGPROC slots,
-		 * we have already initialized libpq and are able to report the error
-		 * to the client.
+		 * We want to do this before InitProcess() for a couple of reasons: 1.
+		 * so that we aren't eating up a PGPROC slot while waiting on the
+		 * client. 2. so that if InitProcess() fails due to being out of
+		 * PGPROC slots, we have already initialized libpq and are able to
+		 * report the error to the client.
 		 */
 		BackendInitialize(&port);
 
@@ -3268,16 +3268,15 @@ SubPostmasterMain(int argc, char *argv[])
 		InitProcess();
 
 		/*
-		 *	Attach process to shared data structures.  If testing
-		 *	EXEC_BACKEND on Linux, you must run this as root
-		 *	before starting the postmaster:
+		 * Attach process to shared data structures.  If testing EXEC_BACKEND
+		 * on Linux, you must run this as root before starting the postmaster:
 		 *
-		 *		echo 0 >/proc/sys/kernel/randomize_va_space
+		 * echo 0 >/proc/sys/kernel/randomize_va_space
 		 *
-		 *	This prevents a randomized stack base address that causes
-		 *	child shared memory to be at a different address than
-		 *	the parent, making it impossible to attached to shared
-		 *	memory.  Return the value to '1' when finished.
+		 * This prevents a randomized stack base address that causes child
+		 * shared memory to be at a different address than the parent, making
+		 * it impossible to attached to shared memory.	Return the value to
+		 * '1' when finished.
 		 */
 		CreateSharedMemoryAndSemaphores(false, 0);
 

@@ -36,19 +36,21 @@ g_int_consistent(PG_FUNCTION_ARGS)
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 
-	if (strategy == BooleanSearchStrategy) {
+	if (strategy == BooleanSearchStrategy)
+	{
 		retval = execconsistent((QUERYTYPE *) query,
-								   (ArrayType *) DatumGetPointer(entry->key),
-									  GIST_LEAF(entry));
+								(ArrayType *) DatumGetPointer(entry->key),
+								GIST_LEAF(entry));
 
-		pfree( query );
+		pfree(query);
 		PG_RETURN_BOOL(retval);
 	}
 
 	/* sort query for fast search, key is already sorted */
 	CHECKARRVALID(query);
-	if (ARRISVOID(query)) {
-		pfree( query );
+	if (ARRISVOID(query))
+	{
+		pfree(query);
 		PG_RETURN_BOOL(false);
 	}
 	PREPAREARR(query);
@@ -88,7 +90,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 		default:
 			retval = FALSE;
 	}
-	pfree( query );
+	pfree(query);
 	PG_RETURN_BOOL(retval);
 }
 
@@ -156,7 +158,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-				  entry->rel, entry->page, entry->offset, FALSE);
+					  entry->rel, entry->page, entry->offset, FALSE);
 
 		PG_RETURN_POINTER(retval);
 	}
@@ -203,7 +205,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 		r = resize_intArrayType(r, len);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-				  entry->rel, entry->page, entry->offset, FALSE);
+					  entry->rel, entry->page, entry->offset, FALSE);
 		PG_RETURN_POINTER(retval);
 	}
 	else
@@ -240,7 +242,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		{
 			retval = palloc(sizeof(GISTENTRY));
 			gistentryinit(*retval, PointerGetDatum(in),
-				 entry->rel, entry->page, entry->offset, FALSE);
+						  entry->rel, entry->page, entry->offset, FALSE);
 
 			PG_RETURN_POINTER(retval);
 		}
@@ -331,7 +333,7 @@ typedef struct
 {
 	OffsetNumber pos;
 	float		cost;
-} SPLITCOST;
+}	SPLITCOST;
 
 static int
 comparecost(const void *a, const void *b)

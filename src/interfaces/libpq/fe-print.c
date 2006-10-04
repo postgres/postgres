@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.72 2006/07/14 16:59:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.73 2006/10/04 00:30:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,7 +276,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				{
 					if (po->caption)
 						fprintf(fout,
-							  "<table %s><caption align=\"top\">%s</caption>\n",
+						   "<table %s><caption align=\"top\">%s</caption>\n",
 								po->tableOpt ? po->tableOpt : "",
 								po->caption);
 					else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.132 2006/08/02 01:59:46 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.133 2006/10/04 00:29:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -418,7 +418,7 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
  *			for an ordered index, or NoMovementScanDirection for
  *			an unordered index.
  * 'outer_rel' is the outer relation if this is a join inner indexscan path.
- *			(pathkeys and indexscandir are ignored if so.)  NULL if not.
+ *			(pathkeys and indexscandir are ignored if so.)	NULL if not.
  *
  * Returns the new path node.
  */
@@ -680,12 +680,12 @@ create_result_path(List *quals)
 	/* Ideally should define cost_result(), but I'm too lazy */
 	pathnode->path.startup_cost = 0;
 	pathnode->path.total_cost = cpu_tuple_cost;
+
 	/*
-	 * In theory we should include the qual eval cost as well, but
-	 * at present that doesn't accomplish much except duplicate work that
-	 * will be done again in make_result; since this is only used for
-	 * degenerate cases, nothing interesting will be done with the path
-	 * cost values...
+	 * In theory we should include the qual eval cost as well, but at present
+	 * that doesn't accomplish much except duplicate work that will be done
+	 * again in make_result; since this is only used for degenerate cases,
+	 * nothing interesting will be done with the path cost values...
 	 */
 
 	return pathnode;

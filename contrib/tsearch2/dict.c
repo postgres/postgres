@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict.c,v 1.12 2006/05/31 14:05:31 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict.c,v 1.13 2006/10/04 00:29:46 momjian Exp $ */
 
 /*
  * interface functions to dictionary
@@ -102,7 +102,8 @@ comparedict(const void *a, const void *b)
 }
 
 static void
-insertdict(Oid id) {
+insertdict(Oid id)
+{
 	DictInfo	newdict;
 
 	if (DList.len == DList.reallen)
@@ -143,7 +144,7 @@ finddict(Oid id)
 			return DList.last_dict;
 	}
 
-	/* insert new dictionary */ 
+	/* insert new dictionary */
 	insertdict(id);
 	return finddict(id); /* qsort changed order!! */ ;
 }
@@ -201,30 +202,31 @@ lexize(PG_FUNCTION_ARGS)
 			   *ptr;
 	Datum	   *da;
 	ArrayType  *a;
-	DictSubState	dstate = { false, false, NULL };
+	DictSubState dstate = {false, false, NULL};
 
 	SET_FUNCOID();
 	dict = finddict(PG_GETARG_OID(0));
 
 	ptr = res = (TSLexeme *) DatumGetPointer(
-										FunctionCall4(&(dict->lexize_info),
-										PointerGetDatum(dict->dictionary),
-										PointerGetDatum(VARDATA(in)),
-										Int32GetDatum(VARSIZE(in) - VARHDRSZ),
-										PointerGetDatum(&dstate)
+										  FunctionCall4(&(dict->lexize_info),
+										   PointerGetDatum(dict->dictionary),
+												PointerGetDatum(VARDATA(in)),
+									   Int32GetDatum(VARSIZE(in) - VARHDRSZ),
+													 PointerGetDatum(&dstate)
 														)
 		);
 
-	if (dstate.getnext)  {
-		dstate.isend = true;	
+	if (dstate.getnext)
+	{
+		dstate.isend = true;
 		ptr = res = (TSLexeme *) DatumGetPointer(
-										FunctionCall4(&(dict->lexize_info),
+										  FunctionCall4(&(dict->lexize_info),
 										   PointerGetDatum(dict->dictionary),
 												PointerGetDatum(VARDATA(in)),
-										Int32GetDatum(VARSIZE(in) - VARHDRSZ),
-										PointerGetDatum(&dstate)
+									   Int32GetDatum(VARSIZE(in) - VARHDRSZ),
+													 PointerGetDatum(&dstate)
 														)
-		);
+			);
 	}
 
 	PG_FREE_IF_COPY(in, 1);

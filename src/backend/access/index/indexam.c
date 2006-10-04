@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.94 2006/07/31 20:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.95 2006/10/04 00:29:48 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -122,7 +122,7 @@ static IndexScanDesc index_beginscan_internal(Relation indexRelation,
  *		index_open - open an index relation by relation OID
  *
  *		If lockmode is not "NoLock", the specified kind of lock is
- *		obtained on the index.  (Generally, NoLock should only be
+ *		obtained on the index.	(Generally, NoLock should only be
  *		used if the caller knows it has some appropriate lock on the
  *		index already.)
  *
@@ -209,7 +209,7 @@ index_insert(Relation indexRelation,
  * index_getnext on this scan; index_getnext_indexitem will not use the
  * heapRelation link (nor the snapshot).  However, the caller had better
  * be holding some kind of lock on the heap relation in any case, to ensure
- * no one deletes it (or the index) out from under us.  Caller must also
+ * no one deletes it (or the index) out from under us.	Caller must also
  * be holding a lock on the index.
  */
 IndexScanDesc
@@ -553,7 +553,7 @@ index_getmulti(IndexScanDesc scan,
  *
  *		callback routine tells whether a given main-heap tuple is
  *		to be deleted
- * 
+ *
  *		return value is an optional palloc'd struct of statistics
  * ----------------
  */

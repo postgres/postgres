@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.114 2006/09/05 21:08:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.115 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,
-								bool isSelect);
+					bool isSelect);
 static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
 static void setRuleCheckAsUser_Query(Query *qry, Oid userid);
 
@@ -286,7 +286,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 */
 		if (!replace && event_relation->rd_rules != NULL)
 		{
-			int		i;
+			int			i;
 
 			for (i = 0; i < event_relation->rd_rules->numLocks; i++)
 			{
@@ -369,14 +369,14 @@ DefineQueryRewrite(RuleStmt *stmt)
 	else
 	{
 		/*
-		 * For non-SELECT rules, a RETURNING list can appear in at most one
-		 * of the actions ... and there can't be any RETURNING list at all
-		 * in a conditional or non-INSTEAD rule.  (Actually, there can be
-		 * at most one RETURNING list across all rules on the same event,
-		 * but it seems best to enforce that at rule expansion time.)  If
-		 * there is a RETURNING list, it must match the event relation.
+		 * For non-SELECT rules, a RETURNING list can appear in at most one of
+		 * the actions ... and there can't be any RETURNING list at all in a
+		 * conditional or non-INSTEAD rule.  (Actually, there can be at most
+		 * one RETURNING list across all rules on the same event, but it seems
+		 * best to enforce that at rule expansion time.)  If there is a
+		 * RETURNING list, it must match the event relation.
 		 */
-		bool	haveReturning = false;
+		bool		haveReturning = false;
 
 		foreach(l, action)
 		{
@@ -387,7 +387,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 			if (haveReturning)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot have multiple RETURNING lists in a rule")));
+				  errmsg("cannot have multiple RETURNING lists in a rule")));
 			haveReturning = true;
 			if (event_qual != NULL)
 				ereport(ERROR,
@@ -478,7 +478,7 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 isSelect ?
-					 errmsg("SELECT rule's target list has too many entries") :
+				   errmsg("SELECT rule's target list has too many entries") :
 					 errmsg("RETURNING list has too many entries")));
 
 		attr = resultDesc->attrs[i - 1];
@@ -513,9 +513,9 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect)
 
 		/*
 		 * Allow typmods to be different only if one of them is -1, ie,
-		 * "unspecified".  This is necessary for cases like "numeric",
-		 * where the table will have a filled-in default length but the
-		 * select rule's expression will probably have typmod = -1.
+		 * "unspecified".  This is necessary for cases like "numeric", where
+		 * the table will have a filled-in default length but the select
+		 * rule's expression will probably have typmod = -1.
 		 */
 		tletypmod = exprTypmod((Node *) tle->expr);
 		if (attr->atttypmod != tletypmod &&
@@ -638,4 +638,5 @@ RenameRewriteRule(Oid owningRel, const char *oldName,
 	heap_freetuple(ruletup);
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
 }
+
 #endif

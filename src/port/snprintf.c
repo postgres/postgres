@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.31 2005/12/05 21:57:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.32 2006/10/04 00:30:14 momjian Exp $
  */
 
 #include "c.h"
@@ -70,7 +70,7 @@
  * platforms.  This implementation is compatible with the Single Unix Spec:
  *
  * 1. -1 is returned only if processing is abandoned due to an invalid
- * parameter, such as incorrect format string.  (Although not required by
+ * parameter, such as incorrect format string.	(Although not required by
  * the spec, this happens only when no characters have yet been transmitted
  * to the destination.)
  *
@@ -146,7 +146,7 @@ static int	dopr(PrintfTarget *target, const char *format, va_list args);
 int
 pg_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 {
-	PrintfTarget	target;
+	PrintfTarget target;
 
 	if (str == NULL || count == 0)
 		return 0;
@@ -179,7 +179,7 @@ pg_snprintf(char *str, size_t count, const char *fmt,...)
 static int
 pg_vsprintf(char *str, const char *fmt, va_list args)
 {
-	PrintfTarget	target;
+	PrintfTarget target;
 
 	if (str == NULL)
 		return 0;
@@ -212,7 +212,7 @@ pg_sprintf(char *str, const char *fmt,...)
 static int
 pg_vfprintf(FILE *stream, const char *fmt, va_list args)
 {
-	PrintfTarget	target;
+	PrintfTarget target;
 	char		buffer[1024];	/* size is arbitrary */
 
 	if (stream == NULL)
@@ -262,7 +262,7 @@ pg_printf(const char *fmt,...)
 static void
 flushbuffer(PrintfTarget *target)
 {
-	size_t	nc = target->bufptr - target->bufstart;
+	size_t		nc = target->bufptr - target->bufstart;
 
 	if (nc > 0)
 		target->nchars += fwrite(target->bufstart, 1, nc, target->stream);
@@ -278,8 +278,8 @@ static void fmtint(int64 value, char type, int forcesign,
 	   PrintfTarget *target);
 static void fmtchar(int value, int leftjust, int minlen, PrintfTarget *target);
 static void fmtfloat(double value, char type, int forcesign,
-		int leftjust, int minlen, int zpad, int precision, int pointflag,
-		PrintfTarget *target);
+		 int leftjust, int minlen, int zpad, int precision, int pointflag,
+		 PrintfTarget *target);
 static void dostr(const char *str, int slen, PrintfTarget *target);
 static void dopr_outch(int c, PrintfTarget *target);
 static int	adjust_sign(int is_negative, int forcesign, int *signvalue);
@@ -317,8 +317,8 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 	double		fvalue;
 	char	   *strvalue;
 	int			i;
-	PrintfArgType argtypes[NL_ARGMAX+1];
-	PrintfArgValue argvalues[NL_ARGMAX+1];
+	PrintfArgType argtypes[NL_ARGMAX + 1];
+	PrintfArgValue argvalues[NL_ARGMAX + 1];
 
 	/*
 	 * Parse the format string to determine whether there are %n$ format
@@ -335,7 +335,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 		longflag = longlongflag = pointflag = 0;
 		fmtpos = accum = 0;
 		afterstar = false;
-	nextch1:
+nextch1:
 		ch = *format++;
 		if (ch == '\0')
 			break;				/* illegal, but we don't complain */
@@ -362,7 +362,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 				goto nextch1;
 			case '*':
 				if (afterstar)
-					have_non_dollar = true;	/* multiple stars */
+					have_non_dollar = true;		/* multiple stars */
 				afterstar = true;
 				accum = 0;
 				goto nextch1;
@@ -462,6 +462,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 			case '%':
 				break;
 		}
+
 		/*
 		 * If we finish the spec with afterstar still set, there's a
 		 * non-dollar star in there.
@@ -516,7 +517,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 		longflag = longlongflag = pointflag = 0;
 		fmtpos = accum = 0;
 		have_star = afterstar = false;
-	nextch2:
+nextch2:
 		ch = *format++;
 		if (ch == '\0')
 			break;				/* illegal, but we don't complain */
@@ -561,7 +562,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 				else
 				{
 					/* fetch and process value now */
-					int		starval = va_arg(args, int);
+					int			starval = va_arg(args, int);
 
 					if (pointflag)
 					{
@@ -586,7 +587,7 @@ dopr(PrintfTarget *target, const char *format, va_list args)
 				if (afterstar)
 				{
 					/* fetch and process star value */
-					int		starval = argvalues[accum].i;
+					int			starval = argvalues[accum].i;
 
 					if (pointflag)
 					{
@@ -854,7 +855,7 @@ fmtint(int64 value, char type, int forcesign, int leftjust,
 	else
 	{
 		/* make integer string */
-		uint64	uvalue = (uint64) value;
+		uint64		uvalue = (uint64) value;
 
 		do
 		{
@@ -932,17 +933,17 @@ dostr(const char *str, int slen, PrintfTarget *target)
 {
 	while (slen > 0)
 	{
-		int		avail;
+		int			avail;
 
 		if (target->bufend != NULL)
 			avail = target->bufend - target->bufptr;
-		else 
+		else
 			avail = slen;
 		if (avail <= 0)
 		{
 			/* buffer full, can we dump to stream? */
 			if (target->stream == NULL)
-				return;				/* no, lose the data */
+				return;			/* no, lose the data */
 			flushbuffer(target);
 			continue;
 		}

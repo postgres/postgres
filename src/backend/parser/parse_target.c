@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.148 2006/08/14 23:39:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.149 2006/10/04 00:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
  * This is the identical transformation to transformTargetList, except that
  * the input list elements are bare expressions without ResTarget decoration,
  * and the output elements are likewise just expressions without TargetEntry
- * decoration.  We use this for ROW() and VALUES() constructs.
+ * decoration.	We use this for ROW() and VALUES() constructs.
  */
 List *
 transformExpressionList(ParseState *pstate, List *exprlist)
@@ -436,7 +436,7 @@ transformAssignedExpr(ParseState *pstate,
 							colname,
 							format_type_be(attrtype),
 							format_type_be(type_id)),
-					 errhint("You will need to rewrite or cast the expression."),
+				 errhint("You will need to rewrite or cast the expression."),
 					 parser_errposition(pstate, location)));
 	}
 
@@ -446,7 +446,7 @@ transformAssignedExpr(ParseState *pstate,
 
 /*
  * updateTargetListEntry()
- *	This is used in UPDATE statements only.	It prepares an UPDATE
+ *	This is used in UPDATE statements only. It prepares an UPDATE
  *	TargetEntry for assignment to a column of the target table.
  *	This includes coercing the given value to the target column's type
  *	(if necessary), and dealing with any subfield names or subscripts
@@ -687,7 +687,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-					 errhint("You will need to rewrite or cast the expression."),
+				 errhint("You will need to rewrite or cast the expression."),
 					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
@@ -697,7 +697,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-					 errhint("You will need to rewrite or cast the expression."),
+				 errhint("You will need to rewrite or cast the expression."),
 					 parser_errposition(pstate, location)));
 	}
 
@@ -761,9 +761,9 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			if (attrno == InvalidAttrNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" does not exist",
-								name,
-								RelationGetRelationName(pstate->p_target_relation)),
+					errmsg("column \"%s\" of relation \"%s\" does not exist",
+						   name,
+						 RelationGetRelationName(pstate->p_target_relation)),
 						 parser_errposition(pstate, col->location)));
 
 			/*
@@ -825,8 +825,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 *
 		 * (e.g., SELECT * FROM emp, dept)
 		 *
-		 * Since the grammar only accepts bare '*' at top level of SELECT,
-		 * we need not handle the targetlist==false case here.
+		 * Since the grammar only accepts bare '*' at top level of SELECT, we
+		 * need not handle the targetlist==false case here.
 		 */
 		Assert(targetlist);
 
@@ -898,7 +898,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 			return expandRelAttrs(pstate, rte, rtindex, sublevels_up);
 		else
 		{
-			List	*vars;
+			List	   *vars;
 
 			expandRTE(rte, rtindex, sublevels_up, false,
 					  NULL, &vars);
@@ -1114,8 +1114,8 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 
 			/*
 			 * This case should not occur: a column of a table or values list
-			 * shouldn't have type RECORD.  Fall through and fail
-			 * (most likely) at the bottom.
+			 * shouldn't have type RECORD.  Fall through and fail (most
+			 * likely) at the bottom.
 			 */
 			break;
 		case RTE_SUBQUERY:

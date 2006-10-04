@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pg_sema.h,v 1.9 2006/04/29 16:34:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pg_sema.h,v 1.10 2006/10/04 00:30:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef struct PGSemaphoreData
 
 #ifdef USE_WIN32_SEMAPHORES
 
-typedef HANDLE	PGSemaphoreData;
+typedef HANDLE PGSemaphoreData;
 #endif
 
 typedef PGSemaphoreData *PGSemaphore;

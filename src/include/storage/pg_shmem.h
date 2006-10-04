@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.19 2006/08/01 19:03:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pg_shmem.h,v 1.20 2006/10/04 00:30:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ extern void PGSharedMemoryDetach(void);
 
 extern void RegisterAddinContext(const char *name, Size size);
 extern Size AddinShmemSize(void);
-extern void InitAddinContexts(void * start);
+extern void InitAddinContexts(void *start);
 extern void *ShmemAllocFromContext(Size size, const char *name);
 extern void ShmemResetContext(const char *name);
 

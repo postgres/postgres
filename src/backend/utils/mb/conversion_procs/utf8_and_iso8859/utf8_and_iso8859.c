@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.21 2006/07/11 18:26:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.22 2006/10/04 00:30:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,12 +118,12 @@ iso8859_to_utf8(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
-	int	i;
+	int			i;
 
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len >= 0);
 
-	for (i=0;i<sizeof(maps)/sizeof(pg_conv_map);i++)
+	for (i = 0; i < sizeof(maps) / sizeof(pg_conv_map); i++)
 	{
 		if (encoding == maps[i].encoding)
 		{
@@ -134,7 +134,7 @@ iso8859_to_utf8(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("unexpected encoding id %d for ISO-8859 charsets", encoding)));
+	   errmsg("unexpected encoding id %d for ISO-8859 charsets", encoding)));
 
 	PG_RETURN_VOID();
 }
@@ -146,12 +146,12 @@ utf8_to_iso8859(PG_FUNCTION_ARGS)
 	unsigned char *src = (unsigned char *) PG_GETARG_CSTRING(2);
 	unsigned char *dest = (unsigned char *) PG_GETARG_CSTRING(3);
 	int			len = PG_GETARG_INT32(4);
-	int	i;
+	int			i;
 
 	Assert(PG_GETARG_INT32(0) == PG_UTF8);
 	Assert(len >= 0);
 
-	for (i=0;i<sizeof(maps)/sizeof(pg_conv_map);i++)
+	for (i = 0; i < sizeof(maps) / sizeof(pg_conv_map); i++)
 	{
 		if (encoding == maps[i].encoding)
 		{
@@ -162,7 +162,7 @@ utf8_to_iso8859(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("unexpected encoding id %d for ISO-8859 charsets", encoding)));
+	   errmsg("unexpected encoding id %d for ISO-8859 charsets", encoding)));
 
 	PG_RETURN_VOID();
 }

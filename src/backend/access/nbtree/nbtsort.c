@@ -57,7 +57,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.106 2006/07/14 14:52:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.107 2006/10/04 00:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ static void _bt_slideleft(Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
 			   IndexTuple itup, OffsetNumber itup_off);
 static void _bt_buildadd(BTWriteState *wstate, BTPageState *state,
-						 IndexTuple itup);
+			 IndexTuple itup);
 static void _bt_uppershutdown(BTWriteState *wstate, BTPageState *state);
 static void _bt_load(BTWriteState *wstate,
 		 BTSpool *btspool, BTSpool *btspool2);
@@ -351,7 +351,7 @@ _bt_pagestate(BTWriteState *wstate, uint32 level)
 		state->btps_full = (BLCKSZ * (100 - BTREE_NONLEAF_FILLFACTOR) / 100);
 	else
 		state->btps_full = RelationGetTargetPageFreeSpace(wstate->index,
-												BTREE_DEFAULT_FILLFACTOR);
+												   BTREE_DEFAULT_FILLFACTOR);
 	/* no parent level, yet */
 	state->btps_next = NULL;
 
@@ -464,8 +464,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	Size		itupsz;
 
 	/*
-	 * This is a handy place to check for cancel interrupts during the
-	 * btree load phase of index creation.
+	 * This is a handy place to check for cancel interrupts during the btree
+	 * load phase of index creation.
 	 */
 	CHECK_FOR_INTERRUPTS();
 
@@ -499,10 +499,10 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 				"or use full text indexing.")));
 
 	/*
-	 * Check to see if page is "full".  It's definitely full if the item
-	 * won't fit.  Otherwise, compare to the target freespace derived from
-	 * the fillfactor.  However, we must put at least two items on each
-	 * page, so disregard fillfactor if we don't have that many.
+	 * Check to see if page is "full".	It's definitely full if the item won't
+	 * fit.  Otherwise, compare to the target freespace derived from the
+	 * fillfactor.	However, we must put at least two items on each page, so
+	 * disregard fillfactor if we don't have that many.
 	 */
 	if (pgspc < itupsz || (pgspc < state->btps_full && last_off > P_FIRSTKEY))
 	{

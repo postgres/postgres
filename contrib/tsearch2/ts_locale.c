@@ -70,54 +70,59 @@ char2wchar(wchar_t *to, const char *from, size_t len)
 
 	return mbstowcs(to, from, len);
 }
-
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 int
-_t_isalpha( const char *ptr ) {
-	wchar_t	character;
+_t_isalpha(const char *ptr)
+{
+	wchar_t		character;
 
 	char2wchar(&character, ptr, 1);
 
-	return iswalpha( (wint_t)character );	
+	return iswalpha((wint_t) character);
 }
 
 int
-_t_isprint( const char *ptr ) {
-	wchar_t	character;
+_t_isprint(const char *ptr)
+{
+	wchar_t		character;
 
 	char2wchar(&character, ptr, 1);
 
-	return iswprint( (wint_t)character );	
+	return iswprint((wint_t) character);
 }
-
-#endif /* TS_USE_WIDE */
+#endif   /* TS_USE_WIDE */
 
 char *
 lowerstr(char *str)
 {
-	char       *ptr = str;
+	char	   *ptr = str;
 
 #ifdef TS_USE_WIDE
+
 	/*
 	 * Use wide char code only when max encoding length > 1 and ctype != C.
 	 * Some operating systems fail with multi-byte encodings and a C locale.
 	 * Also, for a C locale there is no need to process as multibyte. From
 	 * backend/utils/adt/oracle_compat.c Teodor
 	 */
-	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c()) {
-			wchar_t *wstr, *wptr;
-			int len = strlen(str);
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+	{
+		wchar_t    *wstr,
+				   *wptr;
+		int			len = strlen(str);
 
-			wptr = wstr = (wchar_t *) palloc(sizeof(wchar_t) * (len+1));
-			char2wchar(wstr, str, len+1);
-			while (*wptr) {
-				*wptr = towlower((wint_t) *wptr);
-				wptr++;
-			}
-			wchar2char(str, wstr, len);
-			pfree( wstr );
-	} else
+		wptr = wstr = (wchar_t *) palloc(sizeof(wchar_t) * (len + 1));
+		char2wchar(wstr, str, len + 1);
+		while (*wptr)
+		{
+			*wptr = towlower((wint_t) *wptr);
+			wptr++;
+		}
+		wchar2char(str, wstr, len);
+		pfree(wstr);
+	}
+	else
 #endif
 		while (*ptr)
 		{
@@ -126,4 +131,3 @@ lowerstr(char *str)
 		}
 	return str;
 }
-

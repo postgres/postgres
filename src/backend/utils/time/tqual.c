@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.97 2006/09/15 16:39:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.98 2006/10/04 00:30:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1326,7 +1326,7 @@ XidInSnapshot(TransactionId xid, Snapshot snapshot)
 
 	/*
 	 * Make a quick range check to eliminate most XIDs without looking at the
-	 * xip arrays.  Note that this is OK even if we convert a subxact XID to
+	 * xip arrays.	Note that this is OK even if we convert a subxact XID to
 	 * its parent below, because a subxact with XID < xmin has surely also got
 	 * a parent with XID < xmin, while one with XID >= xmax must belong to a
 	 * parent that was not yet committed at the time of this snapshot.
@@ -1342,7 +1342,7 @@ XidInSnapshot(TransactionId xid, Snapshot snapshot)
 	/*
 	 * If the snapshot contains full subxact data, the fastest way to check
 	 * things is just to compare the given XID against both subxact XIDs and
-	 * top-level XIDs.  If the snapshot overflowed, we have to use pg_subtrans
+	 * top-level XIDs.	If the snapshot overflowed, we have to use pg_subtrans
 	 * to convert a subxact XID to its parent XID, but then we need only look
 	 * at top-level XIDs not subxacts.
 	 */
@@ -1365,8 +1365,8 @@ XidInSnapshot(TransactionId xid, Snapshot snapshot)
 		xid = SubTransGetTopmostTransaction(xid);
 
 		/*
-		 * If xid was indeed a subxact, we might now have an xid < xmin,
-		 * so recheck to avoid an array scan.  No point in rechecking xmax.
+		 * If xid was indeed a subxact, we might now have an xid < xmin, so
+		 * recheck to avoid an array scan.	No point in rechecking xmax.
 		 */
 		if (TransactionIdPrecedes(xid, snapshot->xmin))
 			return false;

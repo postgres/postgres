@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.7 2006/07/13 04:15:24 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/fortuna.c,v 1.8 2006/10/04 00:29:46 momjian Exp $
  */
 
 #include "postgres.h"
@@ -365,8 +365,8 @@ rekey(FState * st)
 static void
 startup_tricks(FState * st)
 {
-	int i;
-	uint8 buf[BLOCK];
+	int			i;
+	uint8		buf[BLOCK];
 
 	/* Use next block as counter. */
 	encrypt_counter(st, st->counter);

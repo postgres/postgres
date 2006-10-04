@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.29 2006/09/05 23:02:28 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.30 2006/10/04 00:29:46 momjian Exp $
  */
 
 #include "postgres.h"
@@ -58,7 +58,6 @@
  */
 
 #include <openssl/aes.h>
-
 #else							/* old OPENSSL */
 
 /*
@@ -121,29 +120,32 @@
  * Emulate newer digest API.
  */
 
-static void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
+static void
+EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 }
 
-static int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
+static int
+EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 	return 1;
 }
 
-static int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, void *engine)
+static int
+EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, void *engine)
 {
 	EVP_DigestInit(ctx, md);
 	return 1;
 }
 
-static int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *res, unsigned int *len)
+static int
+EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *res, unsigned int *len)
 {
 	EVP_DigestFinal(ctx, res, len);
 	return 1;
 }
-
 #endif   /* old OpenSSL */
 
 /*
@@ -154,11 +156,12 @@ static int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *res, unsigned int 
 #include "sha2.c"
 #include "internal-sha2.c"
 
-typedef void (*init_f)(PX_MD *md);
+typedef void (*init_f) (PX_MD * md);
 
-static int compat_find_digest(const char *name, PX_MD **res)
+static int
+compat_find_digest(const char *name, PX_MD ** res)
 {
-	init_f init = NULL;
+	init_f		init = NULL;
 
 	if (pg_strcasecmp(name, "sha224") == 0)
 		init = init_sha224;
@@ -175,7 +178,6 @@ static int compat_find_digest(const char *name, PX_MD **res)
 	init(*res);
 	return 0;
 }
-
 #else
 #define compat_find_digest(name, res)  (PXE_NO_HASH)
 #endif
@@ -184,29 +186,32 @@ static int compat_find_digest(const char *name, PX_MD **res)
  * Hashes
  */
 
-typedef struct OSSLDigest {
+typedef struct OSSLDigest
+{
 	const EVP_MD *algo;
-	EVP_MD_CTX ctx;
-} OSSLDigest;
+	EVP_MD_CTX	ctx;
+}	OSSLDigest;
 
 static unsigned
 digest_result_size(PX_MD * h)
 {
-	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
+
 	return EVP_MD_CTX_size(&digest->ctx);
 }
 
 static unsigned
 digest_block_size(PX_MD * h)
 {
-	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
+
 	return EVP_MD_CTX_block_size(&digest->ctx);
 }
 
 static void
 digest_reset(PX_MD * h)
 {
-	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
 	EVP_DigestInit_ex(&digest->ctx, digest->algo, NULL);
 }
@@ -214,7 +219,7 @@ digest_reset(PX_MD * h)
 static void
 digest_update(PX_MD * h, const uint8 *data, unsigned dlen)
 {
-	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
 	EVP_DigestUpdate(&digest->ctx, data, dlen);
 }
@@ -222,7 +227,7 @@ digest_update(PX_MD * h, const uint8 *data, unsigned dlen)
 static void
 digest_finish(PX_MD * h, uint8 *dst)
 {
-	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
 	EVP_DigestFinal_ex(&digest->ctx, dst, NULL);
 }
@@ -230,7 +235,7 @@ digest_finish(PX_MD * h, uint8 *dst)
 static void
 digest_free(PX_MD * h)
 {
-	OSSLDigest *digest = (OSSLDigest *)h->p.ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
 	EVP_MD_CTX_cleanup(&digest->ctx);
 
@@ -560,7 +565,7 @@ ossl_des3_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
-		DES_ecb3_encrypt((void *)(data + i * bs), (void *)(res + i * bs),
+		DES_ecb3_encrypt((void *) (data + i * bs), (void *) (res + i * bs),
 						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3, 1);
 	return 0;
 }
@@ -574,7 +579,7 @@ ossl_des3_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
-		DES_ecb3_encrypt((void *)(data + i * bs), (void *)(res + i * bs),
+		DES_ecb3_encrypt((void *) (data + i * bs), (void *) (res + i * bs),
 						 &od->u.des3.k1, &od->u.des3.k2, &od->u.des3.k3, 0);
 	return 0;
 }

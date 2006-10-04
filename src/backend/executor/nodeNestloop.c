@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.42 2006/03/05 15:58:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.43 2006/10/04 00:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,10 +314,10 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	 * initialize child nodes
 	 *
 	 * Tell the inner child that cheap rescans would be good.  (This is
-	 * unnecessary if we are doing nestloop with inner indexscan, because
-	 * the rescan will always be with a fresh parameter --- but since
-	 * nodeIndexscan doesn't actually care about REWIND, there's no point
-	 * in dealing with that refinement.)
+	 * unnecessary if we are doing nestloop with inner indexscan, because the
+	 * rescan will always be with a fresh parameter --- but since
+	 * nodeIndexscan doesn't actually care about REWIND, there's no point in
+	 * dealing with that refinement.)
 	 */
 	outerPlanState(nlstate) = ExecInitNode(outerPlan(node), estate, eflags);
 	innerPlanState(nlstate) = ExecInitNode(innerPlan(node), estate,

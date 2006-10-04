@@ -2,14 +2,14 @@
  *
  * nodeValuesscan.c
  *	  Support routines for scanning Values lists
- *    ("VALUES (...), (...), ..." in rangetable).
+ *	  ("VALUES (...), (...), ..." in rangetable).
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.2 2006/08/02 18:58:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.3 2006/10/04 00:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,10 +47,10 @@ static TupleTableSlot *
 ValuesNext(ValuesScanState *node)
 {
 	TupleTableSlot *slot;
-	EState		   *estate;
-	ExprContext	   *econtext;
-	ScanDirection	direction;
-	List		   *exprlist;
+	EState	   *estate;
+	ExprContext *econtext;
+	ScanDirection direction;
+	List	   *exprlist;
 
 	/*
 	 * get information from the estate and scan state
@@ -83,9 +83,9 @@ ValuesNext(ValuesScanState *node)
 	}
 
 	/*
-	 * Always clear the result slot; this is appropriate if we are at the
-	 * end of the data, and if we're not, we still need it as the first step
-	 * of the store-virtual-tuple protocol.  It seems wise to clear the slot
+	 * Always clear the result slot; this is appropriate if we are at the end
+	 * of the data, and if we're not, we still need it as the first step of
+	 * the store-virtual-tuple protocol.  It seems wise to clear the slot
 	 * before we reset the context it might have pointers into.
 	 */
 	ExecClearTuple(slot);
@@ -107,18 +107,18 @@ ValuesNext(ValuesScanState *node)
 		ReScanExprContext(econtext);
 
 		/*
-		 * Build the expression eval state in the econtext's per-tuple
-		 * memory.  This is a tad unusual, but we want to delete the eval
-		 * state again when we move to the next row, to avoid growth of
-		 * memory requirements over a long values list.
+		 * Build the expression eval state in the econtext's per-tuple memory.
+		 * This is a tad unusual, but we want to delete the eval state again
+		 * when we move to the next row, to avoid growth of memory
+		 * requirements over a long values list.
 		 */
 		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 		/*
-		 * Pass NULL, not my plan node, because we don't want anything
-		 * in this transient state linking into permanent state.  The
-		 * only possibility is a SubPlan, and there shouldn't be any
-		 * (any subselects in the VALUES list should be InitPlans).
+		 * Pass NULL, not my plan node, because we don't want anything in this
+		 * transient state linking into permanent state.  The only possibility
+		 * is a SubPlan, and there shouldn't be any (any subselects in the
+		 * VALUES list should be InitPlans).
 		 */
 		exprstatelist = (List *) ExecInitExpr((Expr *) exprlist, NULL);
 
@@ -126,8 +126,8 @@ ValuesNext(ValuesScanState *node)
 		Assert(list_length(exprstatelist) == slot->tts_tupleDescriptor->natts);
 
 		/*
-		 * Compute the expressions and build a virtual result tuple.
-		 * We already did ExecClearTuple(slot).
+		 * Compute the expressions and build a virtual result tuple. We
+		 * already did ExecClearTuple(slot).
 		 */
 		values = slot->tts_values;
 		isnull = slot->tts_isnull;
@@ -135,7 +135,7 @@ ValuesNext(ValuesScanState *node)
 		resind = 0;
 		foreach(lc, exprstatelist)
 		{
-			ExprState *estate = (ExprState *) lfirst(lc);
+			ExprState  *estate = (ExprState *) lfirst(lc);
 
 			values[resind] = ExecEvalExpr(estate,
 										  econtext,
@@ -181,12 +181,12 @@ ExecValuesScan(ValuesScanState *node)
 ValuesScanState *
 ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 {
-	ValuesScanState	   *scanstate;
-	RangeTblEntry	   *rte;
-	TupleDesc			tupdesc;
-	ListCell		   *vtl;
-	int					i;
-	PlanState		   *planstate;
+	ValuesScanState *scanstate;
+	RangeTblEntry *rte;
+	TupleDesc	tupdesc;
+	ListCell   *vtl;
+	int			i;
+	PlanState  *planstate;
 
 	/*
 	 * ValuesScan should not have any children.
@@ -208,8 +208,8 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 
 	/*
 	 * Create expression contexts.	We need two, one for per-sublist
-	 * processing and one for execScan.c to use for quals and projections.
-	 * We cheat a little by using ExecAssignExprContext() to build both.
+	 * processing and one for execScan.c to use for quals and projections. We
+	 * cheat a little by using ExecAssignExprContext() to build both.
 	 */
 	ExecAssignExprContext(estate, planstate);
 	scanstate->rowcontext = planstate->ps_ExprContext;

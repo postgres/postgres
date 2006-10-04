@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.216 2006/08/02 01:59:45 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.217 2006/10/04 00:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root, Path *best_path
 static FunctionScan *create_functionscan_plan(PlannerInfo *root, Path *best_path,
 						 List *tlist, List *scan_clauses);
 static ValuesScan *create_valuesscan_plan(PlannerInfo *root, Path *best_path,
-						 List *tlist, List *scan_clauses);
+					   List *tlist, List *scan_clauses);
 static NestLoop *create_nestloop_plan(PlannerInfo *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static MergeJoin *create_mergejoin_plan(PlannerInfo *root, MergePath *best_path,
@@ -98,7 +98,7 @@ static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  Index scanrelid);
 static ValuesScan *make_valuesscan(List *qptlist, List *qpqual,
-				  Index scanrelid);
+				Index scanrelid);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
@@ -216,9 +216,9 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 		tlist = build_relation_tlist(rel);
 
 	/*
-	 * Extract the relevant restriction clauses from the parent relation.
-	 * The executor must apply all these restrictions during the scan,
-	 * except for pseudoconstants which we'll take care of below.
+	 * Extract the relevant restriction clauses from the parent relation. The
+	 * executor must apply all these restrictions during the scan, except for
+	 * pseudoconstants which we'll take care of below.
 	 */
 	scan_clauses = rel->baserestrictinfo;
 
@@ -282,9 +282,9 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 	}
 
 	/*
-	 * If there are any pseudoconstant clauses attached to this node,
-	 * insert a gating Result node that evaluates the pseudoconstants
-	 * as one-time quals.
+	 * If there are any pseudoconstant clauses attached to this node, insert a
+	 * gating Result node that evaluates the pseudoconstants as one-time
+	 * quals.
 	 */
 	if (root->hasPseudoConstantQuals)
 		plan = create_gating_plan(root, plan, scan_clauses);
@@ -327,8 +327,8 @@ use_physical_tlist(RelOptInfo *rel)
 	int			i;
 
 	/*
-	 * We can do this for real relation scans, subquery scans, function
-	 * scans, and values scans (but not for, eg, joins).
+	 * We can do this for real relation scans, subquery scans, function scans,
+	 * and values scans (but not for, eg, joins).
 	 */
 	if (rel->rtekind != RTE_RELATION &&
 		rel->rtekind != RTE_SUBQUERY &&
@@ -466,9 +466,9 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 	}
 
 	/*
-	 * If there are any pseudoconstant clauses attached to this node,
-	 * insert a gating Result node that evaluates the pseudoconstants
-	 * as one-time quals.
+	 * If there are any pseudoconstant clauses attached to this node, insert a
+	 * gating Result node that evaluates the pseudoconstants as one-time
+	 * quals.
 	 */
 	if (root->hasPseudoConstantQuals)
 		plan = create_gating_plan(root, plan, best_path->joinrestrictinfo);
@@ -991,9 +991,9 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 *
 	 * Unlike create_indexscan_plan(), we need take no special thought here
 	 * for partial index predicates; this is because the predicate conditions
-	 * are already listed in bitmapqualorig and indexquals.  Bitmap scans
-	 * have to do it that way because predicate conditions need to be rechecked
-	 * if the scan becomes lossy.
+	 * are already listed in bitmapqualorig and indexquals.  Bitmap scans have
+	 * to do it that way because predicate conditions need to be rechecked if
+	 * the scan becomes lossy.
 	 */
 	qpqual = NIL;
 	foreach(l, scan_clauses)
@@ -1137,6 +1137,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 				subindexquals = lappend(subindexquals,
 										make_ands_explicit(subindexqual));
 		}
+
 		/*
 		 * In the presence of ScalarArrayOpExpr quals, we might have built
 		 * BitmapOrPaths with just one subpath; don't add an OR step.
@@ -1152,7 +1153,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			plan->total_cost = opath->path.total_cost;
 			plan->plan_rows =
 				clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
-			plan->plan_width = 0;	/* meaningless */
+			plan->plan_width = 0;		/* meaningless */
 		}
 
 		/*
@@ -1202,10 +1203,10 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			Expr	   *pred = (Expr *) lfirst(l);
 
 			/*
-			 * We know that the index predicate must have been implied by
-			 * the query condition as a whole, but it may or may not be
-			 * implied by the conditions that got pushed into the
-			 * bitmapqual.	Avoid generating redundant conditions.
+			 * We know that the index predicate must have been implied by the
+			 * query condition as a whole, but it may or may not be implied by
+			 * the conditions that got pushed into the bitmapqual.	Avoid
+			 * generating redundant conditions.
 			 */
 			if (!predicate_implied_by(list_make1(pred), ipath->indexclauses))
 			{
@@ -1244,8 +1245,8 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/*
-	 * Remove any clauses that are TID quals.  This is a bit tricky since
-	 * the tidquals list has implicit OR semantics.
+	 * Remove any clauses that are TID quals.  This is a bit tricky since the
+	 * tidquals list has implicit OR semantics.
 	 */
 	ortidquals = best_path->tidquals;
 	if (list_length(ortidquals) > 1)
@@ -1333,7 +1334,7 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
  */
 static ValuesScan *
 create_valuesscan_plan(PlannerInfo *root, Path *best_path,
-						 List *tlist, List *scan_clauses)
+					   List *tlist, List *scan_clauses)
 {
 	ValuesScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
@@ -1411,9 +1412,9 @@ create_nestloop_plan(PlannerInfo *root,
 		 * join quals; failing to prove that doesn't result in an incorrect
 		 * plan.  It is the right way to proceed because adding more quals to
 		 * the stuff we got from the original query would just make it harder
-		 * to detect duplication.  (Also, to change this we'd have to be
-		 * wary of UPDATE/DELETE/SELECT FOR UPDATE target relations; see
-		 * notes above about EvalPlanQual.)
+		 * to detect duplication.  (Also, to change this we'd have to be wary
+		 * of UPDATE/DELETE/SELECT FOR UPDATE target relations; see notes
+		 * above about EvalPlanQual.)
 		 */
 		BitmapHeapPath *innerpath = (BitmapHeapPath *) best_path->innerjoinpath;
 
@@ -1693,7 +1694,7 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 
 		if (IsA(clause, OpExpr))
 		{
-			OpExpr *op = (OpExpr *) clause;
+			OpExpr	   *op = (OpExpr *) clause;
 
 			if (list_length(op->args) != 2)
 				elog(ERROR, "indexqual clause is not binary opclause");
@@ -1718,7 +1719,7 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 		else if (IsA(clause, RowCompareExpr))
 		{
 			RowCompareExpr *rc = (RowCompareExpr *) clause;
-			ListCell *lc;
+			ListCell   *lc;
 
 			/*
 			 * Check to see if the indexkey is on the right; if so, commute
@@ -1734,13 +1735,13 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 			 * attribute this is and change the indexkey operand as needed.
 			 *
 			 * Save the index opclass for only the first column.  We will
-			 * return the operator and opclass info for just the first
-			 * column of the row comparison; the executor will have to
-			 * look up the rest if it needs them.
+			 * return the operator and opclass info for just the first column
+			 * of the row comparison; the executor will have to look up the
+			 * rest if it needs them.
 			 */
 			foreach(lc, rc->largs)
 			{
-				Oid		tmp_opclass;
+				Oid			tmp_opclass;
 
 				lfirst(lc) = fix_indexqual_operand(lfirst(lc),
 												   index,
