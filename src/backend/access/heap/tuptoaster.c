@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.65 2006/10/04 00:29:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.66 2006/10/05 23:33:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -100,15 +100,12 @@ heap_tuple_untoast_attr(varattrib *attr)
 			 * Fetch it from the toast heap and decompress.
 			 * ----------
 			 */
-			varattrib  *tmp;
+			PGLZ_Header *tmp;
 
-			tmp = toast_fetch_datum(attr);
-			result = (varattrib *) palloc(attr->va_content.va_external.va_rawsize
-										  + VARHDRSZ);
-			VARATT_SIZEP(result) = attr->va_content.va_external.va_rawsize
-				+ VARHDRSZ;
-			pglz_decompress((PGLZ_Header *) tmp, VARATT_DATA(result));
-
+			tmp = (PGLZ_Header *) toast_fetch_datum(attr);
+			result = (varattrib *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+			VARATT_SIZEP(result) = PGLZ_RAW_SIZE(tmp) + VARHDRSZ;
+			pglz_decompress(tmp, VARATT_DATA(result));
 			pfree(tmp);
 		}
 		else
@@ -124,11 +121,11 @@ heap_tuple_untoast_attr(varattrib *attr)
 		/*
 		 * This is a compressed value inside of the main tuple
 		 */
-		result = (varattrib *) palloc(attr->va_content.va_compressed.va_rawsize
-									  + VARHDRSZ);
-		VARATT_SIZEP(result) = attr->va_content.va_compressed.va_rawsize
-			+ VARHDRSZ;
-		pglz_decompress((PGLZ_Header *) attr, VARATT_DATA(result));
+		PGLZ_Header *tmp = (PGLZ_Header *) attr;
+
+		result = (varattrib *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+		VARATT_SIZEP(result) = PGLZ_RAW_SIZE(tmp) + VARHDRSZ;
+		pglz_decompress(tmp, VARATT_DATA(result));
 	}
 	else
 
@@ -157,19 +154,18 @@ heap_tuple_untoast_attr_slice(varattrib *attr, int32 sliceoffset, int32 slicelen
 
 	if (VARATT_IS_COMPRESSED(attr))
 	{
-		varattrib  *tmp;
+		PGLZ_Header *tmp;
 
 		if (VARATT_IS_EXTERNAL(attr))
-			tmp = toast_fetch_datum(attr);
+			tmp = (PGLZ_Header *) toast_fetch_datum(attr);
 		else
-			tmp = attr;			/* compressed in main tuple */
+			tmp = (PGLZ_Header *) attr;		/* compressed in main tuple */
 
-		preslice = (varattrib *) palloc(attr->va_content.va_external.va_rawsize
-										+ VARHDRSZ);
-		VARATT_SIZEP(preslice) = attr->va_content.va_external.va_rawsize + VARHDRSZ;
-		pglz_decompress((PGLZ_Header *) tmp, VARATT_DATA(preslice));
+		preslice = (varattrib *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+		VARATT_SIZEP(preslice) = PGLZ_RAW_SIZE(tmp) + VARHDRSZ;
+		pglz_decompress(tmp, VARATT_DATA(preslice));
 
-		if (tmp != attr)
+		if (tmp != (PGLZ_Header *) attr)
 			pfree(tmp);
 	}
 	else
@@ -948,12 +944,12 @@ Datum
 toast_compress_datum(Datum value)
 {
 	varattrib  *tmp;
+	int32		valsize = VARATT_SIZE(value) - VARHDRSZ;
 
-	tmp = (varattrib *) palloc(sizeof(PGLZ_Header) + VARATT_SIZE(value));
-	pglz_compress(VARATT_DATA(value), VARATT_SIZE(value) - VARHDRSZ,
-				  (PGLZ_Header *) tmp,
-				  PGLZ_strategy_default);
-	if (VARATT_SIZE(tmp) < VARATT_SIZE(value))
+	tmp = (varattrib *) palloc(PGLZ_MAX_OUTPUT(valsize));
+	if (pglz_compress(VARATT_DATA(value), valsize,
+					  (PGLZ_Header *) tmp, PGLZ_strategy_default) &&
+		VARATT_SIZE(tmp) < VARATT_SIZE(value))
 	{
 		/* successful compression */
 		VARATT_SIZEP(tmp) |= VARATT_FLAG_COMPRESSED;

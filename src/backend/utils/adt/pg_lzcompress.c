@@ -1,8 +1,6 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.22 2006/07/14 05:28:28 tgl Exp $
- *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
  *		capable of backward copy information for 3-273 bytes with
@@ -10,28 +8,27 @@
  *
  *		Entry routines:
  *
- *			int
- *			pglz_compress(char *source, int slen, PGLZ_Header *dest,
- *										PGLZ_Strategy *strategy);
+ *			bool
+ *			pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
+ *						  const PGLZ_Strategy *strategy);
  *
  *				source is the input data to be compressed.
  *
  *				slen is the length of the input data.
  *
  *				dest is the output area for the compressed result.
- *					It must be big enough to hold the worst case of
- *					compression failure and can be computed by the
- *					macro PGLZ_MAX_OUTPUT(slen). Don't be surprised,
- *					it is larger than the input data size.
+ *					It must be at least as big as PGLZ_MAX_OUTPUT(slen).
  *
  *				strategy is a pointer to some information controlling
  *					the compression algorithm. If NULL, the compiled
  *					in default strategy is used.
  *
- *				The return value is the size of bytes written to buff.
+ *				The return value is TRUE if compression succeeded,
+ *				FALSE if not; in the latter case the contents of dest
+ *				are undefined.
  *
- *			int
- *			pglz_decompress(PGLZ_Header *source, char *dest)
+ *			void
+ *			pglz_decompress(const PGLZ_Header *source, char *dest)
  *
  *				source is the compressed input.
  *
@@ -42,9 +39,6 @@
  *
  *					The data is written to buff exactly as it was handed
  *					to pglz_compress(). No terminating zero byte is added.
- *
- *				The return value is the size of bytes written to buff.
- *					Obviously the same as PGLZ_RAW_SIZE() returns.
  *
  *		The decompression algorithm and internal data format:
  *
@@ -169,6 +163,8 @@
  *			inspired me to write the PostgreSQL compression this way.
  *
  *			Jan Wieck
+ *
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.23 2006/10/05 23:33:33 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -204,7 +200,7 @@ typedef struct PGLZ_HistEntry
 	struct PGLZ_HistEntry *next;	/* links for my hash key's list */
 	struct PGLZ_HistEntry *prev;
 	int			hindex;			/* my current hash key */
-	char	   *pos;			/* my input position */
+	const char *pos;			/* my input position */
 } PGLZ_HistEntry;
 
 
@@ -212,7 +208,7 @@ typedef struct PGLZ_HistEntry
  * The provided standard strategies
  * ----------
  */
-static PGLZ_Strategy strategy_default_data = {
+static const PGLZ_Strategy strategy_default_data = {
 	256,						/* Data chunks smaller 256 bytes are not
 								 * compressed			 */
 	6144,						/* Data chunks greater equal 6K force
@@ -226,10 +222,10 @@ static PGLZ_Strategy strategy_default_data = {
 	10							/* Lower good match size by 10% at every
 								 * lookup loop iteration. */
 };
-PGLZ_Strategy *PGLZ_strategy_default = &strategy_default_data;
+const PGLZ_Strategy * const PGLZ_strategy_default = &strategy_default_data;
 
 
-static PGLZ_Strategy strategy_always_data = {
+static const PGLZ_Strategy strategy_always_data = {
 	0,							/* Chunks of any size are compressed							*/
 	0,							/* */
 	0,							/* We want to save at least one single byte						*/
@@ -237,17 +233,8 @@ static PGLZ_Strategy strategy_always_data = {
 								 * is found			*/
 	6							/* Look harder for a good match.								*/
 };
-PGLZ_Strategy *PGLZ_strategy_always = &strategy_always_data;
+const PGLZ_Strategy * const PGLZ_strategy_always = &strategy_always_data;
 
-
-static PGLZ_Strategy strategy_never_data = {
-	0,							/* */
-	0,							/* */
-	0,							/* */
-	0,							/* Zero indicates "store uncompressed always"				   */
-	0							/* */
-};
-PGLZ_Strategy *PGLZ_strategy_never = &strategy_never_data;
 
 /* ----------
  * Statically allocated work arrays for history
@@ -384,7 +371,7 @@ do { \
  * ----------
  */
 static inline int
-pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
+pglz_find_match(PGLZ_HistEntry **hstart, const char *input, const char *end,
 				int *lenp, int *offp, int good_match, int good_drop)
 {
 	PGLZ_HistEntry *hent;
@@ -397,8 +384,8 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 	hent = hstart[pglz_hist_idx(input, end)];
 	while (hent)
 	{
-		char	   *ip = input;
-		char	   *hp = hent->pos;
+		const char *ip = input;
+		const char *hp = hent->pos;
 		int32		thisoff;
 		int32		thislen;
 
@@ -490,15 +477,16 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
  *		Compresses source into dest using strategy.
  * ----------
  */
-int
-pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strategy)
+bool
+pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
+			  const PGLZ_Strategy *strategy)
 {
 	unsigned char *bp = ((unsigned char *) dest) + sizeof(PGLZ_Header);
 	unsigned char *bstart = bp;
 	int			hist_next = 0;
 	bool		hist_recycle = false;
-	char	   *dp = source;
-	char	   *dend = source + slen;
+	const char *dp = source;
+	const char *dend = source + slen;
 	unsigned char ctrl_dummy = 0;
 	unsigned char *ctrlp = &ctrl_dummy;
 	unsigned char ctrlb = 0;
@@ -507,8 +495,7 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 	int32		match_off;
 	int32		good_match;
 	int32		good_drop;
-	int32		do_compress = 1;
-	int32		result_size = -1;
+	int32		result_size;
 	int32		result_max;
 	int32		need_rate;
 
@@ -519,27 +506,17 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 		strategy = PGLZ_strategy_default;
 
 	/*
+	 * If the strategy forbids compression (at all or if source chunk too
+	 * small), fail.
+	 */
+	if (strategy->match_size_good == 0 ||
+		slen < strategy->min_input_size)
+		return false;
+
+	/*
 	 * Save the original source size in the header.
 	 */
 	dest->rawsize = slen;
-
-	/*
-	 * If the strategy forbids compression (at all or if source chunk too
-	 * small), copy input to output without compression.
-	 */
-	if (strategy->match_size_good == 0)
-	{
-		memcpy(bstart, source, slen);
-		return (dest->varsize = slen + sizeof(PGLZ_Header));
-	}
-	else
-	{
-		if (slen < strategy->min_input_size)
-		{
-			memcpy(bstart, source, slen);
-			return (dest->varsize = slen + sizeof(PGLZ_Header));
-		}
-	}
 
 	/*
 	 * Limit the match size to the maximum implementation allowed value
@@ -584,14 +561,14 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 	while (dp < dend)
 	{
 		/*
-		 * If we already exceeded the maximum result size, set no compression
-		 * flag and stop this. But don't check too often.
+		 * If we already exceeded the maximum result size, fail.
+		 *
+		 * We check once per loop; since the loop body could emit as many as 4
+		 * bytes (a control byte and 3-byte tag), PGLZ_MAX_OUTPUT() had better
+		 * allow 4 slop bytes.
 		 */
 		if (bp - bstart >= result_max)
-		{
-			do_compress = 0;
-			break;
-		}
+			return false;
 
 		/*
 		 * Try to find a match in the history
@@ -628,35 +605,20 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 	}
 
 	/*
-	 * If we are still in compressing mode, write out the last control byte
-	 * and determine if the compression gained the rate requested by the
-	 * strategy.
+	 * Write out the last control byte and check that we haven't overrun
+	 * the output size allowed by the strategy.
 	 */
-	if (do_compress)
-	{
-		*ctrlp = ctrlb;
-
-		result_size = bp - bstart;
-		if (result_size >= result_max)
-			do_compress = 0;
-	}
+	*ctrlp = ctrlb;
+	result_size = bp - bstart;
+	if (result_size >= result_max)
+		return false;
 
 	/*
-	 * Done - if we successfully compressed and matched the strategy's
-	 * constraints, return the compressed result. Otherwise copy the original
-	 * source over it and return the original length.
+	 * Success - need only fill in the actual length of the compressed datum.
 	 */
-	if (do_compress)
-	{
-		dest->varsize = result_size + sizeof(PGLZ_Header);
-		return VARATT_SIZE(dest);
-	}
-	else
-	{
-		memcpy(((char *) dest) + sizeof(PGLZ_Header), source, slen);
-		dest->varsize = slen + sizeof(PGLZ_Header);
-		return VARATT_SIZE(dest);
-	}
+	dest->varsize = result_size + sizeof(PGLZ_Header);
+
+	return true;
 }
 
 
@@ -666,26 +628,21 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
  *		Decompresses source into dest.
  * ----------
  */
-int
-pglz_decompress(PGLZ_Header *source, char *dest)
+void
+pglz_decompress(const PGLZ_Header *source, char *dest)
 {
-	unsigned char *dp;
-	unsigned char *dend;
+	const unsigned char *dp;
+	const unsigned char *dend;
 	unsigned char *bp;
 	unsigned char ctrl;
 	int32		ctrlc;
 	int32		len;
 	int32		off;
+	int32		destsize;
 
-	dp = ((unsigned char *) source) + sizeof(PGLZ_Header);
-	dend = ((unsigned char *) source) + VARATT_SIZE(source);
+	dp = ((const unsigned char *) source) + sizeof(PGLZ_Header);
+	dend = ((const unsigned char *) source) + VARATT_SIZE(source);
 	bp = (unsigned char *) dest;
-
-	if (VARATT_SIZE(source) == source->rawsize + sizeof(PGLZ_Header))
-	{
-		memcpy(dest, dp, source->rawsize);
-		return source->rawsize;
-	}
 
 	while (dp < dend)
 	{
@@ -739,159 +696,16 @@ pglz_decompress(PGLZ_Header *source, char *dest)
 	}
 
 	/*
+	 * Check we decompressed the right amount, else die.  This is a FATAL
+	 * condition if we tromped on more memory than expected (we assume we
+	 * have not tromped on shared memory, though, so need not PANIC).
+	 */
+	destsize = (char *) bp - dest;
+	if (destsize != source->rawsize)
+		elog(destsize > source->rawsize ? FATAL : ERROR,
+			 "compressed data is corrupt");
+
+	/*
 	 * That's it.
 	 */
-	return (char *) bp - dest;
-}
-
-
-/* ----------
- * pglz_get_next_decomp_char_from_lzdata -
- *
- *		Reads the next character from a decompression state if the
- *		input data to pglz_decomp_init() was in compressed format.
- * ----------
- */
-int
-pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
-{
-	unsigned char retval;
-
-	if (dstate->tocopy > 0)
-	{
-		/*
-		 * Copy one byte from output to output until we did it for the length
-		 * specified by the last tag. Return that byte.
-		 */
-		dstate->tocopy--;
-		return (*(dstate->cp_out++) = *(dstate->cp_copy++));
-	}
-
-	if (dstate->ctrl_count == 0)
-	{
-		/*
-		 * Get the next control byte if we need to, but check for EOF before.
-		 */
-		if (dstate->cp_in == dstate->cp_end)
-			return EOF;
-
-		/*
-		 * This decompression method saves time only, if we stop near the
-		 * beginning of the data (maybe because we're called by a comparison
-		 * function and a difference occurs early). Otherwise, all the checks,
-		 * needed here, cause too much overhead.
-		 *
-		 * Thus we decompress the entire rest at once into the temporary
-		 * buffer and change the decomp state to return the prepared data from
-		 * the buffer by the more simple calls to
-		 * pglz_get_next_decomp_char_from_plain().
-		 */
-		if (dstate->cp_out - dstate->temp_buf >= 256)
-		{
-			unsigned char *cp_in = dstate->cp_in;
-			unsigned char *cp_out = dstate->cp_out;
-			unsigned char *cp_end = dstate->cp_end;
-			unsigned char *cp_copy;
-			unsigned char ctrl;
-			int			off;
-			int			len;
-			int			i;
-
-			while (cp_in < cp_end)
-			{
-				ctrl = *cp_in++;
-
-				for (i = 0; i < 8; i++)
-				{
-					if (cp_in == cp_end)
-						break;
-
-					if (ctrl & 0x01)
-					{
-						len = (cp_in[0] & 0x0f) + 3;
-						off = ((cp_in[0] & 0xf0) << 4) | cp_in[1];
-						cp_in += 2;
-						if (len == 18)
-							len += *cp_in++;
-
-						cp_copy = cp_out - off;
-						while (len--)
-							*cp_out++ = *cp_copy++;
-					}
-					else
-						*cp_out++ = *cp_in++;
-					ctrl >>= 1;
-				}
-			}
-
-			dstate->cp_in = dstate->cp_out;
-			dstate->cp_end = cp_out;
-			dstate->next_char = pglz_get_next_decomp_char_from_plain;
-
-			return (int) (*(dstate->cp_in++));
-		}
-
-		/*
-		 * Not yet, get next control byte into decomp state.
-		 */
-		dstate->ctrl = (unsigned char) (*(dstate->cp_in++));
-		dstate->ctrl_count = 8;
-	}
-
-	/*
-	 * Check for EOF in tag/literal byte data.
-	 */
-	if (dstate->cp_in == dstate->cp_end)
-		return EOF;
-
-	/*
-	 * Handle next control bit.
-	 */
-	dstate->ctrl_count--;
-	if (dstate->ctrl & 0x01)
-	{
-		/*
-		 * Bit is set, so tag is following. Setup copy information and do the
-		 * copy for the first byte as above.
-		 */
-		int			off;
-
-		dstate->tocopy = (dstate->cp_in[0] & 0x0f) + 3;
-		off = ((dstate->cp_in[0] & 0xf0) << 4) | dstate->cp_in[1];
-		dstate->cp_in += 2;
-		if (dstate->tocopy == 18)
-			dstate->tocopy += *(dstate->cp_in++);
-		dstate->cp_copy = dstate->cp_out - off;
-
-		dstate->tocopy--;
-		retval = (*(dstate->cp_out++) = *(dstate->cp_copy++));
-	}
-	else
-	{
-		/*
-		 * Bit is unset, so literal byte follows.
-		 */
-		retval = (int) (*(dstate->cp_out++) = *(dstate->cp_in++));
-	}
-	dstate->ctrl >>= 1;
-
-	return (int) retval;
-}
-
-
-/* ----------
- * pglz_get_next_decomp_char_from_plain -
- *
- *		The input data to pglz_decomp_init() was stored in uncompressed
- *		format. So we don't have a temporary output buffer and simply
- *		return bytes from the input until EOF.
- * ----------
- */
-int
-pglz_get_next_decomp_char_from_plain(PGLZ_DecompState *dstate)
-{
-	if (dstate->cp_in >= dstate->cp_end)
-		return EOF;
-
-	return (int) (*(dstate->cp_in++));
 }
