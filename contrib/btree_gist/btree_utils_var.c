@@ -439,18 +439,14 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree
 }
 
 
-/*
- * Fortunately, this sort comparison routine needn't be reentrant...
- */
-static const gbtree_vinfo *gbt_vsrt_cmp_tinfo;
-
 static int
-gbt_vsrt_cmp(const void *a, const void *b)
+gbt_vsrt_cmp(const void *a, const void *b, void *arg)
 {
 	GBT_VARKEY_R ar = gbt_var_key_readable(((const Vsrt *) a)->t);
 	GBT_VARKEY_R br = gbt_var_key_readable(((const Vsrt *) b)->t);
+	const gbtree_vinfo *tinfo = (const gbtree_vinfo *) arg;
 
-	return (*gbt_vsrt_cmp_tinfo->f_cmp) (ar.lower, br.lower);
+	return (*tinfo->f_cmp) (ar.lower, br.lower);
 }
 
 GIST_SPLITVEC *
@@ -496,11 +492,11 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
 	}
 
 	/* sort */
-	gbt_vsrt_cmp_tinfo = tinfo;
-	qsort((void *) &arr[FirstOffsetNumber],
-		  maxoff - FirstOffsetNumber + 1,
-		  sizeof(Vsrt),
-		  gbt_vsrt_cmp);
+	qsort_arg((void *) &arr[FirstOffsetNumber],
+			  maxoff - FirstOffsetNumber + 1,
+			  sizeof(Vsrt),
+			  gbt_vsrt_cmp,
+			  (void *) tinfo);
 
 	/* We do simply create two parts */
 

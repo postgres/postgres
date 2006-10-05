@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.7 2006/10/04 00:29:48 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.8 2006/10/05 17:57:40 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -129,62 +129,48 @@ compareEntries(GinState *ginstate, Datum a, Datum b)
 	);
 }
 
-static FmgrInfo *cmpDatumPtr = NULL;
-
-#if defined(__INTEL_COMPILER) && (defined(__ia64__) || defined(__ia64))
-/*
- * Intel Compiler on Intel Itanium with -O2 has a bug around
- * change static variable by user function called from
- * libc func: it doesn't change. So mark it as volatile.
- *
- * It's a pity, but it's impossible to define optimization
- * level here.
- */
-#define VOLATILE	volatile
-#else
-#define VOLATILE
-#endif
-
-static bool VOLATILE needUnique = FALSE;
+typedef struct
+{
+	FmgrInfo   *cmpDatumFunc;
+	bool	   *needUnique;
+} cmpEntriesData;
 
 static int
-cmpEntries(const void *a, const void *b)
+cmpEntries(const Datum *a, const Datum *b, cmpEntriesData *arg)
 {
-	int			res = DatumGetInt32(
-									FunctionCall2(
-												  cmpDatumPtr,
-												  *(Datum *) a,
-												  *(Datum *) b
-												  )
-	);
+	int			res = DatumGetInt32(FunctionCall2(arg->cmpDatumFunc,
+												  *a, *b));
 
 	if (res == 0)
-		needUnique = TRUE;
+		*(arg->needUnique) = TRUE;
 
 	return res;
 }
 
 Datum *
-extractEntriesS(GinState *ginstate, Datum value, uint32 *nentries)
+extractEntriesS(GinState *ginstate, Datum value, uint32 *nentries,
+				bool *needUnique)
 {
 	Datum	   *entries;
 
-	entries = (Datum *) DatumGetPointer(
-										FunctionCall2(
+	entries = (Datum *) DatumGetPointer(FunctionCall2(
 												   &ginstate->extractValueFn,
 													  value,
 													PointerGetDatum(nentries)
-													  )
-		);
+													  ));
 
 	if (entries == NULL)
 		*nentries = 0;
 
+	*needUnique = FALSE;
 	if (*nentries > 1)
 	{
-		cmpDatumPtr = &ginstate->compareFn;
-		needUnique = FALSE;
-		qsort(entries, *nentries, sizeof(Datum), cmpEntries);
+		cmpEntriesData arg;
+
+		arg.cmpDatumFunc = &ginstate->compareFn;
+		arg.needUnique = needUnique;
+		qsort_arg(entries, *nentries, sizeof(Datum),
+				  (qsort_arg_comparator) cmpEntries, (void *) &arg);
 	}
 
 	return entries;
@@ -194,9 +180,11 @@ extractEntriesS(GinState *ginstate, Datum value, uint32 *nentries)
 Datum *
 extractEntriesSU(GinState *ginstate, Datum value, uint32 *nentries)
 {
-	Datum	   *entries = extractEntriesS(ginstate, value, nentries);
+	bool		needUnique;
+	Datum	   *entries = extractEntriesS(ginstate, value, nentries,
+										  &needUnique);
 
-	if (*nentries > 1 && needUnique)
+	if (needUnique)
 	{
 		Datum	   *ptr,
 				   *res;

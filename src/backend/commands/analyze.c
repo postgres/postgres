@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.99 2006/10/04 00:29:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.100 2006/10/05 17:57:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1294,11 +1294,12 @@ typedef struct
 	int			first;			/* values[] index of first occurrence */
 } ScalarMCVItem;
 
-
-/* context information for compare_scalars() */
-static FmgrInfo *datumCmpFn;
-static SortFunctionKind datumCmpFnKind;
-static int *datumCmpTupnoLink;
+typedef struct
+{
+	FmgrInfo   *cmpFn;
+	SortFunctionKind cmpFnKind;
+	int		   *tupnoLink;
+} CompareScalarsContext;
 
 
 static void compute_minimal_stats(VacAttrStatsP stats,
@@ -1309,7 +1310,7 @@ static void compute_scalar_stats(VacAttrStatsP stats,
 					 AnalyzeAttrFetchFunc fetchfunc,
 					 int samplerows,
 					 double totalrows);
-static int	compare_scalars(const void *a, const void *b);
+static int	compare_scalars(const void *a, const void *b, void *arg);
 static int	compare_mcvs(const void *a, const void *b);
 
 
@@ -1828,13 +1829,14 @@ compute_scalar_stats(VacAttrStatsP stats,
 					num_hist,
 					dups_cnt;
 		int			slot_idx = 0;
+		CompareScalarsContext cxt;
 
 		/* Sort the collected values */
-		datumCmpFn = &f_cmpfn;
-		datumCmpFnKind = cmpFnKind;
-		datumCmpTupnoLink = tupnoLink;
-		qsort((void *) values, values_cnt,
-			  sizeof(ScalarItem), compare_scalars);
+		cxt.cmpFn = &f_cmpfn;
+		cxt.cmpFnKind = cmpFnKind;
+		cxt.tupnoLink = tupnoLink;
+		qsort_arg((void *) values, values_cnt, sizeof(ScalarItem),
+				  compare_scalars, (void *) &cxt);
 
 		/*
 		 * Now scan the values in order, find the most common ones, and also
@@ -2183,35 +2185,36 @@ compute_scalar_stats(VacAttrStatsP stats,
 }
 
 /*
- * qsort comparator for sorting ScalarItems
+ * qsort_arg comparator for sorting ScalarItems
  *
- * Aside from sorting the items, we update the datumCmpTupnoLink[] array
+ * Aside from sorting the items, we update the tupnoLink[] array
  * whenever two ScalarItems are found to contain equal datums.	The array
  * is indexed by tupno; for each ScalarItem, it contains the highest
  * tupno that that item's datum has been found to be equal to.  This allows
  * us to avoid additional comparisons in compute_scalar_stats().
  */
 static int
-compare_scalars(const void *a, const void *b)
+compare_scalars(const void *a, const void *b, void *arg)
 {
 	Datum		da = ((ScalarItem *) a)->value;
 	int			ta = ((ScalarItem *) a)->tupno;
 	Datum		db = ((ScalarItem *) b)->value;
 	int			tb = ((ScalarItem *) b)->tupno;
+	CompareScalarsContext *cxt = (CompareScalarsContext *) arg;
 	int32		compare;
 
-	compare = ApplySortFunction(datumCmpFn, datumCmpFnKind,
+	compare = ApplySortFunction(cxt->cmpFn, cxt->cmpFnKind,
 								da, false, db, false);
 	if (compare != 0)
 		return compare;
 
 	/*
-	 * The two datums are equal, so update datumCmpTupnoLink[].
+	 * The two datums are equal, so update cxt->tupnoLink[].
 	 */
-	if (datumCmpTupnoLink[ta] < tb)
-		datumCmpTupnoLink[ta] = tb;
-	if (datumCmpTupnoLink[tb] < ta)
-		datumCmpTupnoLink[tb] = ta;
+	if (cxt->tupnoLink[ta] < tb)
+		cxt->tupnoLink[ta] = tb;
+	if (cxt->tupnoLink[tb] < ta)
+		cxt->tupnoLink[tb] = ta;
 
 	/*
 	 * For equal datums, sort by tupno

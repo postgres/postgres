@@ -122,14 +122,14 @@ find_wordentry(tsvector * t, QUERYTYPE * q, ITEM * item)
 }
 
 
-static char *SortAndUniqOperand = NULL;
-
 static int
-compareITEM(const void *a, const void *b)
+compareITEM(const void *a, const void *b, void *arg)
 {
+	char *operand = (char *) arg;
+
 	if ((*(ITEM **) a)->length == (*(ITEM **) b)->length)
-		return strncmp(SortAndUniqOperand + (*(ITEM **) a)->distance,
-					   SortAndUniqOperand + (*(ITEM **) b)->distance,
+		return strncmp(operand + (*(ITEM **) a)->distance,
+					   operand + (*(ITEM **) b)->distance,
 					   (*(ITEM **) b)->length);
 
 	return ((*(ITEM **) a)->length > (*(ITEM **) b)->length) ? 1 : -1;
@@ -158,15 +158,14 @@ SortAndUniqItems(char *operand, ITEM * item, int *size)
 	if (*size < 2)
 		return res;
 
-	SortAndUniqOperand = operand;
-	qsort(res, *size, sizeof(ITEM **), compareITEM);
+	qsort_arg(res, *size, sizeof(ITEM **), compareITEM, (void *) operand);
 
 	ptr = res + 1;
 	prevptr = res;
 
 	while (ptr - res < *size)
 	{
-		if (compareITEM((void *) ptr, (void *) prevptr) != 0)
+		if (compareITEM((void *) ptr, (void *) prevptr, (void *) operand) != 0)
 		{
 			prevptr++;
 			*prevptr = *ptr;
@@ -551,10 +550,11 @@ get_docrep(tsvector * txt, QUERYTYPE * query, int *doclen)
 	int			len = query->size * 4,
 				cur = 0;
 	DocRepresentation *doc;
+	char	   *operand;
 
 	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
 	doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
-	SortAndUniqOperand = GETOPERAND(query);
+	operand = GETOPERAND(query);
 	reset_istrue_flag(query);
 
 	for (i = 0; i < query->size; i++)
@@ -598,7 +598,9 @@ get_docrep(tsvector * txt, QUERYTYPE * query, int *doclen)
 				for (k = 0; k < query->size; k++)
 				{
 					kptr = item + k;
-					if (k == i || (item[k].type == VAL && compareITEM(&kptr, &iptr) == 0))
+					if (k == i ||
+						(item[k].type == VAL &&
+						 compareITEM(&kptr, &iptr, operand) == 0))
 					{
 						doc[cur].item[doc[cur].nitem] = item + k;
 						doc[cur].nitem++;

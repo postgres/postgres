@@ -3,7 +3,7 @@
  *	  header file for postgres inverted index access method implementation.
  *
  *	Copyright (c) 2006, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.8 2006/10/04 00:30:06 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.9 2006/10/05 17:57:40 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -232,7 +232,8 @@ extern Buffer GinNewBuffer(Relation index);
 extern void GinInitBuffer(Buffer b, uint32 f);
 extern void GinInitPage(Page page, uint32 f, Size pageSize);
 extern int	compareEntries(GinState *ginstate, Datum a, Datum b);
-extern Datum *extractEntriesS(GinState *ginstate, Datum value, uint32 *nentries);
+extern Datum *extractEntriesS(GinState *ginstate, Datum value,
+							  uint32 *nentries, bool *needUnique);
 extern Datum *extractEntriesSU(GinState *ginstate, Datum value, uint32 *nentries);
 extern Page GinPageGetCopyPage(Page page);
 

@@ -85,14 +85,14 @@ uniquePos(WordEntryPos * a, int4 l)
 	return res + 1 - a;
 }
 
-static char *BufferStr;
 static int
-compareentry(const void *a, const void *b)
+compareentry(const void *a, const void *b, void *arg)
 {
+	char *BufferStr = (char *) arg;
+
 	if (((WordEntryIN *) a)->entry.len == ((WordEntryIN *) b)->entry.len)
 	{
-		return strncmp(
-					   &BufferStr[((WordEntryIN *) a)->entry.pos],
+		return strncmp(&BufferStr[((WordEntryIN *) a)->entry.pos],
 					   &BufferStr[((WordEntryIN *) b)->entry.pos],
 					   ((WordEntryIN *) a)->entry.len);
 	}
@@ -117,8 +117,7 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 	}
 
 	ptr = a + 1;
-	BufferStr = buf;
-	qsort((void *) a, l, sizeof(WordEntryIN), compareentry);
+	qsort_arg((void *) a, l, sizeof(WordEntryIN), compareentry, (void *) buf);
 
 	while (ptr - a < l)
 	{
