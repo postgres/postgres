@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.129 2006/10/04 00:29:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.130 2006/10/05 01:40:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,6 +328,32 @@ float4in(PG_FUNCTION_ARGS)
 	}
 #endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
 
+#ifdef HAVE_BUGGY_IRIX_STRTOD
+	/*
+	 * In some IRIX versions, strtod() recognizes only "inf", so if the
+	 * input is "infinity" we have to skip over "inity".  Also, it may
+	 * return positive infinity for "-inf".
+	 */
+	if (isinf(val))
+	{
+		if (pg_strncasecmp(num, "Infinity", 8) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 8;
+		}
+		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
+		{
+			val = -get_float4_infinity();
+			endptr = num + 9;
+		}
+		else if (pg_strncasecmp(num, "-inf", 4) == 0)
+		{
+			val = -get_float4_infinity();
+			endptr = num + 4;
+		}
+	}
+#endif /* HAVE_BUGGY_IRIX_STRTOD */
+
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
 		endptr++;
@@ -494,6 +520,32 @@ float8in(PG_FUNCTION_ARGS)
 			endptr--;
 	}
 #endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
+
+#ifdef HAVE_BUGGY_IRIX_STRTOD
+	/*
+	 * In some IRIX versions, strtod() recognizes only "inf", so if the
+	 * input is "infinity" we have to skip over "inity".  Also, it may
+	 * return positive infinity for "-inf".
+	 */
+	if (isinf(val))
+	{
+		if (pg_strncasecmp(num, "Infinity", 8) == 0)
+		{
+			val = get_float8_infinity();
+			endptr = num + 8;
+		}
+		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
+		{
+			val = -get_float8_infinity();
+			endptr = num + 9;
+		}
+		else if (pg_strncasecmp(num, "-inf", 4) == 0)
+		{
+			val = -get_float8_infinity();
+			endptr = num + 4;
+		}
+	}
+#endif /* HAVE_BUGGY_IRIX_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
