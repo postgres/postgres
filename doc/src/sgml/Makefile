@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.77 2006/10/03 21:13:17 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.78 2006/10/05 02:04:32 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -231,7 +231,7 @@ DB2X_XSLTPROC = db2x_xsltproc
 MAKEINFO = makeinfo
 
 postgres.texixml: postgres.xml
-	$(DB2X_XSLTPROC) -s texi $< -o $@
+	$(DB2X_XSLTPROC) -s texi -g output-file=$(basename $@) $< -o $@
 
 postgres.texi: postgres.texixml
 	$(DB2X_TEXIXML) --encoding=iso-8859-1//TRANSLIT $< \
