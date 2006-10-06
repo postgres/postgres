@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.118 2004/12/31 22:01:25 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.118.4.1 2006/10/06 18:23:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -972,7 +972,7 @@ CatalogCacheInitializeCache(CatCache *cache)
 		cache->cc_skey[i].sk_strategy = BTEqualStrategyNumber;
 		cache->cc_skey[i].sk_subtype = InvalidOid;
 
-		CACHE4_elog(DEBUG2, "CatalogCacheInit %s %d %p",
+		CACHE4_elog(DEBUG2, "CatalogCacheInitializeCache %s %d %p",
 					cache->cc_relname,
 					i,
 					cache);
@@ -987,18 +987,20 @@ CatalogCacheInitializeCache(CatCache *cache)
 /*
  * InitCatCachePhase2 -- external interface for CatalogCacheInitializeCache
  *
- * The only reason to call this routine is to ensure that the relcache
- * has created entries for all the catalogs and indexes referenced by
- * catcaches.  Therefore, open the index too.  An exception is the indexes
- * on pg_am, which we don't use (cf. IndexScanOK).
+ * One reason to call this routine is to ensure that the relcache has
+ * created entries for all the catalogs and indexes referenced by catcaches.
+ * Therefore, provide an option to open the index as well as fixing the
+ * cache itself.  An exception is the indexes on pg_am, which we don't use
+ * (cf. IndexScanOK).
  */
 void
-InitCatCachePhase2(CatCache *cache)
+InitCatCachePhase2(CatCache *cache, bool touch_index)
 {
 	if (cache->cc_tupdesc == NULL)
 		CatalogCacheInitializeCache(cache);
 
-	if (cache->id != AMOID &&
+	if (touch_index &&
+		cache->id != AMOID &&
 		cache->id != AMNAME)
 	{
 		Relation	idesc;
