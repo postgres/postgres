@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.24 2006/10/04 00:29:49 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.25 2006/10/06 17:13:58 petere Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -866,7 +866,7 @@ EndPrepare(GlobalTransaction gxact)
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not create twophase state file \"%s\": %m",
+				 errmsg("could not create two-phase state file \"%s\": %m",
 						path)));
 
 	/* Write data to file, and calculate CRC as we pass over it */
@@ -880,7 +880,7 @@ EndPrepare(GlobalTransaction gxact)
 			close(fd);
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not write twophase state file: %m")));
+					 errmsg("could not write two-phase state file: %m")));
 		}
 	}
 
@@ -897,7 +897,7 @@ EndPrepare(GlobalTransaction gxact)
 		close(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write twophase state file: %m")));
+				 errmsg("could not write two-phase state file: %m")));
 	}
 
 	/* Back up to prepare for rewriting the CRC */
@@ -906,7 +906,7 @@ EndPrepare(GlobalTransaction gxact)
 		close(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not seek in twophase state file: %m")));
+				 errmsg("could not seek in two-phase state file: %m")));
 	}
 
 	/*
@@ -946,13 +946,13 @@ EndPrepare(GlobalTransaction gxact)
 		close(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write twophase state file: %m")));
+				 errmsg("could not write two-phase state file: %m")));
 	}
 
 	if (close(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not close twophase state file: %m")));
+				 errmsg("could not close two-phase state file: %m")));
 
 	/*
 	 * Mark the prepared transaction as valid.	As soon as xact.c marks MyProc
@@ -1022,7 +1022,7 @@ ReadTwoPhaseFile(TransactionId xid)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not open twophase state file \"%s\": %m",
+				 errmsg("could not open two-phase state file \"%s\": %m",
 						path)));
 		return NULL;
 	}
@@ -1036,7 +1036,7 @@ ReadTwoPhaseFile(TransactionId xid)
 		close(fd);
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not stat twophase state file \"%s\": %m",
+				 errmsg("could not stat two-phase state file \"%s\": %m",
 						path)));
 		return NULL;
 	}
@@ -1067,7 +1067,7 @@ ReadTwoPhaseFile(TransactionId xid)
 		close(fd);
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not read twophase state file \"%s\": %m",
+				 errmsg("could not read two-phase state file \"%s\": %m",
 						path)));
 		pfree(buf);
 		return NULL;
@@ -1128,7 +1128,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	if (buf == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("twophase state file for transaction %u is corrupt",
+				 errmsg("two-phase state file for transaction %u is corrupt",
 						xid)));
 
 	/*
@@ -1250,7 +1250,7 @@ RemoveTwoPhaseFile(TransactionId xid, bool giveWarning)
 		if (errno != ENOENT || giveWarning)
 			ereport(WARNING,
 					(errcode_for_file_access(),
-					 errmsg("could not remove twophase state file \"%s\": %m",
+					 errmsg("could not remove two-phase state file \"%s\": %m",
 							path)));
 }
 
@@ -1279,7 +1279,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not recreate twophase state file \"%s\": %m",
+				 errmsg("could not recreate two-phase state file \"%s\": %m",
 						path)));
 
 	/* Write content and CRC */
@@ -1288,14 +1288,14 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 		close(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write twophase state file: %m")));
+				 errmsg("could not write two-phase state file: %m")));
 	}
 	if (write(fd, &statefile_crc, sizeof(pg_crc32)) != sizeof(pg_crc32))
 	{
 		close(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write twophase state file: %m")));
+				 errmsg("could not write two-phase state file: %m")));
 	}
 
 	/*
@@ -1307,13 +1307,13 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 		close(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync twophase state file: %m")));
+				 errmsg("could not fsync two-phase state file: %m")));
 	}
 
 	if (close(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not close twophase state file: %m")));
+				 errmsg("could not close two-phase state file: %m")));
 }
 
 /*
@@ -1390,7 +1390,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 			}
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not open twophase state file \"%s\": %m",
+					 errmsg("could not open two-phase state file \"%s\": %m",
 							path)));
 		}
 
@@ -1399,14 +1399,14 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 			close(fd);
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not fsync twophase state file \"%s\": %m",
+					 errmsg("could not fsync two-phase state file \"%s\": %m",
 							path)));
 		}
 
 		if (close(fd) != 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not close twophase state file \"%s\": %m",
+					 errmsg("could not close two-phase state file \"%s\": %m",
 							path)));
 	}
 
@@ -1462,7 +1462,7 @@ PrescanPreparedTransactions(void)
 			if (TransactionIdFollowsOrEquals(xid, origNextXid))
 			{
 				ereport(WARNING,
-						(errmsg("removing future twophase state file \"%s\"",
+						(errmsg("removing future two-phase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				continue;
@@ -1478,7 +1478,7 @@ PrescanPreparedTransactions(void)
 			if (buf == NULL)
 			{
 				ereport(WARNING,
-						(errmsg("removing corrupt twophase state file \"%s\"",
+						(errmsg("removing corrupt two-phase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				continue;
@@ -1489,7 +1489,7 @@ PrescanPreparedTransactions(void)
 			if (!TransactionIdEquals(hdr->xid, xid))
 			{
 				ereport(WARNING,
-						(errmsg("removing corrupt twophase state file \"%s\"",
+						(errmsg("removing corrupt two-phase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				pfree(buf);
@@ -1566,7 +1566,7 @@ RecoverPreparedTransactions(void)
 			if (TransactionIdDidCommit(xid) || TransactionIdDidAbort(xid))
 			{
 				ereport(WARNING,
-						(errmsg("removing stale twophase state file \"%s\"",
+						(errmsg("removing stale two-phase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				continue;
@@ -1577,7 +1577,7 @@ RecoverPreparedTransactions(void)
 			if (buf == NULL)
 			{
 				ereport(WARNING,
-						(errmsg("removing corrupt twophase state file \"%s\"",
+						(errmsg("removing corrupt two-phase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				continue;

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.354 2006/10/04 00:30:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.355 2006/10/06 17:14:00 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -894,7 +894,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"array_nulls", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
 			gettext_noop("Enable input of NULL elements in arrays."),
 			gettext_noop("When turned on, unquoted NULL in an array input "
-						 "value means a NULL value; "
+						 "value means a null value; "
 						 "otherwise it is taken literally.")
 		},
 		&Array_nulls,
@@ -1611,7 +1611,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"gin_fuzzy_search_limit", PGC_USERSET, UNGROUPED,
-			gettext_noop("Sets the maximum allowed result for exact search by gin."),
+			gettext_noop("Sets the maximum allowed result for exact search by GIN."),
 			NULL,
 			0
 		},
@@ -2133,7 +2133,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 	{
 		{"timezone_abbreviations", PGC_USERSET, CLIENT_CONN_LOCALE,
-			gettext_noop("Selects a file of timezone abbreviations"),
+			gettext_noop("Selects a file of time zone abbreviations"),
 			NULL,
 		},
 		&timezone_abbreviations_string,

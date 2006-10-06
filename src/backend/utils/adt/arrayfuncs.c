@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.133 2006/10/04 00:29:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.134 2006/10/06 17:13:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1984,7 +1984,7 @@ array_set(ArrayType *array,
 		if (isNull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("cannot assign NULL to an element of a fixed-length array")));
+					 errmsg("cannot assign null value to an element of a fixed-length array")));
 
 		newarray = (ArrayType *) palloc(arraytyplen);
 		memcpy(newarray, array, arraytyplen);
@@ -2944,7 +2944,7 @@ deconstruct_array(ArrayType *array,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				  errmsg("NULL array element not allowed in this context")));
+				  errmsg("null array element not allowed in this context")));
 		}
 		else
 		{

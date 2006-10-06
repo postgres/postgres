@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.28 2006/10/04 00:29:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.29 2006/10/06 17:13:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,7 +437,7 @@ BackgroundWriterMain(void)
 				 */
 				if ((switchpoint.xrecoff % XLogSegSize) != 0)
 					ereport(DEBUG1,
-							(errmsg("xlog switch forced (archive_timeout=%d)",
+							(errmsg("transaction log switch forced (archive_timeout=%d)",
 									XLogArchiveTimeout)));
 
 				/*

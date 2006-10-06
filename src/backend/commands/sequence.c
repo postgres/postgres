@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.140 2006/10/04 00:29:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.141 2006/10/06 17:13:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1209,11 +1209,11 @@ process_owned_by(Relation seqrel, List *owned_by)
 		if (seqrel->rd_rel->relowner != tablerel->rd_rel->relowner)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			errmsg("sequence must have same owner as table it is owned by")));
+			errmsg("sequence must have same owner as table it is linked to")));
 		if (RelationGetNamespace(seqrel) != RelationGetNamespace(tablerel))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("sequence must be in same schema as table it is owned by")));
+					 errmsg("sequence must be in same schema as table it is linked to")));
 
 		/* Now, fetch the attribute number from the system cache */
 		attnum = get_attnum(RelationGetRelid(tablerel), attrname);

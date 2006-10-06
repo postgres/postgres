@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.337 2006/10/04 00:30:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.338 2006/10/06 17:14:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2428,7 +2428,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if (pg_strncasecmp(url, LDAP_URL, strlen(LDAP_URL)) != 0)
 	{
 		printfPQExpBuffer(errorMessage,
-		libpq_gettext("bad LDAP URL \"%s\": scheme must be ldap://\n"), purl);
+		libpq_gettext("invalid LDAP URL \"%s\": scheme must be ldap://\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2443,7 +2443,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if (p == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-				 "bad LDAP URL \"%s\": missing distinguished name\n"), purl);
+				 "invalid LDAP URL \"%s\": missing distinguished name\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2454,7 +2454,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if ((p = strchr(dn, '?')) == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-			"bad LDAP URL \"%s\": must have exactly one attribute\n"), purl);
+			"invalid LDAP URL \"%s\": must have exactly one attribute\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2464,8 +2464,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	/* scope */
 	if ((p = strchr(attrs[0], '?')) == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
-		printfPQExpBuffer(errorMessage, libpq_gettext(
-													  "bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"), purl);
+		printfPQExpBuffer(errorMessage, libpq_gettext("invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2476,7 +2475,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if ((p = strchr(scopestr, '?')) == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
 		printfPQExpBuffer(errorMessage,
-					libpq_gettext("bad LDAP URL \"%s\": no filter\n"), purl);
+					libpq_gettext("invalid LDAP URL \"%s\": no filter\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2497,7 +2496,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		if (*portstr == '\0' || *endptr != '\0' || errno || lport < 0 || lport > 65535)
 		{
 			printfPQExpBuffer(errorMessage, libpq_gettext(
-						"bad LDAP URL \"%s\": invalid port number\n"), purl);
+						"invalid LDAP URL \"%s\": invalid port number\n"), purl);
 			free(url);
 			return 3;
 		}
@@ -2508,7 +2507,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if (strchr(attrs[0], ',') != NULL)
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext(
-			"bad LDAP URL \"%s\": must have exactly one attribute\n"), purl);
+			"invalid LDAP URL \"%s\": must have exactly one attribute\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2522,8 +2521,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		scope = LDAP_SCOPE_SUBTREE;
 	else
 	{
-		printfPQExpBuffer(errorMessage, libpq_gettext(
-													  "bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"), purl);
+		printfPQExpBuffer(errorMessage, libpq_gettext("invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"), purl);
 		free(url);
 		return 3;
 	}
@@ -2532,7 +2530,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	if ((ld = ldap_init(hostname, port)) == NULL)
 	{
 		printfPQExpBuffer(errorMessage,
-						  libpq_gettext("error creating LDAP structure\n"));
+						  libpq_gettext("could not create LDAP structure\n"));
 		free(url);
 		return 3;
 	}

@@ -200,7 +200,7 @@ CREATE RULE voo_i AS ON INSERT TO voo DO INSTEAD
 INSERT INTO voo VALUES(11,'zit');
 -- fails:
 INSERT INTO voo VALUES(12,'zoo') RETURNING *, f1*2;
-ERROR:  cannot INSERT RETURNING on relation "voo"
+ERROR:  cannot perform INSERT RETURNING on relation "voo"
 HINT:  You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause.
 -- fails, incompatible list:
 CREATE OR REPLACE RULE voo_i AS ON INSERT TO voo DO INSTEAD

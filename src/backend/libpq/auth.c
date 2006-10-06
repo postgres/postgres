@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.144 2006/10/04 00:29:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.145 2006/10/06 17:13:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -835,7 +835,8 @@ CheckLDAPAuth(Port *port)
 			if (_ldap_start_tls_sA == NULL)
 			{
 				ereport(LOG,
-						(errmsg("could not load function _ldap_start_tls_sA in wldap32.dll. LDAP over SSL is not supported on this platform.")));
+						(errmsg("could not load function _ldap_start_tls_sA in wldap32.dll"),
+						 errdetail("LDAP over SSL is not supported on this platform.")));
 				return STATUS_ERROR;
 			}
 

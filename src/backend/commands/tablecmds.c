@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.203 2006/10/04 00:29:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.204 2006/10/06 17:13:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6232,7 +6232,7 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 			if (attribute->attnotnull && !childatt->attnotnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-					  errmsg("column \"%s\" in child table must be NOT NULL",
+					  errmsg("column \"%s\" in child table must be marked NOT NULL",
 							 NameStr(attribute->attname))));
 
 			childatt->attinhcount++;
@@ -6254,7 +6254,7 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("child table missing column \"%s\"",
+					 errmsg("child table is missing column \"%s\"",
 							NameStr(attribute->attname))));
 		}
 
@@ -6356,7 +6356,7 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 				   decompile_conbin(child_contuple, tupleDesc)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("constraint definition for CHECK constraint \"%s\" doesn't match",
+					 errmsg("constraint definition for check constraint \"%s\" does not match",
 							NameStr(parent_con->conname))));
 
 		/*

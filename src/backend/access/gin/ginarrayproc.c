@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.6 2006/10/04 00:29:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.7 2006/10/06 17:13:58 petere Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -27,7 +27,7 @@
 	if ( ARR_HASNULL(x) )									\
 		ereport(ERROR,										\
 			(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),		\
-			 errmsg("array must not contain nulls")));		\
+			 errmsg("array must not contain null values")));		\
 } while(0)
 
 

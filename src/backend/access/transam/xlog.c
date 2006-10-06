@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.250 2006/10/04 00:29:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.251 2006/10/06 17:13:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6421,7 +6421,7 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to switch xlog files"))));
+				 (errmsg("must be superuser to switch transaction log files"))));
 
 	switchpoint = RequestXLogSwitch();
 
@@ -6529,7 +6529,7 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not parse xlog location \"%s\"",
+				 errmsg("could not parse transaction log location \"%s\"",
 						locationstr)));
 
 	locationpoint.xlogid = uxlogid;

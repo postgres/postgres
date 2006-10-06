@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.79 2006/10/04 00:29:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.80 2006/10/06 17:13:58 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -1402,7 +1402,7 @@ DropCast(DropCastStmt *stmt)
 							TypeNameToString(stmt->targettype))));
 		else
 			ereport(NOTICE,
-					(errmsg("cast from type %s to type %s does not exist ... skipping",
+					(errmsg("cast from type %s to type %s does not exist, skipping",
 							TypeNameToString(stmt->sourcetype),
 							TypeNameToString(stmt->targettype))));
 

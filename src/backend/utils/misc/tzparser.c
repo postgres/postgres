@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/tzparser.c,v 1.2 2006/10/04 00:30:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/tzparser.c,v 1.3 2006/10/06 17:14:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ addToArray(tzEntry **base, int *arraysize, int n,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				  errmsg("time zone abbreviation \"%s\" is multiply defined",
 						 entry->abbrev),
-					 errdetail("Time zone file \"%s\", line %d conflicts with file \"%s\", line %d.",
+					 errdetail("Entry in time zone file \"%s\", line %d, conflicts with entry in file \"%s\", line %d.",
 							   midptr->filename, midptr->lineno,
 							   entry->filename, entry->lineno)));
 			return -1;

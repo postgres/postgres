@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.98 2006/10/04 00:29:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.99 2006/10/06 17:13:58 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -163,7 +163,7 @@ defGetBoolean(DefElem *def)
 	}
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("%s requires a boolean value",
+			 errmsg("%s requires a Boolean value",
 					def->defname)));
 	return false;				/* keep compiler quiet */
 }

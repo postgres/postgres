@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.450 2006/10/04 00:30:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.451 2006/10/06 17:14:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,7 +617,7 @@ main(int argc, char **argv)
 
 	if (schemaList != NULL && g_fout->remoteVersion < 70300)
 	{
-		write_msg(NULL, "Postgres must be at least version 7.3 to use schema switches\n");
+		write_msg(NULL, "server version must be at least 7.3 to use schema switches\n");
 		exit_nicely();
 	}
 
@@ -893,11 +893,12 @@ help(const char *progname)
 	printf(_("  -a, --data-only             dump only the data, not the schema\n"));
 	printf(_("  -c, --clean                 clean (drop) schema prior to create\n"));
 	printf(_("  -C, --create                include commands to create database in dump\n"));
-	printf(_("  -d, --inserts               dump data as INSERT, rather than COPY, commands\n"));
+	printf(_("  -d, --inserts               dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  -D, --column-inserts        dump data as INSERT commands with column names\n"));
 	printf(_("  -E, --encoding=ENCODING     dump the data in encoding ENCODING\n"));
 	printf(_("  -n, --schema=SCHEMA         dump the named schema only\n"));
-	printf(_("  -N, --exclude-schema=SCHEMA do NOT dump the named schema\n"));
+	printf(_("  -N, --exclude-schema=SCHEMA\n"
+		 "                              do NOT dump the named schema\n"));
 	printf(_("  -o, --oids                  include OIDs in dump\n"));
 	printf(_("  -O, --no-owner              skip restoration of object ownership\n"
 			 "                              in plain text format\n"));

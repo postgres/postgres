@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.167 2006/10/04 00:29:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.168 2006/10/06 17:13:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1653,21 +1653,21 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				case CMD_INSERT:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot INSERT RETURNING on relation \"%s\"",
+						 errmsg("cannot perform INSERT RETURNING on relation \"%s\"",
 								RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON INSERT DO INSTEAD rule with a RETURNING clause.")));
 					break;
 				case CMD_UPDATE:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot UPDATE RETURNING on relation \"%s\"",
+						 errmsg("cannot perform UPDATE RETURNING on relation \"%s\"",
 								RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON UPDATE DO INSTEAD rule with a RETURNING clause.")));
 					break;
 				case CMD_DELETE:
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot DELETE RETURNING on relation \"%s\"",
+						 errmsg("cannot perform DELETE RETURNING on relation \"%s\"",
 								RelationGetRelationName(rt_entry_relation)),
 							 errhint("You need an unconditional ON DELETE DO INSTEAD rule with a RETURNING clause.")));
 					break;

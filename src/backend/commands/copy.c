@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.272 2006/10/04 00:29:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.273 2006/10/06 17:13:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,7 +872,7 @@ DoCopy(const CopyStmt *stmt)
 		strchr(cstate->null_print, '\n') != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("COPY null cannot use newline or carriage return")));
+				 errmsg("COPY null representation cannot use newline or carriage return")));
 
 	/* Disallow backslash in non-CSV mode */
 	if (!cstate->csv_mode && strchr(cstate->delim, '\\') != NULL)
@@ -1549,7 +1549,7 @@ copy_in_error_callback(void *arg)
 		else if (cstate->cur_attname)
 		{
 			/* error is relevant to a particular column, value is NULL */
-			errcontext("COPY %s, line %d, column %s: NULL input",
+			errcontext("COPY %s, line %d, column %s: null input",
 					   cstate->cur_relname, cstate->cur_lineno,
 					   cstate->cur_attname);
 		}

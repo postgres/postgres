@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.135 2006/09/05 21:08:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.136 2006/10/06 17:13:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,7 +371,7 @@ check_acl(const Acl *acl)
 	if (ARR_ELEMTYPE(acl) != ACLITEMOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("ACL array contains wrong datatype")));
+				 errmsg("ACL array contains wrong data type")));
 	if (ARR_NDIM(acl) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -379,7 +379,7 @@ check_acl(const Acl *acl)
 	if (ARR_HASNULL(acl))
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("ACL arrays must not contain nulls")));
+				 errmsg("ACL arrays must not contain null values")));
 }
 
 /*

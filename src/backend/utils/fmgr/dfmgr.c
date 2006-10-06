@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.91 2006/10/04 00:30:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.92 2006/10/06 17:13:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,7 +285,7 @@ internal_load_library(const char *libname)
 			ereport(ERROR,
 				  (errmsg("incompatible library \"%s\": missing magic block",
 						  libname),
-				   errhint("Extension libraries are now required to use the PG_MODULE_MAGIC macro.")));
+				   errhint("Extension libraries are required to use the PG_MODULE_MAGIC macro.")));
 		}
 
 		/*

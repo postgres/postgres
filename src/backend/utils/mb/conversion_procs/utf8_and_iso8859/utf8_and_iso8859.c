@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.22 2006/10/04 00:30:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.23 2006/10/06 17:13:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ iso8859_to_utf8(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
-	   errmsg("unexpected encoding id %d for ISO-8859 charsets", encoding)));
+	   errmsg("unexpected encoding ID %d for ISO 8859 character sets", encoding)));
 
 	PG_RETURN_VOID();
 }
