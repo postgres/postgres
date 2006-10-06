@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.107 2006/10/04 00:30:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.108 2006/10/06 18:23:35 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -576,7 +576,7 @@ InitCatalogCachePhase2(void)
 	Assert(CacheInitialized);
 
 	for (cacheId = 0; cacheId < SysCacheSize; cacheId++)
-		InitCatCachePhase2(SysCache[cacheId]);
+		InitCatCachePhase2(SysCache[cacheId], true);
 }
 
 
@@ -773,6 +773,9 @@ SearchSysCacheExistsAttName(Oid relid, const char *attname)
  * As with heap_getattr(), if the attribute is of a pass-by-reference type
  * then a pointer into the tuple data area is returned --- the caller must
  * not modify or pfree the datum!
+ *
+ * Note: it is legal to use SysCacheGetAttr() with a cacheId referencing
+ * a different cache for the same catalog the tuple was fetched from.
  */
 Datum
 SysCacheGetAttr(int cacheId, HeapTuple tup,
@@ -781,15 +784,18 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 {
 	/*
 	 * We just need to get the TupleDesc out of the cache entry, and then we
-	 * can apply heap_getattr().  We expect that the cache control data is
-	 * currently valid --- if the caller recently fetched the tuple, then it
-	 * should be.
+	 * can apply heap_getattr().  Normally the cache control data is already
+	 * valid (because the caller recently fetched the tuple via this same
+	 * cache), but there are cases where we have to initialize the cache here.
 	 */
-	if (cacheId < 0 || cacheId >= SysCacheSize)
+	if (cacheId < 0 || cacheId >= SysCacheSize ||
+		!PointerIsValid(SysCache[cacheId]))
 		elog(ERROR, "invalid cache id: %d", cacheId);
-	if (!PointerIsValid(SysCache[cacheId]) ||
-		!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
-		elog(ERROR, "missing cache data for cache id %d", cacheId);
+	if (!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
+	{
+		InitCatCachePhase2(SysCache[cacheId], false);
+		Assert(PointerIsValid(SysCache[cacheId]->cc_tupdesc));
+	}
 
 	return heap_getattr(tup, attributeNumber,
 						SysCache[cacheId]->cc_tupdesc,

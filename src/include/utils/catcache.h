@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.62 2006/10/04 00:30:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.63 2006/10/06 18:23:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ extern CatCache *InitCatCache(int id, Oid reloid, Oid indexoid,
 			 int reloidattr,
 			 int nkeys, const int *key,
 			 int nbuckets);
-extern void InitCatCachePhase2(CatCache *cache);
+extern void InitCatCachePhase2(CatCache *cache, bool touch_index);
 
 extern HeapTuple SearchCatCache(CatCache *cache,
 			   Datum v1, Datum v2,
