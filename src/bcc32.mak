@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/bcc32.mak,v 1.3 2005/05/13 18:12:35 momjian Exp $
+# $PostgreSQL: pgsql/src/bcc32.mak,v 1.4 2006/10/06 18:53:53 tgl Exp $
 
 # Makefile for Borland C++ 5.5 (or compat)
 # Top-file makefile for Win32 parts of postgresql.
@@ -27,6 +27,7 @@ NULL=nul
 ALL: 
    cd include
    if not exist pg_config.h copy pg_config.h.win32 pg_config.h
+   if not exist pg_config_os.h copy port\win32.h pg_config_os.h
    cd ..
    cd interfaces\libpq
    make -N -DCFG=$(CFG) /f bcc32.mak 
@@ -47,5 +48,5 @@ CLEAN:
 
 DISTCLEAN: CLEAN
    cd include
-   del config.h
+   del pg_config.h pg_config_os.h
    cd ..
