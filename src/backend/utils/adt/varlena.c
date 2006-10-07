@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.151 2006/10/04 00:30:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.152 2006/10/07 00:11:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,17 @@
 
 typedef struct varlena unknown;
 
+typedef struct
+{
+	bool		use_wchar;		/* T if multibyte encoding */
+	char	   *str1;			/* use these if not use_wchar */
+	char	   *str2;			/* note: these point to original texts */
+	pg_wchar   *wstr1;			/* use these if use_wchar */
+	pg_wchar   *wstr2;			/* note: these are palloc'd */
+	int			len1;			/* string lengths in logical characters */
+	int			len2;
+} TextPositionState;
+
 #define DatumGetUnknownP(X)			((unknown *) PG_DETOAST_DATUM(X))
 #define DatumGetUnknownPCopy(X)		((unknown *) PG_DETOAST_DATUM_COPY(X))
 #define PG_GETARG_UNKNOWN_P(n)		DatumGetUnknownP(PG_GETARG_DATUM(n))
@@ -44,16 +55,13 @@ typedef struct varlena unknown;
 	DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(str_)))
 #define TEXTLEN(textp) \
 	text_length(PointerGetDatum(textp))
-#define TEXTPOS(buf_text, from_sub_text) \
-	text_position(buf_text, from_sub_text, 1)
-#define LEFT(buf_text, from_sub_text) \
-	text_substring(PointerGetDatum(buf_text), \
-					1, \
-					TEXTPOS(buf_text, from_sub_text) - 1, false)
 
 static int	text_cmp(text *arg1, text *arg2);
 static int32 text_length(Datum str);
-static int32 text_position(text *t1, text *t2, int matchnum);
+static int	text_position(text *t1, text *t2);
+static void text_position_setup(text *t1, text *t2, TextPositionState *state);
+static int	text_position_next(int start_pos, TextPositionState *state);
+static void text_position_cleanup(TextPositionState *state);
 static text *text_substring(Datum str,
 			   int32 start,
 			   int32 length,
@@ -709,7 +717,7 @@ textpos(PG_FUNCTION_ARGS)
 	text	   *str = PG_GETARG_TEXT_P(0);
 	text	   *search_str = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_INT32(text_position(str, search_str, 1));
+	PG_RETURN_INT32((int32) text_position(str, search_str));
 }
 
 /*
@@ -719,7 +727,6 @@ textpos(PG_FUNCTION_ARGS)
  * Inputs:
  *		t1 - string to be searched
  *		t2 - pattern to match within t1
- *		matchnum - number of the match to be found (1 is the first match)
  * Result:
  *		Character index of the first matched char, starting from 1,
  *		or 0 if no match.
@@ -727,46 +734,92 @@ textpos(PG_FUNCTION_ARGS)
  *	This is broken out so it can be called directly by other string processing
  *	functions.
  */
-static int32
-text_position(text *t1, text *t2, int matchnum)
+static int
+text_position(text *t1, text *t2)
 {
-	int			match = 0,
-				pos = 0,
-				p,
-				px,
-				len1,
-				len2;
+	TextPositionState state;
+	int			result;
 
-	if (matchnum <= 0)
-		return 0;				/* result for 0th match */
+	text_position_setup(t1, t2, &state);
+	result = text_position_next(1, &state);
+	text_position_cleanup(&state);
+	return result;
+}
 
-	if (VARSIZE(t2) <= VARHDRSZ)
-		return 1;				/* result for empty pattern */
+/*
+ * text_position_setup, text_position_next, text_position_cleanup -
+ *	Component steps of text_position()
+ *
+ * These are broken out so that a string can be efficiently searched for
+ * multiple occurrences of the same pattern.  text_position_next may be
+ * called multiple times with increasing values of start_pos, which is
+ * the 1-based character position to start the search from.  The "state"
+ * variable is normally just a local variable in the caller.
+ */
 
-	len1 = VARSIZE(t1) - VARHDRSZ;
-	len2 = VARSIZE(t2) - VARHDRSZ;
+static void
+text_position_setup(text *t1, text *t2, TextPositionState *state)
+{
+	int			len1 = VARSIZE(t1) - VARHDRSZ;
+	int			len2 = VARSIZE(t2) - VARHDRSZ;
 
 	if (pg_database_encoding_max_length() == 1)
 	{
 		/* simple case - single byte encoding */
-		char	   *p1,
+		state->use_wchar = false;
+		state->str1 = VARDATA(t1);
+		state->str2 = VARDATA(t2);
+		state->len1 = len1;
+		state->len2 = len2;
+	}
+	else
+	{
+		/* not as simple - multibyte encoding */
+		pg_wchar   *p1,
 				   *p2;
 
-		p1 = VARDATA(t1);
-		p2 = VARDATA(t2);
+		p1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
+		len1 = pg_mb2wchar_with_len(VARDATA(t1), p1, len1);
+		p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
+		len2 = pg_mb2wchar_with_len(VARDATA(t2), p2, len2);
+
+		state->use_wchar = true;
+		state->wstr1 = p1;
+		state->wstr2 = p2;
+		state->len1 = len1;
+		state->len2 = len2;
+	}
+}
+
+static int
+text_position_next(int start_pos, TextPositionState *state)
+{
+	int			pos = 0,
+				p,
+				px;
+
+	Assert(start_pos > 0);		/* else caller error */
+
+	if (state->len2 <= 0)
+		return start_pos;		/* result for empty pattern */
+
+	if (!state->use_wchar)
+	{
+		/* simple case - single byte encoding */
+		char	   *p1 = state->str1;
+		char	   *p2 = state->str2;
 
 		/* no use in searching str past point where search_str will fit */
-		px = (len1 - len2);
+		px = (state->len1 - state->len2);
 
-		for (p = 0; p <= px; p++)
+		p1 += start_pos - 1;
+
+		for (p = start_pos - 1; p <= px; p++)
 		{
-			if ((*p1 == *p2) && (strncmp(p1, p2, len2) == 0))
+			if ((*p1 == *p2) && (strncmp(p1, p2, state->len2) == 0))
 			{
-				if (++match == matchnum)
-				{
-					pos = p + 1;
-					break;
-				}
+				pos = p + 1;
+				break;
 			}
 			p1++;
 		}
@@ -774,39 +827,36 @@ text_position(text *t1, text *t2, int matchnum)
 	else
 	{
 		/* not as simple - multibyte encoding */
-		pg_wchar   *p1,
-				   *p2,
-				   *ps1,
-				   *ps2;
-
-		ps1 = p1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
-		(void) pg_mb2wchar_with_len(VARDATA(t1), p1, len1);
-		len1 = pg_wchar_strlen(p1);
-		ps2 = p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
-		(void) pg_mb2wchar_with_len(VARDATA(t2), p2, len2);
-		len2 = pg_wchar_strlen(p2);
+		pg_wchar   *p1 = state->wstr1;
+		pg_wchar   *p2 = state->wstr2;
 
 		/* no use in searching str past point where search_str will fit */
-		px = (len1 - len2);
+		px = (state->len1 - state->len2);
 
-		for (p = 0; p <= px; p++)
+		p1 += start_pos - 1;
+
+		for (p = start_pos - 1; p <= px; p++)
 		{
-			if ((*p1 == *p2) && (pg_wchar_strncmp(p1, p2, len2) == 0))
+			if ((*p1 == *p2) && (pg_wchar_strncmp(p1, p2, state->len2) == 0))
 			{
-				if (++match == matchnum)
-				{
-					pos = p + 1;
-					break;
-				}
+				pos = p + 1;
+				break;
 			}
 			p1++;
 		}
-
-		pfree(ps1);
-		pfree(ps2);
 	}
 
 	return pos;
+}
+
+static void
+text_position_cleanup(TextPositionState *state)
+{
+	if (state->use_wchar)
+	{
+		pfree(state->wstr1);
+		pfree(state->wstr2);
+	}
 }
 
 /* varstr_cmp()
@@ -1325,6 +1375,7 @@ byteacat(PG_FUNCTION_ARGS)
 
 #define PG_STR_GET_BYTEA(str_) \
 	DatumGetByteaP(DirectFunctionCall1(byteain, CStringGetDatum(str_)))
+
 /*
  * bytea_substr()
  * Return a substring starting at the specified position.
@@ -2024,45 +2075,55 @@ replace_text(PG_FUNCTION_ARGS)
 	text	   *to_sub_text = PG_GETARG_TEXT_P(2);
 	int			src_text_len = TEXTLEN(src_text);
 	int			from_sub_text_len = TEXTLEN(from_sub_text);
-	text	   *left_text;
-	text	   *right_text;
-	text	   *buf_text;
+	TextPositionState state;
+	text	   *chunk_text;
 	text	   *ret_text;
+	int			start_posn;
 	int			curr_posn;
 	StringInfoData str;
 
 	if (src_text_len == 0 || from_sub_text_len == 0)
 		PG_RETURN_TEXT_P(src_text);
 
-	curr_posn = TEXTPOS(src_text, from_sub_text);
+	text_position_setup(src_text, from_sub_text, &state);
+
+	start_posn = 1;
+	curr_posn = text_position_next(1, &state);
 
 	/* When the from_sub_text is not found, there is nothing to do. */
 	if (curr_posn == 0)
-		PG_RETURN_TEXT_P(src_text);
-
-	initStringInfo(&str);
-	buf_text = src_text;
-
-	while (curr_posn > 0)
 	{
-		left_text = text_substring(PointerGetDatum(buf_text),
-								   1, curr_posn - 1, false);
-		right_text = text_substring(PointerGetDatum(buf_text),
-									curr_posn + from_sub_text_len, -1, true);
-
-		appendStringInfoText(&str, left_text);
-		appendStringInfoText(&str, to_sub_text);
-
-		if (buf_text != src_text)
-			pfree(buf_text);
-		pfree(left_text);
-		buf_text = right_text;
-		curr_posn = TEXTPOS(buf_text, from_sub_text);
+		text_position_cleanup(&state);
+		PG_RETURN_TEXT_P(src_text);
 	}
 
-	appendStringInfoText(&str, buf_text);
-	if (buf_text != src_text)
-		pfree(buf_text);
+	initStringInfo(&str);
+
+	do
+	{
+		chunk_text = text_substring(PointerGetDatum(src_text),
+									start_posn,
+									curr_posn - start_posn,
+									false);
+		appendStringInfoText(&str, chunk_text);
+		pfree(chunk_text);
+
+		appendStringInfoText(&str, to_sub_text);
+
+		start_posn = curr_posn + from_sub_text_len;
+		curr_posn = text_position_next(start_posn, &state);
+	}
+	while (curr_posn > 0);
+
+	/* copy trailing chunk */
+	chunk_text = text_substring(PointerGetDatum(src_text),
+								start_posn,
+								-1,
+								true);
+	appendStringInfoText(&str, chunk_text);
+	pfree(chunk_text);
+
+	text_position_cleanup(&state);
 
 	ret_text = PG_STR_GET_TEXT(str.data);
 	pfree(str.data);
@@ -2335,6 +2396,7 @@ split_text(PG_FUNCTION_ARGS)
 	int			fldnum = PG_GETARG_INT32(2);
 	int			inputstring_len = TEXTLEN(inputstring);
 	int			fldsep_len = TEXTLEN(fldsep);
+	TextPositionState state;
 	int			start_posn;
 	int			end_posn;
 	text	   *result_text;
@@ -2359,40 +2421,54 @@ split_text(PG_FUNCTION_ARGS)
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
 
-	start_posn = text_position(inputstring, fldsep, fldnum - 1);
-	end_posn = text_position(inputstring, fldsep, fldnum);
+	text_position_setup(inputstring, fldsep, &state);
 
-	if ((start_posn == 0) && (end_posn == 0))	/* fldsep not found */
+	/* identify bounds of first field */
+	start_posn = 1;
+	end_posn = text_position_next(1, &state);
+
+	/* special case if fldsep not found at all */
+	if (end_posn == 0)
 	{
-		/* if first field, return input string, else empty string */
+		text_position_cleanup(&state);
+		/* if field 1 requested, return input string, else empty string */
 		if (fldnum == 1)
 			PG_RETURN_TEXT_P(inputstring);
 		else
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
-	else if (start_posn == 0)
+
+	while (end_posn > 0 && --fldnum > 0)
 	{
-		/* first field requested */
-		result_text = LEFT(inputstring, fldsep);
-		PG_RETURN_TEXT_P(result_text);
+		/* identify bounds of next field */
+		start_posn = end_posn + fldsep_len;
+		end_posn = text_position_next(start_posn, &state);
 	}
-	else if (end_posn == 0)
+
+	text_position_cleanup(&state);
+
+	if (fldnum > 0)
 	{
-		/* last field requested */
-		result_text = text_substring(PointerGetDatum(inputstring),
-									 start_posn + fldsep_len,
-									 -1, true);
-		PG_RETURN_TEXT_P(result_text);
+		/* N'th field separator not found */
+		/* if last field requested, return it, else empty string */
+		if (fldnum == 1)
+			result_text = text_substring(PointerGetDatum(inputstring),
+										 start_posn,
+										 -1,
+										 true);
+		else
+			result_text = PG_STR_GET_TEXT("");
 	}
 	else
 	{
-		/* interior field requested */
+		/* non-last field requested */
 		result_text = text_substring(PointerGetDatum(inputstring),
-									 start_posn + fldsep_len,
-									 end_posn - start_posn - fldsep_len,
+									 start_posn,
+									 end_posn - start_posn,
 									 false);
-		PG_RETURN_TEXT_P(result_text);
 	}
+
+	PG_RETURN_TEXT_P(result_text);
 }
 
 /*
@@ -2408,6 +2484,7 @@ text_to_array(PG_FUNCTION_ARGS)
 	text	   *fldsep = PG_GETARG_TEXT_P(1);
 	int			inputstring_len = TEXTLEN(inputstring);
 	int			fldsep_len = TEXTLEN(fldsep);
+	TextPositionState state;
 	int			fldnum;
 	int			start_posn;
 	int			end_posn;
@@ -2424,66 +2501,48 @@ text_to_array(PG_FUNCTION_ARGS)
 	 */
 	if (fldsep_len < 1)
 		PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
-										   CStringGetDatum(inputstring), 1));
+										   PointerGetDatum(inputstring), 1));
 
-	/* start with end position holding the initial start position */
-	end_posn = 0;
+	text_position_setup(inputstring, fldsep, &state);
+
+	start_posn = 1;
 	for (fldnum = 1;; fldnum++) /* field number is 1 based */
 	{
-		Datum		dvalue;
-		bool		disnull = false;
+		end_posn = text_position_next(start_posn, &state);
 
-		start_posn = end_posn;
-		end_posn = text_position(inputstring, fldsep, fldnum);
-
-		if ((start_posn == 0) && (end_posn == 0))		/* fldsep not found */
+		if (end_posn == 0)
 		{
-			if (fldnum == 1)
-			{
-				/*
-				 * first element return one element, 1D, array using the input
-				 * string
-				 */
-				PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
-										   CStringGetDatum(inputstring), 1));
-			}
-			else
-			{
-				/* otherwise create array and exit */
-				PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
-													  CurrentMemoryContext));
-			}
-		}
-		else if (start_posn == 0)
-		{
-			/* first field requested */
-			result_text = LEFT(inputstring, fldsep);
-		}
-		else if (end_posn == 0)
-		{
-			/* last field requested */
+			/* fetch last field */
 			result_text = text_substring(PointerGetDatum(inputstring),
-										 start_posn + fldsep_len,
-										 -1, true);
+										 start_posn,
+										 -1,
+										 true);
 		}
 		else
 		{
-			/* interior field requested */
+			/* fetch non-last field */
 			result_text = text_substring(PointerGetDatum(inputstring),
-										 start_posn + fldsep_len,
-										 end_posn - start_posn - fldsep_len,
+										 start_posn,
+										 end_posn - start_posn,
 										 false);
 		}
 
-		/* stash away current value */
-		dvalue = PointerGetDatum(result_text);
-		astate = accumArrayResult(astate, dvalue,
-								  disnull, TEXTOID,
+		/* stash away this field */
+		astate = accumArrayResult(astate,
+								  PointerGetDatum(result_text),
+								  false,
+								  TEXTOID,
 								  CurrentMemoryContext);
+
+		if (end_posn == 0)
+			break;
+		start_posn = end_posn + fldsep_len;
 	}
 
-	/* never reached -- keep compiler quiet */
-	PG_RETURN_NULL();
+	text_position_cleanup(&state);
+
+	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
+										  CurrentMemoryContext));
 }
 
 /*
