@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.61 2006/09/16 00:30:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.62 2006/10/07 20:59:04 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -361,7 +361,6 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X disable-triggers</></term>
       <term><option>--disable-triggers</></term>
       <listitem>
        <para>
@@ -384,7 +383,6 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X use-set-session-authorization</option></term>
       <term><option>--use-set-session-authorization</option></term>
       <listitem>
        <para>
@@ -398,7 +396,7 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X no-data-for-failed-tables</></term>
+      <term><option>--no-data-for-failed-tables</></term>
       <listitem>
        <para>
        By default, table data objects are restored even if the

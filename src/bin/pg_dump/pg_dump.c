@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.451 2006/10/06 17:14:00 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.452 2006/10/07 20:59:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,8 +256,7 @@ main(int argc, char **argv)
 		{"version", no_argument, NULL, 'V'},
 
 		/*
-		 * the following options don't have an equivalent short option letter,
-		 * but are available as '-X long-name'
+		 * the following options don't have an equivalent short option letter
 		 */
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
@@ -432,14 +431,8 @@ main(int argc, char **argv)
 				aclsSkip = true;
 				break;
 
-				/*
-				 * Option letters were getting scarce, so I invented this new
-				 * scheme: '-X feature' turns on some feature. Compare to the
-				 * -f option in GCC.  You should also add an equivalent
-				 * GNU-style option --feature.	Features that require
-				 * arguments should use '-X feature=foo'.
-				 */
 			case 'X':
+				/* -X is a deprecated alternative to long options */
 				if (strcmp(optarg, "disable-dollar-quoting") == 0)
 					disable_dollar_quoting = 1;
 				else if (strcmp(optarg, "disable-triggers") == 0)
@@ -459,9 +452,9 @@ main(int argc, char **argv)
 			case 'Z':			/* Compression Level */
 				compressLevel = atoi(optarg);
 				break;
-				/* This covers the long options equivalent to -X xxx. */
 
 			case 0:
+				/* This covers the long options equivalent to -X xxx. */
 				break;
 
 			default:
@@ -908,11 +901,9 @@ help(const char *progname)
 	printf(_("  -t, --table=TABLE           dump the named table only\n"));
 	printf(_("  -T, --exclude-table=TABLE   do NOT dump the named table\n"));
 	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
-	printf(_("  -X disable-dollar-quoting, --disable-dollar-quoting\n"
-			 "                              disable dollar quoting, use SQL standard quoting\n"));
-	printf(_("  -X disable-triggers, --disable-triggers\n"
-			 "                              disable triggers during data-only restore\n"));
-	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
+	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
+	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
+	printf(_("  --use-set-session-authorization\n"
 			 "                              use SESSION AUTHORIZATION commands instead of\n"
 			 "                              OWNER TO commands\n"));
 

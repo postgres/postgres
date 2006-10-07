@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.88 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.89 2006/10/07 20:59:04 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -524,7 +524,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X disable-dollar-quoting</></term>
       <term><option>--disable-dollar-quoting</></term>
       <listitem>
        <para>
@@ -535,7 +534,6 @@ PostgreSQL documentation
     </varlistentry>
 
      <varlistentry>
-      <term><option>-X disable-triggers</></term>
       <term><option>--disable-triggers</></term>
       <listitem>
        <para>
@@ -563,7 +561,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-X use-set-session-authorization</></term>
       <term><option>--use-set-session-authorization</></term>
       <listitem>
        <para>

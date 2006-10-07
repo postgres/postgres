@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.58 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.59 2006/10/07 20:59:03 petere Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -926,7 +926,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
      <footnote>
       <para>
        You can get the effect of disabling foreign keys by using
-       the <option>-X disable-triggers</> option &mdash; but realize that
+       the <option>--disable-triggers</> option &mdash; but realize that
        that eliminates, rather than just postponing, foreign key
        validation, and so it is possible to insert bad data if you use it.
       </para>

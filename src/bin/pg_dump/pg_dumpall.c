@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.83 2006/10/04 00:30:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.84 2006/10/07 20:59:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,6 @@ static bool skip_acls = false;
 static bool verbose = false;
 static bool ignoreVersion = false;
 
-/* flags for -X long options */
 static int	disable_dollar_quoting = 0;
 static int	disable_triggers = 0;
 static int	use_setsessauth = 0;
@@ -107,8 +106,7 @@ main(int argc, char *argv[])
 		{"no-acl", no_argument, NULL, 'x'},
 
 		/*
-		 * the following options don't have an equivalent short option letter,
-		 * but are available as '-X long-name'
+		 * the following options don't have an equivalent short option letter
 		 */
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
@@ -255,10 +253,11 @@ main(int argc, char *argv[])
 				break;
 
 			case 'X':
+				/* -X is a deprecated alternative to long options */
 				if (strcmp(optarg, "disable-dollar-quoting") == 0)
-					appendPQExpBuffer(pgdumpopts, " -X disable-dollar-quoting");
+					appendPQExpBuffer(pgdumpopts, " --disable-dollar-quoting");
 				else if (strcmp(optarg, "disable-triggers") == 0)
-					appendPQExpBuffer(pgdumpopts, " -X disable-triggers");
+					appendPQExpBuffer(pgdumpopts, " --disable-triggers");
 				else if (strcmp(optarg, "use-set-session-authorization") == 0)
 					 /* no-op, still allowed for compatibility */ ;
 				else
@@ -282,11 +281,11 @@ main(int argc, char *argv[])
 
 	/* Add long options to the pg_dump argument list */
 	if (disable_dollar_quoting)
-		appendPQExpBuffer(pgdumpopts, " -X disable-dollar-quoting");
+		appendPQExpBuffer(pgdumpopts, " --disable-dollar-quoting");
 	if (disable_triggers)
-		appendPQExpBuffer(pgdumpopts, " -X disable-triggers");
+		appendPQExpBuffer(pgdumpopts, " --disable-triggers");
 	if (use_setsessauth)
-		appendPQExpBuffer(pgdumpopts, " -X use-set-session-authorization");
+		appendPQExpBuffer(pgdumpopts, " --use-set-session-authorization");
 
 	if (optind < argc)
 	{
@@ -388,11 +387,10 @@ help(void)
 	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"));
 	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
-	printf(_("  -X disable-dollar-quoting, --disable-dollar-quoting\n"
+	printf(_("  --disable-dollar-quoting\n"
 			 "                           disable dollar quoting, use SQL standard quoting\n"));
-	printf(_("  -X disable-triggers, --disable-triggers\n"
-			 "                           disable triggers during data-only restore\n"));
-	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
+	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
+	printf(_("  --use-set-session-authorization\n"
 			 "                           use SESSION AUTHORIZATION commands instead of\n"
 			 "                           OWNER TO commands\n"));
 

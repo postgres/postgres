@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.464 2006/10/07 03:32:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.465 2006/10/07 20:59:03 petere Exp $ -->
 <!--
 
 Typical markup:
@@ -1815,7 +1815,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Add <link linkend="APP-PGRESTORE"><application>pg_restore</></link>
-        <literal>-X no-data-for-failed-tables</> option to suppress
+        <literal>--no-data-for-failed-tables</> option to suppress
         loading data if table creation failed (the table already
         exists) (Martin Pitt)
        </para>

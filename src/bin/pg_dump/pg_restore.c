@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.82 2006/10/06 17:14:00 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.83 2006/10/07 20:59:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,7 @@ main(int argc, char **argv)
 	extern char *optarg;
 	static int	use_setsessauth = 0;
 	static int	disable_triggers = 0;
+	static int	no_data_for_failed_tables = 0;
 
 	struct option cmdopts[] = {
 		{"clean", 0, NULL, 'c'},
@@ -107,11 +108,11 @@ main(int argc, char **argv)
 		{"single-transaction", 0, NULL, '1'},
 
 		/*
-		 * the following options don't have an equivalent short option letter,
-		 * but are available as '-X long-name'
+		 * the following options don't have an equivalent short option letter
 		 */
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"no-data-for-failed-tables", no_argument, &no_data_for_failed_tables, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -244,12 +245,11 @@ main(int argc, char **argv)
 				break;
 
 			case 'X':
+				/* -X is a deprecated alternative to long options */
 				if (strcmp(optarg, "use-set-session-authorization") == 0)
 					use_setsessauth = 1;
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
-				else if (strcmp(optarg, "no-data-for-failed-tables") == 0)
-					opts->noDataForFailedTables = 1;
 				else
 				{
 					fprintf(stderr,
@@ -260,8 +260,8 @@ main(int argc, char **argv)
 				}
 				break;
 
-				/* This covers the long options equivalent to -X xxx. */
 			case 0:
+				/* This covers the long options equivalent to -X xxx. */
 				break;
 
 			case '1':			/* Restore data in a single transaction */
@@ -296,6 +296,7 @@ main(int argc, char **argv)
 
 	opts->disable_triggers = disable_triggers;
 	opts->use_setsessauth = use_setsessauth;
+	opts->noDataForFailedTables = no_data_for_failed_tables;
 
 	if (opts->formatName)
 	{
@@ -390,12 +391,11 @@ usage(const char *progname)
 	printf(_("  -t, --table=NAME         restore named table\n"));
 	printf(_("  -T, --trigger=NAME       restore named trigger\n"));
 	printf(_("  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
-	printf(_("  -X disable-triggers, --disable-triggers\n"
-			 "                           disable triggers during data-only restore\n"));
-	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
+	printf(_("  --disable-triggers       disable triggers during data-only restore\n"));
+	printf(_("  --use-set-session-authorization\n"
 			 "                           use SESSION AUTHORIZATION commands instead of\n"
 			 "                           OWNER TO commands\n"));
-	printf(_("  -X no-data-for-failed-tables\n"
+	printf(_("  --no-data-for-failed-tables\n"
 			 "                           do not restore data of tables that could not be\n"
 			 "                           created\n"));
 	printf(_("  -1, --single-transaction\n"
