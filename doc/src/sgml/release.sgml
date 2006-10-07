@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.465 2006/10/07 20:59:03 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.466 2006/10/07 22:06:25 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -479,8 +479,8 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Add <literal>FILLFACTOR</> to <link
-        linkend="SQL-CREATETABLE">table</> and <link
-        linkend="SQL-CREATEINDEX">index</> creation (ITAGAKI
+        linkend="SQL-CREATETABLE">table</link> and <link
+        linkend="SQL-CREATEINDEX">index</link> creation (ITAGAKI
         Takahiro)
        </para>
 
@@ -520,7 +520,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Allow the planner to reorder <link linkend="queries-join">outer
-        joins</> in some circumstances (Tom)
+        joins</link> in some circumstances (Tom)
        </para>
 
        <para>
@@ -547,7 +547,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Improve planning of joins to <link linkend="ddl-inherit">inherited
-        tables</> and <link linkend="queries-union"><literal>UNION
+        tables</link> and <link linkend="queries-union"><literal>UNION
         ALL</></link> views (Tom)
        </para>
       </listitem>
@@ -555,8 +555,8 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Allow <link linkend="guc-constraint-exclusion">constraint
-        exclusion</> to be applied to <link
-        linkend="ddl-inherit">inherited</> <command>UPDATE</> and
+        exclusion</link> to be applied to <link
+        linkend="ddl-inherit">inherited</link> <command>UPDATE</> and
         <command>DELETE</> queries (Tom)
        </para>
 
@@ -794,7 +794,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Add support for <link linkend="config-setting">include
-        directives</> in <filename>postgresql.conf</> (Joachim
+        directives</link> in <filename>postgresql.conf</> (Joachim
         Wieland)
        </para>
       </listitem>
@@ -1093,7 +1093,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Add new aggregate creation <link
-        linkend="SQL-CREATEAGGREGATE">syntax</> (Tom)
+        linkend="SQL-CREATEAGGREGATE">syntax</link> (Tom)
        </para>
 
        <para>
@@ -1107,7 +1107,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        <link linkend="SQL-CREATEAGGREGATE">Aggregate functions</>
+        <link linkend="SQL-CREATEAGGREGATE">Aggregate functions</link>
         now support multiple input parameters (Sergey Koposov, Tom)
        </para>
       </listitem>
@@ -1196,7 +1196,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow <link linkend="SQL-COMMENT">comments</> on global
+        Allow <link linkend="SQL-COMMENT">comments</link> on global
         objects to be stored globally (Kris Jurka)
        </para>
 
@@ -1232,7 +1232,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Provide <link linkend="functions-advisory-locks">advisory
-        locking</> functionality (Abhijit Menon-Sen, Tom)
+        locking</link> functionality (Abhijit Menon-Sen, Tom)
        </para>
 
        <para>
@@ -1415,7 +1415,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        New <link linkend="functions-geometry-op-table">operators</>
+        New <link linkend="functions-geometry-op-table">operators</link>
         for array-subset comparisons (<literal>@&gt;</>,
         <literal>&lt;@</>, <literal>&amp;&amp;</>) (Teodor, Tom)
        </para>
@@ -1428,7 +1428,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Add convenient arithmetic <link
-        linkend="cidr-inet-operators-table">operations</> on
+        linkend="cidr-inet-operators-table">operations</link> on
         <type>INET</>/<type>CIDR</> values (Stephen R. van den
         Berg)
        </para>
@@ -1444,7 +1444,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
         Add new aggregate <link
-        linkend="functions-aggregate-statistics-table">functions</>
+        linkend="functions-aggregate-statistics-table">functions</link>
         from SQL2003 (Neil)
        </para>
 
@@ -1479,7 +1479,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow <link linkend="SQL-CREATEDOMAIN">domains</> to be
+        Allow <link linkend="SQL-CREATEDOMAIN">domains</link> to be
         created using other domains (Tom)
        </para>
       </listitem>
@@ -1881,7 +1881,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Allow <acronym>LDAP</> <link linkend="libpq-ldap">lookups</>
+        Allow <acronym>LDAP</> <link linkend="libpq-ldap">lookups</link>
         from <link
         linkend="libpq-pgservice"><filename>pg_service.conf</></link>
         (Laurenz Albe)
@@ -2133,7 +2133,7 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-        Re-implement the <link linkend="regress">regression test</> script as a C program
+        Re-implement the <link linkend="regress">regression test</link> script as a C program
         (Magnus, Tom)
        </para>
       </listitem>
@@ -2152,11 +2152,13 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-        New <link linkend="xfunc-c-dynload">functions</> <function>_PG_init()</> and <function>_PG_fini()</>
-        are called if the library defines such symbols.  Hence we
-        no longer need to specify an initialization function in
-        <varname>shared_preload_libraries</>; we can assume that the
-        library used the <function>_PG_init()</> convention instead.
+	New <link linkend="xfunc-c-dynload">functions</link>
+	<function>_PG_init()</> and <function>_PG_fini()</> are
+	called if the library defines such symbols.  Hence we no
+	longer need to specify an initialization function in
+	<varname>shared_preload_libraries</>; we can assume that
+	the library used the <function>_PG_init()</> convention
+	instead.
        </para>
       </listitem>
 
