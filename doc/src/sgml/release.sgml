@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.462 2006/10/07 02:18:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.463 2006/10/07 03:17:13 neilc Exp $ -->
 <!--
 
 Typical markup:
@@ -96,7 +96,7 @@ For new features, add links to the documentation sections.
       <listitem>
        <para>
 	Query language enhancements including <literal>RETURNING</literal>
-	values, multi-<literal>VALUES</literal>, support, and
+	values, multi-<literal>VALUES</literal> support, and
 	self-joins for <command>DELETE</command>
        </para>
       </listitem>
