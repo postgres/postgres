@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.129.2.2 2006/03/02 19:40:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.129.2.3 2006/10/07 22:21:44 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1803,34 +1803,37 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 
 	while (*cp)
 	{
-		if (*cp == '"')
+		char	ch = *cp;
+
+		if (ch == '"')
 		{
 			if (inquotes && cp[1] == '"')
 			{
-				/* emit one quote */
+				/* emit one quote, stay in inquotes mode */
 				appendPQExpBufferChar(&namebuf, '"');
 				cp++;
 			}
-			inquotes = !inquotes;
+			else
+				inquotes = !inquotes;
 			cp++;
 		}
-		else if (!inquotes && isupper((unsigned char) *cp))
+		else if (!inquotes && isupper((unsigned char) ch))
 		{
 			appendPQExpBufferChar(&namebuf,
-								  pg_tolower((unsigned char) *cp));
+								  pg_tolower((unsigned char) ch));
 			cp++;
 		}
-		else if (!inquotes && *cp == '*')
+		else if (!inquotes && ch == '*')
 		{
 			appendPQExpBuffer(&namebuf, ".*");
 			cp++;
 		}
-		else if (!inquotes && *cp == '?')
+		else if (!inquotes && ch == '?')
 		{
 			appendPQExpBufferChar(&namebuf, '.');
 			cp++;
 		}
-		else if (!inquotes && *cp == '.')
+		else if (!inquotes && ch == '.')
 		{
 			/* Found schema/name separator, move current pattern to schema */
 			resetPQExpBuffer(&schemabuf);
