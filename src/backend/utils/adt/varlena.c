@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.106.2.6 2006/05/21 20:06:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.106.2.7 2006/10/07 00:12:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -779,6 +779,8 @@ text_position(Datum str, Datum search_str, int matchnum)
 					pos = p + 1;
 					break;
 				}
+				p1 += len2 - 1;
+				p += len2 - 1;
 			}
 			p1++;
 		}
@@ -809,6 +811,8 @@ text_position(Datum str, Datum search_str, int matchnum)
 					pos = p + 1;
 					break;
 				}
+				p1 += len2 - 1;
+				p += len2 - 1;
 			}
 			p1++;
 		}
