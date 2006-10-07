@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.463 2006/10/07 03:17:13 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.464 2006/10/07 03:32:28 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -95,9 +95,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Query language enhancements including <literal>RETURNING</literal>
-	values, multi-<literal>VALUES</literal> support, and
-	self-joins for <command>DELETE</command>
+        Query language enhancements including <literal>RETURNING</literal>
+        values, multi-<literal>VALUES</literal> support, and
+        self-joins for <command>DELETE</command>
        </para>
       </listitem>
 
@@ -163,15 +163,15 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Set <link
-	linkend="guc-escape-string-warning"><varname>escape_string_warning</></link>
-	to <literal>on</> by default (Bruce)
+        Set <link
+        linkend="guc-escape-string-warning"><varname>escape_string_warning</></link>
+        to <literal>on</> by default (Bruce)
        </para>
 
        <para>
-	This issues a warning if backslash escapes are used in
-	<link linkend="sql-syntax-strings">non-escape (non-<literal>E''</>)
-	strings</link>.
+        This issues a warning if backslash escapes are used in
+        <link linkend="sql-syntax-strings">non-escape (non-<literal>E''</>)
+        strings</link>.
        </para>
       </listitem>
 
@@ -189,26 +189,26 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Change the <link linkend="sql-syntax-row-constructors">row
-	constructor syntax</link> (<literal>ROW(...)</>) so that
-	list elements <literal>foo.*</> will be expanded to a list
-	of their member fields, rather than creating a nested
-	rowtype field as formerly (Tom)
+        Change the <link linkend="sql-syntax-row-constructors">row
+        constructor syntax</link> (<literal>ROW(...)</>) so that
+        list elements <literal>foo.*</> will be expanded to a list
+        of their member fields, rather than creating a nested
+        rowtype field as formerly (Tom)
        </para>
 
        <para>
-	The new behavior is substantially more useful since it
-	allows, for example, triggers to check for data changes
-	with <literal>IF row(new.*) IS DISTINCT FROM row(old.*)</>.
-	The old behavior is still available by omitting <literal>.*</>.
+        The new behavior is substantially more useful since it
+        allows, for example, triggers to check for data changes
+        with <literal>IF row(new.*) IS DISTINCT FROM row(old.*)</>.
+        The old behavior is still available by omitting <literal>.*</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Make <link linkend="row-wise-comparison">row comparisons</link>
-	follow <acronym>SQL</> standard semantics and allow them
-	to be used in index scans (Tom)
+        Make <link linkend="row-wise-comparison">row comparisons</link>
+        follow <acronym>SQL</> standard semantics and allow them
+        to be used in index scans (Tom)
        </para>
 
        <para>
@@ -221,8 +221,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Have <link linkend="SQL-SET-CONSTRAINTS"><command>SET
-	CONSTRAINT</></link> affect only one constraint (Kris Jurka)
+        Have <link linkend="SQL-SET-CONSTRAINTS"><command>SET
+        CONSTRAINT</></link> affect only one constraint (Kris Jurka)
        </para>
 
        <para>
@@ -260,8 +260,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Change <link linkend="functions-array">array concatenation</link>
-	to match documented behavior (Tom)
+        Change <link linkend="functions-array">array concatenation</link>
+        to match documented behavior (Tom)
        </para>
 
        <para>
@@ -272,9 +272,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Make command-line options of <application>postmaster</>
-	and <link linkend="app-postgres"><application>postgres</></link>
-	identical (Peter)
+        Make command-line options of <application>postmaster</>
+        and <link linkend="app-postgres"><application>postgres</></link>
+        identical (Peter)
        </para>
 
        <para>
@@ -298,9 +298,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Change <link
-	linkend="guc-log-duration"><varname>log_duration</></link>
-	to output even if the query is not output (Tom)
+        Change <link
+        linkend="guc-log-duration"><varname>log_duration</></link>
+        to output even if the query is not output (Tom)
        </para>
 
        <para>
@@ -311,12 +311,12 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Have <link
-	linkend="functions-formatting"><function>to_char(time)</></link>
-	and <link
-	linkend="functions-formatting"><function>to_char(interval)</></link>
-	treat <literal>'HH'</> and <literal>'HH12'</> as 12-hour
-	intervals.
+        Have <link
+        linkend="functions-formatting"><function>to_char(time)</></link>
+        and <link
+        linkend="functions-formatting"><function>to_char(interval)</></link>
+        treat <literal>'HH'</> and <literal>'HH12'</> as 12-hour
+        intervals.
        </para>
 
        <para>
@@ -327,9 +327,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Zero unmasked bits in conversion from <link
-	linkend="datatype-inet"><type>INET</></link> to <link
-	linkend="datatype-inet"><type>CIDR</></link> (Tom)
+        Zero unmasked bits in conversion from <link
+        linkend="datatype-inet"><type>INET</></link> to <link
+        linkend="datatype-inet"><type>CIDR</></link> (Tom)
        </para>
       </listitem>
 
@@ -351,27 +351,27 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	This may eliminate the need to set unrealistically small
-	values of <link
-	linkend="guc-random-page-cost"><varname>random_page_cost</></link>.
-	If you have been using a very small <varname>random_page_cost</>,
-	please recheck your test cases.
+        This may eliminate the need to set unrealistically small
+        values of <link
+        linkend="guc-random-page-cost"><varname>random_page_cost</></link>.
+        If you have been using a very small <varname>random_page_cost</>,
+        please recheck your test cases.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Change <link linkend="libpq"><application>libpq</></link>
-	<function>PQdsplen()</> to return a useful value (Martijn
-	van Oosterhout)
+        Change <link linkend="libpq"><application>libpq</></link>
+        <function>PQdsplen()</> to return a useful value (Martijn
+        van Oosterhout)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Change <link linkend="libpq"><application>libpq</></link>
-	<function>PQgetssl()</> to return a <literal>void *</>,
-	rather than <literal>SSL *</> (Martijn van Oosterhout)
+        Change <link linkend="libpq"><application>libpq</></link>
+        <function>PQgetssl()</> to return a <literal>void *</>,
+        rather than <literal>SSL *</> (Martijn van Oosterhout)
        </para>
 
        <para>
@@ -441,19 +441,19 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Improve efficiency of <link
-	linkend="functions-comparisons"><literal>IN</>
-	(list-of-expressions)</link> clauses (Tom)
+        Improve efficiency of <link
+        linkend="functions-comparisons"><literal>IN</>
+        (list-of-expressions)</link> clauses (Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Increase default values for <link
-	linkend="guc-shared-buffers"><varname>shared_buffers</></link>
-	and <link
-	linkend="guc-max-fsm-pages"><varname>max_fsm_pages</></link>
-	(Andrew)
+        Increase default values for <link
+        linkend="guc-shared-buffers"><varname>shared_buffers</></link>
+        and <link
+        linkend="guc-max-fsm-pages"><varname>max_fsm_pages</></link>
+        (Andrew)
        </para>
       </listitem>
 
@@ -478,10 +478,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <literal>FILLFACTOR</> to <link
-	linkend="SQL-CREATETABLE">table</> and <link
-	linkend="SQL-CREATEINDEX">index</> creation (ITAGAKI
-	Takahiro)
+        Add <literal>FILLFACTOR</> to <link
+        linkend="SQL-CREATETABLE">table</> and <link
+        linkend="SQL-CREATEINDEX">index</> creation (ITAGAKI
+        Takahiro)
        </para>
 
        <para>
@@ -519,8 +519,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow the planner to reorder <link linkend="queries-join">outer
-	joins</> in some circumstances (Tom)
+        Allow the planner to reorder <link linkend="queries-join">outer
+        joins</> in some circumstances (Tom)
        </para>
 
        <para>
@@ -536,28 +536,28 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Improve the optimizer statistics used by <link
-	linkend="functions-like"><literal>LIKE</></link>, <link
-	linkend="functions-like"><literal>ILIKE</></link>, and
-	<link linkend="functions-posix-regexp">regular expression
-	operations</link> (Tom)
+        Improve the optimizer statistics used by <link
+        linkend="functions-like"><literal>LIKE</></link>, <link
+        linkend="functions-like"><literal>ILIKE</></link>, and
+        <link linkend="functions-posix-regexp">regular expression
+        operations</link> (Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Improve planning of joins to <link linkend="ddl-inherit">inherited
-	tables</> and <link linkend="queries-union"><literal>UNION
-	ALL</></link> views (Tom)
+        Improve planning of joins to <link linkend="ddl-inherit">inherited
+        tables</> and <link linkend="queries-union"><literal>UNION
+        ALL</></link> views (Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Allow <link linkend="guc-constraint-exclusion">constraint
-	exclusion</> to be applied to <link
-	linkend="ddl-inherit">inherited</> <command>UPDATE</> and
-	<command>DELETE</> queries (Tom)
+        Allow <link linkend="guc-constraint-exclusion">constraint
+        exclusion</> to be applied to <link
+        linkend="ddl-inherit">inherited</> <command>UPDATE</> and
+        <command>DELETE</> queries (Tom)
        </para>
 
        <para>
@@ -581,15 +581,15 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Improve multicolumn <link linkend="GiST"><acronym>GiST</></link>
-	indexing (Oleg, Teodor)
+        Improve multicolumn <link linkend="GiST"><acronym>GiST</></link>
+        indexing (Oleg, Teodor)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	<link linkend="GiST"><acronym>GiST</></link> indexes now
-	are clusterable (Teodor)
+        <link linkend="GiST"><acronym>GiST</></link> indexes now
+        are clusterable (Teodor)
        </para>
       </listitem>
 
@@ -614,12 +614,12 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	This is valuable for keeping continuous archiving servers
-	in sync with the master.  xlog file switching also happens
-	automatically during <link
-	linkend="functions-admin"><function>pg_stop_backup()</></link>.
-	This ensures that continuous archiving servers have all
-	xlog files needed for recovery.
+        This is valuable for keeping continuous archiving servers
+        in sync with the master.  xlog file switching also happens
+        automatically during <link
+        linkend="functions-admin"><function>pg_stop_backup()</></link>.
+        This ensures that continuous archiving servers have all
+        xlog files needed for recovery.
        </para>
       </listitem>
 
@@ -629,11 +629,11 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	Add functions for interrogating the current xlog insertion
-	point and determining <acronym>WAL</> filenames from the
-	hex <acronym>WAL</> locations displayed by <link
-	linkend="functions-admin"><function>pg_stop_backup()</></link>
-	and friends.
+        Add functions for interrogating the current xlog insertion
+        point and determining <acronym>WAL</> filenames from the
+        hex <acronym>WAL</> locations displayed by <link
+        linkend="functions-admin"><function>pg_stop_backup()</></link>
+        and friends.
        </para>
       </listitem>
 
@@ -654,9 +654,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link
-	linkend="guc-archive-timeout"><varname>archive_timeout</></link>
-	to force xlog file switches at a given interval (Simon)
+        Add <link
+        linkend="guc-archive-timeout"><varname>archive_timeout</></link>
+        to force xlog file switches at a given interval (Simon)
        </para>
 
        <para>
@@ -666,8 +666,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add native <link linkend="auth-ldap"><acronym>LDAP</></link>
-	authentication (Magnus Hagander)
+        Add native <link linkend="auth-ldap"><acronym>LDAP</></link>
+        authentication (Magnus Hagander)
        </para>
 
        <para>
@@ -678,10 +678,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="sql-grant-description-objects"><literal>GRANT
-	CONNECT ON DATABASE</></link>, to be used in addition to
-	<link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
-	(Gevik Babakhani)
+        Add <link linkend="sql-grant-description-objects"><literal>GRANT
+        CONNECT ON DATABASE</></link>, to be used in addition to
+        <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></link>
+        (Gevik Babakhani)
        </para>
 
        <para>
@@ -693,9 +693,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add support for <link linkend="ssl-tcp"><acronym>SSL</>
-	Certificate Revocation List</link> (<acronym>CRL</>) files,
-	<filename>root.crl</> (Libor Hoho&scaron;)
+        Add support for <link linkend="ssl-tcp"><acronym>SSL</>
+        Certificate Revocation List</link> (<acronym>CRL</>) files,
+        <filename>root.crl</> (Libor Hoho&scaron;)
        </para>
 
        <para>
@@ -709,9 +709,9 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	<link
-	linkend="monitoring-stats-views-table"><literal>pg_stat_activity</></link>
-	now shows autovacuum activity.
+        <link
+        linkend="monitoring-stats-views-table"><literal>pg_stat_activity</></link>
+        now shows autovacuum activity.
        </para>
       </listitem>
 
@@ -733,34 +733,34 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	These values now appear in the <link
-	linkend="monitoring-stats-views-table"><literal>pg_stat_*_tables</></link>
-	system views, and are used by autovacuum. ?
+        These values now appear in the <link
+        linkend="monitoring-stats-views-table"><literal>pg_stat_*_tables</></link>
+        system views, and are used by autovacuum. ?
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Improve performance of statistics monitoring, especially
-	<link
-	linkend="guc-stats-command-string"><varname>stats_command_string</></link>
-	(Tom, Bruce)
+        Improve performance of statistics monitoring, especially
+        <link
+        linkend="guc-stats-command-string"><varname>stats_command_string</></link>
+        (Tom, Bruce)
        </para>
 
        <para>
-	This release enables <varname>stats_command_string</> by
-	default, now that its overhead is minimal.  This means
-	<link
-	linkend="monitoring-stats-views-table"><literal>pg_stat_activity</></link>
-	will now show all active queries by default.
+        This release enables <varname>stats_command_string</> by
+        default, now that its overhead is minimal.  This means
+        <link
+        linkend="monitoring-stats-views-table"><literal>pg_stat_activity</></link>
+        will now show all active queries by default.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add a <literal>waiting</> column to <link
-	linkend="monitoring-stats-views-table"><literal>pg_stat_activity</></link>
-	(Tom)
+        Add a <literal>waiting</> column to <link
+        linkend="monitoring-stats-views-table"><literal>pg_stat_activity</></link>
+        (Tom)
        </para>
 
        <para>
@@ -771,10 +771,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <acronym>GUC</> variable <link
-	linkend="guc-update-process-title"><varname>update_process_title</></link>
-	to control whether the <application>ps</> display is updated
-	for every command, default to <literal>on</> (Bruce)
+        Add <acronym>GUC</> variable <link
+        linkend="guc-update-process-title"><varname>update_process_title</></link>
+        to control whether the <application>ps</> display is updated
+        for every command, default to <literal>on</> (Bruce)
        </para>
       </listitem>
 
@@ -785,17 +785,17 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	For example, you can now set <link
-	linkend="guc-shared-buffers"><varname>shared_buffer</></link>
-	to <literal>32000kB</>.
+        For example, you can now set <link
+        linkend="guc-shared-buffers"><varname>shared_buffer</></link>
+        to <literal>32000kB</>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add support for <link linkend="config-setting">include
-	directives</> in <filename>postgresql.conf</> (Joachim
-	Wieland)
+        Add support for <link linkend="config-setting">include
+        directives</> in <filename>postgresql.conf</> (Joachim
+        Wieland)
        </para>
       </listitem>
 
@@ -821,10 +821,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="SQL-INSERT"><command>INSERT</></link>/<link
-	linkend="SQL-UPDATE"><command>UPDATE</></link>/<link
-	linkend="SQL-DELETE"><command>DELETE</></link>
-	<literal>RETURNING</> (Jonah Harris, Tom)
+        Add <link linkend="SQL-INSERT"><command>INSERT</></link>/<link
+        linkend="SQL-UPDATE"><command>UPDATE</></link>/<link
+        linkend="SQL-DELETE"><command>DELETE</></link>
+        <literal>RETURNING</> (Jonah Harris, Tom)
        </para>
 
        <para>
@@ -836,10 +836,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add support for multiple-row <link
-	linkend="queries-values"><literal>VALUES</></link> clauses
-	as part of <command>INSERT</> and <command>SELECT</>
-	statements, per SQL standard (Joe, Tom)
+        Add support for multiple-row <link
+        linkend="queries-values"><literal>VALUES</></link> clauses
+        as part of <command>INSERT</> and <command>SELECT</>
+        statements, per SQL standard (Joe, Tom)
        </para>
 
        <para>
@@ -853,9 +853,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow <link linkend="SQL-UPDATE"><command>UPDATE</></link>
-	and <link linkend="SQL-DELETE"><command>DELETE</></link>
-	to use an alias for the target table (Atsushi Ogawa)
+        Allow <link linkend="SQL-UPDATE"><command>UPDATE</></link>
+        and <link linkend="SQL-DELETE"><command>DELETE</></link>
+        to use an alias for the target table (Atsushi Ogawa)
        </para>
 
        <para>
@@ -867,9 +867,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow <link linkend="SQL-UPDATE"><command>UPDATE</></link>
-	to set multiple columns with a list of values (Susanne
-	Ebrecht)
+        Allow <link linkend="SQL-UPDATE"><command>UPDATE</></link>
+        to set multiple columns with a list of values (Susanne
+        Ebrecht)
        </para>
 
        <para>
@@ -891,8 +891,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="SQL-TRUNCATE"><literal>CASCADE</></link>
-	option to <command>TRUNCATE</> (Joachim Wieland)
+        Add <link linkend="SQL-TRUNCATE"><literal>CASCADE</></link>
+        option to <command>TRUNCATE</> (Joachim Wieland)
        </para>
 
        <para>
@@ -903,16 +903,16 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Support <literal>FOR UPDATE</> and <literal>FOR SHARE</>
-	in the same <link linkend="SQL-INSERT"><literal>SELECT</></link>
-	command (Tom)
+        Support <literal>FOR UPDATE</> and <literal>FOR SHARE</>
+        in the same <link linkend="SQL-INSERT"><literal>SELECT</></link>
+        command (Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add <link linkend="functions-comparisons"><literal>IS NOT
-	DISTINCT FROM</></link> (Pavel Stehule)
+        Add <link linkend="functions-comparisons"><literal>IS NOT
+        DISTINCT FROM</></link> (Pavel Stehule)
        </para>
 
        <para>
@@ -925,9 +925,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Improve the length output used by <link
-	linkend="queries-union"><literal>UNION</></link>/<literal>INTERSECT</>/<literal>EXCEPT</>
-	(Tom)
+        Improve the length output used by <link
+        linkend="queries-union"><literal>UNION</></link>/<literal>INTERSECT</>/<literal>EXCEPT</>
+        (Tom)
        </para>
 
        <para>
@@ -938,8 +938,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow <link linkend="functions-like"><literal>ILIKE</></link>
-	to work for multi-byte encodings (Tom)
+        Allow <link linkend="functions-like"><literal>ILIKE</></link>
+        to work for multi-byte encodings (Tom)
        </para>
 
        <para>
@@ -951,9 +951,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Enable <link
-	linkend="guc-standard-conforming-strings"><varname>standard_conforming_strings</></link>
-	to be turned <literal>on</> (Kevin Grittner)
+        Enable <link
+        linkend="guc-standard-conforming-strings"><varname>standard_conforming_strings</></link>
+        to be turned <literal>on</> (Kevin Grittner)
        </para>
 
        <para>
@@ -966,17 +966,17 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add system view <link
-	linkend="view-pg-prepared-statements"><literal>pg_prepared_statements</></link>
-	to show prepared statements (Joachim Wieland, Neil)
+        Add system view <link
+        linkend="view-pg-prepared-statements"><literal>pg_prepared_statements</></link>
+        to show prepared statements (Joachim Wieland, Neil)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add system view <link
-	linkend="view-pg-cursors"><literal>pg_cursors</></link> to
-	show open cursors (Joachim Wieland, Neil)
+        Add system view <link
+        linkend="view-pg-cursors"><literal>pg_cursors</></link> to
+        show open cursors (Joachim Wieland, Neil)
        </para>
 
        <para>
@@ -987,9 +987,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Support portal parameters in <link
-	linkend="SQL-EXPLAIN"><command>EXPLAIN</></link> and <link
-	linkend="SQL-EXECUTE"><command>EXECUTE</></link> (Tom)
+        Support portal parameters in <link
+        linkend="SQL-EXPLAIN"><command>EXPLAIN</></link> and <link
+        linkend="SQL-EXECUTE"><command>EXECUTE</></link> (Tom)
        </para>
 
        <para>
@@ -1000,10 +1000,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	If <acronym>SQL</>-level <link
-	linkend="SQL-PREPARE"><command>PREPARE</></link> parameters
-	are unspecified, infer their types from the context of the
-	query (Neil)
+        If <acronym>SQL</>-level <link
+        linkend="SQL-PREPARE"><command>PREPARE</></link> parameters
+        are unspecified, infer their types from the context of the
+        query (Neil)
        </para>
 
        <para>
@@ -1040,9 +1040,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <literal>TABLESPACE</> clause to <link
-	linkend="SQL-CREATETABLEAS"><command>CREATE TABLE AS</></link>
-	(Neil)
+        Add <literal>TABLESPACE</> clause to <link
+        linkend="SQL-CREATETABLEAS"><command>CREATE TABLE AS</></link>
+        (Neil)
        </para>
 
        <para>
@@ -1052,9 +1052,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <literal>ON COMMIT</> clause to <link
-	linkend="SQL-CREATETABLEAS"><command>CREATE TABLE AS</></link>
-	(Neil)
+        Add <literal>ON COMMIT</> clause to <link
+        linkend="SQL-CREATETABLEAS"><command>CREATE TABLE AS</></link>
+        (Neil)
        </para>
 
        <para>
@@ -1066,9 +1066,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <literal>INCLUDING CONSTRAINTS</> to <link
-	linkend="SQL-CREATETABLE"><command>CREATE TABLE LIKE</></link>
-	(Greg Stark)
+        Add <literal>INCLUDING CONSTRAINTS</> to <link
+        linkend="SQL-CREATETABLE"><command>CREATE TABLE LIKE</></link>
+        (Greg Stark)
        </para>
 
        <para>
@@ -1078,8 +1078,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow the creation of placeholder (shell) <link
-	linkend="SQL-CREATETYPE">types</link> (Martijn van Oosterhout)
+        Allow the creation of placeholder (shell) <link
+        linkend="SQL-CREATETYPE">types</link> (Martijn van Oosterhout)
        </para>
 
        <para>
@@ -1092,8 +1092,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add new aggregate creation <link
-	linkend="SQL-CREATEAGGREGATE">syntax</> (Tom)
+        Add new aggregate creation <link
+        linkend="SQL-CREATEAGGREGATE">syntax</> (Tom)
        </para>
 
        <para>
@@ -1107,16 +1107,16 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	<link linkend="SQL-CREATEAGGREGATE">Aggregate functions</>
-	now support multiple input parameters (Sergey Koposov, Tom)
+        <link linkend="SQL-CREATEAGGREGATE">Aggregate functions</>
+        now support multiple input parameters (Sergey Koposov, Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add <command>CREATE</>/<command>ALTER <link
-	linkend="SQL-CREATEROLE">ROLE PASSWORD NULL</link></>,
-	which removes the role's password (Peter)
+        Add <command>CREATE</>/<command>ALTER <link
+        linkend="SQL-CREATEROLE">ROLE PASSWORD NULL</link></>,
+        which removes the role's password (Peter)
        </para>
       </listitem>
 
@@ -1134,16 +1134,16 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="SQL-DROP-OWNED"><literal>DROP OWNED</></link>
-	to drop all objects owned by a role (Alvaro)
+        Add <link linkend="SQL-DROP-OWNED"><literal>DROP OWNED</></link>
+        to drop all objects owned by a role (Alvaro)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add <link linkend="SQL-REASSIGN-OWNED"><literal>REASSIGN
-	OWNED</></link> to reassign ownership of all objects owned
-	by a role (Alvaro)
+        Add <link linkend="SQL-REASSIGN-OWNED"><literal>REASSIGN
+        OWNED</></link> to reassign ownership of all objects owned
+        by a role (Alvaro)
        </para>
 
        <para>
@@ -1154,8 +1154,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="SQL-GRANT"><command>GRANT ON SEQUENCE</></link>
-	syntax (Bruce)
+        Add <link linkend="SQL-GRANT"><command>GRANT ON SEQUENCE</></link>
+        syntax (Bruce)
        </para>
 
        <para>
@@ -1167,10 +1167,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="SQL-GRANT"><literal>USAGE</></link>
-	permission for sequences that allows only <function>currval()</>
-	and <function>nextval()</>, not <function>setval()</>
-	(Bruce)
+        Add <link linkend="SQL-GRANT"><literal>USAGE</></link>
+        permission for sequences that allows only <function>currval()</>
+        and <function>nextval()</>, not <function>setval()</>
+        (Bruce)
        </para>
 
        <para>
@@ -1183,8 +1183,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="SQL-ALTERTABLE"><literal>ALTER TABLE
-	... [ NO ] INHERIT</></link> (Greg Stark)
+        Add <link linkend="SQL-ALTERTABLE"><literal>ALTER TABLE
+        ... [ NO ] INHERIT</></link> (Greg Stark)
        </para>
 
        <para>
@@ -1196,8 +1196,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow <link linkend="SQL-COMMENT">comments</> on global
-	objects to be stored globally (Kris Jurka)
+        Allow <link linkend="SQL-COMMENT">comments</> on global
+        objects to be stored globally (Kris Jurka)
        </para>
 
        <para>
@@ -1222,17 +1222,17 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	The new syntax is <link linkend="SQL-CREATEINDEX"><command>CREATE
-	INDEX CONCURRENTLY</></link>.  The default behavior is
-	still to block table modification while a index is being
-	created.
+        The new syntax is <link linkend="SQL-CREATEINDEX"><command>CREATE
+        INDEX CONCURRENTLY</></link>.  The default behavior is
+        still to block table modification while a index is being
+        created.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Provide <link linkend="functions-advisory-locks">advisory
-	locking</> functionality (Abhijit Menon-Sen, Tom)
+        Provide <link linkend="functions-advisory-locks">advisory
+        locking</> functionality (Abhijit Menon-Sen, Tom)
        </para>
 
        <para>
@@ -1243,9 +1243,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow <link linkend="SQL-COPY"><command>COPY</></link> to
-	dump a <command>SELECT</> query (Zoltan Boszormenyi, Karel
-	Zak)
+        Allow <link linkend="SQL-COPY"><command>COPY</></link> to
+        dump a <command>SELECT</> query (Zoltan Boszormenyi, Karel
+        Zak)
        </para>
 
        <para>
@@ -1256,25 +1256,25 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Have the <link linkend="SQL-COPY"><command>COPY</></link>
-	command return a command tag that includes the number of
-	rows copied (Volkan YAZICI)
+        Have the <link linkend="SQL-COPY"><command>COPY</></link>
+        command return a command tag that includes the number of
+        rows copied (Volkan YAZICI)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Allow <link linkend="SQL-VACUUM"><command>VACUUM</></link>
-	to expire rows without being affected by other concurrent
-	<command>VACUUM</> operations (Hannu Krossing, Alvaro, Tom)
+        Allow <link linkend="SQL-VACUUM"><command>VACUUM</></link>
+        to expire rows without being affected by other concurrent
+        <command>VACUUM</> operations (Hannu Krossing, Alvaro, Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Have <link linkend="APP-INITDB"><application>initdb</></link>
-	detect the operating system locale and set the default
-	<varname>DateStyle</> accordingly (Peter)
+        Have <link linkend="APP-INITDB"><application>initdb</></link>
+        detect the operating system locale and set the default
+        <varname>DateStyle</> accordingly (Peter)
        </para>
 
        <para>
@@ -1286,8 +1286,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Avoid extra scan of tables without indexes during <link
-	linkend="SQL-VACUUM"><command>VACUUM</></link> (Greg Stark)
+        Avoid extra scan of tables without indexes during <link
+        linkend="SQL-VACUUM"><command>VACUUM</></link> (Greg Stark)
        </para>
       </listitem>
 
@@ -1307,9 +1307,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow full timezone names in <link
-	linkend="datatype-datetime"><type>timestamp</></link> values
-	(Joachim Wieland)
+        Allow full timezone names in <link
+        linkend="datatype-datetime"><type>timestamp</></link> values
+        (Joachim Wieland)
        </para>
 
        <para>
@@ -1325,30 +1325,30 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	The file name is controlled by the GUC variable <link
-	linkend="guc-timezone-abbreviations"><varname>timezone_abbreviations</></link>.
+        The file name is controlled by the GUC variable <link
+        linkend="guc-timezone-abbreviations"><varname>timezone_abbreviations</></link>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add <link
-	linkend="view-pg-timezone-abbrevs"><varname>pg_timezone_abbrevs</></link>
-	and <link
-	linkend="view-pg-timezone-names"><varname>pg_timezone_names</></link>
-	views to show supported timezones (Magnus Hagander)
+        Add <link
+        linkend="view-pg-timezone-abbrevs"><varname>pg_timezone_abbrevs</></link>
+        and <link
+        linkend="view-pg-timezone-names"><varname>pg_timezone_names</></link>
+        views to show supported timezones (Magnus Hagander)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add <link
-	linkend="functions-datetime-table"><function>clock_timestamp()</></link>,
-	<link
-	linkend="functions-datetime-table"><function>statement_timestamp()</></link>,
-	and <link
-	linkend="functions-datetime-table"><function>transaction_timestamp()</></link>
-	(Bruce)
+        Add <link
+        linkend="functions-datetime-table"><function>clock_timestamp()</></link>,
+        <link
+        linkend="functions-datetime-table"><function>statement_timestamp()</></link>,
+        and <link
+        linkend="functions-datetime-table"><function>transaction_timestamp()</></link>
+        (Bruce)
        </para>
 
        <para>
@@ -1362,21 +1362,21 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow <link
-	linkend="functions-formatting"><function>to_char()</></link>
-	to print localized month and day names (Euler Taveira de
-	Oliveira)
+        Allow <link
+        linkend="functions-formatting"><function>to_char()</></link>
+        to print localized month and day names (Euler Taveira de
+        Oliveira)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Allow <link
-	linkend="functions-formatting"><function>to_char(time)</></link>
-	and <link
-	linkend="functions-formatting"><function>to_char(interval)</></link>
-	to output <acronym>AM</>/<acronym>PM</> specifications
-	(Bruce)
+        Allow <link
+        linkend="functions-formatting"><function>to_char(time)</></link>
+        and <link
+        linkend="functions-formatting"><function>to_char(interval)</></link>
+        to output <acronym>AM</>/<acronym>PM</> specifications
+        (Bruce)
        </para>
 
        <para>
@@ -1387,9 +1387,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add new function <link
-	linkend="functions-datetime-table"><function>justify_interval()</></link>
-	to adjust interval units (Mark Dilger)
+        Add new function <link
+        linkend="functions-datetime-table"><function>justify_interval()</></link>
+        to adjust interval units (Mark Dilger)
        </para>
       </listitem>
 
@@ -1415,9 +1415,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	New <link linkend="functions-geometry-op-table">operators</>
-	for array-subset comparisons (<literal>@&gt;</>,
-	<literal>&lt;@</>, <literal>&amp;&amp;</>) (Teodor, Tom)
+        New <link linkend="functions-geometry-op-table">operators</>
+        for array-subset comparisons (<literal>@&gt;</>,
+        <literal>&lt;@</>, <literal>&amp;&amp;</>) (Teodor, Tom)
        </para>
 
        <para>
@@ -1427,10 +1427,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add convenient arithmetic <link
-	linkend="cidr-inet-operators-table">operations</> on
-	<type>INET</>/<type>CIDR</> values (Stephen R. van den
-	Berg)
+        Add convenient arithmetic <link
+        linkend="cidr-inet-operators-table">operations</> on
+        <type>INET</>/<type>CIDR</> values (Stephen R. van den
+        Berg)
        </para>
 
        <para>
@@ -1443,9 +1443,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add new aggregate <link
-	linkend="functions-aggregate-statistics-table">functions</>
-	from SQL2003 (Neil)
+        Add new aggregate <link
+        linkend="functions-aggregate-statistics-table">functions</>
+        from SQL2003 (Neil)
        </para>
 
        <para>
@@ -1461,9 +1461,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add SQL2003-standard statistical <link
-	linkend="functions-aggregate-statistics-table">aggregates</link>
-	(Sergey Koposov)
+        Add SQL2003-standard statistical <link
+        linkend="functions-aggregate-statistics-table">aggregates</link>
+        (Sergey Koposov)
        </para>
 
        <para>
@@ -1479,16 +1479,16 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow <link linkend="SQL-CREATEDOMAIN">domains</> to be
-	created using other domains (Tom)
+        Allow <link linkend="SQL-CREATEDOMAIN">domains</> to be
+        created using other domains (Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Properly enforce domain <link
-	linkend="ddl-constraints"><literal>CHECK</></link> constraints
-	everywhere (Neil, Tom)
+        Properly enforce domain <link
+        linkend="ddl-constraints"><literal>CHECK</></link> constraints
+        everywhere (Neil, Tom)
        </para>
 
        <para>
@@ -1501,34 +1501,34 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Fix problems with dumping renamed <link
-	linkend="datatype-serial"><type>SERIAL</></link> columns
-	(Tom)
+        Fix problems with dumping renamed <link
+        linkend="datatype-serial"><type>SERIAL</></link> columns
+        (Tom)
        </para>
 
        <para>
-	The fix is to dump a <type>SERIAL</> column by explicitly
-	specifying its <literal>DEFAULT</> and sequence elements,
-	and reconstructing the <type>SERIAL</> column on reload
-	using a new <link linkend="SQL-ALTERSEQUENCE"><command>ALTER
-	SEQUENCE OWNED BY</></link> command.  This also allows
-	dropping a <type>SERIAL</> column specification.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-	Add a server-side sleep function <link
-	linkend="functions-datetime-delay"><function>pg_sleep()</></link>
-	(Joachim Wieland)
+        The fix is to dump a <type>SERIAL</> column by explicitly
+        specifying its <literal>DEFAULT</> and sequence elements,
+        and reconstructing the <type>SERIAL</> column on reload
+        using a new <link linkend="SQL-ALTERSEQUENCE"><command>ALTER
+        SEQUENCE OWNED BY</></link> command.  This also allows
+        dropping a <type>SERIAL</> column specification.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add all comparison operators for the <link
-	linkend="datatype-oid"><type>tid</></link> (tuple id) data
-	type (Mark Kirkwood, Greg Stark, Tom)
+        Add a server-side sleep function <link
+        linkend="functions-datetime-delay"><function>pg_sleep()</></link>
+        (Joachim Wieland)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add all comparison operators for the <link
+        linkend="datatype-oid"><type>tid</></link> (tuple id) data
+        type (Mark Kirkwood, Greg Stark, Tom)
        </para>
       </listitem>
 
@@ -1578,9 +1578,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <literal>STRICT</> to <link
-	linkend="plpgsql-statements-sql-onerow"><command>SELECT
-	INTO</></link> (Matt Miller)
+        Add <literal>STRICT</> to <link
+        linkend="plpgsql-statements-sql-onerow"><command>SELECT
+        INTO</></link> (Matt Miller)
        </para>
 
        <para>
@@ -1628,9 +1628,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Honor <link
-	linkend="guc-check-function-bodies"><varname>check_function_bodies</></link>
-	(Tom)
+        Honor <link
+        linkend="guc-check-function-bodies"><varname>check_function_bodies</></link>
+        (Tom)
        </para>
       </listitem>
 
@@ -1814,18 +1814,18 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="APP-PGRESTORE"><application>pg_restore</></link>
-	<literal>-X no-data-for-failed-tables</> option to suppress
-	loading data if table creation failed (the table already
-	exists) (Martin Pitt)
+        Add <link linkend="APP-PGRESTORE"><application>pg_restore</></link>
+        <literal>-X no-data-for-failed-tables</> option to suppress
+        loading data if table creation failed (the table already
+        exists) (Martin Pitt)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add <link linkend="APP-PGRESTORE"><application>pg_restore</></link>
-	option to run the entire session in a single transaction
-	(Simon)
+        Add <link linkend="APP-PGRESTORE"><application>pg_restore</></link>
+        option to run the entire session in a single transaction
+        (Simon)
        </para>
 
        <para>
@@ -1843,23 +1843,23 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link
-	linkend="libpq-misc"><function>PQencryptPassword()</></link>
-	to encrypt passwords (Tom)
+        Add <link
+        linkend="libpq-misc"><function>PQencryptPassword()</></link>
+        to encrypt passwords (Tom)
        </para>
 
        <para>
-	This allows passwords to be sent encrypted for commands
-	like <link linkend="SQL-ALTERROLE"><command>ALTER ROLE ...
-	PASSWORD</></link>.
+        This allows passwords to be sent encrypted for commands
+        like <link linkend="SQL-ALTERROLE"><command>ALTER ROLE ...
+        PASSWORD</></link>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add function <link
-	linkend="libpq-threading"><function>PQisthreadsafe()</></link>
-	(Bruce)
+        Add function <link
+        linkend="libpq-threading"><function>PQisthreadsafe()</></link>
+        (Bruce)
        </para>
 
        <para>
@@ -1870,29 +1870,29 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link
-	linkend="libpq-exec-main"><function>PQdescribePrepared()</></link>,
-	<link
-	linkend="libpq-exec-main"><function>PQdescribePortal()</></link>,
-	and related functions return information about previously
-	prepared statements and open cursors (Volkan YAZICI)
+        Add <link
+        linkend="libpq-exec-main"><function>PQdescribePrepared()</></link>,
+        <link
+        linkend="libpq-exec-main"><function>PQdescribePortal()</></link>,
+        and related functions return information about previously
+        prepared statements and open cursors (Volkan YAZICI)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Allow <acronym>LDAP</> <link linkend="libpq-ldap">lookups</>
-	from <link
-	linkend="libpq-pgservice"><filename>pg_service.conf</></link>
-	(Laurenz Albe)
+        Allow <acronym>LDAP</> <link linkend="libpq-ldap">lookups</>
+        from <link
+        linkend="libpq-pgservice"><filename>pg_service.conf</></link>
+        (Laurenz Albe)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Allow the <link linkend="libpq-pgpass"><filename>.pgpass</></link>
-	hostname to match the default socket directory, as well as
-	a blank <literal>pghost</> (Bruce)
+        Allow the <link linkend="libpq-pgpass"><filename>.pgpass</></link>
+        hostname to match the default socket directory, as well as
+        a blank <literal>pghost</> (Bruce)
        </para>
       </listitem>
 
@@ -1906,15 +1906,15 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Allow <link linkend="SQL-SHOW"><command>SHOW</></link> to
-	put its result into a variable (Joachim Wieland)
+        Allow <link linkend="SQL-SHOW"><command>SHOW</></link> to
+        put its result into a variable (Joachim Wieland)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add <link linkend="SQL-COPY"><command>COPY TO STDOUT</></link>
-	(Joachim Wieland)
+        Add <link linkend="SQL-COPY"><command>COPY TO STDOUT</></link>
+        (Joachim Wieland)
        </para>
       </listitem>
 
@@ -1947,9 +1947,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <acronym>MSVC</> support for utility commands and <link
-	linkend="APP-PGDUMP"><application>pg_dump</></link> (Hiroshi
-	Saito)
+        Add <acronym>MSVC</> support for utility commands and <link
+        linkend="APP-PGDUMP"><application>pg_dump</></link> (Hiroshi
+        Saito)
        </para>
       </listitem>
 
@@ -2006,8 +2006,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link linkend="GIN"><acronym>GIN</></link> (Generalized
-	Inverted iNdex) index access method (Teodor) ?
+        Add <link linkend="GIN"><acronym>GIN</></link> (Generalized
+        Inverted iNdex) index access method (Teodor) ?
        </para>
       </listitem>
 
@@ -2017,10 +2017,10 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	Rtree has been re-implemented using <link
-	linkend="GiST"><acronym>GiST</></link>. Among other
-	differences, this means that rtree indexes now have support
-	for crash recovery via write-ahead logging (WAL).
+        Rtree has been re-implemented using <link
+        linkend="GiST"><acronym>GiST</></link>. Among other
+        differences, this means that rtree indexes now have support
+        for crash recovery via write-ahead logging (WAL).
        </para>
       </listitem>
 
@@ -2038,8 +2038,8 @@ For new features, add links to the documentation sections.
        </para>
 
        <para>
-	Use configure <link
-	linkend="configure"><literal>--with-libedit-preferred</></link>.
+        Use configure <link
+        linkend="configure"><literal>--with-libedit-preferred</></link>.
        </para>
       </listitem>
 
@@ -2102,18 +2102,18 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Rename existing <acronym>GUC</> variable
-	<varname>preload_libraries</> to <link
-	linkend="guc-shared-preload-libraries"><varname>shared_preload_libraries</></link>
-	(Tom)
+        Rename existing <acronym>GUC</> variable
+        <varname>preload_libraries</> to <link
+        linkend="guc-shared-preload-libraries"><varname>shared_preload_libraries</></link>
+        (Tom)
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Add new GUC variable <link
-	linkend="guc-server-version-num"><varname>server_version_num</></link>
-	(Greg Sabino Mullane)
+        Add new GUC variable <link
+        linkend="guc-server-version-num"><varname>server_version_num</></link>
+        (Greg Sabino Mullane)
        </para>
 
        <para>
@@ -2125,9 +2125,9 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add a <acronym>GUC</> variable <link
-	linkend="guc-seq-page-cost"><varname>seq_page_cost</></link>
-	(Tom)
+        Add a <acronym>GUC</> variable <link
+        linkend="guc-seq-page-cost"><varname>seq_page_cost</></link>
+        (Tom)
        </para>
       </listitem>
 
@@ -2162,10 +2162,10 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	Add <link
-	linkend="xfunc-c-dynload"><literal>PG_MODULE_MAGIC</></link>
-	header block to all shared object files (Martijn van
-	Oosterhout)
+        Add <link
+        linkend="xfunc-c-dynload"><literal>PG_MODULE_MAGIC</></link>
+        header block to all shared object files (Martijn van
+        Oosterhout)
        </para>
 
        <para>
@@ -2194,8 +2194,8 @@ For new features, add links to the documentation sections.
 
       <listitem>
        <para>
-	New <link linkend="datatype-xml"><acronym>XML</></link>
-	documentation section (Bruce)
+        New <link linkend="datatype-xml"><acronym>XML</></link>
+        documentation section (Bruce)
        </para>
       </listitem>
 
