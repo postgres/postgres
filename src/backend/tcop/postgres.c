@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.511 2006/10/07 16:43:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.512 2006/10/07 19:25:28 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -23,11 +23,18 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-#if HAVE_SYS_SELECT_H
+#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
 #endif
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
+
+#ifndef HAVE_GETRUSAGE
+#include "rusagestub.h"
 #endif
 
 #include "access/printtup.h"
@@ -78,7 +85,7 @@ bool		Log_disconnections = false;
 LogStmtLevel log_statement = LOGSTMT_NONE;
 
 /* GUC variable for maximum stack depth (measured in kilobytes) */
-int			max_stack_depth = 2048;
+int			max_stack_depth = 100;
 
 /* wait N seconds to allow attach from a debugger */
 int			PostAuthDelay = 0;
@@ -91,7 +98,7 @@ int			PostAuthDelay = 0;
  */
 
 /* max_stack_depth converted to bytes for speed of checking */
-static long max_stack_depth_bytes = 2048 * 1024L;
+static long max_stack_depth_bytes = 100 * 1024L;
 
 /*
  * Stack base pointer -- initialized by PostgresMain. This is not static
@@ -2490,9 +2497,7 @@ ProcessInterrupts(void)
  * This should be called someplace in any recursive routine that might possibly
  * recurse deep enough to overflow the stack.  Most Unixen treat stack
  * overflow as an unrecoverable SIGSEGV, so we want to error out ourselves
- * before hitting the hardware limit.  Unfortunately we have no direct way
- * to detect the hardware limit, so we have to rely on the admin to set a
- * GUC variable for it ...
+ * before hitting the hardware limit.
  */
 void
 check_stack_depth(void)
@@ -2530,13 +2535,24 @@ check_stack_depth(void)
 	}
 }
 
-/* GUC assign hook to update max_stack_depth_bytes from max_stack_depth */
+/* GUC assign hook for max_stack_depth */
 bool
 assign_max_stack_depth(int newval, bool doit, GucSource source)
 {
-	/* Range check was already handled by guc.c */
+	long		newval_bytes = newval * 1024L;
+	long		stack_rlimit = get_stack_depth_rlimit();
+
+	if (stack_rlimit > 0 && newval_bytes > stack_rlimit - STACK_DEPTH_SLOP)
+	{
+		ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\"max_stack_depth\" must not exceed %ldkB",
+						(stack_rlimit - STACK_DEPTH_SLOP) / 1024L),
+				 errhint("Increase the platform's stack depth limit via \"ulimit -s\" or local equivalent.")));
+		return false;
+	}
 	if (doit)
-		max_stack_depth_bytes = newval * 1024L;
+		max_stack_depth_bytes = newval_bytes;
 	return true;
 }
 
@@ -3635,11 +3651,36 @@ PostgresMain(int argc, char *argv[], const char *username)
 	return 1;					/* keep compiler quiet */
 }
 
-#ifndef HAVE_GETRUSAGE
-#include "rusagestub.h"
-#else
-#include <sys/resource.h>
-#endif   /* HAVE_GETRUSAGE */
+
+/*
+ * Obtain platform stack depth limit (in bytes)
+ *
+ * Return -1 if unlimited or not known
+ */
+long
+get_stack_depth_rlimit(void)
+{
+#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_STACK)
+	static long val = 0;
+
+	/* This won't change after process launch, so check just once */
+	if (val == 0)
+	{
+		struct rlimit rlim;
+
+		if (getrlimit(RLIMIT_STACK, &rlim) < 0)
+			val = -1;
+		else if (rlim.rlim_cur == RLIM_INFINITY)
+			val = -1;
+		else
+			val = rlim.rlim_cur;
+	}
+	return val;
+#else /* no getrlimit */
+	return -1;
+#endif
+}
+
 
 static struct rusage Save_r;
 static struct timeval Save_t;

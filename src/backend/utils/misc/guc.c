@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.355 2006/10/06 17:14:00 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.356 2006/10/07 19:25:28 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1214,7 +1214,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB
 		},
 		&max_stack_depth,
-		2048, 100, MAX_KILOBYTES, assign_max_stack_depth, NULL
+		100, 100, MAX_KILOBYTES, assign_max_stack_depth, NULL
 	},
 
 	{
@@ -1610,7 +1610,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"gin_fuzzy_search_limit", PGC_USERSET, UNGROUPED,
+		{"gin_fuzzy_search_limit", PGC_USERSET, CLIENT_CONN_OTHER,
 			gettext_noop("Sets the maximum allowed result for exact search by GIN."),
 			NULL,
 			0
@@ -2702,6 +2702,7 @@ InitializeGUCOptions(void)
 {
 	int			i;
 	char	   *env;
+	long		stack_rlimit;
 
 	/*
 	 * Build sorted array of all GUC variables.
@@ -2839,6 +2840,27 @@ InitializeGUCOptions(void)
 	env = getenv("PGCLIENTENCODING");
 	if (env != NULL)
 		SetConfigOption("client_encoding", env, PGC_POSTMASTER, PGC_S_ENV_VAR);
+
+	/*
+	 * rlimit isn't exactly an "environment variable", but it behaves about
+	 * the same.  If we can identify the platform stack depth rlimit, increase
+	 * default stack depth setting up to whatever is safe (but at most 2MB).
+	 */
+	stack_rlimit = get_stack_depth_rlimit();
+	if (stack_rlimit > 0)
+	{
+		int		new_limit = (stack_rlimit - STACK_DEPTH_SLOP) / 1024L;
+
+		if (new_limit > 100)
+		{
+			char	limbuf[16];
+
+			new_limit = Min(new_limit, 2048);
+			sprintf(limbuf, "%d", new_limit);
+			SetConfigOption("max_stack_depth", limbuf,
+							PGC_POSTMASTER, PGC_S_ENV_VAR);
+		}
+	}
 }
 
 

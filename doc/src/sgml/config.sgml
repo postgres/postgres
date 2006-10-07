@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.89 2006/09/25 22:12:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.90 2006/10/07 19:25:28 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -846,13 +846,21 @@ SET ENABLE_SEQSCAN TO OFF;
         equivalent), less a safety margin of a megabyte or so.  The safety
         margin is needed because the stack depth is not checked in every
         routine in the server, but only in key potentially-recursive routines
-        such as expression evaluation.  Setting the parameter higher than
-        the actual kernel limit will mean that a runaway recursive function
-        can crash an individual backend process.  The default setting is
+        such as expression evaluation.  The default setting is
         2048 KB (two megabytes), which is conservatively small and unlikely
         to risk crashes.  However, it may be too small to allow execution
         of complex functions.
         Only superusers can change this setting.
+       </para>
+
+       <para>
+        Setting <varname>max_stack_depth</> higher than
+        the actual kernel limit will mean that a runaway recursive function
+        can crash an individual backend process.  On platforms where
+        <productname>PostgreSQL</productname> can determine the kernel limit,
+        it will not let you set this variable to an unsafe value.  However,
+        not all platforms provide the information, so caution is recommended
+        in selecting a value.
        </para>
       </listitem>
      </varlistentry>
@@ -2173,19 +2181,6 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
-	 <varlistentry id="guc-gin-fuzzy-search-limit" xreflabel="gin_fuzzy_search_limit">
-	  <term><varname>gin_fuzzy_search_limit</varname> (<type>integer</type>)</term>
-	  <indexterm>
-	  <primary><varname>gin_fuzzy_search_limit</> configuration parameter</primary>
-	  </indexterm>
-	  <listitem>
-	   <para>
-		Soft upper limit of the size of the set returned by GIN index. For more
-		information see <xref linkend="gin-tips">.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	  
      </variablelist>
     </sect2>
    </sect1>
@@ -3715,6 +3710,19 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         development purposes. The recommended way to set this parameter
         is in the <filename>postgresql.conf</filename> configuration
         file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-gin-fuzzy-search-limit" xreflabel="gin_fuzzy_search_limit">
+      <term><varname>gin_fuzzy_search_limit</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>gin_fuzzy_search_limit</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Soft upper limit of the size of the set returned by GIN index. For more
+        information see <xref linkend="gin-tips">.
        </para>
       </listitem>
      </varlistentry>

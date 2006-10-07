@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.56 2006/10/04 00:29:45 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.57 2006/10/07 19:25:28 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -37,8 +37,9 @@
 #include <sys/select.h>
 #endif
 
-/* for getrlimit */
-#include <sys/resource.h>
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>		/* for getrlimit */
+#endif
 #endif   /* ! WIN32 */
 
 extern char *optarg;
@@ -1172,7 +1173,7 @@ main(int argc, char **argv)
 	int			nsocks;			/* return from select(2) */
 	int			maxsock;		/* max socket number to be waited */
 
-#if !(defined(__CYGWIN__) || defined(__MINGW32__))
+#ifdef HAVE_GETRLIMIT
 	struct rlimit rlim;
 #endif
 
@@ -1233,8 +1234,8 @@ main(int argc, char **argv)
 					fprintf(stderr, "invalid number of clients: %d\n", nclients);
 					exit(1);
 				}
-#if !(defined(__CYGWIN__) || defined(__MINGW32__))
-#ifdef RLIMIT_NOFILE			/* most platform uses RLIMIT_NOFILE */
+#ifdef HAVE_GETRLIMIT
+#ifdef RLIMIT_NOFILE			/* most platforms use RLIMIT_NOFILE */
 				if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 #else							/* but BSD doesn't ... */
 				if (getrlimit(RLIMIT_OFILE, &rlim) == -1)
@@ -1245,11 +1246,11 @@ main(int argc, char **argv)
 				}
 				if (rlim.rlim_cur <= (nclients + 2))
 				{
-					fprintf(stderr, "You need at least %d open files resource but you are only allowed to use %ld.\n", nclients + 2, (long) rlim.rlim_cur);
-					fprintf(stderr, "Use limit/ulimt to increase the limit before using pgbench.\n");
+					fprintf(stderr, "You need at least %d open files but you are only allowed to use %ld.\n", nclients + 2, (long) rlim.rlim_cur);
+					fprintf(stderr, "Use limit/ulimit to increase the limit before using pgbench.\n");
 					exit(1);
 				}
-#endif
+#endif /* HAVE_GETRLIMIT */
 				break;
 			case 'C':
 				is_connect = 1;
