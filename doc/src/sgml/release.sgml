@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.466 2006/10/07 22:06:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.467 2006/10/07 23:28:04 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -25,7 +25,9 @@ non-ASCII characters            convert to HTML4 entity (&) escapes
 
 wrap long lines
 
-For new features, add links to the documentation sections.
+For new features, add links to the documentation sections.  Use </link>
+so that perl can remove it so HISTORY.html can be created with no
+links to the main documentation.
 
 -->
 
