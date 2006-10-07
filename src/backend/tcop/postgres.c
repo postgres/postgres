@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.510 2006/10/04 00:29:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.511 2006/10/07 16:43:28 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -91,7 +91,7 @@ int			PostAuthDelay = 0;
  */
 
 /* max_stack_depth converted to bytes for speed of checking */
-static int	max_stack_depth_bytes = 2048 * 1024;
+static long max_stack_depth_bytes = 2048 * 1024L;
 
 /*
  * Stack base pointer -- initialized by PostgresMain. This is not static
@@ -2498,16 +2498,12 @@ void
 check_stack_depth(void)
 {
 	char		stack_top_loc;
-	int			stack_depth;
+	long		stack_depth;
 
 	/*
 	 * Compute distance from PostgresMain's local variables to my own
-	 *
-	 * Note: in theory stack_depth should be ptrdiff_t or some such, but since
-	 * the whole point of this code is to bound the value to something much
-	 * less than integer-sized, int should work fine.
 	 */
-	stack_depth = (int) (stack_base_ptr - &stack_top_loc);
+	stack_depth = (long) (stack_base_ptr - &stack_top_loc);
 
 	/*
 	 * Take abs value, since stacks grow up on some machines, down on others
@@ -2529,7 +2525,8 @@ check_stack_depth(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 				 errmsg("stack depth limit exceeded"),
-				 errhint("Increase the configuration parameter \"max_stack_depth\".")));
+				 errhint("Increase the configuration parameter \"max_stack_depth\", "
+						 "after ensuring the platform's stack depth limit is adequate.")));
 	}
 }
 
@@ -2539,7 +2536,7 @@ assign_max_stack_depth(int newval, bool doit, GucSource source)
 {
 	/* Range check was already handled by guc.c */
 	if (doit)
-		max_stack_depth_bytes = newval * 1024;
+		max_stack_depth_bytes = newval * 1024L;
 	return true;
 }
 
