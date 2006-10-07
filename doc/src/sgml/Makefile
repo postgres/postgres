@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.79 2006/10/07 23:28:04 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.80 2006/10/07 23:48:52 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -192,7 +192,7 @@ INSTALL.html: standalone-install.sgml installation.sgml version.sgml
 HISTORY.html: release.sgml
 	( echo '<!doctype appendix PUBLIC "-//OASIS//DTD DocBook V4.2//EN">'; \
 	  cat $< ) | \
-	$(PERL) -p -0 -e 's/<link[\n\s]+linkend[^>]*>//sg' | \
+	$(PERL) -p -0 -e 's/<link\s+linkend[^>]*>//g' | \
 	$(PERL) -p -e 's/<\/link>//g' >tempfile_HISTORY.sgml
 	$(JADE.text) -V nochunks tempfile_HISTORY.sgml >$@
 	rm tempfile_HISTORY.sgml
