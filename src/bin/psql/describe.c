@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.71.2.1 2002/12/21 01:07:21 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.71.2.2 2006/10/07 22:22:04 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1470,7 +1470,8 @@ processNamePattern(PQExpBuffer buf, const char *pattern,
 				appendPQExpBufferChar(&namebuf, '"');
 				cp++;
 			}
-			inquotes = !inquotes;
+			else
+				inquotes = !inquotes;
 			cp++;
 		}
 		else if (!inquotes && isupper((unsigned char) *cp))
