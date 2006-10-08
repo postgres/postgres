@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.468 2006/10/08 18:15:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.469 2006/10/08 19:18:32 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1766,8 +1766,8 @@ links to the main documentation.
 
        <para>
 	This makes up-arrow recall of queries easier.  (This is
-	not availble on Win32 because it uses the native command-line
-	editing present in the operating system.)
+	not available on Win32 because it typically uses the native
+	command-line editing present in the operating system.)
        </para>
       </listitem>
 
