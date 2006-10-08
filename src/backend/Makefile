@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.119 2006/09/09 03:15:40 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.120 2006/10/08 17:15:33 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ postgres: $(OBJS) postgres.def libpostgres.a
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(LIBS)
 	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,--stack,4194304 -o $@$(X) $@.exp $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,--stack,$(WIN32_STACK_RLIMIT) -o $@$(X) $@.exp $(OBJS) $(LIBS)
 	rm -f $@.exp $@.base
 
 postgres.def: $(OBJS)
@@ -69,7 +69,7 @@ postgres: $(OBJS) postgres.def libpostgres.a $(WIN32RES)
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(WIN32RES) $(LIBS)
 	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,--stack=4194304 -o $@$(X) $@.exp $(OBJS) $(WIN32RES) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,--stack=$(WIN32_STACK_RLIMIT) -o $@$(X) $@.exp $(OBJS) $(WIN32RES) $(LIBS)
 	rm -f $@.exp $@.base
 
 postgres.def: $(OBJS)

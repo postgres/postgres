@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.231 2006/10/03 22:18:22 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.232 2006/10/08 17:15:33 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -310,6 +310,9 @@ HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@
 # This is mainly for use on FreeBSD, where we have both a.out and elf
 # systems now.  May be applicable to other systems to?
 ELF_SYSTEM= @ELF_SYS@
+
+# Backend stack size limit has to be hard-wired on Windows (it's in bytes)
+WIN32_STACK_RLIMIT=4194304
 
 # Pull in platform-specific magic
 include $(top_builddir)/src/Makefile.port
