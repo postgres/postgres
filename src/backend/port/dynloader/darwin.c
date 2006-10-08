@@ -1,19 +1,58 @@
 /*
- * These routines were taken from the Apache source, but were made
- * available with a PostgreSQL-compatible license.	Kudos Wilfredo
- * Sánchez <wsanchez@apple.com>.
+ * Dynamic loading support for Darwin
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/darwin.c,v 1.10 2004/01/07 18:56:27 neilc Exp $
+ * If dlopen() is available (Darwin 10.3 and later), we just use it.
+ * Otherwise we emulate it with the older, now deprecated, NSLinkModule API.
+ *
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/darwin.c,v 1.11 2006/10/08 19:31:03 tgl Exp $
  */
 #include "postgres.h"
 
+#ifdef HAVE_DLOPEN
+#include <dlfcn.h>
+#else
 #include <mach-o/dyld.h>
+#endif
 
 #include "dynloader.h"
 
 
-static NSObjectFileImageReturnCode cofiff_result = NSObjectFileImageFailure;
+#ifdef HAVE_DLOPEN
 
+void *
+pg_dlopen(char *filename)
+{
+	return dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
+}
+
+void
+pg_dlclose(void *handle)
+{
+	dlclose(handle);
+}
+
+PGFunction
+pg_dlsym(void *handle, char *funcname)
+{
+	/* Do not prepend an underscore: see dlopen(3) */
+	return dlsym(handle, funcname);
+}
+
+char *
+pg_dlerror(void)
+{
+	return dlerror();
+}
+
+#else /* !HAVE_DLOPEN */
+
+/*
+ * These routines were taken from the Apache source, but were made
+ * available with a PostgreSQL-compatible license.	Kudos Wilfredo
+ * Sánchez <wsanchez@apple.com>.
+ */
+
+static NSObjectFileImageReturnCode cofiff_result = NSObjectFileImageFailure;
 
 void *
 pg_dlopen(char *filename)
@@ -92,3 +131,5 @@ pg_dlerror(void)
 
 	return (char *) errorString;
 }
+
+#endif /* HAVE_DLOPEN */
