@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.514 2006/10/08 17:15:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.515 2006/10/08 17:45:50 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -27,6 +27,7 @@
 #include <sys/select.h>
 #endif
 #ifdef HAVE_SYS_RESOURCE_H
+#include <sys/time.h>
 #include <sys/resource.h>
 #endif
 #ifdef HAVE_GETOPT_H
