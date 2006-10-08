@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.17 2006/07/31 01:16:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/keywords.sgml,v 2.18 2006/10/08 20:51:52 petere Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -487,7 +487,7 @@
    </row>
    <row>
     <entry><token>CASCADED</token></entry>
-    <entry></entry>
+    <entry>non-reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -770,6 +770,13 @@
     <entry></entry>
     <entry></entry>
     <entry>reserved</entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>CONCURRENTLY</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
     <entry></entry>
    </row>
    <row>
@@ -1809,6 +1816,13 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>IF</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>IGNORE</token></entry>
     <entry></entry>
     <entry></entry>
@@ -1873,6 +1887,13 @@
    </row>
    <row>
     <entry><token>INDEX</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
+    <entry><token>INDEXES</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
     <entry></entry>
@@ -2831,6 +2852,13 @@
     <entry></entry>
    </row>
    <row>
+    <entry><token>OWNED</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>OWNER</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -3125,6 +3153,13 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>REASSIGN</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>RECHECK</token></entry>
     <entry>non-reserved</entry>
     <entry></entry>
@@ -3326,6 +3361,13 @@
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
+   </row>
+   <row>
+    <entry><token>RETURNING</token></entry>
+    <entry>reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>RETURNS</token></entry>
@@ -4330,7 +4372,7 @@
    </row>
    <row>
     <entry><token>VALUES</token></entry>
-    <entry>non-reserved</entry>
+    <entry>non-reserved (cannot be function or type)</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
