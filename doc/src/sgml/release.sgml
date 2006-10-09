@@ -1,10 +1,46 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.32 2006/05/21 21:50:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.33 2006/10/09 23:22:58 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-7-3-16">
+   <title>Release 7.3.16</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-10-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.15.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.16</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist> 
+
+<listitem><para>Minor fixes related to timezones, spinlocks, SSL,
+GiST, /contrib/ltree, and <application>psql</></para> </listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-3-15">
    <title>Release 7.3.15</title>
 
