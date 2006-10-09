@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.146 2006/10/07 22:21:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.147 2006/10/09 23:30:33 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -31,11 +31,6 @@ static bool describeOneTableDetails(const char *schemaname,
 						const char *relationname,
 						const char *oid,
 						bool verbose);
-static void processNamePattern(PQExpBuffer buf, const char *pattern,
-				   bool have_where, bool force_escape,
-				   const char *schemavar, const char *namevar,
-				   const char *altnamevar, const char *visibilityrule);
-
 static bool add_tablespace_footer(char relkind, Oid tablespace, char **footers,
 					  int *count, PQExpBufferData buf, bool newline);
 
@@ -84,9 +79,9 @@ describeAggregates(const char *pattern, bool verbose)
 					  _("Schema"), _("Name"),
 					  _("Argument data types"), _("Description"));
 
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "p.proname", NULL,
-					   "pg_catalog.pg_function_is_visible(p.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "p.proname", NULL,
+						  "pg_catalog.pg_function_is_visible(p.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3;");
 
@@ -138,9 +133,9 @@ describeTablespaces(const char *pattern, bool verbose)
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_tablespace\n");
 
-	processNamePattern(&buf, pattern, false, false,
-					   NULL, "spcname", NULL,
-					   NULL);
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  NULL, "spcname", NULL,
+						  NULL);
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
@@ -236,9 +231,9 @@ describeFunctions(const char *pattern, bool verbose)
 					  "      OR   p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype)\n"
 					  "      AND NOT p.proisagg\n");
 
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "p.proname", NULL,
-					   "pg_catalog.pg_function_is_visible(p.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "p.proname", NULL,
+						  "pg_catalog.pg_function_is_visible(p.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3, 4;");
 
@@ -302,10 +297,10 @@ describeTypes(const char *pattern, bool verbose)
 	appendPQExpBuffer(&buf, "AND t.typname !~ '^_'\n");
 
 	/* Match name pattern against either internal or external name */
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "t.typname",
-					   "pg_catalog.format_type(t.oid, NULL)",
-					   "pg_catalog.pg_type_is_visible(t.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "t.typname",
+						  "pg_catalog.format_type(t.oid, NULL)",
+						  "pg_catalog.pg_type_is_visible(t.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
 
@@ -350,9 +345,9 @@ describeOperators(const char *pattern)
 					  _("Left arg type"), _("Right arg type"),
 					  _("Result type"), _("Description"));
 
-	processNamePattern(&buf, pattern, false, true,
-					   "n.nspname", "o.oprname", NULL,
-					   "pg_catalog.pg_operator_is_visible(o.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, false, true,
+						  "n.nspname", "o.oprname", NULL,
+						  "pg_catalog.pg_operator_is_visible(o.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3, 4;");
 
@@ -455,8 +450,8 @@ permissionsList(const char *pattern)
 	 * point of view.  You can see 'em by explicit request though, eg with \z
 	 * pg_catalog.*
 	 */
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "c.relname", NULL,
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "c.relname", NULL,
 			"n.nspname !~ '^pg_' AND pg_catalog.pg_table_is_visible(c.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
@@ -513,9 +508,9 @@ objectDescription(const char *pattern)
 	 "       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
 					  "  WHERE p.proisagg\n",
 					  _("aggregate"));
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "p.proname", NULL,
-					   "pg_catalog.pg_function_is_visible(p.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "p.proname", NULL,
+						  "pg_catalog.pg_function_is_visible(p.oid)");
 
 	/* Function descriptions (except in/outs for datatypes) */
 	appendPQExpBuffer(&buf,
@@ -532,9 +527,9 @@ objectDescription(const char *pattern)
 					  "      OR   p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype)\n"
 					  "      AND NOT p.proisagg\n",
 					  _("function"));
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "p.proname", NULL,
-					   "pg_catalog.pg_function_is_visible(p.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "p.proname", NULL,
+						  "pg_catalog.pg_function_is_visible(p.oid)");
 
 	/* Operator descriptions (only if operator has its own comment) */
 	appendPQExpBuffer(&buf,
@@ -546,9 +541,9 @@ objectDescription(const char *pattern)
 					  "  FROM pg_catalog.pg_operator o\n"
 	"       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = o.oprnamespace\n",
 					  _("operator"));
-	processNamePattern(&buf, pattern, false, false,
-					   "n.nspname", "o.oprname", NULL,
-					   "pg_catalog.pg_operator_is_visible(o.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "o.oprname", NULL,
+						  "pg_catalog.pg_operator_is_visible(o.oid)");
 
 	/* Type description */
 	appendPQExpBuffer(&buf,
@@ -560,9 +555,10 @@ objectDescription(const char *pattern)
 					  "  FROM pg_catalog.pg_type t\n"
 	"       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n",
 					  _("data type"));
-	processNamePattern(&buf, pattern, false, false,
-					"n.nspname", "pg_catalog.format_type(t.oid, NULL)", NULL,
-					   "pg_catalog.pg_type_is_visible(t.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "pg_catalog.format_type(t.oid, NULL)",
+						  NULL,
+						  "pg_catalog.pg_type_is_visible(t.oid)");
 
 	/* Relation (tables, views, indexes, sequences) descriptions */
 	appendPQExpBuffer(&buf,
@@ -577,9 +573,9 @@ objectDescription(const char *pattern)
 	 "       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
 					  "  WHERE c.relkind IN ('r', 'v', 'i', 'S')\n",
 					  _("table"), _("view"), _("index"), _("sequence"));
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "c.relname", NULL,
-					   "pg_catalog.pg_table_is_visible(c.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "c.relname", NULL,
+						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	/* Rule description (ignore rules for views) */
 	appendPQExpBuffer(&buf,
@@ -594,9 +590,9 @@ objectDescription(const char *pattern)
 					  "  WHERE r.rulename != '_RETURN'\n",
 					  _("rule"));
 	/* XXX not sure what to do about visibility rule here? */
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "r.rulename", NULL,
-					   "pg_catalog.pg_table_is_visible(c.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "r.rulename", NULL,
+						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	/* Trigger description */
 	appendPQExpBuffer(&buf,
@@ -610,9 +606,9 @@ objectDescription(const char *pattern)
 	"       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n",
 					  _("trigger"));
 	/* XXX not sure what to do about visibility rule here? */
-	processNamePattern(&buf, pattern, false, false,
-					   "n.nspname", "t.tgname", NULL,
-					   "pg_catalog.pg_table_is_visible(c.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "t.tgname", NULL,
+						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	appendPQExpBuffer(&buf,
 					  ") AS tt\n"
@@ -660,9 +656,9 @@ describeTableDetails(const char *pattern, bool verbose)
 					  "FROM pg_catalog.pg_class c\n"
 	 "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n");
 
-	processNamePattern(&buf, pattern, false, false,
-					   "n.nspname", "c.relname", NULL,
-					   "pg_catalog.pg_table_is_visible(c.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "c.relname", NULL,
+						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 2, 3;");
 
@@ -1464,8 +1460,8 @@ describeRoles(const char *pattern, bool verbose)
 
 	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_roles r\n");
 
-	processNamePattern(&buf, pattern, false, false,
-					   NULL, "r.rolname", NULL, NULL);
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  NULL, "r.rolname", NULL, NULL);
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
@@ -1571,9 +1567,9 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 	else
 		appendPQExpBuffer(&buf, "      AND n.nspname NOT IN ('pg_catalog', 'pg_toast')\n");
 
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "c.relname", NULL,
-					   "pg_catalog.pg_table_is_visible(c.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "c.relname", NULL,
+						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1,2;");
 
@@ -1636,9 +1632,9 @@ listDomains(const char *pattern)
 					  _("Modifier"),
 					  _("Check"));
 
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "t.typname", NULL,
-					   "pg_catalog.pg_type_is_visible(t.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "t.typname", NULL,
+						  "pg_catalog.pg_type_is_visible(t.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
 
@@ -1687,9 +1683,9 @@ listConversions(const char *pattern)
 					  _("no"),
 					  _("Default?"));
 
-	processNamePattern(&buf, pattern, true, false,
-					   "n.nspname", "c.conname", NULL,
-					   "pg_catalog.pg_conversion_is_visible(c.oid)");
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "c.conname", NULL,
+						  "pg_catalog.pg_conversion_is_visible(c.oid)");
 
 	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
 
@@ -1787,9 +1783,9 @@ listSchemas(const char *pattern, bool verbose)
 					  "WHERE	(n.nspname !~ '^pg_temp_' OR\n"
 		   "		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");		/* temp schema is first */
 
-	processNamePattern(&buf, pattern, true, false,
-					   NULL, "n.nspname", NULL,
-					   NULL);
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  NULL, "n.nspname", NULL,
+						  NULL);
 
 	appendPQExpBuffer(&buf, "ORDER BY 1;");
 
@@ -1805,202 +1801,4 @@ listSchemas(const char *pattern, bool verbose)
 
 	PQclear(res);
 	return true;
-}
-
-
-/*
- * processNamePattern
- *
- * Scan a wildcard-pattern option and generate appropriate WHERE clauses
- * to limit the set of objects returned.  The WHERE clauses are appended
- * to buf.
- *
- * pattern: user-specified pattern option to a \d command, or NULL if none.
- * have_where: true if caller already emitted WHERE.
- * force_escape: always quote regexp special characters, even outside quotes.
- * schemavar: name of WHERE variable to match against a schema-name pattern.
- * Can be NULL if no schema.
- * namevar: name of WHERE variable to match against an object-name pattern.
- * altnamevar: NULL, or name of an alternate variable to match against name.
- * visibilityrule: clause to use if we want to restrict to visible objects
- * (for example, "pg_catalog.pg_table_is_visible(p.oid)").	Can be NULL.
- */
-static void
-processNamePattern(PQExpBuffer buf, const char *pattern,
-				   bool have_where, bool force_escape,
-				   const char *schemavar, const char *namevar,
-				   const char *altnamevar, const char *visibilityrule)
-{
-	PQExpBufferData schemabuf;
-	PQExpBufferData namebuf;
-	bool		inquotes;
-	const char *cp;
-	int			i;
-
-#define WHEREAND() \
-	(appendPQExpBuffer(buf, have_where ? "      AND " : "WHERE "), have_where = true)
-
-	if (pattern == NULL)
-	{
-		/* Default: select all visible objects */
-		if (visibilityrule)
-		{
-			WHEREAND();
-			appendPQExpBuffer(buf, "%s\n", visibilityrule);
-		}
-		return;
-	}
-
-	initPQExpBuffer(&schemabuf);
-	initPQExpBuffer(&namebuf);
-
-	/*
-	 * Parse the pattern, converting quotes and lower-casing unquoted letters;
-	 * we assume this was NOT done by scan_option.	Also, adjust shell-style
-	 * wildcard characters into regexp notation.
-	 *
-	 * Note: the result of this pass is the actual regexp pattern we want to
-	 * execute.  Quoting/escaping it into a SQL literal will be done below.
-	 */
-	appendPQExpBufferChar(&namebuf, '^');
-
-	inquotes = false;
-	cp = pattern;
-
-	while (*cp)
-	{
-		char	ch = *cp;
-
-		if (ch == '"')
-		{
-			if (inquotes && cp[1] == '"')
-			{
-				/* emit one quote, stay in inquotes mode */
-				appendPQExpBufferChar(&namebuf, '"');
-				cp++;
-			}
-			else
-				inquotes = !inquotes;
-			cp++;
-		}
-		else if (!inquotes && isupper((unsigned char) ch))
-		{
-			appendPQExpBufferChar(&namebuf,
-								  pg_tolower((unsigned char) ch));
-			cp++;
-		}
-		else if (!inquotes && ch == '*')
-		{
-			appendPQExpBuffer(&namebuf, ".*");
-			cp++;
-		}
-		else if (!inquotes && ch == '?')
-		{
-			appendPQExpBufferChar(&namebuf, '.');
-			cp++;
-		}
-		else if (!inquotes && ch == '.')
-		{
-			/* Found schema/name separator, move current pattern to schema */
-			resetPQExpBuffer(&schemabuf);
-			appendPQExpBufferStr(&schemabuf, namebuf.data);
-			resetPQExpBuffer(&namebuf);
-			appendPQExpBufferChar(&namebuf, '^');
-			cp++;
-		}
-		else
-		{
-			/*
-			 * Ordinary data character, transfer to pattern
-			 *
-			 * Inside double quotes, or at all times if parsing an operator
-			 * name, quote regexp special characters with a backslash to avoid
-			 * regexp errors.  Outside quotes, however, let them pass through
-			 * as-is; this lets knowledgeable users build regexp expressions
-			 * that are more powerful than shell-style patterns.
-			 */
-			if ((inquotes || force_escape) &&
-				strchr("|*+?()[]{}.^$\\", ch))
-				appendPQExpBufferChar(&namebuf, '\\');
-			i = PQmblen(cp, pset.encoding);
-			while (i-- && *cp)
-			{
-				appendPQExpBufferChar(&namebuf, *cp);
-				cp++;
-			}
-		}
-	}
-
-	/*
-	 * Now decide what we need to emit.  Note there will be a leading '^' in
-	 * the patterns in any case.
-	 */
-	if (namebuf.len > 1)
-	{
-		/* We have a name pattern, so constrain the namevar(s) */
-
-		appendPQExpBufferChar(&namebuf, '$');
-		/* Optimize away ".*$", and possibly the whole pattern */
-		if (namebuf.len >= 4 &&
-			strcmp(namebuf.data + (namebuf.len - 3), ".*$") == 0)
-		{
-			namebuf.len -= 3;
-			namebuf.data[namebuf.len] = '\0';
-		}
-
-		if (namebuf.len > 1)
-		{
-			WHEREAND();
-			if (altnamevar)
-			{
-				appendPQExpBuffer(buf, "(%s ~ ", namevar);
-				appendStringLiteralConn(buf, namebuf.data, pset.db);
-				appendPQExpBuffer(buf, "\n        OR %s ~ ", altnamevar);
-				appendStringLiteralConn(buf, namebuf.data, pset.db);
-				appendPQExpBuffer(buf, ")\n");
-			}
-			else
-			{
-				appendPQExpBuffer(buf, "%s ~ ", namevar);
-				appendStringLiteralConn(buf, namebuf.data, pset.db);
-				appendPQExpBufferChar(buf, '\n');
-			}
-		}
-	}
-
-	if (schemabuf.len > 1)
-	{
-		/* We have a schema pattern, so constrain the schemavar */
-
-		appendPQExpBufferChar(&schemabuf, '$');
-		/* Optimize away ".*$", and possibly the whole pattern */
-		if (schemabuf.len >= 4 &&
-			strcmp(schemabuf.data + (schemabuf.len - 3), ".*$") == 0)
-		{
-			schemabuf.len -= 3;
-			schemabuf.data[schemabuf.len] = '\0';
-		}
-
-		if (schemabuf.len > 1 && schemavar)
-		{
-			WHEREAND();
-			appendPQExpBuffer(buf, "%s ~ ", schemavar);
-			appendStringLiteralConn(buf, schemabuf.data, pset.db);
-			appendPQExpBufferChar(buf, '\n');
-		}
-	}
-	else
-	{
-		/* No schema pattern given, so select only visible objects */
-		if (visibilityrule)
-		{
-			WHEREAND();
-			appendPQExpBuffer(buf, "%s\n", visibilityrule);
-		}
-	}
-
-	termPQExpBuffer(&schemabuf);
-	termPQExpBuffer(&namebuf);
-
-#undef WHEREAND
 }
