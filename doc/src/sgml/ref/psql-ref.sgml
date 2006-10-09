@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.170 2006/10/03 21:14:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.171 2006/10/09 23:31:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1817,34 +1817,85 @@ lo_import 152801
     </variablelist>
   </para>
 
+  <refsect3 id="APP-PSQL-patterns">
+   <title id="APP-PSQL-patterns-title">Patterns</title>
+
+   <indexterm>
+    <primary>patterns</primary>
+    <secondary>in psql and pg_dump</secondary>
+   </indexterm>
+
   <para>
    The various <literal>\d</> commands accept a <replaceable
    class="parameter">pattern</replaceable> parameter to specify the
-   object name(s) to be displayed.  <literal>*</> means <quote>any
-   sequence of characters</> and <literal>?</> means <quote>any single
-   character</>.  (This notation is comparable to Unix shell file name
-   patterns.)  Advanced users can also use regular-expression
-   notations such as character classes, for example <literal>[0-9]</>
-   to match <quote>any digit</>.  To make any of these
-   pattern-matching characters be interpreted literally, surround it
-   with double quotes.
+   object name(s) to be displayed.  In the simplest case, a pattern
+   is just the exact name of the object.  The characters within a
+   pattern are normally folded to lower case, just as in SQL names;
+   for example, <literal>\dt FOO</> will display the table named
+   <literal>foo</>.  As in SQL names, placing double quotes around
+   a pattern stops folding to lower case.  Should you need to include
+   an actual double quote character in a pattern, write it as a pair
+   of double quotes within a double-quote sequence; again this is in
+   accord with the rules for SQL quoted identifiers.  For example,
+   <literal>\dt "FOO""BAR"</> will display the table named
+   <literal>FOO"BAR</> (not <literal>foo"bar</>).  Unlike the normal
+   rules for SQL names, you can put double quotes around just part
+   of a pattern, for instance <literal>\dt FOO"FOO"BAR</> will display
+   the table named <literal>fooFOObar</>.
   </para>
 
   <para>
-   A pattern that contains an (unquoted) dot is interpreted as a schema
+   Within a pattern, <literal>*</> matches any sequence of characters
+   (including no characters) and <literal>?</> matches any single character.
+   (This notation is comparable to Unix shell file name patterns.)
+   For example, <literal>\dt int*</> displays all tables whose names
+   begin with <literal>int</>.  But within double quotes, <literal>*</>
+   and <literal>?</> lose these special meanings and are just matched
+   literally.
+  </para>
+
+  <para>
+   A pattern that contains a dot (<literal>.</>) is interpreted as a schema
    name pattern followed by an object name pattern.  For example,
-   <literal>\dt foo*.bar*</> displays all tables in schemas whose name
-   starts with <literal>foo</> and whose table name
-   starts with <literal>bar</>.  If no dot appears, then the pattern
+   <literal>\dt foo*.bar*</> displays all tables whose table name
+   starts with <literal>bar</> that are in schemas whose schema name
+   starts with <literal>foo</>.  When no dot appears, then the pattern
    matches only objects that are visible in the current schema search path.
+   Again, a dot within double quotes loses its special meaning and is matched
+   literally.
+  </para>
+
+  <para>
+   Advanced users can use regular-expression notations such as character
+   classes, for example <literal>[0-9]</> to match any digit.  All regular
+   expression special characters work as specified in
+   <xref linkend="functions-posix-regexp">, except for <literal>.</> which
+   is taken as a separator as mentioned above, <literal>*</> which is
+   translated to the regular-expression notation <literal>.*</>, and
+   <literal>?</> which is translated to <literal>.</>.  You can emulate
+   these pattern characters at need by writing
+   <literal>?</> for <literal>.</>,
+   <literal>(<replaceable class="parameter">R</replaceable>+|)</literal> for
+   <literal><replaceable class="parameter">R</replaceable>*</literal>, or
+   <literal>(<replaceable class="parameter">R</replaceable>|)</literal> for
+   <literal><replaceable class="parameter">R</replaceable>?</literal>.
+   Remember that the pattern must match the whole name, unlike the usual
+   interpretation of regular expressions; write <literal>*</> at the beginning
+   and/or end if you don't wish the pattern to be anchored.
+   Note that within double quotes, all regular expression special characters
+   lose their special meanings and are matched literally.  Also, the regular
+   expression special characters are matched literally in operator name
+   patterns (i.e., the argument of <literal>\do</>).
   </para>
 
   <para>
    Whenever the <replaceable class="parameter">pattern</replaceable> parameter
    is omitted completely, the <literal>\d</> commands display all objects
-   that are visible in the current schema search path.  To see all objects
-   in the database, use the pattern <literal>*.*</>.
+   that are visible in the current schema search path &mdash; this is
+   equivalent to using the pattern <literal>*</>.
+   To see all objects in the database, use the pattern <literal>*.*</>.
   </para>
+  </refsect3>
  </refsect2>
 
  <refsect2>
