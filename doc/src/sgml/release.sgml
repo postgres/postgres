@@ -1,10 +1,59 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.23 2006/05/21 21:49:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.24 2006/10/09 23:23:29 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-8-0-9">
+   <title>Release 8.0.9</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-10-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.8.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.9</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+
+<listitem><para>Fix crash when referencing <literal>NEW</> row
+values in rules (Tom)</para></listitem>
+<listitem><para>Add ability to log protocol-level prepared
+statements (Tom)</para></listitem>
+<listitem><para>Fix <command>ALTER TABLE ... TYPE</> to recheck
+<literal>NOT NULL</> for <literal>USING</> clause (Tom)</para></listitem>
+<listitem><para>Fix rare termination of the statistics collector
+process on Win32 (Tom)</para></listitem>
+<listitem><para>Fixes for <systemitem class="osname">AIX</> and
+<productname>Intel</> compilers (Tom)</para></listitem>
+<listitem><para>Fix <function>string_to_array()</> to handle overlapping
+matches for the separator string</para> <para>For example,
+<literal>string_to_array('123xx456xxx789', 'xx')</>.</para></listitem>
+<listitem><para>Minor fixes related to ecpg, /contrib/ltree,
+and <application>psql</></para> </listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-8-0-8">
    <title>Release 8.0.8</title>
 
@@ -3158,6 +3207,46 @@ typedefs (Michael)</para></listitem>
    </sect2>
   </sect1>
 
+  <sect1 id="release-7-4-14">
+   <title>Release 7.4.14</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-10-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.13.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.14</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+
+<listitem><para>Minor fixes related to timezones, ecpg, /contrib/ltree,
+and <application>psql</></para> </listitem>
+
+<listitem><para>Fix <function>string_to_array()</> to handle overlapping
+matches for the separator string</para> <para>For example,
+<literal>string_to_array('123xx456xxx789', 'xx')</>.</para></listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-13">
    <title>Release 7.4.13</title>
 
@@ -6072,6 +6161,42 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-3-16">
+   <title>Release 7.3.16</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2006-10-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.15.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.16</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist> 
+
+<listitem><para>Minor fixes related to timezones, spinlocks, SSL,
+GiST, /contrib/ltree, and <application>psql</></para> </listitem>
+
+</itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-3-15">
    <title>Release 7.3.15</title>
 
