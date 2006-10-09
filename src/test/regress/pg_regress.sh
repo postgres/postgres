@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.53.4.3 2006/06/19 14:25:01 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.53.4.4 2006/10/09 01:45:49 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -680,7 +680,8 @@ do
         # to a system-specific expected file.
         # There shouldn't be multiple matches, but take the last if there are.
 
-        EXPECTED="$inputdir/expected/${name}"
+        STDEXPECTED="$inputdir/expected/${name}"
+        EXPECTED="$STDEXPECTED"
         for LINE in $SUBSTLIST
         do
             if [ `expr "$LINE" : "$name="` -ne 0 ]
@@ -690,13 +691,14 @@ do
             fi
         done
 
-        # If there are multiple equally valid result files, loop to get the right one.
+        # If there are multiple equally valid result files,
+        # loop to get the right one.
         # If none match, diff against the closest one.
 
         bestfile=
         bestdiff=
         result=2
-        for thisfile in $EXPECTED.out ${EXPECTED}_[0-9].out; do
+        for thisfile in $EXPECTED.out ${EXPECTED}_[0-9].out $STDEXPECTED.out; do
             [ ! -r "$thisfile" ] && continue
             diff $DIFFFLAGS $thisfile $outputdir/results/${name}.out >/dev/null 2>&1
             result=$?
