@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.93 2006/09/27 15:41:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.94 2006/10/09 23:36:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,16 +402,14 @@ AssignDumpId(DumpableObject *dobj)
 		{
 			newAlloc = 256;
 			dumpIdMap = (DumpableObject **)
-				malloc(newAlloc * sizeof(DumpableObject *));
+				pg_malloc(newAlloc * sizeof(DumpableObject *));
 		}
 		else
 		{
 			newAlloc = allocedDumpIds * 2;
 			dumpIdMap = (DumpableObject **)
-				realloc(dumpIdMap, newAlloc * sizeof(DumpableObject *));
+				pg_realloc(dumpIdMap, newAlloc * sizeof(DumpableObject *));
 		}
-		if (dumpIdMap == NULL)
-			exit_horribly(NULL, NULL, "out of memory\n");
 		memset(dumpIdMap + allocedDumpIds, 0,
 			   (newAlloc - allocedDumpIds) * sizeof(DumpableObject *));
 		allocedDumpIds = newAlloc;
@@ -541,9 +539,7 @@ getDumpableObjects(DumpableObject ***objs, int *numObjs)
 				j;
 
 	*objs = (DumpableObject **)
-		malloc(allocedDumpIds * sizeof(DumpableObject *));
-	if (*objs == NULL)
-		exit_horribly(NULL, NULL, "out of memory\n");
+		pg_malloc(allocedDumpIds * sizeof(DumpableObject *));
 	j = 0;
 	for (i = 1; i < allocedDumpIds; i++)
 	{
@@ -567,17 +563,15 @@ addObjectDependency(DumpableObject *dobj, DumpId refId)
 		{
 			dobj->allocDeps = 16;
 			dobj->dependencies = (DumpId *)
-				malloc(dobj->allocDeps * sizeof(DumpId));
+				pg_malloc(dobj->allocDeps * sizeof(DumpId));
 		}
 		else
 		{
 			dobj->allocDeps *= 2;
 			dobj->dependencies = (DumpId *)
-				realloc(dobj->dependencies,
-						dobj->allocDeps * sizeof(DumpId));
+				pg_realloc(dobj->dependencies,
+						   dobj->allocDeps * sizeof(DumpId));
 		}
-		if (dobj->dependencies == NULL)
-			exit_horribly(NULL, NULL, "out of memory\n");
 	}
 	dobj->dependencies[dobj->nDeps++] = refId;
 }
@@ -707,7 +701,8 @@ findParentsByOid(TableInfo *self,
 
 	if (numParents > 0)
 	{
-		self->parents = (TableInfo **) malloc(sizeof(TableInfo *) * numParents);
+		self->parents = (TableInfo **)
+			pg_malloc(sizeof(TableInfo *) * numParents);
 		j = 0;
 		for (i = 0; i < numInherits; i++)
 		{
@@ -805,4 +800,125 @@ strInArray(const char *pattern, char **arr, int arr_size)
 			return i;
 	}
 	return -1;
+}
+
+
+/*
+ * Support for simple list operations
+ */
+
+void
+simple_oid_list_append(SimpleOidList *list, Oid val)
+{
+	SimpleOidListCell *cell;
+
+	cell = (SimpleOidListCell *) pg_malloc(sizeof(SimpleOidListCell));
+	cell->next = NULL;
+	cell->val = val;
+
+	if (list->tail)
+		list->tail->next = cell;
+	else
+		list->head = cell;
+	list->tail = cell;
+}
+
+void
+simple_string_list_append(SimpleStringList *list, const char *val)
+{
+	SimpleStringListCell *cell;
+
+	/* this calculation correctly accounts for the null trailing byte */
+	cell = (SimpleStringListCell *)
+		pg_malloc(sizeof(SimpleStringListCell) + strlen(val));
+	cell->next = NULL;
+	strcpy(cell->val, val);
+
+	if (list->tail)
+		list->tail->next = cell;
+	else
+		list->head = cell;
+	list->tail = cell;
+}
+
+bool
+simple_oid_list_member(SimpleOidList *list, Oid val)
+{
+	SimpleOidListCell *cell;
+
+	for (cell = list->head; cell; cell = cell->next)
+	{
+		if (cell->val == val)
+			return true;
+	}
+	return false;
+}
+
+bool
+simple_string_list_member(SimpleStringList *list, const char *val)
+{
+	SimpleStringListCell *cell;
+
+	for (cell = list->head; cell; cell = cell->next)
+	{
+		if (strcmp(cell->val, val) == 0)
+			return true;
+	}
+	return false;
+}
+
+
+/*
+ * Safer versions of some standard C library functions. If an
+ * out-of-memory condition occurs, these functions will bail out
+ * safely; therefore, their return value is guaranteed to be non-NULL.
+ *
+ * XXX need to refactor things so that these can be in a file that can be
+ * shared by pg_dumpall and pg_restore as well as pg_dump.
+ */
+
+char *
+pg_strdup(const char *string)
+{
+	char	   *tmp;
+
+	if (!string)
+		exit_horribly(NULL, NULL, "cannot duplicate null pointer\n");
+	tmp = strdup(string);
+	if (!tmp)
+		exit_horribly(NULL, NULL, "out of memory\n");
+	return tmp;
+}
+
+void *
+pg_malloc(size_t size)
+{
+	void	   *tmp;
+
+	tmp = malloc(size);
+	if (!tmp)
+		exit_horribly(NULL, NULL, "out of memory\n");
+	return tmp;
+}
+
+void *
+pg_calloc(size_t nmemb, size_t size)
+{
+	void	   *tmp;
+
+	tmp = calloc(nmemb, size);
+	if (!tmp)
+		exit_horribly(NULL, NULL, "out of memory\n");
+	return tmp;
+}
+
+void *
+pg_realloc(void *ptr, size_t size)
+{
+	void	   *tmp;
+
+	tmp = realloc(ptr, size);
+	if (!tmp)
+		exit_horribly(NULL, NULL, "out of memory\n");
+	return tmp;
 }

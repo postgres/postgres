@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.89 2006/10/07 20:59:04 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.90 2006/10/09 23:36:58 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -14,7 +14,7 @@ PostgreSQL documentation
   <refname>pg_dump</refname>
 
   <refpurpose>
-   extract a <productname>PostgreSQL</productname> database into a script file or other archive file 
+   extract a <productname>PostgreSQL</productname> database into a script file or other archive file
   </refpurpose>
  </refnamediv>
 
@@ -127,6 +127,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-b</></term>
+      <term><option>--blobs</></term>
+      <listitem>
+       <para>
+        Include large objects in the dump.  This is the default behavior
+        except when <option>--schema</>, <option>--table</>, or
+        <option>--schema-only</> is specified, so the <option>-b</>
+        switch is only useful to add large objects to selective dumps.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-c</option></term>
       <term><option>--clean</option></term>
       <listitem>
@@ -170,12 +183,14 @@ PostgreSQL documentation
         Dump data as <command>INSERT</command> commands (rather
         than <command>COPY</command>).  This will make restoration very slow;
         it is mainly useful for making dumps that can be loaded into
-        non-<productname>PostgreSQL</productname> databases.  Note that
+        non-<productname>PostgreSQL</productname> databases.
+        Also, since this option generates a separate command for each row,
+        an error in reloading a row causes only that row to be lost rather
+        than the entire table contents.
+        Note that
         the restore may fail altogether if you have rearranged column order.
-        The <option>-D</option> option is safer, though even slower.
-        Also, while this option generates errors for invalid data, 
-        it allows other <command>INSERT</command>s to continue loading
-        data into the table.
+        The <option>-D</option> option is safe against column order changes,
+        though even slower.
        </para>
       </listitem>
      </varlistentry>
@@ -193,9 +208,9 @@ PostgreSQL documentation
         ...</literal>).  This will make restoration very slow; it is mainly
         useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
-        Also, while this option generates errors for invalid data, 
-        it allows other <command>INSERT</command>s to continue loading
-        data into the table.
+        Also, since this option generates a separate command for each row,
+        an error in reloading a row causes only that row to be lost rather
+        than the entire table contents.
        </para>
       </listitem>
      </varlistentry>
@@ -238,7 +253,7 @@ PostgreSQL documentation
          <term><literal>plain</></term>
          <listitem>
           <para>
-           Output a plain-text <acronym>SQL</acronym> script file (default)
+           Output a plain-text <acronym>SQL</acronym> script file (the default).
           </para>
          </listitem>
         </varlistentry>
@@ -248,10 +263,10 @@ PostgreSQL documentation
          <term><literal>custom</></term>
          <listitem>
           <para>
-         Output a custom archive suitable for input into 
-         <application>pg_restore</application>. This is the most flexible 
-         format in that it allows reordering of loading data as well 
-         as object definitions. This format is also compressed by default.
+           Output a custom archive suitable for input into
+           <application>pg_restore</application>. This is the most flexible
+           format in that it allows reordering of loading data as well
+           as object definitions. This format is also compressed by default.
           </para>
          </listitem>
         </varlistentry>
@@ -261,11 +276,11 @@ PostgreSQL documentation
          <term><literal>tar</></term>
          <listitem>
           <para>
-         Output a <command>tar</command> archive suitable for input into 
-         <application>pg_restore</application>. Using this archive format 
-         allows reordering and/or exclusion of database objects
-         at the time the database is restored. It is also possible to limit 
-         which data is reloaded at restore time.
+           Output a <command>tar</command> archive suitable for input into
+           <application>pg_restore</application>. Using this archive format
+           allows reordering and/or exclusion of database objects
+           at the time the database is restored. It is also possible to limit
+           which data is reloaded at restore time.
           </para>
          </listitem>
         </varlistentry>
@@ -286,9 +301,11 @@ PostgreSQL documentation
        </para>
 
        <para>
-        <application>pg_dump</application> can handle databases from
+        <application>pg_dump</application> can dump from servers running
         previous releases of <productname>PostgreSQL</>, but very old
-        versions are not supported anymore (currently prior to 7.0).
+        versions are not supported anymore (currently, those prior to 7.0).
+        Dumping from a server newer than <application>pg_dump</application>
+        is likely not to work at all.
         Use this option if you need to override the version check (and
         if <application>pg_dump</application> then fails, don't say
         you weren't warned).
@@ -301,20 +318,61 @@ PostgreSQL documentation
       <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
       <listitem>
        <para>
-        Dump the contents of <replaceable class="parameter">schema</>
-        only. If this option is not specified, all non-system schemas
-        in the target database will be dumped.
+        Dump only schemas matching <replaceable
+        class="parameter">schema</replaceable>; this selects both the
+        schema itself, and all its contained objects.  When this option is
+        not specified, all non-system schemas in the target database will be
+        dumped.  Multiple schemas can be
+        selected by writing multiple <option>-n</> switches.  Also, the
+        <replaceable class="parameter">schema</replaceable> parameter is
+        interpreted as a pattern according to the same rules used by
+        <application>psql</>'s <literal>\d</> commands (see <xref
+        linkend="APP-PSQL-patterns" endterm="APP-PSQL-patterns-title">),
+        so multiple schemas can also be selected by writing wildcard characters
+        in the pattern.  When using wildcards, be careful to quote the pattern
+        if needed to prevent the shell from expanding the wildcards.
        </para>
 
        <note>
         <para>
-         In this mode, <application>pg_dump</application> makes no
-         attempt to dump any other database objects that objects in the
-         selected schema may depend upon. Therefore, there is no
-         guarantee that the results of a single-schema dump can be
-         successfully restored by themselves into a clean database.
+         When <option>-n</> is specified, <application>pg_dump</application>
+         makes no attempt to dump any other database objects that the selected
+         schema(s) may depend upon. Therefore, there is no guarantee
+         that the results of a specific-schema dump can be successfully
+         restored by themselves into a clean database.
         </para>
        </note>
+
+       <note>
+        <para>
+         Non-schema objects such as blobs are not dumped when <option>-n</> is
+         specified.  You can add blobs back to the dump with the
+         <option>--blobs</> switch.
+        </para>
+       </note>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-N <replaceable class="parameter">schema</replaceable></option></term>
+      <term><option>--exclude-schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not dump any schemas matching the <replaceable
+        class="parameter">schema</replaceable> pattern.  The pattern is
+        interpreted according to the same rules as for <option>-n</>.
+        <option>-N</> can be given more than once to exclude schemas
+        matching any of several patterns.
+       </para>
+
+       <para>
+        When both <option>-n</> and <option>-N</> are given, the behavior
+        is to dump just the schemas that match at least one <option>-n</>
+        switch but no <option>-N</> switches.  If <option>-N</> appears
+        without <option>-n</>, then schemas matching <option>-N</> are
+        excluded from what is otherwise a normal dump.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -340,7 +398,7 @@ PostgreSQL documentation
         Do not output commands to set
         ownership of objects to match the original database.
         By default, <application>pg_dump</application> issues
-        <command>ALTER OWNER</> or 
+        <command>ALTER OWNER</> or
         <command>SET SESSION AUTHORIZATION</command>
         statements to set ownership of created database objects.
         These statements
@@ -397,65 +455,45 @@ PostgreSQL documentation
       <term><option>--table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>
-        Dump data for <replaceable class="parameter">table</replaceable>
-        only. It is possible for there to be multiple tables with the same 
-        name in different schemas; if that is the case, all matching tables 
-        will be dumped. Also, if any POSIX regular expression character appears
-        in the table name (<literal>([{\.?+</>, the string will be interpreted
-        as a regular expression.  Note that when in regular expression mode, the
-        string will not be anchored to the start/end unless <literal>^</> and
-        <literal>$</> are used at the beginning/end of the string.
+        Dump only tables (or views or sequences) matching <replaceable
+        class="parameter">table</replaceable>.  Multiple tables can be
+        selected by writing multiple <option>-t</> switches.  Also, the
+        <replaceable class="parameter">table</replaceable> parameter is
+        interpreted as a pattern according to the same rules used by
+        <application>psql</>'s <literal>\d</> commands (see <xref
+        linkend="APP-PSQL-patterns" endterm="APP-PSQL-patterns-title">),
+        so multiple tables can also be selected by writing wildcard characters
+        in the pattern.  When using wildcards, be careful to quote the pattern
+        if needed to prevent the shell from expanding the wildcards.
        </para>
 
        <para>
-       The options <option>-t</>, <option>-T</>, <option>-n</>, and <option>-N</> 
-       can be used together to achieve a high degree of control over what is
-       dumped. Multiple arguments can be used, and are parsed in the order 
-       given to build a list of valid tables and schemas. The schema options are 
-       parsed first to create a list of schemas to dump, and then the table options 
-       are parsed to only find tables in the matching schemas.
+        The <option>-n</> and <option>-N</> switches have no effect when
+        <option>-t</> is used, because tables selected by <option>-t</> will
+        be dumped regardless of those switches, and non-table objects will not
+        be dumped.
        </para>
-
-       <para>For example, to dump a single table named <literal>pg_class</>:
-
-<screen>
-<prompt>$</prompt> <userinput>pg_dump -t pg_class mydb &gt; db.out</userinput>
-</screen>
-       </para>
-
-       <para>To dump all tables starting with <literal>employee</> in the 
-       <literal>detroit</> schema, except for the table named <literal>employee_log</literal>:
-
-<screen>
-<prompt>$</prompt> <userinput>pg_dump -n detroit -t ^employee -T employee_log mydb &gt; db.out</userinput>
-</screen>
-       </para>
-
-       <para>To dump all schemas starting with <literal>east</> or <literal>west</> and ending in
-       <literal>gsm</>, but not schemas that contain the letters <literal>test</>, except for 
-       one named <literal>east_alpha_test_five</>:
-
-<screen>
-<prompt>$</prompt> <userinput>pg_dump -n "^(east|west).*gsm$" -N test -n east_alpha_test_five mydb &gt; db.out</userinput>
-</screen>
-       </para>
-
-
-       <para>To dump all tables except for those beginning with <literal>ts_</literal>:
-
-<screen>
-<prompt>$</prompt> <userinput>pg_dump -T "^ts_" mydb &gt; db.out</userinput>
-</screen>
-       </para>
-
 
        <note>
         <para>
-         In this mode, <application>pg_dump</application> makes no
-         attempt to dump any other database objects that the selected tables
-         may depend upon. Therefore, there is no guarantee
+         When <option>-t</> is specified, <application>pg_dump</application>
+         makes no attempt to dump any other database objects that the selected
+         table(s) may depend upon. Therefore, there is no guarantee
          that the results of a specific-table dump can be successfully
          restored by themselves into a clean database.
+        </para>
+       </note>
+
+       <note>
+        <para>
+         The behavior of the <option>-t</> switch is not entirely upward
+         compatible with pre-8.2 <productname>PostgreSQL</productname>
+         versions.  Formerly, writing <literal>-t tab</> would dump all
+         tables named <literal>tab</>, but now it just dumps whichever one
+         is visible in your default search path.  To get the old behavior
+         you can write <literal>-t '*.tab'</>.  Also, you must write something
+         like <literal>-t sch.tab</> to select a table in a particular schema,
+         rather than the old locution of <literal>-n sch -t tab</>.
         </para>
        </note>
       </listitem>
@@ -466,36 +504,20 @@ PostgreSQL documentation
       <term><option>--exclude-table=<replaceable class="parameter">table</replaceable></option></term>
       <listitem>
        <para>
-        Do not dump any matching <replaceable class="parameter">tables</replaceable>.
-        More than one option can be used, and POSIX regular expressions are handled just
-        like <literal>-t</>.
+        Do not dump any tables matching the <replaceable
+        class="parameter">table</replaceable> pattern.  The pattern is
+        interpreted according to the same rules as for <option>-t</>.
+        <option>-T</> can be given more than once to exclude tables
+        matching any of several patterns.
        </para>
-      </listitem>
-     </varlistentry>
 
-     <varlistentry>
-      <term><option>-n <replaceable class="parameter">schema</replaceable></option></term>
-      <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
-      <listitem>
        <para>
-        Dump only the matching <replaceable class="parameter">schemas</replaceable>.
-        More than one option can be used, and POSIX regular expressions are handled just
-        like <literal>-t</>.
+        When both <option>-t</> and <option>-T</> are given, the behavior
+        is to dump just the tables that match at least one <option>-t</>
+        switch but no <option>-T</> switches.  If <option>-T</> appears
+        without <option>-t</>, then tables matching <option>-T</> are
+        excluded from what is otherwise a normal dump.
        </para>
-
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-N <replaceable class="parameter">schema</replaceable></option></term>
-      <term><option>--exclude-schema=<replaceable class="parameter">schema</replaceable></option></term>
-      <listitem>
-       <para>
-        Do not dump the matching <replaceable class="parameter">schemas</replaceable>.
-        More than one option can be used, and POSIX regular expressions are handled just
-        like <literal>-t</>.
-       </para>
-
       </listitem>
      </varlistentry>
 
@@ -506,7 +528,7 @@ PostgreSQL documentation
        <para>
         Specifies verbose mode.  This will cause
         <application>pg_dump</application> to output detailed object
-        comments and start/stop times to the dump file, and progress 
+        comments and start/stop times to the dump file, and progress
         messages to standard error.
        </para>
       </listitem>
@@ -742,33 +764,80 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <title>Examples</title>
 
   <para>
-   To dump a database:
+   To dump a database called <literal>mydb</> into a SQL-script file:
 <screen>
-<prompt>$</prompt> <userinput>pg_dump mydb &gt; db.out</userinput>
+<prompt>$</prompt> <userinput>pg_dump mydb &gt; db.sql</userinput>
 </screen>
   </para>
 
   <para>
-   To reload this database:
+   To reload such a script into a (freshly created) database named
+   <literal>newdb</>:
+
 <screen>
-<prompt>$</prompt> <userinput>psql -d database -f db.out</userinput>
+<prompt>$</prompt> <userinput>psql -d newdb -f db.sql</userinput>
 </screen>
   </para>
 
   <para>
-   To dump a database called <literal>mydb</> to a file in custom format:
-   file:
+   To dump a database into a custom-format archive file:
 
 <screen>
-<prompt>$</prompt> <userinput>pg_dump -Fc mydb &gt; db.out</userinput>
+<prompt>$</prompt> <userinput>pg_dump -Fc mydb &gt; db.dump</userinput>
 </screen>
   </para>
 
   <para>
-   To reload this dump into an existing database called <literal>newdb</>:
+   To reload an archive file into a (freshly created) database named
+   <literal>newdb</>:
 
 <screen>
-<prompt>$</prompt> <userinput>pg_restore -d newdb db.out</userinput>
+<prompt>$</prompt> <userinput>pg_restore -d newdb db.dump</userinput>
+</screen>
+  </para>
+
+  <para>
+   To dump a single table named <literal>mytab</>:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -t mytab mydb &gt; db.sql</userinput>
+</screen>
+  </para>
+
+  <para>
+   To dump all tables whose names start with <literal>emp</> in the
+   <literal>detroit</> schema, except for the table named
+   <literal>employee_log</literal>:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -t 'detroit.emp*' -T detroit.employee_log mydb &gt; db.sql</userinput>
+</screen>
+  </para>
+
+  <para>
+   To dump all schemas whose names start with <literal>east</> or
+   <literal>west</> and end in <literal>gsm</>, excluding any schemas whose
+   names contain the word <literal>test</>:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -n 'east*gsm' -n 'west*gsm' -N '*test*' mydb &gt; db.sql</userinput>
+</screen>
+  </para>
+
+  <para>
+   The same, using regular expression notation to consolidate the switches:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -n '(east|west)*gsm' -N '*test*' mydb &gt; db.sql</userinput>
+</screen>
+  </para>
+
+  <para>
+   To dump all database objects except for tables whose names begin with
+   <literal>ts_</literal>:
+
+<screen>
+<prompt>$</prompt> <userinput>pg_dump -T 'ts_*' mydb &gt; db.sql</userinput>
 </screen>
   </para>
 

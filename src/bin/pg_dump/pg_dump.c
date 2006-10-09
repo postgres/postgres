@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.452 2006/10/07 20:59:04 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.453 2006/10/09 23:36:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,6 @@
 #ifndef HAVE_INT_OPTRESET
 int			optreset;
 #endif
-
-
 
 #include "access/htup.h"
 #include "catalog/pg_class.h"
@@ -87,20 +85,24 @@ static const char *username_subquery;
 /* obsolete as of 7.3: */
 static Oid	g_last_builtin_oid; /* value of the last builtin oid */
 
-/* select and exclude tables and schemas */
-typedef struct objnameArg
-{
-	struct objnameArg *next;
-	char	   *name;			/* name of the relation */
-	bool		is_include;		/* include/exclude? */
-} objnameArg;
+/*
+ * Object inclusion/exclusion lists
+ *
+ * The string lists record the patterns given by command-line switches,
+ * which we then convert to lists of OIDs of matching objects.
+ */
+static SimpleStringList schema_include_patterns = { NULL, NULL };
+static SimpleOidList schema_include_oids = { NULL, NULL };
+static SimpleStringList schema_exclude_patterns = { NULL, NULL };
+static SimpleOidList schema_exclude_oids = { NULL, NULL };
 
-objnameArg *schemaList = NULL;	/* List of schemas to include/exclude */
-objnameArg *tableList = NULL;	/* List of tables to include/exclude */
+static SimpleStringList table_include_patterns = { NULL, NULL };
+static SimpleOidList table_include_oids = { NULL, NULL };
+static SimpleStringList table_exclude_patterns = { NULL, NULL };
+static SimpleOidList table_exclude_oids = { NULL, NULL };
 
-char	   *matchingSchemas = NULL;		/* Final list of schemas to dump by
-										 * oid */
-char	   *matchingTables = NULL;		/* Final list of tables to dump by oid */
+/* default, if no "inclusion" switches appear, is to dump everything */
+static bool include_everything = true;
 
 char		g_opaque_type[10];	/* name for the opaque type */
 
@@ -119,6 +121,10 @@ static int	disable_dollar_quoting = 0;
 
 
 static void help(const char *progname);
+static void expand_schema_name_patterns(SimpleStringList *patterns,
+										SimpleOidList *oids);
+static void expand_table_name_patterns(SimpleStringList *patterns,
+									   SimpleOidList *oids);
 static NamespaceInfo *findNamespace(Oid nsoid, Oid objoid);
 static void dumpTableData(Archive *fout, TableDataInfo *tdinfo);
 static void dumpComment(Archive *fout, const char *target,
@@ -188,11 +194,6 @@ static void check_sql_result(PGresult *res, PGconn *conn, const char *query,
 int
 main(int argc, char **argv)
 {
-	PQExpBuffer query = createPQExpBuffer();
-	PGresult   *res;
-	objnameArg *this_obj_name,
-			   *schemaList_tail = NULL,
-			   *tableList_tail = NULL;
 	int			c;
 	const char *filename = NULL;
 	const char *format = "p";
@@ -208,14 +209,13 @@ main(int argc, char **argv)
 	DumpableObject **dobjs;
 	int			numObjs;
 	int			i;
-	bool		switch_include_exclude;
 	bool		force_password = false;
 	int			compressLevel = -1;
 	bool		ignore_version = false;
 	int			plainText = 0;
 	int			outputClean = 0;
 	int			outputCreate = 0;
-	bool		outputBlobs = true;
+	bool		outputBlobs = false;
 	int			outputNoOwner = 0;
 	static int	use_setsessauth = 0;
 	static int	disable_triggers = 0;
@@ -306,7 +306,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'b':			/* Dump blobs */
-				/* this is now default, so just ignore the switch */
+				outputBlobs = true;
 				break;
 
 			case 'c':			/* clean (i.e., drop) schema prior to create */
@@ -347,42 +347,13 @@ main(int argc, char **argv)
 				ignore_version = true;
 				break;
 
-			case 'n':			/* Include schemas */
-			case 'N':			/* Exclude schemas */
-			case 't':			/* Include tables */
-			case 'T':			/* Exclude tables */
+			case 'n':			/* include schema(s) */
+				simple_string_list_append(&schema_include_patterns, optarg);
+				include_everything = false;
+				break;
 
-				if (strlen(optarg) < 1)
-				{
-					fprintf(stderr, _("%s: invalid -%c option\n"), progname, c);
-					exit(1);
-				}
-
-				{
-					/* Create a struct for this name */
-					objnameArg *new_obj_name = (objnameArg *)
-					malloc(sizeof(objnameArg));
-
-					new_obj_name->next = NULL;
-					new_obj_name->name = strdup(optarg);
-					new_obj_name->is_include = islower((unsigned char) c) ? true : false;
-
-					/* add new entry to the proper list */
-					if (tolower((unsigned char) c) == 'n')
-					{
-						if (!schemaList_tail)
-							schemaList_tail = schemaList = new_obj_name;
-						else
-							schemaList_tail = schemaList_tail->next = new_obj_name;
-					}
-					else
-					{
-						if (!tableList_tail)
-							tableList_tail = tableList = new_obj_name;
-						else
-							tableList_tail = tableList_tail->next = new_obj_name;
-					}
-				}
+			case 'N':			/* exclude schema(s) */
+				simple_string_list_append(&schema_exclude_patterns, optarg);
 				break;
 
 			case 'o':			/* Dump oids */
@@ -403,11 +374,19 @@ main(int argc, char **argv)
 
 			case 's':			/* dump schema only */
 				schemaOnly = true;
-				outputBlobs = false;
 				break;
 
 			case 'S':			/* Username for superuser in plain text output */
 				outputSuperuser = strdup(optarg);
+				break;
+
+			case 't':			/* include table(s) */
+				simple_string_list_append(&table_include_patterns, optarg);
+				include_everything = false;
+				break;
+
+			case 'T':			/* exclude table(s) */
+				simple_string_list_append(&table_exclude_patterns, optarg);
 				break;
 
 			case 'u':
@@ -487,9 +466,6 @@ main(int argc, char **argv)
 		write_msg(NULL, "options \"clean\" (-c) and \"data only\" (-a) cannot be used together\n");
 		exit(1);
 	}
-
-	if (matchingTables != NULL || matchingSchemas != NULL)
-		outputBlobs = false;
 
 	if (dumpInserts == true && oids == true)
 	{
@@ -607,162 +583,42 @@ main(int argc, char **argv)
 			write_msg(NULL, "last built-in OID is %u\n", g_last_builtin_oid);
 	}
 
-
-	if (schemaList != NULL && g_fout->remoteVersion < 70300)
+	/* Expand schema selection patterns into OID lists */
+	if (schema_include_patterns.head != NULL)
 	{
-		write_msg(NULL, "server version must be at least 7.3 to use schema switches\n");
-		exit_nicely();
-	}
-
-	/* Check schema selection flags */
-	resetPQExpBuffer(query);
-	switch_include_exclude = true;
-
-	for (this_obj_name = schemaList; this_obj_name; this_obj_name = this_obj_name->next)
-	{
-		if (switch_include_exclude)
-		{
-			/* Special case for when -N is the first argument */
-			if (this_obj_name == schemaList && !this_obj_name->is_include)
-				appendPQExpBuffer(query,
-								  "SELECT oid FROM pg_catalog.pg_namespace "
-								  "WHERE nspname NOT LIKE 'pg_%%' AND "
-						   "      nspname != 'information_schema' EXCEPT\n");
-
-			appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_namespace WHERE");
-		}
-
-		appendPQExpBuffer(query, "%s nspname %c ", switch_include_exclude ? "" : " OR",
-		/* any meta-characters? */
-			   strpbrk(this_obj_name->name, "([{\\.?+") == NULL ? '=' : '~');
-		appendStringLiteralAH(query, this_obj_name->name, g_fout);
-
-		if (this_obj_name->next && this_obj_name->next->is_include == this_obj_name->is_include)
-			switch_include_exclude = false;
-		else
-		{
-			switch_include_exclude = true;
-
-			/* Add the joiner if needed */
-			if (this_obj_name->next)
-				appendPQExpBuffer(query, "\n%s\n",
-					   this_obj_name->next->is_include ? "UNION" : "EXCEPT");
-		}
-	}
-
-	/* Construct OID list of matching schemas */
-	if (schemaList)
-	{
-		int			len;
-
-		res = PQexec(g_conn, query->data);
-		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
-		if (PQntuples(res) == 0)
+		expand_schema_name_patterns(&schema_include_patterns,
+									&schema_include_oids);
+		if (schema_include_oids.head == NULL)
 		{
 			write_msg(NULL, "No matching schemas were found\n");
 			exit_nicely();
 		}
-
-		for (i = 0, len = strlen(" "); i < PQntuples(res); i++)
-			len += strlen(PQgetvalue(res, i, 0)) + 1;
-
-		/*
-		 * Need to use comma separators so it can be used by IN.  zero is a
-		 * dummy placeholder.  Format is " oid oid oid ".
-		 */
-		matchingSchemas = malloc(len + 1);
-		strcpy(matchingSchemas, " ");
-		for (i = 0; i < PQntuples(res); i++)
-		{
-			strcat(matchingSchemas, PQgetvalue(res, i, 0));
-			strcat(matchingSchemas, " ");
-		}
 	}
+	expand_schema_name_patterns(&schema_exclude_patterns,
+								&schema_exclude_oids);
+	/* non-matching exclusion patterns aren't an error */
 
-	/* Check table selection flags */
-	resetPQExpBuffer(query);
-	switch_include_exclude = true;
-
-	for (this_obj_name = tableList; this_obj_name; this_obj_name = this_obj_name->next)
+	/* Expand table selection patterns into OID lists */
+	if (table_include_patterns.head != NULL)
 	{
-		if (switch_include_exclude)
-		{
-			/* Special case for when -T is the first argument */
-			if (this_obj_name == tableList && !this_obj_name->is_include && !strlen(query->data))
-				appendPQExpBuffer(query,
-								  "SELECT pg_class.oid FROM pg_catalog.pg_class, pg_catalog.pg_namespace "
-								  "WHERE relkind='r' AND "
-								  "      relnamespace = pg_namespace.oid AND "
-								  "      nspname NOT LIKE 'pg_%%' AND "
-						   "      nspname != 'information_schema' EXCEPT\n");
-
-			appendPQExpBuffer(query, "SELECT oid FROM pg_catalog.pg_class WHERE relkind='r' AND (");
-		}
-
-		appendPQExpBuffer(query, "%srelname %c ", switch_include_exclude ? "" : " OR ",
-		/* any meta-characters? */
-			   strpbrk(this_obj_name->name, "([{\\.?+") == NULL ? '=' : '~');
-		appendStringLiteralAH(query, this_obj_name->name, g_fout);
-
-		if (this_obj_name->next && this_obj_name->next->is_include == this_obj_name->is_include)
-			switch_include_exclude = false;
-		else
-		{
-			switch_include_exclude = true;
-			appendPQExpBuffer(query, ")");
-
-			/* Add the joiner if needed */
-			if (this_obj_name->next)
-				appendPQExpBuffer(query, "\n%s\n", this_obj_name->next->is_include ?
-								  "UNION" : "EXCEPT");
-		}
-	}
-
-	/* Construct OID list of matching tables */
-	if (tableList)
-	{
-		int			len;
-
-		/* Restrict by schema? */
-		if (matchingSchemas != NULL)
-		{
-			char	   *matchingSchemas_commas = strdup(matchingSchemas),
-					   *p;
-
-			/* Construct "IN" SQL string by adding commas, " oid, oid, oid " */
-			for (p = matchingSchemas_commas; *p; p++)
-			{
-				/* No commas for first/last characters */
-				if (*p == ' ' && p != matchingSchemas_commas && *(p + 1))
-					*p = ',';
-			}
-
-			appendPQExpBuffer(query,
-							  "\nINTERSECT\nSELECT oid FROM pg_catalog.pg_class WHERE relkind='r' AND relnamespace IN (%s)\n",
-							  matchingSchemas_commas);
-		}
-
-		res = PQexec(g_conn, query->data);
-		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
-		if (PQntuples(res) == 0)
+		expand_table_name_patterns(&table_include_patterns,
+								   &table_include_oids);
+		if (table_include_oids.head == NULL)
 		{
 			write_msg(NULL, "No matching tables were found\n");
 			exit_nicely();
 		}
-
-		for (i = 0, len = strlen(" "); i < PQntuples(res); i++)
-			len += strlen(PQgetvalue(res, i, 0)) + 1;
-
-		matchingTables = malloc(len + 1);
-		strcpy(matchingTables, " ");
-		for (i = 0; i < PQntuples(res); i++)
-		{
-			strcat(matchingTables, PQgetvalue(res, i, 0));
-			strcat(matchingTables, " ");
-		}
 	}
+	expand_table_name_patterns(&table_exclude_patterns,
+							   &table_exclude_oids);
+	/* non-matching exclusion patterns aren't an error */
 
-	destroyPQExpBuffer(query);
+	/*
+	 * Dumping blobs is now default unless we saw an inclusion switch or -s
+	 * ... but even if we did see one of these, -b turns it back on.
+	 */
+	if (include_everything && !schemaOnly)
+		outputBlobs = true;
 
 	/*
 	 * Now scan the database and create DumpableObject structs for all the
@@ -824,7 +680,7 @@ main(int argc, char **argv)
 	dumpStdStrings(g_fout);
 
 	/* The database item is always next, unless we don't want it at all */
-	if (!dataOnly && matchingTables == NULL && matchingSchemas == NULL)
+	if (include_everything && !dataOnly)
 		dumpDatabase(g_fout);
 
 	/* Now the rearrangeable objects. */
@@ -884,28 +740,28 @@ help(const char *progname)
 
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only             dump only the data, not the schema\n"));
+	printf(_("  -b, --blobs                 include large objects in dump\n"));
 	printf(_("  -c, --clean                 clean (drop) schema prior to create\n"));
 	printf(_("  -C, --create                include commands to create database in dump\n"));
 	printf(_("  -d, --inserts               dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  -D, --column-inserts        dump data as INSERT commands with column names\n"));
 	printf(_("  -E, --encoding=ENCODING     dump the data in encoding ENCODING\n"));
-	printf(_("  -n, --schema=SCHEMA         dump the named schema only\n"));
-	printf(_("  -N, --exclude-schema=SCHEMA\n"
-		 "                              do NOT dump the named schema\n"));
+	printf(_("  -n, --schema=SCHEMA         dump the named schema(s) only\n"));
+	printf(_("  -N, --exclude-schema=SCHEMA do NOT dump the named schema(s)\n"));
 	printf(_("  -o, --oids                  include OIDs in dump\n"));
 	printf(_("  -O, --no-owner              skip restoration of object ownership\n"
 			 "                              in plain text format\n"));
 	printf(_("  -s, --schema-only           dump only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME        specify the superuser user name to use in\n"
 			 "                              plain text format\n"));
-	printf(_("  -t, --table=TABLE           dump the named table only\n"));
-	printf(_("  -T, --exclude-table=TABLE   do NOT dump the named table\n"));
+	printf(_("  -t, --table=TABLE           dump the named table(s) only\n"));
+	printf(_("  -T, --exclude-table=TABLE   do NOT dump the named table(s)\n"));
 	printf(_("  -x, --no-privileges         do not dump privileges (grant/revoke)\n"));
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SESSION AUTHORIZATION commands instead of\n"
-			 "                              OWNER TO commands\n"));
+			 "                              ALTER OWNER commands to set ownership\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
@@ -928,6 +784,106 @@ exit_nicely(void)
 }
 
 /*
+ * Find the OIDs of all schemas matching the given list of patterns,
+ * and append them to the given OID list.
+ */
+static void
+expand_schema_name_patterns(SimpleStringList *patterns, SimpleOidList *oids)
+{
+	PQExpBuffer query;
+	PGresult   *res;
+	SimpleStringListCell *cell;
+	int			i;
+
+	if (patterns->head == NULL)
+		return;					/* nothing to do */
+
+	if (g_fout->remoteVersion < 70300)
+	{
+		write_msg(NULL, "server version must be at least 7.3 to use schema selection switches\n");
+		exit_nicely();
+	}
+
+	query = createPQExpBuffer();
+
+	/*
+	 * We use UNION ALL rather than UNION; this might sometimes result in
+	 * duplicate entries in the OID list, but we don't care.
+	 */
+
+	for (cell = patterns->head; cell; cell = cell->next)
+	{
+		if (cell != patterns->head)
+			appendPQExpBuffer(query, "UNION ALL\n");
+		appendPQExpBuffer(query,
+						  "SELECT oid FROM pg_catalog.pg_namespace n\n");
+		processSQLNamePattern(g_conn, query, cell->val, false, false,
+							  NULL, "n.nspname", NULL,
+							  NULL);
+	}
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
+	}
+
+	PQclear(res);
+	destroyPQExpBuffer(query);
+}
+
+/*
+ * Find the OIDs of all tables matching the given list of patterns,
+ * and append them to the given OID list.
+ */
+static void
+expand_table_name_patterns(SimpleStringList *patterns, SimpleOidList *oids)
+{
+	PQExpBuffer query;
+	PGresult   *res;
+	SimpleStringListCell *cell;
+	int			i;
+
+	if (patterns->head == NULL)
+		return;					/* nothing to do */
+
+	query = createPQExpBuffer();
+
+	/*
+	 * We use UNION ALL rather than UNION; this might sometimes result in
+	 * duplicate entries in the OID list, but we don't care.
+	 */
+
+	for (cell = patterns->head; cell; cell = cell->next)
+	{
+		if (cell != patterns->head)
+			appendPQExpBuffer(query, "UNION ALL\n");
+		appendPQExpBuffer(query,
+						  "SELECT c.oid"
+						  "\nFROM pg_catalog.pg_class c"
+						  "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace"
+						  "\nWHERE c.relkind in ('%c', '%c', '%c')\n",
+						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+		processSQLNamePattern(g_conn, query, cell->val, true, false,
+							  "n.nspname", "c.relname", NULL,
+							  "pg_catalog.pg_table_is_visible(c.oid)");
+	}
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
+	}
+
+	PQclear(res);
+	destroyPQExpBuffer(query);
+}
+
+/*
  * selectDumpableNamespace: policy-setting subroutine
  *		Mark a namespace as to be dumped or not
  */
@@ -936,27 +892,26 @@ selectDumpableNamespace(NamespaceInfo *nsinfo)
 {
 	/*
 	 * If specific tables are being dumped, do not dump any complete
-	 * namespaces.	If specific namespaces are being dumped, dump just those
+	 * namespaces. If specific namespaces are being dumped, dump just those
 	 * namespaces. Otherwise, dump all non-system namespaces.
 	 */
-	nsinfo->dobj.dump = false;
-
-	if (matchingTables != NULL)
-		 /* false */ ;
-	else if (matchingSchemas != NULL)
-	{
-		char	   *search_oid = malloc(20);
-
-		sprintf(search_oid, " %d ", nsinfo->dobj.catId.oid);
-		if (strstr(matchingSchemas, search_oid) != NULL)
-			nsinfo->dobj.dump = true;
-
-		free(search_oid);
-	}
-	/* The server prevents users from creating pg_ schemas */
-	else if (strncmp(nsinfo->dobj.name, "pg_", 3) != 0 &&
-			 strcmp(nsinfo->dobj.name, "information_schema") != 0)
+	if (table_include_oids.head != NULL)
+		nsinfo->dobj.dump = false;
+	else if (schema_include_oids.head != NULL)
+		nsinfo->dobj.dump = simple_oid_list_member(&schema_include_oids,
+												   nsinfo->dobj.catId.oid);
+	else if (strncmp(nsinfo->dobj.name, "pg_", 3) == 0 ||
+			 strcmp(nsinfo->dobj.name, "information_schema") == 0)
+		nsinfo->dobj.dump = false;
+	else
 		nsinfo->dobj.dump = true;
+	/*
+	 * In any case, a namespace can be excluded by an exclusion switch
+	 */
+	if (nsinfo->dobj.dump &&
+		simple_oid_list_member(&schema_exclude_oids,
+							   nsinfo->dobj.catId.oid))
+		nsinfo->dobj.dump = false;
 }
 
 /*
@@ -967,27 +922,21 @@ static void
 selectDumpableTable(TableInfo *tbinfo)
 {
 	/*
-	 * Always dump if dumping parent namespace; else, if a particular
-	 * tablename has been specified, dump matching table name; else, do not
-	 * dump.
+	 * If specific tables are being dumped, dump just those tables;
+	 * else, dump according to the parent namespace's dump flag.
 	 */
-	tbinfo->dobj.dump = false;
-
-	if (matchingTables == NULL)
-	{
-		if (tbinfo->dobj.namespace->dobj.dump)
-			tbinfo->dobj.dump = true;
-	}
+	if (table_include_oids.head != NULL)
+		tbinfo->dobj.dump = simple_oid_list_member(&table_include_oids,
+												   tbinfo->dobj.catId.oid);
 	else
-	{
-		char	   *search_oid = malloc(20);
-
-		sprintf(search_oid, " %d ", tbinfo->dobj.catId.oid);
-		if (strstr(matchingTables, search_oid) != NULL)
-			tbinfo->dobj.dump = true;
-
-		free(search_oid);
-	}
+		tbinfo->dobj.dump = tbinfo->dobj.namespace->dobj.dump;
+	/*
+	 * In any case, a table can be excluded by an exclusion switch
+	 */
+	if (tbinfo->dobj.dump &&
+		simple_oid_list_member(&table_exclude_oids,
+							   tbinfo->dobj.catId.oid))
+		tbinfo->dobj.dump = false;
 }
 
 /*
@@ -5596,7 +5545,7 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
 static bool
 shouldDumpProcLangs(void)
 {
-	if (matchingTables != NULL || matchingSchemas != NULL)
+	if (!include_everything)
 		return false;
 	/* And they're schema not data */
 	if (dataOnly)

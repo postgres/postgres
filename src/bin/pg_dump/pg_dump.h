@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.129 2006/08/21 00:57:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.130 2006/10/09 23:36:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,35 @@ typedef struct
 
 typedef int DumpId;
 
+/*
+ * Data structures for simple lists of OIDs and strings.  The support for
+ * these is very primitive compared to the backend's List facilities, but
+ * it's all we need in pg_dump.
+ */
+
+typedef struct SimpleOidListCell
+{
+	struct SimpleOidListCell *next;
+	Oid			val;
+} SimpleOidListCell;
+
+typedef struct SimpleOidList
+{
+	SimpleOidListCell *head;
+	SimpleOidListCell *tail;
+} SimpleOidList;
+
+typedef struct SimpleStringListCell
+{
+	struct SimpleStringListCell *next;
+	char		val[1];			/* VARIABLE LENGTH FIELD */
+} SimpleStringListCell;
+
+typedef struct SimpleStringList
+{
+	SimpleStringListCell *head;
+	SimpleStringListCell *tail;
+} SimpleStringList;
 
 /*
  * The data structures used to store system catalog information.  Every
@@ -363,6 +392,16 @@ extern TableInfo *findTableByOid(Oid oid);
 extern TypeInfo *findTypeByOid(Oid oid);
 extern FuncInfo *findFuncByOid(Oid oid);
 extern OprInfo *findOprByOid(Oid oid);
+
+extern void simple_oid_list_append(SimpleOidList *list, Oid val);
+extern void simple_string_list_append(SimpleStringList *list, const char *val);
+extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
+extern bool simple_string_list_member(SimpleStringList *list, const char *val);
+
+extern char *pg_strdup(const char *string);
+extern void *pg_malloc(size_t size);
+extern void *pg_calloc(size_t nmemb, size_t size);
+extern void *pg_realloc(void *ptr, size_t size);
 
 extern void check_conn_and_db(void);
 extern void exit_nicely(void);
