@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 Sun Solaris specific
 To be read in conjunction with the installation instructions.
 ============================================================
-Last updated:        $Date: 2006/10/05 03:13:15 $
+Last updated:        $Date: 2006/10/10 22:19:08 $
 
 
 Contents:
@@ -13,25 +13,25 @@ Contents:
 3) Why does configure complain about a failed test program?
 4) Why does my 64-bit build sometimes crash?
 5) How can I compile for optimum performance?
-6) How to compile PostgreSQL with Sun Studio?
-7) Where I can download prepared Solaris packages?
-8) How to tune PostgreSQL and Solaris for best performance?
-9) Can I use dtrace for tracing PostgreSQL?
+6) Where I can download prepared Solaris packages?
+7) How can I tune PostgreSQL and Solaris for performance?
+8) Can I use DTrace for tracing PostgreSQL?
+
 
 1) What tools do I need to build and install PostgreSQL on Solaris?
 
 You will need
 
-	GNU zip (for installing the documentation)
-	GNU make
-	GNU readline library (optional)
-	Sun Studio CC or GCC   
+	gzip (for installing the documentation)
+	GNU Make
+	GNU Readline library (optional)
+	Sun Studio CC or GCC
 
 You can download Sun Studio from: 
 http://developers.sun.com/prodtech/cc/downloads/index.jsp
 
-Many of GNU tools are integrated into the Solaris 10 or they are
-present on the Solaris companion CD. 
+Many of GNU tools are integrated into Solaris 10, or they are present
+on the Solaris companion CD.
 
 If you like packages for older version of Solaris, you can find these
 tools here:
@@ -42,11 +42,12 @@ If you prefer sources, look here:
 
 	http://www.gnu.org/order/ftp.html
 
-You can build with either GCC or Sun's compiler suite. For better  code
-optimalization Sun's compiler is strongly recommended on the SPARC
-architecture. We have heard reports of problems when using  gcc 2.95.1;
-gcc 2.95.3 or later is recommended.  If you are using Sun's compiler, be
-careful *not* to select /usr/ucb/cc;  use /opt/SUNWspro/bin/cc.
+You can build with either GCC or Sun's compiler suite.  For better
+code optimization, Sun's compiler is strongly recommended on the SPARC
+architecture.  We have heard reports of problems when using GCC
+2.95.1; gcc 2.95.3 or later is recommended.  If you are using Sun's
+compiler, be careful not to select /usr/ucb/cc; use
+/opt/SUNWspro/bin/cc.
 
 
 2) Why do I get problems when building with OpenSSL support?
@@ -63,15 +64,15 @@ This is because of a namespace conflict between the standard
 /usr/include/crypt.h header and the header files provided by OpenSSL.
 
 Upgrading your OpenSSL installation to version 0.9.6a fixes this
-problem.  Solaris 9 and above already  newer version of OpenSSL.
+problem.  Solaris 9 and above has a newer version of OpenSSL.
 
 
 3) Why does configure complain about a failed test program?
 
-This is probably a case of the run-time linker being unable to find some
-library. On solaris 8 and older it should be libz or some other
-non-standard library, such as libssl.  To point it to the right
-location, set the LD_LIBRARY_PATH environment variable, e.g.,
+This is probably a case of the run-time linker being unable to find
+some library, probably libz, libreadline or some other non-standard
+library such as libssl.  To point it to the right location, set the
+LD_LIBRARY_PATH environment variable, e.g.,
 
 	LD_LIBRARY_PATH=/usr/sfw/lib:/opt/sfw/lib:/usr/local/lib
 	export LD_LIBRARY_PATH
@@ -104,68 +105,58 @@ does not matter.)
 Then build as usual.
 
 
-5) How can I compile for optimum performance?
+5) How can I compile for optimal performance?
 
-On SPARC architecture Sun Studio is strongly recommended for
-compilation. Try using -xO5 optimalization flag to generate
-significantly faster binaries. Do not use any flags which modify
-behavior of floating point operations and  errno processing (e.g.
--fast). These flags should raise some nonstandard PostgreSQL behavior
-for example in the date/time computing. 
+On the SPARC architecture, Sun Studio is strongly recommended for
+compilation.  Try using the -xO5 optimization flag to generate
+significantly faster binaries.  Do not use any flags that modify
+behavior of floating point operations and errno processing (e.g.,
+-fast).  These flags could raise some nonstandard PostgreSQL behavior
+for example in the date/time computing.
 
-If you do not reason to use 64-bit binaries on SPARC, prefer 32-bit
-version. The 64-bit operations are slower and 64-bit binaries are slower
-then 32-bits. And on other side a 32-bit code on the AMD64 CPU family is
-not native and  that is why 32-bit code is significant slower on this
-CPU family.
-
-
-6) How to compile PostgreSQL with Sun Studio?
-
-On Solaris 10 you can performed following steps:
-
-	export CC=/opt/SUNWspro/bin/cc
-	export CFLAGS=-xO5
-	export LDFLAGS=-lm
-	./configure --without-readline
-	gmake
+If you do not have a reason to use 64-bit binaries on SPARC, prefer
+the 32-bit version.  The 64-bit operations are slower and 64-bit
+binaries are slower than the 32-bit variants.  And on other hand,
+32-bit code on the AMD64 CPU family is not native, and that is why
+32-bit code is significant slower on this CPU family.
 
 
-7) Where I can download prepared Solaris packages?
+6) Where I can download prepared Solaris packages?
 
-The PostgreSQL is bundled with Solaris 10 (from update 2). Official
-packages are too available on
-http://pgfoundry.org/projects/solarispackages/.  Packages for older
-Solaris version (8,9) you can download from: http://www.sunfreeware.com
-or http://www.blastwave.org
+The PostgreSQL is bundled with Solaris 10 (from update 2).  Official
+packages are also available on
+<http://pgfoundry.org/projects/solarispackages/>.  Packages for older
+Solaris version (8, 9) you can be obtained from
+<http://www.sunfreeware.com/> or <http://www.blastwave.org/>.
 
 
-8) How to tune PostgreSQL and Solaris for best performance?
+7) How can I tune PostgreSQL and Solaris for performance?
 
 Some tuning tricks can be found here:
 
 	http://www.sun.com/servers/coolthreads/tnb/applications_postgresql.jsp
 
-This article is primary focused on T2000 platform, however, many of
-recommendations are general for other hardware with Solaris.
+This article is primary focused on T2000 platform, but many of the
+recommendations are also useful on other hardware with Solaris.
 
 
-9) Can I use dtrace for tracing PostgreSQL?
+8) Can I use DTrace for tracing PostgreSQL?
 
-The PostgreSQL 8.2 has implemented dtrace support. You can enable it by 
-the --enable-dtrace configure switch. If you want to compile a 64-bit
-code with dtrace you must specify DTRACEFLAGS='-64', e.g.
+PostgreSQL 8.2 has implemented DTrace support.  You can enable it by
+the --enable-dtrace configure switch.  If you want to build 64-bit
+binaries with DTrace you must specify DTRACEFLAGS='-64', e.g.,
 
-Using gcc compiler:
+Using GCC compiler:
 
 	$ ./configure CC='gcc -m64' --enable-dtrace DTRACEFLAGS='-64' ...
             
 Using Sun compiler:
 
-	$ configure CC='/opt/SUNWspro/bin/cc -xtarget=native64' --enable-dtrace DTRACEFLAGS='-64'
+	$ ./configure CC='/opt/SUNWspro/bin/cc -xtarget=native64' --enable-dtrace DTRACEFLAGS='-64'
 
 
-If you have some problem with postgres linking, looks like:
+If you see the linking of the postgres executable abort with an error
+message like
 
 	Undefined                       first referenced
 	 symbol                             in file
@@ -174,10 +165,10 @@ If you have some problem with postgres linking, looks like:
 	ld: fatal: Symbol referencing errors. No output written to postgres
 	collect2: ld returned 1 exit status
 	gmake: *** [postgres] Error 1
-	
-check if you have Solaris 10u3 or newer installed on your box.  You can
-also find more information here:
+
+your DTrace installation is too old to handle probes in static
+functions.  You need Solaris 10u3 or newer.
+
+You can also find more information here:
 
 	http://blogs.sun.com/robertlor/entry/user_level_dtrace_probes_in
-
-
