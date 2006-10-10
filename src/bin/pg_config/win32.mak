@@ -26,6 +26,11 @@ ALL : "..\..\port\pg_config_paths.h" "$(OUTDIR)\pg_config.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\pg_config.obj"
+	-@erase "$(INTDIR)\pgstrcasecmp.obj"
+	-@erase "$(OUTDIR)\path.obj"
+	-@erase "$(OUTDIR)\strlcpy.obj"
+	-@erase "$(INTDIR)\exec.obj"
+	-@erase "$(INTDIR)\snprintf.obj"
 	-@erase "$(OUTDIR)\pg_config.exe"
 	-@erase "$(INTDIR)\..\..\port\pg_config_paths.h"
 
@@ -63,6 +68,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\pg_config.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
 	"$(OUTDIR)\path.obj" \
+	"$(OUTDIR)\strlcpy.obj" \
 	"$(INTDIR)\exec.obj" \
 	"$(INTDIR)\snprintf.obj" \
 !IFDEF DEBUG
@@ -79,6 +85,11 @@ LINK32_OBJS= \
 "$(OUTDIR)\path.obj" : "$(OUTDIR)" ..\..\port\path.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\path.c
+<<
+
+"$(OUTDIR)\strlcpy.obj" : "$(OUTDIR)" ..\..\port\strlcpy.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\strlcpy.c
 <<
 
 "$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c

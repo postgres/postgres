@@ -59,6 +59,7 @@ CLEAN :
 	-@erase "$(INTDIR)\getopt_long.obj"
 	-@erase "$(INTDIR)\snprintf.obj"
 	-@erase "$(INTDIR)\path.obj"
+	-@erase "$(INTDIR)\strlcpy.obj"
 	-@erase "$(INTDIR)\pgstrcasecmp.obj"
 	-@erase "$(INTDIR)\sprompt.obj"
 	-@erase "$(INTDIR)\dumputils.obj"
@@ -94,6 +95,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\getopt_long.obj" \
 	"$(INTDIR)\snprintf.obj" \
 	"$(INTDIR)\path.obj" \
+	"$(INTDIR)\strlcpy.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
 	"$(INTDIR)\sprompt.obj" \
 	"$(INTDIR)\dumputils.obj" \
@@ -149,6 +151,11 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\libpqdll.lib"
 "$(INTDIR)\path.obj" : "$(INTDIR)" ..\..\port\path.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\path.c
+<<
+
+"$(INTDIR)\strlcpy.obj" : "$(INTDIR)" ..\..\port\strlcpy.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\strlcpy.c
 <<
 
 "$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c

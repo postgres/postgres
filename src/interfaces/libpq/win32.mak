@@ -74,8 +74,8 @@ CLEAN :
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(OUTDIR)\libpq.res"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).dll"
-	-@erase "*.pch"
-	-@erase "$(OUTDIR)\libpq.pch"
+#	-@erase "*.pch"
+#	-@erase "$(OUTDIR)\libpq.pch"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.exp"
 	-@erase "$(INTDIR)\pg_config_paths.h"
 
