@@ -13,10 +13,10 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Wed Mar  1 17:24:48 EST 2006</P>
+    <P>Last updated: Wed Sep  6 20:12:13 EDT 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
-    "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
+    "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
     </P>
 
     <P>The most recent version of this document can be viewed at <A
@@ -177,7 +177,7 @@
     <li>The patch should be generated in contextual diff format (<i>diff
     -c</i> and should be applicable from the root directory. If you are
     unfamiliar with this, you might find the script
-    <I>src/tools/makediff/difforig</I> useful. (Unified diffs are only
+    <I>src/tools/make_diff/difforig</I> useful. (Unified diffs are only
     preferable if the file changes are single-line changes and do not
     rely on surrounding lines.)</li>
     
@@ -199,7 +199,7 @@
     "#1.16">1.16</a>.</li>
 
     <li>If you are adding a new feature, confirm that it has been tested
-    thoughly. Try to test the feature in all conceivable
+    thoroughly.  Try to test the feature in all conceivable
     scenarios.</li>
 
     <li>If it is a performance patch, please provide confirming test
@@ -222,7 +222,9 @@
     <P>Other than documentation in the source tree itself, you can find
     some papers/presentations discussing the code at <A href=
     "http://www.postgresql.org/developer">
-    http://www.postgresql.org/developer</A>.</P>
+    http://www.postgresql.org/developer</A>.  An excellent presentation
+    is at <a href=
+    "http://neilconway.org/talks/hacking/">http://neilconway.org/talks/hacking/</a></P>
 
     <H3 id="item1.7">1.7) How do I download/update the current
     source tree?</H3>
@@ -355,9 +357,9 @@
     can be applied to the distribution. This produces context diffs,
     which is our preferred format.</P>
 
-    <P>Our standard format is to indent each code level with one tab,
-    where each tab is four spaces. You will need to set your editor to
-    display tabs as four spaces:<BR>
+    <P>Our standard format <I>BSD</I> style, with each level of code indented
+    one tab, where each tab is four spaces. You will need to set your editor 
+    or file viewer to display tabs as four spaces:<BR>
     </P>
 <PRE>
     vi in ~/.exrc:
@@ -367,45 +369,16 @@
             more -x4
     less:
             less -x4
-    emacs:
-        M-x set-variable tab-width
-
-        or
-
-        (c-add-style "pgsql"
-                '("bsd"
-                        (indent-tabs-mode . t)
-                        (c-basic-offset   . 4)
-                        (tab-width . 4)
-                        (c-offsets-alist .
-                                ((case-label . +)))
-                )
-                nil ) ; t = set this style, nil = don't
-
-        (defun pgsql-c-mode ()
-                (c-mode)
-                (c-set-style "pgsql")
-        )
-
-        and add this to your autoload list (modify file path in macro):
-
-        (setq auto-mode-alist
-                (cons '("\\`/home/andrew/pgsql/.*\\.[chyl]\\'" . pgsql-c-mode)
-                auto-mode-alist))
-        or
-            /*
-             * Local variables:
-             *  tab-width: 4
-             *  c-indent-level: 4
-             *  c-basic-offset: 4
-             * End:
-             */
 </PRE>
-    <BR>
-     <I>pgindent</I> will the format code by specifying flags to your
+    <P>The <I>tools/editors</I> directory of the latest sources contains sample
+    settings that can be used with the <I>emacs</I>, <I>xemacs</I> and
+    <I>vim</I> editors, that assist in keeping to PostgreSQL coding standards.
+    </P>
+
+    <P><I>pgindent</I> will the format code by specifying flags to your
     operating system's utility <I>indent.</I> This <A href=
     "http://ezine.daemonnews.org/200112/single_coding_style.html">article</A>
-    describes the value of a consistent coding style. 
+    describes the value of a consistent coding style.</P>
 
     <P><I>pgindent</I> is run on all source files just before each beta
     test period. It auto-formats all source files to make them
@@ -704,7 +677,7 @@
       http://www.cse.iitb.ac.in/dbms/Data/Papers-Other/SQL1999/ansi-iso-9075-2-1999.pdf</A></LI>
 
       <LI>SQL:2003 <A href=
-      "http://www.wiscorp.com/sql/sql_2003_standard.zip">http://www.wiscorp.com/sql/sql_2003_standard.zip</A></LI>
+      "http://www.wiscorp.com/sql_2003_standard.zip">http://www.wiscorp.com/sql_2003_standard.zip</A></LI>
     </UL>
 
     <P>Some SQL standards web pages are:</P>

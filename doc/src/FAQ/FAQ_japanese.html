@@ -9,9 +9,9 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Sun Apr  2 23:40:12 EDT 2006</p>
+<p>原文最終更新日:		Fri Aug 18 12:27:33 EDT 2006</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
-href="mailto:pgman at candle.pha.pa.us">pgman at candle.pha.pa.us</a>)<br />
+href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
 href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <p>この文書の最新版は<a href=
@@ -45,13 +45,13 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#item1.3">1.3</a>) PostgreSQLの著作権はどうなってますか？<br />
 <a href="#item1.4">1.4</a>) PostgreSQLをサポートするプラットホームは？<br />
 <a href="#item1.5">1.5</a>) PostgreSQLはどこから入手できますか？<br />
-<a href="#item1.6">1.6</a>) 最新版はどれですか？<br />
+<a href="#item1.6">1.6</a>) 最新のリリースはどれですか？<br />
 <a href="#item1.7">1.7</a>) サポートはどこで受けられますか？<br />
 <a href="#item1.8">1.8</a>) バグレポートはどのように発信しますか？<br />
 <a href="#item1.9">1.9</a>) 既知のバグや未だ無い機能はどうやって見つけますか？<br />
 <a href="#item1.10">1.10</a>) どのような文書がありますか？<br />
 <a href="#item1.11">1.11</a>) <small>SQL</small>はどうすれば学べますか？<br />
-<a href="#item1.12">1.12</a>) 開発チームにはどのように参加しますか？<br />
+<a href="#item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？<br />
 <a href="#item1.13">1.13</a>) 他の<small>DBMS</small>と比べてPostgreSQLはどうなのですか？<br />
 
 
@@ -69,7 +69,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#item3.3">3.3</a>) より良い性能を得るためには、データベース・エンジンをどのように調整しますか？<br />
 <a href="#item3.4">3.4</a>) どのようなデバグ機能が使えますか？<br />
 <a href="#item3.5">3.5</a>) 接続しようとするときに <i>'Sorry, too many clients'</i> が出るのはなぜですか？<br />
-<a href="#item3.6">3.6</a>) PostgreSQLのメジャーリリースをアップデートするのにダンプとリストアをしなくてはならないのはなぜですか？<br />
+<a href="#item3.6">3.6</a>) PostgreSQLのアップグレードの手順はどうしますか？<br />
 <a href="#item3.7">3.7</a>) ハードウェアにはどんなコンピュータを使えばよいですか？<br />
 
 
@@ -221,7 +221,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     なされたプラットホームについてはインストール手引書に列挙してあります。
     </p>
 
-    <p>PostgreSQL は、Win2000, WinXP, そして、Win2003 のような Microsoft
+    <p>PostgreSQL は、Win2000 SP4, WinXP, そして、Win2003 など Microsoft
     Windows NTベースのオペレーティングシステムで、ネイティブに走ります。
     あらかじめパッケージにされたインストーラが<a href= 
     "http://pgfoundry.org/projects/pginstaller">
@@ -255,9 +255,9 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     ftp://ftp.PostgreSQL.org/pub/</a> を使います。</p>
 
 
-<h4 id="item1.6">1.6</a>) 最新版はどれですか？</h4>
+<h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.1.3 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.1.4 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -304,8 +304,8 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     </pre></small></p>
 
     <p>商用サポート会社のリストは<a
-    href="http://techdocs.postgresql.org/companies.php">
-    http://techdocs.postgresql.org/companies.php</a>にあります。</p>
+    href="http://www.postgresql.org/support/professional_support">
+    http://www.postgresql.org/support/professional_support</a>にあります。</p>
 
 
 <h4 id="item1.8">1.8</a>) バグレポートはどのように発信しますか？
@@ -442,11 +442,20 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 
     <p>素晴らしい手引書は、<a href=
-    "http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm,</a>
-    <a href=
-    "http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">
-    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,</a>
-    そして、<a href="http://sqlcourse.com/">http://sqlcourse.com</a>
+    <ul>
+    <li> <a href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm</a>
+    </li>
+    <li>
+    <a href="http://sqlcourse.com/">http://sqlcourse.com</a>
+    </li>
+
+    <li>
+    <a href="http://www.w3schools.com/sql/default.asp">http://www.w3schools.com/sql/default.asp</a>
+    </li>
+    <li><a href=
+    "http://mysite.verizon.net/Graeme_Birchall/id1.html">http://mysite.verizon.net/Graeme_Birchall/id1.html</a>
+    </li>
+    </ul>
     にあります。</p>
 
 
@@ -470,7 +479,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     ]
     </pre></small></p>
 
-<h4 id="item1.12">1.12</a>) 開発チームにはどのように参加しますか？</h4>
+<h4 id="item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？</h4>
 
     <p><a href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
     （開発者向けの）Developer's FAQ</a>をごらんください。</p>
@@ -580,10 +589,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <h4 id="item2.3">2.3</a>) PostgreSQL にグラフィカル・ユーザインターフェースはありますか？</h4>
 
 
-    <p>もちろん、あります。 
- 	詳細は、<a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a> 
-    をごらんください。</p>
-
+    <p>商用とオープンソース開発者によるもの両方で、PostgreSQLには多くのGUIツールが利用可能で、詳細なリストは、<a href="http://www.postgresql.org/docs/techdocs.54">PostgreSQLコミュニティ文書</a> でごらんください。</p>
 
 <hr />
 
@@ -646,12 +652,13 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
     <dt><b>ハードウェアの選定</b></dt>
 
-    <dd>性能におけるハードウェアの影響は <a
-    href="http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html">
-    http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html</a>
+    <dd>性能におけるハードウェアの影響は
+    <a href="http://www.powerpostgresql.com/PerfList/">
+    http://www.powerpostgresql.com/PerfList/</a> と、 <a
+    href="http://momjian.us/main/writings/pgsql/hw_performance/index.html">
+    http://momjian.us/main/writings/pgsql/hw_performance/index.html</a>
     (<a href="http://www.postgresql.jp/wg/psqltrans/hw_performance_j/index.html">JPUGサイトの日本語版</a>)
-    と <a href="http://www.powerpostgresql.com/PerfList/">
-    http://www.powerpostgresql.com/PerfList/</a> に述べられています。
+    に述べられています。
     <br/>
     <br/>
     </dd>
@@ -680,16 +687,25 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <i>max_connections</i> の値を変更して <i>postmaster</i>を再起動する
     ことで可能になります。</p>
 
-<h4 id="item3.6">3.6</a>)  PostgreSQLのメジャーリリースをアップデートするのにダンプとリストアをしなくてはならないのはなぜですか？</h4>
+<h4 id="item3.6">3.6</a>)  PostgreSQLのアップグレードの手順はどうしますか？</h4>
 
-    <p>PostgreSQLチームはマイナーリリースでは小さな変更しか行ないません
-    ので、7.4.0 から 7.4.1 へのアップグレードにはダンプとリストアの必要は
-    ありません。しかし、メジャーリリース(たとえば、7.2から7.3へのような)
-    では、システムテーブルやデータファイルの内部フォーマットの変更をしば
-    しば行ないます。これらの変更はたいてい複雑で、そのため我々はデータファ
-    イルのための後方互換性を維持することができません。ダンプは汎用フォー
-    マットでデータを出力し、それを新しい内部フォーマットに読み込むことが
-    できます。</p>
+    <p>PostgreSQLチームはマイナーリリースではバグの修正しか行ないません
+    ので、たとえば 7.4.8 から 7.4.9 へのアップグレードにダンプとリスト
+    アは必要ありません。したがって、データベースサーバを一時的に停止して、
+    アップデートしたバイナリをインストールし、そして、サーバをリスタート
+    するだけです。</p>
+
+    <p>全ユーザはできるだけ早く最新のマイナーリリースにアップグレードす
+    るべきです。すべてのアップグレードにリスクはつきものですが、
+    PostgreSQLのマイナーリリースは、なるべく小さなリスクで一般的なバグの
+    修正だけを目論んだものです。我々コミュニティの中ではアップグレード
+    <i>しない</i>ほうがもっとリスクが高いものと考えられています。</p>
+
+    <p>しかし、メジャーリリース（たとえば、7.3 から 7.4 のような）では、
+    システムテーブルやデータファイルの内部フォーマットの変更をしばしば行
+    ないます。これらの変更はたいてい複雑で、そのため我々はデータファイル
+    のための後方互換性を維持することができません。メジャーアップグレード
+    のためには、データベースのダンプ/リロードが必要です。</p>
 
 <h4 id="item3.7">3.7</a>) ハードウェアにはどんなコンピュータを使えばよいですか？</h4>
 
@@ -790,7 +806,8 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     </p>
 
     <p> デフォルトのブロックサイズを32kに増加することで、最大テーブルサイズ
-    と行サイズと最大カラム数とを4倍にすることができます。</p> 
+    と行サイズと最大カラム数とを4倍にすることができます。また、最大テーブル
+    サイズはテーブルパーティションを使って増やすこともできます。</p> 
 
     <p>ひとつの制限は、約2,000文字以上の長さのカラムにインデックスを付
     けることができないことです。 幸いにも、そのようなインデックスは実際
@@ -1061,21 +1078,21 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
     <p>PostgreSQLでつくられるすべてのロウは、<small>WITHOUT OIDS</small>
     でつくられないかぎり一意の<small>OID</small>を得ます。
-    O<small>ID</small>は自動的に4バイトの整数で与えられ、それは、全イン
+    <small>OID</small>は自動的に4バイトの整数で与えられ、それは、全イン
     ストレーションを通して一意な値となります。しかし、約40億でオーバーフ
-    ローし、そして、O<small>ID</small>は重複をしはじめます。PostgreSQLは
-    内部システムテーブルを一緒にリンクするためにO<small>ID</small> を使
+    ローし、そして、<small>OID</small>は重複をしはじめます。PostgreSQLは
+    内部システムテーブルを一緒にリンクするために<small>OID</small> を使
     います。
 
     <p>ユーザのテーブルのカラムに一意の番号を付けるためには、
-    O<small>ID</small> ではなく <small>SERIAL</small> を使うのが最もよい
+    <small>OID</small> ではなく <small>SERIAL</small> を使うのが最もよい
     でしょう。<small>SERIAL</small>の連番は1つのテーブル内でのみ一意にな
     るからで、オーバーフローを起こしにくいと考えられます。
     8バイトのシーケンス値を保存するために、<small>SERIAL8</small>があり
     ます。</p>
 
-    <p>C<small>TID</small> は、特定の物理ロウをブロックとオフセットの値
-    で識別するために使われます。C<small>TID</small>は、ロウが修正された
+    <p><small>CTID</small> は、特定の物理ロウをブロックとオフセットの値
+    で識別するために使われます。<small>CTID</small>は、ロウが修正された
     り再読込みされたときに変わります。また、物理ロウを差すためにインデッ
     クスの記載に使われます。</p>
 
@@ -1237,7 +1254,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2006年04月03日
+  最終更新日:	2006年08月19日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1246,7 +1263,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 		石井 達夫(<a href="mailto:t-ishii at sra.co.jp">Tatsuo ISHII &lt;t-ishii at sra.co.jp&gt;</a>)
 		齊藤 知人(<a href="mailto:tomos at elelab.nsc.co.jp">Tomohito SAITOH &lt;tomos at elelab.nsc.co.jp&gt;</a>)
 		馬場  肇(<a href="mailto:baba at kusastro.kyoto-u.ac.jp">Hajime BABA &lt;baba at kusastro.kyoto-u.ac.jp&gt;</a>)
-		岡本 一幸(<a href="mailto:kaz-okamoto at hitachi-system.co.jp">Kazuyuki OKAMOTO &lt;kokamoto at itg.hitachi.co.jp&gt;</a>)
+		岡本 一幸(<a href="mailto:kaz-okamoto at hitachi-system.co.jp">Kazuyuki OKAMOTO &lt;kaz-okamoto at hitachi-system.co.jp&gt;</a>)
 		小菅 昭一(<a href="mailto:s-kosuge at str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge at str.hitachi.co.jp&gt;</a>)
 		山下 義之(<a href="mailto:dica at eurus.dti.ne.jp">Yoshiyuki YAMASHITA &lt;dica at eurus.dti.ne.jp&gt;</a>)
 		境 真太郎(<a href="mailto:s_sakai at mxn.mesh.ne.jp">Sintaro SAKAI &lt;s_sakai at mxn.mesh.ne.jp&gt;</a>)

@@ -12,7 +12,7 @@
   <BODY bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Пятница 24 февраля 23:28:40 EDT 2006</P>
+    <P>Дата последнего обновления: Воскресенье 18 июня 15:33:25 EDT 2006</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -34,14 +34,14 @@
      <A href="#item1.3">1.3</A>) Каковы авторские права на PostgreSQL?<BR>
      <A href="#item1.4">1.4</A>) На каких платформах работает PostgreSQL?<BR>
      <A href="#item1.5">1.5</A>) Где можно взять PostgreSQL?<BR>
-     <A href="#item1.6">1.6</A>) Какая версия последняя?<BR>
+     <A href="#item1.6">1.6</A>) Какая версия наиболее свежая?<BR>
      <A href="#item1.7">1.7</A>) Где получить поддержку?<BR>
      <A href="#item1.8">1.8</A>) Как мне сообщить об ошибке?<BR>
      <A href="#item1.9">1.9</A>) Как найти информацию об известных ошибках или отсутствующих
     возможностях?<BR>
      <A href="#item1.10">1.10</A>) Какая документация имеется в наличии?<BR>
      <A href="#item1.11">1.11</A>) Как научиться <SMALL>SQL</SMALL>?<BR>
-     <A href="#item1.12">1.12</A>) Как присоединится к команде разработчиков?<BR>
+     <A href="#item1.12">1.12</A>) Как мне отправить исправление или присоединится к команде разработчиков?<BR>
      <A href="#item1.13">1.13</A>) Как сравнить PostgreSQL с другими
     <SMALL>СУБД</SMALL>?<BR>
     
@@ -64,8 +64,7 @@
      <A href="#item3.4">3.4</A>) Какие возможности для отладки есть в наличии?<BR>
      <A href="#item3.5">3.5</A>) Почему я получаю сообщение <I>"Sorry, too many
     clients"</I> когда пытаюсь подключиться к базе?<BR>
-     <A href="#item3.6">3.6</A>) Почему необходимо делать dump и restore при
-    обновлении выпусков PostgreSQL?<BR>
+     <A href="#item3.6">3.6</A>) Как выполнить обновление PostgreSQL?<BR>
      <A href="#item3.7">3.7</A>) Какое компьютерное "железо" я должен
     использовать?<BR>
      
@@ -222,9 +221,9 @@
     <A href="ftp://ftp.PostgreSQL.org/pub/">ftp://ftp.PostgreSQL.org/pub/</A>.</P>
 
 
-    <H3><A name="item1.6">1.6</A>) Какая последняя версия?</H3>
+    <H3><A name="item1.6">1.6</A>) Какая версия наиболее свежая?</H3>
 
-    <P>Последний выпуск PostgreSQL - это версия 8.1.3</P>
+    <P>Последний выпуск PostgreSQL - это версия 8.1.4</P>
 
     <P>Мы планируем выпускать новые старшие версии каждый год,
     а младшие версии каждые несколько месяцев.</P>
@@ -369,14 +368,20 @@
     Bowman, Judith S., et al., Addison-Wesley. Другим нравится <I>The
     Complete Reference SQL</I>, Groff et al., McGraw-Hill.</P>
 
-    Есть прекрасный учебник на <A href=
-    "http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm,</A>
-    на <A href="http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">
-    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,</A>
-    и на <A href="http://sqlcourse.com/">http://sqlcourse.com.</A></P>
+    <P>Существует также множество прекрасных учебников доступных в online:
+    <UL>
+    <LI><A href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm,</A>
+    </LI>
+    <LI><A href="http://sqlcourse.com/">http://sqlcourse.com.</A>
+    </LI>
+    <LI><A href="http://www.w3schools.com/sql/default.asp">http://www.w3school.com/sql/default.asp</A>
+    </LI>
+    <LI><A href="http://mysite.verizon.net/Graeme_Birchall/id1.html">http://mysite.verizon.net/Graeme_Birchall/id1.html</A>
+    </LI>
+    </UL>
+    </P>
 
-
-    <H3><A name="item1.12">1.12</A>) Как присоединится к команде разработчиков?</H3>
+    <H3><A name="item1.12">1.12</A>) Как мне прислать исправление или присоединится к команде разработчиков?</H3>
 
     <P>Смотрите <a href="http://www.postgresql.org/docs/faqs.FAQ_DEV.html">
     FAQ для разработчиков</A>.</P>
@@ -483,8 +488,10 @@
     <H3><A name="item2.3">2.3</A>) Есть ли у PostgreSQL графический интерфейс
     пользователя?</H3>
 
-    <P>Да, подробности смотрите в <a href="http://techdocs.postgresql.org/guides/GUITools">
-    http://techdocs.postgresql.org/guides/GUITools</A>.</P>
+    <P>Для PostgreSQL существует большое количество инструментов с
+    графическим интерфейсом как коммерческих, так и открытых. Подробности
+    можно найти в <a href="http://www.postgresql.org/docs/techdocs.54">
+    Документации сообщества PostgreSQL</A></P>
 
     <HR>
 
@@ -549,7 +556,7 @@
     <DT><B>Выбор "железа" - аппаратного обеспечения</B></DT>
     
     <DD>Влияние "железа" на производительность подробно описано в
-    <A href="http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html">
+    <A href="http://momjian.us/main/writings/pgsql/hw_performance/index.html">
     http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html</A> и
     <A href="http://www.powerpostgresql.com/PerfList/">
     http://www.powerpostgresql.com/PerfList/</A>.
@@ -576,24 +583,27 @@
     и перестартовать <I>postmaster</I>.</P>
      
 
-    <H3><A name="item3.6">3.6</A>) Почему необходимо делать dump и restore при
-    обновлении выпусков PostgreSQL?</H3>
+    <H3><A name="item3.6">3.6</A>) Как выполнить обновление PostgreSQL?</H3>
     
-    <P>Разработчики PostgreSQL делают только небольшие изменения между
-    подвыпусками. Таким образом обновление с версии 7.4.0 до 7.4.1 не требует
-    выполнения dump и restore. Однако при выходе очередного выпуска
+    <P>Между подвыпусками, разработчики PostgreSQL делают только исправления
+    ошибок. Таким образом обновление с версии 7.4.8 до 7.4.9 не требует
+    выполнения dump и restore; достаточно остановить сервер, установить
+    обновлённые файлы СУБД и запустить сервер.</P>
+    
+    <P>Все пользователи должны бы обновляться на наиболее свежую подверсию
+    как только она будет доступна. В то время как каждое обновление
+    подразумевает некоторый риск, подверсии PostgreSQL разрабытываются только
+    для исправления общих ошибок с минимальным риском.  Таким образом, ваш
+    риск связан только с самим обновлением.</P>
+    
+    
+    <P>При выходе очередного выпуска
     (т.е. при обновлении например, с 7.3 на 7.4) часто меняется внутренний
     формат системных таблиц и файлов данных. Эти изменения часто носят
-    комплексный характер, так что нет возможности обеспечить обратную
-    совместимость файлов данных. Выполение dump позволяет получить данные
-    в общем формате, который затем может быть загружен при использовании
-    нового внутреннего формата.</P>
+    сложный характер, так что мы не обслуживаем обратную
+    совместимость для файлов данных. В этих случаях для обновления базы
+    данных требуется выполнить dump/restore.</P>
     
-    <P>В тех выпусках, где формат данных на диске не меняется, для проведения
-    обновления может быть использован сценарий <i>pg_upgrade</i> без
-    использования dump/restore. Комментарии к выпуску говорит когда можно
-    использовать <i>pg_upgrade</i> для этого выпуска.</P>
-
 
     <H3><A name="item3.7">3.7</A>) Какое компьютерное "железо" я должен
     использовать?</H3>
@@ -684,7 +694,7 @@
 </TR>
 <TR>
   <TD>Максимальный размер строки?</TD>
-  <TD>1.6 TB</TD>
+  <TD>400 Gb</TD>
 </TR>
 <TR>
   <TD>Максимальный размер поля?</TD>
