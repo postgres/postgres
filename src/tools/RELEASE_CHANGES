@@ -9,7 +9,7 @@
 	o bump library versions for _major_ releases
 		- src/interfaces/*/Makefile
 		- src/interfaces/*/*/Makefile
-	o copy FAQs from HEAD to top-most branches
+	o copy FAQs from HEAD to top-most branch
 	o configure.in, and run autoconf or update configure (by packager)
 
 * Beta and Release Candidate (RC) changes
