@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.126.4.2 2006/01/17 17:33:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.126.4.3 2006/10/11 20:21:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,11 +130,28 @@ coerce_type(ParseState *pstate, Node *node,
 		return node;
 	}
 	if (targetTypeId == ANYOID ||
-		targetTypeId == ANYARRAYOID ||
-		targetTypeId == ANYELEMENTOID)
+		targetTypeId == ANYELEMENTOID ||
+		(targetTypeId == ANYARRAYOID &&
+		 (inputTypeId != UNKNOWNOID ||
+		  (IsA(node, Const) && ((Const *) node)->constisnull)))) /* HACK */
 	{
-		/* assume can_coerce_type verified that implicit coercion is okay */
-		/* NB: we do NOT want a RelabelType here */
+		/*
+		 * Assume can_coerce_type verified that implicit coercion is okay.
+		 *
+		 * Note: by returning the unmodified node here, we are saying that
+		 * it's OK to treat an UNKNOWN constant as a valid input for a
+		 * function accepting ANY or ANYELEMENT.  This should be all right,
+		 * since an UNKNOWN value is still a perfectly valid Datum.  However
+		 * an UNKNOWN value is definitely *not* an array, and so we mustn't
+		 * accept it for ANYARRAY.  (Instead, we will call anyarray_in below,
+		 * which will produce an error.)
+		 *
+		 * HACK: if it's a NULL UNKNOWN constant, return it as-is, same as
+		 * before.  This is just to avoid changing the pg_stats view and thus
+		 * the expected regression test results in back branches.
+		 *
+		 * NB: we do NOT want a RelabelType here.
+		 */
 		return node;
 	}
 	if (inputTypeId == UNKNOWNOID && IsA(node, Const))
