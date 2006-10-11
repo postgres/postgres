@@ -66,12 +66,12 @@ select ('aa=>NULL, c=>d , b=>16'::hstore->'aa') is null;
 
 -- exists/defined
 
-select isexists('a=>NULL, b=>qq', 'a');
-select isexists('a=>NULL, b=>qq', 'b');
-select isexists('a=>NULL, b=>qq', 'c');
-select isdefined('a=>NULL, b=>qq', 'a');
-select isdefined('a=>NULL, b=>qq', 'b');
-select isdefined('a=>NULL, b=>qq', 'c');
+select exist('a=>NULL, b=>qq', 'a');
+select exist('a=>NULL, b=>qq', 'b');
+select exist('a=>NULL, b=>qq', 'c');
+select defined('a=>NULL, b=>qq', 'a');
+select defined('a=>NULL, b=>qq', 'b');
+select defined('a=>NULL, b=>qq', 'c');
 
 -- delete 
 

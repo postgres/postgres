@@ -13,7 +13,9 @@ DROP OPERATOR =>( text, text );
 
 DROP FUNCTION fetchval(hstore,text);
 DROP FUNCTION isexists(hstore,text);
+DROP FUNCTION exist(hstore,text);
 DROP FUNCTION isdefined(hstore,text);
+DROP FUNCTION defined(hstore,text);
 DROP FUNCTION delete(hstore,text);
 DROP FUNCTION hs_concat(hstore,hstore);
 DROP FUNCTION hs_contains(hstore,hstore);

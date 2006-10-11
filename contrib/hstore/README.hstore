@@ -117,20 +117,20 @@ regression=# select * from each('a=>1,b=>2');
  a   | 1
  b   | 2
 
-    * isexists (hstore,text) - returns 'true if key is exists in hstore and 
+    * exist (hstore,text) - returns 'true if key is exists in hstore and 
 	false otherwise. 
 
-regression=# select isexists('a=>1','a');
- isexists 
+regression=# select exist('a=>1','a');
+ exist 
 ----------
  t
 
-    * isdefined (hstore,text) - returns true if key is exists in hstore and 
+    * defined (hstore,text) - returns true if key is exists in hstore and 
 	  its value is not NULL. 
 
-regression=# select isdefined('a=>NULL','a');
- isdefined 
------------
+regression=# select defined('a=>NULL','a');
+ defined 
+---------
  f
 
 Indices

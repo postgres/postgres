@@ -35,7 +35,17 @@ RETURNS bool
 AS 'MODULE_PATHNAME','exists'
 LANGUAGE 'C' with (isstrict,iscachable);
 
+CREATE FUNCTION exist(hstore,text)
+RETURNS bool
+AS 'MODULE_PATHNAME','exists'
+LANGUAGE 'C' with (isstrict,iscachable);
+
 CREATE FUNCTION isdefined(hstore,text)
+RETURNS bool
+AS 'MODULE_PATHNAME','defined'
+LANGUAGE 'C' with (isstrict,iscachable);
+
+CREATE FUNCTION defined(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','defined'
 LANGUAGE 'C' with (isstrict,iscachable);

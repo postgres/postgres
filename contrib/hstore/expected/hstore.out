@@ -273,39 +273,39 @@ select ('aa=>NULL, c=>d , b=>16'::hstore->'aa') is null;
 (1 row)
 
 -- exists/defined
-select isexists('a=>NULL, b=>qq', 'a');
- isexists 
-----------
+select exist('a=>NULL, b=>qq', 'a');
+ exist 
+-------
  t
 (1 row)
 
-select isexists('a=>NULL, b=>qq', 'b');
- isexists 
-----------
+select exist('a=>NULL, b=>qq', 'b');
+ exist 
+-------
  t
 (1 row)
 
-select isexists('a=>NULL, b=>qq', 'c');
- isexists 
-----------
+select exist('a=>NULL, b=>qq', 'c');
+ exist 
+-------
  f
 (1 row)
 
-select isdefined('a=>NULL, b=>qq', 'a');
- isdefined 
------------
+select defined('a=>NULL, b=>qq', 'a');
+ defined 
+---------
  f
 (1 row)
 
-select isdefined('a=>NULL, b=>qq', 'b');
- isdefined 
------------
+select defined('a=>NULL, b=>qq', 'b');
+ defined 
+---------
  t
 (1 row)
 
-select isdefined('a=>NULL, b=>qq', 'c');
- isdefined 
------------
+select defined('a=>NULL, b=>qq', 'c');
+ defined 
+---------
  f
 (1 row)
 
