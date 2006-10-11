@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.43 2006/10/09 23:23:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.44 2006/10/11 20:56:21 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.43 2006/10/09 23:23:
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -32,14 +32,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.43 2006/10/09 23:23:
     <title>Changes</title>
 
 <itemizedlist>
-
-<listitem><para>Minor fixes related to timezones, ecpg, /contrib/ltree,
-and <application>psql</></para> </listitem>
-
+<listitem><para>Fix core dump when an untyped literal is taken as
+ANYARRAY</para></listitem>
 <listitem><para>Fix <function>string_to_array()</> to handle overlapping
-matches for the separator string</para> <para>For example,
-<literal>string_to_array('123xx456xxx789', 'xx')</>.</para></listitem>
-
+  matches for the separator string</para>
+<para>For example, <literal>string_to_array('123xx456xxx789', 'xx')</>.
+</para></listitem>
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Adjust regression tests for recent changes in US DST laws
+</para> </listitem>
 </itemizedlist>
 
    </sect2>
@@ -2964,7 +2969,7 @@ DROP SCHEMA information_schema CASCADE;
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -2986,10 +2991,16 @@ DROP SCHEMA information_schema CASCADE;
     <title>Changes</title>
 
 <itemizedlist> 
-
-<listitem><para>Minor fixes related to timezones, spinlocks, SSL,
-GiST, /contrib/ltree, and <application>psql</></para> </listitem>
-
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Back-port 7.4 spinlock code to improve performance and support
+64-bit architectures better</para> </listitem>
+<listitem><para>Fix SSL-related memory leak in libpq</para> </listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Adjust regression tests for recent changes in US DST laws
+</para> </listitem>
 </itemizedlist>
 
    </sect2>
