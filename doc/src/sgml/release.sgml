@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.470 2006/10/09 23:23:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.471 2006/10/11 20:55:52 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -174,18 +174,6 @@ links to the main documentation.
         This issues a warning if backslash escapes are used in
         <link linkend="sql-syntax-strings">non-escape (non-<literal>E''</>)
         strings</link>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Disallow aggregate functions in <command>UPDATE</> commands
-        (unless within a subquery) (Tom)
-       </para>
-
-       <para>
-        The standard disallows this, and it leads to unpredictable
-        results.
        </para>
       </listitem>
 
@@ -2372,7 +2360,7 @@ links to the main documentation.
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -2394,37 +2382,46 @@ links to the main documentation.
     <title>Changes</title>
 
 <itemizedlist>
-
-<listitem><para>Fix for <systemitem class="osname">OS/X</>
-<application>Bonjour</> on x86 systems (Ashley Clark)</para></listitem>
-<listitem><para>Fix <acronym>MSVC</>/<productname>Borland C++</>
-compiles (Hiroshi Saito)</para></listitem>
-<listitem><para>Minor fixes related to ecpg, /contrib/dblink,
-/contrib/ltree, /contrib/tsearch2, and <application>psql</></para> </listitem>
-<listitem><para>Add ability to log protocol-level prepared
-statements (Tom)</para></listitem>
-<listitem><para>Disallow non-subselect aggregates in <command>UPDATE</>
-statements (Tom)</para>
-<para>The behavior of such an aggregate was unpredictable,
-so it has been disabled.  The SQL standard does not support
-it either.</para></listitem>
+<listitem><para>Disallow aggregate functions in <command>UPDATE</>
+commands, except within sub-SELECTs (Tom)</para>
+<para>The behavior of such an aggregate was unpredictable, and in 8.1.X
+could cause a crash, so it has been disabled.  The SQL standard does not allow
+this either.</para></listitem>
+<listitem><para>Fix core dump when an untyped literal is taken as
+ANYARRAY</para></listitem>
+<listitem><para>Fix core dump in duration logging for extended query protocol
+when a <command>COMMIT</> or <command>ROLLBACK</> is
+executed</para></listitem>
 <listitem><para>Fix <command>ALTER TABLE ... TYPE</> to recheck
 <literal>NOT NULL</> for <literal>USING</> clause (Tom)</para></listitem>
-<listitem><para>Fix rare termination of the statistics collector
-process on Win32 (Tom)</para></listitem>
-<listitem><para>Improvements to hash and bitmap joins (Tom)</para></listitem>
+<listitem><para>Fix <function>string_to_array()</> to handle overlapping
+  matches for the separator string</para>
+<para>For example, <literal>string_to_array('123xx456xxx789', 'xx')</>.
+</para></listitem>
+<listitem><para>Fix <function>to_timestamp()</> for
+<literal>AM</>/<literal>PM</> formats (Bruce)</para></listitem>
+<listitem><para>Fix autovacuum's calculation that decides whether
+  <command>ANALYZE</> is needed (Alvaro)</para></listitem>
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Numerous robustness fixes in <application>ecpg</> (Joachim
+Wieland)</para></listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Minor fixes in /contrib/dblink and /contrib/tsearch2</para>
+</listitem>
+<listitem><para>Efficiency improvements in hash tables and bitmap index scans
+(Tom)</para></listitem>
+<listitem><para>Fix instability of statistics collection on Win32 (Tom, Andrew)</para></listitem>
 <listitem><para>Fix <varname>statement_timeout</> to use the proper
-units of microseconds on Win32 (Bruce)</para>
-<para>In previous Win32 8.1.X versions, 100-microseconds units were
-incorrectly used internally.</para></listitem>
+units on Win32 (Bruce)</para>
+<para>In previous Win32 8.1.X versions, the delay was off by a factor of
+100.</para></listitem>
+<listitem><para>Fixes for <acronym>MSVC</> and <productname>Borland C++</>
+compilers (Hiroshi Saito)</para></listitem>
 <listitem><para>Fixes for <systemitem class="osname">AIX</> and
 <productname>Intel</> compilers (Tom)</para></listitem>
-<listitem><para>Fix <function>to_timestamp()</> for
-<literal>PM</>/<literal>AM</> (Bruce)</para></listitem>
-<listitem><para>Fix <function>string_to_array()</> to handle overlapping
-matches for the separator string</para> <para>For example,
-<literal>string_to_array('123xx456xxx789', 'xx')</>.</para></listitem>
-
 </itemizedlist>
 
    </sect2>
@@ -5020,7 +5017,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -5042,23 +5039,26 @@ psql -t -f fixseq.sql db1 | psql -e db1
     <title>Changes</title>
 
 <itemizedlist>
-
 <listitem><para>Fix crash when referencing <literal>NEW</> row
-values in rules (Tom)</para></listitem>
-<listitem><para>Add ability to log protocol-level prepared
-statements (Tom)</para></listitem>
+values in rule WHERE expressions (Tom)</para></listitem>
+<listitem><para>Fix core dump when an untyped literal is taken as
+ANYARRAY</para></listitem>
 <listitem><para>Fix <command>ALTER TABLE ... TYPE</> to recheck
 <literal>NOT NULL</> for <literal>USING</> clause (Tom)</para></listitem>
-<listitem><para>Fix rare termination of the statistics collector
-process on Win32 (Tom)</para></listitem>
+<listitem><para>Fix <function>string_to_array()</> to handle overlapping
+  matches for the separator string</para>
+<para>For example, <literal>string_to_array('123xx456xxx789', 'xx')</>.
+</para></listitem>
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Numerous robustness fixes in <application>ecpg</> (Joachim
+Wieland)</para></listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Fix instability of statistics collection on Win32 (Tom, Andrew)</para></listitem>
 <listitem><para>Fixes for <systemitem class="osname">AIX</> and
 <productname>Intel</> compilers (Tom)</para></listitem>
-<listitem><para>Fix <function>string_to_array()</> to handle overlapping
-matches for the separator string</para> <para>For example,
-<literal>string_to_array('123xx456xxx789', 'xx')</>.</para></listitem>
-<listitem><para>Minor fixes related to ecpg, /contrib/ltree,
-and <application>psql</></para> </listitem>
-
 </itemizedlist>
 
    </sect2>
@@ -8222,7 +8222,7 @@ typedefs (Michael)</para></listitem>
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -8244,14 +8244,19 @@ typedefs (Michael)</para></listitem>
     <title>Changes</title>
 
 <itemizedlist>
-
-<listitem><para>Minor fixes related to timezones, ecpg, /contrib/ltree,
-and <application>psql</></para> </listitem>
-
+<listitem><para>Fix core dump when an untyped literal is taken as
+ANYARRAY</para></listitem>
 <listitem><para>Fix <function>string_to_array()</> to handle overlapping
-matches for the separator string</para> <para>For example,
-<literal>string_to_array('123xx456xxx789', 'xx')</>.</para></listitem>
-
+  matches for the separator string</para>
+<para>For example, <literal>string_to_array('123xx456xxx789', 'xx')</>.
+</para></listitem>
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Adjust regression tests for recent changes in US DST laws
+</para> </listitem>
 </itemizedlist>
 
    </sect2>
@@ -11176,7 +11181,7 @@ DROP SCHEMA information_schema CASCADE;
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -11198,10 +11203,16 @@ DROP SCHEMA information_schema CASCADE;
     <title>Changes</title>
 
 <itemizedlist> 
-
-<listitem><para>Minor fixes related to timezones, spinlocks, SSL,
-GiST, /contrib/ltree, and <application>psql</></para> </listitem>
-
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Back-port 7.4 spinlock code to improve performance and support
+64-bit architectures better</para> </listitem>
+<listitem><para>Fix SSL-related memory leak in libpq</para> </listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Adjust regression tests for recent changes in US DST laws
+</para> </listitem>
 </itemizedlist>
 
    </sect2>
