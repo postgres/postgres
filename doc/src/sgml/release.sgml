@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.24 2006/10/09 23:23:29 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.25 2006/10/11 20:56:10 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.24 2006/10/09 23:23:29 mo
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -32,23 +32,26 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.24 2006/10/09 23:23:29 mo
     <title>Changes</title>
 
 <itemizedlist>
-
 <listitem><para>Fix crash when referencing <literal>NEW</> row
-values in rules (Tom)</para></listitem>
-<listitem><para>Add ability to log protocol-level prepared
-statements (Tom)</para></listitem>
+values in rule WHERE expressions (Tom)</para></listitem>
+<listitem><para>Fix core dump when an untyped literal is taken as
+ANYARRAY</para></listitem>
 <listitem><para>Fix <command>ALTER TABLE ... TYPE</> to recheck
 <literal>NOT NULL</> for <literal>USING</> clause (Tom)</para></listitem>
-<listitem><para>Fix rare termination of the statistics collector
-process on Win32 (Tom)</para></listitem>
+<listitem><para>Fix <function>string_to_array()</> to handle overlapping
+  matches for the separator string</para>
+<para>For example, <literal>string_to_array('123xx456xxx789', 'xx')</>.
+</para></listitem>
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Numerous robustness fixes in <application>ecpg</> (Joachim
+Wieland)</para></listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Fix instability of statistics collection on Win32 (Tom, Andrew)</para></listitem>
 <listitem><para>Fixes for <systemitem class="osname">AIX</> and
 <productname>Intel</> compilers (Tom)</para></listitem>
-<listitem><para>Fix <function>string_to_array()</> to handle overlapping
-matches for the separator string</para> <para>For example,
-<literal>string_to_array('123xx456xxx789', 'xx')</>.</para></listitem>
-<listitem><para>Minor fixes related to ecpg, /contrib/ltree,
-and <application>psql</></para> </listitem>
-
 </itemizedlist>
 
    </sect2>
@@ -888,7 +891,7 @@ typedefs (Michael)</para></listitem>
         to run natively on <trademark class=registered>Microsoft Windows</> as
         a server. It can run as a <productname>Windows</> service. This
         release supports NT-based Windows releases like
-        <productname>Windows 2000</>, <productname>Windows XP</>, and
+        <productname>Windows 2000 SP4</>, <productname>Windows XP</>, and
         <productname>Windows 2003</>. Older releases like
         <productname>Windows 95</>, <productname>Windows 98</>, and
         <productname>Windows ME</> are not supported because these operating
@@ -3212,7 +3215,7 @@ typedefs (Michael)</para></listitem>
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -3234,14 +3237,19 @@ typedefs (Michael)</para></listitem>
     <title>Changes</title>
 
 <itemizedlist>
-
-<listitem><para>Minor fixes related to timezones, ecpg, /contrib/ltree,
-and <application>psql</></para> </listitem>
-
+<listitem><para>Fix core dump when an untyped literal is taken as
+ANYARRAY</para></listitem>
 <listitem><para>Fix <function>string_to_array()</> to handle overlapping
-matches for the separator string</para> <para>For example,
-<literal>string_to_array('123xx456xxx789', 'xx')</>.</para></listitem>
-
+  matches for the separator string</para>
+<para>For example, <literal>string_to_array('123xx456xxx789', 'xx')</>.
+</para></listitem>
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Adjust regression tests for recent changes in US DST laws
+</para> </listitem>
 </itemizedlist>
 
    </sect2>
@@ -6166,7 +6174,7 @@ DROP SCHEMA information_schema CASCADE;
 
    <note>
    <title>Release date</title>
-   <simpara>2006-10-??</simpara>
+   <simpara>2006-10-16</simpara>
    </note>
 
    <para>
@@ -6188,10 +6196,16 @@ DROP SCHEMA information_schema CASCADE;
     <title>Changes</title>
 
 <itemizedlist> 
-
-<listitem><para>Minor fixes related to timezones, spinlocks, SSL,
-GiST, /contrib/ltree, and <application>psql</></para> </listitem>
-
+<listitem><para>Fix corner cases in pattern matching for
+  <application>psql</>'s <literal>\d</> commands</para></listitem>
+<listitem><para>Fix index-corrupting bugs in /contrib/ltree
+  (Teodor)</para></listitem>
+<listitem><para>Back-port 7.4 spinlock code to improve performance and support
+64-bit architectures better</para> </listitem>
+<listitem><para>Fix SSL-related memory leak in libpq</para> </listitem>
+<listitem><para>Fix backslash escaping in /contrib/dbmirror</para></listitem>
+<listitem><para>Adjust regression tests for recent changes in US DST laws
+</para> </listitem>
 </itemizedlist>
 
    </sect2>
