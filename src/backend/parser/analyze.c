@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.352 2006/10/04 00:29:55 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.353 2006/10/11 16:42:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1286,12 +1286,10 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 					 InhRelation *inhRelation)
 {
 	AttrNumber	parent_attno;
-
 	Relation	relation;
 	TupleDesc	tupleDesc;
 	TupleConstr *constr;
 	AclResult	aclresult;
-
 	bool		including_defaults = false;
 	bool		including_constraints = false;
 	bool		including_indexes = false;
@@ -1342,15 +1340,18 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 				including_indexes = false;
 				break;
 			default:
-				elog(ERROR, "unrecognized CREATE TABLE LIKE option: %d", option);
+				elog(ERROR, "unrecognized CREATE TABLE LIKE option: %d",
+					 option);
 		}
 	}
 
 	if (including_indexes)
-		elog(ERROR, "TODO");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("LIKE INCLUDING INDEXES is not implemented")));
 
 	/*
-	 * Insert the inherited attributes into the cxt for the new table
+	 * Insert the copied attributes into the cxt for the new table
 	 * definition.
 	 */
 	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
@@ -1367,7 +1368,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			continue;
 
 		/*
-		 * Create a new inherited column.
+		 * Create a new column, which is marked as NOT inherited.
 		 *
 		 * For constraints, ONLY the NOT NULL constraint is inherited by the
 		 * new column definition per SQL99.
@@ -1389,7 +1390,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		cxt->columns = lappend(cxt->columns, def);
 
 		/*
-		 * Copy default if any, and the default has been requested
+		 * Copy default, if present and the default has been requested
 		 */
 		if (attribute->atthasdef && including_defaults)
 		{
@@ -1419,10 +1420,14 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		}
 	}
 
+	/*
+	 * Copy CHECK constraints if requested, being careful to adjust
+	 * attribute numbers
+	 */
 	if (including_constraints && tupleDesc->constr)
 	{
-		int			ccnum;
 		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
+		int			ccnum;
 
 		for (ccnum = 0; ccnum < tupleDesc->constr->num_check; ccnum++)
 		{
@@ -1435,8 +1440,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 			n->contype = CONSTR_CHECK;
 			n->name = pstrdup(ccname);
-			n->raw_expr = ccbin_node;
-			n->cooked_expr = NULL;
+			n->raw_expr = NULL;
+			n->cooked_expr = nodeToString(ccbin_node);
 			n->indexspace = NULL;
 			cxt->ckconstraints = lappend(cxt->ckconstraints, (Node *) n);
 		}

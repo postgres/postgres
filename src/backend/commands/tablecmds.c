@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.204 2006/10/06 17:13:59 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.205 2006/10/11 16:42:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,6 +163,8 @@ static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, int *supOidCount);
 static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel);
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
+static void add_nonduplicate_constraint(Constraint *cdef,
+										ConstrCheck *check, int *ncheck);
 static bool change_varattnos_walker(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
@@ -285,7 +287,6 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	List	   *rawDefaults;
 	Datum		reloptions;
 	ListCell   *listptr;
-	int			i;
 	AttrNumber	attnum;
 
 	/*
@@ -378,49 +379,35 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	localHasOids = interpretOidsOption(stmt->options);
 	descriptor->tdhasoid = (localHasOids || parentOidCount > 0);
 
-	if (old_constraints != NIL)
+	if (old_constraints || stmt->constraints)
 	{
-		ConstrCheck *check = (ConstrCheck *)
-		palloc0(list_length(old_constraints) * sizeof(ConstrCheck));
+		ConstrCheck *check;
 		int			ncheck = 0;
 
+		/* make array that's certainly big enough */
+		check = (ConstrCheck *)
+			palloc((list_length(old_constraints) +
+					list_length(stmt->constraints)) * sizeof(ConstrCheck));
+		/* deal with constraints from MergeAttributes */
 		foreach(listptr, old_constraints)
 		{
 			Constraint *cdef = (Constraint *) lfirst(listptr);
-			bool		dup = false;
 
-			if (cdef->contype != CONSTR_CHECK)
-				continue;
-			Assert(cdef->name != NULL);
-			Assert(cdef->raw_expr == NULL && cdef->cooked_expr != NULL);
-
-			/*
-			 * In multiple-inheritance situations, it's possible to inherit
-			 * the same grandparent constraint through multiple parents.
-			 * Hence, discard inherited constraints that match as to both name
-			 * and expression.	Otherwise, gripe if the names conflict.
-			 */
-			for (i = 0; i < ncheck; i++)
-			{
-				if (strcmp(check[i].ccname, cdef->name) != 0)
-					continue;
-				if (strcmp(check[i].ccbin, cdef->cooked_expr) == 0)
-				{
-					dup = true;
-					break;
-				}
-				ereport(ERROR,
-						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("duplicate check constraint name \"%s\"",
-								cdef->name)));
-			}
-			if (!dup)
-			{
-				check[ncheck].ccname = cdef->name;
-				check[ncheck].ccbin = pstrdup(cdef->cooked_expr);
-				ncheck++;
-			}
+			if (cdef->contype == CONSTR_CHECK)
+				add_nonduplicate_constraint(cdef, check, &ncheck);
 		}
+		/*
+		 * analyze.c might have passed some precooked constraints too,
+		 * due to LIKE tab INCLUDING CONSTRAINTS
+		 */
+		foreach(listptr, stmt->constraints)
+		{
+			Constraint *cdef = (Constraint *) lfirst(listptr);
+
+			if (cdef->contype == CONSTR_CHECK && cdef->cooked_expr != NULL)
+				add_nonduplicate_constraint(cdef, check, &ncheck);
+		}
+		/* if we found any, insert 'em into the descriptor */
 		if (ncheck > 0)
 		{
 			if (descriptor->constr == NULL)
@@ -1118,66 +1105,57 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	return schema;
 }
 
-/*
- * Varattnos of pg_constraint.conbin must be rewritten when subclasses inherit
- * constraints from parent classes, since the inherited attributes could
- * be given different column numbers in multiple-inheritance cases.
- *
- * Note that the passed node tree is modified in place!
- *
- * This function is used elsewhere such as in analyze.c
- *
- */
 
+/*
+ * In multiple-inheritance situations, it's possible to inherit
+ * the same grandparent constraint through multiple parents.
+ * Hence, we want to discard inherited constraints that match as to
+ * both name and expression.  Otherwise, gripe if there are conflicting
+ * names.  Nonconflicting constraints are added to the array check[]
+ * of length *ncheck ... caller must ensure there is room!
+ */
+static void
+add_nonduplicate_constraint(Constraint *cdef, ConstrCheck *check, int *ncheck)
+{
+	int			i;
+
+	/* Should only see precooked constraints here */
+	Assert(cdef->contype == CONSTR_CHECK);
+	Assert(cdef->name != NULL);
+	Assert(cdef->raw_expr == NULL && cdef->cooked_expr != NULL);
+
+	for (i = 0; i < *ncheck; i++)
+	{
+		if (strcmp(check[i].ccname, cdef->name) != 0)
+			continue;
+		if (strcmp(check[i].ccbin, cdef->cooked_expr) == 0)
+			return;				/* duplicate constraint, so ignore it */
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("duplicate check constraint name \"%s\"",
+						cdef->name)));
+	}
+	/* No match on name, so add it to array */
+	check[*ncheck].ccname = cdef->name;
+	check[*ncheck].ccbin = pstrdup(cdef->cooked_expr);
+	(*ncheck)++;
+}
+
+
+/*
+ * Replace varattno values in an expression tree according to the given
+ * map array, that is, varattno N is replaced by newattno[N-1].  It is
+ * caller's responsibility to ensure that the array is long enough to
+ * define values for all user varattnos present in the tree.  System column
+ * attnos remain unchanged.
+ *
+ * Note that the passed node tree is modified in-place!
+ */
 void
 change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
 {
-	change_varattnos_walker(node, newattno);
-}
-
-/* Generate a map for change_varattnos_of_a_node from two tupledesc's. */
-
-AttrNumber *
-varattnos_map(TupleDesc old, TupleDesc new)
-{
-	int			i,
-				j;
-	AttrNumber *attmap = palloc0(sizeof(AttrNumber) * old->natts);
-
-	for (i = 1; i <= old->natts; i++)
-	{
-		if (old->attrs[i - 1]->attisdropped)
-		{
-			attmap[i - 1] = 0;
-			continue;
-		}
-		for (j = 1; j <= new->natts; j++)
-			if (!strcmp(NameStr(old->attrs[i - 1]->attname), NameStr(new->attrs[j - 1]->attname)))
-				attmap[i - 1] = j;
-	}
-	return attmap;
-}
-
-/*
- * Generate a map for change_varattnos_of_a_node from a tupledesc and a list of
- * ColumnDefs
- */
-AttrNumber *
-varattnos_map_schema(TupleDesc old, List *schema)
-{
-	int			i;
-	AttrNumber *attmap = palloc0(sizeof(AttrNumber) * old->natts);
-
-	for (i = 1; i <= old->natts; i++)
-	{
-		if (old->attrs[i - 1]->attisdropped)
-		{
-			attmap[i - 1] = 0;
-			continue;
-		}
-		attmap[i - 1] = findAttrByName(NameStr(old->attrs[i - 1]->attname), schema);
-	}
-	return attmap;
+	/* no setup needed, so away we go */
+	(void) change_varattnos_walker(node, newattno);
 }
 
 static bool
@@ -1205,6 +1183,59 @@ change_varattnos_walker(Node *node, const AttrNumber *newattno)
 	return expression_tree_walker(node, change_varattnos_walker,
 								  (void *) newattno);
 }
+
+/*
+ * Generate a map for change_varattnos_of_a_node from old and new TupleDesc's,
+ * matching according to column name.
+ */
+AttrNumber *
+varattnos_map(TupleDesc old, TupleDesc new)
+{
+	AttrNumber *attmap;
+	int			i,
+				j;
+
+	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * old->natts);
+	for (i = 1; i <= old->natts; i++)
+	{
+		if (old->attrs[i - 1]->attisdropped)
+			continue;			/* leave the entry as zero */
+
+		for (j = 1; j <= new->natts; j++)
+		{
+			if (strcmp(NameStr(old->attrs[i - 1]->attname),
+					   NameStr(new->attrs[j - 1]->attname)) == 0)
+			{
+				attmap[i - 1] = j;
+				break;
+			}
+		}
+	}
+	return attmap;
+}
+
+/*
+ * Generate a map for change_varattnos_of_a_node from a TupleDesc and a list
+ * of ColumnDefs
+ */
+AttrNumber *
+varattnos_map_schema(TupleDesc old, List *schema)
+{
+	AttrNumber *attmap;
+	int			i;
+
+	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * old->natts);
+	for (i = 1; i <= old->natts; i++)
+	{
+		if (old->attrs[i - 1]->attisdropped)
+			continue;			/* leave the entry as zero */
+
+		attmap[i - 1] = findAttrByName(NameStr(old->attrs[i - 1]->attname),
+									   schema);
+	}
+	return attmap;
+}
+
 
 /*
  * StoreCatalogInheritance

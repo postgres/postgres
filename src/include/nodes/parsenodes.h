@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.331 2006/10/04 00:30:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.332 2006/10/11 16:42:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,8 +414,18 @@ typedef struct InhRelation
 {
 	NodeTag		type;
 	RangeVar   *relation;
-	List	   *options;
+	List	   *options;		/* integer List of CreateStmtLikeOption */
 } InhRelation;
+
+typedef enum CreateStmtLikeOption
+{
+	CREATE_TABLE_LIKE_INCLUDING_DEFAULTS,
+	CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS,
+	CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS,
+	CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS,
+	CREATE_TABLE_LIKE_INCLUDING_INDEXES,
+	CREATE_TABLE_LIKE_EXCLUDING_INDEXES
+} CreateStmtLikeOption;
 
 /*
  * IndexElem - index parameters (used in CREATE INDEX)
@@ -1054,16 +1064,6 @@ typedef struct CreateStmt
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
 	char	   *tablespacename; /* table space to use, or NULL */
 } CreateStmt;
-
-typedef enum CreateStmtLikeOption
-{
-	CREATE_TABLE_LIKE_INCLUDING_DEFAULTS,
-	CREATE_TABLE_LIKE_EXCLUDING_DEFAULTS,
-	CREATE_TABLE_LIKE_INCLUDING_CONSTRAINTS,
-	CREATE_TABLE_LIKE_EXCLUDING_CONSTRAINTS,
-	CREATE_TABLE_LIKE_INCLUDING_INDEXES,
-	CREATE_TABLE_LIKE_EXCLUDING_INDEXES
-} CreateStmtLikeOption;
 
 /* ----------
  * Definitions for plain (non-FOREIGN KEY) constraints in CreateStmt
