@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.263 2006/10/01 23:47:16 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.264 2006/10/12 18:49:32 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -856,14 +856,17 @@ su - postgres
        <term><option>--with-ldap</option></term>
        <listitem>
         <para>
-         Build with <acronym>LDAP</><indexterm><primary>LDAP</></> support
-         for authentication and connection parameter lookup.
-         On Unix, this requires the
-         <productname>OpenLDAP</> package to be installed.
-         <filename>configure</> will check for the required header files
-         and libraries to make sure that your <productname>OpenLDAP</>
-         installation is sufficient before proceeding. On Windows,
-         the default <productname>WinLDAP</> library is used.
+         Build with <acronym>LDAP</><indexterm><primary>LDAP</></>
+         support for authentication and connection parameter lookup (see 
+         <![%standalone-include[the documentation about client authentication
+         and libpq]]><![%standalone-ignore[<xref linkend="libpq-ldap"> and
+         <xref linkend="auth-ldap">]]> for more information). On Unix,
+         this requires the <productname>OpenLDAP</> package to be
+         installed. <filename>configure</> will check for the required
+         header files and libraries to make sure that your
+         <productname>OpenLDAP</> installation is sufficient before
+         proceeding. On Windows, the default <productname>WinLDAP</>
+         library is used.
         </para>
        </listitem>
       </varlistentry>
