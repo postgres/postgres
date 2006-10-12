@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Oct 12 17:29:19 EDT 2006
+Last updated:		Thu Oct 12 17:40:09 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1387,6 +1387,8 @@ Features We Do _Not_ Want
   Optimizer hints are used to work around problems in the optimizer.  We
   would rather have the problems reported and fixed.
   http://archives.postgresql.org/pgsql-hackers/2006-08/msg00506.php
+  http://archives.postgresql.org/pgsql-hackers/2006-10/msg00517.php
+  http://archives.postgresql.org/pgsql-hackers/2006-10/msg00663.php
 
 * Allow AS in "SELECT col AS label" to be optional (not wanted)
 
