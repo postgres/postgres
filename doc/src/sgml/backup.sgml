@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.89 2006/10/02 22:33:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.90 2006/10/12 19:38:08 neilc Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -27,7 +27,7 @@
   <title><acronym>SQL</> Dump</title>
 
   <para>
-   The idea behind the SQL-dump method is to generate a text file with SQL
+   The idea behind this dump method is to generate a text file with SQL
    commands that, when fed back to the server, will recreate the
    database in the same state as it was at the time of the dump.
    <productname>PostgreSQL</> provides the utility program
@@ -471,7 +471,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    To recover successfully using continuous archiving (also called "online
    backup" by many database vendors), you need a continuous
    sequence of archived WAL files that extends back at least as far as the
-   start time of your backup.  So to get started, you should set up and test
+   start time of your backup.  So to get started, you should setup and test
    your procedure for archiving WAL files <emphasis>before</> you take your
    first base backup.  Accordingly, we first discuss the mechanics of
    archiving WAL files.
@@ -861,8 +861,8 @@ SELECT pg_stop_backup();
     <para>
      Remove any files present in <filename>pg_xlog/</>; these came from the
      backup dump and are therefore probably obsolete rather than current.
-     If you didn't archive <filename>pg_xlog/</> at all, then re-create it,
-     and be sure to re-create the subdirectory
+     If you didn't archive <filename>pg_xlog/</> at all, then recreate it,
+     and be sure to recreate the subdirectory
     <filename>pg_xlog/archive_status/</> as well.
     </para>
    </listitem>
@@ -905,7 +905,7 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    The key part of all this is to set up a recovery command file that
+    The key part of all this is to setup a recovery command file that
     describes how you want to recover and how far the recovery should
     run.  You can use <filename>recovery.conf.sample</> (normally
     installed in the installation <filename>share/</> directory) as a
@@ -1196,7 +1196,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    </para>
 
    <para>
-    To make use of this capability you will need to set up a Standby database
+    To make use of this capability you will need to setup a Standby database
     on a second system, as described in <xref linkend="warm-standby">. By
     taking a backup of the Standby server while it is running you will
     have produced an incrementally updated backup. Once this configuration
@@ -1219,35 +1219,38 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
   <itemizedlist>
    <listitem>
     <para>
-     Operations on hash indexes are
-     not presently WAL-logged, so replay will not update these indexes.
-     The recommended workaround is to manually <command>REINDEX</> each
-     such index after completing a recovery operation.
+     Operations on hash indexes are not presently WAL-logged, so
+     replay will not update these indexes.  The recommended workaround
+     is to manually <xref linkend="sql-reindex" endterm="sql-reindex-title">
+     each such index after completing a recovery operation.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     If a <command>CREATE DATABASE</> command is executed while a base
-     backup is being taken, and then the template database that the
-     <command>CREATE DATABASE</> copied is modified while the base backup
-     is still in progress, it is possible that recovery will cause those
-     modifications to be propagated into the created database as well.
-     This is of course undesirable.  To avoid this risk, it is best not to
-     modify any template databases while taking a base backup.
+     If a <xref linkend="sql-createdatabase" endterm="sql-createdatabase-title">
+     command is executed while a base backup is being taken, and then
+     the template database that the <command>CREATE DATABASE</> copied
+     is modified while the base backup is still in progress, it is
+     possible that recovery will cause those modifications to be
+     propagated into the created database as well.  This is of course
+     undesirable.  To avoid this risk, it is best not to modify any
+     template databases while taking a base backup.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     <command>CREATE TABLESPACE</> commands are WAL-logged with the literal
-     absolute path, and will therefore be replayed as tablespace creations
-     with the same absolute path.  This might be undesirable if the log is
-     being replayed on a different machine.  It can be dangerous even if
-     the log is being replayed on the same machine, but into a new data
-     directory: the replay will still overwrite the contents of the original
-     tablespace.  To avoid potential gotchas of this sort, the best practice
-     is to take a new base backup after creating or dropping tablespaces.
+     <xref linkend="sql-createtablespace" endterm="sql-createtablespace-title">
+     commands are WAL-logged with the literal absolute path, and will
+     therefore be replayed as tablespace creations with the same
+     absolute path.  This might be undesirable if the log is being
+     replayed on a different machine.  It can be dangerous even if the
+     log is being replayed on the same machine, but into a new data
+     directory: the replay will still overwrite the contents of the
+     original tablespace.  To avoid potential gotchas of this sort,
+     the best practice is to take a new base backup after creating or
+     dropping tablespaces.
     </para>
    </listitem>
   </itemizedlist>
@@ -1256,21 +1259,20 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    <para>
     It should also be noted that the default <acronym>WAL</acronym>
     format is fairly bulky since it includes many disk page snapshots.
-    These page snapshots are designed to support crash recovery,
-    since we may need to fix partially-written disk pages.  Depending
-    on your system hardware and software, the risk of partial writes may
-    be small enough to ignore, in which case you can significantly reduce
-    the total volume of archived logs by turning off page snapshots 
-    using the <xref linkend="guc-full-page-writes"> parameter.
-    (Read the notes and warnings in 
-    <xref linkend="wal"> before you do so.)
-    Turning off page snapshots does not prevent use of the logs for PITR
-    operations.
-    An area for future development is to compress archived WAL data by
-    removing unnecessary page copies even when <varname>full_page_writes</>
-    is on.  In the meantime, administrators
-    may wish to reduce the number of page snapshots included in WAL by
-    increasing the checkpoint interval parameters as much as feasible.
+    These page snapshots are designed to support crash recovery, since
+    we may need to fix partially-written disk pages.  Depending on
+    your system hardware and software, the risk of partial writes may
+    be small enough to ignore, in which case you can significantly
+    reduce the total volume of archived logs by turning off page
+    snapshots using the <xref linkend="guc-full-page-writes">
+    parameter.  (Read the notes and warnings in <xref linkend="wal">
+    before you do so.)  Turning off page snapshots does not prevent
+    use of the logs for PITR operations.  An area for future
+    development is to compress archived WAL data by removing
+    unnecessary page copies even when <varname>full_page_writes</> is
+    on.  In the meantime, administrators may wish to reduce the number
+    of page snapshots included in WAL by increasing the checkpoint
+    interval parameters as much as feasible.
    </para>
   </sect2>
  </sect1>
@@ -1326,8 +1328,8 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
 
   <para>
    Directly moving WAL or "log" records from one database server to another
-   is typically described as Log Shipping. PostgreSQL implements file-based
-   Log Shipping, meaning WAL records are batched one file at a time. WAL
+   is typically described as Log Shipping. <productname>PostgreSQL</>
+   implements file-based log shipping, which means that WAL records are batched one file at a time. WAL
    files can be shipped easily and cheaply over any distance, whether it be
    to an adjacent system, another system on the same site or another system
    on the far side of the globe. The bandwidth required for this technique
@@ -1339,13 +1341,13 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
   </para>
 
   <para>
-   It should be noted that the log shipping is asynchronous, i.e. the WAL
-   records are shipped after transaction commit. As a result there can be a
-   small window of data loss, should the Primary Server suffer a
-   catastrophic failure. The window of data loss is minimised by the use of
-   the archive_timeout parameter, which can be set as low as a few seconds
-   if required. A very low setting can increase the bandwidth requirements
-   for file shipping.
+   It should be noted that the log shipping is asynchronous, i.e. the
+   WAL records are shipped after transaction commit. As a result there
+   can be a small window of data loss, should the Primary Server
+   suffer a catastrophic failure. The window of data loss is minimised
+   by the use of the <varname>archive_timeout</varname> parameter,
+   which can be set as low as a few seconds if required. A very low
+   setting can increase the bandwidth requirements for file shipping.
   </para>
 
   <para>
@@ -1374,7 +1376,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
 
   <para>
    In general, log shipping between servers running different release
-   levels will not be possible. It is the policy of the PostgreSQL Worldwide
+   levels will not be possible. It is the policy of the PostgreSQL Global
    Development Group not to make changes to disk formats during minor release
    upgrades, so it is likely that running different minor release levels 
    on Primary and Standby servers will work successfully. However, no
@@ -1389,7 +1391,8 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     On the Standby server all tablespaces and paths will refer to similarly
     named mount points, so it is important to create the Primary and Standby
     servers so that they are as similar as possible, at least from the
-    perspective of the database server. Furthermore, any CREATE TABLESPACE
+    perspective of the database server. Furthermore, any <xref
+    linkend="sql-createtablespace" endterm="sql-createtablespace-title">
     commands will be passed across as-is, so any new mount points must be
     created on both servers before they are used on the Primary. Hardware
     need not be the same, but experience shows that maintaining two
@@ -1408,28 +1411,31 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    </para>
 
    <para>
-    The magic that makes the two loosely coupled servers work together is
-    simply a restore_command that waits for the next WAL file to be archived
-    from the Primary. The restore_command is specified in the recovery.conf
-    file on the Standby Server. Normal recovery processing would request a
-    file from the WAL archive, causing an error if the file was unavailable.
-    For Standby processing it is normal for the next file to be unavailable,
-    so we must be patient and wait for it to appear. A waiting
-    restore_command can be written as a custom script that loops after
-    polling for the existence of the next WAL file. There must also be some
-    way to trigger failover, which should interrupt the restore_command,
-    break the loop and return a file not found error to the Standby Server.
-    This then ends recovery and the Standby will then come up as a normal
+    The magic that makes the two loosely coupled servers work together
+    is simply a <varname>restore_command</> that waits for the next
+    WAL file to be archived from the Primary. The <varname>restore_command</>
+    is specified in the <filename>recovery.conf</> file on the Standby
+    Server. Normal recovery processing would request a file from the
+    WAL archive, causing an error if the file was unavailable.  For
+    Standby processing it is normal for the next file to be
+    unavailable, so we must be patient and wait for it to appear. A
+    waiting <varname>restore_command</> can be written as a custom
+    script that loops after polling for the existence of the next WAL
+    file. There must also be some way to trigger failover, which
+    should interrupt the <varname>restore_command</>, break the loop
+    and return a file not found error to the Standby Server. This then
+    ends recovery and the Standby will then come up as a normal
     server.
    </para>
 
    <para>
-    Sample code for the C version of the restore_command would be be:
+    Sample code for the C version of the <varname>restore_command</>
+    would be be:
 <programlisting>
 triggered = false;
 while (!NextWALFileReady() && !triggered)
 {
-    sleep(100000L);         // wait for ~0.1 sec
+    sleep(100000L);         /* wait for ~0.1 sec */
     if (CheckForExternalTrigger())
         triggered = true;
 }
@@ -1439,24 +1445,27 @@ if (!triggered)
    </para>
 
    <para>
-    PostgreSQL does not provide the system software required to identify a
-    failure on the Primary and notify the Standby system and then the
-    Standby database server. Many such tools exist and are well integrated
-    with other aspects of a system failover, such as ip address migration.
+    <productname>PostgreSQL</productname> does not provide the system
+    software required to identify a failure on the Primary and notify
+    the Standby system and then the Standby database server. Many such
+    tools exist and are well integrated with other aspects of a system
+    failover, such as IP address migration.
    </para>
 
    <para>
-    Triggering failover is an important part of planning and design. The
-    restore_command is executed in full once for each WAL file. The process
-    running the restore_command is therefore created and dies for each file,
-    so there is no daemon or server process and so we cannot use signals and
-    a signal handler. A more permanent notification is required to trigger
-    the failover. It is possible to use a simple timeout facility,
-    especially if used in conjunction with a known archive_timeout setting
-    on the Primary. This is somewhat error prone since a network or busy
-    Primary server might be sufficient to initiate failover. A notification
-    mechanism such as the explicit creation of a trigger file is less error
-    prone, if this can be arranged.
+    Triggering failover is an important part of planning and
+    design. The <varname>restore_command</> is executed in full once
+    for each WAL file. The process running the <varname>restore_command</>
+    is therefore created and dies for each file, so there is no daemon
+    or server process and so we cannot use signals and a signal
+    handler. A more permanent notification is required to trigger the
+    failover. It is possible to use a simple timeout facility,
+    especially if used in conjunction with a known
+    <varname>archive_timeout</> setting on the Primary. This is
+    somewhat error prone since a network or busy Primary server might
+    be sufficient to initiate failover. A notification mechanism such
+    as the explicit creation of a trigger file is less error prone, if
+    this can be arranged.
    </para>
   </sect2>
 
@@ -1469,13 +1478,14 @@ if (!triggered)
     <orderedlist>
      <listitem>
       <para>
-       Set up Primary and Standby systems as near identically as possible,
-       including two identical copies of PostgreSQL at same release level.
+       Setup Primary and Standby systems as near identically as
+       possible, including two identical copies of
+       <productname>PostgreSQL</> at the same release level.
       </para>
      </listitem>
      <listitem>
       <para>
-       Set up Continuous Archiving from the Primary to a WAL archive located
+       Setup Continuous Archiving from the Primary to a WAL archive located
        in a directory on the Standby Server. Ensure that both <xref
        linkend="guc-archive-command"> and <xref linkend="guc-archive-timeout">
        are set. (See <xref linkend="backup-archiving-wal">)
@@ -1489,9 +1499,10 @@ if (!triggered)
      </listitem>
      <listitem>
       <para>
-       Begin recovery on the Standby Server from the local WAL archive,
-       using a recovery.conf that specifies a restore_command that waits as
-       described previously. (See <xref linkend="backup-pitr-recovery">)
+       Begin recovery on the Standby Server from the local WAL
+       archive, using a <filename>recovery.conf</> that specifies a
+       <varname>restore_command</> that waits as described
+       previously. (See <xref linkend="backup-pitr-recovery">)
       </para>
      </listitem>
     </orderedlist>
@@ -1551,7 +1562,7 @@ if (!triggered)
     At the instant that failover takes place to the Standby, we have only a
     single server in operation. This is known as a degenerate state.
     The former Standby is now the Primary, but the former Primary is down 
-    and may stay down. We must now fully re-create a Standby server, 
+    and may stay down. We must now fully recreate a Standby server, 
     either on the former Primary system when it comes up, or on a third, 
     possibly new, system. Once complete the Primary and Standby can be 
     considered to have switched roles. Some people choose to use a third 
@@ -1577,18 +1588,18 @@ if (!triggered)
     The main features for Log Shipping in this release are based
     around the file-based Log Shipping described above. It is also
     possible to implement record-based Log Shipping using the
-    <function>pg_xlogfile_name_offset</function> function (see <xref
+    <function>pg_xlogfile_name_offset()</function> function (see <xref
     linkend="functions-admin">), though this requires custom
     development.
    </para>
 
    <para>
-    An external program can call pg_xlogfile_name_offset() to find out the
-    filename and the exact byte offset within it of the latest WAL pointer.
-    If the external program regularly polls the server it can find out how
-    far forward the pointer has moved. It can then access the WAL file
-    directly and copy those bytes across to a less up-to-date copy on a
-    Standby Server.
+    An external program can call <function>pg_xlogfile_name_offset()</>
+    to find out the filename and the exact byte offset within it of
+    the latest WAL pointer.  If the external program regularly polls
+    the server it can find out how far forward the pointer has
+    moved. It can then access the WAL file directly and copy those
+    bytes across to a less up-to-date copy on a Standby Server.
    </para>
   </sect2>
  </sect1>
