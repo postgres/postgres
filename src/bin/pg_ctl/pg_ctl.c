@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.73 2006/10/04 00:30:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.74 2006/10/12 05:14:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -858,7 +858,6 @@ do_status(void)
 				if (optlines != NULL)
 					for (; *optlines != NULL; optlines++)
 						fputs(*optlines, stdout);
-				free(optlines);
 				return;
 			}
 		}
