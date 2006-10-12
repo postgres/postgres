@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.471 2006/10/11 20:55:52 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.472 2006/10/12 19:25:12 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -2392,6 +2392,8 @@ ANYARRAY</para></listitem>
 <listitem><para>Fix core dump in duration logging for extended query protocol
 when a <command>COMMIT</> or <command>ROLLBACK</> is
 executed</para></listitem>
+<listitem><para>Fix mishandling of AFTER triggers when query contains a SQL
+function returning multiple rows (Tom)</para></listitem>
 <listitem><para>Fix <command>ALTER TABLE ... TYPE</> to recheck
 <literal>NOT NULL</> for <literal>USING</> clause (Tom)</para></listitem>
 <listitem><para>Fix <function>string_to_array()</> to handle overlapping
@@ -5043,6 +5045,8 @@ psql -t -f fixseq.sql db1 | psql -e db1
 values in rule WHERE expressions (Tom)</para></listitem>
 <listitem><para>Fix core dump when an untyped literal is taken as
 ANYARRAY</para></listitem>
+<listitem><para>Fix mishandling of AFTER triggers when query contains a SQL
+function returning multiple rows (Tom)</para></listitem>
 <listitem><para>Fix <command>ALTER TABLE ... TYPE</> to recheck
 <literal>NOT NULL</> for <literal>USING</> clause (Tom)</para></listitem>
 <listitem><para>Fix <function>string_to_array()</> to handle overlapping
