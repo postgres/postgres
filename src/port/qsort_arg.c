@@ -9,7 +9,7 @@
  *
  *	CAUTION: if you change this file, see also qsort.c
  *
- *	$PostgreSQL: pgsql/src/port/qsort_arg.c,v 1.2 2006/10/04 00:30:14 momjian Exp $
+ *	$PostgreSQL: pgsql/src/port/qsort_arg.c,v 1.3 2006/10/12 15:04:55 tgl Exp $
  */
 
 /*	$NetBSD: qsort.c,v 1.13 2003/08/07 16:43:42 agc Exp $	*/
@@ -49,8 +49,6 @@
 static char *med3(char *a, char *b, char *c,
 	 qsort_arg_comparator cmp, void *arg);
 static void swapfunc(char *, char *, size_t, int);
-
-#define min(a, b)	((a) < (b) ? (a) : (b))
 
 /*
  * Qsort routine based on J. L. Bentley and M. D. McIlroy,
@@ -184,9 +182,9 @@ loop:SWAPINIT(a, es);
 		pc -= es;
 	}
 	pn = (char *) a + n * es;
-	r = min(pa - (char *) a, pb - pa);
+	r = Min(pa - (char *) a, pb - pa);
 	vecswap(a, pb - r, r);
-	r = min(pd - pc, pn - pd - es);
+	r = Min(pd - pc, pn - pd - es);
 	vecswap(pb, pn - r, r);
 	if ((r = pb - pa) > es)
 		qsort_arg(a, r / es, es, cmp, arg);
