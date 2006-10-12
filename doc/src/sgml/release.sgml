@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.25 2006/10/11 20:56:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.26 2006/10/12 19:25:32 tgl Exp $
 -->
 
 <appendix id="release">
@@ -36,6 +36,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.25 2006/10/11 20:56:10 tg
 values in rule WHERE expressions (Tom)</para></listitem>
 <listitem><para>Fix core dump when an untyped literal is taken as
 ANYARRAY</para></listitem>
+<listitem><para>Fix mishandling of AFTER triggers when query contains a SQL
+function returning multiple rows (Tom)</para></listitem>
 <listitem><para>Fix <command>ALTER TABLE ... TYPE</> to recheck
 <literal>NOT NULL</> for <literal>USING</> clause (Tom)</para></listitem>
 <listitem><para>Fix <function>string_to_array()</> to handle overlapping
