@@ -4,6 +4,7 @@
  */
 
 #include "../../include/pg_config.h"
+#include "../../include/pg_config_os.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -14,13 +15,19 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#ifdef WIN32
+#define FSYNC_FILENAME	"./test_fsync.out"
+#else
 #define FSYNC_FILENAME	"/var/tmp/test_fsync.out"
+#endif
 
 /* O_SYNC and O_FSYNC are the same */
 #if defined(O_SYNC)
 #define OPEN_SYNC_FLAG		O_SYNC
 #elif defined(O_FSYNC)
 #define OPEN_SYNC_FLAG		O_FSYNC
+#elif defined(O_DSYNC)
+#define OPEN_DATASYNC_FLAG	O_DSYNC
 #endif
 
 #if defined(OPEN_SYNC_FLAG)
@@ -122,6 +129,7 @@ main(int argc, char *argv[])
 
 	printf("\nCompare one o_sync write to two:\n");
 
+#ifdef OPEN_SYNC_FLAG
 	/* 16k o_sync write */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
 		die("Cannot open output file.");
@@ -150,6 +158,10 @@ main(int argc, char *argv[])
 	printf("\n");
 
 	printf("\nCompare file sync methods with one 8k write:\n");
+#else
+	printf("\t(o_sync unavailable)  ");
+#endif
+	printf("\n");
 
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
@@ -162,11 +174,8 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	printf("\topen o_dsync, write    ");
 	print_elapse(start_t, elapse_t);
-#else
-	printf("\t(o_dsync unavailable)  ");
-#endif
 	printf("\n");
-
+#ifdef OPEN_SYNC_FLAG
 	/* open_fsync, write */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
 		die("Cannot open output file.");
@@ -177,6 +186,10 @@ main(int argc, char *argv[])
 	close(tmpfile);
 	printf("\topen o_sync, write     ");
 	print_elapse(start_t, elapse_t);
+#endif
+#else
+	printf("\t(o_dsync unavailable)  ");
+#endif
 	printf("\n");
 
 #ifdef HAVE_FDATASYNC
@@ -234,6 +247,7 @@ main(int argc, char *argv[])
 #endif
 	printf("\n");
 
+#ifdef OPEN_SYNC_FLAG
 	/* open_fsync, write */
 	if ((tmpfile = open(filename, O_RDWR | OPEN_SYNC_FLAG)) == -1)
 		die("Cannot open output file.");
@@ -248,6 +262,7 @@ main(int argc, char *argv[])
 	printf("\topen o_sync, write     ");
 	print_elapse(start_t, elapse_t);
 	printf("\n");
+#endif
 
 #ifdef HAVE_FDATASYNC
 	/* write, fdatasync */
