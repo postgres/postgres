@@ -22980,9 +22980,9 @@ fi
 #
 
 
-  for var in `set |sed -ne '/^\(with_\|enable\_\)/ s/=.*//p'` ; do
-     case $var in
-       with_template) ;;
+  for pgac_var in `set | sed 's/=.*//' | $EGREP 'with_|enable_'`; do
+    case $pgac_var in
+      with_template) ;;
 with_docdir) ;;
 with_includes) ;;
 with_libraries) ;;
@@ -23014,12 +23014,13 @@ with_readline) ;;
 with_libedit_preferred) ;;
 with_zlib) ;;
 
-       with_gnu_ld) ;;
-     *)
-       echo -n "*** Option ignored: "
-       echo $var | sed -e 's/\(^=*\)/--\1/;s/_/-/g'
-       ;;
-     esac
+      with_gnu_ld) ;;
+    *)
+      pgac_txt=`echo $pgac_var | tr '_' '-'`
+      { echo "$as_me:$LINENO: WARNING: option ignored: --$pgac_txt" >&5
+echo "$as_me: WARNING: option ignored: --$pgac_txt" >&2;}
+      ;;
+    esac
   done
 
 
