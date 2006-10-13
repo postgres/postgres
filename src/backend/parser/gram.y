@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.566 2006/09/28 20:51:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.567 2006/10/13 21:43:19 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1506,20 +1506,20 @@ alter_table_cmd:
 					n->subtype = AT_DisableTrigUser;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> ALTER INHERITS ADD <parent> */
+			/* ALTER TABLE <name> INHERIT <parent> */
 			| INHERIT qualified_name
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
-					n->subtype = AT_AddInherits;
-					n->parent = $2;
+					n->subtype = AT_AddInherit;
+					n->def = (Node *) $2;
 					$$ = (Node *)n;
 				}
-			/* ALTER TABLE <name> alter INHERITS DROP <parent> */
+			/* ALTER TABLE <name> NO INHERIT <parent> */
 			| NO INHERIT qualified_name
 				{
 					AlterTableCmd *n = makeNode(AlterTableCmd);
-					n->subtype = AT_DropInherits;
-					n->parent = $3;
+					n->subtype = AT_DropInherit;
+					n->def = (Node *) $3;
 					$$ = (Node *)n;
 				}
 			| alter_rel_cmd

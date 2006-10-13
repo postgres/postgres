@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.90 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.91 2006/10/13 21:43:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -294,28 +294,22 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <term><literal>INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
     <listitem>
      <para>
-      This form adds a new parent table to the table. This won't add new
-      columns to the child table, instead all columns of the parent table must
-      already exist in the child table. They must have matching data types,
+      This form adds the target table as a new child of the specified parent
+      table.  Subsequently, queries against the parent will include records
+      of the target table.  To be added as a child, the target table must
+      already contain all the same columns as the parent (it could have
+      additional columns, too).  The columns must have matching data types,
       and if they have <literal>NOT NULL</literal> constraints in the parent
       then they must also have <literal>NOT NULL</literal> constraints in the
       child.
      </para>
 
      <para>
-      There must also be matching table constraints for all
-      <literal>CHECK</literal> table constraints of the parent. Currently
+      There must also be matching child-table constraints for all
+      <literal>CHECK</literal> constraints of the parent. Currently
       <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
-      <literal>FOREIGN KEY</literal> constraints are ignored however this may
-      change in the future.
-     </para>
-
-     <para>
-      The easiest way to create a suitable table is to create a table using
-      <literal>INHERITS</literal> and then remove it via <literal>NO
-      INHERIT</literal>. Alternatively create a table using
-      <literal>LIKE</literal> however note that <literal>LIKE</literal> does
-      not create the necessary constraints.
+      <literal>FOREIGN KEY</literal> constraints are not considered, but
+      this may change in the future.
      </para>
     </listitem>
    </varlistentry>
@@ -324,7 +318,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <term><literal>NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
     <listitem>
      <para>
-      This form removes a parent table from the list of parents of the table.
+      This form removes the target table from the list of children of the
+      specified parent table.
       Queries against the parent table will no longer include records drawn
       from the target table.
      </para>
@@ -392,6 +387,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    You must own the table to use <command>ALTER TABLE</>.
    To change the schema of a table, you must also have
    <literal>CREATE</literal> privilege on the new schema.
+   To add the table as a new child of a parent table, you must own the
+   parent table as well.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
    the table's schema.  (These restrictions enforce that altering the owner

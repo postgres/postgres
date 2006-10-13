@@ -324,7 +324,7 @@ select test2 from atacc2;
 -- fail due to missing constraint
 alter table atacc2 add constraint foo check (test2>0);
 alter table atacc3 inherit atacc2;
-ERROR:  child table missing constraint matching parent table constraint "foo"
+ERROR:  child table is missing constraint "foo"
 -- fail due to missing column
 alter table atacc3 rename test2 to testx;
 alter table atacc3 inherit atacc2;
@@ -342,10 +342,10 @@ alter table atacc3 inherit atacc2;
 alter table atacc3 inherit atacc2;
 ERROR:  inherited relation "atacc2" duplicated
 alter table atacc2 inherit atacc3;
-ERROR:  circular inheritance structure found
+ERROR:  circular inheritance not allowed
 DETAIL:  "atacc3" is already a child of "atacc2".
 alter table atacc2 inherit atacc2;
-ERROR:  circular inheritance structure found
+ERROR:  circular inheritance not allowed
 DETAIL:  "atacc2" is already a child of "atacc2".
 -- test that we really are a child now (should see 4 not 3 and cascade should go through)
 select test2 from atacc2;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.63 2006/09/20 21:30:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.64 2006/10/13 21:43:17 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2061,53 +2061,54 @@ VALUES ('New York', NULL, NULL, 'NY');
   </para>
 
   <para>
-   Table inheritance can be defined using the <xref linkend="sql-createtable"
-   endterm="sql-createtable-title"> statement using the
-   <command>INHERITS</command> keyword. However the related statement
-   <command>CREATE TABLE AS</command> does not allow inheritance to be
-   specified. 
+   Table inheritance is typically established when the child table is
+   created, using the <literal>INHERITS</> clause of the
+   <xref linkend="sql-createtable" endterm="sql-createtable-title">
+   statement. However the related statement <command>CREATE TABLE AS</command>
+   does not allow inheritance to be specified. 
   </para>
 
   <para>
-   Alternatively a table which is already defined in a compatible way can have
-   a new parent added with <xref linkend="sql-altertable"
-   endterm="sql-altertable-title"> using the <command>INHERIT</command>
-   subform. To do this the new child table must already include columns with
-   the same name and type as the columns of the parent. It must also include
-   check constraints with the same name and check expression as those of the
+   Alternatively, a table which is already defined in a compatible way can
+   have a new parent relationship added, using the <literal>INHERIT</literal>
+   variant of <xref linkend="sql-altertable" endterm="sql-altertable-title">.
+   To do this the new child table must already include columns with
+   the same names and types as the columns of the parent. It must also include
+   check constraints with the same names and check expressions as those of the
    parent. Similarly an inheritance link can be removed from a child using the
-   <command>ALTER TABLE</command> using the <command>NO INHERIT</command>
-   subform.
+   <literal>NO INHERIT</literal> variant of <command>ALTER TABLE</>.
+   Dynamically adding and removing inheritance links like this can be useful
+   when the inheritance relationship is being used for table
+   partitioning (see <xref linkend="ddl-partitioning">).
   </para>
 
   <para>
-   One convenient way to create a compatible table to be a new child
-   is specify the <command>LIKE</command> clause in <command>CREATE
+   One convenient way to create a compatible table that will later be made
+   a new child is to use the <literal>LIKE</literal> clause in <command>CREATE
    TABLE</command>. This creates a new table with the same columns as
-   the source table. If there are any <command>CHECK</command>
-   constraints defined on the parent table, the <command>INCLUDING
-   CONSTRAINTS</command> option to <command>LIKE</command> may be
-   useful, as the new child must have constraints matching the parent
-   to be considered compatible. Alternatively a compatible table can
-   be created by first creating a new child using <command>CREATE
-   TABLE</command> then removing the inheritance link with
-   <command>ALTER TABLE</command>.
+   the source table. If there are any <literal>CHECK</literal>
+   constraints defined on the source table, the <literal>INCLUDING
+   CONSTRAINTS</literal> option to <literal>LIKE</literal> should be
+   specified, as the new child must have constraints matching the parent
+   to be considered compatible.
   </para>
 
   <para>
-   A parent table cannot be dropped while any
-   of its children remain. If you wish to remove a table and all of its
+   A parent table cannot be dropped while any of its children remain. Neither
+   can columns of child tables be dropped or altered if they are inherited
+   from any parent tables. If you wish to remove a table and all of its
    descendants, one easy way is to drop the parent table with the
-   <literal>CASCADE</literal> option. Neither can columns of child tables be
-   dropped or altered if they are inherited from any parent tables.
+   <literal>CASCADE</literal> option.
   </para>
 
   <para>
    <xref linkend="sql-altertable" endterm="sql-altertable-title"> will
-   propagate any changes in column data definitions and check constraints down
-   the inheritance hierarchy. <command>ALTER TABLE</command> follows the same
-   rules for duplicate column merging and rejection that apply during
-   <command>CREATE TABLE</command>. 
+   propagate any changes in column data definitions and check
+   constraints down the inheritance hierarchy.  Again, dropping
+   columns or constraints on parent tables is only possible when using
+   the <literal>CASCADE</literal> option. <command>ALTER
+   TABLE</command> follows the same rules for duplicate column merging
+   and rejection that apply during <command>CREATE TABLE</command>.
   </para>
 
  <sect2 id="ddl-inherit-caveats">
@@ -2162,16 +2163,6 @@ VALUES ('New York', NULL, NULL, 'NY');
       not capital names.  There is no good workaround for this case.
      </para>
     </listitem>
-
-    <listitem>
-     <para>
-      If a table is ever removed from the inheritance structure using
-      <command>ALTER TABLE</command> then all its columns will be marked as
-      being locally defined. This means <command>DROP COLUMN</command> on the
-      parent table will never cascade to drop those columns on the child
-      table. They must be dropped manually.
-     </para>
-    </listitem>
    </itemizedlist>
 
    These deficiencies will probably be fixed in some future release,
@@ -2222,37 +2213,31 @@ VALUES ('New York', NULL, NULL, 'NY');
    <itemizedlist>
     <listitem>
      <para>
-      Query performance can be improved when partition constraints can be
-      combined with local indexes to reduce the number of records that need to
-      be accessed for a query. Whereas the alternative, adding those columns
-      to every index, increases space usage which can erase any
-      performance gain.
-     </para>
-
-     <para>
-      When most of the heavily accessed area of the table is in a single
-      partition or a small number of partitions. That partition and its
-      indexes are more likely to fit within memory than the index of the
-      entire table.
+      Query performance can be improved dramatically in certain situations,
+      particularly when most of the heavily accessed rows of the table are in a
+      single partition or a small number of partitions.  The partitioning
+      substitutes for leading columns of indexes, reducing index size and
+      making it more likely that the heavily-used parts of the indexes
+      fit in memory.
      </para>
     </listitem>
 
     <listitem>
      <para>
       When queries or updates access a large percentage of a a single
-      partition performance can be improved dramatically by taking advantage
-      of sequential disk access of a single partition instead of using an
-      index and random access reads across the whole table.
+      partition, performance can be improved by taking advantage
+      of sequential scan of that partition instead of using an
+      index and random access reads scattered across the whole table.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Bulk loads and deletes may be accomplished by simply removing or adding
-      one of the partitions. <command>ALTER TABLE</> is far faster than a bulk
-      and takes the same amount of time regardless of the amount of data being
-      added or removed. It also entirely avoids the <command>VACUUM</command>
-      overhead caused by a bulk <command>delete</>.
+      Bulk loads and deletes may be accomplished by adding or removing
+      partitions, if that requirement is planned into the partitioning design.
+      <command>ALTER TABLE</> is far faster than a bulk operation.
+      It also entirely avoids the <command>VACUUM</command>
+      overhead caused by a bulk <command>DELETE</>.
      </para>
     </listitem>
 
@@ -2577,6 +2562,25 @@ DO INSTEAD
      creating a new partition each month, so it may be wise to write a
      script that generates the required DDL automatically.
     </para>
+
+   <para>
+    Partitioning can also be arranged using a <literal>UNION ALL</literal>
+    view:
+
+<programlisting>
+CREATE VIEW measurement AS
+          SELECT * FROM measurement_y2004m02
+UNION ALL SELECT * FROM measurement_y2004m03
+...
+UNION ALL SELECT * FROM measurement_y2005m11
+UNION ALL SELECT * FROM measurement_y2005m12
+UNION ALL SELECT * FROM measurement_y2006m01;
+</programlisting>
+
+    However, the need to
+    recreate the view adds an extra step to adding and dropping
+    individual partitions of the dataset.
+   </para>
    </sect2>
 
    <sect2 id="ddl-partitioning-managing-partitions">
@@ -2589,15 +2593,15 @@ DO INSTEAD
      add new partitions for new data. One of the most important
      advantages of partitioning is precisely that it allows this
      otherwise painful task to be executed nearly instantaneously by
-     manipulating the partition structure, rather than moving large
-     amounts of data around physically.
+     manipulating the partition structure, rather than physically moving large
+     amounts of data around.
    </para>
 
    <para>
-     The simplest option for removing old data is to simply drop the partition
+     The simplest option for removing old data is simply to drop the partition
      that is no longer necessary:
 <programlisting>
-DROP TABLE measurement_y2003mm02;
+DROP TABLE measurement_y2003m02;
 </programlisting>
      This can very quickly delete millions of records because it doesn't have
      to individually delete every record.
@@ -2608,10 +2612,10 @@ DROP TABLE measurement_y2003mm02;
      the partitioned table but retain access to it as a table in its own
      right:
 <programlisting>
-ALTER TABLE measurement_y2003mm02 NO INHERIT measurement;
+ALTER TABLE measurement_y2003m02 NO INHERIT measurement;
 </programlisting>
      This allows further operations to be performed on the data before
-     it is dropped. For example, this is often a useful time to backup
+     it is dropped. For example, this is often a useful time to back up
      the data using <command>COPY</>, <application>pg_dump</>, or
      similar tools. It can also be a useful time to aggregate data
      into smaller formats, perform other data manipulations, or run
@@ -2635,10 +2639,12 @@ CREATE TABLE measurement_y2006m02 (
      transformed prior to it appearing in the partitioned table.
 
 <programlisting>
-CREATE TABLE measurement_y2006m02 (LIKE measurement INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
-\COPY measurement_y2006m02 FROM 'measurement_y2006m02'
-UPDATE ... ;
-ALTER TABLE measurement_y2006m02 ADD CONSTRAINT y2006m02 CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' );
+CREATE TABLE measurement_y2006m02
+  (LIKE measurement INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
+ALTER TABLE measurement_y2006m02 ADD CONSTRAINT y2006m02
+   CHECK ( logdate &gt;= DATE '2006-02-01' AND logdate &lt; DATE '2006-03-01' );
+\copy measurement_y2006m02 from 'measurement_y2006m02'
+-- possibly some other data preparation work
 ALTER TABLE measurement_y2006m02 INHERIT measurement;
 </programlisting>
     </para>
@@ -2670,37 +2676,7 @@ ALTER TABLE measurement_y2006m02 INHERIT measurement;
       using a set of rules as suggested above.)
      </para>
     </listitem>
-
-    <listitem>
-     <para>
-      When using the <literal>LIKE</> option above to create new
-      partitions, <literal>CHECK</> constraints are not copied from
-      the parent. If there are any <literal>CHECK</> constraints
-      defined for the parent, they must be manually created in new
-      partitions before <command>ALTER TABLE</command> will allow them
-      to be added.
-     </para>
-    </listitem>
    </itemizedlist>
-   </para>
-
-   <para>
-    Partitioning can also be arranged using a <literal>UNION ALL</literal>
-    view:
-
-<programlisting>
-CREATE VIEW measurement AS
-          SELECT * FROM measurement_y2004m02
-UNION ALL SELECT * FROM measurement_y2004m03
-...
-UNION ALL SELECT * FROM measurement_y2005m11
-UNION ALL SELECT * FROM measurement_y2005m12
-UNION ALL SELECT * FROM measurement_y2006m01;
-</programlisting>
-
-    However, the need to
-    recreate the view adds an extra step to adding and dropping
-    individual partitions of the dataset.
    </para>
    </sect2>
 

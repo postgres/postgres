@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.332 2006/10/11 16:42:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.333 2006/10/13 21:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -905,8 +905,8 @@ typedef enum AlterTableType
 	AT_DisableTrigAll,			/* DISABLE TRIGGER ALL */
 	AT_EnableTrigUser,			/* ENABLE TRIGGER USER */
 	AT_DisableTrigUser,			/* DISABLE TRIGGER USER */
-	AT_AddInherits,				/* ADD INHERITS parent */
-	AT_DropInherits				/* DROP INHERITS parent */
+	AT_AddInherit,				/* INHERIT parent */
+	AT_DropInherit				/* NO INHERIT parent */
 } AlterTableType;
 
 typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
@@ -915,9 +915,8 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
 								 * or new owner or tablespace */
-	RangeVar   *parent;			/* Parent table for add/drop inherits */
 	Node	   *def;			/* definition of new column, column type,
-								 * index, or constraint */
+								 * index, constraint, or parent table */
 	Node	   *transform;		/* transformation expr for ALTER TYPE */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 } AlterTableCmd;
