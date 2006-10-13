@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Fri Aug 18 12:27:33 EDT 2006
+原文最終更新日: Mon Oct 9 20:28:14 EDT 2006
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -166,7 +166,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
         POSTGRESQL データベース管理システム
 
-        部分的著作権 (c) 1996-2005, PostgreSQL国際開発チーム
+        部分的著作権 (c) 1996-2006, PostgreSQL国際開発チーム
         部分的著作権 (c) 1994-1996 カリフォルニア大学本校
 
 
@@ -209,7 +209,7 @@ PostgreSQL を走らせることができます。
             http://www.postgresql.org/mirrors-ftp.html
 
         詳しくは、次の Windows版に関するFAQの和訳をごらんください。
-        http://www.postgresql.jp/wg/jpugdoc/FAQ_windows.ja.html
+        http://old.postgresql.jp/wg/jpugdoc/FAQ_windows.ja.html
     ]
 
 
@@ -225,7 +225,7 @@ ftp://ftp.PostgreSQL.org/pub/ を使います。
 
 1.6) 最新のリリースはどれですか？
 
-PostgreSQL の最新版はバージョン 8.1.4 です。
+PostgreSQL の最新版はバージョン 8.1.5 です。
 
 我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを行なうことを計
 画しています。
@@ -253,11 +253,12 @@ postgresql-es)もあり、フランス語のチャンネル (#postgresqlfr)もあります。EFNetに
     [訳注:
           1999年7月23日、日本ポストグレスユーザー会、略称JPUGが設立されました。
         JPUG は非営利組織で、PostgreSQLを利用する人達の相互協力の場となっています。
-        (2003年5月17日、「日本PostgreSQLユーザ会」に名称を改めました。)
-        正会員の会費は無料ですが、協賛会員の会費と会員の積極的な貢献が会の運営を助けています。
+        (2006年 特定非営利活動(NPO)法人日本PostgreSQLユーザ会になりました。
+        Web会員と正会員の会費は無料ですが、協賛会員の会費と会員の貢献で
+          会は運営されています。)
         詳しくは、JPUG のWeb サイト:
                 http://www.PostgreSQL.jp/
-        をごらんください。会員登録も可能となっています。
+        をごらんください。
 
         日本語のIRCチャンネル '#PostgreSQL:*.jp' も存在します。
     ]
@@ -1008,7 +1009,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2006年08月19日
+  最終更新日:   2006年10月14日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
