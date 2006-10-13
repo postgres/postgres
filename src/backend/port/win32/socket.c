@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.13 2006/10/04 00:29:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.14 2006/10/13 13:59:47 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,11 +102,23 @@ pgwin32_poll_signals(void)
 	return 0;
 }
 
+static int
+isDataGram(SOCKET s) {
+	int type;
+	int typelen = sizeof(type);
+
+	if ( getsockopt(s, SOL_SOCKET, SO_TYPE, (char*)&type, &typelen) )
+		return 1;
+
+	return ( type == SOCK_DGRAM ) ? 1 : 0;
+}
+
 int
 pgwin32_waitforsinglesocket(SOCKET s, int what)
 {
 	static HANDLE waitevent = INVALID_HANDLE_VALUE;
 	static SOCKET current_socket = -1;
+	static int    isUDP = 0;
 	HANDLE		events[2];
 	int			r;
 
@@ -127,8 +139,12 @@ pgwin32_waitforsinglesocket(SOCKET s, int what)
 	 * socket from a previous call
 	 */
 
-	if (current_socket != s && current_socket != -1)
-		WSAEventSelect(current_socket, waitevent, 0);
+	if (current_socket != s) 
+	{
+		if ( current_socket != -1 )
+			WSAEventSelect(current_socket, waitevent, 0);
+		isUDP = isDataGram(s);
+	}
 
 	current_socket = s;
 
@@ -140,7 +156,46 @@ pgwin32_waitforsinglesocket(SOCKET s, int what)
 
 	events[0] = pgwin32_signal_event;
 	events[1] = waitevent;
-	r = WaitForMultipleObjectsEx(2, events, FALSE, INFINITE, TRUE);
+
+	/* 
+	 * Just a workaround of unknown locking problem with writing
+	 * in UDP socket under high load: 
+	 * Client's pgsql backend sleeps infinitely in 
+	 * WaitForMultipleObjectsEx, pgstat process sleeps in 
+	 * pgwin32_select().  So, we will wait with small 
+	 * timeout(0.1 sec) and if sockect is still blocked, 
+	 * try WSASend (see comments in pgwin32_select) and wait again.
+	 */
+	if ((what & FD_WRITE) && isUDP)
+	{
+		for(;;)
+		{
+			r = WaitForMultipleObjectsEx(2, events, FALSE, 100, TRUE);
+
+			if ( r == WAIT_TIMEOUT )
+			{
+				char        c;
+				WSABUF      buf;
+				DWORD       sent;
+
+				buf.buf = &c;
+				buf.len = 0;
+
+				r = WSASend(s, &buf, 1, &sent, 0, NULL, NULL);
+				if (r == 0)         /* Completed - means things are fine! */
+					return 1;
+				else if ( WSAGetLastError() != WSAEWOULDBLOCK )
+				{
+					TranslateSocketError();
+					return 0;
+				}
+			}
+			else
+				break;
+		}
+	}
+	else
+		r = WaitForMultipleObjectsEx(2, events, FALSE, INFINITE, TRUE);
 
 	if (r == WAIT_OBJECT_0 || r == WAIT_IO_COMPLETION)
 	{
@@ -280,30 +335,31 @@ pgwin32_send(SOCKET s, char *buf, int len, int flags)
 	wbuf.len = len;
 	wbuf.buf = buf;
 
-	r = WSASend(s, &wbuf, 1, &b, flags, NULL, NULL);
-	if (r != SOCKET_ERROR && b > 0)
-		/* Write succeeded right away */
-		return b;
+	/*
+	 * Readiness of socket to send data to UDP socket 
+	 * may be not true: socket can become busy again! So loop
+	 * until send or error occurs.
+	 */
+	for(;;) {
+		r = WSASend(s, &wbuf, 1, &b, flags, NULL, NULL);
+		if (r != SOCKET_ERROR && b > 0)
+			/* Write succeeded right away */
+			return b;
 
-	if (r == SOCKET_ERROR &&
-		WSAGetLastError() != WSAEWOULDBLOCK)
-	{
-		TranslateSocketError();
-		return -1;
+		if (r == SOCKET_ERROR &&
+			WSAGetLastError() != WSAEWOULDBLOCK)
+		{
+			TranslateSocketError();
+			return -1;
+		}
+
+		/* No error, zero bytes (win2000+) or error+WSAEWOULDBLOCK (<=nt4) */
+
+		if (pgwin32_waitforsinglesocket(s, FD_WRITE | FD_CLOSE) == 0)
+			return -1;
 	}
 
-	/* No error, zero bytes (win2000+) or error+WSAEWOULDBLOCK (<=nt4) */
-
-	if (pgwin32_waitforsinglesocket(s, FD_WRITE | FD_CLOSE) == 0)
-		return -1;
-
-	r = WSASend(s, &wbuf, 1, &b, flags, NULL, NULL);
-	if (r == SOCKET_ERROR)
-	{
-		TranslateSocketError();
-		return -1;
-	}
-	return b;
+	return -1;
 }
 
 
