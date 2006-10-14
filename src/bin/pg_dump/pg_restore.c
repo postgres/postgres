@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.83 2006/10/07 20:59:05 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.84 2006/10/14 23:07:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,6 +338,14 @@ main(int argc, char **argv)
 
 	if (opts->tocFile)
 		SortTocFromFile(AH, opts);
+	else if (opts->noDataForFailedTables)
+	{
+		/*
+		 * we implement this option by clearing idWanted entries, so must
+		 * create a dummy idWanted array if there wasn't a tocFile
+		 */
+		InitDummyWantedList(AH, opts);
+	}
 
 	if (opts->tocSummary)
 		PrintTOCSummary(AH, opts);

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.62 2006/10/07 20:59:04 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.63 2006/10/14 23:07:22 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -396,15 +396,23 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-data-for-failed-tables</></term>
+      <term><option>--no-data-for-failed-tables</option></term>
       <listitem>
        <para>
-       By default, table data objects are restored even if the
-       associated table could not be successfully created (e. g.
-       because it already exists). With this option, such table
-       data is silently ignored. This is useful for dumping and
-       restoring databases with tables which contain auxiliary data
-       for PostgreSQL extensions (e. g. PostGIS).
+        By default, table data is restored even if the creation command
+        for the table failed (e.g., because it already exists).
+        With this option, data for such a table is skipped.
+        This behavior is useful when the target database may already
+        contain the desired table contents.  For example,
+        auxiliary tables for <productname>PostgreSQL</> extensions
+        such as <productname>PostGIS</> may already be loaded in
+        the target database; specifying this option prevents duplicate
+        or obsolete data from being loaded into them.
+       </para>
+
+       <para>
+        This option is effective only when restoring directly into a
+        database, not when producing SQL script output.
        </para>
       </listitem>
      </varlistentry>

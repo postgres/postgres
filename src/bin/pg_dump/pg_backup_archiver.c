@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.136 2006/10/04 00:30:05 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.137 2006/10/14 23:07:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,23 +279,27 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			defnDumped = true;
 
 			/*
-			 * If we could not create a table, ignore the respective TABLE
-			 * DATA if -X no-data-for-failed-tables is given
+			 * If we could not create a table and --no-data-for-failed-tables
+			 * was given, ignore the corresponding TABLE DATA
 			 */
-			if (ropt->noDataForFailedTables && AH->lastErrorTE == te && strcmp(te->desc, "TABLE") == 0)
+			if (ropt->noDataForFailedTables &&
+				AH->lastErrorTE == te &&
+				strcmp(te->desc, "TABLE") == 0)
 			{
-				TocEntry   *tes,
-						   *last;
+				TocEntry   *tes;
 
-				ahlog(AH, 1, "table %s could not be created, will not restore its data\n", te->tag);
+				ahlog(AH, 1, "table \"%s\" could not be created, will not restore its data\n",
+					  te->tag);
 
-				for (last = te, tes = te->next; tes != AH->toc; last = tes, tes = tes->next)
+				for (tes = te->next; tes != AH->toc; tes = tes->next)
 				{
-					if (strcmp(tes->desc, "TABLE DATA") == 0 && strcmp(tes->tag, te->tag) == 0 &&
-						strcmp(tes->namespace ? tes->namespace : "", te->namespace ? te->namespace : "") == 0)
+					if (strcmp(tes->desc, "TABLE DATA") == 0 &&
+						strcmp(tes->tag, te->tag) == 0 &&
+						strcmp(tes->namespace ? tes->namespace : "",
+							   te->namespace ? te->namespace : "") == 0)
 					{
-						/* remove this node */
-						last->next = tes->next;
+						/* mark it unwanted */
+						ropt->idWanted[tes->dumpId - 1] = false;
 						break;
 					}
 				}
@@ -789,7 +793,6 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	/* Allocate space for the 'wanted' array, and init it */
 	ropt->idWanted = (bool *) malloc(sizeof(bool) * AH->maxDumpId);
 	memset(ropt->idWanted, 0, sizeof(bool) * AH->maxDumpId);
-	ropt->limitToList = true;
 
 	/* Set prev entry as head of list */
 	tePrev = AH->toc;
@@ -835,6 +838,19 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	if (fclose(fh) != 0)
 		die_horribly(AH, modulename, "could not close TOC file: %s\n",
 					 strerror(errno));
+}
+
+/*
+ * Set up a dummy ID filter that selects all dump IDs
+ */
+void
+InitDummyWantedList(Archive *AHX, RestoreOptions *ropt)
+{
+	ArchiveHandle *AH = (ArchiveHandle *) AHX;
+
+	/* Allocate space for the 'wanted' array, and init it to 1's */
+	ropt->idWanted = (bool *) malloc(sizeof(bool) * AH->maxDumpId);
+	memset(ropt->idWanted, 1, sizeof(bool) * AH->maxDumpId);
 }
 
 /**********************
@@ -2066,8 +2082,8 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	if (!te->defn || strlen(te->defn) == 0)
 		res = res & ~REQ_SCHEMA;
 
-	/* Finally, if we used a list, limit based on that as well */
-	if (ropt->limitToList && !ropt->idWanted[te->dumpId - 1])
+	/* Finally, if there's a per-ID filter, limit based on that as well */
+	if (ropt->idWanted && !ropt->idWanted[te->dumpId - 1])
 		return 0;
 
 	return res;
