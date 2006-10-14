@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Oct 9 20:28:14 EDT 2006
+   Last updated: Sat Oct 14 19:08:19 EDT 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -184,8 +184,9 @@
    The major IRC channel is #postgresql on Freenode (irc.freenode.net).
    To connect you can use the Unix program irc -c '#postgresql' "$USER"
    irc.freenode.net or use any other IRC clients. A Spanish one also
-   exists on the same network, (#postgresql-es), and a French one,
-   (#postgresqlfr). There is also a PostgreSQL channel on EFNet.
+   exists on the same network, (#postgresql-es), a French one,
+   (#postgresqlfr), and a Brazilian one, (#postgresql-br). There is also
+   a PostgreSQL channel on EFNet.
    
    A list of commercial support companies is available at
    http://www.postgresql.org/support/professional_support.
@@ -732,7 +733,7 @@
    overflow at 4 billion, and then the OIDs start being duplicated.
    PostgreSQL uses OIDs to link its internal system tables together.
    
-   To uniquely number columns in user tables, it is best to use SERIAL
+   To uniquely number rows in user tables, it is best to use SERIAL
    rather than OIDs because SERIAL sequences are unique only within a
    single table. and are therefore less likely to overflow. SERIAL8 is
    available for storing eight-byte sequence values.
@@ -823,7 +824,7 @@
    Multi-master replication allows read/write queries to be sent to
    multiple replicated computers. This capability also has a severe
    impact on performance due to the need to synchronize changes between
-   servers. Pgcluster is the most popular such solution freely available
+   servers. PGCluster is the most popular such solution freely available
    for PostgreSQL.
    
    There are also commercial and hardware-based replication solutions

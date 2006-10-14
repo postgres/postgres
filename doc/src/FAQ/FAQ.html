@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Oct  9 20:28:14 EDT 2006</P>
+    <P>Last updated: Sat Oct 14 19:08:19 EDT 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -236,8 +236,9 @@
     (<I>irc.freenode.net</I>).  To connect you can use the Unix
     program <CODE>irc -c '#postgresql' "$USER" irc.freenode.net</CODE>
     or use any other IRC clients.  A Spanish one also exists
-    on the same network, (<I>#postgresql-es</I>), and a French one,
-    (<I>#postgresqlfr</I>).  There is also a PostgreSQL channel on EFNet.</P>
+    on the same network, (<I>#postgresql-es</I>), a French one,
+	(<I>#postgresqlfr</I>), and a Brazilian one, (<I>#postgresql-br</I>).
+	There is also a PostgreSQL channel on EFNet.</P>
 
     <P>A list of commercial support companies is available at <A href=
     "http://www.postgresql.org/support/professional_support">
@@ -963,7 +964,7 @@ length</TD></TR>
     being duplicated. PostgreSQL uses <SMALL>OID</SMALL>s to link its
     internal system tables together.</P>
 
-    <P>To uniquely number columns in user tables, it is best to use
+    <P>To uniquely number rows in user tables, it is best to use
     <SMALL>SERIAL</SMALL> rather than O<SMALL>ID</SMALL>s because
     <SMALL>SERIAL</SMALL> sequences are unique only within a single
     table. and are therefore less likely to overflow.
@@ -1077,7 +1078,7 @@ length</TD></TR>
     <P>Multi-master replication allows read/write queries to be sent to
     multiple replicated computers.  This capability also has a severe impact
     on performance due to the need to synchronize changes between servers. 
-    <A href="http://pgfoundry.org/projects/pgcluster/">Pgcluster</a> is the
+    <A href="http://pgfoundry.org/projects/pgcluster/">PGCluster</a> is the
     most popular such solution freely available for PostgreSQL.</P>
 
     <P>There are also commercial and hardware-based replication solutions
