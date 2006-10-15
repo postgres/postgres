@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.119 2006/10/04 00:30:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.120 2006/10/15 18:56:39 tgl Exp $
  *
  **********************************************************************/
 
@@ -114,6 +114,9 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 static SV  *plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
+static SV  *newSVstring(const char *str);
+static SV **hv_store_string(HV *hv, const char *key, SV *val);
+static SV **hv_fetch_string(HV *hv, const char *key);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -471,61 +474,61 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 												)
 		);
 
-	hv_store(hv, "name", 4, newSVpv(tdata->tg_trigger->tgname, 0), 0);
-	hv_store(hv, "relid", 5, newSVpv(relid, 0), 0);
+	hv_store_string(hv, "name", newSVstring(tdata->tg_trigger->tgname));
+	hv_store_string(hv, "relid", newSVstring(relid));
 
 	if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))
 	{
 		event = "INSERT";
 		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
-			hv_store(hv, "new", 3,
-					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-					 0);
+			hv_store_string(hv, "new",
+							plperl_hash_from_tuple(tdata->tg_trigtuple,
+												   tupdesc));
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(tdata->tg_event))
 	{
 		event = "DELETE";
 		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
-			hv_store(hv, "old", 3,
-					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-					 0);
+			hv_store_string(hv, "old",
+							plperl_hash_from_tuple(tdata->tg_trigtuple,
+												   tupdesc));
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
 	{
 		event = "UPDATE";
 		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
 		{
-			hv_store(hv, "old", 3,
-					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-					 0);
-			hv_store(hv, "new", 3,
-					 plperl_hash_from_tuple(tdata->tg_newtuple, tupdesc),
-					 0);
+			hv_store_string(hv, "old",
+							plperl_hash_from_tuple(tdata->tg_trigtuple,
+												   tupdesc));
+			hv_store_string(hv, "new",
+							plperl_hash_from_tuple(tdata->tg_newtuple,
+												   tupdesc));
 		}
 	}
 	else
 		event = "UNKNOWN";
 
-	hv_store(hv, "event", 5, newSVpv(event, 0), 0);
-	hv_store(hv, "argc", 4, newSViv(tdata->tg_trigger->tgnargs), 0);
+	hv_store_string(hv, "event", newSVstring(event));
+	hv_store_string(hv, "argc", newSViv(tdata->tg_trigger->tgnargs));
 
 	if (tdata->tg_trigger->tgnargs > 0)
 	{
 		AV		   *av = newAV();
 
 		for (i = 0; i < tdata->tg_trigger->tgnargs; i++)
-			av_push(av, newSVpv(tdata->tg_trigger->tgargs[i], 0));
-		hv_store(hv, "args", 4, newRV_noinc((SV *) av), 0);
+			av_push(av, newSVstring(tdata->tg_trigger->tgargs[i]));
+		hv_store_string(hv, "args", newRV_noinc((SV *) av));
 	}
 
-	hv_store(hv, "relname", 7,
-			 newSVpv(SPI_getrelname(tdata->tg_relation), 0), 0);
+	hv_store_string(hv, "relname",
+					newSVstring(SPI_getrelname(tdata->tg_relation)));
 
-	hv_store(hv, "table_name", 10,
-			 newSVpv(SPI_getrelname(tdata->tg_relation), 0), 0);
+	hv_store_string(hv, "table_name",
+					newSVstring(SPI_getrelname(tdata->tg_relation)));
 
-	hv_store(hv, "table_schema", 12,
-			 newSVpv(SPI_getnspname(tdata->tg_relation), 0), 0);
+	hv_store_string(hv, "table_schema",
+					newSVstring(SPI_getnspname(tdata->tg_relation)));
 
 	if (TRIGGER_FIRED_BEFORE(tdata->tg_event))
 		when = "BEFORE";
@@ -533,7 +536,7 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		when = "AFTER";
 	else
 		when = "UNKNOWN";
-	hv_store(hv, "when", 4, newSVpv(when, 0), 0);
+	hv_store_string(hv, "when", newSVstring(when));
 
 	if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
 		level = "ROW";
@@ -541,7 +544,7 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 		level = "STATEMENT";
 	else
 		level = "UNKNOWN";
-	hv_store(hv, "level", 5, newSVpv(level, 0), 0);
+	hv_store_string(hv, "level", newSVstring(level));
 
 	return newRV_noinc((SV *) hv);
 }
@@ -567,7 +570,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 
 	tupdesc = tdata->tg_relation->rd_att;
 
-	svp = hv_fetch(hvTD, "new", 3, FALSE);
+	svp = hv_fetch_string(hvTD, "new");
 	if (!svp)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
@@ -741,9 +744,10 @@ plperl_validator(PG_FUNCTION_ARGS)
 }
 
 
-/* Uses mksafefunc/mkunsafefunc to create an anonymous sub whose text is
- * supplied in s, and returns a reference to the closure. */
-
+/*
+ * Uses mksafefunc/mkunsafefunc to create an anonymous sub whose text is
+ * supplied in s, and returns a reference to the closure.
+ */
 static SV  *
 plperl_create_sub(char *s, bool trusted)
 {
@@ -761,8 +765,8 @@ plperl_create_sub(char *s, bool trusted)
 	ENTER;
 	SAVETMPS;
 	PUSHMARK(SP);
-	XPUSHs(sv_2mortal(newSVpv("our $_TD; local $_TD=$_[0]; shift;", 0)));
-	XPUSHs(sv_2mortal(newSVpv(s, 0)));
+	XPUSHs(sv_2mortal(newSVstring("our $_TD; local $_TD=$_[0]; shift;")));
+	XPUSHs(sv_2mortal(newSVstring(s)));
 	PUTBACK;
 
 	/*
@@ -900,11 +904,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 
 			tmp = OutputFunctionCall(&(desc->arg_out_func[i]),
 									 fcinfo->arg[i]);
-			sv = newSVpv(tmp, 0);
-#if PERL_BCDVERSION >= 0x5006000L
-			if (GetDatabaseEncoding() == PG_UTF8)
-				SvUTF8_on(sv);
-#endif
+			sv = newSVstring(tmp);
 			XPUSHs(sv_2mortal(sv));
 			pfree(tmp);
 		}
@@ -965,7 +965,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 
 	tg_trigger = ((TriggerData *) fcinfo->context)->tg_trigger;
 	for (i = 0; i < tg_trigger->tgnargs; i++)
-		XPUSHs(sv_2mortal(newSVpv(tg_trigger->tgargs[i], 0)));
+		XPUSHs(sv_2mortal(newSVstring(tg_trigger->tgargs[i])));
 	PUTBACK;
 
 	/* Do NOT use G_KEEPERR here */
@@ -1256,7 +1256,6 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	HeapTuple	procTup;
 	Form_pg_proc procStruct;
 	char		internal_proname[64];
-	int			proname_len;
 	plperl_proc_desc *prodesc = NULL;
 	int			i;
 	SV		  **svp;
@@ -1277,12 +1276,10 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 	else
 		sprintf(internal_proname, "__PLPerl_proc_%u_trigger", fn_oid);
 
-	proname_len = strlen(internal_proname);
-
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
 	 ************************************************************/
-	svp = hv_fetch(plperl_proc_hash, internal_proname, proname_len, FALSE);
+	svp = hv_fetch_string(plperl_proc_hash, internal_proname);
 	if (svp)
 	{
 		bool		uptodate;
@@ -1484,8 +1481,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				 internal_proname);
 		}
 
-		hv_store(plperl_proc_hash, internal_proname, proname_len,
-				 newSVuv(PTR2UV(prodesc)), 0);
+		hv_store_string(plperl_proc_hash, internal_proname,
+						newSVuv(PTR2UV(prodesc)));
 	}
 
 	ReleaseSysCache(procTup);
@@ -1512,36 +1509,27 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		char	   *outputstr;
 		Oid			typoutput;
 		bool		typisvarlena;
-		int			namelen;
-		SV		   *sv;
 
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
 
 		attname = NameStr(tupdesc->attrs[i]->attname);
-		namelen = strlen(attname);
 		attr = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
 		if (isnull)
 		{
 			/* Store (attname => undef) and move on. */
-			hv_store(hv, attname, namelen, newSV(0), 0);
+			hv_store_string(hv, attname, newSV(0));
 			continue;
 		}
 
 		/* XXX should have a way to cache these lookups */
-
 		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
 						  &typoutput, &typisvarlena);
 
 		outputstr = OidOutputFunctionCall(typoutput, attr);
 
-		sv = newSVpv(outputstr, 0);
-#if PERL_BCDVERSION >= 0x5006000L
-		if (GetDatabaseEncoding() == PG_UTF8)
-			SvUTF8_on(sv);
-#endif
-		hv_store(hv, attname, namelen, sv, 0);
+		hv_store_string(hv, attname, newSVstring(outputstr));
 
 		pfree(outputstr);
 	}
@@ -1627,10 +1615,10 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 
 	result = newHV();
 
-	hv_store(result, "status", strlen("status"),
-			 newSVpv((char *) SPI_result_code_string(status), 0), 0);
-	hv_store(result, "processed", strlen("processed"),
-			 newSViv(processed), 0);
+	hv_store_string(result, "status",
+					newSVstring(SPI_result_code_string(status)));
+	hv_store_string(result, "processed",
+					newSViv(processed));
 
 	if (status > 0 && tuptable)
 	{
@@ -1644,8 +1632,8 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
 			row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc);
 			av_push(rows, row);
 		}
-		hv_store(result, "rows", strlen("rows"),
-				 newRV_noinc((SV *) rows), 0);
+		hv_store_string(result, "rows",
+						newRV_noinc((SV *) rows));
 	}
 
 	SPI_freetuptable(tuptable);
@@ -1811,7 +1799,7 @@ plperl_spi_query(char *query)
 		if (portal == NULL)
 			elog(ERROR, "SPI_cursor_open() failed:%s",
 				 SPI_result_code_string(SPI_result));
-		cursor = newSVpv(portal->name, 0);
+		cursor = newSVstring(portal->name);
 
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
@@ -2065,9 +2053,9 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	 * Insert a hashtable entry for the plan and return
 	 * the key to the caller.
 	 ************************************************************/
-	hv_store(plperl_query_hash, qdesc->qname, strlen(qdesc->qname), newSVuv(PTR2UV(qdesc)), 0);
+	hv_store_string(plperl_query_hash, qdesc->qname, newSVuv(PTR2UV(qdesc)));
 
-	return newSVpv(qdesc->qname, strlen(qdesc->qname));
+	return newSVstring(qdesc->qname);
 }
 
 HV *
@@ -2098,7 +2086,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		/************************************************************
 		 * Fetch the saved plan descriptor, see if it's o.k.
 		 ************************************************************/
-		sv = hv_fetch(plperl_query_hash, query, strlen(query), 0);
+		sv = hv_fetch_string(plperl_query_hash, query);
 		if (sv == NULL)
 			elog(ERROR, "spi_exec_prepared: Invalid prepared query passed");
 		if (*sv == NULL || !SvOK(*sv))
@@ -2118,7 +2106,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		limit = 0;
 		if (attr != NULL)
 		{
-			sv = hv_fetch(attr, "limit", 5, 0);
+			sv = hv_fetch_string(attr, "limit");
 			if (*sv && SvIOK(*sv))
 				limit = SvIV(*sv);
 		}
@@ -2239,7 +2227,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		/************************************************************
 		 * Fetch the saved plan descriptor, see if it's o.k.
 		 ************************************************************/
-		sv = hv_fetch(plperl_query_hash, query, strlen(query), 0);
+		sv = hv_fetch_string(plperl_query_hash, query);
 		if (sv == NULL)
 			elog(ERROR, "spi_query_prepared: Invalid prepared query passed");
 		if (*sv == NULL || !SvOK(*sv))
@@ -2301,7 +2289,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 			elog(ERROR, "SPI_cursor_open() failed:%s",
 				 SPI_result_code_string(SPI_result));
 
-		cursor = newSVpv(portal->name, 0);
+		cursor = newSVstring(portal->name);
 
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
@@ -2353,7 +2341,7 @@ plperl_spi_freeplan(char *query)
 	void	   *plan;
 	plperl_query_desc *qdesc;
 
-	sv = hv_fetch(plperl_query_hash, query, strlen(query), 0);
+	sv = hv_fetch_string(plperl_query_hash, query);
 	if (sv == NULL)
 		elog(ERROR, "spi_exec_freeplan: Invalid prepared query passed");
 	if (*sv == NULL || !SvOK(*sv))
@@ -2375,4 +2363,60 @@ plperl_spi_freeplan(char *query)
 	free(qdesc);
 
 	SPI_freeplan(plan);
+}
+
+/*
+ * Create a new SV from a string assumed to be in the current database's
+ * encoding.
+ */
+static SV *
+newSVstring(const char *str)
+{
+	SV		   *sv;
+
+	sv = newSVpv(str, 0);
+#if PERL_BCDVERSION >= 0x5006000L
+	if (GetDatabaseEncoding() == PG_UTF8)
+		SvUTF8_on(sv);
+#endif
+	return sv;
+}
+
+/*
+ * Store an SV into a hash table under a key that is a string assumed to be
+ * in the current database's encoding.
+ */
+static SV **
+hv_store_string(HV *hv, const char *key, SV *val)
+{
+	int32	klen = strlen(key);
+
+	/*
+	 * This seems nowhere documented, but under Perl 5.8.0 and up,
+	 * hv_store() recognizes a negative klen parameter as meaning
+	 * a UTF-8 encoded key.  It does not appear that hashes track
+	 * UTF-8-ness of keys at all in Perl 5.6.
+	 */
+#if PERL_BCDVERSION >= 0x5008000L
+	if (GetDatabaseEncoding() == PG_UTF8)
+		klen = -klen;
+#endif
+	return hv_store(hv, key, klen, val, 0);
+}
+
+/*
+ * Fetch an SV from a hash table under a key that is a string assumed to be
+ * in the current database's encoding.
+ */
+static SV **
+hv_fetch_string(HV *hv, const char *key)
+{
+	int32	klen = strlen(key);
+
+	/* See notes in hv_store_string */
+#if PERL_BCDVERSION >= 0x5008000L
+	if (GetDatabaseEncoding() == PG_UTF8)
+		klen = -klen;
+#endif
+	return hv_fetch(hv, key, klen, 0);
 }
