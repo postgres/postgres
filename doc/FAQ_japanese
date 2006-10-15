@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Mon Oct 9 20:28:14 EDT 2006
+原文最終更新日: Sat Oct 14 19:08:19 EDT 2006
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -247,8 +247,8 @@ general または、bugs といったリストがよいでしょう。
 メジャーなIRC チャンネルは、Freenode (irc.freenode.net)の #postgresql というチ
 ャンネルです。UNIX コマンドでは、 irc -c '#PostgreSQL' "$USER" irc.freenode.net
 を使って参加できます。同じネットワークに、スペイン語のチャンネル (#
-postgresql-es)もあり、フランス語のチャンネル (#postgresqlfr)もあります。EFNetに
-もPostgreSQLチャンネルがあります。
+postgresql-es)、フランス語のチャンネル (#postgresqlfr)、ブラジル語チャンネル (#
+postgresql-br) もあります。また、EFNetにもPostgreSQLチャンネルがあります。
 
     [訳注:
           1999年7月23日、日本ポストグレスユーザー会、略称JPUGが設立されました。
@@ -959,7 +959,7 @@ PL/PgSQL は関数スクリプトをキャッシュし、不幸にもその副作用で、 PL/PgSQL関数が
 
 マルチ−マスタのレプリケーションは、読み／書きのクエリを受けとり、複数のレプリ
 ケートさせるコンピュータに送ることができます。この機能は、サーバ間の変更の同期
-が必要なため、性能に重大な衝撃を与えます。 Pgcluster は、このようなソリューショ
+が必要なため、性能に重大な衝撃を与えます。 PGCluster は、このようなソリューショ
 ンとしてPostgreSQLのためにフリーで利用できるものとして、最も人気があります。
 
 この他にも、商用やハードウェア−ベースのレプリケーションソリューションがいろい
@@ -1009,7 +1009,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2006年10月14日
+  最終更新日:   2006年10月15日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
