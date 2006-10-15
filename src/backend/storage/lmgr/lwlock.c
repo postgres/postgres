@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.46 2006/10/04 00:29:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.47 2006/10/15 22:04:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,6 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
-
-
-static int	NumAddinLWLocks(void);
-static void AssignAddinLWLocks(void);
 
 
 /* We use the ShmemLock spinlock to protect LWLockAssign */
@@ -88,69 +84,15 @@ NON_EXEC_STATIC LWLockPadded *LWLockArray = NULL;
 static int	num_held_lwlocks = 0;
 static LWLockId held_lwlocks[MAX_SIMUL_LWLOCKS];
 
+static int	lock_addin_request = 0;
+static bool lock_addin_request_allowed = true;
+
 #ifdef LWLOCK_STATS
 static int	counts_for_pid = 0;
 static int *sh_acquire_counts;
 static int *ex_acquire_counts;
 static int *block_counts;
 #endif
-
-/*
- * Structures and globals to allow add-ins to register for their own
- * lwlocks from the preload-libraries hook.
- */
-typedef struct LWLockNode
-{
-	LWLockId   *lock;
-	struct LWLockNode *next;
-} LWLockNode;
-
-static LWLockNode *addin_locks = NULL;
-static int	num_addin_locks = 0;
-
-
-/*
- *	RegisterAddinLWLock() --- Allow an andd-in to request a LWLock
- *							  from the preload-libraries hook.
- */
-void
-RegisterAddinLWLock(LWLockId *lock)
-{
-	LWLockNode *locknode = malloc(sizeof(LWLockNode));
-
-	locknode->next = addin_locks;
-	locknode->lock = lock;
-
-	addin_locks = locknode;
-	num_addin_locks++;
-}
-
-/*
- *	NumAddinLWLocks() --- Return the number of LWLocks requested by add-ins.
- */
-static int
-NumAddinLWLocks()
-{
-	return num_addin_locks;
-}
-
-/*
- *	AssignAddinLWLocks() --- Assign LWLocks previously requested by add-ins.
- */
-static void
-AssignAddinLWLocks()
-{
-	LWLockNode *node = addin_locks;
-
-	while (node)
-	{
-		*(node->lock) = LWLockAssign();
-		node = node->next;
-	}
-}
-
-
-
 
 #ifdef LOCK_DEBUG
 bool		Trace_lwlocks = false;
@@ -231,13 +173,35 @@ NumLWLocks(void)
 	/* multixact.c needs two SLRU areas */
 	numLocks += NUM_MXACTOFFSET_BUFFERS + NUM_MXACTMEMBER_BUFFERS;
 
-	/* Leave a few extra for use by user-defined modules. */
-	numLocks += NUM_USER_DEFINED_LWLOCKS;
-
-	/* Add the number that have been explicitly requested by add-ins. */
-	numLocks += NumAddinLWLocks();
+	/*
+	 * Add any requested by loadable modules; for backwards-compatibility
+	 * reasons, allocate at least NUM_USER_DEFINED_LWLOCKS of them even
+	 * if there are no explicit requests.
+	 */
+	lock_addin_request_allowed = false;
+	numLocks += Max(lock_addin_request, NUM_USER_DEFINED_LWLOCKS);
 
 	return numLocks;
+}
+
+
+/*
+ * RequestAddinLWLocks
+ *		Request that extra LWLocks be allocated for use by
+ *		a loadable module.
+ *
+ * This is only useful if called from the _PG_init hook of a library that
+ * is loaded into the postmaster via shared_preload_libraries.  Once
+ * shared memory has been allocated, calls will be ignored.  (We could
+ * raise an error, but it seems better to make it a no-op, so that
+ * libraries containing such calls can be reloaded if needed.)
+ */
+void
+RequestAddinLWLocks(int n)
+{
+	if (IsUnderPostmaster || !lock_addin_request_allowed)
+		return;					/* too late */
+	lock_addin_request += n;
 }
 
 
@@ -304,11 +268,6 @@ CreateLWLocks(void)
 	LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
 	LWLockCounter[0] = (int) NumFixedLWLocks;
 	LWLockCounter[1] = numLocks;
-
-	/*
-	 * Allocate LWLocks for those add-ins that have explicitly requested them.
-	 */
-	AssignAddinLWLocks();
 }
 
 

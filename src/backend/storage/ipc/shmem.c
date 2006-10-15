@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.97 2006/10/04 00:29:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.98 2006/10/15 22:04:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@
  *	postmaster.  However, this does not work in the EXEC_BACKEND case.
  *	In ports using EXEC_BACKEND, new backends have to set up their local
  *	pointers using the method described in (b) above.
-
+ *
  *		(d) memory allocation model: shared memory can never be
  *	freed, once allocated.	 Each hash table has its own free list,
  *	so hash buckets can be reused when an item is deleted.	However,
@@ -61,15 +61,6 @@
  *	cannot be redistributed to other tables.  We could build a simple
  *	hash bucket garbage collector if need be.  Right now, it seems
  *	unnecessary.
- *
- *		(e) Add-ins can request their own logical shared memory segments
- *	by calling RegisterAddinContext() from the preload-libraries hook.
- *	Each call establishes a uniquely named add-in shared memopry
- *	context which will be set up as part of postgres intialisation.
- *	Memory can be allocated from these contexts using
- *	ShmemAllocFromContext(), and can be reset to its initial condition
- *	using ShmemResetContext().	Also, RegisterAddinLWLock(LWLockid *lock_ptr)
- *	can be used to request that a LWLock be allocated, placed into *lock_ptr.
  */
 
 #include "postgres.h"
@@ -94,19 +85,6 @@ slock_t    *ShmemLock;			/* spinlock for shared memory and LWLock
 								 * allocation */
 
 static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
-
-/* Structures and globals for managing add-in shared memory contexts */
-typedef struct context
-{
-	char	   *name;
-	Size		size;
-	PGShmemHeader *seg_hdr;
-	struct context *next;
-} ContextNode;
-
-static ContextNode *addin_contexts = NULL;
-static Size addin_contexts_size = 0;
-
 
 
 /*
@@ -162,99 +140,7 @@ InitShmemAllocation(void)
 }
 
 /*
- * RegisterAddinContext -- Register the requirement for a named shared
- *						   memory context.
- */
-void
-RegisterAddinContext(const char *name, Size size)
-{
-	char	   *newstr = malloc(strlen(name) + 1);
-	ContextNode *node = malloc(sizeof(ContextNode));
-
-	strcpy(newstr, name);
-	node->name = newstr;
-
-	/* Round up to typical page size */
-	node->size = add_size(size, 8192 - (size % 8192));
-	node->next = addin_contexts;
-
-	addin_contexts = node;
-	addin_contexts_size = add_size(addin_contexts_size, node->size);
-}
-
-
-/*
- * ContextFromName -- Return the ContextNode for the given named
- *					  context, or NULL if not found.
- */
-static ContextNode *
-ContextFromName(const char *name)
-{
-	ContextNode *context = addin_contexts;
-
-	while (context)
-	{
-		if (strcmp(name, context->name) == 0)
-			return context;
-		context = context->next;
-	}
-	return NULL;
-}
-
-/*
- * InitAddinContexts -- Initialise the registered addin shared memory
- *						contexts.
- */
-void
-InitAddinContexts(void *start)
-{
-	PGShmemHeader *next_segment = (PGShmemHeader *) start;
-	ContextNode *context = addin_contexts;
-
-	while (context)
-	{
-		context->seg_hdr = next_segment;
-
-		next_segment->totalsize = context->size;
-		next_segment->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
-
-		next_segment = (PGShmemHeader *)
-			((char *) next_segment + context->size);
-		context = context->next;
-	}
-}
-
-/*
- * ShmemResetContext -- Re-initialise the named addin shared memory context.
- */
-void
-ShmemResetContext(const char *name)
-{
-	PGShmemHeader *segment;
-	ContextNode *context = ContextFromName(name);
-
-	if (!context)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("cannot reset unknown shared memory context %s",
-						name)));
-
-	segment = context->seg_hdr;
-	segment->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
-}
-
-/*
- * AddinShmemSize -- Report how much shared memory has been registered
- *	for add-ins.
- */
-Size
-AddinShmemSize(void)
-{
-	return addin_contexts_size;
-}
-
-/*
- * ShmemAllocFromContext -- allocate max-aligned chunk from shared memory
+ * ShmemAlloc -- allocate max-aligned chunk from shared memory
  *
  * Assumes ShmemLock and ShmemSegHdr are initialized.
  *
@@ -263,29 +149,14 @@ AddinShmemSize(void)
  *		to be compatible with malloc().
  */
 void *
-ShmemAllocFromContext(Size size, const char *context_name)
+ShmemAlloc(Size size)
 {
 	Size		newStart;
 	Size		newFree;
 	void	   *newSpace;
-	ContextNode *context;
 
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PGShmemHeader *shmemseghdr = ShmemSegHdr;
-
-	/*
-	 * if context_name is provided, allocate from the named context
-	 */
-	if (context_name)
-	{
-		context = ContextFromName(context_name);
-		if (!context)
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("cannot reset unknown shared memory context %s",
-							context_name)));
-		shmemseghdr = context->seg_hdr;
-	}
 
 	/*
 	 * ensure all space is adequately aligned.
@@ -305,7 +176,7 @@ ShmemAllocFromContext(Size size, const char *context_name)
 	newFree = newStart + size;
 	if (newFree <= shmemseghdr->totalsize)
 	{
-		newSpace = (void *) MAKE_PTRFROM((SHMEM_OFFSET) shmemseghdr, newStart);
+		newSpace = (void *) MAKE_PTR(newStart);
 		shmemseghdr->freeoffset = newFree;
 	}
 	else
@@ -319,22 +190,6 @@ ShmemAllocFromContext(Size size, const char *context_name)
 				 errmsg("out of shared memory")));
 
 	return newSpace;
-}
-
-/*
- * ShmemAlloc -- allocate max-aligned chunk from shared memory
- *
- * Assumes ShmemLock and ShmemSegHdr are initialized.
- *
- * Returns: real pointer to memory or NULL if we are out
- *		of space.  Has to return a real pointer in order
- *		to be compatible with malloc().
- */
-
-void *
-ShmemAlloc(Size size)
-{
-	return ShmemAllocFromContext(size, NULL);
 }
 
 /*
