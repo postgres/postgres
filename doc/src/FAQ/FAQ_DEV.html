@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Wed Sep  6 20:12:13 EDT 2006</P>
+    <P>Last updated: Mon Oct  16 15:24:36 EDT 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -488,15 +488,15 @@
 
     <H3 id="item1.14">1.14) How are RPMs packaged?</H3>
 
-    <P>This was written by Lamar Owen:</P>
+    <P>This was written by Lamar Owen and Devrim Gündüz:</P>
 
-    <P>2001-05-03</P>
+    <P>2006-10-16</P>
 
-    <P>As to how the RPMs are built -- to answer that question sanely
-    requires me to know how much experience you have with the whole RPM
-    paradigm. 'How is the RPM built?' is a multifaceted question. The
-    obvious simple answer is that I maintain:</P>
-
+    <P>
+   As to how the RPMs are built -- to answer that question sanely
+   requires us to know how much experience you have with the whole RPM
+   paradigm. 'How is the RPM built?' is a multifaceted question. The
+   obvious simple answer is that we maintain:</P>
     <OL>
       <LI>A set of patches to make certain portions of the source tree
       'behave' in the different environment of the RPMset;</LI>
@@ -515,81 +515,61 @@
       trivial undertaking in a package of this size.</LI>
     </OL>
 
-    <P>I then download and build on as many different canonical
-    distributions as I can -- currently I am able to build on Red Hat
-    6.2, 7.0, and 7.1 on my personal hardware. Occasionally I receive
-    opportunity from certain commercial enterprises such as Great
-    Bridge and PostgreSQL, Inc. to build on other distributions.</P>
+   <P>PGDG RPM Maintainer builds the SRPM and announces the SRPM to the 
+   pgsqlrpms-hackers list. This is a list where package builders are 
+   subscribed. Then, the builders download the SRPM and rebuild it on their
+   machines.</P> 
 
-    <P>I test the build by installing the resulting packages and
-    running the regression tests. Once the build passes these tests, I
-    upload to the postgresql.org ftp server and make a release
-    announcement. I am also responsible for maintaining the RPM
-    download area on the ftp site.</P>
+   <P>We try to build on as many different canonical distributions as we can. 
+   Currently we are able to build on Red Hat Linux 9, RHEL 3 and above, 
+   and all Fedora Core Linux releases.</P>
+   
+   <P>To test the binaries, we install them on our local machines and run
+   regression tests. If the package builders uses postgres user to build the
+   rpms, then it is possible to run regression tests during RPM builds.</P>
 
-    <P>You'll notice I said 'canonical' distributions above. That
-    simply means that the machine is as stock 'out of the box' as
-    practical -- that is, everything (except select few programs) on
-    these boxen are installed by RPM; only official Red Hat released
-    RPMs are used (except in unusual circumstances involving software
-    that will not alter the build -- for example, installing a newer
-    non-RedHat version of the Dia diagramming package is OK --
-    installing Python 2.1 on the box that has Python 1.5.2 installed is
-    not, as that alters the PostgreSQL build). The RPM as uploaded is
-    built to as close to out-of-the-box pristine as is possible. Only
-    the standard released 'official to that release' compiler is used
-    -- and only the standard official kernel is used as well.</P>
+   <P>Once the build passes these tests, the binary RPMs are sent back to PGDG 
+   RPM Maintainer and they are pushed to main FTP site, followed by a 
+   release announcement to pgsqlrpms-* lists, pgsql-general and 
+   pgsql-announce lists.</P>
 
-    <P>For a time I built on Mandrake for RedHat consumption -- no
-    more. Nonstandard RPM building systems are worse than useless.
-    Which is not to say that Mandrake is useless! By no means is
-    Mandrake useless -- unless you are building Red Hat RPMs -- and Red
-    Hat is useless if you're trying to build Mandrake or SuSE RPMs, for
-    that matter. But I would be foolish to use 'Lamar Owen's Super
-    Special RPM Blend Distro 0.1.2' to build for public consumption!
-    :-)</P>
+   <P>You will notice we said 'canonical' distributions above. That simply
+   means that the machine is as stock 'out of the box' as practical --
+   that is, everything (except select few programs) on these boxen are
+   installed by RPM; only official Red Hat released RPMs are used (except
+   in unusual circumstances involving software that will not alter the
+   build -- for example, installing a newer non-RedHat version of the Dia
+   diagramming package is OK -- installing Python 2.1 on the box that has
+   Python 1.5.2 installed is not, as that alters the PostgreSQL build).
+   The RPM as uploaded is built to as close to out-of-the-box pristine as
+   is possible. Only the standard released 'official to that release'
+   compiler is used -- and only the standard official kernel is used as
+   well.</P>
+   
+   <P>PGDG RPM Building Project does not build RPMs for Mandrake .</P>
 
-    <P>I _do_ attempt to make the _source_ RPM compatible with as many
-    distributions as possible -- however, since I have limited
-    resources (as a volunteer RPM maintainer) I am limited as to the
-    amount of testing said build will get on other distributions,
-    architectures, or systems.</P>
+   <P>We usually have only one SRPM for all platforms. This is because of our 
+   limited resources. However, on some cases, we may distribute different 
+   SRPMs for different platforms, depending on possible compilation problems,
+   especially on older distros.</P>
+   
+   <P>Please note that this is a volunteered job -- We are doing our best to 
+   keep  packages up to date. We, at least, provide SRPMs for all platforms. 
+   For example, if you do not find a RHEL 4 x86_64 RPM in our FTP site, it 
+   means that we do not have a RHEL 4 x86_64 server around. If you have one 
+   and want to help us, please do not hesitate to build rpms and send to us :-)
+   http://pgfoundry.org/docman/view.php/1000048/98/PostgreSQL-RPM-Installation-PGDG.pdf
+   has some information about building binary RPMs using an SRPM.</P>
 
-    <P>And, while I understand people's desire to immediately upgrade
-    to the newest version, realize that I do this as a side interest --
-    I have a regular, full-time job as a broadcast
-    engineer/webmaster/sysadmin/Technical Director which occasionally
-    prevents me from making timely RPM releases. This happened during
-    the early part of the 7.1 beta cycle -- but I believe I was pretty
-    much on the ball for the Release Candidates and the final
-    release.</P>
+   <P>PGDG RPM Building Project is a hosted on pgFoundry :
+   <a href="http://pgfoundry.org/projects/pgsqlrpms">http://pgfoundry.org/projects/pgsqlrpms</a>. 
+   We are an open community, except one point : Our pgsqlrpms-hackers list is open 
+   to package builders only. Still, its archives are visible to public. 
+   We use a CVS server to save  the work we have done so far. This includes 
+   spec files and patches; as well as documents.</P>
 
-    <P>I am working towards a more open RPM distribution -- I would
-    dearly love to more fully document the process and put everything
-    into CVS -- once I figure out how I want to represent things such
-    as the spec file in a CVS form. It makes no sense to maintain a
-    changelog, for instance, in the spec file in CVS when CVS does a
-    better job of changelogs -- I will need to write a tool to generate
-    a real spec file from a CVS spec-source file that would add version
-    numbers, changelog entries, etc to the result before building the
-    RPM. IOW, I need to rethink the process -- and then go through the
-    motions of putting my long RPM history into CVS one version at a
-    time so that version history information isn't lost.</P>
-
-    <P>As to why all these files aren't part of the source tree, well,
-    unless there was a large cry for it to happen, I don't believe it
-    should. PostgreSQL is very platform-agnostic -- and I like that.
-    Including the RPM stuff as part of the Official Tarball (TM) would,
-    IMHO, slant that agnostic stance in a negative way. But maybe I'm
-    too sensitive to that. I'm not opposed to doing that if that is the
-    consensus of the core group -- and that would be a sneaky way to
-    get the stuff into CVS :-). But if the core group isn't thrilled
-    with the idea (and my instinct says they're not likely to be), I am
-    opposed to the idea -- not to keep the stuff to myself, but to not
-    hinder the platform-neutral stance. IMHO, of course.</P>
-
-    <P>Of course, there are many projects that DO include all the files
-    necessary to build RPMs from their Official Tarball (TM).</P>
+   <P>As to why all these files aren't part of the source tree, well, unless
+   there was a large cry for it to happen, we don't believe it should.</P>
 
     <H3 id="item1.15">1.15) How are CVS branches managed?</H3>
 
