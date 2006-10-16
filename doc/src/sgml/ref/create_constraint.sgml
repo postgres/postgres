@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.15 2006/10/16 19:30:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.16 2006/10/16 19:33:12 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
     AFTER <replaceable class="parameter">event [ OR ... ]</replaceable>
     ON <replaceable class="parameter">table_name</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
-    { NOT DEFERRABLE | [ DEFERABBLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }
+    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }
     FOR EACH ROW
     EXECUTE PROCEDURE <replaceable class="parameter">funcname</replaceable> ( <replaceable class="parameter">arguments</replaceable> )
 </synopsis>
@@ -54,7 +54,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
       created trigger will be of the form
       <literal>RI_ConstraintTrigger_0000<literal> (where 0000 is some number
       assigned by the server).
-      Use this assigned name is when dropping the constraint.
+      Use this assigned name when dropping the trigger.
      </para>
     </listitem>
    </varlistentry>
