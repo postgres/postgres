@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.482 2006/10/07 19:25:28 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.483 2006/10/16 17:24:54 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1069,17 +1069,14 @@ PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEM
 # Let's see who fails, perhaps AIX.  2004-04-23
 if test "$PTHREAD_CC" != "$CC"; then
 AC_MSG_ERROR([
-PostgreSQL does not support platforms that require a special
-compiler binary for thread-safety.
-])
+PostgreSQL does not support platforms that require a special compiler
+for thread safety.])
 fi
 
 if test "$THREAD_SUPPORT" = no; then
-AC_MSG_ERROR([
-Cannot enable threads on your platform.
-Your platform is known to not support thread-safe programs.
-For details, compile and run src/bin/pg_thread_test.
-])
+AC_MSG_ERROR([cannot enable threads on this platform
+This platform is known to not support thread-safe programs.  For details,
+compile and run src/bin/pg_thread_test.])
 fi
 
 # Check for *_r functions
@@ -1144,9 +1141,9 @@ AC_TRY_RUN([int main() { return 0; }],
 [AC_MSG_RESULT(ok)],
 [AC_MSG_RESULT(failed)
 AC_MSG_ERROR([[
-*** Could not execute a simple test program.  This may be a problem
-*** related to locating shared libraries.  Check the file 'config.log'
-*** for the exact reason.]])],
+Could not execute a simple test program.  This may be a problem
+related to locating shared libraries.  Check the file 'config.log'
+for the exact reason.]])],
 [AC_MSG_RESULT([cross-compiling])])
 
 # --------------------
@@ -1282,9 +1279,8 @@ then
 PGAC_FUNC_POSIX_SIGNALS
 if test "$pgac_cv_func_posix_signals" != yes -a "$enable_thread_safety" = yes; then
   AC_MSG_ERROR([
-*** Thread-safety requires POSIX signals, which are not supported by your
-*** operating system.
-])
+Thread-safety requires POSIX signals, which are not supported by this
+operating system.])
 fi
 fi
 
@@ -1365,12 +1361,11 @@ if test x"$template" != x"win32"
 then
   AC_MSG_WARN([
 *** Skipping thread test program.  --enable-thread-safety-force was used.
-*** Run the program in src/test/thread on the your machine and add
-proper locking function calls to your applications to guarantee thread
-safety.
+*** Run the program in src/test/thread on the your machine and add proper
+*** locking function calls to your applications to guarantee thread safety.
 ])
 else
-AC_MSG_WARN([*** Skipping thread test on Win32])
+AC_MSG_WARN([*** skipping thread test on Win32])
 fi
 elif test "$enable_thread_safety" = yes; then
 if test x"$template" != x"win32"
@@ -1384,15 +1379,14 @@ LIBS="$LIBS $PTHREAD_LIBS"
 AC_TRY_RUN([#include "$srcdir/src/test/thread/thread_test.c"],
   [AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
-  AC_MSG_ERROR([
-*** Thread test program failed.  Your platform is not thread-safe.  
-*** Check the file 'config.log'for the exact reason.
-***
-*** You can use the configure option --enable-thread-safety-force
-*** to force threads to be enabled.  However, you must then run
-*** the program in src/test/thread and add locking function calls
-*** to your applications to guarantee thread safety.
-])],
+  AC_MSG_ERROR([thread test program failed
+This platform is not thread-safe.  Check the file 'config.log'for the
+exact reason.
+
+You can use the configure option --enable-thread-safety-force to force
+threads to be enabled.  But you must then run the program in
+src/test/thread and add locking function calls to your applications to
+guarantee thread safety.])],
   [AC_MSG_RESULT(maybe)
   AC_MSG_WARN([
 *** Skipping thread test program because of cross-compile build.
@@ -1401,7 +1395,7 @@ AC_TRY_RUN([#include "$srcdir/src/test/thread/thread_test.c"],
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
 else
-AC_MSG_WARN([*** Skipping thread test on Win32])
+AC_MSG_WARN([*** skipping thread test on Win32])
 fi
 fi
 
@@ -1442,7 +1436,7 @@ AC_CONFIG_COMMANDS([check_win32_symlinks],[
 for FILE in $CONFIG_LINKS
  do
 	# test -e works for symlinks in the MinGW console
-	test -e `expr "$FILE" : '\([[^:]]*\)'` || AC_MSG_WARN([*** link for $FILE - please fix by hand])
+	test -e `expr "$FILE" : '\([[^:]]*\)'` || AC_MSG_WARN([*** link for $FILE -- please fix by hand])
  done
 ])
 fi

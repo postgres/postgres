@@ -5010,9 +5010,9 @@ if test "$pythreads" = "1"; then
   echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
   case $host_os in
-  openbsd*|freebsd4*)
-    { { echo "$as_me:$LINENO: error: *** Threaded Python not supported on this platform ***" >&5
-echo "$as_me: error: *** Threaded Python not supported on this platform ***" >&2;}
+  openbsd*|freebsd*)
+    { { echo "$as_me:$LINENO: error: threaded Python not supported on this platform" >&5
+echo "$as_me: error: threaded Python not supported on this platform" >&2;}
    { (exit 1); exit 1; }; }
     ;;
   esac
@@ -16796,27 +16796,21 @@ PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEM
 # Let's see who fails, perhaps AIX.  2004-04-23
 if test "$PTHREAD_CC" != "$CC"; then
 { { echo "$as_me:$LINENO: error:
-PostgreSQL does not support platforms that require a special
-compiler binary for thread-safety.
-" >&5
+PostgreSQL does not support platforms that require a special compiler
+for thread safety." >&5
 echo "$as_me: error:
-PostgreSQL does not support platforms that require a special
-compiler binary for thread-safety.
-" >&2;}
+PostgreSQL does not support platforms that require a special compiler
+for thread safety." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 if test "$THREAD_SUPPORT" = no; then
-{ { echo "$as_me:$LINENO: error:
-Cannot enable threads on your platform.
-Your platform is known to not support thread-safe programs.
-For details, compile and run src/bin/pg_thread_test.
-" >&5
-echo "$as_me: error:
-Cannot enable threads on your platform.
-Your platform is known to not support thread-safe programs.
-For details, compile and run src/bin/pg_thread_test.
-" >&2;}
+{ { echo "$as_me:$LINENO: error: cannot enable threads on this platform
+This platform is known to not support thread-safe programs.  For details,
+compile and run src/bin/pg_thread_test." >&5
+echo "$as_me: error: cannot enable threads on this platform
+This platform is known to not support thread-safe programs.  For details,
+compile and run src/bin/pg_thread_test." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -17521,13 +17515,13 @@ sed 's/^/| /' conftest.$ac_ext >&5
 echo "$as_me:$LINENO: result: failed" >&5
 echo "${ECHO_T}failed" >&6
 { { echo "$as_me:$LINENO: error:
-*** Could not execute a simple test program.  This may be a problem
-*** related to locating shared libraries.  Check the file 'config.log'
-*** for the exact reason." >&5
+Could not execute a simple test program.  This may be a problem
+related to locating shared libraries.  Check the file 'config.log'
+for the exact reason." >&5
 echo "$as_me: error:
-*** Could not execute a simple test program.  This may be a problem
-*** related to locating shared libraries.  Check the file 'config.log'
-*** for the exact reason." >&2;}
+Could not execute a simple test program.  This may be a problem
+related to locating shared libraries.  Check the file 'config.log'
+for the exact reason." >&2;}
    { (exit 1); exit 1; }; }
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
@@ -21371,13 +21365,11 @@ HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 
 if test "$pgac_cv_func_posix_signals" != yes -a "$enable_thread_safety" = yes; then
   { { echo "$as_me:$LINENO: error:
-*** Thread-safety requires POSIX signals, which are not supported by your
-*** operating system.
-" >&5
+Thread-safety requires POSIX signals, which are not supported by this
+operating system." >&5
 echo "$as_me: error:
-*** Thread-safety requires POSIX signals, which are not supported by your
-*** operating system.
-" >&2;}
+Thread-safety requires POSIX signals, which are not supported by this
+operating system." >&2;}
    { (exit 1); exit 1; }; }
 fi
 fi
@@ -22840,19 +22832,17 @@ if test x"$template" != x"win32"
 then
   { echo "$as_me:$LINENO: WARNING:
 *** Skipping thread test program.  --enable-thread-safety-force was used.
-*** Run the program in src/test/thread on the your machine and add
-proper locking function calls to your applications to guarantee thread
-safety.
+*** Run the program in src/test/thread on the your machine and add proper
+*** locking function calls to your applications to guarantee thread safety.
 " >&5
 echo "$as_me: WARNING:
 *** Skipping thread test program.  --enable-thread-safety-force was used.
-*** Run the program in src/test/thread on the your machine and add
-proper locking function calls to your applications to guarantee thread
-safety.
+*** Run the program in src/test/thread on the your machine and add proper
+*** locking function calls to your applications to guarantee thread safety.
 " >&2;}
 else
-{ echo "$as_me:$LINENO: WARNING: *** Skipping thread test on Win32" >&5
-echo "$as_me: WARNING: *** Skipping thread test on Win32" >&2;}
+{ echo "$as_me:$LINENO: WARNING: *** skipping thread test on Win32" >&5
+echo "$as_me: WARNING: *** skipping thread test on Win32" >&2;}
 fi
 elif test "$enable_thread_safety" = yes; then
 if test x"$template" != x"win32"
@@ -22905,24 +22895,22 @@ sed 's/^/| /' conftest.$ac_ext >&5
 ( exit $ac_status )
 echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-  { { echo "$as_me:$LINENO: error:
-*** Thread test program failed.  Your platform is not thread-safe.
-*** Check the file 'config.log'for the exact reason.
-***
-*** You can use the configure option --enable-thread-safety-force
-*** to force threads to be enabled.  However, you must then run
-*** the program in src/test/thread and add locking function calls
-*** to your applications to guarantee thread safety.
-" >&5
-echo "$as_me: error:
-*** Thread test program failed.  Your platform is not thread-safe.
-*** Check the file 'config.log'for the exact reason.
-***
-*** You can use the configure option --enable-thread-safety-force
-*** to force threads to be enabled.  However, you must then run
-*** the program in src/test/thread and add locking function calls
-*** to your applications to guarantee thread safety.
-" >&2;}
+  { { echo "$as_me:$LINENO: error: thread test program failed
+This platform is not thread-safe.  Check the file 'config.log'for the
+exact reason.
+
+You can use the configure option --enable-thread-safety-force to force
+threads to be enabled.  But you must then run the program in
+src/test/thread and add locking function calls to your applications to
+guarantee thread safety." >&5
+echo "$as_me: error: thread test program failed
+This platform is not thread-safe.  Check the file 'config.log'for the
+exact reason.
+
+You can use the configure option --enable-thread-safety-force to force
+threads to be enabled.  But you must then run the program in
+src/test/thread and add locking function calls to your applications to
+guarantee thread safety." >&2;}
    { (exit 1); exit 1; }; }
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
@@ -22930,8 +22918,8 @@ fi
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
 else
-{ echo "$as_me:$LINENO: WARNING: *** Skipping thread test on Win32" >&5
-echo "$as_me: WARNING: *** Skipping thread test on Win32" >&2;}
+{ echo "$as_me:$LINENO: WARNING: *** skipping thread test on Win32" >&5
+echo "$as_me: WARNING: *** skipping thread test on Win32" >&2;}
 fi
 fi
 
@@ -24476,8 +24464,8 @@ echo "$as_me: executing $ac_dest commands" >&6;}
 for FILE in $CONFIG_LINKS
  do
 	# test -e works for symlinks in the MinGW console
-	test -e `expr "$FILE" : '\([^:]*\)'` || { echo "$as_me:$LINENO: WARNING: *** link for $FILE - please fix by hand" >&5
-echo "$as_me: WARNING: *** link for $FILE - please fix by hand" >&2;}
+	test -e `expr "$FILE" : '\([^:]*\)'` || { echo "$as_me:$LINENO: WARNING: *** link for $FILE -- please fix by hand" >&5
+echo "$as_me: WARNING: *** link for $FILE -- please fix by hand" >&2;}
  done
  ;;
   esac
