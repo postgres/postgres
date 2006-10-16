@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.46 2006/10/04 00:30:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.47 2006/10/16 19:58:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
 
@@ -31,8 +32,11 @@ pg_tz	   *global_timezone = NULL;
 
 
 static char tzdir[MAXPGPATH];
-static int	done_tzdir = 0;
+static bool done_tzdir = false;
 
+static bool scan_directory_ci(const char *dirname,
+							  const char *fname, int fnamelen,
+							  char *canonname, int canonnamelen);
 static const char *identify_system_timezone(void);
 static const char *select_default_timezone(void);
 static bool set_global_timezone(const char *tzname);
@@ -41,17 +45,120 @@ static bool set_global_timezone(const char *tzname);
 /*
  * Return full pathname of timezone data directory
  */
-char *
+static char *
 pg_TZDIR(void)
 {
 	if (done_tzdir)
 		return tzdir;
 
 	get_share_path(my_exec_path, tzdir);
-	strcat(tzdir, "/timezone");
+	strlcpy(tzdir + strlen(tzdir), "/timezone", MAXPGPATH - strlen(tzdir));
 
-	done_tzdir = 1;
+	done_tzdir = true;
 	return tzdir;
+}
+
+
+/*
+ * Given a timezone name, open() the timezone data file.  Return the
+ * file descriptor if successful, -1 if not.
+ *
+ * The input name is searched for case-insensitively (we assume that the
+ * timezone database does not contain case-equivalent names).
+ *
+ * If "canonname" is not NULL, then on success the canonical spelling of the
+ * given name is stored there (it is assumed to be > TZ_STRLEN_MAX bytes!).
+ */
+int
+pg_open_tzfile(const char *name, char *canonname)
+{
+	const char *fname;
+	char		fullname[MAXPGPATH];
+	int			fullnamelen;
+	int			orignamelen;
+
+	/*
+	 * Loop to split the given name into directory levels; for each level,
+	 * search using scan_directory_ci().
+	 */
+	strcpy(fullname, pg_TZDIR());
+	orignamelen = fullnamelen = strlen(fullname);
+	fname = name;
+	for (;;)
+	{
+		const char *slashptr;
+		int		fnamelen;
+
+		slashptr = strchr(fname, '/');
+		if (slashptr)
+			fnamelen = slashptr - fname;
+		else
+			fnamelen = strlen(fname);
+		if (fullnamelen + 1 + fnamelen >= MAXPGPATH)
+			return -1;			/* not gonna fit */
+		if (!scan_directory_ci(fullname, fname, fnamelen,
+							   fullname + fullnamelen + 1,
+							   MAXPGPATH - fullnamelen - 1))
+			return -1;
+		fullname[fullnamelen++] = '/';
+		fullnamelen += strlen(fullname + fullnamelen);
+		if (slashptr)
+			fname = slashptr + 1;
+		else
+			break;
+	}
+
+	if (canonname)
+		strlcpy(canonname, fullname + orignamelen + 1, TZ_STRLEN_MAX + 1);
+
+	return open(fullname, O_RDONLY | PG_BINARY, 0);
+}
+
+
+/*
+ * Scan specified directory for a case-insensitive match to fname
+ * (of length fnamelen --- fname may not be null terminated!).  If found,
+ * copy the actual filename into canonname and return true.
+ */
+static bool
+scan_directory_ci(const char *dirname, const char *fname, int fnamelen,
+				  char *canonname, int canonnamelen)
+{
+	bool		found = false;
+	DIR		   *dirdesc;
+	struct dirent *direntry;
+
+	dirdesc = AllocateDir(dirname);
+	if (!dirdesc)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m", dirname)));
+		return false;
+	}
+
+	while ((direntry = ReadDir(dirdesc, dirname)) != NULL)
+	{
+		/*
+		 * Ignore . and .., plus any other "hidden" files.  This is a security
+		 * measure to prevent access to files outside the timezone directory.
+		 */
+		if (direntry->d_name[0] == '.')
+			continue;
+
+		if (strlen(direntry->d_name) == fnamelen &&
+			pg_strncasecmp(direntry->d_name, fname, fnamelen) == 0)
+		{
+			/* Found our match */
+			strlcpy(canonname, direntry->d_name, canonnamelen);
+			found = true;
+			break;
+		}
+	}
+
+	FreeDir(dirdesc);
+
+	return found;
 }
 
 
@@ -167,7 +274,7 @@ score_timezone(const char *tzname, struct tztry * tt)
 	 * Load timezone directly. Don't use pg_tzset, because we don't want all
 	 * timezones loaded in the cache at startup.
 	 */
-	if (tzload(tzname, &tz.state) != 0)
+	if (tzload(tzname, NULL, &tz.state) != 0)
 	{
 		if (tzname[0] == ':' || tzparse(tzname, &tz.state, FALSE) != 0)
 		{
@@ -958,9 +1065,19 @@ identify_system_timezone(void)
 
 /*
  * We keep loaded timezones in a hashtable so we don't have to
- * load and parse the TZ definition file every time it is selected.
+ * load and parse the TZ definition file every time one is selected.
+ * Because we want timezone names to be found case-insensitively,
+ * the hash key is the uppercased name of the zone.
  */
+typedef struct
+{
+	/* tznameupper contains the all-upper-case name of the timezone */
+	char		tznameupper[TZ_STRLEN_MAX + 1];
+	pg_tz		tz;
+} pg_tz_cache;
+
 static HTAB *timezone_cache = NULL;
+
 
 static bool
 init_timezone_hashtable(void)
@@ -970,7 +1087,7 @@ init_timezone_hashtable(void)
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 
 	hash_ctl.keysize = TZ_STRLEN_MAX + 1;
-	hash_ctl.entrysize = sizeof(pg_tz);
+	hash_ctl.entrysize = sizeof(pg_tz_cache);
 
 	timezone_cache = hash_create("Timezones",
 								 4,
@@ -989,8 +1106,11 @@ init_timezone_hashtable(void)
 struct pg_tz *
 pg_tzset(const char *name)
 {
-	pg_tz	   *tzp;
-	pg_tz		tz;
+	pg_tz_cache *tzp;
+	struct state tzstate;
+	char		uppername[TZ_STRLEN_MAX + 1];
+	char		canonname[TZ_STRLEN_MAX + 1];
+	char	   *p;
 
 	if (strlen(name) > TZ_STRLEN_MAX)
 		return NULL;			/* not going to fit */
@@ -999,37 +1119,49 @@ pg_tzset(const char *name)
 		if (!init_timezone_hashtable())
 			return NULL;
 
-	tzp = (pg_tz *) hash_search(timezone_cache,
-								name,
-								HASH_FIND,
-								NULL);
+	/*
+	 * Upcase the given name to perform a case-insensitive hashtable search.
+	 * (We could alternatively downcase it, but we prefer upcase so that we
+	 * can get consistently upcased results from tzparse() in case the name
+	 * is a POSIX-style timezone spec.)
+	 */
+	p = uppername;
+	while (*name)
+		*p++ = pg_toupper((unsigned char) *name++);
+	*p = '\0';
+
+	tzp = (pg_tz_cache *) hash_search(timezone_cache,
+									  uppername,
+									  HASH_FIND,
+									  NULL);
 	if (tzp)
 	{
 		/* Timezone found in cache, nothing more to do */
-		return tzp;
+		return &tzp->tz;
 	}
 
-	if (tzload(name, &tz.state) != 0)
+	if (tzload(uppername, canonname, &tzstate) != 0)
 	{
-		if (name[0] == ':' || tzparse(name, &tz.state, FALSE) != 0)
+		if (uppername[0] == ':' || tzparse(uppername, &tzstate, FALSE) != 0)
 		{
 			/* Unknown timezone. Fail our call instead of loading GMT! */
 			return NULL;
 		}
+		/* For POSIX timezone specs, use uppercase name as canonical */
+		strcpy(canonname, uppername);
 	}
 
-	strcpy(tz.TZname, name);
-
 	/* Save timezone in the cache */
-	tzp = hash_search(timezone_cache,
-					  name,
-					  HASH_ENTER,
-					  NULL);
+	tzp = (pg_tz_cache *) hash_search(timezone_cache,
+									  uppername,
+									  HASH_ENTER,
+									  NULL);
 
-	strcpy(tzp->TZname, tz.TZname);
-	memcpy(&tzp->state, &tz.state, sizeof(tz.state));
+	/* hash_search already copied uppername into the hash key */
+	strcpy(tzp->tz.TZname, canonname);
+	memcpy(&tzp->tz.state, &tzstate, sizeof(tzstate));
 
-	return tzp;
+	return &tzp->tz;
 }
 
 
@@ -1241,14 +1373,13 @@ pg_tzenumerate_next(pg_tzenum *dir)
 		 * Load this timezone using tzload() not pg_tzset(), so we don't fill
 		 * the cache
 		 */
-		if (tzload(fullname + dir->baselen, &dir->tz.state) != 0)
+		if (tzload(fullname + dir->baselen, dir->tz.TZname, &dir->tz.state) != 0)
 		{
 			/* Zone could not be loaded, ignore it */
 			continue;
 		}
 
 		/* Timezone loaded OK. */
-		strcpy(dir->tz.TZname, fullname + dir->baselen);
 		return &dir->tz;
 	}
 

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.h,v 1.17 2006/07/11 13:54:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.h,v 1.18 2006/10/16 19:58:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "tzfile.h"
 #include "pgtime.h"
 
-extern char *pg_TZDIR(void);
 
 #define BIGGEST(a, b)	(((a) > (b)) ? (a) : (b))
 
@@ -55,11 +54,17 @@ struct state
 
 struct pg_tz
 {
+	/* TZname contains the canonically-cased name of the timezone */
 	char		TZname[TZ_STRLEN_MAX + 1];
 	struct state state;
 };
 
-int			tzload(const char *name, struct state * sp);
-int			tzparse(const char *name, struct state * sp, int lastditch);
+
+/* in pgtz.c */
+extern int	pg_open_tzfile(const char *name, char *canonname);
+
+/* in localtime.c */
+extern int	tzload(const char *name, char *canonname, struct state *sp);
+extern int	tzparse(const char *name, struct state *sp, int lastditch);
 
 #endif   /* _PGTZ_H */

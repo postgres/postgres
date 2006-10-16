@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.14 2006/06/07 22:24:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.15 2006/10/16 19:58:26 tgl Exp $
  */
 
 /*
@@ -122,7 +122,7 @@ detzcode(const char *codep)
 }
 
 int
-tzload(const char *name, struct state * sp)
+tzload(const char *name, char *canonname, struct state *sp)
 {
 	const char *p;
 	int			i;
@@ -130,36 +130,11 @@ tzload(const char *name, struct state * sp)
 
 	if (name == NULL && (name = TZDEFAULT) == NULL)
 		return -1;
-	{
-		int			doaccess;
-		char		fullname[MAXPGPATH];
-
-		if (name[0] == ':')
-			++name;
-		doaccess = name[0] == '/';
-		if (!doaccess)
-		{
-			p = pg_TZDIR();
-			if (p == NULL)
-				return -1;
-			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
-				return -1;
-			(void) strcpy(fullname, p);
-			(void) strcat(fullname, "/");
-			(void) strcat(fullname, name);
-
-			/*
-			 * Set doaccess if '.' (as in "../") shows up in name.
-			 */
-			if (strchr(name, '.') != NULL)
-				doaccess = TRUE;
-			name = fullname;
-		}
-		if (doaccess && access(name, R_OK) != 0)
-			return -1;
-		if ((fid = open(name, O_RDONLY | PG_BINARY, 0)) == -1)
-			return -1;
-	}
+	if (name[0] == ':')
+		++name;
+	fid = pg_open_tzfile(name, canonname);
+	if (fid < 0)
+		return -1;
 	{
 		struct tzhead *tzhp;
 		union
@@ -587,7 +562,7 @@ tzparse(const char *name, struct state * sp, int lastditch)
 		if (name == NULL)
 			return -1;
 	}
-	load_result = tzload(TZDEFRULES, sp);
+	load_result = tzload(TZDEFRULES, NULL, sp);
 	if (load_result != 0)
 		sp->leapcnt = 0;		/* so, we're off a little */
 	if (*name != '\0')
@@ -794,7 +769,7 @@ tzparse(const char *name, struct state * sp, int lastditch)
 static void
 gmtload(struct state * sp)
 {
-	if (tzload(gmt, sp) != 0)
+	if (tzload(gmt, NULL, sp) != 0)
 		(void) tzparse(gmt, sp, TRUE);
 }
 

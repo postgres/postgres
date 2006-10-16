@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.176 2006/09/22 16:20:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.177 2006/10/16 19:58:26 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1593,12 +1593,12 @@ SELECT b, char_length(b) FROM test2;
       linkend="datatype-datetime-time-table"> 
       and <xref linkend="datatype-timezone-table">.)  If a time zone is
       specified in the input for <type>time without time zone</type>,
-      it is silently ignored. You can also always specify a date but it will
-      be ignored except for when you use a full time zone name like
+      it is silently ignored. You can also specify a date but it will
+      be ignored, except when you use a full time zone name like
       <literal>America/New_York</literal>. In this case specifying the date
-      is compulsory in order to tell which time zone offset should be
-      applied. It will be applied whatever time zone offset was valid at that
-      date and time at the specified place.
+      is required in order to determine whether standard or daylight-savings
+      time applies.  The appropriate time zone offset is recorded in the
+      <type>time with time zone</type> value.
      </para>
 
       <table id="datatype-datetime-time-table">
@@ -1653,7 +1653,7 @@ SELECT b, char_length(b) FROM test2;
          </row>
          <row>
           <entry><literal>04:05:06 PST</literal></entry>
-          <entry>time zone specified by name</entry>
+          <entry>time zone specified by abbreviation</entry>
          </row>
          <row>
           <entry><literal>2003-04-12 04:05:06 America/New_York</literal></entry>
@@ -2212,6 +2212,12 @@ January 8 04:05:06 1999 PST
      linkend="guc-timezone"> to a full time zone name: this way,
      <productname>PostgreSQL</productname>
      will always know the correct UTC offset for your region.
+    </para>
+
+    <para>
+     In all cases, timezone names are recognized case-insensitively.
+     (This is a change from <productname>PostgreSQL</productname> versions
+     prior to 8.2, which were case-sensitive in some contexts and not others.)
     </para>
 
     <para>
