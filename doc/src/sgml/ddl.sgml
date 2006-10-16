@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.64 2006/10/13 21:43:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.65 2006/10/16 17:28:03 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2342,7 +2342,7 @@ VALUES ('New York', NULL, NULL, 'NY');
 <programlisting>
 CHECK ( x = 1 )
 CHECK ( county IN ( 'Oxfordshire', 'Buckinghamshire', 'Warwickshire' ))
-CHECK ( outletID >= 100 AND outletID < 200 )
+CHECK ( outletID &gt;= 100 AND outletID &lt; 200 )
 </programlisting>
         Ensure that the constraints guarantee that there is no overlap
         between the key values permitted in different partitions.  A common
