@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.473 2006/10/13 15:24:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.474 2006/10/17 20:17:08 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -39,7 +39,7 @@ links to the main documentation.
 
    <note>
     <title>Release date</title>
-    <simpara>2005-1?-??</simpara>
+    <simpara>2006-1?-??</simpara>
     <para>CURRENT AS OF 2006-09-21</>
    </note>
 
