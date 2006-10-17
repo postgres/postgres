@@ -1,4 +1,4 @@
 Var: Search path: public
 Var: Standard conforming strings: off
-Time Zone: pst8pdt
+Time Zone: PST8PDT
 Transaction isolation level: read committed

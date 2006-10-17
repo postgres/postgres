@@ -30,7 +30,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 27: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGget_data line 27: RESULT: pst8pdt offset: -1 array: Yes
+[NO_PID]: ECPGget_data line 27: RESULT: PST8PDT offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 30: QUERY: set transaction isolation level read committed on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
