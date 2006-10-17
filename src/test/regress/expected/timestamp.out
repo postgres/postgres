@@ -80,12 +80,12 @@ INSERT INTO TIMESTAMP_TBL VALUES ('1997-02-10 17:32:01 -08:00');
 INSERT INTO TIMESTAMP_TBL VALUES ('19970210 173201 -0800');
 INSERT INTO TIMESTAMP_TBL VALUES ('1997-06-10 17:32:01 -07:00');
 INSERT INTO TIMESTAMP_TBL VALUES ('2001-09-22T18:19:20');
--- POSIX format
+-- POSIX format (note that the timezone abbrev is just decoration here)
 INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 08:14:01 GMT+8');
 INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 13:14:02 GMT-1');
-INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 12:14:03 GMT -2');
-INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 03:14:04 EST+3');
-INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 02:14:05 EST +2:00');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 12:14:03 GMT-2');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 03:14:04 PST+8');
+INSERT INTO TIMESTAMP_TBL VALUES ('2000-03-15 02:14:05 MST+7:00');
 -- Variations for acceptable input formats
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997 -0800');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997');
@@ -101,9 +101,9 @@ INSERT INTO TIMESTAMP_TBL VALUES ('97/02/10 17:32:01 UTC');
 reset datestyle;
 INSERT INTO TIMESTAMP_TBL VALUES ('1997.041 17:32:01 UTC');
 INSERT INTO TIMESTAMP_TBL VALUES ('19970210 173201 America/New_York');
--- this fails
+-- this fails (even though TZ is a no-op, we still look it up)
 INSERT INTO TIMESTAMP_TBL VALUES ('19970710 173201 America/Does_not_exist');
-ERROR:  time zone "America/Does_not_exist" not recognized
+ERROR:  time zone "america/does_not_exist" not recognized
 -- Check date conversion and date arithmetic
 INSERT INTO TIMESTAMP_TBL VALUES ('1997-06-10 18:32:01 PDT');
 INSERT INTO TIMESTAMP_TBL VALUES ('Feb 10 17:32:01 1997');
@@ -179,7 +179,7 @@ SELECT '' AS "64", d1 FROM TIMESTAMP_TBL;
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 14:32:01 1997
+    | Mon Feb 10 17:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -248,7 +248,7 @@ SELECT '' AS "48", d1 FROM TIMESTAMP_TBL
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 14:32:01 1997
+    | Mon Feb 10 17:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -333,7 +333,7 @@ SELECT '' AS "63", d1 FROM TIMESTAMP_TBL
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 14:32:01 1997
+    | Mon Feb 10 17:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -424,7 +424,7 @@ SELECT '' AS "49", d1 FROM TIMESTAMP_TBL
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Mon Feb 10 17:32:01 1997
-    | Mon Feb 10 14:32:01 1997
+    | Mon Feb 10 17:32:01 1997
     | Tue Jun 10 18:32:01 1997
     | Mon Feb 10 17:32:01 1997
     | Tue Feb 11 17:32:01 1997
@@ -480,7 +480,7 @@ SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
-    | @ 39 days 14 hours 32 mins 1 sec
+    | @ 39 days 17 hours 32 mins 1 sec
     | @ 159 days 18 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 40 days 17 hours 32 mins 1 sec
@@ -550,7 +550,7 @@ SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
-    | @ 39 days 14 hours 32 mins 1 sec
+    | @ 39 days 17 hours 32 mins 1 sec
     | @ 159 days 18 hours 32 mins 1 sec
     | @ 39 days 17 hours 32 mins 1 sec
     | @ 40 days 17 hours 32 mins 1 sec
@@ -614,7 +614,7 @@ SELECT '' AS "54", d1 as "timestamp",
     | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
     | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
     | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
-    | Mon Feb 10 14:32:01 1997    | 1997 |     2 |  10 |   14 |     32 |      1
+    | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
     | Tue Jun 10 18:32:01 1997    | 1997 |     6 |  10 |   18 |     32 |      1
     | Mon Feb 10 17:32:01 1997    | 1997 |     2 |  10 |   17 |     32 |      1
     | Tue Feb 11 17:32:01 1997    | 1997 |     2 |  11 |   17 |     32 |      1
@@ -677,7 +677,7 @@ SELECT '' AS "54", d1 as "timestamp",
     | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
     | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
     | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
-    | Mon Feb 10 14:32:01 1997    |       1 |  1000 |  1000000
+    | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
     | Tue Jun 10 18:32:01 1997    |       2 |  1000 |  1000000
     | Mon Feb 10 17:32:01 1997    |       1 |  1000 |  1000000
     | Tue Feb 11 17:32:01 1997    |       1 |  1000 |  1000000
@@ -1025,7 +1025,7 @@ SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS')
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
-           | 02 02 14 32 01 52321
+           | 05 05 17 32 01 63121
            | 06 06 18 32 01 66721
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
@@ -1096,7 +1096,7 @@ SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between qu
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
-           | HH:MI:SS is 02:32:01 "text between quote marks"
+           | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 06:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
@@ -1167,7 +1167,7 @@ SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
            | 17--text--32--text--01
            | 17--text--32--text--01
            | 17--text--32--text--01
-           | 14--text--32--text--01
+           | 17--text--32--text--01
            | 18--text--32--text--01
            | 17--text--32--text--01
            | 17--text--32--text--01
@@ -1310,7 +1310,7 @@ SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. H
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
-           | 1997 A.D. 1997 a.d. 1997 ad 02:32:01 P.M. 02:32:01 p.m. 02:32:01 pm
+           | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 06:32:01 P.M. 06:32:01 p.m. 06:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm

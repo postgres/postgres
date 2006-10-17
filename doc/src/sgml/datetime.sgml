@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.54 2006/09/22 16:35:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.55 2006/10/17 21:03:20 tgl Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -46,9 +46,9 @@
        <para>
         If the numeric token contains a dash (<literal>-</>), slash
         (<literal>/</>), or two or more dots (<literal>.</>), this is
-        a date string which may have a text month. In case of a slash
-        (<literal>/</>) it can also be a full time zone name like
-        <literal>America/New_York</>.
+        a date string which may have a text month.  If a date token has
+        already been seen, it is instead interpreted as a time zone
+        name (e.g., <literal>America/New_York</>).
        </para>
       </step>
 
@@ -64,7 +64,7 @@
       <step>
        <para>
         If the token starts with a plus (<literal>+</>) or minus
-        (<literal>-</>), then it is either a time zone or a special
+        (<literal>-</>), then it is either a numeric time zone or a special
         field.
        </para>
       </step>
@@ -73,30 +73,24 @@
 
     <step>
      <para>
-      If the token is a text string, match up with possible strings.
+      If the token is a text string, match up with possible strings:
      </para>
      
      <substeps>
       <step>
        <para>
-        Do a binary-search table lookup for the token
-        as either a special string (e.g., <literal>today</literal>),
-        day (e.g., <literal>Thursday</literal>),
-        month (e.g., <literal>January</literal>),
-        or noise word (e.g., <literal>at</literal>, <literal>on</literal>).
-       </para>
-
-       <para>
-        Set field values and bit mask for fields.
-        For example, set year, month, day for <literal>today</literal>,
-        and additionally hour, minute, second for <literal>now</literal>.
+        Do a binary-search table lookup for the token as a time zone
+        abbreviation.
        </para>
       </step>
       
       <step>
        <para>
         If not found, do a similar binary-search table lookup to match
-        the token with a time zone.
+        the token as either a special string (e.g., <literal>today</literal>),
+        day (e.g., <literal>Thursday</literal>),
+        month (e.g., <literal>January</literal>),
+        or noise word (e.g., <literal>at</literal>, <literal>on</literal>).
        </para>
       </step>
 

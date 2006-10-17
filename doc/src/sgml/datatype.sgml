@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.177 2006/10/16 19:58:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.178 2006/10/17 21:03:20 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1675,11 +1675,15 @@ SELECT b, char_length(b) FROM test2;
         <tbody>
          <row>
           <entry><literal>PST</literal></entry>
-          <entry>Pacific Standard Time</entry>
+          <entry>Abbreviation (for Pacific Standard Time)</entry>
          </row>
          <row>
           <entry><literal>America/New_York</literal></entry>
           <entry>Full time zone name</entry>
+         </row>
+         <row>
+          <entry><literal>PST8PDT</literal></entry>
+          <entry>POSIX-style time zone specification</entry>
          </row>
          <row>
           <entry><literal>-8:00</literal></entry>
@@ -2183,7 +2187,7 @@ January 8 04:05:06 1999 PST
       <listitem>
        <para>
         In addition to the timezone names and abbreviations,
-        <productname>PostgreSQL</productname> will accept time zone
+        <productname>PostgreSQL</productname> will accept POSIX-style time zone
         specifications of the form <replaceable>STD</><replaceable>offset</> or
         <replaceable>STD</><replaceable>offset</><replaceable>DST</>, where
         <replaceable>STD</> is a zone abbreviation, <replaceable>offset</> is a
@@ -2218,12 +2222,6 @@ January 8 04:05:06 1999 PST
      In all cases, timezone names are recognized case-insensitively.
      (This is a change from <productname>PostgreSQL</productname> versions
      prior to 8.2, which were case-sensitive in some contexts and not others.)
-    </para>
-
-    <para>
-     Note that timezone names are <emphasis>not</> used for date/time output
-     &mdash; all supported output formats use numeric timezone displays to
-     avoid ambiguity.
     </para>
 
     <para>
