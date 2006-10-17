@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.16 2006/10/16 19:33:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.17 2006/10/17 12:53:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -52,7 +52,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
      <para>
       The name of the constraint trigger. The actual name of the
       created trigger will be of the form
-      <literal>RI_ConstraintTrigger_0000<literal> (where 0000 is some number
+      <literal>RI_ConstraintTrigger_0000</literal> (where 0000 is some number
       assigned by the server).
       Use this assigned name when dropping the trigger.
      </para>
@@ -60,12 +60,12 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">events</replaceable></term>
+    <term><replaceable class="PARAMETER">event</replaceable></term>
     <listitem>
      <para>
       One of <literal>INSERT</literal>, <literal>UPDATE</literal>, or
       <literal>DELETE</literal>; this specifies the event that will fire the
-      trigger. Multiple events can be specified using <literal>OR<literal>.
+      trigger. Multiple events can be specified using <literal>OR</literal>.
      </para>
     </listitem>
    </varlistentry>
