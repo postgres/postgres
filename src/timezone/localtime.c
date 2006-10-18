@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.15 2006/10/16 19:58:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.16 2006/10/18 16:43:14 tgl Exp $
  */
 
 /*
@@ -1064,6 +1064,31 @@ pg_next_dst_boundary(const pg_time_t *timep,
 	*after_gmtoff = ttisp->tt_gmtoff;
 	*after_isdst = ttisp->tt_isdst;
 	return 1;
+}
+
+/*
+ * If the given timezone uses only one GMT offset, store that offset
+ * into *gmtoff and return TRUE, else return FALSE.
+ */
+bool
+pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff)
+{
+	/*
+	 * The zone could have more than one ttinfo, if it's historically used
+	 * more than one abbreviation.  We return TRUE as long as they all have
+	 * the same gmtoff.
+	 */
+	const struct state *sp;
+	int			i;
+
+	sp = &tz->state;
+	for (i = 1; i < sp->typecnt; i++)
+	{
+		if (sp->ttis[i].tt_gmtoff != sp->ttis[0].tt_gmtoff)
+			return false;
+	}
+	*gmtoff = sp->ttis[0].tt_gmtoff;
+	return true;
 }
 
 /*

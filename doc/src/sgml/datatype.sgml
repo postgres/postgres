@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.178 2006/10/17 21:03:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.179 2006/10/18 16:43:13 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1356,8 +1356,8 @@ SELECT b, char_length(b) FROM test2;
         <entry><type>time [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
         <entry>12 bytes</entry>
         <entry>times of day only, with time zone</entry>
-        <entry>00:00:00+1359</entry>
-        <entry>24:00:00-1359</entry>
+        <entry>00:00:00+1459</entry>
+        <entry>24:00:00-1459</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
       </tbody>
@@ -1594,7 +1594,8 @@ SELECT b, char_length(b) FROM test2;
       and <xref linkend="datatype-timezone-table">.)  If a time zone is
       specified in the input for <type>time without time zone</type>,
       it is silently ignored. You can also specify a date but it will
-      be ignored, except when you use a full time zone name like
+      be ignored, except when you use a time zone name that involves a
+      daylight-savings rule, such as
       <literal>America/New_York</literal>. In this case specifying the date
       is required in order to determine whether standard or daylight-savings
       time applies.  The appropriate time zone offset is recorded in the
@@ -1747,12 +1748,7 @@ SELECT b, char_length(b) FROM test2;
 </programlisting>
 
       are valid values, which follow the <acronym>ISO</acronym> 8601
-      standard. You can also specify the full time zone name as in
-<programlisting>
-1999-01-08 04:05:06 America/New_York
-</programlisting>
-
-      In addition, the wide-spread format
+      standard.  In addition, the wide-spread format
 <programlisting>
 January 8 04:05:06 1999 PST
 </programlisting>
@@ -2210,12 +2206,7 @@ January 8 04:05:06 1999 PST
      There is a conceptual and practical difference between the abbreviations
      and the full names: abbreviations always represent a fixed offset from
      UTC, whereas most of the full names imply a local daylight-savings time
-     rule and so have two possible UTC offsets. That's why you always have to
-     specify a date if you want to use full time zone names in <type>timetz</>
-     values. This is also the reason why you should set <xref
-     linkend="guc-timezone"> to a full time zone name: this way,
-     <productname>PostgreSQL</productname>
-     will always know the correct UTC offset for your region.
+     rule and so have two possible UTC offsets.
     </para>
 
     <para>

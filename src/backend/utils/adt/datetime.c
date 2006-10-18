@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.173 2006/10/17 21:03:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.174 2006/10/18 16:43:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1199,6 +1199,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						ptype = val;
 						break;
 
+					case UNKNOWN_FIELD:
+						/*
+						 * Before giving up and declaring error, check to see
+						 * if it is an all-alpha timezone name.
+						 */
+						namedTz = pg_tzset(field[i]);
+						if (!namedTz)
+							return DTERR_BAD_FORMAT;
+						/* we'll apply the zone setting below */
+						tmask = DTK_M(TZ);
+						break;
+
 					default:
 						return DTERR_BAD_FORMAT;
 				}
@@ -1911,6 +1923,18 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						ptype = val;
 						break;
 
+					case UNKNOWN_FIELD:
+						/*
+						 * Before giving up and declaring error, check to see
+						 * if it is an all-alpha timezone name.
+						 */
+						namedTz = pg_tzset(field[i]);
+						if (!namedTz)
+							return DTERR_BAD_FORMAT;
+						/* we'll apply the zone setting below */
+						tmask = DTK_M(TZ);
+						break;
+
 					default:
 						return DTERR_BAD_FORMAT;
 				}
@@ -1952,18 +1976,28 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 	/*
 	 * If we had a full timezone spec, compute the offset (we could not
-	 * do it before, because we need the date to resolve DST status).
+	 * do it before, because we may need the date to resolve DST status).
 	 */
 	if (namedTz != NULL)
 	{
-		/* a date has to be specified */
-		if ((fmask & DTK_DATE_M) != DTK_DATE_M)
-			return DTERR_BAD_FORMAT;
+		long int	gmtoff;
+
 		/* daylight savings time modifier disallowed with full TZ */
 		if (fmask & DTK_M(DTZMOD))
 			return DTERR_BAD_FORMAT;
 
-		*tzp = DetermineTimeZoneOffset(tm, namedTz);
+		/* if non-DST zone, we do not need to know the date */
+		if (pg_get_timezone_offset(namedTz, &gmtoff))
+		{
+			*tzp = -(int) gmtoff;
+		}
+		else
+		{
+			/* a date has to be specified */
+			if ((fmask & DTK_DATE_M) != DTK_DATE_M)
+				return DTERR_BAD_FORMAT;
+			*tzp = DetermineTimeZoneOffset(tm, namedTz);
+		}
 	}
 
 	/* timezone not specified? then find local timezone if possible */
