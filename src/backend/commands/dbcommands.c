@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.185 2006/10/04 00:29:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.186 2006/10/18 22:44:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@ static bool get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbTablespace);
 static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
+static bool check_db_file_conflict(Oid db_id);
 
 
 /*
@@ -336,12 +337,22 @@ createdb(const CreatedbStmt *stmt)
 				 errmsg("database \"%s\" already exists", dbname)));
 
 	/*
-	 * Insert a new tuple into pg_database.  This establishes our ownership of
-	 * the new database name (anyone else trying to insert the same name will
-	 * block on the unique index, and fail after we commit).  It also assigns
-	 * the OID that the new database will have.
+	 * Select an OID for the new database, checking that it doesn't have
+	 * a filename conflict with anything already existing in the tablespace
+	 * directories.
 	 */
 	pg_database_rel = heap_open(DatabaseRelationId, RowExclusiveLock);
+
+	do
+	{
+		dboid = GetNewOid(pg_database_rel);
+	} while (check_db_file_conflict(dboid));
+
+	/*
+	 * Insert a new tuple into pg_database.  This establishes our ownership of
+	 * the new database name (anyone else trying to insert the same name will
+	 * block on the unique index, and fail after we commit).
+	 */
 
 	/* Form tuple */
 	MemSet(new_record, 0, sizeof(new_record));
@@ -371,7 +382,9 @@ createdb(const CreatedbStmt *stmt)
 	tuple = heap_formtuple(RelationGetDescr(pg_database_rel),
 						   new_record, new_record_nulls);
 
-	dboid = simple_heap_insert(pg_database_rel, tuple);
+	HeapTupleSetOid(tuple, dboid);
+
+	simple_heap_insert(pg_database_rel, tuple);
 
 	/* Update indexes */
 	CatalogUpdateIndexes(pg_database_rel, tuple);
@@ -1216,7 +1229,7 @@ remove_dbtablespaces(Oid db_id)
 
 		dstpath = GetDatabasePath(db_id, dsttablespace);
 
-		if (stat(dstpath, &st) < 0 || !S_ISDIR(st.st_mode))
+		if (lstat(dstpath, &st) < 0 || !S_ISDIR(st.st_mode))
 		{
 			/* Assume we can ignore it */
 			pfree(dstpath);
@@ -1251,6 +1264,55 @@ remove_dbtablespaces(Oid db_id)
 	heap_close(rel, AccessShareLock);
 }
 
+/*
+ * Check for existing files that conflict with a proposed new DB OID;
+ * return TRUE if there are any
+ *
+ * If there were a subdirectory in any tablespace matching the proposed new
+ * OID, we'd get a create failure due to the duplicate name ... and then we'd
+ * try to remove that already-existing subdirectory during the cleanup in
+ * remove_dbtablespaces.  Nuking existing files seems like a bad idea, so
+ * instead we make this extra check before settling on the OID of the new
+ * database.  This exactly parallels what GetNewRelFileNode() does for table
+ * relfilenode values.
+ */
+static bool
+check_db_file_conflict(Oid db_id)
+{
+	bool		result = false;
+	Relation	rel;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+
+	rel = heap_open(TableSpaceRelationId, AccessShareLock);
+	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Oid			dsttablespace = HeapTupleGetOid(tuple);
+		char	   *dstpath;
+		struct stat st;
+
+		/* Don't mess with the global tablespace */
+		if (dsttablespace == GLOBALTABLESPACE_OID)
+			continue;
+
+		dstpath = GetDatabasePath(db_id, dsttablespace);
+
+		if (lstat(dstpath, &st) == 0)
+		{
+			/* Found a conflicting file (or directory, whatever) */
+			pfree(dstpath);
+			result = true;
+			break;
+		}
+
+		pfree(dstpath);
+	}
+
+	heap_endscan(scan);
+	heap_close(rel, AccessShareLock);
+	return result;
+}
 
 /*
  * get_database_oid - given a database name, look up the OID
