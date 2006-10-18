@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.474 2006/10/17 20:17:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.475 2006/10/18 03:53:50 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -1405,7 +1405,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        New <link linkend="functions-geometry-op-table">operators</link>
+        New <link linkend="functions-array">operators</link>
         for array-subset comparisons (<literal>@&gt;</>,
         <literal>&lt;@</>, <literal>&amp;&amp;</>) (Teodor, Tom)
        </para>
