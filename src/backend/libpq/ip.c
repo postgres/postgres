@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.23.2.2 2004/11/08 01:54:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.23.2.3 2006/10/19 17:26:51 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -75,6 +75,15 @@ getaddrinfo_all(const char *hostname, const char *servname,
 #ifdef HAVE_UNIX_SOCKETS
 	if (hintp != NULL && hintp->ai_family == AF_UNIX)
 		return getaddrinfo_unix(servname, hintp, result);
+#endif
+
+#ifdef _AIX
+	/*
+	 * It seems AIX's getaddrinfo doesn't reliably zero sin_port when servname
+	 * is NULL, so force the issue.
+	 */
+	if (servname == NULL)
+		servname = "0";
 #endif
 
 	/* NULL has special meaning to getaddrinfo */
