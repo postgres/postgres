@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.93 2006/10/04 00:29:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.94 2006/10/19 22:44:11 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -51,6 +51,7 @@ struct fp_info
 	Oid			namespace;		/* other stuff from pg_proc */
 	Oid			rettype;
 	Oid			argtypes[FUNC_MAX_ARGS];
+	char		fname[NAMEDATALEN];		/* function name for logging */
 };
 
 
@@ -229,6 +230,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 	fip->namespace = pp->pronamespace;
 	fip->rettype = pp->prorettype;
 	memcpy(fip->argtypes, pp->proargtypes.values, pp->pronargs * sizeof(Oid));
+	strlcpy(fip->fname, NameStr(pp->proname), NAMEDATALEN);
 
 	ReleaseSysCache(func_htp);
 
@@ -316,21 +318,21 @@ HandleFunctionRequest(StringInfo msgBuf)
 
 	fid = (Oid) pq_getmsgint(msgBuf, 4);		/* function oid */
 
-	/* Log as soon as we have the function OID */
-	if (log_statement == LOGSTMT_ALL)
-	{
-		ereport(LOG,
-				(errmsg("fastpath function call: function OID %u",
-						fid)));
-		was_logged = true;
-	}
-
 	/*
 	 * There used to be a lame attempt at caching lookup info here. Now we
 	 * just do the lookups on every call.
 	 */
 	fip = &my_fp;
 	fetch_fp_info(fid, fip);
+
+	/* Log as soon as we have the function OID and name */
+	if (log_statement == LOGSTMT_ALL)
+	{
+		ereport(LOG,
+				(errmsg("fastpath function call: \"%s\" (OID %u)",
+						fip->fname, fid)));
+		was_logged = true;
+	}
 
 	/*
 	 * Check permission to access and call function.  Since we didn't go
@@ -404,8 +406,8 @@ HandleFunctionRequest(StringInfo msgBuf)
 			break;
 		case 2:
 			ereport(LOG,
-					(errmsg("duration: %s ms  fastpath function call: function OID %u",
-							msec_str, fid)));
+					(errmsg("duration: %s ms  fastpath function call: \"%s\" (OID %u)",
+							msec_str, fip->fname, fid)));
 			break;
 	}
 
