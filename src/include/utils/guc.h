@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.75 2006/08/14 02:27:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.76 2006/10/19 18:32:47 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -115,9 +115,9 @@ extern bool log_executor_stats;
 extern bool log_statement_stats;
 extern bool log_btree_build_stats;
 
-extern bool SQL_inheritance;
-
+extern DLLIMPORT bool check_function_bodies;
 extern bool default_with_oids;
+extern bool SQL_inheritance;
 
 extern int	log_min_error_statement;
 extern int	log_min_messages;

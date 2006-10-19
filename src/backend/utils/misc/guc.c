@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.356 2006/10/07 19:25:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.357 2006/10/19 18:32:47 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -93,7 +93,6 @@
 
 /* XXX these should appear in other modules' header files */
 extern bool Log_disconnections;
-extern bool check_function_bodies;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *default_tablespace;
@@ -171,11 +170,11 @@ bool		log_statement_stats = false;		/* this is sort of all three
 												 * above together */
 bool		log_btree_build_stats = false;
 
+bool		check_function_bodies = true;
+bool		default_with_oids = false;
 bool		SQL_inheritance = true;
 
 bool		Password_encryption = true;
-
-bool		default_with_oids = false;
 
 int			log_min_error_statement = PANIC;
 int			log_min_messages = NOTICE;

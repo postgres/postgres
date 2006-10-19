@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.189 2006/09/04 15:07:46 petere Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.190 2006/10/19 18:32:47 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -70,8 +70,8 @@ extern volatile bool ProcDiePending;
 
 /* these are marked volatile because they are examined by signal handlers: */
 extern volatile bool ImmediateInterruptOK;
-extern volatile uint32 InterruptHoldoffCount;
-extern volatile uint32 CritSectionCount;
+extern DLLIMPORT volatile uint32 InterruptHoldoffCount;
+extern DLLIMPORT volatile uint32 CritSectionCount;
 
 /* in tcop/postgres.c */
 extern void ProcessInterrupts(void);
@@ -125,7 +125,7 @@ extern bool IsUnderPostmaster;
 
 extern bool ExitOnAnyError;
 
-extern char *DataDir;
+extern DLLIMPORT char *DataDir;
 
 extern DLLIMPORT int NBuffers;
 extern int	MaxBackends;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.32 2006/10/04 00:30:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.33 2006/10/19 18:32:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,9 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-extern DLLIMPORT bool check_function_bodies;
 
 PG_MODULE_MAGIC;
 

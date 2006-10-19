@@ -8,7 +8,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.5 2006/10/19 17:48:04 neilc Exp $
+ *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.6 2006/10/19 18:32:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "postmaster/syslogger.h"
 #include "storage/fd.h"
 #include "utils/datetime.h"
 
@@ -36,10 +37,6 @@
 #undef unlink
 #endif
 #endif
-
-extern DLLIMPORT char *DataDir;
-extern DLLIMPORT char *Log_directory;
-extern DLLIMPORT char *Log_filename;
 
 PG_MODULE_MAGIC;
 

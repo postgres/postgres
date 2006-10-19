@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.120 2006/10/15 18:56:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.121 2006/10/19 18:32:47 tgl Exp $
  *
  **********************************************************************/
 
@@ -23,12 +23,10 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/typcache.h"
-
-/* define this before the perl headers get a chance to mangle DLLIMPORT */
-extern DLLIMPORT bool check_function_bodies;
 
 /* perl stuff */
 #include "plperl.h"

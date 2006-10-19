@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.140 2006/07/13 16:49:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.141 2006/10/19 18:32:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +33,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-
-/* GUC parameter */
-bool		check_function_bodies = true;
 
 
 Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
