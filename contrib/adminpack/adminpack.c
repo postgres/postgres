@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * admin81.c
+ * adminpack.c
  *
  *
  * Copyright (c) 2002 - 2006, PostgreSQL Global Development Group
@@ -8,7 +8,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.4 2006/10/04 00:29:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.5 2006/10/19 17:48:04 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
