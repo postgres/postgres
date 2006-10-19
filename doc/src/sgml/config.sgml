@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.90 2006/10/07 19:25:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.91 2006/10/19 22:55:25 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2891,18 +2891,14 @@ SELECT * FROM parent WHERE key = 2400;
 
        <note>
         <para>
-         Statements that generate syntax errors are not logged.  Set
-         <varname>log_min_error_statement</> to <literal>error</> to
-         log such statements.      
-        </para>
-
-        <para>
-         When a function is defined in the
-         <application>PL/pgSQL</application>server-side language, any queries
-         executed by the function will only be logged the first time that the
-         function is invoked in a particular session. This is because
-         <application>PL/pgSQL</application> keeps a cache of the
-         query plans produced for the SQL statements in the function.
+         Statements that contain simple syntax errors are not logged
+         even by the <varname>log_statement</> = <literal>all</> setting,
+         because the log message is emitted only after basic parsing has
+         been done to determine the statement type.  In the case of extended
+         query protocol, this setting likewise does not log statements that
+         fail before the Execute phase (i.e., during parse analysis or
+         planning).  Set <varname>log_min_error_statement</> to
+         <literal>error</> to log such statements.      
         </para>
        </note>
       </listitem>
