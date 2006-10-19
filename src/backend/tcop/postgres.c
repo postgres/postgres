@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.515 2006/10/08 17:45:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.516 2006/10/19 19:52:22 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1326,9 +1326,9 @@ exec_bind_message(StringInfo input_message)
 	/*
 	 * Report query to various monitoring facilities.
 	 */
-	debug_query_string = "bind message";
+	debug_query_string = pstmt->query_string ? pstmt->query_string : "<BIND>";
 
-	pgstat_report_activity(pstmt->query_string ? pstmt->query_string : "<BIND>");
+	pgstat_report_activity(debug_query_string);
 
 	set_ps_display("BIND", false);
 
@@ -1680,28 +1680,8 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
-	/*
-	 * Report query to various monitoring facilities.
-	 */
-	debug_query_string = "execute message";
-
-	pgstat_report_activity(portal->sourceText ? portal->sourceText : "<EXECUTE>");
-
-	set_ps_display(portal->commandTag, false);
-
-	if (save_log_statement_stats)
-		ResetUsage();
-
 	/* Does the portal contain a transaction command? */
 	is_xact_command = IsTransactionStmtList(portal->parseTrees);
-
-	/*
-	 * If we re-issue an Execute protocol request against an existing portal,
-	 * then we are only fetching more rows rather than completely re-executing
-	 * the query from the start. atStart is never reset for a v3 portal, so we
-	 * are safe to use this check.
-	 */
-	execute_is_fetch = !portal->atStart;
 
 	/*
 	 * We must copy the sourceText and prepStmtName into MessageContext in
@@ -1710,7 +1690,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 */
 	if (is_xact_command)
 	{
-		sourceText = pstrdup(portal->sourceText);
+		sourceText = portal->sourceText ? pstrdup(portal->sourceText) : NULL;
 		if (portal->prepStmtName)
 			prepStmtName = pstrdup(portal->prepStmtName);
 		else
@@ -1732,6 +1712,18 @@ exec_execute_message(const char *portal_name, long max_rows)
 		portalParams = portal->portalParams;
 	}
 
+	/*
+	 * Report query to various monitoring facilities.
+	 */
+	debug_query_string = sourceText ? sourceText : "<EXECUTE>";
+
+	pgstat_report_activity(debug_query_string);
+
+	set_ps_display(portal->commandTag, false);
+
+	if (save_log_statement_stats)
+		ResetUsage();
+
 	BeginCommand(portal->commandTag, dest);
 
 	/*
@@ -1745,6 +1737,14 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 * case already due to prior BIND).
 	 */
 	start_xact_command();
+
+	/*
+	 * If we re-issue an Execute protocol request against an existing portal,
+	 * then we are only fetching more rows rather than completely re-executing
+	 * the query from the start. atStart is never reset for a v3 portal, so we
+	 * are safe to use this check.
+	 */
+	execute_is_fetch = !portal->atStart;
 
 	/* Log immediately if dictated by log_statement */
 	if (check_log_statement_cooked(portal->parseTrees))
