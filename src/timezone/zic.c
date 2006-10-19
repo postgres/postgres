@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.17 2006/10/16 19:58:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.18 2006/10/19 20:38:48 tgl Exp $
  */
 
 #include "postgres.h"
@@ -13,6 +13,9 @@
 #endif
 #include <limits.h>
 #include <locale.h>
+
+extern int	optind;
+extern char *optarg;
 
 #include "private.h"
 #include "pgtz.h"
