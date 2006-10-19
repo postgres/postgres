@@ -9,7 +9,7 @@
  *
  *	CAUTION: if you change this file, see also qsort_arg.c
  *
- *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.11 2006/10/12 15:04:55 tgl Exp $
+ *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.12 2006/10/19 20:56:22 tgl Exp $
  */
 
 /*	$NetBSD: qsort.c,v 1.13 2003/08/07 16:43:42 agc Exp $	*/
@@ -46,8 +46,8 @@
 #include "c.h"
 
 
-static char *med3(char *, char *, char *,
-	 int (*) (const void *, const void *));
+static char *med3(char *a, char *b, char *c,
+	 int (*cmp) (const void *, const void *));
 static void swapfunc(char *, char *, size_t, int);
 
 /*
@@ -96,11 +96,7 @@ int			swaptype;
 #define vecswap(a, b, n) if ((n) > 0) swapfunc((a), (b), (size_t)(n), swaptype)
 
 static char *
-med3(a, b, c, cmp)
-char	   *a,
-		   *b,
-		   *c;
-int			(*cmp) (const void *, const void *);
+med3(char *a, char *b, char *c, int (*cmp) (const void *, const void *))
 {
 	return cmp(a, b) < 0 ?
 		(cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a))
@@ -108,11 +104,7 @@ int			(*cmp) (const void *, const void *);
 }
 
 void
-qsort(a, n, es, cmp)
-void	   *a;
-size_t		n,
-			es;
-int			(*cmp) (const void *, const void *);
+pg_qsort(void *a, size_t n, size_t es, int (*cmp) (const void *, const void *))
 {
 	char	   *pa,
 			   *pb,

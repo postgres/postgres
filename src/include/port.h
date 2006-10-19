@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.104 2006/10/04 00:30:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.105 2006/10/19 20:56:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,6 +362,11 @@ extern int pqGethostbyname(const char *name,
 				char *buffer, size_t buflen,
 				struct hostent ** result,
 				int *herrno);
+
+extern void pg_qsort(void *base, size_t nel, size_t elsize,
+					 int (*cmp) (const void *, const void *));
+
+#define qsort(a,b,c,d) pg_qsort(a,b,c,d)
 
 typedef int (*qsort_arg_comparator) (const void *a, const void *b, void *arg);
 
