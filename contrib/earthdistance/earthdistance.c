@@ -1,7 +1,10 @@
-/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.11 2006/05/30 22:12:12 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.12 2006/10/19 20:03:07 tgl Exp $ */
 
 #include "postgres.h"
 
+#ifdef WIN32
+#define _USE_MATH_DEFINES
+#endif
 #include <math.h>
 
 #include "utils/geo_decls.h"	/* for Pt */
