@@ -1,13 +1,14 @@
-/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.12 2006/10/19 20:03:07 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/earthdistance/earthdistance.c,v 1.13 2006/10/19 20:08:03 tgl Exp $ */
 
 #include "postgres.h"
 
-#ifdef WIN32
-#define _USE_MATH_DEFINES
-#endif
 #include <math.h>
 
 #include "utils/geo_decls.h"	/* for Pt */
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 
 PG_MODULE_MAGIC;
