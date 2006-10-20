@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.63 2006/09/20 23:43:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.64 2006/10/20 20:35:13 neilc Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -890,8 +890,9 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
      already holds a given lock, additional requests will always succeed, even
      if other sessions are awaiting the lock.)  Like all locks in
      <productname>PostgreSQL</productname>, a complete list of advisory
-     locks currently held by any session can be found in the system view
-     <structname>pg_locks</structname>.
+     locks currently held by any session can be found in the
+     <link linkend="view-pg-locks"><structname>pg_locks</structname></link>
+     system view.
     </para>
 
     <para>
