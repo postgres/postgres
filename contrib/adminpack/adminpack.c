@@ -8,7 +8,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.6 2006/10/19 18:32:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.7 2006/10/20 00:59:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,10 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <dirent.h>
 
-#include "miscadmin.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "postmaster/syslogger.h"
 #include "storage/fd.h"
 #include "utils/datetime.h"
@@ -303,7 +302,7 @@ pg_logdir_ls(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("only superuser can list the log directory"))));
 
-	if (memcmp(Log_filename, "postgresql-%Y-%m-%d_%H%M%S.log", 30) != 0)
+	if (strcmp(Log_filename, "postgresql-%Y-%m-%d_%H%M%S.log") != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 (errmsg("the log_filename parameter must equal 'postgresql-%%Y-%%m-%%d_%%H%%M%%S.log'"))));
@@ -318,7 +317,7 @@ pg_logdir_ls(PG_FUNCTION_ARGS)
 
 		fctx = palloc(sizeof(directory_fctx));
 		if (is_absolute_path(Log_directory))
-			fctx->location = Log_directory;
+			fctx->location = pstrdup(Log_directory);
 		else
 		{
 			fctx->location = palloc(strlen(DataDir) + strlen(Log_directory) + 2);
@@ -346,14 +345,11 @@ pg_logdir_ls(PG_FUNCTION_ARGS)
 	funcctx = SRF_PERCALL_SETUP();
 	fctx = (directory_fctx *) funcctx->user_fctx;
 
-	if (!fctx->dirdesc)			/* not a readable directory  */
-		SRF_RETURN_DONE(funcctx);
-
-	while ((de = readdir(fctx->dirdesc)) != NULL)
+	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
 	{
 		char	   *values[2];
 		HeapTuple	tuple;
-
+		char		timestampbuf[32];
 		char	   *field[MAXDATEFIELDS];
 		char		lowstr[MAXDATELEN + 1];
 		int			dtype;
@@ -367,25 +363,27 @@ pg_logdir_ls(PG_FUNCTION_ARGS)
 		 * Default format: postgresql-YYYY-MM-DD_HHMMSS.log
 		 */
 		if (strlen(de->d_name) != 32
-			|| memcmp(de->d_name, "postgresql-", 11)
+			|| strncmp(de->d_name, "postgresql-", 11) != 0
 			|| de->d_name[21] != '_'
-			|| strcmp(de->d_name + 28, ".log"))
+			|| strcmp(de->d_name + 28, ".log") != 0)
 			continue;
 
-		values[1] = palloc(strlen(fctx->location) + strlen(de->d_name) + 2);
-		sprintf(values[1], "%s/%s", fctx->location, de->d_name);
+		/* extract timestamp portion of filename */
+		strcpy(timestampbuf, de->d_name + 11);
+		timestampbuf[17] = '\0';
 
-		values[0] = de->d_name + 11;	/* timestamp */
-		values[0][17] = 0;
-
-		/* parse and decode expected timestamp */
-		if (ParseDateTime(values[0], lowstr, MAXDATELEN, field, ftype, MAXDATEFIELDS, &nf))
+		/* parse and decode expected timestamp to verify it's OK format */
+		if (ParseDateTime(timestampbuf, lowstr, MAXDATELEN, field, ftype, MAXDATEFIELDS, &nf))
 			continue;
 
 		if (DecodeDateTime(field, ftype, nf, &dtype, &date, &fsec, &tz))
 			continue;
 
-		/* Seems the format fits the expected format; feed it into the tuple */
+		/* Seems the timestamp is OK; prepare and return tuple */
+
+		values[0] = timestampbuf;
+		values[1] = palloc(strlen(fctx->location) + strlen(de->d_name) + 2);
+		sprintf(values[1], "%s/%s", fctx->location, de->d_name);
 
 		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
 
