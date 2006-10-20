@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.23.2.3 2006/10/19 17:26:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.23.2.4 2006/10/20 01:10:40 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -69,6 +69,8 @@ int
 getaddrinfo_all(const char *hostname, const char *servname,
 				const struct addrinfo *hintp, struct addrinfo **result)
 {
+	int			rc;
+
 	/* not all versions of getaddrinfo() zero *result on failure */
 	*result = NULL;
 
@@ -77,18 +79,37 @@ getaddrinfo_all(const char *hostname, const char *servname,
 		return getaddrinfo_unix(servname, hintp, result);
 #endif
 
+	/* NULL has special meaning to getaddrinfo */
+	rc = getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
+					 servname, hintp, result);
+
 #ifdef _AIX
 	/*
-	 * It seems AIX's getaddrinfo doesn't reliably zero sin_port when servname
-	 * is NULL, so force the issue.
+	 * It seems some versions of AIX's getaddrinfo don't reliably zero
+	 * sin_port when servname is NULL, so clean up after it.
 	 */
-	if (servname == NULL)
-		servname = "0";
+	if (servname == NULL && rc == 0)
+	{
+		struct addrinfo *addr;
+
+		for (addr = *result; addr; addr = addr->ai_next)
+		{
+			switch (addr->ai_family)
+			{
+				case AF_INET:
+					((struct sockaddr_in *) addr->ai_addr)->sin_port = htons(0);
+					break;
+#ifdef HAVE_IPV6
+				case AF_INET6:
+					((struct sockaddr_in6 *) addr->ai_addr)->sin6_port = htons(0);
+					break;
+#endif
+			}
+		}
+	}
 #endif
 
-	/* NULL has special meaning to getaddrinfo */
-	return getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
-					   servname, hintp, result);
+	return rc;
 }
 
 
