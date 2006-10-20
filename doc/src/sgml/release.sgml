@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.475 2006/10/18 03:53:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.476 2006/10/20 16:34:48 alvherre Exp $ -->
 <!--
 
 Typical markup:
@@ -60,7 +60,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        More efficient locking with better concurency
+        More efficient locking with better concurrency
        </para>
       </listitem>
 
