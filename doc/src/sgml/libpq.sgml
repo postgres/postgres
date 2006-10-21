@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.217 2006/10/21 17:10:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.218 2006/10/21 18:25:01 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -955,7 +955,7 @@ int PQserverVersion(const PGconn *conn);
 Applications may use this to determine the version of the database server they
 are connected to. The number is formed by converting the major, minor, and
 revision numbers into two-decimal-digit numbers and appending them
-together. For example, version 7.4.2 will be returned as 70402, and version
+together. For example, version 8.1.5 will be returned as 80105, and version
 8.1 will be returned as 80100 (leading zeroes are not shown).  Zero is
 returned if the connection is bad.
 </para>
