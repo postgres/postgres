@@ -1,4 +1,4 @@
-pgbench README		2006/07/26 Tatsuo Ishii
+pgbench README		2006/10/21 Tatsuo Ishii
 
 ■pgbench とは？
 
@@ -284,6 +284,10 @@ pgbench は石井 達夫によって書かれました．ライセンス条件は pgbench.c 
 できます．
 
 ■改定履歴
+
+2006/10/21
+	* 更にデフォルトのスケーリングファクタをbranchesから取ってこな
+          いバグを修正．
 
 2006/09/13
 	* 変数tpsは紛らわしいのでscaleに変更．デフォルトシナリオの時に，

@@ -1,4 +1,4 @@
-pgbench README		2006/07/26 Tatsuo Ishii
+pgbench README		2006/10/21 Tatsuo Ishii
 
 o What is pgbench?
 
@@ -234,6 +234,10 @@ o License?
 Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
+
+2006/10/21
+	* more fix with handling default scaling factor in the default
+          scenarios
 
 2006/09/14
 	* change "tps" to "scale" to avoid confusion
