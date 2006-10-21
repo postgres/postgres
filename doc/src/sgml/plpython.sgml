@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.34 2006/10/16 17:28:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.35 2006/10/21 18:33:05 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -61,11 +61,11 @@ $$ LANGUAGE plpythonu;
 
   <para>
    The body of a function is simply a Python script. When the function
-   is called, all unnamed arguments are passed as elements to the array
-   <varname>args[]</varname> and named arguments as ordinary variables to the
-   Python script. The result is returned from the Python code in the usual way,
-   with <literal>return</literal> or <literal>yield</literal> (in case of
-   a resultset statement).
+   is called, its arguments are passed as elements of the array
+   <varname>args[]</varname>; named arguments are also passed as ordinary
+   variables to the Python script. The result is returned from the Python code
+   in the usual way, with <literal>return</literal> or
+   <literal>yield</literal> (in case of a resultset statement).
   </para>
 
   <para>
@@ -101,9 +101,9 @@ def __plpython_procedure_pymax_23456():
    the global <varname>args</varname> list.  In the
    <function>pymax</function> example, <varname>args[0]</varname> contains
    whatever was passed in as the first argument and
-   <varname>args[1]</varname> contains the second argument's value. Alternatively,
-   one can use named parameters as shown in the example above. This greatly simplifies
-   the reading and writing of <application>PL/Python</application> code.
+   <varname>args[1]</varname> contains the second argument's
+   value. Alternatively, one can use named parameters as shown in the example
+   above.  Use of named parameters is usually more readable.
   </para>
 
   <para>
@@ -161,15 +161,8 @@ $$ LANGUAGE plpythonu;
 
   <para>
    There are multiple ways to return row or composite types from a Python
-   scripts. In following examples we assume to have:
+   function. The following examples assume we have:
 
-<programlisting>
-CREATE TABLE named_value (
-  name   text,
-  value  integer
-);
-</programlisting>
-   or
 <programlisting>
 CREATE TYPE named_value AS (
   name   text,
@@ -177,15 +170,18 @@ CREATE TYPE named_value AS (
 );
 </programlisting>
 
+   A composite result can be returned as a:
+
    <variablelist>
     <varlistentry>
-     <term>Sequence types (tuple or list), but not <literal>set</literal> (because
+     <term>Sequence type (a tuple or list, but not a set because
      it is not indexable)</term>
      <listitem>
       <para>
-       Returned sequence objects must have the same number of items as
-       composite types have fields. Item with index 0 is assigned to the first field
-       of the composite type, 1 to second and so on. For example:
+       Returned sequence objects must have the same number of items as the
+       composite result type has fields. The item with index 0 is assigned to
+       the first field of the composite type, 1 to the second and so on. For
+       example:
 
 <programlisting>
 CREATE FUNCTION make_pair (name text, value integer)
@@ -196,7 +192,7 @@ AS $$
 $$ LANGUAGE plpythonu;
 </programlisting>
 
-       To return SQL null in any column, insert <symbol>None</symbol> at
+       To return a SQL null for any column, insert <symbol>None</symbol> at
        the corresponding position.
       </para>
      </listitem>
@@ -206,8 +202,8 @@ $$ LANGUAGE plpythonu;
      <term>Mapping (dictionary)</term>
      <listitem>
       <para>
-       Value for a composite type's column is retrieved from the mapping with
-       the column name as key. Example:
+       The value for each result type column is retrieved from the mapping
+       with the column name as key. Example:
 
 <programlisting>
 CREATE FUNCTION make_pair (name text, value integer)
@@ -217,8 +213,9 @@ AS $$
 $$ LANGUAGE plpythonu;
 </programlisting>
 
-       Additional dictionary key/value pairs are ignored. Missing keys are
-       treated as errors, i.e. to return an SQL null value for any column, insert
+       Any extra dictionary key/value pairs are ignored. Missing keys are
+       treated as errors.
+       To return a SQL null value for any column, insert
        <symbol>None</symbol> with the corresponding column name as the key.
       </para>
      </listitem>
@@ -228,6 +225,7 @@ $$ LANGUAGE plpythonu;
      <term>Object (any object providing method <literal>__getattr__</literal>)</term>
      <listitem>
       <para>
+       This works the same as a mapping.
        Example:
 
 <programlisting>
@@ -261,9 +259,9 @@ $$ LANGUAGE plpythonu;
 
   <para>
    A <application>PL/Python</application> function can also return sets of
-   scalar or composite types. There are serveral ways to achieve this because
-   the returned object is internally turned into an iterator. For following
-   examples, let's assume to have composite type:
+   scalar or composite types. There are several ways to achieve this because
+   the returned object is internally turned into an iterator. The following
+   examples assume we have composite type:
 
 <programlisting>
 CREATE TYPE greeting AS (
@@ -272,10 +270,11 @@ CREATE TYPE greeting AS (
 );
 </programlisting>
    
-   Currently known iterable types are:
+   A set result can be returned from a:
+
    <variablelist>
     <varlistentry>
-     <term>Sequence types (tuple, list, set)</term>
+     <term>Sequence type (tuple, list, set)</term>
      <listitem>
       <para>
 <programlisting>
@@ -341,9 +340,10 @@ $$ LANGUAGE plpythonu;
          <ulink url="http://sourceforge.net/tracker/index.php?func=detail&amp;aid=1483133&amp;group_id=5470&amp;atid=105470">bug #1483133</ulink>,
          some debug versions of Python 2.4
          (configured and compiled with option <literal>--with-pydebug</literal>)
-         are known to crash the <productname>PostgreSQL</productname> server.
+         are known to crash the <productname>PostgreSQL</productname> server
+         when using an iterator to return a set result.
          Unpatched versions of Fedora 4 contain this bug.
-         It does not happen in production version of Python or on patched
+         It does not happen in production versions of Python or on patched
          versions of Fedora 4.
         </para>
        </warning>
@@ -351,9 +351,6 @@ $$ LANGUAGE plpythonu;
      </listitem>
     </varlistentry>
    </variablelist>
-
-   Whenever new iterable types are added to Python language,
-   <application>PL/Python</application> is ready to use it.
   </para>
 
   <para>
