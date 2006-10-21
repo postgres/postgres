@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-06 23:05-0300\n"
+"POT-Creation-Date: 2005-11-02 10:07-0500\n"
 "PO-Revision-Date: 2005-01-10 19:47-0300\n"
 "Last-Translator: Ivan Hernandez <ivanx@ciencias.unam.mx>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -374,7 +374,6 @@ msgstr ""
 "                  nueva transacción\n"
 
 #: pg_resetxlog.c:804
-#, c-format
 msgid "  -m XID          set next multitransaction ID\n"
 msgstr "  -m XID          asigna el siguiente ID de multitransacción\n"
 
@@ -394,7 +393,6 @@ msgid "  -o OID          set next OID\n"
 msgstr "  -o OID          asigna el siguiente OID\n"
 
 #: pg_resetxlog.c:807
-#, c-format
 msgid "  -O OFFSET       set next multitransaction offset\n"
 msgstr "  -O OFFSET       asigna la siguiente posición de multitransacción\n"
 

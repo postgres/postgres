@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-11-06 23:07-0300\n"
+"POT-Creation-Date: 2005-11-05 23:34-0300\n"
 "PO-Revision-Date: 2004-11-02 23:45-0400\n"
 "Last-Translator: alvherre <alvherre@dcc.uchile.cl>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -161,7 +161,8 @@ msgstr "Por favor termine postgres e intente nuevamente.\n"
 #: pg_ctl.c:743
 #, c-format
 msgid "%s: old postmaster process (PID: %ld) seems to be gone\n"
-msgstr "%s: el proceso postmaster antiguo (PID: %ld) parece no estar\n"
+msgstr ""
+"%s: el proceso postmaster antiguo (PID: %ld) parece no estar\n"
 
 #: pg_ctl.c:767
 #, c-format

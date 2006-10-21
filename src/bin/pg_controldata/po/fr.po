@@ -2,7 +2,7 @@
 # translation of pg_controldata-fr.po to FR_fr
 # French message translation file for pg_controldata
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.11 2005/11/04 23:31:10 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.12 2006/10/21 21:03:02 petere Exp $
 #
 # Use these quotes: «%s»
 # Loïc Hennequin <loic.hennequin@wanadoo.fr>, 2002.
@@ -11,8 +11,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata-fr\n"
-"POT-Creation-Date: 2005-10-05 13:15-0300\n"
-"PO-Revision-Date: 2005-10-05 21:41+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-10-16 01:15-0300\n"
+"PO-Revision-Date: 2006-10-16 20:53+0100\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team:  <pgsql-fr-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -47,10 +48,10 @@ msgstr ""
 "  --version      affiche les informations sur la version puis quitte\n"
 
 #: pg_controldata.c:36
+#, c-format
 msgid ""
 "\n"
-"If no data directory (DATADIR) is specified, the environment variable "
-"PGDATA\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
 "is used.\n"
 "\n"
 msgstr ""
@@ -60,6 +61,7 @@ msgstr ""
 "\n"
 
 #: pg_controldata.c:38
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Rapporter les bogues à <pgsql-bugs@postgresql.org>.\n"
 
@@ -76,38 +78,43 @@ msgid "shutting down"
 msgstr "arrêt en cours"
 
 #: pg_controldata.c:54
-msgid "in recovery"
-msgstr "restauration en cours"
+msgid "in crash recovery"
+msgstr "restauration en cours (crash)"
 
 #: pg_controldata.c:56
+msgid "in archive recovery"
+msgstr "restauration en cours (archive)"
+
+#: pg_controldata.c:58
 msgid "in production"
 msgstr "en production"
 
-#: pg_controldata.c:58
+#: pg_controldata.c:60
 msgid "unrecognized status code"
 msgstr "code de statut inconnu"
 
-#: pg_controldata.c:100
+#: pg_controldata.c:102
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s : aucun répertoire de données n'a été spécifié\n"
 
-#: pg_controldata.c:101
+#: pg_controldata.c:103
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez «%s --help» pour plus d'informations.\n"
 
-#: pg_controldata.c:109
+#: pg_controldata.c:111
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s : n'a pas pu ouvrir le fichier «%s» en lecture : %s\n"
 
-#: pg_controldata.c:116
+#: pg_controldata.c:118
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s : n'a pas pu lire le fichier «%s» : %s\n"
 
-#: pg_controldata.c:130
+#: pg_controldata.c:132
+#, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
 "Either the file is corrupt, or it has a different layout than this program\n"
@@ -120,145 +127,155 @@ msgstr ""
 "dignes de confiance.\n"
 "\n"
 
-#: pg_controldata.c:150
+#: pg_controldata.c:152
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "Numéro de version de pg_control :     %u\n"
 
-#: pg_controldata.c:151
+#: pg_controldata.c:154
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Numéro de version du catalogue :      %u\n"
 
-#: pg_controldata.c:152
+#: pg_controldata.c:156
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Identifiant du système de base de données : %s\n"
 
-#: pg_controldata.c:153
+#: pg_controldata.c:158
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "Etat du groupe de base de données :   %s\n"
 
-#: pg_controldata.c:154
+#: pg_controldata.c:160
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "Dernière modification de pg_control : %s\n"
 
-#: pg_controldata.c:155
+#: pg_controldata.c:162
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "ID du fichier journal courant :       %u\n"
 
-#: pg_controldata.c:156
+#: pg_controldata.c:164
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "Prochain segment de fichier journal : %u\n"
 
-#: pg_controldata.c:157
+#: pg_controldata.c:166
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Dernière localisation du point de contrôle: %X/%X\n"
 
-#: pg_controldata.c:159
+#: pg_controldata.c:169
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Précédente localisation du point de contrôle: %X/%X\n"
 
-#: pg_controldata.c:161
+#: pg_controldata.c:172
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "Dernière localisation de reprise du point de contrôle : %X/%X\n"
 
-#: pg_controldata.c:163
+#: pg_controldata.c:175
 #, c-format
 msgid "Latest checkpoint's UNDO location:    %X/%X\n"
 msgstr "Dernière localisation d'annulation du point de contrôle : %X/%X\n"
 
-#: pg_controldata.c:165
+#: pg_controldata.c:178
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Dernier TimeLineID du point de vérification : %u\n"
 
-#: pg_controldata.c:166
+#: pg_controldata.c:180
 #, c-format
-msgid "Latest checkpoint's NextXID:          %u\n"
-msgstr "Dernier NextXID du point de contrôle : %u\n"
+msgid "Latest checkpoint's NextXID:          %u/%u\n"
+msgstr "Dernier NextXID du point de contrôle : %u/%u\n"
 
-#: pg_controldata.c:167
+#: pg_controldata.c:183
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Dernier NextXOID du point de contrôle : %u\n"
 
-#: pg_controldata.c:168
+#: pg_controldata.c:185
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "Dernier NextMultiXactId du point de contrôle : %u\n"
 
-#: pg_controldata.c:169
+#: pg_controldata.c:187
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "Dernier NextMultiOffset du point de contrôle : %u\n"
 
-#: pg_controldata.c:170
+#: pg_controldata.c:189
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Heure du dernier point de contrôle :  %s\n"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:191
+#, c-format
+msgid "Minimum recovery ending location:     %X/%X\n"
+msgstr "Emplacement de fin de la récupération minimale:   %X/%X\n"
+
+#: pg_controldata.c:194
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Alignement maximale de la donnée :    %u\n"
 
-#: pg_controldata.c:173
+#: pg_controldata.c:197
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Taille de bloc de la base de données : %u\n"
 
-#: pg_controldata.c:174
+#: pg_controldata.c:199
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Blocs par segment pour une relation importante : %u\n"
 
-#: pg_controldata.c:175
+#: pg_controldata.c:201
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "Taille de bloc du WAL :               %u\n"
+
+#: pg_controldata.c:203
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Octets par segment WAL :              %u\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:205
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Taille maximale des identifiants :    %u\n"
 
-#: pg_controldata.c:177
+#: pg_controldata.c:207
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Nombre de colonnes maximum d'un index: %u\n"
 
-#: pg_controldata.c:178
+#: pg_controldata.c:209
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Stockage du type date/heure :         %s\n"
 
-#: pg_controldata.c:179
+#: pg_controldata.c:210
 msgid "64-bit integers"
 msgstr "entiers 64-bits"
 
-#: pg_controldata.c:179
+#: pg_controldata.c:210
 msgid "floating-point numbers"
 msgstr "nombres à virgule flottante"
 
-#: pg_controldata.c:180
+#: pg_controldata.c:211
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Taille maximum d'un nom local :       %u\n"
 
-#: pg_controldata.c:181
+#: pg_controldata.c:213
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE :                          %s\n"
 
-#: pg_controldata.c:182
+#: pg_controldata.c:215
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE :                            %s\n"

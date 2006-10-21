@@ -4,7 +4,7 @@
 # Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/backend/po/ru.po,v 1.32 2006/08/29 15:47:48 teodor Exp $
+# $PostgreSQL: pgsql/src/backend/po/ru.po,v 1.33 2006/10/21 21:02:59 petere Exp $
 #
 # ChangeLog:
 #   - December 10, 2004 - January 17, 2005:
@@ -610,7 +610,7 @@ msgstr "Кластер баз данных был инициализирован без HAVE_INT64_TIMESTAMP, но серв
 
 #: access/transam/xlog.c:3298
 msgid "The database cluster was initialized with HAVE_INT64_TIMESTAMP but the server was compiled without HAVE_INT64_TIMESTAMP."
-msgstr "Кластер баз данных был инициализирован с HAVE_INT64_TIMESTAMP, но сервер был скомпилирован без HAVE_INT64_TIMESTAMP."
+msgstr "Кластер баз данных был инициализирован с PG_CONTROL_VERSION, но сервер был скомпилирован без PG_CONTROL_VERSION."
 
 #: access/transam/xlog.c:3306
 #, c-format
@@ -7431,7 +7431,7 @@ msgstr "не получилось выделить сегмент общей памяти \"%s\""
 #: storage/lmgr/lock.c:559
 #: storage/lmgr/lock.c:622
 msgid "You may need to increase max_locks_per_transaction."
-msgstr "Вам следует увеличить значение параметра max_locks_per_transaction."
+msgstr "Вам следует увеличить значение прамера max_locks_per_transaction."
 
 #: storage/lmgr/deadlock.c:867
 #, c-format
