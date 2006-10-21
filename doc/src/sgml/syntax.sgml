@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.109 2006/09/16 00:30:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.110 2006/10/21 17:12:07 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -240,49 +240,12 @@ UPDATE "my_table" SET "a" = 5;
      </indexterm>
      A string constant in SQL is an arbitrary sequence of characters
      bounded by single quotes (<literal>'</literal>), for example
-     <literal>'This is a string'</literal>.  The standard-compliant way of
-     writing a single-quote character within a string constant is to
+     <literal>'This is a string'</literal>.  To include
+     a single-quote character within a string constant,
      write two adjacent single quotes, e.g.
      <literal>'Dianne''s horse'</literal>.
-     <productname>PostgreSQL</productname> also allows single quotes
-     to be escaped with a backslash (<literal>\'</literal>).  However,
-     future versions of <productname>PostgreSQL</productname> will not
-     allow this, so applications using backslashes should convert to the 
-     standard-compliant method outlined above.
-    </para>
-
-    <para>
-     Another <productname>PostgreSQL</productname> extension is that
-     C-style backslash escapes are available: <literal>\b</literal> is a
-     backspace, <literal>\f</literal> is a form feed,
-     <literal>\n</literal> is a newline, <literal>\r</literal> is a
-     carriage return, <literal>\t</literal> is a tab. Also supported is
-     <literal>\<replaceable>digits</replaceable></literal>, where
-     <replaceable>digits</replaceable> represents an octal byte value, and
-     <literal>\x<replaceable>hexdigits</replaceable></literal>, where
-     <replaceable>hexdigits</replaceable> represents a hexadecimal byte value.
-     (It is your responsibility that the byte sequences you create are
-     valid characters in the server character set encoding.) Any other
-     character following a backslash is taken literally. Thus, to
-     include a backslash in a string constant, write two backslashes.
-    </para>
-
-    <note>
-    <para>
-     While ordinary strings now support C-style backslash escapes,
-     future versions will generate warnings for such usage and
-     eventually treat backslashes as literal characters to be
-     standard-conforming. The proper way to specify escape processing is
-     to use the escape string syntax to indicate that escape
-     processing is desired. Escape string syntax is specified by writing
-     the letter <literal>E</literal> (upper or lower case) just before
-     the string, e.g. <literal>E'\041'</>. This method will work in all
-     future versions of <productname>PostgreSQL</productname>.
-    </para>
-    </note>
-
-    <para>
-     The character with the code zero cannot be in a string constant.
+     Note that this is <emphasis>not</> the same as a double-quote
+     character (<literal>"</>).
     </para>
 
     <para>
@@ -305,6 +268,70 @@ SELECT 'foo'      'bar';
      is not valid syntax.  (This slightly bizarre behavior is specified
      by <acronym>SQL</acronym>; <productname>PostgreSQL</productname> is
      following the standard.)
+    </para>
+
+    <para>
+     <indexterm>
+      <primary>escape string syntax</primary>
+     </indexterm>
+     <indexterm>
+      <primary>backslash escapes</primary>
+     </indexterm>
+     <productname>PostgreSQL</productname> also accepts <quote>escape</>
+     string constants, which are an extension to the SQL standard.
+     An escape string constant is specified by writing the letter
+     <literal>E</literal> (upper or lower case) just before the opening single
+     quote, e.g. <literal>E'foo'</>.  (When continuing an escape string
+     constant across lines, write <literal>E</> only before the first opening
+     quote.)
+     Within an escape string, a backslash character (<literal>\</>) begins a
+     C-like <firstterm>backslash escape</> sequence, in which the combination
+     of backslash and following character(s) represents a special byte value.
+     <literal>\b</literal> is a backspace,
+     <literal>\f</literal> is a form feed,
+     <literal>\n</literal> is a newline,
+     <literal>\r</literal> is a carriage return,
+     <literal>\t</literal> is a tab.
+     Also supported are
+     <literal>\<replaceable>digits</replaceable></literal>, where
+     <replaceable>digits</replaceable> represents an octal byte value, and
+     <literal>\x<replaceable>hexdigits</replaceable></literal>, where
+     <replaceable>hexdigits</replaceable> represents a hexadecimal byte value.
+     (It is your responsibility that the byte sequences you create are
+     valid characters in the server character set encoding.) Any other
+     character following a backslash is taken literally. Thus, to
+     include a backslash character, write two backslashes (<literal>\\</>).
+     Also, a single quote can be included in an escape string by writing
+     <literal>\'</literal>, in addition to the normal way of <literal>''</>.
+    </para>
+
+    <caution>
+    <para>
+     If the configuration parameter
+     <xref linkend="guc-standard-conforming-strings"> is <literal>off</>,
+     then <productname>PostgreSQL</productname> recognizes backslash escapes
+     in both regular and escape string constants.  This is for backward
+     compatibility with the historical behavior, in which backslash escapes
+     were always recognized.
+     Although <varname>standard_conforming_strings</> currently defaults to
+     <literal>off</>, the default will change to <literal>on</> in a future
+     release for improved standards compliance.  Applications are therefore
+     encouraged to migrate away from using backslash escapes.  If you need
+     to use a backslash escape to represent a special character, write the
+     constant with an <literal>E</> to be sure it will be handled the same
+     way in future releases.
+    </para>
+
+    <para>
+     In addition to <varname>standard_conforming_strings</>, the configuration
+     parameters <xref linkend="guc-escape-string-warning"> and
+     <xref linkend="guc-backslash-quote"> govern treatment of backslashes
+     in string constants.
+    </para>
+    </caution>
+
+    <para>
+     The character with the code zero cannot be in a string constant.
     </para>
    </sect3>
 
