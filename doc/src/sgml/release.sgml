@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.478 2006/10/21 18:15:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.479 2006/10/21 18:41:53 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -279,7 +279,7 @@ links to the main documentation.
 
        <para>
         This changes the previous behavior where concatenation
-        would adjust the lower array dimensions.
+        would modify the array lower bound.
        </para>
       </listitem>
 
@@ -459,19 +459,26 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Improve efficiency of <link
-        linkend="functions-comparisons"><literal>IN</>
-        (list-of-expressions)</link> clauses (Tom)
+        Allow the planner to reorder <link linkend="queries-join">outer
+        joins</link> in some circumstances (Tom)
+       </para>
+
+       <para>
+        In previous releases, outer joins would always be evaluated in
+        the order written in the query. This change allows the
+        query optimizer to consider reordering outer joins, in cases where
+        it can determine that the join order can be changed without
+        altering the meaning of the query.  This can make a
+        considerable performance difference for queries involving
+        multiple outer joins or mixed inner and outer joins.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Increase default values for <link
-        linkend="guc-shared-buffers"><varname>shared_buffers</></link>
-        and <link
-        linkend="guc-max-fsm-pages"><varname>max_fsm_pages</></link>
-        (Andrew)
+        Improve efficiency of <link
+        linkend="functions-comparisons"><literal>IN</>
+        (list-of-expressions)</link> clauses (Tom)
        </para>
       </listitem>
 
@@ -505,6 +512,16 @@ links to the main documentation.
 
       <listitem>
        <para>
+        Increase default values for <link
+        linkend="guc-shared-buffers"><varname>shared_buffers</></link>
+        and <link
+        linkend="guc-max-fsm-pages"><varname>max_fsm_pages</></link>
+        (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Improve locking performance by breaking the lock manager tables into
         sections
         (Tom)
@@ -532,28 +549,11 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Allow the planner to reorder <link linkend="queries-join">outer
-        joins</link> in some circumstances (Tom)
-       </para>
-
-       <para>
-        In previous releases, outer joins would always be evaluated in
-        the order written in the query. This change allows the
-        query optimizer to consider reordering outer joins, in cases where
-        it can determine that the join order can be changed without
-        altering the meaning of the query.  This can make a
-        considerable performance difference for queries involving
-        multiple outer joins or mixed inner and outer joins.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Improve the optimizer statistics used by <link
+        Improve the optimizer's selectivity estimates for <link
         linkend="functions-like"><literal>LIKE</></link>, <link
         linkend="functions-like"><literal>ILIKE</></link>, and
-        <link linkend="functions-posix-regexp">regular expression
-        operations</link> (Tom)
+        <link linkend="functions-posix-regexp">regular expression</link>
+        operations (Tom)
        </para>
       </listitem>
 
@@ -1136,7 +1136,8 @@ links to the main documentation.
        </para>
 
        <para>
-        This allows the new table to receive matching constraints.
+        This allows easy copying of <literal>CHECK</> constraints to a new
+        table.
        </para>
       </listitem>
 
@@ -1270,10 +1271,10 @@ links to the main documentation.
        <para>
         Previously, comments attached to databases were stored in individual
         databases, making them ineffective, and there was no provision
-        at all for comments on roles.  This change adds a new
-        <link
+        at all for comments on roles or tablespaces.  This change adds a new
+        shared catalog <link
         linkend="catalog-pg-shdescription"><structname>pg_shdescription</structname></link>
-        system catalog and stores comments on databases and roles therein.
+        and stores comments on databases, roles, and tablespaces therein.
        </para>
       </listitem>
 
@@ -1628,8 +1629,14 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Add <literal>table_name</> and <literal>table_schema</> as
-        trigger data (Andrew)
+        Add <literal>TG_table_name</> and <literal>TG_table_schema</> to
+        trigger parameters (Andrew)
+       </para>
+
+       <para>
+        <literal>TG_relname</> is now deprecated.  Comparable
+        changes have been made in the trigger parameters for the other
+        PLs as well.
        </para>
       </listitem>
 
@@ -1671,12 +1678,8 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Add <literal>table_name</> and <literal>table_schema</> as
-        trigger data (Adam Sj&oslash;gren)
-       </para>
-
-       <para>
-        <literal>relname</> is kept but now deprecated.
+        Add <literal>table_name</> and <literal>table_schema</> to
+        trigger parameters (Adam Sj&oslash;gren)
        </para>
       </listitem>
 
@@ -1697,14 +1700,6 @@ links to the main documentation.
        </para>
       </listitem>
 
-      <listitem>
-       <para>
-        Honor <link
-        linkend="guc-check-function-bodies"><varname>check_function_bodies</></link>
-        (Tom)
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     </sect3>
@@ -1715,8 +1710,15 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Add <literal>table_name</> and <literal>table_schema</> as
-        trigger data (Andrew)
+        Named parameters are passed as ordinary variables, as well as in the
+        <literal>args[]</> array (Sven Suursoho)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <literal>table_name</> and <literal>table_schema</> to
+        trigger parameters (Andrew)
        </para>
       </listitem>
 
@@ -1736,13 +1738,6 @@ links to the main documentation.
       <listitem>
        <para>
         Allow functions to return <literal>void</> (Neil)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Add named parameters to the <literal>args[]</> array (Sven
-        Suursoho)
        </para>
       </listitem>
 
@@ -2114,8 +2109,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Improve ability to relocate installs in more complex
-        configurations (Tom)
+        Improve ability to relocate installation directories (Tom)
        </para>
       </listitem>
 
