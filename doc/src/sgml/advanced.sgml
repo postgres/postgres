@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.51 2006/09/16 00:30:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.52 2006/10/21 23:12:57 tgl Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -384,7 +384,7 @@ CREATE TABLE capitals (
     type of the column <structfield>name</structfield> is
     <type>text</type>, a native <productname>PostgreSQL</productname>
     type for variable length character strings.  State capitals have
-    an extra column, state, that shows their state.  In
+    an extra column, <structfield>state</>, that shows their state.  In
     <productname>PostgreSQL</productname>, a table can inherit from
     zero or more other tables.
    </para>

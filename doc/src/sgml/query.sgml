@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.47 2006/09/16 00:30:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.48 2006/10/21 23:12:57 tgl Exp $ -->
 
  <chapter id="tutorial-sql">
   <title>The <acronym>SQL</acronym> Language</title>
@@ -20,7 +20,7 @@
    <para>
     In the examples that follow, we assume that you have created a
     database named <literal>mydb</literal>, as described in the previous
-    chapter, and have started <application>psql</application>.
+    chapter, and have been able to start <application>psql</application>.
    </para>
 
    <para>
@@ -35,12 +35,15 @@
 </screen>
 
     This creates the scripts and compiles the C files containing user-defined
-    functions and types.  (You must use GNU make for this &mdash; it may be named
-    something different on your system, often <application>gmake</>.)
+    functions and types.  (If you installed a pre-packaged version of
+    <productname>PostgreSQL</productname> rather than building from source,
+    look for a directory named <filename>tutorial</> within the
+    <productname>PostgreSQL</productname> documentation.  The <quote>make</>
+    part should already have been done for you.)
     Then, to start the tutorial, do the following:
 
 <screen>
-<prompt>$</prompt> <userinput>cd <replaceable>....</replaceable>/src/tutorial</userinput>
+<prompt>$</prompt> <userinput>cd <replaceable>....</replaceable>/tutorial</userinput>
 <prompt>$</prompt> <userinput>psql -s mydb</userinput>
 <computeroutput>
 ...
@@ -416,7 +419,7 @@ SELECT DISTINCT city
        In some database systems, including older versions of
        <productname>PostgreSQL</productname>, the implementation of
        <literal>DISTINCT</literal> automatically orders the rows and
-       so <literal>ORDER BY</literal> is redundant.  But this is not
+       so <literal>ORDER BY</literal> is unnecessary.  But this is not
        required by the SQL standard, and current
        <productname>PostgreSQL</productname> doesn't guarantee that
        <literal>DISTINCT</literal> causes the rows to be ordered.
@@ -518,8 +521,10 @@ SELECT city, temp_lo, temp_hi, prcp, date, location
 
    <para>
     Since the columns all had different names, the parser
-    automatically found out which table they belong to, but it is good
-    style to fully qualify column names in join queries:
+    automatically found out which table they belong to.  If there
+    were duplicate column names in the two tables you'd need to
+    <firstterm>qualify</> the column names to show which one you
+    meant, as in:
 
 <programlisting>
 SELECT weather.city, weather.temp_lo, weather.temp_hi,
@@ -527,6 +532,10 @@ SELECT weather.city, weather.temp_lo, weather.temp_hi,
     FROM weather, cities
     WHERE cities.name = weather.city;
 </programlisting>
+
+    It is widely considered good style to qualify all column names
+    in a join query, so that the query won't fail if a duplicate
+    column name is later added to one of the tables.
    </para>
 
    <para>
@@ -548,7 +557,7 @@ SELECT *
     Now we will figure out how we can get the Hayward records back in.
     What we want the query to do is to scan the
     <classname>weather</classname> table and for each row to find the
-    matching <classname>cities</classname> row.  If no matching row is
+    matching <classname>cities</classname> row(s).  If no matching row is
     found we want some <quote>empty values</quote> to be substituted
     for the <classname>cities</classname> table's columns.  This kind
     of query is called an <firstterm>outer join</firstterm>.  (The
@@ -681,11 +690,11 @@ SELECT city FROM weather WHERE temp_lo = max(temp_lo);     <lineannotation>WRONG
     but this will not work since the aggregate
     <function>max</function> cannot be used in the
     <literal>WHERE</literal> clause.  (This restriction exists because
-    the <literal>WHERE</literal> clause determines the rows that will
-    go into the aggregation stage; so it has to be evaluated before
-    aggregate functions are computed.)
+    the <literal>WHERE</literal> clause determines which rows will be
+    included in the aggregate calculation; so obviously it has to be evaluated
+    before aggregate functions are computed.)
     However, as is often the case
-    the query can be restated to accomplish the intended result, here
+    the query can be restated to accomplish the desired result, here
     by using a <firstterm>subquery</firstterm>:
 
 <programlisting>
@@ -808,7 +817,7 @@ SELECT city, max(temp_lo)
     You can update existing rows using the
     <command>UPDATE</command> command. 
     Suppose you discover the temperature readings are
-    all  off  by 2 degrees as of November 28.  You may update the
+    all off by 2 degrees after November 28.  You may correct the
     data as follows:
 
 <programlisting>
