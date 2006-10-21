@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.216 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.217 2006/10/21 17:10:43 tgl Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -2289,7 +2289,10 @@ It is not thread-safe.
 
    <indexterm zone="libpq-exec-escape-string"><primary>PQescapeStringConn</></>
    <indexterm zone="libpq-exec-escape-string"><primary>PQescapeString</></>
-   <indexterm zone="libpq-exec-escape-string"><primary>escaping strings</></>
+   <indexterm zone="libpq-exec-escape-string">
+     <primary>escaping strings</>
+     <secondary>in libpq</secondary>
+   </>
 
 <para>
 <function>PQescapeStringConn</function> escapes a string for use within an SQL
