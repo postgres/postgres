@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.477 2006/10/20 23:02:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.478 2006/10/21 18:15:44 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -811,7 +811,7 @@ links to the main documentation.
 
        <para>
         On platforms where it is expensive to update the <application>ps</>
-	display, it may be worthwhile to turn this off and rely solely on
+        display, it may be worthwhile to turn this off and rely solely on
         <structname>pg_stat_activity</> for status information.
        </para>
       </listitem>
@@ -2395,6 +2395,36 @@ links to the main documentation.
        <para>
         pgcrypto now has all planned functionality (Marko Kreen)
        </para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          Include iMath library in pgcrypto to have the public-key encryption
+          functions always available.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          Add SHA224 algorithm that was missing in OpenBSD code.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          Activate builtin code for SHA224/256/384/512 hashes on older
+          OpenSSL to have those algorithms always available.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          New function gen_random_bytes() that returns cryptographically strong 
+          randomness.  Useful for generating encryption keys.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          Remove digest_exists(), hmac_exists() and cipher_exists() functions.
+         </para>
+        </listitem>
+       </itemizedlist>
       </listitem>
 
       <listitem>
