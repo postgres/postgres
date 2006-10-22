@@ -8,6 +8,8 @@ if "%1" == "src\backend\utils\misc\guc-file.l" call :generate %1 src\backend\uti
 if "%1" == "src\pl\plpgsql\src\scan.l" call :generate %1 src\pl\plpgsql\src\pl_scan.c
 if "%1" == "src\interfaces\ecpg\preproc\pgc.l" call :generate %1 src\interfaces\ecpg\preproc\pgc.c
 if "%1" == "src\bin\psql\psqlscan.l" call :generate %1 src\bin\psql\psqlscan.c
+if "%1" == "contrib\cube\cubescan.l" call :generate %1 contrib\cube\cubescan.c
+if "%1" == "contrib\seg\segscan.l" call :generate %1 contrib\seg\segscan.c
 
 echo Unknown flex input: %1
 exit 1

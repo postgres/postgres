@@ -286,7 +286,7 @@ EOF
 			my $of = $f;
 			$of =~ s/\.y$/.c/;
 			$of =~ s{^src\\pl\\plpgsql\\src\\gram.c$}{src\\pl\\plpgsql\\src\\pl_gram.c};
-			print F '>' . GenerateCustomTool('Running bison on ' . $f, 'src\tools\msvc\pgbison.bat ' . $f, $of) . '</File>' . "\n";
+			print F '>' . GenerateCustomTool('Running bison on ' . $f, 'cmd /V:ON /c src\tools\msvc\pgbison.bat ' . $f, $of) . '</File>' . "\n";
 		}
 		elsif ($f =~ /\.l$/) {
 			my $of = $f;
@@ -358,7 +358,7 @@ sub WriteConfiguration
 	ConfigurationType="$cfgtype" UseOfMFC="0" ATLMinimizesCRunTimeLibraryUsage="FALSE" CharacterSet="2" WholeProgramOptimization="$p->{wholeopt}">
 	<Tool Name="VCCLCompilerTool" Optimization="$p->{opt}"
 		AdditionalIncludeDirectories="src/include;src/include/port/win32;src/include/port/win32_msvc;$self->{solution}->{options}->{pthread};$self->{includes}"
-		PreprocessorDefinitions="WIN32;_WINDOWS;__WINDOWS__;__WIN32__;EXEC_BACKEND;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE$self->{defines}$p->{defs}"
+		PreprocessorDefinitions="WIN32;_WINDOWS;__WINDOWS__;__WIN32__;EXEC_BACKEND;WIN32_STACK_RLIMIT=4194304;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE$self->{defines}$p->{defs}"
 		StringPooling="$p->{strpool}"
 		RuntimeLibrary="$p->{runtime}" DisableSpecificWarnings="$self->{disablewarnings}"
 EOF
@@ -406,5 +406,20 @@ sub Footer {
 EOF
 }
 
+
+# Utility function that loads a complete file
+sub read_file {
+	my $filename = shift;
+	my $F;
+	my $t = $/;
+
+	undef $/;
+	open($F, $filename) || croak "Could not open file $filename\n";
+	my $txt = <$F>;
+	close($F);
+	$/ = $t;
+	
+	return $txt;
+}
 
 1;

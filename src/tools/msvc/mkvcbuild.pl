@@ -144,16 +144,73 @@ my $pgrestore = AddSimpleFrontend('pg_dump', 1);
 $pgrestore->{name} = 'pg_restore';
 $pgrestore->AddFile('src\bin\pg_dump\pg_restore.c');
 
-open(MF,'src\backend\utils\mb\conversion_procs\Makefile') || die 'Could not open src\backend\utils\mb\conversion_procs\Makefile';
-my $t = $/;undef $/;
-my $mf = <MF>;
-close(MF);
+my $zic = $solution->AddProject('zic','exe','utils');
+$zic->AddFiles('src\timezone','zic.c','ialloc.c','scheck.c','localtime.c');
+$zic->AddReference($libpgport);
+
+my $contrib_defines = {
+	'refint' => 'REFINT_VERBOSE'
+};
+my @contrib_uselibpq = ('dblink', 'oid2name', 'pgbench', 'vacuumlo');
+my @contrib_uselibpgport = ('oid2name', 'pgbench', 'vacuumlo');
+my $contrib_extralibs = {
+    'pgbench' => ['wsock32.lib']
+};
+my $contrib_extraincludes = {
+	'tsearch2' => ['contrib/tsearch2']
+};
+my $contrib_extrasource = {
+	'cube' => ['cubescan.l','cubeparse.y'],
+	'seg' => ['segscan.l','segparse.y']
+};
+
+my @contrib_excludes = ('pgcrypto');
+
+if ($solution->{options}->{xml}) {
+	$contrib_extraincludes->{'xml2'} = [$solution->{options}->{xml} . '\include' ,
+		$solution->{options}->{xslt} . '\include',
+		$solution->{options}->{iconv} . '\include'];
+
+	$contrib_extralibs->{'xml2'} = [$solution->{options}->{xml} . '\lib\libxml2.lib',
+		$solution->{options}->{xslt} . '\lib\libxslt.lib'];
+}
+else {
+	push @contrib_excludes,'xml2';
+}
+
+# Pgcrypto makefile too complex to parse....
+my $pgcrypto = $solution->AddProject('pgcrypto','dll','crypto');
+$pgcrypto->AddFiles('contrib\pgcrypto','pgcrypto.c','px.c','px-hmac.c','px-crypt.c',
+		'crypt-gensalt.c','crypt-blowfish.c','crypt-des.c','crypt-md5.c','mbuf.c',
+		'pgp.c','pgp-armor.c','pgp-cfb.c','pgp-compress.c','pgp-decrypt.c','pgp-encrypt.c',
+		'pgp-info.c','pgp-mpi.c','pgp-pubdec.c','pgp-pubenc.c','pgp-pubkey.c','pgp-s2k.c',
+		'pgp-pgsql.c');
+if ($solution->{options}->{openssl}) {
+	$pgcrypto->AddFiles('contrib\pgcrypto', 'openssl.c','pgp-mpi-openssl.c');
+}
+else {
+	$pgcrypto->AddFiles('contrib\pgcrypto', 'md5.c','sha1.c','sha2.c','internal.c','internal-sha2.c',
+			'blf.c','rijndael.c','fortuna.c','random.c','pgp-mpi-internal.c','imath.c');
+}
+$pgcrypto->AddReference($postgres);
+$pgcrypto->AddLibrary('wsock32.lib');
+
+my $D;
+opendir($D, 'contrib') || croak "Could not opendir on contrib!\n";
+while (my $d = readdir($D)) {
+	next if ($d =~ /^\./);
+	next unless (-f "contrib/$d/Makefile");
+	next if (grep {/^$d$/} @contrib_excludes);
+	AddContrib($d);
+}
+closedir($D);
+
+
+my $mf = Project::read_file('src\backend\utils\mb\conversion_procs\Makefile');
 $mf =~ s{\\s*[\r\n]+}{}mg;
 $mf =~ m{DIRS\s*=\s*(.*)$}m || die 'Could not match in conversion makefile' . "\n";
 foreach my $sub (split /\s+/,$1) {
-	open(MF,'src\backend\utils\mb\conversion_procs\\' . $sub . '\Makefile') || die 'Could not open Makefile for $sub';
-	$mf = <MF>;
-	close(MF);
+	my $mf = Project::read_file('src\backend\utils\mb\conversion_procs\\' . $sub . '\Makefile');
 	my $p = $solution->AddProject($sub, 'dll', 'conversion procs');
 	$p->AddFile('src\backend\utils\mb\conversion_procs\\' . $sub . '\\' . $sub . '.c');
 	if ($mf =~ m{^SRCS\s*\+=\s*(.*)$}m) {
@@ -162,9 +219,7 @@ foreach my $sub (split /\s+/,$1) {
 	$p->AddReference($postgres);
 }
 
-open(MF,'src\bin\scripts\Makefile') || die 'Could not open src\bin\scripts\Makefile';
-$mf = <MF>;
-close(MF);
+$mf = Project::read_file('src\bin\scripts\Makefile');
 $mf =~ s{\\s*[\r\n]+}{}mg;
 $mf =~ m{PROGRAMS\s*=\s*(.*)$}m || die 'Could not match in bin\scripts\Makefile' . "\n";
 foreach my $prg (split /\s+/,$1) {
@@ -194,23 +249,12 @@ foreach my $prg (split /\s+/,$1) {
 	$proj->AddReference($libpq,$libpgport);
 	$proj->AddResourceFile('src\bin\scripts','PostgreSQL Utility');
 }
-$/ = $t;
 
 
 # Regression DLLs
 my $regress = $solution->AddProject('regress','dll','misc');
 $regress->AddFile('src\test\regress\regress.c');
 $regress->AddReference($postgres);
-
-my $refint = $solution->AddProject('refint','dll','contrib');
-$refint->AddFile('contrib\spi\refint.c');
-$refint->AddReference($postgres);
-$refint->AddDefine('REFINT_VERBOSE');
-
-my $autoinc = $solution->AddProject('autoinc','dll','contrib');
-$autoinc ->AddFile('contrib\spi\autoinc.c');
-$autoinc->AddReference($postgres);
-
 
 $solution->Save();
 
@@ -234,3 +278,86 @@ sub AddSimpleFrontend {
 	return $p;
 }
 
+
+# Add a simple contrib project
+sub AddContrib {
+	my $n = shift;
+	my $mf = Project::read_file('contrib\\' . $n . '\Makefile');
+
+	if ($mf =~ /^MODULE_big/mg) {
+		$mf =~ s{\\\s*[\r\n]+}{}mg;
+		my $proj = $solution->AddProject($n, 'dll', 'contrib');
+		$mf =~ /^OBJS\s*=\s*(.*)$/gm || croak "Could not find objects in MODULE_big for $n\n";
+		foreach my $o (split /\s+/, $1) {
+			$o =~ s/\.o$/.c/;
+			$proj->AddFile('contrib\\' . $n . '\\' . $o);
+		}
+		$proj->AddReference($postgres);
+		if ($mf =~ /^SUBDIRS\s*:?=\s*(.*)$/mg) {
+			foreach my $d (split /\s+/, $1) {
+				my $mf2 = Project::read_file('contrib\\' . $n . '\\' . $d . '\Makefile');
+				$mf2 =~ s{\\\s*[\r\n]+}{}mg;
+				$mf2 =~ /^SUBOBJS\s*=\s*(.*)$/gm || croak "Could not find objects in MODULE_big for $n, subdir $d\n";
+				foreach my $o (split /\s+/, $1) {
+					$o =~ s/\.o$/.c/;
+					$proj->AddFile('contrib\\' . $n . '\\' . $d . '\\' . $o);
+				}
+			}
+		}
+		AdjustContribProj($proj);
+		return $proj;
+	}
+	elsif ($mf =~ /^MODULES\s*=\s*(.*)$/mg) {
+		foreach my $mod (split /\s+/, $1) {
+			my $proj = $solution->AddProject($mod, 'dll', 'contrib');
+			$proj->AddFile('contrib\\' . $n . '\\' . $mod . '.c');
+			$proj->AddReference($postgres);
+			AdjustContribProj($proj);
+		}
+		return undef;
+	}
+	elsif ($mf =~ /^PROGRAM\s*=\s*(.*)$/mg) {
+		my $proj = $solution->AddProject($1, 'exe', 'contrib');
+		$mf =~ /^OBJS\s*=\s*(.*)$/gm || croak "Could not find objects in MODULE_big for $n\n";
+		foreach my $o (split /\s+/, $1) {
+			$o =~ s/\.o$/.c/;
+			$proj->AddFile('contrib\\' . $n . '\\' . $o);
+		}
+		AdjustContribProj($proj);
+		return $proj;
+	}
+	else {
+		croak "Could not determine contrib module type for $n\n";
+	}
+}
+
+sub AdjustContribProj {
+	my $proj = shift;
+	my $n = $proj->{name};
+
+	if ($contrib_defines->{$n}) {
+		foreach my $d ($contrib_defines->{$n}) {
+			$proj->AddDefine($d);
+		}
+	}
+	if (grep {/^$n$/} @contrib_uselibpq) {
+		$proj->AddIncludeDir('src\interfaces\libpq');
+		$proj->AddReference($libpq);
+	}
+	if (grep {/^$n$/} @contrib_uselibpgport) {
+		$proj->AddReference($libpgport);
+	}
+	if ($contrib_extralibs->{$n}) {
+		foreach my $l (@{$contrib_extralibs->{$n}}) {
+			$proj->AddLibrary($l);
+		}
+	}
+	if ($contrib_extraincludes->{$n}) {
+		foreach my $i (@{$contrib_extraincludes->{$n}}) {
+			$proj->AddIncludeDir($i);
+		}
+	}
+	if ($contrib_extrasource->{$n}) {
+		$proj->AddFiles('contrib\\' . $n, @{$contrib_extrasource->{$n}});
+	}
+}
