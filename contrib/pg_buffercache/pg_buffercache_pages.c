@@ -3,12 +3,14 @@
  * pg_buffercache_pages.c
  *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.10 2006/10/19 18:32:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.11 2006/10/22 17:49:21 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "funcapi.h"
+
+#include "access/heapam.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "utils/relcache.h"
@@ -26,7 +28,6 @@ Datum		pg_buffercache_pages(PG_FUNCTION_ARGS);
  */
 typedef struct
 {
-
 	uint32		bufferid;
 	Oid			relfilenode;
 	Oid			reltablespace;
@@ -34,7 +35,6 @@ typedef struct
 	BlockNumber blocknum;
 	bool		isvalid;
 	bool		isdirty;
-
 }	BufferCachePagesRec;
 
 
@@ -43,11 +43,8 @@ typedef struct
  */
 typedef struct
 {
-
-	AttInMetadata *attinmeta;
+	TupleDesc	tupdesc;
 	BufferCachePagesRec *record;
-	char	   *values[NUM_BUFFERCACHE_PAGES_ELEM];
-
 }	BufferCachePagesContext;
 
 
@@ -56,10 +53,10 @@ typedef struct
  * relation node/tablespace/database/blocknum and dirty indicator.
  */
 PG_FUNCTION_INFO_V1(pg_buffercache_pages);
+
 Datum
 pg_buffercache_pages(PG_FUNCTION_ARGS)
 {
-
 	FuncCallContext *funcctx;
 	Datum		result;
 	MemoryContext oldcontext;
@@ -77,7 +74,10 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		/* Switch context when allocating stuff to be used in later calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		/* Construct a tuple to return. */
+		/* Create a user function context for cross-call persistence */
+		fctx = (BufferCachePagesContext *) palloc(sizeof(BufferCachePagesContext));
+
+		/* Construct a tuple descriptor for the result rows. */
 		tupledesc = CreateTemplateTupleDesc(NUM_BUFFERCACHE_PAGES_ELEM, false);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "bufferid",
 						   INT4OID, -1, 0);
@@ -92,27 +92,14 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "isdirty",
 						   BOOLOID, -1, 0);
 
-		/* Generate attribute metadata needed later to produce tuples */
-		funcctx->attinmeta = TupleDescGetAttInMetadata(tupledesc);
-
-		/*
-		 * Create a function context for cross-call persistence and initialize
-		 * the buffer counters.
-		 */
-		fctx = (BufferCachePagesContext *) palloc(sizeof(BufferCachePagesContext));
-		funcctx->max_calls = NBuffers;
-		funcctx->user_fctx = fctx;
+		fctx->tupdesc = BlessTupleDesc(tupledesc);
 
 		/* Allocate NBuffers worth of BufferCachePagesRec records. */
 		fctx->record = (BufferCachePagesRec *) palloc(sizeof(BufferCachePagesRec) * NBuffers);
 
-		/* allocate the strings for tuple formation */
-		fctx->values[0] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[1] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[2] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[3] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[4] = (char *) palloc(3 * sizeof(uint32) + 1);
-		fctx->values[5] = (char *) palloc(2);
+		/* Set max calls and remember the user function context. */
+		funcctx->max_calls = NBuffers;
+		funcctx->user_fctx = fctx;
 
 		/* Return to original context when allocating transient memory */
 		MemoryContextSwitchTo(oldcontext);
@@ -167,19 +154,11 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		uint32		i = funcctx->call_cntr;
-		char	   *values[NUM_BUFFERCACHE_PAGES_ELEM];
-		int			j;
+		Datum		values[NUM_BUFFERCACHE_PAGES_ELEM];
+		bool		nulls[NUM_BUFFERCACHE_PAGES_ELEM];
 
-		/*
-		 * Use a temporary values array, initially pointing to fctx->values,
-		 * so it can be reassigned w/o losing the storage for subsequent
-		 * calls.
-		 */
-		for (j = 0; j < NUM_BUFFERCACHE_PAGES_ELEM; j++)
-		{
-			values[j] = fctx->values[j];
-		}
-
+		values[0] = Int32GetDatum(fctx->record[i].bufferid);
+		nulls[0] = false;
 
 		/*
 		 * Set all fields except the bufferid to null if the buffer is unused
@@ -188,43 +167,32 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		if (fctx->record[i].blocknum == InvalidBlockNumber ||
 			fctx->record[i].isvalid == false)
 		{
-
-			sprintf(values[0], "%u", fctx->record[i].bufferid);
-			values[1] = NULL;
-			values[2] = NULL;
-			values[3] = NULL;
-			values[4] = NULL;
-			values[5] = NULL;
-
+			nulls[1] = true;
+			nulls[2] = true;
+			nulls[3] = true;
+			nulls[4] = true;
+			nulls[5] = true;
 		}
 		else
 		{
-
-			sprintf(values[0], "%u", fctx->record[i].bufferid);
-			sprintf(values[1], "%u", fctx->record[i].relfilenode);
-			sprintf(values[2], "%u", fctx->record[i].reltablespace);
-			sprintf(values[3], "%u", fctx->record[i].reldatabase);
-			sprintf(values[4], "%u", fctx->record[i].blocknum);
-			if (fctx->record[i].isdirty)
-			{
-				strcpy(values[5], "t");
-			}
-			else
-			{
-				strcpy(values[5], "f");
-			}
-
+			values[1] = ObjectIdGetDatum(fctx->record[i].relfilenode);
+			nulls[1] = false;
+			values[2] = ObjectIdGetDatum(fctx->record[i].reltablespace);
+			nulls[2] = false;
+			values[3] = ObjectIdGetDatum(fctx->record[i].reldatabase);
+			nulls[3] = false;
+			values[4] = Int64GetDatum((int64) fctx->record[i].blocknum);
+			nulls[4] = false;
+			values[5] = BoolGetDatum(fctx->record[i].isdirty);
+			nulls[5] = false;
 		}
 
-
 		/* Build and return the tuple. */
-		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
+		tuple = heap_form_tuple(fctx->tupdesc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
-
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 	else
 		SRF_RETURN_DONE(funcctx);
-
 }
