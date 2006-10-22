@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.65 2006/10/16 17:28:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.66 2006/10/22 03:03:40 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -146,8 +146,10 @@ DROP TABLE products;
 </programlisting>
    Attempting to drop a table that does not exist is an error.
    Nevertheless, it is common in SQL script files to unconditionally
-   try to drop each table before creating it, ignoring the error
-   messages.
+   try to drop each table before creating it, ignoring any error
+   messages, so that the script works whether or not the table exists.
+   (If you like, you can use the <literal>DROP TABLE IF EXISTS</> variant
+   to avoid the error messages, but this is not standard SQL.)
   </para>
 
   <para>
@@ -174,7 +176,7 @@ DROP TABLE products;
 
   <para>
    A column can be assigned a default value.  When a new row is
-   created and no values are specified for some of the columns, the
+   created and no values are specified for some of the columns, those
    columns will be filled with their respective default values.  A
    data manipulation command can also request explicitly that a column
    be set to its default value, without having to know what that value is.
@@ -245,7 +247,7 @@ CREATE TABLE products (
    standard data type that accepts only positive numbers.  Another issue is
    that you might want to constrain column data with respect to other
    columns or rows.  For example, in a table containing product
-   information, there should only be one row for each product number.
+   information, there should be only one row for each product number.
   </para>
 
   <para>
@@ -400,11 +402,6 @@ CREATE TABLE products (
     ensure that a column does not contain null values, the not-null
     constraint described in the next section can be used.
    </para>
-
-   <para>
-    Check constraints can be useful for enhancing the performance of
-    partitioned tables.  For details see <xref linkend="ddl-partitioning">.
-   </para>
   </sect2>
 
   <sect2>
@@ -461,7 +458,7 @@ CREATE TABLE products (
     <literal>NULL</literal> constraint.  This does not mean that the
     column must be null, which would surely be useless.  Instead, this
     simply selects the default behavior that the column may be null.
-    The <literal>NULL</literal> constraint is not defined in the SQL
+    The <literal>NULL</literal> constraint is not present in the SQL
     standard and should not be used in portable applications.  (It was
     only added to <productname>PostgreSQL</productname> to be
     compatible with some other database systems.)  Some users, however,
@@ -556,7 +553,7 @@ CREATE TABLE products (
     In general, a unique constraint is violated when there are two or
     more rows in the table where the values of all of the
     columns included in the constraint are equal.
-    However, null values are not considered equal in this
+    However, two null values are not considered equal in this
     comparison.  That means even in the presence of a
     unique constraint it is possible to store duplicate
     rows that contain a null value in at least one of the constrained
@@ -626,8 +623,10 @@ CREATE TABLE example (
    </para>
 
    <para>
-    A table can have at most one primary key (while it can have many
-    unique and not-null constraints).  Relational database theory
+    A table can have at most one primary key.  (There can be any number
+    of unique and not-null constraints, which are functionally the same
+    thing, but only one can be identified as the primary key.)
+    Relational database theory
     dictates that every table must have a primary key.  This rule is
     not enforced by <productname>PostgreSQL</productname>, but it is
     usually best to follow it.
@@ -878,7 +877,7 @@ CREATE TABLE order_items (
       The object identifier (object ID) of a row. This column is only
       present if the table was created using <literal>WITH
       OIDS</literal>, or if the <xref linkend="guc-default-with-oids">
-      configuration variable was set. This column is of type
+      configuration variable was set at the time. This column is of type
       <type>oid</type> (same name as the column); see <xref
       linkend="datatype-oid"> for more information about the type.
      </para>
@@ -1017,7 +1016,7 @@ CREATE TABLE order_items (
      </listitem>
      <listitem>
       <para>
-       The tables in question should be created using <literal>WITH
+       Of course, the tables in question must be created <literal>WITH
        OIDS</literal>.  As of <productname>PostgreSQL</productname> 8.1,
        <literal>WITHOUT OIDS</> is the default.
       </para>
@@ -1096,7 +1095,7 @@ CREATE TABLE order_items (
 
    All these actions are performed using the
    <xref linkend="sql-altertable" endterm="sql-altertable-title">
-   command.
+   command, which see for details beyond those given here.
   </para>
 
   <sect2>
@@ -1129,6 +1128,18 @@ ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '')
     constraints later (see below) after you've filled in the new column
     correctly.
    </para>
+
+  <tip>
+   <para>
+    Adding a column with a default requires updating each row of the
+    table (to store the new column value).  However, if no default is
+    specified, <productname>PostgreSQL</productname> is able to avoid
+    the physical update.  So if you intend to fill the column with
+    mostly nondefault values, it's best to add the column with no default,
+    insert the correct values using <command>UPDATE</>, and then add any
+    desired default as described below.
+   </para>
+  </tip>
   </sect2>
 
   <sect2>
@@ -1376,14 +1387,16 @@ ALTER TABLE products RENAME TO items;
 <programlisting>
 GRANT UPDATE ON accounts TO joe;
 </programlisting>
-   To grant a privilege to a group, use this syntax:
-<programlisting>
-GRANT SELECT ON accounts TO GROUP staff;
-</programlisting>
-   The special <quote>user</quote> name <literal>PUBLIC</literal> can
-   be used to grant a privilege to every user on the system. Writing
-   <literal>ALL</literal> in place of a specific privilege grants all
+   Writing <literal>ALL</literal> in place of a specific privilege grants all
    privileges that are relevant for the object type.
+  </para>
+
+  <para>
+   The special <quote>user</quote> name <literal>PUBLIC</literal> can
+   be used to grant a privilege to every user on the system.  Also,
+   <quote>group</> roles can be set up to help manage privileges when
+   there are many users of a database &mdash; for details see
+   <xref linkend="user-manag">.
   </para>
 
   <para>
@@ -1890,7 +1903,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> implements table inheritance
+   <productname>PostgreSQL</productname> implements table inheritance,
    which can be a useful tool for database designers.  (SQL:1999 and
    later define a type inheritance feature, which differs in many
    respects from the features described here.)
@@ -2064,11 +2077,7 @@ VALUES ('New York', NULL, NULL, 'NY');
    Table inheritance is typically established when the child table is
    created, using the <literal>INHERITS</> clause of the
    <xref linkend="sql-createtable" endterm="sql-createtable-title">
-   statement. However the related statement <command>CREATE TABLE AS</command>
-   does not allow inheritance to be specified. 
-  </para>
-
-  <para>
+   statement.
    Alternatively, a table which is already defined in a compatible way can
    have a new parent relationship added, using the <literal>INHERIT</literal>
    variant of <xref linkend="sql-altertable" endterm="sql-altertable-title">.
@@ -2294,8 +2303,6 @@ VALUES ('New York', NULL, NULL, 'NY');
       </listitem>
      </varlistentry>
     </variablelist>
-
-    Hash partitioning is not currently supported.
    </para>
    </sect2>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.36 2006/09/18 19:54:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.37 2006/10/22 03:03:41 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -131,9 +131,9 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    </indexterm>
 
    <para>
-    When a table reference names a table that is the supertable of a
+    When a table reference names a table that is the parent of a
     table inheritance hierarchy, the table reference produces rows of
-    not only that table but all of its subtable successors, unless the
+    not only that table but all of its descendant tables, unless the
     key word <literal>ONLY</> precedes the table name.  However, the
     reference produces only the columns that appear in the named table
     &mdash; any columns added in subtables are ignored.

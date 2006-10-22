@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.110 2006/10/21 17:12:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.111 2006/10/22 03:03:41 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -182,8 +182,8 @@ UPDATE "my_table" SET "a" = 5;
    </para>
 
    <para>
-    Quoted identifiers can contain any character other than a double
-    quote itself.  (To include a double quote, write two double quotes.)
+    Quoted identifiers can contain any character, except the character
+    with code zero.  (To include a double quote, write two double quotes.)
     This allows constructing table or column names that would
     otherwise not be possible, such as ones containing spaces or
     ampersands.  The length limitation still applies.
@@ -251,7 +251,7 @@ UPDATE "my_table" SET "a" = 5;
     <para>
      Two string constants that are only separated by whitespace
      <emphasis>with at least one newline</emphasis> are concatenated
-     and effectively treated as if the string had been written in one
+     and effectively treated as if the string had been written as one
      constant.  For example:
 <programlisting>
 SELECT 'foo'
