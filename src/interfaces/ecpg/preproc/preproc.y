@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.338 2006/09/08 13:32:26 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.339 2006/10/23 08:00:48 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1323,7 +1323,7 @@ alter_table_cmd:
 /* ALTER TABLE <name> ALTER INHERITS ADD <parent> */
 		| INHERIT qualified_name
 			{ $$ = cat2_str(make_str("inherit"), $2); }
-/* ALTER TABLE <name> ALTER INHERITS DROP <parent> */
+/* ALTER TABLE <name> NO INHERITS <parent> */
 		| NO INHERIT qualified_name
 			{ $$ = cat2_str(make_str("no inherit"), $3); }
 		| alter_rel_cmd
@@ -3940,6 +3940,8 @@ a_expr:  c_expr
 			{ $$ = cat2_str($1, make_str("notnull")); }
 		| a_expr IS NOT NULL_P
 			{ $$ = cat2_str($1, make_str("is not null")); }
+		| row OVERLAPS row
+			{ $$ = cat_str(3, $1, make_str("overlaps"), $3); }
 		/* IS TRUE, IS FALSE, etc used to be function calls
 		 *	but let's make them expressions to allow the optimizer
 		 *	a chance to eliminate them if a_expr is a constant string.
