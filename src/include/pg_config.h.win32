@@ -568,23 +568,23 @@
 #define PACKAGE_NAME "PostgreSQL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PostgreSQL 8.2beta1"
+#define PACKAGE_STRING "PostgreSQL 8.2beta2"
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "8.2beta2"
+
+/* PostgreSQL version as a string */
+#define PG_VERSION "8.2beta2"
+
+/* PostgreSQL version as a number */
+#define PG_VERSION_NUM 80200
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "postgresql"
 
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "8.2beta1"
-
 /* Define to the name of the default PostgreSQL service principal in Kerberos.
    (--with-krb-srvnam=NAME) */
 #define PG_KRB_SRVNAM "postgres"
-
-/* PostgreSQL version as a string */
-#define PG_VERSION "8.2beta1"
-
-/* PostgreSQL version as a number */
-#define PG_VERSION_NUM 80200
 
 /* A string containing the version number, platform, and C compiler */
 #define PG_VERSION_STR "Uninitialized version string (win32)"
