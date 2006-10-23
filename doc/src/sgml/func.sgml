@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.344 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.345 2006/10/23 19:57:37 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8102,17 +8102,7 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>sqrt((<replaceable class="parameter">N</replaceable> *
-      sum(<replaceable class="parameter">X</replaceable>*<replaceable
-      class="parameter">Y</replaceable>) - sum(<replaceable
-      class="parameter">X</replaceable>) * sum(<replaceable
-      class="parameter">Y</replaceable>))^2 / ((<replaceable
-      class="parameter">N</replaceable> * sum(<replaceable
-      class="parameter">X</replaceable>^2) - sum(<replaceable
-      class="parameter">X</replaceable>)^2) * (<replaceable
-      class="parameter">N</replaceable> * sum(<replaceable
-      class="parameter">Y</replaceable>^2) - sum(<replaceable
-      class="parameter">Y</replaceable>)^2)))</entry>
+      <entry>correlation coefficient</entry>
      </row>
 
      <row>
@@ -8129,12 +8119,7 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>(sum(<replaceable class="parameter">X</replaceable>*<replaceable
-      class="parameter">Y</replaceable>) - sum(<replaceable
-      class="parameter">X</replaceable>) * sum(<replaceable
-      class="parameter">Y</replaceable>) / <replaceable
-      class="parameter">N</replaceable>) / <replaceable
-      class="parameter">N</replaceable></entry>
+      <entry>population covariance</entry>
      </row>
 
      <row>
@@ -8151,12 +8136,7 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>(sum(<replaceable class="parameter">X</replaceable>*<replaceable
-      class="parameter">Y</replaceable>) - sum(<replaceable
-      class="parameter">X</replaceable>) * sum(<replaceable
-      class="parameter">Y</replaceable>) / <replaceable
-      class="parameter">N</replaceable>) / (<replaceable
-      class="parameter">N</replaceable> - 1)</entry>
+      <entry>sample covariance</entry>
      </row>
 
      <row>
@@ -8169,8 +8149,8 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>sum(<replaceable class="parameter">X</replaceable>) /
-      <replaceable class="parameter">N</replaceable></entry>
+      <entry>average of the independent variable
+      (<literal>sum(<replaceable class="parameter">X</replaceable>)/<replaceable class="parameter">N</replaceable></literal>)</entry>
      </row>
 
      <row>
@@ -8183,8 +8163,8 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>sum(<replaceable class="parameter">Y</replaceable>) /
-      <replaceable class="parameter">N</replaceable></entry>
+      <entry>average of the dependent variable
+      (<literal>sum(<replaceable class="parameter">Y</replaceable>)/<replaceable class="parameter">N</replaceable></literal>)</entry>
      </row>
 
      <row>
@@ -8197,7 +8177,7 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>bigint</type>
       </entry>
-      <entry>number of input rows in which both expressions are non-null</entry>
+      <entry>number of input rows in which both expressions are nonnull</entry>
      </row>
 
      <row>
@@ -8213,14 +8193,10 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>(sum(<replaceable class="parameter">Y</replaceable>) *
-      sum(<replaceable class="parameter">X</replaceable>^2) - sum(<replaceable
-      class="parameter">X</replaceable>) * sum(<replaceable
-      class="parameter">X</replaceable>*<replaceable
-      class="parameter">Y</replaceable>)) / (<replaceable
-      class="parameter">N</replaceable> * sum(<replaceable
-      class="parameter">X</replaceable>^2) - sum(<replaceable
-      class="parameter">X</replaceable>)^2)</entry>
+      <entry>y-intercept of the least-squares-fit linear equation
+      determined by the (<replaceable
+      class="parameter">X</replaceable>, <replaceable
+      class="parameter">Y</replaceable>) pairs</entry>
      </row>
 
      <row>
@@ -8233,17 +8209,7 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>(<replaceable class="parameter">N</replaceable> *
-      sum(<replaceable class="parameter">X</replaceable>*<replaceable
-      class="parameter">Y</replaceable>) - sum(<replaceable
-      class="parameter">X</replaceable>) * sum(<replaceable
-      class="parameter">Y</replaceable>))^2 / ((<replaceable
-      class="parameter">N</replaceable> * sum(<replaceable
-      class="parameter">X</replaceable>^2) - sum(<replaceable
-      class="parameter">X</replaceable>)^2) * (<replaceable
-      class="parameter">N</replaceable> * sum(<replaceable
-      class="parameter">Y</replaceable>^2) - sum(<replaceable
-      class="parameter">Y</replaceable>)^2))</entry>
+      <entry>square of the correlation coefficient</entry>
      </row>
 
      <row>
@@ -8259,14 +8225,9 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>(<replaceable class="parameter">N</replaceable> *
-      sum(<replaceable class="parameter">X</replaceable>*<replaceable
-      class="parameter">Y</replaceable>) - sum(<replaceable
-      class="parameter">X</replaceable>) * sum(<replaceable
-      class="parameter">Y</replaceable>)) / (<replaceable
-      class="parameter">N</replaceable> * sum(<replaceable
-      class="parameter">X</replaceable>^2) - sum(<replaceable
-      class="parameter">X</replaceable>)^2)</entry>
+      <entry>slope of the least-squares-fit linear equation determined
+      by the (<replaceable class="parameter">X</replaceable>,
+      <replaceable class="parameter">Y</replaceable>) pairs</entry>
      </row>
 
      <row>
@@ -8279,9 +8240,11 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>sum(<replaceable class="parameter">X</replaceable>^2) -
-      sum(<replaceable class="parameter">X</replaceable>)^2 / <replaceable
-      class="parameter">N</replaceable></entry>
+      <entry><literal>sum(<replaceable
+      class="parameter">X</replaceable>^2) - sum(<replaceable
+      class="parameter">X</replaceable>)^2/<replaceable
+      class="parameter">N</replaceable></literal> (<quote>sum of
+      squares</quote> of the independent variable)</entry>
      </row>
 
      <row>
@@ -8294,11 +8257,14 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>sum(<replaceable class="parameter">X</replaceable>*<replaceable
+      <entry><literal>sum(<replaceable
+      class="parameter">X</replaceable>*<replaceable
       class="parameter">Y</replaceable>) - sum(<replaceable
       class="parameter">X</replaceable>) * sum(<replaceable
-      class="parameter">Y</replaceable>) / <replaceable
-      class="parameter">N</replaceable></entry>
+      class="parameter">Y</replaceable>)/<replaceable
+      class="parameter">N</replaceable></literal> (<quote>sum of
+      products</quote> of independent times dependent
+      variable)</entry>
      </row>
 
      <row>
@@ -8311,9 +8277,11 @@ SELECT count(*) FROM sometable;
       <entry>
        <type>double precision</type>
       </entry>
-      <entry>sum(<replaceable class="parameter">Y</replaceable>^2) -
-      sum(<replaceable class="parameter">Y</replaceable>)^2 / <replaceable
-      class="parameter">N</replaceable></entry>
+      <entry><literal>sum(<replaceable
+      class="parameter">Y</replaceable>^2) - sum(<replaceable
+      class="parameter">Y</replaceable>)^2/<replaceable
+      class="parameter">N</replaceable></literal> (<quote>sum of
+      squares</quote> of the dependent variable)</entry>
      </row>
 
      <row>
