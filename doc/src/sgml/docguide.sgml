@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.57 2006/09/16 00:30:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.58 2006/10/23 14:13:43 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -502,12 +502,15 @@ checking for sgmlspl... sgmlspl
    If neither <filename>onsgmls</filename> nor
    <filename>nsgmls</filename> were found then you will not see the
    remaining 4 lines.  <filename>nsgmls</filename> is part of the Jade
-   package.  If <quote>DocBook V4.2</quote> was not found then you did
-   not install the DocBook DTD kit in a place where jade can find it,
-   or you have not set up the catalog files correctly.  See the
-   installation hints above.  The DocBook stylesheets are looked for
-   in a number of relatively standard places, but if you have them
-   some other place then you should set the environment variable
+   package.  You can pass the environment variables
+   <envar>JADE</envar> and <envar>NSGMLS</envar> to configure to point
+   to the programs if they are not found automatically.  If
+   <quote>DocBook V4.2</quote> was not found then you did not install
+   the DocBook DTD kit in a place where Jade can find it, or you have
+   not set up the catalog files correctly.  See the installation hints
+   above.  The DocBook stylesheets are looked for in a number of
+   relatively standard places, but if you have them some other place
+   then you should set the environment variable
    <envar>DOCBOOKSTYLE</envar> to the location and rerun
    <filename>configure</filename> afterwards.
   </para>
