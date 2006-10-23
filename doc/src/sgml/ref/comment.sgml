@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.32 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.33 2006/10/23 18:10:32 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -206,7 +206,7 @@ COMMENT ON
    connected to a database can see all the comments for objects in
    that database (although only superusers can change comments for
    objects that they don't own).  For shared objects such as
-   databases, roles, and tablespaces comments are stored gloablly
+   databases, roles, and tablespaces comments are stored globally
    and any user connected to any database can see all the comments
    for shared objects.  Therefore, don't put security-critical
    information in comments.

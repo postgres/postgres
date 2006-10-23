@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.93 2006/09/16 00:30:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.94 2006/10/23 18:10:30 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -947,9 +947,9 @@ ldap://ldap.example.net/dc=example,dc=net;EXAMPLE\
    </para>
    <para>
     The server will bind to the distinguished name specified as
-    <replaceable>base dn</> using the username supplied by the client.
+    <replaceable>base dn</> using the user name supplied by the client.
     If <replaceable>prefix</> and <replaceable>suffix</> is 
-    specified, it will be prepended and appended to the username
+    specified, it will be prepended and appended to the user name
     before the bind. Typically, the prefix parameter is used to specify
     <replaceable>cn=</>, or <replaceable>DOMAIN\</> in an Active
     Directory environment.

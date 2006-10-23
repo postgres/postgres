@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.24 2006/09/16 00:30:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.25 2006/10/23 18:10:32 petere Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -177,7 +177,7 @@
      <term><option>--cc</option></>
      <listitem>
       <para>
-       Print the value of the CC macro that was used for building
+       Print the value of the <varname>CC</varname> variable that was used for building
        <productname>PostgreSQL</>.  This shows the C compiler used.
       </para>
      </listitem>
@@ -187,7 +187,7 @@
      <term><option>--cppflags</option></>
      <listitem>
       <para>
-       Print the value of the CPPFLAGS macro that was used for building
+       Print the value of the <varname>CPPFLAGS</varname> variable that was used for building
        <productname>PostgreSQL</>.  This shows C compiler switches needed
        at preprocessing time (typically, <literal>-I</> switches).
       </para>
@@ -198,7 +198,7 @@
      <term><option>--cflags</option></>
      <listitem>
       <para>
-       Print the value of the CFLAGS macro that was used for building
+       Print the value of the <varname>CFLAGS</varname> variable that was used for building
        <productname>PostgreSQL</>.  This shows C compiler switches.
       </para>
      </listitem>
@@ -208,7 +208,7 @@
      <term><option>--cflags_sl</option></>
      <listitem>
       <para>
-       Print the value of the CFLAGS_SL macro that was used for building
+       Print the value of the <varname>CFLAGS_SL</varname> variable that was used for building
        <productname>PostgreSQL</>.  This shows extra C compiler switches
        used for building shared libraries.
       </para>
@@ -219,7 +219,7 @@
      <term><option>--ldflags</option></>
      <listitem>
       <para>
-       Print the value of the LDFLAGS macro that was used for building
+       Print the value of the <varname>LDFLAGS</varname> variable that was used for building
        <productname>PostgreSQL</>.  This shows linker switches.
       </para>
      </listitem>
@@ -229,7 +229,7 @@
      <term><option>--ldflags_sl</option></>
      <listitem>
       <para>
-       Print the value of the LDFLAGS_SL macro that was used for building
+       Print the value of the <varname>LDFLAGS_SL</varname> variable that was used for building
        <productname>PostgreSQL</>.  This shows linker switches
        used for building shared libraries.
       </para>
@@ -240,7 +240,7 @@
      <term><option>--libs</option></>
      <listitem>
       <para>
-       Print the value of the LIBS macro that was used for building
+       Print the value of the <varname>LIBS</varname> variable that was used for building
        <productname>PostgreSQL</>.  This normally contains <literal>-l</>
        switches for external libraries linked into <productname>PostgreSQL</>.
       </para>

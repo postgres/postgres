@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.41 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.42 2006/10/23 18:10:31 petere Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -95,7 +95,7 @@ Oid lo_creat(PGconn *conn, int mode);
      <indexterm><primary>lo_creat</></>
      creates a new large object.  
      The return value is the OID that was assigned to the new large object,
-     or InvalidOid (zero) on failure.
+     or <symbol>InvalidOid</symbol> (zero) on failure.
 
      <replaceable class="parameter">mode</replaceable> is unused and
      ignored as of <productname>PostgreSQL</productname> 8.1; however, for
@@ -123,16 +123,16 @@ Oid lo_create(PGconn *conn, Oid lobjId);
      specified by <replaceable class="parameter">lobjId</replaceable>;
      if so, failure occurs if that OID is already in use for some large
      object.  If <replaceable class="parameter">lobjId</replaceable>
-     is InvalidOid (zero) then <function>lo_create</> assigns an unused
+     is <symbol>InvalidOid</symbol> (zero) then <function>lo_create</> assigns an unused
      OID (this is the same behavior as <function>lo_creat</>).
      The return value is the OID that was assigned to the new large object,
-     or InvalidOid (zero) on failure.
+     or <symbol>InvalidOid</symbol> (zero) on failure.
     </para>
 
     <para>
      <function>lo_create</> is new as of <productname>PostgreSQL</productname>
      8.1; if this function is run against an older server version, it will
-     fail and return InvalidOid.
+     fail and return <symbol>InvalidOid</symbol>.
     </para>
 
     <para>
@@ -156,9 +156,9 @@ Oid lo_import(PGconn *conn, const char *filename);
      specifies the operating system name of
      the file to be imported as a large object.
      The return value is the OID that was assigned to the new large object,
-     or InvalidOid (zero) on failure.
+     or <symbol>InvalidOid</symbol> (zero) on failure.
      Note that the file is read by the client interface library, not by
-     the server; so it must exist in the client filesystem and be readable
+     the server; so it must exist in the client file system and be readable
      by the client application.
     </para>
    </sect2>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.37 2006/10/22 03:03:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.38 2006/10/23 18:10:31 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -1367,7 +1367,7 @@ VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ..
    Each parenthesized list of expressions generates a row in the table.
    The lists must all have the same number of elements (i.e., the number
    of columns in the table), and corresponding entries in each list must
-   have compatible datatypes.  The actual datatype assigned to each column
+   have compatible data types.  The actual data type assigned to each column
    of the result is determined using the same rules as for <literal>UNION</>
    (see <xref linkend="typeconv-union-case">).
   </para>

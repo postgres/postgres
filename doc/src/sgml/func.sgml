@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.343 2006/10/01 18:54:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.344 2006/10/23 18:10:31 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7686,7 +7686,7 @@ SELECT NULLIF(value, '(none)') ...
 
   <para>
    Array comparisons compare the array contents element-by-element,
-   using the default btree comparison function for the element data type.
+   using the default B-Tree comparison function for the element data type.
    In multidimensional arrays the elements are visited in row-major order
    (last subscript varies most rapidly).
    If the contents of two arrays are equal but the dimensionality is
@@ -9003,8 +9003,8 @@ AND
    <literal>&gt;</> or
    <literal>&gt;=</>,
    or has semantics similar to one of these.  (To be specific, an operator
-   can be a row comparison operator if it is a member of a btree operator
-   class, or is the negator of the <literal>=</> member of a btree operator
+   can be a row comparison operator if it is a member of a B-Tree operator
+   class, or is the negator of the <literal>=</> member of a B-Tree operator
    class.)
   </para>
 
@@ -10251,35 +10251,35 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_switch_xlog</function>()</literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Force switch to a new xlog file</entry>
+       <entry>Force switch to a new transaction log file</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_current_xlog_location</function>()</literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Get current xlog write location</entry>
+       <entry>Get current transaction log write location</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_current_xlog_insert_location</function>()</literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Get current xlog insert location</entry>
+       <entry>Get current transaction log insert location</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_xlogfile_name_offset</function>(<parameter>location</> <type>text</>)</literal>
         </entry>
        <entry><type>text</>, <type>integer</></entry>
-       <entry>Convert xlog location string to filename and decimal byte offset within file</entry>
+       <entry>Convert transaction log location string to file name and decimal byte offset within file</entry>
       </row>
       <row>
        <entry>
         <literal><function>pg_xlogfile_name</function>(<parameter>location</> <type>text</>)</literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Convert xlog location string to filename</entry>
+       <entry>Convert transaction log location string to file name</entry>
       </row>
      </tbody>
     </tgroup>
@@ -10290,7 +10290,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     arbitrary user-defined label for the backup.  (Typically this would be
     the name under which the backup dump file will be stored.)  The function
     writes a backup label file into the database cluster's data directory,
-    and then returns the backup's starting xlog location as text.  The user
+    and then returns the backup's starting transaction log location as text.  The user
     need not pay any attention to this result value, but it is provided in
     case it is of use. 
 <programlisting>
@@ -10305,33 +10305,33 @@ postgres=# select pg_start_backup('label_goes_here');
    <para>
     <function>pg_stop_backup</> removes the label file created by
     <function>pg_start_backup</>, and instead creates a backup history file in
-    the xlog archive area.  The history file includes the label given to
-    <function>pg_start_backup</>, the starting and ending xlog locations for
+    the transaction log archive area.  The history file includes the label given to
+    <function>pg_start_backup</>, the starting and ending transaction log locations for
     the backup, and the starting and ending times of the backup.  The return
-    value is the backup's ending xlog location (which again may be of little
-    interest).  After noting the ending location, the current xlog insertion
-    point is automatically advanced to the next xlog file, so that the
-    ending xlog file can be archived immediately to complete the backup.
+    value is the backup's ending transaction log location (which again may be of little
+    interest).  After noting the ending location, the current transaction log insertion
+    point is automatically advanced to the next transaction log file, so that the
+    ending transaction log file can be archived immediately to complete the backup.
    </para>
 
    <para>
-    <function>pg_switch_xlog</> moves to the next xlog file, allowing the 
+    <function>pg_switch_xlog</> moves to the next transaction log file, allowing the 
     current file to be archived (assuming you are using continuous archiving).
-    The result is the ending xlog location within the just-completed xlog file.
-    If there has been no xlog activity since the last xlog switch,
+    The result is the ending transaction log location within the just-completed transaction log file.
+    If there has been no transaction log activity since the last transaction log switch,
     <function>pg_switch_xlog</> does nothing and returns the end location
-    of the previous xlog file.
+    of the previous transaction log file.
    </para>
 
    <para>
-    <function>pg_current_xlog_location</> displays the current xlog write
+    <function>pg_current_xlog_location</> displays the current transaction log write
     location in the same format used by the above functions.  Similarly
-    <function>pg_current_xlog_insert_location</> displays the current xlog
-    insertion point.  The insertion point is the <quote>logical</> end of xlog
+    <function>pg_current_xlog_insert_location</> displays the current transaction log
+    insertion point.  The insertion point is the <quote>logical</> end of transaction log
     at any instant, while the write location is the end of what has actually
     been written out from the server's internal buffers.  The write location
     is the end of what can be examined from outside the server, and is usually
-    what you want if you are interested in archiving partially-complete xlog
+    what you want if you are interested in archiving partially-complete transaction log
     files.  The insertion point is made available primarily for server
     debugging purposes.  These are both read-only operations and do not
     require superuser permissions.
@@ -10339,7 +10339,7 @@ postgres=# select pg_start_backup('label_goes_here');
 
    <para>
     You can use <function>pg_xlogfile_name_offset</> to extract the
-    corresponding xlog filename and byte offset from the results of any of the
+    corresponding transaction log file name and byte offset from the results of any of the
     above functions.  For example:
 <programlisting>
 postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
@@ -10348,10 +10348,10 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
  00000001000000000000000D |     4039624
 (1 row)
 </programlisting>
-    Similarly, <function>pg_xlogfile_name</> extracts just the xlog filename.
-    When the given xlog location is exactly at an xlog file boundary, both
-    these functions return the name of the preceding xlog file.
-    This is usually the desired behavior for managing xlog archiving
+    Similarly, <function>pg_xlogfile_name</> extracts just the transaction log file name.
+    When the given transction log location is exactly at an transaction log file boundary, both
+    these functions return the name of the preceding transaction log file.
+    This is usually the desired behavior for managing transaction log archiving
     behavior, since the preceding file is the last one that currently
     needs to be archived.
    </para>
@@ -10574,7 +10574,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
     <function>pg_stat_file</> returns a record containing the file
     size, last accessed time stamp, last modified time stamp,
     last file status change time stamp (Unix platforms only),
-    file creation timestamp (Windows only), and a <type>boolean</type>
+    file creation time stamp (Windows only), and a <type>boolean</type>
     indicating if it is a directory.  Typical usages include:
 <programlisting>
 SELECT * FROM pg_stat_file('filename');

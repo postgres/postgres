@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.58 2006/10/23 14:13:43 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.59 2006/10/23 18:10:30 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -290,7 +290,7 @@ make install
         <envar>SGML_CATALOG_FILES</envar> to point to the file
         whenever you use <application>jade</application> later on.
         (This method is also an option if OpenJade is already
-        installed and you want to install the rest of the toolchain
+        installed and you want to install the rest of the tool chain
         locally.)
        </para>
       </step>

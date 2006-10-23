@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.37 2006/03/10 19:10:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.38 2006/10/23 18:10:30 petere Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -91,7 +91,7 @@ cvs -z3 -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot co -P pgsql
       <para>
        If you have a fast link to the Internet, you may not need
        <option>-z3</option>, which instructs
-       <productname>CVS</productname> to use gzip compression for transferred data.  But
+       <productname>CVS</productname> to use <command>gzip</command> compression for transferred data.  But
        on a modem-speed link, it's a very substantial win.
       </para>
      </note>
@@ -131,8 +131,8 @@ cvs -z3
 update -d -P
 </programlisting>
 
-     This supplies the <option>-z3</option> option to all cvs commands, and the
-     <option>-d</option> and <option>-P</option> options to cvs update.  Then you just have
+     This supplies the <option>-z3</option> option to all <command>cvs</> commands, and the
+     <option>-d</option> and <option>-P</option> options to <command>cvs update</>.  Then you just have
      to say
 <programlisting>
 cvs update
@@ -206,7 +206,7 @@ cvs checkout -r REL6_4 tc
 
   <para>
    When you tag more than one file with the same tag you can think
-   about the tag as <quote>a curve drawn through a matrix of filename vs.
+   about the tag as <quote>a curve drawn through a matrix of file name vs.
    revision number</quote>.  Say we have 5 files with the following revisions:
 
    <programlisting>
@@ -304,7 +304,7 @@ cvs commit
    A major advantage to using
    <productname>CVSup</productname> is that it can reliably
    replicate the <emphasis>entire</emphasis> CVS repository on your local system,
-   allowing fast local access to cvs operations such as <option>log</option>
+   allowing fast local access to <command>cvs</> operations such as <option>log</option>
    and <option>diff</option>. Other advantages include fast synchronization to
    the <productname>PostgreSQL</productname> server due to an efficient
    streaming transfer protocol which only sends the changes since the last update.
@@ -445,7 +445,7 @@ CVSROOT/loginfo*
    </para>
 
    <para>
-    The following is a suggested <productname>CVSup</productname> config file from
+    The following is a suggested <productname>CVSup</productname> configuration file from
     the <productname>PostgreSQL</>
     <ulink url="ftp://ftp.postgresql.org/pub/CVSup/README.cvsup">
     ftp site</ulink>
@@ -570,7 +570,7 @@ mv cvsup.1 ../doc/man/man1/
       <step>
        <para>
 	If there is a directory structure in the tar file, then unpack
-	the tar file within /usr/local/src and move the binaries into
+	the tar file within <filename>/usr/local/src</filename> and move the binaries into
 	the appropriate location as above.
        </para>
       </step>
@@ -645,7 +645,7 @@ $ which cvsup
 
       <step>
        <para>
-	Install the Modula-3 rpms:
+	Install the Modula-3 RPMs:
 
 <programlisting>
 # rpm -Uvh pm3*.rpm

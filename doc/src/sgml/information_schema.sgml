@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.28 2006/10/03 01:03:53 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.29 2006/10/23 18:10:31 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2313,7 +2313,7 @@ ORDER BY c.ordinal_position;
       <entry>
        <literal>IN</literal> for input parameter,
        <literal>OUT</literal> for output parameter,
-       and <literal>INOUT</literal> for input/ouput parameter.
+       and <literal>INOUT</literal> for input/output parameter.
       </entry>
      </row>
 

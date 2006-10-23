@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.90 2006/10/12 19:38:08 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.91 2006/10/23 18:10:30 petere Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -977,7 +977,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     If recovery fails for an external reason, such as a system crash or
     the WAL archive has become inaccessible, then the recovery can be
     simply restarted and it will restart almost from where it failed.
-    Restartable recovery works by writing a restartpoint record to the control
+    Restartable recovery works by writing a restart-point record to the control
     file at the first safely usable checkpoint record found after 
     <varname>checkpoint_timeout</> seconds. 
    </para>
@@ -1188,7 +1188,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
 
    <para>
     If we take a backup of the server files whilst a recovery is in progress,
-    we will be able to restart the recovery from the last restartpoint. 
+    we will be able to restart the recovery from the last restart point. 
     That backup now has many of the changes from previous WAL archive files,
     so this version is now an updated version of the original base backup.
     If we need to recover, it will be faster to recover from the 
@@ -1595,7 +1595,7 @@ if (!triggered)
 
    <para>
     An external program can call <function>pg_xlogfile_name_offset()</>
-    to find out the filename and the exact byte offset within it of
+    to find out the file name and the exact byte offset within it of
     the latest WAL pointer.  If the external program regularly polls
     the server it can find out how far forward the pointer has
     moved. It can then access the WAL file directly and copy those

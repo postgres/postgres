@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.66 2006/10/22 03:03:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.67 2006/10/23 18:10:30 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2586,7 +2586,7 @@ UNION ALL SELECT * FROM measurement_y2006m01;
 
     However, the need to
     recreate the view adds an extra step to adding and dropping
-    individual partitions of the dataset.
+    individual partitions of the data set.
    </para>
    </sect2>
 
@@ -2778,7 +2778,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
       Constraint exclusion only works when the query's <literal>WHERE</>
       clause contains constants.  A parameterized query will not be
       optimized, since the planner cannot know what partitions the
-      parameter value might select at runtime.  For the same reason,
+      parameter value might select at run time.  For the same reason,
       <quote>stable</> functions such as <function>CURRENT_DATE</function>
       must be avoided.
      </para>
@@ -2786,7 +2786,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
 
     <listitem>
      <para>
-      Avoid cross-datatype comparisons in the <literal>CHECK</>
+      Avoid cross-data type comparisons in the <literal>CHECK</>
       constraints, as the planner will currently fail to prove such
       conditions false.  For example, the following constraint
       will work if <varname>x</varname> is an <type>integer</type>
@@ -2802,7 +2802,7 @@ CHECK ( x = 1::bigint )
       The problem is not limited to the <type>bigint</type> data type
       &mdash; it can occur whenever the default data type of the
       constant does not match the data type of the column to which it
-      is being compared.  Cross-datatype comparisons in the supplied
+      is being compared.  Cross-data type comparisons in the supplied
       queries are usually OK, just not in the <literal>CHECK</> conditions.
      </para>
     </listitem>

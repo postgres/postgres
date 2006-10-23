@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.64 2006/09/18 12:11:36 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.65 2006/10/23 18:10:31 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -254,7 +254,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    indexing strategy.  
    As an example, the standard distribution of
    <productname>PostgreSQL</productname> includes GIN operator classes
-   for one-dimentional arrays, which support indexed
+   for one-dimensional arrays, which support indexed
    queries using these operators:
 
    <simplelist>
@@ -267,7 +267,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    (See <xref linkend="functions-array"> for the meaning of
    these operators.)
    Other GIN operator classes are available in the <literal>contrib</>
-   tsearch2 and intarray modules. For more information see <xref linkend="GIN">.
+   <literal>tsearch2</literal> and <literal>intarray</literal> modules. For more information see <xref linkend="GIN">.
   </para>
  </sect1>
 

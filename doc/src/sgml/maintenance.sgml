@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.62 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.63 2006/10/23 18:10:31 petere Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -90,9 +90,10 @@
 
   <para>
    The standard form of <command>VACUUM</> can run in parallel with production
-   database operations. Commands such as SELECTs, INSERTs, UPDATEs and DELETEs
+   database operations. Commands such as <command>SELECT</command>,
+   <command>INSERT</command>, <command>UPDATE</command>, and <command>DELETE</command>
    will continue to function as normal, though you will not be able to modify the
-   definition of a table with commands such as ALTER TABLE ADD COLUMN
+   definition of a table with commands such as <command>ALTER TABLE ADD COLUMN</command>
    while it is being vacuumed.
    Beginning in <productname>PostgreSQL</productname> 8.0, there are
    configuration parameters that can be adjusted to further reduce the

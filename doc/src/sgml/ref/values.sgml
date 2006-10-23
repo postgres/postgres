@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.1 2006/09/18 19:54:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.2 2006/10/23 18:10:32 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -202,9 +202,9 @@ UPDATE employees SET salary = salary * v.increase
 
   <para>
    When <command>VALUES</> is used in <command>INSERT</>, the values are all
-   automatically coerced to the datatype of the corresponding destination
+   automatically coerced to the data type of the corresponding destination
    column.  When it's used in other contexts, it may be necessary to specify
-   the correct datatype.  If the entries are all quoted literal constants,
+   the correct data type.  If the entries are all quoted literal constants,
    coercing the first is sufficient to determine the assumed type for all:
 
 <programlisting>

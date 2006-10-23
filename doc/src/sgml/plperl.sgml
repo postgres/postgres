@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.57 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.58 2006/10/23 18:10:31 petere Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -21,7 +21,7 @@
    within stored functions, of the manyfold <quote>string
     munging</quote> operators and functions available for Perl.  Parsing
    complex strings may be be easier using Perl than it is with the
-   string functions and control structures provided in PL/pgsql.</para>
+   string functions and control structures provided in PL/pgSQL.</para>
   
   <para>
    To install PL/Perl in a particular database, use
@@ -188,7 +188,7 @@ SELECT * FROM perl_row();
 </programlisting>
 
    Any columns in the declared result data type that are not present in the
-   hash will be returned as NULLs.
+   hash will be returned as null values.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.28 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.29 2006/10/23 18:10:32 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -94,7 +94,7 @@ DROP TYPE box;
 
   <para>
    This command is similar to the corresponding command in the SQL
-   standard, aapart from the <literal>IF EXISTS</>
+   standard, apart from the <literal>IF EXISTS</>
    option, which is a <productname>PostgreSQL</> extension.
    But note that the <command>CREATE TYPE</command> command
    and the data type extension mechanisms in

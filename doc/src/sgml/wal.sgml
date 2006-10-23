@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.40 2006/09/16 00:30:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.41 2006/10/23 18:10:32 petere Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -85,8 +85,8 @@
    permanent storage <emphasis>before</> modifying the actual page on
    disk. By doing this, during crash recovery <productname>PostgreSQL</> can
    restore partially-written pages.  If you have a battery-backed disk
-   controller or file-system software (e.g., Reiser4) that prevents partial
-   page writes,  you can turn off this page imaging by using the 
+   controller or file-system software that prevents partial page writes
+   (e.g., ReiserFS 4),  you can turn off this page imaging by using the 
    <xref linkend="guc-full-page-writes"> parameter.
   </para>
  </sect1>

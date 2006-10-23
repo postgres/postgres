@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.48 2006/09/10 20:56:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.49 2006/10/23 18:10:32 petere Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -369,7 +369,7 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
    then you may use the
    global pointer <literal>SPITupleTable *SPI_tuptable</literal> to
    access the result rows.  Some utility commands (such as
-   <command>EXPLAIN</>) also return rowsets, and <literal>SPI_tuptable</> 
+   <command>EXPLAIN</>) also return row sets, and <literal>SPI_tuptable</> 
    will contain the result in these cases too.
   </para>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.100 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.101 2006/10/23 18:10:31 petere Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -176,7 +176,7 @@ $$ LANGUAGE plpgsql;
      client and server </para></listitem>
 
      <listitem><para> Intermediate results that the client does not
-     need do not need to be marshalled or transferred between server
+     need do not need to be marshaled or transferred between server
      and client </para></listitem>
 
      <listitem><para> There is no need for additional rounds of query
@@ -1066,7 +1066,7 @@ tax := subtotal * 0.06;
      Any <application>PL/pgSQL</application> variable name appearing
      in the query text is replaced by a parameter symbol, and then the
      current value of the variable is provided as the parameter value
-     at runtime.  This allows the same textual query to do different
+     at run time.  This allows the same textual query to do different
      things in different calls of the function.
     </para>
 
@@ -1182,7 +1182,7 @@ DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRIC
      substituted into the rest of the query as usual.
      This works for <command>SELECT</>,
      <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> with
-     <literal>RETURNING</>, and utility commands that return rowset
+     <literal>RETURNING</>, and utility commands that return row-set
      results (such as <command>EXPLAIN</>).
      Except for the <literal>INTO</> clause, the SQL command is the same
      as it would be written outside <application>PL/pgSQL</application>.
@@ -2738,7 +2738,7 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
 
     <para>
      <command>RAISE EXCEPTION</command> presently always generates
-     the same SQLSTATE code, <literal>P0001</>, no matter what message
+     the same <varname>SQLSTATE</varname> code, <literal>P0001</>, no matter what message
      it is invoked with.  It is possible to trap this exception with
      <literal>EXCEPTION ... WHEN RAISE_EXCEPTION THEN ...</> but there
      is no way to tell one <command>RAISE</> from another.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.90 2006/10/09 23:36:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.91 2006/10/23 18:10:32 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -748,7 +748,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   Because <application>pg_dump</application> is used to tranfer data
+   Because <application>pg_dump</application> is used to transfer data
    to newer versions of <productname>PostgreSQL</>, the output of
    <application>pg_dump</application> can be loaded into
    newer <productname>PostgreSQL</> databases.  It also can read older

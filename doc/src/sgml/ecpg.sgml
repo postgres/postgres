@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.76 2006/09/22 15:22:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.77 2006/10/23 18:10:31 petere Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -472,7 +472,7 @@ EXEC SQL int i = 4;
    <para>
     As a host variable you can also use arrays, typedefs, structs and
     pointers. Moreover there are special types of host variables that exist
-    only in ecpg.
+    only in ECPG.
    </para>
 
    <para>
@@ -539,9 +539,9 @@ EXEC SQL END DECLARE SECTION;
       <term>Special types of variables</term>
       <listitem>
        <para>
-        ecpg contains some special types that help you to interact easily with
+        ECPG contains some special types that help you to interact easily with
         data from the SQL server. For example it has implemented support for
-        the varchar, numeric, date, timestamp and interval types.
+        the <type>varchar</>, <type>numeric</>, <type>date</>, <type>timestamp</>, and <type>interval</> types.
         <xref linkend="ecpg-pgtypes"> contains basic functions to deal with
         those types, such that you do not need to send a query to the SQL
         server just for adding an interval to a timestamp for example.
@@ -835,7 +835,7 @@ numeric *PGTYPESnumeric_from_asc(char *str, char **endptr);
      <term><function>PGTYPESnumeric_to_asc</function></term>
      <listitem>
       <para>
-       Returns a pointer to a malloced string that contains the string
+       Returns a pointer to a string allocated by <function>malloc</function> that contains the string
        representation of the numeric type <literal>num</literal>.
 <synopsis>
 char *PGTYPESnumeric_to_asc(numeric *num, int dscale);
@@ -1012,7 +1012,7 @@ int PGTYPESnumeric_to_double(numeric *nv, double *dp)
 </synopsis>
        The function converts the numeric value from the variable that
        <literal>nv</> points to into the double variable that <literal>dp</> points
-       to. It retuns 0 on success and -1 if an error occurs, including
+       to. It returns 0 on success and -1 if an error occurs, including
        overflow. On overflow, the global variable <literal>errno</> will be set
        to <literal>PGTYPES_NUM_OVERFLOW</> additionally.
       </para>
@@ -1029,7 +1029,7 @@ int PGTYPESnumeric_to_int(numeric *nv, int *ip);
 </synopsis>
        The function converts the numeric value from the variable that
        <literal>nv</> points to into the integer variable that <literal>ip</>
-       points to. It retuns 0 on success and -1 if an error occurs, including
+       points to. It returns 0 on success and -1 if an error occurs, including
        overflow. On overflow, the global variable <literal>errno</> will be set
        to <literal>PGTYPES_NUM_OVERFLOW</> additionally.
       </para>
@@ -1046,7 +1046,7 @@ int PGTYPESnumeric_to_long(numeric *nv, long *lp);
 </synopsis>
        The function converts the numeric value from the variable that
        <literal>nv</> points to into the long integer variable that
-       <literal>lp</> points to. It retuns 0 on success and -1 if an error
+       <literal>lp</> points to. It returns 0 on success and -1 if an error
        occurs, including overflow. On overflow, the global variable
        <literal>errno</> will be set to <literal>PGTYPES_NUM_OVERFLOW</>
        additionally.
@@ -1064,7 +1064,7 @@ int PGTYPESnumeric_to_decimal(numeric *src, decimal *dst);
 </synopsis>
        The function converts the numeric value from the variable that
        <literal>src</> points to into the decimal variable that
-       <literal>dst</> points to. It retuns 0 on success and -1 if an error
+       <literal>dst</> points to. It returns 0 on success and -1 if an error
        occurs, including overflow. On overflow, the global variable
        <literal>errno</> will be set to <literal>PGTYPES_NUM_OVERFLOW</>
        additionally.
@@ -1082,7 +1082,7 @@ int PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);
 </synopsis>
        The function converts the decimal value from the variable that
        <literal>src</> points to into the numeric variable that
-       <literal>dst</> points to. It retuns 0 on success and -1 if an error
+       <literal>dst</> points to. It returns 0 on success and -1 if an error
        occurs. Since the decimal type is implemented as a limited version of
        the numeric type, overflow can not occur with this conversion.
       </para>
@@ -1607,7 +1607,7 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
 	specification. Note that timezones are not supported by ecpg. It can
 	parse them but does not apply any calculation as the
 	<productname>PostgreSQL</> server does for example. Timezone
-	specificiers are silently discarded.
+	specifiers are silently discarded.
        </para>
        <para>
         The following table contains a few examples for input strings:
@@ -2194,7 +2194,7 @@ int PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);
      type which can be created on the heap only, the decimal type can be
      created either on the stack or on the heap (by means of the functions
      PGTYPESdecimal_new() and PGTYPESdecimal_free(). There are a lot of other
-     functions that deal with the decimal type in the Informix compatibility
+     functions that deal with the decimal type in the <productname>Informix</productname> compatibility
      mode described in <xref linkend="ecpg-informix-compat">.
    </para>
    <para>
@@ -2375,11 +2375,11 @@ void PGTYPESdecimal_free(decimal *var);
  </sect1>
 
  <sect1 id="ecpg-informix-compat">
-  <title>Informix compatibility mode</title>
+  <title><productname>Informix</productname> compatibility mode</title>
   <para>
    ecpg can be run in a so-called <firstterm>Informix compatibility mode</>. If
-   this mode is active, it tries to behave as if it were the Informix
-   precompiler for Informix E/SQL. Generally spoken this will allow you to use
+   this mode is active, it tries to behave as if it were the <productname>Informix</productname>
+   precompiler for <productname>Informix</productname> E/SQL. Generally spoken this will allow you to use
    the dollar sign instead of the <literal>EXEC SQL</> primitive to introduce
    embedded SQL commands.
 <programlisting>
@@ -2398,19 +2398,19 @@ void PGTYPESdecimal_free(decimal *var);
    against <literal>libcompat</> that is shipped with ecpg.
   </para>
   <para>
-   Besides the previously explained syntactic sugar, the Informix compatibility
+   Besides the previously explained syntactic sugar, the <productname>Informix</productname> compatibility
    mode ports some functions for input, output and transformation of data as
    well as embedded SQL statements known from E/SQL to ecpg.
   </para>
   <para>
-   Informix compatibility mode is closely connected to the pgtypeslib library
+   <productname>Informix</productname> compatibility mode is closely connected to the pgtypeslib library
    of ecpg. pgtypeslib maps SQL data types to data types within the C host
-   program and most of the additional functions of the Informix compatibility
+   program and most of the additional functions of the <productname>Informix</productname> compatibility
    mode allow you to operate on those C host program types. Note however that
-   the extent of the compatibility is limited. It does not try to copy Informix
+   the extent of the compatibility is limited. It does not try to copy <productname>Informix</productname>
    behaviour; it allows you to do more or less the same operations and gives
    you functions that have the same name and the same basic behavior but it is
-   no drop-in replacement if you are using Informix at the moment. Moreover,
+   no drop-in replacement if you are using <productname>Informix</productname> at the moment. Moreover,
    some of the data types are different. For example,
    <productname>PostgreSQL's</productname> datetime and interval types do not
    know about ranges like for example <literal>YEAR TO MINUTE</> so you won't
@@ -2540,7 +2540,7 @@ int deccvasc(char *cp, int len, decimal *np);
 	<literal>ECPG_INFORMIX_NUM_UNDERFLOW</> is returned. If the ASCII
 	representation could not be parsed,
 	<literal>ECPG_INFORMIX_BAD_NUMERIC</> is returned or
-	<literal>ECPG_INFORMIX_BAD_EXPONENT</> if this problem ocurred while
+	<literal>ECPG_INFORMIX_BAD_EXPONENT</> if this problem occurred while
 	parsing the exponent.
        </para>
       </listitem>
@@ -2741,8 +2741,8 @@ int dectoint(decimal *np, int *ip);
 	is returned.
        </para>
        <para>
-	Note that the ecpg implementation differs from the Informix
-	implementation. Informix limits an integer to the range from -32767 to
+	Note that the ecpg implementation differs from the <productname>Informix</productname>
+	implementation. <productname>Informix</productname> limits an integer to the range from -32767 to
 	32767, while the limits in the ecpg implementation depend on the
 	architecture (<literal>-INT_MAX .. INT_MAX</>).
        </para>
@@ -2767,8 +2767,8 @@ int dectolong(decimal *np, long *lngp);
 	is returned.
        </para>
        <para>
-	Note that the ecpg implementation differs from the Informix
-	implementation. Informix limits a long integer to the range from
+	Note that the ecpg implementation differs from the <productname>Informix</productname>
+	implementation. <productname>Informix</productname> limits a long integer to the range from
 	-2,147,483,647 to 2,147,483,647, while the limits in the ecpg
 	implementation depend on the architecture (<literal>-LONG_MAX ..
 	LONG_MAX</>).
@@ -2795,8 +2795,8 @@ int rdatestr(date d, char *str);
 	error.
        </para>
        <para>
-	Note that ecpg's implementation differs from the Informix
-	implementation. In Informix the format can be influenced by setting
+	Note that ecpg's implementation differs from the <productname>Informix</productname>
+	implementation. In <productname>Informix</productname> the format can be influenced by setting
 	environment variables. In ecpg however, you cannot change the output
 	format.
        </para>
@@ -2814,7 +2814,7 @@ int rstrdate(char *str, date *d);
 	The function receives the textual representation of the date to convert
 	(<literal>str</>) and a pointer to a variable of type date
 	(<literal>d</>). This function does not allow you to specify a format
-	mask. It uses the default format mask of Informix which is
+	mask. It uses the default format mask of <productname>Informix</productname> which is
 	<literal>mm/dd/yyyy</>. Internally, this function is implemented by
 	means of <function>rdefmtdate</>. Therefore, <function>rstrdate</> is
 	not faster and if you have the choice you should opt for
@@ -3167,9 +3167,9 @@ int dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr);
 	error occurred.
        </para>
        <para>
-	Internally this function uses the <xref
+	Internally, this function uses the <xref
 	linkend="PGTYPEStimestampfmtasc"> function. See the reference there for
-	informations on what format mask specifiers can be used.
+	information on what format mask specifiers can be used.
        </para>
       </listitem>
      </varlistentry>
@@ -3396,52 +3396,52 @@ int rsetnull(int t, char *ptr);
         <itemizedlist>
          <listitem>
           <para>
-	   <literal>CCHARTYPE</literal> - For a variable of type char or char*
+	   <literal>CCHARTYPE</literal> - For a variable of type <type>char</type> or <type>char*</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CSHORTTYPE</literal> - For a variable of type short int
+	   <literal>CSHORTTYPE</literal> - For a variable of type <type>short int</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CINTTYPE</literal> - For a variable of type int
+	   <literal>CINTTYPE</literal> - For a variable of type <type>int</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CBOOLTYPE</literal> - For a variable of type boolean
+	   <literal>CBOOLTYPE</literal> - For a variable of type <type>boolean</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CFLOATTYPE</literal> - For a variable of type float
+	   <literal>CFLOATTYPE</literal> - For a variable of type <type>float</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CLONGTYPE</literal> - For a variable of type long
+	   <literal>CLONGTYPE</literal> - For a variable of type <type>long</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CDOUBLETYPE</literal> - For a variable of type double
+	   <literal>CDOUBLETYPE</literal> - For a variable of type <type>double</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CDECIMALTYPE</literal> - For a variable of type decimal
+	   <literal>CDECIMALTYPE</literal> - For a variable of type <type>decimal</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CDATETYPE</literal> - For a variable of type date
+	   <literal>CDATETYPE</literal> - For a variable of type <type>date</type>
           </para>
          </listitem>
          <listitem>
           <para>
-	   <literal>CDTIMETYPE</literal> - For a variable of type timestamp
+	   <literal>CDTIMETYPE</literal> - For a variable of type <type>timestamp</type>
           </para>
          </listitem>
         </itemizedlist>
@@ -3508,7 +3508,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if an overflow occurred in a
-	calculation. Internally it is defined to -1200 (the Informix
+	calculation. Internally it is defined to -1200 (the <productname>Informix</productname>
 	definition).
        </para>
       </listitem>
@@ -3519,7 +3519,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if an underflow occurred in a calculation.
-	Internally it is defined to -1201 (the Informix definition).
+	Internally it is defined to -1201 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3529,7 +3529,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if an attempt to divide by zero is
-	observed. Internally it is defined to -1202 (the Informix definition).
+	observed. Internally it is defined to -1202 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3539,7 +3539,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if a bad value for a year was found while
-	parsing a date. Internally it is defined to -1204 (the Informix
+	parsing a date. Internally it is defined to -1204 (the <productname>Informix</productname>
 	definition).
        </para>
       </listitem>
@@ -3550,7 +3550,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if a bad value for a month was found while
-	parsing a date. Internally it is defined to -1205 (the Informix
+	parsing a date. Internally it is defined to -1205 (the <productname>Informix</productname>
 	definition).
        </para>
       </listitem>
@@ -3561,7 +3561,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if a bad value for a day was found while
-	parsing a date. Internally it is defined to -1206 (the Informix
+	parsing a date. Internally it is defined to -1206 (the <productname>Informix</productname>
 	definition).
        </para>
       </listitem>
@@ -3573,7 +3573,7 @@ risnull(CINTTYPE, (char *) &amp;i);
        <para>
 	Functions return this value if a parsing routine needs a short date
 	representation but did not get the date string in the right length.
-	Internally it is defined to -1209 (the Informix definition).
+	Internally it is defined to -1209 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3583,7 +3583,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if Internally it is defined to -1210 (the
-	Informix definition).
+	<productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3593,7 +3593,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if Internally it is defined to -1211 (the
-	Informix definition).
+	<productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3604,7 +3604,7 @@ risnull(CINTTYPE, (char *) &amp;i);
        <para>
 	Functions return this value if a parsing routine was supposed to get a
 	format mask (like <literal>mmddyy</>) but not all fields were listed
-	correctly. Internally it is defined to -1212 (the Informix definition).
+	correctly. Internally it is defined to -1212 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3617,7 +3617,7 @@ risnull(CINTTYPE, (char *) &amp;i);
 	the textual representation for a numeric value because it contains
 	errors or if a routine cannot complete a calculation involving numeric
 	variables because at least one of the numeric variables is invalid.
-	Internally it is defined to -1213 (the Informix definition).
+	Internally it is defined to -1213 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3627,7 +3627,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if Internally it is defined to -1216 (the
-	Informix definition).
+	<productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3637,7 +3637,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if Internally it is defined to -1218 (the
-	Informix definition).
+	<productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
@@ -3647,7 +3647,7 @@ risnull(CINTTYPE, (char *) &amp;i);
       <listitem>
        <para>
 	Functions return this value if Internally it is defined to -1264 (the
-	Informix definition).
+	<productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>

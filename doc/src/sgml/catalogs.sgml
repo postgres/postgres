@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.134 2006/09/22 23:20:13 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.135 2006/10/23 18:10:30 petere Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -405,7 +405,7 @@
       <entry><structfield>amclusterable</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Can an index of this type be CLUSTERed on?</entry>
+      <entry>Can an index of this type be clustered on?</entry>
      </row>
 
      <row>
@@ -496,7 +496,7 @@
       <entry><structfield>amoptions</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>Function to parse and validate reloptions for an index</entry>
+      <entry>Function to parse and validate <structfield>reloptions</> for an index</entry>
      </row>
 
     </tbody>
@@ -1209,7 +1209,7 @@
       <entry><structfield>vac_scale_factor</structfield></entry>
       <entry><type>float4</type></entry>
       <entry></entry>
-      <entry>Multiplier for reltuples to add to
+      <entry>Multiplier for <structfield>reltuples</> to add to
        <structfield>vac_base_thresh</></entry>
      </row>
 
@@ -1224,7 +1224,7 @@
       <entry><structfield>anl_scale_factor</structfield></entry>
       <entry><type>float4</type></entry>
       <entry></entry>
-      <entry>Multiplier for reltuples to add to
+      <entry>Multiplier for <structfield>reltuples</> to add to
        <structfield>anl_base_thresh</></entry>
      </row>
 
@@ -2043,7 +2043,7 @@
        operation.  All rows inserted or deleted by transaction IDs before this one
        have been marked as known good or deleted.  This
        is used to determine when commit-log space can be recycled.
-       If InvalidTransactionId, then the minimum is unknown and can be
+       If <symbol>InvalidTransactionId</symbol>, then the minimum is unknown and can be
        determined by scanning <structname>pg_class</>.<structfield>relvacuumxid</>.
       </entry>
      </row>
@@ -2058,7 +2058,7 @@
        relabeled with a permanent (<quote>frozen</>) transaction ID in this
        database.  This is useful to check whether a database must be
        vacuumed soon to avoid transaction ID wrap-around problems.
-       If InvalidTransactionId, then the minimum is unknown and can be
+       If <symbol>InvalidTransactionId</symbol>, then the minimum is unknown and can be
        determined by scanning <structname>pg_class</>.<structfield>relminxid</>.
       </entry>
      </row>
@@ -3353,7 +3353,7 @@
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
        An array with the data types of the function arguments.  This includes
-       only input arguments (including INOUT arguments), and thus represents
+       only input arguments (including <literal>INOUT</literal> arguments), and thus represents
        the call signature of the function.
       </entry>
      </row>
@@ -3364,7 +3364,7 @@
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
        An array with the data types of the function arguments.  This includes
-       all arguments (including OUT and INOUT arguments); however, if all the
+       all arguments (including <literal>OUT</literal> and <literal>INOUT</literal> arguments); however, if all the
        arguments are IN arguments, this field will be null.
        Note that subscripting is 1-based, whereas for historical reasons
        <structfield>proargtypes</> is subscripted from 0.
@@ -3377,10 +3377,10 @@
       <entry></entry>
       <entry>
         An array with the modes of the function arguments, encoded as
-        <literal>i</literal> for IN arguments,
-        <literal>o</literal> for OUT arguments,
-        <literal>b</literal> for INOUT arguments.
-        If all the arguments are IN arguments, this field will be null.
+        <literal>i</literal> for <literal>IN</> arguments,
+        <literal>o</literal> for <literal>OUT</> arguments,
+        <literal>b</literal> for <literal>INOUT</> arguments.
+        If all the arguments are <literal>IN</literal> arguments, this field will be null.
         Note that subscripts correspond to positions of
         <structfield>proallargtypes</> not <structfield>proargtypes</>.
       </entry>
@@ -5031,7 +5031,7 @@
 
   <para>
    Advisory locks can be acquired on keys consisting of either a single
-   bigint value or two integer values.  A bigint key is displayed with its
+   <type>bigint</type> value or two integer values.  A <type>bigint</type> key is displayed with its
    high-order half in the <structfield>classid</> column, its low-order half
    in the <structfield>objid</> column, and <structfield>objsubid</> equal
    to 1.  Integer keys are displayed with the first key in the

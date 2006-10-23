@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.479 2006/10/21 18:41:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.480 2006/10/23 18:10:31 petere Exp $ -->
 <!--
 
 Typical markup:
@@ -55,7 +55,7 @@ links to the main documentation.
       <listitem>
        <para>
         Query language enhancements including <command>INSERT/UPDATE/DELETE
-        RETURNING</command>, multi-row <literal>VALUES</literal> lists, and
+        RETURNING</command>, multirow <literal>VALUES</literal> lists, and
         optional target-table alias in
         <command>UPDATE</>/<command>DELETE</command>
        </para>
@@ -147,7 +147,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Many /contrib improvements
+        Many <filename>contrib/</filename> improvements
        </para>
       </listitem>
 
@@ -192,7 +192,7 @@ links to the main documentation.
         constructor syntax</link> (<literal>ROW(...)</>) so that
         list elements <literal>foo.*</> will be expanded to a list
         of their member fields, rather than creating a nested
-        rowtype field as formerly (Tom)
+        row type field as formerly (Tom)
        </para>
 
        <para>
@@ -298,13 +298,13 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Deprecate use of <application>postmaster</> symlink (Peter)
+        Deprecate use of <application>postmaster</> symbolic link (Peter)
        </para>
 
        <para>
         <application>postmaster</> and <application>postgres</>
         commands now act identically, with the behavior determined
-        by switches.  The <application>postmaster</> symlink is
+        by command-line options.  The <application>postmaster</> symbolic link is
         kept for compatibility, but is not really needed.
        </para>
       </listitem>
@@ -365,7 +365,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Improve cost estimation for nestloop index scans (Tom)
+        Improve cost estimation for nested-loop index scans (Tom)
        </para>
 
        <para>
@@ -400,7 +400,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        In /contrib/xml2, rename <function>xml_valid()</> to
+        In <filename>contrib/xml2/<filename>, rename <function>xml_valid()</> to
         <function>xml_is_well_formed()</> (Tom)
        </para>
 
@@ -413,15 +413,16 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Remove /contrib/ora2pg, now at <ulink
+        Remove <filename>contrib/ora2pg/<filename>, now at <ulink
         url="http://www.samse.fr/GPL/ora2pg"></ulink>
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Remove contrib modules that have been migrated to pgfoundry:
-        adddepend, dbase, dbmirror, fulltextindex, mac, userlock
+        Remove contrib modules that have been migrated to PgFoundry:
+        <filename>adddepend</>, <filename>dbase</>, <filename>dbmirror</>,
+        <filename>fulltextindex</>, <filename>mac</>, <filename>userlock</>
        </para>
       </listitem>
 
@@ -506,7 +507,7 @@ links to the main documentation.
        <para>
         This leaves extra free space in each table or index page,
         allowing improved performance as the database grows.  This
-        is particularly valuable to maintain <command>CLUSTER</>ing.
+        is particularly valuable to maintain clustering.
        </para>
       </listitem>
 
@@ -600,7 +601,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Speed up vacuuming of btree indexes (Heikki Linnakangas,
+        Speed up vacuuming of B-Tree indexes (Heikki Linnakangas,
         Tom)
        </para>
       </listitem>
@@ -621,7 +622,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Remove dead index entries before btree page split (Junji
+        Remove dead index entries before B-Tree page split (Junji
         Teramoto)
        </para>
       </listitem>
@@ -636,16 +637,16 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Allow a forced switch to a new xlog file (Simon, Tom)
+        Allow a forced switch to a new transaction log file (Simon, Tom)
        </para>
 
        <para>
         This is valuable for keeping warm standby slave servers
-        in sync with the master.  xlog file switching now also happens
+        in sync with the master.  Transaction log file switching now also happens
         automatically during <link
         linkend="functions-admin"><function>pg_stop_backup()</></link>.
         This ensures that all
-        xlog files needed for recovery can be archived immediately.
+        transaction log files needed for recovery can be archived immediately.
        </para>
       </listitem>
 
@@ -655,7 +656,7 @@ links to the main documentation.
        </para>
 
        <para>
-        Add functions for interrogating the current xlog insertion
+        Add functions for interrogating the current transaction log insertion
         point and determining <acronym>WAL</> filenames from the
         hex <acronym>WAL</> locations displayed by <link
         linkend="functions-admin"><function>pg_stop_backup()</></link>
@@ -681,7 +682,7 @@ links to the main documentation.
        <para>
         Add <link
         linkend="guc-archive-timeout"><varname>archive_timeout</></link>
-        to force xlog file switches at a given interval (Simon)
+        to force transaction log file switches at a given interval (Simon)
        </para>
 
        <para>
@@ -2653,7 +2654,7 @@ MIN/MAX optimization (Tom)</para></listitem>
 <listitem><para>Fix crash from using and modifying a plpgsql function in the
 same transaction</para></listitem>
 
-<listitem><para>Fix WAL replay for case where a btree index has been
+<listitem><para>Fix WAL replay for case where a B-Tree index has been
 truncated</para></listitem>
 
 <listitem><para>Fix <literal>SIMILAR TO</> for patterns involving
@@ -3776,7 +3777,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
        </para>
        <para>
         This prevents a large number of <filename>*.backup</> files from
-        existing in <filename>/pg_xlog</>.
+        existing in <filename>pg_xlog/</>.
        </para>
       </listitem>
 

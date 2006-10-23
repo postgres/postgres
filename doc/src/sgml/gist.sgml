@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.26 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.27 2006/10/23 18:10:31 petere Exp $ -->
 
 <chapter id="GiST">
 <title>GiST Indexes</title>
@@ -199,7 +199,7 @@
   <varlistentry>
    <term>cube</term>
    <listitem>
-    <para>Indexing for multi-dimensional cubes</para>
+    <para>Indexing for multidimensional cubes</para>
    </listitem>
   </varlistentry>
 

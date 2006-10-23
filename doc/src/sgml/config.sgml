@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.91 2006/10/19 22:55:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.92 2006/10/23 18:10:30 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -75,7 +75,7 @@ shared_buffers = 128MB
 <programlisting>
 include 'filename'
 </programlisting>
-    If the filename is not an absolute path, it is taken as relative to
+    If the file name is not an absolute path, it is taken as relative to
     the directory containing the referencing configuration file.
     Inclusions can be nested.
    </para>
@@ -206,7 +206,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
          Specifies the main server configuration file
          (customarily called <filename>postgresql.conf</>).
-         This parameter can only be set on the postgres command line.
+         This parameter can only be set on the <command>postgres</command> command line.
        </para>
       </listitem>
      </varlistentry>
@@ -265,7 +265,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       If you wish to keep the configuration files elsewhere than the
-      data directory, the postgres <option>-D</option>
+      data directory, the <command>postgres</command> <option>-D</option>
       command-line option or <envar>PGDATA</envar> environment variable
       must point to the directory containing the configuration files,
       and the <varname>data_directory</> parameter must be set in
@@ -1422,8 +1422,8 @@ SET ENABLE_SEQSCAN TO OFF;
         or power failure. The risks are similar to turning off
         <varname>fsync</>, though smaller.  It may be safe to turn off
         this parameter if you have hardware (such as a battery-backed disk
-        controller) or filesystem software (e.g., Reiser4) that reduces
-        the risk of partial page writes to an acceptably low level.
+        controller) or file-system software that reduces
+        the risk of partial page writes to an acceptably low level (e.g., ReiserFS 4).
        </para>
 
        <para>
@@ -3901,10 +3901,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         This controls whether the array input parser recognizes
-        unquoted <literal>NULL</> as specifying a NULL array element.
+        unquoted <literal>NULL</> as specifying a null array element.
         By default, this is <literal>on</>, allowing array values containing
-        NULLs to be entered.  However, <productname>PostgreSQL</> versions
-        before 8.2 did not support NULLs in arrays, and therefore would
+        null values to be entered.  However, <productname>PostgreSQL</> versions
+        before 8.2 did not support null values in arrays, and therefore would
         treat <literal>NULL</> as specifying a normal array element with
         the string value <quote>NULL</>.  For backwards compatibility with
         applications that require the old behavior, this variable can be
@@ -3912,7 +3912,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        Note that it is possible to create array values containing NULLs
+        Note that it is possible to create array values containing null values
         even when this variable is <literal>off</>.
        </para>
       </listitem>

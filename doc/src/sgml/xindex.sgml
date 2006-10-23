@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.51 2006/09/21 15:09:38 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.52 2006/10/23 18:10:32 petere Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -387,7 +387,7 @@
      </thead>
      <tbody>
       <row>
-       <entry>consistent - determine whether key satifies the 
+       <entry>consistent - determine whether key satisfies the 
 		query qualifier</entry>
        <entry>1</entry>
       </row>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.91 2006/10/13 21:43:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.92 2006/10/23 18:10:32 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -740,7 +740,7 @@ ALTER TABLE foo
 
   <para>
    The same, when the column has a default expression that won't automatically
-   cast to the new datatype:
+   cast to the new data type:
 <programlisting>
 ALTER TABLE foo
     ALTER COLUMN foo_timestamp DROP DEFAULT,

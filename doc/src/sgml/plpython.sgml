@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.35 2006/10/21 18:33:05 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.36 2006/10/23 18:10:31 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -65,7 +65,7 @@ $$ LANGUAGE plpythonu;
    <varname>args[]</varname>; named arguments are also passed as ordinary
    variables to the Python script. The result is returned from the Python code
    in the usual way, with <literal>return</literal> or
-   <literal>yield</literal> (in case of a resultset statement).
+   <literal>yield</literal> (in case of a result-set statement).
   </para>
 
   <para>

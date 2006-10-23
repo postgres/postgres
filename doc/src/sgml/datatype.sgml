@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.179 2006/10/18 16:43:13 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.180 2006/10/23 18:10:30 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3362,7 +3362,7 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <para>
-    <acronym>XML</> (eXtensible Markup Language) support is not one
+    <acronym>XML</> (Extensible Markup Language) support is not one
     capability, but a variety of features supported by a database
     system. These capabilities include storage, import/export,
     validation, indexing, efficiency of modification, searching,
@@ -3429,7 +3429,7 @@ SELECT * FROM pg_attribute
       indexes to index specific <acronym>XML</> fields. To index the
       full contents of <acronym>XML</> documents, the full-text indexing
       tool <filename>/contrib/tsearch2</> can be used. Of course,
-      tsearch2 indexes have no <acronym>XML</> awareness so additional
+      Tsearch2 indexes have no <acronym>XML</> awareness so additional
       <filename>/contrib/xml2</> checks should be added to queries.
      </para>
     </listitem>
@@ -3466,7 +3466,7 @@ SELECT * FROM pg_attribute
     <listitem>
 
      <para>
-      <filename>/contrib/xml2</> supports <acronym>XSLT</> (XML
+      <filename>/contrib/xml2</> supports <acronym>XSLT</> (Extensible
       Stylesheet Language Transformation).
      </para>
     </listitem>
