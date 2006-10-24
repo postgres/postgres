@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Oct 21 13:31:12 EDT 2006
+Last updated:		Mon Oct 23 22:41:16 EDT 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -960,6 +960,7 @@ Cache Usage
   get a count directly from a unique index, but for this to be
   faster than a sequential scan it must avoid access to the heap
   to obtain tuple visibility information.
+  http://archives.postgresql.org/pgsql-hackers/2005-11/msg00943.php
 
 * Add estimated_count(*) to return an estimate of COUNT(*)
 
