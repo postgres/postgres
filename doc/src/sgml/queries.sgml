@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.38 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.39 2006/10/24 02:24:27 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -514,8 +514,8 @@ SELECT * FROM my_table AS m WHERE my_table.a &gt; 5;
      is not valid according to the SQL standard.  In
      <productname>PostgreSQL</productname> this will draw an error if the
      <xref linkend="guc-add-missing-from"> configuration variable is
-     <literal>off</>.  If it is <literal>on</>, an implicit table reference
-     will be added to the
+     <literal>off</> (as it is by default).  If it is <literal>on</>,
+     an implicit table reference will be added to the
      <literal>FROM</literal> clause, so the query is processed as if
      it were written as
 <programlisting>
@@ -1224,38 +1224,17 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
 <synopsis>
 SELECT <replaceable>select_list</replaceable>
     FROM <replaceable>table_expression</replaceable>
-    ORDER BY <replaceable>column1</replaceable> <optional>ASC | DESC</optional> <optional>, <replaceable>column2</replaceable> <optional>ASC | DESC</optional> ...</optional>
+    ORDER BY <replaceable>sort_expression1</replaceable> <optional>ASC | DESC</optional> <optional>, <replaceable>sort_expression2</replaceable> <optional>ASC | DESC</optional> ...</optional>
 </synopsis>
-   <replaceable>column1</replaceable>, etc., refer to select list
-   columns.  These can be either the output name of a column (see
-   <xref linkend="queries-column-labels">) or the number of a column.  Some
-   examples:
+   The sort expression(s) can be any expression that would be valid in the
+   query's select list.  An example is
 <programlisting>
-SELECT a, b FROM table1 ORDER BY a;
-SELECT a + b AS sum, c FROM table1 ORDER BY sum;
-SELECT a, sum(b) FROM table1 GROUP BY a ORDER BY 1;
+SELECT a, b FROM table1 ORDER BY a + b, c;
 </programlisting>
-  </para>
-
-  <para>
-   As an extension to the SQL standard, <productname>PostgreSQL</productname> also allows ordering
-   by arbitrary expressions:
-<programlisting>
-SELECT a, b FROM table1 ORDER BY a + b;
-</programlisting>
-   References to column names of the <literal>FROM</> clause that are
-   not present in the select list are also allowed:
-<programlisting>
-SELECT a FROM table1 ORDER BY b;
-</programlisting>
-   But these extensions do not work in queries involving
-   <literal>UNION</>, <literal>INTERSECT</>, or <literal>EXCEPT</>,
-   and are not portable to other SQL databases.
-  </para>
-
-  <para>
-   Each column specification may be followed by an optional
-   <literal>ASC</> or <literal>DESC</> to set the sort direction to
+   When more than one expression is specified,
+   the later values are used to sort rows that are equal according to the
+   earlier values.  Each expression may be followed by an optional
+   <literal>ASC</> or <literal>DESC</> keyword to set the sort direction to
    ascending or descending.  <literal>ASC</> order is the default.
    Ascending order puts smaller values first, where
    <quote>smaller</quote> is defined in terms of the
@@ -1264,7 +1243,7 @@ SELECT a FROM table1 ORDER BY b;
     <footnote>
      <para>
       Actually, <productname>PostgreSQL</> uses the <firstterm>default B-tree
-      operator class</> for the column's data type to determine the sort
+      operator class</> for the expression's data type to determine the sort
       ordering for <literal>ASC</> and <literal>DESC</>.  Conventionally,
       data types will be set up so that the <literal>&lt;</literal> and
       <literal>&gt;</literal> operators correspond to this sort ordering,
@@ -1275,9 +1254,32 @@ SELECT a FROM table1 ORDER BY b;
   </para>
 
   <para>
-   If more than one sort column is specified, the later entries are
-   used to sort rows that are equal under the order imposed by the
-   earlier sort columns.
+   For backwards compatibility with the SQL92 version of the standard,
+   a <replaceable>sort_expression</> can instead be the name or number
+   of an output column, as in
+<programlisting>
+SELECT a + b AS sum, c FROM table1 ORDER BY sum;
+SELECT a, max(b) FROM table1 GROUP BY a ORDER BY 1;
+</programlisting>
+   both of which sort by the first output column.  Note that an output
+   column name has to stand alone, it's not allowed as part of an expression
+   &mdash; for example, this is <emphasis>not</> correct:
+<programlisting>
+SELECT a + b AS sum, c FROM table1 ORDER BY sum + c;          -- wrong
+</programlisting>
+   This restriction is made to reduce ambiguity.  There is still 
+   ambiguity if an <literal>ORDER BY</> item is a simple name that
+   could match either an output column name or a column from the table
+   expression.  The output column is used in such cases.  This would
+   only cause confusion if you use <literal>AS</> to rename an output
+   column to match some other table column's name.
+  </para>
+
+  <para>
+   <literal>ORDER BY</> can be applied to the result of a
+   <literal>UNION</>, <literal>INTERSECT</>, or <literal>EXCEPT</>
+   combination, but in this case it is only permitted to sort by
+   output column names or numbers, not by expressions.
   </para>
  </sect1>
 
@@ -1299,6 +1301,7 @@ SELECT a FROM table1 ORDER BY b;
 <synopsis>
 SELECT <replaceable>select_list</replaceable>
     FROM <replaceable>table_expression</replaceable>
+    <optional> ORDER BY <replaceable>sort_expression1</replaceable> <optional>ASC | DESC</optional> <optional>, <replaceable>sort_expression2</replaceable> <optional>ASC | DESC</optional> ...</optional> </optional>
     <optional> LIMIT { <replaceable>number</replaceable> | ALL } </optional> <optional> OFFSET <replaceable>number</replaceable> </optional>
 </synopsis>
   </para>
