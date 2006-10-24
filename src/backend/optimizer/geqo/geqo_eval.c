@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.80 2006/03/05 15:58:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.81 2006/10/24 17:50:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,23 +262,29 @@ desirable_join(PlannerInfo *root,
 		return true;
 
 	/*
-	 * Join if the rels are members of the same outer-join RHS. This is needed
-	 * to improve the odds that we will find a valid solution in a case where
-	 * an OJ RHS has a clauseless join.
+	 * Join if the rels are members of the same outer-join side. This is
+	 * needed to ensure that we can find a valid solution in a case where
+	 * an OJ contains a clauseless join.
 	 */
 	foreach(l, root->oj_info_list)
 	{
 		OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
 
+		/* ignore full joins --- other mechanisms preserve their ordering */
+		if (ojinfo->is_full_join)
+			continue;
 		if (bms_is_subset(outer_rel->relids, ojinfo->min_righthand) &&
 			bms_is_subset(inner_rel->relids, ojinfo->min_righthand))
+			return true;
+		if (bms_is_subset(outer_rel->relids, ojinfo->min_lefthand) &&
+			bms_is_subset(inner_rel->relids, ojinfo->min_lefthand))
 			return true;
 	}
 
 	/*
-	 * Join if the rels are members of the same IN sub-select.	This is needed
-	 * to improve the odds that we will find a valid solution in a case where
-	 * an IN sub-select has a clauseless join.
+	 * Join if the rels are members of the same IN sub-select. This is needed
+	 * to ensure that we can find a valid solution in a case where an IN
+	 * sub-select has a clauseless join.
 	 */
 	foreach(l, root->in_info_list)
 	{

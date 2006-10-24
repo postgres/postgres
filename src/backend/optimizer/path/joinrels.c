@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.80 2006/10/04 00:29:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.81 2006/10/24 17:50:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,9 +87,9 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 
 			/*
 			 * An exception occurs when there is a clauseless join inside a
-			 * construct that restricts join order, i.e., an outer join RHS or
+			 * construct that restricts join order, i.e., an outer join or
 			 * an IN (sub-SELECT) construct.  Here, the rel may well have join
-			 * clauses against stuff outside the OJ RHS or IN sub-SELECT, but
+			 * clauses against stuff outside its OJ side or IN sub-SELECT, but
 			 * the clauseless join *must* be done before we can make use of
 			 * those join clauses.	 So do the clauseless join bit.
 			 *
@@ -331,7 +331,7 @@ make_rels_by_clauseless_joins(PlannerInfo *root,
 /*
  * has_join_restriction
  *		Detect whether the specified relation has join-order restrictions
- *		due to being inside an OJ RHS or an IN (sub-SELECT).
+ *		due to being inside an outer join or an IN (sub-SELECT).
  */
 static bool
 has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
@@ -342,7 +342,15 @@ has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
 	{
 		OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
 
+		/* ignore full joins --- other mechanisms preserve their ordering */
+		if (ojinfo->is_full_join)
+			continue;
+		/* anything inside the RHS is definitely restricted */
 		if (bms_is_subset(rel->relids, ojinfo->min_righthand))
+			return true;
+		/* if it's a proper subset of the LHS, it's also restricted */
+		if (bms_is_subset(rel->relids, ojinfo->min_lefthand) &&
+			!bms_equal(rel->relids, ojinfo->min_lefthand))
 			return true;
 	}
 
