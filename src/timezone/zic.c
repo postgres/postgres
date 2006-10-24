@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.18 2006/10/19 20:38:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.19 2006/10/24 15:11:03 tgl Exp $
  */
 
 #include "postgres.h"
@@ -2383,7 +2383,7 @@ eitol(int i)
 int
 link(const char *oldpath, const char *newpath)
 {
-	if (!CopyFileEx(oldpath, newpath, NULL, NULL, FALSE, 0))
+	if (!CopyFile(oldpath, newpath, FALSE))
 		return -1;
 	return 0;
 }
