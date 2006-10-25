@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.222 2006/10/04 00:29:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.223 2006/10/25 22:11:32 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3177,6 +3177,7 @@ expression_tree_walker(Node *node,
 			{
 				Aggref	   *expr = (Aggref *) node;
 
+				/* recurse directly on List */
 				if (expression_tree_walker((Node *) expr->args,
 										   walker, context))
 					return true;
@@ -3249,8 +3250,7 @@ expression_tree_walker(Node *node,
 			{
 				SubLink    *sublink = (SubLink *) node;
 
-				if (expression_tree_walker(sublink->testexpr,
-										   walker, context))
+				if (walker(sublink->testexpr, context))
 					return true;
 
 				/*
@@ -3265,8 +3265,7 @@ expression_tree_walker(Node *node,
 				SubPlan    *subplan = (SubPlan *) node;
 
 				/* recurse into the testexpr, but not into the Plan */
-				if (expression_tree_walker(subplan->testexpr,
-										   walker, context))
+				if (walker(subplan->testexpr, context))
 					return true;
 				/* also examine args list */
 				if (expression_tree_walker((Node *) subplan->args,
