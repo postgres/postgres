@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.1 2006/10/26 15:32:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.2 2006/10/26 17:07:03 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -109,7 +109,7 @@
 
   <para>
    Slony is an example of this type of replication, with per-table
-   granularity.  It updates the backup server in batches, so the repliation
+   granularity.  It updates the backup server in batches, so the replication
    is asynchronous and might lose data during a fail over.
   </para>
  </sect1>
