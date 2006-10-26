@@ -1,0 +1,210 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.1 2006/10/26 15:32:45 momjian Exp $ -->
+
+<chapter id="failover">
+ <title>Failover, Replication, Load Balancing, and Clustering Options</title>
+
+ <indexterm><primary>failover</></>
+ <indexterm><primary>replication</></>
+ <indexterm><primary>load balancing</></>
+ <indexterm><primary>clustering</></>
+
+ <para>
+  Database servers can work together to allow a backup server to
+  quickly take over if the primary server fails (failover), or to
+  allow several computers to serve the same data (load balancing).
+  Ideally, database servers could work together seamlessly.  Web
+  servers serving static web pages can be combined quite easily by
+  merely load-balancing web requests to multiple machines.  In
+  fact, read-only database servers can be combined relatively easily
+  too.  Unfortunately, most database servers have a read/write mix
+  of requests, and read/write servers are much harder to combine.
+  This is because though read-only data needs to be placed on each
+  server only once, a write to any server has to be propagated to
+  all servers so that future read requests to those servers return
+  consistent results.
+ </para>
+
+ <para>
+  This synchronization problem is the fundamental difficulty for servers
+  working together.  Because there is no single solution that eliminates
+  the impact of the sync problem for all use cases, there are multiple
+  solutions.  Each solution addresses this problem in a different way, and
+  minimizes its impact for a specific workload.
+ </para>
+
+ <para>
+  Some failover and load balancing solutions are synchronous, meaning that
+  a data-modifying transaction is not considered committed until all
+  servers have committed the transaction.  This guarantees that a failover
+  will not lose any data and that all load-balanced servers will return
+  consistent results with no propagation delay. Asynchronous updating has
+  a small delay between the time of commit and its propagation to the
+  other servers, opening the possibility that some transactions might be
+  lost in the switch to a backup server, and that load balanced servers
+  might return slightly stale results.  Asynchronous communication is used
+  when synchronous would be too slow.
+ </para>
+
+ <para>
+  Solutions can also be categorized by their granularity.  Some solutions
+  can deal only with an entire database server, while others allow control
+  at the per-table or per-database level.
+ </para>
+
+ <para>
+  Performance must be considered in any failover or load balancing
+  choice.  There is usually a tradeoff between functionality and
+  performance.  For example, a full synchronous solution over a slow
+  network might cut performance by more than half, while an asynchronous
+  one might have a minimal performance impact.
+ </para>
+
+ <para>
+  This remainder of this section outlines various failover, replication,
+  and load balancing solutions.
+ </para>
+
+ <sect1 id="shared-disk-failover">
+  <title>Shared Disk Failover</title>
+
+  <para>
+   Shared disk failover avoids synchronization overhead by having only one
+   copy of the database.  It uses a single disk array that is shared by
+   multiple servers.  If the main database server fails, the backup server
+   is able to mount and start the database as though it was recovering from
+   a database crash.  This allows rapid failover with no data loss.
+  </para>
+
+  <para>
+   Shared hardware functionality is common in network storage devices.  One
+   significant limitation of this method is that if the shared disk array
+   fails or becomes corrupt, the primary and backup servers are both
+   nonfunctional.
+  </para>
+ </sect1>
+
+ <sect1 id="warm-standby-using-point-in-time-recovery">
+  <title>Warm Standby Using Point-In-Time Recovery</title>
+
+  <para>
+   A warm standby server (see <xref linkend="warm-standby">) can
+   be kept current by reading a stream of write-ahead log (WAL)
+   records.  If the main server fails, the warm standby contains
+   almost all of the data of the main server, and can be quickly
+   made the new master database server.  This is asynchronous and
+   can only be done for the entire database server.
+  </para>
+ </sect1>
+
+ <sect1 id="continuously-running-replication-server">
+  <title>Continuously Running Replication Server</title>
+
+  <para>
+   A continuously running replication server allows the backup server to
+   answer read-only queries while the master server is running.  It
+   receives a continuous stream of write activity from the master server.
+   Because the backup server can be used for read-only database requests,
+   it is ideal for data warehouse queries.
+  </para>
+
+  <para>
+   Slony is an example of this type of replication, with per-table
+   granularity.  It updates the backup server in batches, so the repliation
+   is asynchronous and might lose data during a fail over.
+  </para>
+ </sect1>
+
+ <sect1 id="data-partitioning">
+  <title>Data Partitioning</title>
+
+  <para>
+   Data partitioning splits tables into data sets.  Each set can only be
+   modified by one server.  For example, data can be partitioned by
+   offices, e.g. London and Paris.  While London and Paris servers have all
+   data records, only London can modify London records, and Paris can only
+   modify Paris records.
+  </para>
+
+  <para>
+   Such partitioning implements both failover and load balancing.  Failover
+   is achieved because the data resides on both servers, and this is an
+   ideal way to enable failover if the servers share a slow communication
+   channel. Load balancing is possible because read requests can go to any
+   of the servers, and write requests are split among the servers.  Of
+   course, the communication to keep all the servers up-to-date adds
+   overhead, so ideally the write load should be low, or localized as in
+   the London/Paris example above.
+  </para>
+
+  <para>
+   Data partitioning is usually handled by application code, though rules
+   and triggers can be used to keep the read-only data sets current.  Slony
+   can also be used in such a setup.  While Slony replicates only entire
+   tables, London and Paris can be placed in separate tables, and
+   inheritance can be used to access both tables using a single table name.
+  </para>
+ </sect1>
+
+ <sect1 id="query-broadcast-load-balancing">
+  <title>Query Broadcast Load Balancing</title>
+
+  <para>
+   Query broadcast load balancing is accomplished by having a program
+   intercept every query and send it to all servers.  Read-only queries can
+   be sent to a single server because there is no need for all servers to
+   process it.  This is unusual because most replication solutions have
+   each write server propagate its changes to the other servers.  With
+   query broadcasting, each server operates independently.
+  </para>
+
+  <para>
+   This can be complex to set up because functions like random()
+   and CURRENT_TIMESTAMP will have different values on different
+   servers, and sequences should be consistent across servers.
+   Care must also be taken that all transactions either commit or
+   abort on all servers  Pgpool is an example of this type of
+   replication.
+  </para>
+ </sect1>
+
+ <sect1 id="clustering-for-load-balancing">
+  <title>Clustering For Load Balancing</title>
+
+  <para>
+   In clustering, each server can accept write requests, and these
+   write requests are broadcast from the original server to all
+   other servers before each transaction commits.  Under heavy
+   load, this can cause excessive locking and performance degradation.
+   It is implemented by <productname>Oracle</> in their
+   <productname><acronym>RAC</></> product.  <productname>PostgreSQL</>
+   does not offer this type of load balancing, though
+   <productname>PostgreSQL</> two-phase commit can be used to
+   implement this in application code or middleware.
+  </para>
+ </sect1>
+
+ <sect1 id="clustering-for-parallel-query-execution">
+  <title>Clustering For Parallel Query Execution</title>
+
+  <para>
+   This allows multiple servers to work on a single query.  One
+   possible way this could work is for the data to be split among
+   servers and for each server to execute its part of the query
+   and results sent to a central server to be combined and returned
+   to the user.  There currently is no <productname>PostgreSQL</>
+   open source solution for this.
+  </para>
+ </sect1>
+
+ <sect1 id="commercial-solutions">
+  <title>Commercial Solutions</title>
+
+  <para>
+   Because <productname>PostgreSQL</> is open source and easily
+   extended, a number of companies have taken <productname>PostgreSQL</>
+   and created commercial closed-source solutions with unique
+   failover, replication, and load balancing capabilities.
+  </para>
+ </sect1>
+
+</chapter>
