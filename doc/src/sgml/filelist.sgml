@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.47 2006/09/14 11:16:27 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.48 2006/10/26 15:26:54 momjian Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -34,6 +34,7 @@
 <!entity charset       SYSTEM "charset.sgml">
 <!entity client-auth   SYSTEM "client-auth.sgml">
 <!entity diskusage     SYSTEM "diskusage.sgml">
+<!entity failover      SYSTEM "failover.sgml">
 <!entity installation  SYSTEM "installation.sgml">
 <!entity installw      SYSTEM "install-win32.sgml">
 <!entity maintenance   SYSTEM "maintenance.sgml">
