@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.2 2006/10/26 17:07:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.3 2006/10/27 12:40:26 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -60,7 +60,7 @@
  </para>
 
  <para>
-  This remainder of this section outlines various failover, replication,
+  The remainder of this section outlines various failover, replication,
   and load balancing solutions.
  </para>
 
