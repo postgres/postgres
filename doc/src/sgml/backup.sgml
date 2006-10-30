@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.91 2006/10/23 18:10:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.92 2006/10/30 00:08:02 neilc Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1430,7 +1430,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
 
    <para>
     Sample code for the C version of the <varname>restore_command</>
-    would be be:
+    would be:
 <programlisting>
 triggered = false;
 while (!NextWALFileReady() && !triggered)
