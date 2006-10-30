@@ -1459,7 +1459,7 @@ echo "$as_me:$LINENO: checking which template to use" >&5
 echo $ECHO_N "checking which template to use... $ECHO_C" >&6
 
 
-
+pgac_args="$pgac_args with_template"
 
 
 # Check whether --with-template or --without-template was given.
@@ -1577,7 +1577,7 @@ tas_file=dummy.s
 # Installation directory for documentation
 #
 
-
+pgac_args="$pgac_args with_docdir"
 
 
 # Check whether --with-docdir or --without-docdir was given.
@@ -1609,7 +1609,7 @@ fi;
 # Add non-standard directories to the include path
 #
 
-
+pgac_args="$pgac_args with_includes"
 
 
 # Check whether --with-includes or --without-includes was given.
@@ -1640,7 +1640,7 @@ fi;
 # Add non-standard directories to the library search path
 #
 
-
+pgac_args="$pgac_args with_libraries"
 
 
 # Check whether --with-libraries or --without-libraries was given.
@@ -1667,7 +1667,7 @@ fi;
 
 
 
-
+pgac_args="$pgac_args with_libs"
 
 
 # Check whether --with-libs or --without-libs was given.
@@ -1700,7 +1700,7 @@ fi;
 echo "$as_me:$LINENO: checking whether to build with 64-bit integer date/time support" >&5
 echo $ECHO_N "checking whether to build with 64-bit integer date/time support... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args enable_integer_datetimes"
 
 # Check whether --enable-integer-datetimes or --disable-integer-datetimes was given.
 if test "${enable_integer_datetimes+set}" = set; then
@@ -1739,7 +1739,7 @@ echo "${ECHO_T}$enable_integer_datetimes" >&6
 echo "$as_me:$LINENO: checking whether NLS is wanted" >&5
 echo $ECHO_N "checking whether NLS is wanted... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args enable_nls"
 
 # Check whether --enable-nls or --disable-nls was given.
 if test "${enable_nls+set}" = set; then
@@ -1782,7 +1782,7 @@ echo "${ECHO_T}$enable_nls" >&6
 echo "$as_me:$LINENO: checking for default port number" >&5
 echo $ECHO_N "checking for default port number... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_pgport"
 
 
 # Check whether --with-pgport or --without-pgport was given.
@@ -1828,7 +1828,7 @@ _ACEOF
 # Option to disable shared libraries
 #
 
-
+pgac_args="$pgac_args enable_shared"
 
 # Check whether --enable-shared or --disable-shared was given.
 if test "${enable_shared+set}" = set; then
@@ -1859,7 +1859,7 @@ fi;
 # '-rpath'-like feature can be disabled
 #
 
-
+pgac_args="$pgac_args enable_rpath"
 
 # Check whether --enable-rpath or --disable-rpath was given.
 if test "${enable_rpath+set}" = set; then
@@ -1890,7 +1890,7 @@ fi;
 # Spinlocks
 #
 
-
+pgac_args="$pgac_args enable_spinlocks"
 
 # Check whether --enable-spinlocks or --disable-spinlocks was given.
 if test "${enable_spinlocks+set}" = set; then
@@ -1920,7 +1920,7 @@ fi;
 # --enable-debug adds -g to compiler flags
 #
 
-
+pgac_args="$pgac_args enable_debug"
 
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
@@ -1951,7 +1951,7 @@ fi;
 # DTrace
 #
 
-
+pgac_args="$pgac_args enable_dtrace"
 
 # Check whether --enable-dtrace or --disable-dtrace was given.
 if test "${enable_dtrace+set}" = set; then
@@ -2036,7 +2036,7 @@ fi;
 # to use, although the standard way to do this is to set the CC environment
 # variable.
 
-
+pgac_args="$pgac_args with_CC"
 
 
 # Check whether --with-CC or --without-CC was given.
@@ -3532,7 +3532,7 @@ fi
 # Automatic dependency tracking
 #
 
-
+pgac_args="$pgac_args enable_depend"
 
 # Check whether --enable-depend or --disable-depend was given.
 if test "${enable_depend+set}" = set; then
@@ -3564,7 +3564,7 @@ fi;
 # Enable assert checks
 #
 
-
+pgac_args="$pgac_args enable_cassert"
 
 # Check whether --enable-cassert or --disable-cassert was given.
 if test "${enable_cassert+set}" = set; then
@@ -3635,7 +3635,7 @@ IFS=$ac_save_IFS
 echo "$as_me:$LINENO: checking allow thread-safe client libraries" >&5
 echo $ECHO_N "checking allow thread-safe client libraries... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args enable_thread_safety"
 
 # Check whether --enable-thread-safety or --disable-thread-safety was given.
 if test "${enable_thread_safety+set}" = set; then
@@ -3661,7 +3661,7 @@ else
 fi;
 
 
-
+pgac_args="$pgac_args enable_thread_safety_force"
 
 # Check whether --enable-thread-safety-force or --disable-thread-safety-force was given.
 if test "${enable_thread_safety_force+set}" = set; then
@@ -3705,7 +3705,7 @@ echo "${ECHO_T}$enable_thread_safety" >&6
 echo "$as_me:$LINENO: checking whether to build with Tcl" >&5
 echo $ECHO_N "checking whether to build with Tcl... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_tcl"
 
 
 # Check whether --with-tcl or --without-tcl was given.
@@ -3739,7 +3739,7 @@ echo "${ECHO_T}$with_tcl" >&6
 # This will override the use of tclsh to find the paths to search.
 
 
-
+pgac_args="$pgac_args with_tclconfig"
 
 
 # Check whether --with-tclconfig or --without-tclconfig was given.
@@ -3771,7 +3771,7 @@ fi;
 echo "$as_me:$LINENO: checking whether to build Perl modules" >&5
 echo $ECHO_N "checking whether to build Perl modules... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_perl"
 
 
 # Check whether --with-perl or --without-perl was given.
@@ -3807,7 +3807,7 @@ echo "${ECHO_T}$with_perl" >&6
 echo "$as_me:$LINENO: checking whether to build Python modules" >&5
 echo $ECHO_N "checking whether to build Python modules... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_python"
 
 
 # Check whether --with-python or --without-python was given.
@@ -3843,7 +3843,7 @@ echo "${ECHO_T}$with_python" >&6
 echo "$as_me:$LINENO: checking whether to build with Kerberos 5 support" >&5
 echo $ECHO_N "checking whether to build with Kerberos 5 support... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_krb5"
 
 
 # Check whether --with-krb5 or --without-krb5 was given.
@@ -3888,7 +3888,7 @@ echo "${ECHO_T}$with_krb5" >&6
 # Kerberos configuration parameters
 #
 
-
+pgac_args="$pgac_args with_krb_srvnam"
 
 
 # Check whether --with-krb-srvnam or --without-krb-srvnam was given.
@@ -3928,7 +3928,7 @@ _ACEOF
 echo "$as_me:$LINENO: checking whether to build with PAM support" >&5
 echo $ECHO_N "checking whether to build with PAM support... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_pam"
 
 
 # Check whether --with-pam or --without-pam was given.
@@ -3969,7 +3969,7 @@ echo "${ECHO_T}$with_pam" >&6
 echo "$as_me:$LINENO: checking whether to build with LDAP support" >&5
 echo $ECHO_N "checking whether to build with LDAP support... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_ldap"
 
 
 # Check whether --with-ldap or --without-ldap was given.
@@ -4010,7 +4010,7 @@ echo "${ECHO_T}$with_ldap" >&6
 echo "$as_me:$LINENO: checking whether to build with Bonjour support" >&5
 echo $ECHO_N "checking whether to build with Bonjour support... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_bonjour"
 
 
 # Check whether --with-bonjour or --without-bonjour was given.
@@ -4051,7 +4051,7 @@ echo "${ECHO_T}$with_bonjour" >&6
 echo "$as_me:$LINENO: checking whether to build with OpenSSL support" >&5
 echo $ECHO_N "checking whether to build with OpenSSL support... $ECHO_C" >&6
 
-
+pgac_args="$pgac_args with_openssl"
 
 
 # Check whether --with-openssl or --without-openssl was given.
@@ -4090,7 +4090,7 @@ echo "${ECHO_T}$with_openssl" >&6
 # Readline
 #
 
-
+pgac_args="$pgac_args with_readline"
 
 
 # Check whether --with-readline or --without-readline was given.
@@ -4132,7 +4132,7 @@ fi
 # Prefer libedit
 #
 
-
+pgac_args="$pgac_args with_libedit_preferred"
 
 
 # Check whether --with-libedit-preferred or --without-libedit-preferred was given.
@@ -4164,7 +4164,7 @@ fi;
 # Zlib
 #
 
-
+pgac_args="$pgac_args with_zlib"
 
 
 # Check whether --with-zlib or --without-zlib was given.
@@ -22962,56 +22962,6 @@ fi
           ac_config_headers="$ac_config_headers src/interfaces/ecpg/include/ecpg_config.h"
 
 
-
-#
-# Warn about unknown options
-#
-
-
-  for pgac_var in `set | sed 's/=.*//' | $EGREP 'with_|enable_'`; do
-    case $pgac_var in
-      with_template) ;;
-with_docdir) ;;
-with_includes) ;;
-with_libraries) ;;
-with_libs) ;;
-enable_integer_datetimes) ;;
-enable_nls) ;;
-with_pgport) ;;
-enable_shared) ;;
-enable_rpath) ;;
-enable_spinlocks) ;;
-enable_debug) ;;
-enable_dtrace) ;;
-with_CC) ;;
-enable_depend) ;;
-enable_cassert) ;;
-enable_thread_safety) ;;
-enable_thread_safety_force) ;;
-with_tcl) ;;
-with_tclconfig) ;;
-with_perl) ;;
-with_python) ;;
-with_krb5) ;;
-with_krb_srvnam) ;;
-with_pam) ;;
-with_ldap) ;;
-with_bonjour) ;;
-with_openssl) ;;
-with_readline) ;;
-with_libedit_preferred) ;;
-with_zlib) ;;
-
-      with_gnu_ld) ;;
-    *)
-      pgac_txt=`echo $pgac_var | tr '_' '-'`
-      { echo "$as_me:$LINENO: WARNING: option ignored: --$pgac_txt" >&5
-echo "$as_me: WARNING: option ignored: --$pgac_txt" >&2;}
-      ;;
-    esac
-  done
-
-
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -24502,3 +24452,14 @@ if test "$no_create" != yes; then
 fi
 
 
+# Warn about unknown options
+for pgac_var in `set | sed 's/=.*//' | $EGREP 'with_|enable_'`; do
+  for pgac_arg in $pgac_args with_gnu_ld; do
+    if test "$pgac_var" = "$pgac_arg"; then
+      continue 2
+    fi
+  done
+  pgac_txt=`echo $pgac_var | tr '_' '-'`
+  { echo "$as_me:$LINENO: WARNING: option ignored: --$pgac_txt" >&5
+echo "$as_me: WARNING: option ignored: --$pgac_txt" >&2;}
+done
