@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.36 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.37 2006/10/31 01:52:31 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -60,8 +60,8 @@ CLUSTER
    in the
    current database that the calling user owns, or all tables if called
    by a superuser.  (Never-clustered tables are not included.)  This
-   form of <command>CLUSTER</command> cannot be called from inside a
-   transaction or function.
+   form of <command>CLUSTER</command> cannot be executed inside a transaction
+   block.
   </para>
 
   <para>

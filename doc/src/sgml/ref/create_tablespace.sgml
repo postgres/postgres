@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.6 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.7 2006/10/31 01:52:31 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -95,6 +95,11 @@ CREATE TABLESPACE <replaceable class="parameter">tablespacename</replaceable> [ 
   <para>
    Tablespaces are only supported on systems that support symbolic links.
   </para>
+
+   <para>
+    <command>CREATE TABLESPACE</> cannot be executed inside a transaction
+    block.
+   </para>
  </refsect1>
 
  <refsect1>

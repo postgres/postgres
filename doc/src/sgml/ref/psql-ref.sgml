@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.172 2006/10/23 18:10:32 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.173 2006/10/31 01:52:31 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -94,9 +94,10 @@ PostgreSQL documentation
       <para>
        If the command string contains multiple SQL commands, they are
        processed in a single transaction, unless there are explicit
-       BEGIN/COMMIT commands included in the string to divide it into
-       multiple transactions.  This is different from the behavior when
-       the same string is fed to <application>psql</application>'s standard input.
+       <command>BEGIN</>/<command>COMMIT</> commands included in the
+       string to divide it into multiple transactions.  This is
+       different from the behavior when the same string is fed to
+       <application>psql</application>'s standard input.
       </para>
       </listitem>
     </varlistentry>
@@ -472,9 +473,14 @@ PostgreSQL documentation
         <option>-f</> option, adding this option wraps
         <command>BEGIN</>/<command>COMMIT</> around the script to execute it
         as a single transaction.  This ensures that either all the commands
-        complete successfully, or no changes are applied.  (However, if the
-        script itself uses <command>BEGIN</> or <command>COMMIT</>, this
-        option will not have the desired effect!)
+        complete successfully, or no changes are applied.  
+       </para>
+
+       <para>
+        If the script itself uses <command>BEGIN</>, <command>COMMIT</>
+        or any command that cannot be executed inside a transaction
+        block, specifying this option will cause the transaction to be
+        aborted.
        </para>
       </listitem>
      </varlistentry>

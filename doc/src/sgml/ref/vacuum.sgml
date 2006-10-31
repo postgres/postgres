@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.41 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.42 2006/10/31 01:52:31 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -154,6 +154,10 @@ VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">ta
 
  <refsect1>
   <title>Notes</title>
+
+   <para>
+    <command>VACUUM</> cannot be executed inside a transaction block.
+   </para>
 
    <para>
     We recommend that active production databases be
