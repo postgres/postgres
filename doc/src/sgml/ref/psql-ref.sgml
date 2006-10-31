@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.173 2006/10/31 01:52:31 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.174 2006/10/31 02:29:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -477,10 +477,12 @@ PostgreSQL documentation
        </para>
 
        <para>
-        If the script itself uses <command>BEGIN</>, <command>COMMIT</>
-        or any command that cannot be executed inside a transaction
-        block, specifying this option will cause the transaction to be
-        aborted.
+        If the script itself uses <command>BEGIN</>, <command>COMMIT</>,
+        or <command>ROLLBACK</>, this option will not have the desired
+        effects.
+        Also, if the script contains any command that cannot be executed
+        inside a transaction block, specifying this option will cause that
+        command (and hence the whole transaction) to fail.
        </para>
       </listitem>
      </varlistentry>
