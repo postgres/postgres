@@ -427,9 +427,9 @@ concatenation also works with NULL fields.</strong></p>
 <p>We need to create the index on the column idxFTI. Keep in mind
 that the database will update the index when some action is taken.
 In this case we _need_ the index (The whole point of Full Text
-INDEXINGi ;-)), so don't worry about any indexing overhead. We will
-create an index based on the gist function. GiST is an index
-structure for Generalized Search Tree.</p>
+INDEXING ;-)), so don't worry about any indexing overhead. We will
+create an index based on the gist or gin function. GiST is an index
+structure for Generalized Search Tree, GIN is a inverted index (see <a href="tsearch2-ref.html#indexes">The tsearch2 Reference: Indexes</a>).</p>
 <pre>
         CREATE INDEX idxFTI_idx ON tblMessages USING gist(idxFTI);
         VACUUM FULL ANALYZE;

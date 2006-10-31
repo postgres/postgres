@@ -1,7 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<link type="text/css" rel="stylesheet" href="/~megera/postgres/gist/tsearch/tsearch.css">
 <title>tsearch2 guide</title>
 </head>
 <body>
@@ -9,16 +8,13 @@
 
 <p align=center>
 Brandon Craig Rhodes<br>30 June 2003
+<br>Updated to 8.2 release by Oleg Bartunov, October 2006</br>
 <p>
 This Guide introduces the reader to the PostgreSQL tsearch2 module,
 version&nbsp;2.
 More formal descriptions of the module's types and functions
 are provided in the <a href="tsearch2-ref.html">tsearch2 Reference</a>,
 which is a companion to this document.
-You can retrieve a beta copy of the tsearch2 module from the
-<a href="http://www.sai.msu.su/~megera/postgres/gist/">GiST for PostgreSQL</a>
-page &mdash; look under the section entitled <i>Development History</i>
-for the current version.
 <p>
 First we will examine the <tt>tsvector</tt> and <tt>tsquery</tt> types
 and how they are used to search documents;
@@ -32,15 +28,40 @@ you should be able to run the examples here exactly as they are typed.
 <hr>
 <h2>Table of Contents</h2>
 <blockquote>
+<a href="#intro">Introduction to FTS with tsearch2</a><br>
 <a href="#vectors_queries">Vectors and Queries</a><br>
 <a href="#simple_search">A Simple Search Engine</a><br>
 <a href="#weights">Ranking and Position Weights</a><br>
 <a href="#casting">Casting Vectors and Queries</a><br>
 <a href="#parsing_lexing">Parsing and Lexing</a><br>
+<a href="#ref">Additional information</a>
 </blockquote>
 
 <hr>
 
+
+<h2><a name="intro">Introduction to FTS with tsearch2</a></h2>
+The purpose of FTS is to
+find <b>documents</b>, which satisfy <b>query</b> and optionally return 
+them in some <b>order</b>. 
+Most common case: Find documents containing all query terms and return them in order 
+of their similarity to the query. Document in database can be 
+any text attribute, or combination of text attributes from one or many tables
+(using joins).
+Text search operators existed for years, in PostgreSQL they are
+<tt><b>~,~*, LIKE, ILIKE</b></tt>, but they lack linguistic support,
+tends to be slow and have no relevance ranking. The idea behind tsearch2 is 
+is rather simple - preprocess document at index time to save time at search stage.
+Preprocessing includes
+<ul>
+<li>document parsing onto words
+<li>linguistic - normalize words to obtain lexemes
+<li>store document in optimized for searching way
+</ul>
+Tsearch2, in a nutshell, provides FTS operator (contains) for two new data types, 
+which represent document and query - <tt>tsquery  @@ tsvector</tt>.
+
+<P>
 <h2><a name=vectors_queries>Vectors and Queries</a></h2>
 
 <blockquote>
@@ -79,6 +100,8 @@ Preparing your document index involves two steps:
  on the <tt>tsvector</tt> column of a table,
  which implements a form of the Berkeley
  <a href="http://gist.cs.berkeley.edu/"><i>Generalized Search Tree</i></a>.
+ Since PostgreSQL 8.2 tsearch2 supports <a href="http://www.sigaev.ru/gin/">Gin</a> index,
+ which is an inverted index, commonly used in search engines. It adds scalability to tsearch2.
 </ul>
 Once your documents are indexed,
 performing a search involves:
@@ -251,7 +274,7 @@ and give you an error to prevent this mistake:
 
 <pre>
 =# <b>SELECT to_tsquery('the')</b>
-NOTICE:  Query contains only stopword(s) or doesn't contain lexeme(s), ignored
+NOTICE:  Query contains only stopword(s) or doesn't contain lexem(s), ignored
  to_tsquery 
 ------------
  
@@ -483,8 +506,8 @@ The <tt>rank()</tt> function existed in older versions of OpenFTS,
 and has the feature that you can assign different weights
 to words from different sections of your document.
 The <tt>rank_cd()</tt> uses a recent technique for weighting results
-but does not allow different weight to be given
-to different sections of your document.
+and also allows  different weight to be given
+to different sections of your document (since 8.2).
 <p>
 Both ranking functions allow you to specify,
 as an optional last argument,
@@ -511,9 +534,6 @@ for details
 see the <a href="tsearch2-ref.html#ranking">section on ranking</a>
 in the Reference.
 <p>
-The <tt>rank()</tt> function offers more flexibility
-because it pays attention to the <i>weights</i>
-with which you have labelled lexeme positions.
 Currently tsearch2 supports four different weight labels:
 <tt>'D'</tt>, the default weight;
 and <tt>'A'</tt>, <tt>'B'</tt>, and <tt>'C'</tt>.
@@ -730,7 +750,7 @@ The main problem is that the apostrophe and backslash
 are important <i>both</i> to PostgreSQL when it is interpreting a string,
 <i>and</i> to the <tt>tsvector</tt> conversion function.
 You may want to review section
-<a href="http://www.postgresql.org/docs/view.php?version=7.3&idoc=0&file=sql-syntax.html#SQL-SYNTAX-STRINGS">1.1.2.1,
+<a href="http://www.postgresql.org/docs/current/static/sql-syntax.html#SQL-SYNTAX-STRINGS">
 &ldquo;String Constants&rdquo;</a>
 in the PostgreSQL documentation before proceeding.
 <p>
@@ -1050,6 +1070,14 @@ Query words are stemmed by the <tt>to_tsquery()</tt> function
 using the same scheme to determine the dictionary for each token,
 with the difference that the query parser recognizes as special
 the boolean operators that separate query words.
+
+
+<h2><a name="ref">Additional information</a></h2>
+More information about tsearch2 is available from 
+<a href="http://www.sai.msu.su/~megera/postgres/gist/tsearch/V2">tsearch2</a> page.
+Also, it's worth to check 
+<a href="http://www.sai.msu.su/~megera/wiki/Tsearch2">tsearch2 wiki</a> pages.
+
 
 </body>
 </html>
