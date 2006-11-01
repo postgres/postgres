@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.8 2003/11/29 19:51:40 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.8.6.1 2006/11/01 19:50:03 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -189,9 +189,24 @@ the half-dead page's level and its parent's level may be a little out of
 whack: key space that appears to belong to the half-dead page's parent on the
 parent level may really belong to its right sibling.  We can tolerate this,
 however, because insertions and deletions on upper tree levels are always
-done by reference to child page numbers, not keys.  The only cost is that
-searches may sometimes descend to the half-dead page and then have to move
-right, rather than going directly to the sibling page.
+done by reference to child page numbers, not keys.  Searches may sometimes
+descend to the half-dead page and then have to move right, rather than going
+directly to the sibling page, but this is no different from the behavior
+during a split.
+
+A special case that arises from using half-dead pages for rightmost children
+is that it's possible for the grandparent level's sequence of keys to become
+out-of-order.  This occurs when there are a large number of insertions into
+the key space that's been implicitly transferred to the right sibling of the
+half-dead page's parent.  If the right sibling itself splits, the split
+bounding key (which could be less than the high key of the parent page) is
+inserted into the grandparent level to the right of the parent page.  This
+is pretty ugly, but it causes no serious damage.  Searches, again, may descend
+a bit to the left of the optimal path but will be able to recover.  The only
+problem is that when it comes time to delete the half-dead page, _bt_pagedel's
+normal strategy for finding the target page's parent can fail: the search for
+the page's high key may well descend to the right of the parent.  In this case
+we recover by searching from the left end of the parent level.
 
 A deleted page cannot be reclaimed immediately, since there may be other
 processes waiting to reference it (ie, search processes that just left the

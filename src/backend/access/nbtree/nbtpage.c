@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.88.2.1 2005/11/22 18:23:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.88.2.2 2006/11/01 19:50:03 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -869,14 +869,27 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 
 	/*
 	 * Next find and write-lock the current parent of the target page. This is
-	 * essentially the same as the corresponding step of splitting.
+	 * essentially the same as the corresponding step of splitting.  However,
+	 * it's possible for the search to fail (for reasons explained in README).
+	 * If that happens, we recover by searching the whole parent level, which
+	 * is a tad inefficient but doesn't happen often enough to be a problem.
 	 */
 	ItemPointerSet(&(stack->bts_btitem.bti_itup.t_tid),
 				   target, P_HIKEY);
 	pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
 	if (pbuf == InvalidBuffer)
-		elog(ERROR, "failed to re-find parent key in \"%s\"",
-			 RelationGetRelationName(rel));
+	{
+		/* Find the leftmost page in the parent level */
+		pbuf = _bt_get_endpoint(rel, opaque->btpo.level + 1, false);
+		stack->bts_blkno = BufferGetBlockNumber(pbuf);
+		stack->bts_offset = InvalidOffsetNumber;
+		_bt_relbuf(rel, pbuf);
+		/* and repeat search from there */
+		pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
+		if (pbuf == InvalidBuffer)
+			elog(ERROR, "failed to re-find parent key in \"%s\" for deletion target page %u",
+				 RelationGetRelationName(rel), target);
+	}
 	parent = stack->bts_blkno;
 	poffset = stack->bts_offset;
 
