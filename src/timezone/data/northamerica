@@ -1,4 +1,4 @@
-# @(#)northamerica	8.8
+# @(#)northamerica	8.9
 # <pre>
 
 # also includes Central America and the Caribbean
@@ -2383,12 +2383,19 @@ Zone America/Montserrat	-4:08:52 -	LMT	1911 Jul 1 0:01   # Cork Hill
 # advanced by sixty minutes their official time, yesterday at 2 in the
 # morning, and will stay that way until 30.th. of september.
 #
+# From Jesper Norgaard Welen (2006-09-30):
+# http://www.presidencia.gob.ni/buscador_gaceta/BD/DECRETOS/2006/D-063-2006P-PRN-Cambio-Hora.pdf
+# My informal translation runs:
+# The natural sun time is restored in all the national territory, in that the
+# time is returned one hour at 01:00 am of October 1 of 2006.
+#
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Nic	1979	1980	-	Mar	Sun>=16	0:00	1:00	D
 Rule	Nic	1979	1980	-	Jun	Mon>=23	0:00	0	S
 Rule	Nic	2005	only	-	Apr	10	0:00	1:00	D
-Rule	Nic	2005	2006	-	Oct	Sun>=1	0:00	0	S
+Rule	Nic	2005	only	-	Oct	Sun>=1	0:00	0	S
 Rule	Nic	2006	only	-	Apr	30	2:00	1:00	D
+Rule	Nic	2006	only	-	Oct	Sun>=1	1:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Managua	-5:45:08 -	LMT	1890
 			-5:45:12 -	MMT	1934 Jun 23 # Managua Mean Time?

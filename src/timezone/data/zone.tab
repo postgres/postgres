@@ -1,4 +1,4 @@
-# @(#)zone.tab	8.4
+# @(#)zone.tab	8.5
 #
 # TZ zone descriptions
 #
@@ -143,7 +143,6 @@ CN	+4348+08735	Asia/Urumqi	most of Tibet & Xinjiang
 CN	+3929+07559	Asia/Kashgar	west Tibet & Xinjiang
 CO	+0436-07405	America/Bogota
 CR	+0956-08405	America/Costa_Rica
-CS	+4450+02030	Europe/Belgrade
 CU	+2308-08222	America/Havana
 CV	+1455-02331	Atlantic/Cape_Verde
 CX	-1025+10543	Indian/Christmas
@@ -248,6 +247,7 @@ LY	+3254+01311	Africa/Tripoli
 MA	+3339-00735	Africa/Casablanca
 MC	+4342+00723	Europe/Monaco
 MD	+4700+02850	Europe/Chisinau
+ME	+4247+01928	Europe/Podgorica
 MG	-1855+04731	Indian/Antananarivo
 MH	+0709+17112	Pacific/Majuro	most locations
 MH	+0905+16720	Pacific/Kwajalein	Kwajalein
@@ -312,6 +312,7 @@ PY	-2516-05740	America/Asuncion
 QA	+2517+05132	Asia/Qatar
 RE	-2052+05528	Indian/Reunion
 RO	+4426+02606	Europe/Bucharest
+RS	+4450+02030	Europe/Belgrade
 RU	+5443+02030	Europe/Kaliningrad	Moscow-01 - Kaliningrad
 RU	+5545+03735	Europe/Moscow	Moscow+00 - west Russia
 RU	+4844+04425	Europe/Volgograd	Moscow+00 - Caspian Sea

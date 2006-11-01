@@ -1,12 +1,12 @@
 # ISO 3166 alpha-2 country codes
 #
-# @(#)iso3166.tab	8.2
+# @(#)iso3166.tab	8.3
 #
-# From Paul Eggert (2006-04-24):
+# From Paul Eggert (2006-09-27):
 #
 # This file contains a table with the following columns:
 # 1.  ISO 3166-1 alpha-2 country code, current as of
-#     ISO 3166-1 Newsletter No. V-11 (2006-03-29).  See:
+#     ISO 3166-1 Newsletter No. V-12 (2006-09-26).  See:
 #     <a href="http://www.iso.org/iso/en/prods-services/iso3166ma/index.html">
 #     ISO 3166 Maintenance agency (ISO 3166/MA)
 #     </a>.
@@ -70,7 +70,6 @@ CM	Cameroon
 CN	China
 CO	Colombia
 CR	Costa Rica
-CS	Serbia and Montenegro
 CU	Cuba
 CV	Cape Verde
 CX	Christmas Island
@@ -159,6 +158,7 @@ LY	Libya
 MA	Morocco
 MC	Monaco
 MD	Moldova
+ME	Montenegro
 MG	Madagascar
 MH	Marshall Islands
 MK	Macedonia
@@ -207,6 +207,7 @@ PY	Paraguay
 QA	Qatar
 RE	Reunion
 RO	Romania
+RS	Serbia
 RU	Russia
 RW	Rwanda
 SA	Saudi Arabia

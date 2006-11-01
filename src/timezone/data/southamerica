@@ -1,4 +1,4 @@
-# @(#)southamerica	8.3
+# %W%
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -428,11 +428,7 @@ Zone	America/La_Paz	-4:32:36 -	LMT	1890
 # The official decrees referenced below are mostly taken from
 # <a href="http://pcdsh01.on.br/DecHV.html">
 # Decretos sobre o Horario de Verao no Brasil
-# </a> (2001-09-20, in Portuguese).
-# The official site for all decrees, including those not related to time, is
-# <a href="http://www.presidencia.gov.br/CCIVIL/decreto/principal_ano.htm">
-# Presidencia da Republica, Subchefia para Assuntos Juridicos, Decretos
-# </a> (in Portuguese).
+# </a>.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 # Decree <a href="http://pcdsh01.on.br/HV20466.htm">20,466</a> (1931-10-01)
@@ -548,7 +544,7 @@ Rule	Brazil	2000	only	-	Feb	27	 0:00	0	-
 # Decree <a href="http://pcdsh01.on.br/figuras/HV3916.gif">3,916</a>
 # (2001-09-13) reestablishes DST in AL, CE, MA, PB, PE, PI, RN, SE.
 Rule	Brazil	2000	2001	-	Oct	Sun>=8	 0:00	1:00	S
-Rule	Brazil	2001	max	-	Feb	Sun>=15	 0:00	0	-
+Rule	Brazil	2001	2006	-	Feb	Sun>=15	 0:00	0	-
 # Decree 4,399 (2002-10-01) repeals DST in AL, CE, MA, PB, PE, PI, RN, SE.
 # <a href="http://www.presidencia.gov.br/CCIVIL/decreto/2002/D4399.htm"></a>
 Rule	Brazil	2002	only	-	Nov	 3	 0:00	1:00	S
@@ -560,10 +556,14 @@ Rule	Brazil	2003	only	-	Oct	19	 0:00	1:00	S
 Rule	Brazil	2004	only	-	Nov	 2	 0:00	1:00	S
 # Decree <a href="http://pcdsh01.on.br/DecHV5539.gif">5,539</a> (2005-09-19),
 # adopted by the same states as before.
-Rule	Brazil	2005	max	-	Oct	Sun>=15	 0:00	1:00	S
+Rule	Brazil	2005	only	-	Oct	16	 0:00	1:00	S
+# Decree <a href="http://www.planalto.gov.br/ccivil_03/_Ato2004-2006/2006/Decreto/D5920.htm">5,920</a>
+# (2006-10-03), adopted by the same states as before.
+Rule	Brazil	2006	max	-	Nov	Sun>=1	 0:00	1:00	S
+Rule	Brazil	2007	max	-	Feb	lastSun	 0:00	0	-
 # The latest ruleset listed above says that the following states observe DST:
 # DF, ES, GO, MG, MS, MT, PR, RJ, RS, SC, SP.
-# For dates after mid-2006, the above rules with TO="max" are guesses
+# For dates after mid-2007, the above rules with TO="max" are guesses
 # and are quite possibly wrong, but are more likely than no DST at all.
 
 
@@ -1064,6 +1064,10 @@ Rule	Uruguay	2005	only	-	Mar	27	 2:00	0	-
 # 02:00 local time, official time in Uruguay will be at GMT -2.
 Rule	Uruguay	2005	only	-	Oct	 9	 2:00	1:00	S
 Rule	Uruguay	2006	only	-	Mar	12	 2:00	0	-
+# From Jesper Norgaard Welen (2006-09-06):
+# http://www.presidencia.gub.uy/_web/decretos/2006/09/CM%20210_08%2006%202006_00001.PDF
+Rule	Uruguay	2006	max	-	Oct	Sun>=1	 2:00	1:00	S
+Rule	Uruguay	2007	max	-	Mar	Sun>=8	 2:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Montevideo	-3:44:44 -	LMT	1898 Jun 28
 			-3:44:44 -	MMT	1920 May  1	# Montevideo MT
