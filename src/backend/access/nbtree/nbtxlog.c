@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.38 2006/10/04 00:29:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.39 2006/11/01 19:43:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,31 +22,41 @@
  * them manually if they are not seen in the WAL log during replay.  This
  * makes it safe for page insertion to be a multiple-WAL-action process.
  *
+ * Similarly, deletion of an only child page and deletion of its parent page
+ * form multiple WAL log entries, and we have to be prepared to follow through
+ * with the deletion if the log ends between.
+ *
  * The data structure is a simple linked list --- this should be good enough,
- * since we don't expect a page split to remain incomplete for long.
+ * since we don't expect a page split or multi deletion to remain incomplete
+ * for long.  In any case we need to respect the order of operations.
  */
-typedef struct bt_incomplete_split
+typedef struct bt_incomplete_action
 {
 	RelFileNode node;			/* the index */
+	bool		is_split;		/* T = pending split, F = pending delete */
+	/* these fields are for a split: */
+	bool		is_root;		/* we split the root */
 	BlockNumber leftblk;		/* left half of split */
 	BlockNumber rightblk;		/* right half of split */
-	bool		is_root;		/* we split the root */
-} bt_incomplete_split;
+	/* these fields are for a delete: */
+	BlockNumber delblk;			/* parent block to be deleted */
+} bt_incomplete_action;
 
-static List *incomplete_splits;
+static List *incomplete_actions;
 
 
 static void
 log_incomplete_split(RelFileNode node, BlockNumber leftblk,
 					 BlockNumber rightblk, bool is_root)
 {
-	bt_incomplete_split *split = palloc(sizeof(bt_incomplete_split));
+	bt_incomplete_action *action = palloc(sizeof(bt_incomplete_action));
 
-	split->node = node;
-	split->leftblk = leftblk;
-	split->rightblk = rightblk;
-	split->is_root = is_root;
-	incomplete_splits = lappend(incomplete_splits, split);
+	action->node = node;
+	action->is_split = true;
+	action->is_root = is_root;
+	action->leftblk = leftblk;
+	action->rightblk = rightblk;
+	incomplete_actions = lappend(incomplete_actions, action);
 }
 
 static void
@@ -54,17 +64,50 @@ forget_matching_split(RelFileNode node, BlockNumber downlink, bool is_root)
 {
 	ListCell   *l;
 
-	foreach(l, incomplete_splits)
+	foreach(l, incomplete_actions)
 	{
-		bt_incomplete_split *split = (bt_incomplete_split *) lfirst(l);
+		bt_incomplete_action *action = (bt_incomplete_action *) lfirst(l);
 
-		if (RelFileNodeEquals(node, split->node) &&
-			downlink == split->rightblk)
+		if (RelFileNodeEquals(node, action->node) &&
+			action->is_split &&
+			downlink == action->rightblk)
 		{
-			if (is_root != split->is_root)
+			if (is_root != action->is_root)
 				elog(LOG, "forget_matching_split: fishy is_root data (expected %d, got %d)",
-					 split->is_root, is_root);
-			incomplete_splits = list_delete_ptr(incomplete_splits, split);
+					 action->is_root, is_root);
+			incomplete_actions = list_delete_ptr(incomplete_actions, action);
+			pfree(action);
+			break;				/* need not look further */
+		}
+	}
+}
+
+static void
+log_incomplete_deletion(RelFileNode node, BlockNumber delblk)
+{
+	bt_incomplete_action *action = palloc(sizeof(bt_incomplete_action));
+
+	action->node = node;
+	action->is_split = false;
+	action->delblk = delblk;
+	incomplete_actions = lappend(incomplete_actions, action);
+}
+
+static void
+forget_matching_deletion(RelFileNode node, BlockNumber delblk)
+{
+	ListCell   *l;
+
+	foreach(l, incomplete_actions)
+	{
+		bt_incomplete_action *action = (bt_incomplete_action *) lfirst(l);
+
+		if (RelFileNodeEquals(node, action->node) &&
+			!action->is_split &&
+			delblk == action->delblk)
+		{
+			incomplete_actions = list_delete_ptr(incomplete_actions, action);
+			pfree(action);
 			break;				/* need not look further */
 		}
 	}
@@ -389,8 +432,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-btree_xlog_delete_page(bool ismeta,
-					   XLogRecPtr lsn, XLogRecord *record)
+btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_delete_page *xlrec = (xl_btree_delete_page *) XLogRecGetData(record);
 	Relation	reln;
@@ -427,6 +469,7 @@ btree_xlog_delete_page(bool ismeta,
 				poffset = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
 				if (poffset >= PageGetMaxOffsetNumber(page))
 				{
+					Assert(info == XLOG_BTREE_DELETE_PAGE_HALF);
 					Assert(poffset == P_FIRSTDATAKEY(pageop));
 					PageIndexTupleDelete(page, poffset);
 					pageop->btpo_flags |= BTP_HALF_DEAD;
@@ -437,6 +480,7 @@ btree_xlog_delete_page(bool ismeta,
 					IndexTuple	itup;
 					OffsetNumber nextoffset;
 
+					Assert(info != XLOG_BTREE_DELETE_PAGE_HALF);
 					itemid = PageGetItemId(page, poffset);
 					itup = (IndexTuple) PageGetItem(page, itemid);
 					ItemPointerSet(&(itup->t_tid), rightsib, P_HIKEY);
@@ -523,7 +567,7 @@ btree_xlog_delete_page(bool ismeta,
 	UnlockReleaseBuffer(buffer);
 
 	/* Update metapage if needed */
-	if (ismeta)
+	if (info == XLOG_BTREE_DELETE_PAGE_META)
 	{
 		xl_btree_metadata md;
 
@@ -533,6 +577,13 @@ btree_xlog_delete_page(bool ismeta,
 						 md.root, md.level,
 						 md.fastroot, md.fastlevel);
 	}
+
+	/* Forget any completed deletion */
+	forget_matching_deletion(xlrec->target.node, target);
+
+	/* If parent became half-dead, remember it for deletion */
+	if (info == XLOG_BTREE_DELETE_PAGE_HALF)
+		log_incomplete_deletion(xlrec->target.node, parent);
 }
 
 static void
@@ -620,10 +671,9 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 			btree_xlog_delete(lsn, record);
 			break;
 		case XLOG_BTREE_DELETE_PAGE:
-			btree_xlog_delete_page(false, lsn, record);
-			break;
 		case XLOG_BTREE_DELETE_PAGE_META:
-			btree_xlog_delete_page(true, lsn, record);
+		case XLOG_BTREE_DELETE_PAGE_HALF:
+			btree_xlog_delete_page(info, lsn, record);
 			break;
 		case XLOG_BTREE_NEWROOT:
 			btree_xlog_newroot(lsn, record);
@@ -724,6 +774,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 			}
 		case XLOG_BTREE_DELETE_PAGE:
 		case XLOG_BTREE_DELETE_PAGE_META:
+		case XLOG_BTREE_DELETE_PAGE_HALF:
 			{
 				xl_btree_delete_page *xlrec = (xl_btree_delete_page *) rec;
 
@@ -752,7 +803,7 @@ btree_desc(StringInfo buf, uint8 xl_info, char *rec)
 void
 btree_xlog_startup(void)
 {
-	incomplete_splits = NIL;
+	incomplete_actions = NIL;
 }
 
 void
@@ -760,45 +811,60 @@ btree_xlog_cleanup(void)
 {
 	ListCell   *l;
 
-	foreach(l, incomplete_splits)
+	foreach(l, incomplete_actions)
 	{
-		bt_incomplete_split *split = (bt_incomplete_split *) lfirst(l);
+		bt_incomplete_action *action = (bt_incomplete_action *) lfirst(l);
 		Relation	reln;
-		Buffer		lbuf,
-					rbuf;
-		Page		lpage,
-					rpage;
-		BTPageOpaque lpageop,
-					rpageop;
-		bool		is_only;
 
-		reln = XLogOpenRelation(split->node);
-		lbuf = XLogReadBuffer(reln, split->leftblk, false);
-		/* failure should be impossible because we wrote this page earlier */
-		if (!BufferIsValid(lbuf))
-			elog(PANIC, "btree_xlog_cleanup: left block unfound");
-		lpage = (Page) BufferGetPage(lbuf);
-		lpageop = (BTPageOpaque) PageGetSpecialPointer(lpage);
-		rbuf = XLogReadBuffer(reln, split->rightblk, false);
-		/* failure should be impossible because we wrote this page earlier */
-		if (!BufferIsValid(rbuf))
-			elog(PANIC, "btree_xlog_cleanup: right block unfound");
-		rpage = (Page) BufferGetPage(rbuf);
-		rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
+		reln = XLogOpenRelation(action->node);
+		if (action->is_split)
+		{
+			/* finish an incomplete split */
+			Buffer		lbuf,
+						rbuf;
+			Page		lpage,
+						rpage;
+			BTPageOpaque lpageop,
+						rpageop;
+			bool		is_only;
 
-		/* if the two pages are all of their level, it's a only-page split */
-		is_only = P_LEFTMOST(lpageop) && P_RIGHTMOST(rpageop);
+			lbuf = XLogReadBuffer(reln, action->leftblk, false);
+			/* failure is impossible because we wrote this page earlier */
+			if (!BufferIsValid(lbuf))
+				elog(PANIC, "btree_xlog_cleanup: left block unfound");
+			lpage = (Page) BufferGetPage(lbuf);
+			lpageop = (BTPageOpaque) PageGetSpecialPointer(lpage);
+			rbuf = XLogReadBuffer(reln, action->rightblk, false);
+			/* failure is impossible because we wrote this page earlier */
+			if (!BufferIsValid(rbuf))
+				elog(PANIC, "btree_xlog_cleanup: right block unfound");
+			rpage = (Page) BufferGetPage(rbuf);
+			rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
 
-		_bt_insert_parent(reln, lbuf, rbuf, NULL,
-						  split->is_root, is_only);
+			/* if the pages are all of their level, it's a only-page split */
+			is_only = P_LEFTMOST(lpageop) && P_RIGHTMOST(rpageop);
+
+			_bt_insert_parent(reln, lbuf, rbuf, NULL,
+							  action->is_root, is_only);
+		}
+		else
+		{
+			/* finish an incomplete deletion (of a half-dead page) */
+			Buffer		buf;
+
+			buf = XLogReadBuffer(reln, action->delblk, false);
+			if (BufferIsValid(buf))
+				if (_bt_pagedel(reln, buf, NULL, true) == 0)
+					elog(PANIC, "btree_xlog_cleanup: _bt_pagdel failed");
+		}
 	}
-	incomplete_splits = NIL;
+	incomplete_actions = NIL;
 }
 
 bool
 btree_safe_restartpoint(void)
 {
-	if (incomplete_splits)
+	if (incomplete_actions)
 		return false;
 	return true;
 }

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.152 2006/10/04 00:29:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.153 2006/11/01 19:43:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -804,8 +804,7 @@ restart:
 	if (blkno != orig_blkno)
 	{
 		if (_bt_page_recyclable(page) ||
-			P_ISDELETED(opaque) ||
-			(opaque->btpo_flags & BTP_HALF_DEAD) ||
+			P_IGNORE(opaque) ||
 			!P_ISLEAF(opaque) ||
 			opaque->btpo_cycleid != vstate->cycleid)
 		{
@@ -828,7 +827,7 @@ restart:
 		/* Already deleted, but can't recycle yet */
 		stats->pages_deleted++;
 	}
-	else if (opaque->btpo_flags & BTP_HALF_DEAD)
+	else if (P_ISHALFDEAD(opaque))
 	{
 		/* Half-dead, try to delete */
 		delete_now = true;
@@ -939,7 +938,7 @@ restart:
 		MemoryContextReset(vstate->pagedelcontext);
 		oldcontext = MemoryContextSwitchTo(vstate->pagedelcontext);
 
-		ndel = _bt_pagedel(rel, buf, info->vacuum_full);
+		ndel = _bt_pagedel(rel, buf, NULL, info->vacuum_full);
 
 		/* count only this page, else may double-count parent */
 		if (ndel)

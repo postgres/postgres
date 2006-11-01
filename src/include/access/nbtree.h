@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.105 2006/10/04 00:30:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.106 2006/11/01 19:43:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,6 +163,7 @@ typedef struct BTMetaPageData
 #define P_ISLEAF(opaque)		((opaque)->btpo_flags & BTP_LEAF)
 #define P_ISROOT(opaque)		((opaque)->btpo_flags & BTP_ROOT)
 #define P_ISDELETED(opaque)		((opaque)->btpo_flags & BTP_DELETED)
+#define P_ISHALFDEAD(opaque)	((opaque)->btpo_flags & BTP_HALF_DEAD)
 #define P_IGNORE(opaque)		((opaque)->btpo_flags & (BTP_DELETED|BTP_HALF_DEAD))
 #define P_HAS_GARBAGE(opaque)	((opaque)->btpo_flags & BTP_HAS_GARBAGE)
 
@@ -203,8 +204,10 @@ typedef struct BTMetaPageData
 #define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, new item on right */
 #define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuple */
 #define XLOG_BTREE_DELETE_PAGE	0x80	/* delete an entire page */
-#define XLOG_BTREE_DELETE_PAGE_META 0x90		/* same, plus update metapage */
+#define XLOG_BTREE_DELETE_PAGE_META 0x90		/* same, and update metapage */
 #define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
+#define XLOG_BTREE_DELETE_PAGE_HALF 0xB0		/* page deletion that makes
+												 * parent half-dead */
 
 /*
  * All that we need to find changed index tuple
@@ -501,7 +504,8 @@ extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems(Relation rel, Buffer buf,
 			 OffsetNumber *itemnos, int nitems);
-extern int	_bt_pagedel(Relation rel, Buffer buf, bool vacuum_full);
+extern int	_bt_pagedel(Relation rel, Buffer buf,
+						BTStack stack, bool vacuum_full);
 
 /*
  * prototypes for functions in nbtsearch.c

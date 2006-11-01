@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.13 2006/07/25 19:13:00 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.14 2006/11/01 19:43:17 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -201,26 +201,25 @@ When we delete the last remaining child of a parent page, we mark the
 parent page "half-dead" as part of the atomic update that deletes the
 child page.  This implicitly transfers the parent's key space to its right
 sibling (which it must have, since we never delete the overall-rightmost
-page of a level).  No future insertions into the parent level are allowed
-to insert keys into the half-dead page --- they must move right to its
-sibling, instead.  The parent remains empty and can be deleted in a
-separate atomic action.  (However, if it's the rightmost child of its own
-parent, it might have to stay half-dead for awhile, until it's also the
-only child.)
-
-Note that an empty leaf page is a valid tree state, but an empty interior
-page is not legal (an interior page must have children to delegate its
-key space to).  So an interior page *must* be marked half-dead as soon
-as its last child is deleted.
+page of a level).  Searches ignore the half-dead page and immediately move
+right.  We need not worry about insertions into a half-dead page --- insertions
+into upper tree levels happen only as a result of splits of child pages, and
+the half-dead page no longer has any children that could split.  Therefore
+the page stays empty even when we don't have lock on it, and we can complete
+its deletion in a second atomic action.
 
 The notion of a half-dead page means that the key space relationship between
 the half-dead page's level and its parent's level may be a little out of
 whack: key space that appears to belong to the half-dead page's parent on the
-parent level may really belong to its right sibling.  We can tolerate this,
-however, because insertions and deletions on upper tree levels are always
-done by reference to child page numbers, not keys.  The only cost is that
-searches may sometimes descend to the half-dead page and then have to move
-right, rather than going directly to the sibling page.
+parent level may really belong to its right sibling.  To prevent any possible
+problems, we hold lock on the deleted child page until we have finished
+deleting any now-half-dead parent page(s).  This prevents any insertions into
+the transferred keyspace until the operation is complete.  The reason for
+doing this is that a sufficiently large number of insertions into the
+transferred keyspace, resulting in multiple page splits, could propagate keys
+from that keyspace into the parent level, resulting in transiently
+out-of-order keys in that level.  It is thought that that wouldn't cause any
+serious problem, but it seems too risky to allow.
 
 A deleted page cannot be reclaimed immediately, since there may be other
 processes waiting to reference it (ie, search processes that just left the
