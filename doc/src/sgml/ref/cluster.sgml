@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.37 2006/10/31 01:52:31 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.38 2006/11/04 19:03:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -108,8 +108,8 @@ CLUSTER
     If you are requesting a range of indexed values from a table, or a
     single indexed value that has multiple rows that match,
     <command>CLUSTER</command> will help because once the index identifies the
-    heap page for the first row that matches, all other rows
-    that match are probably already on the same heap page,
+    table page for the first row that matches, all other rows
+    that match are probably already on the same table page,
     and so you save disk accesses and speed up the query.
    </para>
 
@@ -137,30 +137,33 @@ CLUSTER
 
    <para>
     There is another way to cluster data. The
-    <command>CLUSTER</command> command reorders the original table using
-    the ordering of the index you specify. This can be slow
-    on large tables because the rows are fetched from the heap
-    in index order, and if the heap table is unordered, the
+    <command>CLUSTER</command> command reorders the original table by
+    scanning it using the index you specify. This can be slow
+    on large tables because the rows are fetched from the table
+    in index order, and if the table is disordered, the
     entries are on random pages, so there is one disk page
-    retrieved for every row moved. (<productname>PostgreSQL</productname> has a cache,
-    but the majority of a big table will not fit in the cache.)
+    retrieved for every row moved. (<productname>PostgreSQL</productname> has
+    a cache, but the majority of a big table will not fit in the cache.)
     The other way to cluster a table is to use
 
 <programlisting>
 CREATE TABLE <replaceable class="parameter">newtable</replaceable> AS
-    SELECT <replaceable class="parameter">columnlist</replaceable> FROM <replaceable class="parameter">table</replaceable> ORDER BY <replaceable class="parameter">columnlist</replaceable>;
+    SELECT * FROM <replaceable class="parameter">table</replaceable> ORDER BY <replaceable class="parameter">columnlist</replaceable>;
 </programlisting>
 
-    which uses the <productname>PostgreSQL</productname> sorting code in 
-    the <literal>ORDER BY</literal> clause to create the desired order; this is usually much
-    faster than an index scan for
-    unordered data. You then drop the old table, use
+    which uses the <productname>PostgreSQL</productname> sorting code
+    to produce the desired order;
+    this is usually much faster than an index scan for disordered data.
+    Then you drop the old table, use
     <command>ALTER TABLE ... RENAME</command>
-    to rename <replaceable class="parameter">newtable</replaceable> to the old name, and
-    recreate the table's indexes. However, this approach does not preserve
+    to rename <replaceable class="parameter">newtable</replaceable> to the
+    old name, and recreate the table's indexes.
+    The big disadvantage of this approach is that it does not preserve
     OIDs, constraints, foreign key relationships, granted privileges, and
     other ancillary properties of the table &mdash; all such items must be
-    manually recreated.
+    manually recreated.  Another disadvantage is that this way requires a sort
+    temporary file about the same size as the table itself, so peak disk usage
+    is about three times the table size instead of twice the table size.
    </para>
  </refsect1>
 
