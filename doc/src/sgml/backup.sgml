@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.92 2006/10/30 00:08:02 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.93 2006/11/04 18:20:27 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -518,8 +518,10 @@ tar -cf backup.tar /usr/local/pgsql/data
     linkend="guc-archive-command"> configuration parameter, which in practice
     will always be placed in the <filename>postgresql.conf</filename> file.
     In this string,
-    any <literal>%p</> is replaced by the absolute path of the file to
+    any <literal>%p</> is replaced by the path name of the file to
     archive, while any <literal>%f</> is replaced by the file name only.
+    (The path name is relative to the working directory of the server,
+    i.e., the cluster's data directory.)
     Write <literal>%%</> if you need to embed an actual <literal>%</>
     character in the command.  The simplest useful command is something
     like
@@ -915,7 +917,9 @@ SELECT pg_stop_backup();
     WAL file segments.  Like the <varname>archive_command</>, this is
     a shell command string.  It may contain <literal>%f</>, which is
     replaced by the name of the desired log file, and <literal>%p</>,
-    which is replaced by the absolute path to copy the log file to.
+    which is replaced by the path name to copy the log file to.
+    (The path name is relative to the working directory of the server,
+    i.e., the cluster's data directory.)
     Write <literal>%%</> if you need to embed an actual <literal>%</>
     character in the command.  The simplest useful command is
     something like
@@ -1003,8 +1007,10 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
         the WAL file series. This parameter is required.
         Any <literal>%f</> in the string is
         replaced by the name of the file to retrieve from the archive,
-        and any <literal>%p</> is replaced by the absolute path to copy
+        and any <literal>%p</> is replaced by the path name to copy
         it to on the server.
+        (The path name is relative to the working directory of the server,
+        i.e., the cluster's data directory.)
         Write <literal>%%</> to embed an actual <literal>%</> character
         in the command. 
        </para>
