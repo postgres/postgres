@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.36.2.6 2006/05/21 20:11:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.36.2.7 2006/11/04 18:20:40 tgl Exp $
 -->
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1496,9 +1496,11 @@ SET ENABLE_SEQSCAN TO OFF;
         The shell command to execute to archive a completed segment of
         the WAL file series. If this is an empty string (the default),
         WAL archiving is disabled. Any <literal>%p</> in the string is
-        replaced by the absolute path of the file to archive, and any
-        <literal>%f</> is replaced by the file name only. Use
-        <literal>%%</> to embed an actual <literal>%</> character in the
+        replaced by the path name of the file to archive, and any
+        <literal>%f</> is replaced by the file name only.
+        (The path name is relative to the working directory of the server,
+        i.e., the cluster's data directory.)
+        Use <literal>%%</> to embed an actual <literal>%</> character in the
         command. For more information see <xref
         linkend="backup-archiving-wal">. This option can only be set at
         server start or in the <filename>postgresql.conf</filename>
