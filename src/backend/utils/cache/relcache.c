@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.249 2006/10/04 00:30:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.250 2006/11/05 23:40:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3585,4 +3585,26 @@ RelationCacheInitFileInvalidate(bool beforeSend)
 		unlink(initfilename);
 		LWLockRelease(RelCacheInitLock);
 	}
+}
+
+/*
+ * Remove the init file for a given database during postmaster startup.
+ *
+ * We used to keep the init file across restarts, but that is unsafe in PITR
+ * scenarios, and even in simple crash-recovery cases there are windows for
+ * the init file to become out-of-sync with the database.  So now we just
+ * remove it during startup and expect the first backend launch to rebuild it.
+ * Of course, this has to happen in each database of the cluster.  For
+ * simplicity this is driven by flatfiles.c, which has to scan pg_database
+ * anyway.
+ */
+void
+RelationCacheInitFileRemove(const char *dbPath)
+{
+	char		initfilename[MAXPGPATH];
+
+	snprintf(initfilename, sizeof(initfilename), "%s/%s",
+			 dbPath, RELCACHE_INIT_FILENAME);
+	unlink(initfilename);
+	/* ignore any error, since it might not be there at all */
 }
