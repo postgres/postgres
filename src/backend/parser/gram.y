@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.567 2006/10/13 21:43:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.568 2006/11/05 22:42:09 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5158,7 +5158,7 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 					n->vacuum = true;
 					n->analyze = false;
 					n->full = $2;
-					n->freeze = $3;
+					n->freeze_min_age = $3 ? 0 : -1;
 					n->verbose = $4;
 					n->relation = NULL;
 					n->va_cols = NIL;
@@ -5170,7 +5170,7 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 					n->vacuum = true;
 					n->analyze = false;
 					n->full = $2;
-					n->freeze = $3;
+					n->freeze_min_age = $3 ? 0 : -1;
 					n->verbose = $4;
 					n->relation = $5;
 					n->va_cols = NIL;
@@ -5181,7 +5181,7 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
 					VacuumStmt *n = (VacuumStmt *) $5;
 					n->vacuum = true;
 					n->full = $2;
-					n->freeze = $3;
+					n->freeze_min_age = $3 ? 0 : -1;
 					n->verbose |= $4;
 					$$ = (Node *)n;
 				}
@@ -5194,7 +5194,7 @@ AnalyzeStmt:
 					n->vacuum = false;
 					n->analyze = true;
 					n->full = false;
-					n->freeze = false;
+					n->freeze_min_age = -1;
 					n->verbose = $2;
 					n->relation = NULL;
 					n->va_cols = NIL;
@@ -5206,7 +5206,7 @@ AnalyzeStmt:
 					n->vacuum = false;
 					n->analyze = true;
 					n->full = false;
-					n->freeze = false;
+					n->freeze_min_age = -1;
 					n->verbose = $2;
 					n->relation = $3;
 					n->va_cols = $4;

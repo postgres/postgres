@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.98 2006/10/04 00:30:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.99 2006/11/05 22:42:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1099,9 +1099,11 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin,
 	{
 		/*
 		 * "Deleting" xact really only locked it, so the tuple is live in any
-		 * case.  However, we must make sure that either XMAX_COMMITTED or
-		 * XMAX_INVALID gets set once the xact is gone; otherwise it is unsafe
-		 * to recycle CLOG status after vacuuming.
+		 * case.  However, we should make sure that either XMAX_COMMITTED or
+		 * XMAX_INVALID gets set once the xact is gone, to reduce the costs
+		 * of examining the tuple for future xacts.  Also, marking dead
+		 * MultiXacts as invalid here provides defense against MultiXactId
+		 * wraparound (see also comments in heap_freeze_tuple()).
 		 */
 		if (!(tuple->t_infomask & HEAP_XMAX_COMMITTED))
 		{

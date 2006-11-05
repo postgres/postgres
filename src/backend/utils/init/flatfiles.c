@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.21 2006/07/14 14:52:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.22 2006/11/05 22:42:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ name_okay(const char *str)
 /*
  * write_database_file: update the flat database file
  *
- * A side effect is to determine the oldest database's datminxid
+ * A side effect is to determine the oldest database's datfrozenxid
  * so we can set or update the XID wrap limit.
  */
 static void
@@ -177,7 +177,7 @@ write_database_file(Relation drel)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	NameData	oldest_datname;
-	TransactionId oldest_datminxid = InvalidTransactionId;
+	TransactionId oldest_datfrozenxid = InvalidTransactionId;
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
@@ -208,27 +208,23 @@ write_database_file(Relation drel)
 		char	   *datname;
 		Oid			datoid;
 		Oid			dattablespace;
-		TransactionId datminxid,
-					datvacuumxid;
+		TransactionId datfrozenxid;
 
 		datname = NameStr(dbform->datname);
 		datoid = HeapTupleGetOid(tuple);
 		dattablespace = dbform->dattablespace;
-		datminxid = dbform->datminxid;
-		datvacuumxid = dbform->datvacuumxid;
+		datfrozenxid = dbform->datfrozenxid;
 
 		/*
-		 * Identify the oldest datminxid, ignoring databases that are not
-		 * connectable (we assume they are safely frozen).	This must match
+		 * Identify the oldest datfrozenxid.  This must match
 		 * the logic in vac_truncate_clog() in vacuum.c.
 		 */
-		if (dbform->datallowconn &&
-			TransactionIdIsNormal(datminxid))
+		if (TransactionIdIsNormal(datfrozenxid))
 		{
-			if (oldest_datminxid == InvalidTransactionId ||
-				TransactionIdPrecedes(datminxid, oldest_datminxid))
+			if (oldest_datfrozenxid == InvalidTransactionId ||
+				TransactionIdPrecedes(datfrozenxid, oldest_datfrozenxid))
 			{
-				oldest_datminxid = datminxid;
+				oldest_datfrozenxid = datfrozenxid;
 				namestrcpy(&oldest_datname, datname);
 			}
 		}
@@ -244,14 +240,14 @@ write_database_file(Relation drel)
 		}
 
 		/*
-		 * The file format is: "dbname" oid tablespace minxid vacuumxid
+		 * The file format is: "dbname" oid tablespace frozenxid
 		 *
 		 * The xids are not needed for backend startup, but are of use to
 		 * autovacuum, and might also be helpful for forensic purposes.
 		 */
 		fputs_quote(datname, fp);
-		fprintf(fp, " %u %u %u %u\n",
-				datoid, dattablespace, datminxid, datvacuumxid);
+		fprintf(fp, " %u %u %u\n",
+				datoid, dattablespace, datfrozenxid);
 	}
 	heap_endscan(scan);
 
@@ -272,10 +268,10 @@ write_database_file(Relation drel)
 						tempname, filename)));
 
 	/*
-	 * Set the transaction ID wrap limit using the oldest datminxid
+	 * Set the transaction ID wrap limit using the oldest datfrozenxid
 	 */
-	if (oldest_datminxid != InvalidTransactionId)
-		SetTransactionIdLimit(oldest_datminxid, &oldest_datname);
+	if (oldest_datfrozenxid != InvalidTransactionId)
+		SetTransactionIdLimit(oldest_datfrozenxid, &oldest_datname);
 }
 
 

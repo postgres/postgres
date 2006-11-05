@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.42 2006/10/31 01:52:31 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.43 2006/11/05 22:42:07 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,8 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
-VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -62,21 +62,6 @@ VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">ta
    blocks.  This form is much slower and requires an exclusive lock on each
    table while it is being processed.
   </para>
-
-  <para>
-   <literal>FREEZE</literal> is a special-purpose option that
-   causes tuples to be marked <quote>frozen</quote> as soon as possible,
-   rather than waiting until they are quite old.  If this is done when there
-   are no other open transactions in the same database, then it is guaranteed
-   that all tuples in the database are <quote>frozen</> and will not be
-   subject to transaction ID wraparound problems, no matter how long the
-   database is left unvacuumed.
-   <literal>FREEZE</literal> is not recommended for routine use.  Its only
-   intended usage is in connection with preparation of user-defined template
-   databases, or other databases that are completely read-only and will not
-   receive routine maintenance <command>VACUUM</> operations.
-   See <xref linkend="maintenance"> for details.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -98,6 +83,11 @@ VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">ta
     <listitem>
      <para>
       Selects aggressive <quote>freezing</quote> of tuples.
+      Specifying <literal>FREEZE</literal> is equivalent to performing
+      <command>VACUUM</command> with the
+      <xref linkend="guc-vacuum-freeze-min-age"> parameter
+      set to zero.  The <literal>FREEZE</literal> option is deprecated and
+      will be removed in a future release; set the parameter instead.
      </para>
     </listitem>
    </varlistentry>
@@ -184,6 +174,13 @@ VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">ta
     which can cause poor performance for other active sessions.  Therefore,
     it is sometimes advisable to use the cost-based vacuum delay feature.
     See <xref linkend="runtime-config-resource-vacuum-cost"> for details.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> includes an <quote>autovacuum</>
+    facility which can automate routine vacuum maintenance.  For more
+    information about automatic and manual vacuuming, see
+    <xref linkend="routine-vacuuming">.
    </para>
  </refsect1>
 

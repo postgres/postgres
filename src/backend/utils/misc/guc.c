@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.357 2006/10/19 18:32:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.358 2006/11/05 22:42:09 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1331,6 +1331,15 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"vacuum_freeze_min_age", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Minimum age at which VACUUM should freeze a table row."),
+			NULL
+		},
+		&vacuum_freeze_min_age,
+		100000000, 0, 1000000000, NULL, NULL
+	},
+
+	{
 		{"max_fsm_relations", PGC_POSTMASTER, RESOURCES_FSM,
 			gettext_noop("Sets the maximum number of tables and indexes for which free space is tracked."),
 			NULL
@@ -1575,6 +1584,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_anl_thresh,
 		250, 0, INT_MAX, NULL, NULL
+	},
+	{
+		/* see varsup.c for why this is PGC_POSTMASTER not PGC_SIGHUP */
+		{"autovacuum_freeze_max_age", PGC_POSTMASTER, AUTOVACUUM,
+			gettext_noop("Age at which to autovacuum a table to prevent transacion ID wraparound."),
+			NULL
+		},
+		&autovacuum_freeze_max_age,
+		200000000, 100000000, 2000000000, NULL, NULL
 	},
 
 	{

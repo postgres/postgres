@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.18 2006/10/04 00:29:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.19 2006/11/05 22:42:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,9 @@ TransactionIdIsInProgress(TransactionId xid)
 
 	/*
 	 * Don't bother checking a transaction older than RecentXmin; it could not
-	 * possibly still be running.
+	 * possibly still be running.  (Note: in particular, this guarantees
+	 * that we reject InvalidTransactionId, FrozenTransactionId, etc as
+	 * not running.)
 	 */
 	if (TransactionIdPrecedes(xid, RecentXmin))
 	{

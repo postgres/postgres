@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.156 2006/10/04 00:29:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.157 2006/11/05 22:42:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1004,16 +1004,14 @@ load_hba(void)
  *	dbname: gets database name (must be of size NAMEDATALEN bytes)
  *	dboid: gets database OID
  *	dbtablespace: gets database's default tablespace's OID
- *	dbminxid: gets database's minimum XID
- *	dbvacuumxid: gets database's vacuum XID
+ *	dbfrozenxid: gets database's frozen XID
  *
  * This is not much related to the other functions in hba.c, but we put it
  * here because it uses the next_token() infrastructure.
  */
 bool
 read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
-					  Oid *dbtablespace, TransactionId *dbminxid,
-					  TransactionId *dbvacuumxid)
+					  Oid *dbtablespace, TransactionId *dbfrozenxid)
 {
 	char		buf[MAX_TOKEN];
 
@@ -1035,11 +1033,7 @@ read_pg_database_line(FILE *fp, char *dbname, Oid *dboid,
 	next_token(fp, buf, sizeof(buf));
 	if (!isdigit((unsigned char) buf[0]))
 		elog(FATAL, "bad data in flat pg_database file");
-	*dbminxid = atoxid(buf);
-	next_token(fp, buf, sizeof(buf));
-	if (!isdigit((unsigned char) buf[0]))
-		elog(FATAL, "bad data in flat pg_database file");
-	*dbvacuumxid = atoxid(buf);
+	*dbfrozenxid = atoxid(buf);
 	/* expect EOL next */
 	if (next_token(fp, buf, sizeof(buf)))
 		elog(FATAL, "bad data in flat pg_database file");

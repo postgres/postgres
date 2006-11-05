@@ -3,7 +3,7 @@
  *
  * Resource managers definition
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/rmgr.c,v 1.24 2006/08/07 16:57:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/rmgr.c,v 1.25 2006/11/05 22:42:07 tgl Exp $
  */
 #include "postgres.h"
 
@@ -32,7 +32,7 @@ const RmgrData RmgrTable[RM_MAX_ID + 1] = {
 	{"MultiXact", multixact_redo, multixact_desc, NULL, NULL, NULL},
 	{"Reserved 7", NULL, NULL, NULL, NULL, NULL},
 	{"Reserved 8", NULL, NULL, NULL, NULL, NULL},
-	{"Reserved 9", NULL, NULL, NULL, NULL, NULL},
+	{"Heap2", heap2_redo, heap2_desc, NULL, NULL, NULL},
 	{"Heap", heap_redo, heap_desc, NULL, NULL, NULL},
 	{"Btree", btree_redo, btree_desc, btree_xlog_startup, btree_xlog_cleanup, btree_safe_restartpoint},
 	{"Hash", hash_redo, hash_desc, NULL, NULL, NULL},

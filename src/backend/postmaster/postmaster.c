@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.500 2006/10/04 00:29:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.501 2006/11/05 22:42:09 tgl Exp $
  *
  * NOTES
  *
@@ -216,6 +216,8 @@ static bool FatalError = false; /* T if recovering from backend crash */
 
 bool		ClientAuthInProgress = false;		/* T during new-client
 												 * authentication */
+
+static bool force_autovac = false; /* received START_AUTOVAC signal */
 
 /*
  * State for assigning random salts and cancel keys.
@@ -1231,9 +1233,13 @@ ServerLoop(void)
 		 * (It'll die relatively quickly.)  We check that it's not started too
 		 * frequently in autovac_start.
 		 */
-		if (AutoVacuumingActive() && AutoVacPID == 0 &&
+		if ((AutoVacuumingActive() || force_autovac) && AutoVacPID == 0 &&
 			StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
+		{
 			AutoVacPID = autovac_start();
+			if (AutoVacPID != 0)
+				force_autovac = false;	/* signal successfully processed */
+		}
 
 		/* If we have lost the archiver, try to start a new one */
 		if (XLogArchivingActive() && PgArchPID == 0 &&
@@ -2100,9 +2106,7 @@ reaper(SIGNAL_ARGS)
 		/*
 		 * Was it the autovacuum process?  Normal exit can be ignored; we'll
 		 * start a new one at the next iteration of the postmaster's main
-		 * loop, if necessary.
-		 *
-		 * An unexpected exit must crash the system.
+		 * loop, if necessary.  An unexpected exit is treated as a crash.
 		 */
 		if (AutoVacPID != 0 && pid == AutoVacPID)
 		{
@@ -3424,12 +3428,16 @@ sigusr1_handler(SIGNAL_ARGS)
 
 	if (CheckPostmasterSignal(PMSIGNAL_START_AUTOVAC))
 	{
-		/* start one iteration of the autovacuum daemon */
-		if (Shutdown == NoShutdown)
-		{
-			Assert(!AutoVacuumingActive());
-			AutoVacPID = autovac_start();
-		}
+		/*
+		 * Start one iteration of the autovacuum daemon, even if autovacuuming
+		 * is nominally not enabled.  This is so we can have an active defense
+		 * against transaction ID wraparound.  We set a flag for the main loop
+		 * to do it rather than trying to do it here --- this is because the
+		 * autovac process itself may send the signal, and we want to handle
+		 * that by launching another iteration as soon as the current one
+		 * completes.
+		 */
+		force_autovac = true;
 	}
 
 	PG_SETMASK(&UnBlockSig);

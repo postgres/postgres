@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.186 2006/10/18 22:44:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.187 2006/11/05 22:42:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,7 @@
 static bool get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
-			Oid *dbLastSysOidP,
-			TransactionId *dbVacuumXidP, TransactionId *dbMinXidP,
+			Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
 			Oid *dbTablespace);
 static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
@@ -75,8 +74,7 @@ createdb(const CreatedbStmt *stmt)
 	bool		src_istemplate;
 	bool		src_allowconn;
 	Oid			src_lastsysoid;
-	TransactionId src_vacuumxid;
-	TransactionId src_minxid;
+	TransactionId src_frozenxid;
 	Oid			src_deftablespace;
 	volatile Oid dst_deftablespace;
 	Relation	pg_database_rel;
@@ -228,7 +226,7 @@ createdb(const CreatedbStmt *stmt)
 	if (!get_db_info(dbtemplate, ShareLock,
 					 &src_dboid, &src_owner, &src_encoding,
 					 &src_istemplate, &src_allowconn, &src_lastsysoid,
-					 &src_vacuumxid, &src_minxid, &src_deftablespace))
+					 &src_frozenxid, &src_deftablespace))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("template database \"%s\" does not exist",
@@ -366,8 +364,7 @@ createdb(const CreatedbStmt *stmt)
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(true);
 	new_record[Anum_pg_database_datconnlimit - 1] = Int32GetDatum(dbconnlimit);
 	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
-	new_record[Anum_pg_database_datvacuumxid - 1] = TransactionIdGetDatum(src_vacuumxid);
-	new_record[Anum_pg_database_datminxid - 1] = TransactionIdGetDatum(src_minxid);
+	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
 	new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_deftablespace);
 
 	/*
@@ -565,7 +562,7 @@ dropdb(const char *dbname, bool missing_ok)
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(dbname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 &db_istemplate, NULL, NULL, NULL, NULL, NULL))
+					 &db_istemplate, NULL, NULL, NULL, NULL))
 	{
 		if (!missing_ok)
 		{
@@ -689,7 +686,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	rel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	if (!get_db_info(oldname, AccessExclusiveLock, &db_id, NULL, NULL,
-					 NULL, NULL, NULL, NULL, NULL, NULL))
+					 NULL, NULL, NULL, NULL, NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", oldname)));
@@ -1067,8 +1064,7 @@ static bool
 get_db_info(const char *name, LOCKMODE lockmode,
 			Oid *dbIdP, Oid *ownerIdP,
 			int *encodingP, bool *dbIsTemplateP, bool *dbAllowConnP,
-			Oid *dbLastSysOidP,
-			TransactionId *dbVacuumXidP, TransactionId *dbMinXidP,
+			Oid *dbLastSysOidP, TransactionId *dbFrozenXidP,
 			Oid *dbTablespace)
 {
 	bool		result = false;
@@ -1154,12 +1150,9 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				/* last system OID used in database */
 				if (dbLastSysOidP)
 					*dbLastSysOidP = dbform->datlastsysoid;
-				/* limit of vacuumed XIDs */
-				if (dbVacuumXidP)
-					*dbVacuumXidP = dbform->datvacuumxid;
-				/* limit of min XIDs */
-				if (dbMinXidP)
-					*dbMinXidP = dbform->datminxid;
+				/* limit of frozen XIDs */
+				if (dbFrozenXidP)
+					*dbFrozenXidP = dbform->datfrozenxid;
 				/* default tablespace for this database */
 				if (dbTablespace)
 					*dbTablespace = dbform->dattablespace;

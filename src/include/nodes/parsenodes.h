@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.333 2006/10/13 21:43:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.334 2006/11/05 22:42:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1756,8 +1756,8 @@ typedef struct VacuumStmt
 	bool		vacuum;			/* do VACUUM step */
 	bool		full;			/* do FULL (non-concurrent) vacuum */
 	bool		analyze;		/* do ANALYZE step */
-	bool		freeze;			/* early-freeze option */
 	bool		verbose;		/* print progress info */
+	int			freeze_min_age;	/* min freeze age, or -1 to use default */
 	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 } VacuumStmt;

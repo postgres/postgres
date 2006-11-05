@@ -373,6 +373,8 @@
 					# vacuum
 #autovacuum_analyze_scale_factor = 0.1	# fraction of rel size before 
 					# analyze
+#autovacuum_freeze_max_age = 200000000	# maximum XID age before forced vacuum
+					# (change requires restart)
 #autovacuum_vacuum_cost_delay = -1	# default vacuum cost delay for 
 					# autovacuum, -1 means use 
 					# vacuum_cost_delay
@@ -394,6 +396,7 @@
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
 #statement_timeout = 0			# 0 is disabled
+#vacuum_freeze_min_age = 100000000
 
 # - Locale and Formatting -
 

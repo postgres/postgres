@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.93 2006/11/04 18:20:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.94 2006/11/05 22:42:07 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3217,6 +3217,28 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-autovacuum-freeze-max-age" xreflabel="autovacuum_freeze_max_age">
+      <term><varname>autovacuum_freeze_max_age</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_freeze_max_age</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the maximum age (in transactions) that a table's
+        <structname>pg_class</>.<structfield>relfrozenxid</> field can
+        attain before a <command>VACUUM</> operation is forced to prevent
+        transaction ID wraparound within the table.  Note that the system
+        will launch autovacuum processes to prevent wraparound even when
+        autovacuum is otherwise disabled.
+        The default is 200000000 (200 million).
+        This parameter can only be set at server start, but the setting
+        can be reduced for individual tables by entries in
+        <structname>pg_autovacuum</>.
+        For more information see <xref linkend="vacuum-for-wraparound">.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-autovacuum-vacuum-cost-delay" xreflabel="autovacuum_vacuum_cost_delay">
       <term><varname>autovacuum_vacuum_cost_delay</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -3427,7 +3449,7 @@ SELECT * FROM parent WHERE key = 2400;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-statement-timeout" xreflabel="statement_timeout">
       <term><varname>statement_timeout</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -3441,6 +3463,26 @@ SELECT * FROM parent WHERE key = 2400;
         <literal>ERROR</> or lower, the statement that timed out will also be
         logged.  A value of zero (the default) turns off the 
         limitation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-vacuum-freeze-min-age" xreflabel="vacuum_freeze_min_age">
+      <term><varname>vacuum_freeze_min_age</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>vacuum_freeze_min_age</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the cutoff age (in transactions) that <command>VACUUM</>
+        should use to decide whether to replace transaction IDs with
+        <literal>FrozenXID</> while scanning a table.
+        The default is 100000000 (100 million).  Although users can set this
+        value anywhere from zero to 1000000000, <command>VACUUM</> will
+        silently limit the effective value to half the value of <xref
+        linkend="guc-autovacuum-freeze-max-age">, so that there is not an
+        unreasonably short time between forced autovacuums.
+        For more information see <xref linkend="vacuum-for-wraparound">.
        </para>
       </listitem>
      </varlistentry>

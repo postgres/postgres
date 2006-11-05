@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.48 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.49 2006/11/05 22:42:07 tgl Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -247,19 +247,6 @@ createdb -T template0 <replaceable>dbname</>
    database is normally marked <literal>datallowconn = false</> to prevent modification of it.
    Both <literal>template0</literal> and <literal>template1</literal>
    should always be marked with <literal>datistemplate = true</>.
-  </para>
-
-  <para>
-   After preparing a template database, or making any changes to one,
-   it is a good idea to perform <command>VACUUM FREEZE</> in that
-   database.  If this is done when there are no other open transactions
-   in the same database, then it is guaranteed that all rows in the
-   database are <quote>frozen</> and will not be subject to transaction
-   ID wraparound problems.  This is particularly important for a database
-   that will have <literal>datallowconn</literal> set to false, since it
-   will be impossible to do routine maintenance <command>VACUUM</> in
-   such a database.
-   See <xref linkend="vacuum-for-wraparound"> for more information.
   </para>
 
   <note>

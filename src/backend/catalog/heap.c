@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.313 2006/10/04 00:29:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.314 2006/11/05 22:42:08 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -595,8 +595,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_relhaspkey - 1] = BoolGetDatum(rd_rel->relhaspkey);
 	values[Anum_pg_class_relhasrules - 1] = BoolGetDatum(rd_rel->relhasrules);
 	values[Anum_pg_class_relhassubclass - 1] = BoolGetDatum(rd_rel->relhassubclass);
-	values[Anum_pg_class_relminxid - 1] = TransactionIdGetDatum(rd_rel->relminxid);
-	values[Anum_pg_class_relvacuumxid - 1] = TransactionIdGetDatum(rd_rel->relvacuumxid);
+	values[Anum_pg_class_relfrozenxid - 1] = TransactionIdGetDatum(rd_rel->relfrozenxid);
 	/* start out with empty permissions */
 	nulls[Anum_pg_class_relacl - 1] = 'n';
 	if (reloptions != (Datum) 0)
@@ -644,35 +643,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 */
 	new_rel_reltup = new_rel_desc->rd_rel;
 
-	/* Initialize relminxid and relvacuumxid */
-	if (relkind == RELKIND_RELATION ||
-		relkind == RELKIND_TOASTVALUE)
-	{
-		/*
-		 * Only real tables have Xids stored in them; initialize our known
-		 * value to the minimum Xid that could put tuples in the new table.
-		 */
-		if (!IsBootstrapProcessingMode())
-		{
-			new_rel_reltup->relminxid = RecentXmin;
-			new_rel_reltup->relvacuumxid = RecentXmin;
-		}
-		else
-		{
-			new_rel_reltup->relminxid = FirstNormalTransactionId;
-			new_rel_reltup->relvacuumxid = FirstNormalTransactionId;
-		}
-	}
-	else
-	{
-		/*
-		 * Other relations will not have Xids in them, so set the initial
-		 * value to InvalidTransactionId.
-		 */
-		new_rel_reltup->relminxid = InvalidTransactionId;
-		new_rel_reltup->relvacuumxid = InvalidTransactionId;
-	}
-
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
@@ -692,6 +662,31 @@ AddNewRelationTuple(Relation pg_class_desc,
 			new_rel_reltup->relpages = 0;
 			new_rel_reltup->reltuples = 0;
 			break;
+	}
+
+	/* Initialize relfrozenxid */
+	if (relkind == RELKIND_RELATION ||
+		relkind == RELKIND_TOASTVALUE)
+	{
+		/*
+		 * Initialize to the minimum XID that could put tuples in the table.
+		 * We know that no xacts older than RecentXmin are still running,
+		 * so that will do.
+		 */
+		if (!IsBootstrapProcessingMode())
+			new_rel_reltup->relfrozenxid = RecentXmin;
+		else
+			new_rel_reltup->relfrozenxid = FirstNormalTransactionId;
+	}
+	else
+	{
+		/*
+		 * Other relation types will not contain XIDs, so set relfrozenxid
+		 * to InvalidTransactionId.  (Note: a sequence does contain a tuple,
+		 * but we force its xmin to be FrozenTransactionId always; see
+		 * commands/sequence.c.)
+		 */
+		new_rel_reltup->relfrozenxid = InvalidTransactionId;
 	}
 
 	new_rel_reltup->relowner = relowner;

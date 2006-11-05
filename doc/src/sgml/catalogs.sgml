@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.135 2006/10/23 18:10:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.136 2006/11/05 22:42:06 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1241,6 +1241,20 @@
       <entry></entry>
       <entry>Custom <varname>vacuum_cost_limit</> parameter</entry>
      </row>
+
+     <row>
+      <entry><structfield>freeze_min_age</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Custom <varname>vacuum_freeze_min_age</> parameter</entry>
+     </row>
+
+     <row>
+      <entry><structfield>freeze_max_age</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Custom <varname>autovacuum_freeze_max_age</> parameter</entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
@@ -1259,6 +1273,17 @@
   </para>
 
   <para>
+   Also, the autovacuum daemon will perform a <command>VACUUM</> operation
+   to prevent transaction ID wraparound if the table's
+   <structname>pg_class</>.<structfield>relfrozenxid</> field attains an age
+   of more than <structfield>freeze_max_age</> transactions, whether the table
+   has been changed or not.  The system will launch autovacuum to perform
+   such <command>VACUUM</>s even if autovacuum is otherwise disabled.
+   See <xref linkend="vacuum-for-wraparound"> for more about wraparound
+   prevention.
+  </para>
+
+  <para>
    Any of the numerical fields can contain <literal>-1</> (or indeed
    any negative value) to indicate that the system-wide default should
    be used for this particular value.  Observe that the
@@ -1266,6 +1291,10 @@
    <varname>autovacuum_vacuum_cost_delay</> configuration parameter,
    or from <varname>vacuum_cost_delay</> if the former is set to a negative
    value.  The same applies to <structfield>vac_cost_limit</>.
+   Also, autovacuum will ignore attempts to set a per-table
+   freeze_max_age larger than the system-wide setting (it can only be set
+   smaller), and the freeze_min_age value will be limited to half the
+   system-wide <varname>autovacuum_freeze_max_age</> setting.
   </para>
 
  </sect1>
@@ -1633,26 +1662,15 @@
      </row>
 
      <row>
-      <entry><structfield>relminxid</structfield></entry>
+      <entry><structfield>relfrozenxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       The minimum transaction ID present in all rows in this table.  This
-       value is used to determine the database-global
-       <structname>pg_database</>.<structfield>datminxid</> value.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>relvacuumxid</structfield></entry>
-      <entry><type>xid</type></entry>
-      <entry></entry>
-      <entry>
-       The transaction ID that was used as cleaning point as of the last vacuum
-       operation.  All rows inserted, updated or deleted in this table by
-       transactions whose IDs are below this one have been marked as known good
-       or deleted.  This is used to determine the database-global
-       <structname>pg_database</>.<structfield>datvacuumxid</> value.
+       All transaction IDs before this one have been replaced with a permanent
+       (<quote>frozen</>) transaction ID in this table.  This is used to track
+       whether the table needs to be vacuumed in order to prevent transaction
+       ID wraparound or to allow <literal>pg_clog</> to be shrunk.  Zero
+       (<symbol>InvalidTransactionId</symbol>) if the relation is not a table.
       </entry>
      </row>
 
@@ -2035,31 +2053,16 @@
      </row>
 
      <row>
-      <entry><structfield>datvacuumxid</structfield></entry>
+      <entry><structfield>datfrozenxid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       The transaction ID that was used as cleaning point as of the last vacuum
-       operation.  All rows inserted or deleted by transaction IDs before this one
-       have been marked as known good or deleted.  This
-       is used to determine when commit-log space can be recycled.
-       If <symbol>InvalidTransactionId</symbol>, then the minimum is unknown and can be
-       determined by scanning <structname>pg_class</>.<structfield>relvacuumxid</>.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>datminxid</structfield></entry>
-      <entry><type>xid</type></entry>
-      <entry></entry>
-      <entry>
-       The minimum transaction ID present in all tables in this database.
-       All rows inserted by transaction IDs before this one have been
-       relabeled with a permanent (<quote>frozen</>) transaction ID in this
-       database.  This is useful to check whether a database must be
-       vacuumed soon to avoid transaction ID wrap-around problems.
-       If <symbol>InvalidTransactionId</symbol>, then the minimum is unknown and can be
-       determined by scanning <structname>pg_class</>.<structfield>relminxid</>.
+       All transaction IDs before this one have been replaced with a permanent
+       (<quote>frozen</>) transaction ID in this database.  This is used to
+       track whether the database needs to be vacuumed in order to prevent
+       transaction ID wraparound or to allow <literal>pg_clog</> to be shrunk.
+       It is the minimum of the per-table
+       <structname>pg_class</>.<structfield>relfrozenxid</> values.
       </entry>
      </row>
 

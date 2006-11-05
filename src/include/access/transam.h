@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.58 2006/07/10 16:20:51 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.59 2006/11/05 22:42:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
  * always be considered valid.
  *
  * FirstNormalTransactionId is the first "normal" transaction id.
- * Note: if you need to change it, you must change it in pg_class.h as well.
+ * Note: if you need to change it, you must change pg_class.h as well.
  * ----------------
  */
 #define InvalidTransactionId		((TransactionId) 0)
@@ -88,6 +88,9 @@ typedef struct VariableCacheData
 	Oid			nextOid;		/* next OID to assign */
 	uint32		oidCount;		/* OIDs available before must do XLOG work */
 	TransactionId nextXid;		/* next XID to assign */
+
+	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */
+	TransactionId xidVacLimit;	/* start forcing autovacuums here */
 	TransactionId xidWarnLimit; /* start complaining here */
 	TransactionId xidStopLimit; /* refuse to advance nextXid beyond here */
 	TransactionId xidWrapLimit; /* where the world ends */
@@ -124,7 +127,7 @@ extern bool TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2);
 /* in transam/varsup.c */
 extern TransactionId GetNewTransactionId(bool isSubXact);
 extern TransactionId ReadNewTransactionId(void);
-extern void SetTransactionIdLimit(TransactionId oldest_datminxid,
+extern void SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 					  Name oldest_datname);
 extern Oid	GetNewObjectId(void);
 

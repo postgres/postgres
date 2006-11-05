@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.27 2006/10/04 00:29:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.28 2006/11/05 22:42:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ int			autovacuum_vac_thresh;
 double		autovacuum_vac_scale;
 int			autovacuum_anl_thresh;
 double		autovacuum_anl_scale;
+int			autovacuum_freeze_max_age;
 
 int			autovacuum_vac_cost_delay;
 int			autovacuum_vac_cost_limit;
@@ -70,6 +71,12 @@ static bool am_autovacuum = false;
 static time_t last_autovac_start_time = 0;
 static time_t last_autovac_stop_time = 0;
 
+/* Comparison point for determining whether freeze_max_age is exceeded */
+static TransactionId recentXid;
+
+/* Default freeze_min_age to use for autovacuum (varies by database) */
+static int	default_freeze_min_age;
+
 /* Memory context for long-lived data */
 static MemoryContext AutovacMemCxt;
 
@@ -78,10 +85,8 @@ typedef struct autovac_dbase
 {
 	Oid			oid;
 	char	   *name;
-	TransactionId minxid;
-	TransactionId vacuumxid;
+	TransactionId frozenxid;
 	PgStat_StatDBEntry *entry;
-	int32		age;
 } autovac_dbase;
 
 /* struct to keep track of tables to vacuum and/or analyze */
@@ -91,6 +96,7 @@ typedef struct autovac_table
 	Oid			toastrelid;
 	bool		dovacuum;
 	bool		doanalyze;
+	int			freeze_min_age;
 	int			vacuum_cost_delay;
 	int			vacuum_cost_limit;
 } autovac_table;
@@ -100,7 +106,6 @@ typedef struct autovac_table
 static pid_t autovac_forkexec(void);
 #endif
 NON_EXEC_STATIC void AutoVacMain(int argc, char *argv[]);
-static void process_whole_db(void);
 static void do_autovacuum(PgStat_StatDBEntry *dbentry);
 static List *autovac_get_database_list(void);
 static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
@@ -108,10 +113,9 @@ static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 Form_pg_autovacuum avForm,
 					 List **vacuum_tables,
 					 List **toast_table_ids);
-static void autovacuum_do_vac_analyze(List *relids, bool dovacuum,
-						  bool doanalyze, bool freeze);
-static void autovac_report_activity(VacuumStmt *vacstmt,
-						List *relids);
+static void autovacuum_do_vac_analyze(Oid relid, bool dovacuum,
+						  bool doanalyze, int freeze_min_age);
+static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid);
 
 
 /*
@@ -222,9 +226,9 @@ AutoVacMain(int argc, char *argv[])
 {
 	ListCell   *cell;
 	List	   *dblist;
-	TransactionId nextXid;
 	autovac_dbase *db;
-	bool		whole_db;
+	TransactionId xidForceLimit;
+	bool		for_xid_wrap;
 	sigjmp_buf	local_sigjmp_buf;
 
 	/* we are a postmaster subprocess now */
@@ -315,28 +319,27 @@ AutoVacMain(int argc, char *argv[])
 	dblist = autovac_get_database_list();
 
 	/*
-	 * Get the next Xid that was current as of the last checkpoint. We need it
-	 * to determine whether databases are about to need database-wide vacuums.
+	 * Determine the oldest datfrozenxid/relfrozenxid that we will allow
+	 * to pass without forcing a vacuum.  (This limit can be tightened for
+	 * particular tables, but not loosened.)
 	 */
-	nextXid = GetRecentNextXid();
+	recentXid = ReadNewTransactionId();
+	xidForceLimit = recentXid - autovacuum_freeze_max_age;
+	/* ensure it's a "normal" XID, else TransactionIdPrecedes misbehaves */
+	if (xidForceLimit < FirstNormalTransactionId)
+		xidForceLimit -= FirstNormalTransactionId;
 
 	/*
 	 * Choose a database to connect to.  We pick the database that was least
-	 * recently auto-vacuumed, or one that needs database-wide vacuum (to
-	 * prevent Xid wraparound-related data loss).
+	 * recently auto-vacuumed, or one that needs vacuuming to prevent Xid
+	 * wraparound-related data loss.  If any db at risk of wraparound is
+	 * found, we pick the one with oldest datfrozenxid,
+	 * independently of autovacuum times.
 	 *
 	 * Note that a database with no stats entry is not considered, except for
 	 * Xid wraparound purposes.  The theory is that if no one has ever
 	 * connected to it since the stats were last initialized, it doesn't need
 	 * vacuuming.
-	 *
-	 * Note that if we are called when autovacuum is nominally disabled in
-	 * postgresql.conf, we assume the postmaster has invoked us because a
-	 * database is in danger of Xid wraparound.  In that case, we only
-	 * consider vacuuming whole databases, not individual tables; and we pick
-	 * the oldest one, regardless of it's true age.  So the criteria for
-	 * deciding that a database needs a database-wide vacuum is elsewhere
-	 * (currently in vac_truncate_clog).
 	 *
 	 * XXX This could be improved if we had more info about whether it needs
 	 * vacuuming before connecting to it.  Perhaps look through the pgstats
@@ -346,84 +349,40 @@ AutoVacMain(int argc, char *argv[])
 	 * starvation for less busy databases.
 	 */
 	db = NULL;
-	whole_db = false;
-
-	if (AutoVacuumingActive())
+	for_xid_wrap = false;
+	foreach(cell, dblist)
 	{
-		/*
-		 * We look for the database that most urgently needs a database-wide
-		 * vacuum.	We decide that a database-wide vacuum is needed 100000
-		 * transactions sooner than vacuum.c's vac_truncate_clog() would
-		 * decide to start giving warnings.  If any such db is found, we
-		 * ignore all other dbs.
-		 *
-		 * Unlike vacuum.c, we also look at vacuumxid.	This is so that
-		 * pg_clog can be kept trimmed to a reasonable size.
-		 */
-		foreach(cell, dblist)
+		autovac_dbase *tmp = lfirst(cell);
+
+		/* Find pgstat entry if any */
+		tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
+
+		/* Check to see if this one is at risk of wraparound */
+		if (TransactionIdPrecedes(tmp->frozenxid, xidForceLimit))
 		{
-			autovac_dbase *tmp = lfirst(cell);
-			bool		this_whole_db;
-			int32		true_age,
-						vacuum_age;
-
-			true_age = (int32) (nextXid - tmp->minxid);
-			vacuum_age = (int32) (nextXid - tmp->vacuumxid);
-			tmp->age = Max(true_age, vacuum_age);
-
-			this_whole_db = (tmp->age >
-							 (int32) ((MaxTransactionId >> 3) * 3 - 100000));
-
-			if (whole_db || this_whole_db)
-			{
-				if (!this_whole_db)
-					continue;
-				if (db == NULL || tmp->age > db->age)
-				{
-					db = tmp;
-					whole_db = true;
-				}
-				continue;
-			}
-
-			/*
-			 * Otherwise, skip a database with no pgstat entry; it means it
-			 * hasn't seen any activity.
-			 */
-			tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
-			if (!tmp->entry)
-				continue;
-
-			/*
-			 * Remember the db with oldest autovac time.
-			 */
 			if (db == NULL ||
-				tmp->entry->last_autovac_time < db->entry->last_autovac_time)
+				TransactionIdPrecedes(tmp->frozenxid, db->frozenxid))
 				db = tmp;
+			for_xid_wrap = true;
+			continue;
 		}
-	}
-	else
-	{
+		else if (for_xid_wrap)
+			continue;			/* ignore not-at-risk DBs */
+
 		/*
-		 * If autovacuuming is not active, we must have gotten here because a
-		 * backend signalled the postmaster.  Pick up the database with the
-		 * greatest age, and apply a database-wide vacuum on it.
+		 * Otherwise, skip a database with no pgstat entry; it means it
+		 * hasn't seen any activity.
 		 */
-		int32		oldest = 0;
+		if (!tmp->entry)
+			continue;
 
-		whole_db = true;
-		foreach(cell, dblist)
-		{
-			autovac_dbase *tmp = lfirst(cell);
-			int32		age = (int32) (nextXid - tmp->minxid);
-
-			if (age > oldest)
-			{
-				oldest = age;
-				db = tmp;
-			}
-		}
-		Assert(db);
+		/*
+		 * Remember the db with oldest autovac time.  (If we are here,
+		 * both tmp->entry and db->entry must be non-null.)
+		 */
+		if (db == NULL ||
+			tmp->entry->last_autovac_time < db->entry->last_autovac_time)
+			db = tmp;
 	}
 
 	if (db)
@@ -460,10 +419,7 @@ AutoVacMain(int argc, char *argv[])
 		/*
 		 * And do an appropriate amount of work
 		 */
-		if (whole_db)
-			process_whole_db();
-		else
-			do_autovacuum(db->entry);
+		do_autovacuum(db->entry);
 	}
 
 	/* One iteration done, go away */
@@ -485,8 +441,7 @@ autovac_get_database_list(void)
 	FILE	   *db_file;
 	Oid			db_id;
 	Oid			db_tablespace;
-	TransactionId db_minxid;
-	TransactionId db_vacuumxid;
+	TransactionId db_frozenxid;
 
 	filename = database_getflatfilename();
 	db_file = AllocateFile(filename, "r");
@@ -496,8 +451,7 @@ autovac_get_database_list(void)
 				 errmsg("could not open file \"%s\": %m", filename)));
 
 	while (read_pg_database_line(db_file, thisname, &db_id,
-								 &db_tablespace, &db_minxid,
-								 &db_vacuumxid))
+								 &db_tablespace, &db_frozenxid))
 	{
 		autovac_dbase *db;
 
@@ -505,11 +459,9 @@ autovac_get_database_list(void)
 
 		db->oid = db_id;
 		db->name = pstrdup(thisname);
-		db->minxid = db_minxid;
-		db->vacuumxid = db_vacuumxid;
-		/* these get set later: */
+		db->frozenxid = db_frozenxid;
+		/* this gets set later: */
 		db->entry = NULL;
-		db->age = 0;
 
 		dblist = lappend(dblist, db);
 	}
@@ -521,59 +473,11 @@ autovac_get_database_list(void)
 }
 
 /*
- * Process a whole database.  If it's a template database or is disallowing
- * connection by means of datallowconn=false, then issue a VACUUM FREEZE.
- * Else use a plain VACUUM.
- */
-static void
-process_whole_db(void)
-{
-	HeapTuple	tup;
-	Form_pg_database dbForm;
-	bool		freeze;
-
-	/* Start a transaction so our commands have one to play into. */
-	StartTransactionCommand();
-
-	/* functions in indexes may want a snapshot set */
-	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-
-	/*
-	 * Clean up any dead statistics collector entries for this DB.
-	 */
-	pgstat_vacuum_tabstat();
-
-	/* Look up the pg_database entry and decide whether to FREEZE */
-	tup = SearchSysCache(DATABASEOID,
-						 ObjectIdGetDatum(MyDatabaseId),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
-
-	dbForm = (Form_pg_database) GETSTRUCT(tup);
-
-	if (!dbForm->datallowconn || dbForm->datistemplate)
-		freeze = true;
-	else
-		freeze = false;
-
-	ReleaseSysCache(tup);
-
-	elog(DEBUG2, "autovacuum: VACUUM%s whole database",
-		 (freeze) ? " FREEZE" : "");
-
-	autovacuum_do_vac_analyze(NIL, true, false, freeze);
-
-	/* Finally close out the last transaction. */
-	CommitTransactionCommand();
-}
-
-/*
  * Process a database table-by-table
  *
- * dbentry must be a valid pointer to the database entry in the stats
- * databases' hash table, and it will be used to determine whether vacuum or
- * analyze is needed on a per-table basis.
+ * dbentry is either a pointer to the database entry in the stats databases
+ * hash table, or NULL if we couldn't find any entry (the latter case occurs
+ * only if we are forcing a vacuum for anti-wrap purposes).
  *
  * Note that CHECK_FOR_INTERRUPTS is supposed to be used in certain spots in
  * order not to ignore shutdown commands for too long.
@@ -585,6 +489,7 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 				avRel;
 	HeapTuple	tuple;
 	HeapScanDesc relScan;
+	Form_pg_database dbForm;
 	List	   *vacuum_tables = NIL;
 	List	   *toast_table_ids = NIL;
 	ListCell   *cell;
@@ -602,6 +507,25 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	 * nothing worth vacuuming in the database.
 	 */
 	pgstat_vacuum_tabstat();
+
+	/*
+	 * Find the pg_database entry and select the default freeze_min_age.
+	 * We use zero in template and nonconnectable databases,
+	 * else the system-wide default.
+	 */
+	tuple = SearchSysCache(DATABASEOID,
+						   ObjectIdGetDatum(MyDatabaseId),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for database %u", MyDatabaseId);
+	dbForm = (Form_pg_database) GETSTRUCT(tuple);
+
+	if (dbForm->datistemplate || !dbForm->datallowconn)
+		default_freeze_min_age = 0;
+	else
+		default_freeze_min_age = vacuum_freeze_min_age;
+
+	ReleaseSysCache(tuple);
 
 	/*
 	 * StartTransactionCommand and CommitTransactionCommand will automatically
@@ -676,9 +600,11 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		if (classForm->relisshared && PointerIsValid(shared))
 			tabentry = hash_search(shared->tables, &relid,
 								   HASH_FIND, NULL);
-		else
+		else if (PointerIsValid(dbentry))
 			tabentry = hash_search(dbentry->tables, &relid,
 								   HASH_FIND, NULL);
+		else
+			tabentry = NULL;
 
 		test_rel_for_autovac(relid, tabentry, classForm, avForm,
 							 &vacuum_tables, &toast_table_ids);
@@ -719,11 +645,17 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		VacuumCostDelay = tab->vacuum_cost_delay;
 		VacuumCostLimit = tab->vacuum_cost_limit;
 
-		autovacuum_do_vac_analyze(list_make1_oid(tab->relid),
+		autovacuum_do_vac_analyze(tab->relid,
 								  tab->dovacuum,
 								  tab->doanalyze,
-								  false);
+								  tab->freeze_min_age);
 	}
+
+	/*
+	 * Update pg_database.datfrozenxid, and truncate pg_clog if possible.
+	 * We only need to do this once, not after each table.
+	 */
+	vac_update_datfrozenxid();
 
 	/* Finally close out the last transaction. */
 	CommitTransactionCommand();
@@ -746,10 +678,13 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
  * the number of tuples (both live and dead) that there were as of the last
  * analyze.  This is asymmetric to the VACUUM case.
  *
+ * We also force vacuum if the table's relfrozenxid is more than freeze_max_age
+ * transactions back.
+ *
  * A table whose pg_autovacuum.enabled value is false, is automatically
- * skipped.  Thus autovacuum can be disabled for specific tables.  Also,
- * when the stats collector does not have data about a table, it will be
- * skipped.
+ * skipped (unless we have to vacuum it due to freeze_max_age).  Thus
+ * autovacuum can be disabled for specific tables.  Also, when the stats
+ * collector does not have data about a table, it will be skipped.
  *
  * A table whose vac_base_thresh value is <0 takes the base value from the
  * autovacuum_vacuum_threshold GUC variable.  Similarly, a vac_scale_factor
@@ -763,44 +698,28 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 List **vacuum_tables,
 					 List **toast_table_ids)
 {
+	bool		force_vacuum;
+	bool		dovacuum;
+	bool		doanalyze;
 	float4		reltuples;		/* pg_class.reltuples */
-
 	/* constants from pg_autovacuum or GUC variables */
 	int			vac_base_thresh,
 				anl_base_thresh;
 	float4		vac_scale_factor,
 				anl_scale_factor;
-
 	/* thresholds calculated from above constants */
 	float4		vacthresh,
 				anlthresh;
-
 	/* number of vacuum (resp. analyze) tuples at this time */
 	float4		vactuples,
 				anltuples;
-
+	/* freeze parameters */
+	int			freeze_min_age;
+	int			freeze_max_age;
+	TransactionId xidForceLimit;
 	/* cost-based vacuum delay parameters */
 	int			vac_cost_limit;
 	int			vac_cost_delay;
-	bool		dovacuum;
-	bool		doanalyze;
-
-	/* User disabled it in pg_autovacuum? */
-	if (avForm && !avForm->enabled)
-		return;
-
-	/*
-	 * Skip a table not found in stat hash.  If it's not acted upon, there's
-	 * no need to vacuum it.  (Note that database-level check will take care
-	 * of Xid wraparound.)
-	 */
-	if (!PointerIsValid(tabentry))
-		return;
-
-	reltuples = classForm->reltuples;
-	vactuples = tabentry->n_dead_tuples;
-	anltuples = tabentry->n_live_tuples + tabentry->n_dead_tuples -
-		tabentry->last_anl_tuples;
 
 	/*
 	 * If there is a tuple in pg_autovacuum, use it; else, use the GUC
@@ -818,6 +737,12 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			avForm->anl_scale_factor : autovacuum_anl_scale;
 		anl_base_thresh = (avForm->anl_base_thresh >= 0) ?
 			avForm->anl_base_thresh : autovacuum_anl_thresh;
+
+		freeze_min_age = (avForm->freeze_min_age >= 0) ?
+			avForm->freeze_min_age : default_freeze_min_age;
+		freeze_max_age = (avForm->freeze_max_age >= 0) ?
+			Min(avForm->freeze_max_age, autovacuum_freeze_max_age) :
+			autovacuum_freeze_max_age;
 
 		vac_cost_limit = (avForm->vac_cost_limit >= 0) ?
 			avForm->vac_cost_limit :
@@ -837,6 +762,9 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		anl_scale_factor = autovacuum_anl_scale;
 		anl_base_thresh = autovacuum_anl_thresh;
 
+		freeze_min_age = default_freeze_min_age;
+		freeze_max_age = autovacuum_freeze_max_age;
+
 		vac_cost_limit = (autovacuum_vac_cost_limit >= 0) ?
 			autovacuum_vac_cost_limit : VacuumCostLimit;
 
@@ -844,22 +772,51 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			autovacuum_vac_cost_delay : VacuumCostDelay;
 	}
 
-	vacthresh = (float4) vac_base_thresh + vac_scale_factor * reltuples;
-	anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;
+	/* Force vacuum if table is at risk of wraparound */
+	xidForceLimit = recentXid - freeze_max_age;
+	if (xidForceLimit < FirstNormalTransactionId)
+		xidForceLimit -= FirstNormalTransactionId;
+	force_vacuum = (TransactionIdIsNormal(classForm->relfrozenxid) &&
+					TransactionIdPrecedes(classForm->relfrozenxid,
+										  xidForceLimit));
 
-	/*
-	 * Note that we don't need to take special consideration for stat reset,
-	 * because if that happens, the last vacuum and analyze counts will be
-	 * reset too.
-	 */
+	/* User disabled it in pg_autovacuum?  (But ignore if at risk) */
+	if (avForm && !avForm->enabled && !force_vacuum)
+		return;
 
-	elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
-		 NameStr(classForm->relname),
-		 vactuples, vacthresh, anltuples, anlthresh);
+	if (PointerIsValid(tabentry))
+	{
+		reltuples = classForm->reltuples;
+		vactuples = tabentry->n_dead_tuples;
+		anltuples = tabentry->n_live_tuples + tabentry->n_dead_tuples -
+			tabentry->last_anl_tuples;
 
-	/* Determine if this table needs vacuum or analyze. */
-	dovacuum = (vactuples > vacthresh);
-	doanalyze = (anltuples > anlthresh);
+		vacthresh = (float4) vac_base_thresh + vac_scale_factor * reltuples;
+		anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;
+
+		/*
+		 * Note that we don't need to take special consideration for stat
+		 * reset, because if that happens, the last vacuum and analyze counts
+		 * will be reset too.
+		 */
+		elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
+			 NameStr(classForm->relname),
+			 vactuples, vacthresh, anltuples, anlthresh);
+
+		/* Determine if this table needs vacuum or analyze. */
+		dovacuum = force_vacuum || (vactuples > vacthresh);
+		doanalyze = (anltuples > anlthresh);
+	}
+	else
+	{
+		/*
+		 * Skip a table not found in stat hash, unless we have to force
+		 * vacuum for anti-wrap purposes.  If it's not acted upon, there's
+		 * no need to vacuum it.
+		 */
+		dovacuum = force_vacuum;
+		doanalyze = false;
+	}
 
 	/* ANALYZE refuses to work with pg_statistics */
 	if (relid == StatisticRelationId)
@@ -888,6 +845,7 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			tab->toastrelid = classForm->reltoastrelid;
 			tab->dovacuum = dovacuum;
 			tab->doanalyze = doanalyze;
+			tab->freeze_min_age = freeze_min_age;
 			tab->vacuum_cost_limit = vac_cost_limit;
 			tab->vacuum_cost_delay = vac_cost_delay;
 
@@ -904,11 +862,11 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 
 /*
  * autovacuum_do_vac_analyze
- *		Vacuum and/or analyze a list of tables; or all tables if relids = NIL
+ *		Vacuum and/or analyze the specified table
  */
 static void
-autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
-						  bool freeze)
+autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
+						  int freeze_min_age)
 {
 	VacuumStmt *vacstmt;
 	MemoryContext old_cxt;
@@ -932,15 +890,15 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
 	vacstmt->vacuum = dovacuum;
 	vacstmt->full = false;
 	vacstmt->analyze = doanalyze;
-	vacstmt->freeze = freeze;
+	vacstmt->freeze_min_age = freeze_min_age;
 	vacstmt->verbose = false;
-	vacstmt->relation = NULL;	/* all tables, or not used if relids != NIL */
+	vacstmt->relation = NULL;	/* not used since we pass relids list */
 	vacstmt->va_cols = NIL;
 
 	/* Let pgstat know what we're doing */
-	autovac_report_activity(vacstmt, relids);
+	autovac_report_activity(vacstmt, relid);
 
-	vacuum(vacstmt, relids);
+	vacuum(vacstmt, list_make1_oid(relid));
 
 	pfree(vacstmt);
 	MemoryContextSwitchTo(old_cxt);
@@ -958,48 +916,35 @@ autovacuum_do_vac_analyze(List *relids, bool dovacuum, bool doanalyze,
  * bother to report "<IDLE>" or some such.
  */
 static void
-autovac_report_activity(VacuumStmt *vacstmt, List *relids)
+autovac_report_activity(VacuumStmt *vacstmt, Oid relid)
 {
+	char	   *relname = get_rel_name(relid);
+	char	   *nspname = get_namespace_name(get_rel_namespace(relid));
 #define MAX_AUTOVAC_ACTIV_LEN (NAMEDATALEN * 2 + 32)
 	char		activity[MAX_AUTOVAC_ACTIV_LEN];
-
-	/*
-	 * This case is not currently exercised by the autovac code.  Fill it in
-	 * if needed.
-	 */
-	if (list_length(relids) > 1)
-		elog(WARNING, "vacuuming >1 rel unsupported");
 
 	/* Report the command and possible options */
 	if (vacstmt->vacuum)
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
-				 "VACUUM%s%s%s",
-				 vacstmt->full ? " FULL" : "",
-				 vacstmt->freeze ? " FREEZE" : "",
+				 "VACUUM%s",
 				 vacstmt->analyze ? " ANALYZE" : "");
-	else if (vacstmt->analyze)
+	else
 		snprintf(activity, MAX_AUTOVAC_ACTIV_LEN,
 				 "ANALYZE");
 
-	/* Report the qualified name of the first relation, if any */
-	if (relids)
+	/*
+	 * Report the qualified name of the relation.
+	 *
+	 * Paranoia is appropriate here in case relation was recently dropped
+	 * --- the lsyscache routines we just invoked will return NULL rather
+	 * than failing.
+	 */
+	if (relname && nspname)
 	{
-		Oid			relid = linitial_oid(relids);
-		char	   *relname = get_rel_name(relid);
-		char	   *nspname = get_namespace_name(get_rel_namespace(relid));
+		int			len = strlen(activity);
 
-		/*
-		 * Paranoia is appropriate here in case relation was recently dropped
-		 * --- the lsyscache routines we just invoked will return NULL rather
-		 * than failing.
-		 */
-		if (relname && nspname)
-		{
-			int			len = strlen(activity);
-
-			snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
-					 " %s.%s", nspname, relname);
-		}
+		snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
+				 " %s.%s", nspname, relname);
 	}
 
 	pgstat_report_activity(activity);
