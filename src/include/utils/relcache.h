@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.52 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.52.2.1 2006/11/05 23:40:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@ extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
  */
 extern bool RelationIdIsInInitFile(Oid relationId);
 extern void RelationCacheInitFileInvalidate(bool beforeSend);
+extern void RelationCacheInitFileRemove(const char *dbPath);
 
 /* should be used only by relcache.c and catcache.c */
 extern bool criticalRelcachesBuilt;

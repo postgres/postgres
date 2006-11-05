@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.15.2.1 2005/11/22 18:23:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.15.2.2 2006/11/05 23:40:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 
 #include "access/heapam.h"
 #include "access/twophase_rmgr.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
@@ -46,6 +47,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/flatfiles.h"
+#include "utils/relcache.h"
 #include "utils/resowner.h"
 #include "utils/syscache.h"
 
@@ -165,9 +167,14 @@ name_okay(const char *str)
  *
  * A side effect is to determine the oldest database's datfrozenxid
  * so we can set or update the XID wrap limit.
+ *
+ * Also, if "startup" is true, we tell relcache.c to clear out the relcache
+ * init file in each database.  That's a bit nonmodular, but scanning
+ * pg_database twice during system startup seems too high a price for keeping
+ * things better separated.
  */
 static void
-write_database_file(Relation drel)
+write_database_file(Relation drel, bool startup)
 {
 	char	   *filename,
 			   *tempname;
@@ -252,6 +259,17 @@ write_database_file(Relation drel)
 		fputs_quote(datname, fp);
 		fprintf(fp, " %u %u %u %u\n",
 				datoid, dattablespace, datfrozenxid, datvacuumxid);
+
+		/*
+		 * Also clear relcache init file for each DB if starting up.
+		 */
+		if (startup)
+		{
+			char *dbpath = GetDatabasePath(datoid, dattablespace);
+
+			RelationCacheInitFileRemove(dbpath);
+			pfree(dbpath);
+		}
 	}
 	heap_endscan(scan);
 
@@ -673,6 +691,9 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
  * policy means we need not force initdb to change the format of the
  * flat files.
  *
+ * We also cause relcache init files to be flushed, for largely the same
+ * reasons.
+ *
  * In a standalone backend we pass database_only = true to skip processing
  * the auth file.  We won't need it, and building it could fail if there's
  * something corrupt in the authid/authmem catalogs.
@@ -703,7 +724,7 @@ BuildFlatFiles(bool database_only)
 
 	/* No locking is needed because no one else is alive yet */
 	rel_db = XLogOpenRelation(rnode);
-	write_database_file(rel_db);
+	write_database_file(rel_db, true);
 
 	if (!database_only)
 	{
@@ -791,7 +812,7 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 	if (database_file_update_subid != InvalidSubTransactionId)
 	{
 		database_file_update_subid = InvalidSubTransactionId;
-		write_database_file(drel);
+		write_database_file(drel, false);
 		heap_close(drel, NoLock);
 	}
 
