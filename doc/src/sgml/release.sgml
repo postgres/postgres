@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.481 2006/10/23 19:29:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.482 2006/11/06 17:00:27 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -40,7 +40,7 @@ links to the main documentation.
    <note>
     <title>Release date</title>
     <simpara>2006-1?-??</simpara>
-    <para>CURRENT AS OF 2006-10-18</>
+    <para>CURRENT AS OF 2006-11-05</>
    </note>
 
    <sect2>
@@ -400,6 +400,15 @@ links to the main documentation.
 
       <listitem>
        <para>
+        C-language loadable modules must now include a
+        <link linkend="xfunc-c-dynload"><literal>PG_MODULE_MAGIC</></link>
+        macro call for version compatibility checking
+        (Martijn van Oosterhout)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         In <filename>contrib/xml2/</>, rename <function>xml_valid()</> to
         <function>xml_is_well_formed()</> (Tom)
        </para>
@@ -681,6 +690,20 @@ links to the main documentation.
 
       <listitem>
        <para>
+        Improve reliability of long-term <acronym>WAL</> replay
+        (Heikki, Simon, Tom)
+       </para>
+
+       <para>
+        Formerly, trying to roll forward through more than 2 billion
+        transactions would not work due to XID wraparound.  This meant
+        warm standby servers had to be reloaded
+        from fresh base backups periodically.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add <link
         linkend="guc-archive-timeout"><varname>archive_timeout</></link>
         to force transaction log file switches at a given interval (Simon)
@@ -751,12 +774,12 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Track tables needing vacuum with more accuracy (Alvaro)
+        Track maximum XID age within individual tables, instead of whole databases (Alvaro)
        </para>
 
        <para>
         This reduces the overhead involved in preventing transaction
-        ID wraparound.
+        ID wraparound, by avoiding unnecessary VACUUMs.
        </para>
       </listitem>
 
@@ -847,7 +870,9 @@ links to the main documentation.
 
        <para>
         Such logging now shows statement names, bind parameter
-        values, and the text of the query being executed.
+        values, and the text of the query being executed.  Also,
+        the query text is properly included in logged error messages
+        when enabled by <varname>log_min_error_statement</>.
        </para>
       </listitem>
 
@@ -876,6 +901,25 @@ links to the main documentation.
         The server is now able to report a specific error location for
         some semantic errors (such as unrecognized column name), rather
         than just for basic syntax errors as before.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix <quote>failed to re-find parent key</> errors in
+        <command>VACUUM</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Clean out <filename>pg_internal.init</> cache files during server
+        restart (Simon)
+       </para>
+
+       <para>
+        This avoids a hazard that the cache files might contain stale
+        data after PITR recovery.
        </para>
       </listitem>
 
