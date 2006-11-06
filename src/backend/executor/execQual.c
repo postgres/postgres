@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.196 2006/10/06 17:13:59 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.197 2006/11/06 18:21:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2280,6 +2280,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		int		   *elem_lbs = NULL;
 		bool		firstone = true;
 		bool		havenulls = false;
+		bool		haveempty = false;
 		char	  **subdata;
 		bits8	  **subbitmaps;
 		int		   *subbytes;
@@ -2302,11 +2303,15 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			bool		eisnull;
 			Datum		arraydatum;
 			ArrayType  *array;
+			int			this_ndims;
 
 			arraydatum = ExecEvalExpr(e, econtext, &eisnull, NULL);
-			/* ignore null subarrays */
+			/* temporarily ignore null subarrays */
 			if (eisnull)
+			{
+				haveempty = true;
 				continue;
+			}
 
 			array = DatumGetArrayTypeP(arraydatum);
 
@@ -2320,10 +2325,18 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 								   format_type_be(ARR_ELEMTYPE(array)),
 								   format_type_be(element_type))));
 
+			this_ndims = ARR_NDIM(array);
+			/* temporarily ignore zero-dimensional subarrays */
+			if (this_ndims <= 0)
+			{
+				haveempty = true;
+				continue;
+			}
+
 			if (firstone)
 			{
 				/* Get sub-array details from first member */
-				elem_ndims = ARR_NDIM(array);
+				elem_ndims = this_ndims;
 				ndims = elem_ndims + 1;
 				if (ndims <= 0 || ndims > MAXDIM)
 					ereport(ERROR,
@@ -2341,7 +2354,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			else
 			{
 				/* Check other sub-arrays are compatible */
-				if (elem_ndims != ARR_NDIM(array) ||
+				if (elem_ndims != this_ndims ||
 					memcmp(elem_dims, ARR_DIMS(array),
 						   elem_ndims * sizeof(int)) != 0 ||
 					memcmp(elem_lbs, ARR_LBOUND(array),
@@ -2356,11 +2369,27 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			subbitmaps[outer_nelems] = ARR_NULLBITMAP(array);
 			subbytes[outer_nelems] = ARR_SIZE(array) - ARR_DATA_OFFSET(array);
 			nbytes += subbytes[outer_nelems];
-			subnitems[outer_nelems] = ArrayGetNItems(ARR_NDIM(array),
+			subnitems[outer_nelems] = ArrayGetNItems(this_ndims,
 													 ARR_DIMS(array));
 			nitems += subnitems[outer_nelems];
 			havenulls |= ARR_HASNULL(array);
 			outer_nelems++;
+		}
+
+		/*
+		 * If all items were null or empty arrays, return an empty array;
+		 * otherwise, if some were and some weren't, raise error.  (Note:
+		 * we must special-case this somehow to avoid trying to generate
+		 * a 1-D array formed from empty arrays.  It's not ideal...)
+		 */
+		if (haveempty)
+		{
+			if (ndims == 0)		/* didn't find any nonempty array */
+				return PointerGetDatum(construct_empty_array(element_type));
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("multidimensional arrays must have array "
+							"expressions with matching dimensions")));
 		}
 
 		/* setup for multi-D array */
