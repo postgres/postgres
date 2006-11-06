@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.145 2006/10/06 17:13:59 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.146 2006/11/06 01:27:52 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -716,11 +716,11 @@ CheckLDAPAuth(Port *port)
 	char		prefix[128];
 	char		suffix[128];
 	LDAP	   *ldap;
-	int			ssl = 0;
+	bool		ssl = false;
 	int			r;
 	int			ldapversion = LDAP_VERSION3;
 	int			ldapport = LDAP_PORT;
-	char		fulluser[128];
+	char		fulluser[NAMEDATALEN + 256 + 1];
 
 	if (!port->auth_arg || port->auth_arg[0] == '\0')
 	{
@@ -750,7 +750,7 @@ CheckLDAPAuth(Port *port)
 				   "ldaps://%127[^:]:%i/%127[^;];%127[^;];%127s",
 				   server, &ldapport, basedn, prefix, suffix);
 		if (r >= 3)
-			ssl = 1;
+			ssl = true;
 	}
 	if (r < 3)
 	{
@@ -766,7 +766,7 @@ CheckLDAPAuth(Port *port)
 				   "ldaps://%127[^/]/%127[^;];%127[^;];%127s",
 				   server, basedn, prefix, suffix);
 		if (r >= 2)
-			ssl = 1;
+			ssl = true;
 	}
 	if (r < 2)
 	{
@@ -799,8 +799,9 @@ CheckLDAPAuth(Port *port)
 
 	if ((r = ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
 	{
+		ldap_unbind(ldap);
 		ereport(LOG,
-		  (errmsg("could not set LDAP protocol version: error code %d", r)));
+				(errmsg("could not set LDAP protocol version: error code %d", r)));
 		return STATUS_ERROR;
 	}
 
@@ -827,6 +828,7 @@ CheckLDAPAuth(Port *port)
 				 * should never happen since we import other files from
 				 * wldap32, but check anyway
 				 */
+				ldap_unbind(ldap);
 				ereport(LOG,
 						(errmsg("could not load wldap32.dll")));
 				return STATUS_ERROR;
@@ -834,6 +836,7 @@ CheckLDAPAuth(Port *port)
 			_ldap_start_tls_sA = (__ldap_start_tls_sA) GetProcAddress(ldaphandle, "ldap_start_tls_sA");
 			if (_ldap_start_tls_sA == NULL)
 			{
+				ldap_unbind(ldap);
 				ereport(LOG,
 						(errmsg("could not load function _ldap_start_tls_sA in wldap32.dll"),
 						 errdetail("LDAP over SSL is not supported on this platform.")));
@@ -841,7 +844,7 @@ CheckLDAPAuth(Port *port)
 			}
 
 			/*
-			 * Leak ldaphandle on purpose, because we need the library to stay
+			 * Leak LDAP handle on purpose, because we need the library to stay
 			 * open. This is ok because it will only ever be leaked once per
 			 * process and is automatically cleaned up on process exit.
 			 */
@@ -849,13 +852,14 @@ CheckLDAPAuth(Port *port)
 		if ((r = _ldap_start_tls_sA(ldap, NULL, NULL, NULL, NULL)) != LDAP_SUCCESS)
 #endif
 		{
+			ldap_unbind(ldap);
 			ereport(LOG,
-			 (errmsg("could not start LDAP TLS session: error code %d", r)));
+					(errmsg("could not start LDAP TLS session: error code %d", r)));
 			return STATUS_ERROR;
 		}
 	}
 
-	snprintf(fulluser, sizeof(fulluser) - 1, "%s%s%s",
+	snprintf(fulluser, sizeof(fulluser), "%s%s%s",
 			 prefix, port->user_name, suffix);
 	fulluser[sizeof(fulluser) - 1] = '\0';
 
