@@ -233,6 +233,9 @@
 /* Define to 1 if you have the `ldap_r' library (-lldap_r). */
 #undef HAVE_LIBLDAP_R
 
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
 /* Define to 1 if you have the `pam' library (-lpam). */
 #undef HAVE_LIBPAM
 
