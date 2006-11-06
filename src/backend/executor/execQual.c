@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.150.2.1 2003/12/18 22:23:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.150.2.2 2006/11/06 18:21:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1715,6 +1715,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		int		   *elem_dims = NULL;
 		int		   *elem_lbs = NULL;
 		bool		firstone = true;
+		bool		haveempty = false;
 		int			i;
 
 		/* loop through and get data area from each element */
@@ -1724,6 +1725,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			bool		eisnull;
 			Datum		arraydatum;
 			ArrayType  *array;
+			int			this_ndims;
 			int			elem_ndatabytes;
 
 			arraydatum = ExecEvalExpr(e, econtext, &eisnull, NULL);
@@ -1745,10 +1747,18 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 								   format_type_be(ARR_ELEMTYPE(array)),
 								   format_type_be(element_type))));
 
+			this_ndims = ARR_NDIM(array);
+			/* temporarily ignore zero-dimensional subarrays */
+			if (this_ndims <= 0)
+			{
+				haveempty = true;
+				continue;
+			}
+
 			if (firstone)
 			{
 				/* Get sub-array details from first member */
-				elem_ndims = ARR_NDIM(array);
+				elem_ndims = this_ndims;
 				ndims = elem_ndims + 1;
 				if (ndims <= 0 || ndims > MAXDIM)
 					ereport(ERROR,
@@ -1766,7 +1776,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			else
 			{
 				/* Check other sub-arrays are compatible */
-				if (elem_ndims != ARR_NDIM(array) ||
+				if (elem_ndims != this_ndims ||
 					memcmp(elem_dims, ARR_DIMS(array),
 						   elem_ndims * sizeof(int)) != 0 ||
 					memcmp(elem_lbs, ARR_LBOUND(array),
@@ -1787,6 +1797,29 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			memcpy(dat + (ndatabytes - elem_ndatabytes),
 				   ARR_DATA_PTR(array),
 				   elem_ndatabytes);
+		}
+
+		/*
+		 * If all items were empty arrays, return an empty array;
+		 * otherwise, if some were and some weren't, raise error.  (Note:
+		 * we must special-case this somehow to avoid trying to generate
+		 * a 1-D array formed from empty arrays.  It's not ideal...)
+		 */
+		if (haveempty)
+		{
+			if (ndims == 0)		/* didn't find any nonempty array */
+			{
+				result = (ArrayType *) palloc(sizeof(ArrayType));
+				result->size = sizeof(ArrayType);
+				result->ndim = 0;
+				result->flags = 0;
+				result->elemtype = element_type;
+				return PointerGetDatum(result);
+			}
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					 errmsg("multidimensional arrays must have array "
+							"expressions with matching dimensions")));
 		}
 
 		/* setup for multi-D array */
