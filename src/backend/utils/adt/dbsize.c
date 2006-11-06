@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.8 2006/03/05 15:58:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.9 2006/11/06 03:06:41 tgl Exp $
  *
  */
 
@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 
 #include "access/heapam.h"
+#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
@@ -77,11 +78,11 @@ calculate_database_size(Oid dbOid)
 	/* Shared storage in pg_global is not counted */
 
 	/* Include pg_default storage */
-	snprintf(pathname, MAXPGPATH, "%s/base/%u", DataDir, dbOid);
+	snprintf(pathname, MAXPGPATH, "base/%u", dbOid);
 	totalsize = db_dir_size(pathname);
 
 	/* Scan the non-default tablespaces */
-	snprintf(dirpath, MAXPGPATH, "%s/pg_tblspc", DataDir);
+	snprintf(dirpath, MAXPGPATH, "pg_tblspc");
 	dirdesc = AllocateDir(dirpath);
 	if (!dirdesc)
 		ereport(ERROR,
@@ -95,8 +96,8 @@ calculate_database_size(Oid dbOid)
 			strcmp(direntry->d_name, "..") == 0)
 			continue;
 
-		snprintf(pathname, MAXPGPATH, "%s/pg_tblspc/%s/%u",
-				 DataDir, direntry->d_name, dbOid);
+		snprintf(pathname, MAXPGPATH, "pg_tblspc/%s/%u",
+				 direntry->d_name, dbOid);
 		totalsize += db_dir_size(pathname);
 	}
 
@@ -148,11 +149,11 @@ calculate_tablespace_size(Oid tblspcOid)
 	struct dirent *direntry;
 
 	if (tblspcOid == DEFAULTTABLESPACE_OID)
-		snprintf(tblspcPath, MAXPGPATH, "%s/base", DataDir);
+		snprintf(tblspcPath, MAXPGPATH, "base");
 	else if (tblspcOid == GLOBALTABLESPACE_OID)
-		snprintf(tblspcPath, MAXPGPATH, "%s/global", DataDir);
+		snprintf(tblspcPath, MAXPGPATH, "global");
 	else
-		snprintf(tblspcPath, MAXPGPATH, "%s/pg_tblspc/%u", DataDir, tblspcOid);
+		snprintf(tblspcPath, MAXPGPATH, "pg_tblspc/%u", tblspcOid);
 
 	dirdesc = AllocateDir(tblspcPath);
 
@@ -219,30 +220,22 @@ static int64
 calculate_relation_size(RelFileNode *rfn)
 {
 	int64		totalsize = 0;
-	char		dirpath[MAXPGPATH];
+	char	   *relationpath;
 	char		pathname[MAXPGPATH];
 	unsigned int segcount = 0;
 
-	Assert(OidIsValid(rfn->spcNode));
-
-	if (rfn->spcNode == DEFAULTTABLESPACE_OID)
-		snprintf(dirpath, MAXPGPATH, "%s/base/%u", DataDir, rfn->dbNode);
-	else if (rfn->spcNode == GLOBALTABLESPACE_OID)
-		snprintf(dirpath, MAXPGPATH, "%s/global", DataDir);
-	else
-		snprintf(dirpath, MAXPGPATH, "%s/pg_tblspc/%u/%u",
-				 DataDir, rfn->spcNode, rfn->dbNode);
+	relationpath = relpath(*rfn);
 
 	for (segcount = 0;; segcount++)
 	{
 		struct stat fst;
 
 		if (segcount == 0)
-			snprintf(pathname, MAXPGPATH, "%s/%u",
-					 dirpath, rfn->relNode);
+			snprintf(pathname, MAXPGPATH, "%s",
+					 relationpath);
 		else
-			snprintf(pathname, MAXPGPATH, "%s/%u.%u",
-					 dirpath, rfn->relNode, segcount);
+			snprintf(pathname, MAXPGPATH, "%s.%u",
+					 relationpath, segcount);
 
 		if (stat(pathname, &fst) < 0)
 		{
@@ -296,8 +289,7 @@ pg_relation_size_name(PG_FUNCTION_ARGS)
 
 /*
  *	Compute the on-disk size of files for the relation according to the
- *	stat function, optionally including heap data, index data, and/or
- *	toast data.
+ *	stat function, including heap data, index data, and toast data.
  */
 static int64
 calculate_total_relation_size(Oid Relid)
@@ -313,10 +305,9 @@ calculate_total_relation_size(Oid Relid)
 	/* Get the heap size */
 	size = calculate_relation_size(&(heapRel->rd_node));
 
-	/* Get index size */
+	/* Include any dependent indexes */
 	if (heapRel->rd_rel->relhasindex)
 	{
-		/* recursively include any dependent indexes */
 		List	   *index_oids = RelationGetIndexList(heapRel);
 
 		foreach(cell, index_oids)
@@ -334,7 +325,7 @@ calculate_total_relation_size(Oid Relid)
 		list_free(index_oids);
 	}
 
-	/* Get toast table (and index) size */
+	/* Recursively include toast table (and index) size */
 	if (OidIsValid(toastOid))
 		size += calculate_total_relation_size(toastOid);
 
@@ -343,10 +334,6 @@ calculate_total_relation_size(Oid Relid)
 	return size;
 }
 
-/*
- *	Compute on-disk size of files for 'relation' including
- *	heap data, index data, and toasted data.
- */
 Datum
 pg_total_relation_size_oid(PG_FUNCTION_ARGS)
 {

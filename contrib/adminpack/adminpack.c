@@ -8,7 +8,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.7 2006/10/20 00:59:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/adminpack/adminpack.c,v 1.8 2006/11/06 03:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,43 +60,47 @@ typedef struct
  */
 
 /*
- * Return an absolute path. Argument may be absolute or
- * relative to the DataDir.
+ * Convert a "text" filename argument to C string, and check it's allowable.
+ *
+ * Filename may be absolute or relative to the DataDir, but we only allow
+ * absolute paths that match DataDir or Log_directory.
  */
 static char *
-absClusterPath(text *arg, bool logAllowed)
+convert_and_check_filename(text *arg, bool logAllowed)
 {
-	char	   *filename;
-	int			len = VARSIZE(arg) - VARHDRSZ;
-	int			dlen = strlen(DataDir);
+	int			input_len = VARSIZE(arg) - VARHDRSZ;
+	char	   *filename = palloc(input_len + 1);
 
-	filename = palloc(len + 1);
-	memcpy(filename, VARDATA(arg), len);
-	filename[len] = 0;
+	memcpy(filename, VARDATA(arg), input_len);
+	filename[input_len] = '\0';
 
-	if (strstr(filename, "..") != NULL)
+	canonicalize_path(filename);	/* filename can change length here */
+
+	/* Disallow ".." in the path */
+	if (path_contains_parent_reference(filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("No .. allowed in filenames"))));
+			(errmsg("reference to parent directory (\"..\") not allowed"))));
 
 	if (is_absolute_path(filename))
 	{
-		if (logAllowed && !strncmp(filename, Log_directory, strlen(Log_directory)))
+		/* Allow absolute references within DataDir */
+		if (path_is_prefix_of_path(DataDir, filename))
 			return filename;
-		if (strncmp(filename, DataDir, dlen))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 (errmsg("Absolute path not allowed"))));
+		/* The log directory might be outside our datadir, but allow it */
+		if (logAllowed &&
+			is_absolute_path(Log_directory) &&
+			path_is_prefix_of_path(Log_directory, filename))
+			return filename;
 
-		return filename;
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("absolute path not allowed"))));
+		return NULL;			/* keep compiler quiet */
 	}
 	else
 	{
-		char	   *absname = palloc(dlen + len + 2);
-
-		sprintf(absname, "%s/%s", DataDir, filename);
-		pfree(filename);
-		return absname;
+		return filename;
 	}
 }
 
@@ -129,17 +133,17 @@ pg_file_write(PG_FUNCTION_ARGS)
 
 	requireSuperuser();
 
-	filename = absClusterPath(PG_GETARG_TEXT_P(0), false);
+	filename = convert_and_check_filename(PG_GETARG_TEXT_P(0), false);
 	data = PG_GETARG_TEXT_P(1);
 
-	if (PG_ARGISNULL(2) || !PG_GETARG_BOOL(2))
+	if (!PG_GETARG_BOOL(2))
 	{
 		struct stat fst;
 
 		if (stat(filename, &fst) >= 0)
 			ereport(ERROR,
 					(ERRCODE_DUPLICATE_FILE,
-					 errmsg("file %s exists", filename)));
+					 errmsg("file \"%s\" exists", filename)));
 
 		f = fopen(filename, "wb");
 	}
@@ -147,11 +151,10 @@ pg_file_write(PG_FUNCTION_ARGS)
 		f = fopen(filename, "ab");
 
 	if (!f)
-	{
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could open file %s for writing: %m", filename)));
-	}
+				 errmsg("could not open file \"%s\" for writing: %m",
+						filename)));
 
 	if (VARSIZE(data) != 0)
 	{
@@ -160,7 +163,7 @@ pg_file_write(PG_FUNCTION_ARGS)
 		if (count != VARSIZE(data) - VARHDRSZ)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("error writing file %s: %m", filename)));
+					 errmsg("could not write file \"%s\": %m", filename)));
 	}
 	fclose(f);
 
@@ -181,18 +184,18 @@ pg_file_rename(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
 
-	fn1 = absClusterPath(PG_GETARG_TEXT_P(0), false);
-	fn2 = absClusterPath(PG_GETARG_TEXT_P(1), false);
+	fn1 = convert_and_check_filename(PG_GETARG_TEXT_P(0), false);
+	fn2 = convert_and_check_filename(PG_GETARG_TEXT_P(1), false);
 	if (PG_ARGISNULL(2))
 		fn3 = 0;
 	else
-		fn3 = absClusterPath(PG_GETARG_TEXT_P(2), false);
+		fn3 = convert_and_check_filename(PG_GETARG_TEXT_P(2), false);
 
 	if (access(fn1, W_OK) < 0)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("file %s not accessible: %m", fn1)));
+				 errmsg("file \"%s\" is not accessible: %m", fn1)));
 
 		PG_RETURN_BOOL(false);
 	}
@@ -201,18 +204,18 @@ pg_file_rename(PG_FUNCTION_ARGS)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("file %s not accessible: %m", fn2)));
+				 errmsg("file \"%s\" is not accessible: %m", fn2)));
 
 		PG_RETURN_BOOL(false);
 	}
-
 
 	rc = access(fn3 ? fn3 : fn2, 2);
 	if (rc >= 0 || errno != ENOENT)
 	{
 		ereport(ERROR,
 				(ERRCODE_DUPLICATE_FILE,
-				 errmsg("cannot rename to target file %s", fn3 ? fn3 : fn2)));
+				 errmsg("cannot rename to target file \"%s\"",
+						fn3 ? fn3 : fn2)));
 	}
 
 	if (fn3)
@@ -221,37 +224,37 @@ pg_file_rename(PG_FUNCTION_ARGS)
 		{
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not rename %s to %s: %m", fn2, fn3)));
+					 errmsg("could not rename \"%s\" to \"%s\": %m",
+							fn2, fn3)));
 		}
 		if (rename(fn1, fn2) != 0)
 		{
 			ereport(WARNING,
 					(errcode_for_file_access(),
-					 errmsg("could not rename %s to %s: %m", fn1, fn2)));
+					 errmsg("could not rename \"%s\" to \"%s\": %m",
+							fn1, fn2)));
 
 			if (rename(fn3, fn2) != 0)
 			{
 				ereport(ERROR,
 						(errcode_for_file_access(),
-					errmsg("could not rename %s back to %s: %m", fn3, fn2)));
+						 errmsg("could not rename \"%s\" back to \"%s\": %m",
+								fn3, fn2)));
 			}
 			else
 			{
 				ereport(ERROR,
 						(ERRCODE_UNDEFINED_FILE,
-						 errmsg("renaming %s to %s was reverted", fn2, fn3)));
-
+						 errmsg("renaming \"%s\" to \"%s\" was reverted",
+								fn2, fn3)));
 			}
 		}
 	}
 	else if (rename(fn1, fn2) != 0)
 	{
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("renaming %s to %s %m", fn1, fn2)));
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not rename %s to %s: %m", fn1, fn2)));
+				 errmsg("could not rename \"%s\" to \"%s\": %m", fn1, fn2)));
 	}
 
 	PG_RETURN_BOOL(true);
@@ -265,7 +268,7 @@ pg_file_unlink(PG_FUNCTION_ARGS)
 
 	requireSuperuser();
 
-	filename = absClusterPath(PG_GETARG_TEXT_P(0), false);
+	filename = convert_and_check_filename(PG_GETARG_TEXT_P(0), false);
 
 	if (access(filename, W_OK) < 0)
 	{
@@ -274,15 +277,14 @@ pg_file_unlink(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("file %s not accessible: %m", filename)));
-
+					 errmsg("file \"%s\" is not accessible: %m", filename)));
 	}
 
 	if (unlink(filename) < 0)
 	{
 		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not unlink file %s: %m", filename)));
+				 errmsg("could not unlink file \"%s\": %m", filename)));
 
 		PG_RETURN_BOOL(false);
 	}
@@ -316,13 +318,7 @@ pg_logdir_ls(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		fctx = palloc(sizeof(directory_fctx));
-		if (is_absolute_path(Log_directory))
-			fctx->location = pstrdup(Log_directory);
-		else
-		{
-			fctx->location = palloc(strlen(DataDir) + strlen(Log_directory) + 2);
-			sprintf(fctx->location, "%s/%s", DataDir, Log_directory);
-		}
+
 		tupdesc = CreateTemplateTupleDesc(2, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "starttime",
 						   TIMESTAMPOID, -1, 0);
@@ -331,12 +327,14 @@ pg_logdir_ls(PG_FUNCTION_ARGS)
 
 		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
+		fctx->location = pstrdup(Log_directory);
 		fctx->dirdesc = AllocateDir(fctx->location);
 
 		if (!fctx->dirdesc)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("%s is not browsable: %m", fctx->location)));
+					 errmsg("could not read directory \"%s\": %m",
+							fctx->location)));
 
 		funcctx->user_fctx = fctx;
 		MemoryContextSwitchTo(oldcontext);

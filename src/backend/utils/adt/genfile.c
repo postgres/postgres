@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.11 2006/07/13 16:49:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.12 2006/11/06 03:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,13 +38,13 @@ typedef struct
 
 
 /*
- * Validate a path and convert to absolute form.
+ * Convert a "text" filename argument to C string, and check it's allowable.
  *
- * Argument may be absolute or relative to the DataDir (but we only allow
- * absolute paths that match DataDir or Log_directory).
+ * Filename may be absolute or relative to the DataDir, but we only allow
+ * absolute paths that match DataDir or Log_directory.
  */
 static char *
-check_and_make_absolute(text *arg)
+convert_and_check_filename(text *arg)
 {
 	int			input_len = VARSIZE(arg) - VARHDRSZ;
 	char	   *filename = palloc(input_len + 1);
@@ -77,11 +77,7 @@ check_and_make_absolute(text *arg)
 	}
 	else
 	{
-		char	   *absname = palloc(strlen(DataDir) + strlen(filename) + 2);
-
-		sprintf(absname, "%s/%s", DataDir, filename);
-		pfree(filename);
-		return absname;
+		return filename;
 	}
 }
 
@@ -105,7 +101,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to read files"))));
 
-	filename = check_and_make_absolute(filename_t);
+	filename = convert_and_check_filename(filename_t);
 
 	if ((file = AllocateFile(filename, PG_BINARY_R)) == NULL)
 		ereport(ERROR,
@@ -166,7 +162,7 @@ pg_stat_file(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to get file information"))));
 
-	filename = check_and_make_absolute(filename_t);
+	filename = convert_and_check_filename(filename_t);
 
 	if (stat(filename, &fst) < 0)
 		ereport(ERROR,
@@ -238,7 +234,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		fctx = palloc(sizeof(directory_fctx));
-		fctx->location = check_and_make_absolute(PG_GETARG_TEXT_P(0));
+		fctx->location = convert_and_check_filename(PG_GETARG_TEXT_P(0));
 
 		fctx->dirdesc = AllocateDir(fctx->location);
 
