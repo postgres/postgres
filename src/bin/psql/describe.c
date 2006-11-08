@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.147 2006/10/09 23:30:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.148 2006/11/08 01:22:55 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1171,7 +1171,14 @@ describeOneTableDetails(const char *schemaname,
 
 		result6 = PSQLexec(buf.data, false);
 		if (!result6)
+		{
+			PQclear(result1);
+			PQclear(result2);
+			PQclear(result3);
+			PQclear(result4);
+			PQclear(result5);
 			goto error_return;
+		}
 		else
 			inherits_count = PQntuples(result6);
 
