@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.68 2006/10/04 00:30:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.69 2006/11/08 19:27:24 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -140,6 +140,7 @@ typedef struct AllocSetContext
 	/* Allocation parameters for this context: */
 	Size		initBlockSize;	/* initial block size */
 	Size		maxBlockSize;	/* maximum block size */
+	Size		nextBlockSize;	/* next block size to allocate */
 	AllocBlock	keeper;			/* if not NULL, keep this block over resets */
 } AllocSetContext;
 
@@ -325,6 +326,7 @@ AllocSetContextCreate(MemoryContext parent,
 		maxBlockSize = initBlockSize;
 	context->initBlockSize = initBlockSize;
 	context->maxBlockSize = maxBlockSize;
+	context->nextBlockSize = initBlockSize;
 
 	/*
 	 * Grab always-allocated space, if requested
@@ -442,6 +444,9 @@ AllocSetReset(MemoryContext context)
 		}
 		block = next;
 	}
+
+	/* Reset block size allocation sequence, too */
+	set->nextBlockSize = set->initBlockSize;
 
 	set->isReset = true;
 }
@@ -665,28 +670,14 @@ AllocSetAlloc(MemoryContext context, Size size)
 	{
 		Size		required_size;
 
-		if (set->blocks == NULL)
-		{
-			/* First block of the alloc set, use initBlockSize */
-			blksize = set->initBlockSize;
-		}
-		else
-		{
-			/*
-			 * Use first power of 2 that is larger than previous block, but
-			 * not more than the allowed limit.  (We don't simply double the
-			 * prior block size, because in some cases this could be a funny
-			 * size, eg if very first allocation was for an odd-sized large
-			 * chunk.)
-			 */
-			Size		pblksize = set->blocks->endptr - ((char *) set->blocks);
-
-			blksize = set->initBlockSize;
-			while (blksize <= pblksize)
-				blksize <<= 1;
-			if (blksize > set->maxBlockSize)
-				blksize = set->maxBlockSize;
-		}
+		/*
+		 * The first such block has size initBlockSize, and we double the
+		 * space in each succeeding block, but not more than maxBlockSize.
+		 */
+		blksize = set->nextBlockSize;
+		set->nextBlockSize <<= 1;
+		if (set->nextBlockSize > set->maxBlockSize)
+			set->nextBlockSize = set->maxBlockSize;
 
 		/*
 		 * If initBlockSize is less than ALLOC_CHUNK_LIMIT, we could need more
@@ -734,11 +725,8 @@ AllocSetAlloc(MemoryContext context, Size size)
 		 * never need any space.  Don't mark an oversize block as a keeper,
 		 * however.
 		 */
-		if (set->blocks == NULL && blksize == set->initBlockSize)
-		{
-			Assert(set->keeper == NULL);
+		if (set->keeper == NULL && blksize == set->initBlockSize)
 			set->keeper = block;
-		}
 
 		block->next = set->blocks;
 		set->blocks = block;
