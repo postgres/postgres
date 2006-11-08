@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.7 2005/10/15 02:49:47 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.8 2006/11/08 10:46:47 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -101,7 +101,7 @@ ECPGclear_auto_mem(void)
 {
 	struct auto_mem *am;
 
-	/* free just our own structure */
+	/* only free our own structure */
 	for (am = auto_allocs; am;)
 	{
 		struct auto_mem *act = am;

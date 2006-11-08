@@ -2149,5 +2149,9 @@ Th 14. Sep 09:47:03 CEST 2006
 
 	- Completely removed complex tests.
 	- Added missing constuctor/destructor for interval and date.
+
+We 8. Nov 10:53:42 CET 2006
+
+	- Applied patch by Peter Harris to free auto_mem struct in ECPGconnect.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
