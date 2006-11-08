@@ -149,7 +149,7 @@ Development History
           introduced  an  interesting  data structure suitable for sets -
           RD-tree  (Russian  Doll  tree). Further research lead us to the
           idea to use GiST for implementing RD-tree, but at that time the
-          GiST  code  was intouched for a long time and contained several
+          GiST  code  was untouched for a long time and contained several
           bugs.  After  work  on  improving  GiST  for  version  7.0.3 of
           PostgreSQL  was done, we were able to implement RD-Tree and use
           it  for index access to arrays of integers. This implementation
@@ -159,7 +159,7 @@ Development History
           by  a  single bit-signature, a so-called superimposed signature
           (see "Index Structures for Databases Containing Data Items with
           Set-valued  Attributes",  1997,  Sven  Helmer  for details). We
-          developeded  the  contrib/intarray  module and used it for full
+          developed  the  contrib/intarray  module and used it for full
           text indexing.
 
    tsearch v1
