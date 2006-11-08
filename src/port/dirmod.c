@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.43 2006/07/18 22:36:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.44 2006/11/08 20:12:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,43 +117,28 @@ pgrename(const char *from, const char *to)
 	int			loops = 0;
 
 	/*
-	 * We need these loops because even though PostgreSQL uses flags that
+	 * We need to loop because even though PostgreSQL uses flags that
 	 * allow rename while the file is open, other applications might have
-	 * these files open without those flags.
+	 * the file open without those flags.  However, we won't wait
+	 * indefinitely for someone else to close the file.
 	 */
 #if defined(WIN32) && !defined(__CYGWIN__)
 	while (!MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
+#else
+	while (rename(from, to) < 0)
 #endif
-#ifdef __CYGWIN__
-		while (rename(from, to) < 0)
-#endif
-		{
+	{
 #if defined(WIN32) && !defined(__CYGWIN__)
-			if (GetLastError() != ERROR_ACCESS_DENIED)
-#endif
-#ifdef __CYGWIN__
-				if (errno != EACCES)
-#endif
-					/* set errno? */
-					return -1;
-			pg_usleep(100000);	/* us */
-			if (loops == 30)
-#ifndef FRONTEND
-				elog(LOG, "could not rename file \"%s\" to \"%s\", continuing to try",
-					 from, to);
+		if (GetLastError() != ERROR_ACCESS_DENIED)
 #else
-				fprintf(stderr, _("could not rename file \"%s\" to \"%s\", continuing to try\n"),
-						from, to);
+		if (errno != EACCES)
 #endif
-			loops++;
-		}
-
-	if (loops > 30)
-#ifndef FRONTEND
-		elog(LOG, "completed rename of file \"%s\" to \"%s\"", from, to);
-#else
-		fprintf(stderr, _("completed rename of file \"%s\" to \"%s\"\n"), from, to);
-#endif
+			/* set errno? */
+			return -1;
+		if (++loops > 300)		/* time out after 30 sec */
+			return -1;
+		pg_usleep(100000);		/* us */
+	}
 	return 0;
 }
 
@@ -167,33 +152,20 @@ pgunlink(const char *path)
 	int			loops = 0;
 
 	/*
-	 * We need these loops because even though PostgreSQL uses flags that
+	 * We need to loop because even though PostgreSQL uses flags that
 	 * allow unlink while the file is open, other applications might have
-	 * these files open without those flags.
+	 * the file open without those flags.  However, we won't wait
+	 * indefinitely for someone else to close the file.
 	 */
 	while (unlink(path))
 	{
 		if (errno != EACCES)
 			/* set errno? */
 			return -1;
+		if (++loops > 300)		/* time out after 30 sec */
+			return -1;
 		pg_usleep(100000);		/* us */
-		if (loops == 30)
-#ifndef FRONTEND
-			elog(LOG, "could not remove file \"%s\", continuing to try",
-				 path);
-#else
-			fprintf(stderr, _("could not remove file \"%s\", continuing to try\n"),
-					path);
-#endif
-		loops++;
 	}
-
-	if (loops > 30)
-#ifndef FRONTEND
-		elog(LOG, "completed removal of file \"%s\"", path);
-#else
-		fprintf(stderr, _("completed removal of file \"%s\"\n"), path);
-#endif
 	return 0;
 }
 
