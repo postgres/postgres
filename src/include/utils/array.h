@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.59 2006/09/10 20:14:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.60 2006/11/08 19:24:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,13 +78,8 @@ typedef struct ArrayBuildState
 	MemoryContext mcontext;		/* where all the temp stuff is kept */
 	Datum	   *dvalues;		/* array of accumulated Datums */
 	bool	   *dnulls;			/* array of is-null flags for Datums */
-
-	/*
-	 * The allocated size of dvalues[] and dnulls[] is always a multiple of
-	 * ARRAY_ELEMS_CHUNKSIZE
-	 */
-#define ARRAY_ELEMS_CHUNKSIZE	64
-	int			nelems;			/* number of valid Datums in dvalues[] */
+	int			alen;			/* allocated length of above arrays */
+	int			nelems;			/* number of valid entries in above arrays */
 	Oid			element_type;	/* data type of the Datums */
 	int16		typlen;			/* needed info about datatype */
 	bool		typbyval;

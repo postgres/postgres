@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.134 2006/10/06 17:13:59 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.135 2006/11/08 19:24:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4337,10 +4337,9 @@ accumArrayResult(ArrayBuildState *astate,
 		oldcontext = MemoryContextSwitchTo(arr_context);
 		astate = (ArrayBuildState *) palloc(sizeof(ArrayBuildState));
 		astate->mcontext = arr_context;
-		astate->dvalues = (Datum *)
-			palloc(ARRAY_ELEMS_CHUNKSIZE * sizeof(Datum));
-		astate->dnulls = (bool *)
-			palloc(ARRAY_ELEMS_CHUNKSIZE * sizeof(bool));
+		astate->alen = 64;		/* arbitrary starting array size */
+		astate->dvalues = (Datum *) palloc(astate->alen * sizeof(Datum));
+		astate->dnulls = (bool *) palloc(astate->alen * sizeof(bool));
 		astate->nelems = 0;
 		astate->element_type = element_type;
 		get_typlenbyvalalign(element_type,
@@ -4353,14 +4352,13 @@ accumArrayResult(ArrayBuildState *astate,
 		oldcontext = MemoryContextSwitchTo(astate->mcontext);
 		Assert(astate->element_type == element_type);
 		/* enlarge dvalues[]/dnulls[] if needed */
-		if ((astate->nelems % ARRAY_ELEMS_CHUNKSIZE) == 0)
+		if (astate->nelems >= astate->alen)
 		{
+			astate->alen *= 2;
 			astate->dvalues = (Datum *)
-				repalloc(astate->dvalues,
-				   (astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(Datum));
+				repalloc(astate->dvalues, astate->alen * sizeof(Datum));
 			astate->dnulls = (bool *)
-				repalloc(astate->dnulls,
-					(astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(bool));
+				repalloc(astate->dnulls, astate->alen * sizeof(bool));
 		}
 	}
 
