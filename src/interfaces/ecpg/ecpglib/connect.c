@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.24.4.5 2006/06/21 11:38:35 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.24.4.6 2006/11/08 10:48:21 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -271,6 +271,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			   *options = NULL;
 
 	ECPGinit_sqlca(sqlca);
+
+	ECPGclear_auto_mem();
 
 	if (INFORMIX_MODE(compat))
 	{
