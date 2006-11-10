@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.254 2006/11/08 20:12:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.255 2006/11/10 22:32:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2434,7 +2434,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 			switch (sp[1])
 			{
 				case 'p':
-					/* %p: full path of target file */
+					/* %p: relative path of target file */
 					sp++;
 					StrNCpy(dp, xlogpath, endp - dp);
 					make_native_path(dp);

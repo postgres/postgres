@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.93 2006/11/04 18:20:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.94 2006/11/10 22:32:20 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -599,7 +599,7 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
     In writing your archive command, you should assume that the file names to
     be archived may be up to 64 characters long and may contain any
     combination of ASCII letters, digits, and dots.  It is not necessary to
-    remember the original full path (<literal>%p</>) but it is necessary to
+    remember the original relative path (<literal>%p</>) but it is necessary to
     remember the file name (<literal>%f</>).
    </para>
 

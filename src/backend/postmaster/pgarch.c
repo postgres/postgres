@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.25 2006/08/07 17:41:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.26 2006/11/10 22:32:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,7 +417,7 @@ pgarch_archiveXlog(char *xlog)
 			switch (sp[1])
 			{
 				case 'p':
-					/* %p: full path of source file */
+					/* %p: relative path of source file */
 					sp++;
 					StrNCpy(dp, pathname, endp - dp);
 					make_native_path(dp);
