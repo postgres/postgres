@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.37 2006/09/14 22:05:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.38 2006/11/10 18:10:10 tgl Exp $
  */
 
 /*
@@ -51,6 +51,28 @@ CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
     IMMUTABLE
     RETURNS NULL ON NULL INPUT
     AS 'select information_schema._pg_keyissubset($1, $2) and information_schema._pg_keyissubset($2, $1)';
+
+/* Get the OID of the unique index that an FK constraint depends on */
+CREATE FUNCTION _pg_underlying_index(oid) RETURNS oid
+    LANGUAGE sql STRICT STABLE
+    AS $$
+SELECT refobjid FROM pg_catalog.pg_depend
+  WHERE classid = 'pg_catalog.pg_constraint'::pg_catalog.regclass AND
+        objid = $1 AND
+        refclassid = 'pg_catalog.pg_class'::pg_catalog.regclass AND
+        refobjsubid = 0 AND deptype = 'n'
+$$;
+
+/* Given an index's OID and an underlying-table column number, return the
+ * column's position in the index (NULL if not there) */
+CREATE FUNCTION _pg_index_position(oid, smallint) RETURNS int
+    LANGUAGE sql STRICT STABLE
+    AS $$
+SELECT (ss.a).n FROM
+  (SELECT information_schema._pg_expandarray(indkey) AS a
+   FROM pg_catalog.pg_index WHERE indexrelid = $1) ss
+  WHERE (ss.a).x = $2;
+$$;
 
 CREATE FUNCTION _pg_truetypid(pg_attribute, pg_type) RETURNS oid
     LANGUAGE sql
@@ -922,17 +944,16 @@ CREATE VIEW key_column_usage AS
            CAST(relname AS sql_identifier) AS table_name,
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST((ss.x).n AS cardinal_number) AS ordinal_position,
-           (
-             SELECT CAST(a AS cardinal_number)
-             FROM pg_constraint,
-               (SELECT a FROM generate_series(1, array_upper(ss.confkey,1)) a) AS foo
-             WHERE conrelid = ss.confrelid
-             AND conkey[foo.a] = ss.confkey[(ss.x).n]
-           ) AS position_in_unique_constraint
+           CAST(CASE WHEN contype = 'f' THEN
+                  _pg_index_position(_pg_underlying_index(ss.coid),
+                                     ss.confkey[(ss.x).n])
+                     ELSE NULL
+                END AS cardinal_number)
+             AS position_in_unique_constraint
     FROM pg_attribute a,
-         (SELECT r.oid, r.relname, nc.nspname AS nc_nspname,
+         (SELECT r.oid AS roid, r.relname, nc.nspname AS nc_nspname,
                  nr.nspname AS nr_nspname,
-                 c.conname, c.confkey, c.confrelid,
+                 c.oid AS coid, c.conname, c.contype, c.confkey, c.confrelid,
                  _pg_expandarray(c.conkey) AS x
           FROM pg_namespace nr, pg_class r, pg_namespace nc,
                pg_constraint c
@@ -947,7 +968,7 @@ CREATE VIEW key_column_usage AS
                      OR has_table_privilege(c.oid, 'INSERT')
                      OR has_table_privilege(c.oid, 'UPDATE')
                      OR has_table_privilege(c.oid, 'REFERENCES')) ) AS ss
-    WHERE ss.oid = a.attrelid
+    WHERE ss.roid = a.attrelid
           AND a.attnum = (ss.x).x
           AND NOT a.attisdropped;
 
