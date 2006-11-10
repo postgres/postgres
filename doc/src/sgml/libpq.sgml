@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.219 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.220 2006/11/10 22:15:26 tgl Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -956,7 +956,7 @@ Applications may use this to determine the version of the database server they
 are connected to. The number is formed by converting the major, minor, and
 revision numbers into two-decimal-digit numbers and appending them
 together. For example, version 8.1.5 will be returned as 80105, and version
-8.1 will be returned as 80100 (leading zeroes are not shown).  Zero is
+8.2 will be returned as 80200 (leading zeroes are not shown).  Zero is
 returned if the connection is bad.
 </para>
 </listitem>
@@ -1138,41 +1138,116 @@ connections; it will fail when using protocol 2.0.
 </para>
 
 <para>
-If parameters are used, they are referred to in the command string
-as <literal>$1</>, <literal>$2</>, etc.
-<parameter>nParams</> is the number of parameters supplied; it is the length
-of the arrays <parameter>paramTypes[]</>, <parameter>paramValues[]</>,
-<parameter>paramLengths[]</>, and <parameter>paramFormats[]</>.  (The
-array pointers may be <symbol>NULL</symbol> when <parameter>nParams</> is zero.)
-<parameter>paramTypes[]</> specifies, by OID, the data types to be assigned to
-the parameter symbols.  If <parameter>paramTypes</> is <symbol>NULL</symbol>, or any particular
-element in the array is zero, the server assigns a data type to the parameter
-symbol in the same way it would do for an untyped literal string.
-<parameter>paramValues[]</> specifies the actual values of the parameters.
-A null pointer in this array means the corresponding parameter is null;
-otherwise the pointer points to a zero-terminated text string (for text
-format) or binary data in the format expected by the server (for binary
-format).
-<parameter>paramLengths[]</> specifies the actual data lengths of
-binary-format parameters.  It is ignored for null parameters and text-format
-parameters.  The array pointer may be null when there are no binary
-parameters.
-<parameter>paramFormats[]</> specifies whether parameters are text (put a zero
-in the array) or binary (put a one in the array).  If the array pointer is
-null then all parameters are presumed to be text.
-<parameter>resultFormat</> is zero to obtain results in text format, or one to
-obtain results in binary format.  (There is not currently a provision to
-obtain different result columns in different formats, although that is
-possible in the underlying protocol.)
+The function arguments are:
+
+<variablelist>
+  <varlistentry>
+    <term><parameter>conn</parameter></term>
+    <listitem>
+      <para>
+       The connection object to send the command through.
+      </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><parameter>command</parameter></term>
+    <listitem>
+      <para>
+       The SQL command string to be executed. If parameters are used, they are
+       referred to in the command string as <literal>$1</>, <literal>$2</>,
+       etc.
+      </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><parameter>nParams</parameter></term>
+    <listitem>
+      <para>
+       The number of parameters supplied; it is the length of the arrays
+       <parameter>paramTypes[]</>, <parameter>paramValues[]</>,
+       <parameter>paramLengths[]</>, and <parameter>paramFormats[]</>. (The
+       array pointers may be <symbol>NULL</symbol> when <parameter>nParams</>
+       is zero.)
+      </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><parameter>paramTypes[]</parameter></term>
+    <listitem>
+      <para>
+       Specifies, by OID, the data types to be assigned to the parameter
+       symbols.  If <parameter>paramTypes</> is <symbol>NULL</symbol>, or any
+       particular element in the array is zero, the server infers a data type
+       for the parameter symbol in the same way it would do for an untyped
+       literal string.
+      </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><parameter>paramValues[]</parameter></term>
+    <listitem>
+      <para>
+       Specifies the actual values of the parameters.
+       A null pointer in this array means the corresponding parameter is null;
+       otherwise the pointer points to a zero-terminated text string (for text
+       format) or binary data in the format expected by the server (for binary
+       format).
+      </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><parameter>paramLengths[]</parameter></term>
+    <listitem>
+      <para>
+       Specifies the actual data lengths of binary-format parameters.
+       It is ignored for null parameters and text-format parameters.
+       The array pointer may be null when there are no binary parameters.
+      </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><parameter>paramFormats[]</parameter></term>
+    <listitem>
+      <para>
+       Specifies whether parameters are text (put a zero in the array entry for
+       the corresponding parameter) or binary (put a one in the array entry for
+       the corresponding parameter). If the array pointer is null then all
+       parameters are presumed to be text strings.
+      </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term><parameter>resultFormat</parameter></term>
+    <listitem>
+      <para>
+       Specify zero to obtain results in text format, or one to obtain results
+       in binary format.  (There is not currently a provision to obtain
+       different result columns in different formats, although that is
+       possible in the underlying protocol.)
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
 </para>
 </listitem>
 </varlistentry>
 </variablelist>
+</para>
 
+<para>
 The primary advantage of <function>PQexecParams</> over <function>PQexec</>
 is that parameter values may be separated from the command string, thus
 avoiding the need for tedious and error-prone quoting and escaping.
+</para>
 
+<para>
 Unlike <function>PQexec</>, <function>PQexecParams</> allows at most one SQL
 command in the given string.  (There can be semicolons in it, but not more
 than one nonempty command.)  This is a limitation of the underlying protocol,
