@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.24 2006/10/04 00:29:46 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.25 2006/11/10 06:28:29 neilc Exp $
  */
 
 #include "postgres.h"
@@ -45,8 +45,7 @@ PG_MODULE_MAGIC;
 /* private stuff */
 
 typedef int (*PFN) (const char *name, void **res);
-static void *
-			find_provider(text *name, PFN pf, char *desc, int silent);
+static void *find_provider(text *name, PFN pf, char *desc, int silent);
 
 /* SQL function: hash(bytea, text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_digest);
@@ -60,9 +59,6 @@ pg_digest(PG_FUNCTION_ARGS)
 				hlen;
 	PX_MD	   *md;
 	bytea	   *res;
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
-		PG_RETURN_NULL();
 
 	name = PG_GETARG_TEXT_P(1);
 
@@ -101,9 +97,6 @@ pg_hmac(PG_FUNCTION_ARGS)
 				klen;
 	PX_HMAC    *h;
 	bytea	   *res;
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
-		PG_RETURN_NULL();
 
 	name = PG_GETARG_TEXT_P(2);
 
@@ -144,9 +137,6 @@ pg_gen_salt(PG_FUNCTION_ARGS)
 	text	   *res;
 	char		buf[PX_MAX_SALT_LEN + 1];
 
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-
 	arg0 = PG_GETARG_TEXT_P(0);
 
 	len = VARSIZE(arg0) - VARHDRSZ;
@@ -179,9 +169,6 @@ pg_gen_salt_rounds(PG_FUNCTION_ARGS)
 	int			len;
 	text	   *res;
 	char		buf[PX_MAX_SALT_LEN + 1];
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
-		PG_RETURN_NULL();
 
 	arg0 = PG_GETARG_TEXT_P(0);
 	rounds = PG_GETARG_INT32(1);
@@ -222,9 +209,6 @@ pg_crypt(PG_FUNCTION_ARGS)
 			   *resbuf;
 	text	   *res;
 
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-
 	arg0 = PG_GETARG_TEXT_P(0);
 	arg1 = PG_GETARG_TEXT_P(1);
 	len0 = VARSIZE(arg0) - VARHDRSZ;
@@ -239,9 +223,7 @@ pg_crypt(PG_FUNCTION_ARGS)
 	buf0[len0] = '\0';
 	buf1[len1] = '\0';
 
-	resbuf = palloc(PX_MAX_CRYPT);
-
-	memset(resbuf, 0, PX_MAX_CRYPT);
+	resbuf = palloc0(PX_MAX_CRYPT);
 
 	cres = px_crypt(buf0, buf1, resbuf, PX_MAX_CRYPT);
 
@@ -281,9 +263,6 @@ pg_encrypt(PG_FUNCTION_ARGS)
 	unsigned	dlen,
 				klen,
 				rlen;
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
-		PG_RETURN_NULL();
 
 	type = PG_GETARG_TEXT_P(2);
 	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
@@ -334,9 +313,6 @@ pg_decrypt(PG_FUNCTION_ARGS)
 				klen,
 				rlen;
 
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
-		PG_RETURN_NULL();
-
 	type = PG_GETARG_TEXT_P(2);
 	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
 
@@ -386,10 +362,6 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 				klen,
 				ivlen,
 				rlen;
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1)
-		|| PG_ARGISNULL(2) || PG_ARGISNULL(3))
-		PG_RETURN_NULL();
 
 	type = PG_GETARG_TEXT_P(3);
 	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);
@@ -444,10 +416,6 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 				klen,
 				rlen,
 				ivlen;
-
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1)
-		|| PG_ARGISNULL(2) || PG_ARGISNULL(3))
-		PG_RETURN_NULL();
 
 	type = PG_GETARG_TEXT_P(3);
 	c = find_provider(type, (PFN) px_find_combo, "Cipher", 0);

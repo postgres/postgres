@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.7 2005/11/22 18:17:04 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.8 2006/11/10 06:28:29 neilc Exp $
  */
 
 #include "postgres.h"
@@ -73,18 +73,6 @@ PG_FUNCTION_INFO_V1(pgp_key_id_w);
 
 PG_FUNCTION_INFO_V1(pg_armor);
 PG_FUNCTION_INFO_V1(pg_dearmor);
-
-/*
- * check for NULL arguments
- */
-#define CHECK_ARGS() \
-	do { \
-		int a; \
-		for (a = 0; a < PG_NARGS(); a++) { \
-			if (PG_ARGISNULL(a)) \
-				PG_RETURN_NULL(); \
-		} \
-	} while (0)
 
 /*
  * Mix a block of data into RNG.
@@ -660,7 +648,6 @@ pgp_sym_encrypt_bytea(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	CHECK_ARGS();
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
 	if (PG_NARGS() > 2)
@@ -683,7 +670,6 @@ pgp_sym_encrypt_text(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	CHECK_ARGS();
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
 	if (PG_NARGS() > 2)
@@ -707,7 +693,6 @@ pgp_sym_decrypt_bytea(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	CHECK_ARGS();
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
 	if (PG_NARGS() > 2)
@@ -730,7 +715,6 @@ pgp_sym_decrypt_text(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	CHECK_ARGS();
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
 	if (PG_NARGS() > 2)
@@ -757,7 +741,6 @@ pgp_pub_encrypt_bytea(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	CHECK_ARGS();
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
 	if (PG_NARGS() > 2)
@@ -780,7 +763,6 @@ pgp_pub_encrypt_text(PG_FUNCTION_ARGS)
 	text	   *arg = NULL;
 	text	   *res;
 
-	CHECK_ARGS();
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
 	if (PG_NARGS() > 2)
@@ -805,7 +787,6 @@ pgp_pub_decrypt_bytea(PG_FUNCTION_ARGS)
 			   *arg = NULL;
 	text	   *res;
 
-	CHECK_ARGS();
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
 	if (PG_NARGS() > 2)
@@ -833,7 +814,6 @@ pgp_pub_decrypt_text(PG_FUNCTION_ARGS)
 			   *arg = NULL;
 	text	   *res;
 
-	CHECK_ARGS();
 	data = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
 	if (PG_NARGS() > 2)
@@ -866,9 +846,6 @@ pg_armor(PG_FUNCTION_ARGS)
 				res_len,
 				guess_len;
 
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-
 	data = PG_GETARG_BYTEA_P(0);
 	data_len = VARSIZE(data) - VARHDRSZ;
 
@@ -895,9 +872,6 @@ pg_dearmor(PG_FUNCTION_ARGS)
 	int			data_len,
 				res_len,
 				guess_len;
-
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
 
 	data = PG_GETARG_TEXT_P(0);
 	data_len = VARSIZE(data) - VARHDRSZ;
@@ -932,9 +906,6 @@ pgp_key_id_w(PG_FUNCTION_ARGS)
 	text	   *res;
 	int			res_len;
 	MBuf	   *buf;
-
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
 
 	data = PG_GETARG_BYTEA_P(0);
 	buf = create_mbuf_from_vardata(data);
