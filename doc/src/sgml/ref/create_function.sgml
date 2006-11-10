@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.69 2006/11/03 07:17:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.70 2006/11/10 20:52:18 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -198,15 +198,15 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       These attributes inform the system whether it is safe to
-       replace multiple evaluations of the function with a single
-       evaluation, for run-time optimization.  At most one choice
+       These attributes inform the query optimizer about the behavior
+       of the function.  At most one choice
        may be specified.  If none of these appear,
        <literal>VOLATILE</literal> is the default assumption.
       </para>
 
       <para>
-       <literal>IMMUTABLE</literal> indicates that the function always
+       <literal>IMMUTABLE</literal> indicates that the function
+       cannot modify the database and always
        returns the same result when given the same argument values; that
        is, it does not do database lookups or otherwise use information not
        directly present in its argument list.  If this option is given,
@@ -215,8 +215,9 @@ CREATE [ OR REPLACE ] FUNCTION
       </para>
 
       <para>
-       <literal>STABLE</literal> indicates that within a single table scan
-       the function will consistently
+       <literal>STABLE</literal> indicates that the function
+       cannot modify the database,
+       and that within a single table scan it will consistently
        return the same result for the same argument values, but that its
        result could change across SQL statements.  This is the appropriate
        selection for functions whose results depend on database lookups,
