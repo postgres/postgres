@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.167 2006/10/04 00:29:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.168 2006/11/10 01:21:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1948,7 +1948,8 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   JoinType jointype,
 						   List *restrictlist)
 {
-	Selectivity selec;
+	Selectivity jselec;
+	Selectivity pselec;
 	double		nrows;
 	UniquePath *upath;
 
@@ -1957,20 +1958,60 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	 * clauses that become restriction clauses at this join level; we are not
 	 * double-counting them because they were not considered in estimating the
 	 * sizes of the component rels.
+	 *
+	 * For an outer join, we have to distinguish the selectivity of the
+	 * join's own clauses (JOIN/ON conditions) from any clauses that were
+	 * "pushed down".  For inner joins we just count them all as joinclauses.
 	 */
-	selec = clauselist_selectivity(root,
-								   restrictlist,
-								   0,
-								   jointype);
+	if (IS_OUTER_JOIN(jointype))
+	{
+		List	   *joinquals = NIL;
+		List	   *pushedquals = NIL;
+		ListCell   *l;
+
+		/* Grovel through the clauses to separate into two lists */
+		foreach(l, restrictlist)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+			Assert(IsA(rinfo, RestrictInfo));
+			if (rinfo->is_pushed_down)
+				pushedquals = lappend(pushedquals, rinfo);
+			else
+				joinquals = lappend(joinquals, rinfo);
+		}
+
+		/* Get the separate selectivities */
+		jselec = clauselist_selectivity(root,
+										joinquals,
+										0,
+										jointype);
+		pselec = clauselist_selectivity(root,
+										pushedquals,
+										0,
+										jointype);
+
+		/* Avoid leaking a lot of ListCells */
+		list_free(joinquals);
+		list_free(pushedquals);
+	}
+	else
+	{
+		jselec = clauselist_selectivity(root,
+										restrictlist,
+										0,
+										jointype);
+		pselec = 0.0;			/* not used, keep compiler quiet */
+	}
 
 	/*
 	 * Basically, we multiply size of Cartesian product by selectivity.
 	 *
-	 * If we are doing an outer join, take that into account: the output must
-	 * be at least as large as the non-nullable input.	(Is there any chance
-	 * of being even smarter?)	(XXX this is not really right, because it
-	 * assumes all the restriction clauses are join clauses; we should figure
-	 * pushed-down clauses separately.)
+	 * If we are doing an outer join, take that into account: the joinqual
+	 * selectivity has to be clamped using the knowledge that the output must
+	 * be at least as large as the non-nullable input.  However, any
+	 * pushed-down quals are applied after the outer join, so their
+	 * selectivity applies fully.
 	 *
 	 * For JOIN_IN and variants, the Cartesian product is figured with respect
 	 * to a unique-ified input, and then we can clamp to the size of the other
@@ -1979,30 +2020,33 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 	switch (jointype)
 	{
 		case JOIN_INNER:
-			nrows = outer_rel->rows * inner_rel->rows * selec;
+			nrows = outer_rel->rows * inner_rel->rows * jselec;
 			break;
 		case JOIN_LEFT:
-			nrows = outer_rel->rows * inner_rel->rows * selec;
+			nrows = outer_rel->rows * inner_rel->rows * jselec;
 			if (nrows < outer_rel->rows)
 				nrows = outer_rel->rows;
+			nrows *= pselec;
 			break;
 		case JOIN_RIGHT:
-			nrows = outer_rel->rows * inner_rel->rows * selec;
+			nrows = outer_rel->rows * inner_rel->rows * jselec;
 			if (nrows < inner_rel->rows)
 				nrows = inner_rel->rows;
+			nrows *= pselec;
 			break;
 		case JOIN_FULL:
-			nrows = outer_rel->rows * inner_rel->rows * selec;
+			nrows = outer_rel->rows * inner_rel->rows * jselec;
 			if (nrows < outer_rel->rows)
 				nrows = outer_rel->rows;
 			if (nrows < inner_rel->rows)
 				nrows = inner_rel->rows;
+			nrows *= pselec;
 			break;
 		case JOIN_IN:
 		case JOIN_UNIQUE_INNER:
 			upath = create_unique_path(root, inner_rel,
 									   inner_rel->cheapest_total_path);
-			nrows = outer_rel->rows * upath->rows * selec;
+			nrows = outer_rel->rows * upath->rows * jselec;
 			if (nrows > outer_rel->rows)
 				nrows = outer_rel->rows;
 			break;
@@ -2010,7 +2054,7 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 		case JOIN_UNIQUE_OUTER:
 			upath = create_unique_path(root, outer_rel,
 									   outer_rel->cheapest_total_path);
-			nrows = upath->rows * inner_rel->rows * selec;
+			nrows = upath->rows * inner_rel->rows * jselec;
 			if (nrows > inner_rel->rows)
 				nrows = inner_rel->rows;
 			break;
