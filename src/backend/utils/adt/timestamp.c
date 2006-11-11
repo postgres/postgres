@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.168 2006/10/04 00:29:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.169 2006/11/11 01:14:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1257,7 +1257,10 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 
 	/* Julian day routines are not correct for negative Julian days */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
+	{
+		*result = 0;			/* keep compiler quiet */
 		return -1;
+	}
 
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
@@ -1266,11 +1269,17 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	*result = date * USECS_PER_DAY + time;
 	/* check for major overflow */
 	if ((*result - time) / USECS_PER_DAY != date)
+	{
+		*result = 0;			/* keep compiler quiet */
 		return -1;
+	}
 	/* check for just-barely overflow (okay except time-of-day wraps) */
 	if ((*result < 0 && date >= 0) ||
 		(*result >= 0 && date < 0))
+	{
+		*result = 0;			/* keep compiler quiet */
 		return -1;
+	}
 #else
 	*result = date * SECS_PER_DAY + time;
 #endif

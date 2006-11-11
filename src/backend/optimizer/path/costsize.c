@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.168 2006/11/10 01:21:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.169 2006/11/11 01:14:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -626,7 +626,10 @@ cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec)
 		*selec = ((BitmapOrPath *) path)->bitmapselectivity;
 	}
 	else
+	{
 		elog(ERROR, "unrecognized node type: %d", nodeTag(path));
+		*cost = *selec = 0;		/* keep compiler quiet */
+	}
 }
 
 /*

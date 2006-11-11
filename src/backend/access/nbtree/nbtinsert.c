@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.145 2006/11/01 19:43:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.146 2006/11/11 01:14:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1082,6 +1082,9 @@ _bt_findsplitloc(Relation rel,
 												 BTREE_DEFAULT_FILLFACTOR);
 	else
 		state.fillfactor = BTREE_NONLEAF_FILLFACTOR;
+	state.newitemonleft = false;	/* these just to keep compiler quiet */
+	state.firstright = 0;
+	state.best_delta = 0;
 
 	/* Total free space available on a btree page, after fixed overhead */
 	leftspace = rightspace =
