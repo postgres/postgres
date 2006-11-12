@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.61 2006/10/04 00:29:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.62 2006/11/12 06:55:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids, int maxtids, b
 				n = OffsetNumberNext(n);
 		}
 
-		/* wonderfull, we can look at page */
+		/* wonderful, we can look at page */
 
 		for (;;)
 		{

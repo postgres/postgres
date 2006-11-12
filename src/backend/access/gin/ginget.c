@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.3 2006/10/04 00:29:47 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.4 2006/11/12 06:55:53 neilc Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -389,7 +389,7 @@ scanGetItem(IndexScanDesc scan, ItemPointerData *item)
 				*item = key->curItem;
 		}
 		else
-			return FALSE;		/* finshed one of keys */
+			return FALSE;		/* finished one of keys */
 	}
 
 	for (i = 1; i <= so->nkeys; i++)
@@ -405,7 +405,7 @@ scanGetItem(IndexScanDesc scan, ItemPointerData *item)
 			else if (cmp > 0)
 			{
 				if (keyGetItem(scan->indexRelation, &so->ginstate, so->tempCtx, key) == TRUE)
-					return FALSE;		/* finshed one of keys */
+					return FALSE;		/* finished one of keys */
 			}
 			else
 			{					/* returns to begin */

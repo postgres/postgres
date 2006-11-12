@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.5 2006/10/04 00:29:47 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.6 2006/11/12 06:55:53 neilc Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -38,7 +38,7 @@ ginTraverseLock(Buffer buffer, bool searchMode)
 			/* But root can become non-leaf during relock */
 			if (!GinPageIsLeaf(page))
 			{
-				/* resore old lock type (very rare) */
+				/* restore old lock type (very rare) */
 				LockBuffer(buffer, GIN_UNLOCK);
 				LockBuffer(buffer, GIN_SHARE);
 			}
@@ -263,7 +263,7 @@ findParents(GinBtree btree, GinBtreeStack *stack,
 }
 
 /*
- * Insert value (stored in GinBtree) to tree descibed by stack
+ * Insert value (stored in GinBtree) to tree described by stack
  */
 void
 ginInsertValue(GinBtree btree, GinBtreeStack *stack)
@@ -316,7 +316,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 			Page		newlpage;
 
 			/*
-			 * newlpage is a pointer to memory page, it does'nt assosiates
+			 * newlpage is a pointer to memory page, it doesn't associate
 			 * with buffer, stack->buffer shoud be untouched
 			 */
 			newlpage = btree->splitPage(btree, stack->buffer, rbuffer, stack->off, &rdata);

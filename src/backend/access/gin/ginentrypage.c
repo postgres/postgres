@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.4 2006/10/04 00:29:47 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.5 2006/11/12 06:55:53 neilc Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -21,20 +21,20 @@
  * non-traditional layout. Tuple may contain posting list or
  * root blocknumber of posting tree. Macros GinIsPostingTre: (itup) / GinSetPostingTree(itup, blkno)
  * 1) Posting list
- *		- itup->t_info & INDEX_SIZE_MASK contains size of tuple as usial
+ *		- itup->t_info & INDEX_SIZE_MASK contains size of tuple as usual
  *		- ItemPointerGetBlockNumber(&itup->t_tid) contains original
  *		  size of tuple (without posting list).
  *		  Macroses: GinGetOrigSizePosting(itup) / GinSetOrigSizePosting(itup,n)
  *		- ItemPointerGetOffsetNumber(&itup->t_tid) contains number
  *		  of elements in posting list (number of heap itempointer)
  *		  Macroses: GinGetNPosting(itup) / GinSetNPosting(itup,n)
- *		- After usial part of tuple there is a posting list
+ *		- After usual part of tuple there is a posting list
  *		  Macros: GinGetPosting(itup)
  * 2) Posting tree
- *		- itup->t_info & INDEX_SIZE_MASK contains size of tuple as usial
+ *		- itup->t_info & INDEX_SIZE_MASK contains size of tuple as usual
  *		- ItemPointerGetBlockNumber(&itup->t_tid) contains block number of
  *		  root of posting tree
- *		- ItemPointerGetOffsetNumber(&itup->t_tid) contains magick number GIN_TREE_POSTING
+ *		- ItemPointerGetOffsetNumber(&itup->t_tid) contains magic number GIN_TREE_POSTING
  */
 IndexTuple
 GinFormTuple(GinState *ginstate, Datum key, ItemPointerData *ipd, uint32 nipd)

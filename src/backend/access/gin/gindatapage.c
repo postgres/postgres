@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.4 2006/10/04 00:29:47 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.5 2006/11/12 06:55:53 neilc Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -69,8 +69,8 @@ dataIsMoveRight(GinBtree btree, Page page)
 }
 
 /*
- * Find correct PostingItem in non-leaf page. It supposed that
- * page correctly choosen and searching value SHOULD be on page
+ * Find correct PostingItem in non-leaf page. It supposed that page
+ * correctly chosen and searching value SHOULD be on page
  */
 static BlockNumber
 dataLocateItem(GinBtree btree, GinBtreeStack *stack)
@@ -107,7 +107,7 @@ dataLocateItem(GinBtree btree, GinBtreeStack *stack)
 		if (mid == maxoff)
 
 			/*
-			 * Right infinity, page already correctly choosen with a help of
+			 * Right infinity, page already correctly chosen with a help of
 			 * dataIsMoveRight
 			 */
 			result = -1;
@@ -137,7 +137,7 @@ dataLocateItem(GinBtree btree, GinBtreeStack *stack)
 
 /*
  * Searches correct position for value on leaf page.
- * Page should be corrrectly choosen.
+ * Page should be correctly chosen.
  * Returns true if value found on page.
  */
 static bool
@@ -190,7 +190,7 @@ dataLocateLeafItem(GinBtree btree, GinBtreeStack *stack)
 }
 
 /*
- * Finds links to blkno on non-leaf page, retuns
+ * Finds links to blkno on non-leaf page, returns
  * offset of PostingItem
  */
 static OffsetNumber
@@ -236,7 +236,7 @@ dataFindChildPtr(GinBtree btree, Page page, BlockNumber blkno, OffsetNumber stor
 }
 
 /*
- * retunrs blkno of lefmost child
+ * returns blkno of leftmost child
  */
 static BlockNumber
 dataGetLeftMostPage(GinBtree btree, Page page)
@@ -252,7 +252,7 @@ dataGetLeftMostPage(GinBtree btree, Page page)
 }
 
 /*
- * add ItemPointer or PostingItem to page. data should points to
+ * add ItemPointer or PostingItem to page. data should point to
  * correct value! depending on leaf or non-leaf page
  */
 void

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.7 2006/10/04 00:29:48 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.8 2006/11/12 06:55:53 neilc Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -34,9 +34,9 @@ typedef struct
 /*
  * Cleans array of ItemPointer (removes dead pointers)
  * Results are always stored in *cleaned, which will be allocated
- * if its needed. In case of *cleaned!=NULL caller is resposible to
+ * if its needed. In case of *cleaned!=NULL caller is responsible to
  * enough space. *cleaned and items may point to the same
- * memory addres.
+ * memory address.
  */
 
 static uint32
@@ -195,7 +195,7 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 			MarkBufferDirty(buffer);
 			END_CRIT_SECTION();
 
-			/* if root is a leaf page, we don't desire futher processing */
+			/* if root is a leaf page, we don't desire further processing */
 			if (!isRoot && GinPageGetOpaque(page)->maxoff < FirstOffsetNumber)
 				hasVoidPage = TRUE;
 		}
@@ -459,7 +459,7 @@ ginVacuumPostingTree(GinVacuumState *gvs, BlockNumber rootBlkno)
 /*
  * returns modified page or NULL if page isn't modified.
  * Function works with original page until first change is occured,
- * then page is copied into temprorary one.
+ * then page is copied into temporary one.
  */
 static Page
 ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint32 *nroot)
@@ -489,7 +489,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 		else if (GinGetNPosting(itup) > 0)
 		{
 			/*
-			 * if we already create temrorary page, we will make changes in
+			 * if we already create temporary page, we will make changes in
 			 * place
 			 */
 			ItemPointerData *cleaned = (tmppage == origpage) ? NULL : GinGetPosting(itup);
@@ -508,7 +508,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 				if (tmppage == origpage)
 				{
 					/*
-					 * On first difference we create temprorary page in memory
+					 * On first difference we create temporary page in memory
 					 * and copies content in to it.
 					 */
 					tmppage = GinPageGetCopyPage(origpage);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.143 2006/10/04 00:29:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.144 2006/11/12 06:55:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,8 +360,8 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 			ptr->block.blkno = BufferGetBlockNumber(ptr->buffer);
 
 			/*
-			 * fill page, we can do it becouse all this pages are new (ie not
-			 * linked in tree or masked by temp page
+			 * fill page, we can do it because all these pages are new
+			 * (ie not linked in tree or masked by temp page
 			 */
 			data = (char *) (ptr->list);
 			for (i = 0; i < ptr->block.num; i++)
@@ -371,7 +371,7 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate)
 				data += IndexTupleSize((IndexTuple) data);
 			}
 
-			/* set up ItemPointer and remmeber it for parent */
+			/* set up ItemPointer and remember it for parent */
 			ItemPointerSetBlockNumber(&(ptr->itup->t_tid), ptr->block.blkno);
 			state->itup[state->ituplen] = ptr->itup;
 			state->ituplen++;
@@ -646,7 +646,7 @@ gistfindleaf(GISTInsertState *state, GISTSTATE *giststate)
 /*
  * Traverse the tree to find path from root page to specified "child" block.
  *
- * returns from the begining of closest parent;
+ * returns from the beginning of closest parent;
  *
  * To prevent deadlocks, this should lock only one page simultaneously.
  */
@@ -953,7 +953,7 @@ gistSplit(Relation r,
 	for (i = 0; i < v.splitVector.spl_nright; i++)
 		rvectup[i] = itup[v.splitVector.spl_right[i] - 1];
 
-	/* finalyze splitting (may need another split) */
+	/* finalize splitting (may need another split) */
 	if (!gistfitpage(rvectup, v.splitVector.spl_nright))
 	{
 		res = gistSplit(r, page, rvectup, v.splitVector.spl_nright, giststate);

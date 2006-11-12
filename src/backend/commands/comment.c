@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.92 2006/10/04 00:29:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.93 2006/11/12 06:55:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@
 /*
  * Static Function Prototypes --
  *
- * The following protoypes are declared static so as not to conflict
+ * The following prototypes are declared static so as not to conflict
  * with any other routines outside this module. These routines are
  * called by the public function CommentObject() routine to create
  * the appropriate comment for the specific object type.
