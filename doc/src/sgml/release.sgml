@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.482 2006/11/06 17:00:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.483 2006/11/13 17:13:56 adunstan Exp $ -->
 <!--
 
 Typical markup:
@@ -405,6 +405,21 @@ links to the main documentation.
         macro call for version compatibility checking
         (Martijn van Oosterhout)
        </para>
+      </listitem>
+
+	  <listitem>
+	    <para>
+		  Data can no longer be shared between a PL/Perl function and a 
+		  PL/PerlU function, and modules used by a /PerlU function are no 
+		  longer available to PL/Perl functions.
+		</para>
+		<para>
+		  Some perl installations have not been compiled with the correct flags
+		  to allow multiple interpreters to exist within a single process.
+		  In this situation PL/Perl and PL/PerlU cannot both be used in a 
+		  single backend. The solution is to get a Perl installation which 
+		  supports multiple interpreters. (Andrew)  
+ 	    </para>
       </listitem>
 
       <listitem>
@@ -1743,8 +1758,21 @@ links to the main documentation.
        <para>
         Previously, it was lexical, which caused unexpected sharing
         violations.
-       </para>
+       </para>	   
       </listitem>
+
+	  <listitem>
+	    <para>
+		  Run PL/Perl and PL/PerlU in separate interpreters, for security 
+		  reasons.
+		</para>
+		<para>
+		  In consequence, they can no longer share data nor loaded modules.
+		  Also, if Perl has not been compiled with the requisite flags to
+		  allow multiple interpreters, only one of these lamguages can be used
+		  in any given backend process. (Andrew)
+	    </para>
+	  </listitem>
 
      </itemizedlist>
 
