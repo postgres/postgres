@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Oct 23 22:42:19 EDT 2006
+Last updated:           Tue Nov 14 17:26:31 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -162,7 +162,7 @@ first.
 </p>
   </li><li>Change NUMERIC to enforce the maximum precision
   </li><li>Add NUMERIC division operator that doesn't round?
-<p>  Currently NUMERIC _rounds_ the result to the specified precision.  
+<p>  Currently NUMERIC <u>rounds</u> the result to the specified precision.  
   This means division can return a result that multiplied by the 
   divisor is greater than the dividend, e.g. this returns a value &gt; 10:
 </p>
@@ -1099,7 +1099,7 @@ first.
   require frequent mapping/unmapping.  Extending the file also causes
   mapping problems that might require mapping only individual pages,
   leading to thousands of mappings.  Another problem is that there is no
-  way to _prevent_ I/O to disk from the dirty shared buffers so changes
+  way to <u>prevent</u> I/O to disk from the dirty shared buffers so changes
   could hit disk before WAL is written.
 </p>
   </li><li>Add a script to ask system configuration questions and tune postgresql.conf
@@ -1204,7 +1204,7 @@ first.
     <li>Allow dynamic character set handling
     </li><li>Add decoded type, length, precision
     </li><li>Use compression?
-    </li><li>Update clients to use data types, typmod, <a href="http://schema.table.column">schema.table.column</a>/ names
+    </li><li>Update clients to use data types, typmod, schema.table.column names
           of result sets using new statement protocol
   </li></ul>
 </li></ul>
@@ -1233,9 +1233,10 @@ first.
   </li><li>Consider allowing control of upper/lower case folding of unquoted
   identifiers
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php">http://archives.postgresql.org/pgsql-hackers/2004-04/msg00818.php</a>
+  <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg01527.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg01527.php</a>
 </p>
 </li></ul>
-<h1><a name="section_23">Features We Do _Not_ Want</a></h1>
+<h1><a name="section_23">Features We Do <u>Not</u> Want</a></h1>
 
 <ul>
   <li>All backends running as threads in a single process (not wanted)
