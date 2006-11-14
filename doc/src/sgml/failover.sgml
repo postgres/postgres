@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.4 2006/11/14 21:43:00 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.5 2006/11/14 22:25:15 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -189,9 +189,10 @@
    <productname><acronym>RAC</></> product.  <productname>PostgreSQL</>
    does not offer this type of load balancing, though
    <productname>PostgreSQL</> two-phase commit (<xref
-   linkend="sql-prepare-transaction-title"> and <xref linkend=
-   "sql-commit-prepared-title">) can be used to implement this in
-   application code or middleware.
+   linkend="sql-prepare-transaction"
+   endterm="sql-prepare-transaction-title"> and <xref
+   linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
+   can be used to implement this in application code or middleware.
   </para>
  </sect1>
 
