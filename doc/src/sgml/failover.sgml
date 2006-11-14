@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.3 2006/10/27 12:40:26 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.4 2006/11/14 21:43:00 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -108,7 +108,7 @@
   </para>
 
   <para>
-   Slony is an example of this type of replication, with per-table
+   Slony-I is an example of this type of replication, with per-table
    granularity.  It updates the backup server in batches, so the replication
    is asynchronous and might lose data during a fail over.
   </para>
@@ -138,8 +138,8 @@
 
   <para>
    Data partitioning is usually handled by application code, though rules
-   and triggers can be used to keep the read-only data sets current.  Slony
-   can also be used in such a setup.  While Slony replicates only entire
+   and triggers can be used to keep the read-only data sets current.  Slony-I
+   can also be used in such a setup.  While Slony-I replicates only entire
    tables, London and Paris can be placed in separate tables, and
    inheritance can be used to access both tables using a single table name.
   </para>
@@ -158,11 +158,13 @@
   </para>
 
   <para>
-   This can be complex to set up because functions like random()
-   and CURRENT_TIMESTAMP will have different values on different
-   servers, and sequences should be consistent across servers.
-   Care must also be taken that all transactions either commit or
-   abort on all servers  Pgpool is an example of this type of
+   Because each server operates independently, functions like
+   <function>random()</>, <function>CURRENT_TIMESTAMP</>, and
+   sequences can have different values on different servers.  If
+   this is unacceptable, applications must query such values from
+   a single server and then use those values in write queries.
+   Also, care must also be taken that all transactions either commit
+   or abort on all servers  Pgpool is an example of this type of
    replication.
   </para>
  </sect1>
@@ -173,13 +175,23 @@
   <para>
    In clustering, each server can accept write requests, and these
    write requests are broadcast from the original server to all
-   other servers before each transaction commits.  Under heavy
-   load, this can cause excessive locking and performance degradation.
-   It is implemented by <productname>Oracle</> in their
+   other servers before each transaction commits.  Heavy write
+   activity can cause excessive locking, leading to poor performance.
+   In fact, write performance is often worse than that of a single
+   server.  Read requests can be sent to any server.  Clustering
+   is best for mostly read workloads, though its big advantage is
+   that any server can accept write requests --- there is no need
+   to partition workloads between read/write and read-only servers.
+  </para>
+
+  <para>
+   Clustering is implemented by <productname>Oracle</> in their
    <productname><acronym>RAC</></> product.  <productname>PostgreSQL</>
    does not offer this type of load balancing, though
-   <productname>PostgreSQL</> two-phase commit can be used to
-   implement this in application code or middleware.
+   <productname>PostgreSQL</> two-phase commit (<xref
+   linkend="sql-prepare-transaction-title"> and <xref linkend=
+   "sql-commit-prepared-title">) can be used to implement this in
+   application code or middleware.
   </para>
  </sect1>
 
@@ -187,12 +199,12 @@
   <title>Clustering For Parallel Query Execution</title>
 
   <para>
-   This allows multiple servers to work on a single query.  One
-   possible way this could work is for the data to be split among
-   servers and for each server to execute its part of the query
-   and results sent to a central server to be combined and returned
-   to the user.  There currently is no <productname>PostgreSQL</>
-   open source solution for this.
+   This allows multiple servers to work concurrently on a single
+   query.  One possible way this could work is for the data to be
+   split among servers and for each server to execute its part of
+   the query and results sent to a central server to be combined
+   and returned to the user.  There currently is no
+   <productname>PostgreSQL</> open source solution for this.
   </para>
  </sect1>
 
