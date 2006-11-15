@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.5 2006/11/14 22:25:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.6 2006/11/15 01:09:08 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -149,23 +149,25 @@
   <title>Query Broadcast Load Balancing</title>
 
   <para>
-   Query broadcast load balancing is accomplished by having a program
-   intercept every query and send it to all servers.  Read-only queries can
-   be sent to a single server because there is no need for all servers to
-   process it.  This is unusual because most replication solutions have
-   each write server propagate its changes to the other servers.  With
-   query broadcasting, each server operates independently.
+   Query broadcast load balancing is accomplished by having a
+   program intercept every SQL query and send it to all servers.
+   This is unique because most replication solutions have the write
+   server propagate its changes to the other servers.  With query
+   broadcasting, each server operates independently.  Read-only
+   queries can be sent to a single server because there is no need
+   for all servers to process it.
   </para>
 
   <para>
-   Because each server operates independently, functions like
+   One limitation of this solution is that functions like
    <function>random()</>, <function>CURRENT_TIMESTAMP</>, and
-   sequences can have different values on different servers.  If
-   this is unacceptable, applications must query such values from
-   a single server and then use those values in write queries.
-   Also, care must also be taken that all transactions either commit
-   or abort on all servers  Pgpool is an example of this type of
-   replication.
+   sequences can have different values on different servers.  This
+   is because each server operates independently, and because SQL
+   queries are broadcast (and not actual modified rows).  If this
+   is unacceptable, applications must query such values from a
+   single server and then use those values in write queries.  Also,
+   care must be taken that all transactions either commit or abort
+   on all servers  Pgpool is an example of this type of replication.
   </para>
  </sect1>
 
@@ -173,14 +175,14 @@
   <title>Clustering For Load Balancing</title>
 
   <para>
-   In clustering, each server can accept write requests, and these
-   write requests are broadcast from the original server to all
-   other servers before each transaction commits.  Heavy write
-   activity can cause excessive locking, leading to poor performance.
-   In fact, write performance is often worse than that of a single
+   In clustering, each server can accept write requests, and modified
+   data is transmitted from the original server to every other
+   server before each transaction commits.  Heavy write activity
+   can cause excessive locking, leading to poor performance.  In
+   fact, write performance is often worse than that of a single
    server.  Read requests can be sent to any server.  Clustering
    is best for mostly read workloads, though its big advantage is
-   that any server can accept write requests --- there is no need
+   that any server can accept write requests &mdash; there is no need
    to partition workloads between read/write and read-only servers.
   </para>
 
