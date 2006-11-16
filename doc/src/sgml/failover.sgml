@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.8 2006/11/16 21:43:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.9 2006/11/16 21:45:25 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -192,9 +192,13 @@
     is because each server operates independently, and because SQL
     queries are broadcast (and not actual modified rows).  If this
     is unacceptable, applications must query such values from a
-    single server and then use those values in write queries.  Also,
-    care must be taken that all transactions either commit or abort
-    on all servers  Pgpool is an example of this type of replication.
+    single server and then use those values in write queries.
+    Also, care must be taken that all transactions either commit
+    or abort on all servers, perhaps using two-phase commit (<xref
+    linkend="sql-prepare-transaction"
+    endterm="sql-prepare-transaction-title"> and <xref
+    linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">.
+    Pgpool is an example of this type of replication.
    </para>
   </listitem>
  </varlistentry>
