@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.7 2006/11/16 18:25:58 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.8 2006/11/16 21:43:33 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -76,167 +76,186 @@
   and load balancing solutions.
  </para>
 
- <sect1 id="shared-disk-failover">
-  <title>Shared Disk Failover</title>
+ <variablelist>
 
-  <para>
-   Shared disk failover avoids synchronization overhead by having only one
-   copy of the database.  It uses a single disk array that is shared by
-   multiple servers.  If the main database server fails, the backup server
-   is able to mount and start the database as though it was recovering from
-   a database crash.  This allows rapid failover with no data loss.
-  </para>
+ <varlistentry>
+  <term>Shared Disk Failover</term>
+  <listitem>
 
-  <para>
-   Shared hardware functionality is common in network storage devices.  One
-   significant limitation of this method is that if the shared disk array
-   fails or becomes corrupt, the primary and backup servers are both
-   nonfunctional.
-  </para>
- </sect1>
+   <para>
+    Shared disk failover avoids synchronization overhead by having only one
+    copy of the database.  It uses a single disk array that is shared by
+    multiple servers.  If the main database server fails, the backup server
+    is able to mount and start the database as though it was recovering from
+    a database crash.  This allows rapid failover with no data loss.
+   </para>
 
- <sect1 id="warm-standby-using-point-in-time-recovery">
-  <title>Warm Standby Using Point-In-Time Recovery</title>
+   <para>
+    Shared hardware functionality is common in network storage devices.  One
+    significant limitation of this method is that if the shared disk array
+    fails or becomes corrupt, the primary and backup servers are both
+    nonfunctional.
+   </para>
+  </listitem>
+ </varlistentry>
 
-  <para>
-   A warm standby server (see <xref linkend="warm-standby">) can
-   be kept current by reading a stream of write-ahead log (WAL)
-   records.  If the main server fails, the warm standby contains
-   almost all of the data of the main server, and can be quickly
-   made the new master database server.  This is asynchronous and
-   can only be done for the entire database server.
-  </para>
- </sect1>
+ <varlistentry>
+  <term>Warm Standby Using Point-In-Time Recovery</term>
+  <listitem>
 
- <sect1 id="continuously-running-replication-server">
-  <title>Continuously Running Replication Server</title>
+   <para>
+    A warm standby server (see <xref linkend="warm-standby">) can
+    be kept current by reading a stream of write-ahead log (WAL)
+    records.  If the main server fails, the warm standby contains
+    almost all of the data of the main server, and can be quickly
+    made the new master database server.  This is asynchronous and
+    can only be done for the entire database server.
+   </para>
+  </listitem>
+ </varlistentry>
 
-  <para>
-   A continuously running replication server allows the backup server to
-   answer read-only queries while the master server is running.  It
-   receives a continuous stream of write activity from the master server.
-   Because the backup server can be used for read-only database requests,
-   it is ideal for data warehouse queries.
-  </para>
+ <varlistentry>
+  <term>Continuously Running Replication Server</term>
+  <listitem>
 
-  <para>
-   Slony-I is an example of this type of replication, with per-table
-   granularity.  It updates the backup server in batches, so the replication
-   is asynchronous and might lose data during a fail over.
-  </para>
- </sect1>
+   <para>
+    A continuously running replication server allows the backup server to
+    answer read-only queries while the master server is running.  It
+    receives a continuous stream of write activity from the master server.
+    Because the backup server can be used for read-only database requests,
+    it is ideal for data warehouse queries.
+   </para>
 
- <sect1 id="data-partitioning">
-  <title>Data Partitioning</title>
+   <para>
+    Slony-I is an example of this type of replication, with per-table
+    granularity.  It updates the backup server in batches, so the replication
+    is asynchronous and might lose data during a fail over.
+   </para>
+  </listitem>
+ </varlistentry>
 
-  <para>
-   Data partitioning splits tables into data sets.  Each set can
-   be modified by only one server.  For example, data can be
-   partitioned by offices, e.g. London and Paris.  While London
-   and Paris servers have all data records, only London can modify
-   London records, and Paris can only modify Paris records.  This
-   is similar to section <xref
-   linkend="continuously-running-replication-server"> above, except
-   that instead of having a read/write server and a read-only server,
-   each server has a read/write data set and a read-only data
-   set.
-  </para>
+ <varlistentry>
+  <term>Data Partitioning</term>
+  <listitem>
 
-  <para>
-   Such partitioning provides both failover and load balancing.  Failover
-   is achieved because the data resides on both servers, and this is an
-   ideal way to enable failover if the servers share a slow communication
-   channel. Load balancing is possible because read requests can go to any
-   of the servers, and write requests are split among the servers.  Of
-   course, the communication to keep all the servers up-to-date adds
-   overhead, so ideally the write load should be low, or localized as in
-   the London/Paris example above.
-  </para>
+   <para>
+    Data partitioning splits tables into data sets.  Each set can
+    be modified by only one server.  For example, data can be
+    partitioned by offices, e.g. London and Paris.  While London
+    and Paris servers have all data records, only London can modify
+    London records, and Paris can only modify Paris records.  This
+    is similar to the "Continuously Running Replication Server"
+    item above, except that instead of having a read/write server
+    and a read-only server, each server has a read/write data set
+    and a read-only data set.
+   </para>
 
-  <para>
-   Data partitioning is usually handled by application code, though rules
-   and triggers can be used to keep the read-only data sets current.  Slony-I
-   can also be used in such a setup.  While Slony-I replicates only entire
-   tables, London and Paris can be placed in separate tables, and
-   inheritance can be used to access both tables using a single table name.
-  </para>
- </sect1>
+   <para>
+    Such partitioning provides both failover and load balancing.  Failover
+    is achieved because the data resides on both servers, and this is an
+    ideal way to enable failover if the servers share a slow communication
+    channel. Load balancing is possible because read requests can go to any
+    of the servers, and write requests are split among the servers.  Of
+    course, the communication to keep all the servers up-to-date adds
+    overhead, so ideally the write load should be low, or localized as in
+    the London/Paris example above.
+   </para>
 
- <sect1 id="query-broadcast-load-balancing">
-  <title>Query Broadcast Load Balancing</title>
+    <para>
+    Data partitioning is usually handled by application code, though rules
+    and triggers can be used to keep the read-only data sets current.  Slony-I
+    can also be used in such a setup.  While Slony-I replicates only entire
+    tables, London and Paris can be placed in separate tables, and
+    inheritance can be used to access both tables using a single table name.
+   </para>
+  </listitem>
+ </varlistentry>
 
-  <para>
-   Query broadcast load balancing is accomplished by having a
-   program intercept every SQL query and send it to all servers.
-   This is unique because most replication solutions have the write
-   server propagate its changes to the other servers.  With query
-   broadcasting, each server operates independently.  Read-only
-   queries can be sent to a single server because there is no need
-   for all servers to process it.
-  </para>
+ <varlistentry>
+  <term>Query Broadcast Load Balancing</term>
+  <listitem>
 
-  <para>
-   One limitation of this solution is that functions like
-   <function>random()</>, <function>CURRENT_TIMESTAMP</>, and
-   sequences can have different values on different servers.  This
-   is because each server operates independently, and because SQL
-   queries are broadcast (and not actual modified rows).  If this
-   is unacceptable, applications must query such values from a
-   single server and then use those values in write queries.  Also,
-   care must be taken that all transactions either commit or abort
-   on all servers  Pgpool is an example of this type of replication.
-  </para>
- </sect1>
+   <para>
+    Query broadcast load balancing is accomplished by having a
+    program intercept every SQL query and send it to all servers.
+    This is unique because most replication solutions have the write
+    server propagate its changes to the other servers.  With query
+    broadcasting, each server operates independently.  Read-only
+    queries can be sent to a single server because there is no need
+    for all servers to process it.
+   </para>
 
- <sect1 id="clustering-for-load-balancing">
-  <title>Clustering For Load Balancing</title>
+   <para>
+    One limitation of this solution is that functions like
+    <function>random()</>, <function>CURRENT_TIMESTAMP</>, and
+    sequences can have different values on different servers.  This
+    is because each server operates independently, and because SQL
+    queries are broadcast (and not actual modified rows).  If this
+    is unacceptable, applications must query such values from a
+    single server and then use those values in write queries.  Also,
+    care must be taken that all transactions either commit or abort
+    on all servers  Pgpool is an example of this type of replication.
+   </para>
+  </listitem>
+ </varlistentry>
 
-  <para>
-   In clustering, each server can accept write requests, and modified
-   data is transmitted from the original server to every other
-   server before each transaction commits.  Heavy write activity
-   can cause excessive locking, leading to poor performance.  In
-   fact, write performance is often worse than that of a single
-   server.  Read requests can be sent to any server.  Clustering
-   is best for mostly read workloads, though its big advantage is
-   that any server can accept write requests &mdash; there is no need
-   to partition workloads between read/write and read-only servers.
-  </para>
+ <varlistentry>
+  <term>Clustering For Load Balancing</term>
+  <listitem>
 
-  <para>
-   Clustering is implemented by <productname>Oracle</> in their
-   <productname><acronym>RAC</></> product.  <productname>PostgreSQL</>
-   does not offer this type of load balancing, though
-   <productname>PostgreSQL</> two-phase commit (<xref
-   linkend="sql-prepare-transaction"
-   endterm="sql-prepare-transaction-title"> and <xref
-   linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
-   can be used to implement this in application code or middleware.
-  </para>
- </sect1>
+    <para>
+    In clustering, each server can accept write requests, and modified
+    data is transmitted from the original server to every other
+    server before each transaction commits.  Heavy write activity
+    can cause excessive locking, leading to poor performance.  In
+    fact, write performance is often worse than that of a single
+    server.  Read requests can be sent to any server.  Clustering
+    is best for mostly read workloads, though its big advantage is
+    that any server can accept write requests &mdash; there is no need
+    to partition workloads between read/write and read-only servers.
+   </para>
 
- <sect1 id="clustering-for-parallel-query-execution">
-  <title>Clustering For Parallel Query Execution</title>
+   <para>
+    Clustering is implemented by <productname>Oracle</> in their
+    <productname><acronym>RAC</></> product.  <productname>PostgreSQL</>
+    does not offer this type of load balancing, though
+    <productname>PostgreSQL</> two-phase commit (<xref
+    linkend="sql-prepare-transaction"
+    endterm="sql-prepare-transaction-title"> and <xref
+    linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
+    can be used to implement this in application code or middleware.
+   </para>
+  </listitem>
+ </varlistentry>
 
-  <para>
-   This allows multiple servers to work concurrently on a single
-   query.  One possible way this could work is for the data to be
-   split among servers and for each server to execute its part of
-   the query and results sent to a central server to be combined
-   and returned to the user.  There currently is no
-   <productname>PostgreSQL</> open source solution for this.
-  </para>
- </sect1>
+ <varlistentry>
+  <term>Clustering For Parallel Query Execution</term>
+  <listitem>
 
- <sect1 id="commercial-solutions">
-  <title>Commercial Solutions</title>
+   <para>
+    This allows multiple servers to work concurrently on a single
+    query.  One possible way this could work is for the data to be
+    split among servers and for each server to execute its part of
+    the query and results sent to a central server to be combined
+    and returned to the user.  There currently is no
+    <productname>PostgreSQL</> open source solution for this.
+   </para>
+  </listitem>
+ </varlistentry>
 
-  <para>
-   Because <productname>PostgreSQL</> is open source and easily
-   extended, a number of companies have taken <productname>PostgreSQL</>
-   and created commercial closed-source solutions with unique
-   failover, replication, and load balancing capabilities.
-  </para>
- </sect1>
+ <varlistentry>
+  <term>Commercial Solutions</term>
+  <listitem>
+
+   <para>
+    Because <productname>PostgreSQL</> is open source and easily
+    extended, a number of companies have taken <productname>PostgreSQL</>
+    and created commercial closed-source solutions with unique
+    failover, replication, and load balancing capabilities.
+   </para>
+  </listitem>
+ </varlistentry>
+
+ </variablelist>
 
 </chapter>
