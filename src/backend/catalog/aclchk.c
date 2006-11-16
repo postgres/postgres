@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.132 2006/10/04 00:29:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.133 2006/11/16 14:41:49 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -311,7 +311,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			break;
 		case ACL_OBJECT_NAMESPACE:
 			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
-			errormsg = _("invalid privilege type %s for namespace");
+			errormsg = _("invalid privilege type %s for schema");
 			break;
 		case ACL_OBJECT_TABLESPACE:
 			all_privileges = ACL_ALL_RIGHTS_TABLESPACE;
