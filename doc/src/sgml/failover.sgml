@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.6 2006/11/15 01:09:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.7 2006/11/16 18:25:58 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -30,6 +30,18 @@
   the impact of the sync problem for all use cases, there are multiple
   solutions.  Each solution addresses this problem in a different way, and
   minimizes its impact for a specific workload.
+ </para>
+
+ <para>
+  Some solutions deal with synchronization by allowing only one
+  server to modify the data.  Servers that can modify data are
+  called read/write or "master" server.  Servers with read-only
+  data are called backup or "slave" servers.  As you will see below,
+  these terms cover a variety of implementations.  Some servers
+  are masters of some data sets, and slave of others.  Some slaves
+  cannot be accessed until they are changed to master servers,
+  while other slaves can reply to read-only queries while they are
+  slaves.
  </para>
 
  <para>
@@ -118,15 +130,20 @@
   <title>Data Partitioning</title>
 
   <para>
-   Data partitioning splits tables into data sets.  Each set can only be
-   modified by one server.  For example, data can be partitioned by
-   offices, e.g. London and Paris.  While London and Paris servers have all
-   data records, only London can modify London records, and Paris can only
-   modify Paris records.
+   Data partitioning splits tables into data sets.  Each set can
+   be modified by only one server.  For example, data can be
+   partitioned by offices, e.g. London and Paris.  While London
+   and Paris servers have all data records, only London can modify
+   London records, and Paris can only modify Paris records.  This
+   is similar to section <xref
+   linkend="continuously-running-replication-server"> above, except
+   that instead of having a read/write server and a read-only server,
+   each server has a read/write data set and a read-only data
+   set.
   </para>
 
   <para>
-   Such partitioning implements both failover and load balancing.  Failover
+   Such partitioning provides both failover and load balancing.  Failover
    is achieved because the data resides on both servers, and this is an
    ideal way to enable failover if the servers share a slow communication
    channel. Load balancing is possible because read requests can go to any
