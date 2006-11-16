@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.255 2006/11/10 22:32:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.256 2006/11/16 14:28:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6595,7 +6595,7 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not parse xlog location \"%s\"",
+				 errmsg("could not parse transaction log location \"%s\"",
 						locationstr)));
 
 	locationpoint.xlogid = uxlogid;
