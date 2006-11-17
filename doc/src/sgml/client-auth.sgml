@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.94 2006/10/23 18:10:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.95 2006/11/17 23:25:17 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -226,11 +226,12 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
-       A typical <replaceable>CIDR-address</replaceable> is
+       Typical examples of a <replaceable>CIDR-address</replaceable> are
        <literal>172.20.143.89/32</literal> for a single host, or
-       <literal>172.20.143.0/24</literal> for a network.
+       <literal>172.20.143.0/24</literal> for a small network, or
+       <literal>10.6.0.0/16</literal> for a larger one.
        To specify a single host, use a CIDR mask of 32 for IPv4 or
-       128 for IPv6.
+       128 for IPv6.  In a network address, do not omit trailing zeroes.
       </para>
 
       <para>
