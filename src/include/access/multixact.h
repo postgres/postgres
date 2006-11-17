@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/multixact.h,v 1.10 2006/03/24 04:32:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/multixact.h,v 1.11 2006/11/17 18:00:15 tgl Exp $
  */
 #ifndef MULTIXACT_H
 #define MULTIXACT_H
@@ -45,6 +45,7 @@ typedef struct xl_multixact_create
 extern MultiXactId MultiXactIdCreate(TransactionId xid1, TransactionId xid2);
 extern MultiXactId MultiXactIdExpand(MultiXactId multi, TransactionId xid);
 extern bool MultiXactIdIsRunning(MultiXactId multi);
+extern bool MultiXactIdIsCurrent(MultiXactId multi);
 extern void MultiXactIdWait(MultiXactId multi);
 extern bool ConditionalMultiXactIdWait(MultiXactId multi);
 extern void MultiXactIdSetOldestMember(void);

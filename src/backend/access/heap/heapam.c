@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.221 2006/11/05 22:42:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.222 2006/11/17 18:00:14 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2359,6 +2359,8 @@ heap_lock_tuple(Relation relation, HeapTuple tuple, Buffer *buffer,
 	ItemId		lp;
 	PageHeader	dp;
 	TransactionId xid;
+	TransactionId xmax;
+	uint16		old_infomask;
 	uint16		new_infomask;
 	LOCKMODE	tuple_lock_type;
 	bool		have_tuple_lock = false;
@@ -2394,6 +2396,25 @@ l3:
 		infomask = tuple->t_data->t_infomask;
 
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
+
+		/*
+		 * If we wish to acquire share lock, and the tuple is already
+		 * share-locked by a multixact that includes any subtransaction of the
+		 * current top transaction, then we effectively hold the desired lock
+		 * already.  We *must* succeed without trying to take the tuple lock,
+		 * else we will deadlock against anyone waiting to acquire exclusive
+		 * lock.  We don't need to make any state changes in this case.
+		 */
+		if (mode == LockTupleShared &&
+			(infomask & HEAP_XMAX_IS_MULTI) &&
+			MultiXactIdIsCurrent((MultiXactId) xwait))
+		{
+			Assert(infomask & HEAP_XMAX_SHARED_LOCK);
+			/* Probably can't hold tuple lock here, but may as well check */
+			if (have_tuple_lock)
+				UnlockTuple(relation, tid, tuple_lock_type);
+			return HeapTupleMayBeUpdated;
+		}
 
 		/*
 		 * Acquire tuple lock to establish our priority for the tuple.
@@ -2533,25 +2554,49 @@ l3:
 	}
 
 	/*
+	 * We might already hold the desired lock (or stronger), possibly under
+	 * a different subtransaction of the current top transaction.  If so,
+	 * there is no need to change state or issue a WAL record.  We already
+	 * handled the case where this is true for xmax being a MultiXactId,
+	 * so now check for cases where it is a plain TransactionId.
+	 *
+	 * Note in particular that this covers the case where we already hold
+	 * exclusive lock on the tuple and the caller only wants shared lock.
+	 * It would certainly not do to give up the exclusive lock.
+	 */
+	xmax = HeapTupleHeaderGetXmax(tuple->t_data);
+	old_infomask = tuple->t_data->t_infomask;
+
+	if (!(old_infomask & (HEAP_XMAX_INVALID |
+						  HEAP_XMAX_COMMITTED |
+						  HEAP_XMAX_IS_MULTI)) &&
+		(mode == LockTupleShared ?
+		 (old_infomask & HEAP_IS_LOCKED) :
+		 (old_infomask & HEAP_XMAX_EXCL_LOCK)) &&
+		TransactionIdIsCurrentTransactionId(xmax))
+	{
+		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
+		/* Probably can't hold tuple lock here, but may as well check */
+		if (have_tuple_lock)
+			UnlockTuple(relation, tid, tuple_lock_type);
+		return HeapTupleMayBeUpdated;
+	}
+
+	/*
 	 * Compute the new xmax and infomask to store into the tuple.  Note we do
 	 * not modify the tuple just yet, because that would leave it in the wrong
 	 * state if multixact.c elogs.
 	 */
 	xid = GetCurrentTransactionId();
 
-	new_infomask = tuple->t_data->t_infomask;
-
-	new_infomask &= ~(HEAP_XMAX_COMMITTED |
-					  HEAP_XMAX_INVALID |
-					  HEAP_XMAX_IS_MULTI |
-					  HEAP_IS_LOCKED |
-					  HEAP_MOVED);
+	new_infomask = old_infomask & ~(HEAP_XMAX_COMMITTED |
+									HEAP_XMAX_INVALID |
+									HEAP_XMAX_IS_MULTI |
+									HEAP_IS_LOCKED |
+									HEAP_MOVED);
 
 	if (mode == LockTupleShared)
 	{
-		TransactionId xmax = HeapTupleHeaderGetXmax(tuple->t_data);
-		uint16		old_infomask = tuple->t_data->t_infomask;
-
 		/*
 		 * If this is the first acquisition of a shared lock in the current
 		 * transaction, set my per-backend OldestMemberMXactId setting. We can
@@ -2592,32 +2637,13 @@ l3:
 			}
 			else if (TransactionIdIsInProgress(xmax))
 			{
-				if (TransactionIdEquals(xmax, xid))
-				{
-					/*
-					 * If the old locker is ourselves, we'll just mark the
-					 * tuple again with our own TransactionId.	However we
-					 * have to consider the possibility that we had exclusive
-					 * rather than shared lock before --- if so, be careful to
-					 * preserve the exclusivity of the lock.
-					 */
-					if (!(old_infomask & HEAP_XMAX_SHARED_LOCK))
-					{
-						new_infomask &= ~HEAP_XMAX_SHARED_LOCK;
-						new_infomask |= HEAP_XMAX_EXCL_LOCK;
-						mode = LockTupleExclusive;
-					}
-				}
-				else
-				{
-					/*
-					 * If the Xmax is a valid TransactionId, then we need to
-					 * create a new MultiXactId that includes both the old
-					 * locker and our own TransactionId.
-					 */
-					xid = MultiXactIdCreate(xmax, xid);
-					new_infomask |= HEAP_XMAX_IS_MULTI;
-				}
+				/*
+				 * If the XMAX is a valid TransactionId, then we need to
+				 * create a new MultiXactId that includes both the old
+				 * locker and our own TransactionId.
+				 */
+				xid = MultiXactIdCreate(xmax, xid);
+				new_infomask |= HEAP_XMAX_IS_MULTI;
 			}
 			else
 			{

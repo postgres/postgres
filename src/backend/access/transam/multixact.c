@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.21 2006/10/04 00:29:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.22 2006/11/17 18:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,7 +366,6 @@ bool
 MultiXactIdIsRunning(MultiXactId multi)
 {
 	TransactionId *members;
-	TransactionId myXid;
 	int			nmembers;
 	int			i;
 
@@ -380,12 +379,14 @@ MultiXactIdIsRunning(MultiXactId multi)
 		return false;
 	}
 
-	/* checking for myself is cheap */
-	myXid = GetTopTransactionId();
-
+	/*
+	 * Checking for myself is cheap compared to looking in shared memory,
+	 * so first do the equivalent of MultiXactIdIsCurrent().  This is not
+	 * needed for correctness, it's just a fast path.
+	 */
 	for (i = 0; i < nmembers; i++)
 	{
-		if (TransactionIdEquals(members[i], myXid))
+		if (TransactionIdIsCurrentTransactionId(members[i]))
 		{
 			debug_elog3(DEBUG2, "IsRunning: I (%d) am running!", i);
 			pfree(members);
@@ -414,6 +415,44 @@ MultiXactIdIsRunning(MultiXactId multi)
 	debug_elog3(DEBUG2, "IsRunning: %u is not running", multi);
 
 	return false;
+}
+
+/*
+ * MultiXactIdIsCurrent
+ *		Returns true if the current transaction is a member of the MultiXactId.
+ *
+ * We return true if any live subtransaction of the current top-level
+ * transaction is a member.  This is appropriate for the same reason that a
+ * lock held by any such subtransaction is globally equivalent to a lock
+ * held by the current subtransaction: no such lock could be released without
+ * aborting this subtransaction, and hence releasing its locks.  So it's not
+ * necessary to add the current subxact to the MultiXact separately.
+ */
+bool
+MultiXactIdIsCurrent(MultiXactId multi)
+{
+	bool		result = false;
+	TransactionId *members;
+	int			nmembers;
+	int			i;
+
+	nmembers = GetMultiXactIdMembers(multi, &members);
+
+	if (nmembers < 0)
+		return false;
+
+	for (i = 0; i < nmembers; i++)
+	{
+		if (TransactionIdIsCurrentTransactionId(members[i]))
+		{
+			result = true;
+			break;
+		}
+	}
+
+	pfree(members);
+
+	return result;
 }
 
 /*
