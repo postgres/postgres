@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.9 2006/11/16 21:45:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.10 2006/11/17 04:52:46 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -9,7 +9,7 @@
  <indexterm><primary>clustering</></>
 
  <para>
-  Database servers can work together to allow a backup server to
+  Database servers can work together to allow a second server to
   quickly take over if the primary server fails (failover), or to
   allow several computers to serve the same data (load balancing).
   Ideally, database servers could work together seamlessly.  Web
@@ -35,13 +35,10 @@
  <para>
   Some solutions deal with synchronization by allowing only one
   server to modify the data.  Servers that can modify data are
-  called read/write or "master" server.  Servers with read-only
-  data are called backup or "slave" servers.  As you will see below,
-  these terms cover a variety of implementations.  Some servers
-  are masters of some data sets, and slave of others.  Some slaves
-  cannot be accessed until they are changed to master servers,
-  while other slaves can reply to read-only queries while they are
-  slaves.
+  called read/write or "master" servers.  Servers that can reply
+  to read-only queries are called "slave" servers.  Servers that
+  cannot be accessed until they are changed to master servers are
+  called "standby" servers.
  </para>
 
  <para>
@@ -85,16 +82,20 @@
    <para>
     Shared disk failover avoids synchronization overhead by having only one
     copy of the database.  It uses a single disk array that is shared by
-    multiple servers.  If the main database server fails, the backup server
+    multiple servers.  If the main database server fails, the standby server
     is able to mount and start the database as though it was recovering from
     a database crash.  This allows rapid failover with no data loss.
    </para>
 
    <para>
-    Shared hardware functionality is common in network storage devices.  One
-    significant limitation of this method is that if the shared disk array
-    fails or becomes corrupt, the primary and backup servers are both
-    nonfunctional.
+    Shared hardware functionality is common in network storage
+    devices.  Using a network file system is also possible, though
+    care must be taken that the file system has full POSIX behavior.
+    One significant limitation of this method is that if the shared
+    disk array fails or becomes corrupt, the primary and standby
+    servers are both nonfunctional.  Another issue is that the
+    standby server should never access the shared storage while
+    the primary server is running.
    </para>
   </listitem>
  </varlistentry>
@@ -115,21 +116,22 @@
  </varlistentry>
 
  <varlistentry>
-  <term>Continuously Running Replication Server</term>
+  <term>Master/Slave Replication</term>
   <listitem>
 
    <para>
-    A continuously running replication server allows the backup server to
-    answer read-only queries while the master server is running.  It
-    receives a continuous stream of write activity from the master server.
-    Because the backup server can be used for read-only database requests,
-    it is ideal for data warehouse queries.
+    A master/slave replication setup sends all data modification
+    queries to the master server.  The master server asynchonously
+    sends data changes to the slave server.  The slave can answer
+    read-only queries while the master server is running.  The
+    slave server is ideal for data warehouse queries.
    </para>
 
    <para>
     Slony-I is an example of this type of replication, with per-table
-    granularity.  It updates the backup server in batches, so the replication
-    is asynchronous and might lose data during a fail over.
+    granularity, and support for multiple slaves.  Because it
+    updates the slave server asynchronously (in batches), there is
+    possible data loss during fail over.
    </para>
   </listitem>
  </varlistentry>
@@ -144,10 +146,10 @@
     partitioned by offices, e.g. London and Paris.  While London
     and Paris servers have all data records, only London can modify
     London records, and Paris can only modify Paris records.  This
-    is similar to the "Continuously Running Replication Server"
-    item above, except that instead of having a read/write server
-    and a read-only server, each server has a read/write data set
-    and a read-only data set.
+    is similar to the "Master/Slave Replication" item above, except
+    that instead of having a read/write server and a read-only
+    server, each server has a read/write data set and a read-only
+    data set.
    </para>
 
    <para>
@@ -161,7 +163,7 @@
     the London/Paris example above.
    </para>
 
-    <para>
+   <para>
     Data partitioning is usually handled by application code, though rules
     and triggers can be used to keep the read-only data sets current.  Slony-I
     can also be used in such a setup.  While Slony-I replicates only entire
@@ -172,17 +174,15 @@
  </varlistentry>
 
  <varlistentry>
-  <term>Query Broadcast Load Balancing</term>
+  <term>Multi-Master Replication Using Query Broadcasting</term>
   <listitem>
 
    <para>
-    Query broadcast load balancing is accomplished by having a
-    program intercept every SQL query and send it to all servers.
-    This is unique because most replication solutions have the write
-    server propagate its changes to the other servers.  With query
-    broadcasting, each server operates independently.  Read-only
-    queries can be sent to a single server because there is no need
-    for all servers to process it.
+    One way to do multi-master replication is by having a program
+    intercept every SQL query and send it to all servers.  Each
+    server operates independently.  Read-only queries can be sent
+    to a single server because there is no need for all servers to
+    process it.
    </para>
 
    <para>
@@ -204,19 +204,22 @@
  </varlistentry>
 
  <varlistentry>
-  <term>Clustering For Load Balancing</term>
+  <term>Multi-Master Replication Using Custering</term>
   <listitem>
 
-    <para>
-    In clustering, each server can accept write requests, and modified
-    data is transmitted from the original server to every other
-    server before each transaction commits.  Heavy write activity
-    can cause excessive locking, leading to poor performance.  In
-    fact, write performance is often worse than that of a single
+   <para>
+    In clustering, each server can accept write requests, and
+    modified data is transmitted from the original server to every
+    other server before each transaction commits.  Heavy write
+    activity can cause excessive locking, leading to poor performance.
+    In fact, write performance is often worse than that of a single
     server.  Read requests can be sent to any server.  Clustering
-    is best for mostly read workloads, though its big advantage is
-    that any server can accept write requests &mdash; there is no need
-    to partition workloads between read/write and read-only servers.
+    is best for mostly read workloads, though its big advantage
+    is that any server can accept write requests &mdash; there is
+    no need to partition workloads between master and slave servers,
+    and because the changes are sent from one server to another,
+    there is not a problem with non-deterministic functions like
+    <function>random()</>.
    </para>
 
    <para>
