@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.11 2006/11/17 08:46:53 meskes Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.12 2006/11/17 09:00:03 neilc Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -121,7 +121,7 @@
 
    <para>
     A master/slave replication setup sends all data modification
-    queries to the master server.  The master server asynchonously
+    queries to the master server.  The master server asynchronously
     sends data changes to the slave server.  The slave can answer
     read-only queries while the master server is running.  The
     slave server is ideal for data warehouse queries.
