@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.12 2006/11/17 09:00:03 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.13 2006/11/17 13:29:53 momjian Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -137,52 +137,14 @@
  </varlistentry>
 
  <varlistentry>
-  <term>Data Partitioning</term>
+  <term>Query Broadcasting</term>
   <listitem>
 
    <para>
-    Data partitioning splits tables into data sets.  Each set can
-    be modified by only one server.  For example, data can be
-    partitioned by offices, e.g. London and Paris.  While London
-    and Paris servers have all data records, only London can modify
-    London records, and Paris can only modify Paris records.  This
-    is similar to the "Master/Slave Replication" item above, except
-    that instead of having a read/write server and a read-only
-    server, each server has a read/write data set and a read-only
-    data set.
-   </para>
-
-   <para>
-    Such partitioning provides both failover and load balancing.  Failover
-    is achieved because the data resides on both servers, and this is an
-    ideal way to enable failover if the servers share a slow communication
-    channel. Load balancing is possible because read requests can go to any
-    of the servers, and write requests are split among the servers.  Of
-    course, the communication to keep all the servers up-to-date adds
-    overhead, so ideally the write load should be low, or localized as in
-    the London/Paris example above.
-   </para>
-
-   <para>
-    Data partitioning is usually handled by application code, though rules
-    and triggers can be used to keep the read-only data sets current.  Slony-I
-    can also be used in such a setup.  While Slony-I replicates only entire
-    tables, London and Paris can be placed in separate tables, and
-    inheritance can be used to access both tables using a single table name.
-   </para>
-  </listitem>
- </varlistentry>
-
- <varlistentry>
-  <term>Multi-Master Replication Using Query Broadcasting</term>
-  <listitem>
-
-   <para>
-    One way to do multi-master replication is by having a program
-    intercept every SQL query and send it to all servers.  Each
-    server operates independently.  Read-only queries can be sent
-    to a single server because there is no need for all servers to
-    process it.
+    In query broadcasting, a program intercepts every SQL query
+    and sends it to all servers.  Each server operates independently.
+    Read-only queries can be sent to a single server because there
+    is no need for all servers to process it.
    </para>
 
    <para>
@@ -231,6 +193,22 @@
     endterm="sql-prepare-transaction-title"> and <xref
     linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
     can be used to implement this in application code or middleware.
+   </para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term>Data Partitioning</term>
+  <listitem>
+
+   <para>
+    Data partitioning splits tables into data sets.  Each set can
+    be modified by only one server.  For example, data can be
+    partitioned by offices, e.g. London and Paris, with a server
+    in each office.  If queries combining London and Paris data
+    are necessary, an application can query both servers, or
+    master/slave replication can be used to keep a read-only copy
+    of the other office's data on each server.
    </para>
   </listitem>
  </varlistentry>
