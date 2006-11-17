@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.10 2006/11/17 04:52:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.11 2006/11/17 08:46:53 meskes Exp $ -->
 
 <chapter id="failover">
  <title>Failover, Replication, Load Balancing, and Clustering Options</title>
@@ -204,7 +204,7 @@
  </varlistentry>
 
  <varlistentry>
-  <term>Multi-Master Replication Using Custering</term>
+  <term>Multi-Master Replication Using Clustering</term>
   <listitem>
 
    <para>
