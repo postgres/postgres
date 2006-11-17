@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.38 2006/10/23 18:10:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.39 2006/11/17 05:29:46 neilc Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -23,7 +23,7 @@
 
  <para>
   The <productname>PostgreSQL</productname> source code is stored and managed using the
-  <productname>CVS</productname> code management system.
+  <productname>CVS</productname> version control system.
  </para>
 
  <para>
@@ -50,10 +50,9 @@
     <para>
      You will need a local copy of <productname>CVS</productname>
      (Concurrent Version Control System), which you can get from
-     <ulink url="http://www.nongnu.org/cvs/"></ulink>
-     (the official site with the latest version) or any GNU software
-     archive site (often somewhat outdated). We recommend version 1.10
-     or newer. Many systems have a recent version of
+     <ulink url="http://www.nongnu.org/cvs/"></ulink> (the official
+     site with the latest version) or any GNU software archive site
+     (often somewhat outdated). Many systems have a recent version of
      <application>cvs</application> installed by default.
     </para>
    </step>
@@ -72,7 +71,7 @@ cvs -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot login
 
     <para>
      You should only need to do this once, since the password will be
-     saved in <literal>.cvspass</literal> in your home directory.
+     saved in <filename>.cvspass</filename> in your home directory.
     </para>
    </step>
 
@@ -143,29 +142,13 @@ cvs update
    </step>
   </procedure>
 
-  <caution>
-   <para>
-    Some older versions of <productname>CVS</productname> have a bug that
-    causes all checked-out files to be stored world-writable in your
-    directory.  If you see that this has happened, you can do something like
-<programlisting>
-chmod -R go-w pgsql
-</programlisting>
-    to set the permissions properly.
-    This bug is fixed as of
-    <productname>CVS</productname> version 1.9.28.
-   </para>
-  </caution>
-
   <para>
-   <productname>CVS</productname> can do a lot of other things,
-   such as fetching prior revisions
-   of the <productname>PostgreSQL</productname> sources
-   rather than the latest development version.
-   For more info consult the manual that comes with
-   <productname>CVS</productname>, or see the online
-   documentation at
-   <ulink url="http://www.nongnu.org/cvs/"></ulink>.
+   <productname>CVS</productname> can do a lot of other things, such
+   as fetching prior revisions of the
+   <productname>PostgreSQL</productname> sources rather than the
+   latest development version.  For more info consult the manual that
+   comes with <productname>CVS</productname>, or see the online
+   documentation at <ulink url="http://www.nongnu.org/cvs/"></ulink>.
   </para>
  </sect1>
 
@@ -477,223 +460,6 @@ pgsql
 # pgsql-src
 </programlisting>
    </para>
-  </sect2>
-
-  <sect2>
-   <title>Installing <productname>CVSup</productname></title>
-
-   <para>
-    <productname>CVSup</productname> is available as source, pre-built
-    binaries, or Linux RPMs. It is far easier to use a binary than to
-    build from source, primarily because the very capable, but
-    voluminous, Modula-3 compiler is required for the build.
-   </para>
-
-   <procedure>
-    <title><productname>CVSup</productname> Installation from Binaries</title>
-
-    <para>
-     You can use pre-built binaries
-     if you have a platform for which binaries
-     are posted on the <productname>PostgreSQL</productname>
-     <ulink url="ftp://ftp.postgresql.org/pub">
-     ftp site</ulink>
-     or if you are running FreeBSD, for which
-     <productname>CVSup</productname> is available as a port.
-
-     <note>
-      <para>
-       <productname>CVSup</productname> was originally developed as a
-       tool for distributing the <productname>FreeBSD</productname>
-       source tree. It is available as a <quote>port</quote>, and for those running
-       FreeBSD, if this is not sufficient to tell how to obtain and
-       install it then please contribute a procedure here.
-      </para>
-     </note>
-    </para>
-
-    <para>
-     At the time of writing, binaries are available for
-     Alpha/Tru64, ix86/xBSD,
-     HPPA/HP-UX 10.20, MIPS/IRIX,
-     ix86/linux-libc5, ix86/linux-glibc,
-     Sparc/Solaris, and Sparc/SunOS.
-    </para>
-
-    <step>
-     <para>
-      Retrieve the binary tar file for
-      <application>cvsup</application>
-      (<application>cvsupd</application> is not required
-      to be a client) appropriate for your platform.
-     </para>
-
-     <substeps>
-      <step performance="optional">
-       <para>
-	If you are running FreeBSD, install the <productname>CVSup</productname> port.
-       </para>
-      </step>
-
-      <step performance="optional">
-       <para>
-	If you have another platform, check for and download the appropriate binary from
-	the <productname>PostgreSQL</productname>
-        <ulink url="ftp://ftp.postgresql.org/pub">
-        ftp site</ulink>.
-       </para>
-      </step>
-     </substeps>
-    </step>
-
-    <step>
-     <para>
-      Check the tar file to verify the contents and directory
-      structure, if any. For the linux tar file at least, the static binary
-      and man page is included without any directory packaging.
-     </para>
-
-     <substeps>
-      <step>
-       <para>
-	If the binary is in the top level of the tar file, then simply
-	unpack the tar file into your target directory:
-
-<programlisting>
-cd /usr/local/bin
-tar zxvf /usr/local/src/cvsup-16.0-linux-i386.tar.gz
-mv cvsup.1 ../doc/man/man1/
-</programlisting>
-       </para>
-      </step>
-
-      <step>
-       <para>
-	If there is a directory structure in the tar file, then unpack
-	the tar file within <filename>/usr/local/src</filename> and move the binaries into
-	the appropriate location as above.
-       </para>
-      </step>
-     </substeps>
-    </step>
-
-    <step>
-     <para>
-      Ensure that the new binaries are in your path.
-
-<programlisting>
-$ rehash
-$ which cvsup
-$ set path=(<replaceable>path to cvsup</replaceable> $path)
-$ which cvsup
-/usr/local/bin/cvsup
-</programlisting>
-     </para>
-    </step>
-   </procedure>
-  </sect2>
-
-  <sect2>
-   <title>Installation from Sources</title>
-
-   <para>
-    Installing <productname>CVSup</productname> from sources is not
-    entirely trivial, primarily because most systems will need to
-    install a Modula-3 compiler first.
-    This compiler is available as Linux <productname>RPM</productname>,
-    FreeBSD package, or source code.
-
-    <note>
-     <para>
-      A clean-source installation of Modula-3 takes roughly 200MB of disk space,
-      which shrinks to roughly 50MB of space when the sources are removed.</para>
-    </note>
-   </para>
-
-   <procedure>
-    <title>Linux installation</title>
-
-    <step>
-     <para>
-      Install Modula-3.
-     </para>
-
-     <substeps>
-      <step>
-       <para>
-	Pick up the <productname>Modula-3</productname>
-	distribution from <ulink url="http://m3.polymtl.ca/m3">
-        Polytechnique Montréal</ulink>
-	who are actively maintaining the code base originally developed by
-	the <ulink url="http://www.research.digital.com/SRC/modula-3/html/home.html">
-        DEC Systems Research Center</ulink>.
-        The <productname>PM3</productname> <productname>RPM</productname> distribution is roughly
-	30MB compressed. At the time of writing, the 1.1.10-1 release
-	installed cleanly on RH-5.2, whereas the 1.1.11-1 release is
-	apparently built for another release (RH-6.0?) and does not run on RH-5.2.
-
-	<tip>
-	 <para>
-	  This particular rpm packaging has
-	  <emphasis>many</emphasis> <productname>RPM</productname> files,
-	  so you will likely want to place them into a separate
-	  directory.
-	 </para>
-	</tip>
-       </para>
-      </step>
-
-      <step>
-       <para>
-	Install the Modula-3 RPMs:
-
-<programlisting>
-# rpm -Uvh pm3*.rpm
-</programlisting>
-       </para>
-      </step>
-     </substeps>
-    </step>
-
-    <step>
-     <para>
-     Unpack the cvsup distribution:
-
-<programlisting>
-# cd /usr/local/src
-# tar zxf cvsup-16.0.tar.gz
-</programlisting>
-     </para>
-    </step>
-
-    <step>
-     <para>
-      Build the cvsup distribution, suppressing the GUI interface
-      feature to avoid requiring X11 libraries:
-
-<programlisting>
-# make M3FLAGS="-DNOGUI"
-</programlisting>
-
-      and if you want to build a static binary to move to systems
-      that may not have Modula-3 installed, try:
-
-<programlisting>
-# make M3FLAGS="-DNOGUI -DSTATIC"
-</programlisting>
-     </para>
-    </step>
-
-    <step>
-     <para>
-      Install the built binary:
-
-<programlisting>
-# make M3FLAGS="-DNOGUI -DSTATIC" install
-</programlisting>
-     </para>
-    </step>
-   </procedure>
   </sect2>
  </sect1>
 </appendix>
