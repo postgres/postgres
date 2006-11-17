@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.91.2.1 2005/11/22 18:23:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.91.2.2 2006/11/17 18:00:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,7 +506,10 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple, Buffer buffer)
  *	HeapTupleUpdated: The tuple was updated by a committed transaction.
  *
  *	HeapTupleBeingUpdated: The tuple is being updated by an in-progress
- *	transaction other than the current transaction.
+ *	transaction other than the current transaction.  (Note: this includes
+ *	the case where the tuple is share-locked by a MultiXact, even if the
+ *	MultiXact includes the current transaction.  Callers that want to
+ *	distinguish that case must test for it themselves.)
  */
 HTSU_Result
 HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid,
