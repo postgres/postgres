@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.79 2006/10/26 15:26:54 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.80 2006/11/17 16:38:44 momjian Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
@@ -151,7 +151,7 @@
   &charset;
   &maintenance;
   &backup;
-  &failover;
+  &high-availability;
   &monitoring;
   &diskusage;
   &wal;

@@ -1,35 +1,38 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/failover.sgml,v 1.13 2006/11/17 13:29:53 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.1 2006/11/17 16:38:44 momjian Exp $ -->
 
-<chapter id="failover">
- <title>Failover, Replication, Load Balancing, and Clustering Options</title>
+<chapter id="high-availability">
+ <title>High Availability and Load Balancing</title>
 
+ <indexterm><primary>high availability</></>
  <indexterm><primary>failover</></>
  <indexterm><primary>replication</></>
  <indexterm><primary>load balancing</></>
  <indexterm><primary>clustering</></>
+ <indexterm><primary>data partitioning</></>
 
  <para>
   Database servers can work together to allow a second server to
-  quickly take over if the primary server fails (failover), or to
-  allow several computers to serve the same data (load balancing).
-  Ideally, database servers could work together seamlessly.  Web
-  servers serving static web pages can be combined quite easily by
-  merely load-balancing web requests to multiple machines.  In
-  fact, read-only database servers can be combined relatively easily
-  too.  Unfortunately, most database servers have a read/write mix
-  of requests, and read/write servers are much harder to combine.
-  This is because though read-only data needs to be placed on each
-  server only once, a write to any server has to be propagated to
-  all servers so that future read requests to those servers return
-  consistent results.
+  quickly take over quickly if the primary server fails (high
+  availability), or to allow several computers to serve the same
+  data (load balancing).  Ideally, database servers could work
+  together seamlessly.  Web servers serving static web pages can
+  be combined quite easily by merely load-balancing web requests
+  to multiple machines.  In fact, read-only database servers can
+  be combined relatively easily too.  Unfortunately, most database
+  servers have a read/write mix of requests, and read/write servers
+  are much harder to combine.  This is because though read-only
+  data needs to be placed on each server only once, a write to any
+  server has to be propagated to all servers so that future read
+  requests to those servers return consistent results.
  </para>
 
  <para>
-  This synchronization problem is the fundamental difficulty for servers
-  working together.  Because there is no single solution that eliminates
-  the impact of the sync problem for all use cases, there are multiple
-  solutions.  Each solution addresses this problem in a different way, and
-  minimizes its impact for a specific workload.
+  This synchronization problem is the fundamental difficulty for
+  servers working together.  Because there is no single solution
+  that eliminates the impact of the sync problem for all use cases,
+  there are multiple solutions.  Each solution addresses this
+  problem in a different way, and minimizes its impact for a specific
+  workload.
  </para>
 
  <para>
