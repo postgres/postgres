@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.52 2006/03/31 23:32:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.53 2006/11/19 21:33:22 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -20,7 +20,7 @@
 #include "access/hash.h"
 
 
-static BlockNumber _hash_getovflpage(Relation rel, Buffer metabuf);
+static Buffer _hash_getovflpage(Relation rel, Buffer metabuf);
 static uint32 _hash_firstfreebit(uint32 map);
 
 
@@ -99,18 +99,14 @@ blkno_to_bitno(HashMetaPage metap, BlockNumber ovflblkno)
 Buffer
 _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 {
-	BlockNumber ovflblkno;
 	Buffer		ovflbuf;
 	Page		page;
 	Page		ovflpage;
 	HashPageOpaque pageopaque;
 	HashPageOpaque ovflopaque;
 
-	/* allocate an empty overflow page */
-	ovflblkno = _hash_getovflpage(rel, metabuf);
-
-	/* lock the overflow page */
-	ovflbuf = _hash_getbuf(rel, ovflblkno, HASH_WRITE);
+	/* allocate and lock an empty overflow page */
+	ovflbuf = _hash_getovflpage(rel, metabuf);
 	ovflpage = BufferGetPage(ovflbuf);
 
 	/*
@@ -150,7 +146,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 	MarkBufferDirty(ovflbuf);
 
 	/* logically chain overflow page to previous page */
-	pageopaque->hasho_nextblkno = ovflblkno;
+	pageopaque->hasho_nextblkno = BufferGetBlockNumber(ovflbuf);
 	_hash_wrtbuf(rel, buf);
 
 	return ovflbuf;
@@ -159,16 +155,18 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 /*
  *	_hash_getovflpage()
  *
- *	Find an available overflow page and return its block number.
+ *	Find an available overflow page and return it.  The returned buffer
+ *	is pinned and write-locked, but its contents are not initialized.
  *
  * The caller must hold a pin, but no lock, on the metapage buffer.
- * The buffer is returned in the same state.
+ * That buffer is left in the same state at exit.
  */
-static BlockNumber
+static Buffer
 _hash_getovflpage(Relation rel, Buffer metabuf)
 {
 	HashMetaPage metap;
 	Buffer		mapbuf = 0;
+	Buffer		newbuf;
 	BlockNumber blkno;
 	uint32		orig_firstfree;
 	uint32		splitnum;
@@ -243,11 +241,10 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 		_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
 	}
 
-	/* No Free Page Found - have to allocate a new page */
-	bit = metap->hashm_spares[splitnum];
-	metap->hashm_spares[splitnum]++;
-
-	/* Check if we need to allocate a new bitmap page */
+	/*
+	 * No free pages --- have to extend the relation to add an overflow page.
+	 * First, check to see if we have to add a new bitmap page too.
+	 */
 	if (last_bit == (uint32) (BMPGSZ_BIT(metap) - 1))
 	{
 		/*
@@ -258,21 +255,38 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 		 * marked "in use".  Subsequent pages do not exist yet, but it is
 		 * convenient to pre-mark them as "in use" too.
 		 */
-		_hash_initbitmap(rel, metap, bitno_to_blkno(metap, bit));
-
 		bit = metap->hashm_spares[splitnum];
+		_hash_initbitmap(rel, metap, bitno_to_blkno(metap, bit));
 		metap->hashm_spares[splitnum]++;
 	}
 	else
 	{
 		/*
-		 * Nothing to do here; since the page was past the last used page, we
-		 * know its bitmap bit was preinitialized to "in use".
+		 * Nothing to do here; since the page will be past the last used page,
+		 * we know its bitmap bit was preinitialized to "in use".
 		 */
 	}
 
 	/* Calculate address of the new overflow page */
+	bit = metap->hashm_spares[splitnum];
 	blkno = bitno_to_blkno(metap, bit);
+
+	/*
+	 * We have to fetch the page with P_NEW to ensure smgr's idea of the
+	 * relation length stays in sync with ours.  XXX It's annoying to do this
+	 * with metapage write lock held; would be better to use a lock that
+	 * doesn't block incoming searches.  Best way to fix it would be to stop
+	 * maintaining hashm_spares[hashm_ovflpoint] and rely entirely on the
+	 * smgr relation length to track where new overflow pages come from;
+	 * then we could release the metapage before we do the smgrextend.
+	 * FIXME later (not in beta...)
+	 */
+	newbuf = _hash_getbuf(rel, P_NEW, HASH_WRITE);
+	if (BufferGetBlockNumber(newbuf) != blkno)
+		elog(ERROR, "unexpected hash relation size: %u, should be %u",
+			 BufferGetBlockNumber(newbuf), blkno);
+
+	metap->hashm_spares[splitnum]++;
 
 	/*
 	 * Adjust hashm_firstfree to avoid redundant searches.	But don't risk
@@ -284,7 +298,7 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 	/* Write updated metapage and release lock, but not pin */
 	_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_NOLOCK);
 
-	return blkno;
+	return newbuf;
 
 found:
 	/* convert bit to bit number within page */
@@ -300,7 +314,7 @@ found:
 	/* convert bit to absolute bit number */
 	bit += (i << BMPG_SHIFT(metap));
 
-	/* Calculate address of the new overflow page */
+	/* Calculate address of the recycled overflow page */
 	blkno = bitno_to_blkno(metap, bit);
 
 	/*
@@ -320,7 +334,8 @@ found:
 		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
 	}
 
-	return blkno;
+	/* Fetch and return the recycled page */
+	return _hash_getbuf(rel, blkno, HASH_WRITE);
 }
 
 /*
@@ -388,7 +403,11 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	prevblkno = ovflopaque->hasho_prevblkno;
 	bucket = ovflopaque->hasho_bucket;
 
-	/* Zero the page for debugging's sake; then write and release it */
+	/*
+	 * Zero the page for debugging's sake; then write and release it.
+	 * (Note: if we failed to zero the page here, we'd have problems
+	 * with the Assert in _hash_pageinit() when the page is reused.)
+	 */
 	MemSet(ovflpage, 0, BufferGetPageSize(ovflbuf));
 	_hash_wrtbuf(rel, ovflbuf);
 
@@ -488,12 +507,19 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
 	/*
 	 * It is okay to write-lock the new bitmap page while holding metapage
 	 * write lock, because no one else could be contending for the new page.
+	 * Also, the metapage lock makes it safe to extend the index using P_NEW,
+	 * which we want to do to ensure the smgr's idea of the relation size
+	 * stays in step with ours.
 	 *
 	 * There is some loss of concurrency in possibly doing I/O for the new
 	 * page while holding the metapage lock, but this path is taken so seldom
 	 * that it's not worth worrying about.
 	 */
-	buf = _hash_getbuf(rel, blkno, HASH_WRITE);
+	buf = _hash_getbuf(rel, P_NEW, HASH_WRITE);
+	if (BufferGetBlockNumber(buf) != blkno)
+		elog(ERROR, "unexpected hash relation size: %u, should be %u",
+			 BufferGetBlockNumber(buf), blkno);
+
 	pg = BufferGetPage(buf);
 
 	/* initialize the page */
